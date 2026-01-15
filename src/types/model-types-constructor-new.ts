@@ -1,4 +1,5 @@
-import * as modelTypes from "./model-types-new";
+import { tr } from 'date-fns/locale';
+import * as modelTypes from './model-types-new';
 
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
@@ -21,14 +22,14 @@ export const newApUser: modelTypes.ApUser = {
   gender: null,
   jobDescription: null,
   jobRole: null,
-  admin: false,
+  admin: false
 };
 
 export const newCandidate: modelTypes.Candidate = {
   id: undefined,
   rule: '',
   fields: {},
-  isActive: true,
+  isActive: true
 };
 
 export const newDepartment: modelTypes.Department = {
@@ -46,8 +47,8 @@ export const newDepartment: modelTypes.Department = {
   email: '',
   encounterType: undefined,
   isActive: true,
-  hasMedicalSheets:false,
- hasNurseMedicalSheets:false
+  hasMedicalSheets: false,
+  hasNurseMedicalSheets: false
 };
 
 export const newFacility: modelTypes.Facility = {
@@ -62,8 +63,8 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-  ruleId:null,
-} ;
+  ruleId: null
+};
 
 export const newCreateFacility: modelTypes.CreateFacility = {
   name: '',
@@ -75,19 +76,19 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   addressId: '',
   type: '',
   defaultCurrency: '',
-  isActive: true,
+  isActive: true
 };
 
 export const newRole: modelTypes.Role = {
   id: undefined,
   name: '',
   type: '',
-  facilityId: null,
+  facilityId: null
 };
 
 export const newUserRole: modelTypes.UserRole = {
   roleId: undefined,
-  userId: undefined,
+  userId: undefined
 };
 
 export const newUserDepartment: modelTypes.UserDepartment = {
@@ -97,7 +98,6 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   isActive: true,
   isDefault: false
 };
-
 
 // Patient Attachment Constructors
 export const newPatientAttachment: modelTypes.PatientAttachment = {
@@ -109,7 +109,7 @@ export const newPatientAttachment: modelTypes.PatientAttachment = {
   sizeBytes: 0,
   type: undefined,
   details: undefined,
-  source: undefined,
+  source: undefined
 };
 
 export const newUploadResponse: modelTypes.UploadResponse = {
@@ -117,12 +117,12 @@ export const newUploadResponse: modelTypes.UploadResponse = {
   filename: '',
   mimeType: '',
   sizeBytes: 0,
-  downloadUrl: '',
+  downloadUrl: ''
 };
 
 export const newDownloadTicket: modelTypes.DownloadTicket = {
   url: '',
-  expiresInSeconds: 0,
+  expiresInSeconds: 0
 };
 
 export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams = {
@@ -130,7 +130,7 @@ export const newUploadAttachmentParams: modelTypes.UploadPatientAttachmentParams
   file: undefined,
   type: undefined,
   details: undefined,
-  source: undefined,
+  source: undefined
 };
 
 // Encounter Attachment Constructors
@@ -144,7 +144,7 @@ export const newEncounterAttachment: modelTypes.EncounterAttachment = {
   type: undefined,
   details: undefined,
   source: undefined,
-  sourceId: undefined,
+  sourceId: undefined
 };
 
 export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttachmentParams = {
@@ -153,7 +153,7 @@ export const newUploadEncounterAttachmentParams: modelTypes.UploadEncounterAttac
   type: undefined,
   details: undefined,
   source: undefined,
-  sourceId: undefined,
+  sourceId: undefined
 };
 
 export const newService: modelTypes.Service = {
@@ -169,7 +169,7 @@ export const newService: modelTypes.Service = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined, 
+  facilityId: undefined
 };
 
 export const newServiceItem: modelTypes.ServiceItem = {
@@ -181,7 +181,7 @@ export const newServiceItem: modelTypes.ServiceItem = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  isActive: true,
+  isActive: true
 };
 
 export const newLanguage: modelTypes.Language = {
@@ -189,7 +189,7 @@ export const newLanguage: modelTypes.Language = {
   langKey: undefined,
   langName: undefined,
   direction: undefined,
-  details: undefined,
+  details: undefined
 };
 
 export const newPractitioner: modelTypes.Practitioner = {
@@ -211,7 +211,7 @@ export const newPractitioner: modelTypes.Practitioner = {
   dateOfBirth: undefined,
   jobRole: null,
   gender: null,
-  isActive: true,
+  isActive: true
 };
 
 export const newLanguageTranslation: modelTypes.LanguageTranslation = {
@@ -220,7 +220,7 @@ export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   translationKey: undefined,
   translationText: undefined,
   verified: undefined,
-  translated: undefined,
+  translated: undefined
 };
 
 export const newAgeGroup: modelTypes.AgeGroup = {
@@ -235,7 +235,7 @@ export const newAgeGroup: modelTypes.AgeGroup = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined,
+  facilityId: undefined
 };
 
 export const newProcedure: modelTypes.Procedure = {
@@ -253,7 +253,7 @@ export const newProcedure: modelTypes.Procedure = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined,
+  facilityId: undefined
 };
 
 export const newAllergen: modelTypes.Allergen = {
@@ -265,26 +265,35 @@ export const newAllergen: modelTypes.Allergen = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
+// constructor/default object aligned with domain defaults
 export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   id: undefined,
-  type: null,
-  name: null,
-  internalCode: null,
+  type: '',
+  name: '',
+  internalCode: '',
+
   ageSpecific: false,
   ageGroupList: [],
+
   genderSpecific: false,
   gender: null,
+
   specialPopulation: false,
   specialPopulationValues: [],
+
   price: null,
   currency: null,
   specialNotes: '',
+
   isActive: true,
   isProfile: false,
   appointable: false,
+
+  defaultProfileResultType: '',
+  defaultProfileResultUnit: ''
 };
 
 export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO = {
@@ -342,43 +351,43 @@ export const newLaboratory: modelTypes.Laboratory = {
   testInstructions: undefined,
   category: undefined,
   tubeType: undefined,
-  timing:null,
+  timing: null
 };
 
-
-// default empty object
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
-  id: undefined,
-  testId: undefined,
   name: '',
-  resultUnit: ''};
-
+  resultUnit: null,
+  resultType: null,
+  listOfValueId: null,
+  isDefault: false,
+  isActive: true
+};
 
 export const newPathology: modelTypes.Pathology = {
   id: undefined,
   testId: undefined,
-  category: "",
-  specimenType: "",
-  analysisProcedure: "",
+  category: '',
+  specimenType: '',
+  analysisProcedure: '',
   turnaroundTime: undefined,
-  timeUnit: "",
-  testDescription: "",
-  sampleHandling: "",
-  medicalIndications: "",
-  criticalValues: "",
-  preparationRequirements: "",
+  timeUnit: '',
+  testDescription: '',
+  sampleHandling: '',
+  medicalIndications: '',
+  criticalValues: '',
+  preparationRequirements: ''
 };
 
 export const newRadiology: modelTypes.Radiology = {
   id: undefined,
   testId: 0,
-  category: "",
+  category: '',
   imageDuration: null,
-  testInstructions: "",
-  medicalIndications: "",
-  turnaroundTimeUnit: "",
+  testInstructions: '',
+  medicalIndications: '',
+  turnaroundTimeUnit: '',
   turnaroundTime: undefined,
-  associatedRisks: "",
+  associatedRisks: ''
 };
 
 export const newMedicationCategory: modelTypes.MedicationCategory = {
@@ -391,7 +400,6 @@ export const newMedicationCategoryClass: modelTypes.MedicationCategoryClass = {
   name: '',
   medicationCategoriesId: undefined
 };
-
 
 export const newActiveIngredient: modelTypes.ActiveIngredient = {
   id: undefined,
@@ -441,7 +449,6 @@ export const newActiveIngredientPreRequestedTest: modelTypes.ActiveIngredientPre
   testId: 0
 };
 
-
 export const newActiveIngredientSynonym: modelTypes.ActiveIngredientSynonym = {
   id: undefined,
   activeIngredientId: 0,
@@ -454,21 +461,19 @@ export const newActiveIngredientSpecialPopulation: modelTypes.ActiveIngredientSp
   considerations: ''
 };
 
-
-
-
 export const newActiveIngredientContraindication: modelTypes.ActiveIngredientContraindication = {
   id: undefined,
   activeIngredientId: 0,
   icdCodeId: 0
 };
 
-export const newDentalAction: modelTypes.DentalAction={
-  id: null,               // Primary key (auto-generated)
-  description: '',        // Mandatory field
-  type:null,    // Enum (mandatory)
-  imageName: null,  // Optional image file name
-  isActive: true,  }
+export const newDentalAction: modelTypes.DentalAction = {
+  id: null, // Primary key (auto-generated)
+  description: '', // Mandatory field
+  type: null, // Enum (mandatory)
+  imageName: null, // Optional image file name
+  isActive: true
+};
 export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange = {
   id: undefined,
   testId: 0,
@@ -480,7 +485,7 @@ export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange 
   ageToUnit: undefined,
   condition: undefined,
 
-  resultType: "", 
+  resultType: '',
   resultText: undefined,
   resultLov: undefined,
   normalRangeType: undefined,
@@ -495,27 +500,27 @@ export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange 
   profileTestId: undefined,
   isProfile: false,
 
-  lovKeys: [],
-}
+  lovKeys: []
+};
 
 export const newProcedureCoding: modelTypes.ProcedureCoding = {
   id: undefined,
-  procedureId: undefined,        
-  codeType: 'CPT_CODES',           
-  codeId: '',                      
+  procedureId: undefined,
+  codeType: 'CPT_CODES',
+  codeId: '',
   // doseAdjustmentPugC: null,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 export const newProcedurePriceList: modelTypes.ProcedurePriceList = {
   id: undefined,
-  procedureId: undefined,      
-  price: 0,                    
-  currency: 'USD',
-}
+  procedureId: undefined,
+  price: 0,
+  currency: 'USD'
+};
 
 export const newActiveIngredientDrugInteraction: modelTypes.ActiveIngredientDrugInteraction = {
   id: undefined,
@@ -526,15 +531,13 @@ export const newActiveIngredientDrugInteraction: modelTypes.ActiveIngredientDrug
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
-
+  lastModifiedDate: null
 };
 
-
-export const newBrandMedication:modelTypes.BrandMedication= {
+export const newBrandMedication: modelTypes.BrandMedication = {
   id: undefined, // Optional because it's generated by backend
   name: '',
-  code:'',
+  code: '',
   manufacturer: '',
   dosageForm: '',
   usageInstructions: '',
@@ -549,24 +552,21 @@ export const newBrandMedication:modelTypes.BrandMedication= {
   isActive: true,
   uomGroupId: null,
   uomGroupUnitId: null,
-  hasActiveIngredient:false
- 
-}
+  hasActiveIngredient: false
+};
 
-export const newSubstitute:modelTypes.Substitute={
-  brandId:undefined,
-  alternativeBrandId:undefined
-}
-;
+export const newSubstitute: modelTypes.Substitute = {
+  brandId: undefined,
+  alternativeBrandId: undefined
+};
 export const newPrescriptionInstructions: modelTypes.prescriptionInstructions = {
   id: undefined,
   category: '',
   dose: 0,
-  unit: "",
-  rout: "",
-  frequency: ""
+  unit: '',
+  rout: '',
+  frequency: ''
 };
-
 
 export const newActiveIngredientIndication: modelTypes.ActiveIngredientIndication = {
   id: undefined,
@@ -629,30 +629,29 @@ export const newVaccineDose: modelTypes.VaccineDose = {
 };
 export const newVaccineDosesInterval: modelTypes.VaccineDosesInterval = {
   id: undefined,
-  vaccineId: 0,       
-  fromDoseId: 0,   
-  toDoseId: 0,     
-  intervalBetweenDoses: 0,  
+  vaccineId: 0,
+  fromDoseId: 0,
+  toDoseId: 0,
+  intervalBetweenDoses: 0,
   unit: 'DAYS',
   isActive: true,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null
-}
+};
 export const newCdtDentalAction: modelTypes.CdtDentalAction = {
   dentalActionId: undefined,
-  cdtId: undefined,
+  cdtId: undefined
 };
 
-
-export const newBrandMedicationActiveIngredient:modelTypes.BrandMedicationActiveIngredient={
-    id:undefined,
-    brandId:undefined,
-    activeIngredientId:undefined,
-    strength: undefined,
-    unit:'',
-  }
+export const newBrandMedicationActiveIngredient: modelTypes.BrandMedicationActiveIngredient = {
+  id: undefined,
+  brandId: undefined,
+  activeIngredientId: undefined,
+  strength: undefined,
+  unit: ''
+};
 
 export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
   id: 0,
@@ -683,38 +682,38 @@ export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
 export const CatalogDiagnosticTest: modelTypes.CatalogDiagnosticTest = {
   id: 0,
   catalogId: 0,
-  diagnosticTestId: 0,
+  diagnosticTestId: 0
 };
 export const CatalogAddTestsVM: modelTypes.CatalogAddTestsVM = {
   testIds: []
 };
 
-export const newUOMGroup : modelTypes.uomGroup = {
+export const newUOMGroup: modelTypes.uomGroup = {
   id: undefined,
-  description: '',         
-  name: '',
+  description: '',
+  name: ''
 };
 
 export const newUOMGroupUnit: modelTypes.UOMGroupUnit = {
   id: undefined,
-  uom: '',             
-  uomOrder: 0,
+  uom: '',
+  uomOrder: 0
   // uom_group_id: undefined
 };
 
 export const newUOMGroupRelation: modelTypes.UOMGroupRelation = {
-  id: undefined,          
+  id: undefined,
   relation: 0,
   // uom_group_id: undefined,
   fromUnitId: undefined,
-  toUnitId: undefined}
+  toUnitId: undefined
+};
 
 export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdverseEffect = {
   id: undefined,
   activeIngredientId: 0,
   adverseEffect: ''
 };
-
 
 export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFoodInteraction = {
   id: undefined,
@@ -725,7 +724,7 @@ export const newActiveIngredientFoodInteraction: modelTypes.ActiveIngredientFood
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 export const newInventoryProduct: modelTypes.InventoryProduct = {
   id: undefined,
@@ -758,17 +757,17 @@ export const newInventoryProduct: modelTypes.InventoryProduct = {
   leadTime: null,
   leadTimeUnit: null,
   erpIntegrationId: null,
-  isActive: true,
+  isActive: true
 };
 export const newDiagnosticTestCoding: modelTypes.DiagnosticTestCoding = {
   id: undefined,
-  procedureId: undefined,        
-  codeType: null,           
-  codeId: '',                      
+  procedureId: undefined,
+  codeType: null,
+  codeId: '',
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 export const newCountry: modelTypes.Country = {
@@ -782,21 +781,21 @@ export const newCountryDistrict: modelTypes.CountryDistrict = {
   countryId: undefined,
   name: '',
   code: '',
-  isActive: true,
+  isActive: true
 };
 
 export const newDistrictCommunity: modelTypes.DistrictCommunity = {
   id: undefined,
   districtId: undefined,
   name: '',
-  isActive: true,
+  isActive: true
 };
 
 export const newCommunityArea: modelTypes.CommunityArea = {
   id: undefined,
   communityId: undefined,
   name: '',
-  isActive: true,
+  isActive: true
 };
 
 export const newVisitDuration: modelTypes.VisitDuration = {
@@ -807,25 +806,25 @@ export const newVisitDuration: modelTypes.VisitDuration = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 export const newPriceList: modelTypes.PriceList = {
   id: undefined,
   facilityId: null,
   facilityIds: [],
-  name: "",
-  type: "",
-  effectiveFrom: "",
+  name: '',
+  type: '',
+  effectiveFrom: '',
   effectiveTo: null,
-  description: "",
-  isActive: false,
+  description: '',
+  isActive: false
 };
 
 export const newReportTemplate: modelTypes.ReportTemplate = {
   id: 0,
   name: null,
   templateValue: null,
-  isActive: true,
+  isActive: true
 };
 
 export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTemplate = {
@@ -833,31 +832,31 @@ export const newDiagnosticTestReportTemplate: modelTypes.DiagnosticTestReportTem
   diagnosticTest: null,
   name: null,
   templateValue: null,
-  isActive: true,
+  isActive: true
 };
 
 export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM = {
-    id: undefined,
-    userId: undefined,
-    note: '',
-    priority: '',
-    priorityOrder: 0,
-    color:'',
-    createdBy: '',
-    createdDate: null,
-    lastModifiedBy: '',
-    lastModifiedDate: null,
-    patientId: ''
+  id: undefined,
+  userId: undefined,
+  note: '',
+  priority: '',
+  priorityOrder: 0,
+  color: '',
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: '',
+  lastModifiedDate: null,
+  patientId: ''
 };
 
 export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
-    userId: undefined,
-     note: '',
-    priority: '',
-    priorityOrder: 0,
-    color:'--note-purple',
-    patientId: undefined
-}
+  userId: undefined,
+  note: '',
+  priority: '',
+  priorityOrder: 0,
+  color: '--note-purple',
+  patientId: undefined
+};
 export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
   priceListId: 0,
@@ -867,20 +866,19 @@ export const newPriceListItem: modelTypes.PriceListItem = {
   productId: null,
   price: 0,
   discountAllowed: false,
-  isActive: true,
-
+  isActive: true
 };
 
 export const newReferralRequest: modelTypes.ReferralRequest = {
   id: null,
   patientId: null,
   encounterId: null,
-  referralType: "INTERNAL",
+  referralType: 'INTERNAL',
   facilityId: null,
   departmentId: null,
-  referralReason: "",
+  referralReason: '',
   priority: null,
-  isActive: true,
+  isActive: true
 };
 // Billing Invoice
 
@@ -891,7 +889,7 @@ export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
   totalAmount: 0,
   paidAmount: 0,
   balanceAmount: 0,
-  currency: null,
+  currency: null
 };
 
 export const newBillingInvoiceUpdate: modelTypes.BillingInvoiceUpdateVM = {
@@ -902,16 +900,16 @@ export const newBillingInvoiceUpdate: modelTypes.BillingInvoiceUpdateVM = {
   totalAmount: 0,
   paidAmount: 0,
   balanceAmount: 0,
-  currency: null,
+  currency: null
 };
 
 export const newBillingInvoiceResponse: modelTypes.BillingInvoiceResponseVM = {
   id: 0,
-  invoiceNumber: "",
+  invoiceNumber: '',
   facilityId: 0,
   patientKey: null,
   encounterKey: null,
-  status: "",
+  status: '',
   totalAmount: 0,
   paidAmount: 0,
   balanceAmount: 0,
@@ -919,18 +917,18 @@ export const newBillingInvoiceResponse: modelTypes.BillingInvoiceResponseVM = {
   createdBy: null,
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
-}
+  lastModifiedDate: null
+};
 
 export const newPayor: modelTypes.Payor = {
   id: undefined,
-  code: "",
-  name: "",
+  code: '',
+  name: '',
   category: null,
-  address: "",
-  phone: "",
-  email: "",
-  contractManagerContact: "",
+  address: '',
+  phone: '',
+  email: '',
+  contractManagerContact: '',
   startDate: null,
   expiryDate: null,
   renewable: false,
@@ -940,7 +938,7 @@ export const newPayor: modelTypes.Payor = {
   allowPackagePricing: false,
   allowDrgBilling: false,
   forcePreApproval: false,
-  isActive: true,
+  isActive: true
 };
 
 export const newPayorPlan: modelTypes.PayorPlan = {
@@ -950,9 +948,8 @@ export const newPayorPlan: modelTypes.PayorPlan = {
   planType: null,
   itemType: null,
   createdDate: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
-
 
 export const newPayorPlanItem: modelTypes.PayorPlanItem = {
   id: undefined,
@@ -962,7 +959,7 @@ export const newPayorPlanItem: modelTypes.PayorPlanItem = {
   coverageType: null,
   isActive: true,
   createdDate: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 // Billing Invoice Item
@@ -974,7 +971,7 @@ export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
   quantity: 0,
   unitPrice: 0,
   totalPrice: 0,
-  currency: null,
+  currency: null
 };
 
 export const newBillingInvoiceItemUpdate: modelTypes.BillingInvoiceItemUpdateVM = {
@@ -985,7 +982,7 @@ export const newBillingInvoiceItemUpdate: modelTypes.BillingInvoiceItemUpdateVM 
   quantity: 0,
   unitPrice: 0,
   totalPrice: 0,
-  currency: null,
+  currency: null
 };
 
 export const newBillingInvoiceItemResponse: modelTypes.BillingInvoiceItemResponseVM = {
@@ -1000,7 +997,7 @@ export const newBillingInvoiceItemResponse: modelTypes.BillingInvoiceItemRespons
   createdBy: null,
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 // Patient Payment
@@ -1010,11 +1007,11 @@ export const newPatientPayment: modelTypes.PatientPaymentCreateVM = {
   facilityId: 0,
   paymentType: null,
   paymentMethod: null,
-  paymentDate: "",
+  paymentDate: '',
   amount: 0,
   currency: null,
   reference: null,
-  notes: null,
+  notes: null
 };
 
 export const newPatientPaymentUpdate: modelTypes.PatientPaymentUpdateVM = {
@@ -1023,11 +1020,11 @@ export const newPatientPaymentUpdate: modelTypes.PatientPaymentUpdateVM = {
   facilityId: 0,
   paymentType: null,
   paymentMethod: null,
-  paymentDate: "",
+  paymentDate: '',
   amount: 0,
   currency: null,
   reference: null,
-  notes: null,
+  notes: null
 };
 
 export const newPatientPaymentResponse: modelTypes.PatientPaymentResponseVM = {
@@ -1036,7 +1033,7 @@ export const newPatientPaymentResponse: modelTypes.PatientPaymentResponseVM = {
   facilityId: 0,
   paymentType: null,
   paymentMethod: null,
-  paymentDate: "",
+  paymentDate: '',
   amount: 0,
   currency: null,
   reference: null,
@@ -1044,7 +1041,7 @@ export const newPatientPaymentResponse: modelTypes.PatientPaymentResponseVM = {
   createdBy: null,
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 // Payment Allocation
@@ -1053,7 +1050,7 @@ export const newPaymentAllocation: modelTypes.PaymentAllocationCreateVM = {
   paymentId: 0,
   invoiceId: 0,
   allocatedAmount: 0,
-  invoiceItemId: null,
+  invoiceItemId: null
 };
 
 export const newPaymentAllocationUpdate: modelTypes.PaymentAllocationUpdateVM = {
@@ -1061,7 +1058,7 @@ export const newPaymentAllocationUpdate: modelTypes.PaymentAllocationUpdateVM = 
   paymentId: 0,
   invoiceId: 0,
   allocatedAmount: 0,
-  invoiceItemId: null,
+  invoiceItemId: null
 };
 
 export const newPaymentAllocationResponse: modelTypes.PaymentAllocationResponseVM = {
@@ -1073,17 +1070,17 @@ export const newPaymentAllocationResponse: modelTypes.PaymentAllocationResponseV
   createdBy: null,
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 // Patient Account Summary
 
 export const newPatientAccountSummary: modelTypes.PatientAccountSummaryVM = {
-  patientKey: "",
+  patientKey: '',
   freeBalance: 0,
   outstandingBalance: 0,
   totalInvoiced: 0,
-  totalPaid: 0,
+  totalPaid: 0
 };
 export const newDischargePlanning: modelTypes.DischargePlanning = {
   id: undefined,
@@ -1092,16 +1089,16 @@ export const newDischargePlanning: modelTypes.DischargePlanning = {
   encounterId: 0,
 
   expectedDischargeDate: null,
-  estimatedLos: "",
-  readinessStatus: "",
+  estimatedLos: '',
+  readinessStatus: '',
 
   medicalConditionStable: false,
   vitalsStable: false,
   pendingInvestigations: false,
   mobilityAdlStatus: false,
 
-  diagnosisCode: "",
-  diagnosisName: "",
+  diagnosisCode: '',
+  diagnosisName: '',
 
   finalMedReconciliationCompleted: false,
   dischargeSummaryPrepared: false,
@@ -1110,14 +1107,14 @@ export const newDischargePlanning: modelTypes.DischargePlanning = {
   patientFamilyInformed: false,
   transportArranged: false,
 
-  medicalEquipment: "",
+  medicalEquipment: '',
   homeCareNeeded: false,
-  postDischargeDietaryPlan: "",
-  postDischargeSocialNeeds: "",
+  postDischargeDietaryPlan: '',
+  postDischargeSocialNeeds: '',
 
-  topicsCovered: "",
-  educationDietaryPlan: "",
-  educationSocialNeeds: "",
+  topicsCovered: '',
+  educationDietaryPlan: '',
+  educationSocialNeeds: '',
 
   materialLeaflet: false,
   materialVerbal: false,
@@ -1126,16 +1123,16 @@ export const newDischargePlanning: modelTypes.DischargePlanning = {
   educationProvided: false,
   patientUnderstanding: false,
 
-  isActive: true,
+  isActive: true
 };
 export const newPriceListAttribute: modelTypes.PriceListAttribute = {
-  id:undefined,
+  id: undefined,
   priceListId: undefined,
-  attributeType:null, // PriceAttributes enum as string
+  attributeType: null, // PriceAttributes enum as string
   attribute: null,
-  price: null ,// or string if you prefer BigDecimal string
+  price: null, // or string if you prefer BigDecimal string
   isActive: true
-}
+};
 
 export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   id: undefined,
@@ -1157,6 +1154,12 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   facilityId: null,
   departmentId: null,
   formJson: null
+};
+
+export const newFavoriteDiagnosticTest: modelTypes.FavoriteDiagnosticTest = {
+  id: undefined,
+  userId: undefined,
+  testId: undefined
 }
 
 export const newDiagnosticOrder: modelTypes.DiagnosticOrder = {
