@@ -105,6 +105,17 @@ export const procedureSetupService = createApi({
       providesTags: ['Procedure'],
     }),
 
+     getActiveAppointableProcedures: builder.query<
+      PagedResult<any>,
+     PagedParams
+    >({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/procedure/active-appointable`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Procedure'],
+    }),
 
   }),
 });
@@ -120,6 +131,9 @@ export const {
   useAddProcedureMutation,
   useUpdateProcedureMutation,
   useToggleProcedureIsActiveMutation,
+   useGetProceduresByFacilityQuery,      
+  useLazyGetProceduresByFacilityQuery,  
+  useGetActiveAppointableProceduresQuery 
   useGetProceduresByFacilityQuery,
   useLazyGetProceduresByFacilityQuery,
 } = procedureSetupService;
