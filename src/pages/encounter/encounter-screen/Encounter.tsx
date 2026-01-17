@@ -39,13 +39,15 @@ import WarningiesModal from './WarningiesModal';
 // import AiAssistantPopup from './AiAssistantPopup';
 import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
 import AiAssistantPopup from './AiAssistantPopup';
+import { clearCurrentEncounter } from '@/reducers/encounterSlice';
 
 const Encounter = () => {
 
   const mode = useSelector((state: any) => state.ui.mode);
   // create the action for the Customize Dashboard that we defined it in Patient summary page
   const [action, setAction] = useState(() => () => {});
-
+const currentEncounter = useAppSelector(s => s.encounter.current);
+ console.log('currentEncounter', currentEncounter);
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -183,11 +185,11 @@ const Encounter = () => {
 
   // get Midical Sheets Data Steps
   useEffect(() => {
-    if (!propsData?.encounter) {
+    if (!currentEncounter) {
       navigate('/encounter-list');
     } else {
       setEdit(
-        fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === 'CLOSED'
+        fromPage === 'PatientEMR' || currentEncounter.encounterStatusLvalue.valueCode === 'CLOSED'
       );
       //TODO convert key to code
       if (
@@ -196,11 +198,11 @@ const Encounter = () => {
         propsData?.encounter?.resourceTypeLkey === '6743167799449277'
       ) {
         // Clinic logic
-        setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
+        setMedicalSheetRowSourceKey(currentEncounter?.resourceKey);
         setMedicalSheetSourceKey(undefined);
       } else {
         // Not Clinic
-        setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
+        setMedicalSheetSourceKey(currentEncounter?.departmentKey);
         setMedicalSheetRowSourceKey(undefined);
       }
     }
@@ -245,8 +247,8 @@ const Encounter = () => {
 
   const handleCompleteEncounter = async () => {
     try {
-      if (propsData.encounter) {
-        await completeEncounter(propsData.encounter).unwrap();
+      if (currentEncounter) {
+        await completeEncounter(currentEncounter).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
     } catch (error) {
@@ -342,6 +344,11 @@ const Encounter = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+useEffect(() => {
+  return () => {
+    dispatch(clearCurrentEncounter());
+  };
+}, [dispatch]);
 
   useEffect(() => {
     if (isAiDragging) {
@@ -582,7 +589,7 @@ const Encounter = () => {
                           navigate(fullPath, {
                             state: {
                               patient: propsData.patient,
-                              encounter: propsData.encounter,
+                              encounter: currentEncounter,
                               edit
                             }
                           });

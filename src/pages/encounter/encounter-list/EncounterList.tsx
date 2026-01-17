@@ -1,5 +1,6 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
+import { setCurrentEncounter } from '@/reducers/encounterSlice'; 
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
@@ -277,27 +278,33 @@ const EncounterList = () => {
     setListRequestForToday(updatedRequest);
   };
 
-  const handleGoToVisit = async (encounterData, patientData) => {
-    await startEncounter(encounterData).unwrap();
-    if (encounterData && encounterData.key) {
-      dispatch(setEncounter(encounterData));
-      dispatch(setPatient(encounterData['patientObject']));
-    }
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
+const handleGoToVisit = async (encounterData, patientData) => {
+  await startEncounter(encounterData).unwrap();
 
-    navigate(targetPath, {
-      state: {
-        info: 'toEncounter',
-        fromPage: 'EncounterList',
-        patient: patientData,
-        encounter: encounterData
-      }
-    });
+  if (encounterData && encounterData.key) {
+ 
+    dispatch(setCurrentEncounter(encounterData));
 
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
-  };
+    
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(encounterData['patientObject']));
+  }
+
+  const privatePatientPath = '/user-access-patient-private';
+  const encounterPath = '/encounter';
+  const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
+
+  navigate(targetPath, {
+    state: {
+      info: 'toEncounter',
+      fromPage: 'EncounterList',
+      patient: patientData,
+      // encounter: encounterData  // احذفها
+    },
+  });
+
+  sessionStorage.setItem('encounterPageSource', 'EncounterList');
+};
 
   const handleGoToPreVisitObservations = async (encounterData, patientData) => {
     const privatePatientPath = '/user-access-patient-private';

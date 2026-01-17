@@ -115,8 +115,11 @@ import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
+import encounterReducer from '@/reducers/encounterSlice';
+
 export const store = configureStore({
   reducer: {
+   
     [idParsingService.reducerPath]: idParsingService.reducer,
     [summarizationService.reducerPath]: summarizationService.reducer,
     // ui
@@ -334,6 +337,7 @@ export const store = configureStore({
     [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer, 
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]: medicationTestOrdersValidationService.reducer,
+     encounter: encounterReducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -451,6 +455,7 @@ export const store = configureStore({
       clinicalSummaryService.middleware,
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
+     
 
     ])
 });
