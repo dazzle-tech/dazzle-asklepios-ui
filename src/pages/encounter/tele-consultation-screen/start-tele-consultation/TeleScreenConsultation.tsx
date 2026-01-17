@@ -1,11 +1,11 @@
 // TeleScreenConsultation.tsx
 import React, { useState } from 'react';
-import Details from '../../encounter-component/consultation/Details';
+// import Details from '../../encounter-component/consultation/Details';
+import Details from '../../encounter-component/consultation-new/Details';
 import { newApConsultationOrder } from '@/types/model-types-constructor';
 
 const TeleScreenConsultation = ({ open, onClose, patient, encounter, refetch }) => {
   const [consultationOrder, setConsultationOrder] = useState({ ...newApConsultationOrder });
-
   return (
     <Details
       open={open}

@@ -283,9 +283,7 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
               rightAddon="Min"
               required
             />
-          </div>
 
-          <div className="middle-row">
             <MyInput
               width="13vw"
               fieldName="resourceSpecific"

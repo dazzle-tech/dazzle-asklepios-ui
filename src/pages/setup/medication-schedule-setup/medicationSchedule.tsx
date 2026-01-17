@@ -160,7 +160,7 @@ const MedicationSchedule = () => {
                 fieldType="number"
                 record={''}
                 setRecord={{}}
-                width={200}
+                width={"100%"}
                 rightAddon={'hrs'}
                 required
               />
@@ -171,7 +171,7 @@ const MedicationSchedule = () => {
                 fieldType="time"
                 record={''}
                 setRecord={{}}
-                width={245}
+                width={"100%"}
                 required
               />
             </Form>
@@ -179,7 +179,7 @@ const MedicationSchedule = () => {
         }
         hideActionBtn={false}
         actionButtonLabel="Save"
-        size="18vw"
+        size="25vw"
         steps={[{ title: 'Add Dose Details', icon: <FontAwesomeIcon icon={faPills} /> }]}
       />
       <DeletionConfirmationModal

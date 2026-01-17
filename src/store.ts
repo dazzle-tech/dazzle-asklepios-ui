@@ -36,6 +36,7 @@ import callReducer from './store/callSlice';
 import { enumsApi } from '@/services/enumsApi';
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
+import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
@@ -107,6 +108,13 @@ import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
 import {priceListAttributesService} from '@/services/billing/PriceListAttributesService';
 import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
+import { formTemplateService } from './services/setup/formTemplateService';
+import { FormEntriesService } from './services/setup/formEntriesService';
+import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
+import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
+import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
+import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
+import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -208,6 +216,7 @@ export const store = configureStore({
 
     [facilityService.reducerPath]: facilityService.reducer,
     [departmentService.reducerPath]: departmentService.reducer,
+    [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
@@ -226,6 +235,10 @@ export const store = configureStore({
 
     // Translation slice
     [translationService.reducerPath]: translationService.reducer,
+
+     // Form slice
+    [formTemplateService.reducerPath]: formTemplateService.reducer,
+    [FormEntriesService.reducerPath]: FormEntriesService.reducer,
 
     //service
     [serviceService.reducerPath]: serviceService.reducer,
@@ -313,6 +326,14 @@ export const store = configureStore({
 
     [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
     [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
+
+    [prescriptionPService.reducerPath]: prescriptionPService.reducer,
+    [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
+
+        //AI Services
+    [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer, 
+    [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
+    [medicationTestOrdersValidationService.reducerPath]: medicationTestOrdersValidationService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -353,6 +374,7 @@ export const store = configureStore({
       enumsApi.middleware,
       facilityService.middleware,
       departmentService.middleware,
+      organizationDefinitionService.middleware,
       roleService.middleware,
       userRoleService.middleware,
       enumService.middleware,
@@ -363,6 +385,8 @@ export const store = configureStore({
       MedicationCategoriesClassService.middleware,
       languageService.middleware,
       translationService.middleware,
+      formTemplateService.middleware,
+      FormEntriesService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
       ResourceService.middleware,
@@ -422,6 +446,11 @@ export const store = configureStore({
       PayorPlanService.middleware,
       DischargePlanningService.middleware,
       priceListAttributesService.middleware,
+      prescriptionPService.middleware,
+      radiologyReportApi.middleware,
+      clinicalSummaryService.middleware,
+      clinicalRecommendationsService.middleware,
+      medicationTestOrdersValidationService.middleware,
 
     ])
 });

@@ -29,7 +29,7 @@ import {
 } from 'rsuite';
 import TransferList from './TransferTestList';
 import './styles.less';
-import { formatDateWithoutSeconds } from '@/utils';
+import { addFilterToListRequest, formatDateWithoutSeconds } from '@/utils';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
@@ -55,19 +55,26 @@ import CancellationModal from '@/components/CancellationModal';
 import { useLocation } from 'react-router-dom';
 import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
 import PatientPrevTests from './PatientPrevTests';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import {
+  useGetLovValuesByCodeQuery,
+  useGetDiagnosticsTestLaboratoryListQuery,
+  useGetDiagnosticsTestRadiologyListQuery
+} from '@/services/setupService';
+import PatientHistorySummaryModal from './PatientHistorySummaryModal';
+
 import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
 import { newApDrugOrderMedications } from '@/types/model-types-constructor';
 import SampleModal from '@/pages/lab-module/SampleModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { add } from 'lodash';
 
 const DiagnosticsOrder = props => {
   const location = useLocation();
-     const authSlice = useAppSelector(state => state.auth);
-  
-     const selectedDepartment = authSlice.selectedDepartment;
-  
+  const authSlice = useAppSelector(state => state.auth);
+
+  const selectedDepartment = authSlice.selectedDepartment;
+
   // Reference to table container
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -109,6 +116,9 @@ const DiagnosticsOrder = props => {
   const [reson, setReson] = useState({ cancellationReason: '' });
   const [openTestsModal, setOpenTestsModal] = useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [searchType, setSearchType] = React.useState({ type: '' });
+
+  const [search, setSearch] = useState({ testName: '', type: '', category: '' });
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [recallFavoriteModal, setRecallFavoriteModal] = useState(false);
   const [preTestAssessmentModal, setPreTestAssessmentModal] = useState(false);
@@ -126,7 +136,7 @@ const DiagnosticsOrder = props => {
   const [drugKey, setDrugKey] = useState(null);
   const [openToAdd, setOpenToAdd] = useState(true);
   const [missingDeptModalOpen, setMissingDeptModalOpen] = useState(false);
-  const [missingDeptList, setMissingDeptList] = useState([]); 
+  const [missingDeptList, setMissingDeptList] = useState([]);
   const [openSampleModal, setOpenSampleModal] = useState(false);
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
@@ -142,7 +152,27 @@ const DiagnosticsOrder = props => {
     ...initialListRequest,
     pageSize: 1000
   });
+  const [listTestSearchRequest, setListTestSearchRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageSize: 1000
+  });
   const { data: testsList, isFetching } = useGetDiagnosticsTestListQuery(listTestRequest);
+  const { data: testsSearchList, isFetching: isFetchingSearch } =
+    useGetDiagnosticsTestListQuery(listTestSearchRequest);
+
+  const [labRequest, setLabRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageSize: 1000
+  });
+  const [radRequest, setRadRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageSize: 1000
+  });
+  const { data: labTestsList, isFetching: isLabTestsLoading } =
+    useGetDiagnosticsTestLaboratoryListQuery(labRequest);
+  const { data: radiologyTestsList, isFetching: isRadiologyTestsLoading } =
+    useGetDiagnosticsTestRadiologyListQuery(radRequest);
+
   const [leftItems, setLeftItems] = useState([]);
   const [selectedTestsList, setSelectedTestsList] = useState([]);
   const [listOrdersRequest, setListOrdersRequest] = useState<ListRequest>({
@@ -200,6 +230,17 @@ const DiagnosticsOrder = props => {
     refetch: orderTestRefetch,
     isLoading: loadTests
   } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
+  const tableLoading =
+    loadTests ||
+    isFetchingSearch ||
+    (search.category &&
+      (search.type === '862810597620632'
+        ? isLabTestsLoading
+        : search.type === '862828331135792'
+          ? isRadiologyTestsLoading
+          : false));
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+
   const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
   const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
   const [openDetailsModel, setOpenDetailsModel] = useState(false);
@@ -211,6 +252,7 @@ const DiagnosticsOrder = props => {
   const { data: diagTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
   const { data: labCategoriesLovResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
   const { data: radCategoriesLovResponse } = useGetLovValuesByCodeQuery('RAD_CATEGORIES');
+
   const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
     'MED_ORDER_ADMIN_NSTRUCTIONS'
   );
@@ -222,8 +264,88 @@ const DiagnosticsOrder = props => {
   };
   const filteredOrders =
     ordersList?.object?.filter(item => item.statusLkey === '1804482322306061') ?? [];
+  //Effects
 
-  // Effects
+  useEffect(() => {
+    setSearch(prev => ({ ...prev, category: '' }));
+  }, [search.type]);
+
+  useEffect(() => {
+    setListTestSearchRequest(prev => {
+      let next: ListRequest = { ...prev, pageSize: 1000, pageNumber: 1 };
+
+      next = {
+        ...next,
+        filters: next.filters.filter(
+          f => f.fieldName !== 'test_name' && f.fieldName !== 'test_type_lkey'
+        ),
+        ignore: false
+      };
+
+      const name = search.testName?.trim();
+      if (name) {
+        next = addFilterToListRequest('test_name', 'containsIgnoreCase', name, next);
+      }
+
+      const type = search.type?.trim?.() ?? search.type;
+      if (type) {
+        next = addFilterToListRequest('test_type_lkey', 'match', type, next);
+      }
+
+      return next;
+    });
+  }, [search.testName, search.type]);
+
+  useEffect(() => {
+    setLabRequest(prev => ({
+      ...prev,
+      filters: prev.filters.filter(f => f.fieldName !== 'category_lkey'),
+      ignore: false,
+      pageNumber: 1,
+      pageSize: 1000
+    }));
+    setRadRequest(prev => ({
+      ...prev,
+      filters: prev.filters.filter(f => f.fieldName !== 'category_lkey'),
+      ignore: false,
+      pageNumber: 1,
+      pageSize: 1000
+    }));
+
+    if (!search.category) return;
+
+    if (search.type === '862810597620632') {
+      setLabRequest(prev =>
+        addFilterToListRequest('category_lkey', 'match', search.category, prev)
+      );
+    } else if (search.type === '862828331135792') {
+      setRadRequest(prev =>
+        addFilterToListRequest('category_lkey', 'match', search.category, prev)
+      );
+    }
+  }, [search.type, search.category]);
+
+  useEffect(() => {
+    if (!testsSearchList?.object) return;
+
+    const all = testsSearchList.object;
+    let selected = all;
+
+    if (search.category) {
+      if (search.type === '862810597620632') {
+        const labKeys = new Set((labTestsList?.object ?? []).map(x => x.testKey));
+        selected = all.filter(t => labKeys.has(t.key));
+      } else if (search.type === '862828331135792') {
+        const radKeys = new Set((radiologyTestsList?.object ?? []).map(x => x.testKey));
+        selected = all.filter(t => radKeys.has(t.key));
+      }
+    }
+
+    const value = selected.length === 0 ? '(-1)' : selected.map(t => `(${t.key})`).join(' ');
+
+    setListOrdersTestRequest(prev => addFilterToListRequest('test_key', 'in', value, prev));
+  }, [testsSearchList, labTestsList, radiologyTestsList, search.type, search.category]);
+
   useEffect(() => {
     if (testsList?.object) {
       setLeftItems(testsList.object);
@@ -232,21 +354,22 @@ const DiagnosticsOrder = props => {
   }, [openTestsModal, testsList]);
 
   useEffect(() => {
-    if (searchTerm.trim() !== '') {
-      setListRequest({
-        ...initialListRequest,
-        filters: [
-          {
-            fieldName: 'test_name',
-            operator: 'containsIgnoreCase',
-            value: searchTerm
-          }
-        ]
-      });
-    } else {
-      setListRequest({ ...initialListRequest, pageSize: 1000 });
-    }
-  }, [searchTerm]);
+    setListRequest(prev => {
+      let next: ListRequest = { ...initialListRequest, pageSize: 1000, pageNumber: 1 };
+
+      const name = searchTerm?.trim();
+      if (name) {
+        next = addFilterToListRequest('test_name', 'containsIgnoreCase', name, next);
+      }
+
+      const type = searchType?.type?.trim();
+      if (type) {
+        next = addFilterToListRequest('test_type_lkey', 'match', type, next);
+      }
+
+      return next;
+    });
+  }, [searchTerm, searchType.type]);
 
   useEffect(() => {
     const draftOrder = ordersList?.object?.find(order => order.saveDraft === true);
@@ -359,14 +482,20 @@ const DiagnosticsOrder = props => {
 
   const handleSaveTest = async () => {
     try {
-      await saveOrderTests({...orderTest,fromFacilityId:selectedDepartment.facilityId ,fromDepartmentId:selectedDepartment.departmentId}).unwrap();
+      await saveOrderTests({
+        ...orderTest,
+        fromFacilityId: selectedDepartment.facilityId,
+        fromDepartmentId: selectedDepartment.departmentId
+      }).unwrap();
       setOpenDetailsModel(false);
       dispatch(notify({ msg: 'saved Successfully', sev: 'success' }));
 
       orderTestRefetch()
         .then(() => {
+          console.log('Refetch complete');
         })
         .catch(error => {
+          console.error('Refetch failed:', error);
         });
     } catch (error) {
       dispatch(notify('Save Failed'));
@@ -401,12 +530,15 @@ const DiagnosticsOrder = props => {
 
       orderTestRefetch()
         .then(() => {
+          console.log('Refetch complete');
         })
         .catch(error => {
+          console.error('Refetch failed:', error);
         });
       setSelectedRows([]);
       CloseConfirmDeleteModel();
     } catch (error) {
+      console.error('Encounter save failed:', error);
       dispatch(notify({ msg: 'One or more deleted failed', sev: 'error' }));
       CloseConfirmDeleteModel();
     }
@@ -471,49 +603,46 @@ const DiagnosticsOrder = props => {
     }
   };
 
-const handleSubmitPres = async () => {
+  const handleSubmitPres = async () => {
+    const missingTests =
+      orderTestList?.object
+        ?.filter(item => !item.receivedLabId)
+        ?.map(item => item.test?.testName || 'Unnamed Test') || [];
 
-  const missingTests =
-    orderTestList?.object
-      ?.filter(item => !item.receivedLabId)
-      ?.map(item => item.test?.testName || 'Unnamed Test') || [];
-
-  if (missingTests.length > 0) {
-    setMissingDeptList(missingTests);
-    setMissingDeptModalOpen(true);         
-    return;                         
-  }
-
-  try {
-    await saveOrders({
-      ...orders,
-      statusLkey: '1804482322306061',
-      saveDraft: false,
-      submittedAt: Date.now()
-    }).unwrap();
-
-    dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
-    ordersRefetch();
-    orderTestRefetch();
-  } catch (error) {
-    console.error('Error saving :', error);
-  }
-
-  orderTestList?.object?.map(item => {
-    if (item.statusLkey !== '1804447528780744') {
-      saveOrderTests({ ...item, statusLkey: '1804482322306061', submitDate: Date.now() });
+    if (missingTests.length > 0) {
+      setMissingDeptList(missingTests);
+      setMissingDeptModalOpen(true);
+      return;
     }
-  });
 
-  setIsDraft(false);
-  setFlag(true);
-  await ordersRefetch();
-  orderTestRefetch().then(() => '');
-  setOrders({ ...newApDiagnosticOrders });
-  handleClearDiagnostics();
-};
+    try {
+      await saveOrders({
+        ...orders,
+        statusLkey: '1804482322306061',
+        saveDraft: false,
+        submittedAt: Date.now()
+      }).unwrap();
 
+      dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
+      ordersRefetch();
+      orderTestRefetch();
+    } catch (error) {
+      console.error('Error saving :', error);
+    }
 
+    orderTestList?.object?.map(item => {
+      if (item.statusLkey !== '1804447528780744') {
+        saveOrderTests({ ...item, statusLkey: '1804482322306061', submitDate: Date.now() });
+      }
+    });
+
+    setIsDraft(false);
+    setFlag(true);
+    await ordersRefetch();
+    orderTestRefetch().then(() => '');
+    setOrders({ ...newApDiagnosticOrders });
+    handleClearDiagnostics();
+  };
 
   const handleRecall = rowData => {
     const genericMedication = genericMedicationListResponse?.object?.find(
@@ -601,7 +730,63 @@ const handleSubmitPres = async () => {
   const joinValuesFromArray = values => {
     return values.filter(Boolean).join(', ');
   };
+  const buildDiagnosticsSummaryPayload = (
+    patient: any,
+    encounter: any,
+    orderTests: any[] = []
+  ) => {
+    const toStr = (v: any) => (v === null || v === undefined ? '' : String(v));
 
+    const patientInfo = {
+      mrn: toStr(patient?.patientMrn),
+      fullName: toStr(patient?.fullName || patient?.patientFullName),
+      gender: toStr(patient?.genderLvalue?.lovDisplayVale || patient?.genderLvalue?.valueCode),
+      dob: toStr(patient?.dob),
+    };
+
+    const encounterInfo = {
+      visitId: toStr(encounter?.visitId),
+      visitType: toStr(encounter?.visitTypeLvalue?.lovDisplayVale),
+      plannedStartDate: toStr(encounter?.plannedStartDate),
+      chiefComplaint: toStr(encounter?.chiefComplaint),
+      patientAge: toStr(encounter?.patientAge),
+      diagnosis: toStr(encounter?.diagnosis),
+    };
+
+    // Each row as a single string "exactly like table data (human readable)"
+    const testsAsStrings: string[] = orderTests.map((row: any) => {
+      const parts = [
+        `Order Type: ${toStr(row?.test?.testTypeLvalue?.lovDisplayVale)}`,
+        `Test Name: ${toStr(row?.test?.testName)}`,
+        `Internal Code: ${toStr(row?.test?.internalCode)}`,
+        `Status: ${toStr(row?.statusLvalue?.lovDisplayVale || row?.statusLkey)}`,
+        `Reason: ${toStr(row?.reasonLvalue?.lovDisplayVale || row?.reasonLkey)}`,
+        `Priority: ${toStr(row?.priorityLvalue?.lovDisplayVale || row?.priorityLkey)}`,
+        `Notes: ${toStr(row?.notes)}`,
+        `Cancellation Reason: ${toStr(row?.cancellationReason)}`,
+      ];
+
+      return parts
+        .map(s => s.trim())
+        .filter(s => !s.endsWith(':') && !s.endsWith(': '))
+        .join(' | ');
+    });
+
+    return {
+      patient: patientInfo,
+      encounter: encounterInfo,
+      complain: toStr(encounter?.chiefComplaint), // explicit field as requested
+      diagnosis: {
+        value: toStr(encounter?.diagnosis),
+      },
+      tests: testsAsStrings,
+    };
+  };
+  const payload = buildDiagnosticsSummaryPayload(
+    patient,
+    encounter,
+    orderTestList?.object ?? []
+  );
   const tableColumns = [
     {
       key: 'check',
@@ -702,7 +887,7 @@ const handleSubmitPres = async () => {
         return (
           <MdAttachFile
             size={20}
-            fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+            fill={rowData?.key ? 'var(--primary-gray)' : '#ccc'}
             onClick={() => {
               if (rowData?.key) {
                 setOrderTest(rowData);
@@ -925,8 +1110,8 @@ const handleSubmitPres = async () => {
                 fieldName="testName"
                 fieldType="text"
                 fieldLabel="Test Name"
-                record={''}
-                setRecord={{}}
+                record={search}
+                setRecord={setSearch}
               />
             </Form>
             {/* Type */}
@@ -939,84 +1124,35 @@ const handleSubmitPres = async () => {
                 selectDataLabel="lovDisplayVale"
                 fieldLabel="Type"
                 selectDataValue="key"
-                record={{ orderId: orders.orderId }}
-                setRecord={value => setOrders({ ...orders, orderId: value.orderId })}
-                searchable={false}
-              />
-            </Form>
-
-            {/* Catalog */}
-            <Form>
-              <MyInput
-                fieldName="catalog"
-                fieldType="select"
-                record={{ catalog: selectedCatalog }}
-                setRecord={rec => setSelectedCatalog(rec.catalog)}
-                selectData={[]}
-                selectDataLabel="name"
-                selectDataValue="key"
-                width={120}
+                record={search}
+                setRecord={setSearch}
                 searchable={false}
               />
             </Form>
 
             {/* Category */}
-            <Form>
-              <MyInput
-                fieldName="category"
-                fieldType="select"
-                fieldLabel="Category"
-                width={120}
-                selectData={
-                  orders.type === 'Laboratory'
-                    ? labCategoriesLovResponse?.object ?? []
-                    : orders.type === 'Radiology'
-                    ? radCategoriesLovResponse?.object ?? []
-                    : []
-                }
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={{ category: orders.category }}
-                setRecord={rec => setOrders({ ...orders, category: rec.category })}
-                searchable={false}
-              />
-            </Form>
-
-            {/* Proposed Execution Date */}
-            <Form fluid>
-              <MyInput
-                fieldName="proposedExecutionDate"
-                fieldType="datetime"
-                record={{ proposedExecutionDate }}
-                setRecord={rec => setProposedExecutionDate(rec.proposedExecutionDate)}
-                width={220}
-                fieldLabel={<Translate>Proposed Execution Date</Translate>}
-              />
-            </Form>
-
-            {/* Execution Number */}
-            <Form>
-              <MyInput
-                width={120}
-                fieldName="executionNumber"
-                fieldType="text"
-                fieldLabel="Execution Number"
-                record={{ executionNumber }}
-                setRecord={value => setExecutionNumber(value.executionNumber)}
-              />
-            </Form>
-
-            {/* Approval Number */}
-            <Form>
-              <MyInput
-                width={120}
-                fieldName="approvalNumber"
-                fieldType="text"
-                fieldLabel="Approval Number"
-                record={{ approvalNumber }}
-                setRecord={value => setApprovalNumber(value.approvalNumber)}
-              />
-            </Form>
+            {search.type && (
+              <Form>
+                <MyInput
+                  fieldName="category"
+                  fieldType="select"
+                  fieldLabel="Category"
+                  width={120}
+                  selectData={
+                    search.type === '862810597620632'
+                      ? labCategoriesLovResponse?.object ?? []
+                      : search.type === '862828331135792'
+                        ? radCategoriesLovResponse?.object ?? []
+                        : []
+                  }
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={search}
+                  setRecord={setSearch}
+                  searchable={false}
+                />
+              </Form>
+            )}
           </div>
 
           {/* Third Row - Action Buttons */}
@@ -1033,8 +1169,9 @@ const handleSubmitPres = async () => {
             </MyButton>
             {/* Sign and Submit */}
             <MyButton
-              onClick={handleSubmitPres}
-              disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
+              onClick={() => {
+                setSummaryModalOpen(true);
+              }} disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
               prefixIcon={() => <CheckIcon />}
             >
               Sign & Submit
@@ -1078,7 +1215,7 @@ const handleSubmitPres = async () => {
             columns={tableColumns}
             sortColumn={listOrdersRequest.sortBy}
             sortType={listOrdersRequest.sortType}
-            loading={loadTests}
+            loading={tableLoading}
             onSortChange={(sortBy, sortType) => {
               setListOrdersRequest({ ...listOrdersRequest, sortBy, sortType });
             }}
@@ -1142,7 +1279,7 @@ const handleSubmitPres = async () => {
             source="DIAGNOSTIC_ORDER_ATTACHMENT"
             sourceId={orderTest?.key ? Number(orderTest.key) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />
@@ -1155,13 +1292,18 @@ const handleSubmitPres = async () => {
         size="50vw"
         content={
           <TransferList
+            open={openTestsModal}
             leftItems={leftItems}
             rightItems={selectedTestsList}
             setLeftItems={setLeftItems}
             setRightItems={setSelectedTestsList}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            searchType={searchType}
+            setSearchType={setSearchType}
+            isFetching={isFetching}
           />
+
         }
       />
 
@@ -1323,7 +1465,15 @@ const handleSubmitPres = async () => {
         edit={edit}
         onSave={handleSaveTest}
       />
-
+      <PatientHistorySummaryModal
+        open={summaryModalOpen}
+        setOpen={setSummaryModalOpen}
+        patient={patient}
+        encounter={encounter}
+        edit={edit}
+        handleSave={handleSubmitPres}
+        payload={payload}
+      />
       <MyModal
         open={missingDeptModalOpen}
         setOpen={setMissingDeptModalOpen}
@@ -1331,7 +1481,7 @@ const handleSubmitPres = async () => {
         modalColor="var(--primary-orange)"
         steps={[
           {
-            title: "Warning",
+            title: 'Warning',
             icon: <FontAwesomeIcon icon={faTriangleExclamation} />
           }
         ]}
@@ -1352,8 +1502,6 @@ const handleSubmitPres = async () => {
           </div>
         }
       />
-
-
     </>
   );
 };

@@ -55,7 +55,22 @@ export const diagnosticTestService = createApi({
       },
       providesTags: ["DiagnosticTest"],
     }),
-
+      getAllActiveAppointableDiagnosticTests: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = "id,asc" }) => ({
+        url: "/api/setup/diagnostic-test/active-appointable",
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["DiagnosticTest"],
+    }),
     getAllDiagnosticTestsByNameAndType: builder.query({
       query: ({ type, name, ...params }) => ({
         url: `/api/setup/diagnostic-test/by-type-and-name?type=${type}&name=${name}`,
@@ -170,5 +185,6 @@ export const {
   useCreateDiagnosticTestMutation,
   useUpdateDiagnosticTestMutation,
   useToggleDiagnosticTestActiveMutation,
-  useGetAllDiagnosticTestsByNameAndTypeQuery
+  useGetAllDiagnosticTestsByNameAndTypeQuery,
+  useGetAllActiveAppointableDiagnosticTestsQuery
 } = diagnosticTestService;

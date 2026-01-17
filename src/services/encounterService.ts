@@ -51,6 +51,24 @@ import {
   ApDiagnosticOrderTestsSamples,
   ApTelephonicConsultation
 } from '@/types/model-types';
+
+type ParentResponse<T> = {
+  object: T;
+  msg?: string;
+};
+
+export type PatientSummaryResponse = {
+  age: any;
+  gender: string;
+  symptoms: string;
+  vitals: string;
+  diagnosis: string;
+  allergies: string[];
+  medicalWarnings: string;
+  surgeries: string[];
+  problems: string[];
+  medications: string[];
+};
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
   baseQuery: baseQuery,
@@ -1051,6 +1069,7 @@ export const encounterService = createApi({
         )}`
       }),
       transformResponse: (response: any) => {
+        console.log('RAW progress notes API response', response);
         return response?.object ?? [];
       },
       keepUnusedDataFor: 5
@@ -1160,7 +1179,51 @@ export const encounterService = createApi({
           lang
         }
       })
-    })
+    }),
+    getPatientSummary: builder.query<
+      PatientSummaryResponse,
+      { patientKey: string; encounterKey: string; lang?: string; medications?: string[] }
+    >({
+      query: ({ patientKey, encounterKey, lang, medications }) => ({
+        url: `/encounter/summary`, 
+        method: 'GET',
+        params: {
+          patientKey,
+          encounterKey,
+          medications
+        },
+        headers: lang ? { lang } : undefined
+      }),
+      transformResponse: (response: ParentResponse<PatientSummaryResponse>) => {
+        const obj = response?.object ?? ({} as any);
+        return {
+          age: obj.age ?? '',
+          gender: obj.gender ?? '',
+          symptoms: obj.symptoms ?? '',
+          vitals: obj.vitals ?? '',
+          diagnosis: obj.diagnosis ?? '',
+          allergies: obj.allergies ?? [],
+          medicalWarnings: obj.medicalWarnings ?? '',
+          surgeries: obj.surgeries ?? [],
+          problems: obj.problems ?? [],
+          medications: obj.medications ?? []
+        };
+      }
+    }),
+    getMiniSummary: builder.query({
+      query: ({ patientKey, encounterKey, lang = 'en' }) => ({
+        url: `/encounter/mini-summary`,
+        method: 'GET',
+        params: {
+          patientKey,
+          encounterKey,
+          lang
+        }
+      }),
+      transformResponse: (response: any) => {
+        return response?.object;
+      }
+    }),
   })
 });
 
@@ -1279,5 +1342,7 @@ export const {
   useGetUserDashboardComponentsQuery,
   useAddUserDashboardComponentsMutation,
   useDeleteUserDashboardComponentsMutation,
-  useGetClinicalSummaryQuery
+  useGetClinicalSummaryQuery,
+  useGetPatientSummaryQuery,
+  useGetMiniSummaryQuery,
 } = encounterService;

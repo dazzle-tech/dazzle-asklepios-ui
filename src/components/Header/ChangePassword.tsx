@@ -26,14 +26,14 @@ const ChangePassword = ({ open, onClose }) => {
 
         if (!currentPassword || !newPassword || !confirmPassword) {
             setError('Please fill in all fields');
-            dispatch(notify({ msg: 'Please fill in all fields', sev: 'info' }))
+            dispatch(notify({ msg: 'Please fill in all fields', sev: 'warning' }))
             return;
         }
 
         if (newPassword.newPassword !== confirmPassword.confirmPassword) {
           
             setError('New passwords do not match');
-            dispatch(notify({ msg: 'New passwords do not match', sev: 'info' }))
+            dispatch(notify({ msg: 'New passwords do not match', sev: 'warning' }))
             return;
         }
 

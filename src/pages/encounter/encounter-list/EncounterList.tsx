@@ -88,7 +88,14 @@ const EncounterList = () => {
       {
         fieldName: 'resource_type_lkey',
         operator: 'in',
-        value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
+        value: [
+          '2039534205961578',
+          '2039620472612029',
+          '2039516279378421',
+          'PRACTITIONER',
+          'MEDICAL_TEST',
+          'CLINIC'
+        ]
           .map(key => `(${key})`)
           .join(' ')
       },
@@ -132,7 +139,14 @@ const EncounterList = () => {
       {
         fieldName: 'resource_type_lkey',
         operator: 'in',
-        value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
+        value: [
+          '2039534205961578',
+          '2039620472612029',
+          '2039516279378421',
+          'PRACTITIONER',
+          'MEDICAL_TEST',
+          'CLINIC'
+        ]
           .map(key => `(${key})`)
           .join(' ')
       }
@@ -199,10 +213,49 @@ const EncounterList = () => {
       );
     } else if (dateFilter.fromDate) {
       const formattedFromDate = formatDate(dateFilter.fromDate);
-      updatedRequest = addFilterToListRequest('planned_start_date', 'gte', formattedFromDate, updatedRequest);
+      updatedRequest = addFilterToListRequest(
+        'planned_start_date',
+        'gte',
+        formattedFromDate,
+        updatedRequest
+      );
     } else if (dateFilter.toDate) {
       const formattedToDate = formatDate(dateFilter.toDate);
-      updatedRequest = addFilterToListRequest('planned_start_date', 'lte', formattedToDate, updatedRequest);
+      updatedRequest = addFilterToListRequest(
+        'planned_start_date',
+        'lte',
+        formattedToDate,
+        updatedRequest
+      );
+
+      setListRequest(
+        addFilterToListRequest('planned_start_date', 'lte', formattedToDate, listRequest)
+      );
+    } else {
+      setListRequest({
+        ...listRequest,
+        filters: [
+          {
+            fieldName: 'resource_type_lkey',
+            operator: 'in',
+            value: [
+              '2039534205961578',
+              '2039620472612029',
+              '2039516279378421',
+              'PRACTITIONER',
+              'MEDICAL_TEST',
+              'CLINIC'
+            ]
+              .map(key => `(${key})`)
+              .join(' ')
+          },
+          {
+            fieldName: 'encounter_status_lkey',
+            operator: 'in',
+            value: ['91063195286200', '91084250213000'].map(key => `(${key})`).join(' ')
+          }
+        ]
+      });
     }
 
     setListRequest(updatedRequest);
@@ -296,6 +349,30 @@ const EncounterList = () => {
     });
   };
 
+    const renderWithTooltip = (text: string, limit = 20) => {
+      if (!text) return '-';
+
+      const isLong = text.length > limit;
+      const shortText = isLong ? text.slice(0, limit) + '...' : text;
+
+      if (!isLong) return shortText;
+
+      return (
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={
+            <Tooltip style={{ maxWidth: 400, whiteSpace: 'pre-wrap' }}>
+              {text}
+            </Tooltip>
+          }
+        >
+          <span style={{ cursor: 'pointer' }}>{shortText}</span>
+        </Whisper>
+      );
+    };
+
+
   const tableColumns = [
     {
       key: 'queueNumber',
@@ -349,17 +426,18 @@ const EncounterList = () => {
     },
     {
       key: 'chiefComplaint',
-      title: 'CHIEF COMPLAIN',
-      render: rowData => rowData?.chiefComplaint
+      title: 'CHIEF COMPLAINT',
+      render: rowData => renderWithTooltip(rowData?.chiefComplaint, 20)
     },
     {
       key: 'diagnosis',
       title: 'DIAGNOSIS',
-      render: rowData => rowData?.diagnosis
+      render: rowData => renderWithTooltip(rowData?.diagnosis, 20)
     },
     {
       key: 'hasPrescription',
       title: 'PRESCRIPTION',
+      width: '60px',
       render: rowData =>
         rowData.hasPrescription ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -370,6 +448,7 @@ const EncounterList = () => {
     {
       key: 'hasOrder',
       title: 'HAS ORDER',
+      width: '60px',
       render: rowData =>
         rowData.hasOrder ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -393,6 +472,7 @@ const EncounterList = () => {
     {
       key: 'status',
       title: 'STATUS',
+      width: 60,
       render: rowData => (
         <MyBadgeStatus
           color={rowData?.encounterStatusLvalue?.valueColor}
@@ -407,6 +487,7 @@ const EncounterList = () => {
     {
       key: 'hasObservation',
       title: 'IS OBSERVED',
+      width: 60,
       render: rowData =>
         rowData.hasObservation ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -425,7 +506,7 @@ const EncounterList = () => {
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
 
         return (
-          <Form layout="inline" fluid className="nurse-doctor-form">
+          <Form className="actions-row">
             <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
               <div>
                 <MyButton
@@ -700,10 +781,8 @@ const EncounterList = () => {
   useEffect(() => {
     setListRequest(prev => {
       // Remove existing department_key filter if present
-      const filtersWithoutDepartment = prev.filters.filter(
-        f => f.fieldName !== 'department_key'
-      );
-      
+      const filtersWithoutDepartment = prev.filters.filter(f => f.fieldName !== 'department_key');
+
       // Add department filter if selectedDepartment is available
       const updatedFilters = [...filtersWithoutDepartment];
       if (selectedDepartment?.departmentId) {
@@ -713,7 +792,7 @@ const EncounterList = () => {
           value: selectedDepartment.departmentId.toString()
         });
       }
-      
+
       return {
         ...prev,
         filters: updatedFilters
@@ -722,10 +801,8 @@ const EncounterList = () => {
 
     // Also update listRequestForToday
     setListRequestForToday(prev => {
-      const filtersWithoutDepartment = prev.filters.filter(
-        f => f.fieldName !== 'department_key'
-      );
-      
+      const filtersWithoutDepartment = prev.filters.filter(f => f.fieldName !== 'department_key');
+
       const updatedFilters = [...filtersWithoutDepartment];
       if (selectedDepartment?.departmentId) {
         updatedFilters.push({
@@ -734,7 +811,7 @@ const EncounterList = () => {
           value: selectedDepartment.departmentId.toString()
         });
       }
-      
+
       return {
         ...prev,
         filters: updatedFilters

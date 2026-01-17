@@ -149,6 +149,7 @@ const MyInput = ({
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
+      const target = event.target as HTMLElement;
 
       const menuClassList = [
         'rs-picker-popup',
@@ -162,6 +163,10 @@ const MyInput = ({
       if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
         return;
       }
+
+      if (target.closest('.rs-picker-popup')) return;
+
+      if (target.closest('.rs-modal-body')) return;
 
       setIsSelectOpen(false);
       setIsDateOpen(false);
@@ -800,7 +805,7 @@ const MyInput = ({
                 }
               }}
             />
-            {!props.disabled && (
+            {/* {!props.disabled && (
               <div
                 className={`container-of-search-icon ${recording ? 'recording' : ''}`}
                 onClick={changeRecordingState}
@@ -811,7 +816,7 @@ const MyInput = ({
                 />
                 {recording && <span className="pulse-ring"></span>}
               </div>
-            )}
+            )} */}
           </div>
         );
 

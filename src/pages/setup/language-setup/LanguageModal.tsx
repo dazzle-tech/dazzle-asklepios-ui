@@ -45,7 +45,7 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({
             record={languages}
             setRecord={setLanguages}
             required
-            width={300}
+            width={'13vw'}
           />
           <MyInput
             fieldLabel="Language Code"
@@ -55,7 +55,7 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({
             record={languages}
             setRecord={setLanguages}
             required
-            width={300}
+            width={'13vw'}
           />
           <MyInput
             required
@@ -68,7 +68,7 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({
             selectDataValue="value"
             record={languages}
             setRecord={setLanguages}
-            width={300}
+            width={'13vw'}
             searchable={false}
           />
         </Form>

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Panel, Form, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import './styles.less';
 
 interface PreviewDiagnosticsOrderProps {
@@ -15,28 +17,71 @@ const PreviewDiagnosticsOrder: React.FC<PreviewDiagnosticsOrderProps> = ({
     setOpen,
     orderTest
 }) => {
-    const [previewData, setPreviewData] = useState<any>({});
-
-    useEffect(() => {
-        if (orderTest) {
-            setPreviewData({
-                testName: orderTest.test?.testName || '-',
-                orderType: orderTest.orderTypeLvalue?.lovDisplayVale || '-',
-                repeatEveryNumber: orderTest.repeatEveryNumber || '-',
-                repeatEveryUnit: orderTest.repeatEveryUnit || '-',
-                periodNumber: orderTest.periodNumber || '-',
-                periodUnit: orderTest.periodUnit || '-',
-                firstOccurrenceDateTime: orderTest.firstOccurrenceDateTime || '-',
-                notes: orderTest.notes || '-',
-                isRepeat: orderTest.isRepeat || false,
-                reason: orderTest.reasonLvalue?.lovDisplayVale || '-',
-                receivedLab: orderTest.receivedLabName || '-'
-            });
-        }
-    }, [orderTest]);
+const [previewData, setPreviewData] = useState<any>({
+  testName: '',
+  orderType: '',
+  repeatEveryNumber: '',
+  repeatEveryUnit: '',
+  periodNumber: '',
+  periodUnit: '',
+  firstOccurrenceDateTime: '',
+  notes: '',
+  isRepeat: false,
+  reason: '',
+  receivedLab: ''
+});
 
 
 
+const labDepartmentId =
+  orderTest?.receivedLabId && orderTest.receivedLabId !== 0
+    ? orderTest.receivedLabId
+    : null;
+
+
+    const {
+    data: receivedDepartment,
+    isFetching: isFetchingDepartment,
+    isError,
+    error
+    } = useGetDepartmentByIdQuery(
+    labDepartmentId ?? skipToken
+    );  
+
+
+
+
+        
+useEffect(() => {
+  if (!orderTest) return;
+
+  if (!labDepartmentId) {
+    setPreviewData(prev => ({
+      ...prev,
+      receivedLab: '-'
+    }));
+    return;
+  }
+
+  setPreviewData({
+    testName: orderTest.test?.testName ?? '-',
+    orderType: orderTest.orderTypeLvalue?.lovDisplayVale ?? '-',
+    repeatEveryNumber: orderTest.repeatEveryNumber ?? '-',
+    repeatEveryUnit: orderTest.repeatEveryUnit ?? '-',
+    periodNumber: orderTest.periodNumber ?? '-',
+    periodUnit: orderTest.periodUnit ?? '-',
+    firstOccurrenceDateTime: orderTest.firstOccurrenceDateTime ?? '-',
+    notes: orderTest.notes ?? '-',
+    isRepeat: !!orderTest.isRepeat,
+    reason: orderTest.reasonLvalue?.lovDisplayVale ?? '-',
+
+    receivedLab: isFetchingDepartment
+      ? 'Loading...'
+      : receivedDepartment?.name
+        ?? receivedDepartment?.translatedObject?.name
+        ?? '-'
+  });
+}, [orderTest, receivedDepartment, isFetchingDepartment, labDepartmentId]);
 
 
     if (!orderTest) return null;
