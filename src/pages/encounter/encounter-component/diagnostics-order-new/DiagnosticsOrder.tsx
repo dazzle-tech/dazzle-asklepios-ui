@@ -938,39 +938,8 @@ const DiagnosticsOrder = props => {
             </Whisper>
 
             {/*  */}
-            <Whisper placement="top" speaker={<Tooltip>Collect Sample</Tooltip>}>
-              <HStack spacing={10}>
-                <FontAwesomeIcon
-                  icon={faVialCircleCheck}
-                  className="icons-styles"
-                  color="var(--primary-gray)"
-                  onClick={() => setOpenSampleModal(true)}
-                />
-              </HStack>
-            </Whisper>
-            {/*  */}
-            <Whisper placement="top" speaker={<Tooltip>Test card</Tooltip>}>
-              <HStack spacing={10}>
-                <FontAwesomeIcon
-                  icon={faCreditCard}
-                  className="icons-styles"
-                  color="var(--primary-gray)"
-                />
-              </HStack>
-            </Whisper>
-            {/*  */}
-            <Whisper
-              placement="top"
-              speaker={
-                <Tooltip>{isInFavorites ? 'Remove from favorites' : 'Add to favorites'}</Tooltip>
-              }
-            >
-              <FontAwesomeIcon
-                icon={faStar}
-                onClick={() => addToFavorites(rowData)}
-                className={isInFavorites ? 'font-awsy icons-styless' : 'font-aws icons-styless'}
-              />
-            </Whisper>
+         
+        
           </div>
         );
       }
@@ -1158,15 +1127,12 @@ const DiagnosticsOrder = props => {
           {/* Third Row - Action Buttons */}
           <div className="header-third-row">
             {/* Request New Test Setup */}
-            <MyButton onClick={handleRequestNewTestSetup} appearance="ghost">
+            {/* <MyButton onClick={handleRequestNewTestSetup} appearance="ghost">
               <FontAwesomeIcon icon={faVial} />
               Request New TestSetup
-            </MyButton>
+            </MyButton> */}
             {/* Recall Favorite */}
-            <MyButton onClick={() => setOpenFavoritesModal(true)}>
-              <FontAwesomeIcon icon={faStar} />
-              Recall Favorite
-            </MyButton>
+          
             {/* Sign and Submit */}
             <MyButton
               onClick={() => {
