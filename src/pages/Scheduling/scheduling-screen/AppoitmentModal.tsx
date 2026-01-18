@@ -85,7 +85,7 @@ const AppointmentModal = ({
       const departmentKey = isDepartmentBasedResource && !appointmentData?.departmentKey
         ? appointmentData?.resourceKey
         : appointmentData?.departmentKey;
-      
+
       // Don't convert to string here - keep original type, will be normalized later
       setAppointment({
         ...appointmentData,
@@ -103,7 +103,7 @@ const AppointmentModal = ({
     if (appointmentData && showOnly) {
       return;
     }
-    
+
     if (selectedSlot?.resourceKey) {
       setAppointment(prev => ({
         ...prev,
@@ -256,7 +256,7 @@ const AppointmentModal = ({
       setSelectedMonth(date.getMonth());
       setSelectedMonthDay(date.getDate());
       setSelectedTime(date);
-      
+
       // Set the day of week for the date picker
       const jsDay = date.getDay();
       const customDay = mapJsDayToCustom(jsDay);
@@ -413,7 +413,7 @@ const AppointmentModal = ({
   });
 
   const { data: facilityListResponse, isLoading: isGettingFacilities, isFetching: isFetchingFacilities } = useGetAllFacilitiesQuery({});
-  
+
   // Fetch departments for PRACTITIONER resource type
   const { data: departmentListResponse } = useGetAppointableDepartmentsQuery({
     facilityId: appointment?.facilityKey,
@@ -434,15 +434,15 @@ const AppointmentModal = ({
   }, {
     skip: !appointment?.facilityKey
   });
-  
+
   // Normalize facilityKey and departmentKey to string for proper matching
   const normalizedAppointment = useMemo(() => {
     if (!appointment) return appointment;
-    
+
     // For department field, we need to match the department's id
     // Check if departmentKey exists in the department list and get the matching id
     let normalizedDepartmentKey = appointment.departmentKey;
-    
+
     if (appointment.departmentKey !== null && appointment.departmentKey !== undefined && appointment.departmentKey !== '') {
       // For PRACTITIONER resource type
       if (appointment.resourceTypeLkey === '2039534205961578' || appointment.resourceTypeLkey === 'PRACTITIONER') {
@@ -480,14 +480,14 @@ const AppointmentModal = ({
         normalizedDepartmentKey = appointment.departmentKey;
       }
     }
-    
+
     return {
       ...appointment,
       facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey,
       departmentKey: normalizedDepartmentKey
     };
   }, [appointment, departmentListResponse, dayCaseDepartmentListResponse]);
-  
+
   const [saveAppointment, saveAppointmentMutation] = useSaveAppointmentMutation();
 
   useEffect(() => {
@@ -633,14 +633,14 @@ const AppointmentModal = ({
 
   const search = target => {
     setPatientSearchTarget(target);
-    
+
     // Return early if selectedCriterion is null or undefined
     if (!selectedCriterion) {
       return;
     }
-    
+
     let searchValue = searchKeyword;
-    
+
     if (selectedCriterion === 'dob' && dateValue) {
       try {
         // Format date safely
@@ -654,8 +654,8 @@ const AppointmentModal = ({
       }
     }
 
-    if ((searchKeyword && searchKeyword.length >= 3 && selectedCriterion !== 'dob') || 
-        (selectedCriterion === 'dob' && dateValue && searchValue)) {
+    if ((searchKeyword && searchKeyword.length >= 3 && selectedCriterion !== 'dob') ||
+      (selectedCriterion === 'dob' && dateValue && searchValue)) {
       setListRequest({
         ...listRequest,
         ignore: false,
@@ -815,7 +815,7 @@ const AppointmentModal = ({
   const normalizeToString = (v: any) => {
     if (v === null || typeof v === 'undefined') return null;
 
-    if (typeof v === 'boolean') return v ? 'true' : 'false'; 
+    if (typeof v === 'boolean') return v ? 'true' : 'false';
 
     if (v instanceof Date) return v.toISOString();
 
@@ -844,7 +844,7 @@ const AppointmentModal = ({
 
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
-    
+
     if (!localPatient?.key) {
       missingFields.push('Patient');
     }
@@ -865,27 +865,27 @@ const AppointmentModal = ({
     // Also check if time slices are selected (which implies a date context exists)
     const hasDate = selectedDate || (selectedYear && selectedMonth !== null && selectedMonthDay);
     const hasTimeSlices = selectedSlices && selectedSlices.length > 0;
-    
+
     // If time slices are selected, we can use current date as fallback, so don't require selectedDate
     // But if no slices and no date, then date is required
     if (!hasDate && !hasTimeSlices) {
       missingFields.push('Appointment Date');
     }
-    
+
     // Validate appointment time (need either selectedTime or selectedSlices)
     // Only check time if we have a date or time slices are selected
     if (hasDate && !selectedTime && !hasTimeSlices) {
       missingFields.push('Appointment Time');
     }
     // Validate department for PRACTITIONER and PROCEDURE resource types
-    if ((appointment?.resourceTypeLkey === '2039534205961578' || 
-         appointment?.resourceTypeLkey === 'PRACTITIONER' || 
-         appointment?.resourceTypeLkey === '2039548173192779' ||
-         appointment?.resourceTypeLkey === 'PROCEDURE') && 
-        !appointment?.departmentKey) {
+    if ((appointment?.resourceTypeLkey === '2039534205961578' ||
+      appointment?.resourceTypeLkey === 'PRACTITIONER' ||
+      appointment?.resourceTypeLkey === '2039548173192779' ||
+      appointment?.resourceTypeLkey === 'PROCEDURE') &&
+      !appointment?.departmentKey) {
       missingFields.push('Department');
     }
-    
+
     if (missingFields.length > 0) {
       const lines = missingFields.map(field => `• ${field}: is required`);
       dispatch(
@@ -921,11 +921,11 @@ const AppointmentModal = ({
 
     // Check if the resource type is department-based (similar to PatientQuickAppointment)
     const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(appointment?.resourceTypeLkey);
-    
+
     // For department-based resources, use the resourceKey (finalResourceKey) as departmentKey
     // For other resources, use the departmentKey as is
-    const departmentKeyToSave = isDepartmentBasedResource 
-      ? finalResourceKey 
+    const departmentKeyToSave = isDepartmentBasedResource
+      ? finalResourceKey
       : appointment.departmentKey;
 
     const appointmentToSave = {
@@ -1033,7 +1033,7 @@ const AppointmentModal = ({
     const availableDates = getAvailableDatesInMonth(dayOfWeek, today.getFullYear(), today.getMonth());
     setAvailableDatesInMonth(availableDates);
 
-    const availableTimes = generateTimes(mergedPeriods, 30); 
+    const availableTimes = generateTimes(mergedPeriods, 30);
     setAvailableTimes(availableTimes);
   };
 
@@ -1178,10 +1178,10 @@ const AppointmentModal = ({
                                   const genderKey = localPatient?.gender_lkey || localPatient?.genderLkey;
                                   const genderDisplay = genderKey && genderLovQueryResponse?.object
                                     ? conjureValueBasedOnKeyFromListOfValues(
-                                        genderLovQueryResponse.object,
-                                        genderKey,
-                                        'lovDisplayVale'
-                                      ) || 'N/A'
+                                      genderLovQueryResponse.object,
+                                      genderKey,
+                                      'lovDisplayVale'
+                                    ) || 'N/A'
                                     : 'N/A';
                                   return `${genderDisplay}${patientAge?.patientAge ? `, ${patientAge.patientAge}y old` : ''}`;
                                 })()}
@@ -1207,10 +1207,10 @@ const AppointmentModal = ({
                                 const docTypeKey = localPatient?.document_type_lkey || localPatient?.documentTypeLkey;
                                 return docTypeKey && docTypeLovQueryResponse?.object
                                   ? conjureValueBasedOnKeyFromListOfValues(
-                                      docTypeLovQueryResponse.object,
-                                      docTypeKey,
-                                      'lovDisplayVale'
-                                    ) || '-'
+                                    docTypeLovQueryResponse.object,
+                                    docTypeKey,
+                                    'lovDisplayVale'
+                                  ) || '-'
                                   : '-';
                               })()}
                             </div>
@@ -1527,46 +1527,64 @@ const AppointmentModal = ({
                             {showMore ? 'Hide' : 'Show More'}
                           </MyButton>
                         </div>
-                        <div style={{ display: showMore ? 'block' : 'none' }}>
-                          <Panel>
-                            <Form layout="inline" fluid>
-                              <div className="show-grid">
-                                <div className="flex-container">
-                                  <div className="input-wrapper" style={{ flex: 1 }}>
-                                    <MyInput
-                                      disabled={showOnly}
-                                      width={'100%'}
-                                      vr={validationResult}
-                                      column
-                                      fieldLabel="Instructions"
-                                      fieldType="select"
-                                      fieldName="instructionsLkey"
-                                      selectData={instractionsTypeQueryResponse?.object ?? []}
-                                      selectDataLabel="lovDisplayVale"
-                                      selectDataValue="key"
-                                      record={instructionKey}
-                                      searchable={false}
-                                      setRecord={setInstructionsKey}
-                                    />
+
+                        <div style={{ display: showMore ? 'block' : 'none', width: '100%' }}>
+                          <Panel style={{ width: '100%' }}>
+                            <Form layout="inline" fluid style={{ width: '100%' }}>
+                              <div style={{ width: '100%' }}>
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 8,
+                                    minWidth: 0,
+                                  }}
+                                >
+                                  <div className="show-grid" style={{ width: '100%' }}>
+                                    <div className="flex-container" style={{ width: '100%', gap: 12 }}>
+                                      <div className="input-wrapper" style={{ flex: 9, minWidth: 0 }}>
+                                        <MyInput
+                                          disabled={showOnly}
+                                          width="100%"
+                                          vr={validationResult}
+                                          column
+                                          fieldLabel="Instructions"
+                                          fieldType="select"
+                                          fieldName="instructionsLkey"
+                                          selectData={instractionsTypeQueryResponse?.object ?? []}
+                                          selectDataLabel="lovDisplayVale"
+                                          selectDataValue="key"
+                                          record={instructionKey}
+                                          searchable={false}
+                                          setRecord={setInstructionsKey}
+                                        />
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                                <div style={{ display: 'flex', width: '100%' }}>
-                                  <div className="input-wrapper" style={{ flex: 1 }}>
+
+
+                                  <div style={{ width: '100%', minWidth: 0 }}>
                                     <Input
                                       as="textarea"
                                       disabled={showOnly}
                                       onChange={setInstructions}
                                       value={instructions}
-                                      style={{ width: '100%', height: '50px' }}
-                                      rows={3}
+                                      rows={4}
+                                      style={{
+                                        width: '100%',
+                                        minWidth: 0,
+                                        height: 110,
+                                        resize: 'vertical',
+                                      }}
                                     />
                                   </div>
                                 </div>
                               </div>
 
-                              <div className="show-grid">
-                                <div className="flex-container">
-                                  <div className="input-wrapper" style={{ flex: 9 }}>
+                              <div className="show-grid" style={{ width: '100%' }}>
+                                <div className="flex-container" style={{ width: '100%', gap: 12 }}>
+                                  <div className="input-wrapper" style={{ flex: 1, minWidth: 0 }}>
                                     <MyInput
                                       disabled={showOnly}
                                       width={'100%'}
@@ -1583,6 +1601,7 @@ const AppointmentModal = ({
                                       searchable={false}
                                     />
                                   </div>
+
                                   <Button
                                     onClick={() => setAttachmentsModalOpen(true)}
                                     appearance="primary"
@@ -1603,9 +1622,10 @@ const AppointmentModal = ({
                                 </div>
                               </div>
 
-                              <div className="show-grid">
-                                <div className="flex-container">
-                                  <div className="input-wrapper">
+                              {/* ===================== Consent / Reminder ===================== */}
+                              <div className="show-grid" style={{ width: '100%' }}>
+                                <div className="flex-container" style={{ width: '100%', gap: 12 }}>
+                                  <div className="input-wrapper" style={{ minWidth: 0 }}>
                                     <MyInput
                                       disabled={showOnly}
                                       width={'100%'}
@@ -1617,7 +1637,8 @@ const AppointmentModal = ({
                                       setRecord={setAppointment}
                                     />
                                   </div>
-                                  <div className="input-wrapper">
+
+                                  <div className="input-wrapper" style={{ minWidth: 0 }}>
                                     <MyInput
                                       disabled={showOnly}
                                       width={165}
@@ -1629,7 +1650,8 @@ const AppointmentModal = ({
                                       setRecord={setAppointment}
                                     />
                                   </div>
-                                  <div className="input-wrapper">
+
+                                  <div className="input-wrapper" style={{ minWidth: 0 }}>
                                     <MyInput
                                       disabled={!appointment?.isReminder}
                                       width={170}
@@ -1649,19 +1671,22 @@ const AppointmentModal = ({
                                 </div>
                               </div>
 
-                              <div className="flex-container">
-                                <div className="input-wrapper" style={{ flex: 1 }}>
-                                  <MyInput
-                                    disabled={showOnly}
-                                    vr={validationResult}
-                                    fieldType="textarea"
-                                    column
-                                    fieldName="Notes"
-                                    width={'100%'}
-                                    height={70}
-                                    record={appointment}
-                                    setRecord={setAppointment}
-                                  />
+                              {/* ===================== Notes ===================== */}
+                              <div style={{ width: '100%' }}>
+                                <div style={{ display: 'flex', width: '100%' }}>
+                                  <div className="input-wrapper" style={{ flex: 1, minWidth: 0 }}>
+                                    <MyInput
+                                      disabled={showOnly}
+                                      vr={validationResult}
+                                      fieldType="textarea"
+                                      column
+                                      fieldName="Notes"
+                                      width={'100%'}
+                                      height={70}
+                                      record={appointment}
+                                      setRecord={setAppointment}
+                                    />
+                                  </div>
                                 </div>
                               </div>
                             </Form>
@@ -1670,6 +1695,7 @@ const AppointmentModal = ({
                       </>
                     }
                   />
+
                 </div>
               </div>
             </div>
@@ -1761,9 +1787,8 @@ const AppointmentModal = ({
                     </div>
                   }
                   title="No patient found"
-                  contant={`No patient found matching the entered ${
-                    searchCriteriaOptions.find(opt => opt.value === selectedCriterion?.value)?.label || 'criteria'
-                  }.`}
+                  contant={`No patient found matching the entered ${searchCriteriaOptions.find(opt => opt.value === selectedCriterion?.value)?.label || 'criteria'
+                    }.`}
                 />
               )}
             </div>
