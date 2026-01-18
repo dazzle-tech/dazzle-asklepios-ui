@@ -1422,7 +1422,7 @@ const AppointmentModal = ({
                                       return false;
                                     }}
                                     size="md"
-                                    placeholder="Medium"
+                                    placeholder="DD/MM/YYYY"
                                   />
                                 </div>
                               </div>
@@ -1559,56 +1559,6 @@ const AppointmentModal = ({
                                       value={instructions}
                                       style={{ width: '100%', height: '50px' }}
                                       rows={3}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="show-grid">
-                                <div className="flex-container">
-                                  <div className="input-wrapper" style={{ flex: 1 }}>
-                                    <MyInput
-                                      disabled={showOnly}
-                                      width={'100%'}
-                                      vr={validationResult}
-                                      column
-                                      fieldLabel="Refering Physician"
-                                      fieldType="select"
-                                      fieldName="referingPhysician"
-                                      selectData={[]}
-                                      selectDataLabel="lovDisplayVale"
-                                      selectDataValue="key"
-                                      searchable={false}
-                                      record={appointment}
-                                      setRecord={setAppointment}
-                                    />
-                                  </div>
-                                  <div className="input-wrapper" style={{ flex: 1 }}>
-                                    <MyInput
-                                      disabled={showOnly}
-                                      width={'100%'}
-                                      vr={validationResult}
-                                      column
-                                      fieldName="externalPhysician"
-                                      record={appointment}
-                                      setRecord={setAppointment}
-                                    />
-                                  </div>
-                                  <div className="input-wrapper" style={{ flex: 1 }}>
-                                    <MyInput
-                                      disabled={showOnly}
-                                      width={'100%'}
-                                      vr={validationResult}
-                                      column
-                                      fieldLabel="Procedure Level"
-                                      fieldType="select"
-                                      fieldName="procedureLevelLkey"
-                                      selectData={procedureLevelQueryResponse?.object ?? []}
-                                      selectDataLabel="lovDisplayVale"
-                                      selectDataValue="key"
-                                      searchable={false}
-                                      record={appointment}
-                                      setRecord={setAppointment}
                                     />
                                   </div>
                                 </div>
