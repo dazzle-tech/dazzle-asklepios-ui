@@ -3,6 +3,7 @@ import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUpload
 import MyButton from '@/components/MyButton/MyButton';
 import MyCard from '@/components/MyCard';
 import MyInput from '@/components/MyInput';
+import MyLabel from '@/components/MyLabel';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
@@ -26,7 +27,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { faBan, faBolt, faListCheck, faUpload, faUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
   Avatar,
@@ -195,7 +196,7 @@ const AppointmentModal = ({
   const [selectedEvent, setSelectedEvent] = useState(null); // To store selected event details
   const [validationResult, setValidationResult] = useState({});
   const [selectedCriterion, setSelectedCriterion] = useState<
-    'patientMrn' | 'documentNo' | 'fullName' | 'archivingNumber' | 'phoneNumber' | 'dob'
+    'patientMrn' | 'documentNo' | 'fullName' | 'archivingNumber' | 'phoneNumber' | 'dob' | null
   >('fullName');
 
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -204,13 +205,13 @@ const AppointmentModal = ({
   const [dateValue, setDateValue] = useState<Date | null>(null);
   const [patientAge, setPatientAge] = useState({ patientAge: null });
   const [reRenderModal, setReRenderModal] = useState(true);
-  const [instructionKey, setInstructionsKey] = useState();
-  const [instructionValue, setInstructionsValue] = useState();
-  const [instructions, setInstructions] = useState();
-  const [availabilDays, setAvailabilDays] = useState();
+  const [instructionKey, setInstructionsKey] = useState<any>(null);
+  const [instructionValue, setInstructionsValue] = useState<string[] | null>(null);
+  const [instructions, setInstructions] = useState<string>('');
+  const [availabilDays, setAvailabilDays] = useState<any[]>([]);
   const [availablePeriods, setAvailablePeriods] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedTime, setSelectedTime] = useState<Date | null>(null);
   const [availableDatesInMonth, setAvailableDatesInMonth] = useState(null);
   const [selectedMonthDay, setSelectedMonthDay] = useState(null);
   const [selectedPeriods, setSelectedPeriods] = useState(null);
@@ -223,6 +224,7 @@ const AppointmentModal = ({
   const [filteredDates, setFilteredDates] = useState([]);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [showMore, setShowMore] = useState(false);
+  const prevFacilityKeyRef = useRef<string | null>(null);
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
@@ -273,94 +275,62 @@ const AppointmentModal = ({
       return;
     }
 
-    if (resourceAvailabilityDetails?.object?.[0]?.availabilitySlices?.length > 0) {
-      const loadedSlices = {};
+    const hasSelectedFacility = Boolean(appointment?.facilityKey);
 
-      resourceAvailabilityDetails.object[0].availabilitySlices.forEach((slice, originalIndex) => {
-        const day = String(slice.dayOfWeek);
-
-        if (!['0', '1', '2', '3', '4', '5', '6'].includes(day)) {
-          return;
-        }
-
-        if (!loadedSlices[day]) {
-          loadedSlices[day] = [];
-        }
-        const startMinutes = (slice.startHour || 0) * 60 + (slice.startMinute || 0);
-        const endMinutes = (slice.endHour || 0) * 60 + (slice.endMinute || 0);
-        const fromDate = minutesToDisplayDate(startMinutes);
-        const toDate = minutesToDisplayDate(endMinutes);
-
-        loadedSlices[day].push({
-          from: fromDate,
-          to: toDate,
-          isBreak: slice.break || false,
-          SliceKey: slice.key,
-          originalIndex: originalIndex,
-          startMinutes: startMinutes
-        });
-      });
-
-      Object.keys(loadedSlices).forEach(day => {
-        loadedSlices[day].sort((a, b) => {
-          if (a.startMinutes !== b.startMinutes) {
-            return a.startMinutes - b.startMinutes;
-          }
-          return (a.originalIndex || 0) - (b.originalIndex || 0);
-        });
-      });
-
-      setDailySlices(loadedSlices);
+    // If no facility is selected, do not show/build availability times at all.
+    // Availability must depend on selected facility.
+    if (!hasSelectedFacility) {
+      setDailySlices({});
       return;
     }
 
-    if (resourcesAvailability?.object && resourcesAvailability.object.length > 0) {
-      const loadedSlices = {};
+    // If a facility is selected, availability MUST depend on that facility.
+    // So we only build slices from the facility-filtered endpoint (`resourcesAvailability`).
+    const loadedSlices = {};
 
-      resourcesAvailability.object.forEach((slice, originalIndex) => {
-        const day = String(slice.dayLkey || slice.dayOfWeek);
+    const availability = resourcesAvailability?.object ?? [];
+    availability.forEach((slice, originalIndex) => {
+      const day = String(slice.dayLkey || slice.dayOfWeek);
 
-        if (!['0', '1', '2', '3', '4', '5', '6'].includes(day)) {
-          return;
-        }
+      if (!['0', '1', '2', '3', '4', '5', '6'].includes(day)) {
+        return;
+      }
 
-        if (!loadedSlices[day]) {
-          loadedSlices[day] = [];
-        }
+      if (!loadedSlices[day]) {
+        loadedSlices[day] = [];
+      }
 
-        // startTime and endTime are already in minutes from midnight
-        const startMinutes = slice.startTime || 0;
-        const endMinutes = slice.endTime || 0;
-        const fromDate = minutesToDisplayDate(startMinutes);
-        const toDate = minutesToDisplayDate(endMinutes);
+      // startTime and endTime are already in minutes from midnight
+      const startMinutes = slice.startTime || 0;
+      const endMinutes = slice.endTime || 0;
+      const fromDate = minutesToDisplayDate(startMinutes);
+      const toDate = minutesToDisplayDate(endMinutes);
 
-        loadedSlices[day].push({
-          from: fromDate,
-          to: toDate,
-          isBreak: slice.isHasBreak || slice.isBreak || false,
-          SliceKey: slice.key,
-          originalIndex: originalIndex, // Preserve original order
-          startMinutes: startMinutes // For sorting
-        });
+      loadedSlices[day].push({
+        from: fromDate,
+        to: toDate,
+        isBreak: slice.isHasBreak || slice.isBreak || false,
+        SliceKey: slice.key,
+        originalIndex: originalIndex, // Preserve original order
+        startMinutes: startMinutes // For sorting
       });
+    });
 
-      // Sort slices for each day by start time (maintaining order for same start time)
-      Object.keys(loadedSlices).forEach(day => {
-        loadedSlices[day].sort((a, b) => {
-          // First sort by start time
-          if (a.startMinutes !== b.startMinutes) {
-            return a.startMinutes - b.startMinutes;
-          }
-          // If start times are equal, maintain original order
-          return (a.originalIndex || 0) - (b.originalIndex || 0);
-        });
+    // Sort slices for each day by start time (maintaining order for same start time)
+    Object.keys(loadedSlices).forEach(day => {
+      loadedSlices[day].sort((a, b) => {
+        // First sort by start time
+        if (a.startMinutes !== b.startMinutes) {
+          return a.startMinutes - b.startMinutes;
+        }
+        // If start times are equal, maintain original order
+        return (a.originalIndex || 0) - (b.originalIndex || 0);
       });
+    });
 
-      setDailySlices(loadedSlices);
-    } else {
-      setDailySlices({});
-    }
+    setDailySlices(loadedSlices);
   }, [
+    appointment?.facilityKey,
     appointment?.resourceKey,
     resourceAvailabilityDetails,
     resourcesAvailability,
@@ -556,7 +526,7 @@ const AppointmentModal = ({
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const [isSideSearchOpen, setIsSideSearchOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState();
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
   //     code: 'CITY',
@@ -704,19 +674,19 @@ const AppointmentModal = ({
   }, [localPatient]);
 
   useEffect(() => {
-    if (instructionKey?.instructionsLkey) {
+    const instructionLovKey = instructionKey?.instructionsLkey;
+    if (instructionLovKey && instractionsTypeQueryResponse?.object) {
       const filtered = instractionsTypeQueryResponse.object
-        .filter(item => item.key === instructionKey?.instructionsLkey)
+        .filter(item => item.key === instructionLovKey)
         .map(item => item.lovDisplayVale);
-      setInstructionsValue(filtered);
+      setInstructionsValue(filtered ?? null);
     }
   }, [instructionKey]);
 
   useEffect(() => {
-    if (instructionValue) {
-      setInstructions(prevInstructions =>
-        prevInstructions ? `${prevInstructions}, ${instructionValue}` : instructionValue[0]
-      );
+    if (instructionValue?.length) {
+      const nextInstructionText = instructionValue.join(', ');
+      setInstructions(prevInstructions => (prevInstructions ? `${prevInstructions}, ${nextInstructionText}` : nextInstructionText));
     }
     setInstructionsKey(null);
   }, [instructionValue]);
@@ -728,6 +698,26 @@ const AppointmentModal = ({
   useEffect(() => {
     if (facility) setAppointment({ ...appointment, facilityKey: facility?.id || facility?.facilityKey });
   }, [facility]);
+
+  useEffect(() => {
+    const currentFacilityKey = appointment?.facilityKey ? String(appointment.facilityKey) : null;
+
+    // Initialize previous value on first run
+    if (prevFacilityKeyRef.current === null) {
+      prevFacilityKeyRef.current = currentFacilityKey;
+      return;
+    }
+
+    // When facility changes, clear any picked availability selections (times must depend on facility)
+    if (prevFacilityKeyRef.current !== currentFacilityKey) {
+      setSelectedSlices([]);
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setOpenDay(null);
+    }
+
+    prevFacilityKeyRef.current = currentFacilityKey;
+  }, [appointment?.facilityKey]);
 
   const calculateAppointmentDate = (duration, useSelectedSlices = false) => {
     // If using selectedSlices, calculate from slices
@@ -1175,7 +1165,7 @@ const AppointmentModal = ({
                                 {/* {localPatient?.genderLkey} */}
                                 <FontAwesomeIcon icon={faUser} />
                                 {(() => {
-                                  const genderKey = localPatient?.gender_lkey || localPatient?.genderLkey;
+                                  const genderKey = (localPatient as any)?.gender_lkey || localPatient?.genderLkey;
                                   const genderDisplay = genderKey && genderLovQueryResponse?.object
                                     ? conjureValueBasedOnKeyFromListOfValues(
                                       genderLovQueryResponse.object,
@@ -1204,7 +1194,7 @@ const AppointmentModal = ({
                             <div className="input-wrapper" style={{ flex: 1 }}>
                               <p style={{ fontSize: '10px', color: '#A1A9B8' }}>Document Type</p>
                               {(() => {
-                                const docTypeKey = localPatient?.document_type_lkey || localPatient?.documentTypeLkey;
+                                const docTypeKey = (localPatient as any)?.document_type_lkey || localPatient?.documentTypeLkey;
                                 return docTypeKey && docTypeLovQueryResponse?.object
                                   ? conjureValueBasedOnKeyFromListOfValues(
                                     docTypeLovQueryResponse.object,
@@ -1218,7 +1208,7 @@ const AppointmentModal = ({
                               <div className="input-wrapper" style={{ flex: 1 }}>
                                 <p style={{ fontSize: '10px', color: '#A1A9B8' }}>Document No</p>
                                 {(() => {
-                                  const docNo = localPatient?.document_no || localPatient?.documentNo;
+                                  const docNo = (localPatient as any)?.document_no || localPatient?.documentNo;
                                   return docNo || '-';
                                 })()}
                               </div>
@@ -1227,7 +1217,7 @@ const AppointmentModal = ({
                               <div className="input-wrapper" style={{ flex: 1 }}>
                                 <p style={{ fontSize: '10px', color: '#A1A9B8' }}>Mobile Number</p>
                                 {(() => {
-                                  const mobileValue = localPatient?.mobile_number || localPatient?.mobileNumber || localPatient?.phoneNumber;
+                                  const mobileValue = (localPatient as any)?.mobile_number || localPatient?.mobileNumber || localPatient?.phoneNumber;
                                   return mobileValue || '-';
                                 })()}
                               </div>
@@ -1265,23 +1255,6 @@ const AppointmentModal = ({
                                 selectDataValue="key"
                                 record={appointment}
                                 setRecord={setAppointment}
-                              />
-                            </div>
-                            <div className="input-wrapper" style={{ flex: 4 }}>
-                              <MyInput
-                                width={'100%'}
-                                column
-                                fieldLabel="Facility"
-                                selectData={facilityListResponse?.map(f => ({ ...f, id: String(f.id) })) ?? []}
-                                fieldType="select"
-                                selectDataLabel="name"
-                                selectDataValue="id"
-                                fieldName="facilityKey"
-                                disabled={showOnly}
-                                record={normalizedAppointment || appointment}
-                                setRecord={setAppointment}
-                                searchable={false}
-                                required
                               />
                             </div>
                           </div>
@@ -1397,10 +1370,35 @@ const AppointmentModal = ({
                         <Form layout="inline" fluid>
                           <div className="show-grid">
                             <div className="flex-container">
-                              <div className="input-wrapper">
-                                <div>
+                              <div className="input-wrapper" style={{ flex: 3, minWidth: 260 }}>
+                                <MyInput
+                                  width={'100%'}
+                                  column
+                                  fieldLabel="Facility"
+                                  selectData={facilityListResponse?.map(f => ({ ...f, id: String(f.id) })) ?? []}
+                                  fieldType="select"
+                                  selectDataLabel="name"
+                                  selectDataValue="id"
+                                  fieldName="facilityKey"
+                                  disabled={showOnly}
+                                  record={normalizedAppointment || appointment}
+                                  setRecord={setAppointment}
+                                  searchable={false}
+                                  required
+                                />
+                              </div>
+                              <div className="input-wrapper" style={{ flex: 2, minWidth: 200 }}>
+                                <div style={{ width: '100%' }}>
+                                  <Form.ControlLabel>
+                                    <MyLabel
+                                      label="Appointment Date"
+                                      color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
+                                    />
+                                  </Form.ControlLabel>
+                                  <div style={{ marginBottom: 5 }} />
                                   <DatePicker
                                     value={selectedDate}
+                                    disabled={showOnly || !appointment?.facilityKey}
                                     onChange={date => {
                                       setSelectedDate(date);
                                       if (date) {
@@ -1423,12 +1421,13 @@ const AppointmentModal = ({
                                     }}
                                     size="md"
                                     placeholder="DD/MM/YYYY"
+                                    style={{ width: '100%' }}
                                   />
                                 </div>
                               </div>
                               <div className="input-wrapper" style={{ display: 'flex' }}>
                                 <MyButton
-                                  disabled={showOnly}
+                                  disabled={showOnly || !appointment?.facilityKey}
                                   appearance="primary"
                                   className="icon-button-primary"
                                   style={{ width: '100%', marginTop: '0' }}
@@ -1442,78 +1441,88 @@ const AppointmentModal = ({
                         </Form>
 
                         <div style={{ width: '100%' }}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              gap: '10px',
-                              marginBottom: '16px',
-                              flexWrap: 'wrap',
-                              padding: '8px',
-                              backgroundColor: mode === 'light' ? '#f8f9fa' : '#434343ff',
-                              borderRadius: '12px',
-                              border: '1px solid var(--rs-border-primary)'
-                            }}
-                          >
-                            {sortedDaysWithSlices.map(day => {
-                              const dayLabel = DAYS.find(d => d.value === day)?.label;
+                          {!appointment?.facilityKey ? (
+                            <Panel bordered style={{ width: '100%' }}>
+                              <div style={{ fontSize: 13, color: 'var(--rs-text-secondary)' }}>
+                                Please select a <b>Facility</b> to view availability times.
+                              </div>
+                            </Panel>
+                          ) : (
+                            <>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  gap: '10px',
+                                  marginBottom: '16px',
+                                  flexWrap: 'wrap',
+                                  padding: '8px',
+                                  backgroundColor: mode === 'light' ? '#f8f9fa' : '#434343ff',
+                                  borderRadius: '12px',
+                                  border: '1px solid var(--rs-border-primary)'
+                                }}
+                              >
+                                {sortedDaysWithSlices.map(day => {
+                                  const dayLabel = DAYS.find(d => d.value === day)?.label;
 
-                              return (
-                                <div
-                                  key={day}
-                                  onClick={() => handleDayClick(day)}
-                                  style={{
-                                    padding: '10px 16px',
-                                    borderRadius: '12px',
-                                    cursor: 'pointer',
-                                    background:
-                                      openDay === day
-                                        ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
-                                        : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                                    color: openDay === day ? 'white' : '#495057',
-                                    fontWeight: '600',
-                                    userSelect: 'none',
-                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    border: openDay === day ? '2px solid #4caf50' : '1px solid #dee2e6',
-                                    boxShadow:
-                                      openDay === day
-                                        ? '0 4px 12px rgba(76, 175, 80, 0.25), 0 2px 4px rgba(0,0,0,0.1)'
-                                        : '0 2px 4px rgba(0,0,0,0.05)',
-                                    transform: openDay === day ? 'translateY(-1px)' : 'translateY(0)'
-                                  }}
-                                  onMouseEnter={e => {
-                                    if (openDay !== day) {
-                                      e.currentTarget.style.transform = 'translateY(-2px)';
-                                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
-                                    }
-                                  }}
-                                  onMouseLeave={e => {
-                                    if (openDay !== day) {
-                                      e.currentTarget.style.transform = 'translateY(0)';
-                                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-                                    }
-                                  }}
-                                >
-                                  {dayLabel}
-                                </div>
-                              );
-                            })}
-                          </div>
+                                  return (
+                                    <div
+                                      key={day}
+                                      onClick={() => handleDayClick(day)}
+                                      style={{
+                                        padding: '10px 16px',
+                                        borderRadius: '12px',
+                                        cursor: 'pointer',
+                                        background:
+                                          openDay === day
+                                            ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
+                                            : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                                        color: openDay === day ? 'white' : '#495057',
+                                        fontWeight: '600',
+                                        userSelect: 'none',
+                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        border: openDay === day ? '2px solid #4caf50' : '1px solid #dee2e6',
+                                        boxShadow:
+                                          openDay === day
+                                            ? '0 4px 12px rgba(76, 175, 80, 0.25), 0 2px 4px rgba(0,0,0,0.1)'
+                                            : '0 2px 4px rgba(0,0,0,0.05)',
+                                        transform: openDay === day ? 'translateY(-1px)' : 'translateY(0)'
+                                      }}
+                                      onMouseEnter={e => {
+                                        if (openDay !== day) {
+                                          e.currentTarget.style.transform = 'translateY(-2px)';
+                                          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
+                                        }
+                                      }}
+                                      onMouseLeave={e => {
+                                        if (openDay !== day) {
+                                          e.currentTarget.style.transform = 'translateY(0)';
+                                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+                                        }
+                                      }}
+                                    >
+                                      {dayLabel}
+                                    </div>
+                                  );
+                                })}
+                              </div>
 
-                          <SliceBox
-                            dailySlices={dailySlices}
-                            openDay={openDay}
-                            // sortedDaysWithSlices={sortedDaysWithSlices}
-                            onSelectionChange={newSelection => {
-                              setSelectedSlices(newSelection);
-                              // setAppointment({
-                              //     ...appointment,
-                              //     appointmentSlices: newSelection.map(sliceId => {
-                              //         const [day, index] = sliceId.split('-').map(Number);
-                              //         return dailySlices[day][index];
-                              //     })
-                              // });
-                            }}
-                          />
+                              <SliceBox
+                                dailySlices={dailySlices}
+                                openDay={openDay}
+                                // sortedDaysWithSlices={sortedDaysWithSlices}
+                                onSelectionChange={newSelection => {
+                                  setSelectedSlices(newSelection);
+                                  // setAppointment({
+                                  //     ...appointment,
+                                  //     appointmentSlices: newSelection.map(sliceId => {
+                                  //         const [day, index] = sliceId.split('-').map(Number);
+                                  //         return dailySlices[day][index];
+                                  //     })
+                                  // });
+                                }}
+                              />
+                            </>
+                          )}
                         </div>
                       </>
                     }
@@ -1787,7 +1796,7 @@ const AppointmentModal = ({
                     </div>
                   }
                   title="No patient found"
-                  contant={`No patient found matching the entered ${searchCriteriaOptions.find(opt => opt.value === selectedCriterion?.value)?.label || 'criteria'
+                  contant={`No patient found matching the entered ${searchCriteriaOptions.find(opt => opt.value === selectedCriterion)?.label || 'criteria'
                     }.`}
                 />
               )}
