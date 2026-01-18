@@ -231,7 +231,7 @@ const handleSelectEvent = event => {
   const legendItems = [
     { label: 'No-Show', color: '#FDE68A' },
     { label: 'Checked In', color: '#FDBA74' },
-    { label: 'New', color: '#6366F1' },
+    { label: 'New', color: '#fafafeff' , borderColor: '#007bff'},
     { label: 'Confirmed', color: '#34D399' },
     { label: 'Completed', color: '#93C5FD' }
   ];
@@ -727,12 +727,12 @@ const visibleResources =
 
     const getBackgroundColor = status => {
       const item = legendItems.find(i => normalize(i.label) === normalize(status));
-      return item ? hexToRgba(item.color, 0.15) : '#ffffff';
+      return item ? hexToRgba(item.color, 0.15) : '#ffffffff';
     };
 
     const getBorderColor = status => {
       const item = legendItems.find(i => normalize(i.label) === normalize(status));
-      return item ? item.color : '#007bff';
+      return item?.borderColor ? item.color : '#007bff';
     };
 
     const status = event?.appointmentData?.appointmentStatus;
@@ -742,7 +742,7 @@ const visibleResources =
     return {
       style: {
         backgroundColor,
-        borderColor,
+        borderColor:'#007bff' ,
         borderWidth: '3px',
         borderStyle: 'solid',
         borderRadius: '10px',
