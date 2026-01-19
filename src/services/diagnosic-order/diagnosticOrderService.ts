@@ -19,6 +19,19 @@ type PagedResult<T> = {
   totalCount: number;
 };
 
+/* ===================== SAFE MAPPER ===================== */
+/**
+ * IMPORTANT:
+ * Protect large numeric IDs from JS precision loss
+ * without affecting any other fields.
+ */
+const mapDiagnosticOrder = (o: any): DiagnosticOrder => ({
+  ...o,
+  id: o?.id != null ? String(o.id) : o.id,
+  patientId: o?.patientId != null ? String(o.patientId) : o.patientId,
+  encounterId: o?.encounterId != null ? String(o.encounterId) : o.encounterId,
+});
+
 /* ===================== SERVICE ===================== */
 
 export const diagnosticOrderService = createApi({
@@ -62,6 +75,8 @@ export const diagnosticOrderService = createApi({
         url: `/api/patient/diagnostic-orders/${id}`,
         method: 'GET',
       }),
+      transformResponse: (response: DiagnosticOrder) =>
+        mapDiagnosticOrder(response),
       providesTags: (_r, _e, id) => [
         { type: 'DiagnosticOrder', id },
       ],
@@ -89,8 +104,10 @@ export const diagnosticOrderService = createApi({
         params,
       }),
       transformResponse: (response: DiagnosticOrder[], meta): PagedResult<DiagnosticOrder> => ({
-        data: response ?? [],
-        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0),
+        data: (response ?? []).map(mapDiagnosticOrder),
+        totalCount: Number(
+          meta?.response?.headers?.get('X-Total-Count') ?? 0
+        ),
       }),
       providesTags: (_r, _e, { patientId }) => [
         { type: 'DiagnosticOrder', id: `patient-${patientId}` },
@@ -107,8 +124,10 @@ export const diagnosticOrderService = createApi({
         params,
       }),
       transformResponse: (response: DiagnosticOrder[], meta): PagedResult<DiagnosticOrder> => ({
-        data: response ?? [],
-        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0),
+        data: (response ?? []).map(mapDiagnosticOrder),
+        totalCount: Number(
+          meta?.response?.headers?.get('X-Total-Count') ?? 0
+        ),
       }),
       providesTags: (_r, _e, { encounterId }) => [
         { type: 'DiagnosticOrder', id: `encounter-${encounterId}` },
@@ -125,8 +144,10 @@ export const diagnosticOrderService = createApi({
         params,
       }),
       transformResponse: (response: DiagnosticOrder[], meta): PagedResult<DiagnosticOrder> => ({
-        data: response ?? [],
-        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0),
+        data: (response ?? []).map(mapDiagnosticOrder),
+        totalCount: Number(
+          meta?.response?.headers?.get('X-Total-Count') ?? 0
+        ),
       }),
       providesTags: (_r, _e, { patientId, encounterId }) => [
         { type: 'DiagnosticOrder', id: `patient-${patientId}-encounter-${encounterId}` },
@@ -136,7 +157,6 @@ export const diagnosticOrderService = createApi({
     /* -------------------------------------------------
      * FILTER (modern endpoint)
      * ------------------------------------------------- */
-
     filterDiagnosticOrders: builder.query<
       PagedResult<DiagnosticOrder>,
       Record<string, any> & PageableParams
@@ -145,11 +165,25 @@ export const diagnosticOrderService = createApi({
         url: '/api/patient/diagnostic-orders',
         method: 'GET',
         params,
+        responseHandler: (response) => response.text(),
       }),
-      transformResponse: (response: DiagnosticOrder[], meta): PagedResult<DiagnosticOrder> => ({
-        data: response ?? [],
-        totalCount: Number(meta?.response?.headers?.get('X-Total-Count') ?? 0),
-      }),
+
+      transformResponse: (responseText: string, meta): PagedResult<DiagnosticOrder> => {
+        const parsed = JSON.parse(responseText, (_key, value) => {
+          if (typeof value === 'number' && !Number.isSafeInteger(value)) {
+            return String(value);
+          }
+          return value;
+        });
+
+        return {
+          data: (parsed ?? []).map(mapDiagnosticOrder),
+          totalCount: Number(
+            meta?.response?.headers?.get('X-Total-Count') ?? 0
+          ),
+        };
+      },
+
       providesTags: ['DiagnosticOrder'],
     }),
 

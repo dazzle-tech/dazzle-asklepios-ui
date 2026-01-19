@@ -156,6 +156,15 @@ const DetailsModal = ({
     test?.testTypeLvalue?.lovDisplayVale ?? test?.type ?? test?.testTypeLkey ?? '';
   const testNameLabel = test?.testName ?? test?.name ?? '';
 
+  useEffect(() => {
+    if (
+      openDetailsModel &&
+      orderTest?.reasonLkey &&
+      ReasonLovQueryResponse?.object?.length
+    ) {
+      setOrderTest(prev => ({ ...prev }));
+    }
+  }, [ReasonLovQueryResponse?.object]);
 
   return (
     <>
@@ -194,7 +203,6 @@ const DetailsModal = ({
                 </Col>
                 <Col md={8}>
                   <MyInput
-                    width="100%"
                     fieldType="select"
                     fieldLabel="Reason"
                     selectData={ReasonLovQueryResponse?.object ?? []}
@@ -203,8 +211,8 @@ const DetailsModal = ({
                     fieldName={'reasonLkey'}
                     record={orderTest}
                     setRecord={setOrderTest}
-                    value={orderTest?.reasonLkey}
                   />
+
 
                 </Col>
                 <Col md={8}>

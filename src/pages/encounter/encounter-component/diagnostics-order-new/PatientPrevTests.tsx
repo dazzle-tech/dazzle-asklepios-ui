@@ -7,6 +7,7 @@ import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/d
 import { initialListRequestId } from '@/types/types';
 import { DiagnosticStatus } from '@/types/model-types-new';
 import { Checkbox } from 'rsuite';
+import { formatEnumString } from '@/utils';
 
 const PatientPrevTests = (props: any) => {
   /* ===================== HELPERS ===================== */
@@ -99,12 +100,16 @@ const PatientPrevTests = (props: any) => {
       title: <Translate>ORDER ID</Translate>,
       flexGrow: 1,
       render: row => row.orderId
+
     },
     {
       key: 'orderType',
       title: <Translate>ORDER TYPE</Translate>,
       flexGrow: 1,
-      render: row => row.orderType ?? row.test?.type ?? ''
+      render: rowData => {
+        return <>{formatEnumString(
+          rowData.orderType)}</>
+      }
     },
     {
       key: 'testName',
@@ -122,8 +127,10 @@ const PatientPrevTests = (props: any) => {
       key: 'status',
       title: <Translate>STATUS</Translate>,
       flexGrow: 1,
-      render: row => row.status ?? ''
-    }
+      render: rowData => {
+        return <>{formatEnumString(
+          rowData.status)}</>
+      }    }
   ];
 
   /* ===================== HANDLERS ===================== */

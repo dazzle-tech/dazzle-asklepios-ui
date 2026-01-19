@@ -844,9 +844,9 @@ useEffect(() => {
                                       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                                       cursor: 'pointer'
                                     }}
-                                    onClick={() => handleMedicationClick(rowData)}
+                                    // onClick={() => handleMedicationClick(rowData)}
                                   >
-                                    <FontAwesomeIcon icon={faPills} color="#800080" />
+                                    <FontAwesomeIcon icon={faPills} color="#800080" /> 
                                     <span style={{ fontWeight: 500 }}>
                                       {med?.name || 'Unknown Medication'}
                                     </span>

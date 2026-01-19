@@ -82,6 +82,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import { useEnumOptions } from '@/services/enumsApi';
 import TestCardModal from './TestCardModal';
+import { formatEnumString} from '@/utils';
 
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
@@ -124,7 +125,7 @@ const DiagnosticsOrder = props => {
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
-
+  console.log("PATIENT ", patient)
   const toNumericId = (value: any) => {
     if (value === null || value === undefined) return undefined;
     if (typeof value === 'number') return value;
@@ -133,16 +134,10 @@ const DiagnosticsOrder = props => {
   };
 
   const resolveFromDepartmentId = () => {
-    const selectedDeptId = toNumericId(
-      selectedDepartment?.departmentId ??
-      selectedDepartment?.id ??
-      selectedDepartment?.departmentKey ??
-      selectedDepartment?.key
-    );
+    const selectedDeptId = selectedDepartment?.departmentId;
     const selectedDeptName = selectedDepartment?.departmentName ?? selectedDepartment?.name;
-    const selectedFacilityId = toNumericId(
-      selectedDepartment?.facilityId ?? selectedDepartment?.facilityKey
-    );
+    const selectedFacilityId = selectedDepartment?.facilityId;
+
 
     if (!selectedDeptId && !selectedDeptName) return undefined;
     if (!departments.length) return selectedDeptId;
@@ -150,7 +145,7 @@ const DiagnosticsOrder = props => {
     const match =
       departments.find(
         d =>
-          toNumericId(d.id ?? d.departmentId ?? d.key ?? d.departmentKey) === selectedDeptId
+          d.id === selectedDeptId
       ) ??
       departments.find(
         d =>
@@ -163,7 +158,7 @@ const DiagnosticsOrder = props => {
     return toNumericId(match?.id ?? match?.departmentId ?? match?.key ?? match?.departmentKey);
   };
 
-  const patientId = toNumericId(patient?.id ?? patient?.key);
+  const patientId = patient?.key;
   const encounterId = toNumericId(encounter?.id ?? encounter?.key);
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
@@ -226,6 +221,11 @@ const DiagnosticsOrder = props => {
     };
   }, [showCanceled]);
 
+  const normalizeOrderTest = rowData => ({
+    ...rowData,
+    reasonLkey: rowData.reasonLkey ?? rowData.reason
+  });
+
 
   const { data: genericMedicationListResponse } =
     useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
@@ -265,11 +265,6 @@ const DiagnosticsOrder = props => {
   const testsList = testsResponse?.data ?? [];
 
   useEffect(() => {
-    console.log('🔵 useEffect fired', {
-      openTestsModal,
-      testsListLength: testsList?.length
-    });
-
     if (openTestsModal) {
       setLeftItems(testsList);
       setSelectedTestsList([]);
@@ -280,6 +275,7 @@ const DiagnosticsOrder = props => {
   const [leftItems, setLeftItems] = useState<any[]>([]);
   const [orders, setOrders] = useState<any>({ ...newDiagnosticOrder });
   const orderId = orders?.id ?? orders?.key ?? null;
+  const [tableVersion, setTableVersion] = useState(0);
 
   const isSubmitDisabled =
     !orderId || orders?.status !== 'NEW';
@@ -354,6 +350,8 @@ const DiagnosticsOrder = props => {
   const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
     'MED_ORDER_ADMIN_NSTRUCTIONS'
   );
+  const { data: ReasonLovQueryResponse } =
+    useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
 
   const isSelected = rowData => {
     const rowId = rowData?.id ?? rowData?.key;
@@ -444,33 +442,38 @@ const DiagnosticsOrder = props => {
   };
 
   const handleSaveTest = async () => {
-    const receivedDepartmentId =
-      orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId ?? undefined;
-
-    const testId = toNumericId(
-      orderTest?.testId ??
-      orderTest?.test?.id ??
-      orderTest?.diagnosticTest?.id ??
-      test?.id
-    );
-
-    const orderId = toNumericId(orderTest?.orderId ?? orders?.id ?? orders?.key);
-    const fromDepartmentId = resolveFromDepartmentId();
-
-    if (!testId || !orderId || !patientId || !encounterId) {
-      dispatch(notify({ msg: 'Missing test or patient info', sev: 'warning' }));
-      return;
-    }
-
-    if (!fromDepartmentId) {
-      dispatch(notify({ msg: 'Missing department info', sev: 'error' }));
-      return;
-    }
-
-    const orderTestId = toNumericId(orderTest?.id ?? orderTest?.key);
-
     try {
+      const receivedDepartmentId =
+        orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId ?? undefined;
 
+      const testId = toNumericId(
+        orderTest?.testId ??
+        orderTest?.test?.id ??
+        orderTest?.diagnosticTest?.id ??
+        test?.id
+      );
+
+      const orderId = toNumericId(
+        orderTest?.orderId ?? orders?.id ?? orders?.key
+      );
+
+      const fromDepartmentId = resolveFromDepartmentId();
+      const orderTestId = toNumericId(orderTest?.id ?? orderTest?.key);
+
+      // 🛑 validations
+      if (!testId || !orderId || !patientId || !encounterId) {
+        dispatch(notify({ msg: 'Missing test or patient info', sev: 'warning' }));
+        return;
+      }
+
+      if (!fromDepartmentId) {
+        dispatch(notify({ msg: 'Missing department info', sev: 'error' }));
+        return;
+      }
+
+      // ===============================
+      // ➕ CREATE
+      // ===============================
       if (!orderTestId) {
         const createPayload: DiagnosticOrderTestCreateDTO = {
           patientId,
@@ -481,14 +484,18 @@ const DiagnosticsOrder = props => {
           fromFacilityId: toNumericId(selectedDepartment?.facilityId),
           toFacilityId: toNumericId(orderTest?.toFacilityId),
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reason,
+          reason: orderTest?.reasonLkey,
           notes: orderTest?.notes,
-          orderType: resolveOrderType(test)
+          orderType: resolveOrderType(test),
         };
 
+        console.log('SAVING REASON', orderTest.reasonLkey);
         await createOrderTest(createPayload).unwrap();
       }
 
+      // ===============================
+      // ✏️ UPDATE
+      // ===============================
       else {
         const updatePayload: DiagnosticOrderTestUpdateDTO = {
           id: orderTestId,
@@ -500,32 +507,42 @@ const DiagnosticsOrder = props => {
           fromFacilityId: toNumericId(selectedDepartment?.facilityId),
           toFacilityId: toNumericId(orderTest?.toFacilityId),
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reason,
+          reason: orderTest?.reasonLkey,
           notes: orderTest?.notes,
-          isRepeat: orderTest?.isRepeat,
-          repeatEveryNumber: orderTest?.repeatEveryNumber,
-          repeatEveryUnit: orderTest?.repeatEveryUnit,
-          periodNumber: orderTest?.periodNumber,
-          periodUnit: orderTest?.periodUnit,
-          firstOccurrenceDateTime: orderTest?.firstOccurrenceDateTime
+          // isRepeat: orderTest?.isRepeat,
+          // repeatEveryNumber: orderTest?.repeatEveryNumber,
+          // repeatEveryUnit: orderTest?.repeatEveryUnit,
+          // periodNumber: orderTest?.periodNumber,
+          // periodUnit: orderTest?.periodUnit,
+          // firstOccurrenceDateTime: orderTest?.firstOccurrenceDateTime,
         };
-
 
         await updateOrderTest({
           id: orderTestId,
-          body: updatePayload
+          body: updatePayload,
         }).unwrap();
       }
 
+      // ===============================
+      // 🔄 REFRESH TABLE (SAFE)
+      // ===============================
+      if (orderId) {
+        await orderTestRefetch();
+        setTableVersion(v => v + 1);
+      }
+
+      // ===============================
+      // ✅ UI FEEDBACK
+      // ===============================
       setOpenDetailsModel(false);
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      await orderTestRefetch?.();
 
     } catch (error) {
       console.error('Save test failed', error);
       dispatch(notify({ msg: 'Save failed', sev: 'error' }));
     }
   };
+
 
   const handleCheckboxChange = (id: number) => {
     setSelectedRows(prev =>
@@ -626,7 +643,7 @@ const DiagnosticsOrder = props => {
         labStatus: DiagnosticStatus.NEW,
         radStatus: DiagnosticStatus.NEW,
       };
-
+      console.log("PAYLOAD", createPayload)
       const response = await createOrder(createPayload).unwrap();
 
       setOrders(response);
@@ -646,49 +663,58 @@ const DiagnosticsOrder = props => {
     }
   };
 
-  const handleSubmitPres = async () => {
-    const orderId = toNumericId(orders?.id ?? orders?.key);
-    if (!orderId) {
-      dispatch(notify({ msg: 'Missing order id', sev: 'warning' }));
-      return;
-    }
+    const handleSubmitPres = async () => {
+      const orderId = toNumericId(orders?.id ?? orders?.key);
+      if (!orderId) {
+        dispatch(notify({ msg: 'Missing order id', sev: 'warning' }));
+        return;
+      }
 
-    if (!orderTestList.length) {
-      dispatch(notify({ msg: 'Please add at least one test', sev: 'warning' }));
-      return;
-    }
+      if (!orderTestList.length) {
+        dispatch(notify({ msg: 'Please add at least one test', sev: 'warning' }));
+        return;
+      }
 
-    const hasMissingReceivedLab = orderTestList.some(
-      t => !t.receivedDepartmentId
-    );
-
-
-    if (hasMissingReceivedLab) {
-      dispatch(
-        notify({
-          msg: 'Please select Received Lab for Your Test',
-          sev: 'warning'
-        })
+      const hasMissingReceivedLab = orderTestList.some(
+        t => !t.receivedDepartmentId
       );
-      return;
-    }
 
-    try {
-      await submitDiagnosticOrder(orderId).unwrap();
+      if (hasMissingReceivedLab) {
+        dispatch(
+          notify({
+            msg: 'Please select Received Lab for Your Test',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
 
-      dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
+      try {
+        await updateOrder({
+          id: orderId,
+          body: {
+            id: orderId,
+            patientId,
+            encounterId,
+            isUrgent: orders.isUrgent,
+          }
+        }).unwrap();
+        await submitDiagnosticOrder(orderId).unwrap();
 
-      await ordersRefetch();
-      await orderTestRefetch();
+        dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
 
-      setOrders({ ...newDiagnosticOrder });
-      handleClearDiagnostics();
+        await ordersRefetch();
+        await orderTestRefetch();
 
-    } catch (error) {
-      console.error('Submit failed', error);
-      dispatch(notify({ msg: 'Submit failed', sev: 'error' }));
-    }
-  };
+        setOrders({ ...newDiagnosticOrder });
+        handleClearDiagnostics();
+
+      } catch (error) {
+        console.error('Submit failed', error);
+        dispatch(notify({ msg: 'Submit failed', sev: 'error' }));
+      }
+    };
+
 
 
   const handleRecall = rowData => {
@@ -768,6 +794,25 @@ const DiagnosticsOrder = props => {
     return values.filter(Boolean).join(', ');
   };
 
+  const resolveReasonLabel = (reasonKey?: string) =>
+    ReasonLovQueryResponse?.object?.find(
+      r => String(r.key) === String(reasonKey)
+    )?.lovDisplayVale ?? reasonKey ?? '';
+
+  const handleEdit = rowData => {
+    setOrderTest({
+      ...rowData,
+      reasonLkey: rowData.reasonLkey ?? rowData.reason
+    });
+
+    if (!ReasonLovQueryResponse?.object?.length) {
+      return;
+    }
+
+    setOpenDetailsModel(true);
+  };
+
+
   const tableColumns = [
     {
       key: 'check',
@@ -794,12 +839,8 @@ const DiagnosticsOrder = props => {
       flexGrow: 1,
       fullText: true,
       render: rowData => {
-        return (
-          rowData.orderType ??
-          rowData.test?.testTypeLvalue?.lovDisplayVale ??
-          rowData.test?.type ??
-          ''
-        );
+        return <>{formatEnumString(
+          rowData.orderType)}</>
       }
     },
     {
@@ -832,11 +873,10 @@ const DiagnosticsOrder = props => {
       title: <Translate>STATUS</Translate>,
       flexGrow: 1,
       fullText: true,
-      render: rowData =>
-        rowData.status ??
-        rowData.statusLvalue?.lovDisplayVale ??
-        rowData.statusLkey ??
-        ''
+      render: rowData => {
+        return <>{formatEnumString(
+          rowData.status)}</>
+      }
     },
     {
       key: 'receivedDepartmentId',
@@ -853,23 +893,18 @@ const DiagnosticsOrder = props => {
       title: <Translate>PROCESSING STATUS</Translate>,
       flexGrow: 1,
       fullText: true,
-      render: rowData =>
-        rowData.processingStatus ??
-        rowData.processingStatusLvalue?.lovDisplayVale ??
-        rowData.processingStatusLkey ??
-        ''
+      render: rowData => {
+        return <>{formatEnumString(
+            rowData.processingStatus)}</>
+      }
     },
     {
-      key: 'reasonLkey',
-      dataKey: 'reasonLkey',
+      key: 'reason',
       title: <Translate>REASON</Translate>,
       flexGrow: 1,
       fullText: true,
       render: rowData =>
-        rowData.reason ??
-        rowData.reasonLvalue?.lovDisplayVale ??
-        rowData.reasonLkey ??
-        ''
+        resolveReasonLabel(rowData.reason ?? rowData.reasonLkey)
     },
     {
       key: 'priorityLkey',
@@ -882,10 +917,9 @@ const DiagnosticsOrder = props => {
     },
     {
       key: 'notes',
-      dataKey: 'notes ',
       title: <Translate>NOTES</Translate>,
-      fullText: true,
-      flexGrow: 1
+      flexGrow: 1,
+      render: rowData => rowData.notes ?? ''
     },
     {
       key: '',
@@ -914,7 +948,7 @@ const DiagnosticsOrder = props => {
               size={20}
               fill="var(--primary-gray)"
               onClick={() => {
-                setOrderTest(rowData);
+                setOrderTest(normalizeOrderTest(rowData));
                 setAttachmentsModalOpen(true);
               }}
               style={{ cursor: 'pointer' }}
@@ -960,11 +994,7 @@ const DiagnosticsOrder = props => {
                 }}
               >
                 <MdModeEdit
-                  onClick={() => {
-                      setOrderTest(rowData);
-                      setTest(rowData.test ?? newDiagnosticTest);
-                      setOpenDetailsModel(true);
-                    }}
+                  onClick={() => handleEdit(rowData)}
                   className="icons-styles"
                   color="var(--primary-gray)"
                 />
@@ -990,7 +1020,7 @@ const DiagnosticsOrder = props => {
                     className="icons-styles"
                     color="var(--primary-gray)"
                     onClick={() => {
-                      setOrderTest(rowData);
+                      setOrderTest(normalizeOrderTest(rowData));
                       setTest(rowData.test);
                       setOpenSampleModal(true);
                     }}
@@ -1007,7 +1037,7 @@ const DiagnosticsOrder = props => {
                   className="icons-styles"
                   color="var(--primary-gray)"
                   onClick={() => {
-                    setOrderTest(rowData);
+                    setOrderTest(normalizeOrderTest(rowData));
                     setTest(rowData.test);
                     setTestCardModal(true);
                   }}
@@ -1327,16 +1357,18 @@ const DiagnosticsOrder = props => {
         <div ref={tableContainerRef}>
 
           <MyTable
+            key={`${orderId}-${tableVersion}`}
             columns={tableColumns}
             loading={loadTests}
             data={orderId ? normalizedOrderTestList : []}
             onRowClick={rowData => {
-              setOrderTest(rowData);
+              setOrderTest(normalizeOrderTest(rowData));
               setTest(rowData.test ?? newDiagnosticTest);
               setPreviewDiagnosticsOrder(rowData);
             }}
             rowClassName={isSelected}
           />
+
 
 
         </div>
@@ -1568,8 +1600,6 @@ const DiagnosticsOrder = props => {
           />
         }
       />
-
-
 
     </>
   );

@@ -25,6 +25,7 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
         return () => clearTimeout(timeout);
     }, [list]);
 
+
     return (
         <div className='chat-modal'>
             <MyModal
@@ -42,14 +43,19 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                             {list?.length > 0 ? (
                                 list?.map((msg, index) => (
                                     <div key={index} className="message-box">
-                                        <span
-                                            className="message-text"
-                                        >
-                                            {msg[fieldShowName]}
+                                    <div className="message-bubble">
+                                        {msg[fieldShowName]}
+                                    </div>
+
+                                    <div className="message-meta">
+                                        <span className="message-user">
+                                        {msg.createdBy}
                                         </span>
-                                        <div className="message-date">
-                                            {formatDateWithoutSeconds(msg.createdAt)}
-                                        </div>
+                                        <span className="dot">•</span>
+                                        <span className="message-date">
+                                        {formatDateWithoutSeconds(msg.createdDate)}
+                                        </span>
+                                    </div>
                                     </div>
                                 ))
                             ) : (
