@@ -60,12 +60,18 @@ const ScheduleScreen = () => {
   const [viewAppointmentData, setViewAppointmentData] = useState(null);
   const isOpeningViewModalRef = useRef(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [selectedStartDate, setSelectedStartDate] = useState();
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
   //Calendar Filters
-  const [selectedFacility, setSelectedFacility] = useState(null);
-  const [selectedResourceType, setSelectedResourceType] = useState(null);
-  const [selectedResources, setSelectedResources] = useState([]);
+  // NOTE: `MyInput`'s `setRecord` spreads `record` (`{ ...record, ... }`),
+  // so these MUST NOT be `null` (spreading null would crash at runtime).
+  const [selectedFacility, setSelectedFacility] = useState<any>({});
+  const [selectedResourceType, setSelectedResourceType] = useState<{ resourcesType: string[] }>({
+    resourcesType: []
+  });
+  const [selectedResources, setSelectedResources] = useState<{ resourceKey: string[] }>({
+    resourceKey: []
+  });
   const [listRequest] = useState<ListRequest>({ ...initialListRequest });
   const [appointmentsData, setAppointmentsData] = useState([]);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
@@ -73,11 +79,10 @@ const ScheduleScreen = () => {
   const [showCanceled, setShowCanceled] = useState<boolean>(false);
   const [filteredMonth] = useState<Date>();
   const [showReasonModal, setShowReasonModal] = useState(false);
-  const [finalResourceLit, setFinalResourceLit] = useState();
   const [currentView, setCurrentView] = useState('day');
   const [totalAppointmentsText, setTotalAppointmentsText] = useState<string>();
-  const [calendarDate, setCalendarDate] = useState<Date>(null);
-  const [finalAppointments, setFinalAppointments] = useState();
+  const [calendarDate, setCalendarDate] = useState<Date | null>(null);
+  const [finalAppointments, setFinalAppointments] = useState<any[]>([]);
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
   const [reasonViewRecord, setReasonViewRecord] = useState({
     reason: '',
@@ -127,7 +132,7 @@ const ScheduleScreen = () => {
         const isHidden = appointment?.appointmentStatus === 'Canceled';
         return {
           id: appointment?.key,
-          title: ` ${patientFullName}, ${isNaN(dob) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
+          title: ` ${patientFullName}, ${isNaN(dob.getTime()) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
             }Y  ${!(currentView === 'day' || currentView === 'week')
               ? ', ' + (resource?.resourceName || 'Unknown Resource')
               : ''
@@ -150,9 +155,24 @@ const ScheduleScreen = () => {
 
   useEffect(() => {
     if (selectedResourceType && resourcesWithAvailabilityResponse?.object) {
-      const filtered = resourcesWithAvailabilityResponse.object.filter(
-        resource => selectedResourceType?.resourcesType.includes(resource.resourceTypeLkey)
-      );
+      const normalizeType = (v: any) => String(v ?? '').trim().toUpperCase();
+      const selectedTypes = Array.isArray(selectedResourceType?.resourcesType)
+        ? selectedResourceType.resourcesType.map(normalizeType).filter(Boolean)
+        : [];
+
+      const resourceMatchesSelectedType = (resource: any) => {
+        if (!selectedTypes.length) return true;
+        const resourceTypes = [
+          resource?.resourceTypeLkey,
+          resource?.resource_type,
+          resource?.resourceType
+        ]
+          .map(normalizeType)
+          .filter(Boolean);
+        return resourceTypes.some(t => selectedTypes.includes(t));
+      };
+
+      const filtered = resourcesWithAvailabilityResponse.object.filter(resourceMatchesSelectedType);
       setFilteredResourcesList(filtered);
       } else {
         setFilteredResourcesList(resourcesWithAvailabilityResponse?.object ?? []);
@@ -236,16 +256,41 @@ const handleSelectEvent = event => {
     { label: 'Completed', color: '#93C5FD' }
   ];
 
+  // Derived resources list (synchronous) to avoid a one-render "stale columns" glitch
+  // when filters change (react-big-calendar can render once before an effect updates state).
+  const finalResourceLit = useMemo(() => {
+    const all = resourcesWithAvailabilityResponse?.object ?? [];
+    let list = all;
+
+    // Resource Type filter
+    if (selectedResourceType?.resourcesType?.length) {
+      const normalizeType = (v: any) => String(v ?? '').trim().toUpperCase();
+      const selectedTypes = selectedResourceType.resourcesType.map(normalizeType).filter(Boolean);
+      list = list.filter(r => {
+        const resourceTypes = [r?.resourceTypeLkey, r?.resource_type, r?.resourceType]
+          .map(normalizeType)
+          .filter(Boolean);
+        return resourceTypes.some(t => selectedTypes.includes(t));
+      });
+    }
+
+    // Specific Resources filter
+    if (Array.isArray(selectedResources?.resourceKey) && selectedResources.resourceKey.length) {
+      list = list.filter(r => selectedResources.resourceKey.includes(r.key));
+    }
+
+    return list;
+  }, [
+    resourcesWithAvailabilityResponse?.object,
+    selectedResourceType?.resourcesType,
+    selectedResources?.resourceKey
+  ]);
+
   // Filter appointments based on selected resources
   const filteredAppointments = useMemo(() => {
     const hasResourceTypeFilter = selectedResourceType?.resourcesType?.length > 0;
-    // Handle selectedResources - it can be an array or an object with resourceKey property
-    const selectedResourceKeys = Array.isArray(selectedResources) 
-      ? (selectedResources.length > 0 ? selectedResources : null)
-      : (selectedResources as any)?.resourceKey;
-    const hasResourceFilter = selectedResourceKeys && 
-      Array.isArray(selectedResourceKeys) && 
-      selectedResourceKeys.length > 0;
+    const selectedResourceKeys = selectedResources?.resourceKey ?? [];
+    const hasResourceFilter = Array.isArray(selectedResourceKeys) && selectedResourceKeys.length > 0;
     
     if (!hasResourceTypeFilter && !hasResourceFilter) {
       // No filters applied, show all appointments
@@ -300,14 +345,9 @@ const handleSelectEvent = event => {
     }
   }, [visibleAppointments, attachments]);
 
-    // Get resource keys from filtered resources only
-    const filteredResourceKeys = new Set(
-      (finalResourceLit ?? []).map(r => r.key)
-    );
-
-    const appointmentResourceKeys = new Set(
-      (finalAppointments ?? []).map(e => e.resourceId).filter(Boolean)
-    );
+    const appointmentResourceKeys = useMemo(() => {
+      return new Set((finalAppointments ?? []).map(e => e.resourceId).filter(Boolean));
+    }, [finalAppointments]);
 
 const dayIndex = currentCalendarDate.getDay();
 
@@ -327,11 +367,23 @@ const visibleResources =
     ? (finalResourceLit ?? []).filter(
         r =>
           // Only show resources that match the filter AND have appointments or availability
-          filteredResourceKeys.has(r.key) &&
-          (appointmentResourceKeys.has(r.key) ||
-          availabilityResourceKeys.has(r.key))
+          appointmentResourceKeys.has(r.key) || availabilityResourceKeys.has(r.key)
       )
-    : finalResourceLit;
+    : (finalResourceLit ?? []);
+
+  // Force BigCalendar to remount when filters change (react-big-calendar can keep stale resource columns otherwise)
+  const calendarKey = useMemo(() => {
+    const facilityKey = selectedFacility?.id ?? '';
+    const typeKeys = Array.isArray(selectedResourceType?.resourcesType)
+      ? selectedResourceType.resourcesType.join(',')
+      : '';
+    const resourceKeys = Array.isArray((selectedResources as any)?.resourceKey)
+      ? (selectedResources as any).resourceKey.join(',')
+      : Array.isArray(selectedResources)
+      ? selectedResources.join(',')
+      : '';
+    return `${facilityKey}|${typeKeys}|${resourceKeys}|${currentView}`;
+  }, [selectedFacility?.id, selectedResourceType?.resourcesType, selectedResources, currentView]);
 
 
   const handleChangeAppointment = () => {
@@ -369,7 +421,7 @@ const visibleResources =
 
   const CustomToolbar = ({ label, onNavigate, onView }) => {
     const [localVisibleAppointments, setLocalVisibleAppointments] = useState([]);
-    const datePickerRef = useRef();
+    const datePickerRef = useRef<any>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     useEffect(() => {
@@ -643,34 +695,6 @@ const visibleResources =
   const minTime = new Date();
   minTime.setHours(8, 0, 0);
 
-    useEffect(() => {
-      const all = resourcesWithAvailabilityResponse?.object ?? [];
-      let list = all;
-
-      // Resource Type filter
-      if (selectedResourceType?.resourcesType?.length) {
-        list = list.filter(r =>
-          selectedResourceType.resourcesType.includes(r.resourceTypeLkey)
-        );
-      }
-
-      // Specific Resources filter
-      if (
-        Array.isArray(selectedResources?.resourceKey) &&
-        selectedResources.resourceKey.length
-      ) {
-        list = list.filter(r =>
-          selectedResources.resourceKey.includes(r.key)
-        );
-      }
-
-      setFinalResourceLit(list);
-    }, [
-      resourcesWithAvailabilityResponse,
-      selectedResourceType,
-      selectedResources
-    ]);
-
 
 
 
@@ -811,7 +835,7 @@ const visibleResources =
                   <Form fluid layout="inline">
                     <MyInput
                       disabled
-                      height={'35px'}
+                      height={35}
                       width={'11.5vw'}
                       vr={validationResult}
                       column
@@ -829,7 +853,7 @@ const visibleResources =
 
                   <Form fluid layout="inline">
                     <MyInput
-                      height={'35px'}
+                      height={35}
                       width={'11.5vw'}
                       column
                       fieldLabel="Facility"
@@ -845,7 +869,7 @@ const visibleResources =
                   </Form>
                   <Form fluid layout="inline">
                     <MyInput
-                      height={'35px'}
+                      height={35}
                       width={'11.5vw'}
                       vr={validationResult}
                       column
@@ -863,7 +887,7 @@ const visibleResources =
 
                   <Form fluid layout="inline">
                     <MyInput
-                      height={'35px'}
+                      height={35}
                       width={'11.5vw'}
                       column
                       fieldLabel="Resources"
@@ -993,6 +1017,7 @@ const visibleResources =
           </div>
 
           <BigCalendar
+            key={calendarKey}
             date={currentCalendarDate}
             onNavigate={date => {
               setCalendarDate(date);
@@ -1080,7 +1105,7 @@ const visibleResources =
 
           <Stack style={{ margin: '0.4%' }}>
             {legendItems.map(({ label, color }) => (
-              <Stack style={{ marginRight: '36px' }} spacing={6} align="center" key={label}>
+              <Stack style={{ marginRight: '36px' }} spacing={6} alignItems="center" key={label}>
                 <div
                   style={{
                     width: 12,
