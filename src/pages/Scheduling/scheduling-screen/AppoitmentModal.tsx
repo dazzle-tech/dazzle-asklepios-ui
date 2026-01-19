@@ -92,6 +92,7 @@ const AppointmentModal = ({
         ...appointmentData,
         departmentKey: departmentKey
       });
+      console.log('appointmentData patient', appointmentData.patient);
       setLocalPatient(appointmentData?.patient || newApPatient);
     } else {
       setAppointment(newApAppointment);
@@ -1118,7 +1119,7 @@ const AppointmentModal = ({
                             prefixIcon={() => <FontAwesomeIcon icon={faUser} />}
                             style={{ width: '100%' }}
                           >
-                            {localPatient?.fullName ? 'Change Patient' : 'Select Patient'}
+                            {localPatient?.fullName || localPatient?.full_name ? 'Change Patient' : 'Select Patient'}
                           </MyButton>
                         </div>
                         <div style={{ flex: 1 }}>
@@ -1160,7 +1161,7 @@ const AppointmentModal = ({
                             </div>
 
                             <div style={{ marginLeft: '8px' }}>
-                              <p style={{ fontSize: '15px' }}>{localPatient?.fullName}</p>
+                              <p style={{ fontSize: '15px' }}>{localPatient?.fullName || localPatient?.full_name}</p>
                               <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
                                 {/* {localPatient?.genderLkey} */}
                                 <FontAwesomeIcon icon={faUser} />
@@ -1217,7 +1218,7 @@ const AppointmentModal = ({
                               <div className="input-wrapper" style={{ flex: 1 }}>
                                 <p style={{ fontSize: '10px', color: '#A1A9B8' }}>Mobile Number</p>
                                 {(() => {
-                                  const mobileValue = (localPatient as any)?.mobile_number || localPatient?.mobileNumber || localPatient?.phoneNumber;
+                                  const mobileValue = (localPatient as any)?.mobile_number || localPatient?.mobileNumber || localPatient?.phoneNumber || localPatient?.phone_number;
                                   return mobileValue || '-';
                                 })()}
                               </div>
@@ -1759,7 +1760,7 @@ const AppointmentModal = ({
                           ? `data:${patient?.attachmentProfilePicture?.contentType};base64,${patient?.attachmentProfilePicture?.fileContent}`
                           : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
                       }
-                      title={patient.fullName}
+                      title={patient.fullName || patient.full_name}
                       contant={<>{patient.createdAt ? new Date(patient?.createdAt).toLocaleString('en-GB') : ''}</>}
                       showMore={true}
                       arrowClick={() => {
