@@ -64,7 +64,8 @@ const AppointmentModal = ({
   appointmentData,
   showOnly,
   from,
-  selectedSlot
+  selectedSlot,
+  forceStatus
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
@@ -926,7 +927,10 @@ const AppointmentModal = ({
       appointmentStart: appointmentStart,
       appointmentEnd: appointmentEnd,
       instructions: instructions,
-      appointmentStatus: appointment.appointmentStatus ? appointment.appointmentStatus : 'New-Appointment',
+      // appointmentStatus: appointment.appointmentStatus ? appointment.appointmentStatus : 'New-Appointment',
+      appointmentStatus: forceStatus
+        ? forceStatus
+        : (appointment.appointmentStatus ? appointment.appointmentStatus : 'New-Appointment'),
       selectedSlices: selectedSlices ?? [],
       appointmentDate: selectedDate,
       resourceKey: finalResourceKey,

@@ -4,195 +4,282 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import dayjs from 'dayjs';
-import { Checkbox, Form } from 'rsuite';
+import { Checkbox, Form, Modal, Tooltip, Whisper } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { Whisper, Tooltip } from 'rsuite';
-import { useChangeAppointmentStatusMutation, useGetAppointmentsQuery } from '@/services/appointmentService';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+import MyButton from '@/components/MyButton/MyButton';
+import { formatDateWithoutSeconds } from '@/utils';
 
-const ViewAppointmentRequests = () => {
-    const [record, setRecord] = useState<any>({ Status: 'Pending' });
-    const [showRejected, setShowRejected] = useState(false);
+type Row = {
+    id: string;
 
-    // Fixed Follow Up visit type key (LOV key)
-    const FOLLOW_UP_VISIT_TYPE_KEY = '2041067508470007';
+    patientName?: string;
+    age?: number | null;
+    gender?: string | null;
+    mrn?: string | null;
 
-    const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [modalAction, setModalAction] = useState<'confirm' | 'reject'>('confirm');
+    createdBy?: string | null;
+    createdAt?: number | string | null;
 
-    const { data: appointmentsResponse, isFetching, refetch } = useGetAppointmentsQuery({
-        resource_type: null,
-        facility_id: null,
-        resources: []
+    status?: string | null;
+
+    ageText?: string;
+    genderText?: string;
+    updatedBy?: string | null;
+    updatedAt?: number | string | null;
+
+    otherReason?: string | null;
+
+    _raw?: any;
+};
+
+type Props = {
+    data: Row[];
+    onApprove: (row: Row) => void;
+    onReject: (row: Row, rejectReason: string) => Promise<void> | void;
+};
+
+const safeStr = (v: any) => {
+    if (v === null || typeof v === 'undefined') return '';
+    return String(v);
+};
+
+const formatTs = (ts?: number | string | null) => {
+    if (!ts) return '-';
+
+    // epoch ms or epoch seconds
+    const n = Number(ts);
+    if (!Number.isNaN(n) && n > 0) {
+        const asMs = n < 10_000_000_000 ? n * 1000 : n;
+        const d = dayjs(asMs);
+        if (d.isValid()) return d.format('DD-MM-YYYY HH:mm');
+    }
+
+    const s = String(ts);
+    if (/^\d{12,16}$/.test(s)) {
+        const yyyy = s.slice(0, 4);
+        const MM = s.slice(4, 6);
+        const dd = s.slice(6, 8);
+        const HH = s.slice(8, 10);
+        const mm = s.slice(10, 12);
+        const ss = s.length >= 14 ? s.slice(12, 14) : '00';
+        const d2 = dayjs(`${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`);
+        if (d2.isValid()) return d2.format('DD-MM-YYYY HH:mm');
+    }
+
+    // ISO/string
+    const d3 = dayjs(s);
+    if (d3.isValid()) return d3.format('DD-MM-YYYY HH:mm');
+
+    return '-';
+};
+
+const statusColor = (status?: string | null) => {
+    const s = String(status || '').toLowerCase();
+    if (s === 'rejected') return '#d82124ff';
+    if (s === 'confirmed') return '#2dd727ff';
+    if (s === 'pending') return '#faad14';
+    if (s === 'new-appointment') return '#faad14';
+    return '#8f98ab';
+};
+
+const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
+    const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+    // filters
+    const [filters, setFilters] = useState<any>({
+        fromDate: null,
+        toDate: null,
+        status: null,
+        showRejected: false
     });
 
-    const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery(undefined);
+    // Reject reason modal
+    const [rejectModalOpen, setRejectModalOpen] = useState(false);
+    const [rejectReason, setRejectReason] = useState('');
+    const [pendingRejectRow, setPendingRejectRow] = useState<Row | null>(null);
 
-    const departmentNameByKey = useMemo(() => {
-        const map = new Map<string, string>();
-        (allDepartments ?? []).forEach((d: any) => {
-            if (d?.name) {
-                if (d?.id !== null && typeof d?.id !== 'undefined') map.set(String(d.id), String(d.name));
-                if (d?.key !== null && typeof d?.key !== 'undefined') map.set(String(d.key), String(d.name));
-            }
-        });
-        return map;
-    }, [allDepartments]);
+    const filteredData = useMemo(() => {
+        let list = data ?? [];
 
-    const [changeAppointmentStatus, changeAppointmentStatusMutation] = useChangeAppointmentStatusMutation();
-
-    const followUpAppointments = useMemo(() => {
-        const list = appointmentsResponse?.object ?? [];
-        const isFollowUp = (a: any) => {
-            const visitTypeKey = a?.visitTypeLkey;
-            if (visitTypeKey !== null && typeof visitTypeKey !== 'undefined') {
-                return String(visitTypeKey) === FOLLOW_UP_VISIT_TYPE_KEY;
-            }
-            // Fallback if backend sends label/value instead of key
-            const label = a?.visitTypeLvalue?.lovDisplayVale ?? '';
-            return String(label).toLowerCase().includes('follow') && String(label).toLowerCase().includes('up');
-        };
-        const allowed = new Set(['pending', 'confirmed', 'rejected']);
-        return list.filter((a: any) => {
-            const status = String(a?.appointmentStatus ?? '').toLowerCase();
-            return isFollowUp(a) && allowed.has(status);
-        });
-    }, [appointmentsResponse?.object, FOLLOW_UP_VISIT_TYPE_KEY]);
-
-    const filteredAppointments = useMemo(() => {
-        const selectedStatus = String(record?.Status ?? '').toLowerCase();
-        if (!selectedStatus) return followUpAppointments;
-        if (selectedStatus === 'rejected' && !showRejected) return [];
-        if (selectedStatus === 'pending' || selectedStatus === 'confirmed' || selectedStatus === 'rejected') {
-            return followUpAppointments.filter((a: any) => String(a?.appointmentStatus ?? '').toLowerCase() === selectedStatus);
+        if (!filters.showRejected) {
+            list = list.filter(x => safeStr(x.status).toLowerCase() !== 'rejected');
         }
-        return followUpAppointments;
-    }, [followUpAppointments, record?.Status, showRejected]);
 
-    const tableData = useMemo(() => {
-        return filteredAppointments.map((appointment: any) => {
-            const patient = appointment?.patient ?? {};
-            const patientName =
-                patient?.full_name ||
-                patient?.fullName ||
-                (patient?.first_name && patient?.last_name
-                    ? `${patient.first_name} ${patient.last_name}`.trim()
-                    : patient?.first_name || patient?.last_name || 'Unknown Patient');
+        // filter by createdAt
+        if (filters.fromDate) {
+            const from = dayjs(filters.fromDate).startOf('day');
+            list = list.filter(x => {
+                if (!x.createdAt) return true;
+                const d = dayjs(Number(x.createdAt) || String(x.createdAt));
+                return d.isValid() ? (d.isSame(from) || d.isAfter(from)) : true;
+            });
+        }
 
-            const dob = patient?.dob ? new Date(patient.dob) : null;
-            const age = dob && !isNaN(dob.getTime()) ? new Date().getFullYear() - dob.getFullYear() : null;
-            const gender = patient?.genderLvalue?.lovDisplayVale ?? patient?.gender ?? '-';
+        if (filters.toDate) {
+            const to = dayjs(filters.toDate).endOf('day');
+            list = list.filter(x => {
+                if (!x.createdAt) return true;
+                const d = dayjs(Number(x.createdAt) || String(x.createdAt));
+                return d.isValid() ? (d.isSame(to) || d.isBefore(to)) : true;
+            });
+        }
 
-            return {
-                id: appointment?.key ?? appointment?.id,
-                requestedBy: appointment?.createdBy ?? '-',
-                requestedAt: appointment?.createdAt ? dayjs(appointment.createdAt).format('YYYY-MM-DD HH:mm') : '-',
-                patientName,
-                age,
-                gender,
-                department:
-                    departmentNameByKey.get(String(appointment?.departmentKey ?? '')) ||
-                    appointment?.department?.name ||
-                    '-',
-                appointmentDateTime: appointment?.appointmentStart ?? null,
-                status: appointment?.appointmentStatus ?? 'Pending',
-                _raw: appointment
-            };
-        });
-    }, [filteredAppointments, departmentNameByKey]);
+        if (filters.status) {
+            list = list.filter(x => safeStr(x.status) === safeStr(filters.status));
+        }
 
-    // Table Columns
+        return list;
+    }, [data, filters]);
+
+    const openRejectModal = (row: Row) => {
+        setPendingRejectRow(row);
+        setRejectReason('');
+        setRejectModalOpen(true);
+    };
+
+    const confirmReject = async () => {
+        if (!pendingRejectRow) return;
+        const reason = rejectReason?.trim();
+        if (!reason) return;
+
+        await onReject(pendingRejectRow, reason);
+
+        setRejectModalOpen(false);
+        setPendingRejectRow(null);
+        setRejectReason('');
+    };
+
     const columns: ColumnConfig[] = [
         {
-            key: 'requestedByAt',
-            title: 'Requested By\\At',
-            render: row => (
-                <>
-                    {row.requestedBy}
-                    <br />
-                    <span className="date-table-style">{row.requestedAt}</span>
-                </>
-            ),
-        },
-        {
-            key: 'patientName',
-            title: 'Patient Name',
-            render: row => (
+            key: 'patient',
+            title: 'Patient',
+            render: (row: Row) => (
                 <Whisper
                     placement="top"
                     trigger="hover"
                     speaker={
                         <Tooltip>
-                            Age: {row.age} <br />
-                            Gender: {row.gender}
+                            <div style={{ display: 'grid', gap: 4 }}>
+                                <div><b>Name:</b> {row.patientName || '-'}</div>
+                                <div><b>MRN:</b> {row.mrn || '-'}</div>
+                                <div><b>Age:</b> {row.ageText ?? '-'}</div>
+                            </div>
                         </Tooltip>
                     }
                 >
-                    <span className="hoverable-text">{row.patientName}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontWeight: 600 }}>{row.patientName || '-'}</span>
+                        <span style={{ fontSize: 12, color: '#8F98AB' }}>
+                            MRN: {row.mrn || '-'}
+                        </span>
+                    </div>
                 </Whisper>
-            ),
+            )
         },
         {
-            key: 'department',
-            title: 'Department',
-            dataKey: 'department',
+            key: 'age',
+            title: 'Age',
+            render: (row: Row) => <span>{row.ageText || '-'}</span>
         },
         {
-            key: 'appointmentDateTime',
-            title: 'Appointment Date Time',
-            render: row => row.appointmentDateTime ? dayjs(row.appointmentDateTime).format('DD-MM-YYYY HH:mm') : '-',
+            key: 'createdByAt',
+            title: 'Created By\\At',
+            render: (row: Row) => (
+                <>
+                    {row.createdBy || '-'}
+                    <br />
+                    <span className="date-table-style">
+                        {row.createdAt ? formatDateWithoutSeconds(row.createdAt) : ''}
+                    </span>
+                </>
+            )
+        },
+
+        {
+            key: 'approvedByAt',
+            title: 'Approved By\\At',
+            render: (row: Row) => {
+                const isConfirmed = safeStr(row.status).toLowerCase() === 'confirmed';
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontWeight: 600 }}>{isConfirmed ? (row.updatedBy || '-') : '-'}</span>
+                        <span className="date-table-style">{isConfirmed ? formatTs(row.updatedAt) : '-'}</span>
+                    </div>
+                );
+            }
+        },
+        {
+            key: 'rejectedByAt',
+            title: 'Rejected By\\At',
+            render: (row: Row) => {
+                const isRejected = safeStr(row.status).toLowerCase() === 'rejected';
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontWeight: 600 }}>{isRejected ? (row.updatedBy || '-') : '-'}</span>
+                        <span className="date-table-style">{isRejected ? formatTs(row.updatedAt) : '-'}</span>
+                    </div>
+                );
+            }
+        },
+        {
+            key: 'rejectReason',
+            title: 'Reject Reason',
+            render: (row: Row) => {
+                const isRejected = safeStr(row.status).toLowerCase() === 'rejected';
+                return (
+                    <span style={{ color: isRejected ? '#c10020ff' : '#8F98AB' }}>
+                        {isRejected ? (row.otherReason || '-') : '-'}
+                    </span>
+                );
+            }
         },
         {
             key: 'status',
             title: 'Status',
-            render: row => {
-                const displayStatus = row.status;
-                const s = String(displayStatus).toLowerCase();
-                const color =
-                    s === 'rejected' ? '#d82124ff' : s === 'confirmed' ? '#2dd727ff' : '#faad14';
-                return <MyBadgeStatus contant={displayStatus} color={color} />;
-            },
+            render: (row: Row) => (
+                <MyBadgeStatus contant={row.status || 'Pending'} color={statusColor(row.status)} />
+            )
         },
         {
             key: 'actions',
             title: 'Actions',
             align: 'center',
-            render: row => {
-                const isBusy = changeAppointmentStatusMutation.isLoading;
-                const isPending = String(row.status).toLowerCase() === 'pending';
+            render: (row: Row) => {
+                const s = safeStr(row.status).toLowerCase();
+                const isRejected = s === 'rejected';
+                const isConfirmed = s === 'confirmed';
+
                 return (
                     <>
+                        {/* Approve: only if not rejected & not confirmed */}
                         <FontAwesomeIcon
                             icon={faCircleCheck}
-                            style={{ color: !isPending || isBusy ? '#9ca3af' : '#488934ff' }}
+                            style={{ color: '#488934ff', opacity: isRejected || isConfirmed ? 0.35 : 1, cursor: isRejected || isConfirmed ? 'not-allowed' : 'pointer' }}
                             className="action-icon success"
                             onClick={() => {
-                                if (!isPending || isBusy) return;
-                                setSelectedAppointment(row._raw);
-                                setModalAction('confirm');
-                                setModalOpen(true);
+                                if (!isRejected && !isConfirmed) onApprove(row);
                             }}
-                            title="Click to Confirm"
+                            title="Approve"
                         />
+
+                        {/* Reject: only if not rejected & not confirmed */}
                         <FontAwesomeIcon
                             icon={faCircleXmark}
-                            style={{ color: !isPending || isBusy ? '#9ca3af' : '#c10020ff' }}
+                            style={{ color: '#c10020ff', opacity: isRejected || isConfirmed ? 0.35 : 1, cursor: isRejected || isConfirmed ? 'not-allowed' : 'pointer' }}
                             className="action-icon danger"
                             onClick={() => {
-                                if (!isPending || isBusy) return;
-                                setSelectedAppointment(row._raw);
-                                setModalAction('reject');
-                                setModalOpen(true);
+                                if (!isRejected && !isConfirmed) openRejectModal(row);
                             }}
-                            title="Click to Reject"
+                            title="Reject"
                         />
                     </>
                 );
-            },
-        },
+            }
+        }
     ];
+
+    const rowClassName = (rowData: Row) =>
+        safeStr(rowData.id) === safeStr(selectedRowId) ? 'selected-row' : '';
 
     const tablefilters = (
         <div className="field-btn-div">
@@ -203,38 +290,43 @@ const ViewAppointmentRequests = () => {
                         fieldLabel="From Date"
                         fieldType="date"
                         fieldName="fromDate"
-                        record={record}
-                        setRecord={setRecord}
+                        record={filters}
+                        setRecord={setFilters}
                     />
                     <MyInput
                         column
                         fieldLabel="To Date"
                         fieldType="date"
                         fieldName="toDate"
-                        record={record}
-                        setRecord={setRecord}
+                        record={filters}
+                        setRecord={setFilters}
                     />
+
                     <MyInput
                         column
                         width={200}
                         fieldLabel="Status"
                         fieldType="select"
-                        fieldName="Status"
+                        fieldName="status"
                         selectData={[
                             { key: 'Pending', lovDisplayVale: 'Pending' },
+                            { key: 'New-Appointment', lovDisplayVale: 'New-Appointment' },
                             { key: 'Confirmed', lovDisplayVale: 'Confirmed' },
-                            { key: 'Rejected', lovDisplayVale: 'Rejected' },
+                            { key: 'Rejected', lovDisplayVale: 'Rejected' }
                         ]}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        record={record}
-                        setRecord={setRecord}
+                        record={filters}
+                        setRecord={setFilters}
                         searchable={false}
                     />
+
                     <div className="show-rejected-view-appointment-request">
                         <Checkbox
-                            checked={showRejected}
-                            onChange={(_, checked) => setShowRejected(checked)}
+                            checked={!!filters.showRejected}
+                            onChange={(_, checked) =>
+                                setFilters((p: any) => ({ ...p, showRejected: checked }))
+                            }
                         >
                             Show Rejected
                         </Checkbox>
@@ -247,36 +339,46 @@ const ViewAppointmentRequests = () => {
     return (
         <div>
             <MyTable
-                data={tableData}
+                data={filteredData}
                 columns={columns}
-                loading={isFetching}
+                loading={false}
+                rowClassName={rowClassName}
+                onRowClick={(rowData: Row) => setSelectedRowId(safeStr(rowData.id))}
                 filters={tablefilters}
             />
-            <DeletionConfirmationModal
-                open={modalOpen}
-                setOpen={setModalOpen}
-                actionType={modalAction}
-                actionButtonFunction={async () => {
-                    if (!selectedAppointment) return;
-                    const nextStatus = modalAction === 'confirm' ? 'Confirmed' : 'Rejected';
-                    try {
-                        await changeAppointmentStatus({
-                            ...selectedAppointment,
-                            appointmentStatus: nextStatus
-                        }).unwrap();
-                        setModalOpen(false);
-                        setSelectedAppointment(null);
-                        refetch();
-                    } catch (e) {
-                        // Keep modal open; backend error handling is done globally via RTK BaseQuery/toasts
-                    }
-                }}
-                confirmationQuestion={
-                    modalAction === 'confirm'
-                        ? 'Are you sure you want to confirm this appointment?'
-                        : 'Are you sure you want to reject this appointment?'
-                }
-            />
+
+            {/* Reject Reason Modal */}
+            <Modal open={rejectModalOpen} onClose={() => setRejectModalOpen(false)} size="sm">
+                <Modal.Header>
+                    <Modal.Title>Reject Appointment Request</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form fluid>
+                        <MyInput
+                            column
+                            fieldLabel="Reject Reason"
+                            fieldType="textarea"
+                            rows={3}
+                            fieldName="rejectReason"
+                            record={{ rejectReason }}
+                            setRecord={(r: any) => setRejectReason(r.rejectReason)}
+                            required
+                        />
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <MyButton appearance="ghost" onClick={() => setRejectModalOpen(false)}>
+                        Cancel
+                    </MyButton>
+                    <MyButton
+                        appearance="primary"
+                        onClick={confirmReject}
+                        disabled={!rejectReason.trim()}
+                    >
+                        Confirm Reject
+                    </MyButton>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };
