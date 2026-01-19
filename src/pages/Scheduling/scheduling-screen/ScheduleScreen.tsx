@@ -335,8 +335,17 @@ const visibleResources =
 
 
   const handleChangeAppointment = () => {
-    setAppointment(selectedEvent.appointmentData);
-    setModalOpen(true);
+    // Persist the selected appointment data BEFORE closing the actions modal.
+    // Otherwise `onActionsModalClose` clears `selectedEvent` and the edit modal opens empty.
+    const dataToEdit = selectedEvent?.appointmentData;
+    if (dataToEdit) {
+      setViewAppointmentData(dataToEdit);
+      setShowAppointmentOnly(false);
+      // Ensure slot-selection logic can't override existing appointment data while editing
+      setSelectedSlot(null);
+      setAppointment(dataToEdit);
+      setModalOpen(true);
+    }
     setActionsModalOpen(false);
   };
 
