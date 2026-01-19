@@ -4,7 +4,7 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
+import FollowupAppointmentModal from '@/pages/Scheduling/scheduling-screen/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
@@ -242,6 +242,16 @@ const Encounter = () => {
       navigate('/encounter-list');
     }
   };
+
+  const followUpDraftAppointmentData = React.useMemo(() => {
+    // Seed the follow-up modal with the encounter's patient so it opens ready to save.
+    const patient = propsData?.patient;
+    if (!patient) return null;
+    return {
+      patient,
+      patientKey: patient?.key
+    };
+  }, [propsData?.patient]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -661,13 +671,13 @@ const Encounter = () => {
         encounter={propsData?.encounter}
       />
 
-      <AppointmentModal
+      <FollowupAppointmentModal
         from={'Encounter'}
         isOpen={modalOpen}
         onClose={() => {
           setModalOpen(false), setShowAppointmentOnly(false);
         }}
-        appointmentData={selectedEvent?.appointmentData}
+        appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
         onSave={() => {}}
