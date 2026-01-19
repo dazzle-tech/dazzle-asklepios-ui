@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState,useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Calendar as BigCalendar, Views, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -34,7 +34,8 @@ import { useAppDispatch } from '@/hooks';
 import AppointmentActionsModal from './AppointmentActionsModal';
 import {
   useGetAppointmentsQuery,
-  useGetResourcesWithAvailabilityQuery
+  useGetResourcesWithAvailabilityQuery,
+  useSaveAppointmentMutation
 } from '@/services/appointmentService';
 import MyInput from '@/components/MyInput';
 import CalenderSimpleIcon from '@rsuite/icons/CalenderSimple';
@@ -48,6 +49,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import MyModal from '@/components/MyModal/MyModal';
 import ViewAppointmentRequests from './ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
+import { calculateAgeFormat } from '@/utils';
 
 
 const ScheduleScreen = () => {
@@ -65,6 +67,14 @@ const ScheduleScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
+  const FOLLOW_UP_VISIT_TYPE_LKEY = 2041067508470007;
+
+  const [saveAppointment] = useSaveAppointmentMutation();
+
+  const [requestApproveModalOpen, setRequestApproveModalOpen] = useState(false);
+  const [requestToApprove, setRequestToApprove] = useState<any>(null);
+
+
   //Calendar Filters
   // NOTE: `MyInput`'s `setRecord` spreads `record` (`{ ...record, ... }`),
   // so these MUST NOT be `null` (spreading null would crash at runtime).
@@ -129,9 +139,9 @@ const ScheduleScreen = () => {
 
       const formattedAppointments = appointments.object.map(appointment => {
         const dob = new Date(appointment?.patient?.dob);
-        const patientFullName = appointment?.patient?.full_name || 
+        const patientFullName = appointment?.patient?.full_name ||
           appointment?.patient?.fullName ||
-          (appointment?.patient?.first_name && appointment?.patient?.last_name 
+          (appointment?.patient?.first_name && appointment?.patient?.last_name
             ? `${appointment.patient.first_name} ${appointment.patient.last_name}`.trim()
             : appointment?.patient?.first_name || appointment?.patient?.last_name || 'Unknown Patient');
 
@@ -184,9 +194,9 @@ const ScheduleScreen = () => {
 
       const filtered = resourcesWithAvailabilityResponse.object.filter(resourceMatchesSelectedType);
       setFilteredResourcesList(filtered);
-      } else {
-        setFilteredResourcesList(resourcesWithAvailabilityResponse?.object ?? []);
-      }
+    } else {
+      setFilteredResourcesList(resourcesWithAvailabilityResponse?.object ?? []);
+    }
 
   }, [resourcesWithAvailabilityResponse, selectedResourceType?.resourcesType]);
   useEffect(() => {
@@ -195,45 +205,45 @@ const ScheduleScreen = () => {
     }
   }, [selectedSlot]);
 
-const { data: noShowResonLovQueryResponse } =
-  useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
+  const { data: noShowResonLovQueryResponse } =
+    useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
 
-const { data: cancelResonLovQueryResponse } =
-  useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
+  const { data: cancelResonLovQueryResponse } =
+    useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
 
 
 
-const handleSelectEvent = event => {
-  const freshEvent =
-    finalAppointments?.find(e => e.id === event.id) || event;
+  const handleSelectEvent = event => {
+    const freshEvent =
+      finalAppointments?.find(e => e.id === event.id) || event;
 
-  setSelectedEvent(freshEvent);
+    setSelectedEvent(freshEvent);
 
-  const status = freshEvent?.appointmentData?.appointmentStatus;
+    const status = freshEvent?.appointmentData?.appointmentStatus;
 
-  if (status === 'Canceled' || status === 'No-Show') {
-    const reasonKey = freshEvent?.appointmentData?.reasonLkey;
+    if (status === 'Canceled' || status === 'No-Show') {
+      const reasonKey = freshEvent?.appointmentData?.reasonLkey;
 
-    const reasonLovList =
-      status === 'Canceled'
-        ? cancelResonLovQueryResponse?.object
-        : noShowResonLovQueryResponse?.object;
+      const reasonLovList =
+        status === 'Canceled'
+          ? cancelResonLovQueryResponse?.object
+          : noShowResonLovQueryResponse?.object;
 
-    const matchedReason = reasonLovList?.find(
-      r => r.key === reasonKey
-    );
+      const matchedReason = reasonLovList?.find(
+        r => r.key === reasonKey
+      );
 
-    setReasonViewRecord({
-      reason: matchedReason?.lovDisplayVale || '',
-      otherReason: freshEvent?.appointmentData?.otherReason || ''
-    });
+      setReasonViewRecord({
+        reason: matchedReason?.lovDisplayVale || '',
+        otherReason: freshEvent?.appointmentData?.otherReason || ''
+      });
 
-    setShowReasonModal(true);
-    return;
-  }
+      setShowReasonModal(true);
+      return;
+    }
 
-  setActionsModalOpen(true);
-};
+    setActionsModalOpen(true);
+  };
 
 
 
@@ -261,7 +271,7 @@ const handleSelectEvent = event => {
   const legendItems = [
     { label: 'No-Show', color: '#FDE68A' },
     { label: 'Checked In', color: '#FDBA74' },
-    { label: 'New', color: '#fafafeff' , borderColor: '#007bff'},
+    { label: 'New', color: '#fafafeff', borderColor: '#007bff' },
     { label: 'Confirmed', color: '#34D399' },
     { label: 'Completed', color: '#93C5FD' }
   ];
@@ -301,18 +311,18 @@ const handleSelectEvent = event => {
     const hasResourceTypeFilter = selectedResourceType?.resourcesType?.length > 0;
     const selectedResourceKeys = selectedResources?.resourceKey ?? [];
     const hasResourceFilter = Array.isArray(selectedResourceKeys) && selectedResourceKeys.length > 0;
-    
+
     if (!hasResourceTypeFilter && !hasResourceFilter) {
       // No filters applied, show all appointments
       return appointmentsData;
     }
-    
+
     // Filter appointments to only show those matching the selected resources
     const filteredResourceKeys = new Set(
       (finalResourceLit ?? []).map(r => r.key)
     );
-    
-    return appointmentsData.filter(event => 
+
+    return appointmentsData.filter(event =>
       filteredResourceKeys.has(event.resourceId)
     );
   }, [appointmentsData, finalResourceLit, selectedResourceType, selectedResources]);
@@ -355,31 +365,31 @@ const handleSelectEvent = event => {
     }
   }, [visibleAppointments, attachments]);
 
-    const appointmentResourceKeys = useMemo(() => {
-      return new Set((finalAppointments ?? []).map(e => e.resourceId).filter(Boolean));
-    }, [finalAppointments]);
+  const appointmentResourceKeys = useMemo(() => {
+    return new Set((finalAppointments ?? []).map(e => e.resourceId).filter(Boolean));
+  }, [finalAppointments]);
 
-const dayIndex = currentCalendarDate.getDay();
+  const dayIndex = currentCalendarDate.getDay();
 
-const availabilityResourceKeys = useMemo(() => {
-  return new Set(
-    (finalResourceLit ?? [])
-      .filter(r =>
-        r.availability?.some(a => a.dayOfWeek === dayIndex)
-      )
-      .map(r => r.key)
-  );
-}, [finalResourceLit, dayIndex]);
+  const availabilityResourceKeys = useMemo(() => {
+    return new Set(
+      (finalResourceLit ?? [])
+        .filter(r =>
+          r.availability?.some(a => a.dayOfWeek === dayIndex)
+        )
+        .map(r => r.key)
+    );
+  }, [finalResourceLit, dayIndex]);
 
 
-const visibleResources =
-  currentView === 'day'
-    ? (finalResourceLit ?? []).filter(
+  const visibleResources =
+    currentView === 'day'
+      ? (finalResourceLit ?? []).filter(
         r =>
           // Only show resources that match the filter AND have appointments or availability
           appointmentResourceKeys.has(r.key) || availabilityResourceKeys.has(r.key)
       )
-    : (finalResourceLit ?? []);
+      : (finalResourceLit ?? []);
 
   // Force BigCalendar to remount when filters change (react-big-calendar can keep stale resource columns otherwise)
   const calendarKey = useMemo(() => {
@@ -390,8 +400,8 @@ const visibleResources =
     const resourceKeys = Array.isArray((selectedResources as any)?.resourceKey)
       ? (selectedResources as any).resourceKey.join(',')
       : Array.isArray(selectedResources)
-      ? selectedResources.join(',')
-      : '';
+        ? selectedResources.join(',')
+        : '';
     return `${facilityKey}|${typeKeys}|${resourceKeys}|${currentView}`;
   }, [selectedFacility?.id, selectedResourceType?.resourcesType, selectedResources, currentView]);
 
@@ -798,7 +808,7 @@ const visibleResources =
     return {
       style: {
         backgroundColor,
-        borderColor:'#007bff' ,
+        borderColor: '#007bff',
         borderWidth: '3px',
         borderStyle: 'solid',
         borderRadius: '10px',
@@ -846,6 +856,78 @@ const visibleResources =
 
     return { style: defaultShadedStyle };
   };
+
+const requestsRows = useMemo(() => {
+  const list = appointments?.object ?? [];
+
+  return list
+    .filter((a: any) => String(a?.visitTypeLkey) === String(FOLLOW_UP_VISIT_TYPE_LKEY))
+    .filter((a: any) => !a?.appointmentStart)
+    .map((a: any) => {
+      const patient = a?.patient || {};
+
+      const patientName =
+        patient?.full_name ||
+        patient?.fullName ||
+        (patient?.first_name && patient?.last_name
+          ? `${patient.first_name} ${patient.last_name}`.trim()
+          : patient?.first_name || patient?.last_name || 'Unknown');
+
+      const patientGender = patient?.genderLvalue?.lovDisplayVale || patient?.genderLkey || '';
+      const patientAge = patient?.dob ? calculateAgeFormat(patient.dob) : '';
+
+      const patientMrn =
+        patient?.patientMrn ||
+        '';
+
+      return {
+        id: a.key,
+
+        patientName,
+        mrn: patientMrn,
+
+        ageText: patientAge,
+        genderText: patientGender,
+
+        createdBy: a?.createdBy ?? a?.created_by ?? '',
+        createdAt: a?.createdAt ?? a?.created_at ?? null,
+
+        status: a?.appointmentStatus ?? 'Pending',
+
+        updatedBy: a?.updatedBy ?? a?.updated_by ?? '',
+        updatedAt: a?.updatedAt ?? a?.updated_at ?? null,
+
+        otherReason: a?.otherReason ?? '',
+
+        _raw: a
+      };
+    });
+}, [appointments]);
+
+  const handleApproveRequest = (row: any) => {
+    setRequestToApprove(row?._raw);
+    setRequestApproveModalOpen(true);
+  };
+
+  const handleRejectRequest = async (row: any, rejectReason: string) => {
+    try {
+      const raw = row?._raw;
+      if (!raw?.key) return;
+
+      await saveAppointment({
+        ...raw,
+        appointmentStatus: 'Rejected',
+        otherReason: rejectReason,
+        reasonValue: rejectReason,
+        appointmentStart: null,
+        appointmentEnd: null
+      }).unwrap();
+
+      await refitchAppointments();
+    } catch (e) {
+    }
+  };
+
   return (
     <div>
       <div
@@ -992,7 +1074,7 @@ const visibleResources =
                 </InputGroup.Button>
                 <Input placeholder="Search For Appointment" />
               </InputGroup> */}
-           
+
             </div>
 
             {/* Right  */}
@@ -1059,7 +1141,7 @@ const visibleResources =
             style={{ height: '73vh' }}
             min={minTime}
             {...(currentView === 'day' && {
-              resources: visibleResources  ?? [],
+              resources: visibleResources ?? [],
               resourceIdAccessor: 'key',
               resourceTitleAccessor: 'resourceName'
             })}
@@ -1172,6 +1254,27 @@ const visibleResources =
           setFollowUpModalOpen(true);
         }}
       />
+      <AppointmentModal
+        from={'Schedule'}
+        isOpen={requestApproveModalOpen}
+        onClose={() => {
+          setRequestApproveModalOpen(false);
+          setRequestToApprove(null);
+        }}
+        appointmentData={requestToApprove}
+        resourceType={selectedResourceType}
+        facility={selectedFacility}
+        onSave={async () => {
+          await refitchAppointments();
+          setRequestApproveModalOpen(false);
+          setRequestToApprove(null);
+          setAppRequestModalOpen(false);
+        }}
+        showOnly={false}
+        selectedSlot={null}
+        forceStatus="Confirmed"
+      />
+
       <FollowupAppointmentModal
         from={'Schedule'}
         isOpen={followUpModalOpen}
@@ -1227,38 +1330,38 @@ const visibleResources =
         </Drawer.Body>
       </Drawer>
 
-<Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
-  <Modal.Header />
-  <Modal.Body>
+      <Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
+        <Modal.Header />
+        <Modal.Body>
 
-    <Form fluid layout="inline">
+          <Form fluid layout="inline">
 
-      <MyInput
-        width={350}
-        column
-        fieldLabel="Reason"
-        fieldName="reason"
-        record={reasonViewRecord}
-        setRecord={setReasonViewRecord}
-        disabled
-      />
+            <MyInput
+              width={350}
+              column
+              fieldLabel="Reason"
+              fieldName="reason"
+              record={reasonViewRecord}
+              setRecord={setReasonViewRecord}
+              disabled
+            />
 
-      <MyInput
-        width={350}
-        column
-        fieldLabel="Other Reason"
-        fieldName="otherReason"
-        fieldType="textarea"
-        rows={3}
-        record={reasonViewRecord}
-        setRecord={setReasonViewRecord}
-        disabled
-      />
+            <MyInput
+              width={350}
+              column
+              fieldLabel="Other Reason"
+              fieldName="otherReason"
+              fieldType="textarea"
+              rows={3}
+              record={reasonViewRecord}
+              setRecord={setReasonViewRecord}
+              disabled
+            />
 
-    </Form>
+          </Form>
 
-  </Modal.Body>
-</Modal>
+        </Modal.Body>
+      </Modal>
 
 
 
@@ -1272,7 +1375,16 @@ const visibleResources =
         actionButtonFunction={() => {
           setModalOpen(false);
         }}
-        content={<ViewAppointmentRequests></ViewAppointmentRequests>}
+        // content={<ViewAppointmentRequests></ViewAppointmentRequests>}
+        content={
+          <ViewAppointmentRequests
+            data={requestsRows}
+            onApprove={handleApproveRequest}
+            onReject={handleRejectRequest}
+          />
+        }
+
+
       >
       </MyModal>
 
