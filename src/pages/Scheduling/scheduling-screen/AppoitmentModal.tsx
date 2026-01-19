@@ -92,7 +92,6 @@ const AppointmentModal = ({
         ...appointmentData,
         departmentKey: departmentKey
       });
-      console.log('appointmentData patient', appointmentData.patient);
       setLocalPatient(appointmentData?.patient || newApPatient);
     } else {
       setAppointment(newApAppointment);
@@ -462,10 +461,12 @@ const AppointmentModal = ({
   const [saveAppointment, saveAppointmentMutation] = useSaveAppointmentMutation();
 
   useEffect(() => {
-    if (patientSlice?.patient) {
+    // When editing/viewing an existing appointment, localPatient should come from `appointmentData`.
+    // Don't overwrite it from the global patient slice (which may be empty or from a previous flow).
+    if (!appointmentData && patientSlice?.patient) {
       setLocalPatient(patientSlice?.patient);
     }
-  }, [patientSlice]);
+  }, [patientSlice, appointmentData]);
 
   // const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
   const ResourceTypeEnum = useEnumOptions('ResourceType');
@@ -670,7 +671,7 @@ const AppointmentModal = ({
 
   useEffect(() => {
     if (appointmentData) {
-      setAppointment({ ...appointment, patientKey: localPatient?.key });
+      setAppointment(prev => ({ ...prev, patientKey: localPatient?.key }));
     }
   }, [localPatient]);
 
@@ -1119,7 +1120,7 @@ const AppointmentModal = ({
                             prefixIcon={() => <FontAwesomeIcon icon={faUser} />}
                             style={{ width: '100%' }}
                           >
-                            {localPatient?.fullName || localPatient?.full_name ? 'Change Patient' : 'Select Patient'}
+                            {localPatient?.fullName || (localPatient as any)?.full_name ? 'Change Patient' : 'Select Patient'}
                           </MyButton>
                         </div>
                         <div style={{ flex: 1 }}>
@@ -1161,7 +1162,7 @@ const AppointmentModal = ({
                             </div>
 
                             <div style={{ marginLeft: '8px' }}>
-                              <p style={{ fontSize: '15px' }}>{localPatient?.fullName || localPatient?.full_name}</p>
+                              <p style={{ fontSize: '15px' }}>{localPatient?.fullName || (localPatient as any)?.full_name}</p>
                               <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
                                 {/* {localPatient?.genderLkey} */}
                                 <FontAwesomeIcon icon={faUser} />
@@ -1218,7 +1219,11 @@ const AppointmentModal = ({
                               <div className="input-wrapper" style={{ flex: 1 }}>
                                 <p style={{ fontSize: '10px', color: '#A1A9B8' }}>Mobile Number</p>
                                 {(() => {
-                                  const mobileValue = (localPatient as any)?.mobile_number || localPatient?.mobileNumber || localPatient?.phoneNumber || localPatient?.phone_number;
+                                  const mobileValue =
+                                    (localPatient as any)?.mobile_number ||
+                                    localPatient?.mobileNumber ||
+                                    localPatient?.phoneNumber ||
+                                    (localPatient as any)?.phone_number;
                                   return mobileValue || '-';
                                 })()}
                               </div>
