@@ -641,19 +641,26 @@ form.margin-left-3 .rs-form-control-label {
   position: relative;
 }
 
-.prescription-dropdown-menuresult {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
+.icd-search-wrapper {
+  position: relative;
   width: 100%;
-  z-index: 9999;
+  flex: 1 1 auto;
+  min-width: 150px; 
+}
+
+
+.prescription-dropdown-menuresult {
+  min-width: 100% !important;
+  width: auto !important;
+  left: 0;
   right: 0;
-  border: 1px solid #e5e5e5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  max-height: 220px;
-  overflow-y: auto;
-  background: #fff;
-  border-radius: 6px;
+  white-space: normal !important;
+}
+
+
+.icd-search-wrapper .indication-input,
+.icd-search-wrapper .rs-input-group {
+  width: 100%;
 }
 
 .prescription-dropdown-item-content {
@@ -755,6 +762,7 @@ form.margin-left-3 .rs-form-control-label {
 }
 
 .prescription-refills-blocks {
+  margin-top: 2vw;
   display: flex;
   flex-direction: row;
   gap: 1vw;
