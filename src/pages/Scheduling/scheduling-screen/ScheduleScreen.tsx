@@ -26,6 +26,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import AppointmentModal from './AppoitmentModal';
+import FollowupAppointmentModal from './FollowupAppointmentModal';
 import { ApAppointment } from '@/types/model-types';
 import { faPaperPlane, faPlus, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
@@ -55,6 +56,8 @@ const ScheduleScreen = () => {
   const [validationResult] = useState({});
   const [recordSearchAppointment, setRecordSearchAppointment] = useState({ value: '' });
   const [modalOpen, setModalOpen] = useState(false);
+  const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
+  const [followUpDraftData, setFollowUpDraftData] = useState<any>(null);
   const [ActionsModalOpen, setActionsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [viewAppointmentData, setViewAppointmentData] = useState(null);
@@ -88,6 +91,13 @@ const ScheduleScreen = () => {
     reason: '',
     otherReason: ''
   });
+
+  const isFollowUpAppointment = (appt: any) => {
+    const label = appt?.visitTypeLvalue?.lovDisplayVale ?? '';
+    const key = appt?.visitTypeLkey ?? '';
+    const s = `${label} ${key}`.toLowerCase();
+    return s.includes('follow') && s.includes('up');
+  };
 
   const ResourceTypeEnum = useEnumOptions("ResourceType");
 
@@ -391,6 +401,13 @@ const visibleResources =
     // Otherwise `onActionsModalClose` clears `selectedEvent` and the edit modal opens empty.
     const dataToEdit = selectedEvent?.appointmentData;
     if (dataToEdit) {
+      if (isFollowUpAppointment(dataToEdit)) {
+        setFollowUpDraftData(dataToEdit);
+        setFollowUpModalOpen(true);
+        setModalOpen(false);
+        setActionsModalOpen(false);
+        return;
+      }
       setViewAppointmentData(dataToEdit);
       setShowAppointmentOnly(false);
       // Ensure slot-selection logic can't override existing appointment data while editing
@@ -416,7 +433,13 @@ const visibleResources =
       setActionsModalOpen(false);
       // Use setTimeout to ensure state updates complete before opening modal
       setTimeout(() => {
-        setModalOpen(true);
+        if (isFollowUpAppointment(dataToView)) {
+          setFollowUpDraftData(dataToView);
+          setFollowUpModalOpen(true);
+          setModalOpen(false);
+        } else {
+          setModalOpen(true);
+        }
         isOpeningViewModalRef.current = false;
       }, 10);
     }
@@ -977,13 +1000,13 @@ const visibleResources =
               {/* <ButtonToolbar> */}
               <div style={{ display: 'flex', gap: '5px' }}>
 
-                {/* <MyButton
+                <MyButton
                   appearance="ghost"
                   onClick={() => setAppRequestModalOpen(true)}
                   prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
                 >
                   View App Requests
-                </MyButton> */}
+                </MyButton>
 
                 <MyButton
                   // color="blue"
@@ -1132,11 +1155,33 @@ const visibleResources =
 
       <AppointmentModal
         from={'Schedule'}
-        isOpen={modalOpen}
+        isOpen={modalOpen && !followUpModalOpen}
         onClose={() => {
           setModalOpen(false), setShowAppointmentOnly(false), setViewAppointmentData(null);
         }}
         appointmentData={viewAppointmentData || selectedEvent?.appointmentData}
+        resourceType={selectedResourceType}
+        facility={selectedFacility}
+        onSave={refitchAppointments}
+        showOnly={showAppointmentOnly}
+        selectedSlot={showAppointmentOnly ? null : selectedSlot}
+        onSwitchToFollowUp={(draft: any) => {
+          // Switch from the normal appointment modal to the Follow Up modal
+          setFollowUpDraftData({ ...(draft?.appointment ?? {}), patient: draft?.patient });
+          setModalOpen(false);
+          setFollowUpModalOpen(true);
+        }}
+      />
+      <FollowupAppointmentModal
+        from={'Schedule'}
+        isOpen={followUpModalOpen}
+        onClose={() => {
+          setFollowUpModalOpen(false);
+          setFollowUpDraftData(null);
+          setShowAppointmentOnly(false);
+          setViewAppointmentData(null);
+        }}
+        appointmentData={followUpDraftData || viewAppointmentData || selectedEvent?.appointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
         onSave={refitchAppointments}
