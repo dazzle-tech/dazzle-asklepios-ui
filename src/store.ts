@@ -118,6 +118,8 @@ import { medicationTestOrdersValidationService } from './services/ai-services/me
 import { patientProblemService } from './services/patients/patientProblemService';
 import { familyHistoryService } from './services/patients/familyHistoryService';
 import { hospitalizationservice } from './services/patients/hospitalizationsService';
+import { surgicalHistoryService } from './services/patients/surgicalHistoryService';
+import { socialHistoryService } from './services/patients/socialHistoryService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -340,7 +342,9 @@ export const store = configureStore({
       medicationTestOrdersValidationService.reducer,
     [patientProblemService.reducerPath]: patientProblemService.reducer,
     [familyHistoryService.reducerPath]: familyHistoryService.reducer,
-    [hospitalizationservice.reducerPath]: hospitalizationservice.reducer
+    [hospitalizationservice.reducerPath]: hospitalizationservice.reducer,
+    [surgicalHistoryService.reducerPath]: surgicalHistoryService.reducer,
+    [socialHistoryService.reducerPath]: socialHistoryService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -460,7 +464,9 @@ export const store = configureStore({
       medicationTestOrdersValidationService.middleware,
       patientProblemService.middleware,
       familyHistoryService.middleware,
-      hospitalizationservice.middleware
+      hospitalizationservice.middleware,
+      surgicalHistoryService.middleware,
+      socialHistoryService.middleware
     ])
 });
 

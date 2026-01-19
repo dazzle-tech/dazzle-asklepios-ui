@@ -1165,3 +1165,56 @@ export const newHospitalization: modelTypes.Hospitalization = {
   lastModifiedBy: null,
   lastModifiedDate: null
 };
+
+export const newSurgicalHistory: modelTypes.SurgicalHistory = {
+  id: undefined,
+  patientId: 0,
+
+  surgery: '',
+  dateOfSurgery: '',
+  facility: '',
+
+  anesthesiaType: null,
+  complications: null,
+
+  adverseReactionsToAnesthesia: null,
+
+  hasImplantsOrDevices: null,
+  implantsOrDevicesDescription: null,
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newSocialHistory: modelTypes.SocialHistory = {
+  id: undefined,
+  patientId: 0,
+
+  isCurrentSmoker: null,
+  smokeStartDate: null,
+  cigaretteAmount: null,
+  cigaretteType: null,
+
+  isPreviousSmoker: null,
+  smokeQuitDate: null,
+
+  exposureToSecondHandSmoke: null,
+
+  alcoholConsumption: null,
+  typeOfAlcohol: null,
+  alcoholSinceWhen: null,
+
+  substanceUse: null,
+  route: null,
+  frequency: null,
+
+  physicalLimitation: null,
+  diagnosedEatingDisorders: null,
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};

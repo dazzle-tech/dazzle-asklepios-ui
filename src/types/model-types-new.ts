@@ -1377,11 +1377,64 @@ export interface Hospitalization {
   reason: string;
   admissionType?: string | null;
 
-  dateOfAdmission: string; // ISO date (YYYY-MM-DD)
+  dateOfAdmission: string;
   lengthOfStayDays?: number | null;
 
   outcomes?: string | null;
   medicalInterventionsPerformed?: string | null;
+
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface SurgicalHistory {
+  id?: number;
+  patientId: number;
+
+  surgery: string;
+  dateOfSurgery: string;
+  facility: string;
+
+  anesthesiaType?: string | null;
+  complications?: string | null;
+
+  adverseReactionsToAnesthesia?: string | null;
+
+  hasImplantsOrDevices?: boolean | null;
+  implantsOrDevicesDescription?: string | null;
+
+  createdBy?: string;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface SocialHistory {
+  id?: number;
+  patientId: number;
+
+  isCurrentSmoker?: boolean | null;
+  smokeStartDate?: string | null;
+  cigaretteAmount?: number | null;
+  cigaretteType?: string | null;
+
+  isPreviousSmoker?: boolean | null;
+  smokeQuitDate?: string | null;
+
+  exposureToSecondHandSmoke?: boolean | null;
+
+  alcoholConsumption?: boolean | null;
+  typeOfAlcohol?: string | null;
+  alcoholSinceWhen?: string | null;
+
+  substanceUse?: boolean | null;
+  route?: string | null;
+  frequency?: string | null;
+
+  physicalLimitation?: string | null;
+  diagnosedEatingDisorders?: string | null;
 
   createdBy?: string;
   createdDate?: Date | null;
