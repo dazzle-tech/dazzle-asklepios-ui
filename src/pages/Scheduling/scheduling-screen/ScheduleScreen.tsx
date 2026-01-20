@@ -51,7 +51,6 @@ import ViewAppointmentRequests from './ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
 import { calculateAgeFormat } from '@/utils';
 
-
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
   const mode = useSelector((state: any) => state.ui.mode);
@@ -73,7 +72,6 @@ const ScheduleScreen = () => {
 
   const [requestApproveModalOpen, setRequestApproveModalOpen] = useState(false);
   const [requestToApprove, setRequestToApprove] = useState<any>(null);
-
 
   //Calendar Filters
   // NOTE: `MyInput`'s `setRecord` spreads `record` (`{ ...record, ... }`),
@@ -109,7 +107,30 @@ const ScheduleScreen = () => {
     return s.includes('follow') && s.includes('up');
   };
 
-  const ResourceTypeEnum = useEnumOptions("ResourceType");
+  const ResourceTypeEnum = useEnumOptions('ResourceType');
+
+  const DEFAULT_RESOURCE_TYPE = 'CLINIC';
+  useEffect(() => {
+    const isEmpty =
+      !selectedResourceType?.resourcesType || selectedResourceType.resourcesType.length === 0;
+
+    if (isEmpty && Array.isArray(ResourceTypeEnum) && ResourceTypeEnum.length) {
+      const normalize = (v: any) => String(v ?? '').trim().toLowerCase();
+
+      const match =
+        ResourceTypeEnum.find(
+          (x: any) =>
+            normalize(x?.label) === normalize(DEFAULT_RESOURCE_TYPE) ||
+            normalize(x?.value) === normalize(DEFAULT_RESOURCE_TYPE)
+        ) || null;
+
+      if (match?.value) {
+        setSelectedResourceType({ resourcesType: [match.value] });
+      } else {
+        setSelectedResourceType({ resourcesType: [DEFAULT_RESOURCE_TYPE] });
+      }
+    }
+  }, [ResourceTypeEnum]);
 
   const { data: resourcesWithAvailabilityResponse } =
     useGetResourcesWithAvailabilityQuery(listRequest);
@@ -139,7 +160,8 @@ const ScheduleScreen = () => {
 
       const formattedAppointments = appointments.object.map(appointment => {
         const dob = new Date(appointment?.patient?.dob);
-        const patientFullName = appointment?.patient?.full_name ||
+        const patientFullName =
+          appointment?.patient?.full_name ||
           appointment?.patient?.fullName ||
           (appointment?.patient?.first_name && appointment?.patient?.last_name
             ? `${appointment.patient.first_name} ${appointment.patient.last_name}`.trim()
@@ -152,11 +174,13 @@ const ScheduleScreen = () => {
         const isHidden = appointment?.appointmentStatus === 'Canceled';
         return {
           id: appointment?.key,
-          title: ` ${patientFullName}, ${isNaN(dob.getTime()) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
-            }Y  ${!(currentView === 'day' || currentView === 'week')
+          title: ` ${patientFullName}, ${
+            isNaN(dob.getTime()) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
+          }Y  ${
+            !(currentView === 'day' || currentView === 'week')
               ? ', ' + (resource?.resourceName || 'Unknown Resource')
               : ''
-            }
+          }
  `,
           start: convertDate(appointment.appointmentStart),
           end: convertDate(appointment.appointmentEnd),
@@ -182,11 +206,7 @@ const ScheduleScreen = () => {
 
       const resourceMatchesSelectedType = (resource: any) => {
         if (!selectedTypes.length) return true;
-        const resourceTypes = [
-          resource?.resourceTypeLkey,
-          resource?.resource_type,
-          resource?.resourceType
-        ]
+        const resourceTypes = [resource?.resourceTypeLkey, resource?.resource_type, resource?.resourceType]
           .map(normalizeType)
           .filter(Boolean);
         return resourceTypes.some(t => selectedTypes.includes(t));
@@ -197,25 +217,20 @@ const ScheduleScreen = () => {
     } else {
       setFilteredResourcesList(resourcesWithAvailabilityResponse?.object ?? []);
     }
-
   }, [resourcesWithAvailabilityResponse, selectedResourceType?.resourcesType]);
+
   useEffect(() => {
     if (selectedSlot) {
       setSelectedStartDate(selectedSlot?.slots[0]);
     }
   }, [selectedSlot]);
 
-  const { data: noShowResonLovQueryResponse } =
-    useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
+  const { data: noShowResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
 
-  const { data: cancelResonLovQueryResponse } =
-    useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
-
-
+  const { data: cancelResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
 
   const handleSelectEvent = event => {
-    const freshEvent =
-      finalAppointments?.find(e => e.id === event.id) || event;
+    const freshEvent = finalAppointments?.find(e => e.id === event.id) || event;
 
     setSelectedEvent(freshEvent);
 
@@ -225,13 +240,9 @@ const ScheduleScreen = () => {
       const reasonKey = freshEvent?.appointmentData?.reasonLkey;
 
       const reasonLovList =
-        status === 'Canceled'
-          ? cancelResonLovQueryResponse?.object
-          : noShowResonLovQueryResponse?.object;
+        status === 'Canceled' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object;
 
-      const matchedReason = reasonLovList?.find(
-        r => r.key === reasonKey
-      );
+      const matchedReason = reasonLovList?.find(r => r.key === reasonKey);
 
       setReasonViewRecord({
         reason: matchedReason?.lovDisplayVale || '',
@@ -244,10 +255,6 @@ const ScheduleScreen = () => {
 
     setActionsModalOpen(true);
   };
-
-
-
-
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
@@ -318,13 +325,9 @@ const ScheduleScreen = () => {
     }
 
     // Filter appointments to only show those matching the selected resources
-    const filteredResourceKeys = new Set(
-      (finalResourceLit ?? []).map(r => r.key)
-    );
+    const filteredResourceKeys = new Set((finalResourceLit ?? []).map(r => r.key));
 
-    return appointmentsData.filter(event =>
-      filteredResourceKeys.has(event.resourceId)
-    );
+    return appointmentsData.filter(event => filteredResourceKeys.has(event.resourceId));
   }, [appointmentsData, finalResourceLit, selectedResourceType, selectedResources]);
 
   const visibleAppointments =
@@ -374,21 +377,16 @@ const ScheduleScreen = () => {
   const availabilityResourceKeys = useMemo(() => {
     return new Set(
       (finalResourceLit ?? [])
-        .filter(r =>
-          r.availability?.some(a => a.dayOfWeek === dayIndex)
-        )
+        .filter(r => r.availability?.some(a => a.dayOfWeek === dayIndex))
         .map(r => r.key)
     );
   }, [finalResourceLit, dayIndex]);
 
-
   const visibleResources =
     currentView === 'day'
       ? (finalResourceLit ?? []).filter(
-        r =>
-          // Only show resources that match the filter AND have appointments or availability
-          appointmentResourceKeys.has(r.key) || availabilityResourceKeys.has(r.key)
-      )
+          r => appointmentResourceKeys.has(r.key) || availabilityResourceKeys.has(r.key)
+        )
       : (finalResourceLit ?? []);
 
   // Force BigCalendar to remount when filters change (react-big-calendar can keep stale resource columns otherwise)
@@ -400,15 +398,12 @@ const ScheduleScreen = () => {
     const resourceKeys = Array.isArray((selectedResources as any)?.resourceKey)
       ? (selectedResources as any).resourceKey.join(',')
       : Array.isArray(selectedResources)
-        ? selectedResources.join(',')
-        : '';
+      ? (selectedResources as any).join(',')
+      : '';
     return `${facilityKey}|${typeKeys}|${resourceKeys}|${currentView}`;
   }, [selectedFacility?.id, selectedResourceType?.resourcesType, selectedResources, currentView]);
 
-
   const handleChangeAppointment = () => {
-    // Persist the selected appointment data BEFORE closing the actions modal.
-    // Otherwise `onActionsModalClose` clears `selectedEvent` and the edit modal opens empty.
     const dataToEdit = selectedEvent?.appointmentData;
     if (dataToEdit) {
       if (isFollowUpAppointment(dataToEdit)) {
@@ -420,7 +415,6 @@ const ScheduleScreen = () => {
       }
       setViewAppointmentData(dataToEdit);
       setShowAppointmentOnly(false);
-      // Ensure slot-selection logic can't override existing appointment data while editing
       setSelectedSlot(null);
       setAppointment(dataToEdit);
       setModalOpen(true);
@@ -431,17 +425,15 @@ const ScheduleScreen = () => {
   const handleViewAppointment = (appointmentDataToView = null) => {
     const dataToView = appointmentDataToView || selectedEvent?.appointmentData;
     if (dataToView) {
-      // Set ref flag to prevent clearing selectedEvent when actions modal closes
       isOpeningViewModalRef.current = true;
-      // Store appointment data separately so it doesn't get cleared
       setViewAppointmentData(dataToView);
-      // Ensure selectedEvent is set with the appointment data
-      const eventToSet = selectedEvent ? { ...selectedEvent, appointmentData: dataToView } : { appointmentData: dataToView };
+      const eventToSet = selectedEvent
+        ? { ...selectedEvent, appointmentData: dataToView }
+        : { appointmentData: dataToView };
       setSelectedEvent(eventToSet);
       setAppointment(dataToView);
       setShowAppointmentOnly(true);
       setActionsModalOpen(false);
-      // Use setTimeout to ensure state updates complete before opening modal
       setTimeout(() => {
         if (isFollowUpAppointment(dataToView)) {
           setFollowUpDraftData(dataToView);
@@ -454,6 +446,7 @@ const ScheduleScreen = () => {
       }, 10);
     }
   };
+
   useEffect(() => {
     if (filteredMonth) {
       setDrowerOpen(false);
@@ -483,7 +476,7 @@ const ScheduleScreen = () => {
       switch (currentView) {
         case 'day': {
           setTotalAppointmentsText('today appointments');
-          const [, monthStrDay, dayStr] = label.split(' '); // e.g. "Wednesday Apr 30"
+          const [, monthStrDay, dayStr] = label.split(' ');
           const day = parseInt(dayStr);
           const month = new Date(`${monthStrDay} 1, ${new Date().getFullYear()}`).getMonth();
           const year = new Date().getFullYear();
@@ -523,7 +516,7 @@ const ScheduleScreen = () => {
         case 'month': {
           setTotalAppointmentsText('this month appointments');
 
-          const [monthStr, yearStr] = label.split(' '); // example "April 2025"
+          const [monthStr, yearStr] = label.split(' ');
           const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
           const year = parseInt(yearStr);
 
@@ -546,9 +539,7 @@ const ScheduleScreen = () => {
           const startDateParts = startDateStr.split('/');
           const endDateParts = endDateStr.split('/');
 
-          const startDate = new Date(
-            `${startDateParts[2]}-${startDateParts[0]}-${startDateParts[1]}`
-          );
+          const startDate = new Date(`${startDateParts[2]}-${startDateParts[0]}-${startDateParts[1]}`);
           const endDate = new Date(`${endDateParts[2]}-${endDateParts[0]}-${endDateParts[1]}`);
 
           const agendaAppointments = visibleAppointments.filter(appointment => {
@@ -579,13 +570,17 @@ const ScheduleScreen = () => {
       <div style={{ marginInline: '15px' }} className="rbc-toolbar">
         <span className="rbc-btn-group">
           <div style={{ display: 'flex', alignItems: 'center', fontSize: '16px' }}>
-            <div
-              className='calender-icon-schedule'
-            >
+            <div className="calender-icon-schedule">
               <CalenderSimpleIcon style={{ fontSize: '17px' }} />
             </div>
 
-            <strong style={{ fontSize: '19px', marginInline: '8px', color: mode === 'light' ? '#2D3B4C' : 'var(--white)' }}>
+            <strong
+              style={{
+                fontSize: '19px',
+                marginInline: '8px',
+                color: mode === 'light' ? '#2D3B4C' : 'var(--white)'
+              }}
+            >
               {localVisibleAppointments.length}
             </strong>
             <span style={{ fontSize: '14px', color: '#969FB0' }}>{totalAppointmentsText}</span>
@@ -594,18 +589,27 @@ const ScheduleScreen = () => {
 
         <div className="rbc-toolbar-label">
           <button
-            style={{ fontSize: '14px', margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }}
+            style={{
+              fontSize: '14px',
+              margin: '7px',
+              height: '35px',
+              color: mode === 'light' ? 'black' : 'var(--white)'
+            }}
             onClick={() => onNavigate('TODAY')}
-            className='btn-scheduling'
+            className="btn-scheduling"
           >
             Today
           </button>
 
-          <button className='btn-scheduling' style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('PREV')}>
+          <button
+            className="btn-scheduling"
+            style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }}
+            onClick={() => onNavigate('PREV')}
+          >
             <ArrowLeftLineIcon />
           </button>
           <Button
-            className='btn-scheduling'
+            className="btn-scheduling"
             onClick={handleClickCalinderSearch}
             style={{
               display: showDatePicker ? 'none' : 'inline-block',
@@ -634,14 +638,18 @@ const ScheduleScreen = () => {
               }}
             />
           )}
-          <button className='btn-scheduling' style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }} onClick={() => onNavigate('NEXT')}>
+          <button
+            className="btn-scheduling"
+            style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }}
+            onClick={() => onNavigate('NEXT')}
+          >
             <ArrowRightLineIcon />
           </button>
         </div>
 
         <ButtonGroup style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }} size="md">
           <Button
-            className='btn-scheduling'
+            className="btn-scheduling"
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.MONTH), onView(Views.MONTH);
@@ -650,7 +658,7 @@ const ScheduleScreen = () => {
             <Text>Month</Text>
           </Button>
           <Button
-            className='btn-scheduling'
+            className="btn-scheduling"
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.WEEK), onView(Views.WEEK);
@@ -659,7 +667,7 @@ const ScheduleScreen = () => {
             <Text>Week</Text>
           </Button>
           <Button
-            className='btn-scheduling'
+            className="btn-scheduling"
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.DAY), onView(Views.DAY);
@@ -668,7 +676,7 @@ const ScheduleScreen = () => {
             <Text>Day</Text>
           </Button>
           <Button
-            className='btn-scheduling'
+            className="btn-scheduling"
             style={{ border: 'none', height: '35px' }}
             onClick={() => {
               setCurrentView(Views.AGENDA), onView(Views.AGENDA);
@@ -680,8 +688,8 @@ const ScheduleScreen = () => {
       </div>
     );
   };
+
   const getTooltipContent = event => {
-    // based on the current view
     if (currentView === 'month') {
       return `${event.title} - ${event.fromTo}`;
     } else {
@@ -728,7 +736,6 @@ const ScheduleScreen = () => {
     );
   };
 
-
   const formats = {
     timeGutterFormat: (date, culture, localizer) => localizer.format(date, 'h A', culture)
   };
@@ -736,9 +743,6 @@ const ScheduleScreen = () => {
   const data = [];
   const minTime = new Date();
   minTime.setHours(8, 0, 0);
-
-
-
 
   const hexToRgba = (hex, alpha = 0.1) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -764,9 +768,7 @@ const ScheduleScreen = () => {
             size="xs"
             circle
             src={
-              image
-                ? `data:${content_type};base64,${image}`
-                : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+              image ? `data:${content_type};base64,${image}` : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
             }
           />
         </div>
@@ -827,24 +829,17 @@ const ScheduleScreen = () => {
       color: '#ccc'
     };
 
-    const currentResource = resourcesWithAvailabilityResponse?.object.find(
-      r => r.key === resourceId
-    );
-
-
+    const currentResource = resourcesWithAvailabilityResponse?.object.find(r => r.key === resourceId);
 
     if (currentResource && currentResource.availability) {
-      const jsDay = date.getDay(); // 0 Sunday → 6 Saturday
+      const jsDay = date.getDay();
       const apiDay = jsDay;
       const currentMinutes = date.getHours() * 60 + date.getMinutes();
       const isAvailable =
         currentResource?.availability?.some(period => {
           const startMinutes = period.startHour * 60 + (period.startMinute || 0);
           const endMinutes = period.endHour * 60 + (period.endMinute || 0);
-          const match =
-            period.dayOfWeek === apiDay &&
-            currentMinutes >= startMinutes &&
-            currentMinutes < endMinutes;
+          const match = period.dayOfWeek === apiDay && currentMinutes >= startMinutes && currentMinutes < endMinutes;
           return match;
         }) || false;
 
@@ -853,56 +848,53 @@ const ScheduleScreen = () => {
       }
     }
 
-
     return { style: defaultShadedStyle };
   };
 
-const requestsRows = useMemo(() => {
-  const list = appointments?.object ?? [];
+  const requestsRows = useMemo(() => {
+    const list = appointments?.object ?? [];
 
-  return list
-    .filter((a: any) => String(a?.visitTypeLkey) === String(FOLLOW_UP_VISIT_TYPE_LKEY))
-    .filter((a: any) => !a?.appointmentStart)
-    .map((a: any) => {
-      const patient = a?.patient || {};
+    return list
+      .filter((a: any) => String(a?.visitTypeLkey) === String(FOLLOW_UP_VISIT_TYPE_LKEY))
+      .filter((a: any) => !a?.appointmentStart)
+      .map((a: any) => {
+        const patient = a?.patient || {};
 
-      const patientName =
-        patient?.full_name ||
-        patient?.fullName ||
-        (patient?.first_name && patient?.last_name
-          ? `${patient.first_name} ${patient.last_name}`.trim()
-          : patient?.first_name || patient?.last_name || 'Unknown');
+        const patientName =
+          patient?.full_name ||
+          patient?.fullName ||
+          (patient?.first_name && patient?.last_name
+            ? `${patient.first_name} ${patient.last_name}`.trim()
+            : patient?.first_name || patient?.last_name || 'Unknown');
 
-      const patientGender = patient?.genderLvalue?.lovDisplayVale || patient?.genderLkey || '';
-      const patientAge = patient?.dob ? calculateAgeFormat(patient.dob) : '';
+        const patientGender = patient?.genderLvalue?.lovDisplayVale || patient?.genderLkey || '';
+        const patientAge = patient?.dob ? calculateAgeFormat(patient.dob) : '';
 
-      const patientMrn =
-        patient?.patientMrn ||
-        '';
+        const patientMrn = patient?.patientMrn || '';
 
-      return {
-        id: a.key,
+        return {
+          id: a.key,
 
-        patientName,
-        mrn: patientMrn,
+          patientName,
+          mrn: patientMrn,
 
-        ageText: patientAge,
-        genderText: patientGender,
+          ageText: patientAge,
+          genderText: patientGender,
 
-        createdBy: a?.createdBy ?? a?.created_by ?? '',
-        createdAt: a?.createdAt ?? a?.created_at ?? null,
+          createdBy: a?.createdBy ?? a?.created_by ?? '',
+          createdAt: a?.createdAt ?? a?.created_at ?? null,
 
-        status: a?.appointmentStatus ?? 'Pending',
+          status: a?.appointmentStatus ?? 'Pending',
 
-        updatedBy: a?.updatedBy ?? a?.updated_by ?? '',
-        updatedAt: a?.updatedAt ?? a?.updated_at ?? null,
+          updatedBy: a?.updatedBy ?? a?.updated_by ?? '',
+          updatedAt: a?.updatedAt ?? a?.updated_at ?? null,
 
-        otherReason: a?.otherReason ?? '',
+          otherReason: a?.otherReason ?? '',
 
-        _raw: a
-      };
-    });
-}, [appointments]);
+          _raw: a
+        };
+      });
+  }, [appointments]);
 
   const handleApproveRequest = (row: any) => {
     setRequestToApprove(row?._raw);
@@ -924,8 +916,7 @@ const requestsRows = useMemo(() => {
       }).unwrap();
 
       await refitchAppointments();
-    } catch (e) {
-    }
+    } catch (e) {}
   };
 
   return (
@@ -937,12 +928,12 @@ const requestsRows = useMemo(() => {
           width: '100%',
           display: 'flex',
           justifyContent: 'flex-start'
-          // justifyContent: 'flex-end'
         }}
         className="inline-two-four-container"
       >
-        <div className='schedual-screen-filters-waiting-list-position'>
-          <SectionContainer title={"Filters"}
+        <div className="schedual-screen-filters-waiting-list-position">
+          <SectionContainer
+            title={'Filters'}
             content={
               <Panel className="left-section" bordered>
                 <div>
@@ -960,8 +951,6 @@ const requestsRows = useMemo(() => {
                       selectDataLabel="lovDisplayVale"
                       selectDataValue="key"
                       record={undefined}
-                    // record={appointment}
-                    // setRecord={setAppoitment}
                     />
                   </Form>
 
@@ -1008,9 +997,9 @@ const requestsRows = useMemo(() => {
                       selectData={
                         filteredResourcesList.length > 0
                           ? filteredResourcesList
-                          : (!selectedResourceType?.resourcesType || selectedResourceType?.resourcesType.length == 0)
-                            ? resourcesWithAvailabilityResponse?.object
-                            : []
+                          : !selectedResourceType?.resourcesType || selectedResourceType?.resourcesType.length == 0
+                          ? resourcesWithAvailabilityResponse?.object
+                          : []
                       }
                       fieldType="multyPicker"
                       selectDataLabel="resourceName"
@@ -1023,13 +1012,12 @@ const requestsRows = useMemo(() => {
                   <div></div>
                   <Checkbox onChange={() => setShowCanceled(!showCanceled)}>Show Canceled</Checkbox>
                 </div>
+              </Panel>
+            }
+          />
 
-
-
-
-              </Panel>} />
-
-          <SectionContainer title={"WAITING LIST"}
+          <SectionContainer
+            title={'WAITING LIST'}
             content={
               <div style={{ width: '100%', height: 300, marginTop: 18, overflow: 'auto' }}>
                 {data.map(item => (
@@ -1043,10 +1031,12 @@ const requestsRows = useMemo(() => {
                     </Stack>
                   </Panel>
                 ))}
-              </div>} />
+              </div>
+            }
+          />
         </div>
-        {/* =================== Right Side ============= */}
 
+        {/* =================== Right Side ============= */}
         <Panel bordered className="right-section">
           <div
             style={{
@@ -1058,30 +1048,10 @@ const requestsRows = useMemo(() => {
               marginBottom: '1rem'
             }}
           >
-            {/* Left  */}
-            <div>
-              {/* <InputGroup
-                inside
-                style={{
-                  width: '320px',
-                  // maxWidth: 350,
-                  height: 35,
-                  marginBottom: 10
-                }}
-              >
-                <InputGroup.Button>
-                  <SearchIcon style={{ fontSize: '18px', marginRight: 10 }} />
-                </InputGroup.Button>
-                <Input placeholder="Search For Appointment" />
-              </InputGroup> */}
+            <div />
 
-            </div>
-
-            {/* Right  */}
             <div>
-              {/* <ButtonToolbar> */}
               <div style={{ display: 'flex', gap: '5px' }}>
-
                 <MyButton
                   appearance="ghost"
                   onClick={() => setAppRequestModalOpen(true)}
@@ -1090,43 +1060,19 @@ const requestsRows = useMemo(() => {
                   View App Requests
                 </MyButton>
 
-                <MyButton
-                  // color="blue"
-                  // style={{
-                  //   width: '26%',
-                  //   display: 'flex',
-                  //   alignItems: 'center',
-                  //   justifyContent: 'flex-start',
-                  //   borderRadius: '5px',
-                  //   color: 'blue'
-                  // }}
-                  appearance="ghost"
-                  prefixIcon={() => <FontAwesomeIcon
-                    icon={faPrint}
-                  />}
-                >
-                  {/* <FontAwesomeIcon
-                    icon={faPrint}
-                    style={{ color: '#2264E5', marginRight: '10px', fontSize: '18px' }}
-                  /> */}
+                <MyButton appearance="ghost" prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}>
                   Print Report
                 </MyButton>
+
                 <MyButton
                   onClick={() => {
                     setModalOpen(true);
                   }}
-                  // appearance="primary"
-                  // style={{
-                  //   width: '34%',
-                  //   backgroundColor: 'var(--primary-blue)',
-                  //   marginLeft: '3px'
-                  // }}
                   prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
                 >
                   <Translate>Add New Appointments</Translate>
                 </MyButton>
               </div>
-              {/* </ButtonToolbar> */}
             </div>
           </div>
 
@@ -1151,35 +1097,26 @@ const requestsRows = useMemo(() => {
             step={60}
             timeslots={1}
             onSelectSlot={slotInfo => {
-              // Check if the slot is available before opening modal
               if (slotInfo.resourceId) {
-                const currentResource = resourcesWithAvailabilityResponse?.object.find(
-                  r => r.key === slotInfo.resourceId
-                );
+                const currentResource = resourcesWithAvailabilityResponse?.object.find(r => r.key === slotInfo.resourceId);
 
                 if (currentResource && currentResource.availability) {
                   const jsDay = slotInfo.start.getDay();
                   const apiDay = jsDay;
-                  const currentMinutes =
-                    slotInfo.start.getHours() * 60 + slotInfo.start.getMinutes();
+                  const currentMinutes = slotInfo.start.getHours() * 60 + slotInfo.start.getMinutes();
 
                   const isAvailable =
                     currentResource?.availability?.some(period => {
                       const startMinutes = period.startHour * 60 + (period.startMinute || 0);
                       const endMinutes = period.endHour * 60 + (period.endMinute || 0);
 
-                      return (
-                        period.dayOfWeek === apiDay &&
-                        currentMinutes >= startMinutes &&
-                        currentMinutes < endMinutes
-                      );
+                      return period.dayOfWeek === apiDay && currentMinutes >= startMinutes && currentMinutes < endMinutes;
                     }) || false;
 
                   if (!isAvailable) {
-                    return; // Don't open modal for unavailable slots
+                    return;
                   }
 
-                  // Add resource information to slotInfo for AppointmentModal
                   const enhancedSlotInfo = {
                     ...slotInfo,
                     resourceKey: currentResource.resourceKey,
@@ -1194,7 +1131,6 @@ const requestsRows = useMemo(() => {
                 }
               }
 
-              // If no resourceId or resource not found, still open modal but without resource info
               setSelectedSlot(slotInfo);
               setModalOpen(true);
             }}
@@ -1248,7 +1184,6 @@ const requestsRows = useMemo(() => {
         showOnly={showAppointmentOnly}
         selectedSlot={showAppointmentOnly ? null : selectedSlot}
         onSwitchToFollowUp={(draft: any) => {
-          // Switch from the normal appointment modal to the Follow Up modal
           setFollowUpDraftData({ ...(draft?.appointment ?? {}), patient: draft?.patient });
           setModalOpen(false);
           setFollowUpModalOpen(true);
@@ -1292,12 +1227,11 @@ const requestsRows = useMemo(() => {
         selectedSlot={showAppointmentOnly ? null : selectedSlot}
       />
       <AppointmentActionsModal
-        viewAppointment={(appointmentData) => handleViewAppointment(appointmentData)}
+        viewAppointment={appointmentData => handleViewAppointment(appointmentData)}
         editAppointment={() => handleChangeAppointment()}
         onStatusChange={refitchAppointments}
         isActionsModalOpen={ActionsModalOpen}
         onActionsModalClose={() => {
-          // Don't clear selectedEvent if we're opening the view modal
           if (!isOpeningViewModalRef.current) {
             setSelectedEvent(null);
             setAppointment(null);
@@ -1319,12 +1253,10 @@ const requestsRows = useMemo(() => {
         </Drawer.Header>
         <Drawer.Body>
           <DatePicker
-            format="yyyy-MM" // Only show year and month
+            format="yyyy-MM"
             placeholder="Select Month and Year"
-            // onChange={handleSelect} // Trigger filter on change
-            // value={selectedDate}
             cleanable
-            placement="autoVerticalStart" // Position of the dropdown
+            placement="autoVerticalStart"
             style={{ width: 500 }}
           />
         </Drawer.Body>
@@ -1333,19 +1265,8 @@ const requestsRows = useMemo(() => {
       <Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
         <Modal.Header />
         <Modal.Body>
-
           <Form fluid layout="inline">
-
-            <MyInput
-              width={350}
-              column
-              fieldLabel="Reason"
-              fieldName="reason"
-              record={reasonViewRecord}
-              setRecord={setReasonViewRecord}
-              disabled
-            />
-
+            <MyInput width={350} column fieldLabel="Reason" fieldName="reason" record={reasonViewRecord} setRecord={setReasonViewRecord} disabled />
             <MyInput
               width={350}
               column
@@ -1357,25 +1278,20 @@ const requestsRows = useMemo(() => {
               setRecord={setReasonViewRecord}
               disabled
             />
-
           </Form>
-
         </Modal.Body>
       </Modal>
-
-
 
       <MyModal
         open={appRequestModalOpen}
         setOpen={setAppRequestModalOpen}
-        title={"View Appoimtment Request"}
+        title={'View Appoimtment Request'}
         bodyheight="80vh"
         size="70vw"
         actionButtonLabel="Confirm"
         actionButtonFunction={() => {
           setModalOpen(false);
         }}
-        // content={<ViewAppointmentRequests></ViewAppointmentRequests>}
         content={
           <ViewAppointmentRequests
             data={requestsRows}
@@ -1383,11 +1299,7 @@ const requestsRows = useMemo(() => {
             onReject={handleRejectRequest}
           />
         }
-
-
-      >
-      </MyModal>
-
+      ></MyModal>
     </div>
   );
 };
