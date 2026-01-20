@@ -55,6 +55,10 @@ import PatientCardWithPicture from '@/components/PatientCard/PatientCardWithPict
 import { Box, Skeleton } from '@mui/material';
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
+// Follow Up visit type LOV key (fixed)
+const FOLLOW_UP_VISIT_TYPE_KEY = '2041067508470007';
+const FOLLOW_UP_VISIT_TYPE_KEY_STR = String(FOLLOW_UP_VISIT_TYPE_KEY);
+
 const FollowupAppointmentModal = ({
   isOpen,
   onClose,
@@ -79,6 +83,19 @@ const FollowupAppointmentModal = ({
 
   const [selectedSlices, setSelectedSlices] = useState([]);
 
+  const seedFromAppointmentData = () => {
+    const seedPatient = (appointmentData as any)?.patient;
+    if (seedPatient?.key) {
+      setLocalPatient(seedPatient);
+    }
+    // Keep existing appointment fields if editing, but always enforce follow-up visit type + patientKey when available.
+    setAppointment(prev => ({
+      ...prev,
+      visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR,
+      patientKey: seedPatient?.key ?? prev?.patientKey
+    }));
+  };
+
   useEffect(() => {
     if (appointmentData) {
       // For department-based resources (CLINIC, etc.), ensure departmentKey is set from resourceKey if not present
@@ -90,14 +107,26 @@ const FollowupAppointmentModal = ({
       // Don't convert to string here - keep original type, will be normalized later
       setAppointment({
         ...appointmentData,
-        departmentKey: departmentKey
+        departmentKey: departmentKey,
+        // Ensure Follow Up visit type is always set for this modal
+        visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR
       });
       setLocalPatient(appointmentData?.patient || newApPatient);
     } else {
-      setAppointment(newApAppointment);
+      // Ensure Follow Up visit type is always set for this modal
+      setAppointment({ ...newApAppointment, visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR } as any);
       setLocalPatient(newApPatient);
     }
   }, [appointmentData]);
+
+  // When reopening the modal, re-seed patient/visit type from `appointmentData` even if it didn't change.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (appointmentData?.patient) {
+      seedFromAppointmentData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   useEffect(() => {
     // Don't override appointment data if we're viewing an existing appointment
@@ -535,23 +564,12 @@ const FollowupAppointmentModal = ({
   //     parentValueKey: localPatient.countryLkey
   //   });
   const { data: visitTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
-
-  // Force Visit Type to Follow Up and keep it non-editable in this modal
-  const followUpVisitTypeKey = useMemo(() => {
-    const list = visitTypeQueryResponse?.object ?? [];
-    const followUp = list.find((v: any) => {
-      const label = (v?.lovDisplayVale ?? v?.label ?? v?.lovValue ?? '').toString().trim().toLowerCase();
-      return label.includes('follow') && label.includes('up');
-    });
-    return followUp?.key ?? null;
-  }, [visitTypeQueryResponse?.object]);
-
+  // Ensure Visit Type is always set even if LOVs haven't loaded yet
   useEffect(() => {
-    if (showOnly) return;
-    if (!followUpVisitTypeKey) return;
-    if (appointment?.visitTypeLkey === followUpVisitTypeKey) return;
-    setAppointment(prev => ({ ...prev, visitTypeLkey: followUpVisitTypeKey }));
-  }, [followUpVisitTypeKey, showOnly]);
+    if (String(appointment?.visitTypeLkey ?? '') === FOLLOW_UP_VISIT_TYPE_KEY_STR) return;
+    setAppointment(prev => ({ ...prev, visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointment?.visitTypeLkey]);
 
   const { data: patientListResponse, isLoading: isGettingPatients, isFetching: isFetchingPatients, refetch: refetchPatients } = useGetPatientsQuery({
     ...listRequest,
@@ -594,8 +612,10 @@ const FollowupAppointmentModal = ({
 
   const handleClear = () => {
     setModalKey(prev => prev + 1);
-    setLocalPatient(newApPatient);
-    setAppointment(newApAppointment);
+    // For follow-up creation from Encounter, keep the seeded patient when clearing the form.
+    const seedPatient = (appointmentData as any)?.patient;
+    setLocalPatient(seedPatient?.key ? seedPatient : newApPatient);
+    setAppointment({ ...newApAppointment, visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR, patientKey: seedPatient?.key } as any);
     setPatientAge(null);
     setValidationResult(undefined);
     setReRenderModal(!reRenderModal);
@@ -685,7 +705,7 @@ const FollowupAppointmentModal = ({
   };
 
   useEffect(() => {
-    setAppointment({ ...appointment, reminderLkey: null });
+    setAppointment(prev => ({ ...prev, reminderLkey: null }));
   }, [appointment?.isReminder]);
 
   useEffect(() => {
@@ -713,11 +733,11 @@ const FollowupAppointmentModal = ({
   }, [instructionValue]);
 
   useEffect(() => {
-    if (resourceType) setAppointment({ ...appointment, resourceTypeLkey: resourceType?.resourcesType });
+    if (resourceType) setAppointment(prev => ({ ...prev, resourceTypeLkey: resourceType?.resourcesType }));
   }, [resourceType]);
 
   useEffect(() => {
-    if (facility) setAppointment({ ...appointment, facilityKey: facility?.id || facility?.facilityKey });
+    if (facility) setAppointment(prev => ({ ...prev, facilityKey: facility?.id || facility?.facilityKey }));
   }, [facility]);
 
   useEffect(() => {
@@ -882,7 +902,7 @@ const FollowupAppointmentModal = ({
     }
 
     if (missingFields.length > 0) {
-      const lines = missingFields.map(field => `â€¢ ${field}: is required`);
+      const lines = missingFields.map(field => `${field}: is required`);
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}`,
@@ -930,19 +950,33 @@ const FollowupAppointmentModal = ({
     const appointmentToSave = {
       ...appointment,
       patientKey: localPatient.key,
+      // Backend expects audit fields; set them from logged-in user
       createdBy:
         appointment?.createdBy ??
+        authSlice?.user?.username ??
+        authSlice?.user?.userName ??
+        authSlice?.user?.login ??
+        authSlice?.user?.name ??
         authSlice?.user?.key ??
         authSlice?.user?.id ??
-        authSlice?.user?.username ??
-        authSlice?.user?.login ??
-        authSlice?.user?.userName ??
-        authSlice?.user?.name ??
         null,
       createdAt:
         typeof appointment?.createdAt !== 'undefined' && appointment?.createdAt !== null
-          ? Number(appointment.createdAt)
-          : Date.now(),
+          ? appointment.createdAt
+          : new Date().toISOString(),
+      updatedBy:
+        appointment?.updatedBy ??
+        authSlice?.user?.username ??
+        authSlice?.user?.userName ??
+        authSlice?.user?.login ??
+        authSlice?.user?.name ??
+        authSlice?.user?.key ??
+        authSlice?.user?.id ??
+        null,
+      updatedAt:
+        typeof appointment?.updatedAt !== 'undefined' && appointment?.updatedAt !== null
+          ? appointment.updatedAt
+          : new Date().toISOString(),
       appointmentStart: appointmentStart,
       appointmentEnd: appointmentEnd,
       instructions: instructions,
@@ -960,14 +994,17 @@ const FollowupAppointmentModal = ({
       saveAppointment(sanitizedAppointmentToSave)
         .unwrap()
         .then(() => {
+          dispatch(notify({ msg: 'Appointment saved successfully', sev: 'success' }));
           closeModal();
-          handleClear();
           onSave();
         })
         .catch(e => {
-          if (e.status !== 422) {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-          }
+          const msg =
+            (e?.data && (e.data.msg || e.data.message)) ||
+            (typeof e?.data === 'string' ? e.data : null) ||
+            (Array.isArray(e?.data?.errors) ? e.data.errors.join('\n') : null) ||
+            `Failed to save appointment${e?.status ? ` (status ${e.status})` : ''}`;
+          dispatch(notify({ msg, sev: 'warn' }));
         });
     } else {
       dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
@@ -1113,13 +1150,6 @@ const FollowupAppointmentModal = ({
           onClose(), handleClear();
         }}
         actionButtonFunction={handleSaveAppointment}
-        footerButtons={
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <MyButton appearance="ghost" prefixIcon={() => <FontAwesomeIcon icon={faBan} />} onClick={handleClear}>
-              Clear
-            </MyButton>
-          </div>
-        }
         rightTitle="Create Follow-up"
         rightBodyNoScroll={false}
         rightContent={
@@ -1387,7 +1417,12 @@ const FollowupAppointmentModal = ({
                                 fieldLabel="Visit Type"
                                 fieldType="select"
                                 fieldName="visitTypeLkey"
-                                selectData={visitTypeQueryResponse?.object ?? []}
+                                // Provide a fallback option so the disabled field shows a value even before LOVs load
+                                selectData={
+                                  (visitTypeQueryResponse?.object?.length
+                                    ? visitTypeQueryResponse.object.map((v: any) => ({ ...v, key: String(v?.key) }))
+                                    : [{ key: FOLLOW_UP_VISIT_TYPE_KEY_STR, lovDisplayVale: 'Follow Up' }]) as any
+                                }
                                 selectDataLabel="lovDisplayVale"
                                 selectDataValue="key"
                                 record={appointment}
