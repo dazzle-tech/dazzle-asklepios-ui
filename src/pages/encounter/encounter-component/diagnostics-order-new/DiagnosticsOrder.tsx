@@ -1,17 +1,33 @@
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import {
+  useCreateDiagnosticOrderMutation,
+  useFilterDiagnosticOrdersQuery,
+  useSubmitDiagnosticOrderMutation,
+  useUpdateDiagnosticOrderMutation
+} from '@/services/diagnosic-order/diagnosticOrderService';
+import {
+  useCancelDiagnosticOrderTestMutation,
+  useCreateDiagnosticOrderTestMutation,
+  useFilterDiagnosticOrderTestsQuery,
+  useReviewDiagnosticOrderTestMutation,
+  useUpdateDiagnosticOrderTestMutation
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { formatDateWithoutSeconds } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
+  faCreditCard,
   faLandMineOn,
   faListCheck,
-  faCreditCard,
-  faVial,
-  faPlus
+  faPlus,
+  faVial
 } from '@fortawesome/free-solid-svg-icons';
-import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GrTestDesktop } from 'react-icons/gr';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import {
@@ -25,27 +41,18 @@ import {
   Tooltip,
   Whisper
 } from 'rsuite';
+import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
 import TransferList from './TransferTestList';
 import './styles.less';
-import { formatDateWithoutSeconds } from '@/utils';
-import MyButton from '@/components/MyButton/MyButton';
-import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
-import MyModal from '@/components/MyModal/MyModal';
-import {
-  useCreateDiagnosticOrderMutation,
-  useUpdateDiagnosticOrderMutation,
-  useFilterDiagnosticOrdersQuery,
-  useSubmitDiagnosticOrderMutation
-} from '@/services/diagnosic-order/diagnosticOrderService';
-import {
-  useCreateDiagnosticOrderTestMutation,
-  useUpdateDiagnosticOrderTestMutation,
-  useGetTestsByOrderIdQuery,
-  useCancelDiagnosticOrderTestMutation,
-  useReviewDiagnosticOrderTestMutation
-} from '@/services/diagnosic-order/diagnosticOrderTestService';
 
+import AttachmentUploadModal from '@/components/AttachmentUploadModal';
+import CancellationModal from '@/components/CancellationModal';
+import SampleModal from '@/pages/lab-module/SampleModal';
+import { useGetFavoriteDiagnosticTestsByUserQuery } from '@/services/diagnosic-order/favoriteDiagnosticTestService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetAllDiagnosticTestsQuery, useGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
   newDiagnosticOrder,
   newDiagnosticOrderTest,
@@ -54,35 +61,27 @@ import {
 import type {
   DiagnosticOrderCreateDTO,
   DiagnosticOrderTestCreateDTO,
-  DiagnosticOrderTestUpdateDTO,
-  DiagnosticOrderUpdateDTO
+  DiagnosticOrderTestUpdateDTO
 } from '@/types/model-types-new';
 import {
-  DiagnosticOrderTestStatus
+  DiagnosticOrderTestStatus,
+  DiagnosticStatus
 } from '@/types/model-types-new';
-import { DiagnosticStatus } from '@/types/model-types-new';
-import { initialListRequest, initialListRequestId, ListRequest } from '@/types/types';
+import { formatEnumString } from '@/utils';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { skipToken } from '@reduxjs/toolkit/query';
 import CheckIcon from '@rsuite/icons/Check';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
-import DetailsModal from './DetailsModal';
-import { faStar } from '@fortawesome/free-solid-svg-icons';
-import CancellationModal from '@/components/CancellationModal';
-import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
 import { FaFileArrowDown } from 'react-icons/fa6';
-import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { useLocation } from 'react-router-dom';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import BulkAssignDepartmentModal from './BulkAssignDepartmentModal';
+import DetailsModal from './DetailsModal';
 import PatientPrevTests from './PatientPrevTests';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
-import { newApDrugOrderMedications } from '@/types/model-types-constructor';
-import SampleModal from '@/pages/lab-module/SampleModal';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useGetDepartmentsQuery } from '@/services/security/departmentService';
-import { useEnumOptions } from '@/services/enumsApi';
+import RecallFavoriteDiagnosticOrdersModal from './RecallFavoriteDiagnosticOrdersModal';
+import RequestTestModal from './RequestTestModal';
 import TestCardModal from './TestCardModal';
-import { formatEnumString} from '@/utils';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
@@ -104,6 +103,26 @@ const handleDownload = attachment => {
   window.URL.revokeObjectURL(url);
 };
 
+const extractErrorMessage = (error: any) => {
+  const data = error?.data;
+
+  let msg =
+    data?.properties?.message ||
+    data?.message ||
+    data?.detail ||
+    data?.title ||
+    error?.error ||
+    'Operation failed';
+  if (typeof msg === 'string' && msg.startsWith('error.')) {
+    msg = msg.replace(/^error\./, '');
+  }
+
+  return msg;
+};
+
+
+
+
 const DiagnosticsOrder = props => {
   const location = useLocation();
 
@@ -122,10 +141,12 @@ const DiagnosticsOrder = props => {
   };
 
 
-  const patient = props.patient || location.state?.patient;
-  const encounter = props.encounter || location.state?.encounter;
+  const patient = location.state?.patient;
+  console.log("PATIENT", patient)
+
+  console.log(location.state?.patient)
+  const encounter = location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
-  console.log("PATIENT ", patient)
   const toNumericId = (value: any) => {
     if (value === null || value === undefined) return undefined;
     if (typeof value === 'number') return value;
@@ -158,39 +179,27 @@ const DiagnosticsOrder = props => {
     return toNumericId(match?.id ?? match?.departmentId ?? match?.key ?? match?.departmentKey);
   };
 
-  const patientId = patient?.key;
-  const encounterId = toNumericId(encounter?.id ?? encounter?.key);
+  const patientId = patient?.id || patient?.key;
+  const encounterId = encounter?.id || encounter?.key;
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
-  const currentUserName =
-    authSlice?.user?.login ??
-    authSlice?.user?.loginName ??
-    authSlice?.user?.username ??
-    authSlice?.user?.email ??
-    null;
   const [showCanceled, setShowCanceled] = useState(false);
   const [test, setTest] = useState<any>({ ...newDiagnosticTest });
   const [reson, setReson] = useState({ cancellationReason: '' });
   const [openTestsModal, setOpenTestsModal] = useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [searchType, setSearchType] = React.useState({ type: '' });
-  const [search, setSearch] = useState({ testName: '', type: '', category: '' });
+  const [openRequestTestModal, setOpenRequestTestModal] = useState(false);
+  const [searchType, setSearchType] = useState<{
+    type?: string;
+    catalogId?: number;
+  }>({});
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [recallFavoriteModal, setRecallFavoriteModal] = useState(false);
   const [preTestAssessmentModal, setPreTestAssessmentModal] = useState(false);
   const [collectSampleModal, setCollectSampleModal] = useState(false);
   const [testCardModal, setTestCardModal] = useState(false);
   const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedCatalog, setSelectedCatalog] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [proposedExecutionDate, setProposedExecutionDate] = useState(null);
-  const [executionNumber, setExecutionNumber] = useState('');
-  const [approvalNumber, setApprovalNumber] = useState('');
-  const [favoriteMedications, setFavoriteMedications] = useState([]);
-  const [searchKeyword] = useState('');
-  const [openSampleModal, setOpenSampleModal] = useState(false);
   const [paginationParams] = useState({
     page: 0,
     size: 15,
@@ -227,40 +236,12 @@ const DiagnosticsOrder = props => {
   });
 
 
-  const { data: genericMedicationListResponse } =
-    useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
 
   const { data: departmentsResponse } = useGetDepartmentsQuery({ page: 0, size: 10000 });
 
   const departments = departmentsResponse?.data ?? [];
 
-  const [, setOrderMedication] = useState<any>({
-    ...newApDrugOrderMedications,
-    drugOrderKey: null
-  });
-
   const { data: testsResponse, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
-
-  const [listOrdersRequest] = useState<ListRequest>({
-    ...initialListRequestId,
-    pageSize: 1000
-  });
-
-  const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'attachment_type',
-        operator: 'match',
-        value: 'ORDER_TEST'
-      }
-    ]
-  });
 
   const testsList = testsResponse?.data ?? [];
 
@@ -276,6 +257,8 @@ const DiagnosticsOrder = props => {
   const [orders, setOrders] = useState<any>({ ...newDiagnosticOrder });
   const orderId = orders?.id ?? orders?.key ?? null;
   const [tableVersion, setTableVersion] = useState(0);
+  const [bulkDepartmentModalOpen, setBulkDepartmentModalOpen] = useState(false);
+
 
   const isSubmitDisabled =
     !orderId || orders?.status !== 'NEW';
@@ -296,16 +279,12 @@ const DiagnosticsOrder = props => {
     setLeftItems(computedLeft);
   }, [testsList, selectedTestsList]);
 
-  const {
-    data: fetchPatintAttachmentsResponce,
-    refetch: attachmentRefetch,
-  } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
 
   const [selectedRows, setSelectedRows] = useState([]);
 
   const { data: ordersListResponse, refetch: ordersRefetch } = useFilterDiagnosticOrdersQuery(
     patientId && encounterId
-      ? { patientId, encounterId, listRequest: listOrdersRequest }
+      ? { patientId, encounterId }
       : skipToken
   );
 
@@ -315,41 +294,72 @@ const DiagnosticsOrder = props => {
     o => o.status === 'NEW' || o.saveDraft === true
   );
 
+  const cleanFilters = (filters: any) => {
+
+    const cleaned: any = Object.fromEntries(
+      Object.entries(filters).filter(
+        ([, value]) => value !== '' && value !== null && value !== undefined
+      )
+    );
+    if (cleaned.type) {
+      cleaned.orderType = cleaned.type;
+      delete cleaned.type;
+    }
+    return cleaned;
+  };
+
+  const cleanedFilters = React.useMemo(
+    () => cleanFilters(filters),
+    [filters]
+  );
+
   const {
     data: orderTestsResponse,
     refetch: orderTestRefetch,
     isLoading: loadTests
-  } = useGetTestsByOrderIdQuery(
+  } = useFilterDiagnosticOrderTestsQuery(
     orderId
       ? {
         orderId,
         page: 0,
         size: 1000,
+        ...cleanedFilters,
         ...queryParams
       }
       : skipToken
   );
 
+  const userId = authSlice?.user?.id;
+
+  const { data: favoriteLinks } =
+    useGetFavoriteDiagnosticTestsByUserQuery(
+      userId ? { userId } : skipToken
+    );
+
+  const favoriteTestIds = useMemo(
+    () => favoriteLinks?.map(f => f.testId) ?? [],
+    [favoriteLinks]
+  );
+
+  const { data: favoriteTests, isFetching: loadingFavorites } =
+    useGetDiagnosticTestsByIdsQuery(
+      favoriteTestIds.length
+        ? { ids: favoriteTestIds }
+        : skipToken
+    );
 
   const orderTestList = orderTestsResponse?.data ?? [];
   const [cancelDiagnosticOrderTest] = useCancelDiagnosticOrderTestMutation();
   const [submitDiagnosticOrder] = useSubmitDiagnosticOrderMutation();
-  const [reviewDiagnosticOrderTest] = useReviewDiagnosticOrderTestMutation();
   const [createOrder] = useCreateDiagnosticOrderMutation();
   const [updateOrder] = useUpdateDiagnosticOrderMutation();
   const [createOrderTest] = useCreateDiagnosticOrderTestMutation();
   const [updateOrderTest] = useUpdateDiagnosticOrderTestMutation();
   const [openDetailsModel, setOpenDetailsModel] = useState(false);
   const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
-  const [, setSelectedGeneric] = useState(null);
   const [previewDiagnosticsOrder, setPreviewDiagnosticsOrder] = useState<any | null>(null);
-  // LOV queries for new fields
-  const { data: diagTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
   const { data: labCategoriesLovResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
   const { data: radCategoriesLovResponse } = useGetLovValuesByCodeQuery('RAD_CATEGORIES');
-  const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery(
-    'MED_ORDER_ADMIN_NSTRUCTIONS'
-  );
   const { data: ReasonLovQueryResponse } =
     useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
 
@@ -363,32 +373,6 @@ const DiagnosticsOrder = props => {
   };
 
   const filteredOrders = ordersList ?? [];
-
-  useEffect(() => {
-    if (!attachmentsModalOpen) {
-      const updatedFilters = [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        {
-          fieldName: 'attachment_type',
-          operator: 'match',
-          value: 'ORDER_TEST'
-        }
-      ];
-      setAttachmentsListRequest(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
-      }));
-    }
-    attachmentRefetch();
-  }, [attachmentsModalOpen]);
-
-  useEffect(() => {
-    setSelectedCategory('');
-  }, [selectedType]);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -420,13 +404,11 @@ const DiagnosticsOrder = props => {
     };
   }, []);
 
-  const OpenDetailsModel = () => {
-    setOpenDetailsModel(true);
-  };
 
   const OpenConfirmDeleteModel = () => {
     setConfirmDeleteModel(true);
   };
+
   const CloseConfirmDeleteModel = () => {
     setConfirmDeleteModel(false);
   };
@@ -460,7 +442,6 @@ const DiagnosticsOrder = props => {
       const fromDepartmentId = resolveFromDepartmentId();
       const orderTestId = toNumericId(orderTest?.id ?? orderTest?.key);
 
-      // 🛑 validations
       if (!testId || !orderId || !patientId || !encounterId) {
         dispatch(notify({ msg: 'Missing test or patient info', sev: 'warning' }));
         return;
@@ -471,31 +452,21 @@ const DiagnosticsOrder = props => {
         return;
       }
 
-      // ===============================
-      // ➕ CREATE
-      // ===============================
       if (!orderTestId) {
         const createPayload: DiagnosticOrderTestCreateDTO = {
           patientId,
           encounterId,
           orderId,
           testId,
-          fromDepartmentId,
-          fromFacilityId: toNumericId(selectedDepartment?.facilityId),
-          toFacilityId: toNumericId(orderTest?.toFacilityId),
           receivedDepartmentId: toNumericId(receivedDepartmentId),
           reason: orderTest?.reasonLkey,
           notes: orderTest?.notes,
           orderType: resolveOrderType(test),
         };
 
-        console.log('SAVING REASON', orderTest.reasonLkey);
         await createOrderTest(createPayload).unwrap();
       }
 
-      // ===============================
-      // ✏️ UPDATE
-      // ===============================
       else {
         const updatePayload: DiagnosticOrderTestUpdateDTO = {
           id: orderTestId,
@@ -503,18 +474,9 @@ const DiagnosticsOrder = props => {
           encounterId,
           orderId,
           testId,
-          fromDepartmentId,
-          fromFacilityId: toNumericId(selectedDepartment?.facilityId),
-          toFacilityId: toNumericId(orderTest?.toFacilityId),
           receivedDepartmentId: toNumericId(receivedDepartmentId),
           reason: orderTest?.reasonLkey,
           notes: orderTest?.notes,
-          // isRepeat: orderTest?.isRepeat,
-          // repeatEveryNumber: orderTest?.repeatEveryNumber,
-          // repeatEveryUnit: orderTest?.repeatEveryUnit,
-          // periodNumber: orderTest?.periodNumber,
-          // periodUnit: orderTest?.periodUnit,
-          // firstOccurrenceDateTime: orderTest?.firstOccurrenceDateTime,
         };
 
         await updateOrderTest({
@@ -523,26 +485,26 @@ const DiagnosticsOrder = props => {
         }).unwrap();
       }
 
-      // ===============================
-      // 🔄 REFRESH TABLE (SAFE)
-      // ===============================
       if (orderId) {
         await orderTestRefetch();
         setTableVersion(v => v + 1);
       }
 
-      // ===============================
-      // ✅ UI FEEDBACK
-      // ===============================
       setOpenDetailsModel(false);
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save test failed', error);
-      dispatch(notify({ msg: 'Save failed', sev: 'error' }));
-    }
-  };
 
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
+    }
+
+  };
 
   const handleCheckboxChange = (id: number) => {
     setSelectedRows(prev =>
@@ -552,9 +514,11 @@ const DiagnosticsOrder = props => {
     );
   };
 
+
+
+
   const handleCancle = async () => {
     try {
-      console.log('Cancelling IDs:', selectedRows);
       await Promise.all(
         selectedRows.map((itemId: number) =>
           cancelDiagnosticOrderTest({
@@ -614,8 +578,6 @@ const DiagnosticsOrder = props => {
               encounterId,
               orderId,
               testId,
-              fromDepartmentId,
-              fromFacilityId: toNumericId(selectedDepartment?.facilityId),
               orderType: item.type
             }).unwrap();
           })
@@ -624,13 +586,21 @@ const DiagnosticsOrder = props => {
 
       dispatch(notify({ msg: 'All Tests Saved Successfully', sev: 'success' }));
       await orderTestRefetch();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save tests failed:', error);
-      dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
+
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
     }
+
   };
 
   const handleSaveOrders = async () => {
+    console.log("PATIENT ID", patientId, "ENCOUNTER ID", encounterId)
     if (!patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
       return;
@@ -642,8 +612,9 @@ const DiagnosticsOrder = props => {
         encounterId,
         labStatus: DiagnosticStatus.NEW,
         radStatus: DiagnosticStatus.NEW,
+        fromDepartmentId: selectedDepartment?.departmentId,
+        fromFacilityId: selectedDepartment?.facilityId,
       };
-      console.log("PAYLOAD", createPayload)
       const response = await createOrder(createPayload).unwrap();
 
       setOrders(response);
@@ -663,135 +634,68 @@ const DiagnosticsOrder = props => {
     }
   };
 
-    const handleSubmitPres = async () => {
-      const orderId = toNumericId(orders?.id ?? orders?.key);
-      if (!orderId) {
-        dispatch(notify({ msg: 'Missing order id', sev: 'warning' }));
-        return;
-      }
+  const handleSubmitPres = async () => {
+    const orderId = orders?.id;
+    if (!orderId) {
+      dispatch(notify({ msg: 'Missing order id', sev: 'warning' }));
+      return;
+    }
 
-      if (!orderTestList.length) {
-        dispatch(notify({ msg: 'Please add at least one test', sev: 'warning' }));
-        return;
-      }
+    if (!orderTestList.length) {
+      dispatch(notify({ msg: 'Please add at least one test', sev: 'warning' }));
+      return;
+    }
 
-      const hasMissingReceivedLab = orderTestList.some(
-        t => !t.receivedDepartmentId
-      );
-
-      if (hasMissingReceivedLab) {
-        dispatch(
-          notify({
-            msg: 'Please select Received Lab for Your Test',
-            sev: 'warning'
-          })
-        );
-        return;
-      }
-
-      try {
-        await updateOrder({
-          id: orderId,
-          body: {
-            id: orderId,
-            patientId,
-            encounterId,
-            isUrgent: orders.isUrgent,
-          }
-        }).unwrap();
-        await submitDiagnosticOrder(orderId).unwrap();
-
-        dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
-
-        await ordersRefetch();
-        await orderTestRefetch();
-
-        setOrders({ ...newDiagnosticOrder });
-        handleClearDiagnostics();
-
-      } catch (error) {
-        console.error('Submit failed', error);
-        dispatch(notify({ msg: 'Submit failed', sev: 'error' }));
-      }
-    };
-
-
-
-  const handleRecall = rowData => {
-    const genericMedication = genericMedicationListResponse?.object?.find(
-      item => item.key === rowData.genericMedicationsKey
+    const hasMissingReceivedLab = orderTestList.some(
+      t => !t.receivedDepartmentId
     );
 
-    setOrderMedication({
-      ...newApDrugOrderMedications,
-      ...rowData,
-      drugOrderKey: rowData?.drugOrderKey ?? null,
-      genericName: genericMedication?.genericName || '',
-      dose: rowData.dose || null,
-      doseUnitLkey: rowData.doseUnitLkey || null,
-      frequency: rowData.frequency || null,
-      roaLkey: rowData.roaLkey || null,
-      chronicMedication: rowData.chronicMedication || false,
-      priorityLkey: rowData.priorityLkey || null,
-      durationTypeLkey: rowData.durationTypeLkey || null,
-      indicationUseLkey: rowData.indicationUseLkey || null,
-      pharmacyDepartmentKey: rowData.pharmacyDepartmentKey || null
-    });
+    if (hasMissingReceivedLab) {
+      dispatch(
+        notify({
+          msg: 'Please select Received Lab for Your Test',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
 
-    setSelectedGeneric(genericMedication || null);
-    setOpenFavoritesModal(false);
-    setOpenDetailsModel(true);
+    try {
+      await updateOrder({
+        id: orderId,
+        body: {
+          id: orderId,
+          patientId,
+          encounterId,
+          isUrgent: orders.isUrgent,
+        }
+      }).unwrap();
+      await submitDiagnosticOrder(orderId).unwrap();
+
+      dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
+
+      await ordersRefetch();
+      await orderTestRefetch();
+
+      setOrders({ ...newDiagnosticOrder });
+      handleClearDiagnostics();
+
+    } catch (error) {
+      console.error('Submit failed', error);
+      dispatch(notify({ msg: 'Submit failed', sev: 'error' }));
+    }
   };
 
+
+
   const handleRequestNewTestSetup = () => {
-    dispatch(notify({ msg: 'New Test Setup Request Submitted', sev: 'info' }));
+    setOpenRequestTestModal(true);
   };
 
   const handleClearDiagnostics = () => {
     setOrderTest({ ...newDiagnosticOrderTest });
     setTest({ ...newDiagnosticTest });
     setPreviewDiagnosticsOrder(null);
-  };
-
-
-  const addToFavorites = rowData => {
-    const rowId = rowData.id ?? rowData.key;
-
-    const alreadyExists = favoriteMedications.some(
-      item => item.__rowId === rowId
-    );
-
-    if (alreadyExists) {
-      setFavoriteMedications(prev =>
-        prev.filter(item => item.__rowId !== rowId)
-      );
-
-      dispatch(
-        notify({
-          msg: 'Removed from favorites',
-          type: 'info'
-        })
-      );
-    } else {
-      setFavoriteMedications(prev => [
-        ...prev,
-        {
-          ...rowData,
-          __rowId: rowId   // ✅ المفتاح السحري
-        }
-      ]);
-
-      dispatch(
-        notify({
-          msg: 'Added to favorites',
-          type: 'success'
-        })
-      );
-    }
-  };
-
-  const joinValuesFromArray = values => {
-    return values.filter(Boolean).join(', ');
   };
 
   const resolveReasonLabel = (reasonKey?: string) =>
@@ -812,26 +716,71 @@ const DiagnosticsOrder = props => {
     setOpenDetailsModel(true);
   };
 
+  const testsMap = React.useMemo(() => {
+    return new Map(testsList.map(t => [t.id, t]));
+  }, [testsList]);
+
+
+  const normalizedOrderTestList = React.useMemo(() => {
+    return orderTestList.map(orderTest => {
+      const test = testsMap.get(orderTest.testId);
+
+      return {
+        ...orderTest,
+        test,
+        orderType: orderTest.orderType ?? test?.type
+      };
+    });
+  }, [orderTestList, testsMap]);
+
+  const selectableRowIds = useMemo(
+    () =>
+      normalizedOrderTestList
+        .filter(row => row.status === 'NEW')
+        .map(row => Number(row.id))
+        .filter(Boolean),
+    [normalizedOrderTestList]
+  );
+
+
+
+  const isAllSelected =
+    selectableRowIds.length > 0 &&
+    selectableRowIds.every(id => selectedRows.includes(id));
+
+  const isIndeterminate =
+    selectedRows.length > 0 && !isAllSelected;
+
+
+
 
   const tableColumns = [
     {
       key: 'check',
-      title: <Translate>#</Translate>,
+      title: (
+        <Checkbox
+          checked={isAllSelected}
+          indeterminate={isIndeterminate}
+          disabled={selectableRowIds.length === 0}
+          onChange={(_, checked) => {
+            setSelectedRows(checked ? selectableRowIds : []);
+          }}
+        />
+      ),
       flexGrow: 1,
-      fullText: true,
       render: rowData => {
-        const status = rowData.status;
-        const rowId = rowData.id ?? rowData.key;
-
+        const rowId = Number(rowData.id);
+        const isDisabled = rowData.status !== 'NEW';
 
         return (
           <Checkbox
             checked={selectedRows.includes(rowId)}
+            disabled={isDisabled}
             onChange={() => handleCheckboxChange(rowId)}
-            disabled={status !== 'NEW'}
           />
         );
       }
+
     },
     {
       key: 'orderTypeLkey',
@@ -895,7 +844,7 @@ const DiagnosticsOrder = props => {
       fullText: true,
       render: rowData => {
         return <>{formatEnumString(
-            rowData.processingStatus)}</>
+          rowData.processingStatus)}</>
       }
     },
     {
@@ -907,55 +856,27 @@ const DiagnosticsOrder = props => {
         resolveReasonLabel(rowData.reason ?? rowData.reasonLkey)
     },
     {
-      key: 'priorityLkey',
-      dataKey: 'priorityLkey',
-      title: <Translate>priority</Translate>,
-      flexGrow: 1,
-      fullText: true,
-      render: rowData =>
-        rowData.priorityLvalue?.lovDisplayVale ?? rowData.priorityLkey ?? ''
-    },
-    {
       key: 'notes',
       title: <Translate>NOTES</Translate>,
       flexGrow: 1,
       render: rowData => rowData.notes ?? ''
     },
     {
-      key: '',
-      dataKey: '',
-      title: <Translate>ATTACHED FILE</Translate>,
+      key: 'attachments',
+      title: <Translate>ATTACHMENTS</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        const rowId = rowData?.id ?? rowData?.key;
-        const matchingAttachments = fetchPatintAttachmentsResponce?.object?.filter(
-          item => item.referenceObjectKey === rowId
-        );
-        const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
-
-        return (
-          <HStack spacing={2}>
-            {lastAttachment && (
-              <FaFileArrowDown
-                size={20}
-                fill="var(--primary-gray)"
-                onClick={() => handleDownload(lastAttachment)}
-                style={{ cursor: 'pointer' }}
-              />
-            )}
-
-            <MdAttachFile
-              size={20}
-              fill="var(--primary-gray)"
-              onClick={() => {
-                setOrderTest(normalizeOrderTest(rowData));
-                setAttachmentsModalOpen(true);
-              }}
-              style={{ cursor: 'pointer' }}
-            />
-          </HStack>
-        );
-      }
+      render: (rowData: any) => (
+        <MdAttachFile
+          size={20}
+          fill={rowData?.id ? 'var(--primary-gray)' : '#ccc'}
+          style={{ cursor: rowData?.id ? 'pointer' : 'not-allowed' }}
+          onClick={() => {
+            if (!rowData?.id) return;
+            setTest(rowData);
+            setAttachmentsModalOpen(true);
+          }}
+        />
+      )
     },
     {
       key: 'submitDate',
@@ -973,14 +894,7 @@ const DiagnosticsOrder = props => {
       flexGrow: 2,
       fullText: true,
       render: rowData => {
-        const rowId = rowData.id ?? rowData.key;
-        const isLaboratory =
-          rowData.orderType === 'LABORATORY' ||
-          rowData.test?.type === 'LABORATORY';
-
-        const isInFavorites = favoriteMedications.some(
-          item => item.__rowId === rowId
-        );
+        const rowId = rowData.id;
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1001,8 +915,6 @@ const DiagnosticsOrder = props => {
               </span>
             </Whisper>
 
-
-            {/*  */}
             <Whisper placement="top" speaker={<Tooltip>Pre-test assessment</Tooltip>}>
               <FontAwesomeIcon
                 color="var(--primary-gray)"
@@ -1010,26 +922,6 @@ const DiagnosticsOrder = props => {
                 icon={faListCheck}
               />
             </Whisper>
-
-            {/*  */}
-            {isLaboratory && (
-              <Whisper placement="top" speaker={<Tooltip>Collect Sample</Tooltip>}>
-                <HStack spacing={10}>
-                  <FontAwesomeIcon
-                    icon={faVialCircleCheck}
-                    className="icons-styles"
-                    color="var(--primary-gray)"
-                    onClick={() => {
-                      setOrderTest(normalizeOrderTest(rowData));
-                      setTest(rowData.test);
-                      setOpenSampleModal(true);
-                    }}
-                    style={{ cursor: 'pointer' }}
-                  />
-                </HStack>
-              </Whisper>
-            )}
-            {/*  */}
             <Whisper placement="top" speaker={<Tooltip>Test card</Tooltip>}>
               <HStack spacing={10}>
                 <FontAwesomeIcon
@@ -1044,20 +936,6 @@ const DiagnosticsOrder = props => {
                   style={{ cursor: 'pointer' }}
                 />
               </HStack>
-            </Whisper>
-
-            {/*  */}
-            <Whisper
-              placement="top"
-              speaker={
-                <Tooltip>{isInFavorites ? 'Remove from favorites' : 'Add to favorites'}</Tooltip>
-              }
-            >
-              <FontAwesomeIcon
-                icon={faStar}
-                onClick={() => addToFavorites(rowData)}
-                className={isInFavorites ? 'font-awsy icons-styless' : 'font-aws icons-styless'}
-              />
             </Whisper>
           </div>
         );
@@ -1106,7 +984,6 @@ const DiagnosticsOrder = props => {
         );
       }
     },
-
     {
       key: 'cancellationReason',
       dataKey: 'cancellationReason',
@@ -1116,28 +993,38 @@ const DiagnosticsOrder = props => {
   ];
 
 
+  const handleRecallFavoriteTest = async (test: any) => {
+    const orderId = orders?.id;
 
-  const testsMap = React.useMemo(() => {
-    return new Map(testsList.map(t => [t.id, t]));
-  }, [testsList]);
+    if (!orderId || !patientId || !encounterId) {
+      dispatch(notify({ msg: 'Missing order or patient info', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      await createOrderTest({
+        patientId,
+        encounterId,
+        orderId,
+        testId: test.id,
+        orderType: test.type
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Test recalled successfully', sev: 'success' }));
+      setOpenFavoritesModal(false);
+      await orderTestRefetch();
+
+    } catch (e) {
+      dispatch(notify({ msg: 'Recall failed', sev: 'error' }));
+    }
+  };
 
 
-  const normalizedOrderTestList = React.useMemo(() => {
-    return orderTestList.map(orderTest => {
-      const test = testsMap.get(orderTest.testId);
-
-      return {
-        ...orderTest,
-        test,
-        orderType: orderTest.orderType ?? test?.type
-      };
-    });
-  }, [orderTestList, testsMap]);
 
   useEffect(() => {
     if (!ordersList?.length) return;
 
-    if (orders?.id || orders?.key) return;
+    if (orders?.id) return;
     const draftOrder = ordersList.find(
       o => o.saveDraft === true && o.status === 'NEW'
     );
@@ -1147,10 +1034,18 @@ const DiagnosticsOrder = props => {
     }
   }, [ordersList]);
 
+  const selectedOrderTests = useMemo(
+    () =>
+      normalizedOrderTestList.filter(row =>
+        selectedRows.includes(row.id)
+      ),
+    [normalizedOrderTestList, selectedRows]
+  );
+
+
   return (
     <>
       <div className="main-container">
-        {/* Enhanced Header with New Fields */}
         <div className="enhanced-header">
           {/* First Row - Existing Order Selector and Basic Controls */}
           <div className="header-first-row">
@@ -1205,7 +1100,7 @@ const DiagnosticsOrder = props => {
                 disabled={
                   edit
                     ? true
-                    : orders.id ?? orders.key
+                    : orders.id
                       ? orders?.status !== 'NEW' && orders?.statusLkey !== '164797574082125'
                       : true
                 }
@@ -1249,7 +1144,6 @@ const DiagnosticsOrder = props => {
                 }
                 searchable={false}
               />
-
               {/* Category */}
               {filters.type && (
                 <MyInput
@@ -1259,9 +1153,9 @@ const DiagnosticsOrder = props => {
                   fieldLabel="Category"
                   width={120}
                   selectData={
-                    filters.type === '862810597620632'
+                    filters.type === 'LABORATORY'
                       ? labCategoriesLovResponse?.object ?? []
-                      : filters.type === '862828331135792'
+                      : filters.type === 'RADIOLOGY'
                         ? radCategoriesLovResponse?.object ?? []
                         : []
                   }
@@ -1272,20 +1166,6 @@ const DiagnosticsOrder = props => {
                   searchable={false}
                 />
               )}
-
-              {/* Catalog */}
-              <MyInput
-                fieldName="catalog"
-                column
-                fieldType="select"
-                record={filters}
-                setRecord={setFilters}
-                selectData={[]}
-                selectDataLabel="name"
-                selectDataValue="key"
-                width={120}
-                searchable={false}
-              />
 
             </Form>
           </div>
@@ -1299,7 +1179,7 @@ const DiagnosticsOrder = props => {
               Request New TestSetup
             </MyButton>
             {/* Recall Favorite */}
-            <MyButton onClick={() => setOpenFavoritesModal(true)}>
+            <MyButton onClick={() => setRecallFavoriteModal(true)}>
               <FontAwesomeIcon icon={faStar} />
               Recall Favorite
             </MyButton>
@@ -1334,7 +1214,7 @@ const DiagnosticsOrder = props => {
               </Checkbox>
 
               <MyButton
-                disabled={orders.id == null && orders.key == null}
+                disabled={orders.id == null}
                 onClick={() => setOpenTestsModal(true)}
               >
                 <FontAwesomeIcon icon={faPlus} />
@@ -1349,6 +1229,33 @@ const DiagnosticsOrder = props => {
               >
                 Cancel
               </MyButton>
+              <MyButton
+                disabled={selectedRows.length === 0}
+                onClick={() => setBulkDepartmentModalOpen(true)}
+              >
+                Assign Department
+              </MyButton>
+              <Form fluid>
+                <MyInput
+                  column
+                  width={120}
+                  fieldName="type"
+                  fieldLabel='Assign Department'
+                  fieldType="select"
+                  selectData={diagTypeResponse ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={filters}
+                  setRecord={rec =>
+                    setFilters({
+                      ...rec,
+                      category: '',
+                      catalog: '',
+                    })
+                  }
+                  searchable={false}
+                />
+              </Form>
             </div>
           </div>
         </Row>
@@ -1375,7 +1282,6 @@ const DiagnosticsOrder = props => {
 
         <PreviewDiagnosticsOrder
           open={!!previewDiagnosticsOrder}
-          setOpen={setPreviewDiagnosticsOrder}
           orderTest={previewDiagnosticsOrder}
         />
 
@@ -1406,14 +1312,21 @@ const DiagnosticsOrder = props => {
         title={'Cancellation'}
       />
 
-      <AttachmentUploadModal
-        isOpen={attachmentsModalOpen}
-        setIsOpen={setAttachmentsModalOpen}
-        actionType={'add'}
-        refecthData={attachmentRefetch}
-        attachmentSource={orderTest}
-        attatchmentType="ORDER_TEST"
-        patientKey={patientId ?? patient?.key}
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title={`Attachments - ${test?.test?.testName ?? test?.testName ?? ''}`}
+        size="lg"
+        hideActionBtn
+        content={
+          <EncounterAttachment
+            localEncounter={encounter}
+            source="DIAGNOSTIC_ORDER_ATTACHMENT"
+            sourceId={test?.id ? Number(test.id) : undefined}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => { }}
+          />
+        }
       />
 
       <MyModal
@@ -1441,21 +1354,6 @@ const DiagnosticsOrder = props => {
         }
       />
 
-      {/* Recall Favorite Modal */}
-      <MyModal
-        open={recallFavoriteModal}
-        setOpen={setRecallFavoriteModal}
-        title="Recall Favorite Orders"
-        size="60vw"
-        content={
-          <div className="modal-content-padding">
-            <p>Select favorite diagnostic orders to recall...</p>
-            {/* TODO: Add favorite orders selection component similar to medication */}
-          </div>
-        }
-      />
-
-      {/* Pre-test Assessment Modal */}
       <MyModal
         open={preTestAssessmentModal}
         setOpen={setPreTestAssessmentModal}
@@ -1464,12 +1362,10 @@ const DiagnosticsOrder = props => {
         content={
           <div className="modal-content-padding">
             <p>Pre-test assessment checklist and requirements...</p>
-            {/* TODO: Add pre-test assessment form */}
           </div>
         }
       />
 
-      {/* Collect Sample Modal */}
       <MyModal
         open={collectSampleModal}
         setOpen={setCollectSampleModal}
@@ -1478,113 +1374,17 @@ const DiagnosticsOrder = props => {
         content={
           <div className="modal-content-padding">
             <p>Sample collection interface and tracking...</p>
-            {/* TODO: Add sample collection interface */}
           </div>
         }
       />
 
-      <MyModal
-        open={openFavoritesModal}
-        setOpen={setOpenFavoritesModal}
-        title="Favorite Medications"
-        size="lg"
-        content={
-          <div>
-            <MyTable
-              columns={[
-                {
-                  key: 'medicationName',
-                  dataKey: 'genericMedicationsKey',
-                  title: 'Medication Name',
-                  render: (rowData: any) => {
-                    return (
-                      genericMedicationListResponse?.object?.find(
-                        item => item.key === rowData.genericMedicationsKey
-                      )?.genericName || 'Unknown Medication'
-                    );
-                  }
-                },
-                {
-                  key: 'instruction',
-                  dataKey: '',
-                  title: 'Instruction',
-                  render: (rowData: any) => {
-                    return joinValuesFromArray([
-                      rowData.dose,
-                      rowData.doseUnitLvalue?.lovDisplayVale,
-                      rowData.drugOrderTypeLkey == '2937757567806213'
-                        ? 'STAT'
-                        : 'every ' + rowData.frequency + ' hours',
-                      rowData.roaLvalue?.lovDisplayVale
-                    ]);
-                  }
-                },
-                {
-                  key: 'administrationInstruction',
-                  dataKey: 'administrationInstructions',
-                  title: 'Administration Instruction',
-                  render: (rowData: any) => {
-                    if (rowData.administrationInstructions?.lovDisplayVale) {
-                      return rowData.administrationInstructions.lovDisplayVale;
-                    } else if (rowData.administrationInstructions) {
-                      const instruction = administrationInstructionsLovQueryResponse?.object?.find(
-                        item => item.key === rowData.administrationInstructions
-                      );
-                      return instruction?.lovDisplayVale || rowData.administrationInstructions;
-                    }
-                    return 'No instruction';
-                  }
-                },
-                {
-                  key: 'parametersToMonitor',
-                  dataKey: 'parametersToMonitorKey',
-                  title: 'Parameters To Monitor',
-                  render: (rowData: any) => {
-                    if (rowData.parametersToMonitor) {
-                      return rowData.parametersToMonitor;
-                    } else if (rowData.parametersToMonitorValue?.lovDisplayVale) {
-                      return rowData.parametersToMonitorValue.lovDisplayVale;
-                    } else if (rowData.parametersToMonitorKey) {
-                      return rowData.parametersToMonitorKey;
-                    }
-                    return 'No parameters specified';
-                  }
-                },
-                {
-                  key: 'actions',
-                  title: 'Actions',
-                  render: (rowData: any) => {
-                    return (
-                      <div className="favorites-modal-actions">
-                        <MyButton size="xs" onClick={() => handleRecall(rowData)}>
-                          Recall
-                        </MyButton>
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          onClick={() => addToFavorites(rowData)}
-                          className="star-favorite-icon"
-                          title="Remove from favorites"
-                        />
-                      </div>
-                    );
-                  }
-                }
-              ]}
-              data={favoriteMedications || []}
-            />
-          </div>
-        }
-      />
-      <SampleModal
-        open={openSampleModal}
-        setOpen={setOpenSampleModal}
-        order={orders}
-        test={test}
-        orderTest={orderTest}
-        patient={patient}
-        encounter={encounter}
-        edit={edit}
-        onSave={handleSaveTest}
+      <RequestTestModal
+        open={openRequestTestModal}
+        setOpen={setOpenRequestTestModal}
+        fromDepartmentId={resolveFromDepartmentId()}
+        fromFacilityId={selectedDepartment?.facilityId}
+        onSuccess={() => {
+        }}
       />
 
       <MyModal
@@ -1600,6 +1400,26 @@ const DiagnosticsOrder = props => {
           />
         }
       />
+
+      <BulkAssignDepartmentModal
+        open={bulkDepartmentModalOpen}
+        setOpen={setBulkDepartmentModalOpen}
+        selectedRows={selectedRows}
+        orderTests={selectedOrderTests}
+        onSuccess={() => {
+          orderTestRefetch();
+          setSelectedRows([]);
+        }}
+      />
+
+      <RecallFavoriteDiagnosticOrdersModal
+        open={recallFavoriteModal}
+        setOpen={setRecallFavoriteModal}
+        favoriteTests={favoriteTests ?? []}
+        loading={loadingFavorites}
+        onRecall={handleRecallFavoriteTest}
+      />
+
 
     </>
   );

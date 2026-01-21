@@ -25,9 +25,7 @@ const DetailsModal = ({
   const [actionType] = useState(null);
   const [requestedPatientAttacment] = useState();
   const [receivedType, setReceivedType] = useState('');
-  const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
 
-  const { data: orderPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
   const { data: timeUnitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
    const [deptPage, setDeptPage] = useState(0);
@@ -54,18 +52,20 @@ const DetailsModal = ({
   );
 
   useEffect(() => {
-    const testType = test?.testTypeLkey ?? test?.type;
-    if (testType === '862810597620632' || testType === 'LABORATORY') {
+    const testType =  test?.type;
+    if (testType === 'LABORATORY') {
       setReceivedType('LABORATORY');
-    } else if (testType === '862828331135792' || testType === 'RADIOLOGY') {
+    } else if ( testType === 'RADIOLOGY') {
       setReceivedType('RADIOLOGY');
-    } else if (testType === '862842242812880' || testType === 'PATHOLOGY') {
+    } else if (testType === 'PATHOLOGY') {
       setReceivedType('PATHOLOGY');
     } else {
       setReceivedType('');
     }
   }, [test]);
+
   const [allDepartments, setAllDepartments] = useState([]);
+
   useEffect(() => {
      if (receivedLabList?.data) {
        setAllDepartments((prev) =>
@@ -81,11 +81,6 @@ const DetailsModal = ({
       }
     }
   }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
-
-  useEffect(() => {
-    // Initialize repeat checkbox state based on orderTest data
-    setIsRepeatEnabled(!!orderTest?.isRepeat);
-  }, [orderTest?.isRepeat]);
 
   useEffect(() => {
     if (orderTest?.receivedLabId && !orderTest?.receivedDepartmentId) {
@@ -127,26 +122,6 @@ const DetailsModal = ({
     }
   };
 
- 
-
-  const handleRepeatCheckboxChange = checked => {
-    setIsRepeatEnabled(checked);
-    setOrderTest(prev => ({
-      ...prev,
-      isRepeat: checked,
-      // Clear repeat fields if unchecked
-      ...(checked
-        ? {}
-        : {
-          repeatEveryNumber: null,
-          repeatEveryUnit: null,
-          periodNumber: null,
-          periodUnit: null,
-          firstOccurrenceDateTime: null
-        })
-    }));
-  };
-
   const statusValue =
     orderTest?.status ?? orderTest?.statusLkey ?? orderTest?.statusLvalue?.valueCode;
   const isEditable =
@@ -186,22 +161,6 @@ const DetailsModal = ({
         content={
           <div className={clsx('', { 'disabled-panel': edit })}>
             <Form fluid>
-              <Row>
-                <Col md={8}>
-                  <MyInput
-                    width="100%"
-                    fieldType="select"
-                    fieldLabel="Order Priority"
-                    selectData={orderPriorityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'priorityLkey'}
-                    record={orderTest}
-                    setRecord={setOrderTest}
-                    searchable={false}
-                  />
-                </Col>
-                <Col md={8}>
                   <MyInput
                     fieldType="select"
                     fieldLabel="Reason"
@@ -212,11 +171,6 @@ const DetailsModal = ({
                     record={orderTest}
                     setRecord={setOrderTest}
                   />
-
-
-                </Col>
-                <Col md={8}>
-                
 
                   <MyInput
                     fieldType="selectPagination"
@@ -237,101 +191,7 @@ const DetailsModal = ({
                       }
                     }}
                   />
-                </Col>
-              </Row>
 
-              {/* Repeat Section */}
-              <Row style={{ marginTop: '16px' }}>
-                <Col md={24}>
-                  <MyInput
-                    fieldType="checkbox"
-                    fieldLabel="Repeat"
-                    fieldName={'isRepeat'}
-                    record={orderTest}
-                    setRecord={setOrderTest}
-                    onChange={handleRepeatCheckboxChange}
-                  />
-                </Col>
-              </Row>
-
-              {/* Repeat Fields - Only show when repeat is enabled */}
-              {isRepeatEnabled && (
-                <>
-                  <Row>
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="number"
-                        fieldLabel="Repeat every"
-                        fieldName={'repeatEveryNumber'}
-                        record={orderTest}
-                        setRecord={setOrderTest}
-                        min={1}
-                      />
-                    </Col>
-                    <div className="margin-top">
-                      <Col md={8}>
-                        <MyInput
-                          width="100%"
-                          fieldType="select"
-                          fieldLabel=""
-                          selectData={timeUnitsLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName={'repeatEveryUnit'}
-                          record={orderTest}
-                          setRecord={setOrderTest}
-                        />
-                      </Col>
-                    </div>
-                  </Row>
-
-                  <Row>
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="number"
-                        fieldLabel="For period of"
-                        fieldName={'periodNumber'}
-                        record={orderTest}
-                        setRecord={setOrderTest}
-                        min={1}
-                      />
-                    </Col>
-                    <div className="margin-top">
-                      <Col md={8}>
-                        <MyInput
-                          width="100%"
-                          fieldType="select"
-                          fieldLabel=""
-                          selectData={timeUnitsLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName={'periodUnit'}
-                          record={orderTest}
-                          setRecord={setOrderTest}
-                        />
-                      </Col>
-                    </div>
-                  </Row>
-
-                  <Row>
-                    <Col md={16}>
-                      <MyInput
-                        width="100%"
-                        fieldType="datetime"
-                        fieldLabel="First occurrence time"
-                        fieldName={'firstOccurrenceDateTime'}
-                        record={orderTest}
-                        setRecord={setOrderTest}
-                      />
-                    </Col>
-                  </Row>
-                </>
-              )}
-
-              <Row>
-                <Col md={24}>
                   <MyInput
                     height={70}
                     width={'100%'}
@@ -340,8 +200,7 @@ const DetailsModal = ({
                     record={orderTest}
                     setRecord={setOrderTest}
                   />
-                </Col>
-              </Row>
+
             </Form>
           </div>
         }

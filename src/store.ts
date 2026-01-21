@@ -115,11 +115,13 @@ import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
-import { favoriteDiagnosticTestService } from './services/favoriteDiagnosticTestService';
+import { favoriteDiagnosticTestService } from './services/diagnosic-order/favoriteDiagnosticTestService';
 import { diagnosticOrderService } from './services/diagnosic-order/diagnosticOrderService';
 import { diagnosticOrderTestService } from './services/diagnosic-order/diagnosticOrderTestService';
 import { diagnosticOrderTestCollectedSampleService } from './services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 import { diagnosticOrderTestTechnicianNoteService } from './services/diagnosic-order/diagnosticOrderTestTechnicianNoteService';
+import { diagnosticTestRequestService } from './services/diagnosic-order/diagnosticTestRequestService';
+
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -346,6 +348,7 @@ export const store = configureStore({
     [diagnosticOrderTestService.reducerPath]: diagnosticOrderTestService.reducer,
     [diagnosticOrderTestCollectedSampleService.reducerPath]: diagnosticOrderTestCollectedSampleService.reducer,
     [diagnosticOrderTestTechnicianNoteService.reducerPath]: diagnosticOrderTestTechnicianNoteService.reducer,
+    [diagnosticTestRequestService.reducerPath]: diagnosticTestRequestService.reducer,
 
   },
 
@@ -469,6 +472,7 @@ export const store = configureStore({
       diagnosticOrderService.middleware,
       diagnosticOrderTestCollectedSampleService.middleware,
       diagnosticOrderTestTechnicianNoteService.middleware,
+      diagnosticTestRequestService.middleware,
     ])
 });
 

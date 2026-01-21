@@ -10,7 +10,7 @@ import {
   useAddFavoriteDiagnosticTestMutation,
   useDeleteFavoriteDiagnosticTestMutation,
   useGetFavoriteDiagnosticTestsByUserQuery
-} from '@/services/favoriteDiagnosticTestService';
+} from '@/services/diagnosic-order/favoriteDiagnosticTestService';
 
 import { DiagnosticTest } from '@/types/model-types-new';
 

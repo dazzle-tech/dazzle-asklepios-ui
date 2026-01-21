@@ -1,172 +1,244 @@
-import React, { useMemo, useState } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  forwardRef,
+  useImperativeHandle
+} from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useFilterDiagnosticOrderTestsQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { initialListRequestId } from '@/types/types';
 import { DiagnosticStatus } from '@/types/model-types-new';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Form } from 'rsuite';
 import { formatEnumString } from '@/utils';
+import MyInput from '@/components/MyInput';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
-const PatientPrevTests = (props: any) => {
-  /* ===================== HELPERS ===================== */
-  const toNumericId = (value: any) => {
-    if (value === null || value === undefined) return undefined;
-    if (typeof value === 'number') return value;
-    const n = Number(value);
-    return Number.isNaN(n) ? undefined : n;
-  };
+type PatientPrevTestsRef = {
+  refetchPrevTests: () => void;
+};
 
-  const patientId = toNumericId(props?.patient?.id ?? props?.patient?.key);
-  const [showCancelled, setShowCancelled] = useState(false);
+const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
+  ({ patient }, ref) => {
+    /* ===================== HELPERS ===================== */
+    const toNumericId = (value: any) => {
+      if (value === null || value === undefined) return undefined;
+      if (typeof value === 'number') return value;
+      const n = Number(value);
+      return Number.isNaN(n) ? undefined : n;
+    };
 
-  /* ===================== PAGINATION (UI STATE) ===================== */
-  const [paginationParams, setPaginationParams] = useState({
-    page: 0,
-    size: 15
-  });
+    const patientId = toNumericId(patient?.id ?? patient?.key);
 
-  /* ===================== ADAPT pagination → listRequest ===================== */
-  const listRequest = useMemo(
-    () => ({
-      ...initialListRequestId,
-      pageNumber: paginationParams.page + 1, // backend is 1-based
-      pageSize: paginationParams.size
-    }),
-    [paginationParams]
-  );
+    /* ===================== STATE ===================== */
+    const [showCancelled, setShowCancelled] = useState(false);
+    const [filters, setFilters] = useState({
+      testName: '',
+      type: '',
+      category: ''
+    });
 
-  /* ===================== FETCH ORDER TESTS ===================== */
-  const { data: orderTestResponse, isLoading } =
-    useFilterDiagnosticOrderTestsQuery(
+    /* ===================== FILTERS ===================== */
+    const cleanFilters = (filters: any) => {
+      const cleaned: any = Object.fromEntries(
+        Object.entries(filters).filter(
+          ([, v]) => v !== '' && v !== null && v !== undefined
+        )
+      );
+
+      if (cleaned.type) {
+        cleaned.orderType = cleaned.type;
+        delete cleaned.type;
+      }
+
+      return cleaned;
+    };
+
+    const cleanedFilters = useMemo(
+      () => cleanFilters(filters),
+      [filters]
+    );
+
+    /* ===================== QUERY ===================== */
+    const {
+      data: orderTestResponse,
+      isLoading,
+      refetch
+    } = useFilterDiagnosticOrderTestsQuery(
       patientId
         ? showCancelled
           ? {
-            patientId,
-            status: DiagnosticStatus.CANCELLED,
-            listRequest
-          }
+              patientId,
+              status: DiagnosticStatus.CANCELLED,
+              ...cleanedFilters
+            }
           : {
-            patientId,
-            excludeStatus: DiagnosticStatus.CANCELLED,
-            listRequest
-          }
+              patientId,
+              excludeStatus: DiagnosticStatus.CANCELLED,
+              ...cleanedFilters
+            }
         : skipToken
     );
 
-
-
-  const orderTestList: any[] = Array.isArray(orderTestResponse)
-    ? orderTestResponse
-    : orderTestResponse?.data ??
-    orderTestResponse?.object ??
-    [];
-
-  const totalCount =
-    orderTestResponse?.total ??
-    orderTestResponse?.extraNumeric ??
-    orderTestList.length;
-
-  /* ===================== FETCH ALL TESTS ===================== */
-  const { data: testsResponse } = useGetAllDiagnosticTestsQuery({
-    page: 0,
-    size: 10000
-  });
-
-  const testsList = testsResponse?.data ?? [];
-
-  /* ===================== MAP TESTS ===================== */
-  const testsMap = useMemo(() => {
-    return new Map(testsList.map(t => [t.id, t]));
-  }, [testsList]);
-
-  /* ===================== NORMALIZE ===================== */
-  const normalizedRows = useMemo(() => {
-    return orderTestList.map(orderTest => {
-      const test = testsMap.get(orderTest.testId);
-      return {
-        ...orderTest,
-        test,
-        orderType: orderTest.orderType ?? test?.type
-      };
-    });
-  }, [orderTestList, testsMap]);
-
-  /* ===================== COLUMNS ===================== */
-  const tableColumns = [
-    {
-      key: 'orderId',
-      title: <Translate>ORDER ID</Translate>,
-      flexGrow: 1,
-      render: row => row.orderId
-
-    },
-    {
-      key: 'orderType',
-      title: <Translate>ORDER TYPE</Translate>,
-      flexGrow: 1,
-      render: rowData => {
-        return <>{formatEnumString(
-          rowData.orderType)}</>
+    /* 🔥 expose refetch to parent */
+    useImperativeHandle(ref, () => ({
+      refetchPrevTests: () => {
+        refetch();
       }
-    },
-    {
-      key: 'testName',
-      title: <Translate>TEST NAME</Translate>,
-      flexGrow: 2,
-      render: row => row.test?.testName ?? row.test?.name ?? ''
-    },
-    {
-      key: 'internalCode',
-      title: <Translate>INTERNAL CODE</Translate>,
-      flexGrow: 2,
-      render: row => row.test?.internalCode ?? row.test?.code ?? ''
-    },
-    {
-      key: 'status',
-      title: <Translate>STATUS</Translate>,
-      flexGrow: 1,
-      render: rowData => {
-        return <>{formatEnumString(
-          rowData.status)}</>
-      }    }
-  ];
-
-  /* ===================== HANDLERS ===================== */
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setPaginationParams(prev => ({ ...prev, page: newPage }));
-  };
-
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPaginationParams(prev => ({
-      ...prev,
-      size: parseInt(event.target.value, 10),
-      page: 0
     }));
-  };
 
-  /* ===================== RENDER ===================== */
-  return (<>
-    <Checkbox
-      checked={showCancelled}
-      onChange={(_, checked) => setShowCancelled(checked)}
-    >
-      Show Cancelled
-    </Checkbox>
+    const orderTestList: any[] = orderTestResponse?.data ?? [];
 
+    /* ===================== ALL TESTS ===================== */
+    const { data: testsResponse } = useGetAllDiagnosticTestsQuery({
+      page: 0,
+      size: 10000
+    });
 
-    <MyTable
-      loading={isLoading}
-      data={normalizedRows}
-      columns={tableColumns}
-      page={paginationParams.page}
-      rowsPerPage={paginationParams.size}
-      totalCount={totalCount}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-    />
-  </>);
-};
+    const testsList = testsResponse?.data ?? [];
+
+    const testsMap = useMemo(() => {
+      return new Map(testsList.map(t => [t.id, t]));
+    }, [testsList]);
+
+    /* ===================== NORMALIZE ===================== */
+    const normalizedRows = useMemo(() => {
+      return orderTestList.map(orderTest => {
+        const test = testsMap.get(orderTest.testId);
+        return {
+          ...orderTest,
+          test,
+          orderType: orderTest.orderType ?? test?.type
+        };
+      });
+    }, [orderTestList, testsMap]);
+
+    /* ===================== COLUMNS ===================== */
+    const tableColumns = [
+      {
+        key: 'orderId',
+        title: <Translate>ORDER ID</Translate>,
+        flexGrow: 1,
+        render: (row: any) => row.orderId
+      },
+      {
+        key: 'orderType',
+        title: <Translate>ORDER TYPE</Translate>,
+        flexGrow: 1,
+        render: (row: any) => formatEnumString(row.orderType)
+      },
+      {
+        key: 'testName',
+        title: <Translate>TEST NAME</Translate>,
+        flexGrow: 2,
+        render: (row: any) => row.test?.testName ?? row.test?.name ?? ''
+      },
+      {
+        key: 'internalCode',
+        title: <Translate>INTERNAL CODE</Translate>,
+        flexGrow: 2,
+        render: (row: any) => row.test?.internalCode ?? row.test?.code ?? ''
+      },
+      {
+        key: 'status',
+        title: <Translate>STATUS</Translate>,
+        flexGrow: 1,
+        render: (row: any) => formatEnumString(row.status)
+      }
+    ];
+
+    /* ===================== FILTER UI ===================== */
+    const diagTypeResponse = useEnumOptions('TestType');
+    const { data: labCategoriesLovResponse } =
+      useGetLovValuesByCodeQuery('LAB_CATEGORIES');
+    const { data: radCategoriesLovResponse } =
+      useGetLovValuesByCodeQuery('RAD_CATEGORIES');
+
+    const tableFilters = (
+      <Form fluid layout="inline">
+        <MyInput
+          column
+          width={140}
+          fieldName="testName"
+          fieldLabel="Test Name"
+          fieldType="text"
+          record={filters}
+          setRecord={setFilters}
+        />
+
+        <MyInput
+          column
+          width={140}
+          fieldName="type"
+          fieldType="select"
+          fieldLabel="Type"
+          selectData={diagTypeResponse ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={filters}
+          setRecord={rec =>
+            setFilters({
+              ...rec,
+              category: ''
+            })
+          }
+          searchable={false}
+        />
+
+        {filters.type && (
+          <MyInput
+            column
+            width={160}
+            fieldName="category"
+            fieldType="select"
+            fieldLabel="Category"
+            selectData={
+              filters.type === 'LABORATORY'
+                ? labCategoriesLovResponse?.object ?? []
+                : filters.type === 'RADIOLOGY'
+                  ? radCategoriesLovResponse?.object ?? []
+                  : []
+            }
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={filters}
+            setRecord={setFilters}
+            searchable={false}
+          />
+        )}
+      </Form>
+    );
+
+    /* ===================== DEBUG ===================== */
+    useEffect(() => {
+      console.log(
+        'ORDER TYPES IN RESULT:',
+        normalizedRows.map(r => r.orderType)
+      );
+    }, [normalizedRows]);
+
+    /* ===================== RENDER ===================== */
+    return (
+      <>
+        <Checkbox
+          checked={showCancelled}
+          onChange={(_, checked) => setShowCancelled(checked)}
+        >
+          Show Cancelled
+        </Checkbox>
+
+        <MyTable
+          loading={isLoading}
+          data={normalizedRows}
+          columns={tableColumns}
+          filters={tableFilters}
+        />
+      </>
+    );
+  }
+);
 
 export default PatientPrevTests;

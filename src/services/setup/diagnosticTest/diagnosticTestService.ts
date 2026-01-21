@@ -149,6 +149,19 @@ export const diagnosticTestService = createApi({
       ],
     }),
 
+    getDiagnosticTestsByIds: builder.query<any[], { ids: (number | string)[] }>({
+      query: ({ ids }) => ({
+        url: "/api/setup/diagnostic-test/by-ids",
+        method: "GET",
+        params: {
+          ids: ids.join(","),
+        },
+      }),
+      providesTags: ["DiagnosticTest"],
+    }),
+
+
+
     // 🔹 Toggle active status
     toggleDiagnosticTestActive: builder.mutation({
       query: (id) => ({
@@ -170,5 +183,6 @@ export const {
   useCreateDiagnosticTestMutation,
   useUpdateDiagnosticTestMutation,
   useToggleDiagnosticTestActiveMutation,
-  useGetAllDiagnosticTestsByNameAndTypeQuery
+  useGetAllDiagnosticTestsByNameAndTypeQuery,
+  useGetDiagnosticTestsByIdsQuery,
 } = diagnosticTestService;

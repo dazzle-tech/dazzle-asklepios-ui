@@ -1492,6 +1492,9 @@ export interface DiagnosticOrderCreateDTO {
 
   labStatus?: DiagnosticStatus;
   radStatus?: DiagnosticStatus;
+  fromDepartmentId?: number;
+  fromFacilityId?: number;
+
 }
 
 export interface DiagnosticOrderUpdateDTO {
@@ -1506,6 +1509,9 @@ export interface DiagnosticOrderUpdateDTO {
   submittedDate?: string;
 
   isUrgent?: boolean;
+    fromDepartmentId?: number;
+  fromFacilityId?: number;
+
 }
 
 export interface DiagnosticOrderSubmitDTO {
@@ -1530,9 +1536,6 @@ export interface DiagnosticOrderTestCreateDTO {
 
   orderType?: TestType;
 
-  fromDepartmentId?: number;
-  fromFacilityId?: number;
-  toFacilityId?: number;
 }
 
 export interface DiagnosticOrderTestUpdateDTO extends DiagnosticOrderTestCreateDTO {
