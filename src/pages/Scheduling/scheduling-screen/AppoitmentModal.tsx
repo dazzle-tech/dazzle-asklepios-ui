@@ -1082,6 +1082,13 @@ const AppointmentModal = ({
   };
   const [openDay, setOpenDay] = useState<DayValue | null>(null);
 
+  const modalTitle = useMemo(() => {
+  if (showOnly) return 'View Appointment';
+  if (appointmentData) return 'Add/Edit Appointment';
+  return 'Add/Edit Appointment';
+}, [showOnly, appointmentData]);
+
+
   return (
     <div>
       <AdvancedModal
@@ -1104,7 +1111,8 @@ const AppointmentModal = ({
             </MyButton>
           </div>
         }
-        rightTitle="Add Appointment"
+        // rightTitle="Add Appointment"
+        rightTitle={modalTitle}
         rightBodyNoScroll={false}
         rightContent={
           <div className="appointment-wrapper">
