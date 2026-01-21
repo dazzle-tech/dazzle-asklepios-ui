@@ -45,8 +45,8 @@ const Lab = () => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
 
-const OrdersRef = useRef<any>(null);
-const TestsRef = useRef<any>(null);
+  const OrdersRef = useRef<any>(null);
+  const TestsRef = useRef<any>(null);
 
   /* ===================== STATE ===================== */
 

@@ -31,6 +31,10 @@ import {
 import ChatModal from '@/components/ChatModal';
 import BulkCollectSampleModal from './BulkCollectSampleModal';
 import { formatEnumString} from '@/utils';
+import {
+  DiagnosticStatus,
+  DiagnosticOrderTestStatus
+} from '@/types/model-types-new';
 
 type Props = {
   order: any;
@@ -242,8 +246,11 @@ const Tests = forwardRef<any, Props>(
       try {
         await rejectTest({
           id: test.id,
-          body: { reason: test.rejectedReason }
+          body: {
+            rejectedReason: test.rejectedReason
+          }
         }).unwrap();
+
 
         dispatch(notify({ msg: 'Rejected successfully', sev: 'success' }));
         setOpenRejectedModal(false);
@@ -253,7 +260,6 @@ const Tests = forwardRef<any, Props>(
         dispatch(notify({ msg: 'Reject failed', sev: 'error' }));
       }
     };
-
 
     const { data: ReasonLovQueryResponse } =
       useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
@@ -417,80 +423,64 @@ const Tests = forwardRef<any, Props>(
         title: <Translate>ACTION</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
+          console.log('rowData.processingStatus =', rowData.processingStatus);
+          console.log('rowData.status =', rowData.status);
+
+          const canAccept =
+            rowData.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
+
+          const canReject =
+            rowData.status !== DiagnosticOrderTestStatus.APPROVED &&
+            rowData.status !== DiagnosticOrderTestStatus.CANCELLED;
+
           return (
             <HStack spacing={10}>
+              {/* ✅ ACCEPT */}
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Accept</Tooltip>}>
                 <CheckRoundIcon
                   onClick={() => {
+                    if (!canAccept) return;
                     setTest(rowData);
-                    (rowData.processingStatusLkey === '6055029972709625' ||
-                      rowData.processingStatusLkey === '6055207372976955') &&
-                      handleAcceptTest(rowData)
-                  }
-                  }
+                    handleAcceptTest(rowData);
+                  }}
                   style={{
                     fontSize: '1em',
                     marginRight: 10,
-                    color:
-                      rowData.processingStatusLkey !== '6055029972709625' &&
-                        rowData.processingStatusLkey !== '6055207372976955'
-                        ? 'gray'
-                        : 'inherit',
-                    cursor:
-                      rowData.processingStatusLkey !== '6055029972709625' &&
-                        rowData.processingStatusLkey !== '6055207372976955'
-                        ? 'not-allowed'
-                        : 'pointer'
+                    color: canAccept ? 'inherit' : 'gray',
+                    cursor: canAccept ? 'pointer' : 'not-allowed'
                   }}
                 />
               </Whisper>
+
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Undo Accepted</Tooltip>}>
                 <ReloadIcon
-                  // onClick={() => {
-                  //   setTest(rowData);
-                  //   rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED' &&
-                  //     handleUndoAcceptTest(rowData)
-                  // }
-                  // }
                   style={{
                     fontSize: '1em',
                     marginRight: 10,
-                    color:
-                      rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED'
-                        ? 'inherit'
-                        : 'gray',
-                    cursor:
-                      rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED'
-                        ? 'pointer'
-                        : 'not-allowed'
+                    color: 'gray',
+                    cursor: 'not-allowed'
                   }}
                 />
               </Whisper>
+
+              {/* ❌ REJECT */}
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject</Tooltip>}>
                 <WarningRoundIcon
                   onClick={() => {
+                    if (!canReject) return;
                     setTest(rowData);
-                    (rowData.processingStatusLkey === '6055029972709625' ||
-                      rowData.processingStatusLkey === '6055207372976955') &&
-                      setOpenRejectedModal(true)
-                  }
-                  }
+                    setOpenRejectedModal(true);
+                  }}
                   style={{
                     fontSize: '1em',
                     marginRight: 10,
-                    color:
-                      rowData.processingStatusLkey !== '6055029972709625' &&
-                        rowData.processingStatusLkey !== '6055207372976955'
-                        ? 'gray'
-                        : 'inherit',
-                    cursor:
-                      rowData.processingStatusLkey !== '6055029972709625' &&
-                        rowData.processingStatusLkey !== '6055207372976955'
-                        ? 'not-allowed'
-                        : 'pointer'
+                    color: canReject ? 'inherit' : 'gray',
+                    cursor: canReject ? 'pointer' : 'not-allowed'
                   }}
                 />
               </Whisper>
+
+              {/* 🚚 SEND TO EXTERNAL LAB (placeholder) */}
               <Whisper
                 placement="top"
                 trigger="hover"
@@ -498,7 +488,7 @@ const Tests = forwardRef<any, Props>(
               >
                 <FontAwesomeIcon
                   icon={faRightFromBracket}
-                  style={{ fontSize: '1em', marginRight: 10 }}
+                  style={{ fontSize: '1em', marginRight: 10, cursor: 'pointer' }}
                 />
               </Whisper>
             </HStack>

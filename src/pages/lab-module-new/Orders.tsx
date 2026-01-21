@@ -7,7 +7,6 @@ import { useFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagn
 import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 import { formatDateWithoutSeconds } from '@/utils';
 import { useAppSelector } from '@/hooks';
-
 import { skipToken } from '@reduxjs/toolkit/query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';

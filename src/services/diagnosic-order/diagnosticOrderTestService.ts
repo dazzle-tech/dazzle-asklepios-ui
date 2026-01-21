@@ -191,17 +191,18 @@ export const diagnosticOrderTestService = createApi({
 
     rejectDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
-      { id: number; body: DiagnosticOrderTestRejectDTO }
+      { id: number; body: { rejectedReason: string } }
     >({
       query: ({ id, body }) => ({
         url: `/api/patient/diagnostic-order-tests/${id}/reject`,
         method: 'POST',
-        body,
+        body
       }),
       invalidatesTags: (_r, _e, { id }) => [
-        { type: 'DiagnosticOrderTest', id },
+        { type: 'DiagnosticOrderTest', id }
       ],
     }),
+
 
     cancelDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
