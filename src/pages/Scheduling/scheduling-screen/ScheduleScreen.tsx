@@ -110,6 +110,9 @@ const ScheduleScreen = () => {
   const ResourceTypeEnum = useEnumOptions('ResourceType');
 
   const DEFAULT_RESOURCE_TYPE = 'CLINIC';
+  // const DEFAULT_FACILITY_NAME = localStorage.getItem('tenant') || 'null';
+  // const SCHEDULE_DEFAULT_FACILITY_KEY = 'schedule_default_facility_applied_v1';
+
   useEffect(() => {
     const isEmpty =
       !selectedResourceType?.resourcesType || selectedResourceType.resourcesType.length === 0;
@@ -132,6 +135,25 @@ const ScheduleScreen = () => {
     }
   }, [ResourceTypeEnum]);
 
+
+  useEffect(() => {
+  if (selectedFacility?.id) return;
+
+  const raw = localStorage.getItem('tenant');
+  if (!raw) return;
+
+  try {
+    const tenant = JSON.parse(raw);
+    const f = tenant?.selectedFacility;
+
+    if (f?.id) {
+      setSelectedFacility(f);
+    }
+  } catch (e) {}
+}, [selectedFacility?.id]);
+
+
+
   const { data: resourcesWithAvailabilityResponse } =
     useGetResourcesWithAvailabilityQuery(listRequest);
 
@@ -141,7 +163,7 @@ const ScheduleScreen = () => {
     isLoading: isLoadingAppointments,
     isFetching: isFetchingAppointments
   } = useGetAppointmentsQuery({
-    resource_type: selectedResourceType?.resourcesType || null,
+    resource_type:  null,
     facility_id: selectedFacility?.id || null,
     resources: selectedResources ? selectedResources.resourceKey : []
   });
