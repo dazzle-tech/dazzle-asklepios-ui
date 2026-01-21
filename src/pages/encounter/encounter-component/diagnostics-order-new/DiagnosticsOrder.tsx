@@ -1071,7 +1071,7 @@ const DiagnosticsOrder = props => {
             {/* Test Name */}
             <Form>
               <MyInput
-                width={120}
+                width={170}
                 fieldName="testName"
                 fieldType="text"
                 fieldLabel="Test Name"
@@ -1082,7 +1082,7 @@ const DiagnosticsOrder = props => {
             {/* Type */}
             <Form>
               <MyInput
-                width={120}
+                width={180}
                 fieldName="type"
                 fieldType="select"
                 selectData={diagTypesLovQueryResponse?.object ?? []}
@@ -1102,7 +1102,7 @@ const DiagnosticsOrder = props => {
                   fieldName="category"
                   fieldType="select"
                   fieldLabel="Category"
-                  width={120}
+                  width={220}
                   selectData={
                     search.type === '862810597620632'
                       ? labCategoriesLovResponse?.object ?? []

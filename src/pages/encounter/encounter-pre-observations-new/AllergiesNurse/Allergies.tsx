@@ -186,7 +186,7 @@ const Allergies = (props: AllergiesProps) => {
     {
       key: 'allergyTypeLvalue',
       dataKey: 'allergyTypeLvalue',
-      title: <Translate>Allergy Typesss</Translate>,
+      title: <Translate>Allergy Type</Translate>,
       flexGrow: 2,
       render: (rowData: any) => rowData.allergyTypeLvalue?.lovDisplayVale
     },
