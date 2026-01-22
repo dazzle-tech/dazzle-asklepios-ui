@@ -55,6 +55,20 @@ import PatientCardWithPicture from '@/components/PatientCard/PatientCardWithPict
 import { Box, Skeleton } from '@mui/material';
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
+type AppointmentModalProps = {
+  isOpen: any;
+  onClose: any;
+  resourceType: any;
+  facility: any;
+  onSave: any;
+  appointmentData: any;
+  showOnly: any;
+  from: any;
+  selectedSlot: any;
+  forceStatus?: any;
+  onSwitchToFollowUp?: any;
+};
+
 const AppointmentModal = ({
   isOpen,
   onClose,
@@ -65,8 +79,9 @@ const AppointmentModal = ({
   showOnly,
   from,
   selectedSlot,
-  forceStatus
-}) => {
+  forceStatus,
+  onSwitchToFollowUp
+}: AppointmentModalProps) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
   const [resourcesPaginationParams] = useState({
@@ -158,6 +173,14 @@ const AppointmentModal = ({
   const sortedDaysWithSlices = Object.keys(dailySlices).sort((a, b) => parseInt(a) - parseInt(b));
 
   const patientSlice = useAppSelector(state => state.patient);
+  const authSlice = useAppSelector(state => state.auth);
+
+  const loggedInUsername = useMemo(() => {
+    const u = authSlice?.user;
+    const fromUser =
+      u?.login ?? u?.username ?? u?.userName ?? u?.name ?? u?.email ?? u?.id ?? u?.key ?? null;
+    return fromUser ? String(fromUser) : null;
+  }, [authSlice?.user]);
 
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
 
@@ -924,6 +947,11 @@ const AppointmentModal = ({
     const appointmentToSave = {
       ...appointment,
       patientKey: localPatient.key,
+      // Audit field: if backend doesn't populate created_by, ensure it's set from logged-in user
+      createdBy:
+        (typeof appointment?.createdBy === 'string' && appointment.createdBy.trim()
+          ? appointment.createdBy
+          : appointment?.createdBy) ?? loggedInUsername,
       appointmentStart: appointmentStart,
       appointmentEnd: appointmentEnd,
       instructions: instructions,

@@ -186,10 +186,14 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
             title: 'Created By\\At',
             render: (row: Row) => (
                 <>
-                    {row.createdBy || '-'}
+                    {safeStr(row.status).toLowerCase() === 'rejected'
+                        ? (row.updatedBy || '-')
+                        : (row.createdBy || '-')}
                     <br />
                     <span className="date-table-style">
-                        {row.createdAt ? formatDateWithoutSeconds(row.createdAt) : ''}
+                        {safeStr(row.status).toLowerCase() === 'rejected'
+                            ? formatTs(row.updatedAt)
+                            : formatTs(row.createdAt)}
                     </span>
                 </>
             )
