@@ -9,6 +9,40 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import { formatDateWithoutSeconds } from '@/utils';
 
+const formatDateTime = (value?: number | string | null) => {
+    if (value === null || value === undefined || value === '') return '-';
+
+    // handle numeric epoch (ms or seconds)
+    const n = Number(value);
+    if (!Number.isNaN(n) && n > 0) {
+        const asMs = n < 10_000_000_000 ? n * 1000 : n; // seconds -> ms
+        const d = new Date(asMs);
+        return isNaN(d.getTime())
+            ? '-'
+            : d.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+    }
+
+    // fallback for ISO strings
+    const d = new Date(String(value));
+    if (isNaN(d.getTime())) return String(value);
+
+    return d.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+};
+
 type Row = {
     id: string;
 
@@ -37,6 +71,8 @@ type Props = {
     onApprove: (row: Row) => void;
     onReject: (row: Row, rejectReason: string) => Promise<void> | void;
 };
+
+
 
 const safeStr = (v: any) => {
     if (v === null || typeof v === 'undefined') return '';
@@ -184,39 +220,31 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
         {
             key: 'createdByAt',
             title: 'Created By\\At',
-            render: (row: Row) => (
+            render: (row: any) => (
                 <>
-                    {row.createdBy || '-'}
+                    {(safeStr(row.createdBy).trim() || '-')}
                     <br />
                     <span className="date-table-style">
-                        {row.createdAt ? formatDateWithoutSeconds(row.createdAt) : ''}
+                        {formatDateTime(row.createdAt)}
                     </span>
                 </>
             )
         },
-
-        {
-            key: 'approvedByAt',
-            title: 'Approved By\\At',
-            render: (row: Row) => {
-                const isConfirmed = safeStr(row.status).toLowerCase() === 'confirmed';
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontWeight: 600 }}>{isConfirmed ? (row.updatedBy || '-') : '-'}</span>
-                        <span className="date-table-style">{isConfirmed ? formatTs(row.updatedAt) : '-'}</span>
-                    </div>
-                );
-            }
-        },
         {
             key: 'rejectedByAt',
             title: 'Rejected By\\At',
-            render: (row: Row) => {
+            render: (row: any) => {
                 const isRejected = safeStr(row.status).toLowerCase() === 'rejected';
+                if (!isRejected) return '-';
+
                 return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontWeight: 600 }}>{isRejected ? (row.updatedBy || '-') : '-'}</span>
-                        <span className="date-table-style">{isRejected ? formatTs(row.updatedAt) : '-'}</span>
+                        <span style={{ fontWeight: 600 }}>
+                            {safeStr(row.updatedBy).trim() || '-'}
+                        </span>
+                        <span className="date-table-style">
+                            {formatDateTime(row.updatedAt)}
+                        </span>
                     </div>
                 );
             }

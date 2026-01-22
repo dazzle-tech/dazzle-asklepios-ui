@@ -92,7 +92,8 @@ const FollowupAppointmentModal = ({
     setAppointment(prev => ({
       ...prev,
       visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR,
-      patientKey: seedPatient?.key ?? prev?.patientKey
+      patientKey: seedPatient?.key ?? prev?.patientKey,
+      createdBy: authSlice.user.username || '',
     }));
   };
 
@@ -187,6 +188,13 @@ const FollowupAppointmentModal = ({
 
   const patientSlice = useAppSelector(state => state.patient);
   const authSlice = useAppSelector(state => state.auth);
+
+  const loggedInUsername = useMemo(() => {
+    const u = authSlice?.user;
+    const fromUser =
+      u?.login ?? u?.username ?? u?.userName ?? u?.name ?? u?.email ?? u?.id ?? u?.key ?? null;
+    return fromUser ? String(fromUser) : null;
+  }, [authSlice?.user]);
 
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
 
@@ -952,27 +960,17 @@ const FollowupAppointmentModal = ({
       patientKey: localPatient.key,
       // Backend expects audit fields; set them from logged-in user
       createdBy:
-        appointment?.createdBy ??
-        authSlice?.user?.username ??
-        authSlice?.user?.userName ??
-        authSlice?.user?.login ??
-        authSlice?.user?.name ??
-        authSlice?.user?.key ??
-        authSlice?.user?.id ??
-        null,
+        (typeof appointment?.createdBy === 'string' && appointment.createdBy.trim()
+          ? appointment.createdBy
+          : appointment?.createdBy) ?? loggedInUsername,
       createdAt:
         typeof appointment?.createdAt !== 'undefined' && appointment?.createdAt !== null
           ? appointment.createdAt
           : new Date().toISOString(),
       updatedBy:
-        appointment?.updatedBy ??
-        authSlice?.user?.username ??
-        authSlice?.user?.userName ??
-        authSlice?.user?.login ??
-        authSlice?.user?.name ??
-        authSlice?.user?.key ??
-        authSlice?.user?.id ??
-        null,
+        (typeof appointment?.updatedBy === 'string' && appointment.updatedBy.trim()
+          ? appointment.updatedBy
+          : appointment?.updatedBy) ?? loggedInUsername,
       updatedAt:
         typeof appointment?.updatedAt !== 'undefined' && appointment?.updatedAt !== null
           ? appointment.updatedAt

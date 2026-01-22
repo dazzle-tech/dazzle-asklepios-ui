@@ -1287,19 +1287,29 @@ const ScheduleScreen = () => {
       <Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
         <Modal.Header />
         <Modal.Body>
-          <Form fluid layout="inline">
-            <MyInput width={350} column fieldLabel="Reason" fieldName="reason" record={reasonViewRecord} setRecord={setReasonViewRecord} disabled />
-            <MyInput
-              width={350}
-              column
-              fieldLabel="Other Reason"
-              fieldName="otherReason"
-              fieldType="textarea"
-              rows={3}
-              record={reasonViewRecord}
-              setRecord={setReasonViewRecord}
-              disabled
-            />
+          <Form fluid layout="vertical">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 520, maxWidth: '100%' }}>
+              <MyInput
+                width="100%"
+                column
+                fieldLabel="Reason"
+                fieldName="reason"
+                record={reasonViewRecord}
+                setRecord={setReasonViewRecord}
+                disabled
+              />
+              <MyInput
+                width="100%"
+                column
+                fieldLabel="Other Reason"
+                fieldName="otherReason"
+                fieldType="textarea"
+                rows={3}
+                record={reasonViewRecord}
+                setRecord={setReasonViewRecord}
+                disabled
+              />
+            </div>
           </Form>
         </Modal.Body>
       </Modal>
