@@ -436,8 +436,15 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={primaryLabelKey}
             valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : ''}
-            onChange={handleValueChange}
+            value={record?.[fieldName] ?? null}
+            onChange={(value: any) => {
+              if (!setRecord) return;
+              setRecord({
+                ...record,
+                [fieldName]:
+                  value === null || value === undefined || value === '' ? null : Number(value)
+              });
+            }}
             defaultValue={props.defaultSelectValue}
             placeholder={props.placeholder}
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}

@@ -1,6 +1,6 @@
-import { BaseQuery } from "@/newApi";
-import { parseLinkHeader } from "@/utils/paginationHelper";
-import { createApi } from "@reduxjs/toolkit/dist/query/react";
+import { BaseQuery } from '@/newApi';
+import { parseLinkHeader } from '@/utils/paginationHelper';
+import { createApi } from '@reduxjs/toolkit/dist/query/react';
 
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type LinkMap = {
@@ -16,174 +16,176 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
-
-
 export const PractitionerService = createApi({
-  reducerPath: "newPractitionerApi",
+  reducerPath: 'newPractitionerApi',
   baseQuery: BaseQuery,
-  tagTypes: ["Practitioner"],
-  endpoints: (builder) => ({
-
+  tagTypes: ['Practitioner'],
+  endpoints: builder => ({
     // 🔹 Get all practitioners (paginated)
     getAllPractitioners: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
-        url: "/api/setup/practitioner",
-        method: "GET",
-        params: { page, size, sort },
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner',
+        method: 'GET',
+        params: { page, size, sort }
       }),
 
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
 
-      providesTags: ["Practitioner"],
+      providesTags: ['Practitioner']
     }),
 
     // 🔹 Get practitioners by facility
     getPractitionersByFacility: builder.query({
       query: ({ facilityId, ...params }) => ({
         url: `/api/setup/practitioner/by-facility/${facilityId}`,
-        method: "GET",
-        params,
+        method: 'GET',
+        params
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ["Practitioner"],
+      providesTags: ['Practitioner']
     }),
 
     // 🔹 Get practitioners by specialty
     getPractitionersBySpecialty: builder.query({
       query: ({ specialty, ...params }) => ({
         url: `/api/setup/practitioner/by-specialty/${specialty}`,
-        method: "GET",
-        params,
+        method: 'GET',
+        params
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ["Practitioner"],
+      providesTags: ['Practitioner']
     }),
 
     // 🔹 Get active practitioners by sub-specialty
     getActivePractitionersBySubSpecialty: builder.query({
       query: ({ specialty, ...params }) => ({
         url: `/api/setup/practitioner/active/by-sub-specialty/${specialty}`,
-        method: "GET",
-        params,
+        method: 'GET',
+        params
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ["Practitioner"],
+      providesTags: ['Practitioner']
     }),
     getPractitionerByName: builder.query({
       query: ({ name, ...params }) => ({
         url: `/api/setup/practitioner/by-name/${name}`,
-        method: "GET",
-        params,
+        method: 'GET',
+        params
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ["Practitioner"],
+      providesTags: ['Practitioner']
     }),
 
     // 🔹 Get single practitioner
     getPractitionerById: builder.query({
-      query: (id) => ({
+      query: id => ({
         url: `/api/setup/practitioner/${id}`,
-        method: "GET",
+        method: 'GET'
       }),
-      providesTags: (result, error, id) => [{ type: "Practitioner", id }],
+      providesTags: (result, error, id) => [{ type: 'Practitioner', id }]
     }),
 
     // 🔹 Create practitioner
     createPractitioner: builder.mutation({
-      query: (body) => ({
-        url: "/api/setup/practitioner",
-        method: "POST",
-        body,
+      query: body => ({
+        url: '/api/setup/practitioner',
+        method: 'POST',
+        body
       }),
-      invalidatesTags: ["Practitioner"],
+      invalidatesTags: ['Practitioner']
     }),
 
     // 🔹 Update practitioner
     updatePractitioner: builder.mutation({
       query: ({ id, ...body }) => ({
         url: `/api/setup/practitioner/${id}`,
-        method: "PUT",
-        body,
+        method: 'PUT',
+        body
       }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: "Practitioner", id },
-        "Practitioner",
-      ],
+      invalidatesTags: (result, error, { id }) => [{ type: 'Practitioner', id }, 'Practitioner']
     }),
-      getActiveAppointablePractitioner: builder.query({
+    getActiveAppointablePractitioner: builder.query({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/practitioner/active-appointable`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
-       transformResponse: (response: any[], meta) => {
+      transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ["Practitioner"],
+      providesTags: ['Practitioner']
     }),
 
     // 🔹 Toggle active status
     togglePractitionerActive: builder.mutation({
-      query: (id) => ({
+      query: id => ({
         url: `/api/setup/practitioner/${id}/toggle-active`,
-        method: "PATCH",
+        method: 'PATCH'
       }),
-      invalidatesTags: ["Practitioner"],
+      invalidatesTags: ['Practitioner']
     }),
     getPractitionerByUserId: builder.query<any, number>({
-      query: (userId) => ({
+      query: userId => ({
         url: `/api/setup/practitioner/by-user/${userId}`,
-        method: "GET",
+        method: 'GET'
       }),
-      providesTags: ["Practitioner"],
+      providesTags: ['Practitioner']
     }),
     existsPractitionerByUserId: builder.query<boolean, number>({
-      query: (userId) => ({
+      query: userId => ({
         url: `/api/setup/practitioner/exists-by-user/${userId}`,
-        method: "GET",
+        method: 'GET'
       }),
-      providesTags: ["Practitioner"],
+      providesTags: ['Practitioner']
     }),
-  }),
+
+    getPractitionersBulk: builder.mutation({
+      query: (ids: number[]) => ({
+        url: '/api/setup/practitioner/bulk',
+        method: 'POST',
+        body: ids
+      })
+    })
+  })
 });
 
 export const {
@@ -196,6 +198,7 @@ export const {
   useGetActivePractitionersBySubSpecialtyQuery,
   useLazyGetActivePractitionersBySubSpecialtyQuery,
   useGetPractitionerByIdQuery,
+  useLazyGetPractitionerByIdQuery,
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
@@ -204,4 +207,5 @@ export const {
   useLazyGetPractitionerByUserIdQuery,
   useExistsPractitionerByUserIdQuery,
   useLazyExistsPractitionerByUserIdQuery,
+  useGetPractitionersBulkMutation
 } = PractitionerService;

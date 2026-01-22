@@ -1,399 +1,344 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import MyButton from "@/components/MyButton/MyButton";
-import MyTable from "@/components/MyTable";
-import { MdModeEdit, MdAttachFile } from "react-icons/md";
-import { Checkbox } from "rsuite";
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
+import { MdModeEdit, MdAttachFile } from 'react-icons/md';
+import { Checkbox, Loader } from 'rsuite';
+import DetailsTele from './DetailsTele';
+import MyModal from '@/components/MyModal/MyModal';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import clsx from 'clsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import BlockIcon from '@rsuite/icons/Block';
+import { newTelephonicConsultation } from '@/types/model-types-constructor-new';
+import { useLocation } from 'react-router-dom';
+import CancellationModal from '@/components/CancellationModal';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
+import { formatDateWithoutSeconds } from '@/utils';
 import {
-  useGetTelephonicConsultationOrdersListQuery,
-} from "@/services/encounterService";
-import { initialListRequest } from "@/types/types";
-import DetailsTele from "./DetailsTele";
-import MyModal from "@/components/MyModal/MyModal";
-import EncounterAttachment from "@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment";
-import clsx from "clsx";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPrint, faPlus } from "@fortawesome/free-solid-svg-icons";
-import BlockIcon from "@rsuite/icons/Block";
-import CheckIcon from "@rsuite/icons/Check";
-import { newApTelephonicConsultation } from "@/types/model-types-constructor";
-import { useLocation } from "react-router-dom";
-import CancellationModal from "@/components/CancellationModal";
-import { useSaveTelephonicConsultationOrderMutation } from "@/services/encounterService";
-import { notify } from "@/utils/uiReducerActions";
-import { useAppDispatch } from "@/hooks";
-import { useGetAllPractitionersQuery } from "@/services/setup/practitioner/PractitionerService";
-import { formatDateWithoutSeconds } from "@/utils";
+  useFindNotCancelledByEncounterQuery,
+  useFindCancelledByEncounterQuery,
+  useCancelMutation
+} from '@/services/patients/telephonicConsultationService';
+import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
 import './styles.less';
-const TelephonicConsultation = (props) => {
+import { Practitioner } from '@/types/model-types-new';
+
+const TelephonicConsultation = props => {
   const location = useLocation();
+  const dispatch = useAppDispatch();
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
-  const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const dispatch = useAppDispatch();
-  const [saveTeleOrder] = useSaveTelephonicConsultationOrderMutation();
-
-  const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const [showCanceled, setShowCanceled] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
 
   const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [showCanceled, setShowCanceled] = useState(false);
+
   const [openModal, setOpenModal] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [openCancelModal, setOpenCancelModal] = useState(false);
 
   const [consultationOrder, setConsultationOrder] = useState({
-    ...newApTelephonicConsultation,
+    ...newTelephonicConsultation
   });
 
-  const [listRequest, setListRequest] = useState({
-    ...initialListRequest,
-    pageSize: 20,
-    filters: [
-      { fieldName: "deleted_at", operator: "isNull", value: undefined },
-      { fieldName: "patient_key", operator: "match", value: patient?.key },
-      { fieldName: "encounter_key", operator: "match", value: encounter?.key }
-    ]
-  });
+  const [modalKey, setModalKey] = useState(0);
 
-  const { data, isLoading } = useGetTelephonicConsultationOrdersListQuery(listRequest);
-  const { data: practitionerListResponse } = useGetAllPractitionersQuery({
-    page: 0,
-    size: 9999,
-    sort: "id,asc",
-  });
+  const isSelected = row => (row?.id === selectedRow?.id ? 'selected-row' : '');
 
-  const physicians =
-    practitionerListResponse?.data?.filter(
-      (p) => p.jobRole === "PHYSICIAN"
-    ) ?? [];
+  const {
+    data: notCancelledData,
+    isLoading: loadingNotCancelled,
+    refetch: refetchNotCancelled
+  } = useFindNotCancelledByEncounterQuery(
+    { encounterId: encounter?.key, page: pageIndex, size: rowsPerPage },
+    { skip: showCanceled || !encounter?.key }
+  );
 
-  const totalCount = data?.extraNumeric ?? 0;
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
+  const {
+    data: cancelledData,
+    isLoading: loadingCancelled,
+    refetch: refetchCancelled
+  } = useFindCancelledByEncounterQuery(
+    { encounterId: encounter?.key, page: pageIndex, size: rowsPerPage },
+    { skip: !showCanceled || !encounter?.key }
+  );
 
-  const isFormField = (node: EventTarget | null) => {
-    if (!(node instanceof Element)) return false;
-    return (
-      node.closest(`
-        input, textarea, select, button,
-        .rs-input, .rs-picker, .rs-checkbox, .rs-btn,
-        .rs-picker-toggle, .rs-calendar, .rs-dropdown
-      `) !== null
-    );
-  };
+  const [cancelTeleConsultation] = useCancelMutation();
 
-  const isInsideModalOrPopup = (node: EventTarget | null) => {
-    if (!(node instanceof Element)) return false;
-    return node.closest(".rs-modal, .rs-picker-popup, .my-modal") !== null;
-  };
+  const tableData = showCanceled ? cancelledData?.data : notCancelledData?.data;
 
-  const isDataRow = (node: EventTarget | null) => {
-    if (!(node instanceof Element)) return false;
-    return (
-      node.closest(".rs-table-row") &&
-      !node.closest(".rs-table-row-header")
-    );
-  };
+  const totalCount = showCanceled
+    ? cancelledData?.totalCount ?? 0
+    : notCancelledData?.totalCount ?? 0;
+
+  const isLoading = loadingNotCancelled || loadingCancelled;
+
+  const [getPractitionersBulk] = useGetPractitionersBulkMutation();
+  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
+    {}
+  );
+  const [loadingPractitioners, setLoadingPractitioners] = useState(false);
+
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      const rows = tableData ?? [];
+
+      if (!rows.length) {
+        setPractitionersMap({});
+        setLoadingPractitioners(false);
+        return;
+      }
+
+      const uniqueIds = Array.from(
+        new Set(
+          rows
+            .map(r => r.practitionerId)
+            .filter((id): id is number | string => id !== null && id !== undefined)
+        )
+      );
+
+      if (!uniqueIds.length) {
+        setPractitionersMap({});
+        setLoadingPractitioners(false);
+        return;
+      }
+
+      setLoadingPractitioners(true);
+      try {
+        const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
+        const map = Object.fromEntries(practitioners.map(p => [p.id, p]));
+        setPractitionersMap(map);
+      } catch (e) {
+        console.error('Bulk practitioner load failed', e);
+        setPractitionersMap({});
+      } finally {
+        setLoadingPractitioners(false);
+      }
+    };
+
+    loadPractitioners();
+  }, [tableData, getPractitionersBulk]);
 
   const handleClearSelection = useCallback(() => {
     setSelectedRow(null);
-    setSelectedRows([]);
   }, []);
 
   useEffect(() => {
     const handlePointer = (e: PointerEvent) => {
-      const target = e.target;
+      if (openCancelModal || openModal || attachmentsModalOpen) return;
 
-      if (isFormField(target) || isInsideModalOrPopup(target)) return;
-
-      const insideTable = tableContainerRef.current?.contains(target as Node);
-      const rowClick = isDataRow(target);
-
-      if (!insideTable) return handleClearSelection();
-      if (insideTable && !rowClick) return handleClearSelection();
+      const target = e.target as HTMLElement;
+      if (!tableContainerRef.current?.contains(target)) {
+        handleClearSelection();
+      }
     };
 
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClearSelection();
-    };
-
-    document.addEventListener("pointerdown", handlePointer, true);
-    document.addEventListener("keydown", handleEsc);
-
+    document.addEventListener('pointerdown', handlePointer, true);
     return () => {
-      document.removeEventListener("pointerdown", handlePointer, true);
-      document.removeEventListener("keydown", handleEsc);
+      document.removeEventListener('pointerdown', handlePointer, true);
     };
-  }, [handleClearSelection]);
+  }, [handleClearSelection, openCancelModal, openModal, attachmentsModalOpen]);
 
-  const handleOpenAttachments = (row) => {
-    setConsultationOrder(row);
-    setAttachmentsModalOpen(true);
+  const handleCancel = async () => {
+    if (!selectedRow) return;
+
+    try {
+      await cancelTeleConsultation({
+        id: selectedRow.id,
+        reason: consultationOrder?.cancellationReason,
+        cancelledBy: user?.id
+      }).unwrap();
+
+      dispatch(notify('Consultation cancelled'));
+      setSelectedRow(null);
+      setOpenCancelModal(false);
+
+      if (showCanceled) {
+        refetchCancelled();
+      } else {
+        refetchNotCancelled();
+      }
+    } catch {
+      dispatch(notify('Cancel failed'));
+    }
   };
 
-  const isSelected = (r) =>
-    selectedRow?.key === r?.key ? "selected-row" : "";
-
-
-  const handleCheckboxChange = (rowData: any) => {
-    setSelectedRows(prev => {
-      if (prev.includes(rowData)) {
-        return prev.filter(item => item !== rowData);
-      }
-      return [...prev, rowData];
-    });
+  const handleRefetchData = () => {
+    if (showCanceled) {
+      refetchCancelled();
+    } else {
+      refetchNotCancelled();
+    }
   };
 
   const columns = [
     {
-      key: 'select',
-      title: '#',
-      flexGrow: 1,
-      render: (rowData: any) => (
-        <Checkbox
-          checked={selectedRows.includes(rowData)}
-          onChange={() => handleCheckboxChange(rowData)}
-          disabled={rowData.isValid === false}
-        />
-      )
-    },
-
-    {
-      key: "physician",
-      title: "Physician",
+      key: 'practitionerId',
+      title: 'Physician',
       flexGrow: 2,
-      render: (row) => {
-        const physician = physicians.find(item => item?.id === row?.physician);
-        return <p>{physician?.firstName + " " + physician?.lastName}</p>
+      render: row => {
+        const p = practitionersMap[row.practitionerId];
+
+        if (loadingPractitioners) return <Loader size="sm" />;
+        if (!p) return '-';
+
+        return `${p.firstName} ${p.lastName ?? ''}`.trim();
       }
     },
     {
-      key: "dateOfCall",
-      title: "Date Of Call",
+      key: 'dateOfCall',
+      title: 'Date Of Call',
       flexGrow: 2,
-      render: (row) => row.dateOfCall ? new Date(row.dateOfCall).toLocaleString() : ""
+      render: row => (row.dateOfCall ? new Date(row.dateOfCall).toLocaleString() : '')
     },
     {
-      key: "consultationContent",
-      title: "Consultation Content",
-      flexGrow: 4,
-      render: (row) => (
-        <div className="consultation-content-container" >
-          {row.consultationContent}
-        </div>
-      )
+      key: 'consultationContent',
+      title: 'Consultation Content',
+      flexGrow: 4
     },
     {
-      key: "attachments",
-      title: "Attachments",
+      key: 'attachments',
+      title: 'Attachments',
       flexGrow: 1,
-      render: (row) => (
+      render: row => (
         <MdAttachFile
           size={20}
-          fill={row?.key ? "var(--primary-gray)" : "#ccc"}
-          onClick={() => row?.key && handleOpenAttachments(row)}
-          style={{
-            cursor: row?.key ? "pointer" : "not-allowed",
+          style={{ cursor: 'pointer' }}
+          onClick={() => {
+            setConsultationOrder(row);
+            setAttachmentsModalOpen(true);
           }}
         />
       )
     },
     {
-      key: "edit",
-      title: "",
+      key: 'edit',
+      title: '',
       flexGrow: 1,
-      render: (row) => (
+      render: row => (
         <MdModeEdit
           size={22}
-          fill="var(--primary-gray)"
-          style={{ cursor: "pointer" }}
+          style={{ cursor: 'pointer' }}
           onClick={() => {
-            setSelectedRow(row);
             setConsultationOrder(row);
+            setSelectedRow(row);
+            setModalKey(prev => prev + 1);
             setOpenModal(true);
           }}
         />
       )
     },
     {
-      key: 'createdAt',
+      key: 'createdDate',
       title: 'CREATED BY/AT',
       expandable: true,
-      render: (row) =>
-        row?.createdAt ? (
+      render: row =>
+        row.createdDate && (
           <>
-            {row?.createdBy}
+            {row.createdBy}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
           </>
-        ) : (
-          ' '
         )
     },
     {
-      key: 'deletedAt',
+      key: 'cancelledAt',
       title: 'CANCELLED BY/AT',
       expandable: true,
-      render: (row) =>
-        row?.deletedAt ? (
+      render: row =>
+        row.cancelledAt && (
           <>
-            {row?.deletedBy}
+            {row.cancelledBy}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row?.deletedAt)}</span>
+            <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledAt)}</span>
           </>
-        ) : (
-          ' '
         )
     },
     {
       key: 'cancellationReason',
       title: 'Cancellation Reason',
-      expandable: true,
-    },
-  ];
-
-  const handleCancel = async () => {
-    try {
-      await Promise.all(
-        selectedRows.map(item =>
-          saveTeleOrder({
-            ...item,
-            isValid: false,
-            deletedAt: Date.now(),
-            deletedBy: user?.firstName + " " + user?.lastName,
-            cancellationReason: consultationOrder?.cancellationReason,
-          }).unwrap()
-        )
-      );
-
-
-      dispatch(notify("All consultations cancelled"));
-      setSelectedRows([]);
-      setOpenCancelModal(false);
-
-      setListRequest(prev => ({ ...prev, timestamp: Date.now() }));
-    } catch {
-      dispatch(notify("Cancel failed"));
+      expandable: true
     }
-  };
-
-
-
-
-  const handlePageChange = (_: any, newPage: number) => {
-    setListRequest({
-      ...listRequest,
-      pageNumber: newPage + 1,
-    });
-  };
-
-  const handleRowsPerPageChange = (e) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: Number(e.target.value),
-      pageNumber: 1,
-    });
-  };
+  ];
 
   const tableButtons = (
     <div className="bt-div-2">
-
       <div className="bt-left-2">
         <MyButton
           prefixIcon={() => <BlockIcon />}
-          onClick={() => setOpenCancelModal(true)}
-          disabled={selectedRows.length === 0}
+          onClick={() => {
+            if (!selectedRow) return;
+            setConsultationOrder(selectedRow);
+            setOpenCancelModal(true);
+          }}
+          disabled={!selectedRow || showCanceled}
         >
           Cancel
         </MyButton>
 
-        <Checkbox
-          checked={showCanceled}
-          onChange={() => setShowCanceled(prev => !prev)}
-        >
+        <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)}>
           Show Cancelled
         </Checkbox>
-
-
-
       </div>
 
-      <div className={clsx("bt-right-2", { "disabled-panel": edit })}>
+      <div className={clsx('bt-right-2', { 'disabled-panel': edit })}>
         <MyButton
           prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
           onClick={() => {
-            setSelectedRow(null);
             setConsultationOrder({
-              ...newApTelephonicConsultation,
-              patientKey: patient?.key,
-              encounterKey: encounter?.key,
-              createdBy: "Admin",
+              ...newTelephonicConsultation,
+              patientId: patient?.key,
+              encounterId: encounter?.key
             });
+            setModalKey(prev => prev + 1);
             setOpenModal(true);
           }}
         >
           Add Consultation
         </MyButton>
-
       </div>
     </div>
   );
 
-
-  useEffect(() => {
-    setListRequest(prev => ({
-      ...prev,
-      filters: [
-        {
-          fieldName: "is_valid",
-          operator: "equal",
-          value: !showCanceled
-        },
-        {
-          fieldName: "patient_key",
-          operator: "match",
-          value: patient?.key
-        }
-      ]
-    }));
-  }, [showCanceled, patient?.key, encounter?.key]);
-
-
   return (
-    <div>
-      <div ref={tableContainerRef}>
-        <MyTable
-          height={450}
-          loading={isLoading}
-          data={data?.object || []}
-          columns={columns}
-          rowClassName={isSelected}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          onRowClick={(row) => setSelectedRow(row)}
-          tableButtons={tableButtons}
-        />
-      </div>
+    <div ref={tableContainerRef}>
+      <MyTable
+        height={450}
+        loading={isLoading}
+        data={tableData}
+        columns={columns}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={(_, p) => setPageIndex(p)}
+        onRowsPerPageChange={e => {
+          setRowsPerPage(Number(e.target.value));
+          setPageIndex(0);
+        }}
+        onRowClick={row => setSelectedRow(row)}
+        rowClassName={isSelected}
+        tableButtons={tableButtons}
+      />
+
       <DetailsTele
+        key={modalKey}
         patient={patient}
         encounter={encounter}
         consultationOrders={consultationOrder}
         setConsultationOrder={setConsultationOrder}
         open={openModal}
-        setOpen={(v) => {
-          setOpenModal(v);
-          setListRequest({ ...listRequest, timestamp: Date.now() });
-        }}
+        setOpen={setOpenModal}
+        refetchCon={handleRefetchData}
         editing={false}
         edit={false}
-        refetchCon={() =>
-          setListRequest({ ...listRequest, timestamp: Date.now() })
-        }
       />
 
       <MyModal
@@ -401,14 +346,12 @@ const TelephonicConsultation = (props) => {
         setOpen={setAttachmentsModalOpen}
         title="Attachments - Telephonic Consultation"
         size="lg"
-        hideActionBtn={true}
+        hideActionBtn
         content={
           <EncounterAttachment
             localEncounter={encounter}
             source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
-            sourceId={consultationOrder?.key ? Number(consultationOrder.key) : undefined}
-            refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            sourceId={consultationOrder?.id}
           />
         }
       />
@@ -422,10 +365,8 @@ const TelephonicConsultation = (props) => {
         setObject={setConsultationOrder}
         handleCancle={handleCancel}
         fieldName="cancellationReason"
-        required={true}
+        required
       />
-
-
     </div>
   );
 };
