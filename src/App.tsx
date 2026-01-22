@@ -495,7 +495,6 @@ useEffect(() => {
               <Route path="view-triage" element={<ViewTriage />} />
               <Route path="quick-visit" element={<QuickVisit />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
-              <Route path="ER-triage" element={<ERTriage />} />
               <Route path="country-setup" element={<CountrySetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />

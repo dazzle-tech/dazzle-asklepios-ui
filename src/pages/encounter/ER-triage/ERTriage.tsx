@@ -1,14 +1,16 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { newApEncounter } from '@/types/model-types-constructor';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+import { faUserPlus, faBolt } from '@fortawesome/free-solid-svg-icons';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import 'react-tabs/style/react-tabs.css';
-import { addFilterToListRequest, formatDate } from '@/utils';
+import { formatDate } from '@/utils';
 import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
@@ -27,17 +29,56 @@ import { faBarcode } from '@fortawesome/free-solid-svg-icons';
 import { faCirclePlay } from '@fortawesome/free-solid-svg-icons';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { useNavigate } from 'react-router-dom';
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import SendToModal from './SendToModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
+import PatientSearch from '@/components/PatientSearch';
+import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-new';
+import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
+import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
 import './styles.less';
 
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 
 const ERTriage = () => {
+  const COMPLETE_TRIAGE_STATUS_KEY = '91109811181900';
+  const SENT_TO_ER_STATUS_KEY = '6742317684600328';
+
+  const toDateSafe = (value: any): Date | null => {
+    if (!value && value !== 0) return null;
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+    if (typeof value === 'number') {
+      // heuristics: seconds vs millis
+      const ms = value < 1e12 ? value * 1000 : value;
+      const d = new Date(ms);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof value === 'string') {
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+  };
+
+  const formatDateTime = (value: any): string => {
+    const d = toDateSafe(value);
+    if (!d) return '';
+    return d.toLocaleString();
+  };
+
+  const formatDuration = (ms: number | null): string => {
+    if (ms == null || !isFinite(ms) || ms < 0) return '';
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
 
   const handlePrintWristband = async (encounterData: any) => {
     try {
@@ -99,8 +140,10 @@ const ERTriage = () => {
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [openSendToModal, setOpenSendToModal] = useState(false);
   const [open, setOpen] = useState(false);
-  const [record, setRecord] = useState<any>({});
-  const [encounterStatus, setEncounterStatus] = useState({ key: '' });
+  const defaultEncounterStatusKeys = ['6742295599423814', '8890456518264959'];
+  const [encounterStatus, setEncounterStatus] = useState<{ keys: string[] }>({
+    keys: defaultEncounterStatusKeys
+  });
   const [startEncounter] = useSaveEncounterChangesMutation();
   const navigate = useNavigate();
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -121,6 +164,37 @@ const ERTriage = () => {
     toDate: new Date()
   });
 
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [patientSearchResetToken, setPatientSearchResetToken] = useState(0);
+  const [patientSidebarOpen, setPatientSidebarOpen] = useState(false);
+  const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight);
+  const [refetchPatientSidebar, setRefetchPatientSidebar] = useState(false);
+  const [openCreatePatient, setOpenCreatePatient] = useState(false);
+  const [openQuickPatient, setOpenQuickPatient] = useState(false);
+
+  // Keep refs to avoid "Search" reading stale state right after a picker change.
+  const dateFilterRef = useRef(dateFilter);
+  const emergencyLevelRef = useRef(emergencyLevel);
+  const encounterStatusRef = useRef(encounterStatus);
+  const selectedPatientRef = useRef<any>(selectedPatient);
+
+  const setDateFilterSafe = (next: any) => {
+    dateFilterRef.current = next;
+    setDateFilter(next);
+  };
+  const setEmergencyLevelSafe = (next: any) => {
+    emergencyLevelRef.current = next;
+    setEmergencyLevel(next);
+  };
+  const setEncounterStatusSafe = (next: any) => {
+    encounterStatusRef.current = next;
+    setEncounterStatus(next);
+  };
+  const setSelectedPatientSafe = (next: any) => {
+    selectedPatientRef.current = next;
+    setSelectedPatient(next);
+  };
+
   // Create a JSX element to display as the page header content
   const divContent = 'ER Triage';
   dispatch(setPageCode('ER_Triage'));
@@ -136,7 +210,9 @@ const ERTriage = () => {
   } = useGetEREncountersListQuery(listRequest);
 
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
-  const { data: emergencyLevellovqueryresponse } = useGetLovValuesByCodeQuery('EMERGENCY_LEVEL');
+  const emergencyLevelEnumOptions = useEnumOptions('EmergencyLevel');
+
+  const encounterStatusSelectData = useMemo(() => encounterStatusLov?.object ?? [], [encounterStatusLov]);
 
   const isSelected = (rowData: any) => {
     if (rowData && encounter && rowData.key === encounter.key) {
@@ -156,42 +232,7 @@ const ERTriage = () => {
     });
   };
 
-  const handleManualSearch = () => {
-    setManualSearchTriggered(true);
-    if (dateFilter.fromDate && dateFilter.toDate) {
-      const formattedFromDate = formatDate(dateFilter.fromDate);
-      const formattedToDate = formatDate(dateFilter.toDate);
-      setListRequest(
-        addFilterToListRequest(
-          'planned_start_date',
-          'between',
-          formattedFromDate + '_' + formattedToDate,
-          listRequest
-        )
-      );
-    } else if (dateFilter.fromDate) {
-      const formattedFromDate = formatDate(dateFilter.fromDate);
-      setListRequest(
-        addFilterToListRequest('planned_start_date', 'gte', formattedFromDate, listRequest)
-      );
-    } else if (dateFilter.toDate) {
-      const formattedToDate = formatDate(dateFilter.toDate);
-      setListRequest(
-        addFilterToListRequest('planned_start_date', 'lte', formattedToDate, listRequest)
-      );
-    } else {
-      setListRequest({
-        ...listRequest,
-        filters: [
-          {
-            fieldName: 'resource_type_lkey',
-            operator: 'match',
-            value: 'EMERGENCY'
-          }
-        ]
-      });
-    }
-  };
+  // Search is applied only when user clicks Search (see `handleSearchClick`).
 
   const handleCancelEncounter = async () => {
     try {
@@ -234,14 +275,20 @@ const ERTriage = () => {
   }, [location.pathname, dispatch, isLoading]);
 
   useEffect(() => {
+    const onResize = () => setWindowHeight(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
       setManualSearchTriggered(false);
     }
   }, [isFetching, manualSearchTriggered]);
 
   useEffect(() => {
-    // init list
-    handleManualSearch();
+    // Initial load: apply search once so the table is populated by default.
+    handleSearchClick();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -276,8 +323,13 @@ const ERTriage = () => {
     }
   }, [refetch, refetchEncounter, dispatch]);
 
-  useEffect(() => {
-    let filters = [
+  const buildFilters = () => {
+    const df = dateFilterRef.current;
+    const el = emergencyLevelRef.current;
+    const es = encounterStatusRef.current;
+    const sp = selectedPatientRef.current;
+
+    const filters: any[] = [
       {
         fieldName: 'resource_type_lkey',
         operator: 'match',
@@ -285,23 +337,23 @@ const ERTriage = () => {
       }
     ];
 
-    if (dateFilter.fromDate && dateFilter.toDate) {
-      const formattedFromDate = formatDate(dateFilter.fromDate);
-      const formattedToDate = formatDate(dateFilter.toDate);
+    if (df?.fromDate && df?.toDate) {
+      const formattedFromDate = formatDate(df.fromDate);
+      const formattedToDate = formatDate(df.toDate);
       filters.push({
         fieldName: 'planned_start_date',
         operator: 'between',
         value: `${formattedFromDate}_${formattedToDate}`
       });
-    } else if (dateFilter.fromDate) {
-      const formattedFromDate = formatDate(dateFilter.fromDate);
+    } else if (df?.fromDate) {
+      const formattedFromDate = formatDate(df.fromDate);
       filters.push({
         fieldName: 'planned_start_date',
         operator: 'gte',
         value: formattedFromDate
       });
-    } else if (dateFilter.toDate) {
-      const formattedToDate = formatDate(dateFilter.toDate);
+    } else if (df?.toDate) {
+      const formattedToDate = formatDate(df.toDate);
       filters.push({
         fieldName: 'planned_start_date',
         operator: 'lte',
@@ -309,11 +361,78 @@ const ERTriage = () => {
       });
     }
 
-    if (emergencyLevel.key) {
+    if (el?.key) {
       filters.push({
         fieldName: 'emergency_level_lkey',
         operator: 'match',
-        value: emergencyLevel.key
+        value: el.key
+      });
+    }
+
+    if (es?.keys?.length) {
+      filters.push({
+        fieldName: 'encounter_status_lkey',
+        operator: 'in',
+        value: es.keys.map(key => `(${key})`).join(' ')
+      });
+    }
+
+    if (sp?.key) {
+      filters.push({
+        fieldName: 'patient_key',
+        operator: 'match',
+        value: sp.key
+      });
+    }
+
+    return filters;
+  };
+
+  const handleSearchClick = () => {
+    setManualSearchTriggered(true);
+    setListRequest(prev => ({
+      ...prev,
+      pageNumber: 1,
+      ignore: false,
+      filters: buildFilters()
+    }));
+  };
+
+  const handleClearClick = () => {
+    const nextDateFilter = { fromDate: new Date(), toDate: new Date() };
+    const nextEmergencyLevel = { key: '' };
+    const nextEncounterStatus = { keys: defaultEncounterStatusKeys };
+
+    setDateFilterSafe(nextDateFilter);
+    setEmergencyLevelSafe(nextEmergencyLevel);
+    setEncounterStatusSafe(nextEncounterStatus);
+    setSelectedPatientSafe(null);
+    setPatientSearchResetToken(v => v + 1);
+
+    // After clearing, re-apply the default search criteria (do not leave the list ignored/empty)
+    const filters: any[] = [
+      {
+        fieldName: 'resource_type_lkey',
+        operator: 'match',
+        value: 'EMERGENCY'
+      }
+    ];
+
+    if (nextDateFilter.fromDate && nextDateFilter.toDate) {
+      const formattedFromDate = formatDate(nextDateFilter.fromDate);
+      const formattedToDate = formatDate(nextDateFilter.toDate);
+      filters.push({
+        fieldName: 'planned_start_date',
+        operator: 'between',
+        value: `${formattedFromDate}_${formattedToDate}`
+      });
+    }
+
+    if (nextEncounterStatus.keys?.length) {
+      filters.push({
+        fieldName: 'encounter_status_lkey',
+        operator: 'in',
+        value: nextEncounterStatus.keys.map(key => `(${key})`).join(' ')
       });
     }
 
@@ -321,12 +440,78 @@ const ERTriage = () => {
     setListRequest(prev => ({
       ...prev,
       pageNumber: 1,
+      ignore: false,
       filters
     }));
-  }, [dateFilter, emergencyLevel]);
+  };
 
   // table Columns
   const tableColumns = [
+    // Expandable details (only visible when row is expanded)
+    {
+      key: 'encounterCreatedAt',
+      title: <Translate>Time Encounter Created</Translate>,
+      expandable: true,
+      render: (rowData: any) => formatDateTime(rowData?.createdAt)
+    },
+    {
+      key: 'triageStartedAt',
+      title: <Translate>Time Triage Started</Translate>,
+      expandable: true,
+      render: (rowData: any) => formatDateTime(rowData?.emergencyTriage?.createdAt)
+    },
+    {
+      key: 'waitingTime',
+      title: <Translate>Waiting Time</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        const arrival =  toDateSafe(rowData?.createdAt);
+        const triageStart = toDateSafe(rowData?.emergencyTriage?.createdAt);
+        if (!arrival || !triageStart) return '';
+        return formatDuration(triageStart.getTime() - arrival.getTime());
+      }
+    },
+    {
+      key: 'triageCompletedAt',
+      title: <Translate>Time Triage Completed</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        const statusKey = String(rowData?.encounterStatusLkey ?? '');
+        const isCompleted =
+          statusKey === COMPLETE_TRIAGE_STATUS_KEY || statusKey === SENT_TO_ER_STATUS_KEY;
+        if (!isCompleted) return '';
+
+        const completedAt =
+          rowData?.emergencyTriage?.updatedAt ??
+          rowData?.updatedAt ??
+          rowData?.completedAt ??
+          rowData?.completedDate ??
+          null;
+        return formatDateTime(completedAt);
+      }
+    },
+    {
+      key: 'triageTime',
+      title: <Translate>Triage Time</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        const statusKey = String(rowData?.encounterStatusLkey ?? '');
+        const isCompleted =
+          statusKey === COMPLETE_TRIAGE_STATUS_KEY || statusKey === SENT_TO_ER_STATUS_KEY;
+        if (!isCompleted) return '';
+
+        const triageStart = toDateSafe(rowData?.emergencyTriage?.createdAt);
+        const completedAt = toDateSafe(
+          rowData?.emergencyTriage?.updatedAt ??
+            rowData?.updatedAt ??
+            rowData?.completedAt ??
+            rowData?.completedDate ??
+            null
+        );
+        if (!triageStart || !completedAt) return '';
+        return formatDuration(completedAt.getTime() - triageStart.getTime());
+      }
+    },
     {
       key: 'queueNumber',
       title: <Translate>#</Translate>,
@@ -389,9 +574,12 @@ const ERTriage = () => {
         )
     },
     {
-      key: 'erLevel',
+      key: 'encounterPriorityLkey',
       title: <Translate>Priority</Translate>,
-      render: () => 'test'
+      render: (rowData: any) =>
+        rowData?.encounterPriorityLvalue
+          ? rowData?.encounterPriorityLvalue?.lovDisplayVale
+          : rowData?.encounterPriorityLkey
     },
     {
       key: 'chiefComplaint',
@@ -429,6 +617,7 @@ const ERTriage = () => {
       key: 'actions',
       title: <Translate> </Translate>,
       render: (rowData: any) => {
+        const tooltipEmr = <Tooltip>Open EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
         const tooltipStart = <Tooltip>Start Triage</Tooltip>;
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
@@ -436,6 +625,37 @@ const ERTriage = () => {
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
+            <Whisper trigger="hover" placement="top" speaker={tooltipEmr}>
+              <div
+                onClick={(e: any) => {
+                  e?.stopPropagation?.();
+                }}
+              >
+                <MyButton
+                  size="small"
+                  radius="6px"
+                  backgroundColor="violet"
+                  onClick={() => {
+                    const patientData = rowData?.patientObject;
+                    if (patientData) {
+                      dispatch(setPatient(patientData));
+                    }
+                    dispatch(setEncounter(rowData));
+                    navigate('/patient-EMR', {
+                      state: {
+                        patient: patientData,
+                        encounter: rowData,
+                        fromPage: 'ER_Triage',
+                        inModal: true
+                      }
+                    });
+                  }}
+                >
+                  <FontAwesomeIcon icon={faFileLines} color="white" />
+                </MyButton>
+              </div>
+            </Whisper>
+
             {rowData?.encounterStatusLkey === '91109811181900' ||
             rowData?.encounterStatusLkey === '6550164111662337' ? (
               <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
@@ -563,7 +783,7 @@ const ERTriage = () => {
               fieldLabel="From Date"
               fieldName="fromDate"
               record={dateFilter}
-              setRecord={setDateFilter}
+              setRecord={setDateFilterSafe}
             />
             <MyInput
               width={180}
@@ -571,65 +791,87 @@ const ERTriage = () => {
               fieldLabel="To Date"
               fieldName="toDate"
               record={dateFilter}
-              setRecord={setDateFilter}
+              setRecord={setDateFilterSafe}
             />
             <MyInput
               width={200}
               fieldType="select"
               fieldLabel="Emergency Level"
               fieldName="key"
-              selectData={emergencyLevellovqueryresponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              selectData={emergencyLevelEnumOptions}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={emergencyLevel}
-              setRecord={setEmergencyLevel}
+              setRecord={setEmergencyLevelSafe}
             />
+            <PatientSearch
+              value={selectedPatient}
+              onChange={setSelectedPatientSafe}
+              resetToken={patientSearchResetToken}
+            />
+
             <MyInput
               width="10vw"
-              fieldLabel="Select Filter"
-              fieldName="selectfilter"
-              fieldType="select"
-              selectData={[
-                { key: 'MRN', value: 'MRN' },
-                { key: 'Document Number', value: 'Document Number' },
-                { key: 'Full Name', value: 'Full Name' },
-                { key: 'Archiving Number', value: 'Archiving Number' },
-                { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-                { key: 'Date of Birth', value: 'Date of Birth' }
-              ]}
-              selectDataLabel="value"
-              selectDataValue="key"
-              record={record}
-              setRecord={setRecord}
-            />
-            <MyInput
-              fieldLabel="Search by"
-              fieldName="searchCriteria"
-              fieldType="text"
-              placeholder="Search"
-              width="15vw"
-              record={record}
-              setRecord={setRecord}
-            />
-            <MyInput
-              width="10vw"
-              fieldType="select"
+              fieldType="checkPicker"
               fieldLabel="Encounter Status"
-              fieldName="key"
-              selectData={encounterStatusLov?.object ?? []}
+              fieldName="keys"
+              selectData={encounterStatusSelectData}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
               record={encounterStatus}
-              setRecord={setEncounterStatus}
+              setRecord={setEncounterStatusSafe}
             />
           </div>
         </Form>
-        <AdvancedSearchFilters searchFilter={true} />
+        <AdvancedSearchFilters
+          searchFilter={true}
+          showAdvanceButton={false}
+          extraActions={
+            <>
+              <MyButton
+                appearance="ghost"
+                onClick={() => setOpenCreatePatient(true)}
+                prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
+              >
+                Create New Patient
+              </MyButton>
+              <MyButton
+                appearance="ghost"
+                onClick={() => setOpenQuickPatient(true)}
+                prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
+              >
+                Quick Patient
+              </MyButton>
+            </>
+          }
+          searchOnClick={handleSearchClick}
+          clearOnClick={handleClearClick}
+        />
       </>
     );
   };
 
   return (
+    <>
+      {patientSidebarOpen && (
+        <div className="er-triage-patient-sidebar-overlay">
+          <ProfileSidebarNew
+            expand={true}
+            setExpand={setPatientSidebarOpen}
+            windowHeight={windowHeight}
+            setLocalPatient={(p: any) => {
+              setSelectedPatientSafe(p);
+              setPatientSidebarOpen(false);
+            }}
+            refetchData={refetchPatientSidebar}
+            setRefetchData={setRefetchPatientSidebar}
+            showButton={true}
+            showCollapsedButton={false}
+            direction="right"
+          />
+        </div>
+      )}
+
     <Panel>
       <MyTable
         filters={filters()}
@@ -668,7 +910,10 @@ const ERTriage = () => {
         actionButtonLabel="Cancel"
         cancelButtonLabel="Close"
       />
+      <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
+      <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
     </Panel>
+    </>
   );
 };
 
