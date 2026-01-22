@@ -92,7 +92,8 @@ const FollowupAppointmentModal = ({
     setAppointment(prev => ({
       ...prev,
       visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR,
-      patientKey: seedPatient?.key ?? prev?.patientKey
+      patientKey: seedPatient?.key ?? prev?.patientKey,
+      createdBy: authSlice.user.username || '',
     }));
   };
 

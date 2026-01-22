@@ -106,7 +106,8 @@ const AppointmentModal = ({
       // Don't convert to string here - keep original type, will be normalized later
       setAppointment({
         ...appointmentData,
-        departmentKey: departmentKey
+        departmentKey: departmentKey,
+        createdBy: authSlice.user.username || '',
       });
       setLocalPatient(appointmentData?.patient || newApPatient);
     } else {

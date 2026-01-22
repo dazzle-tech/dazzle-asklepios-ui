@@ -9,6 +9,20 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import { formatDateWithoutSeconds } from '@/utils';
 
+    const formatDateTime = (date?: string) => {
+      if (!date) return '';
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return date;
+
+      return d.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    };
 type Row = {
     id: string;
 
@@ -37,6 +51,8 @@ type Props = {
     onApprove: (row: Row) => void;
     onReject: (row: Row, rejectReason: string) => Promise<void> | void;
 };
+
+
 
 const safeStr = (v: any) => {
     if (v === null || typeof v === 'undefined') return '';
@@ -184,33 +200,15 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
         {
             key: 'createdByAt',
             title: 'Created By\\At',
-            render: (row: Row) => (
+            render: (row: any) => (
                 <>
-                    {safeStr(row.status).toLowerCase() === 'rejected'
-                        ? (row.updatedBy || '-')
-                        : (row.createdBy || '-')}
+                    {row.createdBy}
                     <br />
                     <span className="date-table-style">
-                        {safeStr(row.status).toLowerCase() === 'rejected'
-                            ? formatTs(row.updatedAt)
-                            : formatTs(row.createdAt)}
+                        {formatDateTime(row.createdDate)}
                     </span>
                 </>
             )
-        },
-
-        {
-            key: 'approvedByAt',
-            title: 'Approved By\\At',
-            render: (row: Row) => {
-                const isConfirmed = safeStr(row.status).toLowerCase() === 'confirmed';
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontWeight: 600 }}>{isConfirmed ? (row.updatedBy || '-') : '-'}</span>
-                        <span className="date-table-style">{isConfirmed ? formatTs(row.updatedAt) : '-'}</span>
-                    </div>
-                );
-            }
         },
         {
             key: 'rejectedByAt',
