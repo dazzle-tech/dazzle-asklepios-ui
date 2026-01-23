@@ -87,11 +87,11 @@ const FullViewTable = ({
                ',' +
                customeInstructions?.object?.find(
                  item => item.prescriptionMedicationsKey === rowData.key
-               )?.unitLvalue.lovDisplayVale +
+               )?.unitLvalue?.lovDisplayVale +
                ',' +
                customeInstructions?.object?.find(
                  item => item.prescriptionMedicationsKey === rowData.key
-               )?.frequencyLvalue.lovDisplayVale
+               )?.frequencyLvalue?.lovDisplayVale
              );
            }
    
@@ -101,7 +101,7 @@ const FullViewTable = ({
     {
       key: 'instructionsType',
       title: 'Instructions Type',
-      render: (rowData: any) => rowData.instructionsTypeLvalue || ''
+      render: (rowData: any) => rowData?.instructionsTypeLvalue || ''
     },
     {
       key: 'startDate',

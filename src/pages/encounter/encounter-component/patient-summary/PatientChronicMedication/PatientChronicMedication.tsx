@@ -185,11 +185,11 @@ const PatientChronicMedication = ({ patient, title = null }) => {
                ',' +
                customeInstructions?.object?.find(
                  item => item.prescriptionMedicationsKey === rowData.key
-               )?.unitLvalue.lovDisplayVale +
+               )?.unitLvalue?.lovDisplayVale +
                ',' +
                customeInstructions?.object?.find(
                  item => item.prescriptionMedicationsKey === rowData.key
-               )?.frequencyLvalue.lovDisplayVale
+               )?.frequencyLvalue?.lovDisplayVale
              );
            }
    

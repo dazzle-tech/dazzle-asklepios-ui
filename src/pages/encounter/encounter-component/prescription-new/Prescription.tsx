@@ -644,25 +644,24 @@ useEffect(() => {
             .join(', ');
         }
         if (rowData.instructionsTypeLkey === '3010573499898196') {
-          return rowData.instructions;
+          return rowData?.instructions;
         }
-        if (rowData.instructionsTypeLkey === '3010606785535008') {
+        if (rowData?.instructionsTypeLkey === '3010606785535008') {
           return (
             customeInstructions?.object?.find(
-              item => item.prescriptionMedicationsKey === rowData.key
+              item => item?.prescriptionMedicationsKey === rowData.key
             )?.dose +
             ',' +
             customeInstructions?.object?.find(
-              item => item.prescriptionMedicationsKey === rowData.key
-            )?.unitLvalue.lovDisplayVale +
+              item => item?.prescriptionMedicationsKey === rowData.key
+            )?.unitLvalue?.lovDisplayVale +
             ',' +
             customeInstructions?.object?.find(
-              item => item.prescriptionMedicationsKey === rowData.key
-            )?.frequencyLvalue.lovDisplayVale
-          )+","+
-          formatEnumString(
+              item => item?.prescriptionMedicationsKey === rowData.key
+            )?.frequencyLvalue?.lovDisplayVale
+          )+","+formatEnumString(
             customeInstructions?.object?.find(
-              item => item.prescriptionMedicationsKey === rowData.key
+              item => item?.prescriptionMedicationsKey === rowData.key
             )?.roaLkey)
           ;
         }
