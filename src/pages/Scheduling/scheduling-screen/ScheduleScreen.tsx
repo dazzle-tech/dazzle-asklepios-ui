@@ -30,7 +30,7 @@ import FollowupAppointmentModal from './FollowupAppointmentModal';
 import { ApAppointment } from '@/types/model-types';
 import { faPaperPlane, faPlus, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentActionsModal from './AppointmentActionsModal';
 import {
   useGetAppointmentsQuery,
@@ -50,6 +50,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import ViewAppointmentRequests from './ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
 import { calculateAgeFormat } from '@/utils';
+import { update } from 'lodash';
 
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
@@ -106,7 +107,7 @@ const ScheduleScreen = () => {
     const s = `${label} ${key}`.toLowerCase();
     return s.includes('follow') && s.includes('up');
   };
-
+   const authSlice = useAppSelector(state => state.auth);
   const ResourceTypeEnum = useEnumOptions('ResourceType');
 
   const DEFAULT_RESOURCE_TYPE = 'CLINIC';
@@ -893,7 +894,7 @@ const ScheduleScreen = () => {
         const patientGender = patient?.genderLvalue?.lovDisplayVale || patient?.genderLkey || '';
         const patientAge = patient?.dob ? calculateAgeFormat(patient.dob) : '';
 
-        const patientMrn = patient?.patientMrn || '';
+        const patientMrn = patient?.patient_mrn || '';
 
           const resourceKey = a?.resourceKey ?? a?.resource_key ?? a?.resource?.key ?? null;
 
@@ -959,7 +960,8 @@ const ScheduleScreen = () => {
         otherReason: rejectReason,
         reasonValue: rejectReason,
         appointmentStart: null,
-        appointmentEnd: null
+        appointmentEnd: null,
+        updatedBy: authSlice.user.username
       }).unwrap();
 
       await refitchAppointments();
