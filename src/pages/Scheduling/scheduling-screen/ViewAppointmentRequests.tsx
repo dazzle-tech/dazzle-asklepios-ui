@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -7,11 +6,11 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import dayjs from 'dayjs';
 import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { formatDateWithoutSeconds } from '@/utils';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import CancellationModal from '@/components/CancellationModal';
 
 const formatDateTime = (value?: number | string | null) => {
-    if (value === null || value === undefined || value === '') return '-';
+    if (value === null || value === undefined || value === '') return '';
 
     // handle numeric epoch (ms or seconds)
     const n = Number(value);
@@ -19,7 +18,7 @@ const formatDateTime = (value?: number | string | null) => {
         const asMs = n < 10_000_000_000 ? n * 1000 : n; // seconds -> ms
         const d = new Date(asMs);
         return isNaN(d.getTime())
-            ? '-'
+            ? ''
             : d.toLocaleString('en-US', {
                   year: 'numeric',
                   month: '2-digit',
@@ -51,6 +50,7 @@ type Row = {
     age?: number | null;
     gender?: string | null;
     mrn?: string | null;
+    facilityKey?: string | null;
     resourceName?: string | null;
     resourceType?: string | null;
     resourceKey?: string | null;
@@ -129,6 +129,22 @@ const statusColor = (status?: string | null) => {
 
 const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
     const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+    const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+    const facilities = useMemo(() => {
+        const raw = (facilityListResponse as any)?.object ?? facilityListResponse ?? [];
+        return Array.isArray(raw) ? raw : [];
+    }, [facilityListResponse]);
+
+    const facilityNameById = useMemo(() => {
+        const m = new Map<string, string>();
+        facilities.forEach((f: any) => {
+            const id = f?.id ?? f?.key;
+            const name = f?.name ?? f?.facilityName ?? f?.facility_name ?? '';
+            if (id !== null && typeof id !== 'undefined') m.set(String(id), String(name || ''));
+        });
+        return m;
+    }, [facilities]);
 
     // filters
     const [filters, setFilters] = useState<any>({
@@ -247,11 +263,21 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
             )
         },
         {
+            key: 'facilityKey',
+            title: 'Facility',
+            render: (row: Row) => {
+                const id = safeStr(row.facilityKey).trim();
+                const name = id ? facilityNameById.get(id) : '';
+                return <span>{(name && String(name).trim()) || id || '-'}</span>;
+            }
+        },
+        {
             key: 'createdByAt',
             title: 'Created By\\At',
+            expandable: true,
             render: (row: any) => (
                 <>
-                    {safeStr(row.createdBy).trim() || '-'}
+                    {safeStr(row.createdBy).trim() || ''}
                     <br />
                     <span className="date-table-style">{formatDateTime(row.createdAt)}</span>
                 </>
@@ -260,13 +286,14 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
         {
             key: 'rejectedByAt',
             title: 'Rejected By\\At',
+            expandable: true,
             render: (row: any) => {
                 const isRejected = safeStr(row.status).toLowerCase() === 'rejected';
-                if (!isRejected) return '-';
+                if (!isRejected) return '';
 
                 return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontWeight: 600 }}>{row.updatedBy || '-'}</span>
+                        <span style={{ fontWeight: 600 }}>{row.updatedBy || ''}</span>
                         <span className="date-table-style">{formatDateTime(row.updatedAt)}</span>
                     </div>
                 );
@@ -275,11 +302,12 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
         {
             key: 'rejectReason',
             title: 'Reject Reason',
+            expandable: true,
             render: (row: Row) => {
                 const isRejected = safeStr(row.status).toLowerCase() === 'rejected';
                 return (
                     <span style={{ color: isRejected ? '#c10020ff' : '#8F98AB' }}>
-                        {isRejected ? row.otherReason || '-' : '-'}
+                        {isRejected ? row.otherReason || '' : ''}
                     </span>
                 );
             }
