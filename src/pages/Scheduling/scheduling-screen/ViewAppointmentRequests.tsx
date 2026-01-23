@@ -50,7 +50,9 @@ type Row = {
     age?: number | null;
     gender?: string | null;
     mrn?: string | null;
-
+    resourceName?: string | null;
+    resourceType?: string | null;
+    resourceKey?: string | null;
     createdBy?: string | null;
     createdAt?: number | string | null;
 
@@ -77,6 +79,14 @@ type Props = {
 const safeStr = (v: any) => {
     if (v === null || typeof v === 'undefined') return '';
     return String(v);
+};
+
+const formatResourceTypeLabel = (value?: string | null) => {
+    const s = String(value ?? '').trim();
+    if (!s) return '-';
+
+    const cleaned = s.replace(/_/g, ' ').toLowerCase();
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 };
 
 const formatTs = (ts?: number | string | null) => {
@@ -216,6 +226,18 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
             key: 'age',
             title: 'Age',
             render: (row: Row) => <span>{row.ageText || '-'}</span>
+        },
+        {
+            key: 'resource',
+            title: 'Resource',
+            render: (row: Row) => (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontWeight: 600 }}>{safeStr(row.resourceName) || '-'}</span>
+                    <span style={{ fontSize: 12, color: '#8F98AB' }}>
+                        {formatResourceTypeLabel(row.resourceType)}
+                    </span>
+                </div>
+            )
         },
         {
             key: 'createdByAt',
