@@ -120,12 +120,12 @@ const Prescription = (props: any) => {
       { fieldName: 'visit_key', operator: 'match', value: encounter?.key }
     ]
   });
-  
+
   const filteredPrescriptions =
     prescriptions?.object?.filter((item: any) => item.statusLkey === '1804482322306061') ?? [];
 
   const [preKeyRecord, setPreKeyRecord] = useState<{ preKey: any }>({ preKey: null });
-useEffect(() => {
+  useEffect(() => {
     setPrescription(prescriptions?.object?.find((p: any) => p.key === preKeyRecord['preKey']) || { ...newApPrescription });
   }, [prescriptions, preKeyRecord]);
 
@@ -509,8 +509,8 @@ useEffect(() => {
 
       dispatch(notify({ msg: 'All Medication Deleted Successfully', sev: 'success' }));
       setOpenCancellation(false);
-      medicRefetch().catch(() => {});
-      medicRefetch().catch(() => {});
+      medicRefetch().catch(() => { });
+      medicRefetch().catch(() => { });
       setSelectedRows([]);
     } catch (error) {
       dispatch(notify({ msg: 'One or more deleted failed', sev: 'error' }));
@@ -625,49 +625,45 @@ useEffect(() => {
       title: 'Instructions',
       flexGrow: 3,
       render: (rowData: any) => {
+        const cleanJoin = (vals: any[], sep = ', ') =>
+          vals
+            .map(v => (v == null ? '' : String(v).trim()))
+            .filter(v => v !== '' && v !== 'undefined' && v !== 'null')
+            .join(sep);
+
         if (rowData.instructionsTypeLkey === '3010591042600262') {
           const generic = predefinedInstructionsListResponse?.data?.find(
-            item => item.id === Number(rowData.instructions)
+            (item: any) => item.id === Number(rowData.instructions)
           );
 
-          if (generic) {
-          } else {
-            console.warn('No matching generic found for key:', rowData.instructions);
-          }
-          return [
-            generic?.dose ?? '',
-            formatEnumString(generic?.unit) ?? '',
-            formatEnumString(generic?.rout) ?? '', // route
-            formatEnumString(generic?.frequency) ?? ''
-          ]
-            .filter(v => v != null && String(v).trim() !== '')
-            .join(', ');
-        }
-        if (rowData.instructionsTypeLkey === '3010573499898196') {
-          return rowData?.instructions;
-        }
-        if (rowData?.instructionsTypeLkey === '3010606785535008') {
-          return (
-            customeInstructions?.object?.find(
-              item => item?.prescriptionMedicationsKey === rowData.key
-            )?.dose +
-            ',' +
-            customeInstructions?.object?.find(
-              item => item?.prescriptionMedicationsKey === rowData.key
-            )?.unitLvalue?.lovDisplayVale +
-            ',' +
-            customeInstructions?.object?.find(
-              item => item?.prescriptionMedicationsKey === rowData.key
-            )?.frequencyLvalue?.lovDisplayVale
-          )+","+formatEnumString(
-            customeInstructions?.object?.find(
-              item => item?.prescriptionMedicationsKey === rowData.key
-            )?.roaLkey)
-          ;
+          return cleanJoin([
+            generic?.dose,
+            formatEnumString(generic?.unit),
+            formatEnumString(generic?.rout),
+            formatEnumString(generic?.frequency),
+          ]);
         }
 
-        return 'no';
+        if (rowData.instructionsTypeLkey === '3010573499898196') {
+          return cleanJoin([rowData?.instructions]);
+        }
+
+        if (rowData.instructionsTypeLkey === '3010606785535008') {
+          const custom = customeInstructions?.object?.find(
+            (item: any) => item?.prescriptionMedicationsKey === rowData.key
+          );
+
+          return cleanJoin([
+            custom?.dose,
+            custom?.unitLvalue?.lovDisplayVale,
+            custom?.frequencyLvalue?.lovDisplayVale,
+            formatEnumString(custom?.roaLkey),
+          ]);
+        }
+
+        return '';
       }
+
     },
     {
       key: 'instructionsType',
@@ -881,7 +877,7 @@ useEffect(() => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => {}}
+              setRecord={() => { }}
               width={110}
             />
           </Form>
@@ -914,7 +910,7 @@ useEffect(() => {
             disabled={
               preKeyRecord['preKey']
                 ? prescriptions?.object?.find((p: any) => p.key === preKeyRecord['preKey'])
-                    ?.statusLkey === '1804482322306061'
+                  ?.statusLkey === '1804482322306061'
                 : true
             }
             prefixIcon={() => <CheckIcon />}
@@ -988,7 +984,7 @@ useEffect(() => {
         preKey={preKeyRecord['preKey']}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => {}}
+        setOrderMedication={() => { }}
         drugKey={null}
         editing={false}
       />
@@ -1100,13 +1096,12 @@ useEffect(() => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${
-          selectedMedicationForAttachments
+        title={`Attachments - ${selectedMedicationForAttachments
             ? genericMedicationListResponse?.data?.find(
-                (item: any) => item.id === selectedMedicationForAttachments.genericMedicationsId
-              )?.name || 'Medication'
+              (item: any) => item.id === selectedMedicationForAttachments.genericMedicationsId
+            )?.name || 'Medication'
             : 'Medication'
-        }`}
+          }`}
         size="lg"
         hideActionBtn={true}
         content={
@@ -1119,7 +1114,7 @@ useEffect(() => {
                 : undefined
             }
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />
