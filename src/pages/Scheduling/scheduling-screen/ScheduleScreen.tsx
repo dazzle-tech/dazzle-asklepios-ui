@@ -875,6 +875,7 @@ const ScheduleScreen = () => {
 
   const requestsRows = useMemo(() => {
     const list = appointments?.object ?? [];
+    const resourcesList = resourcesWithAvailabilityResponse?.object ?? [];
 
     return list
       .filter((a: any) => String(a?.visitTypeLkey) === String(FOLLOW_UP_VISIT_TYPE_LKEY))
@@ -894,6 +895,27 @@ const ScheduleScreen = () => {
 
         const patientMrn = patient?.patientMrn || '';
 
+          const resourceKey = a?.resourceKey ?? a?.resource_key ?? a?.resource?.key ?? null;
+
+      const resource =
+        resourceKey != null ? resourcesList.find((r: any) => String(r.key) === String(resourceKey)) : null;
+
+      const resourceName =
+        resource?.resourceName ||
+        resource?.name ||
+        a?.resourceName ||
+        a?.resource_name ||
+        '-';
+
+      const resourceType =
+        resource?.resource_type ||
+        resource?.resourceType ||
+        a?.resourceType ||
+        a?.resource_type ||
+        a?.resourceTypeLkey ||
+        a?.resource_type_key ||
+        '-';
+
         return {
           id: a.key,
 
@@ -908,6 +930,9 @@ const ScheduleScreen = () => {
 
           status: a?.appointmentStatus ?? 'Pending',
 
+          resourceName,
+          resourceType,
+          resourceKey: resourceKey ?? '',
           updatedBy: a?.updatedBy ?? a?.updated_by ?? '',
           updatedAt: a?.updatedAt ?? a?.updated_at ?? null,
 
