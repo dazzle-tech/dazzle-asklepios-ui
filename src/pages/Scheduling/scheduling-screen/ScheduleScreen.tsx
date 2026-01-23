@@ -37,6 +37,7 @@ import {
   useGetResourcesWithAvailabilityQuery,
   useSaveAppointmentMutation
 } from '@/services/appointmentService';
+import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
 import MyInput from '@/components/MyInput';
 import CalenderSimpleIcon from '@rsuite/icons/CalenderSimple';
 import ArrowLeftLineIcon from '@rsuite/icons/ArrowLeftLine';
@@ -157,6 +158,24 @@ const ScheduleScreen = () => {
 
   const { data: resourcesWithAvailabilityResponse } =
     useGetResourcesWithAvailabilityQuery(listRequest);
+
+  // Used for mapping resourceKey -> resource name (per requirement: use ResourceService)
+  const { data: allResourcesResponse } = useGetAllResourcesQuery({
+    page: 0,
+    size: 5000,
+    sort: 'id,asc'
+  });
+  const resourceNameById = useMemo(() => {
+    const list = (allResourcesResponse as any)?.data ?? (allResourcesResponse as any)?.object ?? allResourcesResponse ?? [];
+    const arr = Array.isArray(list) ? list : [];
+    const m = new Map<string, string>();
+    arr.forEach((r: any) => {
+      const id = r?.id ?? r?.key;
+      const name = r?.resourceName ?? r?.name ?? r?.resource_name ?? '';
+      if (id !== null && typeof id !== 'undefined') m.set(String(id), String(name || ''));
+    });
+    return m;
+  }, [allResourcesResponse]);
 
   const {
     data: appointments,
@@ -901,7 +920,10 @@ const ScheduleScreen = () => {
       const resource =
         resourceKey != null ? resourcesList.find((r: any) => String(r.key) === String(resourceKey)) : null;
 
+      const resourceNameFromService =
+        resourceKey != null ? resourceNameById.get(String(resourceKey)) : '';
       const resourceName =
+        (resourceNameFromService && String(resourceNameFromService).trim()) ||
         resource?.resourceName ||
         resource?.name ||
         a?.resourceName ||
@@ -926,6 +948,8 @@ const ScheduleScreen = () => {
           ageText: patientAge,
           genderText: patientGender,
 
+          facilityKey: a?.facilityKey ?? a?.facility_key ?? a?.facilityId ?? a?.facility_id ?? '',
+
           createdBy: a?.createdBy ?? a?.created_by ?? '',
           createdAt: a?.createdAt ?? a?.created_at ?? null,
 
@@ -942,7 +966,7 @@ const ScheduleScreen = () => {
           _raw: a
         };
       });
-  }, [appointments]);
+  }, [appointments, resourcesWithAvailabilityResponse?.object, resourceNameById]);
 
   const handleApproveRequest = (row: any) => {
     setRequestToApprove(row?._raw);
