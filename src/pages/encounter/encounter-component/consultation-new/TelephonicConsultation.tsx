@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import { MdModeEdit, MdAttachFile } from 'react-icons/md';
-import { Checkbox, Loader } from 'rsuite';
+import { Checkbox, Loader, Form } from 'rsuite';
 import DetailsTele from './DetailsTele';
 import MyModal from '@/components/MyModal/MyModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
@@ -17,13 +17,41 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import { formatDateWithoutSeconds } from '@/utils';
 import {
-  useFindNotCancelledByEncounterQuery,
-  useFindCancelledByEncounterQuery,
+  useFindAllByEncounterQuery,
   useCancelMutation
 } from '@/services/patients/telephonicConsultationService';
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
+import MyInput from '@/components/MyInput';
 import './styles.less';
 import { Practitioner } from '@/types/model-types-new';
+
+const handleCancelError = (err: any, dispatch: any) => {
+  const data = err?.data ?? err ?? {};
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map((fe: any) => {
+      if (fe.field === 'reason') {
+        return '• Cancellation Reason: is required';
+      }
+      return `• ${fe.field}: ${fe.message}`;
+    });
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}`,
+        sev: 'error'
+      })
+    );
+    return;
+  }
+
+  dispatch(
+    notify({
+      msg: data?.message || 'Cancel failed',
+      sev: 'error'
+    })
+  );
+};
 
 const TelephonicConsultation = props => {
   const location = useLocation();
@@ -51,35 +79,50 @@ const TelephonicConsultation = props => {
 
   const [modalKey, setModalKey] = useState(0);
 
+  const [dateFilter, setDateFilter] = useState(() => {
+    const today = new Date();
+    const onlyDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return {
+      fromDate: onlyDate,
+      toDate: onlyDate
+    };
+  });
+
   const isSelected = row => (row?.id === selectedRow?.id ? 'selected-row' : '');
 
-  const {
-    data: notCancelledData,
-    isLoading: loadingNotCancelled,
-    refetch: refetchNotCancelled
-  } = useFindNotCancelledByEncounterQuery(
-    { encounterId: encounter?.key, page: pageIndex, size: rowsPerPage },
-    { skip: showCanceled || !encounter?.key }
-  );
+  const toInstantStartOfDay = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0).toISOString();
 
-  const {
-    data: cancelledData,
-    isLoading: loadingCancelled,
-    refetch: refetchCancelled
-  } = useFindCancelledByEncounterQuery(
-    { encounterId: encounter?.key, page: pageIndex, size: rowsPerPage },
-    { skip: !showCanceled || !encounter?.key }
-  );
+  const toInstantEndOfDay = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999).toISOString();
+
+  const buildQueryParams = () => {
+    const params: any = {
+      encounterId: encounter?.key,
+      page: pageIndex,
+      size: rowsPerPage,
+      includeCancelled: showCanceled
+    };
+
+    if (dateFilter.fromDate) {
+      params.fromDate = toInstantStartOfDay(dateFilter.fromDate);
+    }
+
+    if (dateFilter.toDate) {
+      params.toDate = toInstantEndOfDay(dateFilter.toDate);
+    }
+
+    return params;
+  };
+
+  const { data, isLoading, refetch } = useFindAllByEncounterQuery(buildQueryParams(), {
+    skip: !encounter?.key
+  });
 
   const [cancelTeleConsultation] = useCancelMutation();
 
-  const tableData = showCanceled ? cancelledData?.data : notCancelledData?.data;
-
-  const totalCount = showCanceled
-    ? cancelledData?.totalCount ?? 0
-    : notCancelledData?.totalCount ?? 0;
-
-  const isLoading = loadingNotCancelled || loadingCancelled;
+  const tableData = data?.data ?? [];
+  const totalCount = data?.totalCount ?? 0;
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
   const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
@@ -161,23 +204,28 @@ const TelephonicConsultation = props => {
       setSelectedRow(null);
       setOpenCancelModal(false);
 
-      if (showCanceled) {
-        refetchCancelled();
-      } else {
-        refetchNotCancelled();
-      }
-    } catch {
-      dispatch(notify('Cancel failed'));
+      refetch();
+    } catch (err: any) {
+      handleCancelError(err, dispatch);
     }
   };
 
   const handleRefetchData = () => {
-    if (showCanceled) {
-      refetchCancelled();
-    } else {
-      refetchNotCancelled();
-    }
+    refetch();
   };
+
+  const handleClearFilters = () => {
+    setDateFilter({
+      fromDate: null,
+      toDate: null
+    });
+    setPageIndex(0);
+  };
+
+  useEffect(() => {
+    setPageIndex(0);
+    handleRefetchData();
+  }, [dateFilter.fromDate, dateFilter.toDate]);
 
   const columns = [
     {
@@ -211,7 +259,7 @@ const TelephonicConsultation = props => {
       render: row => (
         <MdAttachFile
           size={20}
-          style={{ cursor: 'pointer' }}
+          className='edit-pointer'
           onClick={() => {
             setConsultationOrder(row);
             setAttachmentsModalOpen(true);
@@ -226,7 +274,7 @@ const TelephonicConsultation = props => {
       render: row => (
         <MdModeEdit
           size={22}
-          style={{ cursor: 'pointer' }}
+          className='edit-pointer'
           onClick={() => {
             setConsultationOrder(row);
             setSelectedRow(row);
@@ -269,17 +317,47 @@ const TelephonicConsultation = props => {
     }
   ];
 
+  const filters = () => {
+    return (
+      <Form layout="inline" fluid className="date-filter-form">
+        <MyInput
+          column
+          width={180}
+          fieldType="date"
+          fieldLabel="From Date"
+          fieldName="fromDate"
+          record={dateFilter}
+          setRecord={setDateFilter}
+        />
+        <MyInput
+          width={180}
+          column
+          fieldType="date"
+          fieldLabel="To Date"
+          fieldName="toDate"
+          record={dateFilter}
+          setRecord={setDateFilter}
+        />
+        <div className="margin-15">
+          <MyButton onClick={handleClearFilters}>Clear</MyButton>
+        </div>
+      </Form>
+    );
+  };
+
+  const isCancelled = selectedRow?.cancelledAt != null;
+
   const tableButtons = (
     <div className="bt-div-2">
       <div className="bt-left-2">
         <MyButton
           prefixIcon={() => <BlockIcon />}
           onClick={() => {
-            if (!selectedRow) return;
+            if (!selectedRow || isCancelled) return;
             setConsultationOrder(selectedRow);
             setOpenCancelModal(true);
           }}
-          disabled={!selectedRow || showCanceled}
+          disabled={!selectedRow || isCancelled}
         >
           Cancel
         </MyButton>
@@ -325,6 +403,7 @@ const TelephonicConsultation = props => {
         }}
         onRowClick={row => setSelectedRow(row)}
         rowClassName={isSelected}
+        filters={filters()}
         tableButtons={tableButtons}
       />
 

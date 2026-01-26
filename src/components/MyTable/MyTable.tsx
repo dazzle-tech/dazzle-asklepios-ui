@@ -164,10 +164,10 @@ const MyTable: React.FC<MyTableProps> = ({
                     <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>
-              ) : data.length === 0 ? (
+              ) : data?.length === 0 ? (
                 emptyTable()
               ) : (
-                data.map((row, index) => {
+                data?.map((row, index) => {
                   const isEvenRow = index % 2 === 1;
 
                   return (

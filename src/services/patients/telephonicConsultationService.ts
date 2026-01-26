@@ -16,6 +16,15 @@ type PagedResult<T> = {
   totalCount: number;
 };
 
+type FindAllByEncounterParams = {
+  encounterId: string;
+  page?: number;
+  size?: number;
+  fromDate?: string;
+  toDate?: string;
+  includeCancelled?: boolean;
+};
+
 export const telephonicConsultationService = createApi({
   reducerPath: 'telephonicConsultationApi',
   baseQuery: BaseQuery,
@@ -42,12 +51,12 @@ export const telephonicConsultationService = createApi({
 
     cancel: builder.mutation<
       TelephonicConsultation,
-      { id: number; reason?: string; cancelledBy?: number }
+      { id: number; reason: string; cancelledBy?: number }
     >({
-      query: ({ id, reason, cancelledBy }) => ({
+      query: ({ id, ...body }) => ({
         url: `/api/patient/telephonic-consultation/${id}/cancel`,
         method: 'PUT',
-        params: { reason, cancelledBy }
+        body // ✅ JSON body
       }),
       invalidatesTags: ['TelephonicConsultation']
     }),
@@ -76,13 +85,26 @@ export const telephonicConsultationService = createApi({
       providesTags: ['TelephonicConsultation']
     }),
 
-    findCancelledByEncounter: builder.query<
+    findAllByEncounter: builder.query<
       PagedResult<TelephonicConsultation>,
-      { encounterId: string; page?: number; size?: number }
+      FindAllByEncounterParams
     >({
-      query: ({ encounterId, page = 0, size = 20 }) => ({
-        url: `/api/patient/telephonic-consultation/cancelled/by-encounter/${encounterId}`,
-        params: { page, size }
+      query: ({
+        encounterId,
+        page = 0,
+        size = 20,
+        fromDate,
+        toDate,
+        includeCancelled = false
+      }) => ({
+        url: `/api/patient/telephonic-consultation/by-encounter/${encounterId}`,
+        params: {
+          page,
+          size,
+          fromDate,
+          toDate,
+          includeCancelled
+        }
       }),
 
       transformResponse: (
@@ -107,5 +129,5 @@ export const {
   useUpdateMutation,
   useCancelMutation,
   useFindNotCancelledByEncounterQuery,
-  useFindCancelledByEncounterQuery
+  useFindAllByEncounterQuery
 } = telephonicConsultationService;

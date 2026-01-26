@@ -28,85 +28,110 @@ import {
   useLazyGetPractitionerByIdQuery
 } from '@/services/setup/practitioner/PractitionerService';
 
+
+const TELEPHONIC_FIELD_LABELS: Record<string, string> = {
+  facilityId: 'Facility',
+  practitionerId: 'Physician',
+  dateOfCall: 'Date Of Call',
+  consultationContent: 'Consultation Content',
+  approvalNumber: 'Approval Number',
+  notes: 'Notes',
+  extraDocumentation: 'Extra Documentation',
+  patientId: 'Patient',
+  encounterId: 'Encounter'
+};
+
 const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
   const data = err?.data ?? {};
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    const normalizeMsg = (msg: string) => {
-      const m = (msg || '').toLowerCase();
-      if (m.includes('must not be null')) return 'is required';
-      if (m.includes('must not be blank')) return 'must not be blank';
-      if (m.includes('size must be between')) return 'length is out of range';
-      return msg || 'invalid value';
-    };
+    const lines = data.fieldErrors.map((fe: any) => {
+      const label = TELEPHONIC_FIELD_LABELS[fe.field] || fe.field;
 
-    const lines = data.fieldErrors.map((fe: any) => `• ${fe.field}: ${normalizeMsg(fe.message)}`);
+      const msg = (fe.message || '').toLowerCase();
+      let normalized = fe.message;
+
+      if (msg.includes('must not be null')) normalized = 'is required';
+      else if (msg.includes('must not be blank')) normalized = 'must not be blank';
+      else if (msg.includes('size must be')) normalized = 'length is out of range';
+
+      return `• ${label}: ${normalized}`;
+    });
 
     dispatch(
       notify({
-        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
+        msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
         sev: 'error'
       })
     );
     return;
   }
 
-  const messageProp: string = data?.message || '';
+  const errorKey: string | undefined =
+    data?.errorKey ||
+    (typeof data?.message === 'string' && data.message.startsWith('error.')
+      ? data.message.replace('error.', '')
+      : undefined);
 
-  if (
-    messageProp.includes('ConstraintViolationImpl') ||
-    messageProp.includes('Validation failed')
-  ) {
-    const violations: string[] = [];
-    const pattern = /propertyPath=(\w+).*?interpolatedMessage='([^']+)'/g;
-    let match;
-
-    while ((match = pattern.exec(messageProp)) !== null) {
-      const field = match[1];
-      const message = match[2];
-
-      const normalized = message.includes('must not be null')
-        ? 'is required'
-        : message.includes('must not be blank')
-        ? 'must not be blank'
-        : message;
-
-      violations.push(`• ${field}: ${normalized}`);
-    }
-
-    if (violations.length > 0) {
-      dispatch(
-        notify({
-          msg: `Please fix the following fields:\n${violations.join('\n')}` + suffix,
-          sev: 'error'
-        })
-      );
-      return;
-    }
+  if (errorKey === 'fk.patient') {
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n• Facility: is required${suffix}`,
+        sev: 'error'
+      })
+    );
+    return;
   }
 
-  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
+  if (errorKey && keyMap[errorKey]) {
+    dispatch(
+      notify({
+        msg: keyMap[errorKey] + suffix,
+        sev: 'error'
+      })
+    );
+    return;
+  }
 
-  const humanMsg =
-    (errorKey && keyMap[errorKey]) ||
-    data?.detail ||
-    data?.title ||
-    data?.message ||
-    'Unexpected error';
+  const fallbackMsg = data?.detail || data?.title || data?.message || 'Unexpected error occurred';
 
-  dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+  dispatch(
+    notify({
+      msg: fallbackMsg + suffix,
+      sev: 'error'
+    })
+  );
 };
+
 
 const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Telephonic consultation payload is required.',
+  'id.required': 'Telephonic consultation id is required.',
+  'id.mismatch': 'Path id does not match payload id.',
+
+  'patient.required': 'Patient is required.',
   'patient.invalid': 'Invalid patient reference.',
+  'patient.notfound': 'Patient not found.',
+  'fk.patient': 'Patient information is missing or invalid.',
+
+  'encounter.required': 'Encounter is required.',
   'encounter.invalid': 'Invalid encounter reference.',
+  'fk.encounter': 'Encounter information is missing or invalid.',
+
+  'facility.notfound': 'Selected facility not found.',
+  'practitioners.notfound': 'No practitioners found for this facility.',
+  'facility.invalid': 'Invalid facility selection.',
+
+  notfound: 'Telephonic consultation not found.',
   duplicate: 'Telephonic consultation already exists.',
-  'db.constraint': 'Database constraint violation.',
-  notfound: 'Telephonic consultation not found.'
+  'already.cancelled': 'Telephonic consultation already cancelled.',
+  'already.cancelled.update': 'Cancelled telephonic consultation cannot be updated.',
+
+  'db.constraint': 'Database constraint violation.'
 };
+
 
 const DetailsTele = ({
   patient,
@@ -121,10 +146,7 @@ const DetailsTele = ({
   const dispatch = useAppDispatch();
 
   const [formData, setFormData] = useState({ ...newTelephonicConsultation });
-
-  const [practitioner, setPractitioner] = useState<Practitioner>({
-    ...newPractitioner
-  });
+  const [practitioner, setPractitioner] = useState<Practitioner>({ ...newPractitioner });
 
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
 
@@ -142,6 +164,7 @@ const DetailsTele = ({
 
   const [triggerGetPractitionerById, { data: practitionerById, isSuccess: practitionerLoaded }] =
     useLazyGetPractitionerByIdQuery();
+
 
   useEffect(() => {
     if (!open) return;
@@ -165,9 +188,7 @@ const DetailsTele = ({
   }, [open, consultationOrders, patient?.key, encounter?.key]);
 
   useEffect(() => {
-    if (!open) return;
-    if (!consultationOrders?.practitionerId) return;
-
+    if (!open || !consultationOrders?.practitionerId) return;
     triggerGetPractitionerById(consultationOrders.practitionerId);
   }, [open, consultationOrders?.practitionerId]);
 
@@ -179,15 +200,16 @@ const DetailsTele = ({
       facilityId: practitionerById.facilityId
     });
 
-    setPractitionerPage(0);
-
     setAllPractitioners([practitionerById]);
+    setPractitionerPage(0);
 
     triggerGetPractitionersByFacility({
       facilityId: practitionerById.facilityId,
       page: 0,
       size: pageSize,
       sort: 'id,asc'
+    }).catch(err => {
+      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
     });
 
     setFormData(prev => ({
@@ -201,23 +223,14 @@ const DetailsTele = ({
 
     const newPractitioners = practitionersResult.data.data;
 
-    if (practitionerPage === 0) {
-      setAllPractitioners(prev => {
-        if (prev.length > 0) {
-          const existingIds = new Set(prev.map(p => p.id));
-          const uniqueNew = newPractitioners.filter(p => !existingIds.has(p.id));
-          return [...prev, ...uniqueNew];
-        }
-        return newPractitioners;
-      });
-    } else {
-      setAllPractitioners(prev => {
-        const existingIds = new Set(prev.map(p => p.id));
-        const uniqueNew = newPractitioners.filter(p => !existingIds.has(p.id));
-        return [...prev, ...uniqueNew];
-      });
-    }
-  }, [practitionersResult?.data?.data, practitionerPage]);
+    setAllPractitioners(prev => {
+      const existingIds = new Set(prev.map(p => p.id));
+      const unique = newPractitioners.filter(p => !existingIds.has(p.id));
+      return [...prev, ...unique];
+    });
+  }, [practitionersResult?.data?.data]);
+
+  /* ========================= ACTIONS ========================= */
 
   const handleClear = () => {
     setFormData({
@@ -235,12 +248,12 @@ const DetailsTele = ({
       if ((formData as TelephonicConsultation).id) {
         const payload = {
           id: consultationOrders?.id,
-          practitionerId: formData?.practitionerId,
-          dateOfCall: formData?.dateOfCall,
-          consultationContent: formData?.consultationContent,
-          approvalNumber: formData?.approvalNumber,
-          notes: formData?.notes,
-          extraDocumentation: formData?.extraDocumentation
+          practitionerId: formData.practitionerId,
+          dateOfCall: formData.dateOfCall,
+          consultationContent: formData.consultationContent,
+          approvalNumber: formData.approvalNumber,
+          notes: formData.notes,
+          extraDocumentation: formData.extraDocumentation
         };
         await updateConsultation(payload).unwrap();
         dispatch(notify({ msg: 'Telephonic consultation updated successfully', sev: 'success' }));
@@ -261,6 +274,7 @@ const DetailsTele = ({
     setShowAttachmentModal(true);
   };
 
+
   return (
     <>
       <AdvancedModal
@@ -272,12 +286,8 @@ const DetailsTele = ({
         actionButtonFunction={handleSave}
         isDisabledActionBtn={edit}
         footerButtons={
-          <MyButton
-            disabled={edit}
-            prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-            onClick={handleClear}
-          >
-            Clear
+          <MyButton disabled={edit} onClick={handleClear}>
+            <FontAwesomeIcon icon={faBroom} /> Clear
           </MyButton>
         }
         rightTitle="Telephonic Consultation"
@@ -285,7 +295,7 @@ const DetailsTele = ({
           <Form fluid className={clsx({ 'disabled-panel': edit })}>
             <div className="main-details-consultion-page-container">
               <MyInput
-                width="100%"
+                width="24vw"
                 column
                 fieldLabel="Facility"
                 fieldType="select"
@@ -297,8 +307,8 @@ const DetailsTele = ({
                 setRecord={(rec: Practitioner) => {
                   setPractitioner(rec);
                   setFormData(prev => ({ ...prev, practitionerId: null }));
-                  setPractitionerPage(0);
                   setAllPractitioners([]);
+                  setPractitionerPage(0);
 
                   if (rec?.facilityId) {
                     triggerGetPractitionersByFacility({
@@ -306,49 +316,55 @@ const DetailsTele = ({
                       page: 0,
                       size: pageSize,
                       sort: 'id,asc'
+                    }).catch(err => {
+                      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
                     });
                   }
                 }}
                 required
               />
 
-              <MyInput
-                width="12vw"
-                fieldLabel="Physician"
-                fieldName="practitionerId"
-                fieldType="selectPagination"
-                selectData={allPractitioners}
-                selectDataLabel={['firstName', 'lastName']}
-                selectDataValue="id"
-                record={formData}
-                setRecord={setFormData}
-                disabled={!practitioner?.facilityId}
-                loading={practitionersResult?.isFetching}
-                searchable
-                hasMore={practitionersResult?.data?.totalCount > allPractitioners.length}
-                onFetchMore={() => {
-                  const nextPage = practitionerPage + 1;
-                  setPractitionerPage(nextPage);
+              <div className="row-2-cols">
+                <MyInput
+                  width="11vw"
+                  fieldLabel="Physician"
+                  fieldName="practitionerId"
+                  fieldType="selectPagination"
+                  selectData={allPractitioners}
+                  selectDataLabel={['firstName', 'lastName']}
+                  selectDataValue="id"
+                  record={formData}
+                  setRecord={setFormData}
+                  disabled={!practitioner?.facilityId}
+                  loading={practitionersResult?.isFetching}
+                  searchable
+                  hasMore={practitionersResult?.data?.totalCount > allPractitioners.length}
+                  onFetchMore={() => {
+                    const nextPage = practitionerPage + 1;
+                    setPractitionerPage(nextPage);
 
-                  triggerGetPractitionersByFacility({
-                    facilityId: practitioner.facilityId,
-                    page: nextPage,
-                    size: pageSize,
-                    sort: 'id,asc'
-                  });
-                }}
-                required
-              />
+                    triggerGetPractitionersByFacility({
+                      facilityId: practitioner.facilityId,
+                      page: nextPage,
+                      size: pageSize,
+                      sort: 'id,asc'
+                    }).catch(err => {
+                      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+                    });
+                  }}
+                  required
+                />
 
-              <MyInput
-                width="12vw"
-                fieldName="dateOfCall"
-                fieldLabel="Date Of Call"
-                fieldType="datetime"
-                record={formData}
-                setRecord={setFormData}
-                required
-              />
+                <MyInput
+                  width="11vw"
+                  fieldName="dateOfCall"
+                  fieldLabel="Date Of Call"
+                  fieldType="datetime"
+                  record={formData}
+                  setRecord={setFormData}
+                  required
+                />
+              </div>
 
               <MyInput
                 width="24vw"
@@ -361,43 +377,47 @@ const DetailsTele = ({
                 required
               />
 
-              <MyInput
-                width="12vw"
-                fieldName="approvalNumber"
-                fieldType="text"
-                fieldLabel="Approval Number"
-                record={formData}
-                setRecord={setFormData}
-              />
+              <div className="row-approval-attach">
+                <MyInput
+                  width="12vw"
+                  fieldName="approvalNumber"
+                  fieldType="number"
+                  fieldLabel="Approval Number"
+                  record={formData}
+                  setRecord={setFormData}
+                />
 
-              <div className="attachment-button-consultation-position">
-                <MyButton
-                  className="my-button-for-attachment-modal"
-                  onClick={handleOpenAttachmentModal}
-                  disabled={!(formData as any)?.id}
-                >
-                  <FontAwesomeIcon icon={faPaperclip} /> Attachments
-                </MyButton>
+                <div className="attachment-button-consultation-position">
+                  <MyButton
+                    className="my-button-for-attachment-modal"
+                    onClick={handleOpenAttachmentModal}
+                    disabled={!(formData as any)?.id}
+                  >
+                    <FontAwesomeIcon icon={faPaperclip} /> Attachments
+                  </MyButton>
+                </div>
               </div>
 
-              <MyInput
-                width="12vw"
-                fieldName="notes"
-                rows={6}
-                fieldType="textarea"
-                record={formData}
-                setRecord={setFormData}
-              />
+              <div className="row-2-cols">
+                <MyInput
+                  width="12vw"
+                  fieldName="notes"
+                  rows={6}
+                  fieldType="textarea"
+                  record={formData}
+                  setRecord={setFormData}
+                />
 
-              <MyInput
-                width="12vw"
-                fieldName="extraDocumentation"
-                fieldLabel="Extra Documentation"
-                rows={6}
-                fieldType="textarea"
-                record={formData}
-                setRecord={setFormData}
-              />
+                <MyInput
+                  width="12vw"
+                  fieldName="extraDocumentation"
+                  fieldLabel="Extra Documentation"
+                  rows={6}
+                  fieldType="textarea"
+                  record={formData}
+                  setRecord={setFormData}
+                />
+              </div>
             </div>
           </Form>
         }
