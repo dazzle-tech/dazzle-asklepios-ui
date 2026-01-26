@@ -32,14 +32,14 @@ const PatientChronicMedication = ({ patient, title = null }) => {
   // const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({
   //   ...initialListRequest
   // });
-    const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
-  
+  const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+
   // Fetch list of generic medications
   // const { data: genericMedicationListResponse } = useGetGenericMedicationQuery({
   //   ...initialListRequest
   // });
-    const { data: genericMedicationListResponse } =
-      useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+  const { data: genericMedicationListResponse } =
+    useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
 
   // Fetch prescription medications for a specific patient that are marked as chronic and active
   const { data: prescriptionMedications } = useGetPrescriptionMedicationsQuery({
@@ -134,68 +134,67 @@ const PatientChronicMedication = ({ patient, title = null }) => {
 
   // Table Columns
   const columns = [
-{
-  key: 'medicationBrandName',
-  title: 'MEDICATION BRAND NAME',
-  render: (rowData: any) => {
-    const id = rowData.genericMedicationsKey;
+    {
+      key: 'medicationBrandName',
+      title: 'MEDICATION BRAND NAME',
+      render: (rowData: any) => {
+        const id = rowData.genericMedicationsKey;
 
-    const item = genericMedicationListResponse?.data?.find(item => {
-   
-      return item.id === id;
-    });
+        const item = genericMedicationListResponse?.data?.find(item => {
 
-    return item?.name || '-';
-  }
-},
+          return item.id === id;
+        });
+
+        return item?.name || '-';
+      }
+    },
 
     {
-         key: 'instructions',
-         dataKey: '',
-         title: 'Instructions',
-         flexGrow: 3,
-         render: (rowData: any) => {
-           if (rowData.instructionsTypeLkey === '3010591042600262') {
-             const generic = predefinedInstructionsListResponse?.data?.find(
-               item => item.id === Number(rowData.instructions)
-             );
-          
-   
-             if (generic) {
-             } else {
-               console.warn('No matching generic found for key:', rowData.instructions);
-             }
-             return [
-               generic?.dose ?? '',
-               formatEnumString(generic?.unit) ?? '',
-               formatEnumString(generic?.rout) ?? '',   // ✅ route
-               formatEnumString(generic?.frequency) ?? '',
-             ]
-               .filter(v => v != null && String(v).trim() !== '')
-               .join(', ');
-           }
-           if (rowData.instructionsTypeLkey === '3010573499898196') {
-             return rowData.instructions;
-           }
-           if (rowData.instructionsTypeLkey === '3010606785535008') {
-             return (
-               customeInstructions?.object?.find(
-                 item => item.prescriptionMedicationsKey === rowData.key
-               )?.dose +
-               ',' +
-               customeInstructions?.object?.find(
-                 item => item.prescriptionMedicationsKey === rowData.key
-               )?.unitLvalue?.lovDisplayVale +
-               ',' +
-               customeInstructions?.object?.find(
-                 item => item.prescriptionMedicationsKey === rowData.key
-               )?.frequencyLvalue?.lovDisplayVale
-             );
-           }
-   
-           return 'no';
-         }
-       },
+      key: 'instructions',
+      dataKey: '',
+      title: 'Instructions',
+      flexGrow: 3,
+      render: (rowData: any) => {
+        const cleanJoin = (vals: any[], sep = ', ') =>
+          vals
+            .map(v => (v == null ? '' : String(v).trim()))
+            .filter(v => v !== '' && v !== 'undefined' && v !== 'null')
+            .join(sep);
+
+        if (rowData.instructionsTypeLkey === '3010591042600262') {
+          const generic = predefinedInstructionsListResponse?.data?.find(
+            (item: any) => item.id === Number(rowData.instructions)
+          );
+
+          return cleanJoin([
+            generic?.dose,
+            formatEnumString(generic?.unit),
+            formatEnumString(generic?.rout),
+            formatEnumString(generic?.frequency),
+          ]);
+        }
+
+        if (rowData.instructionsTypeLkey === '3010573499898196') {
+          return cleanJoin([rowData?.instructions]);
+        }
+
+        if (rowData.instructionsTypeLkey === '3010606785535008') {
+          const custom = customeInstructions?.object?.find(
+            (item: any) => item?.prescriptionMedicationsKey === rowData.key
+          );
+
+          return cleanJoin([
+            custom?.dose,
+            custom?.unitLvalue?.lovDisplayVale,
+            custom?.frequencyLvalue?.lovDisplayVale,
+            formatEnumString(custom?.roaLkey),
+          ]);
+        }
+
+        return '';
+      }
+
+    },
   ];
 
   // Join non-empty (truthy) values from an array into a comma-separated string
@@ -224,25 +223,25 @@ const PatientChronicMedication = ({ patient, title = null }) => {
   };
   return (
     <Section
-    isContainOnlyTable
+      isContainOnlyTable
       title={title ? title : ' Patient Chronic Medication'}
       content={
         <MyTable
           data={combinedArray ?? []}
           columns={columns}
           height={250}
-          onRowClick={rowData => {}}
+          onRowClick={rowData => { }}
         />
       }
       setOpen={setOpen}
       rightLink="Full view"
       openedContent={
         <FullViewTable open={open} setOpen={setOpen} combinedArray={combinedArray} genericMedicationListResponse={genericMedicationListResponse}
-            joinValuesFromArrayo={joinValuesFromArrayo}
-            predefinedInstructionsListResponse={predefinedInstructionsListResponse}
-            customeInstructions={customeInstructions}
-            joinValuesFromArray={joinValuesFromArray}
-            modalTitle="Patient Chronic Medication" />
+          joinValuesFromArrayo={joinValuesFromArrayo}
+          predefinedInstructionsListResponse={predefinedInstructionsListResponse}
+          customeInstructions={customeInstructions}
+          joinValuesFromArray={joinValuesFromArray}
+          modalTitle="Patient Chronic Medication" />
       }
     />
   );
