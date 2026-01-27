@@ -100,7 +100,7 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
       };
 
       const payload: ChiefComplain = {
-        patientId: 1003,
+        patientId,
         encounterId,
         chiefComplaint: chiefComplain?.chiefComplaint ?? null,
         provocation: chiefComplain?.provocation ?? null,

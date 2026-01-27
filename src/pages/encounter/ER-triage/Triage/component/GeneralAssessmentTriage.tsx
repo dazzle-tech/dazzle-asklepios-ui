@@ -87,7 +87,7 @@ const GeneralAssessmentTriage = ({ patient, encounter, readOnly = false }) => {
       }
 
       const payload: GeneralAssessment = {
-        patientId: 1003,
+        patientId,
         encounterId,
         positionStatus: generalAssessment?.positionStatus ?? null,
         bodyMovements: generalAssessment?.bodyMovements ?? null,

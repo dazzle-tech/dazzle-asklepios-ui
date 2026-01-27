@@ -443,12 +443,8 @@ const ERTriage = () => {
       };
 
       const encounterId = toNumberOrNaN(encounterData?.id ?? encounterData?.encounterId ?? encounterData?.key);
-      const patientId = 1003 
-      //  toNumberOrNaN(
-      //   patientData?.id ?? patientData?.patientId ?? patientData?.key ?? encounterData?.patientKey
-      // );
+      const patientId =  toNumberOrNaN(patientData?.id ?? patientData?.patientId ?? patientData?.key );
 
-      // Create/get the NEW-backend emergency triage record (kept separate from legacy triage flow)
       const emergencyTriageNew =
         !Number.isNaN(encounterId) && !Number.isNaN(patientId)
           ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
