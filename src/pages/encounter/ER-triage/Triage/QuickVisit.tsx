@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Panel, Divider } from 'rsuite';
-import PatientSide from '../encounter-main-info-section/PatienSide';
+import PatientSide from '../../encounter-main-info-section/PatienSide';
 import { useAppDispatch } from '@/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import Translate from '@/components/Translate';
-import './styles.less';
+import '../styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
@@ -15,20 +15,20 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import BackButton from '@/components/BackButton/BackButton';
 import { notify } from '@/utils/uiReducerActions';
-import SOAP from '../encounter-component/s.o.a.p';
-import PrescriptionNew from '../encounter-component/prescription-new';
-import DiagnosticsOrderNew from '../encounter-component/diagnostics-order-new';
-import BedsideProceduresRequests from '../encounter-component/bedside-procedures-requests';
+import SOAP from '../../encounter-component/s.o.a.p';
+import PrescriptionNew from '../../encounter-component/prescription-new';
+import DiagnosticsOrderNew from '../../encounter-component/diagnostics-order-new';
+import BedsideProceduresRequests from '../../encounter-component/bedside-procedures-requests';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
-import Observations from '../encounter-pre-observations-new/observations/Observations';
-import Allergies from '../encounter-pre-observations/AllergiesNurse';
-import Warning from '../encounter-pre-observations/warning';
-import PatientHistory from '../encounter-component/patient-history';
-import PreviousMeasurements from '../encounter-pre-observations-new/previous-measurements';
+import Observations from '../../encounter-pre-observations-new/observations/Observations';
+import Allergies from '../../encounter-pre-observations/AllergiesNurse';
+import Warning from '../../encounter-pre-observations/warning';
+import PatientHistory from '../../encounter-component/patient-history';
+import PreviousMeasurements from '../../encounter-pre-observations-new/previous-measurements';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/PatientAttachment';
-import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
+import EncounterDischarge from '../../encounter-component/encounter-discharge/EncounterDischarge';
 
-const QuickVisit = ({ }) => {
+const QuickVisit = () => {
     const dispatch = useAppDispatch();
     const location = useLocation();
     const propsData = location.state;
@@ -163,7 +163,7 @@ const QuickVisit = ({ }) => {
                                     />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="7" title="Patient History">
-                                    <PatientHistory />
+                                    <PatientHistory {...({} as any)} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="8" title="Previous Measurements">
                                     <PreviousMeasurements

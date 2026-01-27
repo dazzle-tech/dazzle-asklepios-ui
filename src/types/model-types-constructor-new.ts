@@ -214,6 +214,79 @@ export const newPractitioner: modelTypes.Practitioner = {
   isActive: true,
 };
 
+export const newGeneralAssessment: modelTypes.GeneralAssessment = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+
+  positionStatus: '',
+  bodyMovements: '',
+  levelOfConsciousness: '',
+  facialExpression: '',
+  speech: '',
+  moodBehavior: '',
+
+  memoryRemote: false,
+  memoryRecent: false,
+  signsOfAgitation: false,
+  signsOfDepression: false,
+  signsOfSuicidalIdeation: false,
+  signsOfSubstanceUse: false,
+  isTriage: false
+};
+
+// Backward-compat alias (in case any new-backend screens used the old name)
+export const newApGeneralAssessment = newGeneralAssessment;
+
+export const newChiefComplain: modelTypes.ChiefComplain = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+
+  chiefComplaint: '',
+  provocation: '',
+  palliation: '',
+  quality: '',
+  region: '',
+  severity: '',
+  onsetDateTime: null,
+  caseUnderstanding: '',
+  patientCondition: null,
+  isTriage: false
+};
+
+export const newEmergencyTriage: modelTypes.EmergencyTriage = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+
+  emergencyLevel: null,
+
+  rightEyeLightResponse: false,
+  rightEyePupilSize: '',
+
+  leftEyeLightResponse: false,
+  leftEyePupilSize: '',
+
+  hpiAdditionalNotes: '',
+
+  lifeSaving: null,
+  unresponsive: null,
+  highRisk: null,
+
+  avpuScale: null,
+  painScore: null,
+
+  labsRequired: null,
+  imagingRequired: null,
+  ivFluidsRequired: null,
+  medicationRequired: null,
+  ecgRequired: null,
+  consultationRequired: null,
+
+  destination: null
+};
+
 export const newLanguageTranslation: modelTypes.LanguageTranslation = {
   id: undefined,
   langKey: undefined,

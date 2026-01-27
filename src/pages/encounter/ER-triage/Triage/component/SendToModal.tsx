@@ -8,7 +8,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import './styles.less'
+import '../../styles.less'
 import { useERCompleteEncounterMutation } from '@/services/encounterService';
 import { useSentToERMutation } from '@/services/encounterService';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';

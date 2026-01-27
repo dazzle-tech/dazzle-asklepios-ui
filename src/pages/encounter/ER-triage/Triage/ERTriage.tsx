@@ -7,7 +7,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { faUserPlus, faBolt } from '@fortawesome/free-solid-svg-icons';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
-import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
+import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
+
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import 'react-tabs/style/react-tabs.css';
 import { formatDate } from '@/utils';
@@ -28,19 +29,21 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { faBarcode } from '@fortawesome/free-solid-svg-icons';
 import { faCirclePlay } from '@fortawesome/free-solid-svg-icons';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { useNavigate } from 'react-router-dom';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import SendToModal from './SendToModal';
+import SendToModal from './component/SendToModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { notify } from '@/utils/uiReducerActions';
 import PatientSearch from '@/components/PatientSearch';
 import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-new';
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
-import './styles.less';
+import '../styles.less';
+import { useCreateOrGetEmergencyTriageMutation } from '@/services/encounters/er-triage/emergencyTriageService';
 
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
@@ -145,6 +148,7 @@ const ERTriage = () => {
     keys: defaultEncounterStatusKeys
   });
   const [startEncounter] = useSaveEncounterChangesMutation();
+  const [createOrGetEmergencyTriage] = useCreateOrGetEmergencyTriageMutation();
   const navigate = useNavigate();
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -197,8 +201,16 @@ const ERTriage = () => {
 
   // Create a JSX element to display as the page header content
   const divContent = 'ER Triage';
-  dispatch(setPageCode('ER_Triage'));
-  dispatch(setDivContent(divContent));
+
+  // IMPORTANT: don't dispatch during render (can cause infinite render loop / white screen).
+  useEffect(() => {
+    dispatch(setPageCode('ER_Triage'));
+    dispatch(setDivContent(divContent));
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(' '));
+    };
+  }, [dispatch, divContent]);
 
   const refetch = useSelector((state: any) => state?.refetch?.refetchEncounter);
 
@@ -213,6 +225,88 @@ const ERTriage = () => {
   const emergencyLevelEnumOptions = useEnumOptions('EmergencyLevel');
 
   const encounterStatusSelectData = useMemo(() => encounterStatusLov?.object ?? [], [encounterStatusLov]);
+  const encounterPriorityEnumOptions = useEnumOptions('EncounterPriority');
+
+  const emergencyLevelLabelMap = useMemo(() => {
+    const m = new Map<string, string>();
+    emergencyLevelEnumOptions.forEach((opt: any) => {
+      if (opt?.value == null) return;
+      m.set(String(opt.value), String(opt.label ?? opt.value));
+    });
+    return m;
+  }, [emergencyLevelEnumOptions]);
+
+  const emergencyLevelColorMap = useMemo(() => {
+    const byValue: Record<string, string> = {
+      RESUSCITATION: '#7f1d1d',
+      EMERGENT: '#dc2626', 
+      URGENT: '#f97316',
+      LESS_URGENT: '#eab308',
+      NON_URGENT: '#16a34a'
+    };
+
+    const palette = ['#dc2626', '#f97316', '#eab308', '#16a34a', '#0ea5e9', '#7c3aed'];
+    const m = new Map<string, string>();
+    emergencyLevelEnumOptions.forEach((opt: any, idx: number) => {
+      if (opt?.value == null) return;
+      const key = String(opt.value);
+      const mapped = byValue[String(opt.value).toUpperCase()];
+      m.set(key, mapped ?? palette[idx % palette.length]);
+    });
+    return m;
+  }, [emergencyLevelEnumOptions]);
+
+  const priorityOrderMap = useMemo(() => {
+    const rank = (value: string) => {
+      const v = String(value ?? '').toUpperCase();
+      // Force urgent-like priorities to the top regardless of enum order
+      if (v.includes('URGENT') || v.includes('CRITICAL') || v.includes('STAT') || v.includes('EMERG')) return 0;
+      return null;
+    };
+    const m = new Map<string, number>();
+    // Put urgent-like priorities first, then the rest in enum order.
+    encounterPriorityEnumOptions.forEach((opt, idx) => {
+      if (opt?.value == null) return;
+      const forced = rank(String(opt.value));
+      m.set(String(opt.value), forced ?? idx + 10);
+    });
+    return m;
+  }, [encounterPriorityEnumOptions]);
+
+  const priorityLabelMap = useMemo(() => {
+    const m = new Map<string, string>();
+    encounterPriorityEnumOptions.forEach(v => {
+      if (v?.value != null) m.set(String(v.value), String(v.label ?? v.value));
+    });
+    return m;
+  }, [encounterPriorityEnumOptions]);
+
+  const priorityDotColor = useMemo(() => {
+    // Keep a simple, consistent palette (since enums don't come with colors).
+    const palette = ['#16a34a', '#eab308', '#f97316', '#dc2626', '#7c3aed', '#0ea5e9'];
+    const m = new Map<string, string>();
+    encounterPriorityEnumOptions.forEach((v, idx) => {
+      if (v?.value != null) m.set(String(v.value), palette[idx % palette.length]);
+    });
+    return m;
+  }, [encounterPriorityEnumOptions]);
+
+  const tableData = useMemo(() => {
+    const data = (encounterListResponse?.object ?? []) as any[];
+    const copied = [...data];
+    copied.sort((a, b) => {
+      const aKey = a?.encounterPriorityLkey ? String(a.encounterPriorityLkey) : '';
+      const bKey = b?.encounterPriorityLkey ? String(b.encounterPriorityLkey) : '';
+      const aOrder = aKey ? priorityOrderMap.get(aKey) ?? 999999 : 999999;
+      const bOrder = bKey ? priorityOrderMap.get(bKey) ?? 999999 : 999999;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      // fallback: oldest first within same priority (stable-ish)
+      const aDate = a?.plannedStartDate ? new Date(a.plannedStartDate).getTime() : 0;
+      const bDate = b?.plannedStartDate ? new Date(b.plannedStartDate).getTime() : 0;
+      return aDate - bDate;
+    });
+    return copied;
+  }, [encounterListResponse, priorityOrderMap]);
 
   const isSelected = (rowData: any) => {
     if (rowData && encounter && rowData.key === encounter.key) {
@@ -248,31 +342,146 @@ const ERTriage = () => {
     }
   };
 
-  const handleGoToVisit = async (encounterData: any, patientData: any) => {
-    await startEncounter({
-      ...encounterData,
-      encounterStatusLkey: '6742295599423814'
-    }).unwrap();
-
-    const targetPath = '/ER-start-triage';
-
-    // Save source in sessionStorage before navigating
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
-
-    navigate(targetPath, {
-      state: {
-        info: 'to_Start_Triage',
-        fromPage: 'ER_Triage',
-        patient: patientData,
-        encounter: encounterData
-      }
-    });
+  const handleUpdateEncounterPriority = async (rowData: any, priorityKey: string): Promise<boolean> => {
+    try {
+      await startEncounter({
+        ...rowData,
+        encounterPriorityLkey: priorityKey
+      }).unwrap();
+      dispatch(notify({ msg: 'Priority updated', sev: 'success' }));
+      refetchEncounter();
+      return true;
+    } catch (error) {
+      console.error('Priority update error:', error);
+      dispatch(notify({ msg: 'Failed to update priority', sev: 'error' }));
+      return false;
+    }
   };
 
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
+  const EncounterPriorityAction = ({ rowData }: { rowData: any }) => {
+    const whisperRef = useRef<any>(null);
+    const [lockHoverUntilLeave, setLockHoverUntilLeave] = useState(false);
+
+    const prioritySpeaker = (
+      <Popover title="Priority" className="er-priority-popover">
+        <div className="er-priority-menu">
+          {(encounterPriorityEnumOptions ?? []).map((p: any) => (
+            <button
+              type="button"
+              key={p?.value}
+              className={
+                String(rowData?.encounterPriorityLkey ?? '') === String(p?.value ?? '')
+                  ? 'er-priority-item is-selected'
+                  : 'er-priority-item'
+              }
+              onClick={async (e: any) => {
+                e?.stopPropagation?.();
+                const ok = await handleUpdateEncounterPriority(rowData, String(p?.value ?? ''));
+                if (ok) {
+                  // Prevent immediate re-open when trigger includes hover and mouse stays on the button.
+                  setLockHoverUntilLeave(true);
+                  whisperRef.current?.close?.();
+                }
+              }}
+            >
+              <span className="er-priority-left">
+                <span
+                  className="er-priority-dot"
+                  style={{
+                    backgroundColor: priorityDotColor.get(String(p?.value ?? '')) ?? '#98A2B4'
+                  }}
+                />
+                <span className="er-priority-label">{p?.label ?? p?.value ?? ''}</span>
+              </span>
+              {String(rowData?.encounterPriorityLkey ?? '') === String(p?.value ?? '') ? (
+                <span className="er-priority-check">✓</span>
+              ) : (
+                <span className="er-priority-check-placeholder" />
+              )}
+            </button>
+          ))}
+        </div>
+      </Popover>
+    );
+
+    return (
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Set priority</Tooltip>}>
+        <div style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <Whisper
+            ref={whisperRef}
+            trigger={lockHoverUntilLeave ? 'click' : (['hover', 'click'] as any)}
+            placement="leftStart"
+            speaker={prioritySpeaker}
+            enterable
+            delayClose={300}
+          >
+            <div
+              style={{ display: 'inline-flex', alignItems: 'center' }}
+              onMouseLeave={() => setLockHoverUntilLeave(false)}
+            >
+              <MyButton size="small">
+                <FontAwesomeIcon icon={faCircleExclamation} />
+              </MyButton>
+            </div>
+          </Whisper>
+        </div>
+      </Whisper>
+    );
+  };
+
+  const handleGoToVisit = async (encounterData: any, patientData: any) => {
+    try {
+      await startEncounter({
+        ...encounterData,
+        encounterStatusLkey: '6742295599423814'
+      }).unwrap();
+
+      const toNumberOrNaN = (v: unknown) => {
+        if (typeof v === 'number') return v;
+        if (typeof v === 'string' && v.trim() !== '') return Number(v);
+        return Number.NaN;
+      };
+
+      const encounterId = toNumberOrNaN(encounterData?.id ?? encounterData?.encounterId ?? encounterData?.key);
+      const patientId = 1003 
+      //  toNumberOrNaN(
+      //   patientData?.id ?? patientData?.patientId ?? patientData?.key ?? encounterData?.patientKey
+      // );
+
+      // Create/get the NEW-backend emergency triage record (kept separate from legacy triage flow)
+      const emergencyTriageNew =
+        !Number.isNaN(encounterId) && !Number.isNaN(patientId)
+          ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
+          : null;
+
+      const targetPath = '/ER-start-triage';
+
+      // Save source in sessionStorage before navigating
+      sessionStorage.setItem('encounterPageSource', 'EncounterList');
+
+      if (!emergencyTriageNew) {
+        console.warn(
+          '[ER Triage] Could not create/get new emergency triage record: missing numeric patientId/encounterId',
+          { patientId, encounterId, patientData, encounterData }
+        );
+      }
+
+      navigate(targetPath, {
+        state: {
+          info: 'to_Start_Triage',
+          fromPage: 'ER_Triage',
+          patient: patientData,
+          encounter: encounterData,
+          emergencyTriageNew
+        }
+      });
+    } catch (error) {
+      console.error('Start triage error:', error);
+      dispatch(notify({ msg: 'Failed to start triage', sev: 'error' }));
+    }
+  };
+
+  // (header cleanup now handled in the effect above)
 
   useEffect(() => {
     const onResize = () => setWindowHeight(window.innerHeight);
@@ -562,11 +771,13 @@ const ERTriage = () => {
       render: (rowData: any) =>
         rowData?.emergencyLevelLkey ? (
           <MyBadgeStatus
-            color={rowData?.emergencyLevelLvalue?.valueColor}
+            color={
+              emergencyLevelColorMap.get(String(rowData?.emergencyLevelLkey)) ??
+              '#98A2B4'
+            }
             contant={
-              rowData?.emergencyLevelLvalue
-                ? rowData?.emergencyLevelLvalue?.lovDisplayVale
-                : rowData?.emergencyLevelLkey
+              emergencyLevelLabelMap.get(String(rowData?.emergencyLevelLkey)) ??
+              String(rowData?.emergencyLevelLkey)
             }
           />
         ) : (
@@ -576,10 +787,14 @@ const ERTriage = () => {
     {
       key: 'encounterPriorityLkey',
       title: <Translate>Priority</Translate>,
-      render: (rowData: any) =>
-        rowData?.encounterPriorityLvalue
-          ? rowData?.encounterPriorityLvalue?.lovDisplayVale
-          : rowData?.encounterPriorityLkey
+      render: (rowData: any) => {
+        const key = rowData?.encounterPriorityLkey ? String(rowData.encounterPriorityLkey) : '';
+        return (
+          rowData?.encounterPriorityLvalue?.lovDisplayVale ??
+          (key ? priorityLabelMap.get(key) ?? key : '')
+        );
+      }
+
     },
     {
       key: 'chiefComplaint',
@@ -619,7 +834,11 @@ const ERTriage = () => {
       render: (rowData: any) => {
         const tooltipEmr = <Tooltip>Open EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
-        const tooltipStart = <Tooltip>Start Triage</Tooltip>;
+        const tooltipStart = !rowData?.encounterPriorityLkey ? (
+          <Tooltip>Please set Priority first</Tooltip>
+        ) : (
+          <Tooltip>Start Triage</Tooltip>
+        );
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
         const tooltipSendTo = <Tooltip>Send to</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
@@ -656,6 +875,9 @@ const ERTriage = () => {
               </div>
             </Whisper>
 
+            {/* Priority action should appear before Start */}
+            <EncounterPriorityAction rowData={rowData} />
+
             {rowData?.encounterStatusLkey === '91109811181900' ||
             rowData?.encounterStatusLkey === '6550164111662337' ? (
               <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
@@ -683,6 +905,7 @@ const ERTriage = () => {
                       handleGoToVisit(rowData, rowData?.patientObject);
                     }}
                     disabled={
+                      !rowData?.encounterPriorityLkey ||
                       rowData?.encounterStatusLkey !== '8890456518264959' &&
                       rowData?.encounterStatusLkey !== '6742295599423814'
                     }
@@ -866,7 +1089,6 @@ const ERTriage = () => {
             refetchData={refetchPatientSidebar}
             setRefetchData={setRefetchPatientSidebar}
             showButton={true}
-            showCollapsedButton={false}
             direction="right"
           />
         </div>
@@ -876,7 +1098,7 @@ const ERTriage = () => {
       <MyTable
         filters={filters()}
         height={600}
-        data={encounterListResponse?.object ?? []}
+        data={tableData}
         columns={tableColumns}
         rowClassName={isSelected}
         loading={isLoading || (manualSearchTriggered && isFetching)}

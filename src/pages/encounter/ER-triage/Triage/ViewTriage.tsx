@@ -1,23 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import PatientSide from '../encounter-main-info-section/PatienSide';
+import PatientSide from '../../encounter-main-info-section/PatienSide';
 import { useLocation } from 'react-router-dom';
-import './styles.less';
+import '../styles.less';
 import BackButton from '@/components/BackButton/BackButton';
 import { useNavigate } from 'react-router-dom';
 import Translate from '@/components/Translate';
-import { useGetEmergencyTriagesListQuery, useSaveEmergencyTriagesMutation } from '@/services/encounterService';
 import { useAppDispatch } from '@/hooks';
 import { Row, Col, Form, Divider, Panel } from 'rsuite';
-import GeneralAssessmentTriage from './GeneralAssessmentTriage';
-import ChiefComplainTriage from './ChiefComplainTriage';
+import GeneralAssessmentTriage from './component/GeneralAssessmentTriage';
+import ChiefComplainTriage from './component/ChiefComplainTriage';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetLatestEmergencyTriageByEncounterQuery } from '@/services/encounters/er-triage/emergencyTriageService';
 import VitalSignsTriage from './VitalSignsTriage';
-import { newApEmergencyTriage } from '@/types/model-types-constructor';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
 import { ApEncounter } from '@/types/model-types';
 
@@ -25,133 +24,89 @@ const ViewTriage = () => {
     const location = useLocation();
     const propsData = location.state;
     const navigate = useNavigate();
-    const [saveTriage, saveTriageMutation] = useSaveEmergencyTriagesMutation();
     const dispatch = useAppDispatch();
     const [isHiddenFields, setIsHiddenFields] = useState(false);
-    const [emergencyTriage, setEmergencyTriage] = useState<any>({ ...newApEmergencyTriage });
+    const [emergencyTriage, setEmergencyTriage] = useState<any>({});
     const [refetchPatientObservations, setRefetchPatientObservations] = useState(false);
     const [encounter, setEncounter] = useState<ApEncounter>({ ...propsData.encounter });
-    const YES_KEY = '1476229927081534';
-    const NO_KEY = '1476240934233400';
-
-    // Initialize list request with default filters
-    const [triageListRequest, setTriageListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            },
-            {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: propsData.patient?.key
-            },
-            {
-                fieldName: 'encounter_key',
-                operator: 'match',
-                value: propsData.encounter?.key
-            }
-        ],
-    });
-
-    // Fetch the list of Chief Complain based on the provided request, and provide a refetch function
-    const { data: triageResponse, refetch, isLoading } = useGetEmergencyTriagesListQuery(triageListRequest);
+    const YES_KEY = 'YES';
+    const NO_KEY = 'NO';
     
     // Fetch LOV data for various fields
     const { data: sizeLovQueryResponse } = useGetLovValuesByCodeQuery('SIZE');
-    const { data: booleanLovQuery } = useGetLovValuesByCodeQuery('BOOLEAN');
-    const { data: painScoreLovQuery } = useGetLovValuesByCodeQuery('NUMBERS');
-    const { data: levelOfConscLovQuery } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
-    const { data: emergencyLevelLovQuery } = useGetLovValuesByCodeQuery('EMERGENCY_LEVEL');
-    
-    // Find the selected emergency level object from the list based on the selected key
-    const selectedEmergencyLevel = (emergencyLevelLovQuery?.object ?? []).find(
-        (item) => item.key === emergencyTriage?.emergencyLevelLkey
+    const painLevelEnumOptions = useEnumOptions('PainLevel');
+    const avpuScaleEnumOptions = useEnumOptions('AVPUScale');
+    const emergencyLevelEnumOptions = useEnumOptions('EmergencyLevel');
+    const yesNoQuestionEnumOptions = useEnumOptions('YesNoQuestion');
+
+    const isYes = (v: any) => String(v ?? '').toUpperCase().startsWith('Y');
+    const isNo = (v: any) => String(v ?? '').toUpperCase().startsWith('N');
+
+    const emergencyLevelColorMap = React.useMemo(() => {
+      const byValue: Record<string, string> = {
+        RESUSCITATION: '#7f1d1d',
+        EMERGENT: '#dc2626',
+        URGENT: '#f97316',
+        LESS_URGENT: '#eab308',
+        NON_URGENT: '#16a34a',
+      };
+      const palette = ['#dc2626', '#f97316', '#eab308', '#16a34a', '#0ea5e9', '#7c3aed'];
+      const m = new Map<string, string>();
+      emergencyLevelEnumOptions.forEach((opt, idx) => {
+        if (opt?.value == null) return;
+        const key = String(opt.value);
+        const mapped = byValue[String(opt.value).toUpperCase()];
+        m.set(key, mapped ?? palette[idx % palette.length]);
+      });
+      return m;
+    }, [emergencyLevelEnumOptions]);
+
+    const selectedEmergencyLevel = emergencyLevelEnumOptions.find(
+      (item: any) => item.value === emergencyTriage?.emergencyLevel
     );
+
+    const encounterId = Number(propsData?.encounter?.id ?? propsData?.encounter?.key);
+    const { data: emergencyTriageNew } = useGetLatestEmergencyTriageByEncounterQuery(encounterId, {
+      skip: !encounterId || Number.isNaN(encounterId)
+    });
 
     // Header setup
     const divContent = "ER View Triage";
     
     useEffect(() => {
-        if (triageResponse?.object && triageResponse.object.length > 0) {
-            const triageData = triageResponse.object.length === 1 
-                ? triageResponse.object[0]
-                : triageResponse.object.sort((a, b) => b.updatedAt - a.updatedAt)[0];
-            
-            setEmergencyTriage(triageData);
-        }
-    }, [triageResponse]);
+      if (emergencyTriageNew?.id) {
+        setEmergencyTriage((prev: any) => ({ ...prev, ...emergencyTriageNew }));
+      }
+    }, [emergencyTriageNew]);
 
     useEffect(() => {
-        const criticalPainKeys = ['3108900351014435', '3108904932420860', '3108911826984089', '3108917698391821'];
-        let newLevel = null;
+      // Controls whether the "required services" section is visible in view mode.
+      // If any of the prerequisite answers are missing, keep it hidden.
+      if (
+        emergencyTriage?.lifeSaving == null ||
+        emergencyTriage?.unresponsive == null ||
+        emergencyTriage?.highRisk == null ||
+        emergencyTriage?.avpuScale == null ||
+        emergencyTriage?.painScore == null
+      ) {
+        setIsHiddenFields(false);
+        return;
+      }
 
-        if (emergencyTriage.lifeSavingLkey === YES_KEY || emergencyTriage.unresponsiveLkey === YES_KEY) {
-            newLevel = '6859764100147954'; // critical
-            setIsHiddenFields(false);
-        } else if (
-            emergencyTriage.highRiskLkey === YES_KEY ||
-            emergencyTriage.avpuScaleLkey === '6044173055578557' ||
-            (emergencyTriage.painScoreLkey && criticalPainKeys.includes(emergencyTriage.painScoreLkey))
-        ) {
-            newLevel = '6859787815891749'; // serious
-            setIsHiddenFields(false);
-        } else if (
-            emergencyTriage.highRiskLkey != null &&
-            emergencyTriage.avpuScaleLkey != null &&
-            emergencyTriage.painScoreLkey != null &&
-            emergencyTriage.highRiskLkey !== YES_KEY &&
-            emergencyTriage.avpuScaleLkey !== '6044173055578557' &&
-            !criticalPainKeys.includes(emergencyTriage.painScoreLkey)
-        ) {
-            setIsHiddenFields(true);
-            
-            const selectedServices = [
-                emergencyTriage.labsLkey,
-                emergencyTriage.imagingLkey,
-                emergencyTriage.ivFluidsLkey,
-                emergencyTriage.medicationLkey,
-                emergencyTriage.ecgLkey,
-                emergencyTriage.consultationLkey
-            ];
+      const criticalPainKeys = ['LEVEL_7', 'LEVEL_8', 'LEVEL_9', 'LEVEL_10'];
+      const qualifiesForServices =
+        !isYes(emergencyTriage.highRisk) &&
+        String(emergencyTriage.avpuScale) !== 'UNRESPONSIVE' &&
+        !criticalPainKeys.includes(String(emergencyTriage.painScore));
 
-            const count = selectedServices.filter(value => value === YES_KEY).length;
-            
-            if (count >= 2) {
-                newLevel = '6859815212595414'; // high
-            } else if (count === 1) {
-                newLevel = '6859834949140744'; // medium
-            } else {
-                newLevel = '6859862840597358'; // low
-            }
-        }
-
-        if (newLevel && newLevel !== emergencyTriage.emergencyLevelLkey) {
-            setEmergencyTriage(prev => ({ ...prev, emergencyLevelLkey: newLevel }));
-        }
+      setIsHiddenFields(qualifiesForServices);
     }, [
-        emergencyTriage.lifeSavingLkey,
-        emergencyTriage.unresponsiveLkey,
-        emergencyTriage.highRiskLkey,
-        emergencyTriage.avpuScaleLkey,
-        emergencyTriage.painScoreLkey,
-        emergencyTriage.labsLkey,
-        emergencyTriage.imagingLkey,
-        emergencyTriage.ivFluidsLkey,
-        emergencyTriage.medicationLkey,
-        emergencyTriage.ecgLkey,
-        emergencyTriage.consultationLkey,
-        YES_KEY
+      emergencyTriage.lifeSaving,
+      emergencyTriage.unresponsive,
+      emergencyTriage.highRisk,
+      emergencyTriage.avpuScale,
+      emergencyTriage.painScore
     ]);
-
-    useEffect(() => {
-        if (saveTriageMutation && saveTriageMutation.status === 'fulfilled') {
-            setEmergencyTriage(saveTriageMutation.data);
-            setEncounter({ ...encounter, emergencyLevelLkey: saveTriageMutation.data?.emergencyLevelLkey });
-        }
-    }, [saveTriageMutation]);
 
     useEffect(() => {
         if (propsData?.encounter) {
@@ -188,10 +143,10 @@ const ViewTriage = () => {
                     <div className='bt-right'>
                         <Form fluid layout="inline">
                             <MyLabel label="Emergency Level" />
-                            {emergencyTriage?.emergencyLevelLkey && (
+                            {emergencyTriage?.emergencyLevel && (
                                 <MyBadgeStatus
-                                    color={selectedEmergencyLevel?.valueColor}
-                                    contant={selectedEmergencyLevel?.lovDisplayVale ?? emergencyTriage?.emergencyLevelLkey}
+                                    color={emergencyLevelColorMap.get(String(emergencyTriage?.emergencyLevel)) ?? '#98A2B4'}
+                                    contant={selectedEmergencyLevel?.label ?? emergencyTriage?.emergencyLevel}
                                 />
                             )}
                         </Form>
@@ -208,10 +163,10 @@ const ViewTriage = () => {
                                 width={200}
                                 fieldLabel="Life-saving Interventions Required?"
                                 fieldType="select"
-                                fieldName="lifeSavingLkey"
-                                selectData={booleanLovQuery?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
+                                fieldName="lifeSaving"
+                                selectData={yesNoQuestionEnumOptions}
+                                selectDataLabel="label"
+                                selectDataValue="value"
                                 record={emergencyTriage}
                                 setRecord={setEmergencyTriage}
                                 searchable={false}
@@ -219,17 +174,17 @@ const ViewTriage = () => {
                             />
                         </Form>
                         
-                        {emergencyTriage.lifeSavingLkey === NO_KEY && (
+                        {isNo(emergencyTriage.lifeSaving) && (
                             <Form fluid layout="inline">
                                 <MyInput
                                     column
                                     width={200}
                                     fieldLabel="Is the patient unresponsive or acutely mentally altered?"
                                     fieldType="select"
-                                    fieldName="unresponsiveLkey"
-                                    selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="unresponsive"
+                                    selectData={yesNoQuestionEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -238,17 +193,17 @@ const ViewTriage = () => {
                             </Form>
                         )}
                         
-                        {emergencyTriage.lifeSavingLkey === NO_KEY && emergencyTriage.unresponsiveLkey === NO_KEY && (
+                        {isNo(emergencyTriage.lifeSaving) && isNo(emergencyTriage.unresponsive) && (
                             <Form fluid layout="inline">
                                 <MyInput
                                     column
                                     width={200}
                                     fieldLabel="High-risk situation?"
                                     fieldType="select"
-                                    fieldName="highRiskLkey"
-                                    selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="highRisk"
+                                    selectData={yesNoQuestionEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -259,10 +214,10 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="AVPU Scale"
                                     fieldType="select"
-                                    fieldName="avpuScaleLkey"
-                                    selectData={levelOfConscLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="avpuScale"
+                                    selectData={avpuScaleEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -273,10 +228,10 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="Pain Score"
                                     fieldType="select"
-                                    fieldName="painScoreLkey"
-                                    selectData={painScoreLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="painScore"
+                                    selectData={painLevelEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -285,8 +240,8 @@ const ViewTriage = () => {
                             </Form>
                         )}
 
-                        {emergencyTriage.lifeSavingLkey === NO_KEY && 
-                         emergencyTriage.unresponsiveLkey === NO_KEY && 
+                        {isNo(emergencyTriage.lifeSaving) && 
+                         isNo(emergencyTriage.unresponsive) &&
                          isHiddenFields && (
                             <Form fluid layout="inline">
                                 <MyInput
@@ -294,10 +249,10 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="Labs Required"
                                     fieldType="select"
-                                    fieldName="labsLkey"
-                                    selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="labsRequired"
+                                    selectData={yesNoQuestionEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -308,10 +263,10 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="Imaging Required"
                                     fieldType="select"
-                                    fieldName="imagingLkey"
-                                    selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="imagingRequired"
+                                    selectData={yesNoQuestionEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -322,10 +277,10 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="IV Fluids Required"
                                     fieldType="select"
-                                    fieldName="ivFluidsLkey"
-                                    selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="ivFluidsRequired"
+                                    selectData={yesNoQuestionEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -336,10 +291,10 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="Medication Required"
                                     fieldType="select"
-                                    fieldName="medicationLkey"
-                                    selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="medicationRequired"
+                                    selectData={yesNoQuestionEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -350,10 +305,10 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="ECG Required"
                                     fieldType="select"
-                                    fieldName="ecgLkey"
-                                    selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="ecgRequired"
+                                    selectData={yesNoQuestionEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -364,10 +319,10 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="Consultation Required"
                                     fieldType="select"
-                                    fieldName="consultationLkey"
-                                    selectData={booleanLovQuery?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
+                                    fieldName="consultationRequired"
+                                    selectData={yesNoQuestionEnumOptions}
+                                    selectDataLabel="label"
+                                    selectDataValue="value"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
@@ -419,7 +374,7 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="Pupil Size"
                                     fieldType="select"
-                                    fieldName="rightEyePupilSizeLkey"
+                                    fieldName="rightEyePupilSize"
                                     selectData={sizeLovQueryResponse?.object ?? []}
                                     selectDataLabel="lovDisplayVale"
                                     selectDataValue="key"
@@ -452,7 +407,7 @@ const ViewTriage = () => {
                                     width={200}
                                     fieldLabel="Pupil Size"
                                     fieldType="select"
-                                    fieldName="leftEyePupilSizeLkey"
+                                    fieldName="leftEyePupilSize"
                                     selectData={sizeLovQueryResponse?.object ?? []}
                                     selectDataLabel="lovDisplayVale"
                                     selectDataValue="key"
@@ -496,7 +451,7 @@ const ViewTriage = () => {
                             record={emergencyTriage}
                             setRecord={setEmergencyTriage}
                             fieldLabel="Additional Notes"
-                            fieldName="additionalNotes"
+                            fieldName="hpiAdditionalNotes"
                             width={400}
                             disabled={true}
                         />
