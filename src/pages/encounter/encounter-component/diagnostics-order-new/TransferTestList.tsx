@@ -18,7 +18,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useGetCatalogByDepartmentQuery } from '@/services/setup/catalog/catalogService';
 import './styles.less';
-import { useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
+import { useGetCatalogsByDepartmentAndNotQuery, useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
 import SearchIcon from '@rsuite/icons/Search';
 import { Cursor } from 'recharts/types/component/Cursor';
 import { Pointer } from 'lucide-react';
@@ -72,11 +72,17 @@ const TransferTestList = ({
 
   /* ================= computed ================= */
 
-  const { data: catalogsResponse } = useGetCatalogByDepartmentQuery(
-    selectedDepartmentId
-      ? { departmentId: selectedDepartmentId, page: 0, size: 1000 }
-      : skipToken
-  );
+  const { data: catalogsResponse } =
+    useGetCatalogsByDepartmentAndNotQuery(
+      selectedDepartmentId
+        ? {
+            departmentId: selectedDepartmentId,
+            page: 0,
+            size: 1000,
+          }
+        : skipToken
+    );
+
 
   const catalogs = catalogsResponse?.data ?? [];
 
@@ -256,15 +262,10 @@ const filteredLeft = useMemo(() => {
   );
 
 const filteredCatalogs = useMemo(() => {
-  const selectedType = searchType?.type;
-
-  if (!selectedType) return catalogs;
-
-  const mappedCatalogType =
-    TEST_TYPE_TO_CATALOG_TYPE[selectedType];
+  if (!searchType?.type) return catalogs;
 
   return catalogs.filter(
-    (catalog: any) => catalog.type === mappedCatalogType
+    (catalog: any) => catalog.type === searchType.type
   );
 }, [catalogs, searchType?.type]);
 

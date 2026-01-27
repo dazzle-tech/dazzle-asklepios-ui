@@ -24,12 +24,19 @@ type OrdersProps = {
   loading?: boolean;
 };
 
-
 const Orders = forwardRef<any, OrdersProps>(
   ({ order, setOrder, dateFilter,loading  }, ref) => {
-
     const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
+  const [sortColumn, setSortColumn] = useState("id");
+  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 5,
+    sort: ['isUrgent,desc', 'submittedDate,desc'],
+  });
+
 
     const fromDateParam = useMemo(() => {
       if (!dateFilter?.fromDate) return undefined;
@@ -50,6 +57,21 @@ const Orders = forwardRef<any, OrdersProps>(
     selectedDepartment?.departmentId ??
     selectedDepartment?.key;
 
+      const formatDateTime = (date?: string) => {
+        if (!date) return '—';
+
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return date;
+
+        return d.toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+      };
 
 
   const {
@@ -58,14 +80,15 @@ const Orders = forwardRef<any, OrdersProps>(
     refetch: refetchOrders
   } = useFilterDiagnosticOrdersQuery(
     departmentId
-      ? {
-          page: 0,
-          size: 1000,
-          status: 'SUBMITTED',
-          departmentId: selectedDepartment?.departmentId,
-          submittedDateFrom: fromDateParam,
-          submittedDateTo: toDateParam
-        }
+    ? {
+        page: paginationParams.page,
+        size: paginationParams.size,
+        sort: paginationParams.sort,
+        status: 'SUBMITTED',
+        departmentId: selectedDepartment?.departmentId,
+        submittedDateFrom: fromDateParam,
+        submittedDateTo: toDateParam
+      }
       : skipToken
   );
 
@@ -92,11 +115,6 @@ const Orders = forwardRef<any, OrdersProps>(
 
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  const paginatedData = ordersList.slice(
-    pageIndex * rowsPerPage,
-    pageIndex * rowsPerPage + rowsPerPage
-  );
 
   const [fetchPatientById] = useLazyGetPatientByIdQuery();
   const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
@@ -146,23 +164,53 @@ const Orders = forwardRef<any, OrdersProps>(
       title: <Translate>DATE, TIME</Translate>,
       flexGrow: 2,
       render: r => {
+        const rawDate =
+          r.submittedDate ??
+          r.submittedAt ??
+          r.createdAt;
+
+        if (!rawDate) return '—';
+
+        const d = new Date(rawDate);
+        if (isNaN(d.getTime())) return rawDate;
+
+        const datePart = d.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+
+        const timePart = d.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
         return (
-          formatDateWithoutSeconds(
-            r.submittedDate ?? r.submittedAt ?? r.createdAt
-          ) ?? '—'
+          <>
+            <div>{datePart}</div>
+            <div className="date-table-style">{timePart}</div>
+          </>
         );
       }
     },
     {
-      key: 'mrn',
-      title: <Translate>MRN</Translate>,
-      render: r => patientsMap[String(r.patientId)]?.patientMrn ?? '—'
-    },
-    {
-      key: 'patientName',
-      title: <Translate>PATIENT NAME</Translate>,
+      key: 'patient',
+      title: <Translate>PATIENT</Translate>,
       flexGrow: 3,
-      render: r => patientsMap[String(r.patientId)]?.fullName ?? '—'
+      render: r => {
+        const patient = patientsMap[String(r.patientId)];
+
+        return (
+          <>
+            <span>{patient?.fullName ?? '—'}</span>
+            <br />
+            <span className="date-table-style">
+              {patient?.patientMrn ?? '—'}
+            </span>
+          </>
+        );
+      }
     },
     {
       key: 'status',
@@ -198,26 +246,55 @@ const Orders = forwardRef<any, OrdersProps>(
     }
   }, [ordersList]);
 
+    const handlePageChange = (_: any, newPage: number) => {
+      setPaginationParams(prev => ({
+        ...prev,
+        page: newPage,
+      }));
+    };
+
+    const handleRowsPerPageChange = (e: any) => {
+      const newSize = Number(e.target.value);
+      setPaginationParams(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0,
+      }));
+    };
+
+    const handleSortChange = (column: string, type: "asc" | "desc") => {
+      setSortColumn(column);
+      setSortType(type);
+
+      setPaginationParams(prev => ({
+        ...prev,
+        sort: [
+          'isUrgent,desc',
+          'submittedDate,desc',
+        ],
+        page: 0,
+      }));
+
+    };
+
+
+
   return (
     <MyTable
-      data={paginatedData}
+      data={ordersList}
       columns={tableColumns}
       loading={loading || isFetching}
       height={200}
-      onRowClick={rowData => {
-        setOrder(rowData);
-      }}
+      onRowClick={rowData => setOrder(rowData)}
       rowClassName={isSelected}
-      page={pageIndex}
-      rowsPerPage={rowsPerPage}
+      page={paginationParams.page}
+      rowsPerPage={paginationParams.size}
       totalCount={totalCount}
-      onPageChange={(_, page) => {
-        setPageIndex(page);
-      }}
-      onRowsPerPageChange={e => {
-        setRowsPerPage(Number(e.target.value));
-        setPageIndex(0);
-      }}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
+      sortColumn={sortColumn}
+      sortType={sortType}
+      onSortChange={handleSortChange}
     />
   );
 });

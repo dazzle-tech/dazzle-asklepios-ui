@@ -6,9 +6,9 @@ import {
   DiagnosticOrderTestUpdateDTO,
   DiagnosticOrderTestRejectDTO,
   DiagnosticOrderTestCancelDTO,
+  BulkIdsDTO,
+  BulkRejectDTO,
 } from '@/types/model-types-new';
-
-/* ===================== TYPES ===================== */
 
 type PageableParams = {
   page?: number;
@@ -21,17 +21,11 @@ type PagedResult<T> = {
   totalCount: number;
 };
 
-/* ===================== SERVICE ===================== */
-
 export const diagnosticOrderTestService = createApi({
   reducerPath: 'diagnosticOrderTestApi',
   baseQuery: BaseQuery,
   tagTypes: ['DiagnosticOrderTest'],
   endpoints: builder => ({
-
-    /* -------------------------------------------------
-     * CRUD
-     * ------------------------------------------------- */
 
     createDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
@@ -83,10 +77,6 @@ export const diagnosticOrderTestService = createApi({
       invalidatesTags: ['DiagnosticOrderTest'],
     }),
 
-    /* -------------------------------------------------
-     * GET tests by orderId (with pagination)
-     * ------------------------------------------------- */
-
     getTestsByOrderId: builder.query<
       PagedResult<DiagnosticOrderTest>,
       {
@@ -112,10 +102,6 @@ export const diagnosticOrderTestService = createApi({
       ],
     }),
 
-    /* -------------------------------------------------
-     * FILTER (diagnostic-order-tests)
-     * ------------------------------------------------- */
-
     filterDiagnosticOrderTests: builder.query<
       PagedResult<DiagnosticOrderTest>,
       Record<string, any> & PageableParams
@@ -134,10 +120,6 @@ export const diagnosticOrderTestService = createApi({
       }),
       providesTags: ['DiagnosticOrderTest'],
     }),
-
-    /* -------------------------------------------------
-     * ACTIONS (Status Transitions)
-     * ------------------------------------------------- */
 
     collectSample: builder.mutation<DiagnosticOrderTest, number>({
       query: id => ({
@@ -203,6 +185,45 @@ export const diagnosticOrderTestService = createApi({
       ],
     }),
 
+    bulkAcceptDiagnosticOrderTests: builder.mutation<
+      void,
+      BulkIdsDTO
+    >({
+      query: body => ({
+        url: '/api/patient/diagnostic-order-tests/bulk-accept',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['DiagnosticOrderTest'],
+    }),
+
+
+    bulkRejectDiagnosticOrderTests: builder.mutation<
+      void,
+      BulkRejectDTO
+    >({
+      query: body => ({
+        url: '/api/patient/diagnostic-order-tests/bulk-reject',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['DiagnosticOrderTest'],
+    }),
+
+    undoAcceptDiagnosticOrderTest: builder.mutation<
+      DiagnosticOrderTest,
+      number
+    >({
+      query: id => ({
+        url: `/api/patient/diagnostic-order-tests/${id}/undo-accept`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, id) => [
+        { type: 'DiagnosticOrderTest', id },
+        'DiagnosticOrderTest',
+      ],
+    }),
+
 
     cancelDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
@@ -221,20 +242,15 @@ export const diagnosticOrderTestService = createApi({
   }),
 });
 
-/* ===================== HOOKS ===================== */
-
 export const {
   useCreateDiagnosticOrderTestMutation,
   useUpdateDiagnosticOrderTestMutation,
   useGetDiagnosticOrderTestByIdQuery,
   useDeleteDiagnosticOrderTestMutation,
-
   useGetTestsByOrderIdQuery,
   useLazyGetTestsByOrderIdQuery,
-
   useFilterDiagnosticOrderTestsQuery,
   useLazyFilterDiagnosticOrderTestsQuery,
-
   useCollectSampleMutation,
   useAcceptDiagnosticOrderTestMutation,
   useMarkReadyMutation,
@@ -242,4 +258,7 @@ export const {
   useApproveDiagnosticOrderTestMutation,
   useRejectDiagnosticOrderTestMutation,
   useCancelDiagnosticOrderTestMutation,
+  useBulkAcceptDiagnosticOrderTestsMutation,
+  useBulkRejectDiagnosticOrderTestsMutation,
+  useUndoAcceptDiagnosticOrderTestMutation,
 } = diagnosticOrderTestService;

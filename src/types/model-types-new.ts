@@ -1555,3 +1555,11 @@ export interface DiagnosticOrderTestCancelDTO {
   cancellationReason: string;
 }
 
+export interface BulkIdsDTO {
+  ids: number[];
+}
+
+export interface BulkRejectDTO {
+  ids: number[];
+  rejectedReason: string;
+}

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Col, Form, Panel, Row } from "rsuite";
+import { Form, Panel } from "rsuite";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faVialCircleCheck } from "@fortawesome/free-solid-svg-icons";
 
@@ -152,31 +152,31 @@ const tableColumns = [
       content={
         <>
           <Form fluid>
-            <Row>
-              <Col xs={8}><MyInput disabled fieldName="system" record={labView} /></Col>
-              <Col xs={8}><MyInput disabled fieldName="tubeColor" record={labView} /></Col>
-              <Col xs={8}><MyInput disabled fieldName="tubeType" record={labView} /></Col>
-            </Row>
+            <div className="collect-sample-modal-inputs-main-container">
+               <MyInput disabled fieldName="system" record={labView} width={"14vw"} /> 
+               <MyInput disabled fieldName="tubeColor" record={labView} width={"14vw"} /> 
+               <MyInput disabled fieldName="tubeType" record={labView} width={"14vw"} /> 
+             
 
-            <Row>
-              <Col xs={8}><MyInput disabled fieldName="sampleContainer" record={labView} /></Col>
-              <Col xs={8}><MyInput disabled fieldName="sampleVolume" fieldType="number" record={labView} /></Col>
-              <Col xs={8}><MyInput disabled fieldName="sampleVolumeUnit" record={labView} /></Col>
-            </Row>
+             
+               <MyInput disabled fieldName="sampleContainer" record={labView} width={"14vw"} /> 
+               <MyInput disabled fieldName="sampleVolume" fieldType="number" record={labView} width={"14vw"} /> 
+               <MyInput disabled fieldName="sampleVolumeUnit" record={labView} width={"14vw"} /> 
+             
 
-            <Row>
-              <Col xs={8}>
-                <MyInput fieldLabel="Actual Sample Quantity" fieldName="quantity" fieldType="number" record={sample} setRecord={setSample} />
-              </Col>
-              <Col xs={8}>
+             
+               
+                <MyInput fieldLabel="Actual Sample Quantity" fieldName="quantity" fieldType="number" record={sample} setRecord={setSample} width={"14vw"}/>
+               
+               
                 <MyInput fieldName="unitLkey" fieldType="select" selectData={valueUnitLov?.object ?? []}
-                  selectDataLabel="lovDisplayVale" selectDataValue="key" record={sample} setRecord={setSample} />
-              </Col>
-              <Col xs={8}>
+                  selectDataLabel="lovDisplayVale" selectDataValue="key" record={sample} setRecord={setSample} width={"14vw"}/>
+               
+               
                 <MyInput fieldName="dateTime" fieldType="datetime" fieldLabel="Sample Collected"
-                  record={selectedSampleDate} setRecord={setSelectedSampleDate} />
-              </Col>
-            </Row>
+                  record={selectedSampleDate} setRecord={setSelectedSampleDate} width={"14vw"}/>
+               </div>
+             
           </Form>
 
           <Panel>

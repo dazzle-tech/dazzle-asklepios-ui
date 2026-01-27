@@ -206,8 +206,9 @@ useEffect(() => {
       open={open}
       setOpen={setOpen}
       title="Assign Received Lab"
-      size="20vw"
-      position='right'
+      size="25vw"
+      bodyheight="40vh"
+      position='center'
       actionButtonFunction={handleApply}
       content={
         <Form fluid>

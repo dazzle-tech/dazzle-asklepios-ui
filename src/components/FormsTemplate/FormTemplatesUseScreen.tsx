@@ -13,8 +13,6 @@ import { useLazyGetFormEntriesByTemplateQuery } from '@/services/setup/formEntri
 import UseTemplateModal from './UseTemplateModal';
 import EntryPreviewModal from './EntryPreviewModal';
 import EditEntryModal from './EditEntryModal';
-
-// ✅ icons like system
 import { MdPrint } from 'react-icons/md';
 import { FaEye } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';

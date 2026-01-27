@@ -3,7 +3,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import { Form, Divider } from 'rsuite';
-import { useCreateDiagnosticTestRequestMutation } from '@/services/diagnosic-order/diagnosticTestRequestService';
+import { useCreateDiagnosticTestRequestMutation, useUpdateDiagnosticTestRequestMutation } from '@/services/diagnosic-order/diagnosticTestRequestService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import Translate from '@/components/Translate';
@@ -19,6 +19,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { useAppSelector } from '@/hooks';
 
 const RequestTestModal = ({
     open,
@@ -35,6 +36,9 @@ const RequestTestModal = ({
 }) => {
     const dispatch = useAppDispatch();
 
+    const auth = useAppSelector(state => state.auth);
+    const currentUser = auth?.user?.login;
+
     const [record, setRecord] = useState<any>({
         type: null,
         name: '',
@@ -42,6 +46,11 @@ const RequestTestModal = ({
     });
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
+    const [editMode, setEditMode] = useState(false);
+    const [editingId, setEditingId] = useState<number | string | null>(null);
+
+    const [updateRequest, { isLoading: isUpdating }] =
+  useUpdateDiagnosticTestRequestMutation();
 
     const [deleteRequest, { isLoading: isDeleting }] =
     useDeleteDiagnosticTestRequestMutation();
@@ -113,41 +122,85 @@ const RequestTestModal = ({
 
     };
 
-
     const handleSave = async () => {
-        if (!record.type || !record.name) {
+        if (!record?.type || !record?.name) {
             dispatch(
-                notify({
-                    msg: 'Please fill required fields',
-                    sev: 'warning',
-                })
+            notify({
+                msg: 'Please fill required fields',
+                sev: 'warning',
+            })
             );
             return;
         }
 
         try {
+            if (editMode && editingId) {
+            const updated = await updateRequest({
+                id: editingId,
+                body: {
+                id: editingId,
+                name: record.name,
+                type: record.type,
+                indication: record.indication ?? '',
+                fromDepartmentId,
+                fromFacilityId,
+                },
+            }).unwrap();
+
+            dispatch(
+                notify({
+                msg: 'Test request updated successfully',
+                sev: 'success',
+                })
+            );
+            setRecord({
+                type: updated?.type ?? record.type,
+                name: updated?.name ?? record.name,
+                indication:
+                updated?.indication !== null && updated?.indication !== undefined
+                    ? updated.indication
+                    : record.indication ?? '',
+            });
+
+            setEditMode(false);
+            setEditingId(null);
+            }
+
+            else {
             await createRequest({
                 name: record.name,
                 type: record.type,
-                indication: record.indication,
+                indication: record.indication ?? '',
                 fromDepartmentId,
                 fromFacilityId,
             }).unwrap();
 
             dispatch(
                 notify({
-                    msg: 'Test request created successfully',
-                    sev: 'success',
+                msg: 'Test request created successfully',
+                sev: 'success',
                 })
             );
-            setRecord("")
+
+            setRecord({
+                type: null,
+                name: '',
+                indication: '',
+            });
+            }
+
+            await refetch();
+
             onSuccess?.();
-        } catch (e) {
+        } catch (e: any) {
             dispatch(
-                notify({
-                    msg: 'Failed to create test request',
-                    sev: 'error',
-                })
+            notify({
+                msg:
+                e?.data?.message?.startsWith('error.')
+                    ? e.data.message.replace('error.', '')
+                    : 'Operation failed',
+                sev: 'error',
+            })
             );
         }
     };
@@ -173,69 +226,82 @@ const RequestTestModal = ({
     };
 
     /* ================= TABLE (placeholder) ================= */
-const tableColumns = [
-    {
-        key: 'type',
-        title: <Translate>Type</Translate>,
-        flexGrow: 1,
-        render: (row: any) => (
-              <>
-                {formatEnumString(
-                  row.type ??
-                  '—'
-                )}
-            </>
-        )
-    },
+    const tableColumns = [
+        {
+            key: 'type',
+            title: <Translate>Type</Translate>,
+            flexGrow: 1,
+            render: (row: any) => (
+                <>
+                    {formatEnumString(
+                    row.type ??
+                    '—'
+                    )}
+                </>
+            )
+        },
 
+        {
+            key: 'name',
+            title: <Translate>Name</Translate>,
+            flexGrow: 1,
+        },
+        {
+            key: 'indication',
+            title: <Translate>Indication</Translate>,
+            flexGrow: 2,
+        },
+            {
+            key: 'status',
+            title: <Translate>Status</Translate>,
+            flexGrow: 1,
+            render: (row: any) => (
+                <>
+                    {formatEnumString(
+                    row.status ??
+                    '—'
+                    )}
+                </>
+            )
+        },
     {
-        key: 'name',
-        title: <Translate>Name</Translate>,
-        flexGrow: 1,
-    },
-    {
-        key: 'indication',
-        title: <Translate>Indication</Translate>,
-        flexGrow: 2,
-    },
-{
-  key: 'fromDepartmentId',
-  title: <Translate>From Department</Translate>,
-  width: 180,
-  render: (row: any) => (
-    <DepartmentCell departmentId={row.fromDepartmentId} />
-  ),
-},
-
-    {
-    key: 'actions',
-    title: <Translate>Actions</Translate>,
-    width: 120,
-    align: 'center',
-    render: row => (
-        <MdDelete
-        title="Delete"
-        size={24}
-        fill="var(--primary-pink)"
-        className="icons-style"
-        onClick={() => openDeleteModal(row)}
-        />
+    key: 'fromDepartmentId',
+    title: <Translate>From Department</Translate>,
+    width: 180,
+    render: (row: any) => (
+        <DepartmentCell departmentId={row.fromDepartmentId} />
     ),
     },
-    { key: 'createdAtBy', title: 'Requested by/at', dataKey: 'createdByAt', width: 150, expandable : true,
-        render: (row: any) =>
-        row?.createdDate ? (
-            <>
-            {row?.createdBy}
-            <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(row.createdDate)}
-            </span>{' '}
-            </>
-        ) : (
-                  ' '
-                )},
-];
+
+        {
+        key: 'actions',
+        title: <Translate>Actions</Translate>,
+        width: 120,
+        align: 'center',
+        render: row => (
+            <MdDelete
+            title="Delete"
+            size={24}
+            fill="var(--primary-pink)"
+            className="icons-style"
+            onClick={() => openDeleteModal(row)}
+            />
+        ),
+        },
+        { key: 'createdAtBy', title: 'Requested by/at', dataKey: 'createdByAt', width: 150, expandable : true,
+            render: (row: any) =>
+            row?.createdDate ? (
+                <>
+                {row?.createdBy}
+                <br />
+                <span className="date-table-style">
+                {formatDateWithoutSeconds(row.createdDate)}
+                </span>{' '}
+                </>
+            ) : (
+                    ' '
+                    )},
+    ];
 
 
 
@@ -255,6 +321,54 @@ const tableColumns = [
     }, [requestsResponse, fromFacilityId]);
 
     console.log('fromFacilityId', fromFacilityId);
+
+const handleRowClick = (row: any) => {
+  if (row.createdBy !== currentUser) {
+    dispatch(
+      notify({
+        msg: 'You can only edit requests created by you',
+        sev: 'warning',
+      })
+    );
+    return;
+  }
+
+  if (row.status !== 'REQUESTED') {
+    dispatch(
+      notify({
+        msg: 'Only Requested requests can be edited',
+        sev: 'warning',
+      })
+    );
+    return;
+  }
+
+
+  setEditMode(true);
+  setEditingId(row.id);
+
+  const selectedType =
+    TypeResponse?.find(t => t.value === row.type)?.value ?? null;
+
+  setRecord({
+    type: selectedType,
+    name: row.name,
+    indication: row.indication ?? '',
+  });
+};
+
+
+        const handleClear = () => {
+        setRecord({
+            type: null,
+            name: '',
+            indication: '',
+        });
+
+        setEditMode(false);
+        setEditingId(null);
+        };
+
 
     return (
         <MyModal
@@ -305,18 +419,31 @@ const tableColumns = [
                             />
                         </div>
                         <div className='request-test-modal-main-button-container'>
-                        <MyButton onClick={handleSave}>Save</MyButton>
+                        <MyButton
+                            appearance="ghost"
+                            onClick={handleClear}
+                        >
+                            Clear
+                        </MyButton>
+
+                        <MyButton
+                            onClick={handleSave}
+                        >
+                            {editMode ? 'Update' : 'Save'}
+                        </MyButton>
                         </div>
                     </Form>
 
                     <Divider />
 
-                    <MyTable
+                        <MyTable
                         columns={tableColumns}
                         data={requestsResponse?.data || []}
                         loading={isFetching}
                         height={250}
-                    />
+                        onRowClick={handleRowClick}
+                        />
+
 
                 <DeletionConfirmationModal
                 open={deleteModalOpen}

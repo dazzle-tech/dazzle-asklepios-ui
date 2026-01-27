@@ -41,6 +41,15 @@ import {
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 
+const safeRefetch = async (fn?: () => any) => {
+  if (!fn) return;
+  try {
+    await fn();
+  } catch {
+  }
+};
+
+
 const Lab = () => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
@@ -93,76 +102,94 @@ const Lab = () => {
 
   /* ===================== SAMPLES ===================== */
 
-const { data: samplesResponse, refetch: fecthSample } =
-  useGetCollectedSamplesByOrderTestIdQuery(
-    test?.id
-      ? { orderTestId: test.id, page: 0, size: 20 }
-      : skipToken
-  );
+    const { data: samplesResponse, refetch: fecthSample } =
+      useGetCollectedSamplesByOrderTestIdQuery(
+        test?.id
+          ? { orderTestId: test.id, page: 0, size: 20 }
+          : skipToken
+      );
 
-const samplesList = samplesResponse?.data ?? [];
-
-
-const refetchAllLabData = async () => {
-  setGlobalLoading(true);
-
-  try {
-    await Promise.all([
-      OrdersRef.current?.refetchOrders(), // Orders table
-      TestsRef.current?.fetchTest(),      // Tests table
-      fetchAllTests(),                    // counters
-      fecthSample()                       // samples
-    ]);
-  } finally {
-    setGlobalLoading(false);
-  }
-};
+    const samplesList = samplesResponse?.data ?? [];
 
 
+    const refetchAllLabData = async () => {
+      setGlobalLoading(true);
+
+      try {
+        await safeRefetch(OrdersRef.current?.refetchOrders);
+
+        if (order?.id) {
+          await safeRefetch(fetchAllTests);
+        }
+
+        if (test?.id) {
+          await safeRefetch(fecthSample);
+        }
+
+        // Tests table (tab-dependent)
+        await safeRefetch(TestsRef.current?.fetchTest);
+
+      } finally {
+        setGlobalLoading(false);
+      }
+    };
+
+    const newTestsCount = useMemo(
+      () =>
+        allTestsList.filter(
+          t => t.status === DiagnosticOrderTestStatus.NEW
+        ).length,
+      [allTestsList]
+    );
+
+    const sampleCollectedTestsCount = useMemo(
+      () =>
+        allTestsList.filter(
+          t => t.processingStatus === DiagnosticStatus.SAMPLE_COLLECTED
+        ).length,
+      [allTestsList]
+    );
 
 
-  /* ===================== COUNTERS ===================== */
-const newTestsCount = useMemo(
-  () =>
-    allTestsList.filter(
-      t => t.status === DiagnosticOrderTestStatus.NEW
-    ).length,
-  [allTestsList]
-);
+    const resultApprovedCount = useMemo(
+      () =>
+        allTestsList.filter(
+          t => t.status === DiagnosticOrderTestStatus.APPROVED
+        ).length,
+      [allTestsList]
+    );
 
-const sampleCollectedTestsCount = useMemo(
-  () =>
-    allTestsList.filter(
-      t => t.processingStatus === DiagnosticStatus.SAMPLE_COLLECTED
-    ).length,
-  [allTestsList]
-);
+    const stepsData = [
+      { key: DiagnosticOrderTestStatus.SAMPLE_COLLECTED, value: 'Sample Collected' },
+      { key: DiagnosticOrderTestStatus.ACCEPTED, value: 'Accepted' },
+      { key: DiagnosticOrderTestStatus.REJECTED, value: 'Rejected', isError: true },
+      { key: DiagnosticOrderTestStatus.READY, value: 'Result Ready' },
+      { key: DiagnosticOrderTestStatus.APPROVED, value: 'Result Approved' }
+    ];
+
+    const stepsDataComputed = useMemo(() => {
+      return stepsData.filter(step => {
+        if (
+          step.key === DiagnosticOrderTestStatus.REJECTED &&
+          test?.processingStatus !== DiagnosticOrderTestStatus.REJECTED
+        ) {
+          return false;
+        }
+        if (
+          step.key === DiagnosticOrderTestStatus.ACCEPTED &&
+          test?.processingStatus === DiagnosticOrderTestStatus.REJECTED
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+    }, [stepsData, test?.processingStatus]);
 
 
-const resultApprovedCount = useMemo(
-  () =>
-    allTestsList.filter(
-      t => t.status === DiagnosticOrderTestStatus.APPROVED
-    ).length,
-  [allTestsList]
-);
-
-  /* ===================== STEPPER ===================== */
-const stepsData = [
-  { key: DiagnosticOrderTestStatus.NEW, value: 'New' },
-  { key: DiagnosticOrderTestStatus.SUBMITTED, value: 'Submitted' },
-  { key: DiagnosticOrderTestStatus.SAMPLE_COLLECTED, value: 'Sample Collected' },
-  { key: DiagnosticOrderTestStatus.READY, value: 'Result Ready' },
-  { key: DiagnosticOrderTestStatus.APPROVED, value: 'Result Approved' },
-  { key: DiagnosticOrderTestStatus.REJECTED, value: 'Rejected', isError: true },
-  { key: DiagnosticOrderTestStatus.CANCELLED, value: 'Cancelled', isError: true }
-];
-
-const activeStep = stepsData.findIndex(
-  s => s.key === test?.status
-);
-
-  /* ===================== SAVE TEST ===================== */
+    const activeStep = stepsDataComputed.findIndex(
+      s => s.key === test?.processingStatus
+    );
 
   const [updateTest] = useUpdateDiagnosticOrderTestMutation();
 
@@ -270,11 +297,15 @@ useEffect(() => {
               {test.id && (
                 <Row>
                   <Col md={24}>
-                    <MyStepper stepsList={stepsData} activeStep={activeStep} />
+                      <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
                   </Col>
                 </Row>
               )}
-              {test.id && <Row>Number of Samples Collected:{samplesList?.data?.length}</Row>}
+              {test.id && (
+                <Row>
+                  Number of Samples Collected: {samplesList.length}
+                </Row>
+              )}
             </Col>
           </Row>
 

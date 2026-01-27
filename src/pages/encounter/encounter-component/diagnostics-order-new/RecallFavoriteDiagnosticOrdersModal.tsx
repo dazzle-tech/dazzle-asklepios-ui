@@ -1,60 +1,71 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
-import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
-import { formatEnumString } from '@/utils';
+import TransferTestList from './TransferTestList';
 
 type Props = {
   open: boolean;
   setOpen: (v: boolean) => void;
   favoriteTests: any[];
   loading?: boolean;
-  onRecall: (test: any) => void;
+  onRecall: (tests: any[]) => void;
 };
 
 const RecallFavoriteDiagnosticOrdersModal = ({
   open,
   setOpen,
-  favoriteTests,
+  favoriteTests = [],
   loading,
   onRecall
 }: Props) => {
+  const [leftItems, setLeftItems] = useState<any[]>([]);
+  const [rightItems, setRightItems] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchType, setSearchType] = useState<any>({});
+
+  /* ================= effects ================= */
+
+  useEffect(() => {
+    if (!open) return;
+
+    // 🔥 نفس نمط Add Tests
+    setLeftItems(favoriteTests);
+    setRightItems([]);
+    setSearchTerm('');
+    setSearchType({});
+  }, [open, favoriteTests]);
+
+  /* ================= handlers ================= */
+
+  const handleRecall = () => {
+    if (!rightItems.length) return;
+
+    onRecall(rightItems);
+    setOpen(false);
+  };
+
+  /* ================= render ================= */
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Recall Favorite Orders"
-      size="60vw"
+      title="Recall from Favorites"
+      size="45vw"
+      actionButtonText="Recall Selected"
+      actionButtonFunction={handleRecall}
+      disableActionBtn={!rightItems.length}
       content={
-        <MyTable
-          loading={loading}
-          data={favoriteTests ?? []}
-          columns={[
-            {
-              key: 'name',
-              title: 'Test Name',
-              render: row => row.name
-            },
-            {
-              key: 'type',
-              title: 'Type',
-              render: row => formatEnumString(row.type)
-            },
-            {
-              key: 'internalCode',
-              title: 'Code',
-              render: row => row.internalCode ?? '-'
-            },
-            {
-              key: 'actions',
-              title: 'Actions',
-              render: row => (
-                <MyButton size="xs" onClick={() => onRecall(row)}>
-                  Recall
-                </MyButton>
-              )
-            }
-          ]}
+        <TransferTestList
+          open={open}
+          leftItems={leftItems}
+          rightItems={rightItems}
+          setLeftItems={setLeftItems}
+          setRightItems={setRightItems}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchType={searchType}
+          setSearchType={setSearchType}
+          isFetching={loading}
         />
       }
     />

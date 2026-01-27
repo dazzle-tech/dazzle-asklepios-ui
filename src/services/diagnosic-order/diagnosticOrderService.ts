@@ -11,7 +11,7 @@ import {
 type PageableParams = {
   page?: number;
   size?: number;
-  sort?: string;
+  sort?: string[];
 };
 
 type PagedResult<T> = {
@@ -154,38 +154,49 @@ export const diagnosticOrderService = createApi({
       ],
     }),
 
-    /* -------------------------------------------------
-     * FILTER (modern endpoint)
-     * ------------------------------------------------- */
-    filterDiagnosticOrders: builder.query<
-      PagedResult<DiagnosticOrder>,
-      Record<string, any> & PageableParams
-    >({
-      query: params => ({
-        url: '/api/patient/diagnostic-orders',
-        method: 'GET',
-        params,
-        responseHandler: (response) => response.text(),
+      filterDiagnosticOrders: builder.query<
+        PagedResult<DiagnosticOrder>,
+        {
+          page?: number;
+          size?: number;
+          sort?: string[];
+          [key: string]: any;
+        }
+      >({
+        query: ({ sort, ...rest }) => {
+          const params = new URLSearchParams();
+          Object.entries(rest).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+              params.append(key, String(value));
+            }
+          });
+          if (Array.isArray(sort)) {
+            sort.forEach(s => params.append('sort', s));
+          }
+
+          return {
+            url: `/api/patient/diagnostic-orders?${params.toString()}`,
+            method: 'GET',
+            responseHandler: r => r.text(),
+          };
+        },
+
+        transformResponse: (responseText: string, meta): PagedResult<DiagnosticOrder> => {
+          const parsed = JSON.parse(responseText, (_k, v) =>
+            typeof v === 'number' && !Number.isSafeInteger(v) ? String(v) : v
+          );
+
+          return {
+            data: (parsed ?? []).map(mapDiagnosticOrder),
+            totalCount: Number(
+              meta?.response?.headers?.get('X-Total-Count') ?? 0
+            ),
+          };
+        },
+
+        providesTags: ['DiagnosticOrder'],
       }),
 
-      transformResponse: (responseText: string, meta): PagedResult<DiagnosticOrder> => {
-        const parsed = JSON.parse(responseText, (_key, value) => {
-          if (typeof value === 'number' && !Number.isSafeInteger(value)) {
-            return String(value);
-          }
-          return value;
-        });
-
-        return {
-          data: (parsed ?? []).map(mapDiagnosticOrder),
-          totalCount: Number(
-            meta?.response?.headers?.get('X-Total-Count') ?? 0
-          ),
-        };
-      },
-
-      providesTags: ['DiagnosticOrder'],
-    }),
 
     /* -------------------------------------------------
      * ACTIONS

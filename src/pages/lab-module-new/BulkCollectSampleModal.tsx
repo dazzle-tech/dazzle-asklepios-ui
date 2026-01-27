@@ -77,7 +77,7 @@ const BulkCollectSampleModal = ({
       open={open}
       setOpen={setOpen}
       title="Collect Sample"
-      size="30vw"
+      size="50vw"
       actionButtonFunction={handleSave}
       actionButtonLoading={isLoading}
       steps={[
@@ -92,6 +92,7 @@ const BulkCollectSampleModal = ({
                 record={record}
                 setRecord={setRecord}
                 column
+                width={"14vw"}
               />
               <MyInput
                 fieldLabel="Unit"
@@ -103,6 +104,7 @@ const BulkCollectSampleModal = ({
                 record={record}
                 setRecord={setRecord}
                 column
+                width={"14vw"}
               />
 
 
@@ -113,6 +115,7 @@ const BulkCollectSampleModal = ({
                 record={record}
                 setRecord={setRecord}
                 column
+                width={"14vw"}
               />
         </Form>
       }

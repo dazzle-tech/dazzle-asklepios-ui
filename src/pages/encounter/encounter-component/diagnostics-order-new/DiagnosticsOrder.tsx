@@ -73,7 +73,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import CheckIcon from '@rsuite/icons/Check';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
-import { FaFileArrowDown } from 'react-icons/fa6';
+import { FaFileArrowDown, FaIdCard } from 'react-icons/fa6';
 import { useLocation } from 'react-router-dom';
 import BulkAssignDepartmentModal from './BulkAssignDepartmentModal';
 import DetailsModal from './DetailsModal';
@@ -1014,9 +1014,23 @@ const DiagnosticsOrder = props => {
       setOpenFavoritesModal(false);
       await orderTestRefetch();
 
-    } catch (e) {
-      dispatch(notify({ msg: 'Recall failed', sev: 'error' }));
-    }
+    } catch (error: any) {
+    const msg = extractErrorMessage(error);
+
+  dispatch(
+    notify({
+      msg:
+        msg.toLowerCase().includes('already')
+          ? 'This test already ordered'
+          : msg,
+      sev:
+        msg.toLowerCase().includes('already')
+          ? 'warning'
+          : 'error'
+    })
+  );
+      }
+
   };
 
 
@@ -1117,7 +1131,7 @@ const DiagnosticsOrder = props => {
               {/* Test Name */}
               <MyInput
                 column
-                width={120}
+                width={160}
                 fieldName="testName"
                 fieldType="text"
                 fieldLabel="Test Name"
@@ -1128,7 +1142,7 @@ const DiagnosticsOrder = props => {
               {/* Type */}
               <MyInput
                 column
-                width={120}
+                width={160}
                 fieldName="type"
                 fieldType="select"
                 selectData={diagTypeResponse ?? []}
@@ -1151,7 +1165,7 @@ const DiagnosticsOrder = props => {
                   fieldName="category"
                   fieldType="select"
                   fieldLabel="Category"
-                  width={120}
+                  width={240}
                   selectData={
                     filters.type === 'LABORATORY'
                       ? labCategoriesLovResponse?.object ?? []
@@ -1170,10 +1184,7 @@ const DiagnosticsOrder = props => {
             </Form>
           </div>
 
-
-          {/* Third Row - Action Buttons */}
           <div className="header-third-row">
-            {/* Request New Test Setup */}
             <MyButton onClick={handleRequestNewTestSetup} appearance="ghost">
               <FontAwesomeIcon icon={faVial} />
               Request New TestSetup
@@ -1235,27 +1246,6 @@ const DiagnosticsOrder = props => {
               >
                 Assign Department
               </MyButton>
-              <Form fluid>
-                <MyInput
-                  column
-                  width={120}
-                  fieldName="type"
-                  fieldLabel='Assign Department'
-                  fieldType="select"
-                  selectData={diagTypeResponse ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={filters}
-                  setRecord={rec =>
-                    setFilters({
-                      ...rec,
-                      category: '',
-                      catalog: '',
-                    })
-                  }
-                  searchable={false}
-                />
-              </Form>
             </div>
           </div>
         </Row>
@@ -1391,8 +1381,9 @@ const DiagnosticsOrder = props => {
         open={testCardModal}
         setOpen={setTestCardModal}
         title="Test Card"
-        size="45vw"
+        size="42vw"
         position='center'
+        steps={[{ title: '', icon: <FontAwesomeIcon icon={faCreditCard} /> }]}
         content={
           <TestCardModal
             orderTest={orderTest}
@@ -1417,7 +1408,13 @@ const DiagnosticsOrder = props => {
         setOpen={setRecallFavoriteModal}
         favoriteTests={favoriteTests ?? []}
         loading={loadingFavorites}
-        onRecall={handleRecallFavoriteTest}
+        onRecall={tests => {
+          Promise.all(
+            tests.map(test =>
+              handleRecallFavoriteTest(test)
+            )
+          );
+        }}
       />
 
 

@@ -10,7 +10,7 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useFilterDiagnosticOrderTestsQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { DiagnosticStatus } from '@/types/model-types-new';
+import { DiagnosticStatus,DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { Checkbox, Form } from 'rsuite';
 import { formatEnumString } from '@/utils';
 import MyInput from '@/components/MyInput';
@@ -63,25 +63,31 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
     );
 
     /* ===================== QUERY ===================== */
-    const {
-      data: orderTestResponse,
-      isLoading,
-      refetch
-    } = useFilterDiagnosticOrderTestsQuery(
-      patientId
-        ? showCancelled
-          ? {
-              patientId,
-              status: DiagnosticStatus.CANCELLED,
-              ...cleanedFilters
-            }
-          : {
-              patientId,
-              excludeStatus: DiagnosticStatus.CANCELLED,
-              ...cleanedFilters
-            }
-        : skipToken
-    );
+          
+      const encounterId = patient?.encounterId;
+
+      const {
+        data: orderTestResponse,
+        isLoading,
+        refetch
+      } = useFilterDiagnosticOrderTestsQuery(
+        patientId
+          ? showCancelled
+            ? {
+                patientId,
+                encounterId,
+                status: DiagnosticOrderTestStatus.CANCELLED,
+                ...cleanedFilters
+              }
+            : {
+                patientId,
+                encounterId,
+                excludeStatus: DiagnosticOrderTestStatus.CANCELLED,
+                ...cleanedFilters
+              }
+          : skipToken
+      );
+
 
     /* 🔥 expose refetch to parent */
     useImperativeHandle(ref, () => ({
@@ -219,6 +225,15 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
         normalizedRows.map(r => r.orderType)
       );
     }, [normalizedRows]);
+
+
+useEffect(() => {
+  console.log(
+    'STATUSES:',
+    normalizedRows.map(r => r.status)
+  );
+}, [normalizedRows]);
+
 
     /* ===================== RENDER ===================== */
     return (

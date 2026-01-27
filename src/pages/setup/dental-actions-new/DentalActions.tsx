@@ -160,12 +160,6 @@ const handlePageChange = (event, newPage) => {
       }
     };
 
-
-
-
-
-
-
   // handle deactivate/reactivate dental action (need to handle from the back)
     const handleDeactiveReactivateDentalAction = async () => {
       try {
