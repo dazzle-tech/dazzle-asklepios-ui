@@ -15,17 +15,19 @@ import {
   useCreateRadiologyMutation,
   useUpdateRadiologyMutation
 } from '@/services/setup/diagnosticTest/radiologyTestService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetLovsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newLaboratory, newPathology, newRadiology } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useState } from 'react';
 import { GrTestDesktop } from 'react-icons/gr';
 import { LuTestTubes } from 'react-icons/lu';
-import { Form } from 'rsuite';
+import { Dropdown, Form, Input, InputGroup } from 'rsuite';
 import Laboratory from './Laboratory';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import './styles.less';
+import { SearchIcon } from 'lucide-react';
+import { initialListRequest } from '@/types/types';
 
 const AddEditDiagnosticTest = ({
   open,
@@ -40,7 +42,7 @@ const AddEditDiagnosticTest = ({
   const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<any>([]);
   const [ageGroupList, setAgeGroupList] = useState<any>([]);
   const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState({ ...newLaboratory });
-
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [diagnosticTestRadiology, setDiagnosticTestRadiology] = useState({ ...newRadiology });
   const [saveLoading, setSaveLoading] = useState(false);
 
@@ -57,7 +59,11 @@ const AddEditDiagnosticTest = ({
     'SPECIAL_POPULATION_GROUPS'
   );
   const { data: unitsLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-
+  // Fetch LOV list for search
+  const { data: lovListResponseData } = useGetLovsQuery({
+    ...initialListRequest,
+    pageSize: 1000
+  });
   // Fetch Age Group Lov response
 
   const ageGroups = useEnumOptions('AgeGroupType');
@@ -75,7 +81,22 @@ const AddEditDiagnosticTest = ({
   // save Diagnostics Test Pathology
   const [addPathology] = useCreatePathologyMutation();
   const [updatePathology] = useUpdatePathologyMutation();
-  // Fetch Diagnostic Test Type details
+
+   // Filter LOV data based on search
+  const filteredData = (lovListResponseData?.object ?? []).filter(item =>
+    `${item.lovCode}`.toLowerCase().includes(searchKeyword.toLowerCase())
+  );
+  // Display selected LOV
+  const resultLovDisplay = (() => {
+    if (!diagnosticsTest?.listOfValueId) return '';
+    if (!lovListResponseData?.object?.length) return '';
+
+    const found = lovListResponseData.object.find(
+      x => String(x.key) === String(diagnosticsTest.listOfValueId)
+    );
+
+    return found ? `${found.lovCode}` : '';
+  })();
 
   // show details component according to Test type of diagnostic test
   const handleShowComponent = () => {
@@ -268,12 +289,12 @@ const AddEditDiagnosticTest = ({
       setDiagnosticsTest(prev => ({
         ...prev,
         defaultProfileResultType: diagnosticsTest.defaultProfileResultType ?? null,
-        defaultProfileResultUnit: diagnosticsTest.defaultProfileResultUnit ?? null
+        defaultProfileResultUnit: diagnosticsTest.defaultProfileResultUnit ?? null,
+        listOfValueId: diagnosticsTest.listOfValueId ?? null
       }));
     }
   }, [open, diagnosticsTest?.id]);
 
-  console.log('diagnosticsTest=====>', diagnosticsTest);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -324,6 +345,52 @@ const AddEditDiagnosticTest = ({
                       setRecord={setDiagnosticsTest}
                     />
                   </div>
+                  {diagnosticsTest.defaultProfileResultType === 'LOV' && (
+                     <div style={{ width: 320 }}>
+                <div className="container-of-menu-diagnostic">
+                  <InputGroup className="search-input-diagnostic" inside>
+                    <Input
+                      placeholder="Search LOV"
+                      value={searchKeyword}
+                      onChange={setSearchKeyword}
+                    />
+                    <InputGroup.Button>
+                      <SearchIcon />
+                    </InputGroup.Button>
+                  </InputGroup>
+
+                  {searchKeyword && (
+                    <Dropdown.Menu className="menu-diagnostic">
+                      {filteredData.map(mod => (
+                        <Dropdown.Item
+                          key={mod.key}
+                          onClick={() => {
+                            setDiagnosticsTest(prev => ({
+                              ...prev,
+                              listOfValueId: mod.key
+                            }));
+                            setSearchKeyword('');
+                          }}
+                        >
+                          <span>{mod.lovCode}</span>
+                          <span>{mod.lovName}</span>
+                        </Dropdown.Item>
+                      ))}
+                    </Dropdown.Menu>
+                  )}
+                </div>
+
+                <br />
+
+                <Input
+                  className="search-result-diagnostic"
+                  disabled
+                  value={resultLovDisplay}
+                  placeholder="Selected LOV"
+                />
+              </div>
+
+                  )}
 
                   <div className="container-of-field-diagnostic">
                     <MyInput
@@ -489,19 +556,7 @@ const AddEditDiagnosticTest = ({
         return handleShowComponent();
     }
   };
-  // Effects
-useEffect(() => {
-  console.log('================ DETAILS STATES ================');
-  console.log('Test Type:', diagnosticsTest?.type);
-  console.log('LAB:', diagnosticTestLaboratory);
-  console.log('RAD:', diagnosticTestRadiology);
-  console.log('PATH:', diagnosticTestPathology);
-}, [
-  diagnosticsTest?.type,
-  diagnosticTestLaboratory,
-  diagnosticTestRadiology,
-  diagnosticTestPathology
-]);
+  
 
   return (
     <MyModal

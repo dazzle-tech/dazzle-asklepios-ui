@@ -393,6 +393,7 @@ export interface DiagnosticTest {
 
   defaultProfileResultType?: string;
   defaultProfileResultUnit?: string;
+  listOfValueId?: string | null;
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;

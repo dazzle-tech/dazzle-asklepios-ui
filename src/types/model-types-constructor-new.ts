@@ -293,7 +293,8 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   appointable: false,
 
   defaultProfileResultType: '',
-  defaultProfileResultUnit: ''
+  defaultProfileResultUnit: '',
+  listOfValueId: null
 };
 
 export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO = {
