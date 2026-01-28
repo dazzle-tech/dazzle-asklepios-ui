@@ -206,6 +206,8 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
           triageId={triage?.id ?? emergencyTriageNew?.id}
           triage={triage}
           setTriage={setTriage}
+          patient={patient}
+          encounter={encounter}
         />
       </Row>
 
@@ -215,7 +217,7 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
         open={openSendToModal}
         setOpen={setOpenSendToModal}
         encounter={encounter}
-        triage={encounter?.emergencyTriage}
+        triage={triage}
       />
     </div>
   );

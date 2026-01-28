@@ -11,7 +11,7 @@ import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import 'react-tabs/style/react-tabs.css';
-import { formatDate } from '@/utils';
+import { formatDate, formatEnumString } from '@/utils';
 import { faCommentMedical } from '@fortawesome/free-solid-svg-icons';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
@@ -43,10 +43,31 @@ import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-ne
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
 import '../styles.less';
-import { useCreateOrGetEmergencyTriageMutation } from '@/services/encounters/er-triage/emergencyTriageService';
+import {
+  useCreateOrGetEmergencyTriageMutation,
+  useGetLatestEmergencyTriageByEncounterQuery
+} from '@/services/encounters/er-triage/emergencyTriageService';
 
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
+
+const DestinationCell = ({ encounterId, fallbackDestination }: any) => {
+  const toNumberOrNaN = (v: unknown) => {
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string' && v.trim() !== '') return Number(v);
+    return Number.NaN;
+  };
+
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const destination = latestEmergencyTriage?.destination ?? fallbackDestination ?? null;
+  if (!destination) return <></>;
+
+  return <>{formatEnumString(String(destination))}</>;
+};
 
 const ERTriage = () => {
   const COMPLETE_TRIAGE_STATUS_KEY = '91109811181900';
@@ -142,6 +163,7 @@ const ERTriage = () => {
   const [emergencyLevel, setEmergencyLevel] = useState({ key: '' });
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [openSendToModal, setOpenSendToModal] = useState(false);
+  const [sendToEmergencyTriageNew, setSendToEmergencyTriageNew] = useState<any>(null);
   const [open, setOpen] = useState(false);
   const defaultEncounterStatusKeys = ['6742295599423814', '8890456518264959'];
   const [encounterStatus, setEncounterStatus] = useState<{ keys: string[] }>({
@@ -443,8 +465,16 @@ const ERTriage = () => {
       };
 
       const encounterId = toNumberOrNaN(encounterData?.id ?? encounterData?.encounterId ?? encounterData?.key);
-      const patientId =  toNumberOrNaN(patientData?.id ?? patientData?.patientId ?? patientData?.key );
+      const patientId = toNumberOrNaN(
+        patientData?.id ??
+          patientData?.patientId ??
+          patientData?.key ??
+          encounterData?.patientId ??
+          encounterData?.patientKey ??
+          encounterData?.patient_key
+      );
 
+      // Create/get the NEW-backend emergency triage record (kept separate from legacy triage flow)
       const emergencyTriageNew =
         !Number.isNaN(encounterId) && !Number.isNaN(patientId)
           ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
@@ -803,12 +833,13 @@ const ERTriage = () => {
       dataKey: 'plannedStartDate'
     },
     {
-      key: 'destinationLkey',
+      key: 'destination',
       title: 'Destination',
-      render: (row: any) =>
-        row?.emergencyTriage?.destinationLkey
-          ? row?.emergencyTriage?.destinationLvalue?.lovDisplayVale
-          : ''
+      render: (row: any) => {
+        const encounterId = row?.id ?? row?.encounterId ?? row?.key;
+        const fallbackDestination = row?.emergencyTriage?.destination ?? row?.emergencyTriage?.destinationLkey ?? null;
+        return <DestinationCell encounterId={encounterId} fallbackDestination={fallbackDestination} />;
+      }
     },
     {
       key: 'status',
@@ -931,8 +962,37 @@ const ERTriage = () => {
                 <MyButton
                   size="small"
                   backgroundColor="violet"
-                  onClick={() => {
+                  onClick={async () => {
                     setLocalEncounter(rowData);
+
+                    const toNumberOrNaN = (v: unknown) => {
+                      if (typeof v === 'number') return v;
+                      if (typeof v === 'string' && v.trim() !== '') return Number(v);
+                      return Number.NaN;
+                    };
+
+                    const patientData = rowData?.patientObject;
+                    const encounterId = toNumberOrNaN(rowData?.id ?? rowData?.encounterId ?? rowData?.key);
+                    const patientId = toNumberOrNaN(
+                      patientData?.id ??
+                        patientData?.patientId ??
+                        patientData?.key ??
+                        rowData?.patientId ??
+                        rowData?.patientKey ??
+                        rowData?.patient_key
+                    );
+
+                    try {
+                      const triageNew =
+                        !Number.isNaN(encounterId) && !Number.isNaN(patientId)
+                          ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
+                          : null;
+                      setSendToEmergencyTriageNew(triageNew);
+                    } catch (e) {
+                      console.error('[ER Triage] createOrGetEmergencyTriage failed (Send to)', e);
+                      setSendToEmergencyTriageNew(null);
+                    }
+
                     setOpenSendToModal(true);
                   }}
                   disabled={rowData?.encounterStatusLkey != '6742295599423814'}
@@ -1116,7 +1176,7 @@ const ERTriage = () => {
         open={openSendToModal}
         setOpen={setOpenSendToModal}
         encounter={encounter}
-        triage={encounter?.emergencyTriage}
+        triage={sendToEmergencyTriageNew}
         refetch={refetchEncounter}
       />
       <DeletionConfirmationModal

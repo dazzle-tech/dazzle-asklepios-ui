@@ -13,12 +13,14 @@ type EmergencyLevelAssessmentProps = {
   triage: any;
   setTriage: (next: any) => void;
   onSave: () => void;
+  readOnly?: boolean;
 };
 
 const EmergencyLevelAssessment = ({
   triage,
   setTriage,
   onSave,
+  readOnly = false,
 }: EmergencyLevelAssessmentProps) => {
   const dispatch = useAppDispatch();
   const [showServices, setShowServices] = useState(false);
@@ -32,6 +34,7 @@ const EmergencyLevelAssessment = ({
   const isBlank = (v: any) => v == null || String(v).trim() === "";
 
   const handleSave = () => {
+    if (readOnly) return;
     if (isBlank(triage?.lifeSaving)) {
       dispatch(
         notify({
@@ -104,7 +107,7 @@ const EmergencyLevelAssessment = ({
 
   
     const nextLevel = computeEmergencyLevel();
-    if (nextLevel && String(triage?.emergencyLevel ?? "") !== String(nextLevel)) {
+    if (!readOnly && nextLevel && String(triage?.emergencyLevel ?? "") !== String(nextLevel)) {
       setTriage((prev: any) => ({ ...prev, emergencyLevel: nextLevel }));
     }
   }, [
@@ -121,6 +124,7 @@ const EmergencyLevelAssessment = ({
     triage?.consultationRequired,
     triage?.emergencyLevel,
     setTriage,
+    readOnly,
   ]);
 
   return (
@@ -141,6 +145,7 @@ const EmergencyLevelAssessment = ({
             setRecord={setTriage}
             searchable={false}
             required
+            disabled={readOnly}
           />
 
           {isNo(triage?.lifeSaving) && (
@@ -156,6 +161,7 @@ const EmergencyLevelAssessment = ({
               record={triage}
               setRecord={setTriage}
               searchable={false}
+              disabled={readOnly}
             />
           )}
 
@@ -173,6 +179,7 @@ const EmergencyLevelAssessment = ({
                 record={triage}
                 setRecord={setTriage}
                 searchable={false}
+                disabled={readOnly}
               />
 
               <MyInput
@@ -187,6 +194,7 @@ const EmergencyLevelAssessment = ({
                 record={triage}
                 setRecord={setTriage}
                 searchable={false}
+                disabled={readOnly}
               />
 
               <MyInput
@@ -201,6 +209,7 @@ const EmergencyLevelAssessment = ({
                 record={triage}
                 setRecord={setTriage}
                 searchable={false}
+                disabled={readOnly}
               />
             </>
           )}
@@ -219,6 +228,7 @@ const EmergencyLevelAssessment = ({
                 record={triage}
                 setRecord={setTriage}
                 searchable={false}
+                disabled={readOnly}
               />
               <MyInput
                 column
@@ -232,6 +242,7 @@ const EmergencyLevelAssessment = ({
                 record={triage}
                 setRecord={setTriage}
                 searchable={false}
+                disabled={readOnly}
               />
               <MyInput
                 column
@@ -245,6 +256,7 @@ const EmergencyLevelAssessment = ({
                 record={triage}
                 setRecord={setTriage}
                 searchable={false}
+                disabled={readOnly}
               />
               <MyInput
                 column
@@ -258,6 +270,7 @@ const EmergencyLevelAssessment = ({
                 record={triage}
                 setRecord={setTriage}
                 searchable={false}
+                disabled={readOnly}
               />
               <MyInput
                 column
@@ -271,6 +284,7 @@ const EmergencyLevelAssessment = ({
                 record={triage}
                 setRecord={setTriage}
                 searchable={false}
+                disabled={readOnly}
               />
               <MyInput
                 column
@@ -284,13 +298,16 @@ const EmergencyLevelAssessment = ({
                 record={triage}
                 setRecord={setTriage}
                 searchable={false}
+                disabled={readOnly}
               />
             </>
           )}
 
-          <MyButton onClick={handleSave} appearance="primary">
-           <Translate> Save </Translate>
-          </MyButton>
+          {!readOnly && (
+            <MyButton onClick={handleSave} appearance="primary">
+             <Translate> Save </Translate>
+            </MyButton>
+          )}
         </Form>
       }
     />
