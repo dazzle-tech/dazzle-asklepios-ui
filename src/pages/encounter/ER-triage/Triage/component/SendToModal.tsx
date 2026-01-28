@@ -2,92 +2,90 @@ import React, { useEffect, useState } from 'react';
 import { useAppDispatch } from '@/hooks';
 import { Form } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
-import { newApEmergencyTriage, newApEncounter } from '@/types/model-types-constructor';
+import { newApEncounter } from '@/types/model-types-constructor';
 import { ApEncounter } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import '../../styles.less'
-import { useERCompleteEncounterMutation } from '@/services/encounterService';
-import { useSentToERMutation } from '@/services/encounterService';
+import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+
+import { useUpdateEmergencyTriageDestinationMutation } from '@/services/encounters/er-triage/emergencyTriageService';
+
+type DestinationEnum = 'ER_WAITING_LIST' | 'REFER_TO_SPECIALIST' | 'SENT_TO_HOMECARE';
+
 const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
-    const [completeEncounter, completeEncounterMutation] = useERCompleteEncounterMutation();
     const dispatch = useAppDispatch();
     const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...newApEncounter });
-    const [saveEncounter, saveEncounterMutation] = useSentToERMutation();
+    const [saveEncounterChanges] = useSaveEncounterChangesMutation();
+    const [updateDestination] = useUpdateEmergencyTriageDestinationMutation();
     const [showModal, setShowModal] = useState(false);
-    const [emergencyTriage, setEmergencyTriage] = useState<any>({ ...newApEmergencyTriage });
-    // Handle Save Encounter
-  const handleSave = async (destinationKey: string) => {
-    if (!localEncounter || !localEncounter.patientKey) {
-        dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
+    const [emergencyTriage, setEmergencyTriage] = useState<any>({});
+
+    const COMPLETE_TRIAGE_STATUS_KEY = '91109811181900';
+    const SENT_TO_ER_STATUS_KEY = '6742317684600328';
+
+    const handleTransfer = async (destination: DestinationEnum) => {
+      if (!localEncounter) {
+        dispatch(notify({ msg: 'Encounter not found', sev: 'error' }));
         return;
-    }
+      }
 
-    try {
-        await saveEncounter({
-            encounter: {
-                ...localEncounter,
-                encounterStatusLkey: "6742317684600328"
-            },
-            triageKey: emergencyTriage?.key,
-            destinationKey: destinationKey
+      // 1) Update encounter status ONLY
+      const nextStatus =
+        destination === 'ER_WAITING_LIST' ? SENT_TO_ER_STATUS_KEY : COMPLETE_TRIAGE_STATUS_KEY;
+
+      try {
+        await saveEncounterChanges({
+          ...localEncounter,
+          encounterStatusLkey: nextStatus
         }).unwrap();
+      } catch (e: any) {
+        console.error('Error updating encounter status', e);
+        dispatch(notify({ msg: 'Failed to update encounter status', sev: 'error' }));
+        return;
+      }
 
-        dispatch(notify({ msg: 'Patient has been successfully moved to the ER Waiting List' }));
-        setShowModal(false);
-        setOpen(false);
-        if (refetch) {
-            refetch();
-        }
-    } catch (e: any) {
-
-        // RTK Query error shapes
-        const status = e?.status;
-        const backendMessage =
-            e?.data?.message ||
-            e?.error ||
-            (typeof e?.data === 'string' ? e.data : null);
-
-        if (status === 422) {
-            dispatch(notify({ msg: backendMessage || 'Validation error (422)', sev: 'warn' }));
-        } else if (backendMessage) {
-            dispatch(notify({ msg: backendMessage, sev: 'error' }));
-        } else if (status === 'FETCH_ERROR') {
-            dispatch(notify({ msg: 'Network error, please check your connection', sev: 'error' }));
-        } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-        }
-    }
-};
-
-    // handle Complete Encounter Function
-    const handleCompleteEncounter = async (destinationKey) => {
+      // 2) Update destination on NEW emergency triage object
+      const triageId = emergencyTriage?.id ?? triage?.id;
+      if (!triageId) {
+        dispatch(
+          notify({
+            msg: 'Emergency triage record not found (missing id) - destination not saved',
+            sev: 'warn'
+          })
+        );
+      } else {
         try {
-            await completeEncounter({
-                encounter: localEncounter,
-                triageKey: emergencyTriage?.key,
-                destinationKey: destinationKey
-            }).unwrap();
-            if (refetch !== null) {
-                refetch();
-            }
-            refetch();
-            dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
-        } catch (error) {
-            console.error("Encounter completion error:", error);
-            dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
+          await updateDestination({ id: Number(triageId), destination }).unwrap();
+        } catch (e: any) {
+          console.error('Error updating emergency triage destination', e);
+          dispatch(notify({ msg: 'Failed to update destination', sev: 'error' }));
+          // we still continue to close the modal since encounter status is already updated
         }
+      }
+
+      const msg =
+        destination === 'ER_WAITING_LIST'
+          ? 'Patient has been successfully moved to the ER Waiting List'
+          : destination === 'REFER_TO_SPECIALIST'
+          ? 'Patient has been referred to specialist'
+          : 'Patient has been sent to Home Care';
+
+      dispatch(notify({ msg, sev: 'success' }));
+      setShowModal(false);
+      setOpen(false);
+      if (refetch) refetch();
     };
     // Modal Content 
     const content = (
         <Form fluid layout='inline' className="send-to-options-form">
-            <MyButton width={300} onClick={() => { handleCompleteEncounter('8454546825442137') }}>
+            <MyButton width={300} onClick={() => { handleTransfer('REFER_TO_SPECIALIST') }}>
                 Refer to Specialist
             </MyButton>
-            <MyButton width={300} onClick={() => { handleCompleteEncounter('8454570378575811') }}>
+            <MyButton width={300} onClick={() => { handleTransfer('SENT_TO_HOMECARE') }}>
                 Send to Home Care
             </MyButton>
             <MyButton width={300} onClick={() => { setShowModal(true) }}>
@@ -113,7 +111,7 @@ const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
                 open={open}
                 setOpen={setOpen}
                 title="Transfer Options"
-                actionButtonFunction={handleSave}
+                actionButtonFunction={() => {}}
                 position='center'
                 hideActionBtn={true}
                 hideCancel={true}
@@ -129,7 +127,7 @@ const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
                 open={showModal}
                 setOpen={setShowModal}
                 actionType="confirm"
-                actionButtonFunction={() => { handleSave('8454586358847085') }}
+                actionButtonFunction={() => { handleTransfer('ER_WAITING_LIST') }}
                 confirmationQuestion="Do you want to send the patient to the ER Waiting List?"
             />
         </>
