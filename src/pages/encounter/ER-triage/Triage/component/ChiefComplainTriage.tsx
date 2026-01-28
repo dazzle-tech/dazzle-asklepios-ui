@@ -10,6 +10,8 @@ import Translate from '@/components/Translate';
 import SectionContainer from '@/components/SectionsoContainer';
 import type { ChiefComplain } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useSaveEncounterChangesMutation } from '@/services/encounterService';
+import { setEncounter as setEncounterRedux } from '@/reducers/patientSlice';
 import {
   useCreateChiefComplainMutation,
   useGetLatestTriageChiefComplainByEncounterQuery,
@@ -44,6 +46,7 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [createChiefComplain] = useCreateChiefComplainMutation();
   const [updateChiefComplain] = useUpdateChiefComplainMutation();
+  const [saveEncounterChanges] = useSaveEncounterChangesMutation();
   const {
     data: latestChiefComplain,
     isFetching: isFetchingLatest
@@ -120,6 +123,22 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
           : await createChiefComplain(payload as any).unwrap();
 
       setChiefComplain(updated);
+
+      // Also persist the same "chief complaint" text onto the ENCOUNTER (used by ER list/table and other screens).
+      if (encounter) {
+        try {
+          const updatedEncounter = await saveEncounterChanges({
+            ...encounter,
+            chiefComplaint: updated?.chiefComplaint ?? payload?.chiefComplaint ?? null
+          }).unwrap();
+          // Keep redux encounter in sync if it exists in store (harmless otherwise).
+          dispatch(setEncounterRedux(updatedEncounter));
+        } catch (e) {
+          console.error('Error saving encounter chiefComplaint:', e);
+          dispatch(notify({ msg: 'Chief Complain saved, but failed to update Encounter chief complaint', sev: 'warn' }));
+        }
+      }
+
       dispatch(
         notify({
           msg: chiefComplain?.id != null ? 'Chief Complain Updated Successfully' : 'Chief Complain Added Successfully',
