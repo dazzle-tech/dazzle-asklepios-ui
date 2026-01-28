@@ -8,14 +8,25 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useUpdateEmergencyTriageEyeAssessmentMutation } from '@/services/encounters/er-triage/emergencyTriageService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import HpiHistorySummary from './HpiHistorySummary';
 
 type EyeAssessmentHPIProps = {
   triageId?: number | string | null;
   triage: any;
   setTriage: (next: any) => void;
+  patient?: any;
+  encounter?: any;
+  readOnly?: boolean;
 };
 
-const EyeAssessmentHPI = ({ triageId, triage, setTriage }: EyeAssessmentHPIProps) => {
+const EyeAssessmentHPI = ({
+  triageId,
+  triage,
+  setTriage,
+  patient,
+  encounter,
+  readOnly = false
+}: EyeAssessmentHPIProps) => {
   const dispatch = useAppDispatch();
   const [updateEyeAssessment, updateEyeAssessmentState] = useUpdateEmergencyTriageEyeAssessmentMutation();
   const { data: sizeLovQueryResponse } = useGetLovValuesByCodeQuery('SIZE');
@@ -71,6 +82,7 @@ const EyeAssessmentHPI = ({ triageId, triage, setTriage }: EyeAssessmentHPIProps
                       fieldName="rightEyeLightResponse"
                       record={triage}
                       setRecord={setTriage}
+                      disabled={readOnly}
                     />
                     <MyInput
                       column
@@ -84,6 +96,7 @@ const EyeAssessmentHPI = ({ triageId, triage, setTriage }: EyeAssessmentHPIProps
                       record={triage}
                       setRecord={setTriage}
                       searchable={false}
+                      disabled={readOnly}
                     />
                   </Form>
                 }
@@ -103,6 +116,7 @@ const EyeAssessmentHPI = ({ triageId, triage, setTriage }: EyeAssessmentHPIProps
                       fieldName="leftEyeLightResponse"
                       record={triage}
                       setRecord={setTriage}
+                      disabled={readOnly}
                     />
                     <MyInput
                       column
@@ -116,6 +130,7 @@ const EyeAssessmentHPI = ({ triageId, triage, setTriage }: EyeAssessmentHPIProps
                       record={triage}
                       setRecord={setTriage}
                       searchable={false}
+                      disabled={readOnly}
                     />
                   </Form>
                 }
@@ -137,18 +152,27 @@ const EyeAssessmentHPI = ({ triageId, triage, setTriage }: EyeAssessmentHPIProps
                       fieldLabel="Additional notes"
                       fieldName="hpiAdditionalNotes"
                       width={400}
+                      disabled={readOnly}
                     />
 
-                    <MyButton
-                      onClick={handleSave}
-                      appearance="primary"
-                      disabled={updateEyeAssessmentState.isLoading}
-                    >
-                     <Translate> Save </Translate>
-                    </MyButton>
+                    {!readOnly && (
+                      <MyButton
+                        onClick={handleSave}
+                        appearance="primary"
+                        disabled={updateEyeAssessmentState.isLoading}
+                      >
+                       <Translate> Save </Translate>
+                      </MyButton>
+                    )}
                   </Form>
                 }
               />
+            </Col>
+          </Row>
+
+          <Row>
+            <Col md={24}>
+              <HpiHistorySummary patient={patient} encounter={encounter} hpiText={triage?.hpiAdditionalNotes ?? ''} />
             </Col>
           </Row>
         </>
