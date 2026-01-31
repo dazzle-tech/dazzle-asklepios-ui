@@ -16,7 +16,7 @@ import { notify } from '@/utils/uiReducerActions';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
 import { FaChartLine, FaUndo } from 'react-icons/fa';
-import { MdDelete, MdEdit } from 'react-icons/md';
+import { MdDelete, MdEdit, MdModeEdit } from 'react-icons/md';
 import { Badge, Form, Dropdown, Input, InputGroup } from 'rsuite';
 import AddNormalRange from './AddNormalRange';
 import './styles.less';
@@ -36,6 +36,7 @@ import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import { useEnumOptions } from '@/services/enumsApi';
 import SearchIcon from '@rsuite/icons/Search';
 import { useGetLovsQuery } from '@/services/setupService';
+import { set } from 'lodash';
 
 const Profile = ({ open, setOpen, diagnosticsTest }) => {
   const dispatch = useAppDispatch();
@@ -137,13 +138,14 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
   };
 
   const isSelectedDiagnosticTestNormalRange = rowData => {
-    if (rowData && diagnosticTestNormalRange && rowData.key === diagnosticTestNormalRange.id) {
+    if (rowData && diagnosticTestNormalRange && rowData.id === diagnosticTestNormalRange.id) {
       return 'selected-row';
     } else return '';
   };
 
   const iconsForActions = (rowData: any) => (
     <div className="container-of-icons" onClick={e => e.stopPropagation()}>
+     
       {!rowData?.isDefault &&
         (rowData?.isActive ? (
           <MdDelete
@@ -262,16 +264,29 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
     {
       key: 'actions',
       title: <Translate>actions</Translate>,
-      render: () => (
+      render: (rowData) => (
+        <>
+          <MdModeEdit
+              className="icons-style"
+              title="Edit"
+              size={24}
+              fill="var(--primary-gray)"
+              onClick={() => {
+                 setDiagnosticTestNormalRange(rowData);
+                  setOpenSubChild(true);
+              }}
+            />
         <MdDelete
           className="icons-style"
           title="Remove"
           size={24}
           fill="var(--primary-pink)"
           onClick={() => {
+            setDiagnosticTestNormalRange(rowData);
             setOpenConfirmDeleteProfileNormalRange(true);
           }}
         />
+        </> 
       )
     }
   ];

@@ -29,7 +29,6 @@ import { Form, Panel } from 'rsuite';
 import AddEditDiagnosticTest from './AddEditDiagnosticTest';
 import Coding from './Coding';
 import DiagnosticTestTemplate from './DiagnosticTestTemplate';
-import NormalRangeSetupModal from './NormalRangeSetUpModal';
 import Profile from './Profile';
 import './styles.less';
 const DiagnosticsTest = () => {
@@ -130,7 +129,8 @@ const DiagnosticsTest = () => {
           diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultType : null,
 
         defaultProfileResultUnit:
-          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
+        listOfValueId: diagnosticsTest.listOfValueId ?? null
       };
 
       const response = await addDiagnosticTest(payload).unwrap();
@@ -177,7 +177,8 @@ const DiagnosticsTest = () => {
         defaultProfileResultType:
           diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultType : null,
         defaultProfileResultUnit:
-          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
+        listOfValueId: diagnosticsTest.listOfValueId ?? null
       };
 
       const response = await updateDiagnosticTest(payload).unwrap();
@@ -429,12 +430,6 @@ const DiagnosticsTest = () => {
     },
 
     {
-      key: 'profile',
-      title: <Translate>Is Profile</Translate>,
-      render: rowData => (rowData.isProfile ? 'Yes' : 'No')
-    },
-
-    {
       key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 2,
@@ -664,11 +659,7 @@ const DiagnosticsTest = () => {
         handleSave={diagnosticsTest.id ? handleUpdateDiagnosticTest : handleAddNewDiagnosticTest}
         width={width}
       />
-      <NormalRangeSetupModal
-        open={normalRangePopupOpen}
-        setOpen={setNormalRangePopupOpen}
-        diagnosticsTest={diagnosticsTest}
-      />
+     
       <DeletionConfirmationModal
         open={openConfirmDiagnosticTest}
         setOpen={setOpenConfirmDeleteDiagnosticTest}

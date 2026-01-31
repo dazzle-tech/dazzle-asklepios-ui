@@ -230,7 +230,7 @@ const AddNormalRange = ({
           <MyInput
             width="100%"
             fieldLabel="Less Than"
-            fieldName="rangeFrom"
+            fieldName="rangeTo"
             record={diagnosticTestNormalRange}
             setRecord={setDiagnosticTestNormalRange}
           />
@@ -240,7 +240,7 @@ const AddNormalRange = ({
           <MyInput
             width="100%"
             fieldLabel="More Than"
-            fieldName="rangeTo"
+            fieldName="rangeFrom"
             record={diagnosticTestNormalRange}
             setRecord={setDiagnosticTestNormalRange}
           />
@@ -278,28 +278,57 @@ const AddNormalRange = ({
         />
       )}
 
-      {diagnosticTestNormalRange.criticalValue === true && (
-        <div className="container-of-two-fields-diagnostic">
-          <div className="container-of-field-diagnostic">
-            <MyInput
-              width="100%"
-              fieldLabel="Less Than"
-              fieldName="criticalValueLessThan"
-              record={diagnosticTestNormalRange}
-              setRecord={setDiagnosticTestNormalRange}
-            />
-          </div>
-          <div className="container-of-field-diagnostic">
-            <MyInput
-              width="100%"
-              fieldLabel="More Than"
-              fieldName="criticalValueMoreThan"
-              record={diagnosticTestNormalRange}
-              setRecord={setDiagnosticTestNormalRange}
-            />
-          </div>
+      {diagnosticTestNormalRange?.criticalValue === true && (
+  <>
+    {diagnosticTestNormalRange?.normalRangeType === 'LESS_THAN' && (
+      <div className="container-of-field-diagnostic">
+        <MyInput
+          width="100%"
+          fieldLabel="More Than"
+          fieldName="criticalValueMoreThan"
+          record={diagnosticTestNormalRange}
+          setRecord={setDiagnosticTestNormalRange}
+        />
+      </div>
+    )}
+
+    {diagnosticTestNormalRange?.normalRangeType === 'MORE_THAN' && (
+      <div className="container-of-field-diagnostic">
+        <MyInput
+          width="100%"
+          fieldLabel="Less Than"
+          fieldName="criticalValueLessThan"
+          record={diagnosticTestNormalRange}
+          setRecord={setDiagnosticTestNormalRange}
+        />
+      </div>
+    )}
+
+    {diagnosticTestNormalRange?.normalRangeType === 'RANGE' && (
+      <div className="container-of-two-fields-diagnostic">
+        <div className="container-of-field-diagnostic">
+          <MyInput
+            width="100%"
+            fieldLabel="Less Than"
+            fieldName="criticalValueLessThan"
+            record={diagnosticTestNormalRange}
+            setRecord={setDiagnosticTestNormalRange}
+          />
         </div>
-      )}
+        <div className="container-of-field-diagnostic">
+          <MyInput
+            width="100%"
+            fieldLabel="More Than"
+            fieldName="criticalValueMoreThan"
+            record={diagnosticTestNormalRange}
+            setRecord={setDiagnosticTestNormalRange}
+          />
+        </div>
+      </div>
+    )}
+  </>
+)}
+
     </Form>
   );
 };
