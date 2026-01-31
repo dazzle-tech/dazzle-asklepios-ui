@@ -99,6 +99,19 @@ export const diagnosticTestProfileService = createApi({
       invalidatesTags: ['DiagnosticTestProfile']
     }),
 
+    // Get active LAB profiles by testIds (bulk)
+    getActiveLabProfilesByTestIds: builder.mutation<
+      Record<number, any[]>,
+      number[]
+    >({
+      query: testIds => ({
+        url: '/api/setup/diagnostic-test-profiles/by-test-ids/for-lab',
+        method: 'POST',
+        body: testIds
+      })
+    }),
+
+
     // Toggle active status
     toggleDiagnosticTestActive: builder.mutation({
       query: id => ({
@@ -117,5 +130,7 @@ export const {
   useUpdateDiagnosticTestProfileMutation,
   useDeleteDiagnosticTestProfileMutation,
   useDeleteDiagnosticTestProfilesByTestIdMutation,
-  useToggleDiagnosticTestActiveMutation
+  useToggleDiagnosticTestActiveMutation,
+  useGetActiveLabProfilesByTestIdsMutation // 👈 NEW
 } = diagnosticTestProfileService;
+

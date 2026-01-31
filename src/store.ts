@@ -122,7 +122,8 @@ import { diagnosticOrderTestCollectedSampleService } from './services/setup/diag
 import { diagnosticOrderTestTechnicianNoteService } from './services/diagnosic-order/diagnosticOrderTestTechnicianNoteService';
 import { diagnosticTestRequestService } from './services/diagnosic-order/diagnosticTestRequestService';
 import { externalTestService } from './services/diagnosic-order/externalTestService';
-
+import { diagnosticOrderTestResultService } from './services/setup/diagnosticTest/diagnosticOrderTestResultService';
+import { diagnosticOrderTestResultTechnicianNoteService } from './services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -351,6 +352,8 @@ export const store = configureStore({
     [diagnosticOrderTestTechnicianNoteService.reducerPath]: diagnosticOrderTestTechnicianNoteService.reducer,
     [diagnosticTestRequestService.reducerPath]: diagnosticTestRequestService.reducer,
     [externalTestService.reducerPath]: externalTestService.reducer,
+    [diagnosticOrderTestResultService.reducerPath]: diagnosticOrderTestResultService.reducer,
+    [diagnosticOrderTestResultTechnicianNoteService.reducerPath]: diagnosticOrderTestResultTechnicianNoteService.reducer,
 
   },
 
@@ -476,6 +479,8 @@ export const store = configureStore({
       diagnosticOrderTestTechnicianNoteService.middleware,
       diagnosticTestRequestService.middleware,
       externalTestService.middleware,
+      diagnosticOrderTestResultService.middleware,
+      diagnosticOrderTestResultTechnicianNoteService.middleware,
     ])
 });
 

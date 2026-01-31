@@ -24,7 +24,7 @@ import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faComment, faRightFromBracket, faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faPlusCircle, faRightFromBracket, faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 import {
@@ -43,6 +43,7 @@ import {
   useGetExternalTestByTestIdQuery
 } from '@/services/diagnosic-order/externalTestService';
 import MyButton from '@/components/MyButton/MyButton';
+import AddResultModal from './AddResultModal';
 
 type Props = {
   order: any;
@@ -81,9 +82,10 @@ const Tests = forwardRef<any, Props>(
 
     const [selectedRows, setSelectedRows] = useState<(number | string)[]>([]);
     const [openExternalLabModal, setOpenExternalLabModal] = useState(false);
-
+    const [localHasNoteIds, setLocalHasNoteIds] = useState<(number | string)[]>([]);
     const [openSingleSampleModal, setOpenSingleSampleModal] = useState(false);
     const [openBulkSampleModal, setOpenBulkSampleModal] = useState(false);
+    const [openAddResultModal, setOpenAddResultModal] = useState(false);
     const [openRejectedModal, setOpenRejectedModal] = useState(false);
     const [openNoteModal, setOpenNoteModal] = useState(false);
     const [openBulkRejectModal, setOpenBulkRejectModal] = useState(false);
@@ -139,11 +141,18 @@ const Tests = forwardRef<any, Props>(
         }).unwrap();
 
         dispatch(notify({ msg: 'Note sent successfully', sev: 'success' }));
+
+        // 🔵 update locally
+        setLocalHasNoteIds(prev =>
+          prev.includes(test.id) ? prev : [...prev, test.id]
+        );
+
         refetchNotes();
       } catch (e) {
         dispatch(notify({ msg: 'Send failed', sev: 'error' }));
       }
     };
+
 
     const {
       data: testsResponse,
@@ -208,6 +217,20 @@ const Tests = forwardRef<any, Props>(
         };
       });
     }, [orderTests, testsMap, labByTestIdMap]);
+
+    const acceptedStatuses = [
+      DiagnosticOrderTestStatus.ACCEPTED,
+      DiagnosticOrderTestStatus.PARTIALLY
+    ];
+
+    const acceptedTests = useMemo(
+      () =>
+        normalizedOrderTests.filter(t =>
+          acceptedStatuses.includes(t.processingStatus)
+        ),
+      [normalizedOrderTests]
+    );
+
 
     const isTestSelected = (rowData: any) => {
       if (rowData && test && rowData.id === test.id) return 'selected-row';
@@ -328,10 +351,12 @@ const Tests = forwardRef<any, Props>(
       rowData: any;
       onClick: () => void;
     }) => {
-      const { data: externalTest, isFetching } =
-        useGetExternalTestByTestIdQuery(rowData.id, {
-          skip: !rowData?.id
-        });
+      const isExternal = rowData.orderType === 'EXTERNAL';
+
+      const { data: externalTest } =
+        useGetExternalTestByTestIdQuery(
+          isExternal ? rowData.id : skipToken
+        );
 
       const isRejected =
         rowData.status === DiagnosticOrderTestStatus.REJECTED ||
@@ -339,7 +364,7 @@ const Tests = forwardRef<any, Props>(
 
       const isSentToExternal = !!externalTest?.id;
 
-      const isDisabled = isRejected || isSentToExternal;
+      const isDisabled = isRejected || isSentToExternal || !isExternal;
       const color = isRejected
         ? 'gray'
         : isSentToExternal
@@ -352,11 +377,13 @@ const Tests = forwardRef<any, Props>(
           trigger="hover"
           speaker={
             <Tooltip>
-              {isRejected
-                ? 'Rejected test cannot be sent to external lab'
-                : isSentToExternal
-                  ? 'Sent to External Lab'
-                  : 'Send to External Lab'}
+              {!isExternal
+                ? 'Internal Lab Test'
+                : isRejected
+                  ? 'Rejected test cannot be sent'
+                  : isSentToExternal
+                    ? 'Sent to External Lab'
+                    : 'Send to External Lab'}
             </Tooltip>
           }
         >
@@ -367,7 +394,7 @@ const Tests = forwardRef<any, Props>(
               marginRight: 10,
               cursor: isDisabled ? 'not-allowed' : 'pointer',
               color,
-              opacity: isDisabled ? 0.5 : 1
+              opacity: isDisabled ? 0.4 : 1
             }}
             onClick={() => {
               if (isDisabled) return;
@@ -377,6 +404,103 @@ const Tests = forwardRef<any, Props>(
         </Whisper>
       );
     };
+
+
+    const handleBulkAccept = async () => {
+      if (!selectedRows.length) {
+        dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
+        return;
+      }
+      const eligibleIds = normalizedOrderTests
+        .filter(
+          t =>
+            selectedRows.includes(t.id) &&
+            t.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED
+        )
+        .map(t => t.id);
+
+      if (!eligibleIds.length) {
+        dispatch(
+          notify({
+            msg: 'Cannot Accept This Test',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      try {
+        await bulkAccept({ ids: eligibleIds }).unwrap();
+
+        dispatch(
+          notify({
+            msg: `Accepted ${eligibleIds.length} tests successfully`,
+            sev: 'success'
+          })
+        );
+
+        setSelectedRows([]);
+        await refetchAllLabData();
+      } catch (e) {
+        dispatch(notify({ msg: 'Bulk accept failed', sev: 'error' }));
+      }
+    };
+
+    const handleBulkReject = async () => {
+      if (!selectedRows.length) {
+        dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
+        return;
+      }
+
+      const eligibleIds = normalizedOrderTests
+        .filter(
+          t =>
+            selectedRows.includes(t.id) &&
+            t.status !== DiagnosticOrderTestStatus.APPROVED &&
+            t.status !== DiagnosticOrderTestStatus.REJECTED
+        )
+        .map(t => t.id);
+
+      if (!eligibleIds.length) {
+        dispatch(
+          notify({
+            msg: 'No tests eligible for bulk reject',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      try {
+        await bulkReject({
+          ids: eligibleIds,
+          rejectedReason: bulkRejectReason
+        }).unwrap();
+
+        dispatch(
+          notify({
+            msg: `Rejected ${eligibleIds.length} tests successfully`,
+            sev: 'success'
+          })
+        );
+
+        setSelectedRows([]);
+        setBulkRejectReason('');
+        setOpenBulkRejectModal(false);
+        await refetchAllLabData();
+      } catch (e) {
+        dispatch(notify({ msg: 'Bulk reject failed', sev: 'error' }));
+      }
+    };
+
+    const hasBulkAcceptEligible = useMemo(() => {
+      return normalizedOrderTests.some(
+        t =>
+          selectedRows.includes(t.id) &&
+          t.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED
+      );
+    }, [normalizedOrderTests, selectedRows]);
+
 
     const columns = [
       {
@@ -403,7 +527,7 @@ const Tests = forwardRef<any, Props>(
         width: 120,
         align: 'center',
         render: (rowData: any) =>
-        resolveCategoryLabel(rowData.lab?.category)
+          resolveCategoryLabel(rowData.lab?.category)
       },
       {
         key: 'testName',
@@ -467,17 +591,24 @@ const Tests = forwardRef<any, Props>(
         width: 60,
         align: 'center',
         render: (rowData: any) => {
+          const hasNote =
+            rowData.hasNote === true ||
+            localHasNoteIds.includes(rowData.id);
+
           return (
             <HStack spacing={10}>
               <FontAwesomeIcon
                 icon={faComment}
-                style={{ fontSize: '1em', cursor: 'pointer' }}
+                style={{
+                  fontSize: '1em',
+                  cursor: 'pointer',
+                  color: hasNote ? '#1675e0' : 'inherit'
+                }}
                 onClick={() => {
                   setTest(rowData);
                   setOpenNoteModal(true);
                 }}
               />
-
             </HStack>
           );
         }
@@ -710,6 +841,22 @@ const Tests = forwardRef<any, Props>(
         <Whisper
           placement="top"
           trigger="hover"
+          speaker={<Tooltip>Add Result</Tooltip>}
+        >
+          <span style={{ display: 'inline-block' }}>
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faPlusCircle} />}
+              onClick={() => setOpenAddResultModal(true)}
+            >
+              Add Result
+            </MyButton>
+
+          </span>
+        </Whisper>
+
+        <Whisper
+          placement="top"
+          trigger="hover"
           speaker={<Tooltip>Collect Sample</Tooltip>}
         >
           <span style={{ display: 'inline-block' }}>
@@ -769,106 +916,11 @@ const Tests = forwardRef<any, Props>(
 
           searchable={false}
         />
-<div className='test-table-buttons-main-container'>
-        {tablebuttons}
-</div>
+        <div className='test-table-buttons-main-container'>
+          {tablebuttons}
+        </div>
       </Form>
     );
-
-    const handleBulkAccept = async () => {
-      if (!selectedRows.length) {
-        dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
-        return;
-      }
-      const eligibleIds = normalizedOrderTests
-        .filter(
-          t =>
-            selectedRows.includes(t.id) &&
-            t.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED
-        )
-        .map(t => t.id);
-
-      if (!eligibleIds.length) {
-        dispatch(
-          notify({
-            msg: 'Cannot Accept This Test',
-            sev: 'warning'
-          })
-        );
-        return;
-      }
-
-      try {
-        await bulkAccept({ ids: eligibleIds }).unwrap();
-
-        dispatch(
-          notify({
-            msg: `Accepted ${eligibleIds.length} tests successfully`,
-            sev: 'success'
-          })
-        );
-
-        setSelectedRows([]);
-        await refetchAllLabData();
-      } catch (e) {
-        dispatch(notify({ msg: 'Bulk accept failed', sev: 'error' }));
-      }
-    };
-
-    const handleBulkReject = async () => {
-      if (!selectedRows.length) {
-        dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
-        return;
-      }
-
-      const eligibleIds = normalizedOrderTests
-        .filter(
-          t =>
-            selectedRows.includes(t.id) &&
-            t.status !== DiagnosticOrderTestStatus.APPROVED &&
-            t.status !== DiagnosticOrderTestStatus.REJECTED
-        )
-        .map(t => t.id);
-
-      if (!eligibleIds.length) {
-        dispatch(
-          notify({
-            msg: 'No tests eligible for bulk reject',
-            sev: 'warning'
-          })
-        );
-        return;
-      }
-
-      try {
-        await bulkReject({
-          ids: eligibleIds,
-          rejectedReason: bulkRejectReason
-        }).unwrap();
-
-        dispatch(
-          notify({
-            msg: `Rejected ${eligibleIds.length} tests successfully`,
-            sev: 'success'
-          })
-        );
-
-        setSelectedRows([]);
-        setBulkRejectReason('');
-        setOpenBulkRejectModal(false);
-        await refetchAllLabData();
-      } catch (e) {
-        dispatch(notify({ msg: 'Bulk reject failed', sev: 'error' }));
-      }
-    };
-
-    const hasBulkAcceptEligible = useMemo(() => {
-      return normalizedOrderTests.some(
-        t =>
-          selectedRows.includes(t.id) &&
-          t.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED
-      );
-    }, [normalizedOrderTests, selectedRows]);
 
 
 
@@ -911,25 +963,25 @@ const Tests = forwardRef<any, Props>(
     return (
       <Panel ref={ref} defaultExpanded>
 
-      <div style={{ minHeight: 600 }}>
-        <MyTable
-          filters={filters()}
-          columns={columns}
-          height={500}
-          data={pagedData}
-          loading={loading || isTestsFetching}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={effectiveTotalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortColumn={sortColumn}
-          sortType={sortType}
-          onSortChange={handleSortChange}
-          onRowClick={rowData => setTest(rowData)}
-          rowClassName={isTestSelected}
-        />
-      </div>
+        <div style={{ minHeight: 600 }}>
+          <MyTable
+            filters={filters()}
+            columns={columns}
+            height={500}
+            data={pagedData}
+            loading={loading || isTestsFetching}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={effectiveTotalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            sortColumn={sortColumn}
+            sortType={sortType}
+            onSortChange={handleSortChange}
+            onRowClick={rowData => setTest(rowData)}
+            rowClassName={isTestSelected}
+          />
+        </div>
 
         <SampleModal
           open={openSingleSampleModal}
@@ -991,6 +1043,15 @@ const Tests = forwardRef<any, Props>(
           setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
           fieldLabel="Reject Reason"
           title="Bulk Reject"
+        />
+
+        <AddResultModal
+          open={openAddResultModal}
+          setOpen={setOpenAddResultModal}
+          acceptedTests={acceptedTests}
+          onSuccess={async () => {
+            await refetchAllLabData();
+          }}
         />
 
       </Panel>

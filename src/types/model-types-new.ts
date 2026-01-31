@@ -1401,10 +1401,12 @@ export enum DiagnosticOrderTestStatus {
   SUBMITTED = 'SUBMITTED',
   ACCEPTED = 'ACCEPTED',
   REJECTED = 'REJECTED',
-  READY = 'READY',
+  RESULT_READY = 'RESULT_READY',
   SAMPLE_COLLECTED = 'SAMPLE_COLLECTED',
-  APPROVED = 'APPROVED',
+  RESULT_APPROVED = 'RESULT_APPROVED',
   CANCELLED = 'CANCELLED',
+  PARTIALLY = 'PARTIALLY',
+  RESULT_REJECTED = 'RESULT_REJECTED',
 }
 
 export enum TestType {
@@ -1562,4 +1564,102 @@ export interface BulkIdsDTO {
 export interface BulkRejectDTO {
   ids: number[];
   rejectedReason: string;
+}
+
+
+export interface DiagnosticOrderTestResultCreateDTO {
+  orderId: number;
+  orderTestId: number;
+  profileTestId?: number | null;
+
+  resultValueNumber?: number | null;
+  resultValueText?: string | null;
+
+  marker?: string | null;
+  normalRangeValue?: string | null;
+}
+
+export interface DiagnosticOrderTestResultUpdateDTO {
+  id: number;
+
+  orderId: number;
+  orderTestId: number;
+  profileTestId?: number | null;
+
+  resultValueNumber?: number | null;
+  resultValueText?: string | null;
+
+  marker?: string | null;
+  normalRangeValue?: string | null;
+}
+
+export interface DiagnosticOrderTestResultRejectDTO {
+  rejectedReason: string;
+}
+
+/* ================= Diagnostic Order Test Result ================= */
+
+export interface DiagnosticOrderTestResultResponseVM {
+  id: number;
+
+  orderId: number;
+  orderTestId: number;
+  profileTestId?: number | null;
+
+  resultValueNumber?: number | null;
+  resultValueText?: string | null;
+
+  marker?: string | null;
+  viewMarker?: string | null;          // محسوب في controller
+  normalRangeValue?: string | null;
+  viewNormalRange?: string | null;     // محسوب في controller
+
+  processingStatus?: DiagnosticStatus;
+
+  approvedBy?: string | null;
+  approvedDate?: string | null;
+
+  rejectedBy?: string | null;
+  rejectedDate?: string | null;
+  rejectedReason?: string | null;
+
+  reviewBy?: string | null;
+  reviewDate?: string | null;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface FilledProfileTestIdsParams {
+  orderTestIds: number[];
+}
+
+/* ================= Diagnostic Order Test Result Technician Notes ================= */
+
+export interface DiagnosticOrderTestResultTechnicianNote {
+  id?: number;
+  orderId?: number;
+  orderTestId?: number;
+  resultId?: number;
+  note?: string;
+  createdBy?: string;
+  createdDate?: string;
+}
+
+export interface DiagnosticOrderTestResultTechnicianNoteCreateDTO {
+  orderId: number;
+  orderTestId: number;
+  note: string;
+}
+
+export interface LabResultLogResponseVM {
+  id: number;
+  resultId: number;
+  action: string;
+  oldValue?: string;
+  newValue?: string;
+  resultDate: string;
+  createdBy?: string;
 }

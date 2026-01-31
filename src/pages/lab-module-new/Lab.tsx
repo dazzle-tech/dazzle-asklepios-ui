@@ -163,21 +163,40 @@ const Lab = () => {
       { key: DiagnosticOrderTestStatus.SAMPLE_COLLECTED, value: 'Sample Collected' },
       { key: DiagnosticOrderTestStatus.ACCEPTED, value: 'Accepted' },
       { key: DiagnosticOrderTestStatus.REJECTED, value: 'Rejected', isError: true },
-      { key: DiagnosticOrderTestStatus.READY, value: 'Result Ready' },
-      { key: DiagnosticOrderTestStatus.APPROVED, value: 'Result Approved' }
+      { key: DiagnosticOrderTestStatus.RESULT_READY, value: 'Result Ready' },
+      { key: DiagnosticOrderTestStatus.RESULT_APPROVED, value: 'Result Approved' },
+      { key: DiagnosticOrderTestStatus.RESULT_REJECTED, value: 'Result Rejected', isError: true }
     ];
 
     const stepsDataComputed = useMemo(() => {
       return stepsData.filter(step => {
+
+        /* ===== Accepted / Rejected ===== */
         if (
           step.key === DiagnosticOrderTestStatus.REJECTED &&
           test?.processingStatus !== DiagnosticOrderTestStatus.REJECTED
         ) {
           return false;
         }
+
         if (
           step.key === DiagnosticOrderTestStatus.ACCEPTED &&
           test?.processingStatus === DiagnosticOrderTestStatus.REJECTED
+        ) {
+          return false;
+        }
+
+        /* ===== Result Approved / Result Rejected ===== */
+        if (
+          step.key === DiagnosticOrderTestStatus.RESULT_REJECTED &&
+          test?.processingStatus !== DiagnosticOrderTestStatus.RESULT_REJECTED
+        ) {
+          return false;
+        }
+
+        if (
+          step.key === DiagnosticOrderTestStatus.RESULT_APPROVED &&
+          test?.processingStatus === DiagnosticOrderTestStatus.RESULT_REJECTED
         ) {
           return false;
         }
@@ -325,23 +344,11 @@ useEffect(() => {
 
                 </Tabs.Tab>
                   <Tabs.Tab eventKey="2" title="Results">
-                    {/* <Result
-                      result={result}
-                      setResult={setResult}
-                      test={test}
+                    <Result
+                      order={order}
                       setTest={setTest}
-                      saveTest={saveTest}
-                      samplesList={samplesList}
-
-                      patient={patient}
-                      labDetails={labDetails}
-                      fecthSample={fecthSample}
-                      fetchTest={fetchTest}
-                      refetchTest={refetchTest}
-                      listResultResponse={listResultResponse}
-                      setListResultResponse={setListResultResponse}
-                    /> */}
-
+                      loading={globalLoading}
+                    />
                 </Tabs.Tab>
               </Tabs>
 

@@ -1220,3 +1220,97 @@ export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
   cancellationReason: undefined,
   cancelledBy: undefined,
 };
+
+export const newDiagnosticOrderTestResultCreate: modelTypes.DiagnosticOrderTestResultCreateDTO = {
+  orderId: 0,
+  orderTestId: 0,
+  profileTestId: null,
+
+  resultValueNumber: null,
+  resultValueText: null,
+
+  marker: null,
+  normalRangeValue: null
+};
+
+export const newDiagnosticOrderTestResultUpdate: modelTypes.DiagnosticOrderTestResultUpdateDTO = {
+  id: 0,
+
+  orderId: 0,
+  orderTestId: 0,
+  profileTestId: null,
+
+  resultValueNumber: null,
+  resultValueText: null,
+
+  marker: null,
+  normalRangeValue: null
+};
+
+export const newDiagnosticOrderTestResultReject: modelTypes.DiagnosticOrderTestResultRejectDTO = {
+  rejectedReason: ''
+};
+
+export const newDiagnosticOrderTestResultResponse: modelTypes.DiagnosticOrderTestResultResponseVM = {
+  id: 0,
+
+  orderId: 0,
+  orderTestId: 0,
+  profileTestId: null,
+
+  resultValueNumber: null,
+  resultValueText: null,
+
+  marker: null,
+  viewMarker: null,
+  normalRangeValue: null,
+  viewNormalRange: null,
+
+  processingStatus: null,
+
+  approvedBy: null,
+  approvedDate: null,
+
+  rejectedBy: null,
+  rejectedDate: null,
+  rejectedReason: null,
+
+  reviewBy: null,
+  reviewDate: null,
+
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newFilledProfileTestIdsParams: modelTypes.FilledProfileTestIdsParams = {
+  orderTestIds: []
+};
+
+export const newDiagnosticOrderTestResultTechnicianNote
+  : modelTypes.DiagnosticOrderTestResultTechnicianNote = {
+  id: undefined,
+  orderId: undefined,
+  orderTestId: undefined,
+  resultId: undefined,
+  note: '',
+  createdBy: undefined,
+  createdDate: undefined,
+};
+
+export const newDiagnosticOrderTestResultTechnicianNoteCreateDTO: modelTypes.DiagnosticOrderTestResultTechnicianNoteCreateDTO = {
+  orderId: undefined,
+  orderTestId: undefined,
+  note: '',
+};
+
+export const newLabResultLogResponseVM: modelTypes.LabResultLogResponseVM = {
+  id: undefined,
+  resultId: undefined,
+  action: '',
+  oldValue: undefined,
+  newValue: undefined,
+  resultDate: '',
+  createdBy: undefined,
+};
