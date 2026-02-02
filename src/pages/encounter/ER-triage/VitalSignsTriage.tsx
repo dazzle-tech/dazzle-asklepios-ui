@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import '../styles.less';
+import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';

@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "@/hooks";
 import MyLabel from "@/components/MyLabel";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
-import VitalSignsTriage from "../VitalSignsTriage";
+import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
 import { notify } from "@/utils/uiReducerActions";
 import SendToModal from "./SendToModal";
 
@@ -137,6 +137,13 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
     }
   };
 
+  const toNumberOrNaN = (v: any) => {
+    const n = typeof v === "string" ? Number(v) : v;
+    return typeof n === "number" && !Number.isNaN(n) ? n : Number.NaN;
+  };
+  const patientId = toNumberOrNaN(patient?.id ?? patient?.patientId ?? patient?.key);
+  const encounterId = toNumberOrNaN(encounter?.id ?? encounter?.encounterId ?? encounter?.key);
+
   // (moved) emergency level assessment logic is now inside <EmergencyLevelAssessment />
 
   const handleCompleteEncounter = async () => {
@@ -220,11 +227,14 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
       </Row>
 
       <Row gutter={30}>
-        <VitalSignsTriage
-          patient={patient}
-          encounter={encounter}
-          setRefetchPatientObservations={setRefetchPatientObservations}
-        />
+        {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+          <VitalSigns
+            patientId={patientId}
+            encounterId={encounterId}
+            isTriage
+            title="Vital Signs"
+          />
+        )}
       </Row>
 
       <Row gutter={30}>

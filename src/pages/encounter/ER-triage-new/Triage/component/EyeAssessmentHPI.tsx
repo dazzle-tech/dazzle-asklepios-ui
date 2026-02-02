@@ -8,7 +8,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useUpdateEmergencyTriageEyeAssessmentMutation } from '@/services/encounters/er-triage/emergencyTriageService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import HpiHistorySummary from './HpiHistorySummary';
+import PatientHistorySummary from '@/pages/encounter/encounter-component/patient-history/MedicalHistory/PatientHistorySummary/PatientHistorySummary';
 
 type EyeAssessmentHPIProps = {
   triageId?: number | string | null;
@@ -172,7 +172,7 @@ const EyeAssessmentHPI = ({
 
           <Row>
             <Col md={24}>
-              <HpiHistorySummary patient={patient} encounter={encounter} hpiText={triage?.hpiAdditionalNotes ?? ''} />
+              <PatientHistorySummary patient={patient} encounter={encounter} />
             </Col>
           </Row>
         </>

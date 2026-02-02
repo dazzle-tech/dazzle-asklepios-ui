@@ -91,12 +91,12 @@ import VaccinationTab from './pages/encounter/encounter-pre-observations-new/vac
 import Warning from './pages/encounter/encounter-pre-observations-new/warning';
 import EncounterRegistration from './pages/encounter/encounter-registration';
 import Encounter from './pages/encounter/encounter-screen';
-import ERDashboards from './pages/encounter/ER-triage/Er-dashboard/ERDashboard';
-import ERStartTriage from './pages/encounter/ER-triage/Triage/ERStartTriage';
-import ERTabsDepartmentAndWaitingList from './pages/encounter/ER-triage/ERTabsDepartmentAndWaitingList';
-import ERTriage from './pages/encounter/ER-triage/Triage/ERTriage';
-import QuickVisit from './pages/encounter/ER-triage/Triage/QuickVisit';
-import ViewTriage from './pages/encounter/ER-triage/Triage/ViewTriage';
+import ERDashboardsNew from './pages/encounter/ER-triage-new/Er-dashboard/ERDashboard';
+import ERStartTriageNew from './pages/encounter/ER-triage-new/Triage/ERStartTriage';
+import ERTabsDepartmentAndWaitingListNew from './pages/encounter/ER-triage-new/ERTabsDepartmentAndWaitingList';
+import ERTriageNew from './pages/encounter/ER-triage-new/Triage/ERTriage';
+import QuickVisitNew from './pages/encounter/ER-triage-new/Triage/QuickVisit';
+import ViewTriageNew from './pages/encounter/ER-triage-new/Triage/ViewTriage';
 import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
 import StartTeleConsultation from './pages/encounter/tele-consultation-screen/start-tele-consultation';
 import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
@@ -489,12 +489,12 @@ useEffect(() => {
               <Route path="patient-old/patient-emr" element={<PatientEMRLegacy />} />
               <Route path="patient-old/patient-list" element={<PatientListLegacy />} />
               <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
-              <Route path="ER-start-triage" element={<ERStartTriage />} />
-              <Route path="ER-triage" element={<ERTriage />} />
-              <Route path="ER-dashboard" element={<ERDashboards />} />
-              <Route path="ER-department" element={<ERTabsDepartmentAndWaitingList />} />
-              <Route path="view-triage" element={<ViewTriage />} />
-              <Route path="quick-visit" element={<QuickVisit />} />
+              <Route path="ER-start-triage" element={<ERStartTriageNew />} />
+              <Route path="ER-triage" element={<ERTriageNew />} />
+              <Route path="ER-dashboard" element={<ERDashboardsNew />} />
+              <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
+              <Route path="view-triage" element={<ViewTriageNew />} />
+              <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
               <Route path="country-setup" element={<CountrySetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />

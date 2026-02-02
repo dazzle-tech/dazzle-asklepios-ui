@@ -12,7 +12,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { useEnumOptions } from '@/services/enumsApi';
 
 import EmergencyLevelAssessment from './component/EmergencyLevelAssessment';
-import VitalSignsTriage from './VitalSignsTriage';
+import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 import GeneralAssessmentTriage from './component/GeneralAssessmentTriage';
 import ChiefComplainTriage from './component/ChiefComplainTriage';
 import EyeAssessmentHPI from './component/EyeAssessmentHPI';
@@ -80,6 +80,7 @@ const ViewTriage = () => {
   };
 
   const encounterId = toNumberOrNaN(propsData?.encounter?.id ?? propsData?.encounter?.key);
+  const patientId = toNumberOrNaN(patient?.id ?? patient?.patientId ?? patient?.key);
 
   const { data: emergencyTriageNew } = useGetLatestEmergencyTriageByEncounterQuery(encounterId as any, {
     skip: !encounterId || Number.isNaN(encounterId)
@@ -144,12 +145,15 @@ const ViewTriage = () => {
         </Row>
 
         <Row gutter={30}>
-          <VitalSignsTriage
-            patient={patient}
-            encounter={encounter}
-            setRefetchPatientObservations={setRefetchPatientObservations}
-            readOnly
-          />
+          {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+            <VitalSigns
+              patientId={patientId}
+              encounterId={encounterId}
+              isTriage
+              disabled
+              title="Vital Signs"
+            />
+          )}
         </Row>
 
         <Row gutter={30}>
