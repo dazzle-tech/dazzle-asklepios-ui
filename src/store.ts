@@ -116,6 +116,11 @@ import { clinicalSummaryService } from './services/ai-services/clinicalSummarySe
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 import { patientReportService } from './services/patientReportService';
+import { vitalSignsService } from '@/services/medicalSheets/observations/vitalSignsService';
+import { bodyMeasurementsService } from './services/medicalSheets/observations/bodyMeasurementsService';
+import { patientObservationsComplaintsService } from './services/medicalSheets/observations/patientObservationsComplaintsService'; 
+import { painAssessmentService } from './services/medicalSheets/observations/painAssessmentService'; 
+import { additionalMeasurementsService } from './services/medicalSheets/observations/additionalMeasurementsService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -336,6 +341,13 @@ export const store = configureStore({
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]: medicationTestOrdersValidationService.reducer,
     [patientReportService.reducerPath]: patientReportService.reducer,
+
+    [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+
+    [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
+    [patientObservationsComplaintsService.reducerPath]: patientObservationsComplaintsService.reducer,
+    [painAssessmentService.reducerPath]: painAssessmentService.reducer,
+    [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -454,7 +466,11 @@ export const store = configureStore({
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
       patientReportService.middleware,
-
+      vitalSignsService.middleware,
+      bodyMeasurementsService.middleware,
+      patientObservationsComplaintsService.middleware,
+      painAssessmentService.middleware,
+      additionalMeasurementsService.middleware,
     ])
 });
 
