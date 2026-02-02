@@ -1,5 +1,6 @@
 import { tr } from "date-fns/locale";
 import * as modelTypes from "./model-types-new";
+import { VitalSigns } from "./model-types-new";
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
   login: '',
@@ -1202,3 +1203,162 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   departmentId: null,
   formJson: null
 }
+
+export const newVitalSigns: VitalSigns = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  bloodPressureSystolic: null,
+  bloodPressureDiastolic: null,
+  measurementSite: null,
+
+  heartRate: null,
+  temperature: null,
+  oxygenSaturation: null,
+  respiratoryRate: null,
+
+  isTriage: false,
+  isActive: true,
+
+  notes: null,
+
+  createdDate: null,
+  lastModifiedDate: null,
+};
+export const newBodyMeasurements: modelTypes.BodyMeasurements = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  weight: null,
+  height: null,
+  headCircumference: null,
+
+  isActive: true,
+
+  createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newPatientObservationsComplaints: modelTypes.PatientObservationsComplaints = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  reasonOfVisit: null,
+  latestFunctionalStatus: null,
+  latestCognitiveCheck: null,
+
+  isActive: true,
+  functionalStatus: null,
+  cognitiveCheck: null,
+  createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newPainAssessment: modelTypes.PainAssessment = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  painDegree: null,
+  painLevel: null,
+  painDescription: null,
+
+  isActive: true,
+
+  createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newAdditionalMeasurements: modelTypes.AdditionalMeasurements = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  ageGroup: "",
+
+  hearingTest: null,
+
+  dehydration: false,
+  nasalFlaring: false,
+  responseToLight: false,
+  pupilResponse: false,
+  abilityToFollowTarget: false,
+  colorTesting: false,
+
+  fallRisk: false,
+  visionProblemsAffectingFunction: false,
+  hearingProblemsAffectingFunction: false,
+
+  details: null,
+  actionToTake: null,
+
+  isActive: true,
+
+  createdDate: null,
+  lastModifiedDate: null
+};
+export const newPatient: modelTypes.Patient = {
+  id: undefined,
+  mrn: '',
+
+  firstName: '',
+  secondName: '',
+  thirdName: '',
+  lastName: '',
+
+  sexAtBirth: null,
+  dateOfBirth: null,
+
+  patientClasses: '',
+  isPrivatePatient: false,
+
+  firstNameSecondaryLang: '',
+  secondNameSecondaryLang: '',
+  thirdNameSecondaryLang: '',
+  lastNameSecondaryLang: '',
+
+  primaryMobileNumber: '',
+  receiveSms: false,
+  secondMobileNumber: '',
+  homePhone: '',
+  workPhone: '',
+  email: '',
+  receiveEmail: false,
+  preferredWayOfContact: null,
+
+  nativeLanguage: '',
+  emergencyContactName: '',
+  emergencyContactRelation: '',
+  emergencyContactPhone: '',
+
+  role: '',
+  maritalStatus: '',
+  nationality: '',
+  religion: '',
+  ethnicity: '',
+  occupation: '',
+  responsibleParty: '',
+  educationalLevel: '',
+
+  previousId: '',
+  archivingNumber: '',
+
+  details: '',
+  isUnknown: false,
+
+  isVerified: false,
+  isCompletedPatient: false,
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
