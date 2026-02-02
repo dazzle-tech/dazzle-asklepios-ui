@@ -158,7 +158,6 @@ const AddEditDiagnosticTest = ({
           testDurationTime: diagnosticTestLaboratory.testDurationTime,
           timeUnit: diagnosticTestLaboratory.timeUnit,
           resultUnit: diagnosticTestLaboratory.resultUnit,
-          isProfile: diagnosticTestLaboratory.isProfile ?? false,
           sampleContainer: diagnosticTestLaboratory.sampleContainer,
           sampleVolume: diagnosticTestLaboratory.sampleVolume,
           sampleVolumeUnit: diagnosticTestLaboratory.sampleVolumeUnit,

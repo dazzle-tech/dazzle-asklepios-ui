@@ -120,9 +120,7 @@ const DiagnosticsTest = () => {
         price: diagnosticsTest.price,
         currency: diagnosticsTest.currency,
         specialNotes: diagnosticsTest.specialNotes,
-
         isActive: true,
-        isProfile: diagnosticsTest.isProfile ?? false,
         appointable: diagnosticsTest.appointable ?? false,
 
         defaultProfileResultType:
@@ -172,7 +170,6 @@ const DiagnosticsTest = () => {
         currency: diagnosticsTest.currency,
         specialNotes: diagnosticsTest.specialNotes,
         isActive: diagnosticsTest.isActive,
-        isProfile: diagnosticsTest.isProfile,
         appointable: diagnosticsTest.appointable,
         defaultProfileResultType:
           diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultType : null,

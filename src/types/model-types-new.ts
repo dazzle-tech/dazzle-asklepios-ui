@@ -388,7 +388,6 @@ export interface DiagnosticTest {
   specialNotes?: string;
 
   isActive?: boolean;
-  isProfile?: boolean;
   appointable?: boolean;
 
   defaultProfileResultType?: string;
@@ -436,7 +435,6 @@ export interface Laboratory {
   testDurationTime?: number;
   timeUnit?: string;
   resultUnit?: string;
-  isProfile?: boolean;
   sampleContainer?: string;
   sampleVolume?: number;
   sampleVolumeUnit?: string;
@@ -598,10 +596,7 @@ export interface DiagnosticTestNormalRange {
   criticalValue?: boolean;
   criticalValueLessThan?: number;
   criticalValueMoreThan?: number;
-
   profileTestId?: number | null;
-  isProfile?: boolean;
-
   lovKeys?: string[];
 }
 

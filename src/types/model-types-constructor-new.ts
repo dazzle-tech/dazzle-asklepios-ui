@@ -289,7 +289,6 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   specialNotes: '',
 
   isActive: true,
-  isProfile: false,
   appointable: false,
 
   defaultProfileResultType: '',
@@ -337,7 +336,6 @@ export const newLaboratory: modelTypes.Laboratory = {
   testDurationTime: undefined,
   timeUnit: undefined,
   resultUnit: undefined,
-  isProfile: false,
   sampleContainer: undefined,
   sampleVolume: undefined,
   sampleVolumeUnit: undefined,
@@ -499,7 +497,6 @@ export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange 
   criticalValueMoreThan: undefined,
 
   profileTestId: undefined,
-  isProfile: false,
 
   lovKeys: []
 };
