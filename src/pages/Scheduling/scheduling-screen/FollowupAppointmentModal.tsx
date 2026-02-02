@@ -1,4 +1,4 @@
-import AdvancedModal from '@/components/AdvancedModal';
+﻿import AdvancedModal from '@/components/AdvancedModal';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyCard from '@/components/MyCard';
@@ -46,7 +46,7 @@ import {
   Tag
 } from 'rsuite';
 import './AppoitmentModal.less';
-import SliceBox from './SliceBox';
+// Note: Follow Up modal does not show schedule UI, so no SliceBox needed.
 import SectionContainer from '@/components/SectionsoContainer';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import { useEnumOptions } from '@/services/enumsApi';
@@ -55,21 +55,11 @@ import PatientCardWithPicture from '@/components/PatientCard/PatientCardWithPict
 import { Box, Skeleton } from '@mui/material';
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
-type AppointmentModalProps = {
-  isOpen: any;
-  onClose: any;
-  resourceType: any;
-  facility: any;
-  onSave: any;
-  appointmentData: any;
-  showOnly: any;
-  from: any;
-  selectedSlot: any;
-  forceStatus?: any;
-  onSwitchToFollowUp?: any;
-};
+// Follow Up visit type LOV key (fixed)
+const FOLLOW_UP_VISIT_TYPE_KEY = '2041067508470007';
+const FOLLOW_UP_VISIT_TYPE_KEY_STR = String(FOLLOW_UP_VISIT_TYPE_KEY);
 
-const AppointmentModal = ({
+const FollowupAppointmentModal = ({
   isOpen,
   onClose,
   resourceType,
@@ -78,10 +68,8 @@ const AppointmentModal = ({
   appointmentData,
   showOnly,
   from,
-  selectedSlot,
-  forceStatus,
-  onSwitchToFollowUp
-}: AppointmentModalProps) => {
+  selectedSlot
+}) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
   const [resourcesPaginationParams] = useState({
@@ -95,6 +83,20 @@ const AppointmentModal = ({
 
   const [selectedSlices, setSelectedSlices] = useState([]);
 
+  const seedFromAppointmentData = () => {
+    const seedPatient = (appointmentData as any)?.patient;
+    if (seedPatient?.key) {
+      setLocalPatient(seedPatient);
+    }
+    // Keep existing appointment fields if editing, but always enforce follow-up visit type + patientKey when available.
+    setAppointment(prev => ({
+      ...prev,
+      visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR,
+      patientKey: seedPatient?.key ?? prev?.patientKey,
+      createdBy: authSlice.user.username || '',
+    }));
+  };
+
   useEffect(() => {
     if (appointmentData) {
       // For department-based resources (CLINIC, etc.), ensure departmentKey is set from resourceKey if not present
@@ -107,14 +109,25 @@ const AppointmentModal = ({
       setAppointment({
         ...appointmentData,
         departmentKey: departmentKey,
-        createdBy: authSlice.user.username || '',
+        // Ensure Follow Up visit type is always set for this modal
+        visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR
       });
       setLocalPatient(appointmentData?.patient || newApPatient);
     } else {
-      setAppointment(newApAppointment);
+      // Ensure Follow Up visit type is always set for this modal
+      setAppointment({ ...newApAppointment, visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR } as any);
       setLocalPatient(newApPatient);
     }
   }, [appointmentData]);
+
+  // When reopening the modal, re-seed patient/visit type from `appointmentData` even if it didn't change.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (appointmentData?.patient) {
+      seedFromAppointmentData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   useEffect(() => {
     // Don't override appointment data if we're viewing an existing appointment
@@ -383,7 +396,6 @@ const AppointmentModal = ({
     }
   }, [resourcesByTypeResponse, appointment?.resourceTypeLkey]);
 
-  // ──────────────────────────── RESOURCE NAME FROM RESOURCE TABLE ────────────────────────────
   // Use resourceName directly from resource table (no need to fetch from other APIs)
   const resourcesWithNames = useMemo(() => {
     // Use resourcesByTypeResponse when resourceTypeLkey is selected, otherwise use all resources
@@ -560,6 +572,12 @@ const AppointmentModal = ({
   //     parentValueKey: localPatient.countryLkey
   //   });
   const { data: visitTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
+  // Ensure Visit Type is always set even if LOVs haven't loaded yet
+  useEffect(() => {
+    if (String(appointment?.visitTypeLkey ?? '') === FOLLOW_UP_VISIT_TYPE_KEY_STR) return;
+    setAppointment(prev => ({ ...prev, visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointment?.visitTypeLkey]);
 
   const { data: patientListResponse, isLoading: isGettingPatients, isFetching: isFetchingPatients, refetch: refetchPatients } = useGetPatientsQuery({
     ...listRequest,
@@ -602,8 +620,10 @@ const AppointmentModal = ({
 
   const handleClear = () => {
     setModalKey(prev => prev + 1);
-    setLocalPatient(newApPatient);
-    setAppointment(newApAppointment);
+    // For follow-up creation from Encounter, keep the seeded patient when clearing the form.
+    const seedPatient = (appointmentData as any)?.patient;
+    setLocalPatient(seedPatient?.key ? seedPatient : newApPatient);
+    setAppointment({ ...newApAppointment, visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR, patientKey: seedPatient?.key } as any);
     setPatientAge(null);
     setValidationResult(undefined);
     setReRenderModal(!reRenderModal);
@@ -614,10 +634,12 @@ const AppointmentModal = ({
   };
   useEffect(() => {
     calculateAge(localPatient?.dob);
-    if (from === 'Encounter') {
+    // In Follow Up flow from Encounter, the patient is provided via `appointmentData`.
+    // Don't overwrite it from the global patient slice (which may be empty or from a previous flow).
+    if (from === 'Encounter' && !appointmentData && patientSlice?.patient) {
       setLocalPatient(patientSlice.patient);
     }
-  }, [localPatient]);
+  }, [localPatient?.dob, from, appointmentData, patientSlice?.patient]);
 
   const searchCriteriaOptions = [
     { label: 'MRN', value: 'patientMrn' },
@@ -691,7 +713,7 @@ const AppointmentModal = ({
   };
 
   useEffect(() => {
-    setAppointment({ ...appointment, reminderLkey: null });
+    setAppointment(prev => ({ ...prev, reminderLkey: null }));
   }, [appointment?.isReminder]);
 
   useEffect(() => {
@@ -719,11 +741,11 @@ const AppointmentModal = ({
   }, [instructionValue]);
 
   useEffect(() => {
-    if (resourceType) setAppointment({ ...appointment, resourceTypeLkey: resourceType?.resourcesType });
+    if (resourceType) setAppointment(prev => ({ ...prev, resourceTypeLkey: resourceType?.resourcesType }));
   }, [resourceType]);
 
   useEffect(() => {
-    if (facility) setAppointment({ ...appointment, facilityKey: facility?.id || facility?.facilityKey });
+    if (facility) setAppointment(prev => ({ ...prev, facilityKey: facility?.id || facility?.facilityKey }));
   }, [facility]);
 
   useEffect(() => {
@@ -877,23 +899,7 @@ const AppointmentModal = ({
     if (!appointment?.visitTypeLkey) {
       missingFields.push('Visit Type');
     }
-    // Validate appointment date 
-    // Check if date is set via DatePicker (selectedDate) or fallback date fields
-    // Also check if time slices are selected (which implies a date context exists)
-    const hasDate = selectedDate || (selectedYear && selectedMonth !== null && selectedMonthDay);
-    const hasTimeSlices = selectedSlices && selectedSlices.length > 0;
-
-    // If time slices are selected, we can use current date as fallback, so don't require selectedDate
-    // But if no slices and no date, then date is required
-    if (!hasDate && !hasTimeSlices) {
-      missingFields.push('Appointment Date');
-    }
-
-    // Validate appointment time (need either selectedTime or selectedSlices)
-    // Only check time if we have a date or time slices are selected
-    if (hasDate && !selectedTime && !hasTimeSlices) {
-      missingFields.push('Appointment Time');
-    }
+    // Follow Up: appointment date/time are NOT mandatory in this modal.
     // Validate department for PRACTITIONER and PROCEDURE resource types
     if ((appointment?.resourceTypeLkey === '2039534205961578' ||
       appointment?.resourceTypeLkey === 'PRACTITIONER' ||
@@ -904,7 +910,7 @@ const AppointmentModal = ({
     }
 
     if (missingFields.length > 0) {
-      const lines = missingFields.map(field => `• ${field}: is required`);
+      const lines = missingFields.map(field => `${field}: is required`);
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}`,
@@ -931,10 +937,14 @@ const AppointmentModal = ({
       finalResourceKey = selectedResourceFromList?.resourceKey || selectedResourceFromList?.key;
     }
 
-    // Calculate appointmentStart and appointmentEnd
-    // Try to use selectedSlices first, fallback to selectedDate/selectedTime
-    const appointmentStart = calculateAppointmentDate(0, true);
-    const appointmentEnd = calculateAppointmentDate(selectedDuration, true);
+    const hasTimeSlices = selectedSlices && selectedSlices.length > 0;
+    const hasDate = selectedDate || (selectedYear && selectedMonth !== null && selectedMonthDay);
+    const hasTime = Boolean(selectedTime);
+    const hasAnyScheduleSelection = Boolean(hasTimeSlices || hasDate || hasTime);
+
+    // Follow Up: don't default to "now" if nothing is selected
+    const appointmentStart = hasAnyScheduleSelection ? calculateAppointmentDate(0, true) : null;
+    const appointmentEnd = hasAnyScheduleSelection ? calculateAppointmentDate(selectedDuration, true) : null;
 
     // Check if the resource type is department-based (similar to PatientQuickAppointment)
     const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(appointment?.resourceTypeLkey);
@@ -948,20 +958,29 @@ const AppointmentModal = ({
     const appointmentToSave = {
       ...appointment,
       patientKey: localPatient.key,
-      // Audit field: if backend doesn't populate created_by, ensure it's set from logged-in user
+      // Backend expects audit fields; set them from logged-in user
       createdBy:
         (typeof appointment?.createdBy === 'string' && appointment.createdBy.trim()
           ? appointment.createdBy
           : appointment?.createdBy) ?? loggedInUsername,
+      createdAt:
+        typeof appointment?.createdAt !== 'undefined' && appointment?.createdAt !== null
+          ? appointment.createdAt
+          : new Date().toISOString(),
+      updatedBy:
+        (typeof appointment?.updatedBy === 'string' && appointment.updatedBy.trim()
+          ? appointment.updatedBy
+          : appointment?.updatedBy) ?? loggedInUsername,
+      updatedAt:
+        typeof appointment?.updatedAt !== 'undefined' && appointment?.updatedAt !== null
+          ? appointment.updatedAt
+          : new Date().toISOString(),
       appointmentStart: appointmentStart,
       appointmentEnd: appointmentEnd,
       instructions: instructions,
-      // appointmentStatus: appointment.appointmentStatus ? appointment.appointmentStatus : 'New-Appointment',
-      appointmentStatus: forceStatus
-        ? forceStatus
-        : (appointment.appointmentStatus ? appointment.appointmentStatus : 'New-Appointment'),
+      appointmentStatus: appointment.appointmentStatus ? appointment.appointmentStatus : 'Pending',
       selectedSlices: selectedSlices ?? [],
-      appointmentDate: selectedDate,
+      appointmentDate: hasAnyScheduleSelection ? selectedDate : null,
       resourceKey: finalResourceKey,
       departmentKey: departmentKeyToSave ? String(departmentKeyToSave) : departmentKeyToSave,
       facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey
@@ -973,14 +992,17 @@ const AppointmentModal = ({
       saveAppointment(sanitizedAppointmentToSave)
         .unwrap()
         .then(() => {
+          dispatch(notify({ msg: 'Appointment saved successfully', sev: 'success' }));
           closeModal();
-          handleClear();
           onSave();
         })
         .catch(e => {
-          if (e.status !== 422) {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-          }
+          const msg =
+            (e?.data && (e.data.msg || e.data.message)) ||
+            (typeof e?.data === 'string' ? e.data : null) ||
+            (Array.isArray(e?.data?.errors) ? e.data.errors.join('\n') : null) ||
+            `Failed to save appointment${e?.status ? ` (status ${e.status})` : ''}`;
+          dispatch(notify({ msg, sev: 'warn' }));
         });
     } else {
       dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
@@ -1111,13 +1133,6 @@ const AppointmentModal = ({
   };
   const [openDay, setOpenDay] = useState<DayValue | null>(null);
 
-  const modalTitle = useMemo(() => {
-  if (showOnly) return 'View Appointment';
-  if (appointmentData) return 'Add/Edit Appointment';
-  return 'Add/Edit Appointment';
-}, [showOnly, appointmentData]);
-
-
   return (
     <div>
       <AdvancedModal
@@ -1133,20 +1148,12 @@ const AppointmentModal = ({
           onClose(), handleClear();
         }}
         actionButtonFunction={handleSaveAppointment}
-        footerButtons={
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <MyButton appearance="ghost" prefixIcon={() => <FontAwesomeIcon icon={faBan} />} onClick={handleClear}>
-              Clear
-            </MyButton>
-          </div>
-        }
-        // rightTitle="Add Appointment"
-        rightTitle={modalTitle}
+        rightTitle="Create Follow-up"
         rightBodyNoScroll={false}
         rightContent={
           <div className="appointment-wrapper">
-            <div className="appointment-content-wrapper">
-              <div className="left-input">
+            <div className="appointment-content-wrapper" style={{ width: '100%', maxWidth: '100%' }}>
+              <div className="left-input" style={{ width: '100%' }}>
                 {from === 'Schedule' && (
                   <Panel>
                     <div className="show-grid">
@@ -1408,12 +1415,17 @@ const AppointmentModal = ({
                                 fieldLabel="Visit Type"
                                 fieldType="select"
                                 fieldName="visitTypeLkey"
-                                selectData={visitTypeQueryResponse?.object ?? []}
+                                // Provide a fallback option so the disabled field shows a value even before LOVs load
+                                selectData={
+                                  (visitTypeQueryResponse?.object?.length
+                                    ? visitTypeQueryResponse.object.map((v: any) => ({ ...v, key: String(v?.key) }))
+                                    : [{ key: FOLLOW_UP_VISIT_TYPE_KEY_STR, lovDisplayVale: 'Follow Up' }]) as any
+                                }
                                 selectDataLabel="lovDisplayVale"
                                 selectDataValue="key"
                                 record={appointment}
                                 setRecord={setAppointment}
-                                disabled={showOnly}
+                                disabled={true}
                                 searchable={false}
                                 required
                               />
@@ -1423,345 +1435,6 @@ const AppointmentModal = ({
                       </Form>
                     }
                   />
-                </div>
-              </div>
-              <div className="right-input">
-                <div className="right-content-sections-main-conatainer">
-                  <SectionContainer
-                    title={'Schedule Appointment'}
-                    content={
-                      <>
-                        <Form layout="inline" fluid>
-                          <div className="show-grid">
-                            <div className="flex-container">
-                              <div className="input-wrapper" style={{ flex: 2, minWidth: 200 }}>
-                                <div style={{ width: '100%' }}>
-                                  <Form.ControlLabel>
-                                    <MyLabel
-                                      label="Appointment Date"
-                                      color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
-                                    />
-                                  </Form.ControlLabel>
-                                  <div style={{ marginBottom: 5 }} />
-                                  <DatePicker
-                                    value={selectedDate}
-                                    disabled={showOnly || !appointment?.facilityKey}
-                                    onChange={date => {
-                                      setSelectedDate(date);
-                                      if (date) {
-                                        // Convert JavaScript day to API day format (same as NewAvailabilityTimeModal)
-                                        const jsDay = date.getDay(); // 0=Sunday, 6=Saturday
-                                        const apiDay = String((jsDay + 1) % 7); // Convert to 0=Saturday, 1=Sunday, etc.
-                                        setOpenDay(apiDay as DayValue);
-                                      } else {
-                                        setOpenDay(null);
-                                      }
-                                    }}
-                                    shouldDisableDate={date => {
-                                      if (openDay !== null) {
-                                        // Convert JavaScript day to API day format (same as NewAvailabilityTimeModal)
-                                        const jsDay = date.getDay(); // 0=Sunday, 6=Saturday
-                                        const apiDay = String((jsDay + 1) % 7); // Convert to 0=Saturday, 1=Sunday, etc.
-                                        return apiDay !== openDay;
-                                      }
-                                      return false;
-                                    }}
-                                    size="md"
-                                    placeholder="DD/MM/YYYY"
-                                    style={{ width: '100%' }}
-                                  />
-                                </div>
-                              </div>
-                              <div className="input-wrapper" style={{ display: 'flex' }}>
-                                <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-                                  {/* Spacer so the button aligns with the DatePicker input (since DatePicker has a label above it) */}
-                                  <Form.ControlLabel style={{ visibility: 'hidden' }}>
-                                    <MyLabel
-                                      label="Appointment Date"
-                                      color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
-                                    />
-                                  </Form.ControlLabel>
-                                  <div style={{ marginBottom: 5, visibility: 'hidden' }} />
-                                  <MyButton
-                                    disabled={showOnly || !appointment?.facilityKey}
-                                    appearance="primary"
-                                    className="icon-button-primary"
-                                    style={{ width: '100%', marginTop: '0' }}
-                                  >
-                                    <FontAwesomeIcon className="icon-button-primary-icon" icon={faListCheck} />
-                                    <Translate>Add to Waiting List</Translate>
-                                  </MyButton>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </Form>
-
-                        <div style={{ width: '100%' }}>
-                          {!appointment?.facilityKey ? (
-                            <Panel bordered style={{ width: '100%' }}>
-                              <div style={{ fontSize: 13, color: 'var(--rs-text-secondary)' }}>
-                                Please select a <b>Facility</b> to view availability times.
-                              </div>
-                            </Panel>
-                          ) : (
-                            <>
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  gap: '10px',
-                                  marginBottom: '16px',
-                                  flexWrap: 'wrap',
-                                  padding: '8px',
-                                  backgroundColor: mode === 'light' ? '#f8f9fa' : '#434343ff',
-                                  borderRadius: '12px',
-                                  border: '1px solid var(--rs-border-primary)'
-                                }}
-                              >
-                                {sortedDaysWithSlices.map(day => {
-                                  const dayLabel = DAYS.find(d => d.value === day)?.label;
-
-                                  return (
-                                    <div
-                                      key={day}
-                                      onClick={() => handleDayClick(day)}
-                                      style={{
-                                        padding: '10px 16px',
-                                        borderRadius: '12px',
-                                        cursor: 'pointer',
-                                        background:
-                                          openDay === day
-                                            ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
-                                            : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                                        color: openDay === day ? 'white' : '#495057',
-                                        fontWeight: '600',
-                                        userSelect: 'none',
-                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                        border: openDay === day ? '2px solid #4caf50' : '1px solid #dee2e6',
-                                        boxShadow:
-                                          openDay === day
-                                            ? '0 4px 12px rgba(76, 175, 80, 0.25), 0 2px 4px rgba(0,0,0,0.1)'
-                                            : '0 2px 4px rgba(0,0,0,0.05)',
-                                        transform: openDay === day ? 'translateY(-1px)' : 'translateY(0)'
-                                      }}
-                                      onMouseEnter={e => {
-                                        if (openDay !== day) {
-                                          e.currentTarget.style.transform = 'translateY(-2px)';
-                                          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.12)';
-                                        }
-                                      }}
-                                      onMouseLeave={e => {
-                                        if (openDay !== day) {
-                                          e.currentTarget.style.transform = 'translateY(0)';
-                                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-                                        }
-                                      }}
-                                    >
-                                      {dayLabel}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              <SliceBox
-                                dailySlices={dailySlices}
-                                openDay={openDay}
-                                // sortedDaysWithSlices={sortedDaysWithSlices}
-                                onSelectionChange={newSelection => {
-                                  setSelectedSlices(newSelection);
-                                  // setAppointment({
-                                  //     ...appointment,
-                                  //     appointmentSlices: newSelection.map(sliceId => {
-                                  //         const [day, index] = sliceId.split('-').map(Number);
-                                  //         return dailySlices[day][index];
-                                  //     })
-                                  // });
-                                }}
-                              />
-                            </>
-                          )}
-                        </div>
-                      </>
-                    }
-                  />
-                  <SectionContainer
-                    title={'Additional Information'}
-                    content={
-                      <>
-                        <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 8 }}>
-                          <MyButton appearance={showMore ? 'ghost' : 'primary'} onClick={() => setShowMore(v => !v)}>
-                            {showMore ? 'Hide' : 'Show More'}
-                          </MyButton>
-                        </div>
-
-                        <div style={{ display: showMore ? 'block' : 'none', width: '100%' }}>
-                          <Panel style={{ width: '100%' }}>
-                            <Form layout="inline" fluid style={{ width: '100%' }}>
-                              <div style={{ width: '100%' }}>
-                                <div
-                                  style={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: 8,
-                                    minWidth: 0,
-                                  }}
-                                >
-                                  <div className="show-grid" style={{ width: '100%' }}>
-                                    <div className="flex-container" style={{ width: '100%', gap: 12 }}>
-                                      <div className="input-wrapper" style={{ flex: 9, minWidth: 0 }}>
-                                        <MyInput
-                                          disabled={showOnly}
-                                          width="100%"
-                                          vr={validationResult}
-                                          column
-                                          fieldLabel="Instructions"
-                                          fieldType="select"
-                                          fieldName="instructionsLkey"
-                                          selectData={instractionsTypeQueryResponse?.object ?? []}
-                                          selectDataLabel="lovDisplayVale"
-                                          selectDataValue="key"
-                                          record={instructionKey}
-                                          searchable={false}
-                                          setRecord={setInstructionsKey}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-
-
-                                  <div style={{ width: '100%', minWidth: 0 }}>
-                                    <Input
-                                      as="textarea"
-                                      disabled={showOnly}
-                                      onChange={setInstructions}
-                                      value={instructions}
-                                      rows={4}
-                                      style={{
-                                        width: '100%',
-                                        minWidth: 0,
-                                        height: 110,
-                                        resize: 'vertical',
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="show-grid" style={{ width: '100%' }}>
-                                <div className="flex-container" style={{ width: '100%', gap: 12 }}>
-                                  <div className="input-wrapper" style={{ flex: 1, minWidth: 0 }}>
-                                    <MyInput
-                                      disabled={showOnly}
-                                      width={'100%'}
-                                      vr={validationResult}
-                                      column
-                                      fieldLabel="Priority"
-                                      fieldType="select"
-                                      fieldName="priority"
-                                      selectData={priorityQueryResponse?.object ?? []}
-                                      selectDataLabel="lovDisplayVale"
-                                      selectDataValue="key"
-                                      record={appointment}
-                                      setRecord={setAppointment}
-                                      searchable={false}
-                                    />
-                                  </div>
-
-                                  <Button
-                                    onClick={() => setAttachmentsModalOpen(true)}
-                                    appearance="primary"
-                                    className="icon-button-primary"
-                                    disabled={!localPatient?.key || showOnly}
-                                  >
-                                    <FontAwesomeIcon className="icon-button-primary-icon" icon={faUpload} />
-                                    <Translate>Attach File</Translate>
-                                  </Button>
-
-                                  <AttachmentModal
-                                    isOpen={attachmentsModalOpen}
-                                    setIsOpen={setAttachmentsModalOpen}
-                                    attachmentSource={localPatient}
-                                    attatchmentType={'APPOINTMENT_ATTACHMENT'}
-                                    patientKey={localPatient?.key}
-                                  />
-                                </div>
-                              </div>
-
-                              {/* ===================== Consent / Reminder ===================== */}
-                              <div className="show-grid" style={{ width: '100%' }}>
-                                <div className="flex-container" style={{ width: '100%', gap: 12 }}>
-                                  <div className="input-wrapper" style={{ minWidth: 0 }}>
-                                    <MyInput
-                                      disabled={showOnly}
-                                      width={'100%'}
-                                      column
-                                      fieldLabel="Consent Form"
-                                      fieldType="checkbox"
-                                      fieldName="consentForm"
-                                      record={appointment}
-                                      setRecord={setAppointment}
-                                    />
-                                  </div>
-
-                                  <div className="input-wrapper" style={{ minWidth: 0 }}>
-                                    <MyInput
-                                      disabled={showOnly}
-                                      width={165}
-                                      column
-                                      fieldLabel="Reminder"
-                                      fieldType="checkbox"
-                                      fieldName="isReminder"
-                                      record={appointment}
-                                      setRecord={setAppointment}
-                                    />
-                                  </div>
-
-                                  <div className="input-wrapper" style={{ minWidth: 0 }}>
-                                    <MyInput
-                                      disabled={!appointment?.isReminder}
-                                      width={170}
-                                      vr={validationResult}
-                                      column
-                                      fieldLabel="Reminder Type"
-                                      fieldType="select"
-                                      fieldName="reminderLkey"
-                                      selectData={reminderTypeLovQueryResponse?.object ?? []}
-                                      selectDataLabel="lovDisplayVale"
-                                      selectDataValue="key"
-                                      searchable={false}
-                                      record={appointment}
-                                      setRecord={setAppointment}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* ===================== Notes ===================== */}
-                              <div style={{ width: '100%' }}>
-                                <div style={{ display: 'flex', width: '100%' }}>
-                                  <div className="input-wrapper" style={{ flex: 1, minWidth: 0 }}>
-                                    <MyInput
-                                      disabled={showOnly}
-                                      vr={validationResult}
-                                      fieldType="textarea"
-                                      column
-                                      fieldName="Notes"
-                                      width={'100%'}
-                                      height={70}
-                                      record={appointment}
-                                      setRecord={setAppointment}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            </Form>
-                          </Panel>
-                        </div>
-                      </>
-                    }
-                  />
-
                 </div>
               </div>
             </div>
@@ -1911,4 +1584,4 @@ const AppointmentModal = ({
   );
 };
 
-export default AppointmentModal;
+export default FollowupAppointmentModal;

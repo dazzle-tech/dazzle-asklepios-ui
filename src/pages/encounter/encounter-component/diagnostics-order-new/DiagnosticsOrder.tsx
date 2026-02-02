@@ -671,10 +671,6 @@ const DiagnosticsOrder = props => {
     setOpenToAdd(true);
   };
 
-  const handleRequestNewTestSetup = () => {
-    // Implementation for requesting new test setup
-    dispatch(notify({ msg: 'New Test Setup Request Submitted', sev: 'info' }));
-  };
 
   // Clean up the test selection and hide the preview and any associated states
   const handleClearDiagnostics = () => {

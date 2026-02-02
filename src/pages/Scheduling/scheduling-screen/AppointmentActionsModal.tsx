@@ -29,8 +29,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [resonType, setResonType] = useState(null)
     const { data: noShowResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
     const { data: cancelResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
-    const [reasonKey, setResonKey] = useState()
-    const [otherReason, setOtherReason] = useState()
+    const [reasonKey, setResonKey] = useState<any>(null)
+    const [otherReason, setOtherReason] = useState<any>(null)
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
     const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter,discharge:false });
 
@@ -214,27 +214,29 @@ const handleCancel = () => {
     );
     // Cancel/No-Show Modal Content
     const cancelModalContent = (
-        <Form layout="inline">
-            <MyInput
-                width={400}
-                column
-                fieldLabel="Reason"
-                fieldType="select"
-                fieldName="reasonLkey"
-                selectData={resonType === 'Cancel' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={reasonKey}
-                setRecord={setResonKey}
-            />
-            <MyInput
-                width={400}
-                column
-                fieldLabel="Other Reason"
-                fieldName="otherReason"
-                record={otherReason}
-                setRecord={setOtherReason}
-            />
+        <Form fluid layout="vertical">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 520, maxWidth: '100%' }}>
+                <MyInput
+                    width="100%"
+                    column
+                    fieldLabel="Reason"
+                    fieldType="select"
+                    fieldName="reasonLkey"
+                    selectData={resonType === 'Cancel' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={reasonKey}
+                    setRecord={setResonKey}
+                />
+                <MyInput
+                    width="100%"
+                    column
+                    fieldLabel="Other Reason"
+                    fieldName="otherReason"
+                    record={otherReason}
+                    setRecord={setOtherReason}
+                />
+            </div>
         </Form>
     );
     return (
