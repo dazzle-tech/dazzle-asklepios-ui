@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Form, Panel } from "rsuite";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faVialCircleCheck } from "@fortawesome/free-solid-svg-icons";
@@ -66,9 +66,10 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess}: SampleModalProps) =
   }, [lab, systemLov, tubeColorLov, tubeTypeLov, sampleContainerLov, valueUnitLov]);
 
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
-  const [selectedSampleDate, setSelectedSampleDate] = useState<{ dateTime: Date | null }>({
-    dateTime: null,
-  });
+const [selectedSampleDate, setSelectedSampleDate] = useState<{ dateTime: Date | null }>({
+  dateTime: new Date(),
+});
+
 
   const [createCollectedSample] = useCreateCollectedSampleMutation();
 
@@ -110,8 +111,6 @@ const handleSaveSample = async () => {
   }
 
   onSuccess?.();
-  setSample({ ...newApDiagnosticOrderTestsSamples });
-  setSelectedSampleDate({ dateTime: null });
   setOpen(false);
 };
 
@@ -136,6 +135,14 @@ const tableColumns = [
       flexGrow: 1,
     },
   ];
+
+useEffect(() => {
+  if (open) {
+    setSample({ ...newApDiagnosticOrderTestsSamples });
+    setSelectedSampleDate({ dateTime: new Date() });
+  }
+}, [open]);
+
 
   return (
     <MyModal

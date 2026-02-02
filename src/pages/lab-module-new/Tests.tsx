@@ -56,7 +56,6 @@ type Props = {
   refetchAllLabData: () => Promise<void>;
 };
 
-
 const Tests = forwardRef<any, Props>(
   (
     {
@@ -74,12 +73,9 @@ const Tests = forwardRef<any, Props>(
     const dispatch = useAppDispatch();
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
-
     const [pageIndex, setPageIndex] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-
     const [testKeyFilter, setTestKeyFilter] = useState({ value: '' });
-
     const [selectedRows, setSelectedRows] = useState<(number | string)[]>([]);
     const [openExternalLabModal, setOpenExternalLabModal] = useState(false);
     const [localHasNoteIds, setLocalHasNoteIds] = useState<(number | string)[]>([]);
@@ -132,7 +128,6 @@ const Tests = forwardRef<any, Props>(
         dispatch(notify({ msg: 'Select a test first', sev: 'warning' }));
         return;
       }
-
       try {
         await createNote({
           orderId: order.id,
@@ -151,7 +146,6 @@ const Tests = forwardRef<any, Props>(
         dispatch(notify({ msg: 'Send failed', sev: 'error' }));
       }
     };
-
 
     const {
       data: testsResponse,
@@ -176,7 +170,6 @@ const Tests = forwardRef<any, Props>(
     useImperativeHandle(ref, () => ({
       fetchTest
     }));
-
 
     const [bulkAccept, { isLoading: isBulkAccepting }] =
       useBulkAcceptDiagnosticOrderTestsMutation();
@@ -229,7 +222,6 @@ const Tests = forwardRef<any, Props>(
         ),
       [normalizedOrderTests]
     );
-
 
     const isTestSelected = (rowData: any) => {
       if (rowData && test && rowData.id === test.id) return 'selected-row';
@@ -372,15 +364,7 @@ const Tests = forwardRef<any, Props>(
           placement="top"
           trigger="hover"
           speaker={
-            <Tooltip>
-              {!isExternal
-                ? 'Internal Lab Test'
-                : isRejected
-                  ? 'Rejected test cannot be sent'
-                  : isSentToExternal
-                    ? 'Sent to External Lab'
-                    : 'Send to External Lab'}
-            </Tooltip>
+            <Tooltip>Send to External Lab</Tooltip>
           }
         >
           <FontAwesomeIcon
@@ -400,7 +384,6 @@ const Tests = forwardRef<any, Props>(
         </Whisper>
       );
     };
-
 
     const handleBulkAccept = async () => {
       if (!selectedRows.length) {
@@ -497,16 +480,45 @@ const Tests = forwardRef<any, Props>(
       );
     }, [normalizedOrderTests, selectedRows]);
 
+    const allRowIds = useMemo(
+      () => pagedData.map(row => row.id),
+      [pagedData]
+    );
+
+    const isAllSelected =
+      allRowIds.length > 0 &&
+      allRowIds.every(id => selectedRows.includes(id));
+
+    const isSomeSelected =
+      allRowIds.some(id => selectedRows.includes(id)) && !isAllSelected;
+
+    const handleSelectAll = (checked: boolean) => {
+      if (checked) {
+        setSelectedRows(prev =>
+          Array.from(new Set([...prev, ...allRowIds]))
+        );
+      } else {
+        setSelectedRows(prev =>
+          prev.filter(id => !allRowIds.includes(id))
+        );
+      }
+    };
 
     const columns = [
       {
         key: 'check',
-        title: <Translate>#</Translate>,
+        title: (
+          <Checkbox
+            checked={isAllSelected}
+            indeterminate={isSomeSelected}
+            onChange={(_, checked) => handleSelectAll(checked)}
+            onClick={e => e.stopPropagation()}
+          />
+        ),
         width: 60,
         align: 'center',
         render: (rowData: any) => {
           const rowId = rowData.id;
-          const status = rowData.status;
 
           return (
             <Checkbox
@@ -898,6 +910,9 @@ const Tests = forwardRef<any, Props>(
 
     const filters = () => (
       <Form>
+        <div style={{display:'flex',
+        flexDirection:'row',
+        justifyContent:'space-between'}}>
         <MyInput
           fieldType="select"
           fieldName="value"
@@ -915,18 +930,13 @@ const Tests = forwardRef<any, Props>(
         <div className='test-table-buttons-main-container'>
           {tablebuttons}
         </div>
+        </div>
       </Form>
     );
-
-
-
-
 
     useEffect(() => {
       setSelectedRows([]);
     }, [order?.id]);
-
-
 
     const handlePageChange = (_: any, newPage: number) => {
       setPaginationParams(prev => ({
@@ -955,7 +965,6 @@ const Tests = forwardRef<any, Props>(
       }));
     };
 
-
     return (
       <Panel ref={ref} defaultExpanded>
 
@@ -963,7 +972,6 @@ const Tests = forwardRef<any, Props>(
           <MyTable
             filters={filters()}
             columns={columns}
-            height={500}
             data={pagedData}
             loading={loading || isTestsFetching}
             page={pageIndex}
@@ -976,6 +984,7 @@ const Tests = forwardRef<any, Props>(
             onSortChange={handleSortChange}
             onRowClick={rowData => setTest(rowData)}
             rowClassName={isTestSelected}
+            minHeight={600}
           />
         </div>
 

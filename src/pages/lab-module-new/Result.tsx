@@ -305,18 +305,14 @@ const profileTestIds = useMemo(
     const handleApprove = async (row: any) => {
       try {
         await approveResult(row.id).unwrap();
-        setTest({
-          id: row.orderTestId,
-          processingStatus: 'RESULT_APPROVED',
-          status: row.status
-        });
-        refetch();
-        await refetchAllLabData();
 
+        refetch(); 
+        await refetchAllLabData();
       } catch (e) {
         console.error('Approve failed', e);
       }
     };
+
 
 
 
@@ -329,26 +325,15 @@ const profileTestIds = useMemo(
           body: { rejectedReason: resultRejectReason }
         }).unwrap();
 
-        setTest({
-          id: selectedResult.orderTestId,
-          processingStatus: 'RESULT_REJECTED',
-          status: selectedResult.status
-        });
-
         setOpenResultRejectModal(false);
         setResultRejectReason('');
 
         refetch();
         await refetchAllLabData();
-
       } catch (e) {
         console.error('Reject failed', e);
       }
     };
-
-
-
-
 
 
     const columns = [
@@ -392,6 +377,7 @@ const profileTestIds = useMemo(
         key: 'resultnormalRange',
         title: <Translate>RESULT NORMAL RANGE</Translate>,
         flexGrow: 2,
+        align:'center',
         fullText: true,
         render: (row: any) => (
           <Whisper
@@ -449,7 +435,8 @@ const profileTestIds = useMemo(
 
             case 'NORMAL_MARKER':
               return 'Normal';
-
+              case 'UNKNOWN':
+              return 'Unknown';
             case 'UPPER_LIMIT':
               return (
                 <FontAwesomeIcon
@@ -513,7 +500,7 @@ const profileTestIds = useMemo(
       },
       {
         key: 'resultTechnicianNotes',
-        title: <Translate>TECHNICIAN NOTES</Translate>,
+        title: <Translate>COMMENTS</Translate>,
         flexGrow: 1,
         align: 'center',
         render: (row: any) => {
@@ -758,7 +745,6 @@ const isResultSelected = (rowData: any) => {
       <Panel defaultExpanded>
         <MyTable
           columns={columns}
-          height={500}
           data={normalizedResults}
           loading={loading || isFetching}
           page={pageIndex}
@@ -786,7 +772,7 @@ const isResultSelected = (rowData: any) => {
         <ChatModal
           open={openResultNoteModal}
           setOpen={setOpenResultNoteModal}
-          title="Result Technician Notes"
+          title="Result Comments"
           list={resultNotesResponse ?? []}
           fieldShowName="note"
           handleSendMessage={handleSendResultNote}

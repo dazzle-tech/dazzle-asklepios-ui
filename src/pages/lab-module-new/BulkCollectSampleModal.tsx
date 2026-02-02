@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Row, Col } from "rsuite";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faVialCircleCheck } from "@fortawesome/free-solid-svg-icons";
@@ -23,11 +23,12 @@ const BulkCollectSampleModal = ({
 
   const { data: valueUnitLov } = useGetLovValuesByCodeQuery("VALUE_UNIT");
 
-  const [record, setRecord] = useState({
-    quantity: null,
-    unitLkey: null,
-    collectedAt: null
-  });
+const [record, setRecord] = useState({
+  quantity: null,
+  unitLkey: null,
+  collectedAt: new Date()
+});
+
 
   const [bulkCreate, { isLoading }] =
     useBulkCreateCollectedSampleSameMutation();
@@ -65,12 +66,23 @@ const BulkCollectSampleModal = ({
       );
 
       setOpen(false);
-      setRecord({ quantity: null, unitLkey: null, collectedAt: null });
       onSuccess?.();
     } catch {
       dispatch(notify({ msg: "Collect sample failed", sev: "error" }));
     }
   };
+
+useEffect(() => {
+  if (open) {
+    setRecord({
+      quantity: null,
+      unitLkey: null,
+      collectedAt: new Date()
+    });
+  }
+}, [open]);
+
+
 
   return (
     <MyModal

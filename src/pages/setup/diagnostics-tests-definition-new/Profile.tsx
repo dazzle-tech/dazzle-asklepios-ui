@@ -485,7 +485,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
                 />
               </div>
             )}
-
+<div style={{width:'100%'}}>
             <MyTable
               height={380}
               data={allDiagnosticTestProfiles?.data ?? []}
@@ -499,7 +499,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
                 }
                 setDiagnosticsTestProfile(rowData);
               }}
-            />
+            /></div>
 
             <DeletionConfirmationModal
               open={openConfirmDeleteProfile}

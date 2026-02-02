@@ -190,10 +190,17 @@ const Lab = () => {
       });
     }, [stepsData, test?.processingStatus]);
 
+    const isAcceptedLike = (status?: DiagnosticOrderTestStatus) =>
+      status === DiagnosticOrderTestStatus.ACCEPTED ||
+      status === DiagnosticOrderTestStatus.PARTIALLY;
 
-    const activeStep = stepsDataComputed.findIndex(
-      s => s.key === test?.processingStatus
+
+    const activeStep = stepsDataComputed.findIndex(s =>
+      isAcceptedLike(test?.processingStatus)
+        ? s.key === DiagnosticOrderTestStatus.ACCEPTED
+        : s.key === test?.processingStatus
     );
+
 
   const [updateTest] = useUpdateDiagnosticOrderTestMutation();
 

@@ -271,9 +271,9 @@ export const newAllergen: modelTypes.Allergen = {
 // constructor/default object aligned with domain defaults
 export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   id: undefined,
-  type: '',
-  name: '',
-  internalCode: '',
+  type: null,
+  name: null,
+  internalCode: null,
 
   ageSpecific: false,
   ageGroupList: [],

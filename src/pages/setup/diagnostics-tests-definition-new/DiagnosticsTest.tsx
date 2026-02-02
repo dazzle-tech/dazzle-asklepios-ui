@@ -31,6 +31,7 @@ import Coding from './Coding';
 import DiagnosticTestTemplate from './DiagnosticTestTemplate';
 import Profile from './Profile';
 import './styles.less';
+
 const DiagnosticsTest = () => {
   const dispatch = useAppDispatch();
   const [diagnosticsTest, setDiagnosticsTest] = useState<DiagnosticTest>({
@@ -71,8 +72,8 @@ const DiagnosticsTest = () => {
     refetch: refetchDiagnostics,
     isFetching
   } = useGetAllDiagnosticTestsQuery(paginationParams);
+
   const testType = useEnumOptions('TestType');
-  // save Diagnostics Test
 
   const [addDiagnosticTest, addDiagnosticTestMutation] = useCreateDiagnosticTestMutation();
   const [updateDiagnosticTest, updateDiagnosticTestMutation] = useUpdateDiagnosticTestMutation();
@@ -91,8 +92,34 @@ const DiagnosticsTest = () => {
     return detail;
   };
 
+  const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
+    const errors: string[] = [];
+
+    if (!test.type) errors.push('Test Type');
+    if (!test.name?.trim()) errors.push('Name');
+    if (!test.internalCode?.trim()) errors.push('Internal Code');
+
+    if (test.type === 'LABORATORY' && !test.defaultProfileResultType) {
+      errors.push('Result Type');
+    }
+
+    return errors;
+  };
+
+
   const handleAddNewDiagnosticTest = async () => {
     try {
+      const errors = validateDiagnosticTest(diagnosticsTest);
+
+      if (errors.length > 0) {
+        dispatch(
+          notify({
+            msg: `Please fill the following required fields: ${errors.join(', ')}`,
+            sev: 'warning'
+          })
+        );
+        return;
+      }
       if (diagnosticsTest.type === 'LABORATORY' && !diagnosticsTest.defaultProfileResultType) {
         dispatch(
           notify({
@@ -155,6 +182,17 @@ const DiagnosticsTest = () => {
 
   const handleUpdateDiagnosticTest = async () => {
     try {
+      const errors = validateDiagnosticTest(diagnosticsTest);
+
+      if (errors.length > 0) {
+        dispatch(
+          notify({
+            msg: `Please fill the following required fields: ${errors.join(', ')}`,
+            sev: 'warning'
+          })
+        );
+        return;
+      }
       const payload = {
         id: diagnosticsTest.id,
         type: diagnosticsTest.type,
@@ -656,7 +694,7 @@ const DiagnosticsTest = () => {
         handleSave={diagnosticsTest.id ? handleUpdateDiagnosticTest : handleAddNewDiagnosticTest}
         width={width}
       />
-     
+
       <DeletionConfirmationModal
         open={openConfirmDiagnosticTest}
         setOpen={setOpenConfirmDeleteDiagnosticTest}

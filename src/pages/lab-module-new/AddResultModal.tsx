@@ -23,6 +23,7 @@ import {
   useGetLovAllValuesQuery,
   useGetLovsQuery
 } from '@/services/setupService';
+import { Width } from '@rsuite/icons';
 
 type Props = {
   open: boolean;
@@ -195,6 +196,7 @@ const AddResultModal = ({
     {
       key: 'name',
       title: 'Name',
+      width: 160,
       render: (rowData: any) => (
         <strong>{rowData.name}</strong>
       )
@@ -202,6 +204,7 @@ const AddResultModal = ({
     {
       key: 'result',
       title: 'Result',
+      width: 270,
       render: (profile: any) => {
         const isLov =
           profile?.resultType?.toUpperCase() === 'LOV';
@@ -221,36 +224,56 @@ const AddResultModal = ({
         };
 
         return (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <MyInput
-              fieldName={String(profile.id)}
-              fieldType={isLov ? 'select' : 'number'}
-              selectData={isLov ? resolveLovOptions(profile) : undefined}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              showLabel={false}
-              record={rowRecord}
-              setRecord={(newRowRecord: any) => {
-                setResults(prev => ({
-                  ...prev,
-                  [orderTest.testId]: {
-                    ...(prev[orderTest.testId] ?? {}),
-                    ...(newRowRecord ?? {})
-                  }
-                }));
-              }}
-              width={140}
-            />
-
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+            }}
+          >
+          <div>
+              <MyInput
+                fieldName={String(profile.id)}
+                fieldType={isLov ? 'select' : 'number'}
+                selectData={isLov ? resolveLovOptions(profile) : undefined}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                showLabel={false}
+                record={rowRecord}
+                setRecord={(newRowRecord: any) => {
+                  setResults(prev => ({
+                    ...prev,
+                    [orderTest.testId]: {
+                      ...(prev[orderTest.testId] ?? {}),
+                      ...(newRowRecord ?? {})
+                    }
+                  }));
+                }}
+                width={140}
+              />
+          </div>
             {!isLov && (
-              <span style={{ color: '#666' }}>
-                {resolveUnitLabel(profile)}
-              </span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: 36,
+                  marginTop: 2
+                }}
+              >
+                <span
+                  style={{
+                    color: '#666',
+                    whiteSpace: 'nowrap',
+                    lineHeight: '36px'
+                  }}
+                >
+                  {resolveUnitLabel(profile)}
+                </span>
+              </div>
             )}
           </div>
         );
       }
-
     },
     {
       key: 'action',
@@ -262,7 +285,6 @@ const AddResultModal = ({
         return (
           <MyButton
             size="sm"
-            loading={isSavingResult}
             disabled={isSavingResult}
             onClick={() =>
               handleSaveSingleResult(orderTest, profile)
@@ -281,7 +303,7 @@ const AddResultModal = ({
       open={open}
       setOpen={setOpen}
       title="Add Results"
-      size="70vw"
+      size="40vw"
       hideActionBtn
       steps={[
         { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
