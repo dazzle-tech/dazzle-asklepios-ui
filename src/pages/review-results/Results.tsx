@@ -1,558 +1,399 @@
-import ChatModal from "@/components/ChatModal";
-import MyInput from "@/components/MyInput";
-import MyTable from "@/components/MyTable";
-import MyButton from "@/components/MyButton/MyButton";
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useMemo,
+  useState,
+  useEffect
+} from 'react';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import ChatModal from '@/components/ChatModal';
+import CancellationModal from '@/components/CancellationModal';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import Translate from "@/components/Translate";
-import { useAppDispatch } from "@/hooks";
-import { useGetEncounterByIdQuery } from "@/services/encounterService";
-import { useGetDiagnosticOrderTestResultQuery, useGetOrderTestResultNotesByResultIdQuery, useSaveDiagnosticOrderTestResultMutation, useSaveDiagnosticOrderTestResultsNotesMutation } from "@/services/labService";
-import { useGetPatientByIdQuery } from "@/services/patientService";
-import { useGetDiagnosticsTestLaboratoryListQuery, useGetLovAllValuesQuery } from "@/services/setupService";
-import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsResult, newApDiagnosticOrderTestsResultNotes, newApDiagnosticTestLaboratory } from "@/types/model-types-constructor";
-import { initialListRequest, initialListRequestAllValues, ListRequest } from "@/types/types";
-import { addFilterToListRequest, formatDateWithoutSeconds } from '@/utils';
-import { notify } from "@/utils/uiReducerActions";
-import { faArrowDown, faArrowUp, faCircleExclamation, faMagnifyingGlassPlus, faComment, faStar, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { update } from "lodash";
-import React, { useEffect, useState } from "react";
-import { Checkbox, Form, HStack, Tooltip, Whisper } from "rsuite";
+import { Panel, HStack, Tooltip, Whisper, Form, Checkbox } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faArrowDown,
+  faArrowUp,
+  faCheck,
+  faCircleExclamation,
+  faComment,
+  faFileLines,
+  faPrint,
+  faTriangleExclamation,
+  faXmark
+} from '@fortawesome/free-solid-svg-icons';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import {
+  useFilterDiagnosticOrderTestResultsQuery,
+  useApproveDiagnosticOrderTestResultMutation,
+  useRejectDiagnosticOrderTestResultMutation
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
+import {
+  useGetNotesByResultIdQuery,
+  useCreateDiagnosticOrderTestResultTechnicianNoteMutation
+} from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
+import { useLazyGetPatientByIdQuery } from '@/services/patientService';
+import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
+import { useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
+import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 
-const Results = ({ setEncounter, setPatient, user }) => {
-    const dispatch = useAppDispatch();
-    const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
-    const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
-    const [showReview, setShowReview] = useState(true);
+const renderMarker = (viewMarker?: string) => {
+  switch (viewMarker) {
+    case 'NORMAL_MARKER':
+      return 'Normal';
+    case 'ABNORMAL_MARKER':
+      return <FontAwesomeIcon icon={faCircleExclamation} />;
+    case 'UPPER_LIMIT':
+      return <FontAwesomeIcon icon={faArrowUp} />;
+    case 'LOWER_LIMIT':
+      return <FontAwesomeIcon icon={faArrowDown} />;
+    case 'CRITICAL_UPPER':
+      return (
+        <HStack spacing={6}>
+          <FontAwesomeIcon icon={faTriangleExclamation} />
+          <FontAwesomeIcon icon={faArrowUp} />
+        </HStack>
+      );
+    case 'CRITICAL_LOWER':
+      return (
+        <HStack spacing={6}>
+          <FontAwesomeIcon icon={faTriangleExclamation} />
+          <FontAwesomeIcon icon={faArrowDown} />
+        </HStack>
+      );
+    default:
+      return ' ';
+  }
+};
+
+const Result = forwardRef<any, any>(
+  ({ loading, setTest, refetchAllLabData }, ref) => {
+    const [page, setPage] = useState(0);
+    const [size, setSize] = useState(15);
+    const [selectedResult, setSelectedResult] = useState<any>(null);
+    const [openNotesModal, setOpenNotesModal] = useState(false);
+    const [openRejectModal, setOpenRejectModal] = useState(false);
+    const [rejectReason, setRejectReason] = useState('');
+    const [approvalDate, setApprovalDate] = useState({ fromDate: null, toDate: null });
+    const [orderDate, setOrderDate] = useState({ fromDate: null, toDate: null });
+    const [showReview, setShowReview] = useState(false);
     const [showAbnormal, setShowAbnormal] = useState(false);
-    const [selectedResultKey, setSelectedResultKey] = useState<string | null>(null);
-    const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-    const [dateFilter, setDateFilter] = useState({
-        fromDate: null,
-        toDate: null
-    });
-    const [dateOrderFilter, setDateOrderFilter] = useState({
-        fromDate: null,
-        toDate: null
-    });
-    const { data: patientData, isLoading: isPatientLoading } = useGetPatientByIdQuery(test?.order?.patientKey, { skip: !test?.order?.patientKey });
-    const { data: encounterData, isLoading: isEncounterLoading } = useGetEncounterByIdQuery(test?.order?.encounterKey, { skip: !test?.order?.encounterKey });
+    const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
+    const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
+    const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
+    const [fetchPatientById] = useLazyGetPatientByIdQuery();
+
+const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
+const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
+
+
+
+
     const {
-        data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
-    const [saveResult, saveResultMutation] = useSaveDiagnosticOrderTestResultMutation();
-    const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
-    const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
-
-    const isResultSelected = (rowData) =>
-        rowData?.key === selectedResultKey ? 'selected-row' : '';
-
-    const [listResultResponse, setListResultResponse] = useState<ListRequest>({
-        ...initialListRequest,
-        sortBy: "createdAt",
-        sortType: 'desc',
-
-        filters: [
-            {
-                fieldName: "status_lkey",
-                operator: 'match',
-                value: "265089168359400",
-            },
-            {
-                fieldName: "review_at",
-                operator: showReview ? "match" : "notMatch",
-                value: "0"
-
-            }
-
-
-        ],
-    });
-    const { data: resultsList, refetch: resultFetch, isLoading: resultLoding, isFetching: featchingTest } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
-    const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
-    const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
-        ...initialListRequest
-
+      data: resultsResponse,
+      isFetching,
+      refetch
+    } = useFilterDiagnosticOrderTestResultsQuery({
+      page,
+      size,
+      processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED
     });
 
-    useEffect(() => {
+    useImperativeHandle(ref, () => ({ refetch }));
 
-        setPatient(patientData);
-    }, [patientData]);
-    useEffect(() => {
-        setEncounter(encounterData)
-    }, [encounterData]);
-    useEffect(() => {
-        const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
-        setLabDetails(cat);
-    }, [test]);
-    useEffect(() => {
-        setTest({ ...result?.test });
-    }, [result]);
-    useEffect(() => {
+    const results = resultsResponse?.data ?? [];
+    const totalCount = resultsResponse?.totalCount ?? 0;
 
-        if (dateFilter.fromDate && dateFilter.toDate) {
-            const formattedFromDate = new Date(dateFilter.fromDate)?.getTime();
-            const formattedToDate = new Date(dateFilter.toDate)?.getTime();
-            setListResultResponse(
-                addFilterToListRequest(
-                    'approved_at',
-                    'between',
-                    formattedFromDate + '_' + formattedToDate,
-                    listResultResponse
-                )
-            );
-        } else if (dateFilter.fromDate) {
-            const formattedFromDate = new Date(dateFilter.fromDate)?.getTime();
-            setListResultResponse(
-                addFilterToListRequest('approved_at', 'gte', formattedFromDate, listResultResponse)
-            );
-        } else if (dateFilter.toDate) {
-            const formattedToDate = new Date(dateFilter.toDate)?.getTime();
-            setListResultResponse(
-                addFilterToListRequest('approved_at', 'lte', formattedToDate, listResultResponse)
-            );
-        }
-        else {
-            setListResultResponse({
-                ...listResultResponse, filters: [
-                    {
-                        fieldName: "status_lkey",
-                        operator: 'match',
-                        value: "265089168359400",
-                    },
-                    {
-                        fieldName: "review_at",
-                        operator: showReview ? "match" : "notMatch",
-                        value: "0"
+    const { data: notesResponse, refetch: refetchNotes } =
+      useGetNotesByResultIdQuery(selectedResult?.id ?? skipToken);
 
-                    }
-                ]
-            });
-        }
-    }, [dateFilter.fromDate, dateFilter.toDate]);
+    const [sendNote, { isLoading: sendingNote }] =
+      useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
+
+    const handleSendNote = async (value: string) => {
+      if (!selectedResult?.id) return;
+      await sendNote({
+        resultId: selectedResult.id,
+        orderTestId: selectedResult.orderTestId,
+        note: value
+      }).unwrap();
+      refetchNotes();
+    };
+
+    const [approveResult] =
+      useApproveDiagnosticOrderTestResultMutation();
+    const [rejectResult] =
+      useRejectDiagnosticOrderTestResultMutation();
+
+    const handleApprove = async (row: any) => {
+      await approveResult(row.id).unwrap();
+      setTest({
+        id: row.orderTestId,
+        processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
+        status: row.status
+      });
+      await refetchAllLabData();
+      refetch();
+    };
+
+    const handleReject = async () => {
+      if (!selectedResult?.id) return;
+      await rejectResult({
+        id: selectedResult.id,
+        body: { rejectedReason: rejectReason }
+      }).unwrap();
+      setRejectReason('');
+      setOpenRejectModal(false);
+      await refetchAllLabData();
+      refetch();
+    };
 
     useEffect(() => {
+    if (!results.length) return;
 
-        if ((dateOrderFilter.fromDate !== null) && (dateOrderFilter.toDate !== null)) {
-
-            const filtered = resultsList?.object?.filter(
-                item => item.test?.order?.createdAt >= dateOrderFilter.fromDate && item.test?.order?.createdAt <= dateOrderFilter.toDate
-            );
-
-
-            const value = filtered?.map(order => `(${order.key})`)
-                .join(" ");
-
-            setListResultResponse(
-                addFilterToListRequest(
-                    'key',
-                    'in',
-                    value,
-                    listResultResponse
-                )
-            );
-        }
-    }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
-
-    useEffect(() => {
-
-
-        setListResultResponse(prev => ({
-            ...prev,
-            filters: prev.filters.map(filter =>
-                filter.fieldName === "review_at"
-                    ? { ...filter, operator: showReview ? "match" : "notMatch" }
-                    : filter
-            ),
-        }));
-
-        resultFetch();
-    }, [showReview]);
-
-    useEffect(() => {
-        setListResultResponse(prev => {
-            let updatedFilters = prev.filters.filter(f => f.fieldName !== "marker");
-
-            if (showAbnormal) {
-                updatedFilters.push({
-                    fieldName: "marker",
-                    operator: "notMatch",
-                    value: "6731498382453316"
-                });
-            }
-
-            return {
+    results.forEach(r => {
+        // ========= ORDER =========
+        if (r.orderId && !ordersMap[r.orderId]) {
+        fetchOrderById(r.orderId)
+            .unwrap()
+            .then(order => {
+            console.log('[ORDER]', order.id);
+            setOrdersMap(prev => ({
                 ...prev,
-                filters: updatedFilters
-            };
-        });
-
-        resultFetch();
-    }, [showAbnormal]);
-
-    const joinValuesFromArray = (keys) => {
-
-        return keys
-            .map(key => lovValues?.object?.find(lov => lov.key === key))
-            .filter(obj => obj !== undefined)
-            .map(obj => obj.lovDisplayVale)
-            .join(', ');
-    };
-    const handleSendResultMessage = async (value) => {
-        try {
-            await saveResultNote({ ...newApDiagnosticOrderTestsResultNotes, notes: value, testKey: test.key, orderKey: test.orderKey, resultKey: result.key }).unwrap();
-            dispatch(notify({ msg: 'Send Successfully', sev: 'success' }));
-
+                [String(order.id)]: order
+            }));
+            })
+            .catch(() => {});
         }
-        catch (error) {
-            dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
+
+        // ========= ORDER TEST =========
+        if (r.orderTestId && !orderTestsMap[r.orderTestId]) {
+        fetchOrderTestById(r.orderTestId)
+            .unwrap()
+            .then(test => {
+            console.log('[ORDER TEST]', test.id);
+            setOrderTestsMap(prev => ({
+                ...prev,
+                [String(test.id)]: test
+            }));
+            })
+            .catch(() => {});
         }
-        await fecthResultNotes();
-
-    };
-    const tableColomns = [
-        {
-            key: "patientName",
-            title: <Translate>Patient Name</Translate>,
-            render: (rowData: any) => {
-                return rowData.test?.order?.patient?.fullName
-            }
-        },
-
-        {
-            key: "approvedAt",
-            title: <Translate>Result Date</Translate>,
-            render: (rowData: any) => {
-                return formatDateWithoutSeconds(rowData.approvedAt)
-            }
-        },
-
-        {
-            key: "testName",
-            title: <Translate>TEST NAME</Translate>,
-            flexGrow: 2,
-            fullText: true,
-            render: (rowData: any) => {
-                if (rowData.isProfile) {
-                    return rowData.test?.profileList?.find((item) => item.key == rowData?.testProfileKey)?.testName;
-                } else {
-                    return rowData.test?.test?.testName;
-                }
-            },
-        },
-        {
-            key: "testResultUnit",
-            title: <Translate>TEST RESULT,UNIT</Translate>,
-            flexGrow: 2,
-            fullText: true,
-            render: rowData => {
-                if (rowData.normalRangeKey) {
-                    if (rowData.normalRange?.resultTypeLkey === "6209578532136054") {
-
-                        return (
-                            <span>
-
-                                {rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData?.resultLkey}
-                            </span>
-                        );
-                    }
-                    else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
-                        return (
-                            <span>
-                                {rowData.resultValueNumber}
-                            </span>)
-                    }
-                }
-                else {
-                    return (
-                        <span>
-                            {rowData.resultText}
-                        </span>
-                    );
-                }
-            }
-
-        },
-        {
-            key: "normalRange",
-            title: <Translate>NORMAL RANGE</Translate>,
-            flexGrow: 2,
-            fullText: true,
-            render: (rowData: any) => {
-                 console.log("rowData",rowData);
-                if (!rowData.normalRangeKey) return "Normal Range Not Defined";
-
-                const unit =
-                    laboratoryList?.object
-                        ?.find((item: any) =>{ 
-                        //    console.log("item.testKey",item.testKey);
-                        //    console.log("rowData.testKey",rowData.test?.key);
-                          return  String(item.testKey) === String(rowData.test?.testKey)})
-                        ?.resultUnitLvalue
-                        ?.lovDisplayVale ?? ""; 
-
-                const withUnit = (text: string) => `${text} ${unit}`.trim();
-
-                if (rowData.normalRange?.resultTypeLkey === "6209578532136054") {
-                    return withUnit(joinValuesFromArray(rowData.normalRange?.lovList ?? []));
-                }
-
-                if (rowData.normalRange?.resultTypeLkey === "6209569237704618") {
-                    const from = rowData.normalRange?.rangeFrom ?? "";
-                    const to = rowData.normalRange?.rangeTo ?? "";
-
-                    if (rowData.normalRange?.normalRangeTypeLkey === "6221150241292558") {
-                        return withUnit(`${from}_${to}`);
-                    }
-
-                    if (rowData.normalRange?.normalRangeTypeLkey === "6221162489019880") {
-                        return withUnit(`Less Than ${from}`);
-                    }
-
-                    if (rowData.normalRange?.normalRangeTypeLkey === "6221175556193180") {
-                        return withUnit(`More Than ${to}`);
-                    }
-                }
-
-                return ""; // أو "—"
-            }
-
-        },
-        {
-            key: "marker",
-            title: <Translate>MARKER</Translate>,
-            flexGrow: 2,
-            fullText: true,
-            render: (rowData: any) => {
-                if (rowData.marker == "6730122218786367") {
-                    return <FontAwesomeIcon icon={faCircleExclamation} style={{ fontSize: "1em" }} />;
-                } else if (rowData.marker == "6731498382453316") {
-                    return "Normal";
-                } else if (rowData.marker == "6730083474405013") {
-                    return <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: "1em" }} />;
-                } else if (rowData.marker == "6730094497387122") {
-                    return <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: "1em" }} />;
-                } else if (rowData.marker == "6730104027458969") {
-                    return (
-                        <HStack spacing={10}>
-                            <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: "1em" }} />
-                            <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: "1em" }} />
-                        </HStack>
-                    );
-                } else if (rowData.marker == "6730652890616978") {
-                    return (
-                        <HStack spacing={10}>
-                            <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: "1em" }} />
-                            <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: "1em" }} />
-                        </HStack>
-                    );
-                }
-            },
-        },
-        {
-            key: "comments",
-            title: <Translate>COMMENTS</Translate>,
-            flexGrow: 1,
-            fullText: true,
-            render: (rowData: any) => {
-                return (
-                    <HStack spacing={10}>
-                        <FontAwesomeIcon
-                            icon={faComment}
-                            style={{
-                                fontSize: "1em",
-                                color: rowData.hasComments ? "#007bff" : "gray"
-                            }}
-                            onClick={() => setOpenNoteResultModal(true)}
-                        />
-                    </HStack>
-                );
-            },
-        },
-        {
-            key: "action",
-            title: <Translate>ACTION</Translate>,
-            flexGrow: 3,
-            render: (rowData: any) => {
-                const isReviewed = !!rowData.reviewAt;
-
-                return (
-                    <HStack spacing={5}>
-                        <Whisper placement="top" speaker={<Tooltip>Review</Tooltip>}>
-                            <FontAwesomeIcon
-                                icon={faStar}
-                                style={{
-                                    fontSize: '1em',
-                                    cursor: 'pointer',
-                                    color: rowData.reviewAt ? '#e0a500' : '#343434'
-                                }}
-                                onClick={async (e) => {
-                                    e.stopPropagation();
-
-                                    // 1️⃣ حدده فورًا (UI)
-                                    setSelectedResultKey(rowData.key);
-                                    setResult(rowData);
-
-                                    try {
-                                        // 2️⃣ ابعث rowData نفسه
-                                        await saveResult({
-                                            ...rowData,          // ✅ هون الصح
-                                            reviewAt: Date.now(),
-                                            reviewBy: user?.key
-                                        }).unwrap();
-
-                                        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                        resultFetch();
-                                    } catch (error) {
-                                        dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
-                                    }
-                                }}
-
-                            />
-
-                        </Whisper>
-                    </HStack>
-                );
-            }
-        },
-        {
-            key: "",
-            title: <Translate>Review At/By</Translate>,
-            expandable: true,
-            render: (rowData: any) => {
-                return (<>
-                    <span>{rowData.reviewByUser?.fullName}</span>
-                    <br />
-                    <span className='date-table-style'>{rowData.reviewAt ? new Date(rowData.reviewAt).toLocaleString() : ''}</span>
-                </>)
-            }
-
-        }
-    ]
-    const pageIndex = listResultResponse.pageNumber - 1;
-
-    // how many rows per page:
-    const rowsPerPage = listResultResponse.pageSize;
-
-    // total number of items in the backend:
-    const totalCount = resultsList?.extraNumeric ?? 0;
-
-    // handler when the user clicks a new page number:
-    const handlePageChange = (_: unknown, newPage: number) => {
-        // MUI gives you a zero-based page, so add 1 for your API
-
-        setListResultResponse({ ...listResultResponse, pageNumber: newPage + 1 });
-    };
-
-    // handler when the user chooses a different rows-per-page:
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-
-        setListResultResponse({
-            ...listResultResponse,
-            pageSize: parseInt(event.target.value, 10),
-            pageNumber: 1 // reset to first page
-        });
-    };
-    const filters = () => {
-        return (<>
-            <Form layout="inline" fluid className="date-filter-form">
-                <MyInput
-                    column
-                    width={180}
-                    fieldType="date"
-                    fieldLabel="Approval From Date"
-                    fieldName="fromDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                />
-                <MyInput
-                    width={180}
-                    column
-                    fieldType="date"
-                    fieldLabel="Approval To Date"
-                    fieldName="toDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                />
-                <MyInput
-                    column
-                    width={180}
-                    fieldType="date"
-                    fieldLabel="Order From Date"
-                    fieldName="fromDate"
-                    record={dateOrderFilter}
-                    setRecord={setDateOrderFilter}
-                />
-                <MyInput
-                    width={180}
-                    column
-                    fieldType="date"
-                    fieldLabel="Order To Date"
-                    fieldName="toDate"
-                    record={dateOrderFilter}
-                    setRecord={setDateOrderFilter}
-                />
-
-                <Checkbox
-                    style={{ marginTop: "20px" }}
-                    checked={!showReview}
-                    onChange={() => {
-                        setShowReview(!showReview);
-                    }}>
-                    Show Review Result
-                </Checkbox>
-
-                <Checkbox
-                    style={{ marginTop: "20px" }}
-                    checked={showAbnormal}
-                    onChange={() => {
-                        setShowAbnormal(!showAbnormal);
-                    }}>
-                    Show Abnormal Result
-                </Checkbox>
-
-            </Form>
-            <AdvancedSearchFilters searchFilter={true} /></>);
-    };
-
+    });
+    }, [results]);
 
     useEffect(() => {
-        if (!selectedResultKey || !resultsList?.object) return;
+    Object.values(ordersMap).forEach(order => {
+        const patientId = order?.patientId ? String(order.patientId) : null;
 
-        const stillExists = resultsList.object.find(
-            r => r.key === selectedResultKey
-        );
-
-        if (!stillExists) {
-            setSelectedResultKey(null);
-            setResult({ ...newApDiagnosticOrderTestsResult });
-        } else {
-            setResult(stillExists);
+        if (patientId && !patientsMap[patientId]) {
+        fetchPatientById(patientId)
+            .unwrap()
+            .then(patient => {
+            console.log('[PATIENT]', patientId);
+            setPatientsMap(prev => ({
+                ...prev,
+                [patientId]: patient
+            }));
+            })
+            .catch(() => {});
         }
-    }, [resultsList]);
+    });
+    }, [ordersMap]);
 
-    return (
-        <>
-            <MyTable
-                filters={filters()}
-                columns={tableColomns}
-                data={resultsList?.object || []}
-                loading={featchingTest}
-                onRowClick={rowData => {
-                    setResult(rowData);
-                    setSelectedResultKey(rowData.key);
-                }}
-                rowClassName={isResultSelected}
-                height={250}
-                page={pageIndex}
-                rowsPerPage={rowsPerPage}
-                totalCount={totalCount}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-            ></MyTable>
-            <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
+    const { data: profilesResponse } =
+    useGetAllDiagnosticTestProfilesQuery({
+        page: 0,
+        size: 10000,
+        sort: 'id,asc'
+    });
 
-        </>
+    const profilesMap = useMemo(
+    () => new Map(profilesResponse?.data?.map(p => [p.id, p]) ?? []),
+    [profilesResponse]
     );
-}
-export default Results;
+
+
+const normalizedResults = useMemo(() => {
+  return results.map(r => {
+    const order = ordersMap[r.orderId];
+    const patient = patientsMap[order?.patientId];
+    const profile = profilesMap.get(r.profileTestId);
+
+    return {
+      ...r,
+      _patientName: patient?.fullName ?? ' ',
+      _profile: profile,
+      _testName: profile?.name ?? '-',
+      _approvedDate: r.approvedDate
+    };
+  });
+}, [results, ordersMap, patientsMap, profilesMap]);
+
+
+    const columns = useMemo(
+      () => [
+        {
+        key: 'patient',
+        title: <Translate>PATIENT NAME</Translate>,
+        render: (r: any) => r._patientName
+
+        },
+
+        {
+          key: 'approvedAt',
+          title: <Translate>RESULT DATE</Translate>,
+          render: (row: any) =>
+            formatDateWithoutSeconds(row.approvedDate)
+        },
+        {
+        key: 'testName',
+        title: <Translate>TEST NAME</Translate>,
+        render: (row: any) => (
+            <>
+            {row._profile?.name ?? '-'}
+            <br />
+            <span style={{ fontSize: 10, color: '#666' }}>
+                {row._profile?.testName ?? ''}
+            </span>
+            </>
+        )
+        },
+        {
+          key: 'result',
+          title: <Translate>TEST RESULT, UNIT</Translate>,
+          render: (row: any) =>
+            row.resultValueText ??
+            row.resultValueNumber ??
+            ' '
+        },
+        {
+          key: 'normalRange',
+          title: <Translate>NORMAL RANGE</Translate>,
+          render: (row: any) => row.viewNormalRange ?? ' '
+        },
+        {
+          key: 'marker',
+          title: <Translate>MARKER</Translate>,
+          align: 'center',
+          render: (row: any) => renderMarker(row.viewMarker)
+        },
+        {
+          key: 'comments',
+          title: <Translate>COMMENTS</Translate>,
+          align: 'center',
+          render: (row: any) => (
+            <FontAwesomeIcon
+              icon={faComment}
+              style={{
+                cursor: 'pointer',
+                color: row.hasNote ? '#1675e0' : 'gray'
+              }}
+              onClick={() => {
+                setSelectedResult(row);
+                setOpenNotesModal(true);
+              }}
+            />
+          )
+        },
+        {
+          key: 'action',
+          title: <Translate>ACTION</Translate>,
+          align: 'center',
+          render: (row: any) => (
+            <HStack spacing={10}>
+              <Whisper speaker={<Tooltip>Approve</Tooltip>}>
+                <FontAwesomeIcon icon={faCheck} onClick={() => handleApprove(row)} />
+              </Whisper>
+              <Whisper speaker={<Tooltip>Reject</Tooltip>}>
+                <FontAwesomeIcon
+                  icon={faXmark}
+                  onClick={() => {
+                    setSelectedResult(row);
+                    setOpenRejectModal(true);
+                  }}
+                />
+              </Whisper>
+              <FontAwesomeIcon icon={faPrint} />
+              <FontAwesomeIcon icon={faFileLines} />
+            </HStack>
+          )
+        }
+      ],
+      [patientsMap, selectedResult]
+    );
+
+    const filters = () => (
+      <Form fluid>
+          <MyInput fieldType="date" fieldLabel="Approval From Date" fieldName="fromDate" record={approvalDate} setRecord={setApprovalDate} />
+          <MyInput fieldType="date" fieldLabel="Approval To Date" fieldName="toDate" record={approvalDate} setRecord={setApprovalDate} />
+          <MyInput fieldType="date" fieldLabel="Order From Date" fieldName="fromDate" record={orderDate} setRecord={setOrderDate} />
+          <MyInput fieldType="date" fieldLabel="Order To Date" fieldName="toDate" record={orderDate} setRecord={setOrderDate} />
+          <Checkbox checked={showReview} onChange={() => setShowReview(!showReview)}>Show Review Result</Checkbox>
+          <Checkbox checked={showAbnormal} onChange={() => setShowAbnormal(!showAbnormal)}>Show Abnormal Result</Checkbox>
+        <AdvancedSearchFilters />
+      </Form>
+    );
+
+
+useEffect(() => {
+  console.log('[RESULTS]', results.map(r => ({
+    id: r.id,
+    orderId: r.orderId,
+    orderTestId: r.orderTestId
+  })));
+}, [results]);
+
+
+
+
+    console.log("results", results);
+    return (
+      <Panel defaultExpanded>
+        <MyTable
+          filters={filters()}
+          columns={columns}
+          data={normalizedResults}
+          loading={loading || isFetching}
+          page={page}
+          rowsPerPage={size}
+          totalCount={totalCount}
+          onPageChange={(_, p) => setPage(p)}
+          onRowsPerPageChange={e => {
+            setSize(Number(e.target.value));
+            setPage(0);
+          }}
+          onRowClick={row => setSelectedResult(row)}
+        />
+
+        <ChatModal
+          open={openNotesModal}
+          setOpen={setOpenNotesModal}
+          title="Comments"
+          list={notesResponse ?? []}
+          fieldShowName="note"
+          handleSendMessage={handleSendNote}
+          loading={sendingNote}
+        />
+
+        <CancellationModal
+          open={openRejectModal}
+          setOpen={setOpenRejectModal}
+          fieldName="rejectedReason"
+          handleCancle={handleReject}
+          object={{ rejectedReason: rejectReason }}
+          setObject={(obj: any) => setRejectReason(obj.rejectedReason)}
+          fieldLabel="Reject Reason"
+          title="Reject Result"
+        />
+      </Panel>
+    );
+  }
+);
+
+export default Result;

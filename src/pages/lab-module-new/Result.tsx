@@ -12,7 +12,7 @@ import React, {
 } from 'react';
 import { Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowDown, faArrowUp, faCheck, faCircleExclamation, faComment, faDiagramPredecessor, faFileLines, faPlusCircle, faPrint, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faArrowUp, faCheck, faCircleExclamation, faComment, faDiagramPredecessor, faFileLines, faPenToSquare, faPlusCircle, faPrint, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import {
   useGetNotesByResultIdQuery,
   useCreateDiagnosticOrderTestResultTechnicianNoteMutation
@@ -42,12 +42,20 @@ import LogResult from './LogResult';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import CancellationModal from '@/components/CancellationModal';
+import EditResultModal from './EditResultModal';
+import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import NormalRangeModal from './NormalRangeModal';
 
 type Props = {
   order: any;
   loading?: boolean;
   setTest: (test: any) => void;
+  fetchAllTests?: () => any;
+  refetchAllLabData: () => Promise<void>;
+  fecthSample?: () => any;
 };
+
 
 
 const isLovProfile = (profile?: any) =>
@@ -85,9 +93,11 @@ const resolveLovDisplayValue = (
 };
 
 const Result = forwardRef<any, Props>(
-  ({ order, loading, setTest }, ref) => {
+  ({ order, loading, setTest, fetchAllTests,refetchAllLabData,fecthSample }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
 
+    const [openEditModal, setOpenEditModal] = useState(false);
+    const [selectedResultForEdit, setSelectedResultForEdit] = useState<any>(null);
     const [pageIndex, setPageIndex] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [openAddResultModal, setOpenAddResultModal] = useState(false);
@@ -102,12 +112,23 @@ const Result = forwardRef<any, Props>(
     const [categoryFilter, setCategoryFilter] = useState({ value: '' });
     const [sortColumn, setSortColumn] = useState("id");
     const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+    const [openNormalRangeModal, setOpenNormalRangeModal] = useState(false);
 
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
       size: 5,
       sort: "id,asc",
     });
+
+    const [
+      fetchNormalRangesByProfileTestId
+    ] = useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery();
+
+    const [normalRangesMap, setNormalRangesMap] = useState<
+      Record<number, any[]>
+    >({});
+
+
 
 
 
@@ -122,8 +143,6 @@ const Result = forwardRef<any, Props>(
 
     const { data: lovDefinitions } =
       useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
-
-    /* ===================== STATIC DATA ===================== */
 
     const { data: allTestsResponse } =
       useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
@@ -164,6 +183,17 @@ const Result = forwardRef<any, Props>(
 
     const results = resultsResponse?.data ?? [];
 
+
+const profileTestIds = useMemo(
+  () =>
+    results
+      .map(r => r.profileTestId)
+      .filter(Boolean)
+      .filter((id, i, arr) => arr.indexOf(id) === i),
+  [results]
+);
+
+
     const {
       data: resultNotesResponse,
       isFetching: isResultNotesFetching,
@@ -184,12 +214,9 @@ const Result = forwardRef<any, Props>(
       try {
         await createResultNote({
           resultId: selectedResult.id,
-          orderId: order.id,
           orderTestId: selectedResult.orderTestId,
           note: value
         }).unwrap();
-
-        // 🔵 optimistic update
         setLocalResultHasNoteIds(prev =>
           prev.includes(selectedResult.id)
             ? prev
@@ -215,25 +242,27 @@ const Result = forwardRef<any, Props>(
       () => new Map(allProfiles.map(p => [p.id, p])),
       [allProfiles]
     );
-
-    /* ===================== NORMALIZE ===================== */
-
     const normalizedResults = useMemo(() => {
       return results.map(r => {
         const profile = profilesMap.get(r.profileTestId);
         const testId = profile?.testId ?? profile?.diagnosticTestId;
 
-        const relatedTest = testsMap.get(testId);
-
         return {
           ...r,
           profile,
-          test: relatedTest,
+          test: testsMap.get(testId),
           lab: labByTestIdMap.get(testId),
-          profileName: profile?.name ?? profile?.profileName
+          profileName: profile?.name ?? profile?.profileName,
+          normalRanges: normalRangesMap[r.profileTestId] ?? []
         };
       });
-    }, [results, profilesMap, testsMap, labByTestIdMap]);
+    }, [
+      results,
+      profilesMap,
+      testsMap,
+      labByTestIdMap,
+      normalRangesMap
+    ]);
 
     const resolveResultDisplay = (row: any) => {
       const profile = row.profile;
@@ -276,11 +305,20 @@ const Result = forwardRef<any, Props>(
     const handleApprove = async (row: any) => {
       try {
         await approveResult(row.id).unwrap();
+        setTest({
+          id: row.orderTestId,
+          processingStatus: 'RESULT_APPROVED',
+          status: row.status
+        });
         refetch();
+        await refetchAllLabData();
+
       } catch (e) {
         console.error('Approve failed', e);
       }
     };
+
+
 
     const handleReject = async () => {
       if (!selectedResult?.id) return;
@@ -288,18 +326,28 @@ const Result = forwardRef<any, Props>(
       try {
         await rejectResult({
           id: selectedResult.id,
-          body: {
-            rejectedReason: resultRejectReason
-          }
+          body: { rejectedReason: resultRejectReason }
         }).unwrap();
+
+        setTest({
+          id: selectedResult.orderTestId,
+          processingStatus: 'RESULT_REJECTED',
+          status: selectedResult.status
+        });
 
         setOpenResultRejectModal(false);
         setResultRejectReason('');
+
         refetch();
+        await refetchAllLabData();
+
       } catch (e) {
         console.error('Reject failed', e);
       }
     };
+
+
+
 
 
 
@@ -345,19 +393,24 @@ const Result = forwardRef<any, Props>(
         title: <Translate>RESULT NORMAL RANGE</Translate>,
         flexGrow: 2,
         fullText: true,
-        render: (row: any) => {
-          const unit = resolveUnitDisplay(row);
-
-          if (row.normalRange) {
-            return `${row.normalRange}${unit ? ` ${unit}` : ''}`;
-          }
-
-          if (row.minValue != null || row.maxValue != null) {
-            return `${row.minValue ?? '-'} - ${row.maxValue ?? '-'}${unit ? ` ${unit}` : ''}`;
-          }
-
-          return '';
-        }
+        render: (row: any) => (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip>View Normal Ranges</Tooltip>}
+          >
+            <span>
+              <FontAwesomeIcon
+                icon={faCircleInfo}
+                style={{ cursor: 'pointer', opacity: 0.8 }}
+                onClick={() => {
+                  setSelectedResult(row);
+                  setOpenNormalRangeModal(true);
+                }}
+              />
+            </span>
+          </Whisper>
+        )
       },
       {
         key: 'normalRange',
@@ -498,55 +551,110 @@ const Result = forwardRef<any, Props>(
         title: <Translate>ACTION</Translate>,
         flexGrow: 2,
         align: 'center',
-        render: (row: any) => (
-          <HStack spacing={10}>
+        render: (row: any) => {
+          const canEdit = row.processingStatus === 'RESULT_READY';
+          const canApprove = row.processingStatus === 'RESULT_READY';
+          const canReject = row.processingStatus === 'RESULT_READY';
 
-        <Whisper placement="top" trigger="hover" speaker={<Tooltip>Approve</Tooltip>}>
-            <CheckRoundIcon
-              onClick={() => {
-                handleApprove(row);
-              }}
-              style={{
-                fontSize: '1em',
-                marginRight: 10,
-                color: 'inherit',
-                cursor: 'pointer'
-              }}
-            />
-          </Whisper>
+          return (
+            <HStack spacing={10}>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={
+                  <Tooltip>
+                    {canEdit
+                      ? 'Edit Result'
+                      : 'Edit allowed only when status is RESULT READY'}
+                  </Tooltip>
+                }
+              >
+                <span>
+                  <FontAwesomeIcon
+                    icon={faPenToSquare}
+                    style={{
+                      cursor: canEdit ? 'pointer' : 'not-allowed',
+                      opacity: canEdit ? 1 : 0.4
+                    }}
+                    onClick={() => {
+                      if (!canEdit) return;
+                      setSelectedResultForEdit(row);
+                      setOpenEditModal(true);
+                    }}
+                  />
+                </span>
+              </Whisper>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={
+                  <Tooltip>
+                    {canApprove
+                      ? 'Approve Result'
+                      : 'Approve allowed only when status is RESULT READY'}
+                  </Tooltip>
+                }
+              >
+                <span>
+                  <CheckRoundIcon
+                    onClick={() => {
+                      if (!canApprove) return;
+                      handleApprove(row);
+                    }}
+                    style={{
+                      fontSize: '1em',
+                      marginRight: 10,
+                      color: 'inherit',
+                      cursor: canApprove ? 'pointer' : 'not-allowed',
+                      opacity: canApprove ? 1 : 0.4
+                    }}
+                  />
+                </span>
+              </Whisper>
+              <Whisper
+                placement="top"
+                trigger="hover"
+                speaker={
+                  <Tooltip>
+                    {canReject
+                      ? 'Reject Result'
+                      : 'Reject allowed only when status is RESULT READY'}
+                  </Tooltip>
+                }
+              >
+                <span>
+                  <WarningRoundIcon
+                    onClick={() => {
+                      if (!canReject) return;
+                      setSelectedResult(row);
+                      setOpenResultRejectModal(true);
+                    }}
+                    style={{
+                      fontSize: '1em',
+                      marginRight: 10,
+                      color: 'inherit',
+                      cursor: canReject ? 'pointer' : 'not-allowed',
+                      opacity: canReject ? 1 : 0.4
+                    }}
+                  />
+                </span>
+              </Whisper>
+              <FontAwesomeIcon icon={faPrint} style={{ opacity: 0.5 }} />
 
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject</Tooltip>}>
-              <WarningRoundIcon
-                onClick={() => {
-                  setSelectedResult(row);
-                  setOpenResultRejectModal(true);
-                }}
-                style={{
-                  fontSize: '1em',
-                  marginRight: 10,
-                  color: 'inherit',
-                  cursor: 'pointer'
-                }}
-              />
-            </Whisper>
+              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Logs</Tooltip>}>
+                <FontAwesomeIcon
+                  icon={faFileLines}
+                  style={{ cursor: 'pointer', opacity: 0.8 }}
+                  onClick={() => {
+                    setSelectedResultForLogs(row);
+                    setOpenLogsModal(true);
+                  }}
+                />
+              </Whisper>
 
-
-
-            <FontAwesomeIcon icon={faPrint} style={{ opacity: 0.5 }} />
-
-            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Logs</Tooltip>}>
-              <FontAwesomeIcon
-                icon={faFileLines}
-                style={{ cursor: 'pointer', opacity: 0.8 }}
-                onClick={() => {
-                  setSelectedResultForLogs(row);
-                  setOpenLogsModal(true);
-                }}
-              />
-            </Whisper>
-
-          </HStack>
-        )
+            </HStack>
+          );
+        }
       },
       {
         key: 'rejectedAt',
@@ -620,6 +728,30 @@ const isResultSelected = (rowData: any) => {
       }));
     };
 
+  console.log('normalRangesMap', normalRangesMap);
+
+
+    useEffect(() => {
+      if (!profileTestIds.length) return;
+
+      profileTestIds.forEach(profileTestId => {
+        if (normalRangesMap[profileTestId]) return;
+
+        fetchNormalRangesByProfileTestId({
+          profileTestId,
+          page: 0,
+          size: 50
+        })
+          .unwrap()
+          .then(res => {
+            setNormalRangesMap(prev => ({
+              ...prev,
+              [profileTestId]: res?.data ?? []
+            }));
+          })
+          .catch(() => {});
+      });
+    }, [profileTestIds]);
 
 
     return (
@@ -678,6 +810,23 @@ const isResultSelected = (rowData: any) => {
           }
           fieldLabel="Reject Reason"
           title="Reject Result"
+        />
+
+        <EditResultModal
+          open={openEditModal}
+          setOpen={setOpenEditModal}
+          result={selectedResultForEdit}
+          onSuccess={() => refetch()}
+        />
+
+        <NormalRangeModal
+          open={openNormalRangeModal}
+          setOpen={setOpenNormalRangeModal}
+          ranges={
+            selectedResult
+              ? normalRangesMap[selectedResult.profileTestId] ?? []
+              : []
+          }
         />
 
 

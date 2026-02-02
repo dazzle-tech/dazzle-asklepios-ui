@@ -261,4 +261,5 @@ export const {
   useBulkAcceptDiagnosticOrderTestsMutation,
   useBulkRejectDiagnosticOrderTestsMutation,
   useUndoAcceptDiagnosticOrderTestMutation,
+  useLazyGetDiagnosticOrderTestByIdQuery,
 } = diagnosticOrderTestService;

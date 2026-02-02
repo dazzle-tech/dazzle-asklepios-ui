@@ -142,7 +142,6 @@ const Tests = forwardRef<any, Props>(
 
         dispatch(notify({ msg: 'Note sent successfully', sev: 'success' }));
 
-        // 🔵 update locally
         setLocalHasNoteIds(prev =>
           prev.includes(test.id) ? prev : [...prev, test.id]
         );
@@ -258,7 +257,6 @@ const Tests = forwardRef<any, Props>(
         dispatch(notify({ msg: 'Accepted successfully', sev: 'success' }));
 
         await refetchAllLabData();
-        // refresh
         await fetchTest();
         try {
           await fetchAllTests?.();
@@ -266,8 +264,6 @@ const Tests = forwardRef<any, Props>(
         try {
           await resultFetch?.();
         } catch { }
-
-        // keep selection updated
         setTest(rowData);
       } catch (e) {
         dispatch(notify({ msg: 'Accept failed', sev: 'error' }));

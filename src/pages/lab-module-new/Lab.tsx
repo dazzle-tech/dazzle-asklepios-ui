@@ -57,8 +57,6 @@ const Lab = () => {
   const OrdersRef = useRef<any>(null);
   const TestsRef = useRef<any>(null);
 
-  /* ===================== STATE ===================== */
-
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
@@ -70,26 +68,20 @@ const Lab = () => {
 
   const [activeKey, setActiveKey] = useState<'1' | '2'>('1');
   const [dateFilter, setDateFilter] = useState({
-    fromDate: new Date(), //new Date(),
+    fromDate: new Date(), 
     toDate: new Date()
   });
-  /* ===================== PAGE HEADER ===================== */
-
   
   useEffect(() => {
     dispatch(setPageCode('Lab'));
     dispatch(setDivContent('Clinical Laboratory'));
   }, []);
 
-  /* ===================== ORDERS ===================== */
-
   const { data: ordersResponse } = useFilterDiagnosticOrdersQuery({
     page: 0,
     size: 1000,
     hasLaboratory: true
   });
-
-  /* ===================== TESTS ===================== */
 
   const {
     data: testsResponse,
@@ -99,8 +91,6 @@ const Lab = () => {
   );
 
   const allTestsList = testsResponse?.data ?? [];
-
-  /* ===================== SAMPLES ===================== */
 
     const { data: samplesResponse, refetch: fecthSample } =
       useGetCollectedSamplesByOrderTestIdQuery(
@@ -126,7 +116,6 @@ const Lab = () => {
           await safeRefetch(fecthSample);
         }
 
-        // Tests table (tab-dependent)
         await safeRefetch(TestsRef.current?.fetchTest);
 
       } finally {
@@ -170,8 +159,6 @@ const Lab = () => {
 
     const stepsDataComputed = useMemo(() => {
       return stepsData.filter(step => {
-
-        /* ===== Accepted / Rejected ===== */
         if (
           step.key === DiagnosticOrderTestStatus.REJECTED &&
           test?.processingStatus !== DiagnosticOrderTestStatus.REJECTED
@@ -185,8 +172,6 @@ const Lab = () => {
         ) {
           return false;
         }
-
-        /* ===== Result Approved / Result Rejected ===== */
         if (
           step.key === DiagnosticOrderTestStatus.RESULT_REJECTED &&
           test?.processingStatus !== DiagnosticOrderTestStatus.RESULT_REJECTED
@@ -217,8 +202,6 @@ const Lab = () => {
     await updateTest({ id: test.id, body: payload }).unwrap();
     fetchAllTests();
   };
-
-  /* ===================== RENDER ===================== */
 
 useEffect(() => {
   if (!order?.patientId) {
@@ -348,6 +331,9 @@ useEffect(() => {
                       order={order}
                       setTest={setTest}
                       loading={globalLoading}
+                      fetchAllTests={fetchAllTests}
+                      refetchAllLabData={refetchAllLabData}
+                      fecthSample={fecthSample}
                     />
                 </Tabs.Tab>
               </Tabs>

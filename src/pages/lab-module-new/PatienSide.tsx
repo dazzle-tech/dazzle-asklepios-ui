@@ -278,21 +278,9 @@ const PatientSide = ({ patient, encounter }) => {
           </div>
         </div>
       </div>
-      {/* <Divider className="divider-thin" />
-      <Text style={{ display: 'flex', marginTop: '5px' }}>
-        <GiMedicalThermometer className="icon-title" style={{ marginTop: '4px' }} />
-        <span className="patient-section-title" style={{ marginLeft: '2px' }}>
-          Diagnosis
-        </span>
-      </Text>
-      <div>
-        <br />
-        <Text>{textOr(encounter?.diagnosis, '')}</Text>
-      </div> */}
       <Divider className="divider-thin" />
       {/* ==== Allergy & Warning Banners ==== */}
       <div className="my-container">
-        {/* Individual Allergies Badges */}
         {activeAllergies.map((allergy, index) => (
           <MyBadgeStatus
             key={`allergy-${allergy.key || index}`}
@@ -308,8 +296,6 @@ const PatientSide = ({ patient, encounter }) => {
             }
           />
         ))}
-
-        {/* Individual Warnings Badges */}
         {activeWarnings.map((warning, index) => (
           <MyBadgeStatus
             key={`warning-${warning.key || index}`}

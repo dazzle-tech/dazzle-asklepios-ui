@@ -89,8 +89,6 @@ const handleSaveSample = async () => {
       dispatch(notify({ msg: "Unit is required", sev: "warning" }));
       return;
     }
-
-    // ✅ الحفظ فقط
     await createCollectedSample({
       orderId: orderTest.orderId,
       orderTestId: orderTest.id,
@@ -139,7 +137,6 @@ const tableColumns = [
     },
   ];
 
-  /* ================= Render ================= */
   return (
     <MyModal
       open={open}

@@ -4,7 +4,8 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { formatDateWithoutSeconds } from '@/utils';
-
+import { useGetLovAllValuesQuery } from '@/services/setupService';
+import { initialListRequestAllValues } from '@/types/types';
 import { useGetLabResultLogsByResultIdQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 type Props = {
@@ -22,13 +23,28 @@ const LogResult = ({ open, setOpen, result }: Props) => {
     result?.id ?? skipToken
   );
 
+
+const { data: allLovValues } =
+  useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+
+  const resolveLovValue = (value: any) => {
+  if (!value || !allLovValues?.object) return value;
+
+  const lov = allLovValues.object.find(
+    (l: any) => String(l.key) === String(value)
+  );
+
+  return lov?.lovDisplayVale ?? value;
+};
+
+
 const columns = [
   {
     key: 'result',
     title: <Translate>RESULT</Translate>,
     flexGrow: 1.5,
     render: (row: any) =>
-      row.resultId ?? '-',
+      resolveLovValue(row.resultValue) ?? '-',
   },
   {
     key: 'time',
@@ -38,21 +54,20 @@ const columns = [
       formatDateWithoutSeconds(row.resultDate),
   },
   {
-    key: 'log',
+    key: 'resultbyat',
     title: <Translate>LOG</Translate>,
     flexGrow: 2,
     fullText: true,
-    render: (row: any) => (
-      <>
-        <strong>{row.action}</strong>
-        {row.createdBy && (
-          <span style={{ color: '#666', marginLeft: 6 }}>
-            by {row.createdBy}
-          </span>
-        )}
-      </>
-    ),
-  },
+    render: (row: any) => {
+      if (!row.resultBy) return null;
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {row.resultBy}
+        </div>
+      );
+    }
+  }
 ];
 
 
