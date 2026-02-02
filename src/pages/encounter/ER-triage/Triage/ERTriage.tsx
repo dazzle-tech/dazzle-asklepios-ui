@@ -51,19 +51,25 @@ import {
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 
-const DestinationCell = ({ encounterId, fallbackDestination }: any) => {
-  const toNumberOrNaN = (v: unknown) => {
-    if (typeof v === 'number') return v;
-    if (typeof v === 'string' && v.trim() !== '') return Number(v);
-    return Number.NaN;
-  };
+const toNumberOrNaN = (v: unknown) => {
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string' && v.trim() !== '') return Number(v);
+  return Number.NaN;
+};
 
+const unwrapApiObject = <T,>(data: any): T | null => {
+  if (!data) return null;
+  return (data?.object ?? data) as T;
+};
+
+const DestinationCell = ({ encounterId, fallbackDestination }: any) => {
   const id = toNumberOrNaN(encounterId);
   const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
     skip: Number.isNaN(id)
   });
 
-  const destination = latestEmergencyTriage?.destination ?? fallbackDestination ?? null;
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const destination = latest?.destination ?? fallbackDestination ?? null;
   if (!destination) return <></>;
 
   return <>{formatEnumString(String(destination))}</>;
@@ -102,6 +108,98 @@ const ERTriage = () => {
     const minutes = totalMinutes % 60;
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
+  };
+
+  const TriageStartedAtCell = ({ encounterId, fallbackCreatedAt }: any) => {
+    const id = toNumberOrNaN(encounterId);
+    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+      skip: Number.isNaN(id)
+    });
+
+    const latest = unwrapApiObject<any>(latestEmergencyTriage);
+
+    const createdAt =
+      latest?.createdDate ??
+      fallbackCreatedAt ??
+      null;
+    if (!createdAt) return <></>;
+    return <>{formatDateTime(createdAt)}</>;
+  };
+
+  const WaitingTimeCell = ({ encounterId, arrivalCreatedAt, fallbackTriageCreatedAt }: any) => {
+    const id = toNumberOrNaN(encounterId);
+    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+      skip: Number.isNaN(id)
+    });
+
+    const arrival = toDateSafe(arrivalCreatedAt);
+    const latest = unwrapApiObject<any>(latestEmergencyTriage);
+    const triageStart = toDateSafe(
+        latest?.createdDate ??
+        fallbackTriageCreatedAt
+    );
+    if (!arrival || !triageStart) return <></>;
+    return <>{formatDuration(triageStart.getTime() - arrival.getTime())}</>;
+  };
+
+  const TriageCompletedAtCell = ({
+    encounterId,
+    statusKey,
+    fallbackUpdatedAt,
+    completedAt,
+    completedDate
+  }: any) => {
+    const isCompleted = statusKey === COMPLETE_TRIAGE_STATUS_KEY || statusKey === SENT_TO_ER_STATUS_KEY;
+    if (!isCompleted) return <></>;
+
+    const id = toNumberOrNaN(encounterId);
+    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+      skip: Number.isNaN(id)
+    });
+
+    const latest = unwrapApiObject<any>(latestEmergencyTriage);
+    const v =
+      latest?.completedDate ??
+      fallbackUpdatedAt ??
+      completedAt ??
+      completedDate ??
+      null;
+    if (!v) return <></>;
+    return <>{formatDateTime(v)}</>;
+  };
+
+  const TriageTimeCell = ({
+    encounterId,
+    statusKey,
+    fallbackTriageCreatedAt,
+    fallbackUpdatedAt,
+    rowUpdatedAt,
+    completedAt,
+    completedDate
+  }: any) => {
+    const isCompleted = statusKey === COMPLETE_TRIAGE_STATUS_KEY || statusKey === SENT_TO_ER_STATUS_KEY;
+    if (!isCompleted) return <></>;
+
+    const id = toNumberOrNaN(encounterId);
+    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+      skip: Number.isNaN(id)
+    });
+
+    const latest = unwrapApiObject<any>(latestEmergencyTriage);
+    const triageStart = toDateSafe(
+        latest?.createdDate ??
+        fallbackTriageCreatedAt
+    );
+    const end = toDateSafe(
+      latest?.completedDate ??
+        fallbackUpdatedAt ??
+        rowUpdatedAt ??
+        completedAt ??
+        completedDate ??
+        null
+    );
+    if (!triageStart || !end) return <></>;
+    return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
   };
 
   const handlePrintWristband = async (encounterData: any) => {
@@ -305,7 +403,7 @@ const ERTriage = () => {
 
   const priorityDotColor = useMemo(() => {
     // Keep a simple, consistent palette (since enums don't come with colors).
-    const palette = ['#16a34a', '#eab308', '#f97316', '#dc2626', '#7c3aed', '#0ea5e9'];
+    const palette = ['#16a34a', '#dc2626', '#f97316', '#eab308', '#7c3aed', '#0ea5e9'];
     const m = new Map<string, string>();
     encounterPriorityEnumOptions.forEach((v, idx) => {
       if (v?.value != null) m.set(String(v.value), palette[idx % palette.length]);
@@ -465,16 +563,8 @@ const ERTriage = () => {
       };
 
       const encounterId = toNumberOrNaN(encounterData?.id ?? encounterData?.encounterId ?? encounterData?.key);
-      const patientId = toNumberOrNaN(
-        patientData?.id ??
-          patientData?.patientId ??
-          patientData?.key ??
-          encounterData?.patientId ??
-          encounterData?.patientKey ??
-          encounterData?.patient_key
-      );
+      const patientId = toNumberOrNaN(patientData?.id ?? patientData?.patientId ?? patientData?.key  );
 
-      // Create/get the NEW-backend emergency triage record (kept separate from legacy triage flow)
       const emergencyTriageNew =
         !Number.isNaN(encounterId) && !Number.isNaN(patientId)
           ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
@@ -507,7 +597,6 @@ const ERTriage = () => {
     }
   };
 
-  // (header cleanup now handled in the effect above)
 
   useEffect(() => {
     const onResize = () => setWindowHeight(window.innerHeight);
@@ -693,17 +782,25 @@ const ERTriage = () => {
       key: 'triageStartedAt',
       title: <Translate>Time Triage Started</Translate>,
       expandable: true,
-      render: (rowData: any) => formatDateTime(rowData?.emergencyTriage?.createdAt)
+      render: (rowData: any) => {
+        const encounterId = rowData?.id ?? rowData?.encounterId ?? rowData?.key;
+        const fallbackCreatedAt = rowData?.emergencyTriage?.createdAt ?? null;
+        return <TriageStartedAtCell encounterId={encounterId} fallbackCreatedAt={fallbackCreatedAt} />;
+      }
     },
     {
       key: 'waitingTime',
       title: <Translate>Waiting Time</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        const arrival =  toDateSafe(rowData?.createdAt);
-        const triageStart = toDateSafe(rowData?.emergencyTriage?.createdAt);
-        if (!arrival || !triageStart) return '';
-        return formatDuration(triageStart.getTime() - arrival.getTime());
+        const encounterId = rowData?.id ?? rowData?.encounterId ?? rowData?.key;
+        return (
+          <WaitingTimeCell
+            encounterId={encounterId}
+            arrivalCreatedAt={rowData?.createdAt}
+            fallbackTriageCreatedAt={rowData?.emergencyTriage?.createdAt ?? null}
+          />
+        );
       }
     },
     {
@@ -711,18 +808,18 @@ const ERTriage = () => {
       title: <Translate>Time Triage Completed</Translate>,
       expandable: true,
       render: (rowData: any) => {
+        const encounterId = rowData?.id ?? rowData?.encounterId ?? rowData?.key;
         const statusKey = String(rowData?.encounterStatusLkey ?? '');
-        const isCompleted =
-          statusKey === COMPLETE_TRIAGE_STATUS_KEY || statusKey === SENT_TO_ER_STATUS_KEY;
-        if (!isCompleted) return '';
-
-        const completedAt =
-          rowData?.emergencyTriage?.updatedAt ??
-          rowData?.updatedAt ??
-          rowData?.completedAt ??
-          rowData?.completedDate ??
-          null;
-        return formatDateTime(completedAt);
+        return (
+          <TriageCompletedAtCell
+            encounterId={encounterId}
+            statusKey={statusKey}
+            fallbackUpdatedAt={rowData?.emergencyTriage?.updatedAt ?? null}
+            rowUpdatedAt={rowData?.updatedAt ?? null}
+            completedAt={rowData?.completedAt ?? null}
+            completedDate={rowData?.completedDate ?? null}
+          />
+        );
       }
     },
     {
@@ -730,21 +827,20 @@ const ERTriage = () => {
       title: <Translate>Triage Time</Translate>,
       expandable: true,
       render: (rowData: any) => {
+        const encounterId = rowData?.id ?? rowData?.encounterId ?? rowData?.key;
         const statusKey = String(rowData?.encounterStatusLkey ?? '');
-        const isCompleted =
-          statusKey === COMPLETE_TRIAGE_STATUS_KEY || statusKey === SENT_TO_ER_STATUS_KEY;
-        if (!isCompleted) return '';
-
-        const triageStart = toDateSafe(rowData?.emergencyTriage?.createdAt);
-        const completedAt = toDateSafe(
-          rowData?.emergencyTriage?.updatedAt ??
-            rowData?.updatedAt ??
-            rowData?.completedAt ??
-            rowData?.completedDate ??
-            null
+        return (
+          <TriageTimeCell
+            encounterId={encounterId}
+            statusKey={statusKey}
+            arrivalCreatedAt={rowData?.createdAt}
+            fallbackTriageCreatedAt={rowData?.emergencyTriage?.createdAt ?? null}
+            fallbackUpdatedAt={rowData?.emergencyTriage?.updatedAt ?? null}
+            rowUpdatedAt={rowData?.updatedAt ?? null}
+            completedAt={rowData?.completedAt ?? null}
+            completedDate={rowData?.completedDate ?? null}
+          />
         );
-        if (!triageStart || !completedAt) return '';
-        return formatDuration(completedAt.getTime() - triageStart.getTime());
       }
     },
     {
@@ -903,10 +999,11 @@ const ERTriage = () => {
             </Whisper>
 
             {/* Priority action should appear before Start */}
-            <EncounterPriorityAction rowData={rowData} />
+            <EncounterPriorityAction rowData={rowData}  />
 
             {rowData?.encounterStatusLkey === '91109811181900' ||
-            rowData?.encounterStatusLkey === '6550164111662337' ? (
+            rowData?.encounterStatusLkey === '6550164111662337' ||
+            rowData?.encounterStatusLkey === '6742317684600328' ? (
               <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
                 <div>
                   <MyButton

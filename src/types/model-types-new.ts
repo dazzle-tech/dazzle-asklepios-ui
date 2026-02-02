@@ -252,10 +252,10 @@ export interface ChiefComplain {
 
 export interface EmergencyTriage {
   id?: number;
-
   patientId?: number | null;
-
   encounterId?: number | null;
+  createdDate?: string | Date | null;
+  lastModifiedDate?: string | Date | null;
 
   emergencyLevel?: string | null;
 
@@ -282,6 +282,7 @@ export interface EmergencyTriage {
   consultationRequired?: string | null;
 
   destination?: string | null;
+  completedDate?: string | Date | null;
 }
 
 

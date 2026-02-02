@@ -265,7 +265,8 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
                 borderRadius: 6,
                 height: inputHeightPx,
                 padding: '0 8px',
-                background: 'var(--rs-bg-overlay)'
+                background: 'var(--rs-bg-overlay)',
+                color: mode === 'light' ? 'var(--black)' : 'var(--white)'
               }}
             >
               <div

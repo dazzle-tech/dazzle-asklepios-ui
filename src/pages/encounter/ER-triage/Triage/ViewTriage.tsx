@@ -30,6 +30,7 @@ const ViewTriage = () => {
   const [refetchPatientObservations, setRefetchPatientObservations] = useState(false);
 
   const emergencyLevelEnumOptions = useEnumOptions('EmergencyLevel');
+  const encounterPriorityEnumOptions = useEnumOptions('EncounterPriority');
   const emergencyLevelColorMap = useMemo(() => {
       const byValue: Record<string, string> = {
         RESUSCITATION: '#7f1d1d',
@@ -52,6 +53,25 @@ const ViewTriage = () => {
   const selectedEmergencyLevel = emergencyLevelEnumOptions.find(
     (item: any) => item.value === triage?.emergencyLevel
   );
+
+  const encounterPriorityValue =
+    (encounter as any)?.encounterPriorityLkey ?? (encounter as any)?.encounterPriority ?? null;
+  const selectedEncounterPriority = encounterPriorityEnumOptions.find(
+    (item: any) => String(item?.value) === String(encounterPriorityValue ?? '')
+  );
+  const encounterPriorityLabel =
+    selectedEncounterPriority?.label ??
+    (encounterPriorityValue != null ? String(encounterPriorityValue) : '');
+  const encounterPriorityIsUrgent = useMemo(() => {
+    const v = String(
+      selectedEncounterPriority?.label ??
+        selectedEncounterPriority?.value ??
+        encounterPriorityValue ??
+        ''
+    ).toUpperCase();
+    return v.includes('URGENT') || v.includes('CRITICAL') || v.includes('STAT') || v.includes('EMERG');
+  }, [selectedEncounterPriority, encounterPriorityValue]);
+  const encounterPriorityColor = encounterPriorityIsUrgent ? '#dc2626' : '#16a34a';
 
   const toNumberOrNaN = (v: unknown) => {
     if (typeof v === 'number') return v;
@@ -105,6 +125,11 @@ const ViewTriage = () => {
                   color={emergencyLevelColorMap.get(String(triage?.emergencyLevel)) ?? '#98A2B4'}
                   contant={selectedEmergencyLevel?.label ?? triage?.emergencyLevel}
                 />
+              )}
+
+              <MyLabel label="Priority" />
+              {encounterPriorityLabel && (
+                <MyBadgeStatus color={encounterPriorityColor} contant={encounterPriorityLabel} />
               )}
             </Form>
           </div>

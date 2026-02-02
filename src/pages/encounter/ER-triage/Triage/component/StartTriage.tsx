@@ -48,6 +48,7 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
   }, [emergencyTriageNew]);
 
   const emergencyLevelEnumOptions = useEnumOptions("EmergencyLevel");
+  const encounterPriorityEnumOptions = useEnumOptions("EncounterPriority");
   const emergencyLevelColorMap = useMemo(() => {
     const byValue: Record<string, string> = {
       // ER triage common levels
@@ -71,6 +72,30 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
   const selectedEmergencyLevel = emergencyLevelEnumOptions.find(
     (item: any) => item.value === triage?.emergencyLevel
   );
+
+  const encounterPriorityValue =
+    encounter?.encounterPriorityLkey ?? encounter?.encounterPriority ?? null;
+  const selectedEncounterPriority = encounterPriorityEnumOptions.find(
+    (item: any) => String(item?.value) === String(encounterPriorityValue ?? "")
+  );
+  const encounterPriorityLabel =
+    selectedEncounterPriority?.label ??
+    (encounterPriorityValue != null ? String(encounterPriorityValue) : "");
+  const encounterPriorityIsUrgent = useMemo(() => {
+    const v = String(
+      selectedEncounterPriority?.label ??
+        selectedEncounterPriority?.value ??
+        encounterPriorityValue ??
+        ""
+    ).toUpperCase();
+    return (
+      v.includes("URGENT") ||
+      v.includes("CRITICAL") ||
+      v.includes("STAT") ||
+      v.includes("EMERG")
+    );
+  }, [selectedEncounterPriority, encounterPriorityValue]);
+  const encounterPriorityColor = encounterPriorityIsUrgent ? "#dc2626" : "#16a34a";
 
   const handleSaveLevelAssessmentNew = async () => {
     const triageId = emergencyTriageNew?.id;
@@ -168,6 +193,14 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
                   selectedEmergencyLevel?.label ??
                   triage?.emergencyLevel
                 }
+              />
+            )}
+
+            <MyLabel label="Priority" />
+            {encounterPriorityLabel && (
+              <MyBadgeStatus
+                color={encounterPriorityColor}
+                contant={encounterPriorityLabel}
               />
             )}
           </Form>
