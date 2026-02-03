@@ -93,7 +93,7 @@ const resolveLovDisplayValue = (
 };
 
 const Result = forwardRef<any, Props>(
-  ({ order, loading, setTest, fetchAllTests,refetchAllLabData,fecthSample }, ref) => {
+  ({ order, loading, setTest, fetchAllTests, refetchAllLabData, fecthSample }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
 
     const [openEditModal, setOpenEditModal] = useState(false);
@@ -184,14 +184,14 @@ const Result = forwardRef<any, Props>(
     const results = resultsResponse?.data ?? [];
 
 
-const profileTestIds = useMemo(
-  () =>
-    results
-      .map(r => r.profileTestId)
-      .filter(Boolean)
-      .filter((id, i, arr) => arr.indexOf(id) === i),
-  [results]
-);
+    const profileTestIds = useMemo(
+      () =>
+        results
+          .map(r => r.profileTestId)
+          .filter(Boolean)
+          .filter((id, i, arr) => arr.indexOf(id) === i),
+      [results]
+    );
 
 
     const {
@@ -306,7 +306,7 @@ const profileTestIds = useMemo(
       try {
         await approveResult(row.id).unwrap();
 
-        refetch(); 
+        refetch();
         await refetchAllLabData();
       } catch (e) {
         console.error('Approve failed', e);
@@ -377,7 +377,7 @@ const profileTestIds = useMemo(
         key: 'resultnormalRange',
         title: <Translate>RESULT NORMAL RANGE</Translate>,
         flexGrow: 2,
-        align:'center',
+        align: 'center',
         fullText: true,
         render: (row: any) => (
           <Whisper
@@ -435,7 +435,7 @@ const profileTestIds = useMemo(
 
             case 'NORMAL_MARKER':
               return 'Normal';
-              case 'UNKNOWN':
+            case 'UNKNOWN':
               return 'Unknown';
             case 'UPPER_LIMIT':
               return (
@@ -679,12 +679,12 @@ const profileTestIds = useMemo(
       }
     ];
 
-const isResultSelected = (rowData: any) => {
-  if (rowData && selectedRow && rowData.id === selectedRow.id) {
-    return 'selected-row';
-  }
-  return '';
-};
+    const isResultSelected = (rowData: any) => {
+      if (rowData && selectedRow && rowData.id === selectedRow.id) {
+        return 'selected-row';
+      }
+      return '';
+    };
 
 
 
@@ -715,7 +715,7 @@ const isResultSelected = (rowData: any) => {
       }));
     };
 
-  console.log('normalRangesMap', normalRangesMap);
+    console.log('normalRangesMap', normalRangesMap);
 
 
     useEffect(() => {
@@ -736,7 +736,7 @@ const isResultSelected = (rowData: any) => {
               [profileTestId]: res?.data ?? []
             }));
           })
-          .catch(() => {});
+          .catch(() => { });
       });
     }, [profileTestIds]);
 
@@ -779,11 +779,11 @@ const isResultSelected = (rowData: any) => {
           loading={isResultNotesFetching || isSendingResultNote}
         />
 
-          <LogResult
-            open={openLogsModal}
-            setOpen={setOpenLogsModal}
-            result={selectedResultForLogs}
-          />
+        <LogResult
+          open={openLogsModal}
+          setOpen={setOpenLogsModal}
+          result={selectedResultForLogs}
+        />
 
         <CancellationModal
           open={openResultRejectModal}

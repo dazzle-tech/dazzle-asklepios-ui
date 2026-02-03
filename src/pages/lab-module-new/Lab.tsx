@@ -7,6 +7,7 @@ import {
   useFilterDiagnosticOrdersQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
+  useFilterDiagnosticOrderTestsQuery,
   useGetTestsByOrderIdQuery,
   useUpdateDiagnosticOrderTestMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
@@ -65,12 +66,15 @@ const Lab = () => {
   const [globalLoading, setGlobalLoading] = useState(false);
 
   const [fetchPatientById] = useLazyGetPatientByIdQuery();
+  
+  const [testStatusFilter, setTestStatusFilter] =
+    useState<DiagnosticOrderTestStatus | null>(null);
+
+  const [resultStatusFilter, setResultStatusFilter] =
+    useState<DiagnosticOrderTestStatus | null>(null);
 
   const [activeKey, setActiveKey] = useState<'1' | '2'>('1');
-  const [dateFilter, setDateFilter] = useState({
-    fromDate: new Date(), 
-    toDate: new Date()
-  });
+
   
   useEffect(() => {
     dispatch(setPageCode('Lab'));
@@ -83,14 +87,46 @@ const Lab = () => {
     hasLaboratory: true
   });
 
-  const {
-    data: testsResponse,
-    refetch: fetchAllTests
-  } = useGetTestsByOrderIdQuery(
-    order?.id ? { orderId: order.id, page: 0, size: 1000 } : skipToken
-  );
+  const endOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+  };
 
-  const allTestsList = testsResponse?.data ?? [];
+
+  const startOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+  const today = new Date();
+
+  const [dateFilter, setDateFilter] = useState({
+    fromDate: today,
+    toDate: today,
+  });
+
+  const toLocalISOString = (date: Date) => {
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - tzOffset)
+      .toISOString()
+      .slice(0, -1);
+  };
+
+
+  const { data: testsResponse, refetch: fetchAllTests } =
+    useFilterDiagnosticOrderTestsQuery({
+      page: 0,
+      size: 1000,
+      hasLaboratory: true,
+      createdDateFrom: startOfDay(today).toISOString(),
+      createdDateTo: endOfDay(today).toISOString(),
+    });
+
+
+
+    const allTestsList = testsResponse?.data ?? [];
 
     const { data: samplesResponse, refetch: fecthSample } =
       useGetCollectedSamplesByOrderTestIdQuery(
@@ -123,30 +159,36 @@ const Lab = () => {
       }
     };
 
-    const newTestsCount = useMemo(
-      () =>
-        allTestsList.filter(
-          t => t.status === DiagnosticOrderTestStatus.NEW
-        ).length,
-      [allTestsList]
-    );
+      const newTestsCount = useMemo(
+        () =>
+          allTestsList.filter(
+            t =>
+              t.processingStatus === DiagnosticOrderTestStatus.NEW
+          ).length,
+        [allTestsList]
+      );
 
-    const sampleCollectedTestsCount = useMemo(
-      () =>
-        allTestsList.filter(
-          t => t.processingStatus === DiagnosticStatus.SAMPLE_COLLECTED
-        ).length,
-      [allTestsList]
-    );
+      const sampleCollectedTestsCount = useMemo(
+        () =>
+          allTestsList.filter(
+            t =>
+              t.processingStatus ===
+              DiagnosticOrderTestStatus.SAMPLE_COLLECTED
+          ).length,
+        [allTestsList]
+      );
+
+      const resultApprovedCount = useMemo(
+        () =>
+          allTestsList.filter(
+            t =>
+              t.processingStatus ===
+              DiagnosticOrderTestStatus.RESULT_APPROVED
+          ).length,
+        [allTestsList]
+      );
 
 
-    const resultApprovedCount = useMemo(
-      () =>
-        allTestsList.filter(
-          t => t.status === DiagnosticOrderTestStatus.APPROVED
-        ).length,
-      [allTestsList]
-    );
 
     const stepsData = [
       { key: DiagnosticOrderTestStatus.SAMPLE_COLLECTED, value: 'Sample Collected' },
@@ -227,6 +269,10 @@ useEffect(() => {
 
 }, [order?.patientId]);
 
+
+useEffect(() => {
+  fetchAllTests();
+}, [dateFilter.fromDate, dateFilter.toDate]);
 
   return (
     <>

@@ -8,39 +8,35 @@ import React, {
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import ChatModal from '@/components/ChatModal';
-import CancellationModal from '@/components/CancellationModal';
 import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Panel, HStack, Tooltip, Whisper, Form, Checkbox } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowDown,
   faArrowUp,
-  faCheck,
   faCircleExclamation,
   faComment,
-  faFileLines,
-  faPrint,
   faTriangleExclamation,
-  faXmark
 } from '@fortawesome/free-solid-svg-icons';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   useFilterDiagnosticOrderTestResultsQuery,
-  useApproveDiagnosticOrderTestResultMutation,
-  useRejectDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import {
   useGetNotesByResultIdQuery,
-  useCreateDiagnosticOrderTestResultTechnicianNoteMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useGetLovAllValuesQuery, useGetLovsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { initialListRequest, initialListRequestAllValues } from '@/types/types';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { useToggleReviewDiagnosticOrderTestResultMutation }
+  from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 const renderMarker = (viewMarker?: string) => {
   switch (viewMarker) {
@@ -71,15 +67,52 @@ const renderMarker = (viewMarker?: string) => {
   }
 };
 
+const isLovProfile = (profile?: any) =>
+  profile?.resultType?.toUpperCase() === 'LOV';
+
+const resolveLovDisplayValue = (
+  profile: any,
+  key: any,
+  lovDefinitions: any,
+  allLovValues: any
+) => {
+  if (
+    !profile?.listOfValueId ||
+    key == null ||
+    !lovDefinitions?.object ||
+    !allLovValues?.object
+  ) {
+    return key;
+  }
+
+  const lovDef = lovDefinitions.object.find(
+    (d: any) => String(d.key) === String(profile.listOfValueId)
+  );
+
+  if (!lovDef?.lovCode) return key;
+
+  return (
+    allLovValues.object.find(
+      (v: any) =>
+        String(v.lovCode) === String(lovDef.lovCode) &&
+        String(v.key) === String(key)
+    )?.lovDisplayVale ?? key
+  );
+};
+
 const Result = forwardRef<any, any>(
   ({ loading, setTest, refetchAllLabData }, ref) => {
+    const today = new Date();
     const [page, setPage] = useState(0);
     const [size, setSize] = useState(15);
     const [selectedResult, setSelectedResult] = useState<any>(null);
     const [openNotesModal, setOpenNotesModal] = useState(false);
     const [openRejectModal, setOpenRejectModal] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
-    const [approvalDate, setApprovalDate] = useState({ fromDate: null, toDate: null });
+    const [approvalDate, setApprovalDate] = useState({
+      fromDate: today,
+      toDate: today
+    });
     const [orderDate, setOrderDate] = useState({ fromDate: null, toDate: null });
     const [showReview, setShowReview] = useState(false);
     const [showAbnormal, setShowAbnormal] = useState(false);
@@ -87,164 +120,194 @@ const Result = forwardRef<any, any>(
     const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
     const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
     const [fetchPatientById] = useLazyGetPatientByIdQuery();
+    const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
+    const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
+    const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
 
-const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
-const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
+    
+    const [toggleReviewDiagnosticOrderTestResult] =
+      useToggleReviewDiagnosticOrderTestResultMutation();
+
+    const { data: valueUnitLov } =
+      useGetLovValuesByCodeQuery('VALUE_UNIT');
+
+    const { data: allLovValues } =
+      useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+
+    const { data: lovDefinitions } =
+      useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
 
 
+    const normalizeDateRange = (from?: Date | null, to?: Date | null) => {
+      if (from && to && from > to) {
+        return { from: to, to: from };
+      }
+      return { from, to };
+    };
+    const endOfDay = (date: Date) => {
+      const d = new Date(date);
+      d.setHours(23, 59, 59, 999);
+      return d;
+    };
 
+    const filterParams = useMemo(() => {
+      const params: any = {
+        page,
+        size,
+        processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
+        reviewed: showReview
+      };
+
+      const { from, to } = normalizeDateRange(
+        approvalDate.fromDate,
+        approvalDate.toDate
+      );
+
+      if (from) {
+        params.approvedDateFrom = from.toISOString();
+      }
+
+      if (to) {
+        params.approvedDateTo = endOfDay(to).toISOString();
+      }
+
+      return params;
+    }, [page, size, approvalDate, showReview]);
 
     const {
       data: resultsResponse,
       isFetching,
       refetch
-    } = useFilterDiagnosticOrderTestResultsQuery({
-      page,
-      size,
-      processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED
-    });
+    } = useFilterDiagnosticOrderTestResultsQuery(filterParams);
 
     useImperativeHandle(ref, () => ({ refetch }));
 
     const results = resultsResponse?.data ?? [];
     const totalCount = resultsResponse?.totalCount ?? 0;
 
-    const { data: notesResponse, refetch: refetchNotes } =
-      useGetNotesByResultIdQuery(selectedResult?.id ?? skipToken);
-
-    const [sendNote, { isLoading: sendingNote }] =
-      useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
-
-    const handleSendNote = async (value: string) => {
-      if (!selectedResult?.id) return;
-      await sendNote({
-        resultId: selectedResult.id,
-        orderTestId: selectedResult.orderTestId,
-        note: value
-      }).unwrap();
-      refetchNotes();
-    };
-
-    const [approveResult] =
-      useApproveDiagnosticOrderTestResultMutation();
-    const [rejectResult] =
-      useRejectDiagnosticOrderTestResultMutation();
-
-    const handleApprove = async (row: any) => {
-      await approveResult(row.id).unwrap();
-      setTest({
-        id: row.orderTestId,
-        processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
-        status: row.status
-      });
-      await refetchAllLabData();
-      refetch();
-    };
-
-    const handleReject = async () => {
-      if (!selectedResult?.id) return;
-      await rejectResult({
-        id: selectedResult.id,
-        body: { rejectedReason: rejectReason }
-      }).unwrap();
-      setRejectReason('');
-      setOpenRejectModal(false);
-      await refetchAllLabData();
-      refetch();
-    };
+    const { data: notesResponse, isFetching: isNotesFetching } =
+      useGetNotesByResultIdQuery(
+        openNotesModal && selectedResultId
+          ? selectedResultId
+          : skipToken
+      );
 
     useEffect(() => {
-    if (!results.length) return;
+      if (!results.length) return;
 
-    results.forEach(r => {
+      results.forEach(r => {
         // ========= ORDER =========
         if (r.orderId && !ordersMap[r.orderId]) {
-        fetchOrderById(r.orderId)
+          fetchOrderById(r.orderId)
             .unwrap()
             .then(order => {
-            console.log('[ORDER]', order.id);
-            setOrdersMap(prev => ({
+              console.log('[ORDER]', order.id);
+              setOrdersMap(prev => ({
                 ...prev,
                 [String(order.id)]: order
-            }));
+              }));
             })
-            .catch(() => {});
+            .catch(() => { });
         }
 
         // ========= ORDER TEST =========
         if (r.orderTestId && !orderTestsMap[r.orderTestId]) {
-        fetchOrderTestById(r.orderTestId)
+          fetchOrderTestById(r.orderTestId)
             .unwrap()
             .then(test => {
-            console.log('[ORDER TEST]', test.id);
-            setOrderTestsMap(prev => ({
+              console.log('[ORDER TEST]', test.id);
+              setOrderTestsMap(prev => ({
                 ...prev,
                 [String(test.id)]: test
-            }));
+              }));
             })
-            .catch(() => {});
+            .catch(() => { });
         }
-    });
+      });
     }, [results]);
 
     useEffect(() => {
-    Object.values(ordersMap).forEach(order => {
+      Object.values(ordersMap).forEach(order => {
         const patientId = order?.patientId ? String(order.patientId) : null;
 
         if (patientId && !patientsMap[patientId]) {
-        fetchPatientById(patientId)
+          fetchPatientById(patientId)
             .unwrap()
             .then(patient => {
-            console.log('[PATIENT]', patientId);
-            setPatientsMap(prev => ({
+              console.log('[PATIENT]', patientId);
+              setPatientsMap(prev => ({
                 ...prev,
                 [patientId]: patient
-            }));
+              }));
             })
-            .catch(() => {});
+            .catch(() => { });
         }
-    });
+      });
     }, [ordersMap]);
 
     const { data: profilesResponse } =
-    useGetAllDiagnosticTestProfilesQuery({
+      useGetAllDiagnosticTestProfilesQuery({
         page: 0,
         size: 10000,
         sort: 'id,asc'
-    });
+      });
 
     const profilesMap = useMemo(
-    () => new Map(profilesResponse?.data?.map(p => [p.id, p]) ?? []),
-    [profilesResponse]
+      () => new Map(profilesResponse?.data?.map(p => [p.id, p]) ?? []),
+      [profilesResponse]
     );
 
+    const normalizedResults = useMemo(() => {
+      return results.map(r => {
+        const order = ordersMap[r.orderId];
+        const patient = patientsMap[order?.patientId];
+        const profile = profilesMap.get(r.profileTestId);
 
-const normalizedResults = useMemo(() => {
-  return results.map(r => {
-    const order = ordersMap[r.orderId];
-    const patient = patientsMap[order?.patientId];
-    const profile = profilesMap.get(r.profileTestId);
+        return {
+          ...r,
+          _patientName: patient?.fullName ?? ' ',
+          _profile: profile,
+          _testName: profile?.name ?? '-',
+          _approvedDate: r.approvedDate
+        };
+      });
+    }, [results, ordersMap, patientsMap, profilesMap]);
 
-    return {
-      ...r,
-      _patientName: patient?.fullName ?? ' ',
-      _profile: profile,
-      _testName: profile?.name ?? '-',
-      _approvedDate: r.approvedDate
+    const resolveResultDisplay = (row: any) => {
+      const profile = row._profile;
+      if (!profile) return ' ';
+
+      if (isLovProfile(profile)) {
+        return resolveLovDisplayValue(
+          profile,
+          row.resultValueText,
+          lovDefinitions,
+          allLovValues
+        );
+      }
+
+      return row.resultValueNumber ?? ' ';
     };
-  });
-}, [results, ordersMap, patientsMap, profilesMap]);
 
+    const resolveUnitDisplay = (row: any) => {
+      const profile = row._profile;
+      if (!profile || isLovProfile(profile)) return null;
+
+      return profile.resultUnit
+        ? valueUnitLov?.object?.find(
+          u => String(u.key) === String(profile.resultUnit)
+        )?.lovDisplayVale
+        : null;
+    };
 
     const columns = useMemo(
       () => [
         {
-        key: 'patient',
-        title: <Translate>PATIENT NAME</Translate>,
-        render: (r: any) => r._patientName
+          key: 'patient',
+          title: <Translate>PATIENT NAME</Translate>,
+          render: (r: any) => r._patientName
 
         },
-
         {
           key: 'approvedAt',
           title: <Translate>RESULT DATE</Translate>,
@@ -252,25 +315,17 @@ const normalizedResults = useMemo(() => {
             formatDateWithoutSeconds(row.approvedDate)
         },
         {
-        key: 'testName',
-        title: <Translate>TEST NAME</Translate>,
-        render: (row: any) => (
+          key: 'testName',
+          title: <Translate>TEST NAME</Translate>,
+          render: (row: any) => (
             <>
-            {row._profile?.name ?? '-'}
-            <br />
-            <span style={{ fontSize: 10, color: '#666' }}>
+              {row._profile?.name ?? '-'}
+              <br />
+              <span style={{ fontSize: 10, color: '#666' }}>
                 {row._profile?.testName ?? ''}
-            </span>
+              </span>
             </>
-        )
-        },
-        {
-          key: 'result',
-          title: <Translate>TEST RESULT, UNIT</Translate>,
-          render: (row: any) =>
-            row.resultValueText ??
-            row.resultValueNumber ??
-            ' '
+          )
         },
         {
           key: 'normalRange',
@@ -296,6 +351,7 @@ const normalizedResults = useMemo(() => {
               }}
               onClick={() => {
                 setSelectedResult(row);
+                setSelectedResultId(row.id);
                 setOpenNotesModal(true);
               }}
             />
@@ -303,56 +359,87 @@ const normalizedResults = useMemo(() => {
         },
         {
           key: 'action',
-          title: <Translate>ACTION</Translate>,
+          title: <Translate>REVIEW</Translate>,
+          flexGrow: 1,
           align: 'center',
-          render: (row: any) => (
-            <HStack spacing={10}>
-              <Whisper speaker={<Tooltip>Approve</Tooltip>}>
-                <FontAwesomeIcon icon={faCheck} onClick={() => handleApprove(row)} />
+          render: (rowData: any) => {
+            const isReviewed = !!rowData.reviewDate;
+            console.log('reviewDate', rowData.reviewDate);
+
+            return (
+              <Whisper placement="top" speaker={<Tooltip>Review</Tooltip>}>
+                <span>
+                  <FontAwesomeIcon
+                    icon={faStar}
+                    style={{
+                      fontSize: '1em',
+                      cursor: 'pointer',
+                      color: isReviewed ? '#ffea00ff' : '#999',
+                      opacity: isReviewed ? 1 : 0.6
+                    }}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setSelectedResult(rowData);
+                      setSelectedResultId(rowData.id);
+
+                      try {
+                        await toggleReviewDiagnosticOrderTestResult(rowData.id).unwrap();
+                        await refetchAllLabData();
+                        refetch();
+                      } catch (e) {
+                        console.error('Review toggle failed', e);
+                      }
+                    }}
+                  />
+                </span>
               </Whisper>
-              <Whisper speaker={<Tooltip>Reject</Tooltip>}>
-                <FontAwesomeIcon
-                  icon={faXmark}
-                  onClick={() => {
-                    setSelectedResult(row);
-                    setOpenRejectModal(true);
-                  }}
-                />
-              </Whisper>
-              <FontAwesomeIcon icon={faPrint} />
-              <FontAwesomeIcon icon={faFileLines} />
-            </HStack>
-          )
+            );
+          }
         }
       ],
-      [patientsMap, selectedResult]
+      [patientsMap, normalizedResults]
     );
 
     const filters = () => (
       <Form fluid>
+        <div className='results-table-filters-review-results-main-container'>
           <MyInput fieldType="date" fieldLabel="Approval From Date" fieldName="fromDate" record={approvalDate} setRecord={setApprovalDate} />
           <MyInput fieldType="date" fieldLabel="Approval To Date" fieldName="toDate" record={approvalDate} setRecord={setApprovalDate} />
-          <MyInput fieldType="date" fieldLabel="Order From Date" fieldName="fromDate" record={orderDate} setRecord={setOrderDate} />
-          <MyInput fieldType="date" fieldLabel="Order To Date" fieldName="toDate" record={orderDate} setRecord={setOrderDate} />
-          <Checkbox checked={showReview} onChange={() => setShowReview(!showReview)}>Show Review Result</Checkbox>
+          {/* <MyInput fieldType="date" fieldLabel="Order From Date" fieldName="fromDate" record={orderDate} setRecord={setOrderDate} />
+        <MyInput fieldType="date" fieldLabel="Order To Date" fieldName="toDate" record={orderDate} setRecord={setOrderDate} /> */}
+        <div className='results-table-filters-checkboxes-review-results-main-container'>
+          <Checkbox
+            checked={showReview}
+            onChange={(_, checked) => setShowReview(checked)}
+          >
+            Show Review Result
+          </Checkbox>
           <Checkbox checked={showAbnormal} onChange={() => setShowAbnormal(!showAbnormal)}>Show Abnormal Result</Checkbox>
+          </div>
+        </div>
         <AdvancedSearchFilters />
       </Form>
     );
 
-
-useEffect(() => {
-  console.log('[RESULTS]', results.map(r => ({
-    id: r.id,
-    orderId: r.orderId,
-    orderTestId: r.orderTestId
-  })));
-}, [results]);
-
-
-
+    useEffect(() => {
+      console.log('[RESULTS]', results.map(r => ({
+        id: r.id,
+        orderId: r.orderId,
+        orderTestId: r.orderTestId
+      })));
+    }, [results]);
 
     console.log("results", results);
+
+    useEffect(() => {
+      const today = new Date();
+      setApprovalDate({
+        fromDate: today,
+        toDate: today
+      });
+    }, []);
+
+
     return (
       <Panel defaultExpanded>
         <MyTable
@@ -363,33 +450,21 @@ useEffect(() => {
           page={page}
           rowsPerPage={size}
           totalCount={totalCount}
-          onPageChange={(_, p) => setPage(p)}
+          onPageChange={(_, newPage) => setPage(newPage)}
           onRowsPerPageChange={e => {
             setSize(Number(e.target.value));
             setPage(0);
           }}
-          onRowClick={row => setSelectedResult(row)}
         />
 
         <ChatModal
           open={openNotesModal}
           setOpen={setOpenNotesModal}
           title="Comments"
-          list={notesResponse ?? []}
+          list={openNotesModal ? notesResponse ?? [] : []}
           fieldShowName="note"
-          handleSendMessage={handleSendNote}
-          loading={sendingNote}
-        />
-
-        <CancellationModal
-          open={openRejectModal}
-          setOpen={setOpenRejectModal}
-          fieldName="rejectedReason"
-          handleCancle={handleReject}
-          object={{ rejectedReason: rejectReason }}
-          setObject={(obj: any) => setRejectReason(obj.rejectedReason)}
-          fieldLabel="Reject Reason"
-          title="Reject Result"
+          handleSendMessage={{}}
+          disabled
         />
       </Panel>
     );
