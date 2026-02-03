@@ -8,7 +8,7 @@ import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import AdministrativeWarningsModal from './AdministrativeWarning';
-import ScanDocumentModal from './ScanDocumentModal';
+import ScanDocumentModal from '@/pages/patient/patient-profile/ScanDocumentModal';
 import '@/patches/prototypeShield';
 import {
   useGetPatientProfilePictureQuery,
@@ -38,6 +38,9 @@ import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
 
+// IMPORTANT: hook from your RTK Query service file
+import { useGeneratePatientPdfMutation } from '@/services/patientReportService';
+
 interface ProfileHeaderProps {
   localPatient: ApPatient;
   handleSave: () => void;
@@ -50,7 +53,7 @@ interface ProfileHeaderProps {
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setOpenBViewPriceListModal: (value: boolean) => void;
-  setLocalPatient: (patient: ApPatient) => void;
+  setLocalPatient: React.Dispatch<React.SetStateAction<ApPatient>>;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -67,7 +70,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenBViewPriceListModal,
   setLocalPatient
 }) => {
-  const authSlice = useAppSelector(state => state.auth); // مستخدم لاحقًا إذا احتجت له
+  const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const [patientImage, setPatientImage] = useState<ApAttachment | undefined>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
@@ -105,6 +108,47 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   const { data: patientSecondaryDocumentsResponse, refetch: patientSecondaryDocuments } =
     useGetPatientSecondaryDocumentsQuery(documenstListRequest, { skip: !localPatient.key });
+
+  useEffect(() => {
+    setDocumentsListRequest(prev => ({
+      ...prev,
+      pageNumber: 1,
+      filters: [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        },
+        ...(localPatient?.key
+          ? [
+              {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: String(localPatient.key)
+              }
+            ]
+          : [])
+      ]
+    }));
+  }, [localPatient?.key]);
+
+  useEffect(() => {
+    if (localPatient?.key) patientSecondaryDocuments();
+  }, [localPatient?.key, patientSecondaryDocuments]);
+
+  const [generatePatientPdf, { isLoading: isGeneratingPatientPdf }] =
+    useGeneratePatientPdfMutation();
+
+  const urlToBase64 = async (url: string): Promise<string> => {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result)); 
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
 
   const handlePrintPatientLabel = async () => {
     try {
@@ -163,27 +207,70 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
   };
 
-  const handlePrintInformation = () => {
-    if (!localPatient) return;
+  const handlePrintInformation = async () => {
+    try {
+      if (!localPatient) return;
 
-    const patientWithImage = {
-      ...(localPatient as any),
-      profilePictureUrl: patientImageUrl || ''
-    };
-
-    const secondaryDocumentsArray =
-      patientSecondaryDocumentsResponse &&
+      const secondaryDocumentsArray =
+        patientSecondaryDocumentsResponse &&
         (patientSecondaryDocumentsResponse as any).object &&
         Array.isArray((patientSecondaryDocumentsResponse as any).object)
-        ? (patientSecondaryDocumentsResponse as any).object
-        : [];
+          ? (patientSecondaryDocumentsResponse as any).object
+          : [];
 
-    (patientWithImage as any).secondaryDocuments = secondaryDocumentsArray;
+      const secondaryDocuments = (secondaryDocumentsArray ?? []).map((d: any) => ({
+        documentNo: d?.documentNo,
+        documentType: d?.documentTypeLvalue?.lovDisplayVale || d?.documentType || '',
+        documentCountry: d?.documentCountryLvalue?.lovDisplayVale || d?.documentCountry || ''
+      }));
 
-    navigate('/patient-report', { state: { patient: patientWithImage } });
+      let profilePictureBase64: string | undefined = undefined;
+      let profilePictureUrl: string | undefined = undefined;
+
+      if (patientImageUrl) {
+        try {
+          profilePictureBase64 = await urlToBase64(patientImageUrl);
+        } catch {
+          profilePictureUrl = patientImageUrl;
+        }
+      }
+
+      const facilityName = authSlice?.tenant?.selectedFacility?.name;
+      const authenticatedUserName =
+        `${authSlice?.user?.firstName ?? ''} ${authSlice?.user?.lastName ?? ''}`.trim() || undefined;
+      const authenticatedUserEmail = authSlice?.user?.email;
+
+      const blob = await generatePatientPdf({
+        patient: localPatient,
+        facilityName,
+        authenticatedUserName,
+        authenticatedUserEmail,
+        profilePictureBase64,
+        profilePictureUrl,
+        secondaryDocuments
+      } as any).unwrap();
+
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = `Patient_${localPatient?.patientMrn || localPatient?.key || 'info'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.message || 'Failed to generate patient PDF',
+          type: 'error'
+        })
+      );
+    }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!localPatient) return;
     if (!localPatient.key) return;
 
@@ -243,7 +330,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const normalizeParsedData = (raw: any) => {
-
     return {
       firstName:
         raw.firstName ||
@@ -275,9 +361,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const handleIdParsed = (parsedData: any) => {
-
     const normalized = normalizeParsedData(parsedData);
-
 
     const updatedPatient: Partial<ApPatient> = { ...localPatient };
 
@@ -307,7 +391,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setOpenPrintMenu(false);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const patientWithUrl = localPatient as any;
 
     if (patientWithUrl?.profilePictureUrl) {
@@ -428,11 +512,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   <Translate>Clear</Translate>
                 </MyButton>
 
-                <MyButton
-                  appearance="ghost"
-                  disabled={!localPatient.key}
-                  onClick={handleNewVisit}
-                >
+                <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
                   <Translate>Quick Appointment</Translate>
                 </MyButton>
 
@@ -444,13 +524,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 {/* More Menu */}
                 <Whisper
                   trigger="click"
-                   open={openMoreMenu}
+                  open={openMoreMenu}
                   onClose={() => setOpenMoreMenu(false)}
                   placement="bottom"
                   speaker={
                     <Popover full>
                       <Dropdown.Menu>
-
                         <Dropdown.Item
                           disabled={localPatient.key === undefined}
                           onClick={() => {
@@ -480,7 +559,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                           </div>
                         </Dropdown.Item>
 
-                        <Dropdown.Item onClick={() => {setOpenMoreMenu(false); setOpenBViewPriceListModal(true);}}>
+                        <Dropdown.Item
+                          onClick={() => {
+                            setOpenMoreMenu(false);
+                            setOpenBViewPriceListModal(true);
+                          }}
+                        >
                           <div className="container-of-icon-and-key1">
                             <FontAwesomeIcon icon={faHandHoldingDollar} />
                             <Translate>View Price List</Translate>
@@ -529,7 +613,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                             <Translate>Encounter Transactions</Translate>
                           </div>
                         </Dropdown.Item>
-
                       </Dropdown.Menu>
                     </Popover>
                   }
@@ -540,7 +623,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </MyButton>
                   </span>
                 </Whisper>
-
 
                 {/* Print menu */}
                 <Whisper
@@ -565,15 +647,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   }
                 >
                   <span>
-                    <MyButton size="small">
+                    <MyButton size="small" loading={isGeneratingPatientPdf}>
                       <FontAwesomeIcon icon={faPrint} />
                     </MyButton>
                   </span>
                 </Whisper>
-
-
-
-
               </Form>
             </div>
           </Form>

@@ -10,7 +10,7 @@ interface PrivacySecurityTabProps {
   setLocalPatient: (patient: ApPatient) => void;
   validationResult: any;
 }
-import '../styles.less'
+import '../styles.less';
 import AddVerification from './AddVerification';
 const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   localPatient,
@@ -20,13 +20,19 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
 
   // Fetch LOV data for various fields
-  const { data: securityAccessLevelLovQueryResponse } = useGetLovValuesByCodeQuery('SEC_ACCESS_LEVEL');
+  const { data: securityAccessLevelLovQueryResponse } =
+    useGetLovValuesByCodeQuery('SEC_ACCESS_LEVEL');
 
   return (
     <div className="tab-main-container">
-    
-        <AddVerification open={verificationModalOpen} setOpen={setVerificationModalOpen} localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
-        <Form layout="inline" className='btn-fileds-style'>
+      <AddVerification
+        open={verificationModalOpen}
+        setOpen={setVerificationModalOpen}
+        localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
+        validationResult={validationResult}
+      />
+      <Form layout="inline" className="btn-fileds-style">
         <MyInput
           vr={validationResult}
           column
@@ -39,17 +45,61 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
         />
-          <MyButton
+        <MyButton
           onClick={() => setVerificationModalOpen(true)}
           disabled={!localPatient.key}
-          prefixIcon={() => <PlusRound />}>
+          prefixIcon={() => <PlusRound />}
+        >
           Patient Verification
         </MyButton>
       </Form>
-      
+
       <Form layout="inline" fluid>
-        <h5 className='border-top'>HIPAA</h5>
-        <div className='covg-content'>
+        <h5 className="border-top">HIPAA</h5>
+        <div className="covg-content">
+          <MyInput
+            column
+            vr={validationResult}
+            fieldType="checkbox"
+            fieldLabel="Notice of Privacy Practices"
+            fieldName="gdprNoticeOfPrivacyPractice"
+            record={localPatient}
+            setRecord={setLocalPatient}
+          />
+          <MyInput
+            column
+            vr={validationResult}
+            fieldType="date"
+            showLabel={false}
+            fieldName="gdprNoticeOfPrivacyPracticeDate"
+            record={localPatient}
+            setRecord={setLocalPatient}
+          />
+          <Divider className="divider-line-vertical" vertical />
+          <MyInput
+            vr={validationResult}
+            column
+            fieldType="checkbox"
+            fieldLabel="Privacy Authorization"
+            fieldName="gdprPrivacyAuthorization"
+            record={localPatient}
+            setRecord={setLocalPatient}
+          />
+          <MyInput
+            vr={validationResult}
+            column
+            fieldType="date"
+            showLabel={false}
+            fieldName="gdprPrivacyAuthorizationDate"
+            record={localPatient}
+            setRecord={setLocalPatient}
+          />
+        </div>
+      </Form>
+
+      <Form layout="inline" fluid>
+        <h5 className="border-top">GDPR</h5>
+        <div className="covg-content">
           <MyInput
             column
             vr={validationResult}
@@ -68,7 +118,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
             record={localPatient}
             setRecord={setLocalPatient}
           />
-          <Divider className='divider-line-vertical' vertical />
+          <Divider className="divider-line-vertical" vertical />
           <MyInput
             vr={validationResult}
             column

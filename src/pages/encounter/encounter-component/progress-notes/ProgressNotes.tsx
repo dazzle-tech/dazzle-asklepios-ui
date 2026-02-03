@@ -50,9 +50,7 @@ const ProgressNotes: React.FC = () => {
 
   // Header (page title) setup
   useEffect(() => {
-    const header = (
-      "Progress Notes"
-    );
+    const header = 'Progress Notes';
     dispatch(setPageCode('Progress_Notes'));
     dispatch(setDivContent(header));
     return () => {
@@ -147,7 +145,9 @@ const ProgressNotes: React.FC = () => {
         key: 'progressNotes',
         title: 'Progress Notes',
         dataKey: 'progressNotes',
-        render: (rowData: any) => rowData?.progressNotes
+        render: (rowData: any) => (
+          <div className="progress-notes-text">{rowData?.progressNotes}</div>
+        )
       },
       {
         key: 'jobRoleLkey',

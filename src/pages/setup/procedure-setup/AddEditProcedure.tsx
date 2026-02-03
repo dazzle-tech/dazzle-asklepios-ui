@@ -24,6 +24,7 @@ import {
 // Redux hooks
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 type AddEditProcedureProps = {
   open: boolean;
@@ -60,7 +61,8 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
 
   // Category options
-  const categoryOptions = useEnumOptions('ProcedureCategoryType');
+  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+
 
   const isLoading = isAdding || isUpdating || actionLoading;
 
@@ -217,9 +219,9 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
                   fieldLabel="Category"
                   fieldType="select"
                   fieldName="categoryType"
-                  selectData={categoryOptions ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
+                  selectData={CategoryLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
                   record={procedure}
                   setRecord={setProcedure}
                 />

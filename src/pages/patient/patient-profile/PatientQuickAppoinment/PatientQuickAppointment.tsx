@@ -56,7 +56,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             dispatch(
                 notify({
                     msg: `Please fix the following fields:\n${lines.join('\n')}`,
-                    sev: 'error'
+                    sev: 'warning'
                 })
             );
             return false;
@@ -96,7 +96,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 }
             });
         } else {
-            dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
+            dispatch(notify({ msg: 'encounter not linked to patient', sev: 'warning' }));
         }
     };
     // Handle Clear Fields

@@ -1,16 +1,14 @@
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FaBedPulse, FaFileArrowDown } from 'react-icons/fa6';
+import { FaBedPulse } from 'react-icons/fa6';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
-import { Checkbox, HStack } from 'rsuite';
+import { Checkbox } from 'rsuite';
 import './styles.less';
 import PreviewProcedure from './PreviewProcedure';
-import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 
-import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
@@ -24,27 +22,8 @@ import BlockIcon from '@rsuite/icons/Block';
 import { useLocation } from 'react-router-dom';
 import Details from './Details';
 import Perform from './Perform';
-
-/** Download helper for attachment blobs */
-const handleDownload = (attachment: any) => {
-  const byteCharacters = atob(attachment.fileContent);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-  const blob = new Blob([byteArray], { type: attachment.contentType });
-
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  a.download = attachment.fileName;
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-};
-
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import { useGetProceduresQuery as useGetAllProceduresQuery } from '@/services/setup/procedure/procedureService';
 const Referrals = (props: any) => {
   const location = useLocation();
 
@@ -55,13 +34,13 @@ const Referrals = (props: any) => {
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
+  const { data: proceduresDefinitions } = useGetAllProceduresQuery({ page: 0, size: 10000, sort: 'id,asc' });
 
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(true);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [openPerformModal, setOpenPerformModal] = useState(false);
-    const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
 
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
@@ -102,17 +81,6 @@ const Referrals = (props: any) => {
     refetch: proRefetch,
     isLoading: procedureLoding
   } = useGetProceduresQuery(listRequest);
-
-  const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-      { fieldName: 'attachment_type', operator: 'match', value: 'PROCEDURE' }
-    ]
-  });
-
-  const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
-    useGetPatientAttachmentsListQuery(attachmentsListRequest);
 
   /** Utility: is the event target within form-ish/editable elements? */
   const isFormField = (node: EventTarget | null) => {
@@ -174,18 +142,6 @@ const Referrals = (props: any) => {
     setEditing(false);
   }, [encounter?.key, patient?.key]);
 
-  /** Refresh attachments list filters when modal closes/opens */
-  useEffect(() => {
-    if (!attachmentsModalOpen) {
-      const updatedFilters = [
-        { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-        { fieldName: 'attachment_type', operator: 'match', value: 'PROCEDURE' }
-      ];
-      setAttachmentsListRequest(prev => ({ ...prev, filters: updatedFilters }));
-    }
-    attachmentRefetch();
-  }, [attachmentsModalOpen, attachmentRefetch]);
-
   /** Toggle cancelled filter */
   useEffect(() => {
     const updatedFilters = [
@@ -198,17 +154,6 @@ const Referrals = (props: any) => {
     ];
     setListRequest(prev => ({ ...prev, filters: updatedFilters }));
   }, [showCanceled, encounter?.key]);
-
-  /** Scope attachments to current procedure when modal closes/opens */
-  useEffect(() => {
-    if (!attachmentsModalOpen) {
-      const updatedFilters = [
-        { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-        { fieldName: 'reference_object_key', operator: 'match', value: procedure?.key }
-      ];
-      setAttachmentsListRequest(prev => ({ ...prev, filters: updatedFilters }));
-    }
-  }, [attachmentsModalOpen, procedure?.key]);
 
   /**
    * Global listeners:
@@ -320,6 +265,9 @@ const Referrals = (props: any) => {
         dataKey: 'procedureName',
         title: <Translate>Procedure Name</Translate>,
         flexGrow: 1
+       
+
+
       },
       {
         key: 'scheduledDateTime',
@@ -373,36 +321,26 @@ const Referrals = (props: any) => {
       {
         key: 'attachments',
         dataKey: '',
-        title: <Translate>ATTACHED FILE</Translate>,
+        title: <Translate>ATTACHMENTS</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
-          const matchingAttachments = fetchPatintAttachmentsResponce?.object?.filter(
-            (item: any) => item.referenceObjectKey === rowData?.key
-          );
-          const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
-
           return (
-            <HStack spacing={2}>
-              {lastAttachment && (
-                <FaFileArrowDown
-                  size={20}
-                  fill="var(--primary-gray)"
-                  onClick={() => handleDownload(lastAttachment)}
-                  style={{ cursor: 'pointer' }}
-                />
-              )}
-              <MdAttachFile
-                size={20}
-                fill="var(--primary-gray)"
-                onClick={() => setAttachmentsModalOpen(true)}
-                style={{ cursor: 'pointer' }}
-              />
-            </HStack>
+            <MdAttachFile
+              size={20}
+              fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+              onClick={() => {
+                if (rowData?.key) {
+                  setProcedure(rowData);
+                  setAttachmentsModalOpen(true);
+                }
+              }}
+              style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
+            />
           );
         }
       },
-//dont remove this comment 
-//please dont remove this comment
+      //dont remove this comment 
+      //please dont remove this comment
 
       // {
       //   key: 'perform',
@@ -484,7 +422,7 @@ const Referrals = (props: any) => {
         expandable: true
       }
     ],
-    [CategoryLovQueryResponse, fetchPatintAttachmentsResponce]
+    [CategoryLovQueryResponse]
   );
 
   const pageIndex = (listRequest.pageNumber ?? 1) - 1;
@@ -535,8 +473,8 @@ const Referrals = (props: any) => {
                     edit
                       ? true
                       : procedure?.key
-                      ? (procedure?.statusLvalue?.lovCode ?? '') === 'PROC_CANCL'
-                      : true
+                        ? (procedure?.statusLvalue?.lovCode ?? '') === 'PROC_CANCL'
+                        : true
                   }
                   prefixIcon={() => <BlockIcon />}
                 >
@@ -609,14 +547,21 @@ const Referrals = (props: any) => {
         handleCancle={handleCancle}
       />
 
-      <AttachmentUploadModal
-        isOpen={attachmentsModalOpen}
-        setIsOpen={setAttachmentsModalOpen}
-        actionType={'add'}
-        refecthData={attachmentRefetch}
-        attachmentSource={procedure}
-        attatchmentType="PROCEDURE"
-        patientKey={patient?.key}
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title={`Attachments - ${procedure?.procedureName || 'Procedure'}`}
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={encounter}
+            source="PROCEDURE_REQUEST_ATTACHMENT"
+            sourceId={procedure?.key ? Number(procedure.key) : undefined}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => { }}
+          />
+        }
       />
     </>
   );

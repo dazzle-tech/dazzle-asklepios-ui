@@ -32,11 +32,11 @@ const AddressTab: React.FC<AddressTabProps> = ({
 
   return (
     <Form layout="inline" fluid>
-      <div>
+      {/* <div>
         <MyButton prefixIcon={() => <FaClock />} disabled={!localPatient.key}>
           Address Change Log
         </MyButton>
-      </div>
+      </div> */}
       <MyInput
         vr={validationResult}
         column

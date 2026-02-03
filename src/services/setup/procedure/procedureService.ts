@@ -71,7 +71,7 @@ export const procedureSetupService = createApi({
         url: '/api/setup/procedure',
         method: 'POST',
         params: { facilityId },
-        body, 
+        body,
       }),
       invalidatesTags: ['Procedure'],
     }),
@@ -81,7 +81,7 @@ export const procedureSetupService = createApi({
         url: `/api/setup/procedure/${id}`,
         method: 'PUT',
         params: { facilityId },
-        body: { id, ...body }, 
+        body: { id, ...body },
       }),
       invalidatesTags: ['Procedure'],
     }),
@@ -95,10 +95,22 @@ export const procedureSetupService = createApi({
     }),
     getProceduresByFacility: builder.query<
       PagedResult<any>,
-      { facilityId: Id } & PagedParams
+      { facilityId: Id; category?: Id } & PagedParams
     >({
-      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+      query: ({ facilityId, category, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/procedure/by-facility/${encodeURIComponent(String(facilityId))}`,
+        params: { page, size, sort, ...(category ? { category } : {}) },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Procedure'],
+    }),
+
+     getActiveAppointableProcedures: builder.query<
+      PagedResult<any>,
+     PagedParams
+    >({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/procedure/active-appointable`,
         params: { page, size, sort },
       }),
       transformResponse: mapPaged,
@@ -120,5 +132,6 @@ export const {
   useUpdateProcedureMutation,
   useToggleProcedureIsActiveMutation,
    useGetProceduresByFacilityQuery,      
-  useLazyGetProceduresByFacilityQuery,   
+  useLazyGetProceduresByFacilityQuery,  
+  useGetActiveAppointableProceduresQuery
 } = procedureSetupService;

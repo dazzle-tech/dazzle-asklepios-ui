@@ -28,6 +28,20 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
   const [saveFamily] = useSavePatientFamilyHistoryMutation();
 
   const save = () => {
+     let errorMsg = "";
+    if (!formData.condition) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Condition Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Condition Can`t be empty"
+    }
+    if (!formData.relationLkey) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Relation Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Relation Can`t be empty"
+    }
+    if(!errorMsg){
     saveFamily(formData)
       .unwrap()
       .then(() => {
@@ -37,6 +51,10 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       .catch(() =>
         dispatch(notify({ msg: "Saving failed", sev: "error" }))
       );
+    }
+    else{
+      dispatch(notify({ msg: errorMsg, sev: "warning" }))
+    }
   };
 
   const content = (
