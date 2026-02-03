@@ -113,6 +113,7 @@ type MyInputProps = {
   fieldLabel?: string;
   enterClick?: () => Promise<boolean | void> | boolean | void;
   isEnum?: boolean;
+  allowEnterNewLine?: boolean;
 };
 
 const MyInput = ({
@@ -315,7 +316,14 @@ const MyInput = ({
               value={record[fieldName] ? record[fieldName] : ''}
               accepter={Textarea}
               onChange={handleValueChange}
-              onKeyDown={focusNextField}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  if (props.allowEnterNewLine) {
+                    return;
+                  }
+                  focusNextField(e);
+                }
+              }}
             />
             {!props.disabled && (
               <div
