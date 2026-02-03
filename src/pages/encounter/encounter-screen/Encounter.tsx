@@ -639,6 +639,7 @@ const Encounter = () => {
         {/* Right box with PatientSide and Medical Timeline */}
         <div className="right-box">
           <PatientSide patient={propsData?.patient} encounter={propsData?.encounter} edit={edit} />
+          <h2></h2>
         </div>
       </div>
 

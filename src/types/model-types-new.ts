@@ -1360,3 +1360,109 @@ export interface OrganizationDefinition {
   contactLandNumber?: string;
   taxValue?: number;
 }
+
+export interface PatientAllergiesActiveIngredientResponse {
+  id?: number;
+  activeIngredientId?: number;
+  createdBy?: string;
+  createdDate?: string;      // Instant → string (ISO)
+  lastModifiedBy?: string;
+  lastModifiedDate?: string; // Instant → string (ISO)
+}
+
+export interface PatientAllergiesResponseVM {
+  id?: number;
+  patientId?: number;
+  encounterId?: number;
+
+  allergenType?: string;
+  allergenId?: number;
+  severity?: string;
+
+  medicationClassId?: number;
+  criticality?: string;
+  certainty?: string;
+  treatmentStrategy?: string;
+
+  onset?: string;
+  onsetDateUndefined?: boolean;
+  onsetDate?: string;
+
+  typeOfPropensity?: string;
+  byPatient?: boolean;
+  sourceOfInformation?: string;
+  note?: string;
+  status: string;
+  allergicReactions: string;
+
+  resolvedBy?: string;
+  resolvedDate?: string;
+
+  cancelledBy?: string;
+  cancelledDate?: string;
+  cancellationReason?: string;
+
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+
+  activeIngredients?: PatientAllergiesActiveIngredientResponse[];
+}
+
+export interface PatientAllergiesActiveIngredientCreate {
+  activeIngredientId?: number;
+}
+
+export interface PatientAllergiesCreateDTO {
+  patientId: number;
+  encounterId: number;
+  allergenType?: string;
+  allergenId?: number;
+  severity?: string;
+
+  medicationClassId?: number;
+  criticality?: string;
+  certainty?: string;
+  treatmentStrategy?: string;
+
+  onset?: string;
+  onsetDateUndefined?: boolean;
+  onsetDate?: string;
+
+  typeOfPropensity?: string;
+  byPatient?: boolean;
+  sourceOfInformation?: string;
+  note?: string;
+  status: string;
+  allergicReactions?: string;
+
+  resolvedBy?: string;
+  resolvedDate?: string;
+
+  cancelledBy?: string;
+  cancelledDate?: string;
+  cancellationReason?: string;
+
+  activeIngredients?: number[];
+}
+
+export type PatientAllergiesUpdateDTO = {
+  id: number;
+  allergenType: string; // FOOD, MEDICATION, ...
+  allergenId?: number;
+  severity: string; // HIGH, LOW, MEDIUM
+  medicationClassId?: number;
+  criticality?: string;
+  certainty?: string;
+  treatmentStrategy?: string;
+  onset?: string;
+  onsetDateUndefined?: boolean;
+  onsetDate?: string; // ISO string
+  typeOfPropensity?: string;
+  byPatient?: boolean;
+  sourceOfInformation?: string;
+  note?: string;
+  allergicReactions?: string;
+  activeIngredients?: number[];
+};

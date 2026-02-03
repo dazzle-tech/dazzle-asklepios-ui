@@ -1129,3 +1129,108 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   departmentId: null,
   formJson: null
 }
+
+
+export const patientAllergiesResponseVM: modelTypes.PatientAllergiesResponseVM = {
+  id: undefined,
+  patientId: undefined,
+  encounterId: undefined,
+
+  allergenType: '',
+  allergenId: undefined,
+  severity: '',
+
+  medicationClassId: undefined,
+  criticality: '',
+  certainty: '',
+  treatmentStrategy: '',
+
+  onset: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+
+  typeOfPropensity: '',
+  byPatient: true,
+  sourceOfInformation: '',
+  note: '',
+  status: '',
+  allergicReactions: '',
+
+  resolvedBy: '',
+  resolvedDate: '',
+
+  cancelledBy: '',
+  cancelledDate: '',
+  cancellationReason: '',
+
+  createdBy: '',
+  createdDate: '',
+  lastModifiedBy: '',
+  lastModifiedDate: '',
+
+  activeIngredients: []
+}
+
+export const newPatientAllergiesActiveIngredientCreate : modelTypes.PatientAllergiesActiveIngredientCreate = {
+  activeIngredientId: undefined
+}
+
+export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,   
+  allergenType: '',
+  allergenId: undefined,
+  severity: '',
+
+  medicationClassId: undefined,
+  criticality: '',
+  certainty: '',
+  treatmentStrategy: '',
+
+  onset: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+
+  typeOfPropensity: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  status: 'ACTIVE',
+  allergicReactions: '',
+
+  resolvedBy: '',
+  resolvedDate: '',
+
+  cancelledBy: '',
+  cancelledDate: '',
+  cancellationReason: '',
+
+  activeIngredients: [],
+}
+
+export const newPatientAllergiesUpdateDTO: modelTypes.PatientAllergiesUpdateDTO = {
+  id: undefined, 
+  allergenType: '',
+  allergenId: undefined,
+  severity: '',
+
+  medicationClassId: undefined,
+  criticality: '',
+  certainty: '',
+  treatmentStrategy: '',
+
+  onset: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+
+  typeOfPropensity: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  allergicReactions: '',
+
+  // status, resolvedBy, cancelledBy مش مطلوبين هنا لأن التحديث العادي ما بيغيرهم
+  // resolvedDate, cancelledDate, cancellationReason => نفس الشي
+
+  activeIngredients: [], // لاحظ الاسم مطابق للباقي
+};

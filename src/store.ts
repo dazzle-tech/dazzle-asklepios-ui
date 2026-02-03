@@ -115,6 +115,7 @@ import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
+import { patientAllergiesService } from './services/encounters/patientAllergiesService';
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -164,6 +165,8 @@ export const store = configureStore({
 
     //encounter
     [encounterService.reducerPath]: encounterService.reducer,
+
+    [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
 
     //dental
     [dentalService.reducerPath]: dentalService.reducer,
@@ -451,7 +454,7 @@ export const store = configureStore({
       clinicalSummaryService.middleware,
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
-
+      patientAllergiesService.middleware
     ])
 });
 
