@@ -184,6 +184,20 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
       />
     </div>
   );
+  useEffect(() => {
+    if (!open) {
+      setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
+      setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange });
+
+      setOpenConfirmDeleteProfile(false);
+      setOpenConfirmDeleteProfileNormalRange(false);
+      setOpenChild(false);
+      setOpenSubChild(false);
+
+      setSearchKeyword('');
+      setLovCode('');
+    }
+  }, [open]);
 
   const tableColumns = [
     {
@@ -391,19 +405,29 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
     switch (stepNumber) {
       case 0:
         return (
-          <Form layout="inline" fluid>
-            <div className="container-of-add-bar-diagnostic">
-              <div className="container-of-two-fields-diagnostic">
+          <Form fluid>
+            <div className="profile-form-header">
+              <div className="profile-fields">
                 <MyInput
                   required
-                  width={120}
+                  column
                   fieldName="name"
                   record={diagnosticsTestProfile}
                   setRecord={setDiagnosticsTestProfile}
                 />
-
                 <MyInput
-                  width={120}
+                  required
+                  column
+                  fieldName="resultType"
+                  fieldType="select"
+                  selectData={resultType ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={diagnosticsTestProfile}
+                  setRecord={setDiagnosticsTestProfile}
+                />
+                <MyInput
+                  column
                   menuMaxHeight={200}
                   fieldName="resultUnit"
                   fieldType="select"
@@ -414,25 +438,14 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
                   setRecord={setDiagnosticsTestProfile}
                 />
 
-                <MyInput
-                  required
-                  width={120}
-                  fieldName="resultType"
-                  fieldType="select"
-                  selectData={resultType ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={diagnosticsTestProfile}
-                  setRecord={setDiagnosticsTestProfile}
-                />
+
               </div>
 
-              <div style={{ marginTop: '32px' }}>
+              <div className="profile-actions">
                 <MyButton
                   prefixIcon={() => (isEditMode ? <MdEdit size={18} /> : <AddOutlineIcon />)}
                   color={isEditMode ? 'var(--primary-green)' : 'var(--deep-blue)'}
                   onClick={handleSave}
-                  width="109px"
                 >
                   {isEditMode ? 'Update' : 'Add'}
                 </MyButton>
@@ -440,14 +453,10 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
             </div>
 
             {isLovType && (
-              <div style={{ width: 320 }}>
+              <div className="lov-block">
                 <div className="container-of-menu-diagnostic">
                   <InputGroup className="search-input-diagnostic" inside>
-                    <Input
-                      placeholder="Search LOV"
-                      value={searchKeyword}
-                      onChange={setSearchKeyword}
-                    />
+                    <Input placeholder="Search LOV" value={searchKeyword} onChange={setSearchKeyword} />
                     <InputGroup.Button>
                       <SearchIcon />
                     </InputGroup.Button>
@@ -459,10 +468,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
                         <Dropdown.Item
                           key={mod.key}
                           onClick={() => {
-                            setDiagnosticsTestProfile(prev => ({
-                              ...prev,
-                              listOfValueId: mod.key
-                            }));
+                            setDiagnosticsTestProfile(prev => ({ ...prev, listOfValueId: mod.key }));
                             setLovCode(mod.lovCode);
                             setSearchKeyword('');
                           }}
@@ -475,8 +481,6 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
                   )}
                 </div>
 
-                <br />
-
                 <Input
                   className="search-result-diagnostic"
                   disabled
@@ -485,21 +489,24 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
                 />
               </div>
             )}
-<div style={{width:'100%'}}>
-            <MyTable
-              height={380}
-              data={allDiagnosticTestProfiles?.data ?? []}
-              loading={isFetching}
-              columns={tableColumns}
-              rowClassName={isSelected}
-              onRowClick={rowData => {
-                if (diagnosticsTestProfile?.id === rowData.id) {
-                  setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
-                  return;
-                }
-                setDiagnosticsTestProfile(rowData);
-              }}
-            /></div>
+
+            <div className="table-wrapper">
+              <MyTable
+                height={380}
+                data={allDiagnosticTestProfiles?.data ?? []}
+                loading={isFetching}
+                columns={tableColumns}
+                rowClassName={isSelected}
+                onRowClick={rowData => {
+                  if (diagnosticsTestProfile?.id === rowData.id) {
+                    setDiagnosticsTestProfile({ ...newDiagnosticTestProfile });
+                    return;
+                  }
+                  setDiagnosticsTestProfile(rowData);
+                }}
+              />
+            </div>
+
 
             <DeletionConfirmationModal
               open={openConfirmDeleteProfile}
@@ -507,9 +514,8 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
               itemToDelete={
                 diagnosticsTestProfile?.isActive ? 'Deactivate Profile' : 'Activate Profile'
               }
-              confirmationQuestion={`Are you sure you want to ${
-                diagnosticsTestProfile?.isActive ? 'deactivate' : 'activate'
-              } this profile?`}
+              confirmationQuestion={`Are you sure you want to ${diagnosticsTestProfile?.isActive ? 'deactivate' : 'activate'
+                } this profile?`}
               actionButtonFunction={handleToggleActive}
               actionType="Confirm"
             />
@@ -547,9 +553,9 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
           loading={isFetchingNormalRanges}
           columns={tableNormalRangesColumns}
           rowClassName={isSelectedDiagnosticTestNormalRange}
-          // onRowClick={rowData => {
-          //   setDiagnosticsTestProfile(rowData);
-          // }}
+        // onRowClick={rowData => {
+        //   setDiagnosticsTestProfile(rowData);
+        // }}
         />
       </Form>
     );
@@ -648,7 +654,8 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"
       subChildContent={conjureFormContentOfSecondChildModal}
-      mainSize="sm"
+      mainSize="xs"
+      childSize="sm"
     />
   );
 };

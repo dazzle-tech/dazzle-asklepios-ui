@@ -82,15 +82,29 @@ const DiagnosticsTest = () => {
   const [diagnosticTestByTypes] = useLazyGetDiagnosticTestsByTypeQuery();
   const [diagnosticTestByName] = useLazyGetDiagnosticTestsByNameQuery();
 
-  const extractErrorMessage = (error: any): string => {
-    const detail =
-      error?.data?.detail || error?.data?.message || error?.error || 'Unexpected server error';
+ const extractErrorMessage = (error: any): string => {
+  const data = error?.data;
 
-    const match = detail.match(/interpolatedMessage='([^']+)'/);
-    if (match && match[1]) return match[1];
+  const fieldErrors = data?.fieldErrors;
+  if (Array.isArray(fieldErrors) && fieldErrors.length) {
+    const msgs = fieldErrors
+      .map((fe: any) => fe?.message || fe?.defaultMessage)
+      .filter(Boolean);
 
-    return detail;
-  };
+    if (msgs.length) return msgs.map(m => `• ${m}`).join('\n');
+  }
+
+  const detail = data?.detail || data?.message || error?.error || 'Unexpected server error';
+
+  const matches = [...String(detail).matchAll(/default message \[([^\]]+)\]/g)]
+    .map(m => m[1])
+    .filter(Boolean);
+
+  if (matches.length) return matches.map(m => `• ${m}`).join('\n');
+
+  return '• Validation error';
+};
+
 
   const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
     const errors: string[] = [];
@@ -107,135 +121,147 @@ const DiagnosticsTest = () => {
   };
 
 
-  const handleAddNewDiagnosticTest = async () => {
-    try {
-      const errors = validateDiagnosticTest(diagnosticsTest);
+ const handleAddNewDiagnosticTest = async () => {
+  try {
+    // Frontend validations (before calling API)
+    const errors: string[] = [];
 
-      if (errors.length > 0) {
-        dispatch(
-          notify({
-            msg: `Please fill the following required fields: ${errors.join(', ')}`,
-            sev: 'warning'
-          })
-        );
-        return;
-      }
-      if (diagnosticsTest.type === 'LABORATORY' && !diagnosticsTest.defaultProfileResultType) {
-        dispatch(
-          notify({
-            msg: 'Default Result Type is required for Laboratory tests',
-            sev: 'error'
-          })
-        );
-        return;
-      }
+    if (!diagnosticsTest.name?.trim()) errors.push('Name is required');
+    if (!diagnosticsTest.internalCode?.trim()) errors.push('Internal Code is required');
 
-      const payload = {
-        type: diagnosticsTest.type,
-        name: diagnosticsTest.name,
-        internalCode: diagnosticsTest.internalCode,
+    if (diagnosticsTest.type === 'LABORATORY' && !diagnosticsTest.defaultProfileResultType) {
+      errors.push('Default Result Type is required for Laboratory tests');
+    }
 
-        ageSpecific: diagnosticsTest.ageSpecific,
-        ageGroupList: diagnosticsTest.ageGroupList || [],
-
-        genderSpecific: diagnosticsTest.genderSpecific,
-        gender: diagnosticsTest.gender,
-
-        specialPopulation: diagnosticsTest.specialPopulation,
-        specialPopulationValues: diagnosticsTest.specialPopulationValues || [],
-
-        price: diagnosticsTest.price,
-        currency: diagnosticsTest.currency,
-        specialNotes: diagnosticsTest.specialNotes,
-        isActive: true,
-        appointable: diagnosticsTest.appointable ?? false,
-
-        defaultProfileResultType:
-          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultType : null,
-
-        defaultProfileResultUnit:
-          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
-        listOfValueId: diagnosticsTest.listOfValueId ?? null
-      };
-
-      const response = await addDiagnosticTest(payload).unwrap();
-
-      refetchDiagnostics();
-      setDiagnosticsTest({ ...response });
-
+    if (errors.length) {
       dispatch(
         notify({
-          msg: 'The Diagnostic Test was successfully added',
-          sev: 'success'
-        })
-      );
-    } catch (error: any) {
-      console.error('Error adding Diagnostic Test:', error);
-      dispatch(
-        notify({
-          msg: extractErrorMessage(error),
+          msg: errors.map(e => `• ${e}`).join('\n'),
           sev: 'error'
         })
       );
+      return;
     }
-  };
 
-  const handleUpdateDiagnosticTest = async () => {
-    try {
-      const errors = validateDiagnosticTest(diagnosticsTest);
+    const payload = {
+      type: diagnosticsTest.type,
+      name: diagnosticsTest.name?.trim(),
+      internalCode: diagnosticsTest.internalCode?.trim(),
 
-      if (errors.length > 0) {
-        dispatch(
-          notify({
-            msg: `Please fill the following required fields: ${errors.join(', ')}`,
-            sev: 'warning'
-          })
-        );
-        return;
-      }
-      const payload = {
-        id: diagnosticsTest.id,
-        type: diagnosticsTest.type,
-        name: diagnosticsTest.name,
-        internalCode: diagnosticsTest.internalCode,
-        ageSpecific: diagnosticsTest.ageSpecific,
-        ageGroupList: diagnosticsTest.ageGroupList,
-        genderSpecific: diagnosticsTest.genderSpecific,
-        gender: diagnosticsTest.gender,
-        specialPopulation: diagnosticsTest.specialPopulation,
-        specialPopulationValues: diagnosticsTest.specialPopulationValues,
-        price: diagnosticsTest.price,
-        currency: diagnosticsTest.currency,
-        specialNotes: diagnosticsTest.specialNotes,
-        isActive: diagnosticsTest.isActive,
-        appointable: diagnosticsTest.appointable,
-        defaultProfileResultType:
-          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultType : null,
-        defaultProfileResultUnit:
-          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
-        listOfValueId: diagnosticsTest.listOfValueId ?? null
-      };
+      ageSpecific: diagnosticsTest.ageSpecific,
+      ageGroupList: diagnosticsTest.ageGroupList || [],
 
-      const response = await updateDiagnosticTest(payload).unwrap();
-      refetchDiagnostics();
-      setDiagnosticsTest({ ...response });
+      genderSpecific: diagnosticsTest.genderSpecific,
+      gender: diagnosticsTest.gender,
 
+      specialPopulation: diagnosticsTest.specialPopulation,
+      specialPopulationValues: diagnosticsTest.specialPopulationValues || [],
+
+      price: diagnosticsTest.price,
+      currency: diagnosticsTest.currency,
+      specialNotes: diagnosticsTest.specialNotes,
+      isActive: true,
+      appointable: diagnosticsTest.appointable ?? false,
+
+      defaultProfileResultType:
+        diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultType : null,
+
+      defaultProfileResultUnit:
+        diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
+
+      listOfValueId: diagnosticsTest.listOfValueId ?? null
+    };
+
+    const response = await addDiagnosticTest(payload).unwrap();
+
+    refetchDiagnostics();
+    setDiagnosticsTest({ ...response });
+
+    dispatch(
+      notify({
+        msg: 'The Diagnostic Test was successfully added',
+        sev: 'success'
+      })
+    );
+  } catch (error: any) {
+    console.error('Error adding Diagnostic Test:', error);
+    dispatch(
+      notify({
+        msg: extractErrorMessage(error),
+        sev: 'error'
+      })
+    );
+  }
+};
+
+
+ const handleUpdateDiagnosticTest = async () => {
+  try {
+    const errors = validateDiagnosticTest(diagnosticsTest);
+
+    if (errors.length > 0) {
       dispatch(
         notify({
-          msg: 'The Diagnostic Test was successfully updated',
-          sev: 'success'
+          msg: errors.map(e => `• ${e}`).join('\n'),
+          sev: 'warning'
         })
       );
-    } catch (error: any) {
-      console.error('Error updating Diagnostic Test:', error);
-      dispatch(
-        notify({
-          msg: extractErrorMessage(error),
-          sev: 'error'
-        })
-      );
+      return;
     }
-  };
+
+    const payload = {
+      id: diagnosticsTest.id,
+      type: diagnosticsTest.type,
+      name: diagnosticsTest.name?.trim(),
+      internalCode: diagnosticsTest.internalCode?.trim(),
+
+      ageSpecific: diagnosticsTest.ageSpecific,
+      ageGroupList: diagnosticsTest.ageGroupList || [],
+
+      genderSpecific: diagnosticsTest.genderSpecific,
+      gender: diagnosticsTest.gender,
+
+      specialPopulation: diagnosticsTest.specialPopulation,
+      specialPopulationValues: diagnosticsTest.specialPopulationValues || [],
+
+      price: diagnosticsTest.price,
+      currency: diagnosticsTest.currency,
+      specialNotes: diagnosticsTest.specialNotes,
+
+      isActive: diagnosticsTest.isActive,
+      appointable: diagnosticsTest.appointable ?? false,
+
+      defaultProfileResultType:
+        diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultType : null,
+
+      defaultProfileResultUnit:
+        diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
+
+      listOfValueId: diagnosticsTest.listOfValueId ?? null
+    };
+
+    const response = await updateDiagnosticTest(payload).unwrap();
+
+    refetchDiagnostics();
+    setDiagnosticsTest({ ...response });
+
+    dispatch(
+      notify({
+        msg: 'The Diagnostic Test was successfully updated',
+        sev: 'success'
+      })
+    );
+  } catch (error: any) {
+    console.error('Error updating Diagnostic Test:', error);
+    dispatch(
+      notify({
+        msg: extractErrorMessage(error),
+        sev: 'error'
+      })
+    );
+  }
+};
+
 
   const handleToggleActive = async (id: number) => {
     try {

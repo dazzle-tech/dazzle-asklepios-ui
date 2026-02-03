@@ -391,6 +391,7 @@ const AddEditDiagnosticTest = ({
 
                   )}
 
+                 {diagnosticsTest.defaultProfileResultType === 'NUMBER' &&(
                   <div className="container-of-field-diagnostic">
                     <MyInput
                       width="100%"
@@ -404,7 +405,7 @@ const AddEditDiagnosticTest = ({
                       record={diagnosticsTest}
                       setRecord={setDiagnosticsTest}
                     />
-                  </div>
+                  </div>)}
                 </div>
               </>
             )}
