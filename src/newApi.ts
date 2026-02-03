@@ -5,7 +5,7 @@ import config from '../app-config';
 import { RootState } from './store'; 
 
 // Create a base query instance with JWT token injection
-export const BaseQuery = fetchBaseQuery({
+const baseFetchBaseQuery = fetchBaseQuery({
   baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080',
   prepareHeaders: (headers: Headers, { getState }) => {
     const state = getState() as RootState;
@@ -19,6 +19,9 @@ export const BaseQuery = fetchBaseQuery({
     return headers;
   }
 });
+
+// Export BaseQuery
+export const BaseQuery = baseFetchBaseQuery;
 
 /**
  * Generic `onQueryStarted` handler for error handling & notifications
