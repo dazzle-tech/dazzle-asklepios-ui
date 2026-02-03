@@ -38,6 +38,9 @@ import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
 
+// IMPORTANT: hook from your RTK Query service file
+import { useGeneratePatientPdfMutation } from '@/services/patientReportService';
+
 interface ProfileHeaderProps {
   localPatient: ApPatient;
   handleSave: () => void;
@@ -106,6 +109,47 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const { data: patientSecondaryDocumentsResponse, refetch: patientSecondaryDocuments } =
     useGetPatientSecondaryDocumentsQuery(documenstListRequest, { skip: !localPatient.key });
 
+  useEffect(() => {
+    setDocumentsListRequest(prev => ({
+      ...prev,
+      pageNumber: 1,
+      filters: [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        },
+        ...(localPatient?.key
+          ? [
+              {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: String(localPatient.key)
+              }
+            ]
+          : [])
+      ]
+    }));
+  }, [localPatient?.key]);
+
+  useEffect(() => {
+    if (localPatient?.key) patientSecondaryDocuments();
+  }, [localPatient?.key, patientSecondaryDocuments]);
+
+  const [generatePatientPdf, { isLoading: isGeneratingPatientPdf }] =
+    useGeneratePatientPdfMutation();
+
+  const urlToBase64 = async (url: string): Promise<string> => {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result)); 
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const handlePrintPatientLabel = async () => {
     try {
       const p = localPatient;
@@ -163,27 +207,70 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
   };
 
-  const handlePrintInformation = () => {
-    if (!localPatient) return;
+  const handlePrintInformation = async () => {
+    try {
+      if (!localPatient) return;
 
-    const patientWithImage = {
-      ...(localPatient as any),
-      profilePictureUrl: patientImageUrl || ''
-    };
+      const secondaryDocumentsArray =
+        patientSecondaryDocumentsResponse &&
+        (patientSecondaryDocumentsResponse as any).object &&
+        Array.isArray((patientSecondaryDocumentsResponse as any).object)
+          ? (patientSecondaryDocumentsResponse as any).object
+          : [];
 
-    const secondaryDocumentsArray =
-      patientSecondaryDocumentsResponse &&
-      (patientSecondaryDocumentsResponse as any).object &&
-      Array.isArray((patientSecondaryDocumentsResponse as any).object)
-        ? (patientSecondaryDocumentsResponse as any).object
-        : [];
+      const secondaryDocuments = (secondaryDocumentsArray ?? []).map((d: any) => ({
+        documentNo: d?.documentNo,
+        documentType: d?.documentTypeLvalue?.lovDisplayVale || d?.documentType || '',
+        documentCountry: d?.documentCountryLvalue?.lovDisplayVale || d?.documentCountry || ''
+      }));
 
-    (patientWithImage as any).secondaryDocuments = secondaryDocumentsArray;
+      let profilePictureBase64: string | undefined = undefined;
+      let profilePictureUrl: string | undefined = undefined;
 
-    navigate('/patient-report', { state: { patient: patientWithImage } });
+      if (patientImageUrl) {
+        try {
+          profilePictureBase64 = await urlToBase64(patientImageUrl);
+        } catch {
+          profilePictureUrl = patientImageUrl;
+        }
+      }
+
+      const facilityName = authSlice?.tenant?.selectedFacility?.name;
+      const authenticatedUserName =
+        `${authSlice?.user?.firstName ?? ''} ${authSlice?.user?.lastName ?? ''}`.trim() || undefined;
+      const authenticatedUserEmail = authSlice?.user?.email;
+
+      const blob = await generatePatientPdf({
+        patient: localPatient,
+        facilityName,
+        authenticatedUserName,
+        authenticatedUserEmail,
+        profilePictureBase64,
+        profilePictureUrl,
+        secondaryDocuments
+      } as any).unwrap();
+
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = `Patient_${localPatient?.patientMrn || localPatient?.key || 'info'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.message || 'Failed to generate patient PDF',
+          type: 'error'
+        })
+      );
+    }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!localPatient) return;
     if (!localPatient.key) return;
 
@@ -304,7 +391,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setOpenPrintMenu(false);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const patientWithUrl = localPatient as any;
 
     if (patientWithUrl?.profilePictureUrl) {
@@ -560,7 +647,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   }
                 >
                   <span>
-                    <MyButton size="small">
+                    <MyButton size="small" loading={isGeneratingPatientPdf}>
                       <FontAwesomeIcon icon={faPrint} />
                     </MyButton>
                   </span>

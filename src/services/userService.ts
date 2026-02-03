@@ -1,5 +1,6 @@
-  import { createApi } from '@reduxjs/toolkit/query/react';
-  import { BaseQuery } from '../newApi';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { BaseQuery, onQueryStarted } from '../newApi';
+
 
   export const userService = createApi({
     reducerPath: 'newApi',
@@ -125,7 +126,32 @@
           },
         }),
       }),
-
+    
+      // Create-password flow
+      finishCreatePassword: builder.mutation({
+        query: (keyAndPassword) => ({
+          url: '/api/account/create-password/finish',
+          method: 'POST',
+          body: keyAndPassword,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+      }),
+      validateCreatePasswordKey: builder.query({
+        query: (key: string) => ({
+          url: `/api/account/create-password/validate?key=${encodeURIComponent(key)}`,
+          method: 'GET',
+        }),
+        onQueryStarted: onQueryStarted,
+        transformResponse: (response: any) => {
+          return response;
+        },
+        transformErrorResponse: (response: any) => {
+          return response;
+        },
+      }),
+  
       // ==== Duplication Candidates APIs ====
       getDuplicationCandidates: builder.query({
         query: (role?: string) =>
@@ -197,5 +223,8 @@
     useUpdateDuplicationCandidateMutation,
     useReactivateDuplicationCandidateMutation,
     useGetRolePermissionsQuery,
-    useUpdateRolePermissionsMutation 
+    useUpdateRolePermissionsMutation,
+    useFinishCreatePasswordMutation,
+    useValidateCreatePasswordKeyQuery,
+    useLazyValidateCreatePasswordKeyQuery,
   } = userService;
