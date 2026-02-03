@@ -183,7 +183,7 @@ const PatientSide = ({ patient, encounter }) => {
         />
         <div>
           <div className="patient-info">
-            <Text className="info-label">{textOr(patient?.fullName, 'Patient Name')}</Text>
+            <Text className="info-label-full-name">{textOr(patient?.fullName, 'Patient Name')}</Text>
           </div>
           <div className="info-label"># {textOr(patient?.patientMrn, 'MRN')}</div>
         </div>
@@ -278,7 +278,7 @@ const PatientSide = ({ patient, encounter }) => {
           </div>
         </div>
       </div>
-      <Divider className="divider-thin" />
+      {/* <Divider className="divider-thin" />
       <Text style={{ display: 'flex', marginTop: '5px' }}>
         <GiMedicalThermometer className="icon-title" style={{ marginTop: '4px' }} />
         <span className="patient-section-title" style={{ marginLeft: '2px' }}>
@@ -288,7 +288,7 @@ const PatientSide = ({ patient, encounter }) => {
       <div>
         <br />
         <Text>{textOr(encounter?.diagnosis, '')}</Text>
-      </div>
+      </div> */}
       <Divider className="divider-thin" />
       {/* ==== Allergy & Warning Banners ==== */}
       <div className="my-container">

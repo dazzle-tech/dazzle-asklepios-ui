@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PlusIcon from '@rsuite/icons/Plus';
 import MyButton from '@/components/MyButton/MyButton';
 import '../styles.less';
@@ -36,6 +36,19 @@ const Hospitalizations = ({ patient, encounter, edit ,
     ]
   });
 
+  // Update filters when patient key becomes available
+  useEffect(() => {
+    if (patient?.key) {
+      setListRequestHospitalizations(prev => ({
+        ...prev,
+        filters: [
+          { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+          { fieldName: 'patient_key', operator: 'match', value: patient.key }
+        ]
+      }));
+    }
+  }, [patient?.key]);
+
   const { data: hospitalizationsData, isLoading } = useGetPatientHospitalizationQuery(listRequestHospitalizations);
 
   const { data: admissionTypeLov } = useGetLovValuesByCodeQuery('ADMISSION_TYPE');
@@ -53,7 +66,14 @@ const Hospitalizations = ({ patient, encounter, edit ,
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
-        setListRequestHospitalizations({ ...listRequestHospitalizations, timestamp: new Date().getTime() });
+        setListRequestHospitalizations(prev => ({
+          ...prev,
+          timestamp: new Date().getTime(),
+          filters: [
+            { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+            { fieldName: 'patient_key', operator: 'match', value: patient?.key }
+          ]
+        }));
       })
       .catch(() => {
         dispatch(notify({ msg: "Delete failed", sev: "error" }));
@@ -166,11 +186,13 @@ const Hospitalizations = ({ patient, encounter, edit ,
         title={
           <>
             Hospitalizations
-          {!toShowData&&  <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
-              Add
-            </MyButton>}
           </>
         }
+        button={<>
+        {!toShowData&&  <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+              Add
+        </MyButton>}
+        </>}
         content={
           <>
             <MyTable
@@ -196,6 +218,7 @@ const Hospitalizations = ({ patient, encounter, edit ,
                   timestamp: new Date().getTime(),
                   filters: [
                     { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+                    { fieldName: 'patient_key', operator: 'match', value: patient?.key }
                   ]
                 });
               }}

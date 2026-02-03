@@ -1,97 +1,67 @@
+import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
+import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
+import FollowupAppointmentModal from '@/pages/Scheduling/scheduling-screen/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
-import { faComment } from '@fortawesome/free-solid-svg-icons';
-import { faSuitcaseMedical } from '@fortawesome/free-solid-svg-icons';
-import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
-import { faDroplet } from '@fortawesome/free-solid-svg-icons';
-import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
-import { GiKidneys } from 'react-icons/gi';
-import { faFileLines } from '@fortawesome/free-solid-svg-icons';
-import { faLeaf } from '@fortawesome/free-solid-svg-icons';
-import { FaArrowLeft } from 'react-icons/fa6';
-import { faBaby } from '@fortawesome/free-solid-svg-icons';
+import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
+import { notify } from '@/utils/uiReducerActions';
 import {
-  faBedPulse,
+  faBed,
+  faChartLine,
   faCheckDouble,
   faClockRotateLeft,
-  faFilePrescription,
-  faFileWaveform,
-  faHandDots,
-  faNotesMedical,
-  faPersonDotsFromLine,
-  faPills,
-  faStethoscope,
-  faSyringe,
-  faTooth,
-  faTriangleExclamation,
-  faUserDoctor,
-  faPersonFallingBurst,
-  faG,
-  faVials,
-  faPersonWalking
+  faDesktop,
+  faRobot,
+  faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import BarChartHorizontalIcon from '@rsuite/icons/BarChartHorizontal';
-import React, { useEffect, useState, useRef } from 'react';
-import ReactDOMServer from 'react-dom/server';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
-import 'react-tabs/style/react-tabs.css';
-import { Col, Divider, Drawer, Form, List, Panel, Row, Text, Tooltip, Whisper } from 'rsuite';
-import PatientSide from '../encounter-main-info-section/PatienSide';
-import './styles.less';
-import BackButton from '@/components/BackButton/BackButton';
-import { useGetAppointmentsQuery } from '@/services/appointmentService';
-import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
-import { faChartLine } from '@fortawesome/free-solid-svg-icons';
-import {
-  faBrain,
-  faEarListen,
-  faEye,
-  faHeartPulse,
-  faBed,
-  faUserPlus,
-  faBraille
-} from '@fortawesome/free-solid-svg-icons';
-import { useLocation } from 'react-router-dom';
-import AllergiesModal from './AllergiesModal';
-import WarningiesModal from './WarningiesModal';
-import { notify } from '@/utils/uiReducerActions';
-import AdmitToInpatientModal from './AdmitToInpatientModal';
-import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
-import MyInput from '@/components/MyInput';
+import React, { useEffect, useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
-import { faCapsules } from '@fortawesome/free-solid-svg-icons';
-import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
-import SideSummaryScreen from './SideSummaryScreen';
+import { FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import 'react-tabs/style/react-tabs.css';
+import { Col, Divider, Drawer, Form, List, Panel, Row, Tooltip, Whisper } from 'rsuite';
+import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
+import { ActionContext } from '../encounter-component/patient-summary/ActionContext';
 import ConsultationPopup from '../encounter-component/patient-summary/ConsultationPopup';
-import { faDesktop } from '@fortawesome/free-solid-svg-icons';
-import {
-
-  useGetMedicalSheetsByDepartmentQuery,
-} from '@/services/MedicalSheetsService';
-import { MedicalSheets } from '@/config/modules-config';
+import PatientSide from '../encounter-main-info-section/PatienSide';
+import AdmitToInpatientModal from './AdmitToInpatientModal';
+import AllergiesModal from './AllergiesModal';
+import SideSummaryScreen from './SideSummaryScreen';
+import './styles.less';
+import WarningiesModal from './WarningiesModal';
+// import AiAssistantPopup from './AiAssistantPopup';
+import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
+import AiAssistantPopup from './AiAssistantPopup';
 
 const Encounter = () => {
+
   const mode = useSelector((state: any) => state.ui.mode);
   // create the action for the Customize Dashboard that we defined it in Patient summary page
-  const [action, setAction] = useState(() => () => { });
+  const [action, setAction] = useState(() => () => {});
 
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
+  
+  const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
+
+  // const outletPatient = propsData?.patient;
+  // const outletEncounter = propsData?.encounter;
   const savedState = sessionStorage.getItem('encounterPageSource');
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedFacility, setSelectedFacility] = useState(null);
@@ -103,6 +73,7 @@ const Encounter = () => {
   const [edit, setEdit] = useState(false);
   const [fromPage, setFromPage] = useState(savedState);
 
+
   // States for floating consultation button
   const [openConsultationPopup, setOpenConsultationPopup] = useState<boolean>(false);
   const [buttonPosition, setButtonPosition] = useState({
@@ -113,6 +84,20 @@ const Encounter = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
   const buttonRef = useRef<HTMLDivElement>(null);
+
+  // AI floating button states
+  const [openAiPopup, setOpenAiPopup] = useState<boolean>(false);
+
+  const [aiButtonPosition, setAiButtonPosition] = useState({
+    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180, // جنب الزر الأول
+    y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
+  });
+
+  const [isAiDragging, setIsAiDragging] = useState(false);
+  const [aiDragOffset, setAiDragOffset] = useState({ x: 0, y: 0 });
+  const [aiHasMoved, setAiHasMoved] = useState(false);
+
+  const aiButtonRef = useRef<HTMLDivElement>(null);
 
   // Handle mouse down on the floating button
   const handleMouseDown = e => {
@@ -132,7 +117,7 @@ const Encounter = () => {
     if (!hasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (buttonPosition.x + dragOffset.x), 2) +
-        Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
+          Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
       );
 
       if (movedDistance > 5) {
@@ -178,15 +163,12 @@ const Encounter = () => {
   // Use departmentKey from encounter, fallback to 5001 if not available
   const departmentKeyToUse = localEncounter?.departmentKey || '5001';
 
-  const { data: departmentSheets = [] } =
-    useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
-  
+  const { data: departmentSheets = [] } = useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
+
   // Step 2: Fetch the resource if needed "IF Clinic"
   const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(medicalSheetRowSourceKey!, {
     skip: !medicalSheetRowSourceKey
   });
-
-
 
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -261,6 +243,16 @@ const Encounter = () => {
     }
   };
 
+  const followUpDraftAppointmentData = React.useMemo(() => {
+    // Seed the follow-up modal with the encounter's patient so it opens ready to save.
+    const patient = propsData?.patient;
+    if (!patient) return null;
+    return {
+      patient,
+      patientKey: patient?.key
+    };
+  }, [propsData?.patient]);
+
   const handleCompleteEncounter = async () => {
     try {
       if (propsData.encounter) {
@@ -272,51 +264,82 @@ const Encounter = () => {
       dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
     }
   };
+  const handleAiMouseDown = (e: any) => {
+    setIsAiDragging(true);
+    setAiHasMoved(false);
+    setAiDragOffset({
+      x: e.clientX - aiButtonPosition.x,
+      y: e.clientY - aiButtonPosition.y
+    });
+    e.preventDefault();
+  };
+
+  const handleAiMouseMove = (e: any) => {
+    if (!isAiDragging) return;
+
+    if (!aiHasMoved) {
+      const movedDistance = Math.sqrt(
+        Math.pow(e.clientX - (aiButtonPosition.x + aiDragOffset.x), 2) +
+          Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
+      );
+
+      if (movedDistance > 5) setAiHasMoved(true);
+    }
+
+    setAiButtonPosition({
+      x: e.clientX - aiDragOffset.x,
+      y: e.clientY - aiDragOffset.y
+    });
+  };
+
+  const handleAiMouseUp = () => {
+    if (!aiHasMoved && !isAiDragging) {
+      setOpenAiPopup(true);
+    }
+    setIsAiDragging(false);
+  };
+
+  const handleAiClick = () => {
+    if (!aiHasMoved && !isAiDragging) {
+      setOpenAiPopup(true);
+    }
+  };
 
   const allowedSheetCodes = React.useMemo(
     () => new Set((departmentSheets ?? []).map((s: any) => s.medicalSheet)),
     [departmentSheets]
   );
 
-
   const visibleSheets = React.useMemo(() => {
-    return MedicalSheets
-      .filter(ms => allowedSheetCodes.has(ms.code))
-      .filter(ms =>
-        ms.name.toLowerCase().includes(searchTerm.term.toLowerCase())
-      );
+    return MedicalSheets.filter(ms => allowedSheetCodes.has(ms.code)).filter(ms =>
+      ms.name.toLowerCase().includes(searchTerm.term.toLowerCase())
+    );
   }, [allowedSheetCodes, searchTerm.term]);
 
-
   const headersMap = React.useMemo(() => {
-  const map: Record<string, string> = {};
+    const map: Record<string, string> = {};
 
-  MedicalSheets.forEach(ms => {
-    const fullPath = ms.path.startsWith('/encounter')
-      ? ms.path
-      : `/encounter${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
+    MedicalSheets.forEach(ms => {
+      const fullPath = ms.path.startsWith('/encounter')
+        ? ms.path
+        : `/encounter${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
 
-    map[fullPath] = ms.name;
-  });
+      map[fullPath] = ms.name;
+    });
 
-  return map;
-}, []);
+    return map;
+  }, []);
 
+  const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
 
-
-const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
-
-  const divContent = (
-    `Patient Visit > ${currentHeader}`
-  );
+  const divContent = `Patient Visit > ${currentHeader}`;
   useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));
     dispatch(setDivContent(divContent));
   }, [currentHeader, dispatch]);
- useEffect(() => {
-  setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
-}, [location.pathname, headersMap]);
-
+  useEffect(() => {
+    setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
+  }, [location.pathname, headersMap]);
 
   const [expand, setExpand] = useState(false);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
@@ -329,6 +352,18 @@ const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (isAiDragging) {
+      document.addEventListener('mousemove', handleAiMouseMove);
+      document.addEventListener('mouseup', handleAiMouseUp);
+
+      return () => {
+        document.removeEventListener('mousemove', handleAiMouseMove);
+        document.removeEventListener('mouseup', handleAiMouseUp);
+      };
+    }
+  }, [isAiDragging, aiDragOffset, aiHasMoved, aiButtonPosition]);
 
   return (
     <ActionContext.Provider value={{ action, setAction }}>
@@ -349,6 +384,42 @@ const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
           </button>
 
           {!isDragging && <div className="draggable-pulse" />}
+        </div>
+
+        <div
+          ref={buttonRef}
+          className={`draggable-container ${isDragging ? 'grabbing' : 'grab'}`}
+          style={{ left: `${buttonPosition.x}px`, top: `${buttonPosition.y}px` }}
+          onMouseDown={handleMouseDown}
+          onClick={handleClick}
+        >
+          <button
+            className={`my-button draggable-button ${isDragging ? 'dragging' : ''}`}
+            title="Drag to move or click to open consultation"
+          >
+            <FontAwesomeIcon icon={faDesktop} />
+          </button>
+
+          {!isDragging && <div className="draggable-pulse" />}
+        </div>
+
+        <div
+          ref={aiButtonRef}
+          className={`draggable-container ${isAiDragging ? 'grabbing' : 'grab'}`}
+          style={{ left: `${aiButtonPosition.x}px`, top: `${aiButtonPosition.y}px` }}
+          onMouseDown={handleAiMouseDown}
+          onClick={handleAiClick}
+        >
+          <button
+            type="button"
+            className={`my-button draggable-button ai-icon-btn ${isAiDragging ? 'dragging' : ''}`}
+            title="AI Assistant"
+          >
+            <FontAwesomeIcon icon={faRobot} />
+            <span className="ai-badge-2">AI</span>
+          </button>
+
+          {!isAiDragging && <div className="draggable-pulse" />}
         </div>
 
         <div className="left-box">
@@ -382,6 +453,17 @@ const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
                 </Form>
               </div>
               <div className="right">
+                {isMedicalHistoryTab && (
+                  <MyButton
+                    disabled={edit}
+                    onClick={() => {
+                      setSummaryModalOpen(true);
+                    }}
+                  >
+                    patient summary
+                  </MyButton>
+                )}
+
                 <MyButton
                   disabled={edit}
                   prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
@@ -408,9 +490,9 @@ const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
                     prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                     onClick={() =>
                       propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
                         ? setOpenDischargeModal(true)
                         : handleCompleteEncounter()
                     }
@@ -418,9 +500,9 @@ const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
                   >
                     <Translate>
                       {propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                        propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
+                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
                         ? 'Discharge'
                         : 'Complete Visit'}
                     </Translate>
@@ -533,8 +615,6 @@ const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
                       </List.Item>
                     );
                   })}
-
-
                 </List>
               </Drawer.Body>
             </Drawer>
@@ -591,18 +671,26 @@ const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
         encounter={propsData?.encounter}
       />
 
-      <AppointmentModal
+      <FollowupAppointmentModal
         from={'Encounter'}
         isOpen={modalOpen}
         onClose={() => {
           setModalOpen(false), setShowAppointmentOnly(false);
         }}
-        appointmentData={selectedEvent?.appointmentData}
+        appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
         onSave={() => {}}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
+      />
+
+      <PatientHistorySummaryModal
+        patient={propsData?.patient}
+        encounter={propsData?.encounter}
+        edit={edit}
+        open={summaryModalOpen}
+        setOpen={setSummaryModalOpen}
       />
 
       <EncounterDischarge
@@ -615,6 +703,13 @@ const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
       <ConsultationPopup
         open={openConsultationPopup}
         setOpen={() => setOpenConsultationPopup(false)}
+        patient={propsData?.patient}
+        encounter={propsData?.encounter}
+      />
+
+      <AiAssistantPopup
+       open={openAiPopup}
+        setOpen={setOpenAiPopup}
         patient={propsData?.patient}
         encounter={propsData?.encounter}
       />

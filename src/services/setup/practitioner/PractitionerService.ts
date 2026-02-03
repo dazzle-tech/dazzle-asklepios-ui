@@ -145,6 +145,21 @@ export const PractitionerService = createApi({
         "Practitioner",
       ],
     }),
+      getActiveAppointablePractitioner: builder.query({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/practitioner/active-appointable`,
+        params: { page, size, sort },
+      }),
+       transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["Practitioner"],
+    }),
 
     // 🔹 Toggle active status
     togglePractitionerActive: builder.mutation({
@@ -153,6 +168,20 @@ export const PractitionerService = createApi({
         method: "PATCH",
       }),
       invalidatesTags: ["Practitioner"],
+    }),
+    getPractitionerByUserId: builder.query<any, number>({
+      query: (userId) => ({
+        url: `/api/setup/practitioner/by-user/${userId}`,
+        method: "GET",
+      }),
+      providesTags: ["Practitioner"],
+    }),
+    existsPractitionerByUserId: builder.query<boolean, number>({
+      query: (userId) => ({
+        url: `/api/setup/practitioner/exists-by-user/${userId}`,
+        method: "GET",
+      }),
+      providesTags: ["Practitioner"],
     }),
   }),
 });
@@ -170,4 +199,9 @@ export const {
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
+  useGetActiveAppointablePractitionerQuery,
+  useGetPractitionerByUserIdQuery,
+  useLazyGetPractitionerByUserIdQuery,
+  useExistsPractitionerByUserIdQuery,
+  useLazyExistsPractitionerByUserIdQuery,
 } = PractitionerService;
