@@ -75,8 +75,10 @@ export const ICDTreeService = createApi({
       transformResponse: (response: ICDCategoryDTO[], meta) => mapPaged<ICDCategoryDTO>(response, meta),
       providesTags: ["ICD_TREE"],
     }),
-
-    getIcdChildren: builder.query<PagedResult<ICDCategoryDTO>, { icdCoding: string; parentCategoryCode: string } & PagedParams>({
+    getIcdChildren: builder.query<
+      PagedResult<ICDCategoryDTO>,
+      { icdCoding: string; parentCategoryCode: string } & PagedParams
+    >({
       query: ({ icdCoding, parentCategoryCode, page, size, sort = "categoryCode,asc" }) => ({
         url: "/api/setup/icd/tree/children",
         method: "GET",
@@ -95,7 +97,10 @@ export const ICDTreeService = createApi({
       providesTags: ["ICD_TREE"],
     }),
 
-    getIcdDiagnosesByCategory: builder.query<PagedResult<ICDDiagnosisDTO>, { icdCoding: string; categoryCode: string } & PagedParams>({
+    getIcdDiagnosesByCategory: builder.query<
+      PagedResult<ICDDiagnosisDTO>,
+      { icdCoding: string; categoryCode: string } & PagedParams
+    >({
       query: ({ icdCoding, categoryCode, page, size, sort = "icdCode,asc" }) => ({
         url: "/api/setup/icd/diagnoses",
         method: "GET",
@@ -104,6 +109,34 @@ export const ICDTreeService = createApi({
       transformResponse: (response: ICDDiagnosisDTO[], meta) => mapPaged<ICDDiagnosisDTO>(response, meta),
       providesTags: ["ICD_TREE"],
     }),
+
+    getIcdDiagnosisById: builder.query<ICDDiagnosisDTO, { id: number | string; timestamp?: number }>({
+      query: ({ id }) => ({
+        url: `/api/setup/icd/diagnoses/${id}`,
+        method: "GET",
+      }),
+      providesTags: (_res, _err, { id }) => [{ type: "ICD_TREE", id }, "ICD_TREE"],
+    }),
+
+    searchIcdDiagnoses: builder.query<PagedResult<ICDDiagnosisDTO>, { keyword: string } & PagedParams>({
+      query: ({ keyword, page, size, sort = "icdCode,asc" }) => ({
+        url: "/api/setup/icd/diagnoses/search",
+        method: "GET",
+        params: { keyword, page, size, sort },
+      }),
+      transformResponse: (response: ICDDiagnosisDTO[], meta) => mapPaged<ICDDiagnosisDTO>(response, meta),
+      providesTags: ["ICD_TREE"],
+    }),
+
+    getIcdDiagnosesByIds: builder.query<ICDDiagnosisDTO[], { ids: Array<number | string>; timestamp?: number }>({
+      query: ({ ids }) => ({
+        url: "/api/setup/icd/diagnoses/by-ids",
+        method: "GET",
+        params: { ids }, 
+      }),
+      providesTags: ["ICD_TREE"],
+    }),
+
   }),
 });
 
@@ -114,4 +147,10 @@ export const {
   useGetIcdNodeDetailsQuery,
   useGetIcdDiagnosesByCategoryQuery,
   useLazyGetIcdDiagnosesByCategoryQuery,
+  useGetIcdDiagnosisByIdQuery,
+  useLazyGetIcdDiagnosisByIdQuery,
+  useGetIcdDiagnosesByIdsQuery,
+  useLazyGetIcdDiagnosesByIdsQuery,
+  useSearchIcdDiagnosesQuery,
+  useLazySearchIcdDiagnosesQuery,
 } = ICDTreeService;
