@@ -117,6 +117,8 @@ import { clinicalRecommendationsService } from './services/ai-services/clinicalR
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 import { patientReportService } from './services/patientReportService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
+import { ICDTreeService } from './services/setup/icdTreeService';
+
 export const store = configureStore({
   reducer: {
     [idParsingService.reducerPath]: idParsingService.reducer,
@@ -338,7 +340,10 @@ export const store = configureStore({
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
     [patientReportService.reducerPath]: patientReportService.reducer,
-    [patientProcedureService.reducerPath]: patientProcedureService.reducer
+    [patientProcedureService.reducerPath]: patientProcedureService.reducer,
+
+    [ICDTreeService.reducerPath]: ICDTreeService.reducer,
+
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -457,7 +462,8 @@ export const store = configureStore({
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
       patientReportService.middleware,
-      patientProcedureService.middleware
+      patientProcedureService.middleware,
+      ICDTreeService.middleware,
     ])
 });
 
