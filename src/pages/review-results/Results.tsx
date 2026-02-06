@@ -37,11 +37,13 @@ import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { useToggleReviewDiagnosticOrderTestResultMutation }
   from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
+import {
+  useLazyFilterDiagnosticOrdersQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
 
-const renderMarker = (viewMarker?: string) => {
-  switch (viewMarker) {
-    case 'NORMAL_MARKER':
-      return 'Normal';
+
+const renderMarker = (Marker?: string) => {
+  switch (Marker) {
     case 'ABNORMAL_MARKER':
       return <FontAwesomeIcon icon={faCircleExclamation} />;
     case 'UPPER_LIMIT':
@@ -63,7 +65,7 @@ const renderMarker = (viewMarker?: string) => {
         </HStack>
       );
     default:
-      return ' ';
+      return formatEnumString(Marker);
   }
 };
 
@@ -113,6 +115,7 @@ const Result = forwardRef<any, any>(
       fromDate: today,
       toDate: today
     });
+    const [orderIds, setOrderIds] = useState<number[] | null>(null);
     const [orderDate, setOrderDate] = useState({ fromDate: null, toDate: null });
     const [showReview, setShowReview] = useState(false);
     const [showAbnormal, setShowAbnormal] = useState(false);
@@ -124,7 +127,9 @@ const Result = forwardRef<any, any>(
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
     const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
 
-    
+    const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
+
+
     const [toggleReviewDiagnosticOrderTestResult] =
       useToggleReviewDiagnosticOrderTestResultMutation();
 
@@ -150,29 +155,63 @@ const Result = forwardRef<any, any>(
       return d;
     };
 
+    const startOfDay = (date: Date) => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    };
+
+
     const filterParams = useMemo(() => {
       const params: any = {
         page,
         size,
         processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
-        reviewed: showReview
+        reviewed: showReview,
       };
 
-      const { from, to } = normalizeDateRange(
+      if (showAbnormal) {
+        params.markerIn = [
+          'UPPER_LIMIT',
+          'LOWER_LIMIT',
+          'ABNORMAL_MARKER',
+          'CRITICAL_UPPER',
+          'CRITICAL_LOWER',
+        ];
+      }
+      const approval = normalizeDateRange(
         approvalDate.fromDate,
         approvalDate.toDate
       );
 
-      if (from) {
-        params.approvedDateFrom = from.toISOString();
+      if (approval.from) {
+        params.approvedDateFrom = startOfDay(approval.from).toISOString();
+      }
+      if (approval.to) {
+        params.approvedDateTo = endOfDay(approval.to).toISOString();
       }
 
-      if (to) {
-        params.approvedDateTo = endOfDay(to).toISOString();
+      if (orderDate.fromDate || orderDate.toDate) {
+        if (orderIds && orderIds.length > 0) {
+          params.orderIds = orderIds;
+        } else {
+          params.orderIds = [-1];
+        }
       }
+
 
       return params;
-    }, [page, size, approvalDate, showReview]);
+    }, [
+      page,
+      size,
+      approvalDate,
+      showReview,
+      showAbnormal,
+      orderIds,
+      orderDate
+    ]);
+
+
 
     const {
       data: resultsResponse,
@@ -336,7 +375,8 @@ const Result = forwardRef<any, any>(
           key: 'marker',
           title: <Translate>MARKER</Translate>,
           align: 'center',
-          render: (row: any) => renderMarker(row.viewMarker)
+          width: 90,
+          render: (row: any) => renderMarker(row.marker)
         },
         {
           key: 'comments',
@@ -405,19 +445,23 @@ const Result = forwardRef<any, any>(
         <div className='results-table-filters-review-results-main-container'>
           <MyInput fieldType="date" fieldLabel="Approval From Date" fieldName="fromDate" record={approvalDate} setRecord={setApprovalDate} />
           <MyInput fieldType="date" fieldLabel="Approval To Date" fieldName="toDate" record={approvalDate} setRecord={setApprovalDate} />
-          {/* <MyInput fieldType="date" fieldLabel="Order From Date" fieldName="fromDate" record={orderDate} setRecord={setOrderDate} />
-        <MyInput fieldType="date" fieldLabel="Order To Date" fieldName="toDate" record={orderDate} setRecord={setOrderDate} /> */}
-        <div className='results-table-filters-checkboxes-review-results-main-container'>
-          <Checkbox
-            checked={showReview}
-            onChange={(_, checked) => setShowReview(checked)}
-          >
-            Show Review Result
-          </Checkbox>
-          <Checkbox checked={showAbnormal} onChange={() => setShowAbnormal(!showAbnormal)}>Show Abnormal Result</Checkbox>
+          <MyInput fieldType="date" fieldLabel="Order From Date" fieldName="fromDate" record={orderDate} setRecord={setOrderDate} />
+          <MyInput fieldType="date" fieldLabel="Order To Date" fieldName="toDate" record={orderDate} setRecord={setOrderDate} />
+          <div className='results-table-filters-checkboxes-review-results-main-container'>
+            <Checkbox
+              checked={showReview}
+              onChange={(_, checked) => setShowReview(checked)}
+            >
+              Show Review Result
+            </Checkbox>
+            <Checkbox
+              checked={showAbnormal}
+              onChange={(_, checked) => setShowAbnormal(checked)}
+            >
+              Show Abnormal Result
+            </Checkbox>
           </div>
         </div>
-        <AdvancedSearchFilters />
       </Form>
     );
 
@@ -438,6 +482,32 @@ const Result = forwardRef<any, any>(
         toDate: today
       });
     }, []);
+
+    useEffect(() => {
+      const { fromDate, toDate } = orderDate;
+
+      if (!fromDate && !toDate) {
+        setOrderIds(null);
+        return;
+      }
+
+      fetchOrders({
+        submittedDateFrom: fromDate
+          ? startOfDay(fromDate).toISOString()
+          : undefined,
+        submittedDateTo: toDate
+          ? endOfDay(toDate).toISOString()
+          : undefined,
+        page: 0,
+        size: 10000
+      })
+        .unwrap()
+        .then(res => {
+          const ids = (res?.data ?? []).map((o: any) => o.id);
+          setOrderIds(ids);
+        })
+        .catch(() => setOrderIds([]));
+    }, [orderDate]);
 
 
     return (

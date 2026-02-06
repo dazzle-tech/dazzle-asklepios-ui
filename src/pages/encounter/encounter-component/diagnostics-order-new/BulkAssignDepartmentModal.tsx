@@ -56,11 +56,6 @@ const [isMixedTypes, setIsMixedTypes] = useState(false);
     const firstTest = orderTests?.[0]?.test;
     const resolved = resolveReceivedType(firstTest);
     setReceivedType(resolved);
-
-    console.group('🟦 Bulk Assign FINAL DEBUG');
-    console.log('firstTest:', firstTest);
-    console.log('resolved receivedType:', resolved);
-    console.groupEnd();
   }, [orderTests]);
 
 
@@ -148,8 +143,6 @@ const handleApply = async () => {
     onSuccess();
 
   } catch (err: any) {
-    console.error('❌ Bulk assign failed:', err);
-
     dispatch(
       notify({
         msg:

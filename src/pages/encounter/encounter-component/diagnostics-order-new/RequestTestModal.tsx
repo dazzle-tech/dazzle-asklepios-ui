@@ -307,20 +307,13 @@ const RequestTestModal = ({
 
     /* ====================================================== */
     useEffect(() => {
-        console.log('requestsResponse', requestsResponse);
     }, [requestsResponse]);
 
     useEffect(() => {
         if (requestsResponse?.data?.length) {
-            console.log('Current facility:', fromFacilityId);
-            console.log(
-                'Facilities in response:',
-                requestsResponse.data.map(r => r.fromFacilityId)
-            );
         }
     }, [requestsResponse, fromFacilityId]);
 
-    console.log('fromFacilityId', fromFacilityId);
 
 const handleRowClick = (row: any) => {
   if (row.createdBy !== currentUser) {

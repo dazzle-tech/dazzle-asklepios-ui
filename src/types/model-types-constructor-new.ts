@@ -1165,9 +1165,6 @@ export const newDiagnosticOrder: modelTypes.DiagnosticOrder = {
 
   patientId: undefined,
   encounterId: undefined,
-
-  status: modelTypes.DiagnosticStatus.NEW,
-
   submittedBy: undefined,
   submittedDate: undefined,
 
@@ -1180,8 +1177,6 @@ export const newDiagnosticOrder: modelTypes.DiagnosticOrder = {
 export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
   id: undefined,
 
-  patientId: undefined,
-  encounterId: undefined,
 
   orderId: undefined,
   testId: undefined,
@@ -1312,3 +1307,65 @@ export const newLabResultLogResponseVM: modelTypes.LabResultLogResponseVM = {
   resultDate: '',
   createdBy: undefined,
 };
+
+export const newPatientArrivedCreateRequestDTO: modelTypes.PatientArrivedCreateRequestDTO = {
+  arrivedAt: undefined,
+  notes: '',
+};
+
+export const newPatientArrivedResponseVM: modelTypes.PatientArrivedResponseVM = {
+  id: undefined,
+  diagnosticOrderTestId: undefined,
+  arrivedAt: undefined,
+  notes: '',
+  createdBy: undefined,
+  createdDate: undefined,
+};
+
+export const newDiagnosticOrderTestReportCreateRequestDTO: modelTypes.DiagnosticOrderTestReportCreateDTO =
+  {
+    orderId: undefined,
+    orderTestId: undefined,
+    report: '',
+    severity: '',
+    processingStatus: undefined,
+    imageStatus: undefined,
+  };
+
+export const newDiagnosticOrderTestReportUpdateRequestDTO: modelTypes.DiagnosticOrderTestReportUpdateDTO =
+  {
+    id: undefined,
+    report: '',
+    severity: '',
+    processingStatus: undefined,
+    imageStatus: undefined,
+  };
+
+export const newDiagnosticOrderTestReportResponseVM: modelTypes.DiagnosticOrderTestReportResponseVM =
+  {
+    id: undefined,
+
+    orderId: undefined,
+    orderTestId: undefined,
+
+    report: '',
+    severity: '',
+
+    approvedBy: undefined,
+    approvedDate: undefined,
+
+    rejectedBy: undefined,
+    rejectedDate: undefined,
+    rejectedReason: '',
+
+    reviewBy: undefined,
+    reviewDate: undefined,
+
+    processingStatus: undefined,
+    imageStatus: undefined,
+
+    createdDate: undefined,
+    createdBy: undefined,
+    lastModifiedDate: undefined,
+    lastModifiedBy: undefined,
+  };

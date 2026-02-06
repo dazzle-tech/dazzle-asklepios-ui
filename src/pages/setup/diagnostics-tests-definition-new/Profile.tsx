@@ -404,16 +404,20 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
       case 0:
+        const isNumberType =
+  diagnosticsTestProfile?.resultType === 'NUMBER';
+
         return (
           <Form fluid>
             <div className="profile-form-header">
-              <div className="profile-fields">
+              <div className="profile-fields-main-container">
                 <MyInput
                   required
                   column
                   fieldName="name"
                   record={diagnosticsTestProfile}
                   setRecord={setDiagnosticsTestProfile}
+                  width={'9vw'}
                 />
                 <MyInput
                   required
@@ -425,20 +429,64 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
                   selectDataValue="value"
                   record={diagnosticsTestProfile}
                   setRecord={setDiagnosticsTestProfile}
-                />
-                <MyInput
-                  column
-                  menuMaxHeight={200}
-                  fieldName="resultUnit"
-                  fieldType="select"
-                  selectData={unitsLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={diagnosticsTestProfile}
-                  setRecord={setDiagnosticsTestProfile}
+                  width={'9vw'}
                 />
 
+              </div>
+              <div className='profile-lov-unit-main-container'>
+                {isNumberType && (
+                  <MyInput
+                    column
+                    menuMaxHeight={200}
+                    width={'100%'}
+                    fieldName="resultUnit"
+                    fieldType="select"
+                    selectData={unitsLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={diagnosticsTestProfile}
+                    setRecord={setDiagnosticsTestProfile}
+                    required
+                  />
+                )}
 
+                {isLovType && (
+                  <div className="lov-block">
+                    <div className="container-of-menu-diagnostic">
+                      <InputGroup className="search-input-diagnostic" inside>
+                        <Input placeholder="Search LOV" value={searchKeyword} onChange={setSearchKeyword} />
+                        <InputGroup.Button>
+                          <SearchIcon />
+                        </InputGroup.Button>
+                      </InputGroup>
+
+                      {searchKeyword && (
+                        <Dropdown.Menu className="menu-diagnostic">
+                          {filteredData.map(mod => (
+                            <Dropdown.Item
+                              key={mod.key}
+                              onClick={() => {
+                                setDiagnosticsTestProfile(prev => ({ ...prev, listOfValueId: mod.key }));
+                                setLovCode(mod.lovCode);
+                                setSearchKeyword('');
+                              }}
+                            >
+                              <span>{mod.lovCode}</span>
+                              <span>{mod.lovName}</span>
+                            </Dropdown.Item>
+                          ))}
+                        </Dropdown.Menu>
+                      )}
+                    </div>
+
+                    <Input
+                      className="search-result-diagnostic"
+                      disabled
+                      value={resultLovDisplay}
+                      placeholder="Selected LOV"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="profile-actions">
@@ -452,43 +500,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
               </div>
             </div>
 
-            {isLovType && (
-              <div className="lov-block">
-                <div className="container-of-menu-diagnostic">
-                  <InputGroup className="search-input-diagnostic" inside>
-                    <Input placeholder="Search LOV" value={searchKeyword} onChange={setSearchKeyword} />
-                    <InputGroup.Button>
-                      <SearchIcon />
-                    </InputGroup.Button>
-                  </InputGroup>
 
-                  {searchKeyword && (
-                    <Dropdown.Menu className="menu-diagnostic">
-                      {filteredData.map(mod => (
-                        <Dropdown.Item
-                          key={mod.key}
-                          onClick={() => {
-                            setDiagnosticsTestProfile(prev => ({ ...prev, listOfValueId: mod.key }));
-                            setLovCode(mod.lovCode);
-                            setSearchKeyword('');
-                          }}
-                        >
-                          <span>{mod.lovCode}</span>
-                          <span>{mod.lovName}</span>
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  )}
-                </div>
-
-                <Input
-                  className="search-result-diagnostic"
-                  disabled
-                  value={resultLovDisplay}
-                  placeholder="Selected LOV"
-                />
-              </div>
-            )}
 
             <div className="table-wrapper">
               <MyTable
@@ -654,7 +666,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"
       subChildContent={conjureFormContentOfSecondChildModal}
-      mainSize="xs"
+      mainSize="25vw"
       childSize="sm"
     />
   );

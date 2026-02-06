@@ -1403,6 +1403,7 @@ export enum DiagnosticOrderTestStatus {
   CANCELLED = 'CANCELLED',
   PARTIALLY = 'PARTIALLY',
   RESULT_REJECTED = 'RESULT_REJECTED',
+  PATIENT_ARRIVED = 'PATIENT_ARRIVED',
 }
 
 export enum TestType {
@@ -1432,9 +1433,6 @@ export interface DiagnosticOrder extends AuditingEntity {
 
 export interface DiagnosticOrderTest extends AuditingEntity {
   id?: number;
-
-  patientId?: number;
-  encounterId?: number;
 
   orderId?: number;
   testId?: number;
@@ -1479,8 +1477,6 @@ export interface DiagnosticOrderCreateDTO {
   patientId: number;
   encounterId: number;
 
-  status?: DiagnosticStatus;
-
   saveDraft?: boolean;
 
   submittedBy?: string;
@@ -1499,8 +1495,6 @@ export interface DiagnosticOrderUpdateDTO {
   id: number;
   patientId: number;
   encounterId: number;
-
-  status?: DiagnosticStatus;
   saveDraft?: boolean;
 
   submittedBy?: string;
@@ -1518,20 +1512,13 @@ export interface DiagnosticOrderSubmitDTO {
 }
 
 export interface DiagnosticOrderTestCreateDTO {
-  patientId: number;
-  encounterId: number;
-
   orderId: number;
   testId: number;
-
   receivedDepartmentId?: number;
   reason?: string;
   notes?: string;
-
   processingStatus?: DiagnosticStatus;
-
   submitDate?: string;
-
   orderType?: TestType;
 
 }
@@ -1658,4 +1645,62 @@ export interface LabResultLogResponseVM {
   newValue?: string;
   resultDate: string;
   createdBy?: string;
+}
+
+export interface PatientArrivedCreateRequestDTO {
+  arrivedAt?: string;
+  notes?: string;
+}
+
+export interface PatientArrivedResponseVM {
+  id?: number;
+  diagnosticOrderTestId?: number;
+
+  arrivedAt?: string;
+  notes?: string;
+
+  createdBy?: string;
+  createdDate?: string;
+}
+
+
+export interface DiagnosticOrderTestReportCreateDTO {
+  orderId: number;
+  orderTestId: number;
+  report: string;
+  severity?: string;
+}
+
+export interface DiagnosticOrderTestReportUpdateDTO {
+  id: number;
+  report: string;
+  severity?: string;
+}
+
+export interface DiagnosticOrderTestReportResponseVM {
+  id?: number;
+
+  orderId?: number;
+  orderTestId?: number;
+
+  report?: string;
+  severity?: string;
+
+  approvedBy?: string;
+  approvedDate?: string;
+
+  rejectedBy?: string;
+  rejectedDate?: string;
+  rejectedReason?: string;
+
+  reviewBy?: string;
+  reviewDate?: string;
+
+  processingStatus?: string;
+  imageStatus?: string;
+
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
 }

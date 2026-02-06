@@ -8,7 +8,10 @@ import {
   DiagnosticOrderTestCancelDTO,
   BulkIdsDTO,
   BulkRejectDTO,
+  PatientArrivedCreateRequestDTO,
+  PatientArrivedResponseVM,
 } from '@/types/model-types-new';
+
 
 type PageableParams = {
   page?: number;
@@ -224,6 +227,31 @@ export const diagnosticOrderTestService = createApi({
       ],
     }),
 
+    patientArrivedRadiology: builder.mutation<
+  PatientArrivedResponseVM,
+  { id: number; body: PatientArrivedCreateRequestDTO }
+>({
+  query: ({ id, body }) => ({
+    url: `/api/patient/diagnostic-order-tests/${id}/radiology/patient-arrived`,
+    method: 'PATCH',
+    body,
+  }),
+  invalidatesTags: (_r, _e, { id }) => [
+    { type: 'DiagnosticOrderTest', id },
+  ],
+}),
+
+
+getPatientArrivedRadiology: builder.query<
+  PatientArrivedResponseVM,
+  number
+>({
+  query: id => ({
+    url: `/api/patient/diagnostic-order-tests/${id}/radiology/patient-arrived`,
+    method: 'GET',
+  }),
+}),
+
 
     cancelDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
@@ -262,4 +290,6 @@ export const {
   useBulkRejectDiagnosticOrderTestsMutation,
   useUndoAcceptDiagnosticOrderTestMutation,
   useLazyGetDiagnosticOrderTestByIdQuery,
+  usePatientArrivedRadiologyMutation,
+  useGetPatientArrivedRadiologyQuery,
 } = diagnosticOrderTestService;

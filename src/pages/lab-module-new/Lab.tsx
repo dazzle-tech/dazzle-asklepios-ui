@@ -22,7 +22,6 @@ import {
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
-  newApDiagnosticOrderTestsResult,
   newApEncounter,
   newApPatient
 } from '@/types/model-types-constructor';
@@ -60,7 +59,6 @@ const Lab = () => {
 
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-  const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
   const [patient, setPatient] = useState({ ...newApPatient });
   const [encounter] = useState({ ...newApEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
@@ -159,34 +157,43 @@ const Lab = () => {
       }
     };
 
-      const newTestsCount = useMemo(
-        () =>
-          allTestsList.filter(
-            t =>
-              t.processingStatus === DiagnosticOrderTestStatus.NEW
-          ).length,
-        [allTestsList]
-      );
+    const labTestsList = useMemo(
+  () =>
+    allTestsList.filter(
+      t => t.orderType === 'LABORATORY'
+    ),
+  [allTestsList]
+);
 
-      const sampleCollectedTestsCount = useMemo(
-        () =>
-          allTestsList.filter(
-            t =>
-              t.processingStatus ===
-              DiagnosticOrderTestStatus.SAMPLE_COLLECTED
-          ).length,
-        [allTestsList]
-      );
 
-      const resultApprovedCount = useMemo(
-        () =>
-          allTestsList.filter(
-            t =>
-              t.processingStatus ===
-              DiagnosticOrderTestStatus.RESULT_APPROVED
-          ).length,
-        [allTestsList]
-      );
+        const newTestsCount = useMemo(
+          () =>
+            labTestsList.filter(
+              t => t.processingStatus === DiagnosticOrderTestStatus.NEW
+            ).length,
+          [labTestsList]
+        );
+
+        const sampleCollectedTestsCount = useMemo(
+          () =>
+            labTestsList.filter(
+              t =>
+                t.processingStatus ===
+                DiagnosticOrderTestStatus.SAMPLE_COLLECTED
+            ).length,
+          [labTestsList]
+        );
+
+        const resultApprovedCount = useMemo(
+          () =>
+            labTestsList.filter(
+              t =>
+                t.processingStatus ===
+                DiagnosticOrderTestStatus.RESULT_APPROVED
+            ).length,
+          [labTestsList]
+        );
+
 
 
 
@@ -303,7 +310,7 @@ useEffect(() => {
         />
         <DetailsCard
           title="Total Test"
-          number={allTestsList?.length ? allTestsList?.length : 0}
+          number={labTestsList.length}
           icon={faTriangleExclamation}
           color="--gray-dark"
           backgroundClassName="total-test-section"

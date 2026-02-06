@@ -142,9 +142,7 @@ const DiagnosticsOrder = props => {
 
 
   const patient = location.state?.patient;
-  console.log("PATIENT", patient)
 
-  console.log(location.state?.patient)
   const encounter = location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
   const toNumericId = (value: any) => {
@@ -454,8 +452,6 @@ const DiagnosticsOrder = props => {
 
       if (!orderTestId) {
         const createPayload: DiagnosticOrderTestCreateDTO = {
-          patientId,
-          encounterId,
           orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
@@ -470,8 +466,6 @@ const DiagnosticsOrder = props => {
       else {
         const updatePayload: DiagnosticOrderTestUpdateDTO = {
           id: orderTestId,
-          patientId,
-          encounterId,
           orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
@@ -574,8 +568,6 @@ const DiagnosticsOrder = props => {
             if (!testId) return null;
 
             return createOrderTest({
-              patientId,
-              encounterId,
               orderId,
               testId,
               orderType: item.type
@@ -600,13 +592,13 @@ const DiagnosticsOrder = props => {
   };
 
   const handleSaveOrders = async () => {
-    console.log("PATIENT ID", patientId, "ENCOUNTER ID", encounterId)
     if (!patientId || !encounterId) {
       dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
       return;
     }
 
     try {
+
       const createPayload: DiagnosticOrderCreateDTO = {
         patientId,
         encounterId,
@@ -616,7 +608,6 @@ const DiagnosticsOrder = props => {
         fromFacilityId: selectedDepartment?.facilityId,
       };
       const response = await createOrder(createPayload).unwrap();
-
       setOrders(response);
       setOpenTestsModal(true);
 
@@ -670,6 +661,7 @@ const DiagnosticsOrder = props => {
           isUrgent: orders.isUrgent,
         }
       }).unwrap();
+
       await submitDiagnosticOrder(orderId).unwrap();
 
       dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
@@ -1003,8 +995,6 @@ const DiagnosticsOrder = props => {
 
     try {
       await createOrderTest({
-        patientId,
-        encounterId,
         orderId,
         testId: test.id,
         orderType: test.type
@@ -1015,21 +1005,21 @@ const DiagnosticsOrder = props => {
       await orderTestRefetch();
 
     } catch (error: any) {
-    const msg = extractErrorMessage(error);
+      const msg = extractErrorMessage(error);
 
-  dispatch(
-    notify({
-      msg:
-        msg.toLowerCase().includes('already')
-          ? 'This test already ordered'
-          : msg,
-      sev:
-        msg.toLowerCase().includes('already')
-          ? 'warning'
-          : 'error'
-    })
-  );
-      }
+      dispatch(
+        notify({
+          msg:
+            msg.toLowerCase().includes('already')
+              ? 'This test already ordered'
+              : msg,
+          sev:
+            msg.toLowerCase().includes('already')
+              ? 'warning'
+              : 'error'
+        })
+      );
+    }
 
   };
 

@@ -1,367 +1,570 @@
 import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import MyInput from '@/components/MyInput';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import {
-  useGetDiagnosticOrderTestQuery,
-  useGetOrderTestNotesByTestIdQuery,
-  useSaveDiagnosticOrderTestNotesMutation
-} from '@/services/encounterService';
-import { useGetDiagnosticsTestRadiologyListQuery } from '@/services/setupService';
-import {
-  newApDiagnosticOrderTests,
-  newApDiagnosticOrderTestsNotes,
-  newApDiagnosticOrderTestsRadReport
-} from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import ReloadIcon from '@rsuite/icons/Reload';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { notify } from '@/utils/uiReducerActions';
-import {
-  faClipboardList,
-  faComment,
-  faHospitalUser,
-  faRightFromBracket
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { forwardRef, useImperativeHandle, useState, useEffect, useRef } from 'react';
-import { HStack, Tooltip, Whisper } from 'rsuite';
-import ChatModal from '@/components/ChatModal';
 import { formatDateWithoutSeconds } from '@/utils';
+import ReloadIcon from '@rsuite/icons/Reload';
+import {
+  useGetTestsByOrderIdQuery,
+  useAcceptDiagnosticOrderTestMutation,
+  useRejectDiagnosticOrderTestMutation,
+  useFilterDiagnosticOrderTestsQuery,
+  useUndoAcceptDiagnosticOrderTestMutation
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import './styles.less';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { Checkbox, Form, HStack, Panel, Popover, Tooltip, Whisper } from 'rsuite';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import WarningRoundIcon from '@rsuite/icons/WarningRound';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCirclePause, faCircleStop, faComment, faEllipsisVertical, faHospitalUser, faPlay, faPlusCircle, faRightFromBracket, faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+import {
+  useGetNotesByOrderTestIdQuery,
+  useCreateDiagnosticOrderTestTechnicianNoteMutation
+} from '@/services/diagnosic-order/diagnosticOrderTestTechnicianNoteService';
+import ChatModal from '@/components/ChatModal';
+import { formatEnumString } from '@/utils';
+import {
+  DiagnosticStatus,
+  DiagnosticOrderTestStatus
+} from '@/types/model-types-new';
+import {
+  useGetExternalTestByTestIdQuery
+} from '@/services/diagnosic-order/externalTestService';
+import MyButton from '@/components/MyButton/MyButton';
+import { useGetAllRadiologiesQuery, useGetRadiologyByTestIdQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
 import PatientArrivalModal from './PatientArrivalModal';
-import { useDeleteTestReportsMutation } from '@/services/radService';
+import { Dropdown } from 'rsuite';
+import {
+  useStartRadiologyImageMutation,
+  usePauseRadiologyImageMutation,
+  useResumeRadiologyImageMutation,
+  useFinishRadiologyImageMutation,
+  useGetRadiologyReportByOrderTestIdQuery,
+  useLazyGetRadiologyReportByOrderTestIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
 
-type TestsProps = {
-  test: any;
-  setTest: (value: any) => void;
+
+type Props = {
   order: any;
-  patient: any;
-  encounter: any;
-  saveTest: any;
-  saveReport: any;
-  saveReportMutation: any;
-  reportFetch: () => void;
-  fetchAllTests: () => void;
+  test: any;
+  setTest: (t: any) => void;
+  fetchAllTests?: () => any;
+  loading?: boolean;
+  refetchAllRadData: () => Promise<void>;
+  saveTest: (payload: any) => Promise<void>;
 };
 
+const Tests = forwardRef<any, Props>(
+  (
+    {
+      order,
+      test,
+      setTest,
+      fetchAllTests,
+      refetchAllRadData,
+      loading,
+      saveTest
+    },
+    ref
+  ) => {
+    const dispatch = useAppDispatch();
+    const authSlice = useAppSelector(state => state.auth);
+    const selectedDepartment = authSlice.selectedDepartment;
+    const [pageIndex, setPageIndex] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [testKeyFilter, setTestKeyFilter] = useState({ value: '' });
+    const [selectedRows, setSelectedRows] = useState<(number | string)[]>([]);
+    const [localHasNoteIds, setLocalHasNoteIds] = useState<(number | string)[]>([]);
+    const [openRejectedModal, setOpenRejectedModal] = useState(false);
+    const [openNoteModal, setOpenNoteModal] = useState(false);
+    const [sortColumn, setSortColumn] = useState("id");
+    const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+    const [openArrivalModal, setOpenArrivalModal] = useState(false);
+    const [reportsByTestId, setReportsByTestId] = useState<Record<number, any>>({});
 
-type TestsRef = {
-  fetchTest: () => void;
-};
 
-const Tests = forwardRef<TestsRef, TestsProps>(
-  ({
-    test,
-    setTest,
-    order,
-    patient,
-    encounter,
-    saveTest,
-    saveReport,
-    saveReportMutation,
-    reportFetch,
-    fetchAllTests
-  },
-    ref) => {
+    const [paginationParams, setPaginationParams] = useState({
+      page: 0,
+      size: 5,
+      sort: "testId,asc",
+    });
 
+    const [startImage] = useStartRadiologyImageMutation();
+    const [pauseImage] = usePauseRadiologyImageMutation();
+    const [resumeImage] = useResumeRadiologyImageMutation();
+    const [finishImage] = useFinishRadiologyImageMutation();
+
+    const { data: radCategoriesLovQueryResponse } = useGetLovValuesByCodeQuery('RAD_CATEGORIES');
+
+    const { data: allTestsResponse } = useGetAllDiagnosticTestsQuery({
+      page: 0,
+      size: 10000
+    });
+
+    const allTests = allTestsResponse?.data ?? [];
+
+    const {
+      data: notesResponse,
+      isFetching: isNotesFetching,
+      refetch: refetchNotes
+    } = useGetNotesByOrderTestIdQuery(
+      test?.id
+        ? {
+          orderTestId: test.id,
+          page: 0,
+          size: 100
+        }
+        : skipToken
+    );
+
+    const [
+      createNote,
+      { isLoading: isSendingNote }
+    ] = useCreateDiagnosticOrderTestTechnicianNoteMutation();
+
+    const handleSendMessage = async (value: string) => {
+      if (!test?.id || !order?.id) {
+        dispatch(notify({ msg: 'Select a test first', sev: 'warning' }));
+        return;
+      }
+      try {
+        await createNote({
+          orderId: order.id,
+          orderTestId: test.id,
+          note: value
+        }).unwrap();
+
+        dispatch(notify({ msg: 'Note sent successfully', sev: 'success' }));
+
+        setLocalHasNoteIds(prev =>
+          prev.includes(test.id) ? prev : [...prev, test.id]
+        );
+
+        refetchNotes();
+      } catch (e) {
+        dispatch(notify({ msg: 'Send failed', sev: 'error' }));
+      }
+    };
+
+    const {
+      data: testsResponse,
+      isFetching: isTestsFetching,
+      refetch: fetchTest
+    } = useFilterDiagnosticOrderTestsQuery(
+      order?.id
+        ? {
+          orderId: order.id,
+          status: 'SUBMITTED',
+          receivedDepartmentId: selectedDepartment?.departmentId,
+          page: pageIndex,
+          size: rowsPerPage,
+          orderType: 'RADIOLOGY',
+          category: testKeyFilter.value || undefined
+        }
+        : skipToken
+    );
+
+    const orderTests = testsResponse?.data ?? [];
 
     useImperativeHandle(ref, () => ({
       fetchTest
     }));
 
+    const [acceptTest] = useAcceptDiagnosticOrderTestMutation();
+    const [rejectTest] = useRejectDiagnosticOrderTestMutation();
+    const [undoAcceptTest, { isLoading: isUndoing }] = useUndoAcceptDiagnosticOrderTestMutation();
 
-    const authSlice = useAppSelector(state => state.auth);
+    const testsMap = useMemo(() => {
+      return new Map(allTests.map(t => [t.id, t]));
+    }, [allTests]);
 
-    const dispatch = useAppDispatch();
-    const [openNoteModal, setOpenNoteModal] = useState(false);
-    const [openArrivalModal, setOpenArrivalModal] = useState(false);
-    const [manualSearchTriggeredTest, setManualSearchTriggeredTest] = useState(false);
-    const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
-    const [openRejectedModal, setOpenRejectedModal] = useState(false);
-    const selectedDepartment = authSlice.selectedDepartment;
-    const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
-      ...initialListRequest,
-      filters: [
-        {
-          fieldName: 'order_key',
-          operator: 'match',
-          value: order?.key ?? undefined
-        },
-        {
-          fieldName: 'order_type_lkey',
-          operator: 'match',
-          value: '862828331135792'
-        },
-        {
-          fieldName: 'received_lab_id',
-          operator: 'match',
-          value: selectedDepartment?.departmentId || undefined
-        },
-        {
-          fieldName: 'status_lkey',
-          operator: 'match',
-          value: '1804482322306061'
-        }
-      ]
+    const { data: allRadiologiesResponse } = useGetAllRadiologiesQuery({
+      page: 0,
+      size: 10000,
+      sort: 'testId,asc'
     });
 
-    const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
-    const [deleteReports] = useDeleteTestReportsMutation();
-    const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(
-      test?.key || undefined,
-      { skip: test.key == null }
+
+    
+const [
+  getReportByTestId,
+  { data: singleReport }
+] = useLazyGetRadiologyReportByOrderTestIdQuery();
+
+
+    const allRadiologies = allRadiologiesResponse?.data ?? [];
+
+    const radiologyByTestIdMap = useMemo(() => {
+      return new Map(allRadiologies.map(r => [r.testId, r]));
+    }, [allRadiologies]);
+
+    const normalizedOrderTests = useMemo(() => {
+      return orderTests.map(orderTest => {
+        const test = testsMap.get(orderTest.testId);
+        const radiology = radiologyByTestIdMap.get(orderTest.testId);
+        const report = reportsByTestId[orderTest.id];
+
+        return {
+          ...orderTest,
+          test,
+          radiology,
+          imageStatus: report?.imageStatus, // ⭐⭐⭐ هذا المهم
+          orderType: orderTest.orderType ?? test?.type
+        };
+      });
+    }, [orderTests, testsMap, radiologyByTestIdMap, reportsByTestId]);
+
+    const acceptedStatuses = [
+      DiagnosticOrderTestStatus.ACCEPTED,
+      DiagnosticOrderTestStatus.PARTIALLY
+    ];
+
+    const acceptedTests = useMemo(
+      () =>
+        normalizedOrderTests.filter(t =>
+          acceptedStatuses.includes(t.processingStatus)
+        ),
+      [normalizedOrderTests]
     );
-    const { data: radiologyList } = useGetDiagnosticsTestRadiologyListQuery({
-      ...initialListRequest,
-      pageSize: 100
-    });
-    const {
-      data: testsList,
-      refetch: fetchTest,
-      isFetching: isTestFetching
-    } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
 
-    const isSelected = rowData => {
-      if (rowData && test && rowData.key === test.key) {
-        return 'selected-row';
-      } else return '';
+    const isTestSelected = (rowData: any) => {
+      if (rowData && test && rowData.id === test.id) return 'selected-row';
+      return '';
     };
-    //to set notes modal scroll in tha last massage
-    const endOfMessagesRef = useRef(null);
-    useEffect(() => {
-      if (endOfMessagesRef.current) {
-        endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
+
+    const filteredTests = normalizedOrderTests;
+
+    const pagedData = useMemo(() => {
+      const start = pageIndex * rowsPerPage;
+      const end = start + rowsPerPage;
+      return filteredTests.slice(start, end);
+    }, [filteredTests, pageIndex, rowsPerPage]);
+
+    const effectiveTotalCount = filteredTests.length;
+
+    const handleAcceptTest = async (rowData: any) => {
+      try {
+        await acceptTest(rowData.id).unwrap();
+
+        dispatch(
+          notify({ msg: 'Accepted successfully', sev: 'success' })
+        );
+
+        setTest(rowData);
+      } catch (e: any) {
+        dispatch(
+          notify({
+            msg:
+              e?.data?.message ||
+              e?.data?.detail ||
+              'Accept failed',
+            sev: 'error'
+          })
+        );
+        return;
       }
-    }, [messagesList]);
-    useEffect(() => {
-      const updatedFilters = [
-        {
-          fieldName: 'order_key',
-          operator: 'match',
-          value: order?.key ?? undefined
-        },
-        {
-          fieldName: 'order_type_lkey',
-          operator: 'match',
-          value: '862828331135792'
-        },
-        {
-          fieldName: 'received_lab_id',
-          operator: 'match',
-          value: selectedDepartment?.departmentId || undefined
-        },
-        {
-          fieldName: 'status_lkey',
-          operator: 'match',
-          value: '1804482322306061'
-        }
-      ];
-      setListOrdersTestResponse(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
-      }));
-    }, [order]);
-    useEffect(() => {
-      const fetchData = async () => {
-        try {
-          await reportFetch();
-        } catch (error) {
-          console.error('Fetch error:', error);
-        }
-      };
+      try {
+        await refetchAllRadData();
+      } catch (e) {
+        console.warn('Tests refetch failed', e);
+      }
+    };
 
-      fetchData();
-    }, [test]);
-
-    useEffect(() => {
-      reportFetch();
-    }, [saveReportMutation?.isSuccess]);
     const handleRejectedTest = async () => {
+      if (!test?.id) {
+        dispatch(notify({ msg: 'Select a test first', sev: 'warning' }));
+        return;
+      }
+
+      if (
+        test.status === DiagnosticOrderTestStatus.REJECTED ||
+        test.status === DiagnosticOrderTestStatus.APPROVED
+      ) {
+        dispatch(
+          notify({
+            msg: 'This test cannot be rejected',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
       try {
-        const Response = await saveTest({
-          ...test,
-          processingStatusLkey: '6055192099058457',
-          rejectedAt: Date.now()
+        await rejectTest({
+          id: test.id,
+          body: {
+            rejectedReason: test.rejectedReason
+          }
         }).unwrap();
-        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+
+        dispatch(notify({ msg: 'Rejected successfully', sev: 'success' }));
         setOpenRejectedModal(false);
-        setTest({ ...newApDiagnosticOrderTests });
-        await fetchTest();
-        //orderFetch();
-        setTest({ ...Response });
-      } catch (error) {
-        dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+        await refetchAllRadData();
+      } catch (e: any) {
+        const backendMessage =
+          e?.data?.message ||
+          e?.data?.detail ||
+          e?.error ||
+          'Reject failed';
+
+        dispatch(notify({ msg: backendMessage, sev: 'error' }));
       }
     };
-    //When the test is accepted, a report is generated for it,but the patient must have arrived
-    const handleAcceptTest = async rowData => {
-      if (rowData.patientArrivedAt !== null) {
-        if (!rowData?.key) {
-          dispatch(notify({ msg: 'Missing test row key', sev: 'error' }));
-          return;
-        }
 
-        if (!rowData?.testKey) {
-          dispatch(notify({ msg: 'Missing medical test key', sev: 'error' }));
-          return;
-        }
-        try {
-          const Response = await saveTest({
-            ...rowData,
+    const { data: ReasonLovQueryResponse } =
+      useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
+    const { data: timeUnitLov } = useGetLovValuesByCodeQuery('TIME_UNITS');
 
-            processingStatusLkey: '6055074111734636',
-            acceptedAt: Date.now()
-          }).unwrap();
-          await saveReport({
-            ...newApDiagnosticOrderTestsRadReport,
-            orderKey: order?.key,
-            orderTestKey: rowData?.key,
-            medicalTestKey: rowData?.testKey,
-            patientKey: patient?.key,
-            visitKey: encounter?.key,
-            statusLkey: '6055029972709625'
-          }).unwrap();
+    const resolveReasonLabel = (reasonKey?: string) =>
+      ReasonLovQueryResponse?.object?.find(
+        r => String(r.key) === String(reasonKey)
+      )?.lovDisplayVale ?? reasonKey ?? '';
 
-          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+    const resolveCategoryLabel = (key?: any) =>
+      radCategoriesLovQueryResponse?.object?.find(
+        c => String(c.key) === String(key)
+      )?.lovDisplayVale;
 
-          await fetchTest();
-          await reportFetch();
-          setTest({ ...Response });
-        } catch (error) {
-          dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
-          console.error('Error saving test or report:', error);
-        }
+    const resolveTimeUnitLabel = (key?: any) =>
+      timeUnitLov?.object?.find(
+        u => String(u.key) === String(key)
+      )?.lovDisplayVale ?? '';
+
+    console.log("orderTests", orderTests);
+
+    const handleCheckboxChange = (rowId: number | string) => {
+      setSelectedRows(prev =>
+        prev.includes(rowId)
+          ? prev.filter(id => id !== rowId)
+          : [...prev, rowId]
+      );
+    };
+
+    const allRowIds = useMemo(
+      () => pagedData.map(row => row.id),
+      [pagedData]
+    );
+
+    const isAllSelected =
+      allRowIds.length > 0 &&
+      allRowIds.every(id => selectedRows.includes(id));
+
+    const isSomeSelected =
+      allRowIds.some(id => selectedRows.includes(id)) && !isAllSelected;
+
+    const handleSelectAll = (checked: boolean) => {
+      if (checked) {
+        setSelectedRows(prev =>
+          Array.from(new Set([...prev, ...allRowIds]))
+        );
       } else {
-        dispatch(notify({ msg: 'Wait for the patient to arrive', sev: 'warning' }));
+        setSelectedRows(prev =>
+          prev.filter(id => !allRowIds.includes(id))
+        );
       }
     };
-    const handleUndoAcceptTest = async rowData => {
-      try {
-        const Response = await saveTest({
-          ...rowData,
-          processingStatusLkey: '6055029972709625',
-          acceptedAt: null,
-          patientArrivedAt: null
-        }).unwrap();
-        await deleteReports(rowData.key).unwrap();
 
-        dispatch(notify({ msg: 'Undo Successfully', sev: 'success' }));
-        setTest({ ...newApDiagnosticOrderTests });
-        fetchTest();
-        reportFetch();
-        // setTest({ ...Response });
-      } catch (error) {
-        dispatch(notify({ msg: 'Undo Faild', sev: 'error' }));
+    const ThreeDotsMenu = ({ rowData }: { rowData: any }) => {
+      const isAccepted =
+        rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED;
+
+      const imageStatus = rowData.imageStatus;
+
+    const isRunning =
+      imageStatus === 'STARTED' || imageStatus === 'RESUMED';
+
+    const isPaused = imageStatus === 'PAUSED';
+    const isFinished = imageStatus === 'FINISHED';
+
+      if (!isAccepted) {
+        return (
+          <FontAwesomeIcon
+            icon={faEllipsisVertical}
+            style={{ cursor: 'not-allowed', opacity: 0.4 }}
+            onClick={e => e.stopPropagation()}
+          />
+        );
       }
+
+      const speaker = (
+        <Popover full>
+          <Dropdown.Menu>
+            <Dropdown.Item
+              icon={<FontAwesomeIcon icon={faPlay} />}
+              disabled={!!imageStatus}
+              onSelect={async () => {
+                if (imageStatus) return;
+                await startImage(rowData.id).unwrap();
+                await refetchAllRadData();
+              }}
+            >
+              Start
+            </Dropdown.Item>
+
+            <Dropdown.Item
+              icon={
+                <FontAwesomeIcon
+                  icon={isPaused ? faPlay : faCirclePause}
+                />
+              }
+              disabled={!isRunning && !isPaused}
+              onSelect={async () => {
+                if (isPaused) {
+                  await resumeImage(rowData.id).unwrap();
+                } else if (isRunning) {
+                  await pauseImage(rowData.id).unwrap();
+                }
+                await refetchAllRadData();
+              }}
+            >
+              {isPaused ? 'Resume' : 'Pause'}
+            </Dropdown.Item>
+
+            <Dropdown.Item
+              icon={<FontAwesomeIcon icon={faCircleStop} />}
+              disabled={!isRunning}
+              onSelect={async () => {
+                if (!isRunning) return;
+                await finishImage(rowData.id).unwrap();
+                await refetchAllRadData();
+              }}
+            >
+              Finish
+            </Dropdown.Item>
+
+          </Dropdown.Menu>
+        </Popover>
+      );
+
+      return (
+        <Whisper
+          placement="bottomEnd"
+          trigger="click"
+          speaker={speaker}
+        >
+          <FontAwesomeIcon
+            icon={faEllipsisVertical}
+            style={{ cursor: 'pointer' }}
+            onClick={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+          />
+        </Whisper>
+      );
     };
-    const handleSendMessage = async value => {
-      try {
-        await savenotes({
-          ...note,
-          notes: value,
-          testKey: test.key,
-          orderKey: order.key
-        }).unwrap();
-        dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
-      } catch (error) {
-        dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
-      }
-      fecthNotes();
-    };
-    const testColumns = [
+
+    const columns = [
       {
-        key: 'categoryLvalue',
-        dataKey: 'categoryLvalue',
-        title: <Translate>TEST CATEGORY</Translate>,
-        flexGrow: 1,
+        key: 'check',
+        title: (
+          <Checkbox
+            checked={isAllSelected}
+            indeterminate={isSomeSelected}
+            onChange={(_, checked) => handleSelectAll(checked)}
+            onClick={e => e.stopPropagation()}
+          />
+        ),
+        width: 60,
+        align: 'center',
         render: (rowData: any) => {
-          const cat = radiologyList?.object?.find(item => item.testKey === rowData.testKey);
-          if (cat) {
-            return cat.categoryLvalue?.lovDisplayVale ?? '';
-          }
-          return '';
-        }
-      },
-      {
-        key: 'name',
-        dataKey: 'name',
-        title: <Translate>TEST NAME</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          return rowData.test.testName;
-        }
-      },
-      {
-        key: 'reasonLkey',
-        dataKey: 'reasonLkey',
-        title: <Translate>REASON</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          return rowData.reasonLvalue ? rowData.reasonLvalue.lovDisplayVale : rowData.reasonLkey;
-        }
-      },
-      {
-        key: 'priorityLkey',
-        dataKey: 'priorityLkey',
-        title: <Translate>PROIRITY</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          return rowData.priorityLvalue
-            ? rowData.priorityLvalue.lovDisplayVale
-            : rowData.priorityLkey;
-        }
-      },
-      {
-        key: 'duration',
-        dataKey: 'duration',
-        title: <Translate>DURATION</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          const cat = radiologyList?.object?.find(item => item.testKey === rowData.testKey);
-          if (cat) {
-            return `${cat.testDurationTime ?? ''} ${cat.timeUnitLvalue?.lovDisplayVale ?? ''}`;
-          }
-          return '';
-        }
-      },
-      {
-        key: 'physician',
-        dataKey: 'physician',
-        title: <Translate>PHYSICIAN</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
+          const rowId = rowData.id;
+
           return (
-            <>
-              <span>{rowData.createdBy}</span>
-              <br />
-              <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdAt)}</span>
-            </>
+            <Checkbox
+              checked={selectedRows.includes(rowId)}
+              onChange={() => handleCheckboxChange(rowId)}
+              onClick={e => e.stopPropagation()}
+            />
           );
         }
       },
       {
-        key: 'notes',
-        dataKey: 'notes',
-        title: <Translate>ORDERS NOTES</Translate>,
+        key: 'category',
+        title: <Translate>TEST CATEGORY</Translate>,
+        width: 140,
+        align: 'center',
+        render: (rowData: any) =>
+          resolveCategoryLabel(rowData.radiology?.category)
+      },
+      {
+        key: 'testName',
+        title: <Translate>TEST NAME</Translate>,
         flexGrow: 1,
+        align: 'center',
+        render: (rowData: any) => rowData.test?.name
+      },
+      {
+        key: 'reason',
+        title: <Translate>REASON</Translate>,
+        width: 160,
+        align: 'center',
+        render: (rowData: any) =>
+          resolveReasonLabel(rowData.reason ?? rowData.reasonLkey)
+      },
+      {
+        key: 'duration',
+        title: <Translate>DURATION</Translate>,
+        width: 120,
+        align: 'center',
         render: (rowData: any) => {
-          return rowData.notes;
+          const duration = rowData.radiology?.imageDuration;
+          console.log('RAD META', {
+            testId: rowData.test?.id,
+            radiology: rowData.radiology
+          });
+          return duration ? `${duration} min` : ' ';
         }
       },
       {
+        key: 'physician',
+        title: <Translate>PHYSICIAN</Translate>,
+        width: 170,
+        align: 'center',
+        render: (rowData: any) => (
+          <>
+            <div>{rowData.createdBy}</div>
+            <div className="date-table-style">
+              {formatDateWithoutSeconds(rowData.createdDate)}
+            </div>
+          </>
+        )
+      },
+      {
+        key: 'orderNotes',
+        title: <Translate>ORDER NOTES</Translate>,
+        width: 200,
+        align: 'left',
+        render: (rowData: any) =>
+          rowData.orderNotes ?? rowData.notes ?? ' '
+      },
+      {
         key: 'technicianNotes',
-        title: <Translate>Technician Notes</Translate>,
-        flexGrow: 1,
+        title: <Translate>TECHNICIAN NOTES</Translate>,
+        width: 80,
+        align: 'center',
         render: (rowData: any) => {
+          const hasNote =
+            rowData.hasNote === true ||
+            localHasNoteIds.includes(rowData.id);
+
           return (
-            <HStack spacing={10}>
-              <FontAwesomeIcon
-                icon={faComment}
-                style={{ fontSize: '1em' }}
-                onClick={() => setOpenNoteModal(true)}
-              />
-            </HStack>
+            <FontAwesomeIcon
+              icon={faComment}
+              style={{
+                cursor: 'pointer',
+                color: hasNote ? '#1675e0' : '#999'
+              }}
+              onClick={() => {
+                setTest(rowData);
+                setOpenNoteModal(true);
+              }}
+            />
           );
         }
       },
@@ -381,261 +584,238 @@ const Tests = forwardRef<TestsRef, TestsProps>(
           );
         }
       },
-      ,
       {
-        key: 'processingStatusLkey',
-        dataKey: 'processingStatusLkey',
-        title: <Translate>SATUTS</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          return rowData.processingStatusLvalue
-            ? rowData.processingStatusLvalue.lovDisplayVale
-            : rowData.processingStatusLkey;
-        }
+        key: 'status',
+        title: <Translate>STATUS</Translate>,
+        width: 120,
+        align: 'center',
+        render: (rowData: any) =>
+          formatEnumString(rowData.processingStatus ?? ' ')
       },
       {
         key: 'action',
+        dataKey: '',
         title: <Translate>ACTION</Translate>,
-        flexGrow: 1,
+        width: 180,
+        align: 'center',
         render: (rowData: any) => {
+          const canAccept =
+            rowData.processingStatus === DiagnosticOrderTestStatus.PATIENT_ARRIVED;
+
+          const canUndoAccept =
+            rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED;
+
+          const canReject =
+            rowData.processingStatus !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
+            rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
+
+            console.log(
+              'ROW IMAGE STATUS',
+              rowData.id,
+              rowData.imageStatus
+            );
+
           return (
-            <HStack spacing={10}>
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Assessment</Tooltip>}>
-                <FontAwesomeIcon
-                  icon={faClipboardList}
-                  style={{ fontSize: '1em', marginRight: 10 }}
-                  className="icons-styles font-aws"
-                />
-              </Whisper>
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Accepted</Tooltip>}>
-                <CheckRoundIcon
-                  onClick={() =>
-                    (rowData.processingStatusLkey === '6055029972709625' ||
-                      rowData.processingStatusLkey == '6816324725527414') &&
-                    handleAcceptTest(rowData)
-                  }
-                  style={{
-                    fontSize: '1em',
-                    marginRight: 10,
-                    color:
-                      rowData.processingStatusLkey !== '6055029972709625' &&
-                        rowData.processingStatusLkey !== '6816324725527414'
-                        ? 'gray'
-                        : 'inherit',
-                    cursor:
-                      rowData.processingStatusLkey !== '6055029972709625' &&
-                        rowData.processingStatusLkey !== '6816324725527414'
-                        ? 'not-allowed'
-                        : 'pointer'
-                  }}
-                />
-              </Whisper>
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Undo Accepted</Tooltip>}>
-                <ReloadIcon
-                  onClick={() =>
-                    rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED' &&
-                    handleUndoAcceptTest(rowData)
-                  }
-                  style={{
-                    fontSize: '1em',
-                    marginRight: 10,
-                    color:
-                      rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED'
-                        ? 'inherit'
-                        : 'gray',
-                    cursor:
-                      rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED'
-                        ? 'pointer'
-                        : 'not-allowed'
-                  }}
-                />
+            <HStack spacing={8}>
+              <Whisper speaker={<Tooltip>Accept</Tooltip>}>
+                <span>
+                  <CheckRoundIcon
+                    style={{
+                      cursor: canAccept ? 'pointer' : 'not-allowed',
+                      opacity: canAccept ? 1 : 0.4
+                    }}
+                    onClick={() => {
+                      if (!canAccept) return;
+                      setTest(rowData);
+                      handleAcceptTest(rowData);
+                    }}
+                  />
+                </span>
               </Whisper>
 
-              <Whisper placement="top" trigger="hover" speaker={<Tooltip>Rejected</Tooltip>}>
-                <WarningRoundIcon
-                  onClick={() =>
-                    (rowData.processingStatusLkey === '6055029972709625' ||
-                      rowData.processingStatusLkey === '6816324725527414') &&
-                    setOpenRejectedModal(true)
-                  }
-                  style={{
-                    fontSize: '1em',
-                    marginRight: 10,
-                    color:
-                      rowData.processingStatusLkey !== '6055029972709625' &&
-                        rowData.processingStatusLkey !== '6816324725527414'
-                        ? 'gray'
-                        : 'inherit',
-                    cursor:
-                      rowData.processingStatusLkey !== '6055029972709625' &&
-                        rowData.processingStatusLkey !== '6816324725527414'
-                        ? 'not-allowed'
-                        : 'pointer'
-                  }}
-                />
+              <Whisper speaker={<Tooltip>Undo Accept</Tooltip>}>
+                <span>
+                  <ReloadIcon
+                    style={{
+                      cursor: canUndoAccept ? 'pointer' : 'not-allowed',
+                      opacity: canUndoAccept ? 1 : 0.4,
+                      color: canUndoAccept ? '#1675e0' : 'gray'
+                    }}
+                    onClick={async () => {
+                      if (!canUndoAccept) return;
+
+                      try {
+                        await undoAcceptTest(rowData.id).unwrap();
+                        dispatch(
+                          notify({
+                            msg: 'Undo accept successful',
+                            sev: 'success'
+                          })
+                        );
+                        await refetchAllRadData();
+                      } catch (e: any) {
+                        dispatch(
+                          notify({
+                            msg:
+                              e?.data?.message ||
+                              e?.data?.detail ||
+                              'Undo accept failed',
+                            sev: 'error'
+                          })
+                        );
+                      }
+                    }}
+                  />
+                </span>
               </Whisper>
-              <Whisper
-                placement="top"
-                trigger="hover"
-                speaker={<Tooltip>Send to External Lab</Tooltip>}
-              >
-                <FontAwesomeIcon
-                  icon={faRightFromBracket}
-                  style={{ fontSize: '1em', marginRight: 10 }}
-                />
+
+              <Whisper speaker={<Tooltip>Reject</Tooltip>}>
+                <span>
+                  <WarningRoundIcon
+                    style={{
+                      cursor: canReject ? 'pointer' : 'not-allowed',
+                      opacity: canReject ? 1 : 0.4
+                    }}
+                    onClick={() => {
+                      if (!canReject) return;
+                      setTest(rowData);
+                      setOpenRejectedModal(true);
+                    }}
+                  />
+                </span>
               </Whisper>
+              <ThreeDotsMenu rowData={rowData} />
             </HStack>
           );
         }
-      },
-      ,
-      {
-        key: 'acceptedAt',
-        dataKey: 'acceptedAt',
-        title: <Translate>ACCEPTED AT/BY</Translate>,
-        expandable: true,
-        render: (rowData: any) => {
-          return (
-            <>
-              <span>{rowData.acceptedBy}</span>
-              <br />
-              <span className="date-table-style">{formatDateWithoutSeconds(rowData.acceptedAt)}</span>
-            </>
-          );
-        }
-      },
-
-      {
-        key: 'rejectedAt',
-        dataKey: 'rejectedAt',
-        title: <Translate>REJECTED AT/BY</Translate>,
-        flexGrow: 1,
-        expandable: true,
-        render: (rowData: any) => {
-          return (
-            <>
-              <span>{rowData.rejectedBy}</span>
-              <br />
-              <span className="date-table-style">{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
-            </>
-          );
-        }
-      },
-
-      {
-        key: 'rejectedReason',
-        dataKey: 'rejectedReason',
-        title: <Translate>REJECTED REASON</Translate>,
-        flexGrow: 1,
-        expandable: true
-      },
-      {
-        key: 'startedAt',
-        title: <Translate>STARTED AT/BY</Translate>,
-        expandable: true,
-
-        render: (rowData: any) => (
-          <>
-            <span>{rowData.startedBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.startedAt)}</span>
-          </>
-        )
-      },
-      {
-        key: 'pausedAt',
-        title: <Translate>PAUSED AT/BY</Translate>,
-        expandable: true,
-        render: (rowData: any) => (
-          <>
-            <span>{rowData.pausedBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.pausedAt)}</span>
-          </>
-        )
-      },
-      {
-        key: 'resumedAt',
-        title: <Translate>RESUMED AT/BY</Translate>,
-        expandable: true,
-        render: (rowData: any) => (
-          <>
-            <span>{rowData.resumedBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.resumedAt)}</span>
-          </>
-        )
-      },
-      {
-        key: 'finishedAt',
-        title: <Translate>FINISHED AT/BY</Translate>,
-        expandable: true,
-        render: (rowData: any) => (
-          <>
-            <span>{rowData.finishedBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.finishedAt)}</span>
-          </>
-        )
       }
     ];
 
-    ////test
-    const pageTestIndex = listOrdersTestResponse.pageNumber - 1;
-    // how many rows per page:
-    const rowsPerPageTest = listOrdersTestResponse.pageSize;
-    // total number of items in the backend:
-    const totalCountTest = testsList?.extraNumeric ?? 0;
-    // handler when the user clicks a new page number:
-    const handlePageChangeTest = (_: unknown, newPage: number) => {
-      // MUI gives you a zero-based page, so add 1 for your API
-      setManualSearchTriggeredTest(true);
-      setListOrdersTestResponse({ ...listOrdersTestResponse, pageNumber: newPage + 1 });
+    const filters = () => (
+      <Form>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between'
+        }}>
+          <MyInput
+            fieldType="select"
+            fieldName="value"
+            fieldLabel='Category'
+            width={200}
+            placeholder="Select Category"
+            selectData={radCategoriesLovQueryResponse?.object}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={testKeyFilter}
+            setRecord={setTestKeyFilter}
+
+            searchable={false}
+          />
+          <div className='test-table-buttons-main-container'>
+          </div>
+        </div>
+      </Form>
+    );
+
+    useEffect(() => {
+      setSelectedRows([]);
+    }, [order?.id]);
+
+    const handlePageChange = (_: any, newPage: number) => {
+      setPaginationParams(prev => ({
+        ...prev,
+        page: newPage,
+      }));
     };
-    // handler when the user chooses a different rows-per-page:
-    const handleRowsPerPageChangeTest = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setManualSearchTriggeredTest(true);
-      setListOrdersTestResponse({
-        ...listOrdersTestResponse,
-        pageSize: parseInt(event.target.value, 10),
-        pageNumber: 1 // reset to first page
-      });
+
+    const handleRowsPerPageChange = (e: any) => {
+      const newSize = Number(e.target.value);
+      setPaginationParams(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0,
+      }));
     };
+
+    const handleSortChange = (column: string, type: "asc" | "desc") => {
+      setSortColumn(column);
+      setSortType(type);
+
+      setPaginationParams(prev => ({
+        ...prev,
+        sort: `${column},${type}`,
+        page: 0,
+      }));
+    };
+
+
+    useEffect(() => {
+      const fetchReports = async () => {
+        const result: Record<number, any> = {};
+
+        for (const t of orderTests) {
+          try {
+            const report = await getReportByTestId(t.id).unwrap();
+            if (report) {
+              result[t.id] = report;
+            }
+          } catch {
+          }
+        }
+
+        setReportsByTestId(result);
+      };
+
+      if (orderTests.length > 0) {
+        fetchReports();
+      }
+    }, [orderTests, refetchAllRadData]);
+
     return (
-      <>
-        <MyTable
-          columns={testColumns}
-          data={testsList?.object ?? []}
-          onRowClick={rowData => {
-            setTest(rowData);
-            //  setReport({ ...newApDiagnosticOrderTestsRadReport });
-          }}
-          loading={isTestFetching}
-          page={pageTestIndex}
-          rowsPerPage={rowsPerPageTest}
-          totalCount={totalCountTest}
-          onPageChange={handlePageChangeTest}
-          onRowsPerPageChange={handleRowsPerPageChangeTest}
-          rowClassName={isSelected}
-        />
+      <Panel ref={ref} defaultExpanded>
+
+        <div style={{ minHeight: 600 }}>
+          <MyTable
+            filters={filters()}
+            columns={columns}
+            data={pagedData}
+            loading={loading || isTestsFetching}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={effectiveTotalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            sortColumn={sortColumn}
+            sortType={sortType}
+            onSortChange={handleSortChange}
+            onRowClick={rowData => setTest(rowData)}
+            rowClassName={isTestSelected}
+            minHeight={600}
+          />
+        </div>
+
         <CancellationModal
           open={openRejectedModal}
           setOpen={setOpenRejectedModal}
           fieldName="rejectedReason"
-          fieldLabel="Rejected Reason"
-          title="Reject"
+          handleCancle={handleRejectedTest}
           object={test}
           setObject={setTest}
-          handleCancle={handleRejectedTest}
+          fieldLabel="Reject Reason"
+          title="Reject"
         />
+
         <ChatModal
           open={openNoteModal}
           setOpen={setOpenNoteModal}
+          title="Technician Notes"
+          list={notesResponse?.data ?? []}
+          fieldShowName="note"
           handleSendMessage={handleSendMessage}
-          title={'Comments'}
-          list={messagesList?.object}
-          fieldShowName={'notes'}
+          loading={isNotesFetching || isSendingNote}
         />
+
         <PatientArrivalModal
           open={openArrivalModal}
           setOpen={setOpenArrivalModal}
@@ -643,8 +823,10 @@ const Tests = forwardRef<TestsRef, TestsProps>(
           setTest={setTest}
           saveTest={saveTest}
           fetchTest={fetchTest}
+          fetchAllTests={refetchAllRadData}
         />
-      </>
+
+      </Panel>
     );
   }
 );

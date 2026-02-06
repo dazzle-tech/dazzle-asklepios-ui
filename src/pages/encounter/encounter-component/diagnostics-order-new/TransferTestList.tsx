@@ -111,14 +111,6 @@ const catalogTests = catalogTestsResponse?.data?.tests ?? [];
     item?.catalogKey ??
     null;
 
-  useEffect(() => {
-    if (leftItems?.length) {
-      console.log('🧪 LEFT ITEM SAMPLE (RAW FROM BACKEND)');
-      console.log(leftItems[0]);
-      console.log('🧪 ALL KEYS:', Object.keys(leftItems[0]));
-    }
-  }, [leftItems]);
-
 const selectedCatalogTests = useMemo(() => {
   if (!searchType?.catalogId) return null;
 
@@ -167,19 +159,6 @@ const filteredLeft = useMemo(() => {
   searchType?.catalogId,
   catalogTests
 ]);
-
-
-
-
-
-
-
-  useEffect(() => {
-    console.log('🔎 FILTER STATE', {
-      type: searchType?.type,
-      catalogId: searchType?.catalogId
-    });
-  }, [searchType]);
 
   /* ================= handlers ================= */
 

@@ -218,23 +218,6 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
       </Form>
     );
 
-    /* ===================== DEBUG ===================== */
-    useEffect(() => {
-      console.log(
-        'ORDER TYPES IN RESULT:',
-        normalizedRows.map(r => r.orderType)
-      );
-    }, [normalizedRows]);
-
-
-useEffect(() => {
-  console.log(
-    'STATUSES:',
-    normalizedRows.map(r => r.status)
-  );
-}, [normalizedRows]);
-
-
     /* ===================== RENDER ===================== */
     return (
       <>

@@ -94,7 +94,6 @@ const DetailsModal = ({
   const handleDownload = async attachment => {
     try {
       if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
-        console.error('Invalid attachment data.');
         return;
       }
 

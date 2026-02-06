@@ -85,6 +85,7 @@ const Orders = forwardRef<any, OrdersProps>(
         size: paginationParams.size,
         sort: paginationParams.sort,
         status: 'SUBMITTED',
+        testType:"LABORATORY",
         departmentId: selectedDepartment?.departmentId,
         submittedDateFrom: fromDateParam,
         submittedDateTo: toDateParam

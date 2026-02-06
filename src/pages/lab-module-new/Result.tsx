@@ -169,7 +169,7 @@ const Result = forwardRef<any, Props>(
     } = useFilterDiagnosticOrderTestResultsQuery(
       order?.id
         ? {
-          orderId: order.id,
+          orderIds:[ order.id],
           page: pageIndex,
           size: rowsPerPage,
           ...(categoryFilter.value
