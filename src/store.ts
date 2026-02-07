@@ -342,8 +342,7 @@ export const store = configureStore({
     [patientReportService.reducerPath]: patientReportService.reducer,
     [patientProcedureService.reducerPath]: patientProcedureService.reducer,
 
-    [ICDTreeService.reducerPath]: ICDTreeService.reducer,
-
+    [ICDTreeService.reducerPath]: ICDTreeService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -463,7 +462,7 @@ export const store = configureStore({
       medicationTestOrdersValidationService.middleware,
       patientReportService.middleware,
       patientProcedureService.middleware,
-      ICDTreeService.middleware,
+      ICDTreeService.middleware
     ])
 });
 

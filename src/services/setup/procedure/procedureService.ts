@@ -118,6 +118,14 @@ export const procedureSetupService = createApi({
         url: `/api/setup/procedure/${id}`
       }),
       providesTags: ['Procedure']
+    }),
+
+    getProceduresByIds: builder.query<any[], number[]>({
+      query: ids => ({
+        url: '/api/setup/procedure/by-ids',
+        params: { ids }
+      }),
+      providesTags: ['Procedure']
     })
   })
 });
@@ -137,5 +145,6 @@ export const {
   useLazyGetProceduresByFacilityQuery,
   useGetActiveAppointableProceduresQuery,
   useGetProcedureByIdQuery,
-  useLazyGetProcedureByIdQuery
+  useLazyGetProcedureByIdQuery,
+  useGetProceduresByIdsQuery
 } = procedureSetupService;

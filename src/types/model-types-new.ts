@@ -1427,6 +1427,8 @@ export type PatientProcedureUpdateVM = {
   procedureId?: number;
   bodyPart: string;
   side?: string | null;
+  toFacilityId: number;
+  toDepartmentId?: number | null;
 
   scheduledDateTime?: string | null;
 

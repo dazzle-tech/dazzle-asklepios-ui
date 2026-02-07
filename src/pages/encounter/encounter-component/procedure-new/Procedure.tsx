@@ -3,7 +3,7 @@ import { useAppDispatch } from '@/hooks';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaBedPulse } from 'react-icons/fa6';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Loader } from 'rsuite';
 import './styles.less';
 import PreviewProcedure from './PreviewProcedure';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -12,7 +12,7 @@ import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import BlockIcon from '@rsuite/icons/Block';
 import { useLocation } from 'react-router-dom';
 import Details from './Details';
@@ -28,6 +28,30 @@ import {
 import { useLazyGetProcedureByIdQuery } from '@/services/setup/procedure/procedureService';
 import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { cond } from 'lodash';
+import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
+import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+
+const TableLoader = () => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '4px 0'
+    }}
+  >
+    <Loader size="xs" />
+    <span
+      style={{
+        color: '#999',
+        fontSize: '12px',
+        fontStyle: 'italic'
+      }}
+    >
+      Loading...
+    </span>
+  </div>
+);
 
 const Referrals = (props: any) => {
   const location = useLocation();
@@ -71,8 +95,7 @@ const Referrals = (props: any) => {
   const [updateProcedure] = useUpdateProcdureMutation();
   const [cancelProcedure] = useCancelProcdureMutation();
   const [getProcedureById] = useLazyGetProcedureByIdQuery();
-  const [getDepartmentsByFacility, { data: departmentListResponse }] =
-    useLazyGetActiveDepartmentByFacilityListQuery();
+  const [getDepartmentsByFacility] = useLazyGetActiveDepartmentByFacilityListQuery();
 
   const {
     data: proceduresData,
@@ -89,7 +112,6 @@ const Referrals = (props: any) => {
   );
 
   const procedures = proceduresData?.data ?? [];
-  console.log('🔥 procedures:', procedures);
   const totalCount = proceduresData?.totalCount ?? 0;
 
   const isFormField = (node: EventTarget | null) => {
@@ -229,6 +251,54 @@ const Referrals = (props: any) => {
     setOpenDetailsModal(true);
   };
 
+  const procedureIds = useMemo(() => {
+    const ids = procedures.map(p => Number(p.procedureId)).filter(id => !isNaN(id));
+
+    return Array.from(new Set(ids));
+  }, [procedures]);
+
+  const indicationIds = useMemo(() => {
+    const ids: Array<number | string> = [];
+
+    procedures.forEach(p => {
+      if (!p.indicationId) return;
+
+      if (Array.isArray(p.indicationId)) {
+        ids.push(...p.indicationId);
+      } else {
+        ids.push(p.indicationId);
+      }
+    });
+
+    return Array.from(new Set(ids));
+  }, [procedures]);
+
+  const { data: proceduresByIds } = useGetProceduresByIdsQuery(procedureIds, {
+    skip: !procedureIds.length
+  });
+  const { data: icdDiagnoses } = useGetIcdDiagnosesByIdsQuery(
+    { ids: indicationIds },
+    { skip: !indicationIds.length }
+  );
+
+  const proceduresMap = useMemo(() => {
+    const map = new Map<number, any>();
+    (proceduresByIds ?? []).forEach(p => {
+      map.set(p.id, p);
+    });
+    return map;
+  }, [proceduresByIds]);
+
+  const icdMap = useMemo(() => {
+    const map = new Map<number | string, any>();
+
+    (icdDiagnoses ?? []).forEach(d => {
+      map.set(d.id ?? d.icdDiagnosisUid, d);
+    });
+
+    return map;
+  }, [icdDiagnoses]);
+
   const tableColumns = useMemo(
     () => [
       {
@@ -240,9 +310,16 @@ const Referrals = (props: any) => {
       },
       {
         key: 'procedureName',
-        dataKey: 'procedureName',
         title: <Translate>Procedure Name</Translate>,
-        flexGrow: 1
+        flexGrow: 1,
+        render: (rowData: any) => {
+          if (!proceduresByIds && procedureIds.length > 0) {
+            return <TableLoader />;
+          }
+
+          const proc = proceduresMap.get(Number(rowData.procedureId));
+          return proc?.name ?? '';
+        }
       },
       {
         key: 'scheduledDateTime',
@@ -253,15 +330,22 @@ const Referrals = (props: any) => {
           rowData?.scheduledDateTime ? formatDateWithoutSeconds(rowData.scheduledDateTime) : ' '
       },
       {
-        key: 'categoryKey',
-        dataKey: 'categoryKey',
+        key: 'categoryType',
+        dataKey: 'categoryType',
         title: <Translate>CATEGORY</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
+          if (!proceduresByIds && procedureIds.length > 0) {
+            return <TableLoader />;
+          }
+
+          const proc = proceduresMap.get(Number(rowData.procedureId));
+
           const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === rowData?.categoryKey
+            (item: any) => item.key === proc?.categoryType
           );
-          return category?.lovDisplayVale || ' ';
+
+          return category?.lovDisplayVale || '';
         }
       },
       {
@@ -269,28 +353,43 @@ const Referrals = (props: any) => {
         dataKey: 'priority',
         title: <Translate>PRIORITY</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => rowData?.priority ?? ''
+        render: (rowData: any) => {
+          return formatEnumString(rowData?.priority);
+        }
       },
       {
         key: 'procedureLevel',
         dataKey: 'procedureLevel',
         title: <Translate>LEVEL</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => rowData?.procedureLevel ?? ''
+        render: (rowData: any) => {
+          return formatEnumString(rowData?.procedureLevel);
+        }
       },
       {
         key: 'indicationId',
-        dataKey: 'indicationId',
         title: <Translate>INDICATIONS</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => rowData?.indicationId ?? ''
-      },
-      {
-        key: 'status',
-        dataKey: 'status',
-        title: <Translate>STATUS</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => rowData?.status ?? ''
+        render: (rowData: any) => {
+          if (!rowData?.indicationId) return '';
+
+          if (!icdDiagnoses && indicationIds.length > 0) {
+            return <TableLoader />;
+          }
+
+          const ids = Array.isArray(rowData.indicationId)
+            ? rowData.indicationId
+            : [rowData.indicationId];
+
+          const names = ids
+            .map((id: any) => {
+              const diag = icdMap.get(Number(id));
+              return diag?.icdShortDescription || diag?.icdCode;
+            })
+            .filter(Boolean);
+
+          return names.join(', ');
+        }
       },
       {
         key: 'attachments',
@@ -332,39 +431,28 @@ const Referrals = (props: any) => {
               }
 
               try {
-                // 🔍 طباعة rowData لنشوف شو فيها
-                console.log('🔥 rowData:', rowData);
-
                 const procedureRes = await getProcedureById({
                   id: rowData.procedureId
                 }).unwrap();
 
-                // 🔍 طباعة procedureRes لنشوف شو فيها
-                console.log('🔥 procedureRes:', procedureRes);
-
-                // 🔥 جرّب كل الاحتمالات الممكنة
                 const updatedProcedure = {
                   ...rowData,
                   procedureId: procedureRes.id,
                   categoryKey:
                     procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
 
-                  // ✅ جرّب كل الأسماء الممكنة للـ Department
                   toDepartmentId:
                     rowData.toDepartmentId ||
                     procedureRes.toDepartmentId ||
                     procedureRes.departmentId ||
                     procedureRes.department?.id,
 
-                  // ✅ جرّب كل الأسماء الممكنة للـ Procedure Level
                   procedureLevel:
                     rowData.procedureLevel ||
                     procedureRes.procedureLevel ||
                     procedureRes.level ||
                     procedureRes.procedureLevelKey
                 };
-
-                console.log('🔥 updatedProcedure:', updatedProcedure);
 
                 setProcedure(updatedProcedure);
                 setOpenDetailsModal(true);
@@ -426,7 +514,17 @@ const Referrals = (props: any) => {
         expandable: true
       }
     ],
-    [CategoryLovQueryResponse, dispatch, getProcedureById]
+    [
+      CategoryLovQueryResponse,
+      proceduresMap,
+      dispatch,
+      getProcedureById,
+      icdMap,
+      proceduresByIds,
+      icdDiagnoses,
+      procedureIds,
+      indicationIds
+    ]
   );
 
   const handlePageChange = (_: unknown, newPage: number) => {
@@ -450,10 +548,34 @@ const Referrals = (props: any) => {
         <MyTable
           columns={tableColumns}
           data={procedures}
-          onRowClick={rowData => {
-            setProcedure(rowData);
-            setEditing(rowData?.status === 'CANCELLED');
-            setShowPreview(true);
+          onRowClick={async rowData => {
+            try {
+              if (rowData?.procedureId) {
+                const procedureRes = await getProcedureById({
+                  id: rowData.procedureId
+                }).unwrap();
+
+                const updatedProcedure = {
+                  ...rowData,
+                  categoryKey:
+                    procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
+                  procedureId: procedureRes.id
+                };
+
+                setProcedure(updatedProcedure);
+                setEditing(rowData?.status === 'CANCELLED');
+                setShowPreview(true);
+              } else {
+                setProcedure(rowData);
+                setEditing(rowData?.status === 'CANCELLED');
+                setShowPreview(true);
+              }
+            } catch (error) {
+              console.error('Failed to load procedure details:', error);
+              setProcedure(rowData);
+              setEditing(rowData?.status === 'CANCELLED');
+              setShowPreview(true);
+            }
           }}
           loading={procedureLoding}
           rowClassName={isSelected}
@@ -536,6 +658,7 @@ const Referrals = (props: any) => {
         object={procedure}
         setObject={setProcedure}
         handleCancle={handleCancle}
+        required
       />
 
       <MyModal
