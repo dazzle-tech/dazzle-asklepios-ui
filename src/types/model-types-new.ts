@@ -1402,8 +1402,8 @@ export interface PatientAllergiesResponseVM {
   cancelledDate?: string;
   cancellationReason?: string;
 
-  createdBy?: string;
-  createdDate?: string;
+  createdBy: string;
+  createdDate: string;
   lastModifiedBy?: string;
   lastModifiedDate?: string;
 
