@@ -1199,6 +1199,8 @@ export const newPainAssessment: modelTypes.PainAssessment = {
   painLevel: null,
   painDescription: null,
 
+  painPattern: null,
+
   isActive: true,
 
   createdDate: null,

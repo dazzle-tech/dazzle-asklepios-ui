@@ -1431,6 +1431,8 @@ export interface PainAssessment {
   painLevel?: 'NO_PAIN' | 'MILD' | 'MODERATE' | 'SEVERE' | string | null;
   painDescription?: string | null;
 
+  painPattern?: string | null;
+
   isActive: boolean;
 
   createdDate?: Date | string | null;
