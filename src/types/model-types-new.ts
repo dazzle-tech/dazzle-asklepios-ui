@@ -1408,6 +1408,8 @@ export interface PatientObservationsComplaints {
   patientId: number;
   encounterId: number;
 
+  patientConditions?: string | null;
+
   reasonOfVisit?: string | null;
   latestFunctionalStatus?: string | null;
   latestCognitiveCheck?: string | null;

@@ -1180,6 +1180,8 @@ export const newPatientObservationsComplaints: modelTypes.PatientObservationsCom
   latestFunctionalStatus: null,
   latestCognitiveCheck: null,
 
+  patientConditions: null,
+
   isActive: true,
   functionalStatus: null,
   cognitiveCheck: null,
