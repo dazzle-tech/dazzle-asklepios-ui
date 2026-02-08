@@ -44,7 +44,8 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
   const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
   const consultationLevel = useEnumOptions('ConsultationLevel');
 
-  const [triggerGetSpecialistPractitioners] = useLazyGetSpecialistPractitionersQuery();
+  const [triggerGetSpecialistPractitioners, practitionersResult] =
+    useLazyGetSpecialistPractitionersQuery();
 
   const [
     getSpecialtyConsultation,
@@ -67,23 +68,18 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
   }, [formData?.toFacilityId, getDepartmentsByFacility]);
 
   useEffect(() => {
-    if (formData?.consultantSpeciality && formData?.toFacilityId) {
-      triggerGetSpecialistPractitioners({
-        facilityId: formData.toFacilityId,
-        subSpecialty: formData.consultantSpeciality,
-        page: 0,
-        size: 100,
-        sort: 'id,asc'
-      })
-        .unwrap()
-        .then((response: any) => {
-          setAllPractitioners(Array.isArray(response?.data) ? response.data : []);
-        })
-        .catch(() => {
-          setAllPractitioners([]);
-        });
-    }
-  }, [formData?.consultantSpeciality, formData?.toFacilityId, triggerGetSpecialistPractitioners]);
+    if (!formData?.consultantSpeciality || !formData?.toFacilityId) return;
+
+    triggerGetSpecialistPractitioners({
+      facilityId: formData.toFacilityId,
+      subSpecialty: formData.consultantSpeciality,
+      page: 0,
+      size: 100,
+      sort: 'id,asc'
+    }).catch(() => {
+      setAllPractitioners([]);
+    });
+  }, [formData?.consultantSpeciality, formData?.toFacilityId]);
 
   useEffect(() => {
     if (!specialtyName || !formData?.consultantSpeciality) return;
@@ -109,6 +105,16 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
     encounter?.key,
     formData?.consultantSpeciality
   ]);
+
+
+
+  useEffect(() => {
+    if (practitionersResult?.data?.data?.content) {
+      setAllPractitioners(practitionersResult.data.data.content);
+    }
+  }, [practitionersResult?.data?.data?.content]);
+
+
 
   if (!consultation) return null;
 

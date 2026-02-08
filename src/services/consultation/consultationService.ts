@@ -7,15 +7,6 @@ type PagedResult<T> = {
   totalCount: number;
 };
 
-type FindByEncounterParams = {
-  encounterId: string;
-  page?: number;
-  size?: number;
-  fromDate?: string;
-  toDate?: string;
-  includeCancelled?: boolean;
-};
-
 export const consultationService = createApi({
   reducerPath: 'consultationApi',
   baseQuery: BaseQuery,
@@ -52,12 +43,12 @@ export const consultationService = createApi({
       invalidatesTags: ['Consultation']
     }),
 
-    findNotCancelledByEncounter: builder.query<
+    findByEncounterAll: builder.query<
       PagedResult<Consultation>,
       { encounterId: string; page?: number; size?: number }
     >({
       query: ({ encounterId, page = 0, size = 20 }) => ({
-        url: `/api/patient/consultation/not-cancelled/by-encounter/${encounterId}`,
+        url: `/api/patient/consultation/by-encounter/${encounterId}`,
         params: { page, size }
       }),
 
@@ -69,17 +60,47 @@ export const consultationService = createApi({
       providesTags: ['Consultation']
     }),
 
-    findByEncounter: builder.query<PagedResult<Consultation>, FindByEncounterParams>({
-      query: ({
-        encounterId,
-        page = 0,
-        size = 20,
-        fromDate,
-        toDate,
-        includeCancelled = false
-      }) => ({
-        url: `/api/patient/consultation/by-encounter/${encounterId}`,
-        params: { page, size, fromDate, toDate, includeCancelled }
+    findByEncounterNotCancelled: builder.query<
+      PagedResult<Consultation>,
+      { encounterId: string; page?: number; size?: number }
+    >({
+      query: ({ encounterId, page = 0, size = 20 }) => ({
+        url: `/api/patient/consultation/by-encounter/${encounterId}/not-cancelled`,
+        params: { page, size }
+      }),
+
+      transformResponse: (response: Consultation[], meta): PagedResult<Consultation> => {
+        const totalCount = Number(meta?.response?.headers.get('X-Total-Count')) || 0;
+        return { data: response ?? [], totalCount };
+      },
+
+      providesTags: ['Consultation']
+    }),
+
+    findByEncounterWithDateRange: builder.query<
+      PagedResult<Consultation>,
+      { encounterId: string; fromDate: string; toDate: string; page?: number; size?: number }
+    >({
+      query: ({ encounterId, fromDate, toDate, page = 0, size = 20 }) => ({
+        url: `/api/patient/consultation/by-encounter/${encounterId}/date-range`,
+        params: { fromDate, toDate, page, size }
+      }),
+
+      transformResponse: (response: Consultation[], meta): PagedResult<Consultation> => {
+        const totalCount = Number(meta?.response?.headers.get('X-Total-Count')) || 0;
+        return { data: response ?? [], totalCount };
+      },
+
+      providesTags: ['Consultation']
+    }),
+
+    findByEncounterWithDateRangeNotCancelled: builder.query<
+      PagedResult<Consultation>,
+      { encounterId: string; fromDate: string; toDate: string; page?: number; size?: number }
+    >({
+      query: ({ encounterId, fromDate, toDate, page = 0, size = 20 }) => ({
+        url: `/api/patient/consultation/by-encounter/${encounterId}/date-range/not-cancelled`,
+        params: { fromDate, toDate, page, size }
       }),
 
       transformResponse: (response: Consultation[], meta): PagedResult<Consultation> => {
@@ -104,23 +125,6 @@ export const consultationService = createApi({
         method: 'GET'
       }),
       providesTags: ['Consultation']
-    }),
-
-    findByEncounterAll: builder.query<
-      PagedResult<Consultation>,
-      { encounterId: string; page?: number; size?: number }
-    >({
-      query: ({ encounterId, page = 0, size = 20 }) => ({
-        url: `/api/patient/consultation/by-encounter/${encounterId}/all`,
-        params: { page, size }
-      }),
-
-      transformResponse: (response: Consultation[], meta): PagedResult<Consultation> => {
-        const totalCount = Number(meta?.response?.headers.get('X-Total-Count')) || 0;
-        return { data: response ?? [], totalCount };
-      },
-
-      providesTags: ['Consultation']
     })
   })
 });
@@ -129,9 +133,12 @@ export const {
   useCreateMutation,
   useUpdateMutation,
   useCancelMutation,
-  useFindNotCancelledByEncounterQuery,
-  useFindByEncounterQuery,
+
+  useFindByEncounterAllQuery,
+  useFindByEncounterNotCancelledQuery,
+  useFindByEncounterWithDateRangeQuery,
+  useFindByEncounterWithDateRangeNotCancelledQuery,
+
   useGetDepartmentIdsByEncounterQuery,
-  useGetPractitionerIdsByEncounterQuery,
-  useFindByEncounterAllQuery
+  useGetPractitionerIdsByEncounterQuery
 } = consultationService;

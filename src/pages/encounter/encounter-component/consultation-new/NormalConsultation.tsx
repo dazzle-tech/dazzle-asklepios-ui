@@ -22,8 +22,12 @@ import {
   useCancelMutation,
   useGetDepartmentIdsByEncounterQuery,
   useGetPractitionerIdsByEncounterQuery,
-  useFindByEncounterQuery
+  useFindByEncounterAllQuery,
+  useFindByEncounterNotCancelledQuery,
+  useFindByEncounterWithDateRangeQuery,
+  useFindByEncounterWithDateRangeNotCancelledQuery
 } from '@/services/consultation/consultationService';
+
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { newConsultation } from '@/types/model-types-constructor-new';
@@ -56,6 +60,7 @@ const NormalConsultation = props => {
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
 
+  console.log('user-======>', user);
   const [selectedRows, setSelectedRows] = useState<Consultation[]>([]);
   const [selectedRow, setSelectedRow] = useState<Consultation | null>(null);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -71,8 +76,8 @@ const NormalConsultation = props => {
 
   const [consultation, setConsultation] = useState<Consultation>({
     ...newConsultation,
-    patientId: Number(patient?.id ?? patient?.key ?? 0),
-    encounterId: Number(encounter?.id ?? encounter?.key ?? 0)
+    patientId: patient?.id ?? patient?.key,
+    encounterId: encounter?.id ?? encounter?.key
   });
 
   const [modalKey, setModalKey] = useState(0);
@@ -127,22 +132,72 @@ const NormalConsultation = props => {
         .catch(() => {});
     }
   }, [practitionerIds, getPractitionersBulk]);
+  const hasDateRange = !!dateFilter.fromDate && !!dateFilter.toDate;
 
-  const {
-    data: consultationData,
-    isLoading: consultationLoading,
-    refetch
-  } = useFindByEncounterQuery(
+  const allQuery = useFindByEncounterAllQuery(
+    { encounterId: encounterIdStr, page, size },
+    { skip: !encounterIdStr || !showCanceled || hasDateRange }
+  );
+
+  const notCancelledQuery = useFindByEncounterNotCancelledQuery(
+    { encounterId: encounterIdStr, page, size },
+    { skip: !encounterIdStr || showCanceled || hasDateRange }
+  );
+
+  const dateRangeQuery = useFindByEncounterWithDateRangeQuery(
     {
       encounterId: encounterIdStr,
+      fromDate: toISOStartOfDay(dateFilter.fromDate!),
+      toDate: toISOEndOfDay(dateFilter.toDate!),
       page,
-      size,
-      fromDate: dateFilter.fromDate ? toISOStartOfDay(dateFilter.fromDate) : undefined,
-      toDate: dateFilter.toDate ? toISOEndOfDay(dateFilter.toDate) : undefined,
-      includeCancelled: showCanceled
+      size
     },
-    { skip: !encounterIdStr }
+    { skip: !encounterIdStr || !hasDateRange || !showCanceled }
   );
+
+  const dateRangeNotCancelledQuery = useFindByEncounterWithDateRangeNotCancelledQuery(
+    {
+      encounterId: encounterIdStr,
+      fromDate: toISOStartOfDay(dateFilter.fromDate!),
+      toDate: toISOEndOfDay(dateFilter.toDate!),
+      page,
+      size
+    },
+    { skip: !encounterIdStr || !hasDateRange || showCanceled }
+  );
+
+  console.log({ encounterIdStr, showCanceled, hasDateRange });
+  console.log({
+    all: {
+      skip: !encounterIdStr || !showCanceled || hasDateRange,
+      isUninitialized: allQuery.isUninitialized
+    },
+    notCancelled: {
+      skip: !encounterIdStr || showCanceled || hasDateRange,
+      isUninitialized: notCancelledQuery.isUninitialized
+    }
+  });
+
+  const consultationData = hasDateRange
+    ? showCanceled
+      ? dateRangeQuery.data
+      : dateRangeNotCancelledQuery.data
+    : showCanceled
+    ? allQuery.data
+    : notCancelledQuery.data;
+
+  const consultationLoading =
+    allQuery.isLoading ||
+    notCancelledQuery.isLoading ||
+    dateRangeQuery.isLoading ||
+    dateRangeNotCancelledQuery.isLoading;
+
+  const refetch = () => {
+    allQuery.refetch();
+    notCancelledQuery.refetch();
+    dateRangeQuery.refetch();
+    dateRangeNotCancelledQuery.refetch();
+  };
 
   // Select the appropriate data source
   const rows: Consultation[] = consultationData?.data ?? [];
@@ -163,8 +218,8 @@ const NormalConsultation = props => {
   const handleClear = useCallback(() => {
     setConsultation({
       ...newConsultation,
-      patientId: Number(patient?.id ?? patient?.key ?? 0),
-      encounterId: Number(encounter?.id ?? encounter?.key ?? 0)
+      patientId: patient?.id ?? patient?.key,
+      encounterId: encounter?.id ?? encounter?.key
     });
     setSelectedRows([]);
     setSelectedRow(null);
@@ -210,7 +265,7 @@ const NormalConsultation = props => {
 
     try {
       await cancelConsultation({
-        id: Number(selectedRow.id),
+        id: selectedRow.id,
         cancellationReason: consultation?.cancellationReason ?? '',
         cancelledBy: user?.id
       }).unwrap();
@@ -316,7 +371,7 @@ const NormalConsultation = props => {
         key: 'response',
         title: <Translate>RESPONSE</Translate>,
         flexGrow: 1,
-        render: (rowData: Consultation) => (rowData.responseText ? '...' : '')
+        render: (rowData: Consultation) => (rowData.responseText)
       },
       {
         key: 'attachedFile',
@@ -426,7 +481,12 @@ const NormalConsultation = props => {
           tableButtons={
             <div className="bt-div-2">
               <div className="bt-left-2">
-                <MyButton disabled={!selectedRow} onClick={() => setOpenConfirmCancelModel(true)}>
+                <MyButton
+                  disabled={
+                    !selectedRow || String(selectedRow.status ?? '').toUpperCase() === 'CANCELLED'
+                  }
+                  onClick={() => setOpenConfirmCancelModel(true)}
+                >
                   Cancel
                 </MyButton>
 

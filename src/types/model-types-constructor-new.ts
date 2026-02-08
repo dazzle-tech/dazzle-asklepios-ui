@@ -1146,8 +1146,7 @@ export const newConsultation: modelTypes.Consultation = {
   extraDocument: null,
   approvalNumber: null,
 
-  status: null,
-
+  status: 'REQUESTED',
   /* ===== CANCELLED ===== */
   cancellationReason: null,
   cancelledDate: null,

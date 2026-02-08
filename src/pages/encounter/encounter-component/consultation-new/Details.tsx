@@ -30,7 +30,6 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-  // ===== Field label mapping (IMPORTANT PART) =====
   const FIELD_LABELS: Record<string, string> = {
     toFacilityId: 'facility',
     toDepartmentId: 'department',
@@ -51,7 +50,6 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     return msg || 'invalid value';
   };
 
-  // ===== 1. Handle structured fieldErrors =====
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
     const lines = data.fieldErrors.map((fe: any) => {
       const rawField = String(fe.field ?? '');
@@ -70,7 +68,6 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
 
   const messageProp: string = data?.message || '';
 
-  // ===== 2. Handle ConstraintViolation errors =====
   if (
     messageProp.includes('ConstraintViolationImpl') ||
     messageProp.includes('Validation failed')
@@ -104,7 +101,6 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     }
   }
 
-  // ===== 3. Handle 400 Bad Request with fallback mapping =====
   if (err?.status === 400 || data?.status === 400) {
     const message = messageProp.toLowerCase();
 
@@ -127,7 +123,6 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     }
   }
 
-  // ===== 3.5 Handle plain text validation message + sort (FINAL) =====
   if (typeof messageProp === 'string' && messageProp.includes('Please fix the following fields')) {
     const priorityOrder = [
       'facility',
@@ -140,13 +135,11 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
       'question to consultant'
     ];
 
-    // Extract bullets
     const items = messageProp
       .split('•')
       .map(x => x.trim())
       .filter(Boolean);
 
-    // Replace field keys with labels
     const normalizedItems = items.map(item => {
       let result = item;
       Object.entries(FIELD_LABELS).forEach(([key, label]) => {
@@ -156,7 +149,6 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
       return result;
     });
 
-    // Sort by UI priority
     normalizedItems.sort((a, b) => {
       const ai = priorityOrder.findIndex(p => a.toLowerCase().startsWith(p));
       const bi = priorityOrder.findIndex(p => b.toLowerCase().startsWith(p));
@@ -172,7 +164,6 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     return;
   }
 
-  // ===== 4. Default fallback =====
   const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
 
   const humanMsg =
@@ -263,14 +254,14 @@ const Details = ({
     if (consultationOrders?.id) {
       setFormData({
         ...consultationOrders,
-        patientId: Number(patient?.key),
-        encounterId: Number(encounter?.key)
+        patientId: patient?.key,
+        encounterId: encounter?.key
       });
     } else {
       setFormData({
         ...newConsultation,
-        patientId: Number(patient?.key),
-        encounterId: Number(encounter?.key),
+        patientId: patient?.key,
+        encounterId: encounter?.key,
         destinationType: 'DEPARTMENT'
       });
       setAllPractitioners([]);
@@ -330,18 +321,35 @@ const Details = ({
     }
   }, [practitionersResult?.data?.data?.content, practitionerPage]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    if (
+      formData?.destinationType === 'CONSULTANT' &&
+      formData?.consultantSpeciality &&
+      formData?.toFacilityId
+    ) {
+      triggerGetSpecialistPractitioners({
+        facilityId: formData.toFacilityId,
+        subSpecialty: formData.consultantSpeciality,
+        page: 0,
+        size: pageSize,
+        sort: 'id,asc'
+      });
+    }
+  }, [open, formData?.destinationType, formData?.consultantSpeciality, formData?.toFacilityId]);
+
   const handleClear = () => {
     setFormData({
       ...newConsultation,
-      patientId: Number(patient?.key),
-      encounterId: Number(encounter?.key),
+      patientId: patient?.key,
+      encounterId: encounter?.key,
       destinationType: 'DEPARTMENT'
     });
     setAllPractitioners([]);
     setPractitionerPage(0);
   };
 
-  // Simplified validation - let backend handle all validation
   const handleSave = async () => {
     try {
       if (formData.id) {
@@ -371,13 +379,13 @@ const Details = ({
       } else {
         await createConsultation({
           ...formData,
+          status: 'REQUESTED',
           fromFacilityId: selectedDepartment.facilityId,
           fromDepartmentId: selectedDepartment.departmentId
         }).unwrap();
         dispatch(notify({ msg: 'Consultation created successfully', sev: 'success' }));
       }
 
-      refetchCon?.();
       setOpen(false);
       handleClear();
     } catch (err) {
@@ -630,12 +638,7 @@ const Details = ({
                           selectData={allPractitioners}
                           selectDataLabel={['firstName', 'lastName']}
                           selectDataValue="id"
-                          record={{
-                            ...formData,
-                            practitionerId: formData?.practitionerId
-                              ? formData.practitionerId
-                              : undefined
-                          }}
+                          record={formData}
                           setRecord={setFormData}
                           loading={practitionersResult?.isFetching}
                           searchable
