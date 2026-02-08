@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './styles.less';
-import MyButton from '@/components/MyButton/MyButton';
-import {
-    faChevronDown,
-    faChevronUp
-} from '@fortawesome/free-solid-svg-icons';
 import { Col, Form, Row } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import clsx from 'clsx';
@@ -24,9 +18,7 @@ const AllergyDetailsSection = ({
     setAllerges,
     edit,
 }) => {
-    console.log("allerges: ", allerges);
     const [reactions, setReactions] = useState({ reactions: [] });
-    const [showAllFields, setShowAllFields] = useState(false);
     // fetch data
     const { data: onsetLovQueryResponse } = useGetLovValuesByCodeQuery('ONSET');
     const { data: reactionLovQueryResponse } = useGetLovValuesByCodeQuery('ALLRGY_REACTION_TYP');

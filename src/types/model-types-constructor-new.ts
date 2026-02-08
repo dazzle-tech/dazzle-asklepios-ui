@@ -1198,13 +1198,6 @@ export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO 
   status: 'ACTIVE',
   allergicReactions: '',
 
-  resolvedBy: '',
-  resolvedDate: '',
-
-  cancelledBy: '',
-  cancelledDate: '',
-  cancellationReason: '',
-
   activeIngredients: [],
 }
 

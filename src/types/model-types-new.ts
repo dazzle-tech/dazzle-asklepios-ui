@@ -1437,13 +1437,6 @@ export interface PatientAllergiesCreateDTO {
   status: string;
   allergicReactions?: string;
 
-  resolvedBy?: string;
-  resolvedDate?: string;
-
-  cancelledBy?: string;
-  cancelledDate?: string;
-  cancellationReason?: string;
-
   activeIngredients?: number[];
 }
 

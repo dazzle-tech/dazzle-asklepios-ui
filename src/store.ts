@@ -456,7 +456,7 @@ export const store = configureStore({
       clinicalSummaryService.middleware,
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
-      patientAllergiesService.middleware
+      patientAllergiesService.middleware,
       patientReportService.middleware,
 
     ])

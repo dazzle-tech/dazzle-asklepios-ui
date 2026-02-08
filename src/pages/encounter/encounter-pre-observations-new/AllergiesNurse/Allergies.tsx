@@ -158,32 +158,32 @@ const Allergies = (props: AllergiesProps) => {
       //   />
       // )
       render: rowData => {
-  const createdDate = new Date(rowData.createdDate);
-  const today = new Date();
+        const createdDate = new Date(rowData.createdDate);
+        const today = new Date();
 
-  createdDate.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
+        createdDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
 
-  const isPast = createdDate < today;
+        const isPast = createdDate < today;
 
-  return (
-    <MdModeEdit
-      title="Edit"
-      className="icons-style"
-      size={24}
-      fill="var(--primary-gray)"
-      onClick={() => {
-        if (isPast) return; 
-        setOpenDetailsModal(true);
-        setOpenToAdd(false);
-      }}
-      style={{
-        cursor: isPast ? "not-allowed" : "pointer",
-        opacity: isPast ? 0.5 : 1
-      }}
-    />
-  );
-}
+        return (
+          <MdModeEdit
+            title="Edit"
+            className="icons-style"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              if (isPast) return;
+              setOpenDetailsModal(true);
+              setOpenToAdd(false);
+            }}
+            style={{
+              cursor: isPast ? "not-allowed" : "pointer",
+              opacity: isPast ? 0.5 : 1
+            }}
+          />
+        );
+      }
 
     },
 
@@ -242,18 +242,28 @@ const Allergies = (props: AllergiesProps) => {
 
   // handle cancel allergy
   const handleCancel = async () => {
-    try {
-      const result = await cancelPatientAllergy({
-        id: allerges.id,
-        cancelledBy: authSlice?.user?.firstName + " " + authSlice?.user?.lastName,
-        reason: allerges?.cancellationReason, // optional
-      }).unwrap();
-      setAllerges(result);
-      setOpenCancellationReasonModel(false);
-      dispatch(notify({ msg: 'Allergy cancelled successfully', sev: 'success' }));
-      await fetchallerges();
-    } catch (error) {
-      dispatch(notify({ msg: 'Failed to cancel allergy', sev: 'error' }));
+    let reason;
+    if (allerges?.cancellationReason) {
+      reason = allerges?.cancellationReason;
+    }
+    else {
+      reason = undefined;
+      dispatch(notify({ msg: "Cancellation Reason is required", sev: 'warning' }));
+    }
+    if (reason) {
+      try {
+        const result = await cancelPatientAllergy({
+          id: allerges.id,
+          cancelledBy: authSlice?.user?.firstName + " " + authSlice?.user?.lastName,
+          reason: reason, // optional
+        }).unwrap();
+        setAllerges(result);
+        setOpenCancellationReasonModel(false);
+        dispatch(notify({ msg: 'Allergy cancelled successfully', sev: 'success' }));
+        await fetchallerges();
+      } catch (error) {
+        dispatch(notify({ msg: 'Failed to cancel allergy', sev: 'warning' }));
+      }
     }
   };
 
@@ -356,48 +366,39 @@ const Allergies = (props: AllergiesProps) => {
           </MyButton>
         </div>
       </div>
-
-      {/* <Col> */}
-      {/* <Row> */}
       <div className='container-of-table-and-section-patient-allergy'>
-      <MyTable
-        columns={tableColumns}
-        data={allergiesListResponse?.data || []}
-        totalCount={totalCount}
-        onRowClick={rowData => {
-          setAllerges(rowData);
-          setOpenToAdd(false);
-        }}
-        rowClassName={isSelected}
-        loading={isLoading}
-        page={paginationParams.page}
-        rowsPerPage={paginationParams.size}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={e => {
-          const newSize = Number(e.target.value);
-          setPaginationParams({
-            ...paginationParams,
-            size: newSize,
-            page: 0,
-            timestamp: Date.now()
-          });
-        }}
-        sortColumn={sortColumn}
-        sortType={sortType}
-        onSortChange={handleSortChange}
-      />
-      {/* </Row> */}
-
-      {/* <Row> */}
-      <AllergyDetailsSection 
-       allerges={allerges}
-       setAllerges={setAllerges}
-       edit={edit}
-      />
+        <MyTable
+          columns={tableColumns}
+          data={allergiesListResponse?.data || []}
+          totalCount={totalCount}
+          onRowClick={rowData => {
+            setAllerges(rowData);
+            setOpenToAdd(false);
+          }}
+          rowClassName={isSelected}
+          loading={isLoading}
+          page={paginationParams.page}
+          rowsPerPage={paginationParams.size}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={e => {
+            const newSize = Number(e.target.value);
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            });
+          }}
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={handleSortChange}
+        />
+        <AllergyDetailsSection
+          allerges={allerges}
+          setAllerges={setAllerges}
+          edit={edit}
+        />
       </div>
-      {/* </Row> */}
-      {/* </Col> */}
-
       <CancellationModal
         open={openCancellationReasonModel}
         setOpen={setOpenCancellationReasonModel}
