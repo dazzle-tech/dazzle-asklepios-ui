@@ -1,6 +1,5 @@
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
-import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -12,7 +11,7 @@ import PlusIcon from '@rsuite/icons/Plus';
 import ReloadIcon from '@rsuite/icons/Reload';
 import React, { useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
-import { Checkbox, Col, Form, Row } from 'rsuite';
+import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
@@ -24,9 +23,8 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { useGetAllergensQuery } from '@/services/setup/allergensService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import SectionContainer from '@/components/SectionsoContainer';
-import MyInput from '@/components/MyInput';
 import AllergyDetailsSection from './AllergyDetailsSection';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 interface AllergiesProps {
   patient?: any;
@@ -35,6 +33,13 @@ interface AllergiesProps {
   showTableActions?: boolean;
   showTableButtons?: boolean;
 }
+
+const NameCell = ({ login }: { login?: string | null }) => {
+  const { data: fullName } = useGetUserFullNameByLoginQuery(login ?? '', {
+    skip: !login
+  });
+  return <span>{fullName || login || '-'}</span>;
+};
 
 const Allergies = (props: AllergiesProps) => {
 
@@ -90,7 +95,7 @@ const Allergies = (props: AllergiesProps) => {
   const [undoResolvePatientAllergy] = useUndoResolvePatientAllergyMutation();
 
   // class name for selected row
-  const isSelected = (rowData: any) =>
+  const isSelected = (rowData: PatientAllergiesResponseVM) =>
     rowData && allerges && rowData.id === allerges?.id ? 'selected-row' : '';
 
   // table column
@@ -98,13 +103,13 @@ const Allergies = (props: AllergiesProps) => {
     {
       key: 'allergenType',
       title: <Translate>Allergy Type</Translate>,
-      render: (rowData: any) => <p>{formatEnumString(rowData.allergenType)}</p>
+      render: (rowData: PatientAllergiesResponseVM) => <p>{formatEnumString(rowData.allergenType)}</p>
     },
 
     {
       key: 'allergen',
       title: <Translate>Allergen</Translate>,
-      render: (rowData: any) => {
+      render: (rowData: PatientAllergiesResponseVM) => {
         if (rowData?.allergenId && allergensListResponse?.data) {
           const allergen = allergensListResponse.data.find(
             (item: any) => item.id === rowData.allergenId
@@ -143,20 +148,6 @@ const Allergies = (props: AllergiesProps) => {
     props.showTableActions !== false && {
       key: 'actions',
       title: <Translate>Actions</Translate>,
-      // render: rowData => (
-      //   <MdModeEdit
-      //     title="Edit"
-      //     className='icons-style'
-      //     size={24}
-      //     fill="var(--primary-gray)"
-      //     onClick={() => {
-      //       setOpenDetailsModal(true);
-      //       setOpenToAdd(false);
-      //     }}
-      //     style={{ cursor: rowData.createdDate <= new Date() ? "pointer" : "not-allowed" }}
-
-      //   />
-      // )
       render: rowData => {
         const createdDate = new Date(rowData.createdDate);
         const today = new Date();
@@ -178,8 +169,8 @@ const Allergies = (props: AllergiesProps) => {
               setOpenToAdd(false);
             }}
             style={{
-              cursor: isPast ? "not-allowed" : "pointer",
-              opacity: isPast ? 0.5 : 1
+              cursor: isPast || rowData.status !== 'ACTIVE' ? 'not-allowed' : 'pointer',
+              opacity: isPast || rowData.status !== 'ACTIVE' ? 0.5 : 1
             }}
           />
         );
@@ -192,9 +183,9 @@ const Allergies = (props: AllergiesProps) => {
       title: 'Created By/At',
       expandable: true,
 
-      render: (row: any) => (
+     render: (row: PatientAllergiesResponseVM) => (
         <>
-          {row.createdBy}
+          <NameCell login={row.createdBy} />
           <br />
           <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
         </>
@@ -204,11 +195,11 @@ const Allergies = (props: AllergiesProps) => {
       key: 'resolvedByAt',
       title: 'Resolved By/At',
       expandable: true,
-      render: (row: any) => (
+      render: (row: PatientAllergiesResponseVM) => (
         <>
-          {row.resolvedBy}
+          <NameCell login={row.resolvedBy} />
           <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(row.resolvedAt)}</span>
+          <span className="date-table-style">{formatDateWithoutSeconds(row.resolvedDate)}</span>
         </>
       )
 
@@ -217,9 +208,9 @@ const Allergies = (props: AllergiesProps) => {
       key: 'cancelledByAt',
       title: 'Cancelled By/At',
       expandable: true,
-      render: (row: any) => (
+      render: (row: PatientAllergiesResponseVM) => (
         <>
-          {row.cancelledBy}
+          <NameCell login={row.cancelledBy} />
           <br />
           <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledDate)}</span>
         </>

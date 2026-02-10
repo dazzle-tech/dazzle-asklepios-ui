@@ -39,17 +39,17 @@ const AllergyDetailsSection = ({
     // fetch enum lists 
     const allergyTypeEnumResponse = useEnumOptions('AllergenTypes');
     const severityEnumResponse = useEnumOptions('Severity');
-   const [activeIngredientsObject, setActiveIngredientsObject] = useState({activeIngredients: []});
-   
-   useEffect(() => {
-      setActiveIngredientsObject({activeIngredients: allerges.activeIngredients?.map(ai => ai.activeIngredientId) || []})
-      setReactions({
-        reactions: allerges.allergicReactions
-          .split(',')
-          .map(r => r.trim())
-          .filter(Boolean)
-      });
-   },[allerges]);
+    const [activeIngredientsObject, setActiveIngredientsObject] = useState({ activeIngredients: [] });
+
+    useEffect(() => {
+        setActiveIngredientsObject({ activeIngredients: allerges.activeIngredients?.map(ai => ai.activeIngredientId) || [] })
+        setReactions({
+            reactions: allerges.allergicReactions
+                .split(',')
+                .map(r => r.trim())
+                .filter(Boolean)
+        });
+    }, [allerges]);
     return (
         <SectionContainer
             title="Allergy Details"
@@ -131,179 +131,159 @@ const AllergyDetailsSection = ({
                                 disabled
                             />
                         </Form>
-                        {/* <br />
                         <Row className="rows-gap">
-                            <Col md={24}>
-                                <MyButton
-                                    prefixIcon={() => (
-                                        <FontAwesomeIcon icon={showAllFields ? faChevronUp : faChevronDown} />
-                                    )}
-                                    onClick={() => setShowAllFields(!showAllFields)}
-                                    color="var(--primary-blue)"
-                                >
-                                    {showAllFields ? 'Hide Details' : 'More Details'}
-                                </MyButton>
+                            <Col md={8}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="select"
+                                    fieldLabel="Criticality"
+                                    selectData={criticalityLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName='criticality'
+                                    record={allerges}
+                                    setRecord={setAllerges}
+                                    searchable={false}
+                                    disabled
+                                />
+                            </Col>
+                            <Col md={8}>
+                                <MyInput
+                                    width="100%"
+                                    fieldName='certainty'
+                                    record={allerges}
+                                    setRecord={setAllerges}
+                                    disabled
+                                />
+                            </Col>
+                            <Col md={8}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="select"
+                                    fieldLabel="Treatment Strategy"
+                                    selectData={treatmentstrategyLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName='treatmentStrategy'
+                                    record={allerges}
+                                    setRecord={setAllerges}
+                                    searchable={false}
+                                    disabled
+                                />
                             </Col>
                         </Row>
-                        <br /> */}
-                        {/* {showAllFields && ( */}
-                            {/* <> */}
-                                <Row className="rows-gap">
-                                    <Col md={8}>
-                                        <MyInput
-                                            width="100%"
-                                            fieldType="select"
-                                            fieldLabel="Criticality"
-                                            selectData={criticalityLovQueryResponse?.object ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName='criticality'
-                                            record={allerges}
-                                            setRecord={setAllerges}
-                                            searchable={false}
-                                            disabled
-                                        />
-                                    </Col>
-                                    <Col md={8}>
-                                        <MyInput
-                                            width="100%"
-                                            fieldName='certainty'
-                                            record={allerges}
-                                            setRecord={setAllerges}
-                                            disabled
-                                        />
-                                    </Col>
-                                    <Col md={8}>
-                                        <MyInput
-                                            width="100%"
-                                            fieldType="select"
-                                            fieldLabel="Treatment Strategy"
-                                            selectData={treatmentstrategyLovQueryResponse?.object ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName='treatmentStrategy'
-                                            record={allerges}
-                                            setRecord={setAllerges}
-                                            searchable={false}
-                                            disabled
-                                        />
-                                    </Col>
-                                </Row>
-                                <Row className="rows-gap">
-                                    <Col md={8}>
-                                        <MyInput
-                                            width="100%"
-                                            fieldType="select"
-                                            fieldLabel="Onset"
-                                            selectData={onsetLovQueryResponse?.object ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName='onset'
-                                            record={allerges}
-                                            setRecord={setAllerges}
-                                            searchable={false}
-                                            disabled
-                                        />
-                                    </Col>
-                                    <Col md={8}>
-                                        <MyInput
-                                            width="100%"
-                                            fieldType="date"
-                                            fieldName="onsetDate"
-                                            record={allerges}
-                                            setRecord={setAllerges}
-                                            disabled
-                                        />
-                                    </Col>
-                                    <Col md={8}>
-                                        <MyInput
-                                            fieldLabel="Undefined"
-                                            fieldName="onsetDateUndefined"
-                                            width="100%"
-                                            fieldType="checkbox"
-                                            record={allerges}
-                                            setRecord={setAllerges}
-                                            disabled
-                                        />
-                                    </Col>
-                                </Row>
-                                <Row className="rows-gap">
-                                    <Col md={8}>
-                                        <MyInput
-                                            width="100%"
-                                            fieldType="select"
-                                            fieldLabel="Type of Propensity"
-                                            selectData={allgPropnLovQueryResponse?.object ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName='typeOfPropensity'
-                                            record={allerges}
-                                            setRecord={setAllerges}
-                                            searchable={false}
-                                            disabled
-                                        />
-                                    </Col>
-                                    <Col md={8}>
-                                        <Form fluid>
-                                            <MyInput
-                                                width="100%"
-                                                fieldType="select"
-                                                fieldLabel="Source of Information"
-                                                selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                fieldName='sourceOfInformation'
-                                                record={allerges}
-                                                setRecord={setAllerges}
-                                                disabled
-                                            />
-                                        </Form>
-                                    </Col>
-                                    <Col md={8}>
-                                        <Form fluid>
-                                            <MyInput
-                                                fieldLabel="BY Patient"
-                                                fieldName="byPatient"
-                                                width="100%"
-                                                fieldType="checkbox"
-                                                record={allerges}
-                                                setRecord={setAllerges}
-                                                disabled
-                                            />
-                                        </Form>
-                                    </Col>
-                                </Row>
-                                <Row className="rows-gap">
-                                    <Row>
-                                        <Col md={24}>
-                                            <MyInput
-                                                width="100%"
-                                                fieldType="checkPicker"
-                                                fieldLabel="Allergic Reactions"
-                                                selectData={reactionLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                fieldName='reactions'
-                                                record={reactions}
-                                                setRecord={setReactions}
-                                                // disabled
-                                                disabledItemValues
-                                            />
-                                        </Col>
-                                    </Row>
+                        <Row className="rows-gap">
+                            <Col md={8}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="select"
+                                    fieldLabel="Onset"
+                                    selectData={onsetLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName='onset'
+                                    record={allerges}
+                                    setRecord={setAllerges}
+                                    searchable={false}
+                                    disabled
+                                />
+                            </Col>
+                            <Col md={8}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="date"
+                                    fieldName="onsetDate"
+                                    record={allerges}
+                                    setRecord={setAllerges}
+                                    disabled
+                                />
+                            </Col>
+                            <Col md={8}>
+                                <MyInput
+                                    fieldLabel="Undefined"
+                                    fieldName="onsetDateUndefined"
+                                    width="100%"
+                                    fieldType="checkbox"
+                                    record={allerges}
+                                    setRecord={setAllerges}
+                                    disabled
+                                />
+                            </Col>
+                        </Row>
+                        <Row className="rows-gap">
+                            <Col md={8}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="select"
+                                    fieldLabel="Type of Propensity"
+                                    selectData={allgPropnLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName='typeOfPropensity'
+                                    record={allerges}
+                                    setRecord={setAllerges}
+                                    searchable={false}
+                                    disabled
+                                />
+                            </Col>
+                            <Col md={8}>
+                                <Form fluid>
                                     <MyInput
                                         width="100%"
-                                        fieldLabel="Note"
-                                        fieldType="textarea"
-                                        fieldName="note"
-                                        height={90}
+                                        fieldType="select"
+                                        fieldLabel="Source of Information"
+                                        selectData={sourceofinformationLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName='sourceOfInformation'
                                         record={allerges}
                                         setRecord={setAllerges}
                                         disabled
                                     />
-                                </Row>
-                            {/* </> */}
-                        {/* )} */}
+                                </Form>
+                            </Col>
+                            <Col md={8}>
+                                <Form fluid>
+                                    <MyInput
+                                        fieldLabel="BY Patient"
+                                        fieldName="byPatient"
+                                        width="100%"
+                                        fieldType="checkbox"
+                                        record={allerges}
+                                        setRecord={setAllerges}
+                                        disabled
+                                    />
+                                </Form>
+                            </Col>
+                        </Row>
+                        <Row className="rows-gap">
+                            <Row>
+                                <Col md={24}>
+                                    <MyInput
+                                        width="100%"
+                                        fieldType="checkPicker"
+                                        fieldLabel="Allergic Reactions"
+                                        selectData={reactionLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName='reactions'
+                                        record={reactions}
+                                        setRecord={setReactions}
+                                        disabledItemValues
+                                    />
+                                </Col>
+                            </Row>
+                            <MyInput
+                                width="100%"
+                                fieldLabel="Note"
+                                fieldType="textarea"
+                                fieldName="note"
+                                height={90}
+                                record={allerges}
+                                setRecord={setAllerges}
+                                disabled
+                            />
+                        </Row>
                     </Form>
                 </div>
             }
