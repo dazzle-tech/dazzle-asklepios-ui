@@ -54,7 +54,24 @@ type Props = {
   fetchAllTests?: () => any;
   loading?: boolean;
   refetchAllLabData: () => Promise<void>;
+  onTestsLoaded?: (tests: any[]) => void;
 };
+
+const today = new Date();
+
+const startOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const endOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
+
+
 
 const Tests = forwardRef<any, Props>(
   (
@@ -66,6 +83,7 @@ const Tests = forwardRef<any, Props>(
       fetchAllTests,
       fecthSample,
       refetchAllLabData,
+      onTestsLoaded,
       loading
     },
     ref
@@ -89,11 +107,31 @@ const Tests = forwardRef<any, Props>(
     const [sortColumn, setSortColumn] = useState("id");
     const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
+
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
       size: 5,
       sort: "testId,asc",
     });
+
+      const {
+        data: todayTestsResponse
+      } = useFilterDiagnosticOrderTestsQuery({
+        page: 0,
+        size: 1000,
+        orderType: 'LABORATORY',
+        receivedDepartmentId: selectedDepartment?.departmentId,
+        createdDateFrom: startOfDay(today).toISOString(),
+        createdDateTo: endOfDay(today).toISOString()
+      });
+
+const todayDepartmentTests = todayTestsResponse?.data ?? [];
+
+useEffect(() => {
+  onTestsLoaded?.(todayDepartmentTests);
+}, [todayDepartmentTests]);
+
+
 
     const { data: labCatLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
 
@@ -270,7 +308,7 @@ const Tests = forwardRef<any, Props>(
 
       if (
         test.status === DiagnosticOrderTestStatus.REJECTED ||
-        test.status === DiagnosticOrderTestStatus.APPROVED
+        test.status === DiagnosticOrderTestStatus.RESULT_APPROVED
       ) {
         dispatch(
           notify({
@@ -321,8 +359,6 @@ const Tests = forwardRef<any, Props>(
       timeUnitLov?.object?.find(
         u => String(u.key) === String(key)
       )?.lovDisplayVale ?? '';
-
-    console.log("orderTests", orderTests);
 
     const handleCheckboxChange = (rowId: number | string) => {
       setSelectedRows(prev =>
@@ -435,7 +471,7 @@ const Tests = forwardRef<any, Props>(
         .filter(
           t =>
             selectedRows.includes(t.id) &&
-            t.status !== DiagnosticOrderTestStatus.APPROVED &&
+            t.status !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
             t.status !== DiagnosticOrderTestStatus.REJECTED
         )
         .map(t => t.id);
@@ -680,15 +716,13 @@ const Tests = forwardRef<any, Props>(
         width: 140,
         align: 'center',
         render: (rowData: any) => {
-          console.log('rowData.processingStatus =', rowData.processingStatus);
-          console.log('rowData.status =', rowData.status);
 
 
           const canAccept =
             rowData.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
 
           const canReject =
-            rowData.status !== DiagnosticOrderTestStatus.APPROVED &&
+            rowData.status !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
             rowData.status !== DiagnosticOrderTestStatus.REJECTED;
 
           const canUndoAccept =

@@ -61,6 +61,32 @@ type Props = {
   saveTest: (payload: any) => Promise<void>;
 };
 
+
+const notifyFromApiError = (e: any) => {
+  const status = e?.status || e?.originalStatus;
+  const message =
+    e?.data?.message ||
+    e?.data?.detail ||
+    e?.error ||
+    'Something went wrong';
+  if (status === 400 || status === 409 || status === 422) {
+    dispatch(
+      notify({
+        msg: message,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+  dispatch(
+    notify({
+      msg: message,
+      sev: 'error'
+    })
+  );
+};
+
+
 const Tests = forwardRef<any, Props>(
   (
     {
@@ -192,11 +218,11 @@ const Tests = forwardRef<any, Props>(
     });
 
 
-    
-const [
-  getReportByTestId,
-  { data: singleReport }
-] = useLazyGetRadiologyReportByOrderTestIdQuery();
+
+    const [
+      getReportByTestId,
+      { data: singleReport }
+    ] = useLazyGetRadiologyReportByOrderTestIdQuery();
 
 
     const allRadiologies = allRadiologiesResponse?.data ?? [];
@@ -285,7 +311,7 @@ const [
 
       if (
         test.status === DiagnosticOrderTestStatus.REJECTED ||
-        test.status === DiagnosticOrderTestStatus.APPROVED
+        test.status === DiagnosticOrderTestStatus.RESULT_APPROVED
       ) {
         dispatch(
           notify({
@@ -337,8 +363,6 @@ const [
         u => String(u.key) === String(key)
       )?.lovDisplayVale ?? '';
 
-    console.log("orderTests", orderTests);
-
     const handleCheckboxChange = (rowId: number | string) => {
       setSelectedRows(prev =>
         prev.includes(rowId)
@@ -377,15 +401,16 @@ const [
 
       const imageStatus = rowData.imageStatus;
 
-    const isRunning =
-      imageStatus === 'STARTED' || imageStatus === 'RESUMED';
+      const isRunning =
+        imageStatus === 'STARTED' || imageStatus === 'RESUMED';
 
-    const isPaused = imageStatus === 'PAUSED';
-    const isFinished = imageStatus === 'FINISHED';
+      const isPaused = imageStatus === 'PAUSED';
+      const isFinished = imageStatus === 'FINISHED';
 
       if (!isAccepted) {
         return (
           <FontAwesomeIcon
+            className='icon-radiologist-worklist-size'
             icon={faEllipsisVertical}
             style={{ cursor: 'not-allowed', opacity: 0.4 }}
             onClick={e => e.stopPropagation()}
@@ -450,6 +475,7 @@ const [
           speaker={speaker}
         >
           <FontAwesomeIcon
+            className='icon-radiologist-worklist-size'
             icon={faEllipsisVertical}
             style={{ cursor: 'pointer' }}
             onClick={e => e.stopPropagation()}
@@ -514,10 +540,6 @@ const [
         align: 'center',
         render: (rowData: any) => {
           const duration = rowData.radiology?.imageDuration;
-          console.log('RAD META', {
-            testId: rowData.test?.id,
-            radiology: rowData.radiology
-          });
           return duration ? `${duration} min` : ' ';
         }
       },
@@ -555,6 +577,7 @@ const [
 
           return (
             <FontAwesomeIcon
+              className='icon-radiologist-worklist-size'
               icon={faComment}
               style={{
                 cursor: 'pointer',
@@ -576,8 +599,8 @@ const [
           return (
             <HStack spacing={10}>
               <FontAwesomeIcon
+                className='icon-radiologist-worklist-size'
                 icon={faHospitalUser}
-                style={{ fontSize: '1em' }}
                 onClick={() => setOpenArrivalModal(true)}
               />
             </HStack>
@@ -591,6 +614,12 @@ const [
         align: 'center',
         render: (rowData: any) =>
           formatEnumString(rowData.processingStatus ?? ' ')
+      },
+      {
+        key: 'imagestatus',
+        title: 'Image Status',
+        width: 120,
+        render: row => (formatEnumString(row.imageStatus))
       },
       {
         key: 'action',
@@ -609,17 +638,12 @@ const [
             rowData.processingStatus !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
             rowData.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
 
-            console.log(
-              'ROW IMAGE STATUS',
-              rowData.id,
-              rowData.imageStatus
-            );
-
           return (
             <HStack spacing={8}>
               <Whisper speaker={<Tooltip>Accept</Tooltip>}>
                 <span>
                   <CheckRoundIcon
+                  className='icon-radiologist-worklist-size'
                     style={{
                       cursor: canAccept ? 'pointer' : 'not-allowed',
                       opacity: canAccept ? 1 : 0.4
@@ -636,6 +660,7 @@ const [
               <Whisper speaker={<Tooltip>Undo Accept</Tooltip>}>
                 <span>
                   <ReloadIcon
+                  className='icon-radiologist-worklist-size'
                     style={{
                       cursor: canUndoAccept ? 'pointer' : 'not-allowed',
                       opacity: canUndoAccept ? 1 : 0.4,
@@ -672,6 +697,7 @@ const [
               <Whisper speaker={<Tooltip>Reject</Tooltip>}>
                 <span>
                   <WarningRoundIcon
+                  className='icon-radiologist-worklist-size'
                     style={{
                       cursor: canReject ? 'pointer' : 'not-allowed',
                       opacity: canReject ? 1 : 0.4
@@ -772,28 +798,31 @@ const [
       }
     }, [orderTests, refetchAllRadData]);
 
+    console.log("pagedData", pagedData);
+
     return (
       <Panel ref={ref} defaultExpanded>
 
-        <div style={{ minHeight: 600 }}>
-          <MyTable
-            filters={filters()}
-            columns={columns}
-            data={pagedData}
-            loading={loading || isTestsFetching}
-            page={pageIndex}
-            rowsPerPage={rowsPerPage}
-            totalCount={effectiveTotalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            sortColumn={sortColumn}
-            sortType={sortType}
-            onSortChange={handleSortChange}
-            onRowClick={rowData => setTest(rowData)}
-            rowClassName={isTestSelected}
-            minHeight={600}
-          />
-        </div>
+
+        <MyTable
+          filters={filters()}
+          columns={columns}
+          data={pagedData}
+          loading={loading || isTestsFetching}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={effectiveTotalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={handleSortChange}
+          onRowClick={rowData => setTest(rowData)}
+          rowClassName={isTestSelected}
+          loadingHeight={200}
+        
+        />
+
 
         <CancellationModal
           open={openRejectedModal}

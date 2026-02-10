@@ -218,7 +218,6 @@ const Orders = forwardRef<any, OrdersProps>(
       title: <Translate>STATUS</Translate>,
       flexGrow: 2,
       render: r => {
-        console.log("r print: ",r);
         return <>{formatEnumString(r.labStatus ?? r.status ?? '—')}</>;
       }
     },
@@ -234,8 +233,6 @@ const Orders = forwardRef<any, OrdersProps>(
         ) : null
     }
   ];
-
-  console.log("ordersList: ", ordersList);
 
   useEffect(() => {
     setOrder(null);

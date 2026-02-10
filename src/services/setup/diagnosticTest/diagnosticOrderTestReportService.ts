@@ -133,6 +133,26 @@ export const diagnosticOrderTestReportService = createApi({
       invalidatesTags: ["RadiologyReport"],
     }),
 
+      
+    secondApproveRadiologyReport: builder.mutation<any, number>({
+      query: (reportId) => ({
+        url: `/api/patient/radiology/reports/${reportId}/second-approve`,
+        method: "POST",
+      }),
+      invalidatesTags: ["RadiologyReport"],
+    }),
+
+    getRadiologyImageStatusLog: builder.query<any[], number>({
+      query: (reportId) => ({
+        url: `/api/patient/radiology/reports/${reportId}/image-status-log`,
+        method: "GET",
+      }),
+      providesTags: (r, e, id) => [
+        { type: "RadiologyImage", id },
+      ],
+    }),
+
+
 
     finishRadiologyImage: builder.mutation<any, number>({
       query: (testId) => ({
@@ -158,4 +178,7 @@ export const {
   usePauseRadiologyImageMutation,
   useResumeRadiologyImageMutation,
   useFinishRadiologyImageMutation,
+  useSecondApproveRadiologyReportMutation,
+  useGetRadiologyImageStatusLogQuery,
+  useLazyGetRadiologyImageStatusLogQuery,
 } = diagnosticOrderTestReportService;

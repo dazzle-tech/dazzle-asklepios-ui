@@ -109,8 +109,7 @@ const Result = forwardRef<any, any>(
     const [size, setSize] = useState(15);
     const [selectedResult, setSelectedResult] = useState<any>(null);
     const [openNotesModal, setOpenNotesModal] = useState(false);
-    const [openRejectModal, setOpenRejectModal] = useState(false);
-    const [rejectReason, setRejectReason] = useState('');
+
     const [approvalDate, setApprovalDate] = useState({
       fromDate: today,
       toDate: today

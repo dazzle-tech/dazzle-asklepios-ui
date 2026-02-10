@@ -58,7 +58,7 @@ const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
     await fn();
-  } catch {}
+  } catch { }
 };
 
 const startOfDay = (date: Date) => {
@@ -89,6 +89,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [report, setReport] = useState({ ...newApDiagnosticOrderTestsRadReport });
+  const [visibleRadTests, setVisibleRadTests] = useState<any[]>([]);
 
   const [patient, setPatient] = useState({ ...newApPatient });
   const [encounter] = useState({ ...newApEncounter });
@@ -102,6 +103,21 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   });
 
   const [fetchPatientById] = useLazyGetPatientByIdQuery();
+
+  const {
+    data: todayRadTestsResponse
+  } = useFilterDiagnosticOrderTestsQuery({
+    page: 0,
+    size: 1000,
+    orderType: 'RADIOLOGY',
+    receivedDepartmentId: authSlice.selectedDepartment?.departmentId,
+    createdDateFrom: startOfDay(dateFilter.fromDate).toISOString(),
+    createdDateTo: endOfDay(dateFilter.toDate).toISOString()
+  });
+
+  useEffect(() => {
+    setVisibleRadTests(todayRadTestsResponse?.data ?? []);
+  }, [todayRadTestsResponse]);
 
 
   useEffect(() => {
@@ -131,34 +147,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     createdDateTo: endOfDay(dateFilter.toDate).toISOString()
   });
 
-  const radTestsList = useMemo(
-    () => testsResponse?.data ?? [],
-    [testsResponse]
-  );
-
-  const newTestsCount = useMemo(
-    () =>
-      radTestsList.filter(
-        t => t.processingStatus === DiagnosticOrderTestStatus.NEW
-      ).length,
-    [radTestsList]
-  );
-
-  const patientArrivedCount = useMemo(
-    () =>
-      radTestsList.filter(
-        t => t.processingStatus === DiagnosticOrderTestStatus.PATIENT_ARRIVED
-      ).length,
-    [radTestsList]
-  );
-
-  const resultApprovedCount = useMemo(
-    () =>
-      radTestsList.filter(
-        t => t.processingStatus === DiagnosticOrderTestStatus.RESULT_APPROVED
-      ).length,
-    [radTestsList]
-  );
 
 
 
@@ -174,7 +162,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     status === DiagnosticOrderTestStatus.ACCEPTED ||
     status === DiagnosticOrderTestStatus.PARTIALLY;
 
-    
+
   const stepsDataComputed = useMemo(() => {
     return stepsData.filter(step => {
       if (
@@ -195,15 +183,15 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   }, [stepsData, test?.processingStatus]);
 
 
-    const activeStep = useMemo(() => {
-      if (!test?.processingStatus) return 0;
+  const activeStep = useMemo(() => {
+    if (!test?.processingStatus) return 0;
 
-      return stepsDataComputed.findIndex(step =>
-        isAcceptedLike(test.processingStatus)
-          ? step.key === DiagnosticOrderTestStatus.ACCEPTED
-          : step.key === test.processingStatus
-      );
-    }, [stepsDataComputed, test?.processingStatus]);
+    return stepsDataComputed.findIndex(step =>
+      isAcceptedLike(test.processingStatus)
+        ? step.key === DiagnosticOrderTestStatus.ACCEPTED
+        : step.key === test.processingStatus
+    );
+  }, [stepsDataComputed, test?.processingStatus]);
 
 
   const [updateTest] = useUpdateDiagnosticOrderTestMutation();
@@ -211,31 +199,31 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [saveReport, saveReportMutation] =
     useSaveDiagnosticOrderTestRadReportMutation();
 
-    const saveTest = async (payload: any) => {
-      if (!test?.id) throw new Error("Missing test id");
-      const updated = await updateTest({
-        id: test.id,
-        body: payload
-      }).unwrap();
-      await fetchAllTests();
-      return updated;
-    };
+  const saveTest = async (payload: any) => {
+    if (!test?.id) throw new Error("Missing test id");
+    const updated = await updateTest({
+      id: test.id,
+      body: payload
+    }).unwrap();
+    await fetchAllTests();
+    return updated;
+  };
 
-    const refetchAllRadData = async () => {
-      setGlobalLoading(true);
-      try {
-        await safeRefetch(OrdersRef.current?.refetchOrders);
-        await safeRefetch(fetchAllTests);
-        await safeRefetch(TestsRef.current?.fetchTest);
-        await safeRefetch(ReportRef.current?.reportFetch);
-      } finally {
-        setGlobalLoading(false);
-      }
-    };
+  const refetchAllRadData = async () => {
+    setGlobalLoading(true);
+    try {
+      await safeRefetch(OrdersRef.current?.refetchOrders);
+      await safeRefetch(fetchAllTests);
+      await safeRefetch(TestsRef.current?.fetchTest);
+      await safeRefetch(ReportRef.current?.reportFetch);
+    } finally {
+      setGlobalLoading(false);
+    }
+  };
 
-    useImperativeHandle(ref, () => ({
-      refetchAllRadData
-    }));
+  useImperativeHandle(ref, () => ({
+    refetchAllRadData
+  }));
 
 
   useEffect(() => {
@@ -258,6 +246,32 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
       });
 
   }, [order?.patientId]);
+
+  const newTestsCount = useMemo(
+    () =>
+      visibleRadTests.filter(
+        t => t.processingStatus === DiagnosticOrderTestStatus.NEW
+      ).length,
+    [visibleRadTests]
+  );
+
+  const patientArrivedCount = useMemo(
+    () =>
+      visibleRadTests.filter(
+        t => t.processingStatus === DiagnosticOrderTestStatus.PATIENT_ARRIVED
+      ).length,
+    [visibleRadTests]
+  );
+
+  const resultApprovedCount = useMemo(
+    () =>
+      visibleRadTests.filter(
+        t => t.processingStatus === DiagnosticOrderTestStatus.RESULT_APPROVED
+      ).length,
+    [visibleRadTests]
+  );
+
+  const totalRadTestsCount = visibleRadTests.length;
 
 
   return (
@@ -286,7 +300,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
         />
         <DetailsCard
           title="Total Test"
-          number={radTestsList.length}
+          number={totalRadTestsCount}
           icon={faTriangleExclamation}
           color="--gray-dark"
           width="20vw"

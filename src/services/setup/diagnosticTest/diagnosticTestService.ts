@@ -184,5 +184,6 @@ export const {
   useUpdateDiagnosticTestMutation,
   useToggleDiagnosticTestActiveMutation,
   useGetAllDiagnosticTestsByNameAndTypeQuery,
+  useLazyGetDiagnosticTestByIdQuery,
   useGetDiagnosticTestsByIdsQuery,
 } = diagnosticTestService;

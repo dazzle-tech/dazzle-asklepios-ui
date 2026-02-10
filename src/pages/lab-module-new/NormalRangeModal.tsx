@@ -83,7 +83,6 @@ const { data: allLovValues } =
     }
   ];
 
-  console.log("ranges", ranges);
 
   return (
     <MyModal

@@ -71,7 +71,6 @@ const columns = [
 ];
 
 
-  console.log("logs", logs);
   return (
     <MyModal
       open={open}

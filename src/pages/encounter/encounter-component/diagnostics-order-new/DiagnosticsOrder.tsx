@@ -216,17 +216,14 @@ const DiagnosticsOrder = props => {
   const diagTypeResponse = useEnumOptions("TestType");
 
 
-  const queryParams = React.useMemo(() => {
-    if (showCanceled) {
-      return {
-        status: DiagnosticOrderTestStatus.CANCELLED,
-      };
-    }
-
-    return {
-      excludeStatus: [DiagnosticOrderTestStatus.CANCELLED],
-    };
-  }, [showCanceled]);
+const queryParams = React.useMemo(() => {
+  if (showCanceled) {
+    return {};
+  }
+  return {
+    excludeStatus: [DiagnosticOrderTestStatus.CANCELLED],
+  };
+}, [showCanceled]);
 
   const normalizeOrderTest = rowData => ({
     ...rowData,
@@ -712,18 +709,32 @@ const DiagnosticsOrder = props => {
     return new Map(testsList.map(t => [t.id, t]));
   }, [testsList]);
 
-
-  const normalizedOrderTestList = React.useMemo(() => {
-    return orderTestList.map(orderTest => {
-      const test = testsMap.get(orderTest.testId);
-
-      return {
-        ...orderTest,
-        test,
-        orderType: orderTest.orderType ?? test?.type
+      const STATUS_PRIORITY: Record<string, number> = {
+        NEW: 1,
+        IN_PROGRESS: 2,
+        COMPLETED: 3,
+        CANCELLED: 4
       };
-    });
-  }, [orderTestList, testsMap]);
+
+    const normalizedOrderTestList = React.useMemo(() => {
+      return [...orderTestList]
+        .map(orderTest => {
+          const test = testsMap.get(orderTest.testId);
+          return {
+            ...orderTest,
+            test,
+            orderType: orderTest.orderType ?? test?.type
+          };
+        })
+        .sort((a, b) => {
+          const aPriority = STATUS_PRIORITY[a.status] ?? 99;
+          const bPriority = STATUS_PRIORITY[b.status] ?? 99;
+          if (aPriority !== bPriority) {
+            return aPriority - bPriority;
+          }
+          return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
+        });
+    }, [orderTestList, testsMap]);
 
   const selectableRowIds = useMemo(
     () =>
@@ -733,8 +744,6 @@ const DiagnosticsOrder = props => {
         .filter(Boolean),
     [normalizedOrderTestList]
   );
-
-
 
   const isAllSelected =
     selectableRowIds.length > 0 &&

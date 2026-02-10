@@ -8,12 +8,11 @@ import htmlToDraft from 'html-to-draftjs';
 import React, { useEffect, useState } from 'react';
 import { Editor } from 'react-draft-wysiwyg';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
-
+import { useGetDiagnosticTestTemplateByTestIdQuery } from '@/services/setup/report-template/DiagnosticTestTemplate';
 import { useGetAllReportTemplatesQuery } from '@/services/setup/report-template/reportTemplateService';
 import {
   useUpdateRadiologyReportMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
-import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -30,25 +29,58 @@ import { Col, Form, Row } from 'rsuite';
 type Props = {
   open: boolean;
   setOpen: (v: boolean) => void;
+
   report: any;
   setReport: (r: any) => void;
+
+  orderTest?: any;
+  order?: any;
+
   resultFetch?: () => void;
   attachmentRefetch?: () => void;
+
   disableEdit?: boolean;
+  disableDefaultTemplate?: boolean;
 };
+
+
+
+
+
+
+const isEmptyHtml = (html?: string) => {
+  if (!html) return true;
+  const cleaned = html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, '')
+    .trim();
+  return cleaned.length === 0;
+};
+
 
 const AddReportModal = ({
   open,
   setOpen,
   report,
   setReport,
+  orderTest,
+  order,
   resultFetch,
   attachmentRefetch,
-  disableEdit
+  disableEdit,
+  disableDefaultTemplate = false
 }: Props) => {
+
+
   const dispatch = useAppDispatch();
+  const [userTouchedEditor, setUserTouchedEditor] = useState(false);
+
+  const [defaultApplied, setDefaultApplied] = useState(false);
 
   const [updateReport] = useUpdateRadiologyReportMutation();
+
+
+
 
   const { data: severityLovQueryResponse } =
     useGetLovValuesByCodeQuery('SEVERITY');
@@ -60,8 +92,16 @@ const AddReportModal = ({
       sort: 'name,asc'
     });
 
-  const [attachmentsModalOpen, setAttachmentsModalOpen] =
-    useState(false);
+    const diagnosticTestId = orderTest?.testId;
+    const encounterId = order?.encounterId;
+
+
+  const { data: defaultTemplate } =
+    useGetDiagnosticTestTemplateByTestIdQuery(
+      diagnosticTestId!,
+      { skip: !diagnosticTestId }
+    );
+
   const [editorState, setEditorState] =
     useState(EditorState.createEmpty());
 
@@ -72,19 +112,6 @@ const AddReportModal = ({
       full: t
     })) ?? [];
 
-  useEffect(() => {
-    if (report?.report) {
-      const blocks = htmlToDraft(report.report);
-      const contentState =
-        ContentState.createFromBlockArray(
-          blocks.contentBlocks,
-          blocks.entityMap
-        );
-      setEditorState(EditorState.createWithContent(contentState));
-    } else {
-      setEditorState(EditorState.createEmpty());
-    }
-  }, [report?.report]);
 
   const handleSave = async () => {
     if (!report?.id) {
@@ -97,22 +124,19 @@ const AddReportModal = ({
       return;
     }
 
+    const htmlContent = draftToHtml(
+      convertToRaw(editorState.getCurrentContent())
+    );
+
     try {
-      const htmlContent = draftToHtml(
-        convertToRaw(editorState.getCurrentContent())
-      );
-
-      const updateDTO = {
-        report: htmlContent,
-        severity: report.severity,
-        imageStatus: report.imageStatus,
-        processingStatus: report.processingStatus
-      };
-
-
       await updateReport({
         reportId: report.id,
-        body: updateDTO
+        body: {
+          report: htmlContent,
+          severity: report.severity,
+          imageStatus: report.imageStatus,
+          processingStatus: report.processingStatus
+        }
       }).unwrap();
 
       dispatch(
@@ -121,12 +145,20 @@ const AddReportModal = ({
 
       resultFetch?.();
       setOpen(false);
-    } catch (e) {
+    } catch {
       dispatch(
         notify({ msg: 'Failed to update report', sev: 'error' })
       );
     }
   };
+
+
+
+  const handleEditorChange = (state: EditorState) => {
+    setUserTouchedEditor(true);
+    setEditorState(state);
+  };
+
 
 
   const handleChooseTemplate = (templateId: number) => {
@@ -142,18 +174,84 @@ const AddReportModal = ({
       blocks.entityMap
     );
 
+    setUserTouchedEditor(true); // مهم
     setEditorState(EditorState.createWithContent(content));
-    setReport((prev) => ({ ...prev, report: html }));
   };
+
 
   const isDisabled =
     disableEdit ||
     !report?.id ||
     report?.processingStatus === 'RESULT_APPROVED';
 
-  /* ===============================
-   * Render
-   * =============================== */
+  const safeReportHtml =
+    typeof report?.report === 'string'
+      ? report.report
+      : '';
+
+  const safeDefaultTemplateHtml =
+    typeof defaultTemplate?.templateValue === 'string'
+      ? defaultTemplate.templateValue
+      : '';
+
+
+
+  useEffect(() => {
+    if (!open) return;
+
+    setEditorState(EditorState.createEmpty());
+    setUserTouchedEditor(false);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (userTouchedEditor) return;
+
+    // 1️⃣ Report محفوظ
+    if (!isEmptyHtml(report?.report)) {
+      const blocks = htmlToDraft(report.report);
+      const contentState = ContentState.createFromBlockArray(
+        blocks.contentBlocks,
+        blocks.entityMap
+      );
+      setEditorState(EditorState.createWithContent(contentState));
+      setDefaultApplied(true);
+      return;
+    }
+
+    // 2️⃣ Review mode
+    if (disableDefaultTemplate) {
+      setEditorState(EditorState.createEmpty());
+      setDefaultApplied(true);
+      return;
+    }
+
+    // 3️⃣ Default template
+    if (
+      !defaultApplied &&
+      !isEmptyHtml(defaultTemplate?.templateValue)
+    ) {
+      const blocks = htmlToDraft(defaultTemplate.templateValue);
+      const contentState = ContentState.createFromBlockArray(
+        blocks.contentBlocks,
+        blocks.entityMap
+      );
+      setEditorState(EditorState.createWithContent(contentState));
+      setDefaultApplied(true);
+    }
+  }, [
+    open,
+    report?.report,               // ❗ ركّز هنا
+    defaultTemplate?.templateValue,
+    userTouchedEditor,
+    disableDefaultTemplate,
+    defaultApplied
+  ]);
+
+  console.log("orderTest", orderTest);
+  console.log("order", order);
+  console.log("order", order?.encounterId);
+
   return (
     <MyModal
       title="Add Report"
@@ -162,19 +260,19 @@ const AddReportModal = ({
       steps={[
         { title: 'Report', icon: <FontAwesomeIcon icon={faFileLines} /> }
       ]}
-      actionButtonFunction={isDisabled ? () => {} : handleSave}
+      actionButtonFunction={isDisabled ? () => { } : handleSave}
       isDisabledActionBtn={isDisabled}
       size="40vw"
       bodyheight="65vh"
       content={
         <>
-          <Row className="mb-2">
-            <Col md={24}>
-              <Form fluid>
+        <div className='add-report-modal-radiologist-work-list'>
+          <Form fluid>
                 <MyInput
-                  width="100%"
+                  width="12vw"
                   disabled={isDisabled}
                   fieldName="severity"
+                  fieldLabel='Severity'
                   fieldType="select"
                   selectData={severityLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
@@ -182,27 +280,12 @@ const AddReportModal = ({
                   record={report}
                   setRecord={setReport}
                 />
-              </Form>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={24}>
-              <MyButton
-                appearance="ghost"
-                radius="0px"
-                onClick={() => setAttachmentsModalOpen(true)}
-                color="#969797ff"
-              >
-                <FontAwesomeIcon icon={faUpload} />
-              </MyButton>
-            </Col>
-          </Row>
+
+          </Form>
+
           {!isDisabled && (
-            <Row className="mb-2">
-              <Col md={24}>
-                <Form fluid layout="inline">
+                <Form fluid>
                   <MyInput
-                    column
                     fieldName="selectReadyTemplate"
                     fieldLabel="Choose Ready Template"
                     fieldType="select"
@@ -216,9 +299,9 @@ const AddReportModal = ({
                     }
                   />
                 </Form>
-              </Col>
-            </Row>
           )}
+
+        </div>
 
           {/* Editor */}
           <Row>
@@ -228,7 +311,7 @@ const AddReportModal = ({
             <Col md={24}>
               <Editor
                 editorState={editorState}
-                onEditorStateChange={setEditorState}
+                onEditorStateChange={handleEditorChange}
                 readOnly={isDisabled}
                 placeholder="Write your report here..."
                 editorStyle={{
@@ -242,20 +325,7 @@ const AddReportModal = ({
             </Col>
           </Row>
 
-          {/* Attachments Modal */}
-          <AttachmentUploadModal
-            isOpen={attachmentsModalOpen}
-            setIsOpen={setAttachmentsModalOpen}
-            actionType="add"
-            refecthData={attachmentRefetch}
-            attachmentSource={report}
-            attatchmentType="RADIOLOGY_REPORT"
-            patientKey={report?.patientKey}
-            onSuccess={() => {
-              attachmentRefetch?.();
-              resultFetch?.();
-            }}
-          />
+
         </>
       }
     />

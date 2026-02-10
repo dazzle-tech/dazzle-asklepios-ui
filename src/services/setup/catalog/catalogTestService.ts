@@ -78,7 +78,7 @@ export const catalogDiagnosticTestService = createApi({
       { departmentId: number | string } & PagedParams
     >({
       query: ({ departmentId, page, size, sort = 'id,asc' }) => ({
-        url: '/api/setup/catalog/by-department-and-not',
+        url: '/api/setup/catalog/by-department-or-unassigned',
         params: {
           departmentId,
           page,

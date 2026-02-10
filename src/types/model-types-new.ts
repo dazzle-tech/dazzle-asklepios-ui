@@ -1436,7 +1436,7 @@ export interface DiagnosticOrderTest extends AuditingEntity {
 
   orderId?: number;
   testId?: number;
-
+  diagnosticTestId?: number;
   receivedDepartmentId?: number;
 
   reason?: string;

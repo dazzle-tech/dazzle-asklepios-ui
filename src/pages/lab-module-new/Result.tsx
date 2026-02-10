@@ -715,7 +715,6 @@ const Result = forwardRef<any, Props>(
       }));
     };
 
-    console.log('normalRangesMap', normalRangesMap);
 
 
     useEffect(() => {

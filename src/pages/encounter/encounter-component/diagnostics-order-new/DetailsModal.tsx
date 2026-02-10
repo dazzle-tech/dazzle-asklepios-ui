@@ -160,6 +160,7 @@ const DetailsModal = ({
         content={
           <div className={clsx('', { 'disabled-panel': edit })}>
             <Form fluid>
+              <div className='details-modal-diagnostic-order-inputs'>
                   <MyInput
                     fieldType="select"
                     fieldLabel="Reason"
@@ -169,6 +170,7 @@ const DetailsModal = ({
                     fieldName={'reasonLkey'}
                     record={orderTest}
                     setRecord={setOrderTest}
+                    width={"12vw"}
                   />
 
                   <MyInput
@@ -181,7 +183,7 @@ const DetailsModal = ({
                    record={orderTest}
                     setRecord={setOrderTest}
                     searchable
-                    width={520}
+                    width={"12vw"}
                     hasMore={receivedLabList?.links?.next ? true : false}
                     onFetchMore={() => {
                       if (receivedLabList?.links?.next) {
@@ -190,7 +192,7 @@ const DetailsModal = ({
                       }
                     }}
                   />
-
+              </div>
                   <MyInput
                     height={70}
                     width={'100%'}
