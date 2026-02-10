@@ -838,8 +838,8 @@ const queryParams = React.useMemo(() => {
         rowData.receivedDepartmentId ?? rowData.receivedLabId ?? ''
     },
     {
-      key: 'processingStatusLkey',
-      dataKey: 'processingStatusLkey',
+      key: 'processingStatus',
+      dataKey: 'processingStatus',
       title: <Translate>PROCESSING STATUS</Translate>,
       flexGrow: 1,
       fullText: true,
@@ -1184,13 +1184,15 @@ const queryParams = React.useMemo(() => {
           </div>
 
           <div className="header-third-row">
-            <MyButton onClick={handleRequestNewTestSetup} appearance="ghost">
+            <MyButton onClick={handleRequestNewTestSetup}
+            appearance="ghost">
               <FontAwesomeIcon icon={faVial} />
               Request New TestSetup
             </MyButton>
             {/* Recall Favorite */}
-            <MyButton onClick={() => setRecallFavoriteModal(true)}>
-              <FontAwesomeIcon icon={faStar} />
+            <MyButton disabled={isSubmitDisabled} onClick={() => setRecallFavoriteModal(true)}>
+              <FontAwesomeIcon icon={faStar}
+               />
               Recall Favorite
             </MyButton>
 

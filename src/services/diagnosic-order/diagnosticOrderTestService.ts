@@ -89,7 +89,7 @@ export const diagnosticOrderTestService = createApi({
       } & PageableParams
     >({
       query: ({ orderId, ...params }) => ({
-        url: `/api/patient/diagnostic-orders/${orderId}/tests`,
+        url: `/api/patient/diagnostic-order-tests/by-order/${orderId}`,
         method: 'GET',
         params,
       }),
@@ -124,15 +124,6 @@ export const diagnosticOrderTestService = createApi({
       providesTags: ['DiagnosticOrderTest'],
     }),
 
-    collectSample: builder.mutation<DiagnosticOrderTest, number>({
-      query: id => ({
-        url: `/api/patient/diagnostic-order-tests/${id}/collect-sample`,
-        method: 'POST',
-      }),
-      invalidatesTags: (_r, _e, id) => [
-        { type: 'DiagnosticOrderTest', id },
-      ],
-    }),
 
     acceptDiagnosticOrderTest: builder.mutation<DiagnosticOrderTest, number>({
       query: id => ({
@@ -279,7 +270,6 @@ export const {
   useLazyGetTestsByOrderIdQuery,
   useFilterDiagnosticOrderTestsQuery,
   useLazyFilterDiagnosticOrderTestsQuery,
-  useCollectSampleMutation,
   useAcceptDiagnosticOrderTestMutation,
   useMarkReadyMutation,
   useReviewDiagnosticOrderTestMutation,

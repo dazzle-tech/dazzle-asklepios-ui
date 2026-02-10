@@ -99,7 +99,7 @@ export const diagnosticOrderService = createApi({
       { patientId: number; status?: string } & PageableParams
     >({
       query: ({ patientId, ...params }) => ({
-        url: `/api/patient/patients/${patientId}/diagnostic-orders`,
+        url: `/api/patient/diagnostic-orders/by-patient/${patientId}`,
         method: 'GET',
         params,
       }),
@@ -119,7 +119,7 @@ export const diagnosticOrderService = createApi({
       { encounterId: number; status?: string } & PageableParams
     >({
       query: ({ encounterId, ...params }) => ({
-        url: `/api/patient/encounters/${encounterId}/diagnostic-orders`,
+        url: `/api/patient/diagnostic-orders/by-encounter/{encounterId}`,
         method: 'GET',
         params,
       }),
@@ -139,7 +139,7 @@ export const diagnosticOrderService = createApi({
       { patientId: number; encounterId: number; status?: string } & PageableParams
     >({
       query: ({ patientId, encounterId, ...params }) => ({
-        url: `/api/patient/patients/${patientId}/encounters/${encounterId}/diagnostic-orders`,
+        url: `/api/patient/diagnostic-orders/by-patient/${patientId}/by-encounter/${encounterId}`,
         method: 'GET',
         params,
       }),

@@ -1328,8 +1328,7 @@ export const newDiagnosticOrderTestReportCreateRequestDTO: modelTypes.Diagnostic
     orderTestId: undefined,
     report: '',
     severity: '',
-    processingStatus: undefined,
-    imageStatus: undefined,
+
   };
 
 export const newDiagnosticOrderTestReportUpdateRequestDTO: modelTypes.DiagnosticOrderTestReportUpdateDTO =
@@ -1337,8 +1336,6 @@ export const newDiagnosticOrderTestReportUpdateRequestDTO: modelTypes.Diagnostic
     id: undefined,
     report: '',
     severity: '',
-    processingStatus: undefined,
-    imageStatus: undefined,
   };
 
 export const newDiagnosticOrderTestReportResponseVM: modelTypes.DiagnosticOrderTestReportResponseVM =

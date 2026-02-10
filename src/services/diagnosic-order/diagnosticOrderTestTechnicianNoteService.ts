@@ -73,7 +73,7 @@ export const diagnosticOrderTestTechnicianNoteService = createApi({
             { orderTestId: number | string } & PageableParams
         >({
             query: ({ orderTestId, ...params }) => ({
-                url: `/api/patient/diagnostic-order-tests/${orderTestId}/notes`,
+                url: `/api/patient/diagnostic-order-test-notes/by-diagnostic-order-tests/${orderTestId}`,
                 method: 'GET',
                 params,
             }),
@@ -96,7 +96,7 @@ export const diagnosticOrderTestTechnicianNoteService = createApi({
             { orderId: number | string } & PageableParams
         >({
             query: ({ orderId, ...params }) => ({
-                url: `/api/patient/diagnostic-orders/${orderId}/notes`,
+                url: `/api/patient/diagnostic-order-test-notes/by-diagnostic-orders/${orderId}`,
                 method: 'GET',
                 params,
             }),

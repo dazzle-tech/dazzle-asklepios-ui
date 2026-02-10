@@ -1495,14 +1495,12 @@ export interface DiagnosticOrderUpdateDTO {
   id: number;
   patientId: number;
   encounterId: number;
-  saveDraft?: boolean;
+  // saveDraft?: boolean;
 
   submittedBy?: string;
   submittedDate?: string;
 
   isUrgent?: boolean;
-    fromDepartmentId?: number;
-  fromFacilityId?: number;
 
 }
 

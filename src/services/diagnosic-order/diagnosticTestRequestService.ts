@@ -32,12 +32,14 @@ export interface DiagnosticTestRequestCreateDTO {
   type: TestType;
   fromDepartmentId: number | string;
   fromFacilityId: number | string;
+  indication: string;
 }
 
 export interface DiagnosticTestRequestUpdateDTO {
   id: number | string;
-  name?: string;
-  type?: TestType;
+  name: string;
+  type: TestType;
+  indication: string;
 }
 
 export interface DiagnosticTestRequestRejectDTO {

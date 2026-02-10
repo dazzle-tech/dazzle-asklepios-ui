@@ -409,6 +409,7 @@ const handleRowClick = (row: any) => {
                                 fieldLabel="Indication"
                                 placeholder="Enter clinical indication"
                                 width="100%"
+                                required
                             />
                         </div>
                         <div className='request-test-modal-main-button-container'>

@@ -58,7 +58,7 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
       { orderTestId: number; page: number; size: number }
     >({
       query: ({ orderTestId, page, size }) => ({
-        url: `/api/patient/diagnostic-order-tests/${orderTestId}/collected-samples`,
+        url: `/api/patient/diagnostic-order-test-collected-samples/by-diagnostic-order-tests/${orderTestId}`,
         method: "GET",
         params: { page, size },
       }),
@@ -82,7 +82,7 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
       { orderId: number; page: number; size: number }
     >({
       query: ({ orderId, page, size }) => ({
-        url: `/api/patient/diagnostic-orders/${orderId}/collected-samples`,
+        url: `/api/patient/diagnostic-order-test-collected-samples/by-diagnostic-orders/${orderId}`,
         method: "GET",
         params: { page, size },
       }),
@@ -119,7 +119,7 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
       DiagnosticOrderTestCollectedSampleBulkSameDTO
     >({
       query: (body) => ({
-        url: "/api/patient/diagnostic-order-test-collected-samples/bulk-same",
+        url: "/api/patient/diagnostic-order-test-collected-samples/bulk-with-same-details",
         method: "POST",
         body,
       }),
