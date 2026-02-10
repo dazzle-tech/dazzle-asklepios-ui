@@ -1422,3 +1422,75 @@ export type ConsultationUpdatePayload = {
   extraDocument?: string | null;
   approvalNumber?: number | null;
 };
+
+export type ConsultationPortalSearchParams = {
+  fromDate: string;
+  toDate: string;
+  fromFacilityId: number;
+  practitionerId?: number;
+  toDepartmentId?: number;
+  fromDepartmentIds?: number[];
+  page?: number;
+  size?: number;
+  sort?: string;
+  showRejected?: boolean;
+};
+
+export interface Patient {
+  id?: number;
+
+  mrn?: string | null;
+
+  firstName: string;
+  secondName?: string | null;
+  thirdName?: string | null;
+  lastName: string;
+
+  sexAtBirth?: string | null;
+  dateOfBirth?: Date | null;
+
+  patientClasses?: string | null;
+  isPrivatePatient?: boolean | null;
+
+  firstNameSecondaryLang?: string | null;
+  secondNameSecondaryLang?: string | null;
+  thirdNameSecondaryLang?: string | null;
+  lastNameSecondaryLang?: string | null;
+
+  primaryMobileNumber?: string | null;
+  receiveSms?: boolean | null;
+  secondMobileNumber?: string | null;
+  homePhone?: string | null;
+  workPhone?: string | null;
+  email?: string | null;
+  receiveEmail?: boolean | null;
+  preferredWayOfContact?: string | null;
+
+  nativeLanguage?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactRelation?: string | null;
+  emergencyContactPhone?: string | null;
+
+  role?: string | null;
+  maritalStatus?: string | null;
+  nationality?: string | null;
+  religion?: string | null;
+  ethnicity?: string | null;
+  occupation?: string | null;
+  responsibleParty?: string | null;
+  educationalLevel?: string | null;
+
+  previousId?: string | null;
+  archivingNumber?: string | null;
+
+  details?: string | null;
+  isUnknown?: boolean | null;
+
+  isVerified?: boolean | null;
+  isCompletedPatient?: boolean | null;
+  securityAccessLevel?: string | null;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}

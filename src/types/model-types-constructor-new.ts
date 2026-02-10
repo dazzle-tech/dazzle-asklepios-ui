@@ -1167,3 +1167,74 @@ export const newConsultation: modelTypes.Consultation = {
   lastModifiedBy: null,
   lastModifiedDate: null
 };
+
+export const newConsultationPortalSearchParams: modelTypes.ConsultationPortalSearchParams = {
+  fromDate: '',
+  toDate: '',
+  fromFacilityId: 0,
+  practitionerId: undefined,
+  toDepartmentId: undefined,
+  fromDepartmentIds: [],
+  page: 0,
+  size: 10,
+  sort: 'id,desc',
+  showRejected: false
+};
+
+export const newPatient: modelTypes.Patient = {
+  id: undefined,
+  mrn: '',
+
+  firstName: '',
+  secondName: '',
+  thirdName: '',
+  lastName: '',
+
+  sexAtBirth: null,
+  dateOfBirth: null,
+
+  patientClasses: '',
+  isPrivatePatient: false,
+
+  firstNameSecondaryLang: '',
+  secondNameSecondaryLang: '',
+  thirdNameSecondaryLang: '',
+  lastNameSecondaryLang: '',
+
+  primaryMobileNumber: '',
+  receiveSms: false,
+  secondMobileNumber: '',
+  homePhone: '',
+  workPhone: '',
+  email: '',
+  receiveEmail: false,
+  preferredWayOfContact: null,
+
+  nativeLanguage: '',
+  emergencyContactName: '',
+  emergencyContactRelation: '',
+  emergencyContactPhone: '',
+
+  role: '',
+  maritalStatus: '',
+  nationality: '',
+  religion: '',
+  ethnicity: '',
+  occupation: '',
+  responsibleParty: '',
+  educationalLevel: '',
+
+  previousId: '',
+  archivingNumber: '',
+
+  details: '',
+  isUnknown: false,
+
+  isVerified: false,
+  isCompletedPatient: false,
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
