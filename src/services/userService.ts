@@ -164,6 +164,14 @@ import { BaseQuery, onQueryStarted } from '../newApi';
         query: (roleId: number) => `/api/setup/role/${roleId}/screens`,
       }),
 
+      getUserFullNameByLogin: builder.query({
+        query: (login: string) => ({
+          url: `/api/setup/user-departments/user/full-name?login=${encodeURIComponent(login)}`,
+          method: 'GET',
+          responseHandler: 'text',
+        }),
+        transformResponse: (response: string) => response,
+      }),
 
       updateRolePermissions: builder.mutation({
         query: ({ roleId, permissions }) => ({
@@ -227,4 +235,5 @@ import { BaseQuery, onQueryStarted } from '../newApi';
     useFinishCreatePasswordMutation,
     useValidateCreatePasswordKeyQuery,
     useLazyValidateCreatePasswordKeyQuery,
+    useGetUserFullNameByLoginQuery,
   } = userService;
