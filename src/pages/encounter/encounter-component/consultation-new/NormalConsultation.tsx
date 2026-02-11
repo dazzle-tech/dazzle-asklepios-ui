@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Checkbox, Loader, Form } from 'rsuite';
+import { Checkbox, Loader, Form, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
@@ -13,10 +13,11 @@ import CancellationModal from '@/components/CancellationModal';
 import MyModal from '@/components/MyModal/MyModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import MyInput from '@/components/MyInput';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
+import { conjureValueBasedOnIDFromList, formatEnumString, formatDateWithoutSeconds } from '@/utils';
 
 import {
   useCancelMutation,
@@ -60,7 +61,6 @@ const NormalConsultation = props => {
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
 
-  console.log('user-======>', user);
   const [selectedRows, setSelectedRows] = useState<Consultation[]>([]);
   const [selectedRow, setSelectedRow] = useState<Consultation | null>(null);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -166,18 +166,6 @@ const NormalConsultation = props => {
     { skip: !encounterIdStr || !hasDateRange || showCanceled }
   );
 
-  console.log({ encounterIdStr, showCanceled, hasDateRange });
-  console.log({
-    all: {
-      skip: !encounterIdStr || !showCanceled || hasDateRange,
-      isUninitialized: allQuery.isUninitialized
-    },
-    notCancelled: {
-      skip: !encounterIdStr || showCanceled || hasDateRange,
-      isUninitialized: notCancelledQuery.isUninitialized
-    }
-  });
-
   const consultationData = hasDateRange
     ? showCanceled
       ? dateRangeQuery.data
@@ -203,6 +191,13 @@ const NormalConsultation = props => {
   const rows: Consultation[] = consultationData?.data ?? [];
   const totalCount = consultationData?.totalCount ?? 0;
   const isLoading = consultationLoading;
+  const sortedRows = useMemo(() => {
+    return [...rows].sort((first, second) => {
+      const firstTime = first.createdDate ? new Date(first.createdDate).getTime() : -Infinity;
+      const secondTime = second.createdDate ? new Date(second.createdDate).getTime() : -Infinity;
+      return secondTime - firstTime;
+    });
+  }, [rows]);
 
   const isFacilitiesDataLoading = facilitiesLoading;
   const isTargetsDataLoading =
@@ -276,7 +271,7 @@ const NormalConsultation = props => {
       setOpenConfirmCancelModel(false);
       handleRefetchData();
     } catch {
-      dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
+      dispatch(notify({ msg: 'Cancel failed', sev: 'warning' }));
       setOpenConfirmCancelModel(false);
     }
   };
@@ -324,6 +319,21 @@ const NormalConsultation = props => {
         )
       },
       {
+        key: 'created',
+        title: <Translate>Created By / At</Translate>,
+        expandable: true,
+        flexGrow: 2,
+        render: (rowData: Consultation) => (
+          <>
+            {rowData.createdBy ?? ''}
+            <br />
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(rowData.createdDate)}
+            </span>
+          </>
+        )
+      },
+      {
         key: 'target',
         title: <Translate>CONSULTATION TARGET</Translate>,
         flexGrow: 1,
@@ -363,15 +373,64 @@ const NormalConsultation = props => {
         key: 'status',
         title: <Translate>STATUS</Translate>,
         flexGrow: 1,
-        render: (rowData: Consultation) => (
-          <span>{formatEnumString(String(rowData.status ?? ''))}</span>
-        )
+        render: (rowData: Consultation) => {
+          const status = String(rowData.status ?? '').toUpperCase();
+          const statusDisplay = formatEnumString(status);
+          let color = '#6c757d';
+
+          if (status === 'REQUESTED') color = '#E6A100';
+          if (status === 'CONFIRMED') color = '#0DAA41';
+          if (status === 'REJECTED') color = '#D64545';
+          if (status === 'SUBMITTED') color = '#0B5ED7';
+          if (status === 'READY') color = '#17A2B8';
+          if (status === 'CANCELLED') color = '#D64545';
+          if (status === 'NEW') color = '#17A2B8';
+
+          return <MyBadgeStatus contant={statusDisplay} color={color} />;
+        }
+      },
+      {
+        key: 'questionToConsultant',
+        title: <Translate>Question To Consultant</Translate>,
+        flexGrow: 4,
+        render: row => {
+          const text = row.consultationContent || '';
+          const MAX = 20;
+          const isLong = text.length > MAX;
+          const shortText = isLong ? text.substring(0, MAX) + '...' : text;
+
+          return (
+            <Whisper
+              trigger={isLong ? 'hover' : 'none'}
+              placement="top"
+              speaker={<Tooltip style={{ maxWidth: '300px', whiteSpace: 'normal' }}>{text}</Tooltip>}
+            >
+              <span style={{ cursor: isLong ? 'pointer' : 'default' }}>{shortText}</span>
+            </Whisper>
+          );
+        }
       },
       {
         key: 'response',
         title: <Translate>RESPONSE</Translate>,
         flexGrow: 1,
-        render: (rowData: Consultation) => (rowData.responseText)
+        expandable: true,
+        render: row => {
+          const text = row.responseText || '';
+          const MAX = 20;
+          const isLong = text.length > MAX;
+          const shortText = isLong ? text.substring(0, MAX) + '...' : text;
+
+          return (
+            <Whisper
+              trigger={isLong ? 'hover' : 'none'}
+              placement="top"
+              speaker={<Tooltip style={{ maxWidth: '300px', whiteSpace: 'normal' }}>{text}</Tooltip>}
+            >
+              <span style={{ cursor: isLong ? 'pointer' : 'default' }}>{shortText}</span>
+            </Whisper>
+          );
+        }
       },
       {
         key: 'attachedFile',
@@ -459,7 +518,7 @@ const NormalConsultation = props => {
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
-          data={rows}
+          data={sortedRows}
           onRowClick={(rowData: Consultation) => {
             setConsultation(rowData);
             setSelectedRow(rowData);
