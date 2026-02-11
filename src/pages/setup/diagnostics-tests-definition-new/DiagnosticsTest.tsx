@@ -31,6 +31,7 @@ import Coding from './Coding';
 import DiagnosticTestTemplate from './DiagnosticTestTemplate';
 import Profile from './Profile';
 import './styles.less';
+import DefaultProfileIndicator from './DefaultProfileIndicator';
 
 const DiagnosticsTest = () => {
   const dispatch = useAppDispatch();
@@ -81,6 +82,7 @@ const DiagnosticsTest = () => {
     useToggleDiagnosticTestActiveMutation();
   const [diagnosticTestByTypes] = useLazyGetDiagnosticTestsByTypeQuery();
   const [diagnosticTestByName] = useLazyGetDiagnosticTestsByNameQuery();
+  const [openNormalRangesDirectly, setOpenNormalRangesDirectly] = useState(false);
 
  const extractErrorMessage = (error: any): string => {
   const data = error?.data;
@@ -469,6 +471,20 @@ const DiagnosticsTest = () => {
           }}
         />
       )}
+
+      {rowData?.type === 'LABORATORY' && (
+        <DefaultProfileIndicator
+          testId={rowData.id}
+          testType={rowData.type}
+          onClick={() => {
+            setDiagnosticsTest(rowData);
+            setOpenNormalRangesDirectly(true);
+            setOpenProfileModal(true);
+          }}
+        />
+      )}
+
+
     </div>
   );
 
@@ -628,6 +644,13 @@ const DiagnosticsTest = () => {
   }, [location.pathname, dispatch]);
   // update list when filter is changed
 
+    useEffect(() => {
+      if (!openProfileModal) {
+        setOpenNormalRangesDirectly(false);
+      }
+    }, [openProfileModal]);
+
+
   return (
     <Panel>
       <MyTable
@@ -737,7 +760,9 @@ const DiagnosticsTest = () => {
         open={openProfileModal}
         setOpen={setOpenProfileModal}
         diagnosticsTest={diagnosticsTest}
+        openNormalRanges={openNormalRangesDirectly}
       />
+
       {openTemplateModal && diagnosticsTest?.id && (
         <DiagnosticTestTemplate
           open={openTemplateModal}

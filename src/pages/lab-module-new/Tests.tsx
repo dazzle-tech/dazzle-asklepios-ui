@@ -38,12 +38,13 @@ import {
   DiagnosticStatus,
   DiagnosticOrderTestStatus
 } from '@/types/model-types-new';
-import ExternalLabModal from './ExternalLabModal';
+import ExternalLabModal from './ExternalLabAction';
 import {
   useGetExternalTestByTestIdQuery
 } from '@/services/diagnosic-order/externalTestService';
 import MyButton from '@/components/MyButton/MyButton';
 import AddResultModal from './AddResultModal';
+import ExternalLabAction from './ExternalLabAction';
 
 type Props = {
   order: any;
@@ -114,22 +115,22 @@ const Tests = forwardRef<any, Props>(
       sort: "testId,asc",
     });
 
-      const {
-        data: todayTestsResponse
-      } = useFilterDiagnosticOrderTestsQuery({
-        page: 0,
-        size: 1000,
-        orderType: 'LABORATORY',
-        receivedDepartmentId: selectedDepartment?.departmentId,
-        createdDateFrom: startOfDay(today).toISOString(),
-        createdDateTo: endOfDay(today).toISOString()
-      });
+    const {
+      data: todayTestsResponse
+    } = useFilterDiagnosticOrderTestsQuery({
+      page: 0,
+      size: 1000,
+      orderType: 'LABORATORY',
+      receivedDepartmentId: selectedDepartment?.departmentId,
+      createdDateFrom: startOfDay(today).toISOString(),
+      createdDateTo: endOfDay(today).toISOString()
+    });
 
-const todayDepartmentTests = todayTestsResponse?.data ?? [];
+    const todayDepartmentTests = todayTestsResponse?.data ?? [];
 
-useEffect(() => {
-  onTestsLoaded?.(todayDepartmentTests);
-}, [todayDepartmentTests]);
+    useEffect(() => {
+      onTestsLoaded?.(todayDepartmentTests);
+    }, [todayDepartmentTests]);
 
 
 
@@ -368,59 +369,6 @@ useEffect(() => {
       );
     };
 
-    const ExternalLabButton = ({
-      rowData,
-      onClick
-    }: {
-      rowData: any;
-      onClick: () => void;
-    }) => {
-      const isExternal = rowData.orderType === 'EXTERNAL';
-
-      const { data: externalTest } =
-        useGetExternalTestByTestIdQuery(
-          isExternal ? rowData.id : skipToken
-        );
-
-      const isRejected =
-        rowData.status === DiagnosticOrderTestStatus.REJECTED ||
-        rowData.processingStatus === DiagnosticOrderTestStatus.REJECTED;
-
-      const isSentToExternal = !!externalTest?.id;
-
-      const isDisabled = isRejected || isSentToExternal || !isExternal;
-      const color = isRejected
-        ? 'gray'
-        : isSentToExternal
-          ? '#1675e0'
-          : 'inherit';
-
-      return (
-        <Whisper
-          placement="top"
-          trigger="hover"
-          speaker={
-            <Tooltip>Send to External Lab</Tooltip>
-          }
-        >
-          <FontAwesomeIcon
-            icon={faRightFromBracket}
-            style={{
-              fontSize: '1em',
-              marginRight: 10,
-              cursor: isDisabled ? 'not-allowed' : 'pointer',
-              color,
-              opacity: isDisabled ? 0.4 : 1
-            }}
-            onClick={() => {
-              if (isDisabled) return;
-              onClick();
-            }}
-          />
-        </Whisper>
-      );
-    };
-
     const handleBulkAccept = async () => {
       if (!selectedRows.length) {
         dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
@@ -636,7 +584,6 @@ useEffect(() => {
         align: 'center',
         render: (rowData: any) => {
           const hasNote =
-            rowData.hasNote === true ||
             localHasNoteIds.includes(rowData.id);
 
           return (
@@ -811,13 +758,13 @@ useEffect(() => {
 
               </Whisper>
 
-              <ExternalLabButton
+              <ExternalLabAction
                 rowData={rowData}
-                onClick={() => {
-                  setTest(rowData);
-                  setOpenExternalLabModal(true);
+                onSuccess={async () => {
+                  await refetchAllLabData();
                 }}
               />
+
 
             </HStack>
           );
@@ -944,26 +891,28 @@ useEffect(() => {
 
     const filters = () => (
       <Form>
-        <div style={{display:'flex',
-        flexDirection:'row',
-        justifyContent:'space-between'}}>
-        <MyInput
-          fieldType="select"
-          fieldName="value"
-          fieldLabel='Category'
-          width={200}
-          placeholder="Select Category"
-          selectData={labCatLovQueryResponse?.object}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={testKeyFilter}
-          setRecord={setTestKeyFilter}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between'
+        }}>
+          <MyInput
+            fieldType="select"
+            fieldName="value"
+            fieldLabel='Category'
+            width={200}
+            placeholder="Select Category"
+            selectData={labCatLovQueryResponse?.object}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={testKeyFilter}
+            setRecord={setTestKeyFilter}
 
-          searchable={false}
-        />
-        <div className='test-table-buttons-main-container'>
-          {tablebuttons}
-        </div>
+            searchable={false}
+          />
+          <div className='test-table-buttons-main-container'>
+            {tablebuttons}
+          </div>
         </div>
       </Form>
     );
@@ -1064,14 +1013,7 @@ useEffect(() => {
           }}
         />
 
-        <ExternalLabModal
-          open={openExternalLabModal}
-          setOpen={setOpenExternalLabModal}
-          orderTest={test}
-          onSuccess={async () => {
-            await refetchAllLabData();
-          }}
-        />
+
 
         <CancellationModal
           open={openBulkRejectModal}

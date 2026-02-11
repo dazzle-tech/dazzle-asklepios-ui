@@ -160,7 +160,6 @@ const AddResultModal = ({
     ].includes(resultType);
 
     const payload: any = {
-      orderId: orderTest.orderId,
       orderTestId: orderTest.id,
       profileTestId: profile.id,
       ...(isNumber

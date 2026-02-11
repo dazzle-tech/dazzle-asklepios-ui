@@ -4,18 +4,17 @@ import { BaseQuery } from '@/newApi';
 export interface ExternalTest {
   id?: number;
   testId: number;
-  externalLabId?: number;
-  externalLabName?: string;
-  notes?: string;
+  facilityName: string;
+  reason: string;
 
-  createdBy?: string;
-  createdDate?: string;
+  createdBy: string;
+  createdDate: string;
 }
 
 export interface ExternalTestCreateDTO {
   testId: number;
-  externalLabId?: number;
-  notes?: string;
+  facilityName?: string;
+  reason?: string;
 }
 
 export const externalTestService = createApi({

@@ -169,7 +169,7 @@ const Result = forwardRef<any, Props>(
     } = useFilterDiagnosticOrderTestResultsQuery(
       order?.id
         ? {
-          orderIds:[ order.id],
+          orderIdIn:[ order.id],
           page: pageIndex,
           size: rowsPerPage,
           ...(categoryFilter.value
@@ -436,6 +436,7 @@ const Result = forwardRef<any, Props>(
             case 'NORMAL_MARKER':
               return 'Normal';
             case 'UNKNOWN':
+              
               return 'Unknown';
             case 'UPPER_LIMIT':
               return (

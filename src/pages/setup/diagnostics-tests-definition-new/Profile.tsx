@@ -37,7 +37,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import SearchIcon from '@rsuite/icons/Search';
 import { useGetLovsQuery } from '@/services/setupService';
 
-const Profile = ({ open, setOpen, diagnosticsTest }) => {
+const Profile = ({ open, setOpen, diagnosticsTest, openNormalRanges }) => {
   const dispatch = useAppDispatch();
   const [diagnosticsTestProfile, setDiagnosticsTestProfile] = useState<DiagnosticTestProfile>({
     ...newDiagnosticTestProfile
@@ -646,6 +646,14 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
     }
   }, [diagnosticsTestProfile.listOfValueId, lovListResponseData]);
 
+  useEffect(() => {
+    if (open && openNormalRanges) {
+      setOpenChild(true);
+    }
+  }, [open, openNormalRanges]);
+
+
+
   return (
     <ChildModal
       actionButtonLabel="Save"
@@ -666,7 +674,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"
       subChildContent={conjureFormContentOfSecondChildModal}
-      mainSize="25vw"
+      mainSize="xs"
       childSize="sm"
     />
   );

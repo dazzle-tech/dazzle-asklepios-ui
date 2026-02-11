@@ -101,7 +101,6 @@ const handleSave = async () => {
       id: result.id,
     body: {
     id: result.id,
-    orderId: result.orderId,
     orderTestId: result.orderTestId,
     profileTestId: result.profileTestId,
 

@@ -32,7 +32,7 @@ type PagedResult<T> = {
 };
 
 export type DiagnosticOrderTestResultFilterParams = {
-  orderId?: number;
+  orderIdIn?: number;
   orderTestId?: number;
   profileTestId?: number;
 

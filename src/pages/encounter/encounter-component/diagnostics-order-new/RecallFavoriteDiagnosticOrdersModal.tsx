@@ -26,8 +26,6 @@ const RecallFavoriteDiagnosticOrdersModal = ({
 
   useEffect(() => {
     if (!open) return;
-
-    // 🔥 نفس نمط Add Tests
     setLeftItems(favoriteTests);
     setRightItems([]);
     setSearchTerm('');

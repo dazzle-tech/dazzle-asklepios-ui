@@ -1549,7 +1549,6 @@ export interface BulkRejectDTO {
 
 
 export interface DiagnosticOrderTestResultCreateDTO {
-  orderId: number;
   orderTestId: number;
   profileTestId?: number | null;
 
@@ -1563,7 +1562,6 @@ export interface DiagnosticOrderTestResultCreateDTO {
 export interface DiagnosticOrderTestResultUpdateDTO {
   id: number;
 
-  orderId: number;
   orderTestId: number;
   profileTestId?: number | null;
 
@@ -1702,3 +1700,4 @@ export interface DiagnosticOrderTestReportResponseVM {
   lastModifiedBy?: string;
   lastModifiedDate?: string;
 }
+

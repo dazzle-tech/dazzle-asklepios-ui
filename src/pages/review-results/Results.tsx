@@ -114,7 +114,7 @@ const Result = forwardRef<any, any>(
       fromDate: today,
       toDate: today
     });
-    const [orderIds, setOrderIds] = useState<number[] | null>(null);
+    const [orderIdIn, setOrderIdIn] = useState<number[] | null>(null);
     const [orderDate, setOrderDate] = useState({ fromDate: null, toDate: null });
     const [showReview, setShowReview] = useState(false);
     const [showAbnormal, setShowAbnormal] = useState(false);
@@ -125,6 +125,7 @@ const Result = forwardRef<any, any>(
     const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
     const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
 
@@ -191,10 +192,10 @@ const Result = forwardRef<any, any>(
       }
 
       if (orderDate.fromDate || orderDate.toDate) {
-        if (orderIds && orderIds.length > 0) {
-          params.orderIds = orderIds;
+        if (orderIdIn && orderIdIn.length > 0) {
+          params.orderIdIn = orderIdIn;
         } else {
-          params.orderIds = [-1];
+          params.orderIdIn = [-1];
         }
       }
 
@@ -206,7 +207,7 @@ const Result = forwardRef<any, any>(
       approvalDate,
       showReview,
       showAbnormal,
-      orderIds,
+      orderIdIn,
       orderDate
     ]);
 
@@ -216,7 +217,12 @@ const Result = forwardRef<any, any>(
       data: resultsResponse,
       isFetching,
       refetch
-    } = useFilterDiagnosticOrderTestResultsQuery(filterParams);
+    } = useFilterDiagnosticOrderTestResultsQuery({
+        page,
+        size: rowsPerPage,
+        sort: 'id,desc',
+        params: filterParams
+        });
 
     useImperativeHandle(ref, () => ({ refetch }));
 
@@ -486,7 +492,7 @@ const Result = forwardRef<any, any>(
       const { fromDate, toDate } = orderDate;
 
       if (!fromDate && !toDate) {
-        setOrderIds(null);
+        setOrderIdIn(null);
         return;
       }
 
@@ -503,9 +509,9 @@ const Result = forwardRef<any, any>(
         .unwrap()
         .then(res => {
           const ids = (res?.data ?? []).map((o: any) => o.id);
-          setOrderIds(ids);
+          setOrderIdIn(ids);
         })
-        .catch(() => setOrderIds([]));
+        .catch(() => setOrderIdIn([]));
     }, [orderDate]);
 
 
