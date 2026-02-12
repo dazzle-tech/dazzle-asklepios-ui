@@ -112,7 +112,7 @@ const emptyFamilyHistory = {
   patientId: undefined,
   condition: '',
   relation: null,
-  inheritedDiseases: null
+  inheritedDiseases: false
 };
 
 /*  COMPONENT  */
@@ -168,8 +168,8 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
       id: formData.id,
       patientId: Number(patient.key),
       condition: formData.condition,
-      relation: formData.relation, // ENUM STRING
-      inheritedDiseases: formData.inheritedDiseases
+      relation: formData.relation,
+      inheritedDiseases: Boolean(formData.inheritedDiseases)
     };
 
     try {

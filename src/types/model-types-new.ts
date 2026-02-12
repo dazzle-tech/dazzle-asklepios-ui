@@ -1361,7 +1361,7 @@ export interface FamilyHistory {
   patientId: number;
   condition: string;
   relation: string; // enum Relations as STRING
-  inheritedDiseases?: string | null;
+  inheritedDiseases?: boolean;
 
   createdBy?: string;
   createdDate?: Date | null;
@@ -1394,7 +1394,7 @@ export interface SurgicalHistory {
   patientId: number;
 
   surgery: string;
-  dateOfSurgery: string;
+  dateOfSurgery: string | number | Date | null;
   facility: string;
 
   anesthesiaType?: string | null;
@@ -1415,21 +1415,21 @@ export interface SocialHistory {
   id?: number;
   patientId: number;
 
-  isCurrentSmoker?: boolean | null;
+  isCurrentSmoker?: boolean;
   smokeStartDate?: string | null;
   cigaretteAmount?: number | null;
   cigaretteType?: string | null;
 
-  isPreviousSmoker?: boolean | null;
+  isPreviousSmoker?: boolean;
   smokeQuitDate?: string | null;
 
-  exposureToSecondHandSmoke?: boolean | null;
+  exposureToSecondHandSmoke?: boolean;
 
-  alcoholConsumption?: boolean | null;
+  alcoholConsumption?: boolean;
   typeOfAlcohol?: string | null;
   alcoholSinceWhen?: string | null;
 
-  substanceUse?: boolean | null;
+  substanceUse?: boolean;
   route?: string | null;
   frequency?: string | null;
 

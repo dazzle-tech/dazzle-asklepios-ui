@@ -22,6 +22,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
+  // 1️⃣ Handle Bean Validation field errors
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
     const normalizeMsg = (msg: string) => {
       const m = (msg || '').toLowerCase();
@@ -42,16 +43,38 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   }
 
   const messageProp: string = data?.message || '';
-  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
+  const detail: string = data?.detail || '';
+  const errorKey = messageProp?.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
 
+  // 2️⃣ Handle surgical_history duplicate (case-insensitive unique index)
+  if (
+    detail?.includes('ux_surgical_history_patient_surgery_date_ci') ||
+    messageProp?.includes('ux_surgical_history_patient_surgery_date_ci')
+  ) {
+    dispatch(
+      notify({
+        msg: `This surgery already exists for this patient on the same date.${suffix}`,
+        sev: 'error'
+      })
+    );
+    return;
+  }
+
+  // 3️⃣ Handle mapped backend error keys
+  if (errorKey && keyMap[errorKey]) {
+    dispatch(
+      notify({
+        msg: keyMap[errorKey] + suffix,
+        sev: 'error'
+      })
+    );
+    return;
+  }
+
+  // 4️⃣ Fallback
   dispatch(
     notify({
-      msg:
-        keyMap[errorKey] ||
-        data?.detail ||
-        data?.title ||
-        data?.message ||
-        'Unexpected error' + suffix,
+      msg: data?.detail || data?.title || data?.message || 'Unexpected error' + suffix,
       sev: 'error'
     })
   );
@@ -61,15 +84,52 @@ const SURGICAL_HISTORY_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Surgical history payload is required.',
   'patient.invalid': 'Invalid patient reference.',
   'anesthesia.required': 'Anesthesia Type is required.',
-  duplicate: 'Surgical history already exists.',
-  'db.constraint': 'Database constraint violation.',
+  duplicate: 'This surgery already exists for this patient on the same date.',
+  'db.constraint': 'This surgery already exists for this patient on the same date.',
   notfound: 'Surgical history not found.'
+};
+
+type SurgicalHistoryForm = Omit<
+  SurgicalHistory,
+  'dateOfSurgery' | 'adverseReactionsToAnesthesia'
+> & {
+  dateOfSurgery: Date | string | number | null;
+  adverseReactionsToAnesthesia: string[];
+};
+
+const emptySurgicalHistoryForm: SurgicalHistoryForm = {
+  ...newSurgicalHistory,
+  dateOfSurgery: null,
+  adverseReactionsToAnesthesia: []
+};
+
+const toDate = (value: Date | string | number | null | undefined) => {
+  if (value === null || value === undefined || value === '') return null;
+  const d = value instanceof Date ? new Date(value) : new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+const toNoonTimestamp = (value: Date | string | number | null | undefined) => {
+  const d = toDate(value);
+  if (!d) return null;
+  // Use local noon to avoid day-shift when the DB column is date-only
+  d.setHours(12, 0, 0, 0);
+  return d.getTime();
+};
+
+const toStringArray = (value: string | string[] | null | undefined) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  return value
+    .split(',')
+    .map(v => v.trim())
+    .filter(Boolean);
 };
 
 const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
 
-  const [formData, setFormData] = useState<SurgicalHistory>(newSurgicalHistory);
+  const [formData, setFormData] = useState<SurgicalHistoryForm>(emptySurgicalHistoryForm);
   const [openImplants, setOpenImplants] = useState({ open: false });
 
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
@@ -82,19 +142,17 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   useEffect(() => {
     if (initialData) {
       setFormData({
+        ...emptySurgicalHistoryForm,
         ...initialData,
         patientId: Number(patient?.key),
-        adverseReactionsToAnesthesia:
-          typeof initialData.adverseReactionsToAnesthesia === 'string'
-            ? initialData.adverseReactionsToAnesthesia.split(',')
-            : initialData.adverseReactionsToAnesthesia || []
+        dateOfSurgery: toDate(initialData.dateOfSurgery),
+        adverseReactionsToAnesthesia: toStringArray(initialData.adverseReactionsToAnesthesia)
       });
       setOpenImplants({ open: initialData.hasImplantsOrDevices ?? false });
     } else {
       setFormData({
-        ...newSurgicalHistory,
-        patientId: Number(patient?.key),
-        adverseReactionsToAnesthesia: []
+        ...emptySurgicalHistoryForm,
+        patientId: Number(patient?.key)
       });
       setOpenImplants({ open: false });
     }
@@ -110,10 +168,11 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       errors.push('Surgery is required');
     }
 
-    if (!formData.dateOfSurgery) {
+    const surgeryDateValue = toDate(formData.dateOfSurgery);
+    if (!surgeryDateValue) {
       errors.push('Date of surgery is required');
     } else {
-      const surgeryDate = new Date(formData.dateOfSurgery);
+      const surgeryDate = new Date(surgeryDateValue);
       surgeryDate.setHours(0, 0, 0, 0);
       if (surgeryDate > today) {
         errors.push('Date of surgery cannot be in the future');
@@ -141,12 +200,12 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     const payload = {
       ...formData,
       patientId: Number(patient?.key),
-      dateOfSurgery: formData.dateOfSurgery ? new Date(formData.dateOfSurgery).getTime() : null,
+      dateOfSurgery: toNoonTimestamp(formData.dateOfSurgery),
       hasImplantsOrDevices: openImplants.open,
       implantsOrDevicesDescription: openImplants.open
         ? formData.implantsOrDevicesDescription
         : null,
-      adverseReactionsToAnesthesia: formData.adverseReactionsToAnesthesia?.length
+      adverseReactionsToAnesthesia: formData.adverseReactionsToAnesthesia.length
         ? formData.adverseReactionsToAnesthesia.join(',')
         : null
     };

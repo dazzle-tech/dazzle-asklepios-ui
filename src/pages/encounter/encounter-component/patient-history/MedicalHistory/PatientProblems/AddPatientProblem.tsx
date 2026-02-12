@@ -218,6 +218,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         record={formData}
         setRecord={setFormData}
         searchable={false}
+        required
       />
 
       <MyInput

@@ -1138,7 +1138,7 @@ export const newFamilyHistory: modelTypes.FamilyHistory = {
   patientId: 0,
   condition: '',
   relation: 'FATHER',
-  inheritedDiseases: null,
+  inheritedDiseases: false,
 
   createdBy: '',
   createdDate: null,
@@ -1171,7 +1171,7 @@ export const newSurgicalHistory: modelTypes.SurgicalHistory = {
   patientId: 0,
 
   surgery: '',
-  dateOfSurgery: '',
+  dateOfSurgery: null,
   facility: '',
 
   anesthesiaType: null,
@@ -1192,21 +1192,21 @@ export const newSocialHistory: modelTypes.SocialHistory = {
   id: undefined,
   patientId: 0,
 
-  isCurrentSmoker: null,
+  isCurrentSmoker: false,
   smokeStartDate: null,
   cigaretteAmount: null,
   cigaretteType: null,
 
-  isPreviousSmoker: null,
+  isPreviousSmoker: false,
   smokeQuitDate: null,
 
-  exposureToSecondHandSmoke: null,
+  exposureToSecondHandSmoke: false,
 
-  alcoholConsumption: null,
+  alcoholConsumption: false,
   typeOfAlcohol: null,
   alcoholSinceWhen: null,
 
-  substanceUse: null,
+  substanceUse: false,
   route: null,
   frequency: null,
 

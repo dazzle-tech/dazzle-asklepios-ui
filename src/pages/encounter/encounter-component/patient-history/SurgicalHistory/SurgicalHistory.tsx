@@ -124,6 +124,7 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
                 <MdDelete
                   size={22}
                   className="pointer"
+                  fill="var(--primary-pink)"
                   onClick={() => {
                     setRowToDelete(row);
                     setOpenDeleteModal(true);

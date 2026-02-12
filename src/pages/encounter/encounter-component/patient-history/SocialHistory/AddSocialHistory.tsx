@@ -142,20 +142,20 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
 
       smokeStartDate:
         record.isCurrentSmoker && record.smokeStartDate
-          ? new Date(record.smokeStartDate).getTime()
+          ? new Date(record.smokeStartDate).toISOString()
           : null,
 
       smokeQuitDate:
         record.isPreviousSmoker && record.smokeQuitDate
-          ? new Date(record.smokeQuitDate).getTime()
+          ? new Date(record.smokeQuitDate).toISOString()
           : null,
 
       alcoholSinceWhen:
         record.alcoholConsumption && record.alcoholSinceWhen
-          ? new Date(record.alcoholSinceWhen).getTime()
+          ? new Date(record.alcoholSinceWhen).toISOString()
           : null
     };
-
+    console.log('Payload to save ==> ', payload);
     try {
       if (record.id) {
         await updateSocialHistory(payload).unwrap();
