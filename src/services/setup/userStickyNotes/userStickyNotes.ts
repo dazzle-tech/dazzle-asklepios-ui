@@ -11,7 +11,7 @@ export const userStickyNotesService = createApi({
     // 🔹 Get user sticky notes
     getAlluserStickyNotesByUserId: builder.query({
       query: user_id => ({
-        url: `/api/setup/user-sticky-notes/${user_id}`,
+        url: `/api/patient/user-sticky-notes/${user_id}`,
         method: "GET",
       }),
       providesTags: ["UserStickyNotesResponseVM"],
@@ -19,7 +19,7 @@ export const userStickyNotesService = createApi({
 
      createUserStickyNotes: builder.mutation({
       query: userStickyNotesCreateVM => ({
-        url: "/api/setup/user-sticky-notes",
+        url: "/api/patient/user-sticky-notes",
         method: "POST",
         body: userStickyNotesCreateVM,
       }),
@@ -28,7 +28,7 @@ export const userStickyNotesService = createApi({
 
     deleteUserStickyNotes: builder.mutation({
       query: id => ({
-        url: `/api/setup/user-sticky-notes/${id}`,
+        url: `/api/patient/user-sticky-notes/${id}`,
         method: "DELETE",
       }),
     }),
