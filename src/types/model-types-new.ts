@@ -1360,3 +1360,35 @@ export interface OrganizationDefinition {
   contactLandNumber?: string;
   taxValue?: number;
 }
+
+export type PatientServiceAndProduct = {
+  id: number;
+  patientId: number;
+  encounterId: number;
+  category: string;
+  serviceId?: number | null;
+  productId?: number | null;
+  productType?: string | null;
+  quantity: number;
+  createdBy?: string;
+  createdDate?: string;
+  lastModifiedBy?: string;
+  lastModifiedDate?: string;
+};
+
+export type PatientServiceProductCreateDTO = {
+  patientId: number;
+  encounterId: number;
+  category: string;
+  serviceId?: number;
+  productId?: number;
+  quantity: number;
+};
+
+export type PatientServiceProductUpdateDTO = {
+  id: number;
+  category: string;
+  serviceId?: number;
+  productId?: number;
+  quantity: number;
+};
