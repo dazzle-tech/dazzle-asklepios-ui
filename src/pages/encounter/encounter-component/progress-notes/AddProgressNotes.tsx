@@ -116,7 +116,7 @@ const AddProgressNotes = ({ open, setOpen, progressNote, patient, encounter, edi
     try {
       if (formData.id) {
         await updateNote({
-          id: formData.id,
+          id: formData.id!,
           noteText: formData.noteText
         }).unwrap();
 

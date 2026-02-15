@@ -16,9 +16,11 @@ import { notify } from '@/utils/uiReducerActions';
 import { formatDateWithoutSeconds } from '@/utils';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
-  useFindByEncounterQuery,
+  useFindByEncounterNotCancelledQuery,
+  useFindByEncounterAllQuery,
   useCancelMutation
 } from '@/services/patients/progressNoteService';
+
 import { ProgressNote } from '@/types/model-types-new';
 import { newProgressNote } from '@/types/model-types-constructor-new';
 import ExpandableText from '@/components/ExpandMore/ExpandableText';
@@ -56,10 +58,13 @@ const ProgressNotes: React.FC = () => {
     };
   }, [dispatch]);
 
-  const { data, isLoading, refetch } = useFindByEncounterQuery(
+  const queryHook = filterForm.showCancelled
+    ? useFindByEncounterAllQuery
+    : useFindByEncounterNotCancelledQuery;
+
+  const { data, isLoading, refetch } = queryHook(
     {
-      encounterId: encounter?.key,
-      includeCancelled: filterForm.showCancelled
+      encounterId: encounter?.key
     },
     {
       skip: !encounter?.key

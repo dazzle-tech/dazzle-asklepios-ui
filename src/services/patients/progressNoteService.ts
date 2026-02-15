@@ -35,10 +35,10 @@ export const progressNoteService = createApi({
     // UPDATE
     // ------------------
     update: builder.mutation<ProgressNote, ProgressNoteUpdateVM>({
-      query: ({ id, ...body }) => ({
-        url: `/api/patient/progress-notes/${id}`,
+      query: body => ({
+        url: `/api/patient/progress-notes/${body.id}`,
         method: 'PUT',
-        body: { id, ...body }
+        body
       }),
       invalidatesTags: ['ProgressNote']
     }),
@@ -56,20 +56,19 @@ export const progressNoteService = createApi({
     }),
 
     // ------------------
-    // FIND BY ENCOUNTER (toggle includeCancelled)
+    // FIND NOT CANCELLED
     // ------------------
-    findByEncounter: builder.query<
+    findByEncounterNotCancelled: builder.query<
       PagedResult<ProgressNote>,
       {
         encounterId: number;
         page?: number;
         size?: number;
-        includeCancelled?: boolean;
       }
     >({
-      query: ({ encounterId, page = 0, size = 20, includeCancelled = false }) => ({
-        url: `/api/patient/progress-notes/by-encounter/${encounterId}`,
-        params: { page, size, includeCancelled }
+      query: ({ encounterId, page = 0, size = 20 }) => ({
+        url: `/api/patient/progress-notes/by-encounter/${encounterId}/not-cancelled`,
+        params: { page, size }
       }),
 
       transformResponse: (response: ProgressNote[], meta): PagedResult<ProgressNote> => {
@@ -83,6 +82,38 @@ export const progressNoteService = createApi({
 
       providesTags: ['ProgressNote']
     }),
+
+    // ------------------
+    // FIND ALL (including cancelled)
+    // ------------------
+    findByEncounterAll: builder.query<
+      PagedResult<ProgressNote>,
+      {
+        encounterId: number;
+        page?: number;
+        size?: number;
+      }
+    >({
+      query: ({ encounterId, page = 0, size = 20 }) => ({
+        url: `/api/patient/progress-notes/by-encounter/${encounterId}/all`,
+        params: { page, size }
+      }),
+
+      transformResponse: (response: ProgressNote[], meta): PagedResult<ProgressNote> => {
+        const totalCount = Number(meta?.response?.headers.get('X-Total-Count')) || 0;
+
+        return {
+          data: response ?? [],
+          totalCount
+        };
+      },
+
+      providesTags: ['ProgressNote']
+    }),
+
+    // ------------------
+    // LOGS
+    // ------------------
     findLogs: builder.query<ProgressNoteLogVM[], number>({
       query: progressNoteId => ({
         url: `/api/patient/progress-notes/${progressNoteId}/logs`,
@@ -96,6 +127,7 @@ export const {
   useCreateMutation,
   useUpdateMutation,
   useCancelMutation,
-  useFindByEncounterQuery,
+  useFindByEncounterNotCancelledQuery,
+  useFindByEncounterAllQuery,
   useFindLogsQuery
 } = progressNoteService;
