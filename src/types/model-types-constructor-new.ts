@@ -1,3 +1,4 @@
+import { da } from 'date-fns/locale';
 import * as modelTypes from './model-types-new';
 
 // ------------------- ApUser -------------------
@@ -963,21 +964,11 @@ export const newPayorPlan: modelTypes.PayorPlan = {
   name: '',
   planType: null,
   itemType: null,
-  createdDate: null,
-  lastModifiedDate: null,
-};
-
-
-export const newPayorPlanItem: modelTypes.PayorPlanItem = {
-  id: undefined,
-  payorId: 0,
-  itemType: null,
   amount: null,
   coverageType: null,
   isActive: true,
   createdDate: null,
   lastModifiedDate: null
-
 };
 
 // ------------------- Invoice Item -------------------
@@ -1148,7 +1139,7 @@ export const newPatientDocument: modelTypes.PatientDocument = {
 
 export const newPatient: modelTypes.Patient = {
   id: undefined,
-  mrn: '',
+  medicalRecordNumber: '',
 
   firstName: '',
   secondName: '',
@@ -1240,3 +1231,91 @@ export const newPatientPreferredHealthProfessional: modelTypes.PatientPreferredH
     lastModifiedBy: null,
     lastModifiedDate: null
   };
+
+export const newPatientInsurance: modelTypes.PatientInsurance = {
+  id: undefined,
+  patientId: undefined,
+  payorId: undefined,
+  planId: null,
+  policyHolderId: null,
+  policyNumber: 0,
+  groupNumber: null,
+  expirationDate: '',
+  remainingBenefits: null,
+  remainingDeductibles: null,
+  isPrimary: false,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newPatientInsuranceCoverage: modelTypes.PatientInsuranceCoverage = {
+  id: undefined,
+  insuranceId: 0,
+  itemType: null,
+  coverageType: null,
+  amount: 0,
+
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+
+export const newEncounterVaccination: modelTypes.EncounterVaccination = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  vaccineId: 0,
+  vaccineBrandId: 0,
+  vaccineDoseId: 0,
+
+  vaccineLotNumber: null,
+
+  dateAdministered: null,
+
+  status: 'ACTIVE',
+
+  cancellationReason: null,
+
+  cancelledAt: null,
+  cancelledById: null,
+
+  administeredLocation: null,
+  administrationReactions: null,
+  externalFacilityName: null,
+  notes: null,
+
+  reviewedAt: null,
+  reviewedById: null
+};
+
+// ------------------- Patient Encounter Update -------------------
+export const newPatientEncounter: modelTypes.PatientEncounter = {
+  id: 0,
+
+  patientId: 0,
+  facilityId: 0,
+  departmentId: 0,
+
+  practitionerId: null,
+
+  encounterType: '',      
+  encounterReason: '',  
+
+  followUpEncounterId: null,
+
+  priorityLevel: 'NORMAL',          
+
+  originType: null,
+  originName: null,
+
+  notes: null,
+
+  status: 'NEW',
+  encounterDate: null                
+};

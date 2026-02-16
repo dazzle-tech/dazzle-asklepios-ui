@@ -49,18 +49,18 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-    | 'text'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check';
+  | 'text'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -132,7 +132,6 @@ const MyInput = ({
 }: MyInputProps) => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.ui);
-   const direction = localStorage.getItem('direction');
   const recognitionRef = useRef<any>(null);
   const [recording, setRecording] = useState(false);
 
@@ -202,8 +201,10 @@ const MyInput = ({
       setRecord({ ...record, [fieldName]: dateStr });
       return;
     }
+
     setRecord({ ...record, [fieldName]: value });
   };
+
 
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
@@ -418,8 +419,8 @@ const MyInput = ({
               (isArrayLabel
                 ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
                 : props.isEnum
-                ? (label: any) => formatEnumString(String(label))
-                : undefined)
+                  ? (label: any) => formatEnumString(String(label))
+                  : undefined)
             }
             searchBy={props.searchBy}
             container={resolveContainer()}
@@ -446,15 +447,15 @@ const MyInput = ({
             renderValue={
               isArrayLabel
                 ? (value, item, selectedElement) => {
-                    if (!item) return selectedElement;
-                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                  }
+                  if (!item) return selectedElement;
+                  return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                }
                 : props.isEnum
-                ? (value, item, selectedElement) => {
+                  ? (value, item, selectedElement) => {
                     const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
                     return <span>{formatEnumString(String(base))}</span>;
                   }
-                : undefined
+                  : undefined
             }
           />
         );
@@ -485,12 +486,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                    {
-                      [valueKey]: '__load_more__',
-                      [labelKey]: 'Load more...',
-                      isLoadMore: true
-                    }
-                  ]
+                  {
+                    [valueKey]: '__load_more__',
+                    [labelKey]: 'Load more...',
+                    isLoadMore: true
+                  }
+                ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -667,7 +668,7 @@ const MyInput = ({
             }
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? dayjs(record[fieldName], 'YYYY-MM-DD').toDate() : null}
+            value={record[fieldName] ? dayjs(record[fieldName]).toDate() : null}
             accepter={CustomDatePicker}
             onChange={handleValueChange}
             placeholder={props.placeholder}
@@ -680,6 +681,7 @@ const MyInput = ({
             container={resolveContainer()}
           />
         );
+
 
       case 'number': {
         const numInputWidth = props?.width ?? 145;
@@ -870,8 +872,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                ? 'orange'
-                : 'grey'
+                  ? 'orange'
+                  : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
@@ -883,7 +885,6 @@ const MyInput = ({
 
   return (
     <Form.Group
-      style={{direction: direction === "LTR" ? "ltr" : "rtl"}}
       className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
     >
       <Form.ControlLabel>

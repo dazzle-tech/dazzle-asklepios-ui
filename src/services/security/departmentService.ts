@@ -198,6 +198,24 @@ export const departmentService = createApi({
       providesTags: ['Department'],
     }),
 
+    getAppointableActiveDepartmentsByEncounterTypeAndFacility: builder.query<
+      PagedResult<any>,
+      { facilityId: number | string; encounterType: string } & PagedParams
+    >({
+      query: ({ facilityId, encounterType, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/department/appointable/active/by-encounter-type/${encounterType}/${facilityId}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: ['Department'],
+    }),
   }),
 });
 
@@ -224,4 +242,6 @@ export const {
   useGetAllDepartmentsWithoutPaginationQuery,
   useGetDepartmentsByResourceTypeQuery,
   useLazyGetDepartmentsByResourceTypeQuery,
+  useGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
+  useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
 } = departmentService;

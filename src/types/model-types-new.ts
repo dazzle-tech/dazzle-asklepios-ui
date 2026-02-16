@@ -940,7 +940,7 @@ export interface CommunityArea {
 export interface Patient {
   id?: number;
 
-  mrn?: string | null;
+  medicalRecordNumber?: string | null;
 
   firstName: string;
   secondName?: string | null;
@@ -1172,50 +1172,6 @@ export interface BillingInvoiceResponseVM {
 }
 
 /* Billing Items */
-  export interface Payor {
-    id?: number;
-    code: string;
-    name: string;
-    category: string | null;
-    address?: string;
-    phone?: string;
-    email?: string;
-    contractManagerContact?: string;
-    startDate?: Date | string | null;
-    expiryDate?: Date | string | null;
-    renewable: boolean;
-    allowPartialCoverage: boolean;
-    acceptCopay: boolean;
-    acceptDeductibles: boolean;
-    allowPackagePricing: boolean;
-    allowDrgBilling: boolean;
-    forcePreApproval: boolean;
-    isActive: boolean;
-    createdDate?: Date | null;
-    lastModifiedDate?: Date | null;
-  }
-
-  export interface PayorPlan {
-  id?: number;
-  payorId: number;
-  name: string;
-  planType: string;
-  itemType: string;
-  createdDate?: Date | string | null;
-  lastModifiedDate?: Date | string | null;
-}
-
-  export interface PayorPlanItem {
-  id?: number;
-  payorId: number;
-  itemType: string;
-  amount?: number | null;
-  coverageType: string;
-  isActive: boolean;
-  createdDate?: Date | string | null;
-  lastModifiedDate?: Date | string | null;
-}
-
 
 export interface BillingInvoiceItemCreateVM {
   invoiceId: number;
@@ -1502,4 +1458,99 @@ export interface PatientDocument {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+}
+
+export interface PatientInsurance {
+  id?: number;
+  patientId: number;
+  payorId: number;
+  planId?: number | null;
+  policyHolderId?: number | null;
+
+  policyNumber: number | string; // BigDecimal on backend
+  groupNumber?: number | string | null; // BigDecimal on backend
+
+  expirationDate: string; // LocalDate -> string (YYYY-MM-DD)
+  remainingBenefits?: number | string | null; // BigDecimal
+  remainingDeductibles?: number | string | null; // BigDecimal
+  isPrimary?: boolean | null;
+
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface PatientInsuranceCoverage {
+  id?: number;
+
+  insuranceId: number; // FK patient_insurances.id
+
+  itemType: string; // BillingItemTypes enum as string
+  coverageType: string; // InsuranceCoverageType enum as string
+  amount: number | string; // BigDecimal
+
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface EncounterVaccination {
+  id?: number;
+
+  patientId: number; 
+  encounterId: number;
+
+  vaccineId: number;
+  vaccineBrandId: number;
+  vaccineDoseId: number;
+
+  vaccineLotNumber?: number | string | null; 
+  dateAdministered?: string | null;
+
+  status: string; 
+
+  cancellationReason?: string | null;
+
+  cancelledAt?: string | null;      
+  cancelledById?: number | null;   
+
+  administeredLocation?: string | null;
+  administrationReactions?: string | null;
+  externalFacilityName?: string | null;
+  notes?: string | null;
+
+  reviewedAt?: string | null;       
+  reviewedById?: number | null;     
+
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+export interface PatientEncounter {
+  id: number;
+
+  patientId: number;
+  facilityId: number;
+  departmentId: number;
+
+  practitionerId?: number | null;
+
+  encounterType: string;        
+  encounterReason: string;      
+
+  followUpEncounterId?: number | null;
+
+  priorityLevel: string;        
+
+  originType?: string | null;
+  originName?: string | null;
+
+  notes?: string | null;
+
+  status: string;  
+ encounterDate?: Date | null;                
+             
 }

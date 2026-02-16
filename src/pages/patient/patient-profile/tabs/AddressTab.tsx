@@ -36,6 +36,113 @@ import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { FaBroom } from 'react-icons/fa6';
 import { FaSave } from 'react-icons/fa';
+const toHumanAddressError = (
+  err: any,
+  fieldLabels: Record<string, string> = {
+    countryId: 'Country',
+    districtId: 'District',
+    communityId: 'Community',
+    areaId: 'Area',
+    streetName: 'Street Name',
+    houseApartmentNumber: 'House/Apartment Number',
+    postalZipCode: 'Postal/ZIP code',
+    additionalAddressLine: 'Additional Address Line',
+    locationJson: 'Location'
+  }
+): string => {
+  const data = err?.data ?? {};
+
+  const title = data?.title ?? '';
+  const detail = data?.detail ?? '';
+  const message = data?.message ?? '';
+  const type = data?.type ?? '';
+  const fieldErrors = data?.fieldErrors;
+
+  const traceId =
+    data?.traceId || data?.correlationId
+      ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
+      : '';
+
+  const normalize = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('must not be null')) return 'is required';
+    if (m.includes('must not be empty')) return 'is required';
+    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('size must be between')) return 'length is out of range';
+    return msg || 'invalid value';
+  };
+
+  const extractConstraintFromDetail = (text: string): { msg?: string; params?: string } => {
+    if (!text) return {};
+    const msgMatch = text.match(/message\s*=\s*([a-zA-Z0-9_.-]+)/);
+    const paramsMatch = text.match(/params\s*=\s*([a-zA-Z0-9_.-]+)/);
+    return { msg: msgMatch?.[1], params: paramsMatch?.[1] };
+  };
+
+  const extracted = extractConstraintFromDetail(detail);
+  const constraintMsg = message || extracted.msg || '';
+  const constraintParams = data?.params || extracted.params || '';
+
+  const isValidation =
+    data?.message === 'error.validation' ||
+    title?.toLowerCase?.().includes?.('argument not valid') ||
+    (typeof type === 'string' && type.includes('constraint-violation'));
+
+  if (isValidation && Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+    const lines = fieldErrors.map((e: any) => {
+      const label = fieldLabels[e.field] || e.field;
+      return `• ${label}: ${normalize(e.message)}`;
+    });
+
+    return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+  }
+
+  const rawKey = data?.errorKey ?? data?.properties?.message ?? '';
+  const errorKey = String(rawKey).replace(/^error\./, '').trim();
+
+  if (errorKey === 'payload.required') return 'Address payload is required.' + traceId;
+  if (errorKey === 'notfound') return (detail || 'Address not found.') + traceId;
+  if (errorKey === 'unique.patient.fullAddress')
+    return 'This address already exists for the same patient.' + traceId;
+  if (errorKey === 'fk.patient') return 'Invalid patient reference for address.' + traceId;
+  if (errorKey === 'db.constraint')
+    return detail || 'Database constraint violated while saving/updating address.' + traceId;
+
+  if (constraintMsg === 'error.constraint') {
+    if (String(constraintParams).toLowerCase() === 'address') {
+      return 'This address already exists for the same patient.' + traceId;
+    }
+
+    return (
+      'Database constraint violated while saving/updating address.' +
+      (constraintParams ? `\nConstraint: ${constraintParams}` : '') +
+      traceId
+    );
+  }
+
+  const payloadText = [title, detail, message].filter(Boolean).join(' | ');
+  const lower = payloadText.toLowerCase();
+
+  if (
+    lower.includes('uk_address_patient_full_address') ||
+    lower.includes('unique constraint') ||
+    lower.includes('duplicate key') ||
+    lower.includes('duplicate entry') ||
+    lower.includes('duplicate')
+  ) {
+    return 'This address already exists for the same patient.' + traceId;
+  }
+
+  if (lower.includes('fk_address_patient') || lower.includes('foreign key')) {
+    return 'Invalid patient reference for address.' + traceId;
+  }
+
+  return detail || title || message || 'Unexpected server error occurred.' + traceId;
+};
+
+/* ========================================================= */
+/* ======================= Component ======================== */
+/* ========================================================= */
 
 interface AddressTabProps {
   localPatient: any;
@@ -54,8 +161,9 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
   const dispatch = useAppDispatch();
   const patientId = localPatient?.id;
 
-
   const [refreshToken, setRefreshToken] = useState(0);
+
+  const [blockServerHydration, setBlockServerHydration] = useState(false);
 
   const [address, setAddress] = useState<ExtendedAddress>({
     ...newAddress,
@@ -88,7 +196,6 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
 
   const [openChangeLog, setOpenChangeLog] = useState(false);
 
-
   const resetLocationState = () => {
     setAddress({
       ...newAddress,
@@ -104,6 +211,8 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
       communityId: null,
       areaId: null
     });
+
+    setBlockServerHydration(false);
 
     setCountrySearch('');
     setDistrictSearch('');
@@ -123,13 +232,16 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
     setRefreshToken(prev => prev + 1);
   };
 
-
   useEffect(() => {
-    if (patientId) resetLocationState();
+    if (patientId) {
+      setBlockServerHydration(false);
+      resetLocationState();
+    }
   }, [patientId]);
 
   useEffect(() => {
     if (!patientId) {
+      setBlockServerHydration(false);
       resetLocationState();
     }
   }, [patientId]);
@@ -185,7 +297,6 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
     { skip: !address.locationJson?.community?.id }
   );
 
-
   useEffect(() => {
     if (!countriesResponse?.data) return;
 
@@ -221,9 +332,10 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
     setAreaCache(prev => (areaPage === 0 ? areasResponse.data : [...prev, ...areasResponse.data]));
   }, [areasResponse, areaPage]);
 
-
+  // IMPORTANT FIX: don't hydrate from server if last save failed
   useEffect(() => {
     if (!patientId || isFetching) return;
+    if (blockServerHydration) return;
 
     const existing = addressesResult?.data?.[0];
     if (!existing) return;
@@ -235,8 +347,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
       communityId: existing.locationJson?.community?.id ?? null,
       areaId: existing.locationJson?.area?.id ?? null
     });
-  }, [addressesResult, isFetching, patientId]);
-
+  }, [addressesResult, isFetching, patientId, blockServerHydration]);
 
   const [createAddress] = useCreateAddressMutation();
   const [updateAddress] = useUpdateAddressMutation();
@@ -268,17 +379,28 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
         ? await updateAddress({ id: address.id, patientId, body: payload }).unwrap()
         : await createAddress({ patientId, body: payload }).unwrap();
 
+      setBlockServerHydration(false);
+      setRefreshToken(prev => prev + 1);
+
       dispatch(notify({ msg: 'Address Saved Successfully', sev: 'success' }));
     } catch (err: any) {
-      dispatch(
-        notify({
-          msg: err?.data?.detail || err?.data?.message || 'Error',
-          sev: 'error'
-        })
-      );
+      setBlockServerHydration(true);
+
+      const msg = toHumanAddressError(err, {
+        countryId: 'Country',
+        districtId: 'District',
+        communityId: 'Community',
+        areaId: 'Area',
+        streetName: 'Street Name',
+        houseApartmentNumber: 'House/Apartment Number',
+        postalZipCode: 'Postal/ZIP code',
+        additionalAddressLine: 'Additional Address Line',
+        locationJson: 'Location'
+      });
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
-
 
   return (
     <>
@@ -362,6 +484,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
 
                   setRefreshToken(prev => prev + 1);
                 }}
+                disabled={!localPatient?.id}
               />
 
               <MyInput
@@ -504,6 +627,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
                 fieldName="streetName"
                 record={address}
                 setRecord={setAddress}
+                disabled={!localPatient?.id}
               />
 
               <MyInput
@@ -512,6 +636,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
                 fieldName="houseApartmentNumber"
                 record={address}
                 setRecord={setAddress}
+                disabled={!localPatient?.id}
               />
 
               <MyInput
@@ -520,6 +645,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
                 fieldName="postalZipCode"
                 record={address}
                 setRecord={setAddress}
+                disabled={!localPatient?.id}
               />
 
               <MyInput
@@ -528,6 +654,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
                 fieldName="additionalAddressLine"
                 record={address}
                 setRecord={setAddress}
+                disabled={!localPatient?.id}
               />
             </Form>
           </div>

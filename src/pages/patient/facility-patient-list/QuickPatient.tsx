@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Toggle } from 'rsuite';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -33,28 +32,29 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     data?.traceId || data?.correlationId
       ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
       : '';
+
   if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
     const lines = fieldErrors.map((e: any) => {
       const label = fieldLabels[e.field] || e.field;
       return `• ${label}: ${e.message}`;
     });
-
     return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
   }
 
-
   if (errorKey === 'payload.required') return 'Patient payload is required.' + traceId;
-
   if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
+  if (errorKey === 'unique.medical_record_number')
+    return 'A patient with the same medical record number already exists.' + traceId;
 
-  if (errorKey === 'unique.mrn') return 'A patient with the same MRN already exists.' + traceId;
+  // NEW: backend message you got
+  if (message === 'error.required.when.not.unknown')
+    return 'Required fields are missing. Turn on "Unknown Patient" or fill First Name, Last Name, Gender and DOB.' + traceId;
 
   if (errorKey === 'db.constraint')
-    return detail || 'Database constraint violated while saving or updating patient.' + traceId;
+    return (detail || 'Database constraint violated while saving or updating patient.') + traceId;
 
-  return detail || title || message || 'Unexpected server error occurred.' + traceId;
+  return (detail || title || message || 'Unexpected server error occurred.') + traceId;
 };
-
 
 const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const dispatch = useAppDispatch();
@@ -64,7 +64,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
 
   const [addPatient] = useAddPatientMutation();
-  const [addUnknownPatient] = useAddUnknownPatientMutation(); // ✅ إضافة الـ mutation الجديد
+  const [addUnknownPatient] = useAddUnknownPatientMutation();
   const [saveEncounter] = useCompleteEncounterRegistrationMutation();
 
   const [localEncounter, setLocalEncounter] = useState({
@@ -79,18 +79,32 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
   const genderEnum = useEnumOptions('Gender');
 
-
   const handleSave = async () => {
     try {
       let savedPatient: Patient;
 
       if (isUnknown) {
+        const payload: Patient = {
+          ...localPatient,
+          isUnknown: true,
+          isVerified: false,
+          isCompletedPatient: false,
+          lastName: null as any,
+          firstName: null as any,
+          sexAtBirth: null as any,
+          dateOfBirth: null as any,
+          primaryMobileNumber: null as any,
+          securityAccessLevel:
+            localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
+        };
+
         savedPatient = await addUnknownPatient().unwrap();
       } else {
         const payload: Patient = {
           ...localPatient,
           isCompletedPatient: false,
           lastName: localPatient.lastName || '.',
+          isUnknown: false,
           securityAccessLevel:
             localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
         };
@@ -123,15 +137,8 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       handleClearModal();
       setValidationResult(undefined);
 
-      dispatch(
-        notify({
-          msg: 'Patient added successfully',
-          sev: 'success'
-        })
-      );
+      dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
     } catch (err: any) {
-      console.log('Save error:', err);
-
       const msg = toHumanBackendError(err, {
         firstName: 'First Name',
         lastName: 'Last Name',
@@ -149,7 +156,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
     }
   };
 
-  
   const handleClearModal = () => {
     setIsUnknown(false);
     setLocalPatient({ ...newPatient });
@@ -173,6 +179,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const quickPatientContent = (
     <Form layout="inline" fluid>
       <MyInput
+        required
         width={250}
         vr={validationResult}
         column
@@ -183,6 +190,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       />
 
       <MyInput
+        required
         width={250}
         vr={validationResult}
         column
@@ -193,6 +201,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       />
 
       <MyInput
+        required
         width={235}
         vr={validationResult}
         column
@@ -209,6 +218,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       />
 
       <MyInput
+        required
         width={250}
         vr={validationResult}
         column
@@ -217,8 +227,17 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
         setRecord={setLocalPatient}
         disabled={isUnknown}
       />
-
       <MyInput
+        required
+        vr={validationResult}
+        column
+        fieldName="email"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        width={170}
+      />
+      <MyInput
+        required
         width={235}
         vr={validationResult}
         column

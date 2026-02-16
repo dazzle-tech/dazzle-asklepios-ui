@@ -65,7 +65,7 @@ const PatientCardWithPicture: React.FC<PatientCardWithPictureProps> = ({
         <Text className="created-at">
           {patient.createdDate ? new Date(patient.createdDate).toLocaleDateString('en-GB') : ''}
         </Text>
-        <Text className="patient-mrn"># {patient.mrn}</Text>
+        <Text className="patient-mrn"># {patient.medicalRecordNumber}</Text>
       </div>
       <div className="actions">
         {/* {actions} */}

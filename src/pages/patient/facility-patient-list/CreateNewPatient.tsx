@@ -217,7 +217,7 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
   const keyMap = {
     'payload.required': 'Patient payload is required.',
     notfound: 'Patient not found.',
-    'unique.mrn': 'A patient with the same MRN already exists.',
+    'unique.medical_record_number': 'A patient with the same medical record number already exists.',
     'db.constraint': 'Database constraint violated while saving/updating patient.'
   };
 
@@ -318,13 +318,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -351,13 +351,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -525,7 +525,14 @@ const CreateNewPatient = ({ open, setOpen }) => {
               record={localPatient}
               setRecord={setLocalPatient}
             />
-
+            <MyInput
+              required
+              column
+              fieldName="email"
+              record={localPatient}
+              setRecord={setLocalPatient}
+              width={200}
+            />
             <MyInput
               width={200}
               column
@@ -604,7 +611,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     ...newRecord,
                     number:
                       secondaryDocument.type === 'NO_DOC' ||
-                      secondaryDocument.type === 'NO_DOCUMENT'
+                        secondaryDocument.type === 'NO_DOCUMENT'
                         ? 'NO_DOCUMENT'
                         : newRecord.number
                   });

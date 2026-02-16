@@ -7,7 +7,7 @@ import {
   useLazyGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByDateOfBirthQuery,
   useLazyGetPatientsByFullNameQuery,
-  useLazyGetPatientsByMrnQuery,
+ useLazyGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
   useLazyGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsQuery
@@ -58,7 +58,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
 
   const [fetchPatients] = useLazyGetPatientsQuery();
-  const [fetchByMrn] = useLazyGetPatientsByMrnQuery();
+  const [fetchByMrn] = useLazyGetPatientsByMedicalRecordNumberQuery();
   const [fetchByArchiving] = useLazyGetPatientsByArchivingNumberQuery();
   const [fetchByPrimaryPhone] = useLazyGetPatientsByPrimaryPhoneQuery();
   const [fetchByDob] = useLazyGetPatientsByDateOfBirthQuery();
@@ -91,7 +91,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
     switch (selectedCriterion) {
       case 'patientMrn':
-        params.mrn = searchKeyword;
+        params.medicalRecordNumber = searchKeyword;
         break;
 
       case 'documentNo':
