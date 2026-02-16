@@ -150,7 +150,6 @@ import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
 
 import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
-import PatientRelationService from './services/patients/PatientRelationService';
 import { patientInsurancesService } from './services/patients/patientInsurancesService';
 import { patientInsuranceCoveragesService } from './services/patients/patientInsuranceCoveragesService';
 import { encounterVaccinationService } from './services/encounterMedical/encounterVaccinationService';
@@ -317,11 +316,6 @@ export const store = configureStore({
     // uom
     [uomGroupService.reducerPath]: uomGroupService.reducer,
 
-    //
-    [addressService.reducerPath]: addressService.reducer,
-    [hipaaService.reducerPath]: hipaaService.reducer,
-    [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
-    [PatientRelationService.reducerPath]: PatientRelationService.reducer,
     // country / geo
     [countryService.reducerPath]: countryService.reducer,
     [countryDistrictService.reducerPath]: countryDistrictService.reducer,
