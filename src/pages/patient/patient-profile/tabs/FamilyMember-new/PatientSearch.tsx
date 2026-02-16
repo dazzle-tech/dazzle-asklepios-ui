@@ -6,7 +6,7 @@ import Translate from '@/components/Translate';
 
 import {
   useLazyGetPatientsQuery,
-  useLazyGetPatientsByMrnQuery,
+  useLazyGetPatientsByDocumentNumberQuery,
   useLazyGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
   useLazyGetPatientsByDateOfBirthQuery,
@@ -48,7 +48,7 @@ const PatientSearch = ({
 
   // lazy endpoints
   const [fetchPatients] = useLazyGetPatientsQuery();
-  const [fetchByMrn] = useLazyGetPatientsByMrnQuery();
+  const [fetchByMrn] = useLazyGetPatientsByDocumentNumberQuery();
   const [fetchByArchiving] = useLazyGetPatientsByArchivingNumberQuery();
   const [fetchByPrimaryPhone] = useLazyGetPatientsByPrimaryPhoneQuery();
   const [fetchByDob] = useLazyGetPatientsByDateOfBirthQuery();

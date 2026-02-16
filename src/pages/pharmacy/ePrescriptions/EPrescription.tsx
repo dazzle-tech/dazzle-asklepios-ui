@@ -14,7 +14,7 @@ import PatientSide from '@/pages/lab-module/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds } from '@/utils';
-import PatientSearch from '@/pages/patient/patient-profile/tabs/FamilyMember/PatientSearch';
+import PatientSearch from '@/pages/patient/patient-profile/tabs/FamilyMember-new/PatientSearch';
 import SearchIcon from '@rsuite/icons/Search';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { initialListRequest, ListRequest } from '@/types/types';

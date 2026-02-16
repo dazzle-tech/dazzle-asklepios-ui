@@ -47,7 +47,7 @@ const AddFamilyMember = ({
 console.log('allowedSecondGenders:', allowedSecondGenders);
   const [fetchMatrixByFirstGender] = useLazyGetByFirstGenderQuery();
 
-  const firstGender = localPatient?.sexAtBirth || localPatient?.gender; // عدل حسب موديلك
+  const firstGender = localPatient?.sexAtBirth || localPatient?.gender; 
   const relationType = selectedPatientRelation?.relationType;
 
   useEffect(() => {
