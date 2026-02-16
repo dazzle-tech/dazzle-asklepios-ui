@@ -59,7 +59,6 @@ const handleSearch = (value) => {
   // Effects
 
   useEffect(() => {
-    console.log("🟦 Selected Normal Range:", diagnosticTestNormalRange);
   }, [diagnosticTestNormalRange]);
 
 const resultLovDisplay = (() => {

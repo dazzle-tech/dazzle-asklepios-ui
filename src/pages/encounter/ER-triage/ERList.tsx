@@ -630,7 +630,7 @@ const ERList = () => {
         size="90vw"
         content={<RefillModalComponent />}
         actionButtonLabel="Save"
-        actionButtonFunction={() => console.log('Save refill clicked')}
+        actionButtonFunction={() => {}}
         cancelButtonLabel="Close"
       />
 
@@ -641,7 +641,7 @@ const ERList = () => {
         size="90vw"
         content={<PhysicianOrderSummaryModal />}
         actionButtonLabel="Save"
-        actionButtonFunction={() => console.log('Save refill clicked')}
+        actionButtonFunction={() => {}}
         cancelButtonLabel="Close"
       />
 

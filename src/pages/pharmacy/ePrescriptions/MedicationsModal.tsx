@@ -330,7 +330,6 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                     selectDataValue="key"
                     record={{}}
                     setRecord={newValue => {
-                      console.log('Selected Payment Method:', newValue.PaymentMethod);
                       setPaymentMethodSelected(newValue.PaymentMethod);
                     }}
                     className="payment-field"
@@ -506,7 +505,6 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
                   size="md"
                   onClick={() => {
                     // Handle confirm action
-                    console.log('Confirm button clicked');
                     // Add your confirmation logic here
                   }}
                 >

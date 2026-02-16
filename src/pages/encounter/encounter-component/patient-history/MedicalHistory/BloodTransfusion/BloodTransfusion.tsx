@@ -9,7 +9,6 @@ import AddBloodTransfusion from './AddBloodTransfusion';
 import SectionContainer from '@/components/SectionsoContainer';
 const BloodTransfusion = ({ patient, encounter, edit }) => {
   const [open, setOpen] = useState(false);
-  console.log('eee', edit);
   // Table Columns
   const columns = [
     { key: '', title: 'FACILITY', dataKey: '' },

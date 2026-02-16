@@ -472,7 +472,6 @@ const AddEditUom = ({
    saveUomGroup({
       ...uom,
     }).unwrap().then((result) => {
-      console.log(result)
       setUom(result);
       uomRefetch();
       dispatch(
@@ -484,10 +483,8 @@ const AddEditUom = ({
     }).catch((e) => {
 
       if (e.status === 422) {
-        console.log("Validation error: Unprocessable Entity", e);
 
       } else {
-        console.log("An unexpected error occurred", e);
         dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
       }
     });;
@@ -514,10 +511,8 @@ const AddEditUom = ({
     }).catch((e) => {
 
       if (e.status === 422) {
-        console.log("Validation error: Unprocessable Entity", e);
 
       } else {
-        console.log("An unexpected error occurred", e);
         dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
       }
     });;
@@ -543,10 +538,8 @@ const AddEditUom = ({
     }).catch((e) => {
 
       if (e.status === 422) {
-        console.log("Validation error: Unprocessable Entity", e);
 
       } else {
-        console.log("An unexpected error occurred", e);
         dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
       }
     });;

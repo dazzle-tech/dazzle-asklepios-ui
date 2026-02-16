@@ -963,11 +963,21 @@ export const newPayorPlan: modelTypes.PayorPlan = {
   name: '',
   planType: null,
   itemType: null,
+  createdDate: null,
+  lastModifiedDate: null,
+};
+
+
+export const newPayorPlanItem: modelTypes.PayorPlanItem = {
+  id: undefined,
+  payorId: 0,
+  itemType: null,
   amount: null,
   coverageType: null,
   isActive: true,
   createdDate: null,
   lastModifiedDate: null
+
 };
 
 // ------------------- Invoice Item -------------------
@@ -1196,19 +1206,19 @@ export const newPatient: modelTypes.Patient = {
 
 export const newAddress: modelTypes.Address = {
   id: undefined,
-  patientId: 0, // يتم تعبئته من الـ route أو من الـ context
+  patientId: 0,
 
-  countryId: null,
+  locationJson: {
+    country: null,
+    district: null,
+    community: null,
+    area: null
+  },
 
-  countryName: '',
-  districtName: '',
-  communityName: '',
-  areaName: '',
   streetName: '',
   houseApartmentNumber: '',
   postalZipCode: '',
   additionalAddressLine: '',
-
   isCurrent: true,
 
   createdBy: '',
@@ -1217,31 +1227,16 @@ export const newAddress: modelTypes.Address = {
   lastModifiedDate: null
 };
 
-export const  newPatientHIPAA:modelTypes.PatientHIPAA= {
-  patientId: undefined,
-  noticeOfPrivacyPractice: false,
-  privacyAuthorization: false,
-  noticeOfPrivacyPracticeDate:  null,
-  privacyAuthorizationDate: null,
-}
-export const newPatientRelation:modelTypes.PatientRelation= {
-  id: undefined,
-  patientId: undefined,
-  relatedPatientId: undefined,
-  relationType: '',
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: '',
-  lastModifiedDate: null
-}
-
-/**
- * relations_matrix response
- */
-export const newRelationsMatrix:modelTypes.RelationsMatrix= {
-  id: undefined,
-  firstPatientGender: '',
-  secondPatientGender: '',
-  firstRelationCode: '',
-  secondRelationCode: ''
-};
+export const newPatientPreferredHealthProfessional: modelTypes.PatientPreferredHealthProfessional =
+  {
+    id: undefined,
+    patientId: 0,
+    practitionerId: 0,
+    facilityId: 0,
+    networkAffiliation: '',
+    relatedWith: '',
+    createdBy: '',
+    createdDate: null,
+    lastModifiedBy: null,
+    lastModifiedDate: null
+  };

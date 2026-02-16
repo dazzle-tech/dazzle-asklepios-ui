@@ -107,22 +107,22 @@ const DrugFoodInteractions = ({ selectedActiveIngredients }) => {
   // ---------------------------
   const save = async () => {
     if (!selectedActiveIngredients || !selectedActiveIngredients.id) {
-      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "warning" }));
       return;
     }
 
     if (!record?.food || record.food.trim() === "") {
-      dispatch(notify({ msg: "Please fix the following fields: • Food is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Food is required", sev: "warning" }));
       return;
     }
 
     if (!record?.severity) {
-      dispatch(notify({ msg: "Please fix the following fields: • Severity is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Severity is required", sev: "warning" }));
       return;
     }
 
     if (!record?.description || record.description.trim() === "") {
-      dispatch(notify({ msg: "Please fix the following fields: • Description is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Description is required", sev: "warning" }));
       return;
     }
 
@@ -159,7 +159,7 @@ const DrugFoodInteractions = ({ selectedActiveIngredients }) => {
     setOpenDelete(false);
 
     if (!record?.id) {
-      dispatch(notify({ msg: "Invalid item", sev: "error" }));
+      dispatch(notify({ msg: "Invalid item", sev: "warning" }));
       return;
     }
 

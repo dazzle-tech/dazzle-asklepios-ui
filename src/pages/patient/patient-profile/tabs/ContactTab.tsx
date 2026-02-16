@@ -33,6 +33,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldLabel="Primary Mobile Number"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -42,6 +43,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldLabel="Receive SMS"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -50,6 +52,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="secondMobileNumber"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -57,6 +60,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="homePhone"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -64,35 +68,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="workPhone"
         record={localPatient}
         setRecord={setLocalPatient}
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldName="email"
-        record={localPatient}
-        setRecord={setLocalPatient}
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldType="checkbox"
-        fieldName="receiveEmail"
-        fieldLabel="Receive Email"
-        record={localPatient}
-        setRecord={setLocalPatient}
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Preferred Way of Contact"
-        fieldType="select"
-        fieldName="preferredWayOfContact"
-        selectData={preferredWayOfContactEnum ?? []}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        searchable={false}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -106,6 +82,40 @@ const ContactTab: React.FC<ContactTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        width={170}
+      />
+      <MyInput
+        vr={validationResult}
+        column
+        fieldName="email"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        width={170}
+      />
+      <MyInput
+        vr={validationResult}
+        column
+        fieldType="checkbox"
+        fieldName="receiveEmail"
+        fieldLabel="Receive Email"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        width={170}
+      />
+
+      <MyInput
+        vr={validationResult}
+        column
+        fieldLabel="Preferred Way of Contact"
+        fieldType="select"
+        fieldName="preferredWayOfContact"
+        selectData={preferredWayOfContactEnum ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        searchable={false}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -113,6 +123,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="emergencyContactName"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -127,6 +138,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         setRecord={setLocalPatient}
         searchable={false}
         menuMaxHeight={200}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -134,6 +146,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         fieldName="emergencyContactPhone"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -147,6 +160,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        width={170}
       />
     </Form>
   );

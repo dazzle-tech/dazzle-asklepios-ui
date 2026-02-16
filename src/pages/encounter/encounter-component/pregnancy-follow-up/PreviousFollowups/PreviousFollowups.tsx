@@ -94,7 +94,6 @@ const PreviousFollowups = () => {
           style={{ cursor: 'pointer', color: 'var(--primary-gray)' }}
           title="View Delivery Information"
           onClick={() => {
-            console.log('View delivery info for:', rowData.id);
           }}
         />
       )

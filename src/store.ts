@@ -8,7 +8,6 @@ import divSlice from './reducers/divSlice';
 import refetchReducer from './reducers/refetchEncounterState';
 import refetchPatientSideInfo from './reducers/refetchPatientSide';
 import authReducer from './reducers/authSlice';
-import callReducer from './store/callSlice';
 import patientSlice from '@/reducers/patientSlice';
 
 import { uiService } from '@/services/uiService';
@@ -19,7 +18,6 @@ import { accountApi } from './services/accountService';
 import { patientService } from '@/services/patientService';
 import { newPatientService } from './services/patient/patientService';
 import { addressService } from './services/patients/AddressService';
-import { hipaaService } from './services/patients/hipaaService';
 import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
 import { patientDocumentsService } from './services/patients/patientDocumentsService';
 
@@ -318,7 +316,7 @@ export const store = configureStore({
     [addressService.reducerPath]: addressService.reducer,
     [hipaaService.reducerPath]: hipaaService.reducer,
     [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
-    [PatientRelationService.reducerPath]: PatientRelationService.reducer
+    [PatientRelationService.reducerPath]: PatientRelationService.reducer,
     // country / geo
     [countryService.reducerPath]: countryService.reducer,
     [countryDistrictService.reducerPath]: countryDistrictService.reducer,

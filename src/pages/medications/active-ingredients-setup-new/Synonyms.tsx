@@ -107,7 +107,7 @@ const Synonyms = ({ activeIngredients }) => {
   // Save (Create or Update)
   const save = async () => {
     if (!record.synonym?.trim()) {
-      dispatch(notify({ msg: "Please fix the following fields: • Synonym is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Synonym is required", sev: "warning" }));
       return;
     }
 
@@ -133,7 +133,6 @@ const Synonyms = ({ activeIngredients }) => {
 
     } catch (err) {
       dispatch(notify({ msg: "Failed to save Synonym", sev: "error" }));
-      console.log("Error saving synonym:", err);
     }
   };
 
@@ -160,7 +159,6 @@ const Synonyms = ({ activeIngredients }) => {
 
     } catch (err) {
       dispatch(notify({ msg: "Delete failed", sev: "error" }));
-      console.log("Delete error:", err);
     }
   };
 

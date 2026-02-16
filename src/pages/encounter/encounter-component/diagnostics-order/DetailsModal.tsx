@@ -97,9 +97,7 @@ const DetailsModal = ({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      console.log('File downloaded successfully:', attachment.fileName);
     } catch (error) {
-      console.error('Error during file download:', error);
     }
   };
 

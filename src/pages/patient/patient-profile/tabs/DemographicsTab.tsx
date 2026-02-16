@@ -3,7 +3,6 @@ import Translate from '@/components/Translate';
 import { Patient } from '@/types/model-types-new';
 import React from 'react';
 import { Col, Row, Stack } from 'rsuite';
-import AddressTab from './AddressTab';
 import BasicInfo from './BasicInfo';
 import ContactTab from './ContactTab';
 import './styles.less';
@@ -25,12 +24,11 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
   setLocalPatient,
   validationResult,
   genderEnum,
-  patientDocumentEnum,
-  countryLovQueryResponse,
   patientClassLovQueryResponse,
   ageFormatType,
   ageGroupValue
 }) => {
+
 
   return (
     <Stack>
@@ -52,13 +50,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
                     patientClassLovQueryResponse={patientClassLovQueryResponse}
                   />
                 }
-              />
-            </Row>
-            <Row>
-              <AddressTab
-                localPatient={localPatient}
-                setLocalPatient={setLocalPatient}
-                validationResult={validationResult}
               />
             </Row>
           </Col>

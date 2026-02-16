@@ -319,20 +319,16 @@ setWarehouseProductListRequest(prev => ({
         }, [selectedWarehouseProduct?.key]);
 
     useEffect(() => {
-        console.log(productselectListResponseLoading);
         if (productselectListResponseLoading?.object?.length > 0) {
             const firstItem = productselectListResponseLoading.object[0];
             setSelectedProduct(firstItem);
-            console.log(firstItem);
         }
     }, [productselectListResponseLoading?.object]);
 
          useEffect(() => {
-            console.log(warehouseProductSelectedListResponseLoading);
             if (warehouseProductSelectedListResponseLoading?.object?.length > 0) {
                 const firstItem = warehouseProductSelectedListResponseLoading.object[0];
                 setSelectedWarehouseProduct(firstItem);
-                console.log(firstItem);
             }
     
         }, [warehouseProductSelectedListResponseLoading?.object]);
@@ -345,7 +341,6 @@ setWarehouseProductListRequest(prev => ({
 
     useEffect(() => {
         setTotalCost(Number(calculateCost(transProduct?.newQuentity, transProduct?.newCost)) || 0);
-        console.log("Total Cost:", totalCost);
     }, [transProduct?.newQuantity, transProduct?.newCost]);
 
 
@@ -502,7 +497,6 @@ setWarehouseProductListRequest(prev => ({
                             lotserialnumber: selectedObject?.key
                         });
                         setSelectedWarehouseProductdetails(selectedObject? { ...selectedObject } : { ...newApWarehouseProductDetails });
-                        console.log(record);
                         }}
                     />
 

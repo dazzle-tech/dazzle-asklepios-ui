@@ -363,10 +363,8 @@ const DrugOrder = props => {
       CloseCancellationReasonModel();
       medicRefetch()
         .then(() => {
-          console.log('Refetch complete');
         })
         .catch(error => {
-          console.error('Refetch failed:', error);
         });
     } catch (error) {
       dispatch(notify({ msg: ' deleted failed', sev: 'error' }));
@@ -396,10 +394,8 @@ const DrugOrder = props => {
     });
     medicRefetch()
       .then(() => {
-        console.log('Refetch complete');
       })
       .catch(error => {
-        console.error('Refetch failed:', error);
       });
   };
 

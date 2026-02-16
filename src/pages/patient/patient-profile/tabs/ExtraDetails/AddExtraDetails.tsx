@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
@@ -9,16 +9,14 @@ import {
 } from '@/services/patients/patientDocumentsService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { newPatientDocument } from '@/types/model-types-constructor-new';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { faIdCard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles.less';
-
-/* ========================================================= */
-/* ======================= ERROR HANDLING =================== */
-/* ========================================================= */
 
 const toHumanPatientDocumentError = (
   err,
@@ -38,15 +36,10 @@ const toHumanPatientDocumentError = (
   const traceId =
     data.traceId || data.correlationId ? `\nTrace ID: ${data.traceId || data.correlationId}` : '';
 
-  const payloadText = [title, detail, message].filter(Boolean).join(' | ');
-
-  /* ===========================================================
-     1) VALIDATION FIELD ERRORS
-     =========================================================== */
 
   const isValidation =
     data?.message === 'error.validation' ||
-    title?.toLowerCase()?.includes?.('argument not valid') ||
+    title?.toLowerCase()?.includes('argument not valid') ||
     (typeof type === 'string' && type.includes('constraint-violation'));
 
   const normalize = msg => {
@@ -59,53 +52,16 @@ const toHumanPatientDocumentError = (
   };
 
   if (isValidation && Array.isArray(data.fieldErrors) && data.fieldErrors.length) {
-    const lines = data.fieldErrors.map(fe => {
-      const label = fieldLabels[fe.field] ?? fe.field;
-      return `• ${label}: ${normalize(fe.message)}`;
-    });
-
-    return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+    return (
+      'Please fix the following fields:\n' +
+      data.fieldErrors
+        .map(fe => `• ${fieldLabels[fe.field] ?? fe.field}: ${normalize(fe.message)}`)
+        .join('\n') +
+      traceId
+    );
   }
-
-  /* ===========================================================
-     2) HIBERNATE / ConstraintViolation Parsing
-     =========================================================== */
-
-  const looksLikeConstraintViolation =
-    payloadText.toLowerCase().includes('constraintviolation') ||
-    payloadText.toLowerCase().includes('interpolatedmessage=');
-
-  if (looksLikeConstraintViolation) {
-    const matches = [];
-    const regex = /propertyPath\s*=\s*([a-zA-Z0-9_.\[\]]+).*?interpolatedMessage\s*=\s*'([^']+)'/g;
-
-    let m;
-    while ((m = regex.exec(payloadText)) !== null) {
-      matches.push({ field: m[1], msg: m[2] });
-    }
-
-    if (matches.length) {
-      const lines = matches.map(({ field, msg }) => {
-        const base =
-          field
-            .split(/[.\[\]]/)
-            .filter(Boolean)
-            .pop() || field;
-        const label = fieldLabels[base] ?? base;
-
-        return `• ${label}: ${normalize(msg)}`;
-      });
-
-      return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
-    }
-  }
-
-  /* ===========================================================
-     3) BACKEND CUSTOM ERROR KEYS — FIXED VERSION
-     =========================================================== */
 
   let errorKey = data.errorKey || data.message || data.properties?.message || '';
-
   errorKey = errorKey.replace(/^error\./, '');
 
   const keyMap = {
@@ -115,25 +71,15 @@ const toHumanPatientDocumentError = (
     'number.required': 'Document number is required.',
     'type.required': 'Document type is required.',
     'primary.exists': 'This patient already has a primary document.',
-    'unique.document': 'A document with the same number, type, and country already exists.',
-    'db.constraint': 'Database constraint violation.',
+    'document.number.duplicate':
+      'This document number already exists for the selected type and country.',
+    'document.type.country.exists':
+      'This patient already has a document of this type for the selected country.',
     notfound: 'Patient document not found.'
   };
 
-  if (keyMap[errorKey]) {
-    return keyMap[errorKey] + traceId;
-  }
-
-  /* ===========================================================
-     4) FALLBACK
-     =========================================================== */
-
-  return detail || title || message || 'Unexpected error' + traceId;
+  return (keyMap[errorKey] || detail || title || message || 'Unexpected error') + traceId;
 };
-
-/* ========================================================= */
-/* ======================== COMPONENT ======================= */
-/* ========================================================= */
 
 const AddExtraDetails = ({
   localPatient,
@@ -152,23 +98,56 @@ const AddExtraDetails = ({
   const patientDocumentEnum = useEnumOptions('DocumentType');
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
 
+  const PAGE_SIZE = 5;
+  const [docCountryCache, setDocCountryCache] = useState([]);
+  const [docCountryPage, setDocCountryPage] = useState(0);
+  const [docCountrySearch, setDocCountrySearch] = useState('');
+  const [docHasMoreCountries, setDocHasMoreCountries] = useState(true);
+  const [docCountryOpen, setDocCountryOpen] = useState(false);
+  const [docPaginationLoading, setDocPaginationLoading] = useState(false);
+
+  const { data: docCountriesData } = useGetActiveCountriesQuery({
+    page: docCountryPage,
+    size: PAGE_SIZE,
+    ...(docCountrySearch && { search: docCountrySearch }),
+    sort: 'id,asc'
+  });
+
   useEffect(() => {
-    const isNoDocument =
-      secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
+    if (!docCountriesData?.data) return;
 
-    if (isNoDocument && !secondaryDocument.isPrimary) {
-      setSecondaryDocument(prev => ({
-        ...prev,
-        isPrimary: true
-      }));
+    const mapped = docCountriesData.data.map(c => ({
+      ...c,
+      displayName:
+        conjureValueBasedOnKeyFromList(
+          countryLovQueryResponse?.object ?? [],
+          c.name,
+          'lovDisplayVale'
+        ) || c.name
+    }));
+
+    setDocCountryCache(prev => (docCountryPage === 0 ? mapped : [...prev, ...mapped]));
+
+    setDocHasMoreCountries(docCountriesData.last === false);
+    setDocPaginationLoading(false);
+  }, [docCountriesData, docCountryPage, countryLovQueryResponse]);
+
+  const loadMoreDocCountries = () => {
+    if (!docHasMoreCountries || docPaginationLoading) return;
+    setDocPaginationLoading(true);
+    setDocCountryPage(p => p + 1);
+  };
+
+  useEffect(() => {
+    const isNoDoc = secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
+
+    if (isNoDoc && !secondaryDocument.isPrimary) {
+      setSecondaryDocument(prev => ({ ...prev, isPrimary: true }));
     }
-  }, [secondaryDocument.type, secondaryDocument.isPrimary]);
-
-  /* ============================= Modal Content ============================= */
+  }, [secondaryDocument.type]);
 
   const content = () => (
     <Form layout="inline" fluid className="patient-doc-secondary-container">
-      {/* TYPE */}
       <MyInput
         required
         column
@@ -181,32 +160,48 @@ const AddExtraDetails = ({
         selectDataValue="value"
         searchable={false}
         record={secondaryDocument}
-        setRecord={newRecord => setSecondaryDocument({ ...secondaryDocument, ...newRecord })}
+        setRecord={r => setSecondaryDocument(prev => ({ ...prev, ...r }))}
       />
 
-      {/* COUNTRY */}
       {secondaryDocument.type !== 'NO_DOCUMENT' && (
         <MyInput
           required
           column
           width={300}
           fieldLabel="Document Country"
-          fieldType="select"
+          fieldType="selectPagination"
           fieldName="countryId"
-          selectData={countryLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          selectData={docCountryCache}
+          selectDataLabel="displayName"
+          selectDataValue="id"
+          searchKeyWard={docCountrySearch}
+          setSearchKeyWard={v => {
+            setDocCountrySearch(v);
+            setDocCountryPage(0);
+          }}
+          hasMore={docHasMoreCountries}
+          onFetchMore={loadMoreDocCountries}
+          loading={docPaginationLoading}
+          open={docCountryOpen}
+          onOpen={() => setDocCountryOpen(true)}
+          onClose={() => setDocCountryOpen(false)}
+          onSelectItem={item => {
+            setSecondaryDocument(prev => ({
+              ...prev,
+              countryId: item ? item.id : null
+            }));
+
+            if (!item) {
+              setDocCountrySearch('');
+              setDocCountryPage(0);
+            }
+
+            setDocCountryOpen(false);
+          }}
           record={secondaryDocument}
-          setRecord={newRecord =>
-            setSecondaryDocument({
-              ...secondaryDocument,
-              ...newRecord
-            })
-          }
         />
       )}
 
-      {/* NUMBER */}
       {secondaryDocument.type !== 'NO_DOCUMENT' && (
         <MyInput
           required
@@ -214,22 +209,17 @@ const AddExtraDetails = ({
           width={300}
           fieldLabel="Document Number"
           fieldName="number"
-          disabled={secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'}
           record={secondaryDocument}
-          setRecord={newRecord =>
-            setSecondaryDocument({
-              ...secondaryDocument,
-              ...newRecord,
+          setRecord={r =>
+            setSecondaryDocument(prev => ({
+              ...prev,
               number:
-                secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'
-                  ? 'NO_DOCUMENT'
-                  : newRecord.number
-            })
+                prev.type === 'NO_DOC' || prev.type === 'NO_DOCUMENT' ? 'NO_DOCUMENT' : r.number
+            }))
           }
         />
       )}
 
-      {/* PRIMARY FLAG */}
       <MyInput
         width={200}
         column
@@ -243,93 +233,42 @@ const AddExtraDetails = ({
     </Form>
   );
 
-  /* ============================= Reset modal ============================= */
-
   const handleClear = () => {
     setOpen(false);
     setSecondaryDocument({ ...newPatientDocument });
+    setDocCountrySearch('');
+    setDocCountryPage(0);
   };
-
-  /* ============================= SAVE DOCUMENT HANDLER ============================= */
 
   const handleSaveSecondaryDocument = async () => {
     const isNoDoc = secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
 
-    const logError = (prefix: string, err: any) => {
-      console.log(`${prefix} (raw):`, err);
-      const msg = toHumanPatientDocumentError(err);
-      console.log(`${prefix} (human):`, msg);
-
-      dispatch(notify({ msg, sev: 'error' }));
-    };
-
-    /* =========================== NO DOCUMENT CASE =========================== */
-
-    if (isNoDoc) {
-      try {
+    try {
+      if (isNoDoc) {
         await addNoDocument({
           patientId: localPatient.id,
           type: 'NO_DOCUMENT',
           isPrimary: true
         }).unwrap();
+      } else {
+        const payload = {
+          ...secondaryDocument,
+          patientId: localPatient.id,
+          isPrimary: secondaryDocument.isPrimary ?? false
+        };
 
-        dispatch(notify({ msg: 'No Document Added Successfully', sev: 'success' }));
-
-        refetch();
-        handleClear();
-      } catch (err) {
-        logError('Error adding NO_DOCUMENT', err);
+        secondaryDocument.id
+          ? await updatePatientDocument(payload).unwrap()
+          : await addPatientDocument(payload).unwrap();
       }
 
-      return;
-    }
-
-    /* =========================== DOCUMENT DATA =========================== */
-
-    const documentData = {
-      ...secondaryDocument,
-      patientId: localPatient.id,
-      isPrimary: secondaryDocument.isPrimary ?? false,
-      countryId: 14,
-      number: secondaryDocument.number
-    };
-
-    /* =========================== CREATE =========================== */
-
-    if (!secondaryDocument.id) {
-      try {
-        await addPatientDocument(documentData).unwrap();
-
-        dispatch(notify({ msg: 'Document Added Successfully', sev: 'success' }));
-
-        refetch();
-        handleClear();
-      } catch (err) {
-        logError('Error adding document', err);
-      }
-
-      return;
-    }
-
-    /* =========================== UPDATE =========================== */
-
-    try {
-      await updatePatientDocument({
-        id: secondaryDocument.id,
-        ...documentData,
-          countryId: 14,
-      }).unwrap();
-
-      dispatch(notify({ msg: 'Document Updated Successfully', sev: 'success' }));
-
+      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       refetch();
       handleClear();
     } catch (err) {
-      logError('Error updating document', err);
+      dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'error' }));
     }
   };
-
-  /* ============================= Render Component ============================= */
 
   return (
     <MyModal
@@ -341,7 +280,7 @@ const AddExtraDetails = ({
       content={content}
       actionButtonFunction={handleSaveSecondaryDocument}
       actionButtonLabel="Save"
-      hideBack={true}
+      hideBack
       hideCancel={false}
       steps={[
         {

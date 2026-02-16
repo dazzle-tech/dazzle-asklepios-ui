@@ -63,7 +63,6 @@ const handleDelete = (row) => {
       });
     })
     .catch((err) => {
-      console.log("Delete Error =>", err);
       dispatch(notify({ msg: "Delete failed", sev: "error" }));
     });
 };
@@ -174,7 +173,6 @@ const handleDelete = (row) => {
   const rowsPerPage = listRequest.pageSize;
   const totalCount = data?.extraNumeric ?? 0;
 
-console.log("Surgical History Data =>", data?.object);
 
   return (
     <div className="medical-container-div">

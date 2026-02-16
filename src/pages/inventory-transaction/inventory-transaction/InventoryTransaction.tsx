@@ -247,7 +247,6 @@ const InventoryTransaction = () => {
     }
     const actionsForItems = rowData => {
         const handleViewTransactions = () => {
-            console.log('View transactions for:', rowData.name);
             // TODO: Implement view transactions logic
         };
 

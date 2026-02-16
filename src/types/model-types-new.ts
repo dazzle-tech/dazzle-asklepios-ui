@@ -996,16 +996,40 @@ export interface Patient {
   lastModifiedDate?: Date | null;
 }
 
+export interface SimpleCountry {
+  id: number;
+  name: string;
+  code: string;
+}
+
+export interface SimpleDistrict {
+  id: number;
+  name: string;
+  code: string;
+}
+
+export interface SimpleCommunity {
+  id: number;
+  name: string;
+}
+
+export interface SimpleArea {
+  id: number;
+  name: string;
+}
+
+export interface AddressLocation {
+  country: SimpleCountry | null;
+  district: SimpleDistrict | null;
+  community: SimpleCommunity | null;
+  area: SimpleArea | null;
+}
+
 export interface Address {
   id?: number;
   patientId: number;
 
-  countryId?: number | null;
-
-  countryName?: string | null;
-  districtName?: string | null;
-  communityName?: string | null;
-  areaName?: string | null;
+  locationJson: AddressLocation;
 
   streetName?: string | null;
   houseApartmentNumber?: string | null;
@@ -1013,12 +1037,12 @@ export interface Address {
   additionalAddressLine?: string | null;
 
   isCurrent?: boolean | null;
-
   createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+
 
 export interface PatientDocument {
   id?: number;
@@ -1148,6 +1172,50 @@ export interface BillingInvoiceResponseVM {
 }
 
 /* Billing Items */
+  export interface Payor {
+    id?: number;
+    code: string;
+    name: string;
+    category: string | null;
+    address?: string;
+    phone?: string;
+    email?: string;
+    contractManagerContact?: string;
+    startDate?: Date | string | null;
+    expiryDate?: Date | string | null;
+    renewable: boolean;
+    allowPartialCoverage: boolean;
+    acceptCopay: boolean;
+    acceptDeductibles: boolean;
+    allowPackagePricing: boolean;
+    allowDrgBilling: boolean;
+    forcePreApproval: boolean;
+    isActive: boolean;
+    createdDate?: Date | null;
+    lastModifiedDate?: Date | null;
+  }
+
+  export interface PayorPlan {
+  id?: number;
+  payorId: number;
+  name: string;
+  planType: string;
+  itemType: string;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+  export interface PayorPlanItem {
+  id?: number;
+  payorId: number;
+  itemType: string;
+  amount?: number | null;
+  coverageType: string;
+  isActive: boolean;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
 
 export interface BillingInvoiceItemCreateVM {
   invoiceId: number;

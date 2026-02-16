@@ -826,9 +826,7 @@ const InpatientList = () => {
           </>
         }
         actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
+        actionButtonFunction={() => {}}
         cancelButtonLabel="Close"
       />
 
@@ -843,9 +841,7 @@ const InpatientList = () => {
           </>
         }
         actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save Discharge Tracking');
-        }}
+        actionButtonFunction={() => {}}
         cancelButtonLabel="Close"
       />
 
@@ -860,9 +856,7 @@ const InpatientList = () => {
           </>
         }
         actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
+        actionButtonFunction={() => {}}
         cancelButtonLabel="Close"
       />
 

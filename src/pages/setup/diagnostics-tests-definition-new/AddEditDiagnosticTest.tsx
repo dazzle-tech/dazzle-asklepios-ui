@@ -119,7 +119,6 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
 
         dispatch(notify({ msg: 'Laboratory Details Updated Successfully', sev: 'success' }));
       } else {
-        console.log('Creating new Laboratory for Test ID:', diagnosticsTest?.id);
         await addDiagnosticTest({
           testId: diagnosticsTest?.id,
           property: diagnosticTestLaboratory.property,

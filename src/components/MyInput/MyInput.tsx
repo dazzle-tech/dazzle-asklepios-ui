@@ -20,6 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import dayjs from 'dayjs';
 
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
@@ -83,7 +84,7 @@ type MyInputProps = {
   container?: HTMLElement | (() => HTMLElement);
   // select-related
   selectData?: any[];
-  selectDataLabel?: string | string[]; // 👈 يسمح string أو array
+  selectDataLabel?: string | string[];
   selectDataValue?: string;
   renderMenuItem?: any;
   renderOptionLabel?: (item: any) => string;
@@ -101,7 +102,7 @@ type MyInputProps = {
   // Tag/Check picker
   creatable?: boolean;
   groupBy?: string | null;
-  // number
+  onSelectItem?: (item: any) => void;
   max?: number;
   defaultChecked?: boolean;
   checkedLabel?: string;
@@ -131,6 +132,7 @@ const MyInput = ({
 }: MyInputProps) => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.ui);
+   const direction = localStorage.getItem('direction');
   const recognitionRef = useRef<any>(null);
   const [recording, setRecording] = useState(false);
 
@@ -193,9 +195,14 @@ const MyInput = ({
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
 
   const handleValueChange = (value: any) => {
-    if (setRecord && typeof setRecord === 'function') {
-      setRecord({ ...record, [fieldName]: value });
+    if (!setRecord || typeof setRecord !== 'function') return;
+
+    if (fieldType === 'date') {
+      const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
+      setRecord({ ...record, [fieldName]: dateStr });
+      return;
     }
+    setRecord({ ...record, [fieldName]: value });
   };
 
   const inputWidth = props?.width ?? 145;
@@ -388,6 +395,7 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            hideMinutes={props?.hideMinutes ? props?.hideMinutes : false}
           />
         );
 
@@ -459,6 +467,7 @@ const MyInput = ({
           : [props.selectDataLabel ?? 'name'];
         const labelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
+        const pickerValue = record?.[fieldName] ?? '';
 
         return (
           <Form.Control
@@ -486,15 +495,47 @@ const MyInput = ({
             ]}
             labelKey={labelKey}
             valueKey={valueKey}
-            value={record?.[fieldName] ?? ''}
+            value={pickerValue}
             onChange={(value, item, event) => {
-              if (item?.isLoadMore) {
+              if (item?.isLoadMore || value === '__load_more__') {
                 event?.preventDefault?.();
                 event?.stopPropagation?.();
                 props.onFetchMore?.();
-              } else {
-                handleValueChange(value);
+                return;
               }
+
+              if (value === null || value === '' || value === undefined) {
+                handleValueChange(null);
+                if (props.onSelectItem) {
+                  props.onSelectItem(null);
+                }
+                return;
+              }
+              const selectedItem =
+                (props.selectData ?? []).find((x: any) => x[valueKey] === value) ?? item ?? null;
+
+              handleValueChange(value);
+
+              if (props.onSelectItem && selectedItem) {
+                props.onSelectItem(selectedItem);
+              }
+            }}
+            renderValue={(value, item, selectedElement) => {
+              if (!item) return selectedElement;
+              if (item.isLoadMore) return selectedElement;
+
+              if (props.renderOptionLabel) {
+                const base = props.renderOptionLabel(item);
+                return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
+              }
+
+              if (isArrayLabel) {
+                const base = buildCombinedLabel(item, labelKeys, selectedElement);
+                return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
+              }
+
+              const base = item[labelKey];
+              return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
             }}
             renderValue={(value, item, selectedElement) => {
               if (!item) return selectedElement;
@@ -559,7 +600,6 @@ const MyInput = ({
           />
         );
       }
-
       case 'multyPicker':
         return (
           <Form.Control
@@ -627,7 +667,7 @@ const MyInput = ({
             }
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? new Date(record[fieldName]) : null}
+            value={record[fieldName] ? dayjs(record[fieldName], 'YYYY-MM-DD').toDate() : null}
             accepter={CustomDatePicker}
             onChange={handleValueChange}
             placeholder={props.placeholder}
@@ -843,6 +883,7 @@ const MyInput = ({
 
   return (
     <Form.Group
+      style={{direction: direction === "LTR" ? "ltr" : "rtl"}}
       className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
     >
       <Form.ControlLabel>
@@ -855,7 +896,7 @@ const MyInput = ({
         )}
         {props.required && <span className="required-field ">*</span>}
       </Form.ControlLabel>
-      {props.column && <br />}
+      {props.column && <div style={{ marginBottom: 5 }} />}
       {conjureFormControl()}
       {validationResult && conjureValidationMessages()}
     </Form.Group>

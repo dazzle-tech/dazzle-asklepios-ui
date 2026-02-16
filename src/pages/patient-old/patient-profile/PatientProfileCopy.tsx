@@ -69,7 +69,6 @@ const PatientProfile = () => {
       setRefetchData(true);
       dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
     } catch (error) {
-      console.log(error);
     }
   };
 

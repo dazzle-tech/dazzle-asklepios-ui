@@ -68,13 +68,18 @@ const Resources = () => {
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5,
+    size: 15,
     sort: "id,asc",
     timestamp: Date.now(),
   });
+  const [filterPagination, setFilterPagination] = useState({
+      page: 0,
+      size: 15,
+      sort: 'id,asc'
+    });
 
   // ──────────────────────────── DATA ────────────────────────────
-  const { data: resourceListResponse, isFetching } =
+  const { data: resourceListResponse, refetch ,isFetching } =
     useGetAllResourcesQuery(paginationParams);
 
   const [createResource] = useCreateResourceMutation();
@@ -84,7 +89,8 @@ const Resources = () => {
   const resourceTypeEnum = useEnumOptions("ResourceType");
 
   const totalCount = resourceListResponse?.totalCount ?? 0;
-  const links = resourceListResponse?.links || {};
+  const [links, setLinks] = useState({});
+ 
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 
@@ -105,32 +111,47 @@ const Resources = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+   useEffect(() => {
+      setLinks(resourceListResponse?.links);
+    }, [resourceListResponse?.links]);
+
+    useEffect(() => {
+         if(!openAddEditResource && isFiltered){
+          handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+         }
+      },[resourceListResponse]);
+
   // ──────────────────────────── FILTER LOGIC ────────────────────────────
   const filterFields = [
     { label: "Resource Type", value: "resourceType" },
     { label: "Resource Name", value: "resourceName" },
   ];
 
-  const handleFilterChange = async (field: string, value: string) => {
+  const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
     try {
       if (!field || !value) {
         setIsFiltered(false);
         setFilteredList([]);
         return;
       }
+       const currentSize = size ?? filterPagination.size;
 
       let response;
+      const params = {
+        page,
+        size: currentSize,
+        sort: filterPagination.sort
+      };
 
       if (field === "resourceType") {
         response = await getResourcesByType({
           resourceType: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
+          ...params
         }).unwrap();
         setFilteredList(response.data ?? []);
         setFilteredTotal(response.totalCount ?? 0);
         setIsFiltered(true);
+        setFilterPagination({ ...filterPagination, page, size: currentSize });
       } else if (field === "resourceName") {
         // Filter by resource name - search in the current list
         const allResources = resourceListResponse?.data ?? [];
@@ -145,6 +166,7 @@ const Resources = () => {
         setFilteredList(filtered);
         setFilteredTotal(filtered.length);
         setIsFiltered(true);
+        setFilterPagination({ ...filterPagination, page, size: currentSize });
       } else {
         setIsFiltered(false);
         return;
@@ -179,17 +201,18 @@ const Resources = () => {
         notify({ msg: "Resource added successfully", sev: "success" })
       );
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
+      refetch();
       setResource({ ...Response });
       setOpenAddEditResource(false);
     } catch (error) {
 
       if (error?.data?.fieldErrors?.length) {
         const messages = error.data.fieldErrors
-          .map((fe) => `${fe.field}: ${fe.message}`)
+          .map(fe => `${fe.field}: ${fe.message}`)
           .join("\n");
-        dispatch(notify({ msg: messages, sev: "error" }));
+        dispatch(notify({ msg: messages, sev: "warning" }));
       } else if (error?.data?.detail) {
-        dispatch(notify({ msg: error.data.detail, sev: "error" }));
+        dispatch(notify({ msg: error.data.detail, sev: "warning" }));
       } else {
         dispatch(notify({ msg: "Failed to create resource", sev: "error" }));
       }
@@ -221,7 +244,7 @@ const Resources = () => {
 
       if (error?.data?.fieldErrors?.length) {
         const messages = error.data.fieldErrors
-          .map((fe) => `${fe.field}: ${fe.message}`)
+          .map(fe => `${fe.field}: ${fe.message}`)
           .join("\n");
         dispatch(notify({ msg: messages, sev: "error" }));
       } else if (error?.data?.detail) {
@@ -312,7 +335,7 @@ const Resources = () => {
       key: "resourceType",
       title: <Translate>Resource Type</Translate>,
       flexGrow: 3,
-      render: (rowData) => <p>{formatEnumString(rowData?.resourceType)}</p>,
+      render: rowData => <p>{formatEnumString(rowData?.resourceType)}</p>,
     },
     {
       key: "resourceKey",
@@ -353,15 +376,19 @@ const Resources = () => {
   ];
 
   // ──────────────────────────── PAGINATION ────────────────────────────
-  const handlePageChange = (event: unknown, newPage: number) => {
-    PaginationPerPage.handlePageChange(
-      event,
-      newPage,
-      paginationParams,
-      links,
-      setPaginationParams
-    );
-  };
+  const handlePageChange = (event, newPage) => {
+      if (isFiltered) {
+        handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+      } else {
+        PaginationPerPage.handlePageChange(
+          event,
+          newPage,
+          paginationParams,
+          links,
+          setPaginationParams
+        );
+      }
+    };
 
   // ──────────────────────────── FILTER UI ────────────────────────────
   const filters = () => (
@@ -373,7 +400,7 @@ const Resources = () => {
         selectDataLabel="label"
         selectDataValue="value"
         record={recordOfFilter}
-        setRecord={(u) => setRecordOfFilter({ filter: u.filter, value: "" })}
+        setRecord={u => setRecordOfFilter({ filter: u.filter, value: "" })}
         placeholder="Select Filter"
         showLabel={false}
         width="180px"
@@ -387,7 +414,7 @@ const Resources = () => {
           selectDataLabel="label"
           selectDataValue="value"
           record={recordOfFilter}
-          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
           showLabel={false}
           placeholder="Select Resource Type"
         />
@@ -435,12 +462,27 @@ const Resources = () => {
         totalCount={isFiltered ? filteredTotal : totalCount}
         columns={tableColumns}
         rowClassName={isSelected}
-        onRowClick={(rowData) => setResource(rowData)}
+        onRowClick={rowData => setResource(rowData)}
         filters={filters()}
         loading={isFetching}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
+       page={isFiltered ? filterPagination.page : pageIndex}
+        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
         onPageChange={handlePageChange}
+        onRowsPerPageChange={e => {
+          const newSize = Number(e.target.value);
+
+          if (isFiltered) {
+            setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
+            handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+          } else {
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            });
+          }
+        }}
         tableButtons={
           <div className="container-of-add-new-button">
         <MyButton

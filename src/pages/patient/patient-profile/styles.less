@@ -191,6 +191,8 @@
       font-family: 'Manrope Medium' !important;
       .patient-name {
         font-size: 14px;
+        display: flex !important;
+        flex-direction: row !important;
       }
 
       .patient-info {
@@ -265,7 +267,7 @@
   gap: 10px;
   align-items: center;
 }
-.container-of-uploader-bulk-registration{
+.container-of-uploader-bulk-registration {
   display: flex !important;
   justify-content: center !important;
   padding: 7px !important;
@@ -277,12 +279,12 @@
   background-color: #e8f3fc;
   padding: 10px;
 }
-.download-color-text{
-  color: #353B66 !important;
+.download-color-text {
+  color: #353b66 !important;
   font-weight: bold;
 }
-.gray-color-text{
-  color: #B1B7BD !important;
+.gray-color-text {
+  color: #b1b7bd !important;
 }
 
 .button-group-left-align {
@@ -291,13 +293,18 @@
   justify-content: flex-end;
 }
 
-
-
 .profile-sidebar-container.dark {
   .sidebar-panel {
-   background-color: var(--black);
+    background-color: var(--black);
   }
   .profile-sidebar {
-  background: var(--black) !important;
+    background: var(--black) !important;
   }
+}
+
+.rs-avatar-group {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: nowrap !important;
+  width: 40% !important;
 }

@@ -56,7 +56,6 @@ const Plan = () => {
             setLocalPlan(patientPlanListResponse.data.object[0]);
         }
       }, [patientPlanListResponse.data]);
-      console.log(localPlan);
     const saveChanges = async () => {
         try {
             await savePlan({...localPlan}).unwrap();
@@ -67,8 +66,6 @@ const Plan = () => {
             dispatch(notify('Save Failed'));
         }
     };
-    console.log("patientkey:" + patientSlice.patient.key);
-    console.log("patientvisit:" + patientSlice.encounter.key);
     return (<>
         <Grid fluid  >
             <Row gutter={15} style={{ height: '70px' }}>

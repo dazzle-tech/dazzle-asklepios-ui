@@ -9,8 +9,11 @@ import { TitleWithIcon } from '@/components/Charts/DynamicTableChart/TitleWithIc
 import DynamicMainTableChart from '@/components/Charts/DynamicTableChart/DynamicMainTableChart';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStethoscope, faVial, faPills } from '@fortawesome/free-solid-svg-icons';
+import './styles.less';
+import { useSelector } from 'react-redux';
 const Dashboard = () => {
   const dispatch = useAppDispatch();
+  const mode = useSelector((state) => state.ui.mode);
 
   useEffect(() => {
     const divContent = "Dashboard";
@@ -23,10 +26,8 @@ const Dashboard = () => {
     };
   }, [dispatch]);
 
-  console.log("Dashboard Rendered");
-
   return (
-    <Panel>
+    <Panel className={mode === 'dark' ? 'dashboard-dark' : ''}>
       <FlexboxGrid>
 
         {/* Bar Chart */}

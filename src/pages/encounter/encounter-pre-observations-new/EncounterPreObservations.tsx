@@ -97,7 +97,6 @@ const NurseStation = () => {
    const departmentKeyToUse = localEncounter?.departmentKey || '5001';
   const { data: nurseSheets = [] } =
     useGetNurseMedicalSheetsByDepartmentQuery(departmentKeyToUse);
- console.log("Nurse Sheets from backend:", nurseSheets);
   // allowed codes from backend
   const allowedSheetCodes = useMemo(
     () => new Set((nurseSheets ?? []).map((s: any) => s.medicalSheet)),

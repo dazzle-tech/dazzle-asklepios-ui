@@ -187,7 +187,6 @@ const [painLevel, setPainLevel] = useState(0);
         page: lastObservationSummary?.age
       }).unwrap();
       if (encounter.chiefComplaint !== localEncounter.chiefComplaint) {
-        console.log('true');
         await saveencounter(localEncounter).unwrap();
       }
       dispatch(setRefetchPatientSide(true));
@@ -207,12 +206,10 @@ const [painLevel, setPainLevel] = useState(0);
 
   // Effects
   useEffect(() => {
-    console.log(`lastencounterop`, lastencounterop);
     if (lastencounterop) {
       setPatientObservationSummary({
         ...lastencounterop
       });
-      console.log(patientObservationSummary.latestbpSystolic);
     }
   }, [lastencounterop]);
   useEffect(() => {

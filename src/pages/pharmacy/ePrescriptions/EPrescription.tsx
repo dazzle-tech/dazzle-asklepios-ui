@@ -409,7 +409,6 @@ const EPrescriptions = () => {
           <AdvancedSearchFilters searchFilter={true}/>
 
   </>);
-  console.log('selectedPatientRelation', selectedPatientRelation);
   //Table columns
   const tableOrdersColumns = [
     {

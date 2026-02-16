@@ -78,7 +78,6 @@ const AddEditPriceListItem = ({ open, setOpen, priceList }: Props) => {
   // fetch services and products
   const { data: servicesData } = useGetAllServicesQuery({ page: 0, size: 1000 });
  const {data:AllProducts}=useGetInventoryProductsQuery({page:0,size:1000});
- console.log('AllProducts',AllProducts);
   const { data: productsData, isFetching: isFetchingProducts } =
     useGetInventoryProductByTypeQuery(
       { type: item.productType, page: 0, size: 1000 },
@@ -112,24 +111,24 @@ const AddEditPriceListItem = ({ open, setOpen, priceList }: Props) => {
 
       if (item.itemType === "SERVICE") {
         if (!item.serviceId) {
-          dispatch(notify({ msg: "Service is required", sev: "error" }));
+          dispatch(notify({ msg: "Service is required", sev: "warning" }));
           return;
         }
       }
 
       if (item.itemType === "PRODUCT") {
         if (!item.productType) {
-          dispatch(notify({ msg: "Product type is required", sev: "error" }));
+          dispatch(notify({ msg: "Product type is required", sev: "warning" }));
           return;
         }
         if (!item.productId) {
-          dispatch(notify({ msg: "Product is required", sev: "error" }));
+          dispatch(notify({ msg: "Product is required", sev: "warning" }));
           return;
         }
       }
 
       if (item.price === null || item.price === undefined) {
-        dispatch(notify({ msg: "Price is required", sev: "error" }));
+        dispatch(notify({ msg: "Price is required", sev: "warning" }));
         return;
       }
 

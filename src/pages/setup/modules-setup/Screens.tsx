@@ -76,11 +76,6 @@ const Screens = ({ module, goBack }) => {
     }
   }, [screen]);
 
-  useEffect(() => {
-    if (screenMetadataListResponse) {
-      console.log(screenMetadataListResponse);
-    }
-  }, [screenMetadataListResponse]);
 
   useEffect(() => {
     handleFilterChange('name', record['value']);

@@ -67,7 +67,6 @@ const DeliriumPrevention = () => {
             <div className="safety-bundle-icu-add-btn-wrapper">
               <MyButton
                 prefixIcon={() => <PlusIcon />}
-                onClick={() => console.log("Add Delirium clicked")}
               >
                 Add
               </MyButton>

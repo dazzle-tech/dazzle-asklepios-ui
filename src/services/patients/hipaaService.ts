@@ -29,23 +29,19 @@ export const hipaaService = createApi({
         method: 'POST',
         body
       }),
-      invalidatesTags: (_res, _err, { body }) => [
-        { type: 'Hipaa', id: body.patientId }
-      ]
+      invalidatesTags: (_res, _err, { body }) => [{ type: 'Hipaa', id: body.patientId }]
     }),
 
     /**
      * UPDATE HIPAA by patientId
      */
-    updatePatientHIPAA: builder.mutation<PatientHIPAA, { patientId: number; body: PatientHIPAA } >({
+    updatePatientHIPAA: builder.mutation<PatientHIPAA, { patientId: number; body: PatientHIPAA }>({
       query: ({ patientId, body }) => ({
         url: `/api/patient/hipaa/${patientId}`,
         method: 'PUT',
         body
       }),
-      invalidatesTags: (_res, _err, { patientId }) => [
-        { type: 'Hipaa', id: patientId }
-      ]
+      invalidatesTags: (_res, _err, { patientId }) => [{ type: 'Hipaa', id: patientId }]
     })
   })
 });

@@ -38,10 +38,8 @@ import { ApPatientInsurance } from '@/types/model-types';
 
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
-
-/* ========================================================= */
-/* ======================= ERROR HELPERS ==================== */
-/* ========================================================= */
+import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
 
 const toHumanPatientDocumentError = (
   err,
@@ -62,9 +60,6 @@ const toHumanPatientDocumentError = (
 
   const payloadText = [title, detail, message].filter(Boolean).join(' | ');
 
-  /* ===========================================================
-     1) VALIDATION FIELD ERRORS
-     =========================================================== */
   const isValidation =
     data?.message === 'error.validation' ||
     title?.toLowerCase()?.includes?.('argument not valid') ||
@@ -88,9 +83,6 @@ const toHumanPatientDocumentError = (
     return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
   }
 
-  /* ===========================================================
-     2) HIBERNATE / ConstraintViolation Parsing
-     =========================================================== */
   const looksLikeConstraintViolation =
     payloadText.toLowerCase().includes('constraintviolation') ||
     payloadText.toLowerCase().includes('interpolatedmessage=');
@@ -119,9 +111,6 @@ const toHumanPatientDocumentError = (
     }
   }
 
-  /* ===========================================================
-     3) BACKEND CUSTOM ERROR KEYS
-     =========================================================== */
   let errorKey = data.errorKey || data.message || data.properties?.message || '';
   errorKey = errorKey.replace(/^error\./, '');
 
@@ -142,9 +131,6 @@ const toHumanPatientDocumentError = (
     return keyMap[errorKey] + traceId;
   }
 
-  /* ===========================================================
-     4) CHECK FOR COMMON DATABASE CONSTRAINT MESSAGES
-     =========================================================== */
   if (
     payloadText.toLowerCase().includes('constraint') ||
     payloadText.toLowerCase().includes('unique') ||
@@ -156,9 +142,6 @@ const toHumanPatientDocumentError = (
     );
   }
 
-  /* ===========================================================
-     5) FALLBACK
-     =========================================================== */
   return detail || title || message || 'Unexpected error occurred while saving document.' + traceId;
 };
 
@@ -177,9 +160,6 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
 
   const payloadText = [title, detail, message].filter(Boolean).join(' | ');
 
-  /* ===========================================================
-     1) VALIDATION FIELD ERRORS
-     =========================================================== */
   const isValidation =
     data?.message === 'error.validation' ||
     title?.toLowerCase()?.includes?.('argument not valid') ||
@@ -203,9 +183,6 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
   }
 
-  /* ===========================================================
-     2) HIBERNATE / ConstraintViolation Parsing
-     =========================================================== */
   const looksLikeConstraintViolation =
     payloadText.toLowerCase().includes('constraintviolation') ||
     payloadText.toLowerCase().includes('interpolatedmessage=');
@@ -234,9 +211,6 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     }
   }
 
-  /* ===========================================================
-     3) BACKEND CUSTOM ERROR KEYS
-     =========================================================== */
   let errorKey = data.errorKey || data.message || data.properties?.message || '';
   errorKey = errorKey.replace(/^error\./, '');
 
@@ -251,15 +225,8 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     return keyMap[errorKey] + traceId;
   }
 
-  /* ===========================================================
-     4) FALLBACK
-     =========================================================== */
   return detail || title || message || 'Unexpected server error occurred.' + traceId;
 };
-
-/* ========================================================= */
-/* ======================== COMPONENT ======================= */
-/* ========================================================= */
 
 const CreateNewPatient = ({ open, setOpen }) => {
   const dispatch = useAppDispatch();
@@ -267,7 +234,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const pageCode = useSelector(state => state.div?.pageCode);
 
-  /* STATE */
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
   const [secondaryDocument, setSecondaryDocument] = useState(newPatientDocument);
   const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({
@@ -284,7 +250,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
     discharge: false
   });
 
-  /* API */
   const [addPatient] = useAddPatientMutation();
   const [updatePatient] = useUpdatePatientMutation();
   const [addPatientDocument] = useAddPatientDocumentMutation();
@@ -303,6 +268,47 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const { data: insuranceProviderLov } = useGetLovValuesByCodeQuery('INS_PROVIDER');
   const { data: insurancePlanLov } = useGetLovValuesByCodeQuery('INS_PLAN_TYPS');
+
+  const PAGE_SIZE = 5;
+
+  const [docCountryCache, setDocCountryCache] = useState<any[]>([]);
+  const [docCountryPage, setDocCountryPage] = useState(0);
+  const [docCountrySearch, setDocCountrySearch] = useState('');
+  const [docHasMoreCountries, setDocHasMoreCountries] = useState(true);
+  const [docCountryOpen, setDocCountryOpen] = useState(false);
+  const [docPaginationLoading, setDocPaginationLoading] = useState(false);
+
+  const { data: docCountriesData } = useGetActiveCountriesQuery({
+    page: docCountryPage,
+    size: PAGE_SIZE,
+    ...(docCountrySearch && { search: docCountrySearch }),
+    sort: 'id,asc'
+  });
+
+  useEffect(() => {
+    if (!docCountriesData?.data) return;
+
+    const mapped = docCountriesData.data.map((c: any) => ({
+      ...c,
+      displayName:
+        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
+    }));
+
+    if (docCountryPage === 0) {
+      setDocCountryCache(mapped);
+    } else {
+      setDocCountryCache(prev => [...prev, ...mapped]);
+    }
+
+    setDocHasMoreCountries(docCountriesData.last === false);
+    setDocPaginationLoading(false);
+  }, [docCountriesData, docCountryPage, countryLov]);
+
+  const loadMoreDocCountries = () => {
+    if (!docHasMoreCountries) return;
+    setDocPaginationLoading(true);
+    setDocCountryPage(prev => prev + 1);
+  };
 
   /* ========================================================= */
   /* ===================== SAVE PATIENT ======================= */
@@ -340,10 +346,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
       dispatch(notify({ msg, sev: 'error' }));
     }
   };
-
-  /* ========================================================= */
-  /* ====== SAVE + CREATE QUICK ENCOUNTER (ER_Triage) ========= */
-  /* ========================================================= */
 
   const handleSavePatientAndQuick = async () => {
     try {
@@ -390,17 +392,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-  /* ========================================================= */
-  /* ====================== SAVE DOCUMENT ===================== */
-  /* ========================================================= */
-
   const handleSaveDocument = async () => {
     const isNoDocument =
       secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
 
-    /* ===========================
-     NO DOCUMENT CASE
-     =========================== */
     if (isNoDocument) {
       try {
         await addNoDocument({
@@ -419,20 +414,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
       return;
     }
 
-    /* ===========================
-     DOCUMENT DATA
-     =========================== */
     const documentData = {
       ...secondaryDocument,
       patientId: localPatient.id,
       isPrimary: secondaryDocument.isPrimary ?? false,
-      number: secondaryDocument.number,
-      countryId: 14
+      number: secondaryDocument.number
     };
 
-    /* ===========================
-     CREATE DOCUMENT
-     =========================== */
     try {
       await addPatientDocument(documentData).unwrap();
       dispatch(notify({ msg: 'Document Added Successfully', sev: 'success' }));
@@ -442,10 +430,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
       dispatch(notify({ msg, sev: 'error' }));
     }
   };
-
-  /* ========================================================= */
-  /* ======================== EFFECTS ========================= */
-  /* ========================================================= */
 
   useEffect(() => {
     const isNoDocument =
@@ -468,13 +452,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   }, [open]);
 
-  /* ========================================================= */
-  /* ========================== UI ============================ */
-  /* ========================================================= */
-
   const conjureFormContent = step => {
     switch (step) {
-      /* ============ BASIC INFO ============ */
       case 0:
         return (
           <Form layout="inline">
@@ -559,7 +538,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
           </Form>
         );
 
-      /* ============ DOCUMENTS ============ */
       case 1:
         return (
           <Form fluid layout="inline">
@@ -585,15 +563,27 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 column
                 width={200}
                 fieldLabel="Document Country"
-                fieldType="select"
+                fieldType="selectPagination"
                 fieldName="countryId"
-                selectData={countryLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectData={docCountryCache}
+                selectDataLabel="displayName"
+                selectDataValue="id"
+                searchKeyWard={docCountrySearch}
+                setSearchKeyWard={setDocCountrySearch}
+                hasMore={docHasMoreCountries}
+                onFetchMore={loadMoreDocCountries}
+                loading={docPaginationLoading}
+                open={docCountryOpen}
+                onOpen={() => setDocCountryOpen(true)}
+                onClose={() => setDocCountryOpen(false)}
+                onSelectItem={(item: any) => {
+                  setSecondaryDocument(prev => ({
+                    ...prev,
+                    countryId: item.id
+                  }));
+                  setDocCountryOpen(false);
+                }}
                 record={secondaryDocument}
-                setRecord={newRecord =>
-                  setSecondaryDocument({ ...secondaryDocument, ...newRecord })
-                }
               />
             )}
 
@@ -637,7 +627,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
           </Form>
         );
 
-      /* ============ CONTACT ============ */
       case 2:
         return (
           <Form layout="inline">
@@ -747,7 +736,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
           </Form>
         );
 
-      /* ============ INSURANCE ============ */
       case 3:
         return (
           <Form layout="inline">
@@ -813,9 +801,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
         return null;
     }
   };
-
-  /* ========================================================= */
-  /* ========================= RENDER ================================= */
 
   return (
     <MyModal

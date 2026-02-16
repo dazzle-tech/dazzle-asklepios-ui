@@ -12,6 +12,7 @@ import { calculateAgeFormat } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBars,
+  faBolt,
   faBroom,
   faCalendarCheck,
   faCalendarDay,
@@ -32,6 +33,7 @@ import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
+import QuickPatient from '../facility-patient-list/QuickPatient';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -66,11 +68,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
   const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
+  const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
+
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
-  // Fetch patient profile image using new API
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
   const {
     data: profilePictureTicket,
@@ -81,7 +84,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
-  // Container to choose action from more menu
   const contentOfMoreIconMenu = (
     <Popover full>
       <Dropdown.Menu>
@@ -160,7 +162,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     </Popover>
   );
 
-  // Container to choose action from print menu
   const contentOfPrintIconMenu = (
     <Popover full>
       <Dropdown.Menu>
@@ -178,12 +179,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     </Popover>
   );
 
-  // Handle image click for upload
   const handleImageClick = () => {
     if (localPatient.id) profileImageFileInputRef.current.click();
   };
 
-  // Handle file change for profile image
   const handleFileChange = async event => {
     if (!localPatient || !patientId) return;
 
@@ -208,27 +207,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
   };
 
-  // Handle quick appointment
   const handleNewVisit = () => {
     setQuickAppointmentModel(true);
   };
 
-  // Handle scan document button click
   const handleScanDocumentClick = () => {
-    // Allow opening modal even without patient ID for ID parsing
     setOpenScanDocumentModal(true);
   };
 
-  // Handle ID parsed data - Auto-fill patient form
   const handleIdParsed = (parsedData: any) => {
-    console.log('ID Parsed Data:', parsedData);
 
-    // Auto-fill patient form with parsed data
     const updatedPatient: Partial<Patient> = {
       ...localPatient
     };
 
-    // Map parsed data to patient fields
     if (parsedData.firstName) updatedPatient.firstName = parsedData.firstName;
     if (parsedData.lastName) updatedPatient.lastName = parsedData.lastName;
     if (parsedData.secondName) updatedPatient.secondName = parsedData.secondName;
@@ -250,13 +242,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     );
   };
 
-  // Close menus
   const closeMenus = useCallback(() => {
     setOpenMoreMenu(false);
     setOpenPrintMenu(false);
   }, []);
 
-  // Effects for patient image
   React.useEffect(() => {
     const patientWithUrl = localPatient as any;
 
@@ -380,6 +370,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 >
                   Clear
                 </MyButton>
+                <MyButton
+                  appearance="ghost"
+                  onClick={() => setQuickPatientModalOpen(true)}
+                  prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
+                >
+                  Quick Patient
+                </MyButton>
                 <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
                   Quick Appointment
                 </MyButton>
@@ -434,7 +431,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </Stack.Item>
       </Stack>
 
-      {/* Scan Document Modal */}
+      <QuickPatient
+        open={quickPatientModalOpen}
+        setOpen={setQuickPatientModalOpen}
+        setPatient={setLocalPatient}
+      />
+
       <ScanDocumentModal
         open={openScanDocumentModal}
         setOpen={setOpenScanDocumentModal}

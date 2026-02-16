@@ -301,9 +301,6 @@ const handleUpdateDiagnosticTest = async () => {
     } else return '';
   };
 
-console.log("Selected Test:", diagnosticsTest);
-
-
   // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
 const iconsForActions = (rowData: any) => (
   <div className="container-of-icons">
