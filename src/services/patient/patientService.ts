@@ -56,7 +56,7 @@ export const newPatientService = createApi({
       { medicalRecordNumber: string } & PagedParams
     >({
       query: ({ medicalRecordNumber, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-medicalRecordNumber/${encodeURIComponent(
+        url: `/api/patient/by-medicalRecordNumber/${encodeURIComponent(
           medicalRecordNumber
         )}`,
         params: { page, size, sort }
@@ -74,7 +74,7 @@ export const newPatientService = createApi({
       { archivingNumber: string } & PagedParams
     >({
       query: ({ archivingNumber, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-archiving-number/${encodeURIComponent(archivingNumber)}`,
+        url: `/api/patient/by-archiving-number/${encodeURIComponent(archivingNumber)}`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -89,7 +89,7 @@ export const newPatientService = createApi({
       { phone: string } & PagedParams
     >({
       query: ({ phone, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-primary-phone/${encodeURIComponent(phone)}`,
+        url: `/api/patient/by-primary-phone/${encodeURIComponent(phone)}`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -104,7 +104,7 @@ export const newPatientService = createApi({
       { date: string } & PagedParams
     >({
       query: ({ date, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-date-of-birth/${encodeURIComponent(date)}`,
+        url: `/api/patient/by-date-of-birth/${encodeURIComponent(date)}`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -119,7 +119,7 @@ export const newPatientService = createApi({
       { keyword: string } & PagedParams
     >({
       query: ({ keyword, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-full-name/${encodeURIComponent(keyword)}`,
+        url: `/api/patient/by-full-name/${encodeURIComponent(keyword)}`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -135,7 +135,7 @@ export const newPatientService = createApi({
       { number: string } & PagedParams
     >({
       query: ({ number, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-document-number`,
+        url: `/api/patient/by-document-number`,
         params: { number, page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -147,7 +147,7 @@ export const newPatientService = createApi({
 
     addPatient: builder.mutation<modelTypes.Patient, modelTypes.Patient>({
       query: data => ({
-        url: '/api/patient/patients',
+        url: '/api/patient',
         method: 'POST',
         body: data
       }),
@@ -156,7 +156,7 @@ export const newPatientService = createApi({
 
     updatePatient: builder.mutation<modelTypes.Patient, { id: Id; data: modelTypes.Patient }>({
       query: ({ id, data }) => ({
-        url: `/api/patient/patients/${id}`,
+        url: `/api/patient/${id}`,
         method: 'PUT',
         body: data
       }),
@@ -168,7 +168,7 @@ export const newPatientService = createApi({
       { number: string } & PagedParams
     >({
       query: ({ number, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-any-document-number`,
+        url: `/api/patient/by-any-document-number`,
         params: { number, page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -180,25 +180,26 @@ export const newPatientService = createApi({
 
     addUnknownPatient: builder.mutation<modelTypes.Patient, void>({
       query: () => ({
-        url: '/api/patient/patients/unknown',
+        url: '/api/patient/unknown',
         method: 'POST'
       }),
       invalidatesTags: ['Patient']
     }),
 
-    getUnknownPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
-      query: ({ page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/unknown`,
-        params: { page, size, sort }
-      }),
-      transformResponse: (response: any, meta) => {
-        return mapPaged(response?.content ?? [], meta);
-      },
-      providesTags: res =>
-        res
-          ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
-          : ['Patient']
-    })
+   getUnknownPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
+  query: ({ page, size, sort = 'id,asc' }) => ({
+    url: `/api/patient/unknown`,
+    params: { page, size, sort }
+  }),
+  transformResponse: (response: any, meta) => {
+    const rows = Array.isArray(response) ? response : (response?.content ?? []);
+    return mapPaged(rows, meta);
+  },
+  providesTags: res =>
+    res
+      ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
+      : ['Patient']
+})
   })
 });
 

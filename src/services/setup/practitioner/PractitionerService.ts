@@ -38,11 +38,11 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
-    getPractitionersByFacility: builder.query({
-      query: ({ facilityId, ...params }) => ({
+    getPractitionersByFacility: builder.query<PagedResult<any>, { facilityId: number | string } & PagedParams>({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/practitioner/by-facility/${facilityId}`,
         method: 'GET',
-        params
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
@@ -55,11 +55,11 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
-    getPractitionersBySpecialty: builder.query({
-      query: ({ specialty, ...params }) => ({
+    getPractitionersBySpecialty: builder.query<PagedResult<any>, { specialty: string } & PagedParams>({
+      query: ({ specialty, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/practitioner/by-specialty/${specialty}`,
         method: 'GET',
-        params
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
@@ -72,11 +72,11 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
-    getPractitionerByName: builder.query({
-      query: ({ name, ...params }) => ({
+    getPractitionerByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
+      query: ({ name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/practitioner/by-name/${name}`,
         method: 'GET',
-        params
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta) => {
         const headers = meta?.response?.headers;
@@ -89,15 +89,32 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
-    getPractitionerById: builder.query({
+    getPractitionerById: builder.query<any, number | string>({
       query: id => ({
         url: `/api/setup/practitioner/${id}`,
         method: 'GET'
       }),
-      providesTags: (result, error, id) => [{ type: 'Practitioner', id }]
+      providesTags: (_result, _error, id) => [{ type: 'Practitioner', id }]
     }),
 
-    createPractitioner: builder.mutation({
+    getActiveAppointablePractitioners: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/active-appointable',
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
+    createPractitioner: builder.mutation<any, any>({
       query: body => ({
         url: '/api/setup/practitioner',
         method: 'POST',
@@ -106,16 +123,16 @@ export const PractitionerService = createApi({
       invalidatesTags: ['Practitioner']
     }),
 
-    updatePractitioner: builder.mutation({
+    updatePractitioner: builder.mutation<any, { id: number | string } & Record<string, any>>({
       query: ({ id, ...body }) => ({
         url: `/api/setup/practitioner/${id}`,
         method: 'PUT',
         body
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Practitioner', id }, 'Practitioner']
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Practitioner', id }, 'Practitioner']
     }),
 
-    togglePractitionerActive: builder.mutation({
+    togglePractitionerActive: builder.mutation<any, number | string>({
       query: id => ({
         url: `/api/setup/practitioner/${id}/toggle-active`,
         method: 'PATCH'
@@ -123,7 +140,7 @@ export const PractitionerService = createApi({
       invalidatesTags: ['Practitioner']
     }),
 
-    getPractitionersBulk: builder.mutation({
+    getPractitionersBulk: builder.mutation<any, number[]>({
       query: (ids: number[]) => ({
         url: '/api/setup/practitioner/bulk',
         method: 'POST',
@@ -141,8 +158,10 @@ export const {
   useLazyGetPractitionerByNameQuery,
   useGetPractitionersBySpecialtyQuery,
   useGetPractitionerByIdQuery,
+  useGetActiveAppointablePractitionersQuery,
+  useLazyGetActiveAppointablePractitionersQuery,
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
-  useGetPractitionersBulkMutation // ← الجديد
+  useGetPractitionersBulkMutation
 } = PractitionerService;

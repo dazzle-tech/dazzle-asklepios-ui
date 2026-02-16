@@ -20,6 +20,29 @@ import {
   useUpdatePatientPreferredHealthProfessionalMutation
 } from '@/services/patients/PatientPreferredHealthProfessional';
 
+
+const toHumanBackendError = (err: any): string => {
+  const data = err?.data ?? {};
+
+  const rawKey = data?.errorKey ?? data?.message ?? data?.key ?? '';
+  const errorKey = typeof rawKey === 'string' ? rawKey.replace(/^error\./, '') : '';
+
+  const title = data?.title || '';
+  const detail = data?.detail || '';
+  const message = data?.message || '';
+
+  const traceId =
+    data?.traceId || data?.correlationId
+      ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
+      : '';
+
+  if (errorKey === 'unique.patient_practitioner')
+    return 'A practitioner is already preferred.' + traceId;
+
+  return detail || title || message || 'Failed to save Preferred Health Professional.' + traceId;
+};
+
+
 const AddPrefferdHealthProfessionalModal = ({
   open,
   setOpen,
@@ -123,9 +146,17 @@ const AddPrefferdHealthProfessionalModal = ({
       setOpen(false);
       if (refetch) refetch();
     } catch (err: any) {
+      console.log('=== Preferred HP SAVE ERROR START ===');
+      console.log('raw error:', err);
+      console.log('status:', err?.status);
+      console.log('data:', err?.data);
+      console.log('data.message:', err?.data?.message);
+      console.log('data.errorKey:', err?.data?.errorKey);
+      console.log('=== Preferred HP SAVE ERROR END ===');
+
       dispatch(
         notify({
-          msg: err?.data?.message || 'Failed to save Preferred Health Professional',
+          msg: toHumanBackendError(err),
           sev: 'error'
         })
       );
@@ -247,6 +278,22 @@ const AddPrefferdHealthProfessionalModal = ({
       />
     </Form>
   );
+
+  useEffect(() => {
+    if (!open || !editable) return;
+
+    const derivedFacilityId =
+      practitionerRecord?.facilityId ??
+      practitionerRecord?.facility?.id ??
+      practitionerRecord?.facility?.value;
+
+    if (!hpRecord?.facilityId && derivedFacilityId) {
+      setPatientHP((prev: any) => ({
+        ...(prev ?? { ...newPatientPreferredHealthProfessional }),
+        facilityId: derivedFacilityId
+      }));
+    }
+  }, [open, editable, practitionerRecord]);
 
   return (
     <MyModal

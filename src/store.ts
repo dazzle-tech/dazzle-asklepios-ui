@@ -148,7 +148,11 @@ import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
 
 import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
-
+import PatientRelationService from './services/patients/PatientRelationService';
+import { patientInsurancesService } from './services/patients/patientInsurancesService';
+import { patientInsuranceCoveragesService } from './services/patients/patientInsuranceCoveragesService';
+import { encounterVaccinationService } from './services/encounterMedical/encounterVaccinationService';
+import { patientEncounterService } from './services/encounters/patientEncounterService';
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -225,6 +229,7 @@ export const store = configureStore({
     [operationService.reducerPath]: operationService.reducer,
     [radService.reducerPath]: radService.reducer,
     [procedureService.reducerPath]: procedureService.reducer,
+    [PatientRelationService.reducerPath]: PatientRelationService.reducer,
 
     // refetch flags
     refetch: refetchReducer,
@@ -348,7 +353,14 @@ export const store = configureStore({
 
     // payer
     [PayorService.reducerPath]: PayorService.reducer,
-    [PayorPlanService.reducerPath]: PayorPlanService.reducer
+    [PayorPlanService.reducerPath]: PayorPlanService.reducer,
+
+    [patientInsurancesService.reducerPath]: patientInsurancesService.reducer,
+    [patientInsuranceCoveragesService.reducerPath]: patientInsuranceCoveragesService.reducer,
+
+    [encounterVaccinationService.reducerPath]: encounterVaccinationService.reducer,
+
+    [patientEncounterService.reducerPath]: patientEncounterService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -517,7 +529,14 @@ export const store = configureStore({
 
       // payer
       PayorService.middleware,
-      PayorPlanService.middleware
+      PayorPlanService.middleware,
+
+      PatientRelationService.middleware,
+      patientInsurancesService.middleware,
+      patientInsuranceCoveragesService.middleware,
+      encounterVaccinationService.middleware,
+
+      patientEncounterService.middleware
     ])
 });
 

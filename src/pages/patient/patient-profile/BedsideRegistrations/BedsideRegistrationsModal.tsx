@@ -20,7 +20,6 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
     size: 50,
     sort: 'id,asc'
   });
-
   // Icons column (Merge, Update Information)
   const iconsForActions = rowData => (
     <div className="container-of-icons">
@@ -60,7 +59,7 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
       title: <Translate>Patient Name</Translate>
     },
     {
-      key: 'mrn',
+      key: 'medicalRecordNumber',
       title: <Translate>MRN</Translate>
     },
     {

@@ -63,7 +63,7 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
 
   if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
 
-  if (errorKey === 'unique.patient_practitioner_facility') return 'A patient with the same medical record number already exists.' + traceId;
+  if (errorKey === 'unique.medical_record_number') return 'A patient with the same medical record number already exists.' + traceId;
 
   if (errorKey === 'db.constraint')
     return detail || 'Database constraint violated while saving or updating patient.' + traceId;
@@ -127,9 +127,9 @@ const PatientProfile = () => {
       const saved = localPatient?.id
         ? await updatePatient({
             id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
+            data: { ...localPatient, isCompletedPatient: true  ,isUnknown:false}
           }).unwrap()
-        : await addPatient({ ...localPatient, isCompletedPatient: true }).unwrap();
+        : await addPatient({ ...localPatient, isCompletedPatient: true ,isUnknown:false}).unwrap();
 
       setLocalPatient(saved);
       dispatch(setPatient(saved));

@@ -17,6 +17,7 @@ import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
 import InsuranceTab from './tabs/InsuranceTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
+import dayjs from 'dayjs';
 
 interface ProfileTabsProps {
   localPatient: Patient;
@@ -53,27 +54,39 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
 
   useEffect(() => {
-    if (!localPatient?.dateOfBirth) {
+    const dob = localPatient?.dateOfBirth;
+
+    if (!dob) {
       setAgeFormatType({ ageFormat: '' });
       setAgeGroupValue({ ageGroup: '' });
       lastProcessedDOB.current = null;
       return;
     }
 
-    if (lastProcessedDOB.current === localPatient.dateOfBirth) {
+    // normalize to string (prevents: includes is not a function)
+    const dobStr =
+      dob instanceof Date
+        ? dayjs(dob).format('YYYY-MM-DD')
+        : typeof dob === 'string'
+          ? dob
+          : dob != null
+            ? String(dob)
+            : '';
+
+    // avoid re-processing same DOB
+    if (lastProcessedDOB.current === dobStr) {
       return;
     }
+    lastProcessedDOB.current = dobStr;
 
-    lastProcessedDOB.current = localPatient.dateOfBirth;
-
-    const calculatedFormat = calculateAgeFormat(localPatient.dateOfBirth);
+    // calculateAgeFormat expects DOB (string usually), so pass normalized string
+    const calculatedFormat = calculateAgeFormat(dobStr);
     setAgeFormatType({ ageFormat: calculatedFormat });
 
-    fetchAgeGroupByBirthDate({
-      birthDate: localPatient.dateOfBirth.includes('T')
-        ? localPatient.dateOfBirth.split('T')[0]
-        : String(localPatient.dateOfBirth)
-    })
+    // API expects yyyy-mm-dd (strip time if exists)
+    const birthDate = dobStr.includes('T') ? dobStr.split('T')[0] : dobStr;
+
+    fetchAgeGroupByBirthDate({ birthDate })
       .unwrap()
       .then(res => {
         setAgeGroupValue({
@@ -105,11 +118,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     },
     {
       title: 'Address',
-      content: (
-        <AddressTab
-          localPatient={localPatient}
-        />
-      )
+      content: <AddressTab localPatient={localPatient} />
     },
     {
       title: 'Extra Details',

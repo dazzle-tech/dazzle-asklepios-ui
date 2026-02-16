@@ -85,6 +85,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         width={170}
       />
       <MyInput
+        required
         vr={validationResult}
         column
         fieldName="email"

@@ -79,84 +79,82 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
   const genderEnum = useEnumOptions('Gender');
 
-const handleSave = async () => {
-  try {
-    let savedPatient: Patient;
+  const handleSave = async () => {
+    try {
+      let savedPatient: Patient;
 
-    if (isUnknown) {
-      const payload: Patient = {
-        ...localPatient,
-        isUnknown: true,
-        isVerified: false,
-        isCompletedPatient: false,
-        // لا تحط lastName='.' في unknown
-        lastName: null as any,
-        firstName: null as any,
-        sexAtBirth: null as any,
-        dateOfBirth: null as any,
-        primaryMobileNumber: null as any,
-        securityAccessLevel:
-          localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
-      };
+      if (isUnknown) {
+        const payload: Patient = {
+          ...localPatient,
+          isUnknown: true,
+          isVerified: false,
+          isCompletedPatient: false,
+          lastName: null as any,
+          firstName: null as any,
+          sexAtBirth: null as any,
+          dateOfBirth: null as any,
+          primaryMobileNumber: null as any,
+          securityAccessLevel:
+            localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
+        };
 
-      savedPatient = await addUnknownPatient(payload).unwrap();
-    } else {
-      const payload: Patient = {
-        ...localPatient,
-        isCompletedPatient: false,
-        lastName: localPatient.lastName || '.',
-        isUnknown: false,
-        securityAccessLevel:
-          localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
-      };
+        savedPatient = await addUnknownPatient().unwrap();
+      } else {
+        const payload: Patient = {
+          ...localPatient,
+          isCompletedPatient: false,
+          lastName: localPatient.lastName || '.',
+          isUnknown: false,
+          securityAccessLevel:
+            localPatient.securityAccessLevel !== undefined ? localPatient.securityAccessLevel : null
+        };
 
-      savedPatient = await addPatient(payload).unwrap();
-    }
+        savedPatient = await addPatient(payload).unwrap();
+      }
 
-    // باقي اللوجيك كما هو عندك (Encounter + notify + close)
-    if (pageCode === 'ER_Triage') {
-      await saveEncounter({
-        ...localEncounter,
-        patientKey: savedPatient.id?.toString(),
-        plannedStartDate: new Date(),
-        encounterStatusLkey: '8890456518264959',
-        patientAge: calculateAgeFormat(savedPatient.dateOfBirth),
-        visitTypeLkey: '2041082245699228',
-        resourceTypeLkey: '6743167799449277',
-        resourceKey: '7101086042442391'
+      if (pageCode === 'ER_Triage') {
+        await saveEncounter({
+          ...localEncounter,
+          patientKey: savedPatient.id?.toString(),
+          plannedStartDate: new Date(),
+          encounterStatusLkey: '8890456518264959',
+          patientAge: calculateAgeFormat(savedPatient.dateOfBirth),
+          visitTypeLkey: '2041082245699228',
+          resourceTypeLkey: '6743167799449277',
+          resourceKey: '7101086042442391'
+        });
+
+        dispatch(setRefetchEncounter(true));
+      }
+
+      setLocalPatient(savedPatient);
+
+      if (typeof setPatient === 'function') {
+        setPatient(savedPatient);
+      }
+
+      setOpen(false);
+      handleClearModal();
+      setValidationResult(undefined);
+
+      dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
+    } catch (err: any) {
+      const msg = toHumanBackendError(err, {
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        dateOfBirth: 'Date of Birth',
+        primaryMobileNumber: 'Primary Mobile Number',
+        sexAtBirth: 'Sex At Birth',
+        nationality: 'Nationality'
       });
 
-      dispatch(setRefetchEncounter(true));
+      dispatch(notify({ msg, sev: 'error' }));
+
+      if (err?.data?.validationResult) {
+        setValidationResult(err.data.validationResult);
+      }
     }
-
-    setLocalPatient(savedPatient);
-
-    if (typeof setPatient === 'function') {
-      setPatient(savedPatient);
-    }
-
-    setOpen(false);
-    handleClearModal();
-    setValidationResult(undefined);
-
-    dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
-  } catch (err: any) {
-    const msg = toHumanBackendError(err, {
-      firstName: 'First Name',
-      lastName: 'Last Name',
-      dateOfBirth: 'Date of Birth',
-      primaryMobileNumber: 'Primary Mobile Number',
-      sexAtBirth: 'Sex At Birth',
-      nationality: 'Nationality'
-    });
-
-    dispatch(notify({ msg, sev: 'error' }));
-
-    if (err?.data?.validationResult) {
-      setValidationResult(err.data.validationResult);
-    }
-  }
-};
+  };
 
   const handleClearModal = () => {
     setIsUnknown(false);
@@ -181,6 +179,7 @@ const handleSave = async () => {
   const quickPatientContent = (
     <Form layout="inline" fluid>
       <MyInput
+        required
         width={250}
         vr={validationResult}
         column
@@ -191,6 +190,7 @@ const handleSave = async () => {
       />
 
       <MyInput
+        required
         width={250}
         vr={validationResult}
         column
@@ -201,6 +201,7 @@ const handleSave = async () => {
       />
 
       <MyInput
+        required
         width={235}
         vr={validationResult}
         column
@@ -217,6 +218,7 @@ const handleSave = async () => {
       />
 
       <MyInput
+        required
         width={250}
         vr={validationResult}
         column
@@ -225,8 +227,17 @@ const handleSave = async () => {
         setRecord={setLocalPatient}
         disabled={isUnknown}
       />
-
       <MyInput
+        required
+        vr={validationResult}
+        column
+        fieldName="email"
+        record={localPatient}
+        setRecord={setLocalPatient}
+        width={170}
+      />
+      <MyInput
+        required
         width={235}
         vr={validationResult}
         column
