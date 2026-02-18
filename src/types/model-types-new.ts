@@ -1701,3 +1701,25 @@ export interface DiagnosticOrderTestReportResponseVM {
   lastModifiedDate?: string;
 }
 
+export interface DiagnosticHistoryResultVM {
+  id: number;
+  createdAt: string;
+
+  resultText?: string;
+  resultValueNumber?: number;
+
+  resultLkey?: string;
+  resultLvalue?: {
+    lovDisplayVale?: string;
+  };
+
+  normalRange?: {
+    resultTypeLkey?: string;
+  };
+}
+
+export interface ProfileTestGroupedHistoryVM {
+  profileTestId: number;
+  profileTestName: string;
+  results: DiagnosticHistoryResultVM[];
+}

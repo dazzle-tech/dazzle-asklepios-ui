@@ -188,6 +188,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                 <MyInput
                   width="100%"
                   fieldName="price"
+                  fieldType='number'
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
                 />

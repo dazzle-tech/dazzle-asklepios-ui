@@ -5,31 +5,24 @@ import React, {
   useRef,
   useState
 } from 'react';
-
 import { Row, Col, Tabs, Form } from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { skipToken } from '@reduxjs/toolkit/query';
-
 import {
   useFilterDiagnosticOrdersQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
-
 import { useLazyGetPatientByIdQuery } from '@/services/patientService';
-
 import {
   useFilterDiagnosticOrderTestsQuery,
   useUpdateDiagnosticOrderTestMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
-
 import {
   useSaveDiagnosticOrderTestRadReportMutation
 } from '@/services/radService';
-
 import {
   DiagnosticOrderTestStatus
 } from '@/types/model-types-new';
-
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
@@ -37,16 +30,13 @@ import {
   newApEncounter,
   newApPatient
 } from '@/types/model-types-constructor';
-
 import DetailsCard from '@/components/DetailsCard';
 import MyStepper from '@/components/MyStepper';
 import MyInput from '@/components/MyInput';
-
 import Orders from './Orders';
 import Tests from './Tests';
 import Report from './Report';
 import PatientSide from '../lab-module/PatienSide';
-
 import {
   faCircleCheck,
   faClock,
@@ -81,7 +71,6 @@ type RadRef = {
 const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
-
   const OrdersRef = useRef<any>(null);
   const TestsRef = useRef<any>(null);
   const ReportRef = useRef<any>(null);
@@ -90,12 +79,9 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [report, setReport] = useState({ ...newApDiagnosticOrderTestsRadReport });
   const [visibleRadTests, setVisibleRadTests] = useState<any[]>([]);
-
   const [patient, setPatient] = useState({ ...newApPatient });
   const [encounter] = useState({ ...newApEncounter });
-
   const [globalLoading, setGlobalLoading] = useState(false);
-
   const today = new Date();
   const [dateFilter, setDateFilter] = useState({
     fromDate: today,
@@ -118,7 +104,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   useEffect(() => {
     setVisibleRadTests(todayRadTestsResponse?.data ?? []);
   }, [todayRadTestsResponse]);
-
 
   useEffect(() => {
     dispatch(setPageCode('Rad'));
@@ -147,9 +132,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     createdDateTo: endOfDay(dateFilter.toDate).toISOString()
   });
 
-
-
-
   const stepsData = [
     { key: DiagnosticOrderTestStatus.PATIENT_ARRIVED, value: 'Patient Arrived' },
     { key: DiagnosticOrderTestStatus.ACCEPTED, value: 'Accepted' },
@@ -161,7 +143,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const isAcceptedLike = (status?: DiagnosticOrderTestStatus) =>
     status === DiagnosticOrderTestStatus.ACCEPTED ||
     status === DiagnosticOrderTestStatus.PARTIALLY;
-
 
   const stepsDataComputed = useMemo(() => {
     return stepsData.filter(step => {
@@ -182,7 +163,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     });
   }, [stepsData, test?.processingStatus]);
 
-
   const activeStep = useMemo(() => {
     if (!test?.processingStatus) return 0;
 
@@ -192,7 +172,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
         : step.key === test.processingStatus
     );
   }, [stepsDataComputed, test?.processingStatus]);
-
 
   const [updateTest] = useUpdateDiagnosticOrderTestMutation();
 
@@ -224,7 +203,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   useImperativeHandle(ref, () => ({
     refetchAllRadData
   }));
-
 
   useEffect(() => {
     fetchAllTests();
@@ -273,9 +251,9 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
 
   const totalRadTestsCount = visibleRadTests.length;
 
-
   return (
     <>
+
       <div className="count-div-on-top-of-page">
         <DetailsCard
           title="Result Approved"
@@ -371,6 +349,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
           <PatientSide patient={patient} encounter={encounter} />
         </div>
       </div>
+
     </>
   );
 

@@ -200,7 +200,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
     Boolean(filterRecord.searchCriteria) &&
     filterRecord.value.trim().length >= 3;
 
-  const { data, isFetching } = useFilterRadiologyReportsQuery(
+const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
     attachmentsLocked
       ? skipToken
       : {
@@ -263,17 +263,22 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
 
   };
 
+  const tableData = data?.data ?? [];
+
+
+
   const departmentIds = useMemo(
     () =>
       Object.values(ordersMap)
-        .map((o: any) => o.fromDepartmentId)
+        .map((order: any) => order?.fromDepartmentId)
         .filter(Boolean)
         .map(String)
         .filter((id, i, arr) => arr.indexOf(id) === i),
     [ordersMap]
   );
 
-  const tableData = data?.data ?? [];
+
+
 
 
   const orderTestIds = useMemo(
@@ -445,6 +450,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
       );
 
       await refetchAllRadData();
+      await refetch();
     } catch (e: any) {
       notifyFromApiError(dispatch, e, 'Approve Failed');
     }
@@ -465,6 +471,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
       );
 
       await refetchAllRadData();
+      await refetch();
     } catch (e: any) {
       const backendMsg =
         e?.data?.message || e?.data?.detail || '';
@@ -491,11 +498,14 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
       title: 'Department',
       width: 160,
       render: row => {
-        const order = ordersMap[String(row.orderId)];
+        console.log('ordersMap', ordersMap);
+        const ot = orderTestsMap[String(row.orderTestId)];
+        const order = ordersMap[String(ot?.orderId)];
         const department = departmentsMap[String(order?.fromDepartmentId)];
 
-        return department?.name ?? '—';
+        return department?.name ?? ' ';
       }
+
     },
     {
       key: 'patientName',
@@ -505,7 +515,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         const ot = orderTestsMap[String(row.orderTestId)];
         const order = ordersMap[String(ot?.orderId)];
         const patient = patientsMap[String(order?.patientId)];
-        return patient?.fullName ?? '—';
+        return patient?.fullName ?? ' ';
       }
     },
     {
@@ -516,7 +526,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         const ot = orderTestsMap[String(row.orderTestId)];
         const order = ordersMap[String(ot?.orderId)];
         const patient = patientsMap[String(order?.patientId)];
-        return patient?.patientMrn ?? '—';
+        return patient?.patientMrn ?? ' ';
       }
     },
     {
@@ -563,6 +573,8 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
           }}
           onClick={() => {
             const order = ordersMap[String(row.orderId)];
+            console.log('row', row);
+
             if (!order?.encounterId) {
               dispatch(
                 notify({
@@ -720,6 +732,8 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   ], [orderTestsMap, ordersMap, patientsMap]);
 
   useEffect(() => {
+    console.log('departmentIds', departmentIds);
+
     departmentIds.forEach(id => {
       if (departmentsMap[id]) return;
 
@@ -761,6 +775,9 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
       ? { id: Number(selectedReportForAttachments.encounterId) }
       : undefined;
   }, [selectedReportForAttachments]);
+
+
+
 
   return (<>
     <MyTable

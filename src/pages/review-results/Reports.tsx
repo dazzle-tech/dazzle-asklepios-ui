@@ -31,6 +31,7 @@ import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 import {
   useLazyFilterDiagnosticOrdersQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 const startOfDay = (d: Date) => {
     const x = new Date(d);
@@ -252,16 +253,13 @@ const ReviewReport = ({ user }) => {
                             <FontAwesomeIcon
                                 icon={faStar}
                                 style={{
-                                    cursor: isReviewed ? 'default' : 'pointer',
+                                    cursor: 'pointer',
                                     color: isReviewed ? '#ffea00' : '#999',
                                     opacity: isReviewed ? 1 : 0.6
                                 }}
                                 onClick={() => {
-                                    if (!isReviewed) {
-                                        handleReview(row);
-                                    }
-                                }}
-                            />
+                                handleReview(row);
+                                }}/>
                         </Whisper>
                     );
                 }
@@ -269,6 +267,23 @@ const ReviewReport = ({ user }) => {
         ],
         [orderTestsMap, ordersMap, patientsMap, testsMap]
     );
+
+    const resetFilters = () => {
+    const today = new Date();
+    setApprovalDate({
+        fromDate: today,
+        toDate: today
+    });
+    setOrderDate({
+        fromDate: null,
+        toDate: null
+    });
+    setShowReviewed(false);
+    setOrderIdIn(null);
+    setPage(0);
+    };
+
+
 
     const filters = (
         <Form fluid>
@@ -317,6 +332,12 @@ const ReviewReport = ({ user }) => {
                     </Checkbox>
                 </div>
             </div>
+
+        <AdvancedSearchFilters
+            searchFilter={false}
+            showAdvancedButton={false}
+            clearOnClick={resetFilters}
+            />
         </Form>
     );
 

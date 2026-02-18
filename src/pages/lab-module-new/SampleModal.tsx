@@ -11,7 +11,7 @@ import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { formatDateWithoutSeconds } from "@/utils";
-
+import { DiagnosticOrderTestStatus } from "@/types/model-types-new";
 import {
   useCreateCollectedSampleMutation,
   useGetCollectedSamplesByOrderTestIdQuery,
@@ -66,9 +66,9 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess}: SampleModalProps) =
   }, [lab, systemLov, tubeColorLov, tubeTypeLov, sampleContainerLov, valueUnitLov]);
 
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
-const [selectedSampleDate, setSelectedSampleDate] = useState<{ dateTime: Date | null }>({
-  dateTime: new Date(),
-});
+  const [selectedSampleDate, setSelectedSampleDate] = useState<{ dateTime: Date | null }>({
+    dateTime: new Date(),
+  });
 
 
   const [createCollectedSample] = useCreateCollectedSampleMutation();
@@ -79,69 +79,120 @@ const [selectedSampleDate, setSelectedSampleDate] = useState<{ dateTime: Date | 
       { skip: !orderTest?.id }
     );
   
-const handleSaveSample = async () => {
-  try {
-    const unitText =
-      valueUnitLov?.object?.find(
-        u => String(u.key) === String(sample.unitLkey)
-      )?.lovDisplayVale;
+    const handleSaveSample = async () => {
 
-    if (!unitText) {
-      dispatch(notify({ msg: "Unit is required", sev: "warning" }));
-      return;
+      const status = orderTest?.processingStatus;
+
+      switch (status) {
+
+        case DiagnosticOrderTestStatus.RESULT_READY:
+          dispatch(
+            notify({
+              msg: "Cannot collect sample. The result is already marked as Ready.",
+              sev: "warning"
+            })
+          );
+          return;
+
+        case DiagnosticOrderTestStatus.RESULT_APPROVED:
+          dispatch(
+            notify({
+              msg: "Cannot collect sample. The result has already been Approved.",
+              sev: "warning"
+            })
+          );
+          return;
+
+        case DiagnosticOrderTestStatus.ACCEPTED:
+          dispatch(
+            notify({
+              msg: "Cannot collect sample. This test is already Accepted.",
+              sev: "warning"
+            })
+          );
+          return;
+
+        case DiagnosticOrderTestStatus.REJECTED:
+          dispatch(
+            notify({
+              msg: "Cannot collect sample. This test has been Rejected.",
+              sev: "warning"
+            })
+          );
+          return;
+
+        default:
+          break;
+      }
+
+      try {
+
+        const unitText =
+          valueUnitLov?.object?.find(
+            u => String(u.key) === String(sample.unitLkey)
+          )?.lovDisplayVale;
+
+        if (!unitText) {
+          dispatch(notify({ msg: "Unit is required", sev: "warning" }));
+          return;
+        }
+
+        await createCollectedSample({
+          orderId: orderTest.orderId,
+          orderTestId: orderTest.id,
+          quantity: sample.quantity,
+          unit: unitText,
+          collectedAt: selectedSampleDate.dateTime?.toISOString() ?? null
+        }).unwrap();
+
+        dispatch(notify({ msg: "Sample collected successfully", sev: "success" }));
+
+      } catch (e: any) {
+
+        const backendMsg =
+          e?.data?.message ||
+          e?.data?.detail ||
+          "Unable to collect sample.";
+
+        dispatch(notify({ msg: backendMsg, sev: "error" }));
+        return;
+      }
+
+      await refetchSamples();
+      onSuccess?.();
+      setOpen(false);
+    };
+
+
+
+  const tableColumns = [
+      {
+        key: "collectedAt",
+        dataKey: "collectedAt",
+        title: <Translate>COLLECTED AT</Translate>,
+        flexGrow: 2,
+        render: (rowData: any) => formatDateWithoutSeconds(rowData.collectedAt),
+      },
+      {
+        key: "quantity",
+        dataKey: "quantity",
+        title: <Translate>ACTUAL SAMPLE QUANTITY</Translate>,
+        flexGrow: 2,
+      },
+      {
+        key: "unit",
+        dataKey: "unit",
+        title: <Translate>UNIT</Translate>,
+        flexGrow: 1,
+      },
+    ];
+
+  useEffect(() => {
+    if (open) {
+      setSample({ ...newApDiagnosticOrderTestsSamples });
+      setSelectedSampleDate({ dateTime: new Date() });
     }
-    await createCollectedSample({
-      orderId: orderTest.orderId,
-      orderTestId: orderTest.id,
-      quantity: sample.quantity,
-      unit: unitText,
-      collectedAt: selectedSampleDate.dateTime?.toISOString() ?? null
-    }).unwrap();
-
-    dispatch(notify({ msg: "Saved successfully", sev: "success" }));
-
-  } catch (e) {
-    dispatch(notify({ msg: "Save failed", sev: "error" }));
-    return;
-  }
-  try {
-    await refetchSamples();
-  } catch (e) {
-    console.warn("Post-save refresh failed", e);
-  }
-
-  onSuccess?.();
-  setOpen(false);
-};
-
-const tableColumns = [
-    {
-      key: "collectedAt",
-      dataKey: "collectedAt",
-      title: <Translate>COLLECTED AT</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => formatDateWithoutSeconds(rowData.collectedAt),
-    },
-    {
-      key: "quantity",
-      dataKey: "quantity",
-      title: <Translate>ACTUAL SAMPLE QUANTITY</Translate>,
-      flexGrow: 2,
-    },
-    {
-      key: "unit",
-      dataKey: "unit",
-      title: <Translate>UNIT</Translate>,
-      flexGrow: 1,
-    },
-  ];
-
-useEffect(() => {
-  if (open) {
-    setSample({ ...newApDiagnosticOrderTestsSamples });
-    setSelectedSampleDate({ dateTime: new Date() });
-  }
-}, [open]);
+  }, [open]);
 
 
   return (

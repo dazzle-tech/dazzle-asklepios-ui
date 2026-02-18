@@ -96,7 +96,6 @@ const Tests = forwardRef<any, Props>(
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [testKeyFilter, setTestKeyFilter] = useState({ value: '' });
     const [selectedRows, setSelectedRows] = useState<(number | string)[]>([]);
-    const [openExternalLabModal, setOpenExternalLabModal] = useState(false);
     const [localHasNoteIds, setLocalHasNoteIds] = useState<(number | string)[]>([]);
     const [openSingleSampleModal, setOpenSingleSampleModal] = useState(false);
     const [openBulkSampleModal, setOpenBulkSampleModal] = useState(false);
@@ -186,23 +185,25 @@ const Tests = forwardRef<any, Props>(
       }
     };
 
-    const {
-      data: testsResponse,
-      isFetching: isTestsFetching,
-      refetch: fetchTest
-    } = useFilterDiagnosticOrderTestsQuery(
-      order?.id
-        ? {
-          orderId: order.id,
-          status: 'SUBMITTED',
-          receivedDepartmentId: selectedDepartment?.departmentId,
-          page: pageIndex,
-          size: rowsPerPage,
-          orderType: 'LABORATORY',
-          category: testKeyFilter.value || undefined
-        }
-        : skipToken
-    );
+      const {
+        data: testsResponse,
+        isFetching: isTestsFetching,
+        refetch: fetchTest
+      } = useFilterDiagnosticOrderTestsQuery(
+        order?.id
+          ? {
+              orderId: order.id,
+              status: 'SUBMITTED',
+              receivedDepartmentId: selectedDepartment?.departmentId,
+              page: paginationParams.page,
+              size: paginationParams.size,
+              sort: paginationParams.sort,
+              orderType: 'LABORATORY',
+              category: testKeyFilter.value || undefined
+            }
+          : skipToken
+      );
+
 
     const orderTests = testsResponse?.data ?? [];
 
@@ -269,13 +270,8 @@ const Tests = forwardRef<any, Props>(
 
     const filteredTests = normalizedOrderTests;
 
-    const pagedData = useMemo(() => {
-      const start = pageIndex * rowsPerPage;
-      const end = start + rowsPerPage;
-      return filteredTests.slice(start, end);
-    }, [filteredTests, pageIndex, rowsPerPage]);
-
-    const effectiveTotalCount = filteredTests.length;
+    const pagedData = normalizedOrderTests;
+    const effectiveTotalCount = testsResponse?.totalCount ?? 0;
 
     const handleAcceptTest = async (rowData: any) => {
       if (!samplesList?.length) {
@@ -584,6 +580,7 @@ const Tests = forwardRef<any, Props>(
         align: 'center',
         render: (rowData: any) => {
           const hasNote =
+            rowData.hasNote === true ||
             localHasNoteIds.includes(rowData.id);
 
           return (
@@ -593,7 +590,7 @@ const Tests = forwardRef<any, Props>(
                 style={{
                   fontSize: '1em',
                   cursor: 'pointer',
-                  color: hasNote ? '#1675e0' : 'inherit'
+                  color: hasNote? '#1675e0' : 'inherit'
                 }}
                 onClick={() => {
                   setTest(rowData);
@@ -953,22 +950,34 @@ const Tests = forwardRef<any, Props>(
 
         <div style={{ minHeight: 600 }}>
           <MyTable
+            data={normalizedOrderTests}
+            totalCount={testsResponse?.totalCount ?? 0}
+            page={paginationParams.page}
             filters={filters()}
+            rowsPerPage={paginationParams.size}
             columns={columns}
-            data={pagedData}
-            loading={loading || isTestsFetching}
-            page={pageIndex}
-            rowsPerPage={rowsPerPage}
-            totalCount={effectiveTotalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            sortColumn={sortColumn}
-            sortType={sortType}
-            onSortChange={handleSortChange}
-            onRowClick={rowData => setTest(rowData)}
-            rowClassName={isTestSelected}
-            minHeight={600}
+            onPageChange={(_, newPage) =>
+              setPaginationParams(prev => ({
+                ...prev,
+                page: newPage
+              }))
+            }
+            onRowsPerPageChange={(e) =>
+              setPaginationParams(prev => ({
+                ...prev,
+                size: Number(e.target.value),
+                page: 0
+              }))
+            }
+            onSortChange={(column, type) =>
+              setPaginationParams(prev => ({
+                ...prev,
+                sort: `${column},${type}`,
+                page: 0
+              }))
+            }
           />
+
         </div>
 
         <SampleModal
@@ -1006,12 +1015,15 @@ const Tests = forwardRef<any, Props>(
           open={openBulkSampleModal}
           setOpen={setOpenBulkSampleModal}
           orderId={order?.id}
-          selectedTestIds={selectedRows}
+          selectedTests={normalizedOrderTests.filter(t =>
+            selectedRows.includes(t.id)
+          )}
           onSuccess={() => {
             setSelectedRows([]);
             refetchAllLabData?.();
           }}
         />
+
 
 
 

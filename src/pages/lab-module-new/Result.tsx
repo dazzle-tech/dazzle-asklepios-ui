@@ -46,6 +46,11 @@ import EditResultModal from './EditResultModal';
 import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import NormalRangeModal from './NormalRangeModal';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import LaboratoryResultComparison from '../encounter/encounter-component/diagnostics-result/LaboratoryResultComparison';
+import MyModal from '@/components/MyModal/MyModal';
+import { FaChartLine } from 'react-icons/fa';
 
 type Props = {
   order: any;
@@ -92,14 +97,13 @@ const resolveLovDisplayValue = (
   );
 };
 
+
 const Result = forwardRef<any, Props>(
   ({ order, loading, setTest, fetchAllTests, refetchAllLabData, fecthSample }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
-
+    const dispatch = useAppDispatch();
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedResultForEdit, setSelectedResultForEdit] = useState<any>(null);
-    const [pageIndex, setPageIndex] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [openAddResultModal, setOpenAddResultModal] = useState(false);
     const [openResultNoteModal, setOpenResultNoteModal] = useState(false);
     const [selectedResult, setSelectedResult] = useState<any>(null);
@@ -113,6 +117,8 @@ const Result = forwardRef<any, Props>(
     const [sortColumn, setSortColumn] = useState("id");
     const [sortType, setSortType] = useState<"asc" | "desc">("asc");
     const [openNormalRangeModal, setOpenNormalRangeModal] = useState(false);
+    const [openComparisonModal, setOpenComparisonModal] = useState(false);
+    const [selectedComparisonProfileId, setSelectedComparisonProfileId] = useState<number | null>(null);
 
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
@@ -169,15 +175,17 @@ const Result = forwardRef<any, Props>(
     } = useFilterDiagnosticOrderTestResultsQuery(
       order?.id
         ? {
-          orderIdIn:[ order.id],
-          page: pageIndex,
-          size: rowsPerPage,
-          ...(categoryFilter.value
-            ? { category: categoryFilter.value }
-            : {})
-        }
+            orderIdIn: order.id,
+            page: paginationParams.page,
+            size: paginationParams.size,
+            sort: paginationParams.sort,
+            ...(categoryFilter.value
+              ? { category: categoryFilter.value }
+              : {})
+          }
         : skipToken
     );
+
 
     useImperativeHandle(ref, () => ({ refetch }));
 
@@ -224,9 +232,21 @@ const Result = forwardRef<any, Props>(
         );
 
         refetchResultNotes();
-      } catch (e) {
+      } catch (e: any) {
         console.error('Send result note failed', e);
+
+        dispatch(
+          notify({
+            msg:
+              e?.data?.message ||
+              e?.data?.detail ||
+              e?.error ||
+              'Send result note failed',
+            sev: 'error'
+          })
+        );
       }
+
     };
 
     const { data: profilesResponse } =
@@ -252,7 +272,8 @@ const Result = forwardRef<any, Props>(
           profile,
           test: testsMap.get(testId),
           lab: labByTestIdMap.get(testId),
-          profileName: profile?.name ?? profile?.profileName,
+          // profileName: profile?.name ?? profile?.profileName,
+          // isDefault:profile?.isDefault,
           normalRanges: normalRangesMap[r.profileTestId] ?? []
         };
       });
@@ -280,16 +301,19 @@ const Result = forwardRef<any, Props>(
       return row.resultValueNumber ?? ' ';
     };
 
-    const resolveUnitDisplay = (row: any) => {
-      const profile = row.profile;
-      if (!profile || isLovProfile(profile)) return null;
+const resolveUnitDisplay = (row: any) => {
+  const profile = row.profile;
+  if (!profile || isLovProfile(profile)) return null;
 
-      return profile.resultUnit
-        ? valueUnitLov?.object?.find(
-          u => String(u.key) === String(profile.resultUnit)
-        )?.lovDisplayVale
-        : null;
-    };
+  if (!profile.resultUnit) return null;
+
+  const unit = valueUnitLov?.object?.find(
+    u => String(u.key) === String(profile.resultUnit)
+  )?.lovDisplayVale;
+
+  return unit || null;
+};
+
 
     const [
       approveResult,
@@ -308,9 +332,21 @@ const Result = forwardRef<any, Props>(
 
         refetch();
         await refetchAllLabData();
-      } catch (e) {
+      } catch (e: any) {
         console.error('Approve failed', e);
+
+        dispatch(
+          notify({
+            msg:
+              e?.data?.message ||
+              e?.data?.detail ||
+              e?.error ||
+              'Approve failed',
+            sev: 'error'
+          })
+        );
       }
+
     };
 
 
@@ -330,9 +366,21 @@ const Result = forwardRef<any, Props>(
 
         refetch();
         await refetchAllLabData();
-      } catch (e) {
+      } catch (e: any) {
         console.error('Reject failed', e);
+
+        dispatch(
+          notify({
+            msg:
+              e?.data?.message ||
+              e?.data?.detail ||
+              e?.error ||
+              'Reject failed',
+            sev: 'error'
+          })
+        );
       }
+
     };
 
 
@@ -344,11 +392,12 @@ const Result = forwardRef<any, Props>(
         fullText: true,
         render: (row: any) => (
           <>
-            {row.profileName}
+            {row.profile?.name}
             <br />
-            <span style={{ fontSize: 10, color: '#666' }}>
+            {(!row.profile?.isDefault)&& <span style={{ fontSize: 10, color: '#666' }}>
               {row.test?.name}
-            </span>
+            </span>}
+           
           </>
         )
       },
@@ -360,7 +409,6 @@ const Result = forwardRef<any, Props>(
         render: (row: any) => {
           const value = resolveResultDisplay(row);
           const unit = resolveUnitDisplay(row);
-
           return (
             <>
               <span>{value}</span>
@@ -383,11 +431,12 @@ const Result = forwardRef<any, Props>(
           <Whisper
             placement="top"
             trigger="hover"
-            speaker={<Tooltip>View Normal Ranges</Tooltip>}
-          >
-            <span>
-              <FontAwesomeIcon
-                icon={faCircleInfo}
+            container={() => document.body}
+            speaker={<Tooltip>View Normal Ranges</Tooltip>}>
+            <span style={{ display: "inline-block" }}>
+              <FaChartLine
+                size={18}
+                color="var(--primary-gray)"
                 style={{ cursor: 'pointer', opacity: 0.8 }}
                 onClick={() => {
                   setSelectedResult(row);
@@ -404,19 +453,41 @@ const Result = forwardRef<any, Props>(
         flexGrow: 2,
         fullText: true,
         render: (row: any) => {
-          const unit = resolveUnitDisplay(row);
+          const profile = row.profile;
 
-          if (row.viewNormalRange) {
+          const hasViewRange =
+            row.viewNormalRange &&
+            row.viewNormalRange.trim() !== '';
+
+          const hasMinMaxRange =
+            row.minValue !== null &&
+            row.minValue !== undefined &&
+            row.maxValue !== null &&
+            row.maxValue !== undefined;
+
+          if (hasViewRange) {
+            if (isLovProfile(profile)) {
+              return resolveLovDisplayValue(
+                profile,
+                row.viewNormalRange,
+                lovDefinitions,
+                allLovValues
+              );
+            }
+
+            const unit = resolveUnitDisplay(row);
             return `${row.viewNormalRange}${unit ? ` ${unit}` : ''}`;
           }
 
-          if (row.minValue != null || row.maxValue != null) {
-            return `${row.minValue ?? '-'} - ${row.maxValue ?? '-'}${unit ? ` ${unit}` : ''}`;
+          if (hasMinMaxRange) {
+            const unit = resolveUnitDisplay(row);
+            return `${row.minValue} - ${row.maxValue}${unit ? ` ${unit}` : ''}`;
           }
 
           return '';
         }
       },
+
       {
         key: 'marker',
         title: <Translate>MARKER</Translate>,
@@ -492,11 +563,26 @@ const Result = forwardRef<any, Props>(
         title: <Translate>COMPARE WITH ALL PREVIOUS</Translate>,
         flexGrow: 1,
         align: 'center',
-        render: () => (
-          <FontAwesomeIcon
-            icon={faDiagramPredecessor}
-            style={{ opacity: 0.6 }}
-          />
+        render: (row: any) => (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip>Compare with previous results</Tooltip>}
+          >
+            <span>
+              <FontAwesomeIcon
+                icon={faDiagramPredecessor}
+                style={{
+                  cursor: 'pointer',
+                  opacity: 0.8
+                }}
+                onClick={() => {
+                  setSelectedComparisonProfileId(row.profileTestId);
+                  setOpenComparisonModal(true);
+                }}
+              />
+            </span>
+          </Whisper>
         )
       },
       {
@@ -505,9 +591,11 @@ const Result = forwardRef<any, Props>(
         flexGrow: 1,
         align: 'center',
         render: (row: any) => {
+
           const hasNote =
             row.hasNote === true ||
             localResultHasNoteIds.includes(row.id);
+
           return (
             <HStack spacing={10}>
               <FontAwesomeIcon
@@ -549,14 +637,7 @@ const Result = forwardRef<any, Props>(
               <Whisper
                 placement="top"
                 trigger="hover"
-                speaker={
-                  <Tooltip>
-                    {canEdit
-                      ? 'Edit Result'
-                      : 'Edit allowed only when status is RESULT READY'}
-                  </Tooltip>
-                }
-              >
+                speaker={<Tooltip>Edit Result</Tooltip>}>
                 <span>
                   <FontAwesomeIcon
                     icon={faPenToSquare}
@@ -568,20 +649,13 @@ const Result = forwardRef<any, Props>(
                       if (!canEdit) return;
                       setSelectedResultForEdit(row);
                       setOpenEditModal(true);
-                    }}
-                  />
+                    }}/>
                 </span>
               </Whisper>
               <Whisper
                 placement="top"
                 trigger="hover"
-                speaker={
-                  <Tooltip>
-                    {canApprove
-                      ? 'Approve Result'
-                      : 'Approve allowed only when status is RESULT READY'}
-                  </Tooltip>
-                }
+                speaker={<Tooltip>Approve Result</Tooltip>}
               >
                 <span>
                   <CheckRoundIcon
@@ -603,11 +677,7 @@ const Result = forwardRef<any, Props>(
                 placement="top"
                 trigger="hover"
                 speaker={
-                  <Tooltip>
-                    {canReject
-                      ? 'Reject Result'
-                      : 'Reject allowed only when status is RESULT READY'}
-                  </Tooltip>
+                  <Tooltip>Reject Result</Tooltip>
                 }
               >
                 <span>
@@ -672,7 +742,7 @@ const Result = forwardRef<any, Props>(
             <br />
             <span className="date-table-style">
               {row.approvedAt
-                ? formatDateWithoutSeconds(row.approvedAt)
+                ? formatDateWithoutSeconds(row.approvedDate)
                 : ' '}
             </span>
           </>
@@ -689,32 +759,32 @@ const Result = forwardRef<any, Props>(
 
 
 
-    const handlePageChange = (_: any, newPage: number) => {
-      setPaginationParams(prev => ({
-        ...prev,
-        page: newPage,
-      }));
-    };
+  const handlePageChange = (_: any, newPage: number) => {
+    setPaginationParams(prev => ({
+      ...prev,
+      page: newPage,
+    }));
+  };
 
-    const handleRowsPerPageChange = (e: any) => {
-      const newSize = Number(e.target.value);
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-      }));
-    };
+  const handleRowsPerPageChange = (e: any) => {
+    const newSize = Number(e.target.value);
+    setPaginationParams(prev => ({
+      ...prev,
+      size: newSize,
+      page: 0,
+    }));
+  };
 
-    const handleSortChange = (column: string, type: "asc" | "desc") => {
-      setSortColumn(column);
-      setSortType(type);
+  const handleSortChange = (column: string, type: "asc" | "desc") => {
+    setSortColumn(column);
+    setSortType(type);
 
-      setPaginationParams(prev => ({
-        ...prev,
-        sort: `${column},${type}`,
-        page: 0,
-      }));
-    };
+    setPaginationParams(prev => ({
+      ...prev,
+      sort: `${column},${type}`,
+      page: 0,
+    }));
+  };
 
 
 
@@ -740,15 +810,14 @@ const Result = forwardRef<any, Props>(
       });
     }, [profileTestIds]);
 
-
     return (
       <Panel defaultExpanded>
         <MyTable
           columns={columns}
           data={normalizedResults}
           loading={loading || isFetching}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
+          page={paginationParams.page}
+          rowsPerPage={paginationParams.size}
           totalCount={resultsResponse?.totalCount ?? 0}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
@@ -814,6 +883,23 @@ const Result = forwardRef<any, Props>(
               : []
           }
         />
+
+        <MyModal
+          open={openComparisonModal}
+          setOpen={setOpenComparisonModal}
+          title="Laboratory Result Comparison"
+          size="80vw"
+          bodyheight="85vh"
+          hideActionBtn
+          content={() => (
+            <LaboratoryResultComparison
+              patient={{ key: order?.patientId }}
+              profileTestId={selectedComparisonProfileId}
+              hideTestNameFilter={true}
+            />
+          )}
+        />
+
 
 
       </Panel>

@@ -56,7 +56,7 @@ const Orders = forwardRef<any, OrdersProps>(
     selectedDepartment?.key;
 
       const formatDateTime = (date?: string) => {
-        if (!date) return '—';
+        if (!date) return ' ';
 
         const d = new Date(date);
         if (isNaN(d.getTime())) return date;
@@ -157,7 +157,7 @@ const Orders = forwardRef<any, OrdersProps>(
       title: <Translate>ORDER ID</Translate>,
       flexGrow: 1,
       render: r => {
-        return r.orderNumber ?? '—';
+        return r.orderNumber ?? ' ';
       }
     },
     {
@@ -170,7 +170,7 @@ const Orders = forwardRef<any, OrdersProps>(
           r.submittedAt ??
           r.createdAt;
 
-        if (!rawDate) return '—';
+        if (!rawDate) return ' ';
 
         const d = new Date(rawDate);
         if (isNaN(d.getTime())) return rawDate;
@@ -204,10 +204,10 @@ const Orders = forwardRef<any, OrdersProps>(
 
         return (
           <>
-            <span>{patient?.fullName ?? '—'}</span>
+            <span>{patient?.fullName ?? ' '}</span>
             <br />
             <span className="date-table-style">
-              {patient?.patientMrn ?? '—'}
+              {patient?.patientMrn ?? ' '}
             </span>
           </>
         );
@@ -218,7 +218,7 @@ const Orders = forwardRef<any, OrdersProps>(
       title: <Translate>STATUS</Translate>,
       flexGrow: 2,
       render: r => {
-        return <>{formatEnumString(r.radStatus ?? r.status ?? '—')}</>;
+        return <>{formatEnumString(r.radStatus ?? r.status ?? ' ')}</>;
       }
     },
     {

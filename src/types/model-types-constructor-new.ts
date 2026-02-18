@@ -1366,3 +1366,29 @@ export const newDiagnosticOrderTestReportResponseVM: modelTypes.DiagnosticOrderT
     lastModifiedDate: undefined,
     lastModifiedBy: undefined,
   };
+
+  export const newDiagnosticHistoryResultVM: modelTypes.DiagnosticHistoryResultVM =
+{
+  id: undefined,
+  createdAt: undefined,
+
+  resultText: '',
+  resultValueNumber: undefined,
+
+  resultLkey: '',
+  resultLvalue: {
+    lovDisplayVale: '',
+  },
+
+  normalRange: {
+    resultTypeLkey: '',
+  },
+};
+
+
+export const newProfileTestGroupedHistoryVM: modelTypes.ProfileTestGroupedHistoryVM =
+{
+  profileTestId: undefined,
+  profileTestName: '',
+  results: [],
+};

@@ -273,21 +273,36 @@ const Profile = ({ open, setOpen, diagnosticsTest, openNormalRanges }) => {
       title: <Translate>Condition</Translate>,
       render: rowData => <p>{formatEnumString(rowData?.condition)}</p>
     },
-    {
-      key: 'actions',
-      title: <Translate>actions</Translate>,
-      render: () => (
-        <MdDelete
-          className="icons-style"
-          title="Remove"
-          size={24}
-          fill="var(--primary-pink)"
-          onClick={() => {
-            setOpenConfirmDeleteProfileNormalRange(true);
-          }}
-        />
-      )
-    }
+{
+  key: 'actions',
+  title: <Translate>Actions</Translate>,
+  render: (rowData) => (
+    <div style={{ display: 'flex', gap: 10 }}>
+      <MdEdit
+        className="icons-style"
+        title="Edit"
+        size={22}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setDiagnosticTestNormalRange(rowData);
+          setOpenSubChild(true);
+        }}
+      />
+
+      <MdDelete
+        className="icons-style"
+        title="Remove"
+        size={22}
+        fill="var(--primary-pink)"
+        onClick={() => {
+          setDiagnosticTestNormalRange(rowData);
+          setOpenConfirmDeleteProfileNormalRange(true);
+        }}
+      />
+    </div>
+  )
+}
+
   ];
 
   const isEditMode = Boolean(diagnosticsTestProfile?.id);

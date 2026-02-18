@@ -133,11 +133,10 @@ const AddReportModal = ({
         reportId: report.id,
         body: {
           report: htmlContent,
-          severity: report.severity,
-          imageStatus: report.imageStatus,
-          processingStatus: report.processingStatus
+          severity: report.severity
         }
       }).unwrap();
+
 
       dispatch(
         notify({ msg: 'Report updated successfully', sev: 'success' })

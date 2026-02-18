@@ -111,6 +111,38 @@ export const diagnosticTestProfileService = createApi({
       })
     }),
 
+    getLabProfileIdsByTestId: builder.query<number[], number>({
+      query: testId => ({
+        url: `/api/setup/diagnostic-test-profiles/internal/by-test/${testId}/lab-profile-ids`,
+        method: 'GET'
+      }),
+      providesTags: ['DiagnosticTestProfile']
+    }),
+
+    getLabProfilesByTestId: builder.query<any[], number>({
+      query: testId => ({
+        url: `/api/setup/diagnostic-test-profiles/by-test/${testId}/for-lab`,
+        method: 'GET'
+      }),
+      providesTags: ['DiagnosticTestProfile']
+    }),
+
+    getDiagnosticTestProfileResultType: builder.query<string, number>({
+      query: id => ({
+        url: `/api/setup/diagnostic-test-profiles/${id}/result-type`,
+        method: 'GET'
+      })
+    }),
+
+    getDiagnosticTestProfilesByIds: builder.mutation<any[], number[]>({
+      query: ids => ({
+        url: `/api/setup/diagnostic-test-profiles/by-ids`,
+        method: 'POST',
+        body: ids
+      })
+    }),
+
+
 
     // Toggle active status
     toggleDiagnosticTestActive: builder.mutation({
@@ -131,6 +163,10 @@ export const {
   useDeleteDiagnosticTestProfileMutation,
   useDeleteDiagnosticTestProfilesByTestIdMutation,
   useToggleDiagnosticTestActiveMutation,
-  useGetActiveLabProfilesByTestIdsMutation // 👈 NEW
+  useGetActiveLabProfilesByTestIdsMutation,
+  useGetLabProfileIdsByTestIdQuery,
+  useGetLabProfilesByTestIdQuery,
+  useGetDiagnosticTestProfileResultTypeQuery,
+  useGetDiagnosticTestProfilesByIdsMutation
 } = diagnosticTestProfileService;
 

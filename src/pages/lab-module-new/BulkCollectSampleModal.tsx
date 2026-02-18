@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Form, Row, Col } from "rsuite";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faVialCircleCheck } from "@fortawesome/free-solid-svg-icons";
-
+import { DiagnosticOrderTestStatus } from "@/types/model-types-new";
 import MyInput from "@/components/MyInput";
 import MyModal from "@/components/MyModal/MyModal";
 import { useAppDispatch } from "@/hooks";
@@ -12,11 +12,21 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { useBulkCreateCollectedSampleSameMutation } from
   "@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService";
 
+
+type BulkCollectSampleModalProps = {
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  orderId: number;
+  selectedTests: any[];   // 👈 بدل selectedTestIds
+  onSuccess?: () => void;
+};
+
+
 const BulkCollectSampleModal = ({
   open,
   setOpen,
   orderId,
-  selectedTestIds,
+  selectedTests,
   onSuccess
 }: BulkCollectSampleModalProps) => {
   const dispatch = useAppDispatch();
@@ -33,54 +43,89 @@ const [record, setRecord] = useState({
   const [bulkCreate, { isLoading }] =
     useBulkCreateCollectedSampleSameMutation();
 
-  const handleSave = async () => {
-    if (!record.quantity || !record.unitLkey || !record.collectedAt) {
-      dispatch(notify({ msg: "All fields are required", sev: "warning" }));
-      return;
-    }
+    const handleSave = async () => {
 
-    const unitText =
-      valueUnitLov?.object?.find(
-        u => String(u.key) === String(record.unitLkey)
-      )?.lovDisplayVale;
+      if (!record.quantity || !record.unitLkey || !record.collectedAt) {
+        dispatch(notify({ msg: "All fields are required", sev: "warning" }));
+        return;
+      }
 
-    if (!unitText) {
-      dispatch(notify({ msg: "Invalid unit", sev: "error" }));
-      return;
-    }
-
-    try {
-      await bulkCreate({
-        orderId,
-        orderTestIds: selectedTestIds,
-        quantity: record.quantity,
-        unit: unitText,
-        collectedAt: record.collectedAt
-      }).unwrap();
-
-      dispatch(
-        notify({
-          msg: `Samples collected for ${selectedTestIds.length} tests`,
-          sev: "success"
-        })
+      const invalidTest = selectedTests.find(t =>
+        [
+          DiagnosticOrderTestStatus.RESULT_READY,
+          DiagnosticOrderTestStatus.RESULT_APPROVED,
+          DiagnosticOrderTestStatus.ACCEPTED,
+          DiagnosticOrderTestStatus.REJECTED
+        ].includes(t.processingStatus)
       );
 
-      setOpen(false);
-      onSuccess?.();
-    } catch {
-      dispatch(notify({ msg: "Collect sample failed", sev: "error" }));
-    }
-  };
+      if (invalidTest) {
 
-useEffect(() => {
-  if (open) {
-    setRecord({
-      quantity: null,
-      unitLkey: null,
-      collectedAt: new Date()
-    });
-  }
-}, [open]);
+        dispatch(
+          notify({
+            msg: `Cannot collect sample. Test (${invalidTest.test?.name ?? invalidTest.id}) is ${invalidTest.processingStatus.replace("_", " ")}.`,
+            sev: "warning"
+          })
+        );
+
+        return;
+      }
+
+      const unitText =
+        valueUnitLov?.object?.find(
+          u => String(u.key) === String(record.unitLkey)
+        )?.lovDisplayVale;
+
+      if (!unitText) {
+        dispatch(notify({ msg: "Invalid unit", sev: "error" }));
+        return;
+      }
+
+      try {
+
+        await bulkCreate({
+          orderId,
+          orderTestIds: selectedTests.map(t => t.id),
+          quantity: record.quantity,
+          unit: unitText,
+          collectedAt:
+            record.collectedAt instanceof Date
+              ? record.collectedAt.toISOString()
+              : record.collectedAt
+        }).unwrap();
+
+        dispatch(
+          notify({
+            msg: `Samples collected for ${selectedTests.length} tests`,
+            sev: "success"
+          })
+        );
+
+        setOpen(false);
+        onSuccess?.();
+
+      } catch (e: any) {
+
+        dispatch(
+          notify({
+            msg: "Unable to collect sample due to server validation.",
+            sev: "error"
+          })
+        );
+      }
+    };
+
+
+
+    useEffect(() => {
+      if (open) {
+        setRecord({
+          quantity: null,
+          unitLkey: null,
+          collectedAt: new Date()
+        });
+      }
+    }, [open]);
 
 
 

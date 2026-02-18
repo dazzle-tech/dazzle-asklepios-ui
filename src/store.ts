@@ -126,6 +126,7 @@ import { diagnosticOrderTestResultService } from './services/setup/diagnosticTes
 import { diagnosticOrderTestResultTechnicianNoteService } from './services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import { diagnosticOrderTestReportService } from './services/setup/diagnosticTest/diagnosticOrderTestReportService';
 import { diagnosticOrderTestReportCommentsService } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
+import { patientDiagnosticResultHistoryService } from './services/diagnosic-order/patientDiagnosticResultHistoryService';
 
 export const store = configureStore({
   reducer: {
@@ -359,7 +360,10 @@ export const store = configureStore({
     [diagnosticOrderTestResultTechnicianNoteService.reducerPath]: diagnosticOrderTestResultTechnicianNoteService.reducer,
     [diagnosticOrderTestReportService.reducerPath]: diagnosticOrderTestReportService.reducer,
     [diagnosticOrderTestReportCommentsService.reducerPath]: diagnosticOrderTestReportCommentsService.reducer,
+    [patientDiagnosticResultHistoryService.reducerPath]: patientDiagnosticResultHistoryService.reducer,
 
+
+    
   },
 
   middleware: getDefaultMiddleware =>
@@ -488,6 +492,7 @@ export const store = configureStore({
       diagnosticOrderTestResultTechnicianNoteService.middleware,
       diagnosticOrderTestReportService.middleware,
       diagnosticOrderTestReportCommentsService.middleware,
+      patientDiagnosticResultHistoryService.middleware,
     ])
 });
 

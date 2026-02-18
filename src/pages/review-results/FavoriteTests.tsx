@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, Row, Col, Panel, HStack, Tooltip, Whisper, Button, Divider } from 'rsuite';
+import { Panel, HStack, Tooltip, Whisper, Button, Divider } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar as faStarSolid, faFlask, faMicroscope } from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
@@ -34,6 +34,7 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
   const { data: favorites } = useGetFavoriteDiagnosticTestsByUserQuery({ userId: user });
   const [addFavorite] = useAddFavoriteDiagnosticTestMutation();
   const [deleteFavorite] = useDeleteFavoriteDiagnosticTestMutation();
+  const [typeFilter, setTypeFilter] = useState<string>('ALL');
 
   const allTests: DiagnosticTest[] = diagnodticsTestList?.data ?? [];
 
@@ -59,85 +60,126 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
     }
   };
 
-  const gradients = [
-    'linear-gradient(135deg, #667eea 0%, #5a78d6 100%)',
-    'linear-gradient(135deg, #4facfe 0%, #5a9dd6 100%)',
-    'linear-gradient(135deg, #5f9df7 0%, #4a7ac2 100%)',
-    'linear-gradient(135deg, #6ba3d8 0%, #5686c2 100%)',
-    'linear-gradient(135deg, #7ba5dd 0%, #6490d1 100%)',
-    'linear-gradient(135deg, #5e94d6 0%, #4d7fc2 100%)'
-  ];
+  const getGradientByType = (type?: string) => {
+    if (type === 'LABORATORY') {
+      return 'linear-gradient(135deg, #4facfe 0%, #2b6cb0 100%)';
+    }
+
+    if (type === 'RADIOLOGY') {
+      return 'linear-gradient(135deg, #9f7aea 0%, #6b46c1 100%)';
+    }
+
+    return 'linear-gradient(135deg, #718096 0%, #4a5568 100%)';
+  };
+
+  const filteredTests =
+    typeFilter === 'ALL'
+      ? allTests
+      : allTests.filter(t => t.type === typeFilter);
 
   return (
     <div className="favorite-tests">
-      <Grid fluid>
-        <Row gutter={20}>
-          {allTests.map((test, index) => {
-            const isFavorite = test.id !== undefined && favoriteTestIds.includes(test.id);
-            const gradient = gradients[index % gradients.length];
 
-            return (
-              <Col xs={24} sm={12} md={8} lg={6} key={test.id}>
-                <Panel bordered className="test-card" style={{ marginBottom: 20 }}>
-                  <div className="card-gradient-bg" style={{ background: gradient }} />
+      <HStack spacing={10} style={{ marginBottom: 20 }}>
+        <Button
+          appearance={typeFilter === 'ALL' ? 'primary' : 'ghost'}
+          onClick={() => setTypeFilter('ALL')}
+        >
+          All
+        </Button>
 
-                  <div className="card-icon">
-                    <FontAwesomeIcon icon={index % 2 === 0 ? faFlask : faMicroscope} />
-                  </div>
+        <Button
+          appearance={typeFilter === 'LABORATORY' ? 'primary' : 'ghost'}
+          onClick={() => setTypeFilter('LABORATORY')}
+        >
+          Laboratory
+        </Button>
 
-                  <Whisper
-                    speaker={
-                      <Tooltip>{isFavorite ? 'Remove from favorites' : 'Add to favorites'}</Tooltip>
+        <Button
+          appearance={typeFilter === 'RADIOLOGY' ? 'primary' : 'ghost'}
+          onClick={() => setTypeFilter('RADIOLOGY')}
+        >
+          Radiology
+        </Button>
+      </HStack>
+
+
+      <div className="favorite-test-review-result-boxes-container">
+        {filteredTests.map((test) => {
+          const isFavorite =
+            test.id !== undefined && favoriteTestIds.includes(test.id);
+
+          const gradient = getGradientByType(test.type);
+
+          return (
+            <Panel bordered className="test-card" style={{ marginBottom: 20 }}>
+              <div
+                className="card-gradient-bg"
+                style={{ background: gradient }}
+              />
+
+              <Whisper
+                speaker={
+                  <Tooltip>
+                    {isFavorite
+                      ? 'Remove from favorites'
+                      : 'Add to favorites'}
+                  </Tooltip>
+                }
+              >
+                <div
+                  className={`favorite-btn ${isFavorite ? 'active' : ''
+                    }`}
+                  onClick={() =>
+                    test.id && toggleFavorite(test.id)
+                  }
+                >
+                  <FontAwesomeIcon
+                    icon={
+                      isFavorite ? faStarSolid : faStarRegular
                     }
-                  >
-                    <div
-                      className={`favorite-btn ${isFavorite ? 'active' : ''}`}
-                      onClick={() => test.id && toggleFavorite(test.id)}
-                    >
-                      <FontAwesomeIcon
-                        icon={isFavorite ? faStarSolid : faStarRegular}
-                        color={isFavorite ? 'white' : '#b0b0b0'}
-                        style={{ fontSize: 15 }}
-                      />
-                    </div>
-                  </Whisper>
-
-                  <div className="card-content">
-                    <div className="test-name">{test.name}</div>
-
-                    <div className="test-info">
-                      <div className="test-type">
-                        <Translate>Type</Translate>: {test.type}
-                      </div>
-                      {test.internalCode && (
-                        <div className="test-code">
-                          <Translate>Code</Translate>: {test.internalCode}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Panel>
-              </Col>
-            );
-          })}
-
-          {!isFetching && allTests.length === 0 && (
-            <Col xs={24}>
-              <div className="empty-state">
-                <div className="empty-icon">
-                  <FontAwesomeIcon icon={faFlask} />
+                    color={isFavorite ? 'white' : '#b0b0b0'}
+                    style={{ fontSize: 15 }}
+                  />
                 </div>
-                <h3>
-                  <Translate>No tests found</Translate>
-                </h3>
-                <p>
-                  <Translate>Try adjusting your filters</Translate>
-                </p>
+              </Whisper>
+
+              <div className="card-content">
+                <div className="test-name">
+                  {test.name}
+                </div>
+
+                <div className="test-info">
+                  <div className="test-type">
+                    <Translate>Type</Translate>: {test.type}
+                  </div>
+
+                  {test.internalCode && (
+                    <div className="test-code">
+                      <Translate>Code</Translate>: {test.internalCode}
+                    </div>
+                  )}
+                </div>
               </div>
-            </Col>
-          )}
-        </Row>
-      </Grid>
+            </Panel>
+          );
+        })}
+      </div>
+
+      {!isFetching && allTests.length === 0 && (
+        <div className="empty-state">
+          <div className="empty-icon">
+            <FontAwesomeIcon icon={faFlask} />
+          </div>
+          <h3>
+            <Translate>No tests found</Translate>
+          </h3>
+          <p>
+            <Translate>Try adjusting your filters</Translate>
+          </p>
+        </div>
+      )}
+
     </div>
   );
 };

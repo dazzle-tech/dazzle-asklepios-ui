@@ -11,7 +11,9 @@ import {
   useAcceptDiagnosticOrderTestMutation,
   useRejectDiagnosticOrderTestMutation,
   useFilterDiagnosticOrderTestsQuery,
-  useUndoAcceptDiagnosticOrderTestMutation
+  useUndoAcceptDiagnosticOrderTestMutation,
+  useBulkAcceptDiagnosticOrderTestsMutation,
+  useBulkRejectDiagnosticOrderTestsMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -49,7 +51,7 @@ import {
   useGetRadiologyReportByOrderTestIdQuery,
   useLazyGetRadiologyReportByOrderTestIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
-
+import { useDispatch } from 'react-redux';
 
 type Props = {
   order: any;
@@ -62,29 +64,7 @@ type Props = {
 };
 
 
-const notifyFromApiError = (e: any) => {
-  const status = e?.status || e?.originalStatus;
-  const message =
-    e?.data?.message ||
-    e?.data?.detail ||
-    e?.error ||
-    'Something went wrong';
-  if (status === 400 || status === 409 || status === 422) {
-    dispatch(
-      notify({
-        msg: message,
-        sev: 'warning'
-      })
-    );
-    return;
-  }
-  dispatch(
-    notify({
-      msg: message,
-      sev: 'error'
-    })
-  );
-};
+
 
 
 const Tests = forwardRef<any, Props>(
@@ -115,7 +95,30 @@ const Tests = forwardRef<any, Props>(
     const [openArrivalModal, setOpenArrivalModal] = useState(false);
     const [reportsByTestId, setReportsByTestId] = useState<Record<number, any>>({});
 
-
+    const notifyFromApiError = (e: any) => {
+      const status = e?.status || e?.originalStatus;
+      const message =
+        e?.data?.message ||
+        e?.data?.detail ||
+        e?.error ||
+        'Something went wrong';
+      if (status === 400 || status === 409 || status === 422) {
+        dispatch(
+          notify({
+            msg: message,
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+      dispatch(
+        notify({
+          msg: message,
+          sev: 'error'
+        })
+      );
+    };
+    
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
       size: 5,
@@ -206,6 +209,8 @@ const Tests = forwardRef<any, Props>(
     const [acceptTest] = useAcceptDiagnosticOrderTestMutation();
     const [rejectTest] = useRejectDiagnosticOrderTestMutation();
     const [undoAcceptTest, { isLoading: isUndoing }] = useUndoAcceptDiagnosticOrderTestMutation();
+    const [openBulkRejectModal, setOpenBulkRejectModal] = useState(false);
+    const [bulkRejectReason, setBulkRejectReason] = useState('');
 
     const testsMap = useMemo(() => {
       return new Map(allTests.map(t => [t.id, t]));
@@ -217,6 +222,11 @@ const Tests = forwardRef<any, Props>(
       sort: 'testId,asc'
     });
 
+    const [bulkAccept, { isLoading: isBulkAccepting }] =
+      useBulkAcceptDiagnosticOrderTestsMutation();
+
+    const [bulkReject, { isLoading: isBulkRejecting }] =
+      useBulkRejectDiagnosticOrderTestsMutation();
 
 
     const [
@@ -485,6 +495,104 @@ const Tests = forwardRef<any, Props>(
       );
     };
 
+  const canAcceptTest = (t: any) =>
+    t.processingStatus === DiagnosticOrderTestStatus.PATIENT_ARRIVED;
+
+  const canRejectTest = (t: any) =>
+    t.processingStatus !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
+    t.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
+
+
+    const handleBulkAccept = async () => {
+      if (!selectedRows.length) {
+        dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
+        return;
+      }
+
+      const eligibleIds = normalizedOrderTests
+        .filter(
+          t =>
+            selectedRows.includes(t.id) &&
+            canAcceptTest(t)
+        )
+        .map(t => t.id);
+
+      if (!eligibleIds.length) {
+        dispatch(
+          notify({
+            msg: 'No tests eligible for accept',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      try {
+        await bulkAccept({ ids: eligibleIds }).unwrap();
+
+        dispatch(
+          notify({
+            msg: `Accepted ${eligibleIds.length} tests successfully`,
+            sev: 'success'
+          })
+        );
+
+        setSelectedRows([]);
+        await refetchAllRadData();
+      } catch (e: any) {
+        notifyFromApiError(e);
+      }
+    };
+
+
+    const handleBulkReject = async () => {
+  if (!selectedRows.length) {
+    dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
+    return;
+  }
+
+  const eligibleIds = normalizedOrderTests
+    .filter(
+      t =>
+        selectedRows.includes(t.id) &&
+        canRejectTest(t)
+    )
+    .map(t => t.id);
+
+  if (!eligibleIds.length) {
+    dispatch(
+      notify({
+        msg: 'No tests eligible for reject',
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  try {
+    await bulkReject({
+      ids: eligibleIds,
+      rejectedReason: bulkRejectReason
+    }).unwrap();
+
+    dispatch(
+      notify({
+        msg: `Rejected ${eligibleIds.length} tests successfully`,
+        sev: 'success'
+      })
+    );
+
+    setSelectedRows([]);
+    setBulkRejectReason('');
+    setOpenBulkRejectModal(false);
+    await refetchAllRadData();
+  } catch (e: any) {
+    notifyFromApiError(e);
+  }
+    };
+
+
+
     const columns = [
       {
         key: 'check',
@@ -744,6 +852,45 @@ const Tests = forwardRef<any, Props>(
       </Form>
     );
 
+      const hasBulkAcceptEligible = useMemo(() => {
+        return normalizedOrderTests.some(
+          t =>
+            selectedRows.includes(t.id) &&
+            canAcceptTest(t)
+        );
+      }, [normalizedOrderTests, selectedRows]);
+
+
+    const tableButtons = (<>
+    <div className='rad-test-table-buttons-main-container'>
+    <Whisper placement="top" speaker={<Tooltip>Accept</Tooltip>}>
+        <span style={{ display: 'inline-block' }}>
+        <MyButton
+          prefixIcon={() => <CheckRoundIcon />}
+          disabled={!hasBulkAcceptEligible}
+          onClick={handleBulkAccept}
+        >
+          Accept Selected
+        </MyButton>
+        </span>
+    </Whisper>
+
+    <Whisper placement="top" speaker={<Tooltip>Reject</Tooltip>}>
+      <span style={{ display: 'inline-block' }}>
+        <MyButton
+        prefixIcon={() => <WarningRoundIcon />}
+        appearance="ghost"
+        disabled={!selectedRows.length}
+        onClick={() => setOpenBulkRejectModal(true)}
+        >
+          Reject Selected
+        </MyButton>
+
+      </span>
+    </Whisper>
+    </div>
+    </>);
+
     useEffect(() => {
       setSelectedRows([]);
     }, [order?.id]);
@@ -807,6 +954,7 @@ const Tests = forwardRef<any, Props>(
         <MyTable
           filters={filters()}
           columns={columns}
+          tableButtons={tableButtons}
           data={pagedData}
           loading={loading || isTestsFetching}
           page={pageIndex}
@@ -854,6 +1002,18 @@ const Tests = forwardRef<any, Props>(
           fetchTest={fetchTest}
           fetchAllTests={refetchAllRadData}
         />
+
+        <CancellationModal
+          open={openBulkRejectModal}
+          setOpen={setOpenBulkRejectModal}
+          fieldName="rejectedReason"
+          handleCancle={handleBulkReject}
+          object={{ rejectedReason: bulkRejectReason }}
+          setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
+          fieldLabel="Reject Reason"
+          title="Bulk Reject"
+        />
+
 
       </Panel>
     );

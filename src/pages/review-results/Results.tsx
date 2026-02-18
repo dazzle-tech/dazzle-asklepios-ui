@@ -87,6 +87,8 @@ const resolveLovDisplayValue = (
     return key;
   }
 
+  const normalizedKey = String(key);
+
   const lovDef = lovDefinitions.object.find(
     (d: any) => String(d.key) === String(profile.listOfValueId)
   );
@@ -97,10 +99,11 @@ const resolveLovDisplayValue = (
     allLovValues.object.find(
       (v: any) =>
         String(v.lovCode) === String(lovDef.lovCode) &&
-        String(v.key) === String(key)
+        String(v.key) === normalizedKey
     )?.lovDisplayVale ?? key
   );
 };
+
 
 const Result = forwardRef<any, any>(
   ({ loading, setTest, refetchAllLabData }, ref) => {
@@ -109,7 +112,6 @@ const Result = forwardRef<any, any>(
     const [size, setSize] = useState(15);
     const [selectedResult, setSelectedResult] = useState<any>(null);
     const [openNotesModal, setOpenNotesModal] = useState(false);
-
     const [approvalDate, setApprovalDate] = useState({
       fromDate: today,
       toDate: today
@@ -129,7 +131,6 @@ const Result = forwardRef<any, any>(
 
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
 
-
     const [toggleReviewDiagnosticOrderTestResult] =
       useToggleReviewDiagnosticOrderTestResultMutation();
 
@@ -142,13 +143,13 @@ const Result = forwardRef<any, any>(
     const { data: lovDefinitions } =
       useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
 
-
     const normalizeDateRange = (from?: Date | null, to?: Date | null) => {
       if (from && to && from > to) {
         return { from: to, to: from };
       }
       return { from, to };
     };
+
     const endOfDay = (date: Date) => {
       const d = new Date(date);
       d.setHours(23, 59, 59, 999);
@@ -161,24 +162,23 @@ const Result = forwardRef<any, any>(
       return d;
     };
 
-
     const filterParams = useMemo(() => {
       const params: any = {
         page,
         size,
         processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
-        reviewed: showReview,
       };
 
+      params.reviewed = showReview;
+
       if (showAbnormal) {
-        params.markerIn = [
-          'UPPER_LIMIT',
-          'LOWER_LIMIT',
-          'ABNORMAL_MARKER',
-          'CRITICAL_UPPER',
-          'CRITICAL_LOWER',
+        params.excludeMarkerIn = [
+          "NORMAL_MARKER",
+          "UNKNOWN"
+
         ];
       }
+
       const approval = normalizeDateRange(
         approvalDate.fromDate,
         approvalDate.toDate
@@ -187,9 +187,11 @@ const Result = forwardRef<any, any>(
       if (approval.from) {
         params.approvedDateFrom = startOfDay(approval.from).toISOString();
       }
+
       if (approval.to) {
         params.approvedDateTo = endOfDay(approval.to).toISOString();
       }
+
 
       if (orderDate.fromDate || orderDate.toDate) {
         if (orderIdIn && orderIdIn.length > 0) {
@@ -198,7 +200,6 @@ const Result = forwardRef<any, any>(
           params.orderIdIn = [-1];
         }
       }
-
 
       return params;
     }, [
@@ -211,18 +212,16 @@ const Result = forwardRef<any, any>(
       orderDate
     ]);
 
-
-
     const {
       data: resultsResponse,
       isFetching,
       refetch
     } = useFilterDiagnosticOrderTestResultsQuery({
-        page,
-        size: rowsPerPage,
-        sort: 'id,desc',
-        params: filterParams
-        });
+      page,
+      size: rowsPerPage,
+      sort: 'id,desc',
+      ...filterParams
+    });
 
     useImperativeHandle(ref, () => ({ refetch }));
 
@@ -241,18 +240,22 @@ const Result = forwardRef<any, any>(
 
       results.forEach(r => {
         // ========= ORDER =========
-        if (r.orderId && !ordersMap[r.orderId]) {
-          fetchOrderById(r.orderId)
-            .unwrap()
-            .then(order => {
-              console.log('[ORDER]', order.id);
-              setOrdersMap(prev => ({
-                ...prev,
-                [String(order.id)]: order
-              }));
-            })
-            .catch(() => { });
+        if (r.orderTestId && orderTestsMap[r.orderTestId]) {
+          const orderId = orderTestsMap[r.orderTestId]?.orderId;
+
+          if (orderId && !ordersMap[orderId]) {
+            fetchOrderById(orderId)
+              .unwrap()
+              .then(order => {
+                setOrdersMap(prev => ({
+                  ...prev,
+                  [String(order.id)]: order
+                }));
+              })
+              .catch(() => { });
+          }
         }
+
 
         // ========= ORDER TEST =========
         if (r.orderTestId && !orderTestsMap[r.orderTestId]) {
@@ -288,6 +291,24 @@ const Result = forwardRef<any, any>(
         }
       });
     }, [ordersMap]);
+    useEffect(() => {
+  Object.values(orderTestsMap).forEach((test: any) => {
+    const orderId = test?.orderId;
+
+    if (orderId && !ordersMap[orderId]) {
+      fetchOrderById(orderId)
+        .unwrap()
+        .then(order => {
+          setOrdersMap(prev => ({
+            ...prev,
+            [String(order.id)]: order
+          }));
+        })
+        .catch(() => {});
+    }
+  });
+}, [orderTestsMap]);
+
 
     const { data: profilesResponse } =
       useGetAllDiagnosticTestProfilesQuery({
@@ -303,7 +324,8 @@ const Result = forwardRef<any, any>(
 
     const normalizedResults = useMemo(() => {
       return results.map(r => {
-        const order = ordersMap[r.orderId];
+        const orderTest = orderTestsMap[r?.orderTestId]
+        const order = ordersMap[orderTest?.orderId];
         const patient = patientsMap[order?.patientId];
         const profile = profilesMap.get(r.profileTestId);
 
@@ -337,12 +359,29 @@ const Result = forwardRef<any, any>(
       const profile = row._profile;
       if (!profile || isLovProfile(profile)) return null;
 
-      return profile.resultUnit
-        ? valueUnitLov?.object?.find(
-          u => String(u.key) === String(profile.resultUnit)
-        )?.lovDisplayVale
-        : null;
+      const unit = valueUnitLov?.object?.find(
+        u => String(u.key) === String(profile.resultUnit)
+      )?.lovDisplayVale;
+
+      return unit || null;
     };
+
+    const resetFilters = () => {
+      const today = new Date();
+      setApprovalDate({
+        fromDate: today,
+        toDate: today
+      });
+      setOrderDate({
+        fromDate: null,
+        toDate: null
+      });
+      setShowReview(false);
+      setShowAbnormal(false);
+      setOrderIdIn(null);
+      setPage(0);
+    };
+
 
     const columns = useMemo(
       () => [
@@ -362,6 +401,7 @@ const Result = forwardRef<any, any>(
           key: 'testName',
           title: <Translate>TEST NAME</Translate>,
           render: (row: any) => (
+
             <>
               {row._profile?.name ?? '-'}
               <br />
@@ -374,7 +414,45 @@ const Result = forwardRef<any, any>(
         {
           key: 'normalRange',
           title: <Translate>NORMAL RANGE</Translate>,
-          render: (row: any) => row.viewNormalRange ?? ' '
+          render: (row: any) => {
+            console.log("ROWWWWWWW", row);
+            const profile = row._profile;
+
+            const hasViewRange =
+              row.viewNormalRange &&
+              row.viewNormalRange.trim() !== '';
+
+            const hasMinMaxRange =
+              row.minValue !== null &&
+              row.minValue !== undefined &&
+              row.maxValue !== null &&
+              row.maxValue !== undefined;
+
+            console.log('profile: ', row._profile);
+            console.log('viewNormalRange: ', row.viewNormalRange);
+
+            if (hasViewRange) {
+              if (isLovProfile(profile)) {
+                return resolveLovDisplayValue(
+                  profile,
+                  String(row.viewNormalRange),
+                  lovDefinitions,
+                  allLovValues
+                );
+              }
+
+
+              const unit = resolveUnitDisplay(row);
+              return `${row.viewNormalRange}${unit ? ` ${unit}` : ''}`;
+            }
+
+            if (hasMinMaxRange) {
+              const unit = resolveUnitDisplay(row);
+              return `${row.minValue} - ${row.maxValue}${unit ? ` ${unit}` : ''}`;
+            }
+
+            return ' ';
+          }
         },
         {
           key: 'marker',
@@ -445,6 +523,8 @@ const Result = forwardRef<any, any>(
       [patientsMap, normalizedResults]
     );
 
+
+
     const filters = () => (
       <Form fluid>
         <div className='results-table-filters-review-results-main-container'>
@@ -467,6 +547,12 @@ const Result = forwardRef<any, any>(
             </Checkbox>
           </div>
         </div>
+
+        <AdvancedSearchFilters
+          searchFilter={false}
+          showAdvancedButton={false}
+          clearOnClick={resetFilters}
+        />
       </Form>
     );
 

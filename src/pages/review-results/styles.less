@@ -28,6 +28,7 @@
     height: 100%;
     border: none !important;
     box-shadow: 0 3px 10px rgba(102, 126, 234, 0.12);
+    width: 17vw;
 
     &:hover {
       transform: translateY(-6px) scale(1.01);
@@ -43,6 +44,7 @@
     height: 80px;
     z-index: 0;
     opacity: 0.95;
+    width: 40vw;
 
     &::after {
       content: '';
@@ -177,6 +179,15 @@
 }
 
 .report-review-results-filters-main-container {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 1vw !important;
+  flex-wrap: wrap !important;
+  box-sizing: border-box !important;
+}
+
+
+.favorite-test-review-result-boxes-container {
   display: flex !important;
   flex-direction: row !important;
   gap: 1vw !important;

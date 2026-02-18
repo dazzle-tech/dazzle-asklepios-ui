@@ -422,6 +422,7 @@ const AddEditDiagnosticTest = ({
                 <MyInput
                   width="100%"
                   fieldName="price"
+                  fieldType='number'
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
                 />
