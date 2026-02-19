@@ -1192,7 +1192,8 @@ export const newPatient: modelTypes.Patient = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null
+  lastModifiedDate: null,
+  ruleId: null
 };
 
 export const newAddress: modelTypes.Address = {
@@ -1294,7 +1295,6 @@ export const newEncounterVaccination: modelTypes.EncounterVaccination = {
   reviewedById: null
 };
 
-// ------------------- Patient Encounter Update -------------------
 export const newPatientEncounter: modelTypes.PatientEncounter = {
   id: 0,
 
@@ -1318,4 +1318,30 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
 
   status: 'NEW',
   encounterDate: null                
+};
+
+export const newPatientBasicInformationResponseVM: modelTypes.PatientBasicInformationResponseVM = {
+  id: 0,
+  fullName: '',
+  medicalRecordNumber: null,
+  primaryMobileNumber: null
+};
+
+export const newPatientDuplicationLookupDTO: modelTypes.PatientDuplicationLookupDTO = {
+  firstName: null,
+  secondName: null,
+  thirdName: null,
+  lastName: null,
+
+  dateOfBirth: null,
+
+  primaryMobileNumber: null,
+
+  medicalRecordNumber: null,
+
+  primaryDocumentNumber: null,
+
+  sexAtBirth: null,
+
+  facilityId: null
 };

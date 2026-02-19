@@ -994,6 +994,7 @@ export interface Patient {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+  ruleId?: string | null;
 }
 
 export interface SimpleCountry {
@@ -1534,4 +1535,23 @@ export interface PatientEncounter {
   status: string;  
  encounterDate?: Date | null;                
              
+}
+
+export interface PatientBasicInformationResponseVM {
+  id: number;
+  fullName: string;
+  medicalRecordNumber?: string;
+  primaryMobileNumber?: string;
+}
+
+export interface PatientDuplicationLookupDTO {
+  firstName?: string | null;
+  lastName?: string | null;
+dateOfBirth?: string | null;
+  gender?: string | null;
+  ruleId:Number|null ,
+  mobileNumber: string | null;
+  documentNo:string | null;
+facilityId?: number | null;
+
 }

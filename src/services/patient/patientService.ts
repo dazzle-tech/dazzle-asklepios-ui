@@ -186,6 +186,22 @@ export const newPatientService = createApi({
       invalidatesTags: ['Patient']
     }),
 
+    getDuplicationCandidates: builder.mutation<
+      modelTypes.PatientBasicInformationResponseVM[],
+      {
+        dto: modelTypes.PatientDuplicationLookupDTO;
+      } & PagedParams
+    >({
+      query: ({ dto, page, size, sort = 'id,asc' }) => ({
+        url: `/api/patient/duplication-candidates`,
+        method: 'POST',
+        body: dto,
+        params: { page, size, sort }
+      })
+    }),
+
+
+
    getUnknownPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
   query: ({ page, size, sort = 'id,asc' }) => ({
     url: `/api/patient/unknown`,
@@ -235,5 +251,8 @@ export const {
   // Unknown Patients
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
+  
+  useGetDuplicationCandidatesMutation,
+
   useLazyGetUnknownPatientsQuery
 } = newPatientService;

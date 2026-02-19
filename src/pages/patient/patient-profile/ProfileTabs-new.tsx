@@ -18,6 +18,10 @@ import InsuranceTab from './tabs/InsuranceTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 import dayjs from 'dayjs';
+import { useLazyGetDuplicationCandidatesQuery } from '@/services/patient/patientService';
+import MyModal from '@/components/MyModal/MyModal';
+import { useGetDuplicationCandidatesQuery as useGetDuplicationRulesQuery } 
+from '@/services/potintialDuplicateService';
 
 interface ProfileTabsProps {
   localPatient: Patient;
@@ -44,7 +48,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
   const lastProcessedDOB = useRef<string | null>(null);
 
+
+
   const [fetchAgeGroupByBirthDate] = useLazyGetAgeGroupByBirthDateQuery();
+  // const [fetchDuplicationCandidates] = useLazyGetDuplicationCandidatesQuery();
 
   const genderEnum = useEnumOptions('Gender');
   const patientDocumentEnum = useEnumOptions('DocumentType');
@@ -178,6 +185,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       }
     >
       <MyTab data={tabData} />
+
     </Panel>
   );
 };
