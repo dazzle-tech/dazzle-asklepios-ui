@@ -117,6 +117,8 @@ import { clinicalRecommendationsService } from './services/ai-services/clinicalR
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 import { patientReportService } from './services/patientReportService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { patientPrescriptionService } from './services/patients/Prescription/patientPrescriptionService';
+import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
 
 export const store = configureStore({
   reducer: {
@@ -135,6 +137,8 @@ export const store = configureStore({
     // patient
     [patientSlice.name]: patientSlice.reducer,
     [patientService.reducerPath]: patientService.reducer,
+    [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
+    [patientPrescriptionMedicationService.reducerPath]: patientPrescriptionMedicationService.reducer,
 
     //setup
     [setupService.reducerPath]: setupService.reducer,
@@ -352,6 +356,8 @@ export const store = configureStore({
       authServiceApi.middleware,
       accountApi.middleware,
       patientService.middleware,
+      patientPrescriptionService.middleware,
+      patientPrescriptionMedicationService.middleware,
       inventoryService.middleware,
       inventoryProductsService.middleware,
       setupService.middleware,
