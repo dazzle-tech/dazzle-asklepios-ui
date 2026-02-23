@@ -178,7 +178,7 @@ const Prescription = (props: Props) => {
           encounterId,
           fromFacilityId: authSlice?.tenant?.selectedFacility?.id ?? (null as any),
           fromDepartmentId: encounter?.departmentKey ?? (null as any),
-          urgencyLevel: 'NORMAL' // if backend requires; adjust to your enum
+          urgencyLevel: 'NORMAL' 
         } as any).unwrap();
 
         setCurrentPrescription(result);

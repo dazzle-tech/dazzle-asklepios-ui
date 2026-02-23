@@ -1361,26 +1361,6 @@ export interface OrganizationDefinition {
   taxValue?: number;
 }
 
-export interface PatientPrescriptionCreateVM {
-  patientId: number;
-  encounterId: number;
-  prescriptionDate?: string; 
-  urgencyLevel:string;
-  fromFacilityId: number;
-  fromDepartmentId: number;
-  toFacilityId?: number | null;
-  toDepartmentId?: number | null;
-}
-
-export interface PatientPrescriptionUpdateVM {
-  prescriptionDate?: string;
-  urgencyLevel?: string;
-  toFacilityId?: number | null;
-  toDepartmentId?: number | null;
-  lastModifiedBy: string;
-}
-
-
 export interface PatientPrescription {
   id: number;
   patientId: number;
@@ -1399,55 +1379,6 @@ export interface PatientPrescription {
   lastModifiedDate?: string | null;  
 }
 
-export interface PrescriptionMedicationCreate {
-  prescriptionHeaderId: number;
-  medicationsId: number;
-  instructionsType: string;
-  instructions?: string | null;
-  dose?: number | null;
-  doesUnit?: string | null;
-  rout: string; 
-  frequency?: string | null;
-  chronicMedication?: boolean | null;
-  duration?: number | null;
-  durationType?: string | null;
-  maximumDose?: number | null;
-  validUtil?: string | null; 
-  allowedSubstitute?: boolean | null;
-  indicationManually?: string | null;
-  indicationUse?: string | null;
-  indicationIcd?: string | null;
-  parametersToMonitor?: string | null;
-  numberOfRefills?: number | null;
-  refillValue?: number | null;
-  refillUnit?: string | null;
-  notes?: string | null;
-  extraDocumentation?: string | null;
-}
-export interface PrescriptionMedicationUpdate {
-  instructionsType?: string;
-  instructions?: string | null;
-  dose?: number | null;
-  doesUnit?: string | null;
-  rout?: string | null;
-  frequency?: string | null;
-  chronicMedication?: boolean | null;
-  duration?: number | null;
-  durationType?: string | null;
-  maximumDose?: number | null;
-  validUtil?: string | null;
-  allowedSubstitute?: boolean | null;
-  indicationManually?: string | null;
-  indicationUse?: string | null;
-  indicationIcd?: string | null;
-  parametersToMonitor?: string | null;
-  numberOfRefills?: number | null;
-  refillValue?: number | null;
-  refillUnit?: string | null;
-  notes?: string | null;
-  extraDocumentation?: string | null;
-  lastModifiedBy: string;
-}
 
 export interface PatientPrescriptionMedication {
   id: number;

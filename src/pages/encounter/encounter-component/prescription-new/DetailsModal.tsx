@@ -42,6 +42,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
 import InfoCardList from '@/components/InfoCardList';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 
 const DetailsModal = ({
   edit,
@@ -347,7 +348,7 @@ const DetailsModal = ({
         prescriptionMedication?.indicationUse ??
         prescriptionMedication?.indicationUseLkey ??
         null,
-      indicationIcd: indicationsDescription ?? null,
+      indicationIcd: prescriptionMedication?.indicationIcd ?? null, 
       parametersToMonitor: tagcompine ?? null,
       numberOfRefills: prescriptionMedication?.numberOfRefills ?? null,
       refillValue: prescriptionMedication?.refillValue ?? null,
@@ -776,44 +777,14 @@ const DetailsModal = ({
 
                         {/* ICD-10 */}
                         <div className="indication-field">
-                          <div className="icd-search-wrapper">
-                            <InputGroup inside className="indication-input">
-                              <Input
-                                disabled={preKey == null}
-                                placeholder="Search ICD-10"
-                                value={searchKeywordicd}
-                                onChange={handleSearchIcd}
-                              />
-                              <InputGroup.Button>
-                                <SearchIcon />
-                              </InputGroup.Button>
-                            </InputGroup>
-
-                            {searchKeywordicd && (
-                              <Dropdown.Menu className="prescription-dropdown-menuresult">
-                                {modifiedData?.map(mod => (
-                                  <Dropdown.Item
-                                    key={mod.key}
-                                    eventKey={mod.key}
-                                    onClick={() => {
-                                      setIndicationsIcd({ ...indicationsIcd, indicationIcd: mod.key });
-                                      setSearchKeywordicd('');
-                                    }}
-                                  >
-                                    {mod.icdCode} - {mod.description}
-                                  </Dropdown.Item>
-                                ))}
-                              </Dropdown.Menu>
-                            )}
-                          </div>
-
-                          <Input
-                            as="textarea"
-                            disabled
-                            value={indicationsDescription || prescriptionMedication.indicationIcd}
-                            rows={3}
-                            className="indication-textarea"
-                          />
+                        
+                            <Icd10DiagnosisSearch
+              diagnosisId={(prescriptionMedication.indicationIcd as any) ?? null}
+              setDiagnosisId={(id: number | null) => setPrescriptionMedications(prev => ({ ...prev, indicationIcd: id }))}
+              label="ICD-10"
+              disabled={preKey == null}
+            />
+                          <span style={{ color: 'red' }}>*</span>
                         </div>
 
                         {/* Indication Use */}
