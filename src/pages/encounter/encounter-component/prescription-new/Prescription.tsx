@@ -63,7 +63,7 @@ const Prescription = (props: Props) => {
 
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
-  const [showCanceled, setShowCanceled] = useState(true);
+  const [showCanceled, setShowCanceled] = useState(false);
 
   const [currentPrescription, setCurrentPrescription] = useState<PatientPrescription | null>(null);
   const [preKeyRecord, setPreKeyRecord] = useState<{ preKey: number | null }>({ preKey: null });
@@ -120,6 +120,7 @@ const Prescription = (props: Props) => {
     if (Array.isArray(x.content)) return x.content;
     return [];
   };
+  const isCanceledStatus = (status: any) => String(status ?? '').toUpperCase().includes('CANCEL');
 
   // Brand medications (for names in table/preview)
   const { data: genericMedicationListResponse } = useGetAllBrandMedicationsQuery({
@@ -153,9 +154,9 @@ const Prescription = (props: Props) => {
     { skip: !patientId }
   );
 
-  // Filter prescriptions to show in dropdown (keep both DRAFT and SUBMITTED, or just SUBMITTED if you want)
+  // Default: hide canceled prescriptions, show all only when checkbox is enabled.
   const filteredPrescriptions = (prescriptions as PatientPrescription[]).filter(p =>
-    showCanceled ? true : p.status !== 'CANCELED'
+    showCanceled ? true : !isCanceledStatus(p.status)
   );
 
   const prescriptionOptions = (filteredPrescriptions as PatientPrescription[]).map(p => ({
@@ -228,9 +229,9 @@ const Prescription = (props: Props) => {
   // Auto-select first prescription if none selected
   useEffect(() => {
     if (preKeyRecord.preKey !== null) return;
-    const first = (prescriptions as PatientPrescription[])?.[0];
+    const first = (filteredPrescriptions as PatientPrescription[])?.[0];
     if (first?.id) setPreKeyRecord({ preKey: first.id });
-  }, [prescriptions, preKeyRecord.preKey]);
+  }, [filteredPrescriptions, preKeyRecord.preKey]);
 
   // List medications for selected prescription
   const {
@@ -247,6 +248,9 @@ const Prescription = (props: Props) => {
   const patientPrescriptionMedications = asArray(
     patientPrescriptionMedicationsRaw
   ) as PatientPrescriptionMedication[];
+  const visiblePatientPrescriptionMedications = patientPrescriptionMedications.filter(m =>
+    showCanceled ? true : !isCanceledStatus((m as any)?.status)
+  );
 
   // Custom instructions (legacy table formatting uses this)
   const { data: customeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
@@ -480,9 +484,20 @@ const Prescription = (props: Props) => {
   const [deleteMedication] = useDeletePatientPrescriptionMedicationMutation();
 
   const handleCancle = async () => {
+    const rowsToCancel = selectedRows.length
+      ? selectedRows
+      : patientPrescriptionMedicationObject?.id
+        ? [patientPrescriptionMedicationObject]
+        : [];
+
+    if (!rowsToCancel.length) {
+      dispatch(notify({ msg: 'Please select medication(s) to cancel', type: 'warning' } as any));
+      return;
+    }
+
     try {
       await Promise.all(
-        selectedRows
+        rowsToCancel
           .filter(r => r?.id != null)
           .map(r => deleteMedication(Number(r.id)).unwrap())
       );
@@ -798,8 +813,13 @@ const Prescription = (props: Props) => {
 
           <MyButton
             prefixIcon={() => <BlockIcon />}
-            onClick={() => setOpenCancellation(true)}
-            disabled={selectedRows.length === 0 || edit}
+            onClick={() => {
+              if (!selectedRows.length && patientPrescriptionMedicationObject?.id) {
+                setSelectedRows([patientPrescriptionMedicationObject]);
+              }
+              setOpenCancellation(true);
+            }}
+            disabled={(!selectedRows.length && !patientPrescriptionMedicationObject?.id) || edit}
           >
             Cancel
           </MyButton>
@@ -835,7 +855,7 @@ const Prescription = (props: Props) => {
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
-          data={patientPrescriptionMedications ?? []}
+          data={visiblePatientPrescriptionMedications ?? []}
           onRowClick={(rowData: any) => {
             setSelectedPreviewMedication(rowData);
             setPatientPrescriptionMedicationObject(rowData);
