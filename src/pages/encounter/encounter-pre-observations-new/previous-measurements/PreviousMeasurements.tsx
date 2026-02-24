@@ -76,7 +76,8 @@ const endOfDay = (d: Date) => {
   return x;
 };
 
-const toIsoInstant = (d: Date) => d.toISOString();
+
+const toInstantIso = (date: Date) => date.toISOString();
 
 //  date+time formatter (uses your existing formatDate and adds time)
 const formatDateTime = (d: Date) => {
@@ -102,15 +103,9 @@ const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: pa
     };
   });
 
-  const fromIso = useMemo(
-    () => toIsoInstant(startOfDay(dateFilter.fromDate)),
-    [dateFilter.fromDate]
-  );
+  const fromIso = useMemo(() => toInstantIso(startOfDay(dateFilter.fromDate)), [dateFilter.fromDate]);
 
-  const toIso = useMemo(
-    () => toIsoInstant(endOfDay(dateFilter.toDate)),
-    [dateFilter.toDate]
-  );
+  const toIso = useMemo(() => toInstantIso(endOfDay(dateFilter.toDate)), [dateFilter.toDate]);
 
   // ------------------ BODY TABLE (Page) ------------------
   const [bodyTableReq, setBodyTableReq] = useState({
@@ -137,8 +132,12 @@ const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: pa
     { skip: !patientId }
   );
 
-  const bodyRows: BodyMeasurementsResponseVM[] = bodyPage?.content ?? [];
-  const bodyTotal = bodyPage?.totalElements ?? 0;
+// BODY
+const bodyRows: BodyMeasurementsResponseVM[] =
+  Array.isArray(bodyPage) ? bodyPage : bodyPage?.content ?? [];
+
+const bodyTotal =
+  Array.isArray(bodyPage) ? bodyPage.length : bodyPage?.totalElements ?? 0;
 
   // ------------------ VITAL TABLE (Page) ------------------
   const [vitalTableReq, setVitalTableReq] = useState({
@@ -165,9 +164,12 @@ const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: pa
     { skip: !patientId }
   );
 
-  const vitalRows: VitalSignsResponseVM[] = vitalPage?.content ?? [];
-  const vitalTotal = vitalPage?.totalElements ?? 0;
+// VITAL
+const vitalRows: VitalSignsResponseVM[] =
+  Array.isArray(vitalPage) ? vitalPage : vitalPage?.content ?? [];
 
+const vitalTotal =
+  Array.isArray(vitalPage) ? vitalPage.length : vitalPage?.totalElements ?? 0;
   // ------------------ Chart metric selection ------------------
   const [selectedMetric, setSelectedMetric] = useState<SelectedMetric | null>(null);
 
@@ -455,6 +457,7 @@ const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: pa
     setBodyTableReq(prev => ({ ...prev, page: 0 }));
     setVitalTableReq(prev => ({ ...prev, page: 0 }));
   }, [fromIso, toIso]);
+
 
   // ------------------ render ------------------
   return (
