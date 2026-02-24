@@ -57,6 +57,7 @@ const Catalog = () => {
     refetch,
     isFetching
   } = useGetCatalogsQuery(paginationParams);
+  console.log("diagnosticsTestCatalogHeaderListResponse: ", diagnosticsTestCatalogHeaderListResponse);
   const { data: departmentListResponse } = useGetAllDepartmentsWithoutPaginationQuery({});
   const [fetchByDepartment] = useLazyGetCatalogByDepartmentQuery();
   const [fetchByName] = useLazyGetCatalogByNameQuery();

@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery, onQueryStarted } from '@/newApi';
-import {PatientPrescription, PatientPrescriptionCreateVM, PatientPrescriptionUpdateVM} from '@/types/model-types-new';
+import { PatientPrescription, PatientPrescriptionCreateVM, PatientPrescriptionUpdateVM } from '@/types/model-types-new';
+import { parseLinkHeader } from '@/utils/paginationHelper';
 
 export interface PatientPrescriptionListParams {
   patientId?: number;
@@ -12,7 +13,22 @@ export interface PatientPrescriptionListParams {
   page?: number;
   size?: number;
   sort?: string;
+  timestamp?: number
 }
+
+type LinkMap = {
+  next?: string | null;
+  prev?: string | null;
+  first?: string | null;
+  last?: string | null;
+};
+
+type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+  links?: LinkMap;
+};
+
 
 export const patientPrescriptionService = createApi({
   reducerPath: 'patientPrescriptionApi',
@@ -36,20 +52,48 @@ export const patientPrescriptionService = createApi({
 
     // GET /api/patient/patient-prescriptions
     getPatientPrescription: builder.query<
-      PatientPrescription[],
+      PagedResult<PatientPrescription>,
       PatientPrescriptionListParams
     >({
-      query: (params) => ({
+      query: ({
+        patientId,
+        encounterId,
+        status,
+        urgencyLevel,
+        prescriptionNum,
+        includeCanceled,
+        page,
+        size,
+        sort = 'id,asc',
+      }) => ({
         url: '/api/patient/patient-prescriptions',
-        method: 'GET',
-        params,
+        params: {
+          patientId,
+          encounterId,
+          status,
+          urgencyLevel,
+          prescriptionNum,
+          includeCanceled,
+          page,
+          size,
+          sort,
+        },
       }),
-      onQueryStarted,
-      transformResponse: (response: any) => {
-        // Handle paginated response if needed
-        return Array.isArray(response) ? response : response?.content || response || [];
+
+      transformResponse: (
+        response: PatientPrescription[],
+        meta
+      ): PagedResult<PatientPrescription> => {
+        const headers = meta?.response?.headers;
+
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
       },
-      providesTags: ['PatientPrescription'],
+
+      providesTags: (_res) => ['PatientPrescription'],
     }),
 
     // GET /api/patient/patient-prescriptions/{id}
@@ -98,7 +142,7 @@ export const patientPrescriptionService = createApi({
 
     // POST /api/patient/patient-prescriptions/{id}/submit
     submitPatientPrescription: builder.mutation<
-     PatientPrescription,
+      PatientPrescription,
       { id: number }
     >({
       query: ({ id }) => ({
@@ -118,7 +162,7 @@ export const patientPrescriptionService = createApi({
       PatientPrescription,
       { id: number }
     >({
-      query: ({ id}) => ({
+      query: ({ id }) => ({
         url: `/api/patient/patient-prescriptions/${id}/cancel`,
         method: 'POST',
       }),

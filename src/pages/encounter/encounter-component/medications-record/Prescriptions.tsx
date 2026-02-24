@@ -1,146 +1,126 @@
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
-import { useGetPrescriptionsQuery } from "@/services/encounterService";
-import { ApPrescription } from "@/types/model-types";
-import { newApPrescription } from "@/types/model-types-constructor";
-import { initialListRequest, ListRequest } from "@/types/types";
-import React, { useState } from "react";
+import { useGetPatientPrescriptionQuery } from "@/services/patients/Prescription/patientPrescriptionService";
+import type { PatientPrescription } from "@/types/model-types-new";
+import React, { useMemo, useState } from "react";
 import { formatDateWithoutSeconds } from "@/utils";
 import PrescriptionDetails from "./PrescriptionDetails";
-import { useGetAllBrandMedicationsQuery } from "@/services/setup/brandmedication/BrandMedicationService ";
-const Prescriptions = ({ patient,  customeInstructions }) => {
-    const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
-    //List of current patient prescriptions that have been submitted
-    // const {data:genericMedicationListResponse}=useGetAllBrandMedicationsQuery({page:1,size:1000});
-    const [listRequest, setListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: "patient_key",
-                operator: "match",
-                value: patient?.key,
-            },
 
-            {
-                fieldName: "status_lkey",
-                operator: "match",
-                value: "1804482322306061"
-            }
+const Prescriptions = ({ patient, customeInstructions }) => {
+    const [prescription, setPrescription] = useState<PatientPrescription | null>(null);
 
-        ],
-    });
-    const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery(listRequest);
+    const patientId = patient?.id ? Number(patient.id) : patient?.key ? Number(patient.key) : undefined;
 
+    const [pageIndex, setPageIndex] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    const {
+        data: prescriptionsResponse = [],
+        isLoading: isLoadingPrescriptions,
+    } = useGetPatientPrescriptionQuery(
+        {
+            patientId,
+            page: pageIndex,
+            size: rowsPerPage,
+            sort: "prescriptionNum,desc",
+        },
+        { skip: !patientId }
+    );
+    console.log("prescriptionsResponse: ", prescriptionsResponse);
 
-    const isSelected = rowData => {
-        if (rowData && prescription && rowData.key === prescription.key) {
-            return 'selected-row';
-        } else return '';
+    const prescriptions = useMemo(() => {
+        if (Array.isArray(prescriptionsResponse)) return prescriptionsResponse;
+        if (Array.isArray((prescriptionsResponse as any)?.object)) return (prescriptionsResponse as any).object;
+        if (Array.isArray((prescriptionsResponse as any)?.data)) return (prescriptionsResponse as any).data;
+        if (Array.isArray((prescriptionsResponse as any)?.content)) return (prescriptionsResponse as any).content;
+        return [];
+    }, [prescriptionsResponse]);
+
+    const isSelected = (rowData: PatientPrescription) => {
+        if (rowData && prescription && rowData.id === prescription.id) {
+            return "selected-row";
+        }
+        return "";
     };
+
     const tableColumns = [
         {
             key: "prescriptionId",
             title: <Translate>Prescription ID</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData?.prescriptionId ?? "";
-            }
+            render: (rowData: any) => rowData?.prescriptionNum ?? rowData?.id ?? "",
         },
         {
             key: "visitId",
             title: <Translate>Visit ID</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData?.encounter?.visitId ?? "";
-            }
+            render: (rowData: any) => rowData?.encounter?.visitId ?? rowData?.encounterId ?? "",
         },
         {
-            key: "",
+            key: "prescriptionDate",
             title: <Translate>Visit Date</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-                return formatDateWithoutSeconds(rowData.encounter?.createdAt);
-            }
+            render: (rowData: any) => formatDateWithoutSeconds(rowData?.prescriptionDate ?? rowData?.createdDate),
         },
         {
-            key: "createdAt",
+            key: "createdDate",
             title: <Translate>Created At</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-                return formatDateWithoutSeconds(rowData.createdAt);
-            }
+            render: (rowData: any) => formatDateWithoutSeconds(rowData?.createdDate),
         },
         {
             key: "createdBy",
             title: <Translate>Created By</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData?.createdBy ?? "";
-            }
+            render: (rowData: any) => rowData?.createdBy ?? "",
         },
         {
             key: "submittedBy",
             title: <Translate>Submitted By</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData?.submittedBy ?? "";
-            }
+            render: (rowData: any) => rowData?.submittedBy ?? rowData?.lastModifiedBy ?? "",
         },
         {
-            key: "submittedAt ",
+            key: "submittedAt",
             title: <Translate>Submitted at</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => {
-                return formatDateWithoutSeconds(rowData.submittedAt);
-            }
+            render: (rowData: any) => formatDateWithoutSeconds(rowData?.submittedAt ?? rowData?.lastModifiedDate),
         },
-
     ];
-    const pageIndex = listRequest.pageNumber - 1;
 
-    // how many rows per page:
-    const rowsPerPage = listRequest.pageSize;
+    const totalCount = prescriptions.length;
 
-    // total number of items in the backend:
-    const totalCount = prescriptions?.extraNumeric ?? 0;
-
-    // handler when the user clicks a new page number:
     const handlePageChange = (_: unknown, newPage: number) => {
-        // MUI gives you a zero-based page, so add 1 for your API
-
-        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+        setPageIndex(newPage);
     };
 
-    // handler when the user chooses a different rows-per-page:
     const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-
-        setListRequest({
-            ...listRequest,
-            pageSize: parseInt(event.target.value, 10),
-            pageNumber: 1 // reset to first page
-        });
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPageIndex(0);
     };
 
+    return (
+        <>
+            <MyTable
+                columns={tableColumns}
+                data={prescriptions}
+                loading={isLoadingPrescriptions}
+                onRowClick={(rowData) => {
+                    setPrescription(rowData);
+                }}
+                rowClassName={isSelected}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+            />
+            <br />
+            {prescription?.id && (
+                <PrescriptionDetails customeInstructions={customeInstructions} prescription={prescription} />
+            )}
+        </>
+    );
+};
 
-    return (<>
-        <MyTable
-            columns={tableColumns}
-            data={prescriptions?.object ?? []}
-            onRowClick={rowData => {
-                setPrescription(rowData);
-            }}
-            rowClassName={isSelected}
-            page={pageIndex}
-            rowsPerPage={rowsPerPage}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-        ></MyTable>
-        <br />
-        {/* when click row show table for medication details */}
-        {prescription.key &&
-            <PrescriptionDetails customeInstructions={customeInstructions}  prescription={prescription} />}
-    </>)
-}
 export default Prescriptions;
