@@ -83,7 +83,7 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
 
         if (rowData?.instructionsType === 'PRE_DEFINED_INSTRUCTIONS') {
           const inst = (predefinedInstructionsListResponse?.data ?? []).find(
-            (x: any) => x.id === rowData?.instructions
+            (x: any) => Number(x.id) === Number(rowData?.instructions)
           );
           if (!inst) return 'No predefined instructions';
           return [inst?.dose, formatEnumString(inst?.unit), formatEnumString(inst?.rout), formatEnumString(inst?.frequency)]

@@ -13,7 +13,7 @@ export interface PatientPrescriptionListParams {
   page?: number;
   size?: number;
   sort?: string;
-  timestamp?: number
+  // timestamp?: number
 }
 
 type LinkMap = {
@@ -52,49 +52,65 @@ export const patientPrescriptionService = createApi({
 
     // GET /api/patient/patient-prescriptions
     getPatientPrescription: builder.query<
-      PagedResult<PatientPrescription>,
+      PatientPrescription[],
       PatientPrescriptionListParams
     >({
-      query: ({
-        patientId,
-        encounterId,
-        status,
-        urgencyLevel,
-        prescriptionNum,
-        includeCanceled,
-        page,
-        size,
-        sort = 'id,asc',
-      }) => ({
+      query: (params) => ({
         url: '/api/patient/patient-prescriptions',
-        params: {
-          patientId,
-          encounterId,
-          status,
-          urgencyLevel,
-          prescriptionNum,
-          includeCanceled,
-          page,
-          size,
-          sort,
-        },
+        method: 'GET',
+        params,
       }),
-
-      transformResponse: (
-        response: PatientPrescription[],
-        meta
-      ): PagedResult<PatientPrescription> => {
-        const headers = meta?.response?.headers;
-
-        return {
-          data: response,
-          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
-        };
+      onQueryStarted,
+      transformResponse: (response: any) => {
+        // Handle paginated response if needed
+        return Array.isArray(response) ? response : response?.content || response || [];
       },
-
-      providesTags: (_res) => ['PatientPrescription'],
+      providesTags: ['PatientPrescription'],
     }),
+    // getPatientPrescription: builder.query<
+    //   PagedResult<PatientPrescription>,
+    //   PatientPrescriptionListParams
+    // >({
+    //   query: ({
+    //     patientId,
+    //     encounterId,
+    //     status,
+    //     urgencyLevel,
+    //     prescriptionNum,
+    //     includeCanceled,
+    //     page,
+    //     size,
+    //     sort = 'id,asc',
+    //   }) => ({
+    //     url: '/api/patient/patient-prescriptions',
+    //     params: {
+    //       patientId,
+    //       encounterId,
+    //       status,
+    //       urgencyLevel,
+    //       prescriptionNum,
+    //       includeCanceled,
+    //       page,
+    //       size,
+    //       sort,
+    //     },
+    //   }),
+
+    //   transformResponse: (
+    //     response: PatientPrescription[],
+    //     meta
+    //   ): PagedResult<PatientPrescription> => {
+    //     const headers = meta?.response?.headers;
+
+    //     return {
+    //       data: response,
+    //       totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+    //       links: parseLinkHeader(headers?.get('Link')),
+    //     };
+    //   },
+
+    //   providesTags: (_res) => ['PatientPrescription'],
+    // }),
 
     // GET /api/patient/patient-prescriptions/{id}
     getPatientPrescriptionById: builder.query<PatientPrescription, number>({
