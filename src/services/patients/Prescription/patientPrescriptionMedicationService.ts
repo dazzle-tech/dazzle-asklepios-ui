@@ -1,9 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery, onQueryStarted } from '@/newApi';
 import {
-  PatientPrescriptionMedication,
-  PrescriptionMedicationCreate,
-  PrescriptionMedicationUpdate,
+  PatientPrescriptionMedication
 } from '@/types/model-types-new';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 
@@ -89,7 +87,7 @@ export const patientPrescriptionMedicationService = createApi({
     // POST /api/patient/patient-prescription-medications
     createPatientPrescriptionMedication: builder.mutation<
       PatientPrescriptionMedication,
-      PrescriptionMedicationCreate
+      PatientPrescriptionMedication
     >({
       query: (body) => ({
         url: '/api/patient/patient-prescription-medications',
@@ -104,7 +102,7 @@ export const patientPrescriptionMedicationService = createApi({
     // PUT /api/patient/patient-prescription-medications/{id}
     updatePatientPrescriptionMedication: builder.mutation<
       PatientPrescriptionMedication,
-      { id: number; body: PrescriptionMedicationUpdate }
+      { id: number; body: PatientPrescriptionMedication }
     >({
       query: ({ id, body }) => ({
         url: `/api/patient/patient-prescription-medications/${id}`,
