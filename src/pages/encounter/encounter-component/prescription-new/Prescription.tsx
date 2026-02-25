@@ -160,7 +160,7 @@ const Prescription = (props: Props) => {
 
   // List prescriptions
   const {
-    data: prescriptions = [],
+    data: prescriptionsResponse,
     isLoading: isLoadingPrescriptions,
     refetch: preRefetch
   } = useGetPatientPrescriptionQuery(
@@ -174,6 +174,7 @@ const Prescription = (props: Props) => {
     },
     { skip: !patientId }
   );
+  const prescriptions = prescriptionsResponse?.data ?? [];
 
   // Default: hide canceled prescriptions, show all only when checkbox is enabled.
   const filteredPrescriptions = (prescriptions as PatientPrescription[]).filter(p =>

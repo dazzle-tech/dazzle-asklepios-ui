@@ -2,11 +2,11 @@ import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { useGetPatientPrescriptionQuery } from "@/services/patients/Prescription/patientPrescriptionService";
 import type { PatientPrescription } from "@/types/model-types-new";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { formatDateWithoutSeconds } from "@/utils";
 import PrescriptionDetails from "./PrescriptionDetails";
 
-const Prescriptions = ({ patient, customeInstructions }) => {
+const Prescriptions = ({ patient }) => {
     const [prescription, setPrescription] = useState<PatientPrescription | null>(null);
 
     const patientId = patient?.id ? Number(patient.id) : patient?.key ? Number(patient.key) : undefined;
@@ -15,7 +15,7 @@ const Prescriptions = ({ patient, customeInstructions }) => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const {
-        data: prescriptionsResponse = [],
+        data: prescriptionsResponse ,
         isLoading: isLoadingPrescriptions,
     } = useGetPatientPrescriptionQuery(
         {
@@ -26,15 +26,6 @@ const Prescriptions = ({ patient, customeInstructions }) => {
         },
         { skip: !patientId }
     );
-    console.log("prescriptionsResponse: ", prescriptionsResponse);
-
-    const prescriptions = useMemo(() => {
-        if (Array.isArray(prescriptionsResponse)) return prescriptionsResponse;
-        if (Array.isArray((prescriptionsResponse as any)?.object)) return (prescriptionsResponse as any).object;
-        if (Array.isArray((prescriptionsResponse as any)?.data)) return (prescriptionsResponse as any).data;
-        if (Array.isArray((prescriptionsResponse as any)?.content)) return (prescriptionsResponse as any).content;
-        return [];
-    }, [prescriptionsResponse]);
 
     const isSelected = (rowData: PatientPrescription) => {
         if (rowData && prescription && rowData.id === prescription.id) {
@@ -88,7 +79,7 @@ const Prescriptions = ({ patient, customeInstructions }) => {
         },
     ];
 
-    const totalCount = prescriptions.length;
+       const totalCount = prescriptionsResponse?.totalCount ?? 0;
 
     const handlePageChange = (_: unknown, newPage: number) => {
         setPageIndex(newPage);
@@ -103,7 +94,7 @@ const Prescriptions = ({ patient, customeInstructions }) => {
         <>
             <MyTable
                 columns={tableColumns}
-                data={prescriptions}
+                data={prescriptionsResponse?.data ?? []}
                 loading={isLoadingPrescriptions}
                 onRowClick={(rowData) => {
                     setPrescription(rowData);
@@ -117,7 +108,7 @@ const Prescriptions = ({ patient, customeInstructions }) => {
             />
             <br />
             {prescription?.id && (
-                <PrescriptionDetails customeInstructions={customeInstructions} prescription={prescription} />
+                <PrescriptionDetails prescription={prescription} />
             )}
         </>
     );

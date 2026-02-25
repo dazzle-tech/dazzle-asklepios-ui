@@ -10,10 +10,9 @@ export interface PatientPrescriptionMedicationListParams {
   page?: number;
   size?: number;
   sort?: string;
-  // timestamp?: number
+  timestamp?: number
 }
 
-type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 
 type LinkMap = {
   next?: string | null;
@@ -35,43 +34,21 @@ export const patientPrescriptionMedicationService = createApi({
   tagTypes: ['PatientPrescriptionMedication'],
   endpoints: (builder) => ({
     // GET /api/patient/patient-prescription-medications
-     getPatientPrescriptionMedications: builder.query<
-      { data: PatientPrescriptionMedication[]; totalCount: number },
-      PatientPrescriptionMedicationListParams
-    >({
-      query: (params) => ({
-        url: '/api/patient/patient-prescription-medications',
-        method: 'GET',
-        params,
-      }),
-      onQueryStarted,
-      transformResponse: (response: any, meta) => {
-        // Handle paginated response - Spring returns array with total count in headers
-        const headers = meta?.response?.headers;
-        const totalCount = headers?.get('X-Total-Count');
-        
-        // Store total count in response for pagination
-        const data = Array.isArray(response) ? response : response?.content || response || [];
-        return { data, totalCount: totalCount ? Number(totalCount) : data.length };
-      },
-      providesTags: ['PatientPrescriptionMedication'],
-    }),
-
-    // getPatientPrescriptionMedications: builder.query<PagedResult<PatientPrescriptionMedication>, PatientPrescriptionMedicationListParams>({
-    //       query: ({prescriptionHeaderId, page, size, sort = 'id,asc' }) => ({
-    //         url: `/api/patient/patient-prescription-medications?prescriptionHeaderId=${prescriptionHeaderId}`,
-    //         params: { page, size, sort },
-    //       }),
-    //       transformResponse: (response: PatientPrescriptionMedication[], meta): PagedResult<PatientPrescriptionMedication> => {
-    //         const headers = meta?.response?.headers;
-    //         return {
-    //           data: response,
-    //           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-    //           links: parseLinkHeader(headers?.get('Link')),
-    //         };
-    //       },
-    //       providesTags: (_res) => ['PatientPrescriptionMedication'],
-    //     }),
+    getPatientPrescriptionMedications: builder.query<PagedResult<PatientPrescriptionMedication>, PatientPrescriptionMedicationListParams>({
+          query: ({prescriptionHeaderId, page, size, sort = 'id,asc' }) => ({
+            url: `/api/patient/patient-prescription-medications?prescriptionHeaderId=${prescriptionHeaderId}`,
+            params: { page, size, sort },
+          }),
+          transformResponse: (response: PatientPrescriptionMedication[], meta): PagedResult<PatientPrescriptionMedication> => {
+            const headers = meta?.response?.headers;
+            return {
+              data: response,
+              totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+              links: parseLinkHeader(headers?.get('Link')),
+            };
+          },
+          providesTags: (_res) => ['PatientPrescriptionMedication'],
+        }),
 
     // GET /api/patient/patient-prescription-medications/{id}
     getPatientPrescriptionMedicationById: builder.query<PatientPrescriptionMedication, number>({

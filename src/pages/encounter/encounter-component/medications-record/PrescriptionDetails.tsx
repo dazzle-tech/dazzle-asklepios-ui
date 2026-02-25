@@ -4,11 +4,11 @@ import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
-import { conjureValueBasedOnKeyFromListOfValues, formatEnumString } from '@/utils';
-import React, { useMemo, useState } from 'react';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
+import React, {  useState } from 'react';
 
-const PrescriptionDetails = ({ customeInstructions, prescription }) => {
-  console.log("customeInstructions: ", customeInstructions);
+const PrescriptionDetails = ({ prescription }) => {
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -42,23 +42,56 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
       : (undefined as any),
     { skip: !prescription?.id }
   );
-
-  console.log("prescriptionMedicationsResponse: ", prescriptionMedicationsResponse);
-  const totalCount = prescriptionMedicationsResponse?.totalCount ?? 0;
-
-  const { data: customInstructionsResponse } = useGetCustomeInstructionsQuery({
+  const { data: customeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
     ...({} as any)
   });
 
-  const effectiveCustomInstructions =
-    customeInstructions ?? customInstructionsResponse?.object ?? [];
+  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
+  const { data: unitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+  const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
 
+  const totalCount = prescriptionMedicationsResponse?.totalCount ?? 0;
 
   const joinValuesFromArray = values => {
     return values.filter(Boolean).join(', ');
   };
 
+  const getLovDisplay = (list: any[] = [], key: any, labelKey = 'lovDisplayVale') => {
+    if (!key && key !== 0) return '';
+    const lovList = list ?? [];
+    if (!lovList.length) return '';
 
+    // Normalize key to string and number for comparison
+    const keyStr = String(key);
+    const keyNum = Number(key);
+
+    // Try multiple matching strategies
+    for (const item of lovList) {
+      // Match by key (string or number) - most common case
+      if (String(item?.key) === keyStr || Number(item?.key) === keyNum) {
+        const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
+        if (display) return String(display);
+      }
+      // Match by id (string or number)
+      if (String(item?.id) === keyStr || Number(item?.id) === keyNum) {
+        const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
+        if (display) return String(display);
+      }
+      // Match by valueCode (for enum-based LOVs)
+      if (item?.valueCode && String(item?.valueCode) === keyStr) {
+        const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
+        if (display) return String(display);
+      }
+    }
+
+    // Fallback to original utility function
+    const fallback = conjureValueBasedOnKeyFromList(lovList, key, labelKey);
+    if (fallback && fallback !== key) return String(fallback);
+
+    return '';
+  };
+
+  const toStr = (v: any) => (v === null || v === undefined ? '' : String(v));
 
   const tableColumns = [
     {
@@ -97,29 +130,45 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
           return rowData?.instructions || 'No instructions';
         }
 
-        // if (type === 'CUSTOM_INSTRUCTIONS') {
-        //   const dose = rowData?.dose;
+        if (type === 'CUSTOM_INSTRUCTIONS') {
+          // Try reading from medication object first (new API)
+          if (rowData?.dose != null || rowData?.doesUnit || rowData?.frequency || rowData?.rout) {
+            // Get LOV arrays - handle both object and direct array formats
+            const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
+            const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
 
-        //   const unit = conjureValueBasedOnKeyFromListOfValues(
-        //     genderLovQueryResponse.object,
-        //     rowData?.doesUnit,
-        //     'lovDisplayVale'
-        //   );
+            const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) ||
+              formatEnumString(rowData?.doesUnit) ||
+              (rowData?.doesUnit ? String(rowData.doesUnit) : '');
+            const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) ||
+              formatEnumString(rowData?.frequency) ||
+              (rowData?.frequency ? String(rowData.frequency) : '');
+            return [
+              toStr(rowData?.dose),
+              unitDisplay,
+              formatEnumString(rowData?.rout),
+              freqDisplay
+            ]
+              .map(s => s.trim())
+              .filter(Boolean)
+              .join(', ');
+          }
 
-        //   const frequency = conjureValueBasedOnKeyFromListOfValues(
-        //     genderLovQueryResponse.object,
-        //     rowData?.frequency,
-        //     'lovDisplayVale'
-        //   );
+          // Fallback to legacy custom instructions lookup
+          const ci = customeInstructions.find(
+            (x: any) => String(x.prescriptionMedicationsKey) === String(rowData?.id ?? rowData?.key)
+          );
 
-        //   const roa = conjureValueBasedOnKeyFromListOfValues(
-        //     genderLovQueryResponse.object,
-        //     rowData?.rout,
-        //     'lovDisplayVale'
-        //   );
-
-        //   return txt || '-';
-        // }
+          return [
+            toStr(ci?.dose),
+            toStr(ci?.unitLvalue?.lovDisplayVale),
+            formatEnumString(ci?.roaLkey),
+            toStr(ci?.frequencyLvalue?.lovDisplayVale)
+          ]
+            .map(s => s.trim())
+            .filter(Boolean)
+            .join(', ');
+        }
 
         return '-';
       }
