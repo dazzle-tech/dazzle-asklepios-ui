@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery, onQueryStarted } from '@/newApi';
-import { PatientPrescription, PatientPrescriptionCreateVM, PatientPrescriptionUpdateVM } from '@/types/model-types-new';
+import { PatientPrescription } from '@/types/model-types-new';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 
 export interface PatientPrescriptionListParams {
@@ -38,7 +38,7 @@ export const patientPrescriptionService = createApi({
     // POST /api/patient/patient-prescriptions/create-or-get
     createOrGetPatientPrescription: builder.mutation<
       PatientPrescription,
-      PatientPrescriptionCreateVM
+      PatientPrescription
     >({
       query: (body) => ({
         url: '/api/patient/patient-prescriptions/create-or-get',
@@ -126,7 +126,7 @@ export const patientPrescriptionService = createApi({
     // POST /api/patient/patient-prescriptions
     createPatientPrescription: builder.mutation<
       PatientPrescription,
-      PatientPrescriptionCreateVM
+      PatientPrescription
     >({
       query: (body) => ({
         url: '/api/patient/patient-prescriptions',
@@ -141,7 +141,7 @@ export const patientPrescriptionService = createApi({
     // PUT /api/patient/patient-prescriptions/{id}
     updatePatientPrescription: builder.mutation<
       PatientPrescription,
-      { id: number; body: PatientPrescriptionUpdateVM }
+      { id: number; body: PatientPrescription }
     >({
       query: ({ id, body }) => ({
         url: `/api/patient/patient-prescriptions/${id}`,
@@ -159,11 +159,12 @@ export const patientPrescriptionService = createApi({
     // POST /api/patient/patient-prescriptions/{id}/submit
     submitPatientPrescription: builder.mutation<
       PatientPrescription,
-      { id: number }
+      { id: number , lastModifiedBy: string}
     >({
-      query: ({ id }) => ({
+      query: ({ id, lastModifiedBy }) => ({
         url: `/api/patient/patient-prescriptions/${id}/submit`,
-        method: 'POST'
+        method: 'POST',
+        params: { lastModifiedBy }
       }),
       onQueryStarted,
       transformResponse: (response: any) => response,

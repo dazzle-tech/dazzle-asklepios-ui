@@ -12,18 +12,21 @@ import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import {
    useCreateOrGetPatientPrescriptionMutation,
    useGetPatientPrescriptionQuery,
+   useUpdatePatientPrescriptionMutation,
    useSubmitPatientPrescriptionMutation
 } from '@/services/patients/Prescription/patientPrescriptionService';
 import {
- useGetPatientPrescriptionMedicationsQuery,
+  useGetPatientPrescriptionMedicationsQuery,
+  useUpdatePatientPrescriptionMedicationMutation,
   useDeletePatientPrescriptionMedicationMutation
 } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 
 import { notify } from '@/utils/uiReducerActions';
-import { conjureValueBasedOnIDFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { faPrint, faStar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
@@ -78,6 +81,14 @@ const Prescription = (props: Props) => {
     useState<PatientPrescriptionMedication | null>(null);
 
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [submitAssignModalOpen, setSubmitAssignModalOpen] = useState(false);
+  const [submitAssignment, setSubmitAssignment] = useState<{
+    toFacilityId: number | null;
+    toDepartmentId: number | null;
+  }>({
+    toFacilityId: null,
+    toDepartmentId: null
+  });
 
   const [patientPrescriptionMedicationObject, setPatientPrescriptionMedicationObject] =
     useState<PatientPrescriptionMedication>({
@@ -86,6 +97,14 @@ const Prescription = (props: Props) => {
     });
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+  const { data: departmentByFacility = [] } = useGetActiveDepartmentByFacilityListQuery(
+    { facilityId: Number(submitAssignment.toFacilityId) },
+    { skip: !submitAssignment.toFacilityId }
+  );
+  const departmentOptions = (departmentByFacility ?? []).map((d: any) => ({
+    id: Number(d?.id ?? d?.key),
+    name: d?.name ?? d?.departmentName ?? d?.label ?? `Department ${d?.id ?? d?.key}`
+  }));
   const facilityName = conjureValueBasedOnIDFromList(
     facilityListResponse ?? [],
     selectedFacility?.id,
@@ -98,7 +117,9 @@ const Prescription = (props: Props) => {
     sort: 'id,asc'
   });
 
+  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
   const { data: unitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+  const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
 
   type ActiveRel = any;
   type BrandActiveCache = Record<string, ActiveRel[]>;
@@ -261,8 +282,38 @@ const Prescription = (props: Props) => {
   const toStr = (v: any) => (v === null || v === undefined ? '' : String(v));
 
   const getLovDisplay = (list: any[] = [], key: any, labelKey = 'lovDisplayVale') => {
-    const hit = (list ?? []).find((x: any) => String(x?.key) === String(key));
-    return toStr(hit?.[labelKey]);
+    if (!key && key !== 0) return '';
+    const lovList = list ?? [];
+    if (!lovList.length) return '';
+    
+    // Normalize key to string and number for comparison
+    const keyStr = String(key);
+    const keyNum = Number(key);
+    
+    // Try multiple matching strategies
+    for (const item of lovList) {
+      // Match by key (string or number) - most common case
+      if (String(item?.key) === keyStr || Number(item?.key) === keyNum) {
+        const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
+        if (display) return String(display);
+      }
+      // Match by id (string or number)
+      if (String(item?.id) === keyStr || Number(item?.id) === keyNum) {
+        const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
+        if (display) return String(display);
+      }
+      // Match by valueCode (for enum-based LOVs)
+      if (item?.valueCode && String(item?.valueCode) === keyStr) {
+        const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
+        if (display) return String(display);
+      }
+    }
+    
+    // Fallback to original utility function
+    const fallback = conjureValueBasedOnKeyFromList(lovList, key, labelKey);
+    if (fallback && fallback !== key) return String(fallback);
+    
+    return '';
   };
 
   const getMedicationName = (brandMedications: any[] = [], id: any) =>
@@ -317,8 +368,32 @@ const Prescription = (props: Props) => {
       return toStr(row?.instructions);
     }
 
-    // Custom (legacy id)
-    if (type === '3010606785535008') {
+    // Custom instructions: read directly from medication object
+    if (type === 'CUSTOM_INSTRUCTIONS' ) {
+      // Try reading from medication object first (new API)
+      if (row?.dose != null || row?.doesUnit || row?.frequency || row?.rout) {
+        // Get LOV arrays - handle both object and direct array formats
+        const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
+        const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
+        
+        const unitDisplay = getLovDisplay(unitLovArray, row?.doesUnit) || 
+                            formatEnumString(row?.doesUnit) ||
+                            (row?.doesUnit ? String(row.doesUnit) : '');
+        const freqDisplay = getLovDisplay(freqLovArray, row?.frequency) || 
+                           formatEnumString(row?.frequency) ||
+                           (row?.frequency ? String(row.frequency) : '');
+        return [
+          toStr(row?.dose),
+          unitDisplay,
+          formatEnumString(row?.rout),
+          freqDisplay
+        ]
+          .map(s => s.trim())
+          .filter(Boolean)
+          .join(', ');
+      }
+      
+      // Fallback to legacy custom instructions lookup
       const ci = customInstructions.find(
         (x: any) => String(x.prescriptionMedicationsKey) === String(row?.id ?? row?.key)
       );
@@ -326,6 +401,7 @@ const Prescription = (props: Props) => {
       return [
         toStr(ci?.dose),
         toStr(ci?.unitLvalue?.lovDisplayVale),
+        formatEnumString(ci?.roaLkey),
         toStr(ci?.frequencyLvalue?.lovDisplayVale)
       ]
         .map(s => s.trim())
@@ -419,7 +495,8 @@ const Prescription = (props: Props) => {
     predefinedInstructionsListResponse,
     customeInstructions,
     brandActivesCache,
-    unitLov
+    unitLovQueryResponse,
+    frequencyLov
   ]);
 
   const isFormField = (node: EventTarget | null) => {
@@ -512,18 +589,97 @@ const Prescription = (props: Props) => {
   };
 
   // Submit prescription (NEW API)
+  const [updatePrescription] = useUpdatePatientPrescriptionMutation();
+  const [updateMedicationStatus] = useUpdatePatientPrescriptionMedicationMutation();
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
 
-  const handleSubmitPres = async () => {
+  // Keep validation flow unchanged: this is called from validation modal "Save".
+  const handleSubmitPres = () => {
     if (!currentPrescription?.id) return;
+    setSubmitAssignment({
+      toFacilityId: currentPrescription?.toFacilityId ?? selectedFacility?.id ?? null,
+      toDepartmentId: currentPrescription?.toDepartmentId ?? null
+    });
+    setSubmitAssignModalOpen(true);
+  };
+
+  const handleConfirmSubmitPres = async () => {
+    if (!currentPrescription?.id) return;
+    if (!submitAssignment.toFacilityId || !submitAssignment.toDepartmentId) {
+      dispatch(
+        notify({
+          msg: 'Please select To Facility and Department',
+          type: 'warning'
+        } as any)
+      );
+      return;
+    }
 
     try {
-      await submitPrescription({ id: currentPrescription.id }).unwrap();
+      await updatePrescription({
+        id: Number(currentPrescription.id),
+        body: {
+          toFacilityId: Number(submitAssignment.toFacilityId),
+          toDepartmentId: Number(submitAssignment.toDepartmentId),
+          lastModifiedBy: authSlice?.user?.login ?? 'system'
+        }
+      }).unwrap();
+
+      const nonCanceledMeds = (patientPrescriptionMedications ?? []).filter(
+        (m: any) =>
+          m?.id != null &&
+          !isCanceledStatus(m?.status) &&
+          String(m?.status ?? '').toUpperCase() !== 'SUBMITTED'
+      );
+
+      await Promise.all(
+        nonCanceledMeds.map((m: any) =>
+          updateMedicationStatus({
+            id: Number(m.id),
+            body: {
+              status: 'SUBMITTED',
+              lastModifiedBy: authSlice?.user?.login ?? 'system'
+            } as any
+          }).unwrap()
+        )
+      );
+
+      await submitPrescription({
+        id: currentPrescription.id,
+        lastModifiedBy: authSlice?.user?.login ?? 'system'
+      }).unwrap();
       dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
 
+      setSubmitAssignModalOpen(false);
       setSummaryModalOpen(false);
       await preRefetch();
       await medicRefetch();
+
+      // After submit, open/create next draft header automatically for continued ordering.
+      try {
+        const nextDraft = await createOrGetPrescription({
+          patientId,
+          encounterId,
+          fromFacilityId: authSlice?.tenant?.selectedFacility?.id ?? (null as any),
+          fromDepartmentId: encounter?.departmentKey ?? (null as any),
+          urgencyLevel: 'NORMAL'
+        } as any).unwrap();
+        setCurrentPrescription(nextDraft);
+        setPreKeyRecord({ preKey: nextDraft?.id ?? null });
+        setSelectedRows([]);
+        setSelectedPreviewMedication(null);
+        setPatientPrescriptionMedicationObject({
+          ...newPatientPrescriptionMedication,
+          prescriptionHeaderId: nextDraft?.id ?? null
+        } as any);
+      } catch {
+        dispatch(
+          notify({
+            msg: 'Prescription submitted, but failed to open next draft',
+            type: 'warning'
+          } as any)
+        );
+      }
     } catch {
       dispatch(notify({ msg: 'Submit failed', type: 'error' } as any));
     }
@@ -534,14 +690,23 @@ const Prescription = (props: Props) => {
       dispatch(notify({ msg: 'No prescription loaded yet', type: 'warning' } as any));
       return;
     }
+    if (String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED') {
+      dispatch(
+        notify({
+          msg: 'Cannot add medication to submitted prescription',
+          type: 'warning'
+        } as any)
+      );
+      return;
+    }
 
     setPatientPrescriptionMedicationObject({
       ...newPatientPrescriptionMedication,
       prescriptionHeaderId: currentPrescription.id
     } as any);
 
-    setOpenDetailsModal(true);
-    setOpenToAdd(true);
+      setOpenDetailsModal(true);
+      setOpenToAdd(true);
   };
 
   const [generatePrescriptionPdf, { isLoading: isGeneratingPdf }] =
@@ -642,7 +807,29 @@ const Prescription = (props: Props) => {
           return cleanJoin([rowData?.instructions]);
         }
 
-        if (type === '3010606785535008') {
+        // Custom instructions: read directly from medication object
+        if (type === 'CUSTOM_INSTRUCTIONS' || type === '3010606785535008') {
+          // Try reading from medication object first (new API)
+          if (rowData?.dose != null || rowData?.doesUnit || rowData?.frequency || rowData?.rout) {
+            // Get LOV arrays - handle both object and direct array formats
+            const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
+            const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
+            
+            const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) || 
+                                formatEnumString(rowData?.doesUnit) ||
+                                (rowData?.doesUnit ? String(rowData.doesUnit) : '');
+            const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) || 
+                               formatEnumString(rowData?.frequency) ||
+                               (rowData?.frequency ? String(rowData.frequency) : '');
+            return cleanJoin([
+              rowData?.dose,
+              unitDisplay,
+              formatEnumString(rowData?.rout),
+              freqDisplay
+            ]);
+          }
+          
+          // Fallback to legacy custom instructions lookup
           const custom = customeInstructions?.object?.find(
             (item: any) => String(item?.prescriptionMedicationsKey) === String(rowData.id)
           );
@@ -650,8 +837,8 @@ const Prescription = (props: Props) => {
           return cleanJoin([
             custom?.dose,
             custom?.unitLvalue?.lovDisplayVale,
-            custom?.frequencyLvalue?.lovDisplayVale,
-            formatEnumString(custom?.roaLkey)
+            formatEnumString(custom?.roaLkey),
+            custom?.frequencyLvalue?.lovDisplayVale
           ]);
         }
 
@@ -696,8 +883,8 @@ const Prescription = (props: Props) => {
               onClick={() => {
                 if (edit) return;
                 setPatientPrescriptionMedicationObject(rowData);
-                setOpenDetailsModal(true);
-                setOpenToAdd(false);
+                  setOpenDetailsModal(true);
+                  setOpenToAdd(false);
               }}
             />
           </div>
@@ -806,7 +993,7 @@ const Prescription = (props: Props) => {
             onClick={handleNewPrescriptionAndAddMedication}
             prefixIcon={() => <PlusIcon />}
             loading={isLoadingPrescriptions || isLoadingCreateOrGet}
-            disabled={edit}
+            disabled={edit || String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'}
           >
             Add Medication
           </MyButton>
@@ -920,6 +1107,54 @@ const Prescription = (props: Props) => {
         handleSave={handleSubmitPres}
         medicationValidationPayload={payload}
       />
+      <MyModal
+        open={submitAssignModalOpen}
+        setOpen={setSubmitAssignModalOpen}
+        title="Submit Assignment"
+        actionButtonLabel="Save"
+        actionButtonFunction={handleConfirmSubmitPres}
+        content={
+          <Form fluid>
+            <MyInput
+              fieldName="toFacilityId"
+              fieldType="select"
+              fieldLabel="To Facility"
+              selectData={facilityListResponse ?? []}
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={submitAssignment}
+              setRecord={(obj: any) =>
+                setSubmitAssignment(prev => ({
+                  ...prev,
+                  toFacilityId: obj?.toFacilityId ? Number(obj.toFacilityId) : null,
+                  toDepartmentId:
+                    Number(prev?.toFacilityId) === Number(obj?.toFacilityId)
+                      ? prev.toDepartmentId
+                      : null
+                }))
+              }
+              required
+            />
+            <MyInput
+              fieldName="toDepartmentId"
+              fieldType="select"
+              fieldLabel="To Department"
+              selectData={departmentOptions}
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={submitAssignment}
+              setRecord={(obj: any) =>
+                setSubmitAssignment(prev => ({
+                  ...prev,
+                  toDepartmentId: obj?.toDepartmentId ? Number(obj.toDepartmentId) : null
+                }))
+              }
+              disabled={!submitAssignment?.toFacilityId}
+              required
+            />
+          </Form>
+        }
+      />
 
       <MyModal
         open={attachmentsModalOpen}
@@ -933,9 +1168,9 @@ const Prescription = (props: Props) => {
                     (selectedMedicationForAttachments as any)?.medicationsId ??
                       (selectedMedicationForAttachments as any)?.genericMedicationsId
                   )
-              )?.name || 'Medication'
+            )?.name || 'Medication'
             : 'Medication'
-        }`}
+          }`}
         size="lg"
         hideActionBtn={true}
         content={
