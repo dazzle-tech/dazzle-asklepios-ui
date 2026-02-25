@@ -4,7 +4,7 @@ import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
-import { formatEnumString } from '@/utils';
+import { conjureValueBasedOnKeyFromListOfValues, formatEnumString } from '@/utils';
 import React, { useMemo, useState } from 'react';
 
 const PrescriptionDetails = ({ customeInstructions, prescription }) => {
@@ -36,9 +36,9 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
   } = useGetPatientPrescriptionMedicationsQuery(
     prescription?.id
       ? {
-          prescriptionHeaderId: prescription.id,
-          ...paginationParams
-        }
+        prescriptionHeaderId: prescription.id,
+        ...paginationParams
+      }
       : (undefined as any),
     { skip: !prescription?.id }
   );
@@ -58,7 +58,7 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
     return values.filter(Boolean).join(', ');
   };
 
-  
+
 
   const tableColumns = [
     {
@@ -97,41 +97,29 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
           return rowData?.instructions || 'No instructions';
         }
 
-        if (type === 'CUSTOM_INSTRUCTIONS') {
-          const rowMedKey = String(
-            rowData?.id ??
-              rowData?.prescriptionMedicationsKey ??
-              rowData?.prescriptionMedicationKey ??
-              rowData?.prescriptionMedicationId ??
-              rowData?.key
-          );
+        // if (type === 'CUSTOM_INSTRUCTIONS') {
+        //   const dose = rowData?.dose;
 
-          const matches = (effectiveCustomInstructions ?? []).filter(
-            (x: any) => String(x?.prescriptionMedicationsKey) === rowMedKey
-          );
+        //   const unit = conjureValueBasedOnKeyFromListOfValues(
+        //     genderLovQueryResponse.object,
+        //     rowData?.doesUnit,
+        //     'lovDisplayVale'
+        //   );
 
-          const pickBest = (arr: any[]) => {
-            const score = (ci: any) => {
-              let s = 0;
-              if (ci?.dose != null && String(ci?.dose).trim() !== '') s += 2;
-              if (ci?.unitLvalue?.lovDisplayVale) s += 2;
-              if (ci?.frequencyLvalue?.lovDisplayVale) s += 2;
-              if (ci?.roaLvalue?.lovDisplayVale) s += 1;
-              const t = Number(ci?.updatedAt ?? ci?.createdAt ?? 0);
-              return s * 1_000_000_000_000 + t;
-            };
-            return arr.reduce((best, cur) => (!best || score(cur) > score(best) ? cur : best), null);
-          };
+        //   const frequency = conjureValueBasedOnKeyFromListOfValues(
+        //     genderLovQueryResponse.object,
+        //     rowData?.frequency,
+        //     'lovDisplayVale'
+        //   );
 
-          const ci = pickBest(matches);
+        //   const roa = conjureValueBasedOnKeyFromListOfValues(
+        //     genderLovQueryResponse.object,
+        //     rowData?.rout,
+        //     'lovDisplayVale'
+        //   );
 
-          const txt = [ci?.dose, ci?.unitLvalue?.lovDisplayVale, ci?.frequencyLvalue?.lovDisplayVale]
-            .map(v => (v == null ? '' : String(v).trim()))
-            .filter(Boolean)
-            .join(', ');
-
-          return txt || '-';
-        }
+        //   return txt || '-';
+        // }
 
         return '-';
       }
@@ -140,9 +128,9 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
       key: 'instructionsType',
       title: <Translate>Instructions Type</Translate>,
       flexGrow: 1,
-       render: (rowData: any) => (
-              <span>{formatEnumString(rowData.instructionsType)}</span>
-            ),
+      render: (rowData: any) => (
+        <span>{formatEnumString(rowData.instructionsType)}</span>
+      ),
     },
     {
       key: 'validUtil',
@@ -189,7 +177,7 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
     }
   ];
 
-   const handlePageChange = (event, newPage) => {
+  const handlePageChange = (event, newPage) => {
     setPaginationParams({ ...paginationParams, page: newPage });
   };
 
@@ -214,20 +202,20 @@ const PrescriptionDetails = ({ customeInstructions, prescription }) => {
         loading={isLoadingPrescriptionMedications}
         data={prescriptionMedicationsResponse?.data ?? []}
         page={paginationParams.page}
-          rowsPerPage={paginationParams.size}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={e => {
-            const newSize = Number(e.target.value);
-            setPaginationParams({
-              ...paginationParams,
-              size: newSize,
-              page: 0,
-              timestamp: Date.now()
-            });
-          }}
-          sortColumn={sortColumn}
-          sortType={sortType}
-          onSortChange={handleSortChange}
+        rowsPerPage={paginationParams.size}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={e => {
+          const newSize = Number(e.target.value);
+          setPaginationParams({
+            ...paginationParams,
+            size: newSize,
+            page: 0,
+            timestamp: Date.now()
+          });
+        }}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
       />
     </>
   );
