@@ -1,34 +1,31 @@
-import React, { useMemo, useState, useRef } from 'react';
+import CancellationModal from '@/components/CancellationModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { MdDelete, MdOutlineDescription } from 'react-icons/md';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
-import { useEnumOptions } from '@/services/enumsApi';
-import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import DiagnosticsTest from '@/pages/setup/diagnostics-tests-definition-new';
 import {
-  useFilterDiagnosticTestRequestsQuery,
+  DiagnosticTestRequestStatus,
+  useApproveDiagnosticTestRequestMutation,
   useDeleteDiagnosticTestRequestMutation,
+  useFilterDiagnosticTestRequestsQuery,
+  useRejectDiagnosticTestRequestMutation,
   useSetDiagnosticTestForRequestMutation
 } from '@/services/diagnosic-order/diagnosticTestRequestService';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import {
-  useApproveDiagnosticTestRequestMutation,
-  useRejectDiagnosticTestRequestMutation
-} from '@/services/diagnosic-order/diagnosticTestRequestService';
-import { MdCheck, MdClose } from 'react-icons/md';
-import { Tooltip, Whisper } from 'rsuite';
-import './style.less';
-import { useCreateDiagnosticTestMutation } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useNavigate } from 'react-router-dom';
-import ApproveRequestModal from './ApproveRequestModal';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import CancellationModal from '@/components/CancellationModal';
-import MyModal from '@/components/MyModal/MyModal';
-import DiagnosticsTest from '@/pages/setup/diagnostics-tests-definition-new';
+import React, { useMemo, useState } from 'react';
+import { MdOutlineDescription } from 'react-icons/md';
+import { Tooltip, Whisper } from 'rsuite';
+import ApproveRequestModal from './ApproveRequestModal';
+import './style.less';
+import MyInput from '@/components/MyInput';
+import { Form } from 'rsuite';
 
 type Props = {
   page?: number;
@@ -59,18 +56,18 @@ const RequestedTestTable: React.FC<Props> = ({
 }) => {
   const dispatch = useAppDispatch();
   const auth = useAppSelector(state => state.auth);
-  const currentUser = auth?.user?.login;
-  const navigate = useNavigate();
-  const [addDiagnosticTest, addDiagnosticTestMutation] = useCreateDiagnosticTestMutation();
+  const [statusFilter, setStatusFilter] =
+    useState<DiagnosticTestRequestStatus | undefined>();
 
-  const TypeResponse = useEnumOptions('TestType');
+  const [filterRecord, setFilterRecord] = useState<{ status?: string }>({});
 
   const { data: requestsResponse, isFetching, refetch } =
     useFilterDiagnosticTestRequestsQuery({
       type: requestType,
       page,
       size,
-      sort: 'createdDate,desc'
+      sort: 'createdDate,desc',
+      ...(filterRecord.status ? { status: filterRecord.status } : {})
     });
 
   const [deleteRequest] = useDeleteDiagnosticTestRequestMutation();
@@ -82,16 +79,11 @@ const RequestedTestTable: React.FC<Props> = ({
   const [rejectRequest] = useRejectDiagnosticTestRequestMutation();
   const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [test, setTest] = useState<any>({});
-
+  console.log('test in RequestedTestTable:', test);
   const [openDiagnosticsModal, setOpenDiagnosticsModal] = useState(false);
   const [selectedDiagnosticTestId, setSelectedDiagnosticTestId] = useState<number | null>(null);
 
-  const [setDiagnosticTestForRequest] = useSetDiagnosticTestForRequestMutation();
 
-  const openDeleteModal = (row: any) => {
-    setSelectedRequest(row);
-    setDeleteModalOpen(true);
-  };
 
   const confirmDelete = async () => {
     if (!selectedRequest?.id) return;
@@ -251,6 +243,7 @@ const RequestedTestTable: React.FC<Props> = ({
                     onClick={(e) => {
                       e.stopPropagation();
                       setApproveTarget(row);
+                      setTest(row);
                       setApproveModalOpen(true);
                     }}
                   />
@@ -280,23 +273,6 @@ const RequestedTestTable: React.FC<Props> = ({
               </Whisper>
               <Whisper
                 placement="top"
-                speaker={<Tooltip>Delete</Tooltip>}
-                trigger="hover"
-              >
-                <span>
-                  <MdDelete
-                    size={28}
-                    className="icon-radiologist-worklist-size"
-                    title="Delete"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openDeleteModal(row);
-                    }}
-                  />
-                </span>
-              </Whisper>
-              <Whisper
-                placement="top"
                 speaker={<Tooltip>Open Diagnostic Test</Tooltip>}
                 trigger="hover"
               >
@@ -306,6 +282,7 @@ const RequestedTestTable: React.FC<Props> = ({
                     className="icon-radiologist-worklist-size"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setTest(row);
                       setSelectedDiagnosticTestId(row.diagnosticTestId);
                       setOpenDiagnosticsModal(true);
                     }}
@@ -339,21 +316,7 @@ const RequestedTestTable: React.FC<Props> = ({
     [hideActions]
   );
 
-  const internalRowClick = (row: any) => {
-    if (onRowClick) {
-      onRowClick(row);
-      return;
-    }
-    if (row.createdBy !== currentUser) {
-      dispatch(
-        notify({
-          msg: 'You can only edit requests created by you',
-          sev: 'warning'
-        })
-      );
-      return;
-    }
-  };
+
 
 
   return (
@@ -363,7 +326,31 @@ const RequestedTestTable: React.FC<Props> = ({
         data={requestsResponse?.data || []}
         loading={isFetching}
         height={height}
-        onRowClick={internalRowClick}
+        filters={
+          <Form fluid>
+            <MyInput
+              fieldType="select"
+              fieldName="status"
+              fieldLabel="Status"
+              record={filterRecord}
+              setRecord={setFilterRecord}
+              selectData={[
+                { label: 'Requested', value: 'REQUESTED' },
+                { label: 'Approved', value: 'APPROVED' },
+                { label: 'Rejected', value: 'REJECTED' }
+              ]}
+              selectDataLabel="label"  
+              selectDataValue="value"
+              cleanable
+            />  
+          </Form>
+        }
+        rowClassName={rowData =>
+          rowData && rowData.id === test?.id ? 'selected-row' : ''
+        }
+        onRowClick={(row) => {
+          setTest(row)
+        }}
       />
 
       <DeletionConfirmationModal
@@ -406,7 +393,7 @@ const RequestedTestTable: React.FC<Props> = ({
         hideBack
         hideActionBtn
         content={() => (
-          <DiagnosticsTest autoOpenTestId={selectedDiagnosticTestId ?? undefined} mode="restricted" allowedTestId/>
+          <DiagnosticsTest testRequest={test} />
         )}
       />
 

@@ -3,12 +3,6 @@ import { BaseQuery } from '@/newApi';
 
 /* ===================== TYPES ===================== */
 
-export type DiagnosticTestRequestStatus =
-  | 'NEW'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'CANCELLED';
-
 export type TestType = 'LABORATORY' | 'RADIOLOGY' | 'PATHOLOGY';
 
 export interface DiagnosticTestRequest {
@@ -45,6 +39,13 @@ export interface DiagnosticTestRequestUpdateDTO {
 export interface DiagnosticTestRequestRejectDTO {
   rejectedReason: string;
 }
+
+export type DiagnosticTestRequestStatus =
+  | 'NEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'CANCELLED';
+
 
 type PageableParams = {
   page?: number;

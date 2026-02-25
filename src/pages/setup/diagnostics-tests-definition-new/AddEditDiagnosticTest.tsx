@@ -29,13 +29,29 @@ import './styles.less';
 import { SearchIcon } from 'lucide-react';
 import { initialListRequest } from '@/types/types';
 
-const AddEditDiagnosticTest = ({
+
+interface AddEditDiagnosticTestProps {
+  open: boolean;
+  setOpen: any;
+  diagnosticsTest: any;
+  setDiagnosticsTest: any;
+  width: number;
+  handleSave: any;
+  testRequest?: {
+    id: number;
+    diagnosticTestId?: number;
+    type?: string;
+  };
+}
+
+const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
   open,
   setOpen,
   diagnosticsTest,
   setDiagnosticsTest,
   width,
-  handleSave
+  handleSave,
+  testRequest
 }) => {
   const dispatch = useAppDispatch();
   const [diagnosticTestPathology, setDiagnosticTestPathology] = useState({ ...newPathology });
@@ -82,7 +98,7 @@ const AddEditDiagnosticTest = ({
   const [addPathology] = useCreatePathologyMutation();
   const [updatePathology] = useUpdatePathologyMutation();
 
-   // Filter LOV data based on search
+  // Filter LOV data based on search
   const filteredData = (lovListResponseData?.object ?? []).filter(item =>
     `${item.lovCode}`.toLowerCase().includes(searchKeyword.toLowerCase())
   );
@@ -148,7 +164,7 @@ const AddEditDiagnosticTest = ({
 
         dispatch(notify({ msg: 'Laboratory Details Updated Successfully', sev: 'success' }));
       } else {
-        await addDiagnosticTest({
+       const created = await addDiagnosticTest({
           testId: diagnosticsTest?.id,
           property: diagnosticTestLaboratory.property,
           system: diagnosticTestLaboratory.system,
@@ -174,8 +190,8 @@ const AddEditDiagnosticTest = ({
           tubeType: diagnosticTestLaboratory.tubeType,
           timing: diagnosticTestLaboratory.timing
         }).unwrap();
-
-        dispatch(notify({ msg: 'Laboratory Details Saved Successfully', sev: 'success' }));
+      
+        dispatch(notify({ msg: ' Saved Successfully', sev: 'success' }));
       }
     } catch (error: any) {
       console.error('Error saving laboratory details:', error);
@@ -293,7 +309,14 @@ const AddEditDiagnosticTest = ({
       }));
     }
   }, [open, diagnosticsTest?.id]);
-
+useEffect(() => {
+  if (testRequest?.type) {
+    setDiagnosticsTest(prev => ({
+      ...prev,
+      type: testRequest.type
+    }));
+  }
+}, [open, testRequest?.type]);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -313,6 +336,7 @@ const AddEditDiagnosticTest = ({
                   selectDataValue="value"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
+               
                 />
               </div>
               <div className="container-of-field-diagnostic">
@@ -345,67 +369,67 @@ const AddEditDiagnosticTest = ({
                     />
                   </div>
                   {diagnosticsTest.defaultProfileResultType === 'LOV' && (
-                     <div style={{ width: 320 }}>
-                <div className="container-of-menu-diagnostic">
-                  <InputGroup className="search-input-diagnostic" inside>
-                    <Input
-                      placeholder="Search LOV"
-                      value={searchKeyword}
-                      onChange={setSearchKeyword}
-                    />
-                    <InputGroup.Button>
-                      <SearchIcon />
-                    </InputGroup.Button>
-                  </InputGroup>
+                    <div style={{ width: 320 }}>
+                      <div className="container-of-menu-diagnostic">
+                        <InputGroup className="search-input-diagnostic" inside>
+                          <Input
+                            placeholder="Search LOV"
+                            value={searchKeyword}
+                            onChange={setSearchKeyword}
+                          />
+                          <InputGroup.Button>
+                            <SearchIcon />
+                          </InputGroup.Button>
+                        </InputGroup>
 
-                  {searchKeyword && (
-                    <Dropdown.Menu className="menu-diagnostic">
-                      {filteredData.map(mod => (
-                        <Dropdown.Item
-                          key={mod.key}
-                          onClick={() => {
-                            setDiagnosticsTest(prev => ({
-                              ...prev,
-                              listOfValueId: mod.key
-                            }));
-                            setSearchKeyword('');
-                          }}
-                        >
-                          <span>{mod.lovCode}</span>
-                          <span>{mod.lovName}</span>
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
+                        {searchKeyword && (
+                          <Dropdown.Menu className="menu-diagnostic">
+                            {filteredData.map(mod => (
+                              <Dropdown.Item
+                                key={mod.key}
+                                onClick={() => {
+                                  setDiagnosticsTest(prev => ({
+                                    ...prev,
+                                    listOfValueId: mod.key
+                                  }));
+                                  setSearchKeyword('');
+                                }}
+                              >
+                                <span>{mod.lovCode}</span>
+                                <span>{mod.lovName}</span>
+                              </Dropdown.Item>
+                            ))}
+                          </Dropdown.Menu>
+                        )}
+                      </div>
+
+                      <br />
+
+                      <Input
+                        className="search-result-diagnostic"
+                        disabled
+                        value={resultLovDisplay}
+                        placeholder="Selected LOV"
+                      />
+                    </div>
+
                   )}
-                </div>
 
-                <br />
-
-                <Input
-                  className="search-result-diagnostic"
-                  disabled
-                  value={resultLovDisplay}
-                  placeholder="Selected LOV"
-                />
-              </div>
-
-                  )}
-
-                 {diagnosticsTest.defaultProfileResultType === 'NUMBER' &&(
-                  <div className="container-of-field-diagnostic">
-                    <MyInput
-                      width="100%"
-                      menuMaxHeight={200}
-                      fieldLabel="Result Unit"
-                      fieldName="defaultProfileResultUnit"
-                      fieldType="select"
-                      selectData={unitsLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={diagnosticsTest}
-                      setRecord={setDiagnosticsTest}
-                    />
-                  </div>)}
+                  {diagnosticsTest.defaultProfileResultType === 'NUMBER' && (
+                    <div className="container-of-field-diagnostic">
+                      <MyInput
+                        width="100%"
+                        menuMaxHeight={200}
+                        fieldLabel="Result Unit"
+                        fieldName="defaultProfileResultUnit"
+                        fieldType="select"
+                        selectData={unitsLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={diagnosticsTest}
+                        setRecord={setDiagnosticsTest}
+                      />
+                    </div>)}
                 </div>
               </>
             )}
@@ -557,7 +581,7 @@ const AddEditDiagnosticTest = ({
         return handleShowComponent();
     }
   };
-  
+
 
   return (
     <MyModal
@@ -566,10 +590,10 @@ const AddEditDiagnosticTest = ({
         diagnosticsTest?.type == 'LABORATORY'
           ? handleSaveLab
           : diagnosticsTest?.type == 'RADIOLOGY'
-          ? handleSaveRad
-          : diagnosticsTest?.type == 'PATHOLOGY'
-          ? handleSavePath
-          : () => {}
+            ? handleSaveRad
+            : diagnosticsTest?.type == 'PATHOLOGY'
+              ? handleSavePath
+              : () => { }
       }
       open={open}
       setOpen={setOpen}
