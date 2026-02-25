@@ -44,7 +44,7 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
   const orderTestId = rowData?.id;
 
   if (!orderTestId) {
-    // ⛔ لا ترندر ولا hooks
+
     return null;
   }
 
@@ -116,11 +116,9 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
     rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED ||
     rowData.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
 
-  console.log("externalTestState.facilityName", externalTestState.id);
 
   const isAlreadyExternal = !!externalTestState.id;
 
-  console.log("eisAlreadyExternal", isAlreadyExternal);
 
   const isDisabled =
     !canSendToExternal || isFetching;
@@ -129,7 +127,7 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
     ? '#999'
     : isAlreadyExternal
       ? '#1675e0'
-      : 'inherit';
+      : 'var(--primary-gray)';
 
   /* =======================
      Submit
@@ -217,12 +215,12 @@ const ExternalLabAction = ({ rowData, onSuccess }: Props) => {
             <FontAwesomeIcon
               icon={faRightFromBracket}
               style={{
-                fontSize: '1em',
                 marginRight: 10,
                 cursor: isDisabled ? 'not-allowed' : 'pointer',
                 color: iconColor,
                 opacity: isDisabled ? 0.4 : 1
               }}
+              className='icon-laboratory-size'
               onClick={() => {
                 if (isDisabled) return;
                 setOpen(true);

@@ -31,13 +31,10 @@ type SampleModalProps = {
 };
 
 
-const SampleModal = ({ open, setOpen, orderTest, onSuccess}: SampleModalProps) => {
+const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) => {
   const dispatch = useAppDispatch();
 
-  const testId =
-    orderTest?.test?.id ??
-    orderTest?.testId ??
-    orderTest?.diagnosticTest?.id;
+  const testId = orderTest?.testId;
 
   const { data: lab } = useGetLaboratoryByTestIdQuery(testId, {
     skip: !testId,
@@ -78,114 +75,114 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess}: SampleModalProps) =
       { orderTestId: orderTest?.id, page: 0, size: 20 },
       { skip: !orderTest?.id }
     );
-  
-    const handleSaveSample = async () => {
 
-      const status = orderTest?.processingStatus;
+  const handleSaveSample = async () => {
 
-      switch (status) {
+    const status = orderTest?.processingStatus;
 
-        case DiagnosticOrderTestStatus.RESULT_READY:
-          dispatch(
-            notify({
-              msg: "Cannot collect sample. The result is already marked as Ready.",
-              sev: "warning"
-            })
-          );
-          return;
+    switch (status) {
 
-        case DiagnosticOrderTestStatus.RESULT_APPROVED:
-          dispatch(
-            notify({
-              msg: "Cannot collect sample. The result has already been Approved.",
-              sev: "warning"
-            })
-          );
-          return;
+      case DiagnosticOrderTestStatus.RESULT_READY:
+        dispatch(
+          notify({
+            msg: "Cannot collect sample. The result is already marked as Ready.",
+            sev: "warning"
+          })
+        );
+        return;
 
-        case DiagnosticOrderTestStatus.ACCEPTED:
-          dispatch(
-            notify({
-              msg: "Cannot collect sample. This test is already Accepted.",
-              sev: "warning"
-            })
-          );
-          return;
+      case DiagnosticOrderTestStatus.RESULT_APPROVED:
+        dispatch(
+          notify({
+            msg: "Cannot collect sample. The result has already been Approved.",
+            sev: "warning"
+          })
+        );
+        return;
 
-        case DiagnosticOrderTestStatus.REJECTED:
-          dispatch(
-            notify({
-              msg: "Cannot collect sample. This test has been Rejected.",
-              sev: "warning"
-            })
-          );
-          return;
+      case DiagnosticOrderTestStatus.ACCEPTED:
+        dispatch(
+          notify({
+            msg: "Cannot collect sample. This test is already Accepted.",
+            sev: "warning"
+          })
+        );
+        return;
 
-        default:
-          break;
-      }
+      case DiagnosticOrderTestStatus.REJECTED:
+        dispatch(
+          notify({
+            msg: "Cannot collect sample. This test has been Rejected.",
+            sev: "warning"
+          })
+        );
+        return;
 
-      try {
+      default:
+        break;
+    }
 
-        const unitText =
-          valueUnitLov?.object?.find(
-            u => String(u.key) === String(sample.unitLkey)
-          )?.lovDisplayVale;
+    try {
 
-        if (!unitText) {
-          dispatch(notify({ msg: "Unit is required", sev: "warning" }));
-          return;
-        }
+      const unitText =
+        valueUnitLov?.object?.find(
+          u => String(u.key) === String(sample.unitLkey)
+        )?.lovDisplayVale;
 
-        await createCollectedSample({
-          orderId: orderTest.orderId,
-          orderTestId: orderTest.id,
-          quantity: sample.quantity,
-          unit: unitText,
-          collectedAt: selectedSampleDate.dateTime?.toISOString() ?? null
-        }).unwrap();
-
-        dispatch(notify({ msg: "Sample collected successfully", sev: "success" }));
-
-      } catch (e: any) {
-
-        const backendMsg =
-          e?.data?.message ||
-          e?.data?.detail ||
-          "Unable to collect sample.";
-
-        dispatch(notify({ msg: backendMsg, sev: "error" }));
+      if (!unitText) {
+        dispatch(notify({ msg: "Unit is required", sev: "warning" }));
         return;
       }
 
-      await refetchSamples();
-      onSuccess?.();
-      setOpen(false);
-    };
+      await createCollectedSample({
+        orderId: orderTest.orderId,
+        orderTestId: orderTest.id,
+        quantity: sample.quantity,
+        unit: unitText,
+        collectedAt: selectedSampleDate.dateTime?.toISOString() ?? null
+      }).unwrap();
+
+      dispatch(notify({ msg: "Sample collected successfully", sev: "success" }));
+
+    } catch (e: any) {
+
+      const backendMsg =
+        e?.data?.message ||
+        e?.data?.detail ||
+        "Unable to collect sample.";
+
+      dispatch(notify({ msg: backendMsg, sev: "error" }));
+      return;
+    }
+
+    await refetchSamples();
+    onSuccess?.();
+    setOpen(false);
+  };
 
 
 
   const tableColumns = [
-      {
-        key: "collectedAt",
-        dataKey: "collectedAt",
-        title: <Translate>COLLECTED AT</Translate>,
-        flexGrow: 2,
-        render: (rowData: any) => formatDateWithoutSeconds(rowData.collectedAt),
-      },
-      {
-        key: "quantity",
-        dataKey: "quantity",
-        title: <Translate>ACTUAL SAMPLE QUANTITY</Translate>,
-        flexGrow: 2,
-      },
-      {
-        key: "unit",
-        dataKey: "unit",
-        title: <Translate>UNIT</Translate>,
-        flexGrow: 1,
-      },
-    ];
+    {
+      key: "collectedAt",
+      dataKey: "collectedAt",
+      title: <Translate>COLLECTED AT</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => formatDateWithoutSeconds(rowData.collectedAt),
+    },
+    {
+      key: "quantity",
+      dataKey: "quantity",
+      title: <Translate>ACTUAL SAMPLE QUANTITY</Translate>,
+      flexGrow: 2,
+    },
+    {
+      key: "unit",
+      dataKey: "unit",
+      title: <Translate>UNIT</Translate>,
+      flexGrow: 1,
+    },
+  ];
 
   useEffect(() => {
     if (open) {
@@ -208,30 +205,30 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess}: SampleModalProps) =
         <>
           <Form fluid>
             <div className="collect-sample-modal-inputs-main-container">
-               <MyInput disabled fieldName="system" record={labView} width={"14vw"} /> 
-               <MyInput disabled fieldName="tubeColor" record={labView} width={"14vw"} /> 
-               <MyInput disabled fieldName="tubeType" record={labView} width={"14vw"} /> 
-             
+              <MyInput disabled fieldName="system" record={labView} width={"14vw"} />
+              <MyInput disabled fieldName="tubeColor" record={labView} width={"14vw"} />
+              <MyInput disabled fieldName="tubeType" record={labView} width={"14vw"} />
 
-             
-               <MyInput disabled fieldName="sampleContainer" record={labView} width={"14vw"} /> 
-               <MyInput disabled fieldName="sampleVolume" fieldType="number" record={labView} width={"14vw"} /> 
-               <MyInput disabled fieldName="sampleVolumeUnit" record={labView} width={"14vw"} /> 
-             
 
-             
-               
-                <MyInput fieldLabel="Actual Sample Quantity" fieldName="quantity" fieldType="number" record={sample} setRecord={setSample} width={"14vw"}/>
-               
-               
-                <MyInput fieldName="unitLkey" fieldType="select" selectData={valueUnitLov?.object ?? []}
-                  selectDataLabel="lovDisplayVale" selectDataValue="key" record={sample} setRecord={setSample} width={"14vw"}/>
-               
-               
-                <MyInput fieldName="dateTime" fieldType="datetime" fieldLabel="Sample Collected"
-                  record={selectedSampleDate} setRecord={setSelectedSampleDate} width={"14vw"}/>
-               </div>
-             
+
+              <MyInput disabled fieldName="sampleContainer" record={labView} width={"14vw"} />
+              <MyInput disabled fieldName="sampleVolume" fieldType="number" record={labView} width={"14vw"} />
+              <MyInput disabled fieldName="sampleVolumeUnit" record={labView} width={"14vw"} />
+
+
+
+
+              <MyInput fieldLabel="Actual Sample Quantity" fieldName="quantity" fieldType="number" record={sample} setRecord={setSample} width={"14vw"} />
+
+
+              <MyInput fieldName="unitLkey" fieldType="select" selectData={valueUnitLov?.object ?? []}
+                selectDataLabel="lovDisplayVale" selectDataValue="key" record={sample} setRecord={setSample} width={"14vw"} />
+
+
+              <MyInput fieldName="dateTime" fieldType="datetime" fieldLabel="Sample Collected"
+                record={selectedSampleDate} setRecord={setSelectedSampleDate} width={"14vw"} />
+            </div>
+
           </Form>
 
           <Panel>

@@ -1,7 +1,33 @@
+import ChatModal from '@/components/ChatModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppSelector } from '@/hooks';
+import CancellationModal from '@/components/CancellationModal';
+import MyModal from '@/components/MyModal/MyModal';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
+import { useAppDispatch } from '@/hooks';
+import {
+  useCreateDiagnosticOrderTestResultTechnicianNoteMutation,
+  useGetNotesByResultIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
+import {
+  useApproveDiagnosticOrderTestResultMutation,
+  useFilterDiagnosticOrderTestResultsQuery,
+  useRejectDiagnosticOrderTestResultMutation
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
+import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
+import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+import {
+  useGetLovAllValuesQuery,
+  useGetLovsQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
+import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import { faArrowDown, faArrowUp, faCircleExclamation, faComment, faDiagramPredecessor, faFileLines, faPenToSquare, faPrint, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, {
   forwardRef,
@@ -10,62 +36,35 @@ import React, {
   useMemo,
   useState
 } from 'react';
-import { Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowDown, faArrowUp, faCheck, faCircleExclamation, faComment, faDiagramPredecessor, faFileLines, faPenToSquare, faPlusCircle, faPrint, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
-import {
-  useGetNotesByResultIdQuery,
-  useCreateDiagnosticOrderTestResultTechnicianNoteMutation
-} from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
-import ChatModal from '@/components/ChatModal';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetLovAllValuesQuery,
-  useGetLovsQuery
-} from '@/services/setupService';
-
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
-import {
-  useGetAllDiagnosticTestProfilesQuery
-} from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import {
-  useFilterDiagnosticOrderTestResultsQuery,
-  useApproveDiagnosticOrderTestResultMutation,
-  useRejectDiagnosticOrderTestResultMutation
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
-import {
-  initialListRequestAllValues,
-  initialListRequest
-} from '@/types/types';
-import LogResult from './LogResult';
+import { HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import CancellationModal from '@/components/CancellationModal';
-import EditResultModal from './EditResultModal';
-import { useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestNormalRangeService';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import NormalRangeModal from './NormalRangeModal';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import LaboratoryResultComparison from '../encounter/encounter-component/diagnostics-result/LaboratoryResultComparison';
-import MyModal from '@/components/MyModal/MyModal';
 import { FaChartLine } from 'react-icons/fa';
+import LaboratoryResultComparison from '../encounter/encounter-component/diagnostics-result/LaboratoryResultComparison';
+import EditResultModal from './EditResultModal';
+import LogResult from './LogResult';
+import NormalRangeModal from './NormalRangeModal';
+
+type SortType = 'asc' | 'desc';
 
 type Props = {
   order: any;
   loading?: boolean;
   setTest: (test: any) => void;
-  fetchAllTests?: () => any;
   refetchAllLabData: () => Promise<void>;
-  fecthSample?: () => any;
 };
 
+type PaginationParams = {
+  page: number;
+  size: number;
+  sort: string;
+};
 
-
+// Helper: checks if profile result type is LOV.
 const isLovProfile = (profile?: any) =>
   profile?.resultType?.toUpperCase() === 'LOV';
 
+// Helper: maps stored LOV key to user-friendly LOV label.
 const resolveLovDisplayValue = (
   profile: any,
   key: any,
@@ -97,14 +96,13 @@ const resolveLovDisplayValue = (
   );
 };
 
-
 const Result = forwardRef<any, Props>(
-  ({ order, loading, setTest, fetchAllTests, refetchAllLabData, fecthSample }, ref) => {
-    const authSlice = useAppSelector(state => state.auth);
+  ({ order, loading, setTest, refetchAllLabData }, ref) => {
     const dispatch = useAppDispatch();
+
+    // Modal states.
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedResultForEdit, setSelectedResultForEdit] = useState<any>(null);
-    const [openAddResultModal, setOpenAddResultModal] = useState(false);
     const [openResultNoteModal, setOpenResultNoteModal] = useState(false);
     const [selectedResult, setSelectedResult] = useState<any>(null);
     const [openLogsModal, setOpenLogsModal] = useState(false);
@@ -114,59 +112,45 @@ const Result = forwardRef<any, Props>(
     const [resultRejectReason, setResultRejectReason] = useState('');
     const [selectedRow, setSelectedRow] = useState(null);
     const [categoryFilter, setCategoryFilter] = useState({ value: '' });
-    const [sortColumn, setSortColumn] = useState("id");
-    const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+    const [sortColumn, setSortColumn] = useState('id');
     const [openNormalRangeModal, setOpenNormalRangeModal] = useState(false);
     const [openComparisonModal, setOpenComparisonModal] = useState(false);
     const [selectedComparisonProfileId, setSelectedComparisonProfileId] = useState<number | null>(null);
 
-    const [paginationParams, setPaginationParams] = useState({
+    // Table state (pagination + sorting + row selection).
+    const [paginationParams, setPaginationParams] = useState<PaginationParams>({
       page: 0,
       size: 5,
-      sort: "id,asc",
+      sort: 'id,asc'
     });
+    const [sortType, setSortType] = useState<SortType>('asc');
+    const [normalRangesMap, setNormalRangesMap] = useState<Record<number, any[]>>({});
 
-    const [
-      fetchNormalRangesByProfileTestId
-    ] = useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery();
-
-    const [normalRangesMap, setNormalRangesMap] = useState<
-      Record<number, any[]>
-    >({});
-
-
-
-
-
-    const { data: labCatLovQueryResponse } =
-      useGetLovValuesByCodeQuery('LAB_CATEGORIES');
-
-    const { data: valueUnitLov } =
-      useGetLovValuesByCodeQuery('VALUE_UNIT');
-
-    const { data: allLovValues } =
-      useGetLovAllValuesQuery({ ...initialListRequestAllValues });
-
-    const { data: lovDefinitions } =
-      useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
-
-    const { data: allTestsResponse } =
-      useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
+    // Static lookups used to enrich rows.
+    const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+    const { data: allLovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+    const { data: lovDefinitions } = useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
+    const { data: allTestsResponse } = useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
     const allTests = allTestsResponse?.data ?? [];
-
-    const { data: allLabsResponse } =
-      useGetAllLaboratoriesQuery({ page: 0, size: 10000 });
+    const { data: allLabsResponse } = useGetAllLaboratoriesQuery({ page: 0, size: 10000 });
     const allLabs = allLabsResponse?.data ?? [];
+    const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
+      page: 0,
+      size: 10000,
+      sort: 'id,asc'
+    });
+    const allProfiles = profilesResponse?.data ?? [];
 
-    const testsMap = useMemo(
-      () => new Map(allTests.map(t => [t.id, t])),
-      [allTests]
-    );
+    // Mutations.
+    const [fetchNormalRangesByProfileTestId] = useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery();
+    const [approveResult] = useApproveDiagnosticOrderTestResultMutation();
+    const [rejectResult] = useRejectDiagnosticOrderTestResultMutation();
+    const [createResultNote] = useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
 
-    const labByTestIdMap = useMemo(
-      () => new Map(allLabs.map(l => [l.testId, l])),
-      [allLabs]
-    );
+    // Queries.
+    const testsMap = useMemo(() => new Map(allTests.map(t => [t.id, t])), [allTests]);
+    const labByTestIdMap = useMemo(() => new Map(allLabs.map(l => [l.testId, l])), [allLabs]);
+    const profilesMap = useMemo(() => new Map(allProfiles.map(p => [p.id, p])), [allProfiles]);
 
     const {
       data: resultsResponse,
@@ -175,23 +159,21 @@ const Result = forwardRef<any, Props>(
     } = useFilterDiagnosticOrderTestResultsQuery(
       order?.id
         ? {
-            orderIdIn: order.id,
-            page: paginationParams.page,
-            size: paginationParams.size,
-            sort: paginationParams.sort,
-            ...(categoryFilter.value
-              ? { category: categoryFilter.value }
-              : {})
-          }
+          orderIdIn: order.id,
+          page: paginationParams.page,
+          size: paginationParams.size,
+          sort: paginationParams.sort,
+          ...(categoryFilter.value ? { category: categoryFilter.value } : {})
+        }
         : skipToken
     );
 
-
+    // Expose internal refetch function to parent through ref.
     useImperativeHandle(ref, () => ({ refetch }));
 
     const results = resultsResponse?.data ?? [];
 
-
+    // Unique profile IDs used to lazily fetch normal ranges.
     const profileTestIds = useMemo(
       () =>
         results
@@ -201,21 +183,13 @@ const Result = forwardRef<any, Props>(
       [results]
     );
 
-
+    // Result notes query depends on selected row.
     const {
       data: resultNotesResponse,
-      isFetching: isResultNotesFetching,
       refetch: refetchResultNotes
-    } = useGetNotesByResultIdQuery(
-      selectedResult?.id ?? skipToken
-    );
+    } = useGetNotesByResultIdQuery(selectedResult?.id ?? skipToken);
 
-    const [
-      createResultNote,
-      { isLoading: isSendingResultNote }
-    ] = useCreateDiagnosticOrderTestResultTechnicianNoteMutation();
-
-
+    // Handles sending a technician note and updating row visual state.
     const handleSendResultNote = async (value: string) => {
       if (!selectedResult?.id || !order?.id) return;
 
@@ -246,34 +220,19 @@ const Result = forwardRef<any, Props>(
           })
         );
       }
-
     };
 
-    const { data: profilesResponse } =
-      useGetAllDiagnosticTestProfilesQuery({
-        page: 0,
-        size: 10000,
-        sort: 'id,asc'
-      });
-
-    const allProfiles = profilesResponse?.data ?? [];
-
-    const profilesMap = useMemo(
-      () => new Map(allProfiles.map(p => [p.id, p])),
-      [allProfiles]
-    );
+    // Combines API result rows with related profile/test/lab metadata.
     const normalizedResults = useMemo(() => {
       return results.map(r => {
         const profile = profilesMap.get(r.profileTestId);
-        const testId = profile?.testId ?? profile?.diagnosticTestId;
+        const testId = profile?.testId ;
 
         return {
           ...r,
           profile,
           test: testsMap.get(testId),
           lab: labByTestIdMap.get(testId),
-          // profileName: profile?.name ?? profile?.profileName,
-          // isDefault:profile?.isDefault,
           normalRanges: normalRangesMap[r.profileTestId] ?? []
         };
       });
@@ -285,6 +244,7 @@ const Result = forwardRef<any, Props>(
       normalRangesMap
     ]);
 
+    // Resolves result value to display text/number based on profile result type.
     const resolveResultDisplay = (row: any) => {
       const profile = row.profile;
       if (!profile) return ' ';
@@ -301,31 +261,21 @@ const Result = forwardRef<any, Props>(
       return row.resultValueNumber ?? ' ';
     };
 
-const resolveUnitDisplay = (row: any) => {
-  const profile = row.profile;
-  if (!profile || isLovProfile(profile)) return null;
+    // Resolves unit display text for non-LOV profiles.
+    const resolveUnitDisplay = (row: any) => {
+      const profile = row.profile;
+      if (!profile || isLovProfile(profile)) return null;
 
-  if (!profile.resultUnit) return null;
+      if (!profile.resultUnit) return null;
 
-  const unit = valueUnitLov?.object?.find(
-    u => String(u.key) === String(profile.resultUnit)
-  )?.lovDisplayVale;
+      const unit = valueUnitLov?.object?.find(
+        u => String(u.key) === String(profile.resultUnit)
+      )?.lovDisplayVale;
 
-  return unit || null;
-};
+      return unit || null;
+    };
 
-
-    const [
-      approveResult,
-      { isLoading: isApproving }
-    ] = useApproveDiagnosticOrderTestResultMutation();
-
-    const [
-      rejectResult,
-      { isLoading: isRejecting }
-    ] = useRejectDiagnosticOrderTestResultMutation();
-
-
+    // Approves a result and refreshes current table + parent lab data.
     const handleApprove = async (row: any) => {
       try {
         await approveResult(row.id).unwrap();
@@ -346,12 +296,9 @@ const resolveUnitDisplay = (row: any) => {
           })
         );
       }
-
     };
 
-
-
-
+    // Rejects selected result using modal reason.
     const handleReject = async () => {
       if (!selectedResult?.id) return;
 
@@ -380,32 +327,28 @@ const resolveUnitDisplay = (row: any) => {
           })
         );
       }
-
     };
 
-
-    const columns = [
+    // Table columns configuration.
+    const columns: ColumnConfig[] = [
       {
         key: 'testName',
         title: <Translate>TEST NAME</Translate>,
-        flexGrow: 2,
-        fullText: true,
         render: (row: any) => (
           <>
             {row.profile?.name}
             <br />
-            {(!row.profile?.isDefault)&& <span style={{ fontSize: 10, color: '#666' }}>
-              {row.test?.name}
-            </span>}
-           
+            {!row.profile?.isDefault && (
+              <span style={{ fontSize: 10, color: '#666' }}>
+                {row.test?.name}
+              </span>
+            )}
           </>
         )
       },
       {
         key: 'result',
         title: <Translate>TEST RESULT, UNIT</Translate>,
-        flexGrow: 2,
-        fullText: true,
         render: (row: any) => {
           const value = resolveResultDisplay(row);
           const unit = resolveUnitDisplay(row);
@@ -424,9 +367,7 @@ const resolveUnitDisplay = (row: any) => {
       {
         key: 'resultnormalRange',
         title: <Translate>RESULT NORMAL RANGE</Translate>,
-        flexGrow: 2,
         align: 'center',
-        fullText: true,
         render: (row: any) => (
           <Whisper
             placement="top"
@@ -450,14 +391,10 @@ const resolveUnitDisplay = (row: any) => {
       {
         key: 'normalRange',
         title: <Translate>NORMAL RANGE</Translate>,
-        flexGrow: 2,
-        fullText: true,
         render: (row: any) => {
           const profile = row.profile;
 
-          const hasViewRange =
-            row.viewNormalRange &&
-            row.viewNormalRange.trim() !== '';
+          const hasViewRange = row.viewNormalRange && row.viewNormalRange.trim() !== '';
 
           const hasMinMaxRange =
             row.minValue !== null &&
@@ -491,11 +428,8 @@ const resolveUnitDisplay = (row: any) => {
       {
         key: 'marker',
         title: <Translate>MARKER</Translate>,
-        flexGrow: 2,
-        fullText: true,
         render: (rowData: any) => {
           switch (rowData.viewMarker) {
-
             case 'ABNORMAL_MARKER':
               return (
                 <FontAwesomeIcon
@@ -506,9 +440,10 @@ const resolveUnitDisplay = (row: any) => {
 
             case 'NORMAL_MARKER':
               return 'Normal';
+
             case 'UNKNOWN':
-              
               return 'Unknown';
+
             case 'UPPER_LIMIT':
               return (
                 <FontAwesomeIcon
@@ -561,7 +496,6 @@ const resolveUnitDisplay = (row: any) => {
       {
         key: 'compare',
         title: <Translate>COMPARE WITH ALL PREVIOUS</Translate>,
-        flexGrow: 1,
         align: 'center',
         render: (row: any) => (
           <Whisper
@@ -588,10 +522,8 @@ const resolveUnitDisplay = (row: any) => {
       {
         key: 'resultTechnicianNotes',
         title: <Translate>COMMENTS</Translate>,
-        flexGrow: 1,
         align: 'center',
         render: (row: any) => {
-
           const hasNote =
             row.hasNote === true ||
             localResultHasNoteIds.includes(row.id);
@@ -603,8 +535,9 @@ const resolveUnitDisplay = (row: any) => {
                 style={{
                   fontSize: '1em',
                   cursor: 'pointer',
-                  color: hasNote ? '#1675e0' : 'inherit'
+                  color: hasNote ? '#1675e0' : 'var(--primary-gray)',
                 }}
+                className='icon-laboratory-size'
                 onClick={() => {
                   setSelectedResult(row);
                   setOpenResultNoteModal(true);
@@ -617,7 +550,6 @@ const resolveUnitDisplay = (row: any) => {
       {
         key: 'status',
         title: <Translate>RESULT STATUS</Translate>,
-        flexGrow: 1,
         align: 'center',
         render: (row: any) =>
           formatEnumString(row.processingStatus)
@@ -625,7 +557,6 @@ const resolveUnitDisplay = (row: any) => {
       {
         key: 'action',
         title: <Translate>ACTION</Translate>,
-        flexGrow: 2,
         align: 'center',
         render: (row: any) => {
           const canEdit = row.processingStatus === 'RESULT_READY';
@@ -641,6 +572,7 @@ const resolveUnitDisplay = (row: any) => {
                 <span>
                   <FontAwesomeIcon
                     icon={faPenToSquare}
+                    className='icon-laboratory-size'
                     style={{
                       cursor: canEdit ? 'pointer' : 'not-allowed',
                       opacity: canEdit ? 1 : 0.4
@@ -649,7 +581,7 @@ const resolveUnitDisplay = (row: any) => {
                       if (!canEdit) return;
                       setSelectedResultForEdit(row);
                       setOpenEditModal(true);
-                    }}/>
+                    }} />
                 </span>
               </Whisper>
               <Whisper
@@ -663,10 +595,10 @@ const resolveUnitDisplay = (row: any) => {
                       if (!canApprove) return;
                       handleApprove(row);
                     }}
+                    className='icon-laboratory-size'
                     style={{
                       fontSize: '1em',
                       marginRight: 10,
-                      color: 'inherit',
                       cursor: canApprove ? 'pointer' : 'not-allowed',
                       opacity: canApprove ? 1 : 0.4
                     }}
@@ -687,10 +619,10 @@ const resolveUnitDisplay = (row: any) => {
                       setSelectedResult(row);
                       setOpenResultRejectModal(true);
                     }}
+                    className='icon-laboratory-size'
                     style={{
                       fontSize: '1em',
                       marginRight: 10,
-                      color: 'inherit',
                       cursor: canReject ? 'pointer' : 'not-allowed',
                       opacity: canReject ? 1 : 0.4
                     }}
@@ -703,13 +635,13 @@ const resolveUnitDisplay = (row: any) => {
                 <FontAwesomeIcon
                   icon={faFileLines}
                   style={{ cursor: 'pointer', opacity: 0.8 }}
+                  className='icon-laboratory-size'
                   onClick={() => {
                     setSelectedResultForLogs(row);
                     setOpenLogsModal(true);
                   }}
                 />
               </Whisper>
-
             </HStack>
           );
         }
@@ -717,7 +649,6 @@ const resolveUnitDisplay = (row: any) => {
       {
         key: 'rejectedAt',
         title: <Translate>REJECTED AT / BY</Translate>,
-        flexGrow: 1,
         expandable: true,
         render: (row: any) => (
           <>
@@ -734,7 +665,6 @@ const resolveUnitDisplay = (row: any) => {
       {
         key: 'approvedAt',
         title: <Translate>APPROVED AT / BY</Translate>,
-        flexGrow: 1,
         expandable: true,
         render: (row: any) => (
           <>
@@ -750,6 +680,7 @@ const resolveUnitDisplay = (row: any) => {
       }
     ];
 
+    // Row highlight helper for selected row.
     const isResultSelected = (rowData: any) => {
       if (rowData && selectedRow && rowData.id === selectedRow.id) {
         return 'selected-row';
@@ -757,37 +688,34 @@ const resolveUnitDisplay = (row: any) => {
       return '';
     };
 
+    const handlePageChange = (_: any, newPage: number) => {
+      setPaginationParams(prev => ({
+        ...prev,
+        page: newPage
+      }));
+    };
 
+    const handleRowsPerPageChange = (e: any) => {
+      const newSize = Number(e.target.value);
+      setPaginationParams(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0
+      }));
+    };
 
-  const handlePageChange = (_: any, newPage: number) => {
-    setPaginationParams(prev => ({
-      ...prev,
-      page: newPage,
-    }));
-  };
+    const handleSortChange = (column: string, type: SortType) => {
+      setSortColumn(column);
+      setSortType(type);
 
-  const handleRowsPerPageChange = (e: any) => {
-    const newSize = Number(e.target.value);
-    setPaginationParams(prev => ({
-      ...prev,
-      size: newSize,
-      page: 0,
-    }));
-  };
+      setPaginationParams(prev => ({
+        ...prev,
+        sort: `${column},${type}`,
+        page: 0
+      }));
+    };
 
-  const handleSortChange = (column: string, type: "asc" | "desc") => {
-    setSortColumn(column);
-    setSortType(type);
-
-    setPaginationParams(prev => ({
-      ...prev,
-      sort: `${column},${type}`,
-      page: 0,
-    }));
-  };
-
-
-
+    // Fetch normal ranges per profile only once and cache by profileTestId.
     useEffect(() => {
       if (!profileTestIds.length) return;
 
@@ -806,9 +734,9 @@ const resolveUnitDisplay = (row: any) => {
               [profileTestId]: res?.data ?? []
             }));
           })
-          .catch(() => { });
+          .catch(() => {});
       });
-    }, [profileTestIds]);
+    }, [fetchNormalRangesByProfileTestId, normalRangesMap, profileTestIds]);
 
     return (
       <Panel defaultExpanded>
@@ -837,7 +765,6 @@ const resolveUnitDisplay = (row: any) => {
           }}
         />
 
-
         <ChatModal
           open={openResultNoteModal}
           setOpen={setOpenResultNoteModal}
@@ -845,7 +772,6 @@ const resolveUnitDisplay = (row: any) => {
           list={resultNotesResponse ?? []}
           fieldShowName="note"
           handleSendMessage={handleSendResultNote}
-          loading={isResultNotesFetching || isSendingResultNote}
         />
 
         <LogResult
@@ -893,15 +819,13 @@ const resolveUnitDisplay = (row: any) => {
           hideActionBtn
           content={() => (
             <LaboratoryResultComparison
+              //add new patient edits
               patient={{ key: order?.patientId }}
               profileTestId={selectedComparisonProfileId}
               hideTestNameFilter={true}
             />
           )}
         />
-
-
-
       </Panel>
     );
   }

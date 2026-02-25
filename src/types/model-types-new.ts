@@ -1442,7 +1442,7 @@ export interface DiagnosticOrderTest extends AuditingEntity {
   reason?: string;
   notes?: string;
 
-  processingStatus?: DiagnosticStatus;
+  processingStatus?: DiagnosticOrderTestStatus;
 
   submitDate?: string;
 
@@ -1515,7 +1515,7 @@ export interface DiagnosticOrderTestCreateDTO {
   receivedDepartmentId?: number;
   reason?: string;
   notes?: string;
-  processingStatus?: DiagnosticStatus;
+  processingStatus?: DiagnosticOrderTestStatus;
   submitDate?: string;
   orderType?: TestType;
 
@@ -1593,7 +1593,7 @@ export interface DiagnosticOrderTestResultResponseVM {
   normalRangeValue?: string | null;
   viewNormalRange?: string | null;     // محسوب في controller
 
-  processingStatus?: DiagnosticStatus;
+  processingStatus?: DiagnosticOrderTestStatus;
 
   approvedBy?: string | null;
   approvedDate?: string | null;
@@ -1628,7 +1628,7 @@ export interface DiagnosticOrderTestResultTechnicianNote {
 }
 
 export interface DiagnosticOrderTestResultTechnicianNoteCreateDTO {
-  orderId: number;
+  resultId: number;
   orderTestId: number;
   note: string;
 }

@@ -24,6 +24,8 @@ import AllergiesModal from '../encounter/encounter-screen/AllergiesModal';
 import WarningiesModal from '../encounter/encounter-screen/WarningiesModal';
 import './styles.less';
 
+//add new patient edits
+
 const PatientSide = ({ patient, encounter }) => {
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);

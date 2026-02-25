@@ -1,29 +1,29 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Panel } from 'rsuite';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
 import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFlask } from '@fortawesome/free-solid-svg-icons';
-import { initialListRequestAllValues, initialListRequest } from '@/types/types';
 import {
   useCreateDiagnosticOrderTestResultMutation,
   useGetFilledProfileTestIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
+import { initialListRequest, initialListRequestAllValues } from '@/types/types';
+import { notify } from '@/utils/uiReducerActions';
+import { faFlask } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Form, Panel } from 'rsuite';
 
 import {
   useGetActiveLabProfilesByTestIdsMutation
 } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
 
 import {
-  useGetLovValuesByCodeQuery,
   useGetLovAllValuesQuery,
-  useGetLovsQuery
+  useGetLovsQuery,
+  useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { Width } from '@rsuite/icons';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
 
 type Props = {
   open: boolean;
@@ -96,15 +96,6 @@ const AddResultModal = ({
         );
       });
   }, [open, acceptedTestIds, getProfilesForLab, dispatch]);
-
-  const isTestResultReady = (orderTest: any) => {
-    const totalProfiles =
-      profilesByTestId[orderTest.testId]?.length ?? 0;
-
-    const filledCount = filledProfileTestIds.length;
-
-    return totalProfiles > 0 && filledCount >= totalProfiles;
-  };
 
 
   const resolveUnitLabel = (profile: any) => {
@@ -191,7 +182,7 @@ const AddResultModal = ({
     onSuccess?.();
   };
 
-  const buildColumns = (orderTest: any) => [
+  const buildColumns = (orderTest: any): ColumnConfig[] => [
     {
       key: 'name',
       title: 'Name',
@@ -229,7 +220,7 @@ const AddResultModal = ({
               gap: 8,
             }}
           >
-          <div>
+            <div>
               <MyInput
                 fieldName={String(profile.id)}
                 fieldType={isLov ? 'select' : 'number'}
@@ -249,7 +240,7 @@ const AddResultModal = ({
                 }}
                 width={140}
               />
-          </div>
+            </div>
             {!isLov && (
               <div
                 style={{

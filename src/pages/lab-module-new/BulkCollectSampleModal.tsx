@@ -17,7 +17,7 @@ type BulkCollectSampleModalProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
   orderId: number;
-  selectedTests: any[];   // 👈 بدل selectedTestIds
+  selectedTests: any[];   
   onSuccess?: () => void;
 };
 
@@ -136,7 +136,6 @@ const [record, setRecord] = useState({
       title="Collect Sample"
       size="50vw"
       actionButtonFunction={handleSave}
-      actionButtonLoading={isLoading}
       steps={[
         { title: "Sample", icon: <FontAwesomeIcon icon={faVialCircleCheck} /> }
       ]}

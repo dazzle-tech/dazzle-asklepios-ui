@@ -1,50 +1,44 @@
 import CancellationModal from '@/components/CancellationModal';
+import ChatModal from '@/components/ChatModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import MyInput from '@/components/MyInput';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { formatDateWithoutSeconds } from '@/utils';
-import ReloadIcon from '@rsuite/icons/Reload';
 import {
-  useGetTestsByOrderIdQuery,
   useAcceptDiagnosticOrderTestMutation,
-  useRejectDiagnosticOrderTestMutation,
-  useFilterDiagnosticOrderTestsQuery,
-  useUndoAcceptDiagnosticOrderTestMutation,
   useBulkAcceptDiagnosticOrderTestsMutation,
-  useBulkRejectDiagnosticOrderTestsMutation
+  useBulkRejectDiagnosticOrderTestsMutation,
+  useFilterDiagnosticOrderTestsQuery,
+  useRejectDiagnosticOrderTestMutation,
+  useUndoAcceptDiagnosticOrderTestMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import SampleModal from './SampleModal';
-import './styles.less';
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
-import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faComment, faPlusCircle, faRightFromBracket, faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 import {
-  useGetNotesByOrderTestIdQuery,
-  useCreateDiagnosticOrderTestTechnicianNoteMutation
+  useCreateDiagnosticOrderTestTechnicianNoteMutation,
+  useGetNotesByOrderTestIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestTechnicianNoteService';
-import ChatModal from '@/components/ChatModal';
-import BulkCollectSampleModal from './BulkCollectSampleModal';
-import { formatEnumString } from '@/utils';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
-  DiagnosticStatus,
   DiagnosticOrderTestStatus
 } from '@/types/model-types-new';
-import ExternalLabModal from './ExternalLabAction';
-import {
-  useGetExternalTestByTestIdQuery
-} from '@/services/diagnosic-order/externalTestService';
-import MyButton from '@/components/MyButton/MyButton';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import { faComment, faPlusCircle, faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { skipToken } from '@reduxjs/toolkit/query';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import ReloadIcon from '@rsuite/icons/Reload';
+import WarningRoundIcon from '@rsuite/icons/WarningRound';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import AddResultModal from './AddResultModal';
+import BulkCollectSampleModal from './BulkCollectSampleModal';
 import ExternalLabAction from './ExternalLabAction';
+import SampleModal from './SampleModal';
+import './styles.less';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
 
 type Props = {
   order: any;
@@ -52,7 +46,6 @@ type Props = {
   setTest: () => any;
   samplesList?: any;
   fecthSample?: () => any;
-  fetchAllTests?: () => any;
   loading?: boolean;
   refetchAllLabData: () => Promise<void>;
   onTestsLoaded?: (tests: any[]) => void;
@@ -81,7 +74,6 @@ const Tests = forwardRef<any, Props>(
       test,
       setTest,
       samplesList,
-      fetchAllTests,
       fecthSample,
       refetchAllLabData,
       onTestsLoaded,
@@ -92,10 +84,8 @@ const Tests = forwardRef<any, Props>(
     const dispatch = useAppDispatch();
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
-    const [pageIndex, setPageIndex] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [testKeyFilter, setTestKeyFilter] = useState({ value: '' });
-    const [selectedRows, setSelectedRows] = useState<(number | string)[]>([]);
+    const [selectedRows, setSelectedRows] = useState<(number)[]>([]);
     const [localHasNoteIds, setLocalHasNoteIds] = useState<(number | string)[]>([]);
     const [openSingleSampleModal, setOpenSingleSampleModal] = useState(false);
     const [openBulkSampleModal, setOpenBulkSampleModal] = useState(false);
@@ -104,9 +94,6 @@ const Tests = forwardRef<any, Props>(
     const [openNoteModal, setOpenNoteModal] = useState(false);
     const [openBulkRejectModal, setOpenBulkRejectModal] = useState(false);
     const [bulkRejectReason, setBulkRejectReason] = useState('');
-    const [sortColumn, setSortColumn] = useState("id");
-    const [sortType, setSortType] = useState<"asc" | "desc">("asc");
-
 
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
@@ -130,8 +117,6 @@ const Tests = forwardRef<any, Props>(
     useEffect(() => {
       onTestsLoaded?.(todayDepartmentTests);
     }, [todayDepartmentTests]);
-
-
 
     const { data: labCatLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
 
@@ -185,24 +170,24 @@ const Tests = forwardRef<any, Props>(
       }
     };
 
-      const {
-        data: testsResponse,
-        isFetching: isTestsFetching,
-        refetch: fetchTest
-      } = useFilterDiagnosticOrderTestsQuery(
-        order?.id
-          ? {
-              orderId: order.id,
-              status: 'SUBMITTED',
-              receivedDepartmentId: selectedDepartment?.departmentId,
-              page: paginationParams.page,
-              size: paginationParams.size,
-              sort: paginationParams.sort,
-              orderType: 'LABORATORY',
-              category: testKeyFilter.value || undefined
-            }
-          : skipToken
-      );
+    const {
+      data: testsResponse,
+      isFetching: isTestsFetching,
+      refetch: fetchTest
+    } = useFilterDiagnosticOrderTestsQuery(
+      order?.id
+        ? {
+          orderId: order.id,
+          status: 'SUBMITTED',
+          receivedDepartmentId: selectedDepartment?.departmentId,
+          page: paginationParams.page,
+          size: paginationParams.size,
+          sort: paginationParams.sort,
+          orderType: 'LABORATORY',
+          category: testKeyFilter.value || undefined
+        }
+        : skipToken
+    );
 
 
     const orderTests = testsResponse?.data ?? [];
@@ -263,15 +248,8 @@ const Tests = forwardRef<any, Props>(
       [normalizedOrderTests]
     );
 
-    const isTestSelected = (rowData: any) => {
-      if (rowData && test && rowData.id === test.id) return 'selected-row';
-      return '';
-    };
-
-    const filteredTests = normalizedOrderTests;
 
     const pagedData = normalizedOrderTests;
-    const effectiveTotalCount = testsResponse?.totalCount ?? 0;
 
     const handleAcceptTest = async (rowData: any) => {
       if (!samplesList?.length) {
@@ -285,12 +263,6 @@ const Tests = forwardRef<any, Props>(
 
         await refetchAllLabData();
         await fetchTest();
-        try {
-          await fetchAllTests?.();
-        } catch { }
-        try {
-          await resultFetch?.();
-        } catch { }
         setTest(rowData);
       } catch (e) {
         dispatch(notify({ msg: 'Accept failed', sev: 'error' }));
@@ -357,7 +329,7 @@ const Tests = forwardRef<any, Props>(
         u => String(u.key) === String(key)
       )?.lovDisplayVale ?? '';
 
-    const handleCheckboxChange = (rowId: number | string) => {
+    const handleCheckboxChange = (rowId: number) => {
       setSelectedRows(prev =>
         prev.includes(rowId)
           ? prev.filter(id => id !== rowId)
@@ -484,7 +456,7 @@ const Tests = forwardRef<any, Props>(
       }
     };
 
-    const columns = [
+    const columns: ColumnConfig[] = [
       {
         key: 'check',
         title: (
@@ -587,10 +559,11 @@ const Tests = forwardRef<any, Props>(
             <HStack spacing={10}>
               <FontAwesomeIcon
                 icon={faComment}
+                className='icon-laboratory-size'
                 style={{
                   fontSize: '1em',
                   cursor: 'pointer',
-                  color: hasNote? '#1675e0' : 'inherit'
+                  color: hasNote ? '#1675e0' : 'var(--primary-gray)'
                 }}
                 onClick={() => {
                   setTest(rowData);
@@ -615,10 +588,10 @@ const Tests = forwardRef<any, Props>(
             <HStack spacing={10}>
               <FontAwesomeIcon
                 icon={faVialCircleCheck}
+                className='icon-laboratory-size'
                 style={{
                   fontSize: '1em',
                   cursor: canCollectSample ? 'pointer' : 'not-allowed',
-                  color: canCollectSample ? 'inherit' : 'gray'
                 }}
                 onClick={() => {
                   if (!canCollectSample) {
@@ -681,10 +654,10 @@ const Tests = forwardRef<any, Props>(
                     setTest(rowData);
                     handleAcceptTest(rowData);
                   }}
+                  className='icon-laboratory-size'
                   style={{
                     fontSize: '1em',
                     marginRight: 10,
-                    color: canAccept ? 'inherit' : 'gray',
                     cursor: canAccept ? 'pointer' : 'not-allowed'
                   }}
                 />
@@ -692,6 +665,7 @@ const Tests = forwardRef<any, Props>(
 
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Undo Accept</Tooltip>}>
                 <ReloadIcon
+                  className='icon-laboratory-size'
                   onClick={async () => {
 
                     if (!canUndoAccept) return;
@@ -731,6 +705,7 @@ const Tests = forwardRef<any, Props>(
               </Whisper>
               <Whisper placement="top" trigger="hover" speaker={<Tooltip>Reject</Tooltip>}>
                 <WarningRoundIcon
+                  className='icon-laboratory-size'
                   onClick={() => {
                     if (!canReject) {
                       dispatch(
@@ -748,7 +723,6 @@ const Tests = forwardRef<any, Props>(
                   style={{
                     fontSize: '1em',
                     marginRight: 10,
-                    color: canReject ? 'inherit' : 'gray',
                     cursor: canReject ? 'pointer' : 'not-allowed'
                   }}
                 />
@@ -771,7 +745,7 @@ const Tests = forwardRef<any, Props>(
         key: 'acceptedatby',
         dataKey: '',
         title: <Translate>ACCEPTED AT/BY</Translate>,
-        flexGrow: 1,
+    
         expandable: true,
         render: (rowData: any) => {
           return (
@@ -789,7 +763,6 @@ const Tests = forwardRef<any, Props>(
         key: 'rejectedatby',
         dataKey: '',
         title: <Translate>REJECTED AT/BY</Translate>,
-        flexGrow: 1,
         expandable: true,
         render: (rowData: any) => {
           return (
@@ -807,19 +780,17 @@ const Tests = forwardRef<any, Props>(
         key: 'rejectedReason',
         dataKey: 'rejectedReason',
         title: <Translate>REJECTED REASON</Translate>,
-        flexGrow: 1,
         expandable: true
       },
       {
         key: 'attachment',
         dataKey: '',
         title: <Translate>ATTACHMENT</Translate>,
-        flexGrow: 1,
+
         expandable: true
       }
     ];
 
-    const [record, setRecord] = useState({});
 
     const tablebuttons = (
       <HStack spacing={10} style={{ marginBottom: 10 }}>
@@ -918,32 +889,6 @@ const Tests = forwardRef<any, Props>(
       setSelectedRows([]);
     }, [order?.id]);
 
-    const handlePageChange = (_: any, newPage: number) => {
-      setPaginationParams(prev => ({
-        ...prev,
-        page: newPage,
-      }));
-    };
-
-    const handleRowsPerPageChange = (e: any) => {
-      const newSize = Number(e.target.value);
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-      }));
-    };
-
-    const handleSortChange = (column: string, type: "asc" | "desc") => {
-      setSortColumn(column);
-      setSortType(type);
-
-      setPaginationParams(prev => ({
-        ...prev,
-        sort: `${column},${type}`,
-        page: 0,
-      }));
-    };
 
     return (
       <Panel ref={ref} defaultExpanded>

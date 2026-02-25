@@ -1,24 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
-import { Form, HStack } from 'rsuite';
+import MyModal from '@/components/MyModal/MyModal';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
 
 import {
   useUpdateDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 import {
-  useGetLovValuesByCodeQuery,
   useGetLovAllValuesQuery,
-  useGetLovsQuery
+  useGetLovsQuery,
+  useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 
-import {
-  initialListRequestAllValues,
-  initialListRequest
-} from '@/types/types';
 import { useAppDispatch } from '@/hooks';
+import {
+  initialListRequest,
+  initialListRequestAllValues
+} from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
 
 type Props = {
@@ -47,8 +46,6 @@ const EditResultModal = ({
 
 const dispatch = useAppDispatch();
 
-  const { data: valueUnitLov } =
-    useGetLovValuesByCodeQuery('VALUE_UNIT');
 
   const { data: allLovValues } =
     useGetLovAllValuesQuery({ ...initialListRequestAllValues });
@@ -113,7 +110,6 @@ const handleSave = async () => {
     onSuccess?.();
 
   } catch (err: any) {
-    console.error('Update result failed:', err);
 
     const msg =
       err?.data?.message ||

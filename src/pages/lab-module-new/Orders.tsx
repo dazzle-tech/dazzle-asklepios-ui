@@ -1,17 +1,14 @@
-import React, { useEffect, useMemo, useState,forwardRef, useImperativeHandle } from 'react';
-
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-
+import { useAppSelector } from '@/hooks';
 import { useFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import { useLazyGetPatientByIdQuery } from '@/services/patientService';
-import { formatDateWithoutSeconds } from '@/utils';
-import { useAppSelector } from '@/hooks';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { formatEnumString } from '@/utils';
 import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { Tooltip, Whisper } from 'rsuite';
-import { formatEnumString} from '@/utils';
 import './styles.less';
 
 type OrdersProps = {
@@ -57,23 +54,6 @@ const Orders = forwardRef<any, OrdersProps>(
     selectedDepartment?.departmentId ??
     selectedDepartment?.key;
 
-      const formatDateTime = (date?: string) => {
-        if (!date) return '—';
-
-        const d = new Date(date);
-        if (isNaN(d.getTime())) return date;
-
-        return d.toLocaleString('en-US', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        });
-      };
-
-
   const {
     data: ordersResponse,
     isFetching,
@@ -111,15 +91,10 @@ const Orders = forwardRef<any, OrdersProps>(
 
   const isSelected = rowData =>
     rowData && order && rowData.id === order.id ? 'selected-row' : '';
-
-
-
-  const [pageIndex, setPageIndex] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
+//add new patient edits
   const [fetchPatientById] = useLazyGetPatientByIdQuery();
   const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
-
+//add new patient edits
   const patientIds = useMemo(
     () =>
       ordersList
@@ -129,6 +104,8 @@ const Orders = forwardRef<any, OrdersProps>(
         .filter((id, i, arr) => arr.indexOf(id) === i),
     [ordersList]
   );
+
+  //add new patient edits
   useEffect(() => {
     if (!patientIds.length) return;
 
@@ -195,6 +172,7 @@ const Orders = forwardRef<any, OrdersProps>(
         );
       }
     },
+    //add new patient edits
     {
       key: 'patient',
       title: <Translate>PATIENT</Translate>,
@@ -274,8 +252,6 @@ const Orders = forwardRef<any, OrdersProps>(
       }));
 
     };
-
-
 
   return (
     <MyTable

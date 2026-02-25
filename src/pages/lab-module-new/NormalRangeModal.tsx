@@ -1,10 +1,10 @@
-import React from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { formatEnumString } from '@/utils';
 import { useGetLovAllValuesQuery } from '@/services/setupService';
 import { initialListRequestAllValues } from '@/types/types';
+import { formatEnumString } from '@/utils';
+import React from 'react';
 
 type Props = {
   open: boolean;
@@ -14,22 +14,23 @@ type Props = {
 
 const NormalRangeModal = ({ open, setOpen, ranges }: Props) => {
 
-const { data: allLovValues } =
-  useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+  // list of value new function
+  const { data: allLovValues } =
+    useGetLovAllValuesQuery({ ...initialListRequestAllValues }); 
 
-    const resolveLovKeysDisplay = (lovKeys?: string[]) => {
+  const resolveLovKeysDisplay = (lovKeys?: string[]) => {
     if (!Array.isArray(lovKeys) || !lovKeys.length) return ' ';
     if (!allLovValues?.object) return ' ';
 
     return lovKeys
-        .map(key =>
+      .map(key =>
         allLovValues.object.find(
-            v => String(v.key) === String(key)
+          v => String(v.key) === String(key)
         )?.lovDisplayVale
-        )
-        .filter(Boolean)
-        .join(', ') || ' ';
-    };
+      )
+      .filter(Boolean)
+      .join(', ') || ' ';
+  };
 
 
 
@@ -55,18 +56,18 @@ const { data: allLovValues } =
         `${r.ageTo ?? ' '} ${r.ageToUnit ?? ''}`
     },
     {
-    key: 'range',
-    title: <Translate>RANGE</Translate>,
-    flexGrow: 1,
-    render: (r: any) => {
+      key: 'range',
+      title: <Translate>RANGE</Translate>,
+      flexGrow: 1,
+      render: (r: any) => {
         if (r.rangeFrom != null || r.rangeTo != null) {
-        return `${r.rangeFrom ?? ' '} - ${r.rangeTo ?? ' '}`;
+          return `${r.rangeFrom ?? ' '} - ${r.rangeTo ?? ' '}`;
         }
         if (Array.isArray(r.lovKeys) && r.lovKeys.length) {
-        return resolveLovKeysDisplay(r.lovKeys);
+          return resolveLovKeysDisplay(r.lovKeys);
         }
         return ' ';
-    }
+      }
     },
     {
       key: 'critical',
@@ -93,11 +94,11 @@ const { data: allLovValues } =
       size="40vw"
       bodyheight='auto'
       content={
-      <MyTable
-        columns={columns}
-        data={ranges ?? []}
-        height={400}
-      />}
+        <MyTable
+          columns={columns}
+          data={ranges ?? []}
+          height={400}
+        />}
     />
   );
 };

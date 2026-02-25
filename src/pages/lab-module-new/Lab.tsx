@@ -1,46 +1,37 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { Row, Tabs, Form, Col } from 'rsuite';
-import { skipToken } from '@reduxjs/toolkit/query';
-import {
-  useFilterDiagnosticOrdersQuery
-} from '@/services/diagnosic-order/diagnosticOrderService';
-import {
-  useFilterDiagnosticOrderTestsQuery,
-  useGetTestsByOrderIdQuery,
-  useUpdateDiagnosticOrderTestMutation
-} from '@/services/diagnosic-order/diagnosticOrderTestService';
 import {
   useGetCollectedSamplesByOrderTestIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 import {
-  DiagnosticStatus,
   DiagnosticOrderTestStatus
 } from '@/types/model-types-new';
+import { skipToken } from '@reduxjs/toolkit/query';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Col, Form, Row, Tabs } from 'rsuite';
 
+import DetailsCard from '@/components/DetailsCard';
+import MyInput from '@/components/MyInput';
+import MyStepper from '@/components/MyStepper';
+import MyTab from '@/components/MyTab';
+import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
   newApEncounter,
   newApPatient
 } from '@/types/model-types-constructor';
-import DetailsCard from '@/components/DetailsCard';
-import MyStepper from '@/components/MyStepper';
-import Orders from './Orders';
-import Tests from './Tests';
-import Result from './Result';
-import PatientSide from './PatienSide';
-import MyInput from '@/components/MyInput';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
-import MyTab from '@/components/MyTab';
-import RequestedTest from '../rad-module/requested-tests/RequestedTest';
 import {
   faCircleCheck,
   faClock,
   faRectangleList,
   faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
+import RequestedTest from '../rad-module/requested-tests/RequestedTest';
+import Orders from './Orders';
+import PatientSide from './PatienSide';
+import Result from './Result';
+import Tests from './Tests';
 
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
@@ -53,8 +44,6 @@ const safeRefetch = async (fn?: () => any) => {
 
 const Lab = () => {
   const dispatch = useAppDispatch();
-  const authSlice = useAppSelector(state => state.auth);
-
   const OrdersRef = useRef<any>(null);
   const TestsRef = useRef<any>(null);
 
@@ -75,20 +64,6 @@ const Lab = () => {
     dispatch(setDivContent('Clinical Laboratory'));
   }, []);
 
-
-  const endOfDay = (date: Date) => {
-    const d = new Date(date);
-    d.setHours(23, 59, 59, 999);
-    return d;
-  };
-
-
-  const startOfDay = (date: Date) => {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  };
-
   const today = new Date();
 
   const [dateFilter, setDateFilter] = useState({
@@ -96,26 +71,7 @@ const Lab = () => {
     toDate: today,
   });
 
-  const toLocalISOString = (date: Date) => {
-    const tzOffset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() - tzOffset)
-      .toISOString()
-      .slice(0, -1);
-  };
 
-
-  const { data: testsResponse, refetch: fetchAllTests } =
-    useFilterDiagnosticOrderTestsQuery({
-      page: 0,
-      size: 1000,
-      hasLaboratory: true,
-      createdDateFrom: startOfDay(today).toISOString(),
-      createdDateTo: endOfDay(today).toISOString(),
-    });
-
-
-
-  const allTestsList = testsResponse?.data ?? [];
 
   const { data: samplesResponse, refetch: fecthSample } =
     useGetCollectedSamplesByOrderTestIdQuery(
@@ -133,9 +89,9 @@ const Lab = () => {
     try {
       await safeRefetch(OrdersRef.current?.refetchOrders);
 
-      if (order?.id) {
-        await safeRefetch(fetchAllTests);
-      }
+      // if (order?.id) {
+      //   await safeRefetch(fetchAllTests);
+      // }
 
       if (test?.id) {
         await safeRefetch(fecthSample);
@@ -204,14 +160,9 @@ const Lab = () => {
   );
 
 
-  const [updateTest] = useUpdateDiagnosticOrderTestMutation();
 
-  const saveTest = async payload => {
-    if (!test?.id) return;
-    await updateTest({ id: test.id, body: payload }).unwrap();
-    fetchAllTests();
-  };
 
+    //add new patient edits
   useEffect(() => {
     if (!order?.patientId) {
       setPatient({ ...newApPatient });
@@ -228,11 +179,6 @@ const Lab = () => {
       });
 
   }, [order?.patientId]);
-
-
-  useEffect(() => {
-    fetchAllTests();
-  }, [dateFilter.fromDate, dateFilter.toDate]);
 
   const newTestsCount = useMemo(
     () =>
@@ -266,141 +212,141 @@ const Lab = () => {
     {
       title: 'Laboratory',
       content: (<>
-          <>
-      <div className="count-div-on-top-of-page">
-        <DetailsCard
-          title="Result Approved"
-          number={resultApprovedCount}
-          icon={faCircleCheck}
-          color="--green-600"
-          backgroundClassName="result-ready-section"
-          width={'20vw'}
-        />
-        <DetailsCard
-          title="Sample Collected"
-          number={sampleCollectedTestsCount}
-          icon={faClock}
-          color="--primary-yellow"
-          backgroundClassName="sample-collected-section"
-          width={'20vw'}
-        />
-        <DetailsCard
-          title="New"
-          number={newTestsCount}
-          icon={faRectangleList}
-          color="--primary-blue"
-          backgroundClassName="new-section"
-          width={'20vw'}
-        />
-        <DetailsCard
-          title="Total Test"
-          number={totalTestsCount}
-          icon={faTriangleExclamation}
-          color="--gray-dark"
-          backgroundClassName="total-test-section"
-          width={'20vw'}
-        />
-      </div>
+        <>
+          <div className="count-div-on-top-of-page">
+            <DetailsCard
+              title="Result Approved"
+              number={resultApprovedCount}
+              icon={faCircleCheck}
+              color="--green-600"
+              backgroundClassName="result-ready-section"
+              width={'20vw'}
+            />
+            <DetailsCard
+              title="Sample Collected"
+              number={sampleCollectedTestsCount}
+              icon={faClock}
+              color="--primary-yellow"
+              backgroundClassName="sample-collected-section"
+              width={'20vw'}
+            />
+            <DetailsCard
+              title="New"
+              number={newTestsCount}
+              icon={faRectangleList}
+              color="--primary-blue"
+              backgroundClassName="new-section"
+              width={'20vw'}
+            />
+            <DetailsCard
+              title="Total Test"
+              number={totalTestsCount}
+              icon={faTriangleExclamation}
+              color="--gray-dark"
+              backgroundClassName="total-test-section"
+              width={'20vw'}
+            />
+          </div>
 
-      <div className="container">
-        <div className="left-boxs">
-          <Row>
-            <Col xs={14}>
-              <Orders
-                ref={OrdersRef}
-                order={order}
-                setOrder={setOrder}
-                dateFilter={dateFilter}
-                loading={globalLoading}
-              />
-
-
-            </Col>
-            <Col xs={10}>
+          <div className="container">
+            <div className="left-boxs">
               <Row>
-                <Form fluid layout="inline">
-                  <MyInput
-                    width={230}
-                    placeholder="From Date"
-                    fieldType="date"
-                    fieldName="fromDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
+                <Col xs={14}>
+                  <Orders
+                    ref={OrdersRef}
+                    order={order}
+                    setOrder={setOrder}
+                    dateFilter={dateFilter}
+                    loading={globalLoading}
                   />
-                  <MyInput
-                    width={230}
-                    placeholder="To Date"
-                    fieldType="date"
-                    fieldName="toDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                    showLabel={false}
-                  />
-                </Form>
+
+
+                </Col>
+                <Col xs={10}>
+                  <Row>
+                    <Form fluid layout="inline">
+                      <MyInput
+                        width={230}
+                        placeholder="From Date"
+                        fieldType="date"
+                        fieldName="fromDate"
+                        record={dateFilter}
+                        setRecord={setDateFilter}
+                        showLabel={false}
+                      />
+                      <MyInput
+                        width={230}
+                        placeholder="To Date"
+                        fieldType="date"
+                        fieldName="toDate"
+                        record={dateFilter}
+                        setRecord={setDateFilter}
+                        showLabel={false}
+                      />
+                    </Form>
+                  </Row>
+
+                  {test.id && (
+                    <Row>
+                      <Col md={24}>
+                        <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
+                      </Col>
+                    </Row>
+                  )}
+                  {test.id && (
+                    <Row>
+                      Number of Samples Collected: {samplesList.length}
+                    </Row>
+                  )}
+                </Col>
               </Row>
 
-              {test.id && (
-                <Row>
-                  <Col md={24}>
-                    <MyStepper stepsList={stepsDataComputed} activeStep={activeStep} />
-                  </Col>
-                </Row>
-              )}
-              {test.id && (
-                <Row>
-                  Number of Samples Collected: {samplesList.length}
-                </Row>
-              )}
-            </Col>
-          </Row>
+              <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
+                <Tabs.Tab eventKey="1" title="Tests">
+                  <Tests
+                    ref={TestsRef}
+                    order={order}
+                    setTest={setTest}
+                    test={test}
+                    samplesList={samplesList}
+                    fecthSample={fecthSample}
+                    loading={globalLoading}
+                    refetchAllLabData={refetchAllLabData}
+                    onTestsLoaded={setVisibleTests}
+                  />
 
-          <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
-            <Tabs.Tab eventKey="1" title="Tests">
-              <Tests
-                ref={TestsRef}
-                order={order}
-                setTest={setTest}
-                test={test}
-                samplesList={samplesList}
-                fecthSample={fecthSample}
-                loading={globalLoading}
-                refetchAllLabData={refetchAllLabData}
-                onTestsLoaded={setVisibleTests}
-              />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="2" title="Results">
+                  <Result
+                    order={order}
+                    setTest={setTest}
+                    loading={globalLoading}
+                    // fetchAllTests={fetchAllTests}
+                    refetchAllLabData={refetchAllLabData}
+                    // fecthSample={fecthSample}
+                  />
+                </Tabs.Tab>
+              </Tabs>
 
-            </Tabs.Tab>
-            <Tabs.Tab eventKey="2" title="Results">
-              <Result
-                order={order}
-                setTest={setTest}
-                loading={globalLoading}
-                fetchAllTests={fetchAllTests}
-                refetchAllLabData={refetchAllLabData}
-                fecthSample={fecthSample}
-              />
-            </Tabs.Tab>
-          </Tabs>
+            </div>
 
-        </div>
-
-        <div className="right-boxs">
-          <PatientSide patient={patient} encounter={encounter} />
-        </div>
-      </div>
-    </>
+            <div className="right-boxs">
+              <PatientSide patient={patient} encounter={encounter} />
+            </div>
+          </div>
+        </>
       </>)
     },
     {
       title: 'Requested Tests',
-      content: <RequestedTest requestType="LABORATORY"/>
+      content: <RequestedTest requestType="LABORATORY" />
     },
   ];
 
 
   return (
     <>
-    <MyTab data={tabData}/>
+      <MyTab data={tabData} />
 
 
     </>
