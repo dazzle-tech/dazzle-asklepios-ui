@@ -8,6 +8,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
   useCreateEncounterPlanMutation,
+  useUpdateEncounterPlanMutation,
   useGetLatestEncounterPlanQuery,
 } from '@/services/medicalSheets/clinicalVisit/encounterPlanService';
 import type { EncounterPlan } from '@/types/model-types-new';
@@ -44,10 +45,14 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
-  const patientIdNumber: number | null = patient?.key ? Number(patient.key) : null;
-  const encounterIdNumber: number | null = localEncounter?.key ? Number(localEncounter?.key) : null;
+  const patientIdNumber: number | null =
+    patient?.key ? Number(patient.key) : null;
 
-  const { data: planLovQueryResponse } = useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');
+  const encounterIdNumber: number | null =
+    localEncounter?.key ? Number(localEncounter?.key) : null;
+
+  const { data: planLovQueryResponse } =
+    useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');
 
   const {
     data: latestPlan,
@@ -59,11 +64,19 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
     { skip: !encounterIdNumber }
   );
 
-  const [createEncounterPlan, { isLoading: isSaving }] = useCreateEncounterPlanMutation();
+  const [createEncounterPlan, { isLoading: isSavingCreate }] =
+    useCreateEncounterPlanMutation();
 
-  const [planInstructionsLkey, setPlanInstructionsLkey] = useState<any>(null);
-  const [planInstructionsNote, setPlanInstructionsNote] = useState<string>('');
+  const [updateEncounterPlan, { isLoading: isSavingUpdate }] =
+    useUpdateEncounterPlanMutation();
 
+  const isSaving = isSavingCreate || isSavingUpdate;
+
+  const [planInstructionsLkey, setPlanInstructionsLkey] =
+    useState<any>(null);
+
+  const [planInstructionsNote, setPlanInstructionsNote] =
+    useState<string>('');
 
   useEffect(() => {
     setPlanInstructionsLkey(null);
@@ -74,17 +87,35 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
     const list = planLovQueryResponse?.object ?? [];
     if (!planInstructionsLkey || list.length === 0) return;
 
-    const selected = list.find((item: any) => item.key === planInstructionsLkey);
+    const selected = list.find(
+      (item: any) => item.key === planInstructionsLkey
+    );
     if (!selected) return;
 
-    setPlanInstructionsNote(prev => appendUniqueLine(prev, selected.lovDisplayVale));
+    setPlanInstructionsNote(prev =>
+      appendUniqueLine(prev, selected.lovDisplayVale)
+    );
     setPlanInstructionsLkey(null);
   }, [planInstructionsLkey, planLovQueryResponse]);
 
   const showApiError = (error: any) => {
     const data = error?.data ?? {};
+
+    // handle validation errors
+    if (data?.errors?.length) {
+      dispatch(
+        notify({
+          msg: data.errors[0]?.defaultMessage || 'Validation error',
+          sev: 'error',
+        })
+      );
+      return;
+    }
+
     const messageProperty: string = data?.message || '';
-    const errorKey = messageProperty.startsWith('error.') ? messageProperty.substring(6) : undefined;
+    const errorKey = messageProperty.startsWith('error.')
+      ? messageProperty.substring(6)
+      : undefined;
 
     const keyMap: Record<string, string> = {
       'payload.required': 'Encounter plan payload is required.',
@@ -92,7 +123,10 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
       'notfound': 'No encounter plan found for this encounter.',
       'fk.patient': 'Invalid patient (patient does not exist).',
       'required.fields': 'Required fields are missing.',
-      'db.constraint': 'Database constraint violated while saving encounter plan.',
+      'duplicate.record':
+        'Plan already exists for this patient and encounter.',
+      'db.constraint':
+        'Database constraint violated while saving encounter plan.',
     };
 
     const humanMessage =
@@ -112,28 +146,55 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
     if (latestError) showApiError(latestError);
   }, [latestError]);
 
- 
   const payload: EncounterPlan = useMemo(() => {
     return {
+      id: latestPlan?.id ?? undefined,
       patientId: patientIdNumber,
       encounterId: encounterIdNumber,
-      planInstructions: (planInstructionsNote ?? '').trim() || null,
-    };
-  }, [patientIdNumber, encounterIdNumber, planInstructionsNote]);
+      planInstructions: (planInstructionsNote ?? '').trim(),
+    } as any;
+  }, [
+    latestPlan?.id,
+    patientIdNumber,
+    encounterIdNumber,
+    planInstructionsNote,
+  ]);
 
   const handleSave = async () => {
     if (!payload.patientId) {
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
       return;
     }
+
     if (!payload.encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
       return;
     }
 
+    // ✅ منع الإرسال إذا فاضي
+    if (!payload.planInstructions?.trim()) {
+      dispatch(
+        notify({
+          msg: 'Plan instruction cannot be empty.',
+          sev: 'warning',
+        })
+      );
+      return;
+    }
+
     try {
-      await createEncounterPlan(payload as any).unwrap();
-      dispatch(notify({ msg: 'Plan saved successfully', sev: 'success' }));
+      if (latestPlan?.id) {
+        await updateEncounterPlan({
+          id: latestPlan.id,
+          data: payload,
+        }).unwrap();
+      } else {
+        await createEncounterPlan(payload as any).unwrap();
+      }
+
+      dispatch(
+        notify({ msg: 'Plan saved successfully', sev: 'success' })
+      );
       refetch();
     } catch (error: any) {
       showApiError(error);
@@ -145,7 +206,10 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
       title={title}
       action={
         <Form fluid layout="inline">
-          <MyButton onClick={handleSave} disabled={disabled || isFetchingLatest || isSaving}>
+          <MyButton
+            onClick={handleSave}
+            disabled={disabled || isFetchingLatest || isSaving}
+          >
             Save
           </MyButton>
         </Form>
@@ -162,7 +226,9 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
               selectDataValue="key"
               fieldName="planInstructionsLkey"
               record={{ planInstructionsLkey }}
-              setRecord={(r: any) => setPlanInstructionsLkey(r?.planInstructionsLkey)}
+              setRecord={(r: any) =>
+                setPlanInstructionsLkey(r?.planInstructionsLkey)
+              }
               fieldLabel="Plan Instruction"
               disabled={disabled}
             />
@@ -172,7 +238,9 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
               fieldType="textarea"
               fieldName="planInstructionsNote"
               record={{ planInstructionsNote }}
-              setRecord={(r: any) => setPlanInstructionsNote(r?.planInstructionsNote ?? '')}
+              setRecord={(r: any) =>
+                setPlanInstructionsNote(r?.planInstructionsNote ?? '')
+              }
               showLabel={false}
               disabled={disabled}
             />
