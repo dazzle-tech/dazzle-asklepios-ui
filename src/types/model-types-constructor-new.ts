@@ -1284,6 +1284,7 @@ export const newEncounterVaccination: modelTypes.EncounterVaccination = {
 
   cancelledAt: null,
   cancelledById: null,
+  isExternalFacility: false,
 
   administeredLocation: null,
   administrationReactions: null,

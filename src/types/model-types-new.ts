@@ -1505,6 +1505,7 @@ export interface EncounterVaccination {
   reviewedAt?: string | null;       
   reviewedById?: number | null;     
 
+  isExternalFacility: boolean;
   createdBy?: string | null;
   createdDate?: Date | string | null;
   lastModifiedBy?: string | null;

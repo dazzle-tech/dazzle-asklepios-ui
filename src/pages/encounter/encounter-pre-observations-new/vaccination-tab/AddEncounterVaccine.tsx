@@ -20,10 +20,7 @@ import {
   useGetVaccineDosesByVaccineIdQuery,
   useGetNextVaccineDoseQuery
 } from '@/services/vaccine/vaccineDosesService';
-import {
-  useGetIntervalsByVaccineIdQuery,
-  useGetIntervalByFromDoseIdOneQuery
-} from '@/services/vaccine/vaccineDosesIntervalService';
+import { useGetIntervalByFromDoseIdOneQuery } from '@/services/vaccine/vaccineDosesIntervalService';
 import { useGetVaccineBrandsByVaccineQuery } from '@/services/vaccine/vaccineBrandsService';
 
 import { useEnumOptions } from '@/services/enumsApi';
@@ -48,6 +45,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { toHumanEncounterVaccinationError } from './toHumanEncounterVaccinationError';
+
 interface Props {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -100,7 +98,6 @@ const AddEncounterVaccine = ({
     if (!q) return;
 
     setSearchSession(prev => prev + 1);
-
     setSearchKeyword(q);
     setVaccinePage(0);
     setVaccinesAccum([]);
@@ -146,8 +143,16 @@ const AddEncounterVaccine = ({
     administrationReactionsLkey: string | null;
   }>({ administrationReactionsLkey: '' });
 
-  const [hasExternalFacility, setHasExternalFacility] = useState({
-    isHas: encounterVaccination?.externalFacilityName === '' ? false : true
+  /**
+   * NEW (toggle using MyInput checkbox):
+   * source of truth is encounterVaccination.isExternalFacility (boolean)
+   * clear-name rule:
+   * - if isExternalFacility === false => externalFacilityName must be '' (empty string)
+   */
+  const [externalFacilityToggle, setExternalFacilityToggle] = useState<{
+    isExternalFacility: boolean;
+  }>({
+    isExternalFacility: !!encounterVaccination?.isExternalFacility
   });
 
   const [brandPage, setBrandPage] = useState(0);
@@ -163,7 +168,7 @@ const AddEncounterVaccine = ({
   const roaEnumOptions = useEnumOptions('MedRoa');
   const numOfDosesEnumOptions = useEnumOptions('NumberOfDoses');
   const unitEnumOptions = useEnumOptions('DurationUnit');
-console.log("unitEnumOptions===>",unitEnumOptions);
+
   const { data: manufacturerLovQueryResponse } = useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
   const { data: medAdversLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
 
@@ -197,11 +202,16 @@ console.log("unitEnumOptions===>",unitEnumOptions);
     { skip: !vaccineDose?.id }
   );
 
-  console.log('intervalOneData===>', intervalOneData);
-  console.log('intervalRecord===>', intervalRecord);
-
   const handleClearField = () => {
-    setEncounterVaccination({ ...(newEncounterVaccination as EncounterVaccination), status: null });
+    setEncounterVaccination({
+      ...(newEncounterVaccination as EncounterVaccination),
+      status: null,
+      // NEW defaults
+      isExternalFacility: false,
+      externalFacilityName: ''
+    });
+
+    setExternalFacilityToggle({ isExternalFacility: false });
 
     setVaccine({ ...(newVaccine as Vaccine) });
     setVaccineBrand({ ...(newVaccineBrand as VaccineBrand) });
@@ -213,7 +223,6 @@ console.log("unitEnumOptions===>",unitEnumOptions);
     setBrandPicker({ vaccineBrandId: null });
     setDosePicker({ vaccineDoseId: null });
 
-    setHasExternalFacility({ isHas: false });
     setAdministrationReactions({ administrationReactionsLkey: null });
 
     setInputValue('');
@@ -222,13 +231,11 @@ console.log("unitEnumOptions===>",unitEnumOptions);
     setVaccinesAccum([]);
     setHasMoreVaccines(false);
 
-    // reset brands/doses pagination
     setBrandPage(0);
     setAllBrands([]);
     setDosePage(0);
     setAllDoses([]);
   };
-
 
   const handleSaveEncounterVaccine = async () => {
     if (!patient?.key) {
@@ -261,9 +268,11 @@ console.log("unitEnumOptions===>",unitEnumOptions);
       encounterId: encounter.key
     };
 
+    // NEW: normalize using clear-name rule
     const normalizedPayload = {
       ...payload,
-      externalFacilityName: hasExternalFacility.isHas ? payload.externalFacilityName : ''
+      isExternalFacility: !!payload.isExternalFacility,
+      externalFacilityName: payload.isExternalFacility ? payload.externalFacilityName ?? '' : ''
     };
 
     try {
@@ -397,7 +406,7 @@ console.log("unitEnumOptions===>",unitEnumOptions);
     setEncounterVaccination
   ]);
 
-  // clear intervalRecord when dose removed + sync when intervalOneData arrives
+  // intervalRecord sync
   useEffect(() => {
     if (!vaccineDose?.id) {
       setIntervalRecord({ ...(newVaccineDosesInterval as VaccineDosesInterval) });
@@ -412,12 +421,7 @@ console.log("unitEnumOptions===>",unitEnumOptions);
     setIntervalRecord({ ...(newVaccineDosesInterval as VaccineDosesInterval) });
   }, [vaccineDose?.id, intervalOneData]);
 
-  useEffect(() => {
-    setHasExternalFacility({
-      isHas: encounterVaccination?.externalFacilityName === '' ? false : true
-    });
-  }, [encounterVaccination]);
-
+  // next dose sync
   useEffect(() => {
     if (!vaccineDose?.id) {
       setVaccineToDose({ ...(newVaccineDose as VaccineDose), doseNumber: '' });
@@ -444,8 +448,27 @@ console.log("unitEnumOptions===>",unitEnumOptions);
     );
   }, [vaccineDose?.id, nextDoseData, intervalOneData, allDoses]);
 
-  console.log('vaccineToDose===>', vaccineToDose);
-  console.log("vaccine=====>",vaccine);
+  /**
+   * NEW: sync toggle from encounterVaccination (edit / initial load)
+   */
+  useEffect(() => {
+    setExternalFacilityToggle({ isExternalFacility: !!encounterVaccination?.isExternalFacility });
+  }, [encounterVaccination?.isExternalFacility]);
+
+  /**
+   * NEW: when toggle changes -> update encounterVaccination + apply clear-name rule
+   */
+  useEffect(() => {
+    const isExternal = !!externalFacilityToggle.isExternalFacility;
+
+    setEncounterVaccination(prev => ({
+      ...prev,
+      isExternalFacility: isExternal,
+      externalFacilityName: isExternal ? prev.externalFacilityName ?? '' : ''
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalFacilityToggle.isExternalFacility]);
+
   return (
     <AdvancedModal
       open={open}
@@ -496,7 +519,6 @@ console.log("unitEnumOptions===>",unitEnumOptions);
                     onClick={() => {
                       setVaccine({ ...(newVaccine as Vaccine), ...v });
 
-                      // reset selections related to vaccine
                       setVaccineBrand({ ...(newVaccineBrand as VaccineBrand) });
                       setVaccineDose({ ...(newVaccineDose as VaccineDose) });
                       setVaccineToDose({ ...(newVaccineDose as VaccineDose), doseNumber: '' });
@@ -505,13 +527,11 @@ console.log("unitEnumOptions===>",unitEnumOptions);
                       setBrandPicker({ vaccineBrandId: null });
                       setDosePicker({ vaccineDoseId: null });
 
-                      // reset brands/doses pagination
                       setBrandPage(0);
                       setAllBrands([]);
                       setDosePage(0);
                       setAllDoses([]);
 
-                      // reset search
                       setInputValue('');
                       setSearchKeyword('');
                       setVaccinesAccum([]);
@@ -604,7 +624,6 @@ console.log("unitEnumOptions===>",unitEnumOptions);
               disabled
             />
 
-            {/* Used Brand (selectPagination) */}
             <MyInput
               column
               required
@@ -684,7 +703,6 @@ console.log("unitEnumOptions===>",unitEnumOptions);
               setRecord={setEncounterVaccination}
             />
 
-            {/* Dose Number (selectPagination) */}
             <MyInput
               column
               required
@@ -731,8 +749,10 @@ console.log("unitEnumOptions===>",unitEnumOptions);
             <MyInput
               column
               fieldLabel="Next Dose Due Date"
+              fieldType="text"
               fieldName="intervalBetweenDoses"
               record={intervalRecord}
+              setRecord={setIntervalRecord}
               disabled
             />
 
@@ -746,13 +766,14 @@ console.log("unitEnumOptions===>",unitEnumOptions);
               setRecord={setEncounterVaccination}
             />
 
+            {/* NEW: toggle isExternalFacility using MyInput checkbox */}
             <MyInput
               column
-              fieldLabel="External Facility"
+              fieldLabel="Is External Facility"
               fieldType="checkbox"
-              fieldName="isHas"
-              record={hasExternalFacility}
-              setRecord={setHasExternalFacility}
+              fieldName="isExternalFacility"
+              record={externalFacilityToggle}
+              setRecord={setExternalFacilityToggle}
               disabled={isDisabledField}
             />
 
@@ -763,7 +784,7 @@ console.log("unitEnumOptions===>",unitEnumOptions);
               fieldName="externalFacilityName"
               record={encounterVaccination}
               setRecord={setEncounterVaccination}
-              disabled={!hasExternalFacility.isHas}
+              disabled={isDisabledField || !externalFacilityToggle.isExternalFacility}
             />
 
             <MyInput
