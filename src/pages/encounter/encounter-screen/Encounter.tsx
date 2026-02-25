@@ -365,6 +365,33 @@ const Encounter = () => {
     }
   }, [isAiDragging, aiDragOffset, aiHasMoved, aiButtonPosition]);
 
+  const selectedDeptId = useAppSelector(s => s.auth.selectedDepartment?.departmentId);
+  const selectedFacId = useAppSelector(s => s.auth.selectedDepartment?.facilityId);
+
+  const initialDeptRef = useRef<string | number | undefined>(undefined);
+  const initialFacRef = useRef<string | number | undefined>(undefined);
+  const didCaptureRef = useRef(false);
+
+  useEffect(() => {
+    if (!location.pathname.startsWith('/encounter')) return;
+
+    if (!didCaptureRef.current) {
+      if (selectedDeptId == null) return;
+      didCaptureRef.current = true;
+      initialDeptRef.current = selectedDeptId;
+      initialFacRef.current = selectedFacId;
+      return;
+    }
+
+    const deptChanged = String(selectedDeptId) !== String(initialDeptRef.current);
+    const facChanged = String(selectedFacId) !== String(initialFacRef.current);
+
+    if (deptChanged || facChanged) {
+      navigate('/encounter-list', { replace: true });
+    }
+  }, [selectedDeptId, selectedFacId, location.pathname, navigate]);
+
+
   return (
     <ActionContext.Provider value={{ action, setAction }}>
       <div className="container">
