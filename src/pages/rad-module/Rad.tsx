@@ -1,3 +1,27 @@
+import DetailsCard from '@/components/DetailsCard';
+import MyInput from '@/components/MyInput';
+import MyStepper from '@/components/MyStepper';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import {
+  useFilterDiagnosticOrderTestsQuery,
+  useUpdateDiagnosticOrderTestMutation
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useLazyGetPatientByIdQuery } from '@/services/patientService';
+import {
+  newApEncounter,
+  newApPatient
+} from '@/types/model-types-constructor';
+import { newDiagnosticOrder } from '@/types/model-types-constructor-new';
+import {
+  DiagnosticOrderTestStatus
+} from '@/types/model-types-new';
+import {
+  faCircleCheck,
+  faClock,
+  faRectangleList,
+  faTriangleExclamation
+} from '@fortawesome/free-solid-svg-icons';
 import React, {
   useEffect,
   useImperativeHandle,
@@ -5,44 +29,10 @@ import React, {
   useRef,
   useState
 } from 'react';
-import { Row, Col, Tabs, Form } from 'rsuite';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { skipToken } from '@reduxjs/toolkit/query';
-import {
-  useFilterDiagnosticOrdersQuery
-} from '@/services/diagnosic-order/diagnosticOrderService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
-import {
-  useFilterDiagnosticOrderTestsQuery,
-  useUpdateDiagnosticOrderTestMutation
-} from '@/services/diagnosic-order/diagnosticOrderTestService';
-import {
-  useSaveDiagnosticOrderTestRadReportMutation
-} from '@/services/radService';
-import {
-  DiagnosticOrderTestStatus
-} from '@/types/model-types-new';
-import {
-  newApDiagnosticOrders,
-  newApDiagnosticOrderTests,
-  newApDiagnosticOrderTestsRadReport,
-  newApEncounter,
-  newApPatient
-} from '@/types/model-types-constructor';
-import DetailsCard from '@/components/DetailsCard';
-import MyStepper from '@/components/MyStepper';
-import MyInput from '@/components/MyInput';
+import { Col, Form, Row, Tabs } from 'rsuite';
+import PatientSide from '../lab-module-new/PatienSide';
 import Orders from './Orders';
 import Tests from './Tests';
-import Report from './Report';
-import PatientSide from '../lab-module-new/PatienSide';
-import {
-  faCircleCheck,
-  faClock,
-  faRectangleList,
-  faTriangleExclamation
-} from '@fortawesome/free-solid-svg-icons';
 
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
@@ -74,11 +64,11 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const OrdersRef = useRef<any>(null);
   const TestsRef = useRef<any>(null);
   const ReportRef = useRef<any>(null);
-  const [activeKey, setActiveKey] = useState<'1' | '2'>('1');
-  const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
-  const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-  const [report, setReport] = useState({ ...newApDiagnosticOrderTestsRadReport });
+  const [activeKey, setActiveKey] = useState<string | number>('1');
+  const [order, setOrder] = useState<any>({ ...newDiagnosticOrder });
+  const [test, setTest] = useState<any>({ ...newDiagnosticOrder });
   const [visibleRadTests, setVisibleRadTests] = useState<any[]>([]);
+  //add new patient edits
   const [patient, setPatient] = useState({ ...newApPatient });
   const [encounter] = useState({ ...newApEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
@@ -87,7 +77,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     fromDate: today,
     toDate: today
   });
-
+//add new patient edits
   const [fetchPatientById] = useLazyGetPatientByIdQuery();
 
   const {
@@ -115,11 +105,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     };
   }, [dispatch]);
 
-  const { data: ordersResponse } = useFilterDiagnosticOrdersQuery({
-    page: 0,
-    size: 1000,
-    hasRadiology: true
-  });
 
   const {
     data: testsResponse,
@@ -175,9 +160,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
 
   const [updateTest] = useUpdateDiagnosticOrderTestMutation();
 
-  const [saveReport, saveReportMutation] =
-    useSaveDiagnosticOrderTestRadReportMutation();
-
   const saveTest = async (payload: any) => {
     if (!test?.id) throw new Error("Missing test id");
     const updated = await updateTest({
@@ -207,7 +189,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   useEffect(() => {
     fetchAllTests();
   }, [dateFilter.fromDate, dateFilter.toDate]);
-
+//add new patient edits
   useEffect(() => {
     if (!order?.patientId) {
       setPatient({ ...newApPatient });
@@ -329,17 +311,15 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
             </Col>
           </Row>
 
-          <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
+          <Tabs activeKey={activeKey} onSelect={(key) => setActiveKey(key)} appearance="subtle">
             <Tabs.Tab eventKey="1" title="Tests">
               <Tests
                 ref={TestsRef}
                 order={order}
                 test={test}
                 setTest={setTest}
-                fetchAllTests={fetchAllTests}
                 refetchAllRadData={refetchAllRadData}
                 loading={globalLoading}
-                saveTest={saveTest}
               />
             </Tabs.Tab>
           </Tabs>

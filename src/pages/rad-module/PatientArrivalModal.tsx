@@ -1,15 +1,15 @@
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
+import {
+  usePatientArrivedRadiologyMutation
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { notify } from '@/utils/uiReducerActions';
 import { faHospitalUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
-import {
-  usePatientArrivedRadiologyMutation
-} from '@/services/diagnosic-order/diagnosticOrderTestService';
-
+//add new patient edits
 const PatientArrivalModal = ({
   open,
   setOpen,
@@ -22,7 +22,7 @@ const PatientArrivalModal = ({
   const [width, setWidth] = useState('30vw');
   const [patientArrived, { isLoading }] =
     usePatientArrivedRadiologyMutation();
-    
+
   useEffect(() => {
     if (open && !test?.patientArrivedDate) {
       setTest(prev => ({
@@ -45,7 +45,7 @@ const PatientArrivalModal = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      loading={isLoading}
+      // loading={isLoading}
       title="Patient Arrived"
       size={width}
       bodyheight="60vh"
@@ -75,7 +75,7 @@ const PatientArrivalModal = ({
               patientArrivedDate: new Date(
                 test.patientArrivedDate
               ).toISOString(),
-              patientArrivedNoteRad: test.patientArrivedNoteRad
+              notes: test.patientArrivedNoteRad
             }
           }).unwrap();
           dispatch(

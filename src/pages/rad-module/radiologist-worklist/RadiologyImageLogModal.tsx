@@ -1,12 +1,12 @@
-import React from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   useGetRadiologyImageStatusLogQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { skipToken } from '@reduxjs/toolkit/query';
+import React from 'react';
 
 type Props = {
   open: boolean;

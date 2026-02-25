@@ -1,57 +1,51 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Whisper, Tooltip, HStack } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faEnvelope,
-  faClipboardCheck,
-  faPrint,
-  faSheetPlastic,
-  faComment
-} from '@fortawesome/free-solid-svg-icons';
-import { useDispatch } from 'react-redux';
+import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import { useAppSelector } from '@/hooks';
-import {
-  useFilterRadiologyReportsQuery
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
-import {
-  useLazyGetDiagnosticOrderTestByIdQuery
-} from '@/services/diagnosic-order/diagnosticOrderTestService';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
+import {
+  useLazyGetDiagnosticOrderTestByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useLazyGetPatientByIdQuery } from '@/services/patientService';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { useGetDepartmentByFacilityQuery, useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
-import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { useApproveRadiologyReportMutation } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
-import { notify } from '@/utils/uiReducerActions';
-import './style.less';
-import AddReportModal from './AddReportModal';
+import {
+  useCreateReportCommentMutation,
+  useGetReportCommentsByReportIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
+import {
+  useApproveRadiologyReportMutation,
+  useFilterRadiologyReportsQuery,
+  useSecondApproveRadiologyReportMutation
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
+import { useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import {
   newDiagnosticOrderTestReportResponseVM
 } from '@/types/model-types-constructor-new';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
 import {
-  useGetReportCommentsByReportIdQuery,
-  useCreateReportCommentMutation
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
+  faCheckCircle,
+  faClipboardCheck,
+  faComment,
+  faEnvelope,
+  faFileLines,
+  faPrint,
+  faSheetPlastic
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
-import ChatModal from '@/components/ChatModal';
-import PatientSearch from '@/pages/patient/patient-profile/tabs/FamilyMember/PatientSearch';
-import { faFileLines } from '@fortawesome/free-solid-svg-icons';
-import RadiologyImageLogModal from './RadiologyImageLogModal';
-import {
-  useSecondApproveRadiologyReportMutation
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MdAttachFile } from 'react-icons/md';
-import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
-import MyModal from '@/components/MyModal/MyModal';
-import { useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-
-
+import { useDispatch } from 'react-redux';
+import { Form, Tooltip, Whisper } from 'rsuite';
+import AddReportModal from './AddReportModal';
+import RadiologyImageLogModal from './RadiologyImageLogModal';
+import './style.less';
 
 type Props = {
   refetchAllRadData: () => Promise<void>;
@@ -91,7 +85,6 @@ const notifyFromApiError = (dispatch: any, e: any, fallbackMsg = 'Operation fail
   );
 };
 
-
 const startOfDay = (date: Date) => {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -104,8 +97,6 @@ const endOfDay = (date: Date) => {
   return d;
 };
 
-
-
 const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const dispatch = useDispatch();
 
@@ -114,10 +105,6 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   );
 
   const facilityIdForDepartments = selectedFacility?.id;
-
-  const selectedDepartment = useAppSelector(
-    state => state.auth.selectedDepartment
-  );
 
   const today = new Date();
 
@@ -140,14 +127,15 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
+  //add new patient edits
   const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
   const [fetchOrderTestById] =
     useLazyGetDiagnosticOrderTestByIdQuery();
   const [fetchOrderById] =
     useLazyGetDiagnosticOrderByIdQuery();
+  //add new patient edits
   const [fetchPatientById] =
     useLazyGetPatientByIdQuery();
-  const [record, setRecord] = useState<any>({});
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState('id');
@@ -157,8 +145,8 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
     value: ''
   });
 
-  const attachmentsLocked = attachmentsModalOpen;
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const attachmentsLocked = attachmentsModalOpen;
   const [selectedReportForAttachments, setSelectedReportForAttachments] = useState<any>(null);
 
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
@@ -204,7 +192,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
     Boolean(filterRecord.searchCriteria) &&
     filterRecord.value.trim().length >= 3;
 
-const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
+  const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
     attachmentsLocked
       ? skipToken
       : {
@@ -251,21 +239,21 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
 
     try {
       await createComment({
-  reportId: selectedReportForComments.id,
-  orderTestId: selectedReportForComments.orderTestId,
-  note: value
-        }).unwrap();
+        reportId: selectedReportForComments.id,
+        orderTestId: selectedReportForComments.orderTestId,
+        note: value
+      }).unwrap();
 
-        dispatch(
-          notify({ msg: 'Comment added successfully', sev: 'success' })
-        );
-        setLocalHasCommentIds(prev =>
-          prev.includes(selectedReportForComments.id)
-            ? prev
-            : [...prev, selectedReportForComments.id]
-        );
+      dispatch(
+        notify({ msg: 'Comment added successfully', sev: 'success' })
+      );
+      setLocalHasCommentIds(prev =>
+        prev.includes(selectedReportForComments.id)
+          ? prev
+          : [...prev, selectedReportForComments.id]
+      );
 
-        refetchComments();
+      refetchComments();
     } catch (e: any) {
       notifyFromApiError(dispatch, e, 'Failed to add comment');
     }
@@ -309,7 +297,7 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
         .filter((id, i, arr) => arr.indexOf(id) === i),
     [orderTestsMap]
   );
-
+  //add new patient edits
   const patientIds = useMemo(
     () =>
       Object.values(ordersMap)
@@ -347,7 +335,7 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
         .catch(() => { });
     });
   }, [orderIds, fetchOrderById, ordersMap]);
-
+  //add new patient edits
   useEffect(() => {
     patientIds.forEach(id => {
       if (patientsMap[id]) return;
@@ -516,6 +504,7 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
 
     },
     {
+      //add new patient edits
       key: 'patientName',
       title: 'Patient Name',
       width: 180,
@@ -527,6 +516,7 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
       }
     },
     {
+      //add new patient edits
       key: 'mrn',
       title: 'MRN',
       width: 120,
@@ -646,8 +636,8 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
       align: 'center',
       render: (row: any) => {
 
-    const hasComment = !!row?.hasNote || localHasCommentIds.includes(row.id);
-            return (
+        const hasComment = !!row?.hasNote || localHasCommentIds.includes(row.id);
+        return (
           <Whisper speaker={<Tooltip>Comments</Tooltip>}>
             <span style={{ cursor: 'pointer' }}>
               <FontAwesomeIcon
@@ -776,6 +766,7 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
         );
       }
     }
+    //add new patient edits
   ], [orderTestsMap, ordersMap, patientsMap, localHasCommentIds]);
 
   useEffect(() => {
@@ -794,11 +785,6 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
         .catch(() => { });
     });
   }, [departmentIds, fetchDepartmentById, departmentsMap]);
-
-  const isEditDisabled = useMemo(
-    () => orderTestReport?.processingStatus === 'RESULT_APPROVED',
-    [orderTestReport]
-  );
 
   useEffect(() => {
     setPage(0);
@@ -822,25 +808,25 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
   }, [selectedReportForAttachments]);
 
 
-    useEffect(() => {
-      orderTestIds.forEach(id => {
-        const ot = orderTestsMap[id];
-        if (!ot?.testId || testsMap[ot.testId]) return;
+  useEffect(() => {
+    orderTestIds.forEach(id => {
+      const ot = orderTestsMap[id];
+      if (!ot?.testId || testsMap[ot.testId]) return;
 
-        fetchDiagnosticTestById(ot.testId)
-          .unwrap()
-          .then(response => {
-            if (!response?.data) return;
+      fetchDiagnosticTestById(ot.testId)
+        .unwrap()
+        .then(response => {
+          if (!response?.data) return;
 
-            setTestsMap(prev => ({
-              ...prev,
-              [ot.testId]: response.data
-            }));
-          })
-          .catch(() => {});
-      });
-    }, [orderTestsMap]);
-    
+          setTestsMap(prev => ({
+            ...prev,
+            [ot.testId]: response.data
+          }));
+        })
+        .catch(() => { });
+    });
+  }, [orderTestsMap]);
+
   return (<>
     <MyTable
       data={tableData}
@@ -891,7 +877,6 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
       list={commentsResponse ?? []}
       fieldShowName="note"
       handleSendMessage={handleSendComment}
-      loading={isCommentsFetching || isSendingComment}
     />
 
     <RadiologyImageLogModal

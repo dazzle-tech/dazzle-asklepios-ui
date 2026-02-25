@@ -1,5 +1,6 @@
 import CancellationModal from '@/components/CancellationModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
@@ -10,8 +11,7 @@ import {
   useApproveDiagnosticTestRequestMutation,
   useDeleteDiagnosticTestRequestMutation,
   useFilterDiagnosticTestRequestsQuery,
-  useRejectDiagnosticTestRequestMutation,
-  useSetDiagnosticTestForRequestMutation
+  useRejectDiagnosticTestRequestMutation
 } from '@/services/diagnosic-order/diagnosticTestRequestService';
 import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
@@ -21,11 +21,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import React, { useMemo, useState } from 'react';
 import { MdOutlineDescription } from 'react-icons/md';
-import { Tooltip, Whisper } from 'rsuite';
+import { Form, Tooltip, Whisper } from 'rsuite';
 import ApproveRequestModal from './ApproveRequestModal';
 import './style.less';
-import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
 
 type Props = {
   page?: number;

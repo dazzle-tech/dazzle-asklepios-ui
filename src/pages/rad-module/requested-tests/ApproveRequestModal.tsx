@@ -1,12 +1,12 @@
-import React, { useMemo, useState, useEffect } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
-import { RadioGroup, Radio, Loader, Panel } from 'rsuite';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import {
   useGetDiagnosticTestRequestByIdQuery,
   useSetDiagnosticTestForRequestMutation
 } from '@/services/diagnosic-order/diagnosticTestRequestService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Loader, Panel, Radio, RadioGroup } from 'rsuite';
 
 type Props = {
   open: boolean;
@@ -98,7 +98,7 @@ const ApproveRequestModal: React.FC<Props> = ({ open, setOpen, request, onConfir
             <Loader center content="Loading..." />
           ) : (
 
-            
+
             <div style={{ overflowY: 'auto', maxHeight: '45vh' }}>
 
               <div style={{ marginBottom: 10 }}>
@@ -120,8 +120,8 @@ const ApproveRequestModal: React.FC<Props> = ({ open, setOpen, request, onConfir
                 value={selectedId ?? undefined}
                 onChange={(value) => persistSelectedTest(String(value))}
               >
-                  {searchedTests.map((test: any) => (
-                    <Panel
+                {searchedTests.map((test: any) => (
+                  <Panel
                     key={test.id}
                     bordered
                     style={{ marginBottom: 8, padding: 10, cursor: isApproved ? 'not-allowed' : 'pointer', opacity: isApproved ? 0.6 : 1 }}

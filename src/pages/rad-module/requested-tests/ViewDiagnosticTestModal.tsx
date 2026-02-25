@@ -1,6 +1,6 @@
-import React from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import React from 'react';
 import { Loader } from 'rsuite';
 import './style.less';
 

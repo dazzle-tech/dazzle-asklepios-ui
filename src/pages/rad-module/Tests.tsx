@@ -1,66 +1,55 @@
 import CancellationModal from '@/components/CancellationModal';
-import MyTable from '@/components/MyTable';
-import Translate from '@/components/Translate';
-import MyInput from '@/components/MyInput';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { formatDateWithoutSeconds } from '@/utils';
-import ReloadIcon from '@rsuite/icons/Reload';
-import {
-  useGetTestsByOrderIdQuery,
-  useAcceptDiagnosticOrderTestMutation,
-  useRejectDiagnosticOrderTestMutation,
-  useFilterDiagnosticOrderTestsQuery,
-  useUndoAcceptDiagnosticOrderTestMutation,
-  useBulkAcceptDiagnosticOrderTestsMutation,
-  useBulkRejectDiagnosticOrderTestsMutation
-} from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import './styles.less';
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
-import { Checkbox, Form, HStack, Panel, Popover, Tooltip, Whisper } from 'rsuite';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCirclePause, faCircleStop, faComment, faEllipsisVertical, faHospitalUser, faPlay, faPlusCircle, faRightFromBracket, faVialCircleCheck } from '@fortawesome/free-solid-svg-icons';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useGetAllLaboratoriesQuery } from '@/services/setup/diagnosticTest/laboratoryService';
-import {
-  useGetNotesByOrderTestIdQuery,
-  useCreateDiagnosticOrderTestTechnicianNoteMutation
-} from '@/services/diagnosic-order/diagnosticOrderTestTechnicianNoteService';
 import ChatModal from '@/components/ChatModal';
-import { formatEnumString } from '@/utils';
-import {
-  DiagnosticStatus,
-  DiagnosticOrderTestStatus
-} from '@/types/model-types-new';
-import {
-  useGetExternalTestByTestIdQuery
-} from '@/services/diagnosic-order/externalTestService';
 import MyButton from '@/components/MyButton/MyButton';
-import { useGetAllRadiologiesQuery, useGetRadiologyByTestIdQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
-import PatientArrivalModal from './PatientArrivalModal';
-import { Dropdown } from 'rsuite';
+import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
+import Translate from '@/components/Translate';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
-  useStartRadiologyImageMutation,
+  useAcceptDiagnosticOrderTestMutation,
+  useBulkAcceptDiagnosticOrderTestsMutation,
+  useBulkRejectDiagnosticOrderTestsMutation,
+  useFilterDiagnosticOrderTestsQuery,
+  useRejectDiagnosticOrderTestMutation,
+  useUndoAcceptDiagnosticOrderTestMutation
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+import {
+  useCreateDiagnosticOrderTestTechnicianNoteMutation,
+  useGetNotesByOrderTestIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestTechnicianNoteService';
+import {
+  useFinishRadiologyImageMutation,
+  useLazyGetRadiologyReportByOrderTestIdQuery,
   usePauseRadiologyImageMutation,
   useResumeRadiologyImageMutation,
-  useFinishRadiologyImageMutation,
-  useGetRadiologyReportByOrderTestIdQuery,
-  useLazyGetRadiologyReportByOrderTestIdQuery
+  useStartRadiologyImageMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
-import { useDispatch } from 'react-redux';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetAllRadiologiesQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import {
+  DiagnosticOrderTestStatus
+} from '@/types/model-types-new';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import { faCirclePause, faCircleStop, faComment, faEllipsisVertical, faHospitalUser, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { skipToken } from '@reduxjs/toolkit/query';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import ReloadIcon from '@rsuite/icons/Reload';
+import WarningRoundIcon from '@rsuite/icons/WarningRound';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { Checkbox, Dropdown, Form, HStack, Panel, Popover, Tooltip, Whisper } from 'rsuite';
+import PatientArrivalModal from './PatientArrivalModal';
+import './styles.less';
 
 type Props = {
   order: any;
   test: any;
   setTest: (t: any) => void;
-  fetchAllTests?: () => any;
   loading?: boolean;
   refetchAllRadData: () => Promise<void>;
-  saveTest: (payload: any) => Promise<void>;
 };
 
 
@@ -73,10 +62,8 @@ const Tests = forwardRef<any, Props>(
       order,
       test,
       setTest,
-      fetchAllTests,
       refetchAllRadData,
       loading,
-      saveTest
     },
     ref
   ) => {
@@ -86,7 +73,7 @@ const Tests = forwardRef<any, Props>(
     const [pageIndex, setPageIndex] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [testKeyFilter, setTestKeyFilter] = useState({ value: '' });
-    const [selectedRows, setSelectedRows] = useState<(number | string)[]>([]);
+    const [selectedRows, setSelectedRows] = useState<(number)[]>([]);
     const [localHasNoteIds, setLocalHasNoteIds] = useState<(number | string)[]>([]);
     const [openRejectedModal, setOpenRejectedModal] = useState(false);
     const [openNoteModal, setOpenNoteModal] = useState(false);
@@ -269,7 +256,7 @@ const Tests = forwardRef<any, Props>(
           ...orderTest,
           test,
           radiology,
-          imageStatus: report?.imageStatus, // ⭐⭐⭐ هذا المهم
+          imageStatus: report?.imageStatus,
           orderType: orderTest.orderType ?? test?.type
         };
       });
@@ -280,55 +267,47 @@ const Tests = forwardRef<any, Props>(
       DiagnosticOrderTestStatus.PARTIALLY
     ];
 
-    const acceptedTests = useMemo(
-      () =>
-        normalizedOrderTests.filter(t =>
-          acceptedStatuses.includes(t.processingStatus)
-        ),
-      [normalizedOrderTests]
-    );
-
     const isTestSelected = (rowData: any) => {
       if (rowData && test && rowData.id === test.id) return 'selected-row';
       return '';
     };
 
-      const filteredTests = useMemo(() => {
-        const sorted = [...normalizedOrderTests];
+    const filteredTests = useMemo(() => {
+      const sorted = [...normalizedOrderTests];
 
-        if (!sortColumn) return sorted;
+      if (!sortColumn) return sorted;
 
-        sorted.sort((a: any, b: any) => {
-          let aValue;
-          let bValue;
+      sorted.sort((a: any, b: any) => {
+        let aValue;
+        let bValue;
 
-          if (sortColumn === 'createdDate') {
-            aValue = new Date(a.createdDate).getTime();
-            bValue = new Date(b.createdDate).getTime();
-          } 
-          else if (sortColumn === 'status') {
-            aValue = formatEnumString(a.processingStatus ?? '').toLowerCase();
-            bValue = formatEnumString(b.processingStatus ?? '').toLowerCase();
-          }
-          else {
-            aValue = a[sortColumn];
-            bValue = b[sortColumn];
-          }
+        if (sortColumn === 'createdDate') {
+          aValue = new Date(a.createdDate).getTime();
+          bValue = new Date(b.createdDate).getTime();
+        }
+        else if (sortColumn === 'status') {
+          aValue = formatEnumString(a.processingStatus ?? '').toLowerCase();
+          bValue = formatEnumString(b.processingStatus ?? '').toLowerCase();
+        }
+        else {
+          aValue = a[sortColumn];
+          bValue = b[sortColumn];
+        }
 
-          if (aValue < bValue) return sortType === 'asc' ? -1 : 1;
-          if (aValue > bValue) return sortType === 'asc' ? 1 : -1;
-          return 0;
-        });
+        if (aValue < bValue) return sortType === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortType === 'asc' ? 1 : -1;
+        return 0;
+      });
 
-        return sorted;
-      }, [normalizedOrderTests, sortColumn, sortType]);
+      return sorted;
+    }, [normalizedOrderTests, sortColumn, sortType]);
 
-      
-          const pagedData = useMemo(() => {
-            const start = pageIndex * rowsPerPage;
-            const end = start + rowsPerPage;
-            return filteredTests.slice(start, end);
-          }, [filteredTests, pageIndex, rowsPerPage]);
+
+    const pagedData = useMemo(() => {
+      const start = pageIndex * rowsPerPage;
+      const end = start + rowsPerPage;
+      return filteredTests.slice(start, end);
+    }, [filteredTests, pageIndex, rowsPerPage]);
 
     const effectiveTotalCount = filteredTests.length;
 
@@ -415,12 +394,8 @@ const Tests = forwardRef<any, Props>(
         c => String(c.key) === String(key)
       )?.lovDisplayVale;
 
-    const resolveTimeUnitLabel = (key?: any) =>
-      timeUnitLov?.object?.find(
-        u => String(u.key) === String(key)
-      )?.lovDisplayVale ?? '';
 
-    const handleCheckboxChange = (rowId: number | string) => {
+    const handleCheckboxChange = (rowId: number) => {
       setSelectedRows(prev =>
         prev.includes(rowId)
           ? prev.filter(id => id !== rowId)
@@ -462,7 +437,6 @@ const Tests = forwardRef<any, Props>(
         imageStatus === 'STARTED' || imageStatus === 'RESUMED';
 
       const isPaused = imageStatus === 'PAUSED';
-      const isFinished = imageStatus === 'FINISHED';
 
       if (!isAccepted) {
         return (
@@ -638,9 +612,7 @@ const Tests = forwardRef<any, Props>(
       }
     };
 
-
-
-    const columns = [
+    const columns: ColumnConfig[] = [
       {
         key: 'check',
         title: (
@@ -676,7 +648,6 @@ const Tests = forwardRef<any, Props>(
       {
         key: 'testName',
         title: <Translate>TEST NAME</Translate>,
-        flexGrow: 1,
         align: 'center',
         render: (rowData: any) => rowData.test?.name
       },
@@ -749,7 +720,6 @@ const Tests = forwardRef<any, Props>(
       {
         key: 'patientArrived',
         title: <Translate>PATIENT ARRIVED</Translate>,
-        flexGrow: 1,
         render: (rowData: any) => {
           return (
             <HStack spacing={10}>
@@ -1037,7 +1007,6 @@ const Tests = forwardRef<any, Props>(
           list={notesResponse?.data ?? []}
           fieldShowName="note"
           handleSendMessage={handleSendMessage}
-          loading={isNotesFetching || isSendingNote}
         />
 
         <PatientArrivalModal
@@ -1045,7 +1014,6 @@ const Tests = forwardRef<any, Props>(
           setOpen={setOpenArrivalModal}
           test={test}
           setTest={setTest}
-          saveTest={saveTest}
           fetchTest={fetchTest}
           fetchAllTests={refetchAllRadData}
         />

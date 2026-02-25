@@ -1,3 +1,15 @@
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import { useAppDispatch } from '@/hooks';
+import {
+  useUpdateRadiologyReportMutation
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
+import { useGetDiagnosticTestTemplateByTestIdQuery } from '@/services/setup/report-template/DiagnosticTestTemplate';
+import { useGetAllReportTemplatesQuery } from '@/services/setup/report-template/reportTemplateService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { notify } from '@/utils/uiReducerActions';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   ContentState,
   convertToRaw,
@@ -8,22 +20,6 @@ import htmlToDraft from 'html-to-draftjs';
 import React, { useEffect, useState } from 'react';
 import { Editor } from 'react-draft-wysiwyg';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
-import { useGetDiagnosticTestTemplateByTestIdQuery } from '@/services/setup/report-template/DiagnosticTestTemplate';
-import { useGetAllReportTemplatesQuery } from '@/services/setup/report-template/reportTemplateService';
-import {
-  useUpdateRadiologyReportMutation
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
-import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
-import MyModal from '@/components/MyModal/MyModal';
-import { useAppDispatch } from '@/hooks';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import {
-  newDiagnosticOrderTestReportUpdateRequestDTO
-} from '@/types/model-types-constructor-new';
-import { notify } from '@/utils/uiReducerActions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileLines, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { Col, Form, Row } from 'rsuite';
 
 type Props = {
@@ -78,9 +74,6 @@ const AddReportModal = ({
   const [defaultApplied, setDefaultApplied] = useState(false);
 
   const [updateReport] = useUpdateRadiologyReportMutation();
-
-
-
 
   const { data: severityLovQueryResponse } =
     useGetLovValuesByCodeQuery('SEVERITY');
@@ -173,7 +166,7 @@ const AddReportModal = ({
       blocks.entityMap
     );
 
-    setUserTouchedEditor(true); // مهم
+    setUserTouchedEditor(true);
     setEditorState(EditorState.createWithContent(content));
   };
 
@@ -205,8 +198,6 @@ const AddReportModal = ({
   useEffect(() => {
     if (!open) return;
     if (userTouchedEditor) return;
-
-    // 1️⃣ Report محفوظ
     if (!isEmptyHtml(report?.report)) {
       const blocks = htmlToDraft(report.report);
       const contentState = ContentState.createFromBlockArray(
@@ -217,15 +208,11 @@ const AddReportModal = ({
       setDefaultApplied(true);
       return;
     }
-
-    // 2️⃣ Review mode
     if (disableDefaultTemplate) {
       setEditorState(EditorState.createEmpty());
       setDefaultApplied(true);
       return;
     }
-
-    // 3️⃣ Default template
     if (
       !defaultApplied &&
       !isEmptyHtml(defaultTemplate?.templateValue)
@@ -240,7 +227,7 @@ const AddReportModal = ({
     }
   }, [
     open,
-    report?.report,               // ❗ ركّز هنا
+    report?.report,
     defaultTemplate?.templateValue,
     userTouchedEditor,
     disableDefaultTemplate,
@@ -304,9 +291,6 @@ const AddReportModal = ({
 
           {/* Editor */}
           <Row>
-            {/* <div className="diagnostic-template-label">
-              Add Report Manually
-            </div> */}
             <Col md={24}>
               <Editor
                 editorState={editorState}
