@@ -36,7 +36,7 @@ import MyInput from '@/components/MyInput';
 import Orders from './Orders';
 import Tests from './Tests';
 import Report from './Report';
-import PatientSide from '../lab-module/PatienSide';
+import PatientSide from '../lab-module-new/PatienSide';
 import {
   faCircleCheck,
   faClock,
