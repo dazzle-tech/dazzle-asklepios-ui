@@ -177,7 +177,7 @@ const AddReportModal = ({
           </Row>}
 
           <Row>
-          <div className="diagnostic-template-label">Add Report Manually</div>
+          {/* <div className="diagnostic-template-label">Add Report Manually</div> */}
             <Col md={24}>
               <Editor
                 toolbar={{

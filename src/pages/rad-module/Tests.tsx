@@ -90,35 +90,53 @@ const Tests = forwardRef<any, Props>(
     const [localHasNoteIds, setLocalHasNoteIds] = useState<(number | string)[]>([]);
     const [openRejectedModal, setOpenRejectedModal] = useState(false);
     const [openNoteModal, setOpenNoteModal] = useState(false);
-    const [sortColumn, setSortColumn] = useState("id");
+    const [sortColumn, setSortColumn] = useState("status");
     const [sortType, setSortType] = useState<"asc" | "desc">("asc");
     const [openArrivalModal, setOpenArrivalModal] = useState(false);
     const [reportsByTestId, setReportsByTestId] = useState<Record<number, any>>({});
 
     const notifyFromApiError = (e: any) => {
       const status = e?.status || e?.originalStatus;
-      const message =
+
+      const backendMessage =
         e?.data?.message ||
         e?.data?.detail ||
-        e?.error ||
-        'Something went wrong';
-      if (status === 400 || status === 409 || status === 422) {
+        e?.error;
+
+      if (backendMessage === 'error.validation') {
+        const fieldErrors = e?.data?.fieldErrors;
+
+        if (fieldErrors?.length) {
+          const readableMessage = fieldErrors
+            .map((f: any) => `${f.field} is invalid`)
+            .join(', ');
+
+          dispatch(
+            notify({
+              msg: readableMessage,
+              sev: 'warning'
+            })
+          );
+          return;
+        }
+
         dispatch(
           notify({
-            msg: message,
+            msg: 'Validation error. Please check your input.',
             sev: 'warning'
           })
         );
         return;
       }
+
       dispatch(
         notify({
-          msg: message,
-          sev: 'error'
+          msg: backendMessage || 'Something went wrong',
+          sev: status >= 500 ? 'error' : 'warning'
         })
       );
     };
-    
+
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
       size: 5,
@@ -275,13 +293,42 @@ const Tests = forwardRef<any, Props>(
       return '';
     };
 
-    const filteredTests = normalizedOrderTests;
+      const filteredTests = useMemo(() => {
+        const sorted = [...normalizedOrderTests];
 
-    const pagedData = useMemo(() => {
-      const start = pageIndex * rowsPerPage;
-      const end = start + rowsPerPage;
-      return filteredTests.slice(start, end);
-    }, [filteredTests, pageIndex, rowsPerPage]);
+        if (!sortColumn) return sorted;
+
+        sorted.sort((a: any, b: any) => {
+          let aValue;
+          let bValue;
+
+          if (sortColumn === 'createdDate') {
+            aValue = new Date(a.createdDate).getTime();
+            bValue = new Date(b.createdDate).getTime();
+          } 
+          else if (sortColumn === 'status') {
+            aValue = formatEnumString(a.processingStatus ?? '').toLowerCase();
+            bValue = formatEnumString(b.processingStatus ?? '').toLowerCase();
+          }
+          else {
+            aValue = a[sortColumn];
+            bValue = b[sortColumn];
+          }
+
+          if (aValue < bValue) return sortType === 'asc' ? -1 : 1;
+          if (aValue > bValue) return sortType === 'asc' ? 1 : -1;
+          return 0;
+        });
+
+        return sorted;
+      }, [normalizedOrderTests, sortColumn, sortType]);
+
+      
+          const pagedData = useMemo(() => {
+            const start = pageIndex * rowsPerPage;
+            const end = start + rowsPerPage;
+            return filteredTests.slice(start, end);
+          }, [filteredTests, pageIndex, rowsPerPage]);
 
     const effectiveTotalCount = filteredTests.length;
 
@@ -495,12 +542,12 @@ const Tests = forwardRef<any, Props>(
       );
     };
 
-  const canAcceptTest = (t: any) =>
-    t.processingStatus === DiagnosticOrderTestStatus.PATIENT_ARRIVED;
+    const canAcceptTest = (t: any) =>
+      t.processingStatus === DiagnosticOrderTestStatus.PATIENT_ARRIVED;
 
-  const canRejectTest = (t: any) =>
-    t.processingStatus !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
-    t.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
+    const canRejectTest = (t: any) =>
+      t.processingStatus !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
+      t.processingStatus !== DiagnosticOrderTestStatus.REJECTED;
 
 
     const handleBulkAccept = async () => {
@@ -546,49 +593,49 @@ const Tests = forwardRef<any, Props>(
 
 
     const handleBulkReject = async () => {
-  if (!selectedRows.length) {
-    dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
-    return;
-  }
+      if (!selectedRows.length) {
+        dispatch(notify({ msg: 'Select tests first', sev: 'warning' }));
+        return;
+      }
 
-  const eligibleIds = normalizedOrderTests
-    .filter(
-      t =>
-        selectedRows.includes(t.id) &&
-        canRejectTest(t)
-    )
-    .map(t => t.id);
+      const eligibleIds = normalizedOrderTests
+        .filter(
+          t =>
+            selectedRows.includes(t.id) &&
+            canRejectTest(t)
+        )
+        .map(t => t.id);
 
-  if (!eligibleIds.length) {
-    dispatch(
-      notify({
-        msg: 'No tests eligible for reject',
-        sev: 'warning'
-      })
-    );
-    return;
-  }
+      if (!eligibleIds.length) {
+        dispatch(
+          notify({
+            msg: 'No tests eligible for reject',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
 
-  try {
-    await bulkReject({
-      ids: eligibleIds,
-      rejectedReason: bulkRejectReason
-    }).unwrap();
+      try {
+        await bulkReject({
+          ids: eligibleIds,
+          rejectedReason: bulkRejectReason
+        }).unwrap();
 
-    dispatch(
-      notify({
-        msg: `Rejected ${eligibleIds.length} tests successfully`,
-        sev: 'success'
-      })
-    );
+        dispatch(
+          notify({
+            msg: `Rejected ${eligibleIds.length} tests successfully`,
+            sev: 'success'
+          })
+        );
 
-    setSelectedRows([]);
-    setBulkRejectReason('');
-    setOpenBulkRejectModal(false);
-    await refetchAllRadData();
-  } catch (e: any) {
-    notifyFromApiError(e);
-  }
+        setSelectedRows([]);
+        setBulkRejectReason('');
+        setOpenBulkRejectModal(false);
+        await refetchAllRadData();
+      } catch (e: any) {
+        notifyFromApiError(e);
+      }
     };
 
 
@@ -652,7 +699,7 @@ const Tests = forwardRef<any, Props>(
         }
       },
       {
-        key: 'physician',
+        key: 'createdDate',
         title: <Translate>PHYSICIAN</Translate>,
         width: 170,
         align: 'center',
@@ -751,7 +798,7 @@ const Tests = forwardRef<any, Props>(
               <Whisper speaker={<Tooltip>Accept</Tooltip>}>
                 <span>
                   <CheckRoundIcon
-                  className='icon-radiologist-worklist-size'
+                    className='icon-radiologist-worklist-size'
                     style={{
                       cursor: canAccept ? 'pointer' : 'not-allowed',
                       opacity: canAccept ? 1 : 0.4
@@ -768,7 +815,7 @@ const Tests = forwardRef<any, Props>(
               <Whisper speaker={<Tooltip>Undo Accept</Tooltip>}>
                 <span>
                   <ReloadIcon
-                  className='icon-radiologist-worklist-size'
+                    className='icon-radiologist-worklist-size'
                     style={{
                       cursor: canUndoAccept ? 'pointer' : 'not-allowed',
                       opacity: canUndoAccept ? 1 : 0.4,
@@ -805,7 +852,7 @@ const Tests = forwardRef<any, Props>(
               <Whisper speaker={<Tooltip>Reject</Tooltip>}>
                 <span>
                   <WarningRoundIcon
-                  className='icon-radiologist-worklist-size'
+                    className='icon-radiologist-worklist-size'
                     style={{
                       cursor: canReject ? 'pointer' : 'not-allowed',
                       opacity: canReject ? 1 : 0.4
@@ -852,43 +899,43 @@ const Tests = forwardRef<any, Props>(
       </Form>
     );
 
-      const hasBulkAcceptEligible = useMemo(() => {
-        return normalizedOrderTests.some(
-          t =>
-            selectedRows.includes(t.id) &&
-            canAcceptTest(t)
-        );
-      }, [normalizedOrderTests, selectedRows]);
+    const hasBulkAcceptEligible = useMemo(() => {
+      return normalizedOrderTests.some(
+        t =>
+          selectedRows.includes(t.id) &&
+          canAcceptTest(t)
+      );
+    }, [normalizedOrderTests, selectedRows]);
 
 
     const tableButtons = (<>
-    <div className='rad-test-table-buttons-main-container'>
-    <Whisper placement="top" speaker={<Tooltip>Accept</Tooltip>}>
-        <span style={{ display: 'inline-block' }}>
-        <MyButton
-          prefixIcon={() => <CheckRoundIcon />}
-          disabled={!hasBulkAcceptEligible}
-          onClick={handleBulkAccept}
-        >
-          Accept Selected
-        </MyButton>
-        </span>
-    </Whisper>
+      <div className='rad-test-table-buttons-main-container'>
+        <Whisper placement="top" speaker={<Tooltip>Accept</Tooltip>}>
+          <span style={{ display: 'inline-block' }}>
+            <MyButton
+              prefixIcon={() => <CheckRoundIcon />}
+              disabled={!hasBulkAcceptEligible}
+              onClick={handleBulkAccept}
+            >
+              Accept Selected
+            </MyButton>
+          </span>
+        </Whisper>
 
-    <Whisper placement="top" speaker={<Tooltip>Reject</Tooltip>}>
-      <span style={{ display: 'inline-block' }}>
-        <MyButton
-        prefixIcon={() => <WarningRoundIcon />}
-        appearance="ghost"
-        disabled={!selectedRows.length}
-        onClick={() => setOpenBulkRejectModal(true)}
-        >
-          Reject Selected
-        </MyButton>
+        <Whisper placement="top" speaker={<Tooltip>Reject</Tooltip>}>
+          <span style={{ display: 'inline-block' }}>
+            <MyButton
+              prefixIcon={() => <WarningRoundIcon />}
+              appearance="ghost"
+              disabled={!selectedRows.length}
+              onClick={() => setOpenBulkRejectModal(true)}
+            >
+              Reject Selected
+            </MyButton>
 
-      </span>
-    </Whisper>
-    </div>
+          </span>
+        </Whisper>
+      </div>
     </>);
 
     useEffect(() => {
@@ -968,7 +1015,7 @@ const Tests = forwardRef<any, Props>(
           onRowClick={rowData => setTest(rowData)}
           rowClassName={isTestSelected}
           loadingHeight={200}
-        
+
         />
 
 
@@ -1012,6 +1059,7 @@ const Tests = forwardRef<any, Props>(
           setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
           fieldLabel="Reject Reason"
           title="Bulk Reject"
+          required={true}
         />
 
 

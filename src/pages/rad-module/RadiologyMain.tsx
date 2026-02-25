@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import Rad from './Rad';
 import RadiologistWorklist from './radiologist-worklist/RadiologistWorklist';
 import MyTab from '@/components/MyTab';
+import RequestedTest from './requested-tests/RequestedTest';
 
 const RadiologyMain = () => {
   const radRef = useRef<any>(null);
@@ -20,7 +21,11 @@ const RadiologyMain = () => {
           }
         />
       )
-    }
+    },
+    {
+      title: 'Requested Tests',
+      content: <RequestedTest requestType="RADIOLOGY"/>
+    },
   ];
 
   return <MyTab data={tabData} />;

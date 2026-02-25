@@ -16,7 +16,7 @@ export interface DiagnosticTestRequest {
   name?: string;
   type?: TestType;
   status?: DiagnosticTestRequestStatus;
-
+  diagnosticTestId?: string;
   fromDepartmentId?: string;
   fromFacilityId?: string;
 
@@ -64,6 +64,8 @@ type PagedResult<T> = {
 const mapDiagnosticTestRequest = (r: any): DiagnosticTestRequest => ({
   ...r,
   id: r?.id != null ? String(r.id) : r.id,
+  diagnosticTestId:
+    r?.diagnosticTestId != null ? String(r.diagnosticTestId) : r.diagnosticTestId,
   fromDepartmentId:
     r?.fromDepartmentId != null ? String(r.fromDepartmentId) : r.fromDepartmentId,
   fromFacilityId:
@@ -162,6 +164,20 @@ export const diagnosticTestRequestService = createApi({
       ],
     }),
 
+    setDiagnosticTestForRequest: builder.mutation<
+      DiagnosticTestRequest,
+      { id: number | string; diagnosticTestId: number | string }
+    >({
+      query: ({ id, diagnosticTestId }) => ({
+        url: `/api/patient/diagnostic-test-requests/${id}/diagnostic-test`,
+        method: 'PUT',
+        body: { diagnosticTestId }
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'DiagnosticTestRequest', id },
+      ],
+    }),
+
     filterDiagnosticTestRequests: builder.query<
       PagedResult<DiagnosticTestRequest>,
       Record<string, any> & PageableParams
@@ -189,10 +205,18 @@ export const diagnosticTestRequestService = createApi({
         };
       },
 
-      providesTags: ['DiagnosticTestRequest'],
-    }),
+    providesTags: (result) =>
+      result?.data
+        ? [
+            ...result.data.map((r) => ({
+              type: 'DiagnosticTestRequest' as const,
+              id: r.id
+            })),
+            { type: 'DiagnosticTestRequest', id: 'LIST' }
+          ]
+        : [{ type: 'DiagnosticTestRequest', id: 'LIST' }],    }),
 
-  }),
+      }),
 });
 
 /* ===================== HOOKS ===================== */
@@ -202,10 +226,9 @@ export const {
   useUpdateDiagnosticTestRequestMutation,
   useGetDiagnosticTestRequestByIdQuery,
   useDeleteDiagnosticTestRequestMutation,
-
+  useSetDiagnosticTestForRequestMutation,
   useApproveDiagnosticTestRequestMutation,
   useRejectDiagnosticTestRequestMutation,
-
   useFilterDiagnosticTestRequestsQuery,
   useLazyFilterDiagnosticTestRequestsQuery,
 } = diagnosticTestRequestService;

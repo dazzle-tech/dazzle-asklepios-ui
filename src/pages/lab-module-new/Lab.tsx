@@ -33,7 +33,8 @@ import Result from './Result';
 import PatientSide from './PatienSide';
 import MyInput from '@/components/MyInput';
 import { useLazyGetPatientByIdQuery } from '@/services/patientService';
-
+import MyTab from '@/components/MyTab';
+import RequestedTest from '../rad-module/requested-tests/RequestedTest';
 import {
   faCircleCheck,
   faClock,
@@ -261,8 +262,11 @@ const Lab = () => {
 
 
 
-  return (
-    <>
+  const tabData = [
+    {
+      title: 'Laboratory',
+      content: (<>
+          <>
       <div className="count-div-on-top-of-page">
         <DetailsCard
           title="Result Approved"
@@ -384,6 +388,19 @@ const Lab = () => {
           <PatientSide patient={patient} encounter={encounter} />
         </div>
       </div>
+    </>
+      </>)
+    },
+    {
+      title: 'Requested Tests',
+      content: <RequestedTest requestType="LABORATORY"/>
+    },
+  ];
+
+
+  return (
+    <>
+    <MyTab data={tabData}/>
 
 
     </>

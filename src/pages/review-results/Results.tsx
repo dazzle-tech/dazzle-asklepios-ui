@@ -468,6 +468,7 @@ const Result = forwardRef<any, any>(
           render: (row: any) => (
             <FontAwesomeIcon
               icon={faComment}
+              className='icon-radiologist-worklist-size'
               style={{
                 cursor: 'pointer',
                 color: row.hasNote ? '#1675e0' : 'gray'

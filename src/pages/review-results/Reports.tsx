@@ -218,6 +218,7 @@ const ReviewReport = ({ user }) => {
                 render: row => (
                     <FontAwesomeIcon
                         icon={faFileLines}
+                        className='icon-radiologist-worklist-size'
                         style={{ cursor: 'pointer' }}
                         onClick={() => {
                             setSelectedReport(row);
@@ -227,19 +228,31 @@ const ReviewReport = ({ user }) => {
                 )
             },
             {
-                key: 'comments',
-                title: <Translate>Comments</Translate>,
-                align: 'center',
-                render: row => (
-                    <FontAwesomeIcon
+            key: 'comment',
+            title: 'COMMENTS',
+            width: 100,
+            align: 'center',
+            render: (row: any) => {
+            
+            const hasComment = !!row?.hasNote || localHasCommentIds.includes(row.id);
+                    return (
+                    <Whisper speaker={<Tooltip>Comments</Tooltip>}>
+                    <span style={{ cursor: 'pointer' }}>
+                        <FontAwesomeIcon
+                        className='icon-radiologist-worklist-size'
                         icon={faComment}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => {
-                            setSelectedReport(row);
-                            setOpenComments(true);
+                        style={{
+                          color: hasComment ? '#1675e0' : '#999'
                         }}
-                    />
-                )
+                        onClick={() => {
+                          setSelectedReport(row);
+                          setOpenComments(true);
+                        }}
+                          />
+                        </span>
+                      </Whisper>
+                    );
+                  }
             },
             {
                 key: 'review',
@@ -252,6 +265,7 @@ const ReviewReport = ({ user }) => {
                         <Whisper speaker={<Tooltip>Review</Tooltip>}>
                             <FontAwesomeIcon
                                 icon={faStar}
+                                className='icon-radiologist-worklist-size'
                                 style={{
                                     cursor: 'pointer',
                                     color: isReviewed ? '#ffea00' : '#999',

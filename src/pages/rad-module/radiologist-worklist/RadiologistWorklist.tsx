@@ -49,6 +49,7 @@ import {
 import { MdAttachFile } from 'react-icons/md';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import MyModal from '@/components/MyModal/MyModal';
+import { useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 
 
@@ -138,6 +139,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const [orderTestReport, setOrderTestReport] = useState<any>({ ...newDiagnosticOrderTestReportResponseVM });
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
+  const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
   const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
   const [fetchOrderTestById] =
     useLazyGetDiagnosticOrderTestByIdQuery();
@@ -159,6 +161,8 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [selectedReportForAttachments, setSelectedReportForAttachments] = useState<any>(null);
 
+  const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
+  const [testsMap, setTestsMap] = useState<Record<string, any>>({});
 
   const [departmentFilter, setDepartmentFilter] = useState<{
     departmentIds?: number[];
@@ -247,16 +251,21 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
 
     try {
       await createComment({
-        reportId: selectedReportForComments.id,
-        orderTestId: selectedReportForComments.orderTestId,
-        note: value
-      }).unwrap();
+  reportId: selectedReportForComments.id,
+  orderTestId: selectedReportForComments.orderTestId,
+  note: value
+        }).unwrap();
 
-      dispatch(
-        notify({ msg: 'Comment added successfully', sev: 'success' })
-      );
+        dispatch(
+          notify({ msg: 'Comment added successfully', sev: 'success' })
+        );
+        setLocalHasCommentIds(prev =>
+          prev.includes(selectedReportForComments.id)
+            ? prev
+            : [...prev, selectedReportForComments.id]
+        );
 
-      refetchComments();
+        refetchComments();
     } catch (e: any) {
       notifyFromApiError(dispatch, e, 'Failed to add comment');
     }
@@ -498,7 +507,6 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
       title: 'Department',
       width: 160,
       render: row => {
-        console.log('ordersMap', ordersMap);
         const ot = orderTestsMap[String(row.orderTestId)];
         const order = ordersMap[String(ot?.orderId)];
         const department = departmentsMap[String(order?.fromDepartmentId)];
@@ -527,6 +535,16 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
         const order = ordersMap[String(ot?.orderId)];
         const patient = patientsMap[String(order?.patientId)];
         return patient?.patientMrn ?? ' ';
+      }
+    },
+    {
+      key: 'testName',
+      title: 'Test Name',
+      width: 200,
+      render: row => {
+        const ot = orderTestsMap[String(row.orderTestId)];
+        const test = testsMap[ot?.testId];
+        return test?.name ?? ' ';
       }
     },
     {
@@ -564,60 +582,89 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
       title: 'ATTACHMENTS',
       width: 90,
       align: 'center',
-      render: (row: any) => (
-        <MdAttachFile
-          size={20}
-          fill={row?.id ? 'var(--primary-gray)' : '#ccc'}
-          style={{
-            cursor: row?.id ? 'pointer' : 'not-allowed'
-          }}
-          onClick={() => {
-            const order = ordersMap[String(row.orderId)];
-            console.log('row', row);
+      render: (row: any) => {
+        const ot = orderTestsMap[String(row.orderTestId)];
 
-            if (!order?.encounterId) {
-              dispatch(
-                notify({
-                  msg: 'Encounter not loaded yet',
-                  sev: 'warning'
-                })
-              );
-              return;
-            }
+        return (
+          <MdAttachFile
+            size={20}
+            fill={'var(--primary-gray)'}
+            style={{ cursor: 'pointer' }}
+            onClick={async () => {
 
-            setSelectedReportForAttachments({
-              id: row.id,
-              orderId: row.orderId,
-              orderTestId: row.orderTestId,
-              encounterId: order.encounterId
-            });
+              try {
 
-            setAttachmentsModalOpen(true);
-          }}
+                let orderTest = ot;
+                if (!orderTest) {
+                  orderTest = await fetchOrderTestById(row.orderTestId).unwrap();
+                  setOrderTestsMap(prev => ({
+                    ...prev,
+                    [row.orderTestId]: orderTest
+                  }));
+                }
 
+                if (!orderTest?.orderId) {
+                  dispatch(notify({ msg: 'Order not found', sev: 'warning' }));
+                  return;
+                }
 
-        />
-      )
+                let order = ordersMap[String(orderTest.orderId)];
+                if (!order) {
+                  order = await fetchOrderById(orderTest.orderId).unwrap();
+                  setOrdersMap(prev => ({
+                    ...prev,
+                    [orderTest.orderId]: order
+                  }));
+                }
+
+                if (!order?.encounterId) {
+                  dispatch(notify({ msg: 'Encounter not found', sev: 'warning' }));
+                  return;
+                }
+
+                setSelectedReportForAttachments({
+                  id: row.id,
+                  orderTestId: row.orderTestId,
+                  orderId: orderTest.orderId,
+                  encounterId: order.encounterId
+                });
+
+                setAttachmentsModalOpen(true);
+
+              } catch (e) {
+                notifyFromApiError(dispatch, e, 'Failed to load attachment data');
+              }
+            }}
+          />
+        );
+      }
     },
     {
       key: 'comment',
       title: 'COMMENTS',
       width: 100,
       align: 'center',
-      render: (row: any) => (
-        <Whisper speaker={<Tooltip>Comments</Tooltip>}>
-          <span style={{ cursor: 'pointer' }}>
-            <FontAwesomeIcon
-              className='icon-radiologist-worklist-size'
-              icon={faComment}
-              onClick={() => {
-                setSelectedReportForComments(row);
-                setOpenComments(true);
-              }}
-            />
-          </span>
-        </Whisper>
-      )
+      render: (row: any) => {
+
+    const hasComment = !!row?.hasNote || localHasCommentIds.includes(row.id);
+            return (
+          <Whisper speaker={<Tooltip>Comments</Tooltip>}>
+            <span style={{ cursor: 'pointer' }}>
+              <FontAwesomeIcon
+                className='icon-radiologist-worklist-size'
+                icon={faComment}
+                style={{
+                  color: hasComment ? '#1675e0' : '#999'
+                }}
+                onClick={() => {
+                  setSelectedReportForComments(row);
+                  setOpenComments(true);
+                }}
+              />
+            </span>
+          </Whisper>
+        );
+      }
     },
     {
       key: 'status',
@@ -729,11 +776,9 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
         );
       }
     }
-  ], [orderTestsMap, ordersMap, patientsMap]);
+  ], [orderTestsMap, ordersMap, patientsMap, localHasCommentIds]);
 
   useEffect(() => {
-    console.log('departmentIds', departmentIds);
-
     departmentIds.forEach(id => {
       if (departmentsMap[id]) return;
 
@@ -777,8 +822,25 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
   }, [selectedReportForAttachments]);
 
 
+    useEffect(() => {
+      orderTestIds.forEach(id => {
+        const ot = orderTestsMap[id];
+        if (!ot?.testId || testsMap[ot.testId]) return;
 
+        fetchDiagnosticTestById(ot.testId)
+          .unwrap()
+          .then(response => {
+            if (!response?.data) return;
 
+            setTestsMap(prev => ({
+              ...prev,
+              [ot.testId]: response.data
+            }));
+          })
+          .catch(() => {});
+      });
+    }, [orderTestsMap]);
+    
   return (<>
     <MyTable
       data={tableData}
@@ -848,7 +910,7 @@ const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
         selectedEncounter && (
           <EncounterAttachment
             localEncounter={selectedEncounter}
-            source="RADIOLOGY_REPORT_ATTACHMENT"
+            source="RADIOLOGIST_WORKLIST_ATTACHMENT"
             sourceId={Number(selectedReportForAttachments?.id)}
             refetchAttachmentList={false}
             setRefetchAttachmentList={() => { }}

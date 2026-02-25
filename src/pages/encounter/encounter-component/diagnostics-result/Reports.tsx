@@ -15,7 +15,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, HStack } from 'rsuite';
+import { Form, HStack, Tooltip, Whisper } from 'rsuite';
 import { formatEnumString } from '@/utils';
 import {
   useLazyGetDiagnosticOrderTestByIdQuery
@@ -100,12 +100,12 @@ const Reports = ({ patient }) => {
       .filter((id, i, arr) => arr.indexOf(id) === i);
   }, [reports]);
 
-    const testIds = useMemo(() => {
-  return Object.values(orderTestsMap)
-    .map((ot: any) => ot?.testId)
-    .filter(Boolean)
-    .map(String)
-    .filter((id, i, arr) => arr.indexOf(id) === i);
+  const testIds = useMemo(() => {
+    return Object.values(orderTestsMap)
+      .map((ot: any) => ot?.testId)
+      .filter(Boolean)
+      .map(String)
+      .filter((id, i, arr) => arr.indexOf(id) === i);
   }, [orderTestsMap]);
 
 
@@ -192,23 +192,30 @@ const Reports = ({ patient }) => {
     },
     {
       key: 'comment',
-      title: <Translate>COMMENTS</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => (
-        <HStack spacing={10}>
-          <FontAwesomeIcon
-            icon={faComment}
-            style={{
-              cursor: 'pointer',
-              color: rowData.hasComments ? '#007bff' : 'gray'
-            }}
-            onClick={() => {
-              setSelectedReport(rowData);
-              setOpenNoteResultModal(true);
-            }}
-          />
-        </HStack>
-      )
+      title: 'COMMENTS',
+      width: 100,
+      align: 'center',
+      render: (row: any) => {
+
+        const hasComment = !!row?.hasNote || localHasCommentIds.includes(row.id);
+        return (
+          <Whisper speaker={<Tooltip>Comments</Tooltip>}>
+            <span style={{ cursor: 'pointer' }}>
+              <FontAwesomeIcon
+                className='icon-radiologist-worklist-size'
+                icon={faComment}
+                style={{
+                  color: hasComment ? '#1675e0' : '#999'
+                }}
+                onClick={() => {
+                  setSelectedReport(row);
+                  setOpenNoteResultModal(true);
+                }}
+              />
+            </span>
+          </Whisper>
+        );
+      }
     },
     {
       key: 'status',
@@ -336,10 +343,10 @@ const Reports = ({ patient }) => {
             [id]: test
           }));
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   }, [testIds]);
-  
+
   return (
     <>
       <MyTable
@@ -364,6 +371,7 @@ const Reports = ({ patient }) => {
         title="Comments"
         list={comments ?? []}
         fieldShowName="note"
+        disabled
       />
 
       {openReportModal && selectedReport && (
@@ -391,10 +399,10 @@ const Reports = ({ patient }) => {
           selectedReportForAttachments && (
             <EncounterAttachment
               localEncounter={{ id: selectedReportForAttachments.encounterId }}
-              source="RADIOLOGY_REPORT_ATTACHMENT"
+              source="RADIOLOGIST_WORKLIST_ATTACHMENT"
               sourceId={Number(selectedReportForAttachments.reportId)}
               refetchAttachmentList={false}
-              setRefetchAttachmentList={() => {}}
+              setRefetchAttachmentList={() => { }}
             />
           )
         }

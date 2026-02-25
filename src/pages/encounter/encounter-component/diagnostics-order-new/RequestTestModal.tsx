@@ -12,7 +12,7 @@ import { useFilterDiagnosticTestRequestsQuery } from
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useDeleteDiagnosticTestRequestMutation } from
-  '@/services/diagnosic-order/diagnosticTestRequestService';
+    '@/services/diagnosic-order/diagnosticTestRequestService';
 import MyButton from '@/components/MyButton/MyButton';
 import TrashIcon from '@rsuite/icons/Trash';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -20,6 +20,8 @@ import { MdDelete, MdModeEdit } from "react-icons/md";
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import { useAppSelector } from '@/hooks';
+import ViewDiagnosticTestModal from '@/pages/rad-module/requested-tests/ViewDiagnosticTestModal';
+import { useGetDiagnosticTestRequestByIdQuery } from '@/services/diagnosic-order/diagnosticTestRequestService';
 
 const RequestTestModal = ({
     open,
@@ -49,12 +51,16 @@ const RequestTestModal = ({
     const [editMode, setEditMode] = useState(false);
     const [editingId, setEditingId] = useState<number | string | null>(null);
 
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [selectedDiagnosticTestId, setSelectedDiagnosticTestId] = useState<string | null>(null);
+
     const [updateRequest, { isLoading: isUpdating }] =
-  useUpdateDiagnosticTestRequestMutation();
+        useUpdateDiagnosticTestRequestMutation();
 
     const [deleteRequest, { isLoading: isDeleting }] =
-    useDeleteDiagnosticTestRequestMutation();
+        useDeleteDiagnosticTestRequestMutation();
 
+    // const { data: freshRequest } = useGetDiagnosticTestRequestByIdQuery({});
 
     const [createRequest, { isLoading }] =
         useCreateDiagnosticTestRequestMutation();
@@ -77,47 +83,47 @@ const RequestTestModal = ({
     );
 
     const openDeleteModal = (row: any) => {
-    setSelectedRequest(row);
-    setDeleteModalOpen(true);
+        setSelectedRequest(row);
+        setDeleteModalOpen(true);
     };
 
 
     const confirmDelete = async () => {
-    if (!selectedRequest?.id) return;
+        if (!selectedRequest?.id) return;
 
-    try {
-        await deleteRequest(selectedRequest.id).unwrap();
+        try {
+            await deleteRequest(selectedRequest.id).unwrap();
 
-        dispatch(
-        notify({
-            msg: 'Request deleted successfully',
-            sev: 'success',
-        })
-        );
+            dispatch(
+                notify({
+                    msg: 'Request deleted successfully',
+                    sev: 'success',
+                })
+            );
 
-        setDeleteModalOpen(false);
-        setSelectedRequest(null);
-        refetch();
+            setDeleteModalOpen(false);
+            setSelectedRequest(null);
+            refetch();
         } catch (e: any) {
-    let message = 'Failed to delete request';
+            let message = 'Failed to delete request';
 
-    if (e?.data?.message) {
-        message = e.data.message;
+            if (e?.data?.message) {
+                message = e.data.message;
 
-        if (message.startsWith('error.')) {
-        message = message.replace('error.', '');
+                if (message.startsWith('error.')) {
+                    message = message.replace('error.', '');
+                }
+            } else if (e?.status === 403) {
+                message = 'Only the creator can delete this request';
+            }
+
+            dispatch(
+                notify({
+                    msg: message,
+                    sev: 'warning',
+                })
+            );
         }
-    } else if (e?.status === 403) {
-        message = 'Only the creator can delete this request';
-    }
-
-    dispatch(
-        notify({
-        msg: message,
-        sev: 'warning',
-        })
-    );
-    }
 
 
     };
@@ -125,68 +131,68 @@ const RequestTestModal = ({
     const handleSave = async () => {
         if (!record?.type || !record?.name) {
             dispatch(
-            notify({
-                msg: 'Please fill required fields',
-                sev: 'warning',
-            })
+                notify({
+                    msg: 'Please fill required fields',
+                    sev: 'warning',
+                })
             );
             return;
         }
 
         try {
             if (editMode && editingId) {
-            const updated = await updateRequest({
-                id: editingId,
-                body: {
-                id: editingId,
-                name: record.name,
-                type: record.type,
-                indication: record.indication ?? '',
-                fromDepartmentId,
-                fromFacilityId,
-                },
-            }).unwrap();
+                const updated = await updateRequest({
+                    id: editingId,
+                    body: {
+                        id: editingId,
+                        name: record.name,
+                        type: record.type,
+                        indication: record.indication ?? '',
+                        fromDepartmentId,
+                        fromFacilityId,
+                    },
+                }).unwrap();
 
-            dispatch(
-                notify({
-                msg: 'Test request updated successfully',
-                sev: 'success',
-                })
-            );
-            setRecord({
-                type: updated?.type ?? record.type,
-                name: updated?.name ?? record.name,
-                indication:
-                updated?.indication !== null && updated?.indication !== undefined
-                    ? updated.indication
-                    : record.indication ?? '',
-            });
+                dispatch(
+                    notify({
+                        msg: 'Test request updated successfully',
+                        sev: 'success',
+                    })
+                );
+                setRecord({
+                    type: updated?.type ?? record.type,
+                    name: updated?.name ?? record.name,
+                    indication:
+                        updated?.indication !== null && updated?.indication !== undefined
+                            ? updated.indication
+                            : record.indication ?? '',
+                });
 
-            setEditMode(false);
-            setEditingId(null);
+                setEditMode(false);
+                setEditingId(null);
             }
 
             else {
-            await createRequest({
-                name: record.name,
-                type: record.type,
-                indication: record.indication ?? '',
-                fromDepartmentId,
-                fromFacilityId,
-            }).unwrap();
+                await createRequest({
+                    name: record.name,
+                    type: record.type,
+                    indication: record.indication ?? '',
+                    fromDepartmentId,
+                    fromFacilityId,
+                }).unwrap();
 
-            dispatch(
-                notify({
-                msg: 'Test request created successfully',
-                sev: 'success',
-                })
-            );
+                dispatch(
+                    notify({
+                        msg: 'Test request created successfully',
+                        sev: 'success',
+                    })
+                );
 
-            setRecord({
-                type: null,
-                name: '',
-                indication: '',
-            });
+                setRecord({
+                    type: null,
+                    name: '',
+                    indication: '',
+                });
             }
 
             await refetch();
@@ -194,13 +200,13 @@ const RequestTestModal = ({
             onSuccess?.();
         } catch (e: any) {
             dispatch(
-            notify({
-                msg:
-                e?.data?.message?.startsWith('error.')
-                    ? e.data.message.replace('error.', '')
-                    : 'Operation failed',
-                sev: 'error',
-            })
+                notify({
+                    msg:
+                        e?.data?.message?.startsWith('error.')
+                            ? e.data.message.replace('error.', '')
+                            : 'Operation failed',
+                    sev: 'error',
+                })
             );
         }
     };
@@ -216,16 +222,31 @@ const RequestTestModal = ({
     }, [open]);
 
     const DepartmentCell = ({ departmentId }: { departmentId?: string }) => {
-    const { data: department, isFetching } =
-        useGetDepartmentByIdQuery(departmentId!, {
-        skip: !departmentId,
-        });
+        const { data: department, isFetching } =
+            useGetDepartmentByIdQuery(departmentId!, {
+                skip: !departmentId,
+            });
 
-    if (isFetching) return <span>Loading...</span>;
-    return <span>{department?.name ?? '—'}</span>;
+        if (isFetching) return <span>Loading...</span>;
+        return <span>{department?.name ?? '—'}</span>;
     };
 
-    /* ================= TABLE (placeholder) ================= */
+    const handleOpenDiagnosticTest = (row: any) => {
+        if (!row?.diagnosticTestId) {
+            dispatch(
+                notify({
+                    msg: 'Diagnostic test not linked yet',
+                    sev: 'warning'
+                })
+            );
+            return;
+        }
+
+        setSelectedDiagnosticTestId(String(row.diagnosticTestId));
+        setViewModalOpen(true);
+    };
+
+
     const tableColumns = [
         {
             key: 'type',
@@ -234,8 +255,8 @@ const RequestTestModal = ({
             render: (row: any) => (
                 <>
                     {formatEnumString(
-                    row.type ??
-                    '—'
+                        row.type ??
+                        '—'
                     )}
                 </>
             )
@@ -245,62 +266,80 @@ const RequestTestModal = ({
             key: 'name',
             title: <Translate>Name</Translate>,
             flexGrow: 1,
+            render: (row: any) => (
+                <span
+                    style={{
+                        color: '#1675e0',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        fontWeight: 500
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenDiagnosticTest(row);
+                    }}
+                >
+                    {row.name}
+                </span>
+            )
         },
         {
             key: 'indication',
             title: <Translate>Indication</Translate>,
             flexGrow: 2,
         },
-            {
+        {
             key: 'status',
             title: <Translate>Status</Translate>,
             flexGrow: 1,
             render: (row: any) => (
                 <>
                     {formatEnumString(
-                    row.status ??
-                    '—'
+                        row.status ??
+                        '—'
                     )}
                 </>
             )
         },
-    {
-    key: 'fromDepartmentId',
-    title: <Translate>From Department</Translate>,
-    width: 180,
-    render: (row: any) => (
-        <DepartmentCell departmentId={row.fromDepartmentId} />
-    ),
-    },
+        {
+            key: 'fromDepartmentId',
+            title: <Translate>From Department</Translate>,
+            width: 180,
+            render: (row: any) => (
+                <DepartmentCell departmentId={row.fromDepartmentId} />
+            ),
+        },
 
         {
-        key: 'actions',
-        title: <Translate>Actions</Translate>,
-        width: 120,
-        align: 'center',
-        render: row => (
-            <MdDelete
-            title="Delete"
-            size={24}
-            fill="var(--primary-pink)"
-            className="icons-style"
-            onClick={() => openDeleteModal(row)}
-            />
-        ),
+            key: 'actions',
+            title: <Translate>Actions</Translate>,
+            width: 120,
+            align: 'center',
+            render: row => (
+                <MdDelete
+                    title="Delete"
+                    size={24}
+                    fill="var(--primary-pink)"
+                    className="icons-style"
+                    onClick={() => openDeleteModal(row)}
+                />
+            ),
         },
-        { key: 'createdAtBy', title: 'Requested by/at', dataKey: 'createdByAt', width: 150, expandable : true,
+        {
+            key: 'createdAtBy', title: 'Requested by/at', dataKey: 'createdByAt', width: 150, expandable: true,
             render: (row: any) =>
-            row?.createdDate ? (
-                <>
-                {row?.createdBy}
-                <br />
-                <span className="date-table-style">
-                {formatDateWithoutSeconds(row.createdDate)}
-                </span>{' '}
-                </>
-            ) : (
+                row?.createdDate ? (
+                    <>
+                        {row?.createdBy}
+                        <br />
+                        <span className="date-table-style">
+                            {formatDateWithoutSeconds(row.createdDate)}
+                        </span>{' '}
+                    </>
+                ) : (
                     ' '
-                    )},
+                )
+        },
     ];
 
 
@@ -315,43 +354,43 @@ const RequestTestModal = ({
     }, [requestsResponse, fromFacilityId]);
 
 
-const handleRowClick = (row: any) => {
-  if (row.createdBy !== currentUser) {
-    dispatch(
-      notify({
-        msg: 'You can only edit requests created by you',
-        sev: 'warning',
-      })
-    );
-    return;
-  }
+    const handleRowClick = (row: any) => {
+        if (row.createdBy !== currentUser) {
+            dispatch(
+                notify({
+                    msg: 'You can only edit requests created by you',
+                    sev: 'warning',
+                })
+            );
+            return;
+        }
 
-  if (row.status !== 'REQUESTED') {
-    dispatch(
-      notify({
-        msg: 'Only Requested requests can be edited',
-        sev: 'warning',
-      })
-    );
-    return;
-  }
-
-
-  setEditMode(true);
-  setEditingId(row.id);
-
-  const selectedType =
-    TypeResponse?.find(t => t.value === row.type)?.value ?? null;
-
-  setRecord({
-    type: selectedType,
-    name: row.name,
-    indication: row.indication ?? '',
-  });
-};
+        if (row.status !== 'REQUESTED') {
+            dispatch(
+                notify({
+                    msg: 'Only Requested requests can be edited',
+                    sev: 'warning',
+                })
+            );
+            return;
+        }
 
 
-        const handleClear = () => {
+        setEditMode(true);
+        setEditingId(row.id);
+
+        const selectedType =
+            TypeResponse?.find(t => t.value === row.type)?.value ?? null;
+
+        setRecord({
+            type: selectedType,
+            name: row.name,
+            indication: row.indication ?? '',
+        });
+    };
+
+
+    const handleClear = () => {
         setRecord({
             type: null,
             name: '',
@@ -360,7 +399,14 @@ const handleRowClick = (row: any) => {
 
         setEditMode(false);
         setEditingId(null);
-        };
+    };
+
+
+    useEffect(() => {
+        if (!viewModalOpen) {
+            setSelectedDiagnosticTestId(null);
+        }
+    }, [viewModalOpen]);
 
 
     return (
@@ -387,7 +433,7 @@ const handleRowClick = (row: any) => {
                                 fieldLabel="Type"
                                 record={record}
                                 setRecord={setRecord}
-                                width= "20vw"
+                                width="20vw"
                             />
 
                             <MyInput
@@ -398,7 +444,7 @@ const handleRowClick = (row: any) => {
                                 required
                                 fieldLabel="Name"
                                 placeholder="Enter test name"
-                                width= "20vw"
+                                width="20vw"
                             />
 
                             <MyInput
@@ -413,41 +459,46 @@ const handleRowClick = (row: any) => {
                             />
                         </div>
                         <div className='request-test-modal-main-button-container'>
-                        <MyButton
-                            appearance="ghost"
-                            onClick={handleClear}
-                        >
-                            Clear
-                        </MyButton>
+                            <MyButton
+                                appearance="ghost"
+                                onClick={handleClear}
+                            >
+                                Clear
+                            </MyButton>
 
-                        <MyButton
-                            onClick={handleSave}
-                        >
-                            {editMode ? 'Update' : 'Save'}
-                        </MyButton>
+                            <MyButton
+                                onClick={handleSave}
+                            >
+                                {editMode ? 'Update' : 'Save'}
+                            </MyButton>
                         </div>
                     </Form>
 
                     <Divider />
 
-                        <MyTable
+                    <MyTable
                         columns={tableColumns}
                         data={requestsResponse?.data || []}
                         loading={isFetching}
                         height={250}
                         onRowClick={handleRowClick}
-                        />
+                    />
 
 
-                <DeletionConfirmationModal
-                open={deleteModalOpen}
-                setOpen={setDeleteModalOpen}
-                itemToDelete="test request"
-                actionType="delete"
-                actionButtonFunction={confirmDelete}
-                confirmationQuestion={`Are you sure you want to delete "${selectedRequest?.name}"?`}
-                />
+                    <DeletionConfirmationModal
+                        open={deleteModalOpen}
+                        setOpen={setDeleteModalOpen}
+                        itemToDelete="test request"
+                        actionType="delete"
+                        actionButtonFunction={confirmDelete}
+                        confirmationQuestion={`Are you sure you want to delete "${selectedRequest?.name}"?`}
+                    />
 
+                    <ViewDiagnosticTestModal
+                        open={viewModalOpen}
+                        setOpen={setViewModalOpen}
+                        diagnosticTestId={selectedDiagnosticTestId}
+                    />
                 </>
             )}
         />

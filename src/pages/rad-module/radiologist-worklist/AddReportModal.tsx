@@ -304,9 +304,9 @@ const AddReportModal = ({
 
           {/* Editor */}
           <Row>
-            <div className="diagnostic-template-label">
+            {/* <div className="diagnostic-template-label">
               Add Report Manually
-            </div>
+            </div> */}
             <Col md={24}>
               <Editor
                 editorState={editorState}
