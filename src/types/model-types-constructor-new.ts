@@ -1317,5 +1317,73 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
   notes: null,
 
   status: 'NEW',
-  encounterDate: null                
+  encounterDate: null,
+  chiefComplaint:null,
+
+  hasPrescription: false,
+  hasOrder: false,
+  isObserved: false            
+};
+
+export const newPatientPayments: modelTypes.PatientPayments = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
+  planId: null,
+
+  dueAmount: 0,
+  patientBalance: 0,
+
+  paidFromAmount: 0,
+  paidFromBalance: 0,
+
+  paymentTypes: null,
+  paymentMethods: null,
+  refunds: 0,
+
+  amount: 0,
+  currency: '',
+  facilityDefaultCurrency: '',
+  amountInFacilityCurrency: null,
+
+  remaining: 0,
+  addToFreeBalance: false,
+
+  useBalanceToSettleDebts: false,
+
+  cardNumber: null,
+  cardHolderName: null,
+  cardValidUntil: null,
+
+  chequeNumber: null,
+  chequeBankName: null,
+  chequeDueDate: null,
+
+  transferNumber: null,
+  transferBankName: null,
+  transferDate: null,
+
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newPatientPaymentService: modelTypes.PatientPaymentServices = {
+  id: undefined,
+  paymentId: 0,
+  serviceId: 0,
+  price: 0,
+  isExempted: false,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newPatientPaymentDetails: modelTypes.PatientPaymentDetails = {
+  payment: { ...newPatientPayments },
+  services: []
 };

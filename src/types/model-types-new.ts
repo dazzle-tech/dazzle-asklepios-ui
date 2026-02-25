@@ -1514,24 +1514,189 @@ export interface PatientEncounter {
   id: number;
 
   patientId: number;
+
+  encounterNumber?: string | null;
+
   facilityId: number;
   departmentId: number;
 
   practitionerId?: number | null;
 
-  encounterType: string;        
-  encounterReason: string;      
+  encounterType: string;
+  encounterReason: string;
 
   followUpEncounterId?: number | null;
 
-  priorityLevel: string;        
+  priorityLevel: string;
 
   originType?: string | null;
   originName?: string | null;
 
   notes?: string | null;
 
-  status: string;  
- encounterDate?: Date | null;                
-             
+  departmentDailySequenceNumber?: number | null;
+
+  encounterDate?: Date | null;
+
+  status: string;
+
+  chiefComplaint?: string | null;
+
+  hasPrescription: boolean;
+  hasOrder: boolean;
+  isObserved: boolean;
+}
+
+
+
+export interface PatientPaymentServiceItemDTO {
+  serviceId: number;
+  price: number;
+  isExempted: boolean;
+}
+
+export interface PatientPaymentDTO {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  planId?: number | null;
+
+  paymentTypes: string; 
+  paymentMethods: string; 
+
+  amount: number;
+  currency: string; 
+  facilityDefaultCurrency: string; 
+  amountInFacilityCurrency?: number | null;
+
+  addToFreeBalance: boolean;
+
+  useBalanceToSettleDebts?: boolean;
+
+  cardNumber?: string | null;
+  cardHolderName?: string | null;
+  cardValidUntil?: string | null; 
+
+  chequeNumber?: string | null;
+  chequeBankName?: string | null;
+  chequeDueDate?: string | null; 
+
+  transferNumber?: string | null;
+  transferBankName?: string | null;
+  transferDate?: string | null; 
+
+  services: PatientPaymentServiceItemDTO[];
+}
+
+export interface PatientPaymentServices {
+  id?: number;
+
+  paymentId: number;
+
+  serviceId: number;
+  price: number;
+  isExempted: boolean;
+
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface PatientPayments {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  planId?: number | null;
+
+  dueAmount: number;
+  patientBalance: number;
+
+  paidFromAmount?: number | null;
+  paidFromBalance?: number | null;
+
+  paymentTypes: string;
+  paymentMethods: string;
+
+  amount: number;
+  currency: string;
+  facilityDefaultCurrency: string;
+  amountInFacilityCurrency?: number | null;
+
+  remaining: number;
+  addToFreeBalance: boolean;
+
+  useBalanceToSettleDebts?: boolean;
+
+  cardNumber?: string | null;
+  cardHolderName?: string | null;
+  cardValidUntil?: string | null;
+
+  chequeNumber?: string | null;
+  chequeBankName?: string | null;
+  chequeDueDate?: string | null;
+
+  transferNumber?: string | null;
+  transferBankName?: string | null;
+  transferDate?: string | null;
+
+  refunds?: number | string | null;
+
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface PatientPaymentDetails {
+  payment: PatientPayments;
+  services: PatientPaymentServices[];
+}
+
+
+export interface PatientLedgerSummaryDTO {
+  patientId: number;
+  totalDebt: number;
+  walletBalance: number;
+}
+
+
+export interface PatientChargeDTO {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+  planId?: number | null;
+
+  dueAmount: number;
+  remaining: number;
+
+  currency: string;
+  facilityDefaultCurrency: string;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null; 
+}
+
+
+export interface PatientWalletDTO {
+  patientId: number;
+  balance: number;
+  lastModifiedDate?: Date | string | null; 
+}
+
+export interface PatientPaymentAllocationDTO {
+  id?: number;
+
+  paymentId: number;
+  chargeId: number;
+
+  paidFromAmount: number;
+  paidFromBalance: number;
+
+  lastModifiedDate?: Date | string | null;
 }
