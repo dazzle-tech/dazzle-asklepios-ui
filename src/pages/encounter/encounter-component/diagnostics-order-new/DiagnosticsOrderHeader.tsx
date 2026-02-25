@@ -1,21 +1,20 @@
-import React from 'react';
-import { Checkbox, Divider, Form, Row, SelectPicker } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { GrTestDesktop } from 'react-icons/gr';
 import {
   faLandMineOn,
   faPlus,
-  faVial,
-  faStar
+  faStar,
+  faVial
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React from 'react';
+import { GrTestDesktop } from 'react-icons/gr';
+import { Checkbox, Divider, Form, Row, SelectPicker } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import Translate from '@/components/Translate';
 
-import PlusIcon from '@rsuite/icons/Plus';
 import CheckIcon from '@rsuite/icons/Check';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import PlusIcon from '@rsuite/icons/Plus';
 
 type Props = {
   // data

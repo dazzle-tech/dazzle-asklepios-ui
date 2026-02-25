@@ -4,13 +4,13 @@ import { useLocation } from 'react-router-dom';
 import './styles.less';
 
 import DiagnosticsOrderHeader from './DiagnosticsOrderHeader';
-import DiagnosticsOrderTable from './DiagnosticsOrderTable';
 import DiagnosticsOrderModals from './DiagnosticsOrderModals';
+import DiagnosticsOrderTable from './DiagnosticsOrderTable';
 import { useDiagnosticsOrder } from './useDiagnosticsOrder';
 
 const DiagnosticsOrder = (props: any) => {
   const location = useLocation();
-
+//add new patient edits
   const patient = location.state?.patient;
   const encounter = location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;

@@ -1,17 +1,17 @@
-import React, { useMemo } from 'react';
-import Translate from '@/components/Translate';
 import MyInput from '@/components/MyInput';
+import Translate from '@/components/Translate';
+import React, { useMemo } from 'react';
 import { Form } from 'rsuite';
 
 import { useGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
+import { useGetPathologyByTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 import { useGetLaboratoryByTestIdQuery } from '@/services/setup/diagnosticTest/laboratoryService';
 import { useGetRadiologyByTestIdQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
-import { useGetPathologyByTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestPathologyService';
 
-import './styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
+import './styles.less';
 
 
 const lovLabel = (lov?: any[], key?: any) =>
@@ -28,36 +28,25 @@ const prettifyLov = (v?: string) =>
 const TestCardModal = ({ test }: any) => {
   const testId = test?.id;
 
-  /* -------- Resolve test type -------- */
-  const resolvedType = useMemo(() => {
-    const raw =
-      test?.type ??
-      test?.testType ??
-      test?.testTypeLvalue?.valueCode ??
-      test?.testTypeLkey ??
-      null;
 
-    if (!raw) return null;
-    if (raw === '862810597620632') return 'LABORATORY';
-    if (raw === '862828331135792') return 'RADIOLOGY';
-    if (raw === '862842242812880') return 'PATHOLOGY';
-    return raw;
-  }, [test]);
+    const raw = test?.type;
+
+
 
   /* ================= DATA ================= */
 
   const { data: fullTest } = useGetDiagnosticTestByIdQuery(testId, { skip: !testId });
 
   const { data: lab } = useGetLaboratoryByTestIdQuery(testId, {
-    skip: resolvedType !== 'LABORATORY',
+    skip:  raw !== 'LABORATORY',
   });
 
   const { data: rad } = useGetRadiologyByTestIdQuery(testId, {
-    skip: resolvedType !== 'RADIOLOGY',
+    skip:  raw !== 'RADIOLOGY',
   });
 
   const { data: path } = useGetPathologyByTestIdQuery(testId, {
-    skip: resolvedType !== 'PATHOLOGY',
+    skip:  raw !== 'PATHOLOGY',
   });
 
   const { data: propertyLov } = useGetLovValuesByCodeQuery('LAB_PROPERTIES');
@@ -186,12 +175,7 @@ const TestCardModal = ({ test }: any) => {
 
   return (
     <div className="test-card-container">
-      {/* ===== HEADER ===== */}
-      {/* <div className="test-card-header">
-        <h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>
-      </div> */}
-
-      {resolvedType === 'LABORATORY' && (
+      { raw === 'LABORATORY' && (
         <Form fluid>
           <SectionContainer title={<h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>}
           content={
@@ -222,7 +206,7 @@ const TestCardModal = ({ test }: any) => {
         </Form>
       )}
 
-      {resolvedType === 'RADIOLOGY' && (
+      { raw === 'RADIOLOGY' && (
         <Form fluid>
       <SectionContainer title={<h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>}
           content={
@@ -291,7 +275,7 @@ const TestCardModal = ({ test }: any) => {
       )}
 
 
-      {resolvedType === 'PATHOLOGY' && (
+      { raw === 'PATHOLOGY' && (
         <Form fluid>
         <SectionContainer title={<h4>{fullTest?.data?.name ?? <Translate>Diagnostic Test</Translate>}</h4>}
           content={<>

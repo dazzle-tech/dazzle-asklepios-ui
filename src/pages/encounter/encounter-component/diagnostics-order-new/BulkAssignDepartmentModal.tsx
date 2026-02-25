@@ -1,18 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Form } from 'rsuite';
-import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
 import {
   useUpdateDiagnosticOrderTestMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import {
-  useGetDepartmentListByTypeQuery
-} from '@/services/setupService';
 import { useGetDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { notify } from '@/utils/uiReducerActions';
 import { skipToken } from '@reduxjs/toolkit/query';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
 
 type Props = {
   open: boolean;
@@ -50,7 +47,6 @@ const BulkAssignDepartmentModal = ({
   }>({});
 
   const [receivedType, setReceivedType] = useState<string>('');
-const [isMixedTypes, setIsMixedTypes] = useState(false);
 
   useEffect(() => {
     const firstTest = orderTests?.[0]?.test;
@@ -125,8 +121,7 @@ const handleApply = async () => {
           id: row.id,
           body: {
             id: row.id,
-            patientId: row.patientId,
-            encounterId: row.encounterId,
+            //add new patient edits
             orderId: row.orderId,
             testId: row.testId,
             receivedDepartmentId: Number(record.receivedDepartmentId),
@@ -167,13 +162,7 @@ const handleApply = async () => {
        );
      }
    }, [receivedLabList]);
-   
-
-useEffect(() => {
-  if (!selectedRows?.length || !orderTests?.length) {
-    setIsMixedTypes(false);
-    return;
-  }
+  
 
   const selectedTests = selectedRows
     .map(rowId =>
@@ -189,8 +178,6 @@ useEffect(() => {
     )
   );
 
-  setIsMixedTypes(types.length > 1);
-}, [selectedRows, orderTests]);
 
 
 

@@ -1,27 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import MyModal from '@/components/MyModal/MyModal';
-import MyInput from '@/components/MyInput';
-import MyTable from '@/components/MyTable';
-import { Form, Divider } from 'rsuite';
-import { useCreateDiagnosticTestRequestMutation, useUpdateDiagnosticTestRequestMutation } from '@/services/diagnosic-order/diagnosticTestRequestService';
-import { notify } from '@/utils/uiReducerActions';
-import { useAppDispatch } from '@/hooks';
-import Translate from '@/components/Translate';
-import { useFilterDiagnosticTestRequestsQuery } from
-    '@/services/diagnosic-order/diagnosticTestRequestService';
-import './styles.less';
-import { useEnumOptions } from '@/services/enumsApi';
-import { useDeleteDiagnosticTestRequestMutation } from
-    '@/services/diagnosic-order/diagnosticTestRequestService';
-import MyButton from '@/components/MyButton/MyButton';
-import TrashIcon from '@rsuite/icons/Trash';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { MdDelete, MdModeEdit } from "react-icons/md";
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
-import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
-import { useAppSelector } from '@/hooks';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
+import Translate from '@/components/Translate';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import ViewDiagnosticTestModal from '@/pages/rad-module/requested-tests/ViewDiagnosticTestModal';
-import { useGetDiagnosticTestRequestByIdQuery } from '@/services/diagnosic-order/diagnosticTestRequestService';
+import { useCreateDiagnosticTestRequestMutation, useDeleteDiagnosticTestRequestMutation, useFilterDiagnosticTestRequestsQuery, useUpdateDiagnosticTestRequestMutation } from '@/services/diagnosic-order/diagnosticTestRequestService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import React, { useEffect, useState } from 'react';
+import { MdDelete } from "react-icons/md";
+import { Divider, Form } from 'rsuite';
+import './styles.less';
 
 const RequestTestModal = ({
     open,
@@ -59,8 +53,6 @@ const RequestTestModal = ({
 
     const [deleteRequest, { isLoading: isDeleting }] =
         useDeleteDiagnosticTestRequestMutation();
-
-    // const { data: freshRequest } = useGetDiagnosticTestRequestByIdQuery({});
 
     const [createRequest, { isLoading }] =
         useCreateDiagnosticTestRequestMutation();
@@ -147,9 +139,7 @@ const RequestTestModal = ({
                         id: editingId,
                         name: record.name,
                         type: record.type,
-                        indication: record.indication ?? '',
-                        fromDepartmentId,
-                        fromFacilityId,
+                        indication: record.indication ?? ''
                     },
                 }).unwrap();
 
@@ -247,11 +237,10 @@ const RequestTestModal = ({
     };
 
 
-    const tableColumns = [
+    const tableColumns: ColumnConfig[] = [
         {
             key: 'type',
             title: <Translate>Type</Translate>,
-            flexGrow: 1,
             render: (row: any) => (
                 <>
                     {formatEnumString(
@@ -265,7 +254,6 @@ const RequestTestModal = ({
         {
             key: 'name',
             title: <Translate>Name</Translate>,
-            flexGrow: 1,
             render: (row: any) => (
                 <span
                     style={{
@@ -286,12 +274,10 @@ const RequestTestModal = ({
         {
             key: 'indication',
             title: <Translate>Indication</Translate>,
-            flexGrow: 2,
         },
         {
             key: 'status',
             title: <Translate>Status</Translate>,
-            flexGrow: 1,
             render: (row: any) => (
                 <>
                     {formatEnumString(

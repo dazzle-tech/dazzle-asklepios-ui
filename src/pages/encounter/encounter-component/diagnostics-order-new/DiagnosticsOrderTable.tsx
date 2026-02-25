@@ -1,13 +1,13 @@
-import React from 'react';
-import { HStack, Panel, Tooltip, Whisper, Checkbox } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import { faCreditCard, faListCheck } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React from 'react';
+import { MdAttachFile, MdModeEdit } from 'react-icons/md';
+import { Checkbox, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 
-import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
-import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
+import Translate from '@/components/Translate';
 import PatientPrevTests from './PatientPrevTests';
+import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
 
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
@@ -85,7 +85,6 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     return '';
   };
 
-  // columns (نقلناها هون)
   const tableColumns: any[] = [
     {
       key: 'check',
@@ -291,7 +290,9 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       <PreviewDiagnosticsOrder open={!!previewDiagnosticsOrder} orderTest={previewDiagnosticsOrder} />
 
       <Panel header="Patient Orders Test" collapsible expanded className="panel-style">
-        <PatientPrevTests patient={patient} />
+        <PatientPrevTests patient={
+          //add new patient edits
+          patient} />
       </Panel>
     </div>
   );

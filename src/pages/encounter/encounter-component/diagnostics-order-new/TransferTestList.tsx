@@ -1,39 +1,22 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetCatalogsByDepartmentAndNotQuery, useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
 import {
   Checkbox,
+  CircularProgress,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Paper,
-  TextField,
-  CircularProgress
+  Paper
 } from '@mui/material';
-import { Col, Form, Row } from 'rsuite';
-import MyButton from '@/components/MyButton/MyButton';
-import { useSelector } from 'react-redux';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import MyInput from '@/components/MyInput';
-import { useEnumOptions } from '@/services/enumsApi';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useGetCatalogByDepartmentQuery } from '@/services/setup/catalog/catalogService';
-import './styles.less';
-import { useGetCatalogsByDepartmentAndNotQuery, useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
 import SearchIcon from '@rsuite/icons/Search';
-import { Cursor } from 'recharts/types/component/Cursor';
-import { Pointer } from 'lucide-react';
-
-const TEST_TYPE_TO_CATALOG_TYPE: Record<string, string> = {
-  LAB: 'LABORATORY',
-  LABORATORY: 'LABORATORY',
-
-  RAD: 'RADIOLOGY',
-  RADIOLOGY: 'RADIOLOGY',
-
-  PATH: 'PATHOLOGY',
-  PATHOLOGY: 'PATHOLOGY'
-};
-
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Col, Form, Row } from 'rsuite';
+import './styles.less';
 
 const TransferTestList = ({
   open,
@@ -57,10 +40,7 @@ const TransferTestList = ({
   const diagTypeResponse = useEnumOptions("TestType");
 
   const getItemType = (item: any) =>
-    item?.type ??
-    item?.testType ??
-    item?.test?.type ??
-    null;
+    item?.type;
 
   /* ================= helpers ================= */
 
@@ -76,23 +56,23 @@ const TransferTestList = ({
     useGetCatalogsByDepartmentAndNotQuery(
       selectedDepartmentId
         ? {
-            departmentId: selectedDepartmentId,
-            page: 0,
-            size: 1000,
-          }
+          departmentId: selectedDepartmentId,
+          page: 0,
+          size: 1000,
+        }
         : skipToken
     );
 
 
   const catalogs = catalogsResponse?.data ?? [];
 
-const { data: catalogTestsResponse } = useGetCatalogTestsQuery(
-  searchType?.catalogId
-    ? { catalogId: searchType.catalogId, page: 0, size: 1000 }
-    : skipToken
-);
+  const { data: catalogTestsResponse } = useGetCatalogTestsQuery(
+    searchType?.catalogId
+      ? { catalogId: searchType.catalogId, page: 0, size: 1000 }
+      : skipToken
+  );
 
-const catalogTests = catalogTestsResponse?.data?.tests ?? [];
+  const catalogTests = catalogTestsResponse?.data?.tests ?? [];
 
 
   const leftChecked = intersection(
@@ -105,60 +85,37 @@ const catalogTests = catalogTestsResponse?.data?.tests ?? [];
     rightItems.map(getItemKey)
   );
 
-  const getItemCatalogId = (item: any) =>
-    item?.catalogId ??
-    item?.catalog?.id ??
-    item?.catalogKey ??
-    null;
 
-const selectedCatalogTests = useMemo(() => {
-  if (!searchType?.catalogId) return null;
+  const filteredLeft = useMemo(() => {
+    return leftItems.filter(item => {
+      const testId = getItemKey(item);
 
-  const catalog = catalogs.find(
-    c => String(c.id) === String(searchType.catalogId)
-  );
+      // 🔹 name search
+      const matchesName = getItemName(item)
+        .toLowerCase()
+        .includes((searchTerm ?? '').toLowerCase());
 
-  if (!catalog) return null;
+      // 🔹 type filter
+      const selectedType = searchType?.type;
+      const matchesType =
+        !selectedType || getItemType(item) === selectedType;
 
-  return (
-    catalog.tests ??
-    catalog.testList ??
-    catalog.catalogTests ??
-    []
-  );
-}, [catalogs, searchType?.catalogId]);
+      // 🔥 catalog filter (REAL SOURCE)
+      const matchesCatalog =
+        !searchType?.catalogId ||
+        catalogTests.some(
+          t => String(t.id) === String(testId)
+        );
 
-
-const filteredLeft = useMemo(() => {
-  return leftItems.filter(item => {
-    const testId = getItemKey(item);
-
-    // 🔹 name search
-    const matchesName = getItemName(item)
-      .toLowerCase()
-      .includes((searchTerm ?? '').toLowerCase());
-
-    // 🔹 type filter
-    const selectedType = searchType?.type;
-    const matchesType =
-      !selectedType || getItemType(item) === selectedType;
-
-    // 🔥 catalog filter (REAL SOURCE)
-    const matchesCatalog =
-      !searchType?.catalogId ||
-      catalogTests.some(
-        t => String(t.id) === String(testId)
-      );
-
-    return matchesName && matchesType && matchesCatalog;
-  });
-}, [
-  leftItems,
-  searchTerm,
-  searchType?.type,
-  searchType?.catalogId,
-  catalogTests
-]);
+      return matchesName && matchesType && matchesCatalog;
+    });
+  }, [
+    leftItems,
+    searchTerm,
+    searchType?.type,
+    searchType?.catalogId,
+    catalogTests
+  ]);
 
   /* ================= handlers ================= */
 
@@ -240,21 +197,21 @@ const filteredLeft = useMemo(() => {
     </Paper>
   );
 
-const filteredCatalogs = useMemo(() => {
-  if (!searchType?.type) return catalogs;
+  const filteredCatalogs = useMemo(() => {
+    if (!searchType?.type) return catalogs;
 
-  return catalogs.filter(
-    (catalog: any) => catalog.type === searchType.type
-  );
-}, [catalogs, searchType?.type]);
+    return catalogs.filter(
+      (catalog: any) => catalog.type === searchType.type
+    );
+  }, [catalogs, searchType?.type]);
 
 
-useEffect(() => {
-  setSearchType(prev => ({
-    ...prev,
-    catalogId: undefined
-  }));
-}, [searchType?.type]);
+  useEffect(() => {
+    setSearchType(prev => ({
+      ...prev,
+      catalogId: undefined
+    }));
+  }, [searchType?.type]);
 
 
   return (
@@ -291,21 +248,21 @@ useEffect(() => {
         </Form>
         <Form>
           <div className='test-name-field-main-container'>
-              <MyInput
-                fieldName="testName"
-                fieldType="text"
-                placeholder="Search Test"
-                record={{ testName: searchInput }}
-                setRecord={(r: any) => setSearchInput(r.testName)}
-                width="100%"
-                disabled={!!isFetching}
-                showLabel={false}
-                rightAddon={<SearchIcon className='search-icon-test-name-icon' onClick={() => setSearchTerm(searchInput)}/>}
-                enterClick={() => {
-                  setSearchTerm(searchInput);
-                }}
-              />
-        </div>
+            <MyInput
+              fieldName="testName"
+              fieldType="text"
+              placeholder="Search Test"
+              record={{ testName: searchInput }}
+              setRecord={(r: any) => setSearchInput(r.testName)}
+              width="100%"
+              disabled={!!isFetching}
+              showLabel={false}
+              rightAddon={<SearchIcon className='search-icon-test-name-icon' onClick={() => setSearchTerm(searchInput)} />}
+              enterClick={() => {
+                setSearchTerm(searchInput);
+              }}
+            />
+          </div>
         </Form>
       </Row>
 

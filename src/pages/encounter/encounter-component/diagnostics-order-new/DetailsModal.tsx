@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import './styles.less';
-import MyModal from '@/components/MyModal/MyModal';
-import { Col, Form, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
+import { useGetDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { faVials } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
-import clsx from 'clsx';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useGetDepartmentByTypeQuery } from '@/services/security/departmentService';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import clsx from 'clsx';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
+import './styles.less';
 
 const DetailsModal = ({
   test,
@@ -27,15 +27,14 @@ const DetailsModal = ({
   const [receivedType, setReceivedType] = useState('');
 
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
-  const { data: timeUnitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-   const [deptPage, setDeptPage] = useState(0);
+  const [deptPage, setDeptPage] = useState(0);
   const { data: receivedLabList } = useGetDepartmentByTypeQuery(
     receivedType
       ? {
-          type: receivedType,
-          page: deptPage,
-          size: 3
-        }
+        type: receivedType,
+        page: deptPage,
+        size: 3
+      }
       : skipToken
   );
 
@@ -52,10 +51,10 @@ const DetailsModal = ({
   );
 
   useEffect(() => {
-    const testType =  test?.type;
+    const testType = test?.type;
     if (testType === 'LABORATORY') {
       setReceivedType('LABORATORY');
-    } else if ( testType === 'RADIOLOGY') {
+    } else if (testType === 'RADIOLOGY') {
       setReceivedType('RADIOLOGY');
     } else if (testType === 'PATHOLOGY') {
       setReceivedType('PATHOLOGY');
@@ -67,13 +66,13 @@ const DetailsModal = ({
   const [allDepartments, setAllDepartments] = useState([]);
 
   useEffect(() => {
-     if (receivedLabList?.data) {
-       setAllDepartments((prev) =>
-         deptPage === 0 ? receivedLabList.data : [...prev, ...receivedLabList.data]
-       );
-     }
-   }, [receivedLabList]);
- 
+    if (receivedLabList?.data) {
+      setAllDepartments((prev) =>
+        deptPage === 0 ? receivedLabList.data : [...prev, ...receivedLabList.data]
+      );
+    }
+  }, [receivedLabList]);
+
   useEffect(() => {
     if (isSuccess && fetchAttachmentByKeyResponce) {
       if (actionType === 'download') {
@@ -161,46 +160,46 @@ const DetailsModal = ({
           <div className={clsx('', { 'disabled-panel': edit })}>
             <Form fluid>
               <div className='details-modal-diagnostic-order-inputs'>
-                  <MyInput
-                    fieldType="select"
-                    fieldLabel="Reason"
-                    selectData={ReasonLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'reasonLkey'}
-                    record={orderTest}
-                    setRecord={setOrderTest}
-                    width={"12vw"}
-                  />
+                <MyInput
+                  fieldType="select"
+                  fieldLabel="Reason"
+                  selectData={ReasonLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldName={'reasonLkey'}
+                  record={orderTest}
+                  setRecord={setOrderTest}
+                  width={"12vw"}
+                />
 
-                  <MyInput
-                    fieldType="selectPagination"
-                    fieldLabel="Add Department"
-                    fieldName="receivedDepartmentId"
-                    selectData={allDepartments}
-                    selectDataLabel="name"
-                    selectDataValue="id"
-                   record={orderTest}
-                    setRecord={setOrderTest}
-                    searchable
-                    width={"12vw"}
-                    hasMore={receivedLabList?.links?.next ? true : false}
-                    onFetchMore={() => {
-                      if (receivedLabList?.links?.next) {
-                        const { page } = extractPaginationFromLink(receivedLabList.links.next);
-                        setDeptPage(page);
-                      }
-                    }}
-                  />
+                <MyInput
+                  fieldType="selectPagination"
+                  fieldLabel="Add Department"
+                  fieldName="receivedDepartmentId"
+                  selectData={allDepartments}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={orderTest}
+                  setRecord={setOrderTest}
+                  searchable
+                  width={"12vw"}
+                  hasMore={receivedLabList?.links?.next ? true : false}
+                  onFetchMore={() => {
+                    if (receivedLabList?.links?.next) {
+                      const { page } = extractPaginationFromLink(receivedLabList.links.next);
+                      setDeptPage(page);
+                    }
+                  }}
+                />
               </div>
-                  <MyInput
-                    height={70}
-                    width={'100%'}
-                    fieldLabel="Notes"
-                    fieldName={'notes'}
-                    record={orderTest}
-                    setRecord={setOrderTest}
-                  />
+              <MyInput
+                height={70}
+                width={'100%'}
+                fieldLabel="Notes"
+                fieldName={'notes'}
+                record={orderTest}
+                setRecord={setOrderTest}
+              />
 
             </Form>
           </div>

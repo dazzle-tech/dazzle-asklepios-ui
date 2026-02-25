@@ -13,7 +13,7 @@ export interface DiagnosticTestRequest {
   diagnosticTestId?: string;
   fromDepartmentId?: string;
   fromFacilityId?: string;
-
+  indication:string;
   createdBy?: string;
   createdDate?: string;
   approvedDate?: string;

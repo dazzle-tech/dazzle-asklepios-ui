@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Panel, Form, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
-import { skipToken } from '@reduxjs/toolkit/query';
 import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { skipToken } from '@reduxjs/toolkit/query';
+import React, { useEffect, useState } from 'react';
+import { Col, Form, Panel, Row } from 'rsuite';
 import './styles.less';
 
 interface PreviewDiagnosticsOrderProps {
@@ -15,81 +15,81 @@ const PreviewDiagnosticsOrder: React.FC<PreviewDiagnosticsOrderProps> = ({
     open,
     orderTest
 }) => {
-const [previewData, setPreviewData] = useState<any>({
-  testName: '',
-  orderType: '',
-  repeatEveryNumber: '',
-  repeatEveryUnit: '',
-  periodNumber: '',
-  periodUnit: '',
-  firstOccurrenceDateTime: '',
-  notes: '',
-  isRepeat: false,
-  reason: '',
-  receivedLab: ''
-});
+    const [previewData, setPreviewData] = useState<any>({
+        testName: '',
+        orderType: '',
+        repeatEveryNumber: '',
+        repeatEveryUnit: '',
+        periodNumber: '',
+        periodUnit: '',
+        firstOccurrenceDateTime: '',
+        notes: '',
+        isRepeat: false,
+        reason: '',
+        receivedLab: ''
+    });
 
 
 
-const labDepartmentId =
-  (orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId) &&
-  (orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId) !== 0
-    ? orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId
-    : null;
+    const labDepartmentId =
+        (orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId) &&
+            (orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId) !== 0
+            ? orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId
+            : null;
 
 
     const {
-    data: receivedDepartment,
-    isFetching: isFetchingDepartment
+        data: receivedDepartment,
+        isFetching: isFetchingDepartment
     } = useGetDepartmentByIdQuery(
-    labDepartmentId ?? skipToken
-    );  
+        labDepartmentId ?? skipToken
+    );
 
 
-useEffect(() => {
-  if (!orderTest) return;
+    useEffect(() => {
+        if (!orderTest) return;
 
-  setPreviewData(prev => ({
-    ...prev,
-    testName: orderTest.test?.testName ?? orderTest.test?.name ?? '-',
-    orderType:
-      orderTest.orderTypeLvalue?.lovDisplayVale ??
-      orderTest.orderType ??
-      orderTest.test?.type ??
-      '-',
-    repeatEveryNumber: orderTest.repeatEveryNumber ?? '',
-    repeatEveryUnit: orderTest.repeatEveryUnit ?? '',
-    periodNumber: orderTest.periodNumber ?? '',
-    periodUnit: orderTest.periodUnit ?? '',
-    firstOccurrenceDateTime: orderTest.firstOccurrenceDateTime ?? '',
-    notes: orderTest.notes ?? '',
-    isRepeat: Boolean(orderTest.isRepeat),
-    reason:
-      orderTest.reasonLvalue?.lovDisplayVale ??
-      orderTest.reason ??
-      '-'
-  }));
-}, [orderTest]);
+        setPreviewData(prev => ({
+            ...prev,
+            testName: orderTest.test?.testName ?? orderTest.test?.name ?? '-',
+            orderType:
+                orderTest.orderTypeLvalue?.lovDisplayVale ??
+                orderTest.orderType ??
+                orderTest.test?.type ??
+                '-',
+            repeatEveryNumber: orderTest.repeatEveryNumber ?? '',
+            repeatEveryUnit: orderTest.repeatEveryUnit ?? '',
+            periodNumber: orderTest.periodNumber ?? '',
+            periodUnit: orderTest.periodUnit ?? '',
+            firstOccurrenceDateTime: orderTest.firstOccurrenceDateTime ?? '',
+            notes: orderTest.notes ?? '',
+            isRepeat: Boolean(orderTest.isRepeat),
+            reason:
+                orderTest.reasonLvalue?.lovDisplayVale ??
+                orderTest.reason ??
+                '-'
+        }));
+    }, [orderTest]);
 
-useEffect(() => {
-  if (!labDepartmentId) {
-    setPreviewData(prev => ({ ...prev, receivedLab: '-' }));
-    return;
-  }
+    useEffect(() => {
+        if (!labDepartmentId) {
+            setPreviewData(prev => ({ ...prev, receivedLab: '-' }));
+            return;
+        }
 
-  if (isFetchingDepartment) {
-    setPreviewData(prev => ({ ...prev, receivedLab: 'Loading...' }));
-    return;
-  }
+        if (isFetchingDepartment) {
+            setPreviewData(prev => ({ ...prev, receivedLab: 'Loading...' }));
+            return;
+        }
 
-  setPreviewData(prev => ({
-    ...prev,
-    receivedLab:
-      receivedDepartment?.name ??
-      receivedDepartment?.translatedObject?.name ??
-      '-'
-  }));
-}, [labDepartmentId, receivedDepartment, isFetchingDepartment]);
+        setPreviewData(prev => ({
+            ...prev,
+            receivedLab:
+                receivedDepartment?.name ??
+                receivedDepartment?.translatedObject?.name ??
+                '-'
+        }));
+    }, [labDepartmentId, receivedDepartment, isFetchingDepartment]);
 
 
 
@@ -136,15 +136,6 @@ useEffect(() => {
                                                 disabled
                                             />
                                         </Col>
-                                        {/* <Col md={8}>
-                      <MyInput
-                        fieldType="text"
-                        fieldLabel="Order Priority"
-                        record={previewData}
-                        fieldName="priority"
-                        disabled
-                      />
-                    </Col> */}
                                         <Col md={8}>
                                             <MyInput
                                                 fieldType="text"
@@ -167,46 +158,44 @@ useEffect(() => {
                                 }
                             />
 
-                                {previewData.isRepeat && (
+                            {previewData.isRepeat && (
                                 <SectionContainer
                                     title="Repeat Details"
                                     content={
-                                    <Row gutter={16}>
-                                        <Col md={8}>
-                                        <MyInput
-                                            fieldType="text"
-                                            fieldLabel="Repeat Every"
-                                            record={previewData}
-                                            fieldName="repeatEveryNumber"
-                                            disabled
-                                            afterLabel={previewData.repeatEveryUnit}
-                                        />
-                                        </Col>
+                                        <Row gutter={16}>
+                                            <Col md={8}>
+                                                <MyInput
+                                                    fieldType="text"
+                                                    fieldLabel="Repeat Every"
+                                                    record={previewData}
+                                                    fieldName="repeatEveryNumber"
+                                                    disabled
+                                                />
+                                            </Col>
 
-                                        <Col md={8}>
-                                        <MyInput
-                                            fieldType="text"
-                                            fieldLabel="For Period"
-                                            record={previewData}
-                                            fieldName="periodNumber"
-                                            disabled
-                                            afterLabel={previewData.periodUnit}
-                                        />
-                                        </Col>
+                                            <Col md={8}>
+                                                <MyInput
+                                                    fieldType="text"
+                                                    fieldLabel="For Period"
+                                                    record={previewData}
+                                                    fieldName="periodNumber"
+                                                    disabled
+                                                />
+                                            </Col>
 
-                                        <Col md={8}>
-                                        <MyInput
-                                            fieldType="datetime"
-                                            fieldLabel="First Occurrence"
-                                            record={previewData}
-                                            fieldName="firstOccurrenceDateTime"
-                                            disabled
-                                        />
-                                        </Col>
-                                    </Row>
+                                            <Col md={8}>
+                                                <MyInput
+                                                    fieldType="datetime"
+                                                    fieldLabel="First Occurrence"
+                                                    record={previewData}
+                                                    fieldName="firstOccurrenceDateTime"
+                                                    disabled
+                                                />
+                                            </Col>
+                                        </Row>
                                     }
                                 />
-                                )}
+                            )}
 
 
                             {/* Notes */}
@@ -239,7 +228,6 @@ useEffect(() => {
                                                     record={previewData}
                                                     fieldName="repeatEveryNumber"
                                                     disabled
-                                                    afterLabel={previewData.repeatEveryUnit}
                                                 />
                                             </Col>
                                         </Row>
@@ -253,7 +241,6 @@ useEffect(() => {
                                                     record={previewData}
                                                     fieldName="periodNumber"
                                                     disabled
-                                                    afterLabel={previewData.periodUnit}
                                                 />
                                             </Col>
                                         </Row>

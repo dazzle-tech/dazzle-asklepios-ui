@@ -1,16 +1,16 @@
-import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCreditCard } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React from 'react';
 
-import MyModal from '@/components/MyModal/MyModal';
 import CancellationModal from '@/components/CancellationModal';
+import MyModal from '@/components/MyModal/MyModal';
 
-import TransferList from './TransferTestList';
+import BulkAssignDepartmentModal from './BulkAssignDepartmentModal';
 import DetailsModal from './DetailsModal';
+import RecallFavoriteDiagnosticOrdersModal from './RecallFavoriteDiagnosticOrdersModal';
 import RequestTestModal from './RequestTestModal';
 import TestCardModal from './TestCardModal';
-import BulkAssignDepartmentModal from './BulkAssignDepartmentModal';
-import RecallFavoriteDiagnosticOrdersModal from './RecallFavoriteDiagnosticOrdersModal';
+import TransferList from './TransferTestList';
 
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 

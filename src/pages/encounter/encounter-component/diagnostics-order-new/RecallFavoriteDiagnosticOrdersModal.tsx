@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
+import React, { useEffect, useState } from 'react';
 import TransferTestList from './TransferTestList';
 
 type Props = {
@@ -49,9 +49,7 @@ const RecallFavoriteDiagnosticOrdersModal = ({
       setOpen={setOpen}
       title="Recall from Favorites"
       size="45vw"
-      actionButtonText="Recall Selected"
       actionButtonFunction={handleRecall}
-      disableActionBtn={!rightItems.length}
       content={
         <TransferTestList
           open={open}

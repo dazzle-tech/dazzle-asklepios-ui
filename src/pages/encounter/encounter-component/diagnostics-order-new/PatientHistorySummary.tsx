@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import SectionContainer from '@/components/SectionsoContainer';
 import {
-  useValidateTestsMutation,
-  useValidateMedicationMutation
+  useValidateMedicationMutation,
+  useValidateTestsMutation
 } from '@/services/ai-services/medicationTestOrdersValidationService';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useMemo, useRef } from 'react';
 import './styles.less';
 
 type Props = {
@@ -68,9 +68,6 @@ const PatientHistorySummary: React.FC<Props> = ({
     }
   };
 
-  // ======================
-  // ✅ Build Validation Request (Pydantic-safe)
-  // ======================
   const validationRequest = useMemo(() => {
     if (!aiPayload) return null;
 

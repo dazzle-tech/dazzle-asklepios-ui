@@ -30,7 +30,7 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
       const n = Number(value);
       return Number.isNaN(n) ? undefined : n;
     };
-
+//add new patient edits
     const patientId = toNumericId(patient?.id ?? patient?.key);
 
     /* ===================== STATE ===================== */
@@ -63,7 +63,7 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
     );
 
     /* ===================== QUERY ===================== */
-          
+          //add new patient edits
       const encounterId = patient?.encounterId;
 
       const {
@@ -71,6 +71,7 @@ const PatientPrevTests = forwardRef<PatientPrevTestsRef, { patient: any }>(
         isLoading,
         refetch
       } = useFilterDiagnosticOrderTestsQuery(
+        //add new patient edits
         patientId
           ? showCancelled
             ? {
