@@ -7,7 +7,7 @@ import {
   useLazyGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByDateOfBirthQuery,
   useLazyGetPatientsByFullNameQuery,
- useLazyGetPatientsByMedicalRecordNumberQuery,
+  useLazyGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
   useLazyGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsQuery

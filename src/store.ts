@@ -153,6 +153,7 @@ import { patientInsurancesService } from './services/patients/patientInsurancesS
 import { patientInsuranceCoveragesService } from './services/patients/patientInsuranceCoveragesService';
 import { encounterVaccinationService } from './services/encounterMedical/encounterVaccinationService';
 import { patientEncounterService } from './services/encounters/patientEncounterService';
+import { patientPaymentsService } from './services/encounters/patientPaymentsService';
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -360,7 +361,8 @@ export const store = configureStore({
 
     [encounterVaccinationService.reducerPath]: encounterVaccinationService.reducer,
 
-    [patientEncounterService.reducerPath]: patientEncounterService.reducer
+    [patientEncounterService.reducerPath]: patientEncounterService.reducer,
+    [patientPaymentsService.reducerPath]: patientPaymentsService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -536,7 +538,8 @@ export const store = configureStore({
       patientInsuranceCoveragesService.middleware,
       encounterVaccinationService.middleware,
 
-      patientEncounterService.middleware
+      patientEncounterService.middleware,
+      patientPaymentsService.middleware
     ])
 });
 

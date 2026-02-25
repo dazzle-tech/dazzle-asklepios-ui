@@ -154,9 +154,9 @@ const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
     setCoveragesCount(count);
 
     if (count > 0) {
-      setOpenDeleteWithCoveragesModal(true); // ✅ مودال ثانية
+      setOpenDeleteWithCoveragesModal(true); 
     } else {
-      setOpenDeleteModal(true); // ✅ مودال عادية
+      setOpenDeleteModal(true); 
     }
   } catch {
     // fallback

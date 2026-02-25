@@ -17,7 +17,7 @@ import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
+// import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
@@ -320,10 +320,10 @@ const MyInput = ({
                 onClick={changeRecordingState}
                 style={{ position: 'relative' }}
               >
-                <FontAwesomeIcon
+                {/* <FontAwesomeIcon
                   icon={faMicrophone}
                   className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
+                /> */}
                 {recording && <span className="pulse-ring"></span>}
               </div>
             )}
@@ -808,10 +808,10 @@ const MyInput = ({
                 className={`container-of-search-icon ${recording ? 'recording' : ''}`}
                 onClick={changeRecordingState}
               >
-                <FontAwesomeIcon
+                {/* <FontAwesomeIcon
                   icon={faMicrophone}
                   className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
+                /> */}
                 {recording && <span className="pulse-ring"></span>}
               </div>
             )}
@@ -881,7 +881,7 @@ const MyInput = ({
       </Form.ControlLabel>
       {props.column && <div style={{ marginBottom: 5 }} />}
       {conjureFormControl()}
-      {validationResult && conjureValidationMessages()}
+      {/* {validationResult && conjureValidationMessages()} */}
     </Form.Group>
   );
 };

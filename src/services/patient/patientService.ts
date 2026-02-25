@@ -34,6 +34,14 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
   };
 };
 
+type PatientBasicInformationResponseVM = {
+  firstName: string;
+  lastName: string;
+  medicalRecordNumber: string;
+  dateOfBirth: string;
+  sexAtBirth: string; 
+};
+
 export const newPatientService = createApi({
   reducerPath: 'patientsApi',
   baseQuery: BaseQuery,
@@ -129,7 +137,6 @@ export const newPatientService = createApi({
           : ['Patient']
     }),
 
-    // ============ SEARCH BY DOCUMENT NUMBER (NEW) ============
     getPatientsByDocumentNumber: builder.query<
       PagedResult<modelTypes.Patient>,
       { number: string } & PagedParams
@@ -186,20 +193,27 @@ export const newPatientService = createApi({
       invalidatesTags: ['Patient']
     }),
 
-   getUnknownPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
-  query: ({ page, size, sort = 'id,asc' }) => ({
-    url: `/api/patient/unknown`,
-    params: { page, size, sort }
-  }),
-  transformResponse: (response: any, meta) => {
-    const rows = Array.isArray(response) ? response : (response?.content ?? []);
-    return mapPaged(rows, meta);
-  },
-  providesTags: res =>
-    res
-      ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
-      : ['Patient']
-})
+    getUnknownPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: `/api/patient/unknown`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any, meta) => {
+        return mapPaged(response?.content ?? [], meta);
+      },
+      providesTags: res =>
+        res
+          ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
+          : ['Patient']
+    }),
+
+    getBulkPatientBasicInfo: builder.mutation<any, any>({
+      query: (body) => ({
+        url: '/api/patient/bulk/basic-info',
+        method: 'POST',
+        body,
+      }),
+    }),
   })
 });
 
@@ -235,5 +249,7 @@ export const {
   // Unknown Patients
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
-  useLazyGetUnknownPatientsQuery
+  useLazyGetUnknownPatientsQuery,
+
+  useGetBulkPatientBasicInfoMutation
 } = newPatientService;

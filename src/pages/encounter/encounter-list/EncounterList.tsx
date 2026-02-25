@@ -1,69 +1,207 @@
 import MyInput from '@/components/MyInput';
-import Translate from '@/components/Translate';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { newApEncounter } from '@/types/model-types-constructor';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUserNurse,
   faUserDoctor,
   faPrint,
-  faBoxOpen,
-  faListCheck
+  faFileWaveform,
+  faRectangleXmark
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
-import { faFileWaveform, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
-import { addFilterToListRequest, formatDate } from '@/utils';
+import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
 import DetailsCard from '@/components/DetailsCard';
-import { initialListRequest, ListRequest } from '@/types/types';
-import {
-  useCancelEncounterMutation,
-  useGetEncountersQuery,
-  useStartEncounterMutation
-} from '@/services/encounterService';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyModal from '@/components/MyModal/MyModal';
 import { useDispatch } from 'react-redux';
-import ReactDOMServer from 'react-dom/server';
 import './styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+
+import { useLocation, useNavigate } from 'react-router-dom';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+
+import {
+  useFilterEncountersQuery,
+  useCountTodayDepartmentTotalPatientsQuery,
+  useCountTodayDepartmentActiveCasesQuery,
+  useCountTodayDepartmentCompletedQuery,
+  useCountTodayDepartmentCancelledQuery,
+  useStartEncounterMutation,
+  useCancelEncounterMutation
+} from '@/services/encounters/patientEncounterService';
+
+import { useAppSelector } from '@/hooks';
+
+import { useEnumOptions } from '@/services/enumsApi';
+
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+
+const toISODate = (d: Date | string | null | undefined) => {
+  if (!d) return undefined;
+  if (typeof d === 'string') return d;
+  return d.toISOString().slice(0, 10);
+};
+
+const uniqueNonEmpty = (arr?: any[]) => {
+  if (!arr) return undefined;
+  const cleaned = arr.filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+  return cleaned.length ? Array.from(new Set(cleaned.map(v => String(v)))) : undefined;
+};
+
+const normalizeEnumOptions = (input: any): Array<{ label: string; value: string }> => {
+  const arr: any[] = Array.isArray(input) ? input : Array.isArray(input?.options) ? input.options : [];
+
+  return arr
+    .map((o: any) => {
+      const value =
+        o?.value ?? o?.code ?? o?.valueCode ?? o?.key ?? o?.id ?? o?.name ?? o?.enumValue ?? '';
+
+      const label =
+        o?.label ??
+        o?.name ??
+        o?.displayName ??
+        o?.lovDisplayVale ??
+        o?.text ??
+        o?.title ??
+        String(value);
+
+      return { value: String(value), label: String(label) };
+    })
+    .filter(x => x.value && x.label);
+};
+
+const useEnumAsIs = (input: any) => {
+  if (Array.isArray(input)) return input;
+  if (Array.isArray(input?.options)) return input.options;
+  if (Array.isArray(input?.object)) return input.object;
+  return [];
+};
+
+const derivePatientFilters = (appliedSearch: any) => {
+  const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
+
+  const raw = String(
+    appliedSearch?.patientName ??
+      appliedSearch?.searchText ??
+      appliedSearch?.text ??
+      appliedSearch?.value ??
+      ''
+  ).trim();
+
+  if (!raw) {
+    return { patientName: undefined as string | undefined, mrn: undefined as string | undefined };
+  }
+
+  if (searchByField === 'patientMrn') return { patientName: undefined, mrn: raw };
+
+  return { patientName: raw, mrn: undefined };
+};
+
+const ENCOUNTER_ERROR_MAP: Record<string, string> = {
+  'id.notfound': 'Encounter not found.',
+  'patient.notfound': 'Patient not found.',
+  'patient.hasOngoing.notAllowed':
+    'Patient already has an ONGOING encounter. Starting another one is not allowed.',
+  'cancel.notAllowed.rule': 'Cancel is allowed only when status is NEW and isObserved is false.',
+  'followUpEncounter.required.byReason':
+    'Follow-up encounter is required when reason is FOLLOW_UP (and must be empty otherwise).',
+  'followUpEncounter.notfound': 'Follow-up encounter not found.',
+  'encounterNumber.duplicate': 'Encounter number already exists.',
+  'patient.department.date.duplicate': 'This patient already has an encounter for this department on this date.',
+  'department.date.sequence.duplicate': 'Department daily sequence number already exists for this date.',
+  'db.constraint': 'Database constraint violated while saving patient encounter.'
+};
+
+const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
+  patientId: 'Patient',
+  facilityId: 'Facility',
+  departmentId: 'Department',
+  practitionerId: 'Practitioner',
+  encounterType: 'Encounter Type',
+  encounterReason: 'Encounter Reason',
+  followUpEncounterId: 'Follow Up Encounter',
+  priorityLevel: 'Priority',
+  status: 'Status',
+  chiefComplaint: 'Chief Complaint',
+  hasOrder: 'Has Orders',
+  hasPrescription: 'Has Prescription',
+  isObserved: 'Is Observed'
+};
+
+const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
+  const data = err?.data ?? err ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  const normalizeMsg = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('must not be null')) return 'is required';
+    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('size')) return 'length is out of range';
+    if (m.includes('greater')) return 'value is too small';
+    if (m.includes('less')) return 'value is too large';
+    return msg || 'invalid value';
+  };
+
+  const toLabel = (field: string) => ENCOUNTER_FIELD_LABELS[field] ?? field;
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map((fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`);
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
+        sev: 'error'
+      })
+    );
+    return;
+  }
+
+  const messageProp: string = data?.message || '';
+  const errorKey =
+    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) || data?.errorKey;
+
+  const humanMsg = (errorKey && keyMap[errorKey]) || data?.detail || data?.title || data?.message || 'Unexpected error';
+
+  dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+};
 
 const EncounterList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const authSlice = useAppSelector(state => state.auth);
+  const selectedDepartment = authSlice.selectedDepartment;
+  const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
+
   const divContent = 'Patients Visit List';
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent(divContent));
 
-  const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
+  const [encounter, setLocalEncounter] = useState<any>({
+    ...newApEncounter,
+    discharge: false
+  });
 
   const [open, setOpen] = useState(false);
-  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
-  const [record, setRecord] = useState<any>({});
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
   const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
-  const [encounterStatus, setEncounterStatus] = useState<{ key: string }>({ key: '' });
-  const [completesVisits, setCompletedVisits] = useState<number>(0);
-  const [cancelledVisits, setCancelledVisits] = useState<number>(0);
-  const [activeVisits, setActiveVisits] = useState<number>(0);
 
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
@@ -72,143 +210,331 @@ const EncounterList = () => {
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
 
-  // lovs
-  const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
-  const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
-  const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
-
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    ignore: true,
-    filters: [
-      {
-        fieldName: 'resource_type_lkey',
-        operator: 'in',
-        value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
-          .map(key => `(${key})`)
-          .join(' ')
-      },
-      {
-        fieldName: 'encounter_status_lkey',
-        operator: 'in',
-        value: ['91063195286200', '91084250213000'].map(key => `(${key})`).join(' ')
-      }
+  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+    exclude: [
+      'DISCHARGED',
+      'IN_OPERATION',
+      'CONFIRM_RETURN',
+      'TEMP_DC',
+      'TRIAGE_STARTED',
+      'SENT_TO_ER',
+      'WAITING_TRIAGE',
+      'WAITING_LIST',
+      'PENDING_PAYMENT'
     ]
   });
 
+  const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
+  const EncounterReasonEnum = useEnumOptions('EncounterReason');
+
+  const statusOptions = useMemo(() => {
+    const opts = normalizeEnumOptions(EncounterStatusEnum);
+    const allowed = new Set(['NEW', 'ONGOING', 'CANCELED', 'CLOSED']);
+    return opts.filter(o => allowed.has(String(o.value).toUpperCase()));
+  }, [EncounterStatusEnum]);
+
+  const priorityOptions = useMemo(() => normalizeEnumOptions(EncounterPriorityEnum), [EncounterPriorityEnum]);
+  const encounterReasonOptions = useMemo(() => useEnumAsIs(EncounterReasonEnum), [EncounterReasonEnum]);
+
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const DEFAULT_SORT = 'id,desc';
+
+  const today = useMemo(() => new Date(), []);
+  const todayStr = useMemo(() => formatDate(today), [today]);
+
+  const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
+
+  const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
+  const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
+
+  const [encounterReasonIn, setEncounterReasonIn] = useState<string[]>([]);
+  const [priorityIn, setPriorityIn] = useState<string[]>([]);
+  const [withPrescription, setWithPrescription] = useState<boolean | undefined>(undefined);
+  const [hasOrders, setHasOrders] = useState<boolean | undefined>(undefined);
+  const [isObserved, setIsObserved] = useState<boolean | undefined>(undefined);
+
+  const [patientSearchDraft, setPatientSearchDraft] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
+
+  const [patientSearchApplied, setPatientSearchApplied] = useState<any>({
+    searchByField: 'fullName',
+    patientName: ''
+  });
+
+  const [searchTick, setSearchTick] = useState(0);
+
+  const [record, setRecord] = useState<any>({});
+
+  const handlePatientSearchClick = useCallback(() => {
+    setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
+    setPage(0);
+    setSearchTick(t => t + 1); 
+  }, [patientSearchDraft]);
+
+  const filterParams = useMemo(() => {
+    if (!departmentId) return null;
+
+    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+
+    const chiefComplaint = String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
+
+    const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
+    const normalizedEncounterReasonIn = uniqueNonEmpty(encounterReasonIn);
+    const normalizedPriorityIn =
+      uniqueNonEmpty(priorityIn) ?? uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
+
+    const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+
+    return {
+      departmentId: String(departmentId),
+      fromDate,
+      toDate,
+      statusIn: normalizedStatusIn,
+
+      patientName,
+      mrn,
+
+      encounterReasonIn: normalizedEncounterReasonIn,
+      chiefComplaint,
+      priorityIn: normalizedPriorityIn,
+
+      withPrescription,
+      hasOrders,
+      isObserved,
+
+      page,
+      size: pageSize,
+      sort: DEFAULT_SORT,
+
+      timestamp: searchTick 
+    };
+  }, [
+    DEFAULT_STATUS,
+    DEFAULT_SORT,
+    dateFilter.fromDate,
+    dateFilter.toDate,
+    departmentId,
+    encounterReasonIn,
+    hasOrders,
+    isObserved,
+    page,
+    pageSize,
+    priorityIn,
+    record,
+    statusIn,
+    todayStr,
+    withPrescription,
+    patientSearchApplied,
+    searchTick
+  ]);
+
+  // -----------------------------
+  // Data queries
+  // -----------------------------
   const {
-    data: encounterListResponse,
-    isFetching,
-    refetch: refetchEncounter,
-    isLoading
-  } = useGetEncountersQuery(listRequest);
+    data: encountersPaged,
+    isFetching: isEncountersFetching,
+    isLoading: isEncountersLoading,
+    refetch: refetchEncounters
+  } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
 
-  const [listRequestForToday, setListRequestForToday] = useState<ListRequest>({
-    ...initialListRequest,
-    ignore: true,
-    filters: [
-      {
-        fieldName: 'resource_type_lkey',
-        operator: 'in',
-        value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
-          .map(key => `(${key})`)
-          .join(' ')
-      }
+  const todayCountsSkip = !departmentId;
 
-      // {
-      //  fieldName:'planned_start_date',
-      //   operator: 'between',
-      //   value:  formatDate(new Date()) + '_' + formatDate(new Date()),
-      // }
-    ]
-  });
+  const { data: totalPatientsCount } = useCountTodayDepartmentTotalPatientsQuery(
+    { departmentId: String(departmentId ?? '') },
+    { skip: todayCountsSkip }
+  );
 
-  const { data: encounterListForTodayResponse, refetch: refetchListForToday } =
-    useGetEncountersQuery(listRequestForToday);
+  const { data: activeCasesCount } = useCountTodayDepartmentActiveCasesQuery(
+    { departmentId: String(departmentId ?? '') },
+    { skip: todayCountsSkip }
+  );
 
-  const [dateFilter, setDateFilter] = useState({
-    fromDate: new Date(),
-    toDate: new Date()
-  });
+  const { data: completedCount } = useCountTodayDepartmentCompletedQuery(
+    { departmentId: String(departmentId ?? '') },
+    { skip: todayCountsSkip }
+  );
 
-  const pageIndex = listRequest.pageNumber - 1;
+  const { data: cancelledCount } = useCountTodayDepartmentCancelledQuery(
+    { departmentId: String(departmentId ?? '') },
+    { skip: todayCountsSkip }
+  );
 
-  // how many rows per page:
-  const rowsPerPage = listRequest.pageSize;
+  const tableData = encountersPaged?.data ?? [];
+  const totalCount = encountersPaged?.totalCount ?? 0;
 
-  // total number of items in the backend:
-  const totalCount = encounterListResponse?.extraNumeric ?? 0;
+  const patientBulkIdsRef = useRef<string[]>([]);
+  const [getBulkPatientBasicInfo, { data: patientsBasicInfo, isLoading: patientsBulkLoading }] =
+    useGetBulkPatientBasicInfoMutation();
 
-  //Functions
-  const isSelected = rowData => {
-    if (rowData && encounter && rowData.key === encounter.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  const patientIdsForBulk = useMemo(() => {
+    const rows = (tableData ?? []) as any[];
 
-  const handleManualSearch = () => {
-    setManualSearchTriggered(true);
-    if (dateFilter.fromDate && dateFilter.toDate) {
-      const formattedFromDate = formatDate(dateFilter.fromDate);
-      const formattedToDate = formatDate(dateFilter.toDate);
-      setListRequest(
-        addFilterToListRequest(
-          'planned_start_date',
-          'between',
-          formattedFromDate + '_' + formattedToDate,
-          listRequest
-        )
-      );
-    } else if (dateFilter.fromDate) {
-      const formattedFromDate = formatDate(dateFilter.fromDate);
-      setListRequest(
-        addFilterToListRequest('planned_start_date', 'gte', formattedFromDate, listRequest)
-      );
-    } else if (dateFilter.toDate) {
-      const formattedToDate = formatDate(dateFilter.toDate);
-      setListRequest(
-        addFilterToListRequest('planned_start_date', 'lte', formattedToDate, listRequest)
-      );
-    } else {
-      setListRequest({
-        ...listRequest,
-        filters: [
-          {
-            fieldName: 'resource_type_lkey',
-            operator: 'in',
-            value: ['2039534205961578', '2039620472612029', '2039516279378421', 'PRACTITIONER','MEDICAL_TEST','CLINIC']
-              .map(key => `(${key})`)
-              .join(' ')
-          },
-          {
-            fieldName: 'encounter_status_lkey',
-            operator: 'in',
-            value: ['91063195286200', '91084250213000'].map(key => `(${key})`).join(' ')
-          }
-        ]
+    const ids = rows
+      .map(r => r?.patientId ?? r?.patientKey ?? r?.patient?.id ?? r?.patient?.key ?? r?.patientObject?.id ?? r?.patientObject?.key ?? r?.patientObject?.patientId)
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+      .map(v => String(v));
+
+    return Array.from(new Set(ids));
+  }, [tableData]);
+
+  useEffect(() => {
+    if (patientIdsForBulk.length === 0) return;
+
+    patientBulkIdsRef.current = patientIdsForBulk;
+
+    getBulkPatientBasicInfo(patientIdsForBulk as any)
+      .unwrap()
+      .catch(() => {});
+  }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+
+  const patientMap = useMemo(() => {
+    const map = new Map<string, any>();
+    const ids = patientBulkIdsRef.current;
+
+    (patientsBasicInfo ?? []).forEach((patient: any, idx: number) => {
+      const idOrKey = patient?.id ?? patient?.key ?? ids[idx];
+      if (!idOrKey) return;
+
+      map.set(String(idOrKey), {
+        id: idOrKey,
+        firstName: patient?.firstName,
+        secondName: patient?.secondName,
+        thirdName: patient?.thirdName,
+        lastName: patient?.lastName,
+        dateOfBirth: patient?.dateOfBirth,
+        sexAtBirth: patient?.sexAtBirth,
+        medicalRecordNumber: patient?.medicalRecordNumber
       });
+    });
+
+    return map;
+  }, [patientsBasicInfo]);
+
+  // -----------------------------
+  // Normalize rows + inject bulk patient data
+  // -----------------------------
+  const normalizedTableData = useMemo(() => {
+    const rows = (tableData ?? []).map((e: any) => {
+      const statusCode = String(e?.status ?? '').toUpperCase();
+      const priorityCode = String(e?.priorityLevel ?? '').toUpperCase();
+      const reasonCode = String(e?.encounterReason ?? '').toUpperCase();
+
+      const patientKey =
+        e?.patientId ??
+        e?.patientKey ??
+        e?.patient?.id ??
+        e?.patient?.key ??
+        e?.patientObject?.id ??
+        e?.patientObject?.key ??
+        e?.patientObject?.patientId ??
+        null;
+
+      const patientFromMap = patientKey != null ? patientMap.get(String(patientKey)) : null;
+      const first = String(patientFromMap?.firstName ?? e?.patient?.firstName ?? '').trim();
+      const second = String(patientFromMap?.secondName ?? e?.patient?.secondName ?? '').trim();
+      const third = String(patientFromMap?.thirdName ?? e?.patient?.thirdName ?? '').trim();
+      const last = String(patientFromMap?.lastName ?? e?.patient?.lastName ?? '').trim();
+      const bulkFullName = [first, second, third, last].filter(Boolean).join(' ').trim();
+
+      const bulkMrn =
+        patientFromMap?.medicalRecordNumber ??
+        e?.patientObject?.patientMrn ??
+        e?.patientMrn ??
+        e?.mrn ??
+        e?.encounterNumber ??
+        e?.departmentDailySequenceNumber ??
+        e?.id;
+
+      const bulkDob = patientFromMap?.dateOfBirth ?? null;
+      const bulkGender = formatEnumString(patientFromMap?.sexAtBirth) || '';
+
+      return {
+        ...e,
+        key: e?.key ?? e?.id,
+
+        patientObject: {
+          ...(e?.patientObject ?? {}),
+          ...(e?.patient ?? {}),
+          id: patientKey ?? e?.patientObject?.id ?? e?.patient?.id,
+          patientMrn: bulkMrn,
+          fullName:
+            bulkFullName ||
+            e?.patientObject?.fullName ||
+            e?.patientFullName ||
+            e?.fullName ||
+            '-',
+          privatePatient: e?.patientObject?.privatePatient ?? e?.privatePatient ?? false,
+
+          dateOfBirth: bulkDob,
+          sexAtBirth: bulkGender,
+
+          gender: e?.patientObject?.gender ?? null
+        },
+
+        patientAge: e?.patientAge ?? (bulkDob ? calculateAgeFormat(bulkDob) : null),
+
+        visitId: e?.visitId ?? e?.id,
+
+        encounterReason: e?.encounterReason ?? reasonCode,
+        encounterPriority: e?.encounterPriority ?? e?.priorityLevel ?? priorityCode,
+        encounterStatus: e?.encounterStatus ?? e?.status ?? statusCode,
+
+        plannedStartDate: e?.plannedStartDate ?? e?.encounterDate
+      };
+    });
+
+    return rows;
+  }, [tableData, patientMap]);
+
+  // -----------------------------
+  // Start / Cancel helpers
+  // -----------------------------
+  const getEncounterId = (row: any) => row?.id ?? row?.key ?? null;
+
+  const startEncounterSafe = async (row: any) => {
+    const id = getEncounterId(row);
+    if (!id) return false;
+
+    try {
+      await startEncounter({ id }).unwrap();
+      return true;
+    } catch (err: any) {
+      handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
+      return false;
     }
   };
 
-  const handleCountForToday = () => {
-    const formattedFromDate = formatDate(new Date());
-    const formattedToDate = formatDate(new Date());
-    setListRequestForToday(
-      addFilterToListRequest(
-        'planned_start_date',
-        'between',
-        formattedFromDate + '_' + formattedToDate,
-        listRequestForToday
-      )
-    );
+  const cancelEncounterSafe = async (row: any) => {
+    const id = getEncounterId(row);
+    if (!id) return false;
+
+    try {
+      await cancelEncounter({ id }).unwrap();
+      dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+      return true;
+    } catch (err: any) {
+      handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
+      return false;
+    }
   };
 
-  const handleGoToVisit = async (encounterData, patientData) => {
-    await startEncounter(encounterData).unwrap();
+  // -----------------------------
+  // Navigation / actions
+  // -----------------------------
+  const handleGoToVisit = async (encounterData: any, patientData: any) => {
+    const ok = await startEncounterSafe(encounterData);
+    if (!ok) return;
+
     if (encounterData && encounterData.key) {
       dispatch(setEncounter(encounterData));
       dispatch(setPatient(encounterData['patientObject']));
     }
+
     const privatePatientPath = '/user-access-patient-private';
     const encounterPath = '/encounter';
     const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
@@ -225,10 +551,14 @@ const EncounterList = () => {
     sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
-  const handleGoToPreVisitObservations = async (encounterData, patientData) => {
+  const handleGoToPreVisitObservations = async (encounterData: any, patientData: any) => {
+    const ok = await startEncounterSafe(encounterData);
+    if (!ok) return;
+
     const privatePatientPath = '/user-access-patient-private';
     const preObservationsPath = '/nurse-station';
     const targetPath = patientData.privatePatient ? privatePatientPath : preObservationsPath;
+
     if (patientData.privatePatient) {
       navigate(targetPath, {
         state: { info: 'toNurse', patient: patientData, encounter: encounterData }
@@ -238,41 +568,54 @@ const EncounterList = () => {
         state: {
           patient: patientData,
           encounter: encounterData,
-          edit: encounterData.encounterStatusLvalue.valueCode == 'CLOSED'
+          edit: String(encounterData?.encounterStatus ?? encounterData?.status ?? '').toUpperCase() === 'CLOSED'
         }
       });
     }
   };
 
   const handleCancelEncounter = async () => {
-    try {
-      if (encounter) {
-        await cancelEncounter(encounter).unwrap();
-        refetchEncounter();
-        refetchListForToday();
-        dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
-        setOpen(false);
-      }
-    } catch (error) {
-      dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
-    }
+    if (!encounter) return;
+
+    const ok = await cancelEncounterSafe(encounter);
+    if (!ok) return;
+
+    refetchEncounters();
+    setOpen(false);
   };
 
-  // handler when the user clicks a new page number:
-  const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
-    setManualSearchTriggered(true);
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
+  // -----------------------------
+  // Pagination handlers
+  // -----------------------------
+  const handlePageChange = useCallback((_: unknown, newPage: number) => {
+    setPage(newPage);
+  }, []);
 
-  // handler when the user chooses a different rows-per-page:
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setManualSearchTriggered(true);
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
-    });
+  const handleRowsPerPageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setPageSize(parseInt(event.target.value, 10));
+    setPage(0);
+  }, []);
+
+  // -----------------------------
+  // Clear filters
+  // -----------------------------
+  const handleClearFilters = () => {
+    const now = new Date();
+    setRecord({});
+    setDateFilter({ fromDate: now, toDate: now });
+    setStatusIn(DEFAULT_STATUS);
+    setEncounterReasonIn([]);
+    setPriorityIn([]);
+    setWithPrescription(undefined);
+    setHasOrders(undefined);
+    setIsObserved(undefined);
+
+    const cleared = { searchByField: 'fullName', patientName: '' };
+    setPatientSearchDraft(cleared);
+    setPatientSearchApplied(cleared);
+
+    setPage(0);
+    setSearchTick(t => t + 1); 
   };
 
   const tableColumns = [
@@ -280,24 +623,18 @@ const EncounterList = () => {
       key: 'queueNumber',
       title: '#',
       dataKey: 'queueNumber',
-      render: rowData => rowData?.patientObject?.patientMrn
+      render: (rowData: any) => rowData?.encounterNumber
     },
     {
       key: 'patientFullName',
       title: 'PATIENT NAME',
       fullText: true,
-      render: rowData => {
+      render: (rowData: any) => {
         const tooltipSpeaker = (
           <Tooltip>
             <div>MRN : {rowData?.patientObject?.patientMrn}</div>
             <div>Age : {rowData?.patientAge}</div>
-            <div>
-              Gender :{' '}
-              {rowData?.patientObject?.genderLvalue
-                ? rowData?.patientObject?.genderLvalue?.lovDisplayVale
-                : rowData?.patientObject?.genderLkey}
-            </div>
-            <div>Visit ID : {rowData?.visitId}</div>
+            <div>Gender : {rowData?.patientObject?.sexAtBirth || ''}</div>
           </Tooltip>
         );
 
@@ -306,14 +643,10 @@ const EncounterList = () => {
             <div style={{ display: 'inline-block' }}>
               {rowData?.patientObject?.privatePatient ? (
                 <Badge color="blue" content="Private">
-                  <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.fullName}
-                  </p>
+                  <p style={{ marginTop: '5px', cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
                 </Badge>
               ) : (
-                <>
-                  <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
-                </>
+                <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
               )}
             </div>
           </Whisper>
@@ -321,25 +654,24 @@ const EncounterList = () => {
       }
     },
     {
-      key: 'visitType',
-      title: 'VISIT TYPE',
-      render: rowData =>
-        rowData.visitTypeLvalue ? rowData?.visitTypeLvalue?.lovDisplayVale : rowData?.visitTypeLkey
+      key: 'encounterReason',
+      title: 'ENCOUNTER REASON',
+      render: (rowData: any) => rowData?.encounterReason ?? ''
     },
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      render: rowData => rowData?.chiefComplaint
+      render: (rowData: any) => rowData?.chiefComplaint
     },
     {
       key: 'diagnosis',
       title: 'DIAGNOSIS',
-      render: rowData => rowData?.diagnosis
+      render: (rowData: any) => rowData?.diagnosis
     },
     {
       key: 'hasPrescription',
       title: 'PRESCRIPTION',
-      render: rowData =>
+      render: (rowData: any) =>
         rowData.hasPrescription ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
         ) : (
@@ -349,7 +681,7 @@ const EncounterList = () => {
     {
       key: 'hasOrder',
       title: 'HAS ORDER',
-      render: rowData =>
+      render: (rowData: any) =>
         rowData.hasOrder ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
         ) : (
@@ -359,10 +691,7 @@ const EncounterList = () => {
     {
       key: 'encounterPriority',
       title: 'PRIORITY',
-      render: rowData =>
-        rowData?.encounterPriorityLvalue
-          ? rowData?.encounterPriorityLvalue?.lovDisplayVale
-          : rowData?.encounterPriorityLkey
+      render: (rowData: any) => rowData?.encounterPriority ?? ''
     },
     {
       key: 'plannedStartDate',
@@ -372,21 +701,28 @@ const EncounterList = () => {
     {
       key: 'status',
       title: 'STATUS',
-      render: rowData => (
+      render: (rowData: any) => (
         <MyBadgeStatus
-          color={rowData?.encounterStatusLvalue?.valueColor}
-          contant={
-            rowData.encounterStatusLvalue
-              ? rowData?.encounterStatusLvalue?.lovDisplayVale
-              : rowData?.encounterStatusLkey
+          color={
+            String(rowData?.encounterStatus ?? '').toUpperCase() === 'NEW'
+              ? '#0d6efd'
+              : String(rowData?.encounterStatus ?? '').toUpperCase() === 'ONGOING'
+              ? '#198754'
+              : String(rowData?.encounterStatus ?? '').toUpperCase() === 'CANCELED' ||
+                String(rowData?.encounterStatus ?? '').toUpperCase() === 'CANCELLED'
+              ? '#ffc107'
+              : String(rowData?.encounterStatus ?? '').toUpperCase() === 'CLOSED'
+              ? '#6c757d'
+              : '#969fb0'
           }
+          contant={String(rowData?.encounterStatus ?? rowData?.status ?? '')}
         />
       )
     },
     {
       key: 'hasObservation',
       title: 'IS OBSERVED',
-      render: rowData =>
+      render: (rowData: any) =>
         rowData.hasObservation ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
         ) : (
@@ -396,7 +732,7 @@ const EncounterList = () => {
     {
       key: 'actions',
       title: ' ',
-      render: rowData => {
+      render: (rowData: any) => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
@@ -462,7 +798,7 @@ const EncounterList = () => {
               </div>
             </Whisper>
 
-            {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
+            {String(rowData?.encounterStatus ?? rowData?.status ?? '').toUpperCase() === 'NEW' && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
                   <MyButton
@@ -498,35 +834,6 @@ const EncounterList = () => {
     }
   ];
 
-  const handleClearFilters = () => {
-    const today = new Date();
-    setRecord({});
-    setEncounterStatus({ key: '' });
-
-    setDateFilter({
-      fromDate: today,
-      toDate: today
-    });
-
-    const formattedToday = formatDate(today);
-
-    setListRequest({
-      ...initialListRequest,
-      pageNumber: 1,
-      pageSize: listRequest.pageSize,
-      ignore: true,
-      filters: [
-        {
-          fieldName: 'planned_start_date',
-          operator: 'between',
-          value: `${formattedToday}_${formattedToday}`
-        }
-      ]
-    });
-
-    setManualSearchTriggered(true);
-  };
-
   const filters = () => {
     return (
       <>
@@ -538,7 +845,10 @@ const EncounterList = () => {
             fieldLabel="From Date"
             fieldName="fromDate"
             record={dateFilter}
-            setRecord={setDateFilter}
+            setRecord={updated => {
+              setDateFilter(updated);
+              setPage(0);
+            }}
           />
           <MyInput
             width={180}
@@ -547,26 +857,32 @@ const EncounterList = () => {
             fieldLabel="To Date"
             fieldName="toDate"
             record={dateFilter}
-            setRecord={setDateFilter}
+            setRecord={updated => {
+              setDateFilter(updated);
+              setPage(0);
+            }}
           />
 
           <SearchPatientCriteria
-            key={JSON.stringify(record)}
-            record={record}
-            setRecord={setRecord}
+            record={patientSearchDraft}
+            setRecord={setPatientSearchDraft}
+            onSearchClick={handlePatientSearchClick}
           />
 
           <MyInput
             column
-            width={200}
-            fieldType="select"
+            width={260}
+            fieldType="checkPicker"
             fieldLabel="Encounter Status"
-            fieldName="key"
-            selectData={encounterStatusLov?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={encounterStatus}
-            setRecord={setEncounterStatus}
+            fieldName="statusIn"
+            selectData={statusOptions}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={{ statusIn }}
+            setRecord={(upd: any) => {
+              setStatusIn(Array.isArray(upd?.statusIn) ? upd.statusIn : []);
+              setPage(0);
+            }}
           />
         </Form>
 
@@ -576,66 +892,85 @@ const EncounterList = () => {
           content={
             <div className="advanced-filters">
               <Form key={JSON.stringify(record)} fluid className="dissss">
-                {/* Visit Type LOV */}
                 <MyInput
-                  fieldName="accessTypeLkey"
-                  fieldType="select"
-                  selectData={bookVisitLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  fieldLabel="Visit Type"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                  searchable={false}
-                  width={150}
+                  fieldName="encounterReasonIn"
+                  fieldType="checkPicker"
+                  selectData={encounterReasonOptions}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  fieldLabel="Encounter Reason"
+                  record={{ encounterReasonIn }}
+                  setRecord={(upd: any) => {
+                    const raw = Array.isArray(upd) ? upd : upd?.encounterReasonIn;
+                    const next = Array.isArray(raw) ? raw.map((x: any) => String(x)).filter(Boolean) : [];
+                    setEncounterReasonIn(next);
+                    setPage(0);
+                  }}
+                  searchable
+                  width={220}
                 />
-                {/* Chief Complain Text */}
+
                 <MyInput
-                  width={150}
+                  width={200}
                   fieldName="chiefComplain"
                   fieldType="text"
                   record={record}
-                  setRecord={setRecord}
+                  setRecord={updated => {
+                    setRecord(updated);
+                    setPage(0);
+                  }}
                   fieldLabel="Chief Complain"
                 />
-                {/* Checkboxes*/}
+
                 <MyInput
-                  width={110}
+                  width={130}
                   fieldName="withPrescription"
                   fieldType="checkbox"
-                  record={record}
-                  setRecord={setRecord}
+                  record={{ withPrescription: !!withPrescription }}
+                  setRecord={(upd: any) => {
+                    setWithPrescription(!!upd?.withPrescription);
+                    setPage(0);
+                  }}
                   label="With Prescription"
                 />
                 <MyInput
-                  width={80}
+                  width={110}
                   fieldName="hasOrders"
                   fieldType="checkbox"
-                  record={record}
-                  setRecord={setRecord}
+                  record={{ hasOrders: !!hasOrders }}
+                  setRecord={(upd: any) => {
+                    setHasOrders(!!upd?.hasOrders);
+                    setPage(0);
+                  }}
                   label="Has Orders"
                 />
                 <MyInput
-                  width={80}
+                  width={110}
                   fieldName="isObserved"
                   fieldType="checkbox"
-                  record={record}
-                  setRecord={setRecord}
+                  record={{ isObserved: !!isObserved }}
+                  setRecord={(upd: any) => {
+                    setIsObserved(!!upd?.isObserved);
+                    setPage(0);
+                  }}
                   label="Is Observed"
                 />
-                {/* Priority LOV */}
+
                 <MyInput
-                  width={150}
-                  fieldName="priority"
-                  fieldType="select"
-                  record={record}
-                  setRecord={setRecord}
-                  selectData={EncPriorityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
+                  width={200}
+                  fieldName="priorityIn"
+                  fieldType="checkPicker"
+                  record={{ priorityIn }}
+                  setRecord={(upd: any) => {
+                    setPriorityIn(Array.isArray(upd?.priorityIn) ? upd.priorityIn : []);
+                    setPage(0);
+                  }}
+                  selectData={priorityOptions}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   placeholder="Select Priority"
                   fieldLabel="Priority"
-                  searchable={false}
+                  searchable={true}
                 />
               </Form>
             </div>
@@ -645,73 +980,38 @@ const EncounterList = () => {
     );
   };
 
-  //useEffect
-  useEffect(() => {
-    handleCountForToday();
-  }, [encounterListForTodayResponse]);
-
-  useEffect(() => {
-    let CompletedCount = 0;
-    let CancelledCount = 0;
-    if (encounterListForTodayResponse?.object)
-      for (const visit of encounterListForTodayResponse?.object) {
-        if (visit?.encounterStatusLvalue?.key === '91109811181900') {
-          CompletedCount++;
-        }
-        if (visit?.encounterStatusLvalue?.key === '91098528988200') {
-          CancelledCount++;
-        }
-      }
-    setCompletedVisits(CompletedCount);
-    setCancelledVisits(CancelledCount);
-  }, [listRequestForToday, encounterListForTodayResponse]);
-
-  useEffect(() => {
-    setActiveVisits(
-      encounterListForTodayResponse?.object?.length - completesVisits
-        ? encounterListForTodayResponse?.object?.length - completesVisits
-        : 0
-    );
-  }, [completesVisits]);
-
-  useEffect(() => {
-    handleManualSearch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFilter.fromDate, dateFilter.toDate]);
+  const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
   useEffect(() => {
     dispatch(setPageCode(''));
     dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
+  }, [location.pathname, dispatch]);
 
   useEffect(() => {
-    if (!isFetching && manualSearchTriggered) {
-      setManualSearchTriggered(false);
-    }
-  }, [isFetching, manualSearchTriggered]);
+    if (tableLoading) dispatch(showSystemLoader());
+    else dispatch(hideSystemLoader());
 
-  useEffect(() => {
-    // init list
-    handleManualSearch();
-  }, []);
-
-  useEffect(() => {
-    if (isLoading || (manualSearchTriggered && isFetching)) {
-      dispatch(showSystemLoader());
-    } else if (isFetching && isLoading) {
-      dispatch(hideSystemLoader());
-    }
     return () => {
       dispatch(hideSystemLoader());
     };
-  }, [isLoading, isFetching, dispatch, manualSearchTriggered]);
+  }, [dispatch, tableLoading]);
+
+  if (!departmentId) {
+    return (
+      <Panel>
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <p>Please select a department to view encounters.</p>
+        </div>
+      </Panel>
+    );
+  }
 
   return (
     <>
       <div className="count-div-on-top-of-page-visit-list">
         <DetailsCard
           title="Total Patients"
-          number={encounterListForTodayResponse?.object?.length}
+          number={totalPatientsCount ?? 0}
           color="--primary-blue"
           backgroundClassName="result-ready-section"
           position="center"
@@ -719,9 +1019,7 @@ const EncounterList = () => {
         />
         <DetailsCard
           title="Active Cases"
-          number={
-            encounterListForTodayResponse?.object?.length - (completesVisits + cancelledVisits)
-          }
+          number={activeCasesCount ?? 0}
           color="--green-600"
           backgroundClassName="sample-collected-section"
           position="center"
@@ -729,7 +1027,7 @@ const EncounterList = () => {
         />
         <DetailsCard
           title="Completed"
-          number={completesVisits}
+          number={completedCount ?? 0}
           color="--primary-purple "
           backgroundClassName="new-section"
           position="center"
@@ -737,7 +1035,7 @@ const EncounterList = () => {
         />
         <DetailsCard
           title="Cancelled"
-          number={cancelledVisits}
+          number={cancelledCount ?? 0}
           color="--primary-yellow"
           backgroundClassName="total-test-section"
           position="center"
@@ -748,35 +1046,19 @@ const EncounterList = () => {
       <Panel>
         <MyTable
           filters={filters()}
-          // tableButtons={
-          //   <div className="out-patient-list-table-buttons-position-handle">
-          //     <MyButton onClick={() => setOpenRefillModal(true)}>
-          //       <FontAwesomeIcon icon={faBoxOpen} />
-          //       Refill Stock
-          //     </MyButton>
-          //   </div>
-          // }
           height={600}
-          data={encounterListResponse?.object ?? []}
+          data={normalizedTableData}
           columns={tableColumns}
-          rowClassName={isSelected}
-          loading={isLoading || (manualSearchTriggered && isFetching)}
-          onRowClick={rowData => {
-            setLocalEncounter(rowData);
-          }}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortChange={(sortBy, sortType) => {
-            setListRequest({ ...listRequest, sortBy, sortType });
-          }}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
+          rowClassName={(rowData: any) => (rowData && encounter && rowData.key === encounter.key ? 'selected-row' : '')}
+          loading={tableLoading}
+          onRowClick={(rowData: any) => setLocalEncounter(rowData)}
+          page={page}
+          rowsPerPage={pageSize}
           totalCount={totalCount}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
         />
 
-        {/* Refill Modal */}
         <MyModal
           open={openRefillModal}
           setOpen={setOpenRefillModal}
@@ -787,7 +1069,6 @@ const EncounterList = () => {
           cancelButtonLabel="Close"
         />
 
-        {/* Existing deletion modal */}
         <DeletionConfirmationModal
           open={open}
           setOpen={setOpen}
@@ -798,14 +1079,12 @@ const EncounterList = () => {
           cancelButtonLabel="Close"
         />
 
-        {/* Confirm Start Nurse Assessment */}
         <DeletionConfirmationModal
           open={openNurseAssessment}
           setOpen={setOpenNurseAssessment}
-          actionButtonFunction={() => {
+          actionButtonFunction={async () => {
             if (encounter && encounter.patientObject) {
-              const patientData = encounter.patientObject;
-              handleGoToPreVisitObservations(encounter, patientData);
+              await handleGoToPreVisitObservations(encounter, encounter.patientObject);
             }
           }}
           actionType="confirm"
@@ -814,7 +1093,6 @@ const EncounterList = () => {
           cancelButtonLabel="Close"
         />
 
-        {/* Task Management */}
         <MyModal
           open={openPhysicianOrderSummaryModal}
           setOpen={setOpenPhysicianOrderSummaryModal}
@@ -825,7 +1103,6 @@ const EncounterList = () => {
           cancelButtonLabel="Close"
         />
 
-        {/* Encounter Logs */}
         <MyModal
           open={openEncounterLogsModal}
           setOpen={setOpenEncounterLogsModal}

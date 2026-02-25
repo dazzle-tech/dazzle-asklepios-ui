@@ -176,84 +176,95 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
     }
   }, [open]);
 
-  const quickPatientContent = (
-    <Form layout="inline" fluid>
-      <MyInput
-        required
-        width={250}
-        vr={validationResult}
-        column
-        fieldName="firstName"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        disabled={isUnknown}
-      />
+ const quickPatientContent = (
+  <Form
+    fluid
+    style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 12
+    }}
+  >
+    <MyInput
+      required
+      vr={validationResult}
+      column
+      fieldName="firstName"
+      record={localPatient}
+      setRecord={setLocalPatient}
+      disabled={isUnknown}
+      width={200}
+    />
 
-      <MyInput
-        required
-        width={250}
-        vr={validationResult}
-        column
-        fieldName="lastName"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        disabled={isUnknown}
-      />
+    <MyInput
+      required
+      vr={validationResult}
+      column
+      fieldName="lastName"
+      record={localPatient}
+      setRecord={setLocalPatient}
+      disabled={isUnknown}
+            width={200}
 
-      <MyInput
-        required
-        width={235}
-        vr={validationResult}
-        column
-        fieldLabel="Gender"
-        fieldType="select"
-        fieldName="sexAtBirth"
-        selectData={genderEnum ?? []}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        disabled={isUnknown}
-        searchable={false}
-      />
+    />
 
-      <MyInput
-        required
-        width={250}
-        vr={validationResult}
-        column
-        fieldName="primaryMobileNumber"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        disabled={isUnknown}
-      />
-      <MyInput
-        required
-        vr={validationResult}
-        column
-        fieldName="email"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        width={170}
-      />
-      <MyInput
-        required
-        width={235}
-        vr={validationResult}
-        column
-        fieldType="date"
-        fieldLabel="DOB"
-        fieldName="dateOfBirth"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        disabled={isUnknown}
-      />
+    <MyInput
+      required
+      vr={validationResult}
+      column
+      fieldLabel="Gender"
+      fieldType="select"
+      fieldName="sexAtBirth"
+      selectData={genderEnum ?? []}
+      selectDataLabel="label"
+      selectDataValue="value"
+      record={localPatient}
+      setRecord={setLocalPatient}
+      disabled={isUnknown}
+      searchable={false}
+      width={200}
+    />
 
-      <div style={{ marginTop: 8 }}>
-        Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
-      </div>
-    </Form>
-  );
+    <MyInput
+      required
+      vr={validationResult}
+      column
+      fieldName="primaryMobileNumber"
+      record={localPatient}
+      setRecord={setLocalPatient}
+      disabled={isUnknown}
+      width={200}
+    />
+
+    <MyInput
+      required
+      vr={validationResult}
+      column
+      fieldName="email"
+      record={localPatient}
+      setRecord={setLocalPatient}
+      width={200}
+    />
+
+    <MyInput
+      required
+      vr={validationResult}
+      column
+      fieldType="date"
+      fieldLabel="DOB"
+      fieldName="dateOfBirth"
+      record={localPatient}
+      setRecord={setLocalPatient}
+      disabled={isUnknown}
+      width={200}
+    />
+
+    {/* سطر كامل */}
+    <div style={{ gridColumn: '1 / -1', marginTop: 8 }}>
+      Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
+    </div>
+  </Form>
+);
 
   return (
     <MyModal
@@ -266,7 +277,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
           icon: <FontAwesomeIcon icon={faBoltLightning} />
         }
       ]}
-      size="20vw"
+      size="28vw"
       position="right"
       actionButtonLabel="Create"
       actionButtonFunction={handleSave}

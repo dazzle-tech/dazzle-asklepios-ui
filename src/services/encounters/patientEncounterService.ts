@@ -40,10 +40,10 @@ export const patientEncounterService = createApi({
   tagTypes: ['PatientEncounter'],
 
   endpoints: builder => ({
-    /**
-     * CREATE Patient Encounter
-     */
-    createEncounter: builder.mutation<PatientEncounter, { body: PatientEncounter }>({
+    createEncounter: builder.mutation<
+      PatientEncounter,
+      { body: PatientEncounter }
+    >({
       query: ({ body }) => ({
         url: '/api/patient/encounter',
         method: 'POST',
@@ -51,10 +51,6 @@ export const patientEncounterService = createApi({
       }),
       invalidatesTags: ['PatientEncounter']
     }),
-
-    /**
-     * UPDATE Patient Encounter
-     */
     updateEncounter: builder.mutation<
       PatientEncounter,
       { id: Id; body: PatientEncounter }
@@ -69,11 +65,10 @@ export const patientEncounterService = createApi({
         'PatientEncounter'
       ]
     }),
-
-    /**
-     * COUNT today's encounters by facility
-     */
-    countTodayEncountersByFacility: builder.query<number, { facilityId: Id }>({
+    countTodayEncountersByFacility: builder.query<
+      number,
+      { facilityId: Id }
+    >({
       query: ({ facilityId }) => ({
         url: `/api/patient/encounter/facility/${facilityId}/count/today`,
         method: 'GET'
@@ -81,29 +76,170 @@ export const patientEncounterService = createApi({
       providesTags: ['PatientEncounter']
     }),
 
-    /**
-     * GET previous encounters (same department)
-     */
-    getPreviousEncountersSameDepartment: builder.query<
+    filterEncounters: builder.query<
       PagedResult<PatientEncounter>,
-      { patientId: Id; departmentId: Id } & PagedParams
+      {
+        departmentId: Id;
+        fromDate?: string;
+        toDate?: string;
+        statusIn?: string[];
+        patientName?: string;
+        mrn?: string;
+
+        encounterReasonIn?: string[];
+
+        chiefComplaint?: string;
+        priorityIn?: string[];
+        withPrescription?: boolean;
+        hasOrders?: boolean;
+        isObserved?: boolean;
+      } & PagedParams
     >({
-      query: ({ patientId, departmentId, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/encounter/patient/${patientId}/department/${departmentId}/previous`,
+      query: ({
+        departmentId,
+        fromDate,
+        toDate,
+        statusIn,
+        patientName,
+        mrn,
+
+        encounterReasonIn,
+
+        chiefComplaint,
+        priorityIn,
+        withPrescription,
+        hasOrders,
+        isObserved,
+        page,
+        size,
+        sort = 'id,desc'
+      }) => ({
+        url: `/api/patient/encounter`,
         method: 'GET',
-        params: { page, size, sort }
+        params: {
+          departmentId,
+          fromDate,
+          toDate,
+          statusIn,
+          patientName,
+          mrn,
+
+          encounterReasonIn,
+
+          chiefComplaint,
+          priorityIn,
+          withPrescription,
+          hasOrders,
+          isObserved,
+          page,
+          size,
+          sort
+        }
       }),
       transformResponse: (response: any, meta) => {
-        const rows = Array.isArray(response) ? response : (response?.content ?? []);
+        const rows = Array.isArray(response) ? response : response?.content ?? [];
         return mapPaged(rows, meta);
       },
       providesTags: res =>
         res
           ? [
-              ...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })),
-              'PatientEncounter'
-            ]
+            ...res.data.map(e => ({
+              type: 'PatientEncounter' as const,
+              id: e.id
+            })),
+            'PatientEncounter'
+          ]
           : ['PatientEncounter']
+    }),
+    getPreviousEncountersSameDepartment: builder.query<
+      PagedResult<PatientEncounter>,
+      { patientId: Id; departmentId: Id } & PagedParams
+    >({
+      query: ({
+        patientId,
+        departmentId,
+        page,
+        size,
+        sort = 'id,asc'
+      }) => ({
+        url: `/api/patient/encounter/patient/${patientId}/department/${departmentId}/previous`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any, meta) => {
+        const rows = Array.isArray(response)
+          ? response
+          : response?.content ?? [];
+        return mapPaged(rows, meta);
+      },
+      providesTags: res =>
+        res
+          ? [
+            ...res.data.map(e => ({
+              type: 'PatientEncounter' as const,
+              id: e.id
+            })),
+            'PatientEncounter'
+          ]
+          : ['PatientEncounter']
+    }),
+    countTodayDepartmentTotalPatients: builder.query<
+      number,
+      { departmentId: Id }
+    >({
+      query: ({ departmentId }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/today/total-patients`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    countTodayDepartmentActiveCases: builder.query<
+      number,
+      { departmentId: Id }
+    >({
+      query: ({ departmentId }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/today/active`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    countTodayDepartmentCompleted: builder.query<
+      number,
+      { departmentId: Id }
+    >({
+      query: ({ departmentId }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/today/completed`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+    startEncounter: builder.mutation<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}/start`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
+    }),
+
+    // ✅ NEW: CANCEL encounter (set status CANCELED)
+    cancelEncounter: builder.mutation<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}/cancel`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
+    }),
+    countTodayDepartmentCancelled: builder.query<
+      number,
+      { departmentId: Id }
+    >({
+      query: ({ departmentId }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/today/cancelled`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
     })
   })
 });
@@ -111,8 +247,21 @@ export const patientEncounterService = createApi({
 export const {
   useCreateEncounterMutation,
   useUpdateEncounterMutation,
+
+  useStartEncounterMutation,
+  useCancelEncounterMutation,
+  
   useCountTodayEncountersByFacilityQuery,
   useLazyCountTodayEncountersByFacilityQuery,
+
+  useFilterEncountersQuery,
+  useLazyFilterEncountersQuery,
+
   useGetPreviousEncountersSameDepartmentQuery,
-  useLazyGetPreviousEncountersSameDepartmentQuery
+  useLazyGetPreviousEncountersSameDepartmentQuery,
+
+  useCountTodayDepartmentTotalPatientsQuery,
+  useCountTodayDepartmentActiveCasesQuery,
+  useCountTodayDepartmentCompletedQuery,
+  useCountTodayDepartmentCancelledQuery
 } = patientEncounterService;
