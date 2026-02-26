@@ -28,6 +28,7 @@ import { Avatar, Divider, Panel, Text } from 'rsuite';
 import './styles.less';
 import { newApPatient } from '@/types/model-types-constructor';
 import { faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
+import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 
 const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const profileImageFileInputRef = useRef(null);
@@ -36,6 +37,8 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
   );
+const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEncounter);
+
 
   // ===== Helpers to avoid NaN / bad output =====
   const toNumber = (v: any) => {
@@ -61,7 +64,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   });
 
   // New queries for allergies and warnings
-  const { data: allergiesResponse } = useGetAllergiesQuery(
+  const { data: allergiesResponse, refetch: refetchAllergies } = useGetAllergiesQuery(
     {
       ...initialListRequest,
       pageSize: 5, // Limit to show only recent ones
@@ -75,7 +78,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     { skip: !patient?.key }
   );
 
-  const { data: warningsResponse } = useGetWarningsQuery(
+  const { data: warningsResponse, refetch: refetchWarnings } = useGetWarningsQuery(
     {
       ...initialListRequest,
       pageSize: 5, // Limit to show only recent ones
@@ -158,7 +161,21 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     const found = allergensListToGetName.object.find(item => item.key === allergenKey);
     return found?.allergenName || 'Unknown';
   };
+useEffect(() => {
+  if (!refetchEncounter) return;
 
+  const doRefetch = async () => {
+    try {
+      await Promise.all([refetchAllergies(), refetchWarnings()]);
+    } catch (e) {
+      console.error('Error while refetching side data:', e);
+    } finally {
+      dispatch(resetRefetchEncounter());
+    }
+  };
+
+  doRefetch();
+}, [refetchEncounter, refetchAllergies, refetchWarnings, dispatch]);
   // Get active allergies & warnings
   const activeAllergies =
     allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
@@ -193,8 +210,8 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   return (
     <Panel className="patient-panel">
       {props?.setPatient && (
-        <div style={{display: 'flex', justifyContent: "end", marginBottom: "5px"}}>
-        <IoMdClose size={22} className='icons-style' onClick={() => props?.setPatient({ ...newApPatient })}/>
+        <div style={{ display: 'flex', justifyContent: "end", marginBottom: "5px" }}>
+          <IoMdClose size={22} className='icons-style' onClick={() => props?.setPatient({ ...newApPatient })} />
         </div>
       )}
       <div className="div-avatar">
@@ -259,7 +276,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
 
       <Text className="main-info-patient-side">
         <FaWeight className="icon-color" />{' '}
-        <span className="section-title-patient-side">Physical Measurements</span>
+        <span className="section-title-patient-side">Measurements</span>
       </Text>
       <div className="details-sections">
         <br />
@@ -306,16 +323,16 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
         </div>
       </div>
       <Divider className="divider-style" />
-      
+
       {!props?.hideVisitDetails && (
-      <Text className="main-info-patient-side">
-        <FontAwesomeIcon icon={faFileWaveform} className="icon-color" />{' '}
-        <span className="section-title-patient-side">
-          {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT'
-            ? 'Visit Details'
-            : 'Admission Details'}
-        </span>
-      </Text>
+        <Text className="main-info-patient-side">
+          <FontAwesomeIcon icon={faFileWaveform} className="icon-color" />{' '}
+          <span className="section-title-patient-side">
+            {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT'
+              ? 'Visit Details'
+              : 'Admission Details'}
+          </span>
+        </Text>
       )}
       {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT' && !props?.hideVisitDetails && (
         <div className="details-sections">
@@ -409,7 +426,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
         </>
       )}
 
-     
+
 
       {/* ==== Allergy & Warning Banners ==== */}
       <div className="my-container">
@@ -448,28 +465,28 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
         ))}
       </div>
 
-     {props?.balance && (
-      <div>
-      <Text className="main-info-patient-side">
-        <FontAwesomeIcon icon={faScaleBalanced} className="icon-color" />{' '}
-        <span className="section-title-patient-side">Balance</span>
-      </Text>
-      <br />
+      {props?.balance && (
+        <div>
+          <Text className="main-info-patient-side">
+            <FontAwesomeIcon icon={faScaleBalanced} className="icon-color" />{' '}
+            <span className="section-title-patient-side">Balance</span>
+          </Text>
+          <br />
 
-      <div className="info-section">
-        <div className="info-column">
-          <Text className="info-label">Free Balance</Text>
-          <Text className="info-value">{props?.balance?.freeBalance}</Text>
-        </div>
+          <div className="info-section">
+            <div className="info-column">
+              <Text className="info-label">Free Balance</Text>
+              <Text className="info-value">{props?.balance?.freeBalance}</Text>
+            </div>
 
-        <div className="info-column">
-          <Text className="info-label">Outstanding</Text>
-          <Text className="info-value"> {props?.balance?.outstanding}</Text>
+            <div className="info-column">
+              <Text className="info-label">Outstanding</Text>
+              <Text className="info-value"> {props?.balance?.outstanding}</Text>
+            </div>
+          </div>
+          <Divider className="divider-style" />
         </div>
-      </div>
-      <Divider className="divider-style" />
-      </div>
-     )}
+      )}
     </Panel>
   );
 };

@@ -68,6 +68,16 @@ const handleDelete = (row) => {
 };
 
 
+const mapKeysToLovLabels = (keys?: string, lovList?: any[]) => {
+  if (!keys || !lovList?.length) return '-';
+
+  const arr = keys.split(',');
+
+  return lovList
+    .filter(lov => arr.includes(lov.key))
+    .map(lov => lov.lovDisplayVale)
+    .join(', ');
+};
 
 
 
@@ -107,10 +117,12 @@ const handleDelete = (row) => {
     title: "ADVERSE REACTIONS",
     flexGrow: 3,
     render: (row) =>
-      advLov?.object?.find(
-        (x) => x.key === row.adverseReactionsToAnesthesiaLkey
-      )?.lovDisplayVale ?? "",
+      mapKeysToLovLabels(
+        row.adverseReactionsToAnesthesiaLkey,
+        advLov?.object
+      ),
   },
+
 
   {
     key: "isImplantsOrDevices",

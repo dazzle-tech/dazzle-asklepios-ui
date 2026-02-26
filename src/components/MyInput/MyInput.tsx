@@ -17,7 +17,7 @@ import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
+import {  faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
@@ -49,18 +49,19 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-  | 'text'
-  | 'textarea'
-  | 'checkbox'
-  | 'datetime'
-  | 'time'
-  | 'select'
-  | 'selectPagination'
-  | 'multyPicker'
-  | 'checkPicker'
-  | 'date'
-  | 'number'
-  | 'check';
+    | 'text'
+    | 'password'
+    | 'textarea'
+    | 'checkbox'
+    | 'datetime'
+    | 'time'
+    | 'select'
+    | 'selectPagination'
+    | 'multyPicker'
+    | 'checkPicker'
+    | 'date'
+    | 'number'
+    | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -145,10 +146,12 @@ const MyInput = ({
   const [isTimeOpen, setIsTimeOpen] = useState(false);
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
+      const target = event.target as HTMLElement;
 
       const menuClassList = [
         'rs-picker-popup',
@@ -162,6 +165,10 @@ const MyInput = ({
       if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
         return;
       }
+
+      if (target.closest('.rs-picker-popup')) return;
+
+      if (target.closest('.rs-modal-body')) return;
 
       setIsSelectOpen(false);
       setIsDateOpen(false);
@@ -485,12 +492,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                  {
-                    [valueKey]: '__load_more__',
-                    [labelKey]: 'Load more...',
-                    isLoadMore: true
-                  }
-                ]
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -779,7 +786,48 @@ const MyInput = ({
         const displayValue =
           props.isEnum && typeof rawValue === 'string' ? formatEnumString(rawValue) : rawValue;
 
-        const inputControl = (
+        const isPassword = fieldType === 'password';
+
+        const inputControl = isPassword ? (
+          <InputGroup inside style={{ width: defaultInputWidth }}>
+            <Form.Control
+              style={{
+                width: '100%',
+                height: props?.height ?? 30
+              }}
+              disabled={props.disabled}
+              name={fieldName}
+              type={showPassword ? 'text' : 'password'}
+              value={displayValue}
+              onChange={handleValueChange}
+              placeholder={props.placeholder}
+              onKeyDown={async e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const result = await props.enterClick?.();
+                  if (result !== false) {
+                    focusNextField(e);
+                  }
+                }
+              }}
+            />
+            {!props.disabled && (
+              <InputGroup.Button 
+                onClick={() => setShowPassword(!showPassword)}
+                className="password-toggle-button"
+                style={{ 
+                  backgroundColor: 'transparent', 
+                  border: 'none',
+                  boxShadow: 'none',
+                  padding: '8px 12px',
+                  outline: 'none'
+                }}
+              >
+                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+              </InputGroup.Button>
+            )}
+          </InputGroup>
+        ) : (
           <div style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}>
             <Form.Control
               style={{
@@ -803,7 +851,7 @@ const MyInput = ({
                 }
               }}
             />
-            {!props.disabled && (
+            {/* {!props.disabled && (
               <div
                 className={`container-of-search-icon ${recording ? 'recording' : ''}`}
                 onClick={changeRecordingState}
@@ -814,7 +862,7 @@ const MyInput = ({
                 /> */}
                 {recording && <span className="pulse-ring"></span>}
               </div>
-            )}
+            )} */}
           </div>
         );
 
@@ -854,8 +902,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                  ? 'orange'
-                  : 'grey'
+                ? 'orange'
+                : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>

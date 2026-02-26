@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
-import Logo from '../../../images/Logo_BLUE_New.svg';
+import Logo from '../../../images/mainPageScreenLogo.svg';
 import './styles.less';
 import uiSlice, { setLang, setTranslations } from '@/reducers/uiSlice';
 import { useLoginMutation } from '@/services/authServiceApi';

@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { Grid, Row, Col } from "rsuite";
-import "./styles.less";
-import Roles from "./Roles";
-import RoleScreens from "./RoleScreens";
-import SectionContainer from "@/components/SectionsoContainer";
-import MyModal from "@/components/MyModal/MyModal";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUserShield } from "@fortawesome/free-solid-svg-icons";
+import React, { useState } from 'react';
+import { Grid, Row, Col } from 'rsuite';
+import './styles.less';
+import Roles from './Roles';
+import RoleScreens from './RoleScreens';
+import SectionContainer from '@/components/SectionsoContainer';
+import MyModal from '@/components/MyModal/MyModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserShield } from '@fortawesome/free-solid-svg-icons';
 
 type Role = { id: number; name: string; description: string };
 
@@ -23,7 +23,7 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
   setOpen,
   facility,
   setFacility,
-  onSave,
+  onSave
 }) => {
   const [selected, setSelected] = useState<Role | null>(null);
   const handleSave = () => {
@@ -36,16 +36,12 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
     <Grid fluid className="role-management">
       <Row className="role-row">
         <Col xs={24} md={8} className="left-col">
-          <Roles
-            selected={selected}
-            setSelected={setSelected}
-            facilityId={facility.id}
-          />
+          <Roles selected={selected} setSelected={setSelected} facilityId={facility.id} />
         </Col>
 
         <Col xs={24} md={16}>
           <SectionContainer
-            title={"Screens & Permissions"}
+            title={'Screens & Permissions'}
             content={
               selected ? (
                 <RoleScreens roleId={selected.id} />
@@ -69,10 +65,9 @@ const RoleManegment: React.FC<RoleManegmentProps> = ({
       bodyheight="90vh"
       content={content}
       hideBack={true}
-  
       actionButtonLabel="Save"
       hideActionBtn
-      isDisabledActionBtn={!selected} // disable until a role is selected
+      isDisabledActionBtn={!selected}
     />
   );
 };

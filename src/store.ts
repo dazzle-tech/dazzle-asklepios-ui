@@ -63,6 +63,7 @@ import { enumsApi } from '@/services/enumsApi';
 
 import { facilityService } from './services/security/facilityService';
 import { departmentService } from './services/security/departmentService';
+import { organizationDefinitionService } from './services/system-configurations/organizationDefinitionService';
 import { roleService } from './services/security/roleService';
 import { userRoleService } from './services/security/UserRoleService';
 import { enumService } from './services/enumService';
@@ -142,18 +143,27 @@ import { DiagnosticTestTemplateService } from './services/setup/report-template/
 
 import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
 
-import { referralRequestService } from '@/services/encounters/referralRequestService';
-
-import { PayorService } from './services/setup/payer/PayorService';
-import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
-
-import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import PatientRelationService from './services/patients/PatientRelationService';
 import { patientInsurancesService } from './services/patients/patientInsurancesService';
 import { patientInsuranceCoveragesService } from './services/patients/patientInsuranceCoveragesService';
 import { encounterVaccinationService } from './services/encounterMedical/encounterVaccinationService';
 import { patientEncounterService } from './services/encounters/patientEncounterService';
 import { patientPaymentsService } from './services/encounters/patientPaymentsService';
+import { referralRequestService } from '@/services/encounters/referralRequestService';
+import { PayorService } from './services/setup/payer/PayorService';
+import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
+import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
+import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
+import { formTemplateService } from './services/setup/formTemplateService';
+import { FormEntriesService } from './services/setup/formEntriesService';
+import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
+import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
+import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
+import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
+import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
+import { patientReportService } from './services/patientReportService';
+import { ICDTreeService } from './services/setup/icdTreeService';
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -252,6 +262,8 @@ export const store = configureStore({
     [departmentService.reducerPath]: departmentService.reducer,
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
+    [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
+
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
     [enumsApi.reducerPath]: enumsApi.reducer,
@@ -273,6 +285,23 @@ export const store = configureStore({
     [MedicationCategoriesClassService.reducerPath]: MedicationCategoriesClassService.reducer,
 
     // misc setup (age, ICD, resource, allergens)
+    // Language slice
+    [languageService.reducerPath]: languageService.reducer,
+
+    // uom
+    [uomGroupService.reducerPath]: uomGroupService.reducer,
+
+    // Translation slice
+    [translationService.reducerPath]: translationService.reducer,
+
+    // Form slice
+    [formTemplateService.reducerPath]: formTemplateService.reducer,
+    [FormEntriesService.reducerPath]: FormEntriesService.reducer,
+
+    //service
+    [serviceService.reducerPath]: serviceService.reducer,
+
+    //age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
     [ResourceService.reducerPath]: ResourceService.reducer,
@@ -362,7 +391,21 @@ export const store = configureStore({
     [encounterVaccinationService.reducerPath]: encounterVaccinationService.reducer,
 
     [patientEncounterService.reducerPath]: patientEncounterService.reducer,
-    [patientPaymentsService.reducerPath]: patientPaymentsService.reducer
+    [patientPaymentsService.reducerPath]: patientPaymentsService.reducer,
+    [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
+    [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
+
+    [prescriptionPService.reducerPath]: prescriptionPService.reducer,
+    [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
+
+    //AI Services
+    [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer,
+    [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
+    [medicationTestOrdersValidationService.reducerPath]:
+      medicationTestOrdersValidationService.reducer,
+    [patientReportService.reducerPath]: patientReportService.reducer,
+
+    [ICDTreeService.reducerPath]: ICDTreeService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -435,6 +478,7 @@ export const store = configureStore({
       enumsApi.middleware,
       facilityService.middleware,
       departmentService.middleware,
+      organizationDefinitionService.middleware,
       roleService.middleware,
       userRoleService.middleware,
       enumService.middleware,
@@ -451,6 +495,8 @@ export const store = configureStore({
       translationService.middleware,
 
       // practitioner
+      formTemplateService.middleware,
+      FormEntriesService.middleware,
       PractitionerService.middleware,
       PractitionerDepartmentService.middleware,
 
@@ -539,10 +585,19 @@ export const store = configureStore({
       encounterVaccinationService.middleware,
 
       patientEncounterService.middleware,
-      patientPaymentsService.middleware
+      patientPaymentsService.middleware,
+      priceListAttributesService.middleware,
+      prescriptionPService.middleware,
+      radiologyReportApi.middleware,
+      clinicalSummaryService.middleware,
+      clinicalRecommendationsService.middleware,
+      medicationTestOrdersValidationService.middleware,
+      patientReportService.middleware,
+      ICDTreeService.middleware
     ])
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
+// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
 export type AppDispatch = typeof store.dispatch;

@@ -23,6 +23,7 @@ export interface ApUser {
   gender?: string | null;
   jobDescription?: string | null;
   jobRole?: string | null;
+  admin?: boolean;
 }
 
 export interface Candidate {
@@ -1096,6 +1097,44 @@ export interface PriceList {
   lastModifiedDate?: Date | null;
 }
 
+export interface ReportTemplate {
+  id?: number;
+  name: string;
+  templateValue: string;
+  isActive: boolean;
+}
+
+export interface DiagnosticTestReportTemplate {
+  id: number;
+  diagnosticTest: string;
+  name: string;
+  templateValue: string;
+  isActive: boolean;
+}
+
+export interface UserStickyNotesResponseVM {
+  id: number;
+  userId: number;
+  note: string;
+  priority: string;
+  priorityOrder: number;
+  color: string;
+  createdBy: string;
+  createdDate: Date;
+  lastModifiedBy: string;
+  lastModifiedDate: Date;
+  patientId: string;
+}
+
+export interface UserStickyNotesCreateVM {
+  userId: number;
+  note: string;
+  priority: string;
+  priorityOrder: number;
+  color: string;
+  patientId: string;
+}
+
 export interface PriceListItem {
   id?: number;
   priceListId: number;
@@ -1480,30 +1519,30 @@ export interface PatientInsuranceCoverage {
 export interface EncounterVaccination {
   id?: number;
 
-  patientId: number; 
+  patientId: number;
   encounterId: number;
 
   vaccineId: number;
   vaccineBrandId: number;
   vaccineDoseId: number;
 
-  vaccineLotNumber?: number | string | null; 
+  vaccineLotNumber?: number | string | null;
   dateAdministered?: string | null;
 
-  status: string; 
+  status: string;
 
   cancellationReason?: string | null;
 
-  cancelledAt?: string | null;      
-  cancelledById?: number | null;   
+  cancelledAt?: string | null;
+  cancelledById?: number | null;
 
   administeredLocation?: string | null;
   administrationReactions?: string | null;
   externalFacilityName?: string | null;
   notes?: string | null;
 
-  reviewedAt?: string | null;       
-  reviewedById?: number | null;     
+  reviewedAt?: string | null;
+  reviewedById?: number | null;
 
   isExternalFacility: boolean;
   createdBy?: string | null;
@@ -1548,8 +1587,6 @@ export interface PatientEncounter {
   isObserved: boolean;
 }
 
-
-
 export interface PatientPaymentServiceItemDTO {
   serviceId: number;
   price: number;
@@ -1564,12 +1601,12 @@ export interface PatientPaymentDTO {
 
   planId?: number | null;
 
-  paymentTypes: string; 
-  paymentMethods: string; 
+  paymentTypes: string;
+  paymentMethods: string;
 
   amount: number;
-  currency: string; 
-  facilityDefaultCurrency: string; 
+  currency: string;
+  facilityDefaultCurrency: string;
   amountInFacilityCurrency?: number | null;
 
   addToFreeBalance: boolean;
@@ -1578,15 +1615,15 @@ export interface PatientPaymentDTO {
 
   cardNumber?: string | null;
   cardHolderName?: string | null;
-  cardValidUntil?: string | null; 
+  cardValidUntil?: string | null;
 
   chequeNumber?: string | null;
   chequeBankName?: string | null;
-  chequeDueDate?: string | null; 
+  chequeDueDate?: string | null;
 
   transferNumber?: string | null;
   transferBankName?: string | null;
-  transferDate?: string | null; 
+  transferDate?: string | null;
 
   services: PatientPaymentServiceItemDTO[];
 }
@@ -1658,13 +1695,11 @@ export interface PatientPaymentDetails {
   services: PatientPaymentServices[];
 }
 
-
 export interface PatientLedgerSummaryDTO {
   patientId: number;
   totalDebt: number;
   walletBalance: number;
 }
-
 
 export interface PatientChargeDTO {
   id?: number;
@@ -1680,14 +1715,13 @@ export interface PatientChargeDTO {
   facilityDefaultCurrency: string;
 
   createdDate?: Date | string | null;
-  lastModifiedDate?: Date | string | null; 
+  lastModifiedDate?: Date | string | null;
 }
-
 
 export interface PatientWalletDTO {
   patientId: number;
   balance: number;
-  lastModifiedDate?: Date | string | null; 
+  lastModifiedDate?: Date | string | null;
 }
 
 export interface PatientPaymentAllocationDTO {
@@ -1700,4 +1734,50 @@ export interface PatientPaymentAllocationDTO {
   paidFromBalance: number;
 
   lastModifiedDate?: Date | string | null;
+}
+export interface PriceListAttribute {
+  id?: number | null;
+  priceListId: number | null;
+  attributeType: string; // PriceAttributes enum as string
+  attribute: string;
+  price: number; // or string if you prefer BigDecimal string
+  isActive?: boolean;
+}
+
+export interface FormTemplate {
+  id?: number | null;
+  name: string | null;
+  description?: string | null;
+  facilityId: number | null;
+  departmentId: number | null;
+  formJson: string | null;
+}
+
+export interface FormEntry {
+  id?: number | null;
+  title: string | null;
+  templateId: number | null;
+  facilityId: number | null;
+  departmentId: number | null;
+  dataJson: string | null;
+}
+
+export interface FormEntryCreateVM {
+  title: string;
+  templateId: number;
+  facilityId: number;
+  departmentId: number;
+  dataJson: string;
+}
+export interface OrganizationDefinition {
+  id?: number;
+  name?: string;
+  description?: string;
+  address?: string;
+  contactName?: string;
+  contactAddress?: string;
+  contactEmail?: string;
+  contactMobile?: string;
+  contactLandNumber?: string;
+  taxValue?: number;
 }

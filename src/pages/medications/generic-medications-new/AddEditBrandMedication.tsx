@@ -8,7 +8,7 @@ import {
   useGetUomGroupsQuery,
   useGetUomGroupsUnitsQuery
 } from '@/services/setupService';
-import {useGetAllUOMGroupsQuery, useGetAllUnitsByGroupIdQuery} from '@/services/setup/uom-group/uomGroupService';
+import { useGetAllUOMGroupsQuery, useGetAllUnitsByGroupIdQuery } from '@/services/setup/uom-group/uomGroupService';
 import {
   ApUomGroups
 } from '@/types/model-types';
@@ -35,10 +35,10 @@ const AddEditBrandMedication = ({
   const dispatch = useAppDispatch();
 
 
- const [rout,setRout]=useState({roa:[]})
+  const [rout, setRout] = useState({ roa: [] })
 
   const [uomGroupOpen, setUomGroupOpen] = useState(false);
-  const [uomGroup, setUomGroup] = useState<uomGroup>({ ...newUOMGroup});
+  const [uomGroup, setUomGroup] = useState<uomGroup>({ ...newUOMGroup });
 
   const [width, setWidth] = useState<number>(window.innerWidth);
 
@@ -48,41 +48,41 @@ const AddEditBrandMedication = ({
   // Fetch doseage Form Lov  list response
   const { data: doseageFormLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
   // Fetch med Rout Lov  list response
-  const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
+  const roaEnumOptions = useEnumOptions('MedRoa');
   // Fetch unit Lov list response
 
-  const units=useEnumOptions("Unit")
+  const units = useEnumOptions("Unit")
 
-  
+
   const {
     data: uomGroupsListResponse,
     refetch: refetchUomGroups,
     isFetching
-  } = useGetAllUOMGroupsQuery({name:''});
- 
-useEffect(() => {
-  if (rout?.roa?.length) {
-    const joined = rout.roa.join(',');
-    if (brandMedication.roa !== joined) {
-      setBrandMedication(prev => ({ ...prev, roa: joined }));
-    }
-  } else if (brandMedication.roa !== '') {
-    setBrandMedication(prev => ({ ...prev, roa: '' }));
-  }
-}, [rout]);
+  } = useGetAllUOMGroupsQuery({ name: '' });
 
-useEffect(() => {
-  if (typeof brandMedication.roa === "string") {
-    const arr = brandMedication.roa ? brandMedication.roa.split(',').map(v => v.trim()) : [];
-    if (JSON.stringify(rout.roa) !== JSON.stringify(arr)) {
-      setRout({ roa: arr });
+  useEffect(() => {
+    if (rout?.roa?.length) {
+      const joined = rout.roa.join(',');
+      if (brandMedication.roa !== joined) {
+        setBrandMedication(prev => ({ ...prev, roa: joined }));
+      }
+    } else if (brandMedication.roa !== '') {
+      setBrandMedication(prev => ({ ...prev, roa: '' }));
     }
-  } else if (Array.isArray(brandMedication.roa)) {
-    if (JSON.stringify(rout.roa) !== JSON.stringify(brandMedication.roa)) {
-      setRout({ roa: brandMedication.roa });
+  }, [rout]);
+
+  useEffect(() => {
+    if (typeof brandMedication.roa === "string") {
+      const arr = brandMedication.roa ? brandMedication.roa.split(',').map(v => v.trim()) : [];
+      if (JSON.stringify(rout.roa) !== JSON.stringify(arr)) {
+        setRout({ roa: arr });
+      }
+    } else if (Array.isArray(brandMedication.roa)) {
+      if (JSON.stringify(rout.roa) !== JSON.stringify(brandMedication.roa)) {
+        setRout({ roa: brandMedication.roa });
+      }
     }
-  }
-}, [brandMedication.roa]);
+  }, [brandMedication.roa]);
 
 
   const { data: uomGroupsUnitsListResponse, refetch: refetchUomGroupsUnit } =
@@ -96,7 +96,7 @@ useEffect(() => {
         return (
           <Form fluid>
             <Row>
-             
+
               <Col md={8}>
                 <MyInput
                   required
@@ -107,7 +107,7 @@ useEffect(() => {
                   setRecord={setBrandMedication}
                 />
               </Col>
-                 <Col md={8}>
+              <Col md={8}>
                 <MyInput
                   width="100%"
                   fieldLabel="Brand Code"
@@ -116,7 +116,7 @@ useEffect(() => {
                   setRecord={setBrandMedication}
                 />
               </Col>
-                 <Col md={8}>
+              <Col md={8}>
                 <MyInput
                   required
                   width="100%"
@@ -150,19 +150,19 @@ useEffect(() => {
                 <MyInput
                   width="100%"
                   fieldLabel="Rout"
-                  selectData={medRoutLovQueryResponse?.object ?? []}
                   fieldType="checkPicker"
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
                   fieldName="roa"
+                  selectData={roaEnumOptions ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   record={rout}
                   setRecord={setRout}
                 />
               </Col>
-             
-           
+
+
             </Row>
-           
+
             <br />
             <MyInput
               width="100%"
@@ -190,30 +190,30 @@ useEffect(() => {
               </Col>
               {brandMedication?.expiresAfterOpening && (
                 <>
-                <Col md={6}>
-                  <MyInput
-                    width="100%"
-                    fieldLabel='Value'
-                    fieldName="expiresAfterOpeningValue"
-                    fieldType="number"
-                    record={brandMedication}
-                    setRecord={setBrandMedication}
-                  />
-                </Col>
-                <Col md={6}>
-                 <MyInput
-                  width="100%"
-                  fieldLabel='Unit'
-                  fieldName="expiresAfterOpeningUnit"
-                  fieldType="select"
-                  selectData={units ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={brandMedication}
-                  setRecord={setBrandMedication}
-                  menuMaxHeight={250}
-                />
-                </Col></>
+                  <Col md={6}>
+                    <MyInput
+                      width="100%"
+                      fieldLabel='Value'
+                      fieldName="expiresAfterOpeningValue"
+                      fieldType="number"
+                      record={brandMedication}
+                      setRecord={setBrandMedication}
+                    />
+                  </Col>
+                  <Col md={6}>
+                    <MyInput
+                      width="100%"
+                      fieldLabel='Unit'
+                      fieldName="expiresAfterOpeningUnit"
+                      fieldType="select"
+                      selectData={units ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={brandMedication}
+                      setRecord={setBrandMedication}
+                      menuMaxHeight={250}
+                    />
+                  </Col></>
               )}
             </Row>
             <br />
@@ -234,7 +234,7 @@ useEffect(() => {
                   setRecord={setBrandMedication}
                 />
               </Col>
-               <Col md={8}>
+              <Col md={8}>
                 <MyInput
                   width="100%"
                   fieldName="costCategory"
@@ -248,14 +248,14 @@ useEffect(() => {
                 />
               </Col>
             </Row>
-           
+
           </Form>
         );
       case 1:
         return (
           <Form fluid>
             <MyInput
-            required
+              required
               width="100%"
               fieldLabel="UOM Group"
               fieldName="uomGroupId"
@@ -268,7 +268,7 @@ useEffect(() => {
               searchable={true}
             />
             <MyInput
-            required
+              required
               width="100%"
               fieldLabel="Base UOM"
               fieldName="uomGroupUnitId"
@@ -293,7 +293,7 @@ useEffect(() => {
             </div>
           </Form>
         );
-   
+
 
     }
   };
@@ -306,7 +306,7 @@ useEffect(() => {
         title={brandMedication?.id ? 'Edit Brand Medication' : 'New Brand Medication'}
         actionButtonFunction={handleSave}
         content={conjureFormContent}
-         steps={[
+        steps={[
           {
             title: 'Information',
             icon: <MdOutlineMedicationLiquid />,
@@ -316,13 +316,13 @@ useEffect(() => {
           {
             title: 'UOM',
             icon: <FaUnity />,
-           
+
           }
 
         ]}
 
       />
- 
+
       <AddEditUom
         open={uomGroupOpen}
         setOpen={setUomGroupOpen}
