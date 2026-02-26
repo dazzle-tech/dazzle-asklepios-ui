@@ -1,44 +1,44 @@
-import React, { forwardRef, useEffect, useMemo, useState } from 'react';
-import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
-import Translate from '@/components/Translate';
 import ChatModal from '@/components/ChatModal';
-import { Panel, HStack, Checkbox, Form, Message, useToaster } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   faArrowDown,
   faArrowUp,
   faCircleExclamation,
-  faTriangleExclamation,
   faComment,
-  faPrint
+  faPrint,
+  faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import React, { forwardRef, useEffect, useMemo, useState } from 'react';
+import { Checkbox, Form, HStack, Message, Panel, useToaster } from 'rsuite';
 
 import {
   useFilterDiagnosticOrderTestResultsQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 import {
-  useGenerateLabResultsPdfMutation
-} from '@/services/setup/resultReportApi';
-import { useFilterDiagnosticOrderTestsQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetLovAllValuesQuery,
-  useGetLovsQuery
-} from '@/services/setupService';
-import {
-  initialListRequestAllValues,
-  initialListRequest
-} from '@/types/types';
-import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import {
   useGetNotesByResultIdQuery,
 } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
+import { useFilterDiagnosticOrderTestsQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import {
+  useGenerateLabResultsPdfMutation
+} from '@/services/setup/resultReportApi';
+import {
+  useGetLovAllValuesQuery,
+  useGetLovsQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
+import {
+  initialListRequest,
+  initialListRequestAllValues
+} from '@/types/types';
 
 
 type Props = {
@@ -99,13 +99,12 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
   });
 
   const [openNotesModal, setOpenNotesModal] = useState(false);
-  const [selectedResult, setSelectedResult] = useState<any>(null);
 
   const [generatePdf, { isLoading: isGeneratingPdf }] =
     useGenerateLabResultsPdfMutation();
 
   /* ================= QUERY ================= */
-
+//add new patient edits
   const queryParams = useMemo(() => {
     const patientId = patient?.id ?? patient?.key;
     if (!patientId) return null;
@@ -147,12 +146,12 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
       queryParams ?? skipToken
     );
 
-const { data: notesResponse, isFetching: isNotesFetching } =
-  useGetNotesByResultIdQuery(
-    openNotesModal && selectedResultId
-      ? selectedResultId
-      : skipToken
-  );
+  const { data: notesResponse, isFetching: isNotesFetching } =
+    useGetNotesByResultIdQuery(
+      openNotesModal && selectedResultId
+        ? selectedResultId
+        : skipToken
+    );
 
 
   const results = response?.data ?? [];
@@ -244,6 +243,7 @@ const { data: notesResponse, isFetching: isNotesFetching } =
 
   const handleGeneratePdf = async () => {
     try {
+      //add new patient edits
       const pdfData = {
         patientInfo: {
           name: patient?.fullName,
@@ -406,7 +406,6 @@ const { data: notesResponse, isFetching: isNotesFetching } =
             color: row.hasNote ? '#1675e0' : 'gray'
           }}
           onClick={() => {
-            setSelectedResult(row);
             setSelectedResultId(row.id);
             setOpenNotesModal(true);
           }}

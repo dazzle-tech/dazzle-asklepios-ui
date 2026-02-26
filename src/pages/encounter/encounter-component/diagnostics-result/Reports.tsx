@@ -1,34 +1,35 @@
 import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import {
-  useFilterRadiologyReportsQuery
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
-import {
-  useGetReportCommentsByReportIdQuery,
-  useCreateReportCommentMutation
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
-import { notify } from '@/utils/uiReducerActions';
-import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Form, HStack, Tooltip, Whisper } from 'rsuite';
-import { formatEnumString } from '@/utils';
+  useLazyGetDiagnosticOrderByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
 import {
   useLazyGetDiagnosticOrderTestByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import {
+  useCreateReportCommentMutation,
+  useGetReportCommentsByReportIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
+import {
+  useFilterRadiologyReportsQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
+import {
   useLazyGetDiagnosticTestByIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MdAttachFile } from 'react-icons/md';
-import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
-import MyModal from '@/components/MyModal/MyModal';
-import {
-  useLazyGetDiagnosticOrderByIdQuery
-} from '@/services/diagnosic-order/diagnosticOrderService';
+import { Form, HStack, Tooltip, Whisper } from 'rsuite';
 
 
 const startOfDay = (d: Date) => {
@@ -113,9 +114,6 @@ const Reports = ({ patient }) => {
     orderTestIds.every(id => orderTestsMap[id]) &&
     testIds.every(id => testsMap[id]);
 
-
-
-  /** Comments */
   const {
     data: comments,
     refetch: refetchComments
@@ -125,28 +123,11 @@ const Reports = ({ patient }) => {
       : undefined
   );
 
-  const [createComment] = useCreateReportCommentMutation();
 
-  const handleSendComment = async (value: string) => {
-    try {
-      await createComment({
-        reportId: selectedReport.id,
-        orderTestId: selectedReport.orderTestId,
-        note: value
-      }).unwrap();
-
-      dispatch(notify({ msg: 'Comment sent', sev: 'success' }));
-      refetchComments();
-    } catch {
-      dispatch(notify({ msg: 'Send failed', sev: 'error' }));
-    }
-  };
-
-  const reportColumns = [
+  const reportColumns:ColumnConfig[] = [
     {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
-      flexGrow: 1,
       render: (rowData: any) => {
         const ot = orderTestsMap[String(rowData.orderTestId)];
         return ot?.orderId ?? '—';
@@ -155,7 +136,6 @@ const Reports = ({ patient }) => {
     {
       key: 'testName',
       title: <Translate>TEST NAME</Translate>,
-      flexGrow: 1,
       render: (rowData: any) => {
         const ot = orderTestsMap[String(rowData.orderTestId)];
         if (!ot) return '';
@@ -167,7 +147,6 @@ const Reports = ({ patient }) => {
     {
       key: 'approvedAt',
       title: <Translate>Report Date</Translate>,
-      flexGrow: 1,
       render: (rowData: any) =>
         rowData.createdDate
           ? new Date(rowData.createdDate).toLocaleString()
@@ -176,7 +155,6 @@ const Reports = ({ patient }) => {
     {
       key: 'report',
       title: <Translate>Report</Translate>,
-      flexGrow: 1,
       render: (rowData: any) => (
         <HStack spacing={10}>
           <FontAwesomeIcon
@@ -197,7 +175,7 @@ const Reports = ({ patient }) => {
       align: 'center',
       render: (row: any) => {
 
-        const hasComment = !!row?.hasNote || localHasCommentIds.includes(row.id);
+        const hasComment = !!row?.hasNote;
         return (
           <Whisper speaker={<Tooltip>Comments</Tooltip>}>
             <span style={{ cursor: 'pointer' }}>
@@ -220,14 +198,12 @@ const Reports = ({ patient }) => {
     {
       key: 'status',
       title: <Translate>REPORT STATUS</Translate>,
-      flexGrow: 1,
       render: (rowData: any) =>
         formatEnumString(rowData.processingStatus)
     },
     {
       key: 'attachment',
       title: <Translate>ATTACHMENT</Translate>,
-      flexGrow: 1,
       render: (rowData: any) => (
         <MdAttachFile
           size={18}
@@ -266,7 +242,6 @@ const Reports = ({ patient }) => {
     {
       key: 'review',
       title: <Translate>Review At/By</Translate>,
-      flexGrow: 1,
       render: (rowData: any) => (
         <>
           <span>{rowData.reviewBy}</span>
@@ -332,7 +307,7 @@ const Reports = ({ patient }) => {
     testIds.forEach(id => {
       if (testsMap[id]) return;
 
-      fetchDiagnosticTestById(Number(id))
+      fetchDiagnosticTestById(id)
         .unwrap()
         .then(res => {
           const test = res?.data;
@@ -367,7 +342,7 @@ const Reports = ({ patient }) => {
       <ChatModal
         open={openNoteResultModal}
         setOpen={setOpenNoteResultModal}
-        handleSendMessage={handleSendComment}
+        handleSendMessage={() => {}}
         title="Comments"
         list={comments ?? []}
         fieldShowName="note"
@@ -381,7 +356,6 @@ const Reports = ({ patient }) => {
           setOpen={closeModal}
           report={selectedReport}
           setReport={setSelectedReport}
-          orderTestId={selectedReport.orderTestId}
           disableEdit
           disableDefaultTemplate
         />

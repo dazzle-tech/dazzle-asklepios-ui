@@ -1703,24 +1703,28 @@ export interface DiagnosticOrderTestReportResponseVM {
 }
 
 export interface DiagnosticHistoryResultVM {
-  id: number;
-  createdAt: string;
+  orderId: number;
+  orderTestId: number;
+  resultId: number;
+  profileTestId: number;
 
-  resultText?: string;
-  resultValueNumber?: number;
+  resultDate: string;
 
-  resultLkey?: string;
-  resultLvalue?: {
-    lovDisplayVale?: string;
-  };
+  resultValueNumber: number | null;
+  resultValueText: string | null;
 
-  normalRange?: {
-    resultTypeLkey?: string;
-  };
+  processingStatus: string;
+  marker: string;
+  normalRangeValue: string;
+
+  reviewDate: string | null;
 }
 
 export interface ProfileTestGroupedHistoryVM {
   profileTestId: number;
-  profileTestName: string;
+
+  latestProcessingStatus: string;
+  latestResultDate: string;
+
   results: DiagnosticHistoryResultVM[];
 }

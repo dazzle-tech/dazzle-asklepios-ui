@@ -1,9 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { Col, Form, Row } from 'rsuite';
-import Translate from '@/components/Translate';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
+import Translate from '@/components/Translate';
 import { useGetPatientResultsHistoryQuery } from '@/services/diagnosic-order/patientDiagnosticResultHistoryService';
 import {
     useGetDiagnosticTestProfilesByIdsMutation
@@ -14,9 +11,12 @@ import {
     useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import {
-    initialListRequestAllValues,
-    initialListRequest
+    initialListRequest,
+    initialListRequestAllValues
 } from '@/types/types';
+import { formatDateWithoutSeconds } from '@/utils';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 
 type Props = {
@@ -59,7 +59,7 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     const toInstant = dateFilter.toDate
         ? new Date(dateFilter.toDate).toISOString()
         : lastDayOfMonth.toISOString();
-
+    //add new patient edits
     const { data, isLoading } = useGetPatientResultsHistoryQuery({
         patientId: patient?.key,
         from: fromInstant,
@@ -108,7 +108,7 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     }, [profilesByIds]);
 
     /* ================= LOV ================= */
-
+    // list of value new function
     const { data: allLovValues } =
         useGetLovAllValuesQuery({ ...initialListRequestAllValues });
 
@@ -159,9 +159,8 @@ const LaboratoryResultComparison: React.FC<Props> = ({
 
         return data.map(group => {
             const dateMap: Record<string, any> = {};
-
             group.results?.forEach(result => {
-                const date = formatDateWithoutSeconds(result.resultDate);
+                const date = formatDateWithoutSeconds(result?.resultDate);
                 dateMap[date] = result;
             });
 
