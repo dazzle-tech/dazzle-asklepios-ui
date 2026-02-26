@@ -17,7 +17,9 @@ import {
 } from '@/services/setup/diagnosticTest/radiologyTestService';
 import { useGetLovsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newLaboratory, newPathology, newRadiology } from '@/types/model-types-constructor-new';
+import { initialListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
+import { SearchIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { GrTestDesktop } from 'react-icons/gr';
 import { LuTestTubes } from 'react-icons/lu';
@@ -26,8 +28,6 @@ import Laboratory from './Laboratory';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import './styles.less';
-import { SearchIcon } from 'lucide-react';
-import { initialListRequest } from '@/types/types';
 
 
 interface AddEditDiagnosticTestProps {
@@ -60,7 +60,6 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
   const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState({ ...newLaboratory });
   const [searchKeyword, setSearchKeyword] = useState('');
   const [diagnosticTestRadiology, setDiagnosticTestRadiology] = useState({ ...newRadiology });
-  const [saveLoading, setSaveLoading] = useState(false);
 
   // Fetch diagnostics test type Lov response
 
@@ -164,7 +163,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
 
         dispatch(notify({ msg: 'Laboratory Details Updated Successfully', sev: 'success' }));
       } else {
-       const created = await addDiagnosticTest({
+        const created = await addDiagnosticTest({
           testId: diagnosticsTest?.id,
           property: diagnosticTestLaboratory.property,
           system: diagnosticTestLaboratory.system,
@@ -190,7 +189,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
           tubeType: diagnosticTestLaboratory.tubeType,
           timing: diagnosticTestLaboratory.timing
         }).unwrap();
-      
+
         dispatch(notify({ msg: ' Saved Successfully', sev: 'success' }));
       }
     } catch (error: any) {
@@ -208,7 +207,6 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
   // handle save radiology details
   const handleSaveRad = async () => {
     try {
-      setSaveLoading(true);
       setOpen(false);
       if (diagnosticTestRadiology.id) {
         await updateDiagnosticTestRadiology({
@@ -236,7 +234,6 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
         })
       );
     } finally {
-      setSaveLoading(false);
     }
   };
 
@@ -309,14 +306,14 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
       }));
     }
   }, [open, diagnosticsTest?.id]);
-useEffect(() => {
-  if (testRequest?.type) {
-    setDiagnosticsTest(prev => ({
-      ...prev,
-      type: testRequest.type
-    }));
-  }
-}, [open, testRequest?.type]);
+  useEffect(() => {
+    if (testRequest?.type) {
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        type: testRequest.type
+      }));
+    }
+  }, [open, testRequest?.type]);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -336,7 +333,7 @@ useEffect(() => {
                   selectDataValue="value"
                   record={diagnosticsTest}
                   setRecord={setDiagnosticsTest}
-               
+
                 />
               </div>
               <div className="container-of-field-diagnostic">

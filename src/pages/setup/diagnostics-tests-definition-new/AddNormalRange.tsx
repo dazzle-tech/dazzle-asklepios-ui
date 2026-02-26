@@ -66,9 +66,9 @@ const AddNormalRange = ({
       lovKeys: Array.isArray(prev.lovKeys)
         ? prev.lovKeys
         : String(prev.lovKeys)
-            .split(',')
-            .map(x => x.trim())
-            .filter(Boolean)
+          .split(',')
+          .map(x => x.trim())
+          .filter(Boolean)
     }));
   }, []);
 
@@ -169,7 +169,7 @@ const AddNormalRange = ({
             selectDataLabel="lovDisplayVale"
             selectDataValue="key"
             record={diagnosticsTestProfile}
-            setRecord={() => {}}
+            setRecord={() => { }}
           />
         </div>
         <div className="container-of-field-diagnostic">
@@ -279,55 +279,55 @@ const AddNormalRange = ({
       )}
 
       {diagnosticTestNormalRange?.criticalValue === true && (
-  <>
-    {diagnosticTestNormalRange?.normalRangeType === 'LESS_THAN' && (
-      <div className="container-of-field-diagnostic">
-        <MyInput
-          width="100%"
-          fieldLabel="More Than"
-          fieldName="criticalValueMoreThan"
-          record={diagnosticTestNormalRange}
-          setRecord={setDiagnosticTestNormalRange}
-        />
-      </div>
-    )}
+        <>
+          {diagnosticTestNormalRange?.normalRangeType === 'LESS_THAN' && (
+            <div className="container-of-field-diagnostic">
+              <MyInput
+                width="100%"
+                fieldLabel="More Than"
+                fieldName="criticalValueMoreThan"
+                record={diagnosticTestNormalRange}
+                setRecord={setDiagnosticTestNormalRange}
+              />
+            </div>
+          )}
 
-    {diagnosticTestNormalRange?.normalRangeType === 'MORE_THAN' && (
-      <div className="container-of-field-diagnostic">
-        <MyInput
-          width="100%"
-          fieldLabel="Less Than"
-          fieldName="criticalValueLessThan"
-          record={diagnosticTestNormalRange}
-          setRecord={setDiagnosticTestNormalRange}
-        />
-      </div>
-    )}
+          {diagnosticTestNormalRange?.normalRangeType === 'MORE_THAN' && (
+            <div className="container-of-field-diagnostic">
+              <MyInput
+                width="100%"
+                fieldLabel="Less Than"
+                fieldName="criticalValueLessThan"
+                record={diagnosticTestNormalRange}
+                setRecord={setDiagnosticTestNormalRange}
+              />
+            </div>
+          )}
 
-    {diagnosticTestNormalRange?.normalRangeType === 'RANGE' && (
-      <div className="container-of-two-fields-diagnostic">
-        <div className="container-of-field-diagnostic">
-          <MyInput
-            width="100%"
-            fieldLabel="Less Than"
-            fieldName="criticalValueLessThan"
-            record={diagnosticTestNormalRange}
-            setRecord={setDiagnosticTestNormalRange}
-          />
-        </div>
-        <div className="container-of-field-diagnostic">
-          <MyInput
-            width="100%"
-            fieldLabel="More Than"
-            fieldName="criticalValueMoreThan"
-            record={diagnosticTestNormalRange}
-            setRecord={setDiagnosticTestNormalRange}
-          />
-        </div>
-      </div>
-    )}
-  </>
-)}
+          {diagnosticTestNormalRange?.normalRangeType === 'RANGE' && (
+            <div className="container-of-two-fields-diagnostic">
+              <div className="container-of-field-diagnostic">
+                <MyInput
+                  width="100%"
+                  fieldLabel="Less Than"
+                  fieldName="criticalValueLessThan"
+                  record={diagnosticTestNormalRange}
+                  setRecord={setDiagnosticTestNormalRange}
+                />
+              </div>
+              <div className="container-of-field-diagnostic">
+                <MyInput
+                  width="100%"
+                  fieldLabel="More Than"
+                  fieldName="criticalValueMoreThan"
+                  record={diagnosticTestNormalRange}
+                  setRecord={setDiagnosticTestNormalRange}
+                />
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
     </Form>
   );

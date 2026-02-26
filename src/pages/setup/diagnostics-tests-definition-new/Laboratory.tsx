@@ -5,7 +5,7 @@ import {
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import { newLaboratory } from '@/types/model-types-constructor-new';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Form } from 'rsuite';
 const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTestLaboratory }) => {
  

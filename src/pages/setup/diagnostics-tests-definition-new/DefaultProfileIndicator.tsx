@@ -1,9 +1,9 @@
-import React from 'react';
-import { Tooltip, Whisper } from 'rsuite';
-import { FaChartLine } from 'react-icons/fa';
 import {
   useGetDiagnosticTestProfilesByTestIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import React from 'react';
+import { FaChartLine } from 'react-icons/fa';
+import { Tooltip, Whisper } from 'rsuite';
 
 
 type Props = {
@@ -34,9 +34,6 @@ const DefaultProfileIndicator: React.FC<Props> = ({
     defaultActiveProfiles.length === 1 &&
     activeProfiles.length === 1;
   if (!isDefaultOnly) return null;
-
-
-  console.log(profiles);
 
   return (
     <Whisper placement="top" speaker={<Tooltip>Default Normal Range</Tooltip>}>
