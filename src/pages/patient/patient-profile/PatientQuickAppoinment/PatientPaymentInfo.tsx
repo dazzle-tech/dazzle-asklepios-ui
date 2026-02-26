@@ -1,8 +1,3 @@
-// PatientPaymentInfo.tsx
-// Added: dept field (read-only) + ledger summary RTK call and display
-// NOTE: You need to have added the RTK endpoint/hook: useGetPatientLedgerSummaryQuery
-// and the type: modelTypes.PatientLedgerSummaryDTO
-
 import React, {
   forwardRef,
   useEffect,
@@ -31,9 +26,10 @@ import {
   useCreatePaymentMutation,
   useUpdatePaymentMutation,
   useGetPatientBalanceQuery,
-  // NEW: ledger summary endpoint hook
   useGetPatientLedgerSummaryQuery
 } from '@/services/encounters/patientPaymentsService';
+
+import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
 
 import { useGetInsurancesByPatientQuery } from '@/services/patients/patientInsurancesService';
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
@@ -154,7 +150,9 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   const toLabel = (field: string) => PAYMENT_FIELD_LABELS[field] ?? field;
 
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    const lines = data.fieldErrors.map((fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`);
+    const lines = data.fieldErrors.map(
+      (fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`
+    );
 
     dispatch(
       notify({
@@ -167,9 +165,15 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 
   const messageProp: string = data?.message || '';
   const errorKey =
-    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) || data?.errorKey;
+    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
+    data?.errorKey;
 
-  const humanMsg = (errorKey && keyMap[errorKey]) || data?.detail || data?.title || data?.message || 'Unexpected error';
+  const humanMsg =
+    (errorKey && keyMap[errorKey]) ||
+    data?.detail ||
+    data?.title ||
+    data?.message ||
+    'Unexpected error';
 
   dispatch(
     notify({
@@ -202,7 +206,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       payment,
       setPayment,
       patientInsurance,
-      setPatientInsurance,
+      setPatientInsurance
     }: any,
     ref
   ) => {
@@ -214,12 +218,31 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       labelFormatter: v => String(v).toUpperCase()
     });
 
-
-
     const [validationResult, setValidationResult] = useState<any>({});
     const authSlice = useAppSelector(state => state.auth);
-    const facilityDefaultCurrencyFromAuth = authSlice?.tenant?.selectedFacility?.defaultCurrency || '';
+    // -----------------------------------------------------------------------------
+    // Facility (FINAL FIXED VERSION)
+    // -----------------------------------------------------------------------------
 
+    const selectedFacilityId =
+      localEncounter?.facilityId ??
+      localEncounter?.facility?.id ??
+      authSlice?.tenant?.selectedFacility?.id ??
+      null;
+
+    // IMPORTANT: pass ID directly (NOT object)
+    const { data: facilityResponse, isFetching: facilityLoading } = useGetFacilityByIdQuery(
+      selectedFacilityId,
+      { skip: !selectedFacilityId }
+    );
+
+    // support both response shapes
+    const facilityDefaultCurrency =
+      facilityResponse?.defaultCurrency ?? facilityResponse?.data?.defaultCurrency ?? null;
+
+    console.log('selectedFacilityId:', selectedFacilityId);
+    console.log('facilityResponse:', facilityResponse);
+    console.log('facilityDefaultCurrency:', facilityDefaultCurrency);
     // NEW: lock editing after successful confirm
     const [lockAfterConfirm, setLockAfterConfirm] = useState(false);
 
@@ -228,19 +251,20 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
     // keep patient/encounter/default currency synced
     useEffect(() => {
-      setPayment((prev: any) => {
-        const nextFacilityDefault = facilityDefaultCurrencyFromAuth || '';
-        return {
-          ...prev,
-          patientId: localPatient?.id ?? localPatient?.key ?? prev.patientId ?? 0,
-          encounterId: localEncounter?.id ?? prev.encounterId ?? 0,
-          facilityDefaultCurrency: nextFacilityDefault,
-          currency_unlock: prev.currency_unlock,
-          currency: prev.currency || nextFacilityDefault || ''
-        };
-      });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [localPatient?.id, localPatient?.key, localEncounter?.id, facilityDefaultCurrencyFromAuth]);
+      if (!facilityDefaultCurrency) return;
+      // if (!payment?.facilityDefaultCurrency) req('facilityDefaultCurrency');
+      setPayment((prev: any) => ({
+        ...prev,
+        patientId: localPatient?.id ?? localPatient?.key ?? prev.patientId ?? 0,
+
+        encounterId: localEncounter?.id ?? prev.encounterId ?? 0,
+
+        facilityDefaultCurrency: facilityDefaultCurrency,
+
+        // never send empty string
+        currency: prev.currency ?? facilityDefaultCurrency
+      }));
+    }, [localPatient?.id, localPatient?.key, localEncounter?.id, facilityDefaultCurrency]);
 
     // -------------------------------------------------------------------------
     // NEW: Ledger summary (Debt) from backend
@@ -253,7 +277,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
     );
 
     useEffect(() => {
-      const summary: modelTypes.PatientLedgerSummaryDTO | undefined = ledgerSummaryResponse?.data as any;
+      const summary: modelTypes.PatientLedgerSummaryDTO | undefined =
+        ledgerSummaryResponse?.data as any;
       if (!summary) return;
 
       const totalDebt = Number((summary as any)?.totalDebt ?? 0);
@@ -281,8 +306,6 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
     const PaymentMethodsEnum = useEnumOptions('PaymentMethods', {
       exclude: payment?.paymentTypes === 'OUT_OF_POCKET' ? ['INSURANCE_COVERAGE'] : []
     });
-
-    
 
     // Insurance queries
     const patientInsuranceResponse = useGetInsurancesByPatientQuery(
@@ -376,7 +399,10 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
           if (plansByPayorId[payorId]) continue;
 
           try {
-            const res = await triggerGetPlans({ payorId, page: 0, size: 1000, sort: 'name,asc' }, true).unwrap();
+            const res = await triggerGetPlans(
+              { payorId, page: 0, size: 1000, sort: 'name,asc' },
+              true
+            ).unwrap();
             setPlansByPayorId(prev => ({ ...prev, [payorId]: res?.data ?? [] }));
           } catch {
             setPlansByPayorId(prev => ({ ...prev, [payorId]: [] }));
@@ -417,7 +443,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
     // Currency conversion
     const isCurrencyChanged =
-      !!payment?.currency && !!payment?.facilityDefaultCurrency && payment.currency !== payment.facilityDefaultCurrency;
+      !!payment?.currency &&
+      !!payment?.facilityDefaultCurrency &&
+      payment.currency !== payment.facilityDefaultCurrency;
 
     // Patient balance from backend
     const patientBalanceResponse = useGetPatientBalanceQuery(
@@ -442,7 +470,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       localEncounter?.clinicDepartmentId ??
       null;
 
-    const [triggerGetServicesByDepartment, lazyServicesByDepartmentResponse] = useLazyGetServicesByDepartmentQuery();
+    const [triggerGetServicesByDepartment, lazyServicesByDepartmentResponse] =
+      useLazyGetServicesByDepartmentQuery();
 
     useEffect(() => {
       const depIdNum = Number(departmentId ?? 0);
@@ -451,7 +480,10 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         return;
       }
 
-      triggerGetServicesByDepartment({ sourceId: depIdNum, page: 0, size: 200, sort: 'id,asc' }, true);
+      triggerGetServicesByDepartment(
+        { sourceId: depIdNum, page: 0, size: 200, sort: 'id,asc' },
+        true
+      );
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [departmentId]);
 
@@ -611,7 +643,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
     };
 
     const toggleOneExempted = (id: any, checked: boolean) => {
-      setServicesRows(prev => prev.map(s => (String(s.id) === String(id) ? { ...s, isExempted: checked } : s)));
+      setServicesRows(prev =>
+        prev.map(s => (String(s.id) === String(id) ? { ...s, isExempted: checked } : s))
+      );
     };
 
     const exemptionBadge = (isExempted: boolean | null | undefined) => {
@@ -650,7 +684,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         title: <Translate>Default Currency</Translate>,
         dataKey: 'defaultCurrency',
         width: 160,
-        render: (row: UiPaymentServiceRow) => <span>{String(row.defaultCurrency ?? '').toUpperCase()}</span>
+        render: (row: UiPaymentServiceRow) => (
+          <span>{String(row.defaultCurrency ?? '').toUpperCase()}</span>
+        )
       },
       {
         key: 'isExempted',
@@ -708,6 +744,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
     // Confirm (create/update)
     const handleConfirm = async () => {
+      console.log('payment to save confirm:', payment);
       const dto: modelTypes.PatientPaymentDTO = {
         id: payment.id,
         patientId: payment.patientId,
@@ -718,8 +755,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         paymentMethods: payment.paymentMethods,
 
         amount: Number(payment.amount ?? 0),
-        currency: payment.currency,
-        facilityDefaultCurrency: payment.facilityDefaultCurrency,
+        currency: payment.currency ?? null,
+        facilityDefaultCurrency: payment.facilityDefaultCurrency ?? null,
         amountInFacilityCurrency: payment.amountInFacilityCurrency ?? null,
 
         addToFreeBalance: Boolean(payment.addToFreeBalance),
@@ -764,8 +801,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         setPayment((prev: any) => ({
           ...prev,
           ...p,
-          paidFromAmount: Number(p?.amountPaid ?? 0),   
-          paidFromBalance: Number(p?.paidFromBalance ?? 0), 
+          paidFromAmount: Number(p?.amountPaid ?? 0),
+          paidFromBalance: Number(p?.paidFromBalance ?? 0),
           refunds: Number(p?.refunds ?? 0)
         }));
       }
@@ -775,7 +812,10 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
       const depIdNum = Number(departmentId ?? 0);
       if (depIdNum) {
-        const res: any = triggerGetServicesByDepartment({ sourceId: depIdNum, page: 0, size: 200, sort: 'id,asc' }, true);
+        const res: any = triggerGetServicesByDepartment(
+          { sourceId: depIdNum, page: 0, size: 200, sort: 'id,asc' },
+          true
+        );
         if (res?.unwrap) await res.unwrap();
         applySavedServicesToTable(details);
       }
@@ -785,12 +825,16 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
     const validateBeforeSave = () => {
       const details = validationResult?.details ?? {};
       const fields = Object.keys(details);
-      const hasReject = fields.some(f => (details[f] ?? []).some((x: any) => x?.validationType === 'REJECT'));
+      const hasReject = fields.some(f =>
+        (details[f] ?? []).some((x: any) => x?.validationType === 'REJECT')
+      );
 
       if (hasReject) {
         const lines = fields
           .filter(f => (details[f] ?? []).some((x: any) => x?.validationType === 'REJECT'))
-          .map(f => `• ${PAYMENT_FIELD_LABELS[f] ?? f}: ${(details[f]?.[0]?.message ?? 'is required')}`);
+          .map(
+            f => `• ${PAYMENT_FIELD_LABELS[f] ?? f}: ${details[f]?.[0]?.message ?? 'is required'}`
+          );
 
         dispatch(
           notify({
@@ -804,6 +848,12 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
     };
 
     const handleConfirmSafe = async () => {
+      console.log(
+        'handleConfirmSafe called. isReadOnly:',
+        isReadOnly,
+        'validationResult:',
+        validationResult
+      );
       if (isReadOnly) return false;
       if (!validateBeforeSave()) return false;
 
@@ -909,7 +959,10 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
           setRecord={(updated: any) => {
             const next = { ...updated };
 
-            if (next.paymentTypes === 'OUT_OF_POCKET' && next.paymentMethods === 'INSURANCE_COVERAGE') {
+            if (
+              next.paymentTypes === 'OUT_OF_POCKET' &&
+              next.paymentMethods === 'INSURANCE_COVERAGE'
+            ) {
               next.paymentMethods = null;
             }
 
@@ -1043,42 +1096,178 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
               setSearchKeyWard={setInsuranceSearchKeyword}
             />
 
-            <MyInput column disabled={true || isLocked} fieldLabel="Payor" fieldType="text" fieldName="payorName" record={patientInsurance as any} setRecord={() => { }} />
-            <MyInput column disabled={true || isLocked} fieldLabel="Plan" fieldType="text" fieldName="planName" record={patientInsurance as any} setRecord={() => { }} />
-            <MyInput column disabled={true || isLocked} fieldLabel="Policy Number" fieldType="number" fieldName="policyNumber" record={patientInsurance as any} setRecord={() => { }} />
-            <MyInput column disabled={true || isLocked} fieldLabel="Group Number" fieldType="number" fieldName="groupNumber" record={patientInsurance as any} setRecord={() => { }} />
-            <MyInput column disabled={true || isLocked} fieldLabel="Expiration Date" fieldType="date" fieldName="expirationDate" record={patientInsurance as any} setRecord={() => { }} />
-            <MyInput column disabled={true || isLocked} fieldLabel="Primary Insurance" fieldType="checkbox" fieldName="isPrimary" record={patientInsurance as any} setRecord={() => { }} />
+            <MyInput
+              column
+              disabled={true || isLocked}
+              fieldLabel="Payor"
+              fieldType="text"
+              fieldName="payorName"
+              record={patientInsurance as any}
+              setRecord={() => {}}
+            />
+            <MyInput
+              column
+              disabled={true || isLocked}
+              fieldLabel="Plan"
+              fieldType="text"
+              fieldName="planName"
+              record={patientInsurance as any}
+              setRecord={() => {}}
+            />
+            <MyInput
+              column
+              disabled={true || isLocked}
+              fieldLabel="Policy Number"
+              fieldType="number"
+              fieldName="policyNumber"
+              record={patientInsurance as any}
+              setRecord={() => {}}
+            />
+            <MyInput
+              column
+              disabled={true || isLocked}
+              fieldLabel="Group Number"
+              fieldType="number"
+              fieldName="groupNumber"
+              record={patientInsurance as any}
+              setRecord={() => {}}
+            />
+            <MyInput
+              column
+              disabled={true || isLocked}
+              fieldLabel="Expiration Date"
+              fieldType="date"
+              fieldName="expirationDate"
+              record={patientInsurance as any}
+              setRecord={() => {}}
+            />
+            <MyInput
+              column
+              disabled={true || isLocked}
+              fieldLabel="Primary Insurance"
+              fieldType="checkbox"
+              fieldName="isPrimary"
+              record={patientInsurance as any}
+              setRecord={() => {}}
+            />
           </>
         ) : null}
 
-        
-
-        {(showCardFields || showChequeFields || showBankTransferFields) ? (
+        {showCardFields || showChequeFields || showBankTransferFields ? (
           <div style={{ flexBasis: '100%', width: '100%', height: 0 }} />
         ) : null}
 
         {showCardFields ? (
           <>
-            <MyInput vr={validationResult} column required fieldLabel="Card Number" fieldType="number" fieldName="cardNumber" record={payment} setRecord={setPayment} disabled={isReadOnly || isLocked} />
-            <MyInput vr={validationResult} column required fieldLabel="Holder Name" fieldType="text" fieldName="cardHolderName" record={payment} setRecord={setPayment} disabled={isReadOnly || isLocked} />
-            <MyInput vr={validationResult} column required fieldLabel="Valid until" fieldType="date" fieldName="cardValidUntil" record={payment} setRecord={setPayment} disabled={isReadOnly || isLocked} />
+            <MyInput
+              vr={validationResult}
+              column
+              required
+              fieldLabel="Card Number"
+              fieldType="number"
+              fieldName="cardNumber"
+              record={payment}
+              setRecord={setPayment}
+              disabled={isReadOnly || isLocked}
+            />
+            <MyInput
+              vr={validationResult}
+              column
+              required
+              fieldLabel="Holder Name"
+              fieldType="text"
+              fieldName="cardHolderName"
+              record={payment}
+              setRecord={setPayment}
+              disabled={isReadOnly || isLocked}
+            />
+            <MyInput
+              vr={validationResult}
+              column
+              required
+              fieldLabel="Valid until"
+              fieldType="date"
+              fieldName="cardValidUntil"
+              record={payment}
+              setRecord={setPayment}
+              disabled={isReadOnly || isLocked}
+            />
           </>
         ) : null}
 
         {showChequeFields ? (
           <>
-            <MyInput vr={validationResult} column required fieldLabel="Cheque Number" fieldType="number" fieldName="chequeNumber" record={payment} setRecord={setPayment} disabled={isReadOnly || isLocked} />
-            <MyInput vr={validationResult} column required fieldLabel="Bank Name" fieldType="text" fieldName="chequeBankName" record={payment} setRecord={setPayment} disabled={isReadOnly || isLocked} />
-            <MyInput vr={validationResult} column required fieldLabel="Cheque Due Date" fieldType="date" fieldName="chequeDueDate" record={payment} setRecord={setPayment} disabled={isReadOnly || isLocked} />
+            <MyInput
+              vr={validationResult}
+              column
+              required
+              fieldLabel="Cheque Number"
+              fieldType="number"
+              fieldName="chequeNumber"
+              record={payment}
+              setRecord={setPayment}
+              disabled={isReadOnly || isLocked}
+            />
+            <MyInput
+              vr={validationResult}
+              column
+              required
+              fieldLabel="Bank Name"
+              fieldType="text"
+              fieldName="chequeBankName"
+              record={payment}
+              setRecord={setPayment}
+              disabled={isReadOnly || isLocked}
+            />
+            <MyInput
+              vr={validationResult}
+              column
+              required
+              fieldLabel="Cheque Due Date"
+              fieldType="date"
+              fieldName="chequeDueDate"
+              record={payment}
+              setRecord={setPayment}
+              disabled={isReadOnly || isLocked}
+            />
           </>
         ) : null}
 
         {showBankTransferFields ? (
           <>
-            <MyInput vr={validationResult} column required fieldLabel="Transfer Number" fieldType="number" fieldName="transferNumber" record={payment} setRecord={setPayment} disabled={isReadOnly || isLocked} />
-            <MyInput vr={validationResult} column required fieldLabel="Bank Name" fieldType="text" fieldName="transferBankName" record={payment} setRecord={setPayment} disabled={isReadOnly || isLocked} />
-            <MyInput vr={validationResult} column required fieldLabel="Transfer Date" fieldType="date" fieldName="transferDate" record={payment} setRecord={setPayment} disabled={isReadOnly || isLocked} />
+            <MyInput
+              vr={validationResult}
+              column
+              required
+              fieldLabel="Transfer Number"
+              fieldType="number"
+              fieldName="transferNumber"
+              record={payment}
+              setRecord={setPayment}
+              disabled={isReadOnly || isLocked}
+            />
+            <MyInput
+              vr={validationResult}
+              column
+              required
+              fieldLabel="Bank Name"
+              fieldType="text"
+              fieldName="transferBankName"
+              record={payment}
+              setRecord={setPayment}
+              disabled={isReadOnly || isLocked}
+            />
+            <MyInput
+              vr={validationResult}
+              column
+              required
+              fieldLabel="Transfer Date"
+              fieldType="date"
+              fieldName="transferDate"
+              record={payment}
+              setRecord={setPayment}
+              disabled={isReadOnly || isLocked}
+            />
           </>
         ) : null}
 
@@ -1109,7 +1298,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
             record={payment}
             setRecord={(updated: any) => {
               const next = { ...updated };
-              if (!next.currency && next.facilityDefaultCurrency) next.currency = next.facilityDefaultCurrency;
+              if (!next.currency && next.facilityDefaultCurrency)
+                next.currency = next.facilityDefaultCurrency;
               setPayment(next);
             }}
             disabled={isReadOnly || isLocked}
@@ -1127,7 +1317,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
             selectDataLabel="label"
             selectDataValue="value"
             record={payment}
-            setRecord={() => { }}
+            setRecord={() => {}}
             disabled={true}
             searchable={false}
           />
@@ -1201,12 +1391,29 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
             }}
             tableButtons={
               showInternalButtons ? (
-                <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end', width: '100%' }}>
-                  <MyButton appearance="subtle" onClick={handleClear} disabled={isReadOnly || isLocked}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    marginTop: 12,
+                    justifyContent: 'flex-end',
+                    width: '100%'
+                  }}
+                >
+                  <MyButton
+                    appearance="subtle"
+                    onClick={handleClear}
+                    disabled={isReadOnly || isLocked}
+                  >
                     Clear
                   </MyButton>
 
-                  <MyButton appearance="primary" loading={creating || updating} onClick={handleConfirmSafe} disabled={isReadOnly || isLocked}>
+                  <MyButton
+                    appearance="primary"
+                    loading={creating || updating}
+                    onClick={handleConfirmSafe}
+                    disabled={isReadOnly || isLocked}
+                  >
                     Confirm
                   </MyButton>
                 </div>

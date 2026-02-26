@@ -58,13 +58,21 @@ export type PatientLedgerSummary = {
 export const patientPaymentsService = createApi({
   reducerPath: 'patientPaymentsApi',
   baseQuery: BaseQuery,
-  tagTypes: ['PatientPayment', 'PatientPaymentServices', 'PatientBalance', 'PatientLedgerSummary'],
-
+  tagTypes: [
+    'PatientPayment',
+    'PatientPaymentServices',
+    'PatientBalance',
+    'PatientLedgerSummary',
+    'PatientEncounter'
+  ],
   endpoints: builder => ({
     /**
      * CREATE Patient Payment
      */
-    createPayment: builder.mutation<modelTypes.PatientPaymentDetails, { body: modelTypes.PatientPaymentDTO }>({
+    createPayment: builder.mutation<
+      modelTypes.PatientPaymentDetails,
+      { body: modelTypes.PatientPaymentDTO }
+    >({
       query: ({ body }) => ({
         url: '/api/patient/payment',
         method: 'POST',
@@ -75,14 +83,19 @@ export const patientPaymentsService = createApi({
         'PatientPayment',
         'PatientPaymentServices',
         { type: 'PatientBalance', id: body.patientId },
-        { type: 'PatientLedgerSummary', id: body.patientId }
+        { type: 'PatientLedgerSummary', id: body.patientId },
+        { type: 'PatientEncounter', id: body.encounterId },
+        'PatientEncounter'
       ]
     }),
 
     /**
      * UPDATE Patient Payment
      */
-    updatePayment: builder.mutation<modelTypes.PatientPaymentDetails, { id: Id; body: modelTypes.PatientPaymentDTO }>({
+    updatePayment: builder.mutation<
+      modelTypes.PatientPaymentDetails,
+      { id: Id; body: modelTypes.PatientPaymentDTO }
+    >({
       query: ({ id, body }) => ({
         url: `/api/patient/payment/${id}`,
         method: 'PUT',
@@ -139,7 +152,10 @@ export const patientPaymentsService = createApi({
      * LIST payment services for a payment
      * GET /api/patient/payment/{paymentId}/services
      */
-    getPaymentServicesByPaymentId: builder.query<modelTypes.PatientPaymentServices[], { paymentId: Id }>({
+    getPaymentServicesByPaymentId: builder.query<
+      modelTypes.PatientPaymentServices[],
+      { paymentId: Id }
+    >({
       query: ({ paymentId }) => ({
         url: `/api/patient/payment/${paymentId}/services`,
         method: 'GET'
@@ -158,19 +174,25 @@ export const patientPaymentsService = createApi({
      * LIST payments by patient
      * GET /api/patient/payment/patient/{patientId}
      */
-    getPaymentsByPatient: builder.query<PagedResult<modelTypes.PatientPayments>, { patientId: Id } & PagedParams>({
+    getPaymentsByPatient: builder.query<
+      PagedResult<modelTypes.PatientPayments>,
+      { patientId: Id } & PagedParams
+    >({
       query: ({ patientId, page, size, sort = 'id,desc' }) => ({
         url: `/api/patient/payment/patient/${patientId}`,
         method: 'GET',
         params: { page, size, sort }
       }),
       transformResponse: (response: any, meta: any) => {
-        const rows = Array.isArray(response) ? response : (response?.content ?? []);
+        const rows = Array.isArray(response) ? response : response?.content ?? [];
         return mapPaged(rows, meta);
       },
       providesTags: res =>
         res
-          ? [...res.data.map(p => ({ type: 'PatientPayment' as const, id: p.id })), 'PatientPayment']
+          ? [
+              ...res.data.map(p => ({ type: 'PatientPayment' as const, id: p.id })),
+              'PatientPayment'
+            ]
           : ['PatientPayment']
     })
   })
