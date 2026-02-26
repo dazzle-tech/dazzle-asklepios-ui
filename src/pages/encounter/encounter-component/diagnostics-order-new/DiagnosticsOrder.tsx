@@ -57,7 +57,7 @@ const DiagnosticsOrder = (props: any) => {
       document.removeEventListener('touchstart', handleGlobalClick);
       document.removeEventListener('keydown', handleEsc);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

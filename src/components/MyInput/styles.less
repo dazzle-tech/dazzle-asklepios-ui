@@ -78,7 +78,7 @@
 
 .rs-input-group .rs-input-number,
 .rs-input-group .rs-input-group-addon,
-.rs-input-group .rs-input-group-btn,
+.rs-input-group .rs-input-group-btn:not(.password-toggle-button),
 .rs-input-group .rs-picker-date .rs-picker-toggle {
   border: none !important;
   border-radius: 0px 3px 3px 0px !important;
@@ -185,5 +185,68 @@
     svg:not(:root) {
       color: #e74c3c !important;
     }
+  }
+}
+
+.password-toggle-button {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  
+  &:hover,
+  &:focus,
+  &:active,
+  &:focus-visible {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  
+  svg {
+    color: inherit;
+  }
+}
+
+// Override RSuite InputGroup.Button default styles for password toggle
+.rs-input-group .password-toggle-button,
+.rs-input-group .rs-input-group-btn.password-toggle-button,
+.rs-input-group-btn.password-toggle-button,
+.rs-input-group-inside .password-toggle-button {
+  background-color: transparent !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  
+  &:hover,
+  &:focus,
+  &:active,
+  &:focus-visible {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  
+  &.rs-btn,
+  &.rs-btn-subtle {
+    background-color: transparent !important;
+    background: transparent !important;
+    
+    &:hover,
+    &:focus,
+    &:active {
+      background-color: transparent !important;
+      background: transparent !important;
+    }
+  }
+  
+  // Override any RSuite button styles
+  &,
+  * {
+    background-color: transparent !important;
+    background: transparent !important;
   }
 }

@@ -139,6 +139,7 @@ import Questionnaire from './pages/questionnaire-setup/Questionnaire';
 import Rad from './pages/rad-module/RadiologyMain';
 import Recovery from './pages/recovery';
 import ResetPassword from './pages/reset-password/ResetPassword';
+import CreatePassword from './pages/create-password/CreatePassword';
 import ReviewResults from './pages/review-results/ReviewResults';
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
 import AccessRoles from './pages/setup/access-roles';
@@ -175,7 +176,6 @@ import Shifts from './pages/setup/shift-setup';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 import UOMGroup from './pages/setup/uom-group-new';
-import Users from './pages/setup/users-setup';
 import UsersNew from './pages/system-configurations/users-setup-new';
 import Vaccine from './pages/setup/vaccine-setup';
 import VisitDurationSetup from './pages/setup/visit-duration-setup';
@@ -656,7 +656,6 @@ useEffect(() => {
               <Route path="questionnaire-setup" element={<Questionnaire />} />
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
-              <Route path="users" element={<Users />} />
               <Route path="users-new" element={<UsersNew />} />
               <Route path="uom-group" element={<UOMGroup />} />
               <Route path="med-matrix-setup" element={<MedicationMatrix />} />
@@ -737,6 +736,7 @@ useEffect(() => {
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="create-password" element={<CreatePassword />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

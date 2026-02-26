@@ -557,6 +557,8 @@ export const newApConsultationOrder:modelTypes.ApConsultationOrder = {
 	facilityKey:undefined,
 	departmentKey:undefined,
 	priorityLkey:undefined,
+	approvalNumber: '',
+	extraDocumentation: '',
 } 
 
 export const newApCpt:modelTypes.ApCpt = { 

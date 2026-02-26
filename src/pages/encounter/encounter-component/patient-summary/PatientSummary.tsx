@@ -59,36 +59,36 @@ const PatientSummary = () => {
       { id: 'c3', content: <PatientMajorProblemTable patient={patient} />, display: true },
       { id: 'c4', content: <PatientChronicMedicationTable patient={patient} />, display: true },
       { id: 'c5', content: <PreObservation patient={patient} />, display: false },
-      {
-        id: 'c6',
-        content: <FunctionalAssessmentSummary patient={patient} encounter={encounter} />,
-        display: false
-      }
+      // {
+      //   id: 'c6',
+      //   content: <FunctionalAssessmentSummary patient={patient} encounter={encounter} />,
+      //   display: false
+      // }
     ],
     col2: [
       { id: 'c7', content: <ActiveAllergies patient={patient} />, display: true },
       { id: 'c8', content: <MedicalWarnings patient={patient} />, display: true },
-      {
-        id: 'c9',
-        content: <PainAssessmentSummary patient={patient} encounter={encounter} />,
-        display: false
-      },
-      {
-        id: 'c10',
-        content: <GeneralAssessmentSummary patient={patient} encounter={encounter} />,
-        display: false
-      }
+      // {
+      //   id: 'c9',
+      //   content: <PainAssessmentSummary patient={patient} encounter={encounter} />,
+      //   display: false
+      // },
+      // {
+      //   id: 'c10',
+      //   content: <GeneralAssessmentSummary patient={patient} encounter={encounter} />,
+      //   display: false
+      // }
     ],
     col3: [
       { id: 'c11', content: <Procedures patient={patient} />, display: false },
       { id: 'c12', content: <RecentTestResults patient={patient} />, display: false },
-      { id: 'c13', content: <Last24HMedications patient={patient} />, display: false },
-      { id: 'c14', content: <IntakeOutputs patient={patient} />, display: false },
-      {
-        id: 'c15',
-        content: <ChiefComplainSummary patient={patient} encounter={encounter} />,
-        display: false
-      }
+      // { id: 'c13', content: <Last24HMedications patient={patient} />, display: false },
+      // { id: 'c14', content: <IntakeOutputs patient={patient} />, display: false },
+      // {
+      //   id: 'c15',
+      //   content: <ChiefComplainSummary patient={patient} encounter={encounter} />,
+      //   display: false
+      // }
     ]
   });
 

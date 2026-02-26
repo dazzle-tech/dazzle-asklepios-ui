@@ -50,7 +50,9 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
-              <MyInput fieldName="login" required record={user} setRecord={setUser} width={'13vw'} />
+              <MyInput
+              disabled={!!user?.id}
+               fieldName="login" required record={user} setRecord={setUser} width={'13vw'} />
               <MyInput
                 width={'13vw'}
                 fieldLabel="Job Role"
@@ -115,7 +117,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={user?.key ? 'Edit User' : 'New User'}
+      title={user?.id ? 'Edit User' : 'New User'}
       position="right"
       content={conjureFormContent}
       actionButtonLabel={user?.id ? 'Save' : 'Create'}

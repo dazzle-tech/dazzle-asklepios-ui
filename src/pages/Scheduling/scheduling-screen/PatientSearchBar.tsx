@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Form, Input, InputGroup, Button, DatePicker, Sidebar, Sidenav, Nav, Panel } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
@@ -46,6 +46,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   showCloseButton = true
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
+  const effectiveCriterion: CriterionType = (selectedCriterion ?? 'fullName') as CriterionType;
   
   const searchCriteriaOptions = [
     { label: <Translate>MRN</Translate>, value: 'patientMrn' },
@@ -58,6 +59,15 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
     ...option,
     label: <span style={{ textTransform: 'capitalize' }}>{option.label}</span>
   }));
+
+  // Ensure the "prefilled" UI state matches the actual criterion state used by the search logic.
+  // Without this, the dropdown shows "Full Name" while selectedCriterion stays null/undefined,
+  // and a search may be executed with no criterion.
+  useEffect(() => {
+    if (selectedCriterion == null) {
+      onCriterionChange('fullName');
+    }
+  }, [selectedCriterion, onCriterionChange]);
 
   const handleSelect = (value: CriterionType | null) => {
     onCriterionChange(value);
@@ -74,7 +84,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
             selectDataLabel="label"
             selectDataValue="value"
             showLabel={false}
-            record={{ searchCriteria: selectedCriterion || 'fullName' }}
+            record={{ searchCriteria: effectiveCriterion }}
             setRecord={record => {
               const newValue = record?.searchCriteria;
 
@@ -99,7 +109,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
           />
         </Form>
 
-        {selectedCriterion === 'dob' ? (
+        {effectiveCriterion === 'dob' ? (
           <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
             <DatePicker
               format="yyyy-MM-dd"
@@ -211,4 +221,3 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
 };
 
 export default PatientSearchBar;
-

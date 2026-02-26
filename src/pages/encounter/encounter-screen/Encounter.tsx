@@ -4,7 +4,7 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
+import FollowupAppointmentModal from '@/pages/Scheduling/scheduling-screen/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
@@ -243,6 +243,16 @@ const Encounter = () => {
     }
   };
 
+  const followUpDraftAppointmentData = React.useMemo(() => {
+    // Seed the follow-up modal with the encounter's patient so it opens ready to save.
+    const patient = propsData?.patient;
+    if (!patient) return null;
+    return {
+      patient,
+      patientKey: patient?.key
+    };
+  }, [propsData?.patient]);
+
   const handleCompleteEncounter = async () => {
     try {
       if (propsData.encounter) {
@@ -354,6 +364,33 @@ const Encounter = () => {
       };
     }
   }, [isAiDragging, aiDragOffset, aiHasMoved, aiButtonPosition]);
+
+  const selectedDeptId = useAppSelector(s => s.auth.selectedDepartment?.departmentId);
+  const selectedFacId = useAppSelector(s => s.auth.selectedDepartment?.facilityId);
+
+  const initialDeptRef = useRef<string | number | undefined>(undefined);
+  const initialFacRef = useRef<string | number | undefined>(undefined);
+  const didCaptureRef = useRef(false);
+
+  useEffect(() => {
+    if (!location.pathname.startsWith('/encounter')) return;
+
+    if (!didCaptureRef.current) {
+      if (selectedDeptId == null) return;
+      didCaptureRef.current = true;
+      initialDeptRef.current = selectedDeptId;
+      initialFacRef.current = selectedFacId;
+      return;
+    }
+
+    const deptChanged = String(selectedDeptId) !== String(initialDeptRef.current);
+    const facChanged = String(selectedFacId) !== String(initialFacRef.current);
+
+    if (deptChanged || facChanged) {
+      navigate('/encounter-list', { replace: true });
+    }
+  }, [selectedDeptId, selectedFacId, location.pathname, navigate]);
+
 
   return (
     <ActionContext.Provider value={{ action, setAction }}>
@@ -661,13 +698,13 @@ const Encounter = () => {
         encounter={propsData?.encounter}
       />
 
-      <AppointmentModal
+      <FollowupAppointmentModal
         from={'Encounter'}
         isOpen={modalOpen}
         onClose={() => {
           setModalOpen(false), setShowAppointmentOnly(false);
         }}
-        appointmentData={selectedEvent?.appointmentData}
+        appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
         onSave={() => {}}
