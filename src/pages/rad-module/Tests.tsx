@@ -962,7 +962,6 @@ const Tests = forwardRef<any, Props>(
       }
     }, [orderTests, refetchAllRadData]);
 
-    console.log("pagedData", pagedData);
 
     return (
       <Panel ref={ref} defaultExpanded>

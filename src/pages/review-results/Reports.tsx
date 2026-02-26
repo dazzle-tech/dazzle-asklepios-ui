@@ -1,13 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faComment, faFileLines, faStar } from '@fortawesome/free-solid-svg-icons';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
 import Translate from '@/components/Translate';
-import ChatModal from '@/components/ChatModal';
-import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
+import {
+    useLazyFilterDiagnosticOrdersQuery,
+    useLazyGetDiagnosticOrderByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
+import {
+    useLazyGetDiagnosticOrderTestByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useLazyGetPatientByIdQuery } from '@/services/patientService';
+import {
+    useGetReportCommentsByReportIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import {
     useFilterRadiologyReportsQuery,
     useReviewRadiologyReportMutation
@@ -15,23 +23,13 @@ import {
 import {
     useLazyGetDiagnosticTestByIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import {
-    useGetReportCommentsByReportIdQuery,
-    useCreateReportCommentMutation
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
+import { notify } from '@/utils/uiReducerActions';
+import { faComment, faFileLines, faStar } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from '../rad-module/radiologist-worklist/AddReportModal';
-import {
-    useLazyGetDiagnosticOrderTestByIdQuery
-} from '@/services/diagnosic-order/diagnosticOrderTestService';
-import {
-    useLazyGetDiagnosticOrderByIdQuery
-} from '@/services/diagnosic-order/diagnosticOrderService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
-import {
-  useLazyFilterDiagnosticOrdersQuery
-} from '@/services/diagnosic-order/diagnosticOrderService';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 const startOfDay = (d: Date) => {
     const x = new Date(d);
@@ -45,7 +43,7 @@ const endOfDay = (d: Date) => {
     return x;
 };
 
-const ReviewReport = ({ user }) => {
+const ReviewReport = ({ user, setEncounter,setPatient }) => {
     const dispatch = useAppDispatch();
     const today = new Date();
     const [page, setPage] = useState(0);
@@ -71,36 +69,37 @@ const ReviewReport = ({ user }) => {
     const [showReviewed, setShowReviewed] = useState(false);
     const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
     const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
+    //add new patient edits
     const [fetchPatientById] = useLazyGetPatientByIdQuery();
     const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
 
 
     const queryParams: any = {
-    processingStatus: 'RESULT_APPROVED',
-    reviewed: showReviewed,
-    ...(approvalDate.fromDate
-        ? { approvedDateFrom: startOfDay(approvalDate.fromDate).toISOString() }
-        : {}),
-    ...(approvalDate.toDate
-        ? { approvedDateTo: endOfDay(approvalDate.toDate).toISOString() }
-        : {})
+        processingStatus: 'RESULT_APPROVED',
+        reviewed: showReviewed,
+        ...(approvalDate.fromDate
+            ? { approvedDateFrom: startOfDay(approvalDate.fromDate).toISOString() }
+            : {}),
+        ...(approvalDate.toDate
+            ? { approvedDateTo: endOfDay(approvalDate.toDate).toISOString() }
+            : {})
     };
     if (orderDate.fromDate || orderDate.toDate) {
-    if (orderIdIn && orderIdIn.length > 0) {
-        queryParams.orderIdIn = orderIdIn;
-    } else {
-        queryParams.orderIdIn = [-1];
-    }
+        if (orderIdIn && orderIdIn.length > 0) {
+            queryParams.orderIdIn = orderIdIn;
+        } else {
+            queryParams.orderIdIn = [-1];
+        }
     }
 
     const { data, isFetching, refetch } =
-    useFilterRadiologyReportsQuery({
-        page,
-        size: rowsPerPage,
-        sort: 'id,desc',
-        params: queryParams
-    });
+        useFilterRadiologyReportsQuery({
+            page,
+            size: rowsPerPage,
+            sort: 'id,desc',
+            params: queryParams
+        });
 
 
     const reports = data?.data ?? [];
@@ -142,7 +141,7 @@ const ReviewReport = ({ user }) => {
         [orderTestsMap]
     );
 
-
+    //add new patient edits
     const patientIds = useMemo(
         () =>
             Object.values(ordersMap)
@@ -162,31 +161,17 @@ const ReviewReport = ({ user }) => {
             : skipToken
     );
 
-    const [createComment] = useCreateReportCommentMutation();
 
-    const handleSendComment = async (value: string) => {
-        try {
-            await createComment({
-                reportId: selectedReport.id,
-                orderTestId: selectedReport.orderTestId,
-                note: value
-            }).unwrap();
-
-            dispatch(notify({ msg: 'Comment sent', sev: 'success' }));
-            refetchComments();
-        } catch {
-            dispatch(notify({ msg: 'Send failed', sev: 'error' }));
-        }
-    };
 
     const closeModal = () => {
         setOpenReportModal(false);
         setSelectedReport(null);
     };
 
-    const columns = useMemo(
+    const columns: ColumnConfig[] = useMemo(
         () => [
             {
+                //add new patient edits
                 key: 'patient',
                 title: <Translate>Patient</Translate>,
                 render: row => {
@@ -228,31 +213,31 @@ const ReviewReport = ({ user }) => {
                 )
             },
             {
-            key: 'comment',
-            title: 'COMMENTS',
-            width: 100,
-            align: 'center',
-            render: (row: any) => {
-            
-            const hasComment = !!row?.hasNote || localHasCommentIds.includes(row.id);
+                key: 'comment',
+                title: 'COMMENTS',
+                width: 100,
+                align: 'center',
+                render: (row: any) => {
+
+                    const hasComment = !!row?.hasNote;
                     return (
-                    <Whisper speaker={<Tooltip>Comments</Tooltip>}>
-                    <span style={{ cursor: 'pointer' }}>
-                        <FontAwesomeIcon
-                        className='icon-radiologist-worklist-size'
-                        icon={faComment}
-                        style={{
-                          color: hasComment ? '#1675e0' : '#999'
-                        }}
-                        onClick={() => {
-                          setSelectedReport(row);
-                          setOpenComments(true);
-                        }}
-                          />
-                        </span>
-                      </Whisper>
+                        <Whisper speaker={<Tooltip>Comments</Tooltip>}>
+                            <span style={{ cursor: 'pointer' }}>
+                                <FontAwesomeIcon
+                                    className='icon-radiologist-worklist-size'
+                                    icon={faComment}
+                                    style={{
+                                        color: hasComment ? '#1675e0' : '#999'
+                                    }}
+                                    onClick={() => {
+                                        setSelectedReport(row);
+                                        setOpenComments(true);
+                                    }}
+                                />
+                            </span>
+                        </Whisper>
                     );
-                  }
+                }
             },
             {
                 key: 'review',
@@ -272,8 +257,8 @@ const ReviewReport = ({ user }) => {
                                     opacity: isReviewed ? 1 : 0.6
                                 }}
                                 onClick={() => {
-                                handleReview(row);
-                                }}/>
+                                    handleReview(row);
+                                }} />
                         </Whisper>
                     );
                 }
@@ -283,21 +268,19 @@ const ReviewReport = ({ user }) => {
     );
 
     const resetFilters = () => {
-    const today = new Date();
-    setApprovalDate({
-        fromDate: today,
-        toDate: today
-    });
-    setOrderDate({
-        fromDate: null,
-        toDate: null
-    });
-    setShowReviewed(false);
-    setOrderIdIn(null);
-    setPage(0);
+        const today = new Date();
+        setApprovalDate({
+            fromDate: today,
+            toDate: today
+        });
+        setOrderDate({
+            fromDate: null,
+            toDate: null
+        });
+        setShowReviewed(false);
+        setOrderIdIn(null);
+        setPage(0);
     };
-
-
 
     const filters = (
         <Form fluid>
@@ -347,15 +330,15 @@ const ReviewReport = ({ user }) => {
                 </div>
             </div>
 
-        <AdvancedSearchFilters
-            searchFilter={false}
-            showAdvancedButton={false}
-            clearOnClick={resetFilters}
+            <AdvancedSearchFilters
+                searchFilter={false}
+                showAdvancedButton={false}
+                clearOnClick={resetFilters}
             />
         </Form>
     );
 
-    console.log('showReviewedOnly', showReviewed);
+
 
     useEffect(() => {
         orderTestIds.forEach(id => {
@@ -385,7 +368,7 @@ const ReviewReport = ({ user }) => {
                 }).catch(() => { });
         });
     }, [testIds]);
-
+    //add new patient edits
     useEffect(() => {
         patientIds.forEach(id => {
             if (patientsMap[id]) return;
@@ -401,52 +384,52 @@ const ReviewReport = ({ user }) => {
     }, [patientIds]);
 
     useEffect(() => {
-    Object.values(orderTestsMap).forEach((ot: any) => {
-        const orderId = ot?.orderId;
-        if (!orderId) return;
-        if (ordersMap[orderId]) return;
+        Object.values(orderTestsMap).forEach((ot: any) => {
+            const orderId = ot?.orderId;
+            if (!orderId) return;
+            if (ordersMap[orderId]) return;
 
-        fetchOrderById(Number(orderId))
-        .unwrap()
-        .then(order => {
-            if (!order) return;
-            setOrdersMap(prev => ({
-            ...prev,
-            [String(order.id)]: order
-            }));
-        })
-        .catch(() => {});
-    });
+            fetchOrderById(Number(orderId))
+                .unwrap()
+                .then(order => {
+                    if (!order) return;
+                    setOrdersMap(prev => ({
+                        ...prev,
+                        [String(order.id)]: order
+                    }));
+                })
+                .catch(() => { });
+        });
     }, [orderTestsMap]);
 
     useEffect(() => {
-    const { fromDate, toDate } = orderDate;
-    if (!fromDate && !toDate) {
-        setOrderIdIn(null);
-        return;
-    }
+        const { fromDate, toDate } = orderDate;
+        if (!fromDate && !toDate) {
+            setOrderIdIn(null);
+            return;
+        }
 
-    fetchOrders({
-        submittedDateFrom: fromDate
-        ? startOfDay(fromDate).toISOString()
-        : undefined,
-        submittedDateTo: toDate
-        ? endOfDay(toDate).toISOString()
-        : undefined,
-        page: 0,
-        size: 10000
-    })
-        .unwrap()
-        .then(res => {
-        const ids = (res?.data ?? []).map((o: any) => o.id);
-        setOrderIdIn(ids);
+        fetchOrders({
+            submittedDateFrom: fromDate
+                ? startOfDay(fromDate).toISOString()
+                : undefined,
+            submittedDateTo: toDate
+                ? endOfDay(toDate).toISOString()
+                : undefined,
+            page: 0,
+            size: 10000
         })
-        .catch(() => setOrderIdIn([]));
+            .unwrap()
+            .then(res => {
+                const ids = (res?.data ?? []).map((o: any) => o.id);
+                setOrderIdIn(ids);
+            })
+            .catch(() => setOrderIdIn([]));
     }, [orderDate]);
 
 
     useEffect(() => {
-    setPage(0);
+        setPage(0);
     }, [approvalDate, orderDate, showReviewed]);
 
 
@@ -473,7 +456,9 @@ const ReviewReport = ({ user }) => {
                 title="Comments"
                 list={comments ?? []}
                 fieldShowName="note"
-                handleSendMessage={handleSendComment}
+                handleSendMessage={() => {
+                    refetchComments();
+                }}
             />
 
             {openReportModal && selectedReport && (
@@ -483,7 +468,6 @@ const ReviewReport = ({ user }) => {
                     setOpen={closeModal}
                     report={selectedReport}
                     setReport={setSelectedReport}
-                    orderTestId={selectedReport.orderTestId}
                     disableEdit
                     disableDefaultTemplate
                 />

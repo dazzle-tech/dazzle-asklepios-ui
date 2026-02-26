@@ -77,7 +77,6 @@ const RequestedTestTable: React.FC<Props> = ({
   const [rejectRequest] = useRejectDiagnosticTestRequestMutation();
   const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [test, setTest] = useState<any>({});
-  console.log('test in RequestedTestTable:', test);
   const [openDiagnosticsModal, setOpenDiagnosticsModal] = useState(false);
   const [selectedDiagnosticTestId, setSelectedDiagnosticTestId] = useState<number | null>(null);
 

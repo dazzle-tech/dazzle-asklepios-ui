@@ -85,7 +85,7 @@ export const diagnosticOrderTestReportService = createApi({
 
     reviewRadiologyReport: builder.mutation<any, any>({
       query: (body) => ({
-        url: "/api/patient/radiology/reports/review",
+        url: "/api/patient/radiology/reports/review/toggle",
         method: "POST",
         body,
       }),

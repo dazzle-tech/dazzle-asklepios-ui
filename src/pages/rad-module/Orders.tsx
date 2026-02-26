@@ -54,8 +54,6 @@ const Orders = forwardRef<any, OrdersProps>(
       selectedDepartment?.departmentId ??
       selectedDepartment?.key;
 
-    console.log(departmentId, "Department Id)")
-    console.log(selectedDepartment?.departmentId, "Department Id)")
 
     const {
       data: ordersResponse,

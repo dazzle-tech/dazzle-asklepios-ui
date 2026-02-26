@@ -1,11 +1,11 @@
+import MyTab from '@/components/MyTab';
+import { useAppSelector } from '@/hooks';
+import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import React from 'react';
+import PatientSide from '../lab-module-new/PatienSide';
+import FavoriteTests from './FavoriteTests';
 import ReviewReport from './Reports';
 import Results from './Results';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import PatientSide from '../lab-module-new/PatienSide';
-import { useAppSelector } from '@/hooks';
-import MyTab from '@/components/MyTab';
-import FavoriteTests from './FavoriteTests';
 
 const ReviewResults = () => {
   const [patient, setPatient] = React.useState({ ...newApPatient });

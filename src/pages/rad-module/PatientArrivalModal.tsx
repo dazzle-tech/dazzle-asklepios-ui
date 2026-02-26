@@ -69,13 +69,14 @@ const PatientArrivalModal = ({
         }
 
         try {
+          console.log("inpatienrt arrival test", test)
           const response = await patientArrived({
             id: test.id,
             body: {
               patientArrivedDate: new Date(
                 test.patientArrivedDate
               ).toISOString(),
-              notes: test.patientArrivedNoteRad
+              patientArrivedNoteRad: test.patientArrivedNoteRad
             }
           }).unwrap();
           dispatch(

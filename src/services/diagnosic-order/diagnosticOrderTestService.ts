@@ -219,29 +219,29 @@ export const diagnosticOrderTestService = createApi({
     }),
 
     patientArrivedRadiology: builder.mutation<
-  PatientArrivedResponseVM,
-  { id: number; body: PatientArrivedCreateRequestDTO }
->({
-  query: ({ id, body }) => ({
-    url: `/api/patient/diagnostic-order-tests/${id}/radiology/patient-arrived`,
-    method: 'PATCH',
-    body,
-  }),
-  invalidatesTags: (_r, _e, { id }) => [
-    { type: 'DiagnosticOrderTest', id },
-  ],
-}),
+      PatientArrivedResponseVM,
+      { id: number; body: PatientArrivedCreateRequestDTO }
+    >({
+      query: ({ id, body }) => ({
+        url: `/api/patient/diagnostic-order-tests/${id}/radiology/patient-arrived`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'DiagnosticOrderTest', id },
+      ],
+    }),
 
 
-getPatientArrivedRadiology: builder.query<
-  PatientArrivedResponseVM,
-  number
->({
-  query: id => ({
-    url: `/api/patient/diagnostic-order-tests/${id}/radiology/patient-arrived`,
-    method: 'GET',
-  }),
-}),
+    getPatientArrivedRadiology: builder.query<
+      PatientArrivedResponseVM,
+      number
+    >({
+      query: id => ({
+        url: `/api/patient/diagnostic-order-tests/${id}/radiology/patient-arrived`,
+        method: 'GET',
+      }),
+    }),
 
 
     cancelDiagnosticOrderTest: builder.mutation<

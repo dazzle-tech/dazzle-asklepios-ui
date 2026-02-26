@@ -62,7 +62,6 @@ const AddReportModal = ({
   orderTest,
   order,
   resultFetch,
-  attachmentRefetch,
   disableEdit,
   disableDefaultTemplate = false
 }: Props) => {

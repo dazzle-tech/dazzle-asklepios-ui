@@ -1,46 +1,42 @@
-import React, {
-  forwardRef,
-  useImperativeHandle,
-  useMemo,
-  useState,
-  useEffect
-} from 'react';
-import MyTable from '@/components/MyTable';
-import Translate from '@/components/Translate';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { Panel, HStack, Tooltip, Whisper, Form, Checkbox } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { useLazyFilterDiagnosticOrdersQuery, useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
+import {
+  useGetNotesByResultIdQuery,
+} from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
+import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useLazyGetPatientByIdQuery } from '@/services/patientService';
+import {
+  useFilterDiagnosticOrderTestResultsQuery,
+  useToggleReviewDiagnosticOrderTestResultMutation,
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
+import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import { useGetLovAllValuesQuery, useGetLovsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
+import { initialListRequest, initialListRequestAllValues } from '@/types/types';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import {
   faArrowDown,
   faArrowUp,
   faCircleExclamation,
   faComment,
+  faStar,
   faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
-import {
-  useFilterDiagnosticOrderTestResultsQuery,
-} from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
-import {
-  useGetNotesByResultIdQuery,
-} from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
-import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
-import { useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
-import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import { useGetLovAllValuesQuery, useGetLovsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { initialListRequest, initialListRequestAllValues } from '@/types/types';
-import { faStar } from '@fortawesome/free-solid-svg-icons';
-import { useToggleReviewDiagnosticOrderTestResultMutation }
-  from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
-import {
-  useLazyFilterDiagnosticOrdersQuery
-} from '@/services/diagnosic-order/diagnosticOrderService';
-
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState
+} from 'react';
+import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
 
 const renderMarker = (Marker?: string) => {
   switch (Marker) {
@@ -110,7 +106,6 @@ const Result = forwardRef<any, any>(
     const today = new Date();
     const [page, setPage] = useState(0);
     const [size, setSize] = useState(15);
-    const [selectedResult, setSelectedResult] = useState<any>(null);
     const [openNotesModal, setOpenNotesModal] = useState(false);
     const [approvalDate, setApprovalDate] = useState({
       fromDate: today,
@@ -125,6 +120,7 @@ const Result = forwardRef<any, any>(
     const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
     const [fetchPatientById] = useLazyGetPatientByIdQuery();
     const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
+    //add new patient edits
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
     const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -272,7 +268,7 @@ const Result = forwardRef<any, any>(
         }
       });
     }, [results]);
-
+//add new patient edits
     useEffect(() => {
       Object.values(ordersMap).forEach(order => {
         const patientId = order?.patientId ? String(order.patientId) : null;
@@ -291,23 +287,24 @@ const Result = forwardRef<any, any>(
         }
       });
     }, [ordersMap]);
-    useEffect(() => {
-  Object.values(orderTestsMap).forEach((test: any) => {
-    const orderId = test?.orderId;
 
-    if (orderId && !ordersMap[orderId]) {
-      fetchOrderById(orderId)
-        .unwrap()
-        .then(order => {
-          setOrdersMap(prev => ({
-            ...prev,
-            [String(order.id)]: order
-          }));
-        })
-        .catch(() => {});
-    }
-  });
-}, [orderTestsMap]);
+    useEffect(() => {
+      Object.values(orderTestsMap).forEach((test: any) => {
+        const orderId = test?.orderId;
+
+        if (orderId && !ordersMap[orderId]) {
+          fetchOrderById(orderId)
+            .unwrap()
+            .then(order => {
+              setOrdersMap(prev => ({
+                ...prev,
+                [String(order.id)]: order
+              }));
+            })
+            .catch(() => { });
+        }
+      });
+    }, [orderTestsMap]);
 
 
     const { data: profilesResponse } =
@@ -321,7 +318,7 @@ const Result = forwardRef<any, any>(
       () => new Map(profilesResponse?.data?.map(p => [p.id, p]) ?? []),
       [profilesResponse]
     );
-
+//add new patient edits
     const normalizedResults = useMemo(() => {
       return results.map(r => {
         const orderTest = orderTestsMap[r?.orderTestId]
@@ -331,6 +328,7 @@ const Result = forwardRef<any, any>(
 
         return {
           ...r,
+          //add new patient edits
           _patientName: patient?.fullName ?? ' ',
           _profile: profile,
           _testName: profile?.name ?? '-',
@@ -338,22 +336,6 @@ const Result = forwardRef<any, any>(
         };
       });
     }, [results, ordersMap, patientsMap, profilesMap]);
-
-    const resolveResultDisplay = (row: any) => {
-      const profile = row._profile;
-      if (!profile) return ' ';
-
-      if (isLovProfile(profile)) {
-        return resolveLovDisplayValue(
-          profile,
-          row.resultValueText,
-          lovDefinitions,
-          allLovValues
-        );
-      }
-
-      return row.resultValueNumber ?? ' ';
-    };
 
     const resolveUnitDisplay = (row: any) => {
       const profile = row._profile;
@@ -383,9 +365,10 @@ const Result = forwardRef<any, any>(
     };
 
 
-    const columns = useMemo(
+    const columns: ColumnConfig[] = useMemo(
       () => [
         {
+          //add new patient edits
           key: 'patient',
           title: <Translate>PATIENT NAME</Translate>,
           render: (r: any) => r._patientName
@@ -474,7 +457,6 @@ const Result = forwardRef<any, any>(
                 color: row.hasNote ? '#1675e0' : 'gray'
               }}
               onClick={() => {
-                setSelectedResult(row);
                 setSelectedResultId(row.id);
                 setOpenNotesModal(true);
               }}
@@ -503,7 +485,6 @@ const Result = forwardRef<any, any>(
                     }}
                     onClick={async (e) => {
                       e.stopPropagation();
-                      setSelectedResult(rowData);
                       setSelectedResultId(rowData.id);
 
                       try {
@@ -523,7 +504,6 @@ const Result = forwardRef<any, any>(
       ],
       [patientsMap, normalizedResults]
     );
-
 
 
     const filters = () => (

@@ -1646,7 +1646,7 @@ export interface LabResultLogResponseVM {
 export interface PatientArrivedCreateRequestDTO {
   patientArrivedDate?: string;
   arrivedAt?: string;
-  notes?: string;
+  patientArrivedNoteRad?: string;
 }
 
 export interface PatientArrivedResponseVM {
@@ -1654,7 +1654,7 @@ export interface PatientArrivedResponseVM {
   diagnosticOrderTestId?: number;
 
   arrivedAt?: string;
-  notes?: string;
+  patientArrivedNoteRad?: string;
 
   createdBy?: string;
   createdDate?: string;

@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Panel, HStack, Tooltip, Whisper, Button, Divider } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar as faStarSolid, faFlask, faMicroscope } from '@fortawesome/free-solid-svg-icons';
-import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 import Translate from '@/components/Translate';
+import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
+import { faFlask, faStar as faStarSolid } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useState } from 'react';
+import { Button, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import {
   useAddFavoriteDiagnosticTestMutation,
   useDeleteFavoriteDiagnosticTestMutation,
   useGetFavoriteDiagnosticTestsByUserQuery
 } from '@/services/diagnosic-order/favoriteDiagnosticTestService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 import { DiagnosticTest } from '@/types/model-types-new';
 
