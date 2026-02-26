@@ -64,6 +64,7 @@ const VitalSigns = ({ object, setObject, disabled, width = '100%', showNoteField
             fieldName="measurementLkey"
             selectData={BPMeasurmentLov?.object ?? []}
             selectDataLabel="lovDisplayVale"
+            fieldLabel='Measurement Site'
             selectDataValue="key"
             record={object}
             setRecord={setObject}
