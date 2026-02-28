@@ -61,35 +61,6 @@ const uniqueNonEmpty = (arr?: any[]) => {
   return cleaned.length ? Array.from(new Set(cleaned.map(v => String(v)))) : undefined;
 };
 
-const normalizeEnumOptions = (input: any): Array<{ label: string; value: string }> => {
-  const arr: any[] = Array.isArray(input) ? input : Array.isArray(input?.options) ? input.options : [];
-
-  return arr
-    .map((o: any) => {
-      const value =
-        o?.value ?? o?.code ?? o?.valueCode ?? o?.key ?? o?.id ?? o?.name ?? o?.enumValue ?? '';
-
-      const label =
-        o?.label ??
-        o?.name ??
-        o?.displayName ??
-        o?.lovDisplayVale ??
-        o?.text ??
-        o?.title ??
-        String(value);
-
-      return { value: String(value), label: String(label) };
-    })
-    .filter(x => x.value && x.label);
-};
-
-const useEnumAsIs = (input: any) => {
-  if (Array.isArray(input)) return input;
-  if (Array.isArray(input?.options)) return input.options;
-  if (Array.isArray(input?.object)) return input.object;
-  return [];
-};
-
 const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
 
@@ -120,8 +91,10 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'Follow-up encounter is required when reason is FOLLOW_UP (and must be empty otherwise).',
   'followUpEncounter.notfound': 'Follow-up encounter not found.',
   'encounterNumber.duplicate': 'Encounter number already exists.',
-  'patient.department.date.duplicate': 'This patient already has an encounter for this department on this date.',
-  'department.date.sequence.duplicate': 'Department daily sequence number already exists for this date.',
+  'patient.department.date.duplicate':
+    'This patient already has an encounter for this department on this date.',
+  'department.date.sequence.duplicate':
+    'Department daily sequence number already exists for this date.',
   'db.constraint': 'Database constraint violated while saving patient encounter.'
 };
 
@@ -141,42 +114,51 @@ const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
   isObserved: 'Is Observed'
 };
 
-const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
-  const data = err?.data ?? err ?? {};
-  const traceId = data?.traceId || data?.requestId || data?.correlationId;
-  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, string>) => {
+  const responseData = error?.data ?? error ?? {};
+  const traceId = responseData?.traceId || responseData?.requestId || responseData?.correlationId;
+  const traceSuffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-  const normalizeMsg = (msg: string) => {
-    const m = (msg || '').toLowerCase();
-    if (m.includes('must not be null')) return 'is required';
-    if (m.includes('must not be blank')) return 'must not be blank';
-    if (m.includes('size')) return 'length is out of range';
-    if (m.includes('greater')) return 'value is too small';
-    if (m.includes('less')) return 'value is too large';
-    return msg || 'invalid value';
+  const normalizeFieldErrorMessage = (message: string) => {
+    const lowerMessage = (message || '').toLowerCase();
+    if (lowerMessage.includes('must not be null')) return 'is required';
+    if (lowerMessage.includes('must not be blank')) return 'must not be blank';
+    if (lowerMessage.includes('size')) return 'length is out of range';
+    if (lowerMessage.includes('greater')) return 'value is too small';
+    if (lowerMessage.includes('less')) return 'value is too large';
+    return message || 'invalid value';
   };
 
-  const toLabel = (field: string) => ENCOUNTER_FIELD_LABELS[field] ?? field;
+  const getFieldLabel = (field: string) => ENCOUNTER_FIELD_LABELS[field] ?? field;
 
-  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    const lines = data.fieldErrors.map((fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`);
+  if (Array.isArray(responseData?.fieldErrors) && responseData.fieldErrors.length > 0) {
+    const errorLines = responseData.fieldErrors.map(
+      (fieldError: any) =>
+        `• ${getFieldLabel(fieldError.field)}: ${normalizeFieldErrorMessage(fieldError.message)}`
+    );
 
     dispatch(
       notify({
-        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
+        msg: `Please fix the following fields:\n${errorLines.join('\n')}` + traceSuffix,
         sev: 'error'
       })
     );
     return;
   }
 
-  const messageProp: string = data?.message || '';
+  const messageProp: string = responseData?.message || '';
   const errorKey =
-    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) || data?.errorKey;
+    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
+    responseData?.errorKey;
 
-  const humanMsg = (errorKey && keyMap[errorKey]) || data?.detail || data?.title || data?.message || 'Unexpected error';
+  const humanReadableMessage =
+    (errorKey && keyMap[errorKey]) ||
+    responseData?.detail ||
+    responseData?.title ||
+    responseData?.message ||
+    'Unexpected error';
 
-  dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+  dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'error' }));
 };
 
 const EncounterList = () => {
@@ -227,15 +209,6 @@ const EncounterList = () => {
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
   const EncounterReasonEnum = useEnumOptions('EncounterReason');
 
-  const statusOptions = useMemo(() => {
-    const opts = normalizeEnumOptions(EncounterStatusEnum);
-    const allowed = new Set(['NEW', 'ONGOING', 'CANCELED', 'CLOSED']);
-    return opts.filter(o => allowed.has(String(o.value).toUpperCase()));
-  }, [EncounterStatusEnum]);
-
-  const priorityOptions = useMemo(() => normalizeEnumOptions(EncounterPriorityEnum), [EncounterPriorityEnum]);
-  const encounterReasonOptions = useMemo(() => useEnumAsIs(EncounterReasonEnum), [EncounterReasonEnum]);
-
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const DEFAULT_SORT = 'id,desc';
@@ -269,9 +242,12 @@ const EncounterList = () => {
   const [record, setRecord] = useState<any>({});
 
   const handlePatientSearchClick = useCallback(() => {
-    setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
+    setPatientSearchApplied((previousSearch: any) => ({
+      ...previousSearch,
+      ...(patientSearchDraft ?? {})
+    }));
     setPage(0);
-    setSearchTick(t => t + 1); 
+    setSearchTick(previousTick => previousTick + 1);
   }, [patientSearchDraft]);
 
   const filterParams = useMemo(() => {
@@ -280,12 +256,14 @@ const EncounterList = () => {
     const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
     const toDate = toISODate(dateFilter.toDate) ?? todayStr;
 
-    const chiefComplaint = String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
+    const chiefComplaint =
+      String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
 
     const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
     const normalizedEncounterReasonIn = uniqueNonEmpty(encounterReasonIn);
     const normalizedPriorityIn =
-      uniqueNonEmpty(priorityIn) ?? uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
+      uniqueNonEmpty(priorityIn) ??
+      uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
 
     const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
 
@@ -310,7 +288,7 @@ const EncounterList = () => {
       size: pageSize,
       sort: DEFAULT_SORT,
 
-      timestamp: searchTick 
+      timestamp: searchTick
     };
   }, [
     DEFAULT_STATUS,
@@ -332,9 +310,6 @@ const EncounterList = () => {
     searchTick
   ]);
 
-  // -----------------------------
-  // Data queries
-  // -----------------------------
   const {
     data: encountersPaged,
     isFetching: isEncountersFetching,
@@ -375,9 +350,18 @@ const EncounterList = () => {
     const rows = (tableData ?? []) as any[];
 
     const ids = rows
-      .map(r => r?.patientId ?? r?.patientKey ?? r?.patient?.id ?? r?.patient?.key ?? r?.patientObject?.id ?? r?.patientObject?.key ?? r?.patientObject?.patientId)
-      .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
-      .map(v => String(v));
+      .map(
+        row =>
+          row?.patientId ??
+          row?.patientKey ??
+          row?.patient?.id ??
+          row?.patient?.key ??
+          row?.patientObject?.id ??
+          row?.patientObject?.key ??
+          row?.patientObject?.patientId
+      )
+      .filter(value => value !== null && value !== undefined && String(value).trim() !== '')
+      .map(value => String(value));
 
     return Array.from(new Set(ids));
   }, [tableData]);
@@ -396,12 +380,12 @@ const EncounterList = () => {
     const map = new Map<string, any>();
     const ids = patientBulkIdsRef.current;
 
-    (patientsBasicInfo ?? []).forEach((patient: any, idx: number) => {
-      const idOrKey = patient?.id ?? patient?.key ?? ids[idx];
-      if (!idOrKey) return;
+    (patientsBasicInfo ?? []).forEach((patient: any, index: number) => {
+      const patientIdOrKey = patient?.id ?? patient?.key ?? ids[index];
+      if (!patientIdOrKey) return;
 
-      map.set(String(idOrKey), {
-        id: idOrKey,
+      map.set(String(patientIdOrKey), {
+        id: patientIdOrKey,
         firstName: patient?.firstName,
         secondName: patient?.secondName,
         thirdName: patient?.thirdName,
@@ -415,120 +399,124 @@ const EncounterList = () => {
     return map;
   }, [patientsBasicInfo]);
 
-  // -----------------------------
-  // Normalize rows + inject bulk patient data
-  // -----------------------------
   const normalizedTableData = useMemo(() => {
-    const rows = (tableData ?? []).map((e: any) => {
-      const statusCode = String(e?.status ?? '').toUpperCase();
-      const priorityCode = String(e?.priorityLevel ?? '').toUpperCase();
-      const reasonCode = String(e?.encounterReason ?? '').toUpperCase();
+    return (tableData ?? []).map((encounterRow: any) => {
+      const statusCode = String(encounterRow?.status ?? '').toUpperCase();
+      const priorityCode = String(encounterRow?.priorityLevel ?? '').toUpperCase();
+      const reasonCode = String(encounterRow?.encounterReason ?? '').toUpperCase();
 
       const patientKey =
-        e?.patientId ??
-        e?.patientKey ??
-        e?.patient?.id ??
-        e?.patient?.key ??
-        e?.patientObject?.id ??
-        e?.patientObject?.key ??
-        e?.patientObject?.patientId ??
+        encounterRow?.patientId ??
+        encounterRow?.patientKey ??
+        encounterRow?.patient?.id ??
+        encounterRow?.patient?.key ??
+        encounterRow?.patientObject?.id ??
+        encounterRow?.patientObject?.key ??
+        encounterRow?.patientObject?.patientId ??
         null;
 
       const patientFromMap = patientKey != null ? patientMap.get(String(patientKey)) : null;
-      const first = String(patientFromMap?.firstName ?? e?.patient?.firstName ?? '').trim();
-      const second = String(patientFromMap?.secondName ?? e?.patient?.secondName ?? '').trim();
-      const third = String(patientFromMap?.thirdName ?? e?.patient?.thirdName ?? '').trim();
-      const last = String(patientFromMap?.lastName ?? e?.patient?.lastName ?? '').trim();
-      const bulkFullName = [first, second, third, last].filter(Boolean).join(' ').trim();
+
+      const firstName = String(
+        patientFromMap?.firstName ?? encounterRow?.patient?.firstName ?? ''
+      ).trim();
+      const secondName = String(
+        patientFromMap?.secondName ?? encounterRow?.patient?.secondName ?? ''
+      ).trim();
+      const thirdName = String(
+        patientFromMap?.thirdName ?? encounterRow?.patient?.thirdName ?? ''
+      ).trim();
+      const lastName = String(
+        patientFromMap?.lastName ?? encounterRow?.patient?.lastName ?? ''
+      ).trim();
+
+      const bulkFullName = [firstName, secondName, thirdName, lastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
 
       const bulkMrn =
         patientFromMap?.medicalRecordNumber ??
-        e?.patientObject?.patientMrn ??
-        e?.patientMrn ??
-        e?.mrn ??
-        e?.encounterNumber ??
-        e?.departmentDailySequenceNumber ??
-        e?.id;
+        encounterRow?.patientObject?.patientMrn ??
+        encounterRow?.patientMrn ??
+        encounterRow?.mrn ??
+        encounterRow?.encounterNumber ??
+        encounterRow?.departmentDailySequenceNumber ??
+        encounterRow?.id;
 
       const bulkDob = patientFromMap?.dateOfBirth ?? null;
       const bulkGender = formatEnumString(patientFromMap?.sexAtBirth) || '';
 
       return {
-        ...e,
-        key: e?.key ?? e?.id,
+        ...encounterRow,
+        key: encounterRow?.key ?? encounterRow?.id,
 
         patientObject: {
-          ...(e?.patientObject ?? {}),
-          ...(e?.patient ?? {}),
-          id: patientKey ?? e?.patientObject?.id ?? e?.patient?.id,
+          ...(encounterRow?.patientObject ?? {}),
+          ...(encounterRow?.patient ?? {}),
+          id: patientKey ?? encounterRow?.patientObject?.id ?? encounterRow?.patient?.id,
           patientMrn: bulkMrn,
           fullName:
             bulkFullName ||
-            e?.patientObject?.fullName ||
-            e?.patientFullName ||
-            e?.fullName ||
+            encounterRow?.patientObject?.fullName ||
+            encounterRow?.patientFullName ||
+            encounterRow?.fullName ||
             '-',
-          privatePatient: e?.patientObject?.privatePatient ?? e?.privatePatient ?? false,
+          privatePatient:
+            encounterRow?.patientObject?.privatePatient ?? encounterRow?.privatePatient ?? false,
 
           dateOfBirth: bulkDob,
           sexAtBirth: bulkGender,
 
-          gender: e?.patientObject?.gender ?? null
+          gender: encounterRow?.patientObject?.gender ?? null
         },
 
-        patientAge: e?.patientAge ?? (bulkDob ? calculateAgeFormat(bulkDob) : null),
+        patientAge: encounterRow?.patientAge ?? (bulkDob ? calculateAgeFormat(bulkDob) : null),
 
-        visitId: e?.visitId ?? e?.id,
+        visitId: encounterRow?.visitId ?? encounterRow?.id,
 
-        encounterReason: e?.encounterReason ?? reasonCode,
-        encounterPriority: e?.encounterPriority ?? e?.priorityLevel ?? priorityCode,
-        encounterStatus: e?.encounterStatus ?? e?.status ?? statusCode,
+        encounterReason: encounterRow?.encounterReason ?? reasonCode,
+        encounterPriority:
+          encounterRow?.encounterPriority ?? encounterRow?.priorityLevel ?? priorityCode,
+        encounterStatus: encounterRow?.encounterStatus ?? encounterRow?.status ?? statusCode,
 
-        plannedStartDate: e?.plannedStartDate ?? e?.encounterDate
+        plannedStartDate: encounterRow?.plannedStartDate ?? encounterRow?.encounterDate
       };
     });
-
-    return rows;
   }, [tableData, patientMap]);
 
-  // -----------------------------
-  // Start / Cancel helpers
-  // -----------------------------
   const getEncounterId = (row: any) => row?.id ?? row?.key ?? null;
 
   const startEncounterSafe = async (row: any) => {
-    const id = getEncounterId(row);
-    if (!id) return false;
+    const encounterId = getEncounterId(row);
+    if (!encounterId) return false;
 
     try {
-      await startEncounter({ id }).unwrap();
+      await startEncounter({ id: encounterId }).unwrap();
       return true;
-    } catch (err: any) {
-      handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
+    } catch (error: any) {
+      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     }
   };
 
   const cancelEncounterSafe = async (row: any) => {
-    const id = getEncounterId(row);
-    if (!id) return false;
+    const encounterId = getEncounterId(row);
+    if (!encounterId) return false;
 
     try {
-      await cancelEncounter({ id }).unwrap();
+      await cancelEncounter({ id: encounterId }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       return true;
-    } catch (err: any) {
-      handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
+    } catch (error: any) {
+      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
     }
   };
 
-  // -----------------------------
-  // Navigation / actions
-  // -----------------------------
   const handleGoToVisit = async (encounterData: any, patientData: any) => {
-    const ok = await startEncounterSafe(encounterData);
-    if (!ok) return;
+    const isStarted = await startEncounterSafe(encounterData);
+    if (!isStarted) return;
 
     if (encounterData && encounterData.key) {
       dispatch(setEncounter(encounterData));
@@ -552,8 +540,8 @@ const EncounterList = () => {
   };
 
   const handleGoToPreVisitObservations = async (encounterData: any, patientData: any) => {
-    const ok = await startEncounterSafe(encounterData);
-    if (!ok) return;
+    const isStarted = await startEncounterSafe(encounterData);
+    if (!isStarted) return;
 
     const privatePatientPath = '/user-access-patient-private';
     const preObservationsPath = '/nurse-station';
@@ -568,7 +556,9 @@ const EncounterList = () => {
         state: {
           patient: patientData,
           encounter: encounterData,
-          edit: String(encounterData?.encounterStatus ?? encounterData?.status ?? '').toUpperCase() === 'CLOSED'
+          edit:
+            String(encounterData?.encounterStatus ?? encounterData?.status ?? '').toUpperCase() ===
+            'CLOSED'
         }
       });
     }
@@ -577,16 +567,13 @@ const EncounterList = () => {
   const handleCancelEncounter = async () => {
     if (!encounter) return;
 
-    const ok = await cancelEncounterSafe(encounter);
-    if (!ok) return;
+    const isCancelled = await cancelEncounterSafe(encounter);
+    if (!isCancelled) return;
 
     refetchEncounters();
     setOpen(false);
   };
 
-  // -----------------------------
-  // Pagination handlers
-  // -----------------------------
   const handlePageChange = useCallback((_: unknown, newPage: number) => {
     setPage(newPage);
   }, []);
@@ -596,9 +583,6 @@ const EncounterList = () => {
     setPage(0);
   }, []);
 
-  // -----------------------------
-  // Clear filters
-  // -----------------------------
   const handleClearFilters = () => {
     const now = new Date();
     setRecord({});
@@ -610,12 +594,12 @@ const EncounterList = () => {
     setHasOrders(undefined);
     setIsObserved(undefined);
 
-    const cleared = { searchByField: 'fullName', patientName: '' };
-    setPatientSearchDraft(cleared);
-    setPatientSearchApplied(cleared);
+    const clearedSearch = { searchByField: 'fullName', patientName: '' };
+    setPatientSearchDraft(clearedSearch);
+    setPatientSearchApplied(clearedSearch);
 
     setPage(0);
-    setSearchTick(t => t + 1); 
+    setSearchTick(previousTick => previousTick + 1);
   };
 
   const tableColumns = [
@@ -640,13 +624,17 @@ const EncounterList = () => {
 
         return (
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
-            <div style={{ display: 'inline-block' }}>
+            <div className="encounter-list__patient-name-cell">
               {rowData?.patientObject?.privatePatient ? (
                 <Badge color="blue" content="Private">
-                  <p style={{ marginTop: '5px', cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
+                  <p className="encounter-list__patient-name encounter-list__patient-name--clickable">
+                    {rowData?.patientObject?.fullName}
+                  </p>
                 </Badge>
               ) : (
-                <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
+                <p className="encounter-list__patient-name encounter-list__patient-name--clickable">
+                  {rowData?.patientObject?.fullName}
+                </p>
               )}
             </div>
           </Whisper>
@@ -701,23 +689,24 @@ const EncounterList = () => {
     {
       key: 'status',
       title: 'STATUS',
-      render: (rowData: any) => (
-        <MyBadgeStatus
-          color={
-            String(rowData?.encounterStatus ?? '').toUpperCase() === 'NEW'
-              ? '#0d6efd'
-              : String(rowData?.encounterStatus ?? '').toUpperCase() === 'ONGOING'
-              ? '#198754'
-              : String(rowData?.encounterStatus ?? '').toUpperCase() === 'CANCELED' ||
-                String(rowData?.encounterStatus ?? '').toUpperCase() === 'CANCELLED'
-              ? '#ffc107'
-              : String(rowData?.encounterStatus ?? '').toUpperCase() === 'CLOSED'
-              ? '#6c757d'
-              : '#969fb0'
-          }
-          contant={String(rowData?.encounterStatus ?? rowData?.status ?? '')}
-        />
-      )
+      render: (rowData: any) => {
+        const statusUpperCase = String(rowData?.encounterStatus ?? '').toUpperCase();
+
+        const statusColorMap: Record<string, string> = {
+          NEW: '#0d6efd',
+          ONGOING: '#198754',
+          CANCELED: '#ffc107',
+          CANCELLED: '#ffc107',
+          CLOSED: '#6c757d'
+        };
+
+        return (
+          <MyBadgeStatus
+            color={statusColorMap[statusUpperCase] ?? '#969fb0'}
+            contant={String(rowData?.encounterStatus ?? rowData?.status ?? '')}
+          />
+        );
+      }
     },
     {
       key: 'hasObservation',
@@ -845,8 +834,8 @@ const EncounterList = () => {
             fieldLabel="From Date"
             fieldName="fromDate"
             record={dateFilter}
-            setRecord={updated => {
-              setDateFilter(updated);
+            setRecord={updatedFilter => {
+              setDateFilter(updatedFilter);
               setPage(0);
             }}
           />
@@ -857,8 +846,8 @@ const EncounterList = () => {
             fieldLabel="To Date"
             fieldName="toDate"
             record={dateFilter}
-            setRecord={updated => {
-              setDateFilter(updated);
+            setRecord={updatedFilter => {
+              setDateFilter(updatedFilter);
               setPage(0);
             }}
           />
@@ -875,12 +864,12 @@ const EncounterList = () => {
             fieldType="checkPicker"
             fieldLabel="Encounter Status"
             fieldName="statusIn"
-            selectData={statusOptions}
+            selectData={EncounterStatusEnum}
             selectDataLabel="label"
             selectDataValue="value"
             record={{ statusIn }}
-            setRecord={(upd: any) => {
-              setStatusIn(Array.isArray(upd?.statusIn) ? upd.statusIn : []);
+            setRecord={(updatedStatus: any) => {
+              setStatusIn(Array.isArray(updatedStatus?.statusIn) ? updatedStatus.statusIn : []);
               setPage(0);
             }}
           />
@@ -895,15 +884,19 @@ const EncounterList = () => {
                 <MyInput
                   fieldName="encounterReasonIn"
                   fieldType="checkPicker"
-                  selectData={encounterReasonOptions}
+                  selectData={EncounterReasonEnum}
                   selectDataLabel="label"
                   selectDataValue="value"
                   fieldLabel="Encounter Reason"
                   record={{ encounterReasonIn }}
-                  setRecord={(upd: any) => {
-                    const raw = Array.isArray(upd) ? upd : upd?.encounterReasonIn;
-                    const next = Array.isArray(raw) ? raw.map((x: any) => String(x)).filter(Boolean) : [];
-                    setEncounterReasonIn(next);
+                  setRecord={(updatedReason: any) => {
+                    const rawValue = Array.isArray(updatedReason)
+                      ? updatedReason
+                      : updatedReason?.encounterReasonIn;
+                    const nextReasons = Array.isArray(rawValue)
+                      ? rawValue.map((reasonItem: any) => String(reasonItem)).filter(Boolean)
+                      : [];
+                    setEncounterReasonIn(nextReasons);
                     setPage(0);
                   }}
                   searchable
@@ -915,8 +908,8 @@ const EncounterList = () => {
                   fieldName="chiefComplain"
                   fieldType="text"
                   record={record}
-                  setRecord={updated => {
-                    setRecord(updated);
+                  setRecord={updatedRecord => {
+                    setRecord(updatedRecord);
                     setPage(0);
                   }}
                   fieldLabel="Chief Complain"
@@ -927,8 +920,8 @@ const EncounterList = () => {
                   fieldName="withPrescription"
                   fieldType="checkbox"
                   record={{ withPrescription: !!withPrescription }}
-                  setRecord={(upd: any) => {
-                    setWithPrescription(!!upd?.withPrescription);
+                  setRecord={(updatedValue: any) => {
+                    setWithPrescription(!!updatedValue?.withPrescription);
                     setPage(0);
                   }}
                   label="With Prescription"
@@ -938,8 +931,8 @@ const EncounterList = () => {
                   fieldName="hasOrders"
                   fieldType="checkbox"
                   record={{ hasOrders: !!hasOrders }}
-                  setRecord={(upd: any) => {
-                    setHasOrders(!!upd?.hasOrders);
+                  setRecord={(updatedValue: any) => {
+                    setHasOrders(!!updatedValue?.hasOrders);
                     setPage(0);
                   }}
                   label="Has Orders"
@@ -949,8 +942,8 @@ const EncounterList = () => {
                   fieldName="isObserved"
                   fieldType="checkbox"
                   record={{ isObserved: !!isObserved }}
-                  setRecord={(upd: any) => {
-                    setIsObserved(!!upd?.isObserved);
+                  setRecord={(updatedValue: any) => {
+                    setIsObserved(!!updatedValue?.isObserved);
                     setPage(0);
                   }}
                   label="Is Observed"
@@ -961,11 +954,13 @@ const EncounterList = () => {
                   fieldName="priorityIn"
                   fieldType="checkPicker"
                   record={{ priorityIn }}
-                  setRecord={(upd: any) => {
-                    setPriorityIn(Array.isArray(upd?.priorityIn) ? upd.priorityIn : []);
+                  setRecord={(updatedPriority: any) => {
+                    setPriorityIn(
+                      Array.isArray(updatedPriority?.priorityIn) ? updatedPriority.priorityIn : []
+                    );
                     setPage(0);
                   }}
-                  selectData={priorityOptions}
+                  selectData={EncounterPriorityEnum}
                   selectDataLabel="label"
                   selectDataValue="value"
                   placeholder="Select Priority"
@@ -999,7 +994,7 @@ const EncounterList = () => {
   if (!departmentId) {
     return (
       <Panel>
-        <div style={{ padding: '20px', textAlign: 'center' }}>
+        <div className="encounter-list__no-department">
           <p>Please select a department to view encounters.</p>
         </div>
       </Panel>
@@ -1049,7 +1044,9 @@ const EncounterList = () => {
           height={600}
           data={normalizedTableData}
           columns={tableColumns}
-          rowClassName={(rowData: any) => (rowData && encounter && rowData.key === encounter.key ? 'selected-row' : '')}
+          rowClassName={(rowData: any) =>
+            rowData && encounter && rowData.key === encounter.key ? 'selected-row' : ''
+          }
           loading={tableLoading}
           onRowClick={(rowData: any) => setLocalEncounter(rowData)}
           page={page}
@@ -1121,9 +1118,9 @@ const EncounterList = () => {
           size="90vw"
           content={
             emrPatient && emrEncounter ? (
-              <PatientEMRModal inModal patient={emrPatient} encounter={emrEncounter} />
+              <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
             ) : (
-              <div style={{ padding: 16 }}>No patient selected.</div>
+              <div className="encounter-list__no-patient">No patient selected.</div>
             )
           }
           actionButtonLabel="Close"

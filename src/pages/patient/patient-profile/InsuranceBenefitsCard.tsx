@@ -7,6 +7,7 @@ import {
   faPercent,
   faCreditCard
 } from '@fortawesome/free-solid-svg-icons';
+import './styles.less';
 
 interface InsuranceBenefitsCardProps {
   data?: {
@@ -18,8 +19,15 @@ interface InsuranceBenefitsCardProps {
   };
 }
 
+interface BenefitItem {
+  icon: any;
+  label: string;
+  value?: string;
+  color: string;
+}
+
 const InsuranceBenefitsCard: React.FC<InsuranceBenefitsCardProps> = ({ data = {} }) => {
-  const benefits = [
+  const benefits: BenefitItem[] = [
     {
       icon: faDollarSign,
       label: 'Remaining Benefits',
@@ -52,132 +60,42 @@ const InsuranceBenefitsCard: React.FC<InsuranceBenefitsCardProps> = ({ data = {}
     }
   ];
 
-
   return (
-    <div
-      style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '16px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        border: '1px solid #e5e7eb',
-        height: '100%'
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '12px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #f3f4f6'
-        }}
-      >
-        <div
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white'
-          }}
-        >
-          <FontAwesomeIcon icon={faShieldHeart} style={{ fontSize: '16px' }} />
+    <div className="benefits-card">
+      <div className="benefits-card__header">
+        <div className="benefits-card__header-icon">
+          <FontAwesomeIcon icon={faShieldHeart} className="benefits-card__header-icon-svg" />
         </div>
-        <div
-          style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            color: '#1f2937'
-          }}
-        >
-          Benefits Overview
-        </div>
+        <div className="benefits-card__header-title">Benefits Overview</div>
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px'
-        }}
-      >
-        {benefits.map((item, index) => {
-          return (
-            <div
-              key={index}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '8px 10px',
-                backgroundColor: '#fafafa',
-                borderRadius: '8px',
-                border: '1px solid #f0f0f0',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={e => {
-                if (item.value) {
-                  e.currentTarget.style.backgroundColor = '#f5f5f5';
-                  e.currentTarget.style.borderColor = item.color + '40';
-                }
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = '#fafafa';
-                e.currentTarget.style.borderColor = '#f0f0f0';
-              }}
-            >
+      <div className="benefits-card__list">
+        {benefits.map((benefitItem, index) => (
+          <div
+            key={index}
+            className={`benefits-card__item ${benefitItem.value ? 'benefits-card__item--has-value' : ''}`}
+            style={{ '--item-color': benefitItem.color } as React.CSSProperties}
+          >
+            <div className="benefits-card__item-icon">
+              <FontAwesomeIcon
+                icon={benefitItem.icon}
+                className="benefits-card__item-icon-svg"
+              />
+            </div>
+            <div className="benefits-card__item-content">
+              <div className="benefits-card__item-label">{benefitItem.label}</div>
               <div
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '6px',
-                  backgroundColor: item.color + '15',
-                  color: item.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}
+                className={`benefits-card__item-value ${
+                  benefitItem.value
+                    ? 'benefits-card__item-value--filled'
+                    : 'benefits-card__item-value--empty'
+                }`}
               >
-                <FontAwesomeIcon icon={item.icon} style={{ fontSize: '14px' }} />
-              </div>
-              <div
-                style={{
-                  flex: 1,
-                  minWidth: 0
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '11px',
-                    color: '#6b7280',
-                    marginBottom: '2px',
-                    fontWeight: '500'
-                  }}
-                >
-                  {item.label}
-                </div>
-                <div
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    color: item.value ? '#111827' : '#d1d5db',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {item.value || '—'}
-                </div>
+                {benefitItem.value || '—'}
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

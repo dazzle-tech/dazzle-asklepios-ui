@@ -9,8 +9,7 @@ import {
   useLazyGetPatientsByFullNameQuery,
   useLazyGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
-  useLazyGetPatientsByAnyDocumentNumberQuery,
-  useLazyGetPatientsQuery
+  useLazyGetPatientsByAnyDocumentNumberQuery
 } from '@/services/patient/patientService';
 
 import type { ApPatient } from '@/types/model-types';
@@ -57,7 +56,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [links, setLinks] = useState<any>({});
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
 
-  const [fetchPatients] = useLazyGetPatientsQuery();
   const [fetchByMrn] = useLazyGetPatientsByMedicalRecordNumberQuery();
   const [fetchByArchiving] = useLazyGetPatientsByArchivingNumberQuery();
   const [fetchByPrimaryPhone] = useLazyGetPatientsByPrimaryPhoneQuery();
@@ -222,7 +220,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                             const year = val.getFullYear();
                             const month = String(val.getMonth() + 1).padStart(2, '0');
                             const day = String(val.getDate()).padStart(2, '0');
-                            // نحتفظ بقيمة البحث بصيغة مناسبة للـ API (yyyy-MM-dd)
                             setSearchKeyword(`${year}-${month}-${day}`);
                           }}
                         />
