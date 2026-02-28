@@ -284,22 +284,14 @@ export const store = configureStore({
     [MedicationCategoriesService.reducerPath]: MedicationCategoriesService.reducer,
     [MedicationCategoriesClassService.reducerPath]: MedicationCategoriesClassService.reducer,
 
-    // misc setup (age, ICD, resource, allergens)
-    // Language slice
-    [languageService.reducerPath]: languageService.reducer,
-
     // uom
     [uomGroupService.reducerPath]: uomGroupService.reducer,
 
     // Translation slice
-    [translationService.reducerPath]: translationService.reducer,
 
     // Form slice
     [formTemplateService.reducerPath]: formTemplateService.reducer,
     [FormEntriesService.reducerPath]: FormEntriesService.reducer,
-
-    //service
-    [serviceService.reducerPath]: serviceService.reducer,
 
     //age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
@@ -341,9 +333,6 @@ export const store = configureStore({
     [BrandMedicationSubstituteService.reducerPath]: BrandMedicationSubstituteService.reducer,
     [BrandMedicationActiveIngredientService.reducerPath]:
       BrandMedicationActiveIngredientService.reducer,
-
-    // uom
-    [uomGroupService.reducerPath]: uomGroupService.reducer,
 
     // country / geo
     [countryService.reducerPath]: countryService.reducer,
@@ -392,7 +381,6 @@ export const store = configureStore({
 
     [patientEncounterService.reducerPath]: patientEncounterService.reducer,
     [patientPaymentsService.reducerPath]: patientPaymentsService.reducer,
-    [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
     [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,

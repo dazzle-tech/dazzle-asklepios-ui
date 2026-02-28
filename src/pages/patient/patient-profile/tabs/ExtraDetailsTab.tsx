@@ -129,6 +129,7 @@ const ExtraDetailsTab: React.FC<ExtraDetailsTabProps> = ({
         fieldName="archivingNumber"
         record={localPatient}
         setRecord={setLocalPatient}
+        fieldType="number"
       />
       <MyInput
         vr={validationResult}

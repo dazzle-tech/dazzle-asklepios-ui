@@ -63,7 +63,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -82,7 +82,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   dispatch(
     notify({
       msg: humanMsg + suffix,
-      sev: 'error'
+      sev: 'warning'
     })
   );
 };

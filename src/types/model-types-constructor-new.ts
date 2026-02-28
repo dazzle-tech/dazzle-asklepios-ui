@@ -1418,3 +1418,11 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   departmentId: null,
   formJson: null
 };
+
+export const newPatientHIPAA: modelTypes.PatientHIPAA = {
+  patientId: undefined,
+  noticeOfPrivacyPractice: false,
+  privacyAuthorization: false,
+  noticeOfPrivacyPracticeDate: null,
+  privacyAuthorizationDate: null
+};

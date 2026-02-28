@@ -172,7 +172,7 @@ export const departmentService = createApi({
 
     // POST /api/setup/department
     addDepartment: builder.mutation<any, any>({
-      query: (department) => ({
+      query: department => ({
         url: '/api/setup/department',
         method: 'POST',
         body: department,
@@ -182,7 +182,7 @@ export const departmentService = createApi({
 
     // PUT /api/setup/department/{id}
     updateDepartment: builder.mutation<any, any>({
-      query: (department) => ({
+      query: department => ({
         url: `/api/setup/department/${department.id}`,
         method: 'PUT',
         body: department,
@@ -192,7 +192,7 @@ export const departmentService = createApi({
 
     // PATCH /api/setup/department/{id}/toggle-active
     toggleDepartmentIsActive: builder.mutation<any, number>({
-      query: (id) => ({
+      query: id => ({
         url: `/api/setup/department/${id}/toggle-active`,
         method: 'PATCH',
       }),
