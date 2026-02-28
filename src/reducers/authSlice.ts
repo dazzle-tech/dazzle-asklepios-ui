@@ -34,6 +34,7 @@ function isTokenExpired(token: string): boolean {
 // State definition
 // ==================
 interface AuthState {
+  selectedFacility: any;
   user: any | null; // logged-in user object
   token: string | null; // JWT token
   tenant: any | null;

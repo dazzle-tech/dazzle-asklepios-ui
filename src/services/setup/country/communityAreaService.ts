@@ -5,6 +5,7 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 type Id = number | string;
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type WithDistrict = { districtId: Id };
+type WithCommunity = { communityId: Id };
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -27,6 +28,7 @@ export const communityAreaService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['CommunityArea'],
   endpoints: builder => ({
+
     getAllAreas: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/community-area',
@@ -45,16 +47,17 @@ export const communityAreaService = createApi({
       providesTags: ['CommunityArea']
     }),
 
-    getAreasByName: builder.query<PagedResult<any>, WithDistrict & { name?: string } & PagedParams>(
-      {
-        query: ({ districtId, name, page, size, sort = 'id,asc' }) => ({
-          url: `/api/setup/district/${districtId}/community-area/by-name`,
-          params: { page, size, sort, name }
-        }),
-        transformResponse: mapPaged,
-        providesTags: ['CommunityArea']
-      }
-    ),
+    getAreasByName: builder.query<
+      PagedResult<any>,
+      WithDistrict & { name?: string } & PagedParams
+    >({
+      query: ({ districtId, name, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/district/${districtId}/community-area/by-name`,
+        params: { name, page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['CommunityArea']
+    }),
 
     addArea: builder.mutation<any, WithDistrict & any>({
       query: ({ districtId, ...body }) => ({
@@ -80,7 +83,20 @@ export const communityAreaService = createApi({
         method: 'PATCH'
       }),
       invalidatesTags: ['CommunityArea']
+    }),
+
+    getActiveAreas: builder.query<
+      PagedResult<any>,
+      WithCommunity & PagedParams
+    >({
+      query: ({ communityId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/community-area/active',
+        params: { communityId, page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['CommunityArea']
     })
+
   })
 });
 
@@ -93,5 +109,7 @@ export const {
   useLazyGetAreasByNameQuery,
   useAddAreaMutation,
   useUpdateAreaMutation,
-  useToggleAreaActiveMutation
+  useToggleAreaActiveMutation,
+  useGetActiveAreasQuery,
+  useLazyGetActiveAreasQuery
 } = communityAreaService;
