@@ -341,6 +341,7 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	noShowReasonLkey:undefined,
 	noShowReasonValue:'',
 	noShowOtherReason:'',
+	departmentKey:undefined,
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -536,12 +537,9 @@ export const newApConsultationOrder:modelTypes.ApConsultationOrder = {
 	visitKey:undefined,
 	consultantSpecialtyLkey:undefined,
 	cityLkey:undefined,
-	facilityKey:undefined,
-	departmentKey:undefined,
 	preferredConsultantKey:undefined,
 	consultationMethodLkey:undefined,
 	consultationTypeLkey:undefined,
-	priorityLkey:undefined,
 	consultationContent:'',
 	notes:'',
 	statusLkey:undefined,
@@ -559,6 +557,8 @@ export const newApConsultationOrder:modelTypes.ApConsultationOrder = {
 	facilityKey:undefined,
 	departmentKey:undefined,
 	priorityLkey:undefined,
+	approvalNumber: '',
+	extraDocumentation: '',
 } 
 
 export const newApCpt:modelTypes.ApCpt = { 
@@ -1496,9 +1496,9 @@ export const newApEncounterVaccination:modelTypes.ApEncounterVaccination = {
 	key:undefined,
 	patientKey:undefined,
 	encounterKey:undefined,
-	vaccineId:undefined,
-	vaccineBrandId:undefined,
-	vaccineDoseId:undefined,
+	vaccineId:0,
+	vaccineBrandId:0,
+	vaccineDoseId:0,
 	vaccineLotNumber:'',
 	dateAdministered:0,
 	actualSide:'',
@@ -2878,6 +2878,10 @@ export const newApPatient:modelTypes.ApPatient = {
 	countryId:'',
 	bloodGroupLkey:undefined,
 	genderLkey:undefined,
+	gdprNoticeOfPrivacyPractice:undefined,
+	gdprNoticeOfPrivacyPracticeDate:null,
+	gdprPrivacyAuthorization:undefined,
+	gdprPrivacyAuthorizationDate:null,
 } 
 
 export const newApPatientAddresses:modelTypes.ApPatientAddresses = { 
@@ -3207,6 +3211,9 @@ export const newApPatientObservationSummary:modelTypes.ApPatientObservationSumma
 	latestCognitiveCheck:'',
 	platestCognitiveCheck:'',
 	reasonOfVisit:'',
+	notes:'',
+	priorityLkey:undefined,
+	measurementLkey:undefined,
 } 
 
 export const newApPatientPlan:modelTypes.ApPatientPlan = { 
@@ -3719,7 +3726,7 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 	patientKey:undefined,
 	visitKey:undefined,
 	prescriptionKey:undefined,
-	genericMedicationsId:undefined,
+	genericMedicationsId:0,
 	numberOfRefills:0,
 	refillInterval:'',
 	instructionsTypeLkey:undefined,
@@ -3750,7 +3757,7 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 
 export const newApProcedure:modelTypes.ApProcedure = { 
 	key:undefined,
-	procedureNameKey:undefined,
+	procedureNameId:0,
 	procedureId:'',
 	procedureLevelLkey:undefined,
 	categoryKey:undefined,
@@ -4775,26 +4782,4 @@ export const newApWarehouseUser:modelTypes.ApWarehouseUser = {
 	isvalid:undefined,
 } 
 
-export const newAppUser:modelTypes.AppUser = { 
-	id:undefined,
-	login:'',
-	passwordHash:'',
-	firstName:'',
-	lastName:'',
-	email:'',
-	imageUrl:'',
-	activated:undefined,
-	langKey:undefined,
-	resetKey:undefined,
-	createdBy:'',
-	createdDate:undefined,
-	resetDate:undefined,
-	lastModifiedBy:'',
-	lastModifiedDate:undefined,
-	phoneNumber:'',
-	birthDate:null,
-	gender:'',
-	jobRole:'',
-	securityAccessLeve:'',
-} 
 

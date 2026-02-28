@@ -306,6 +306,7 @@ const DetailsModal = ({
       indicationUseLkey: null,
       pharmacyDepartmentKey: null
     });
+
     setAdminInstructions('');
     setSelectedGeneric(null);
     setSelectedFirstDate(null);
@@ -315,6 +316,7 @@ const DetailsModal = ({
     setIsUnregistered(false);
     setUnregisteredMedicationName('');
   };
+
   const handleSaveMedication = () => {
     try {
       const tagcompine = joinValuesFromArray(tags);
@@ -372,6 +374,26 @@ const DetailsModal = ({
       setCapturedSourceId(0);
     }
   }, [attachmentsModalOpen]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const list = orderTypeLovQueryResponse?.object;
+    if (!list?.length) return;
+
+    const preMed = list.find(item => item.valueCode === 'DRUG_PREMED');
+    if (!preMed) return;
+
+    setOrderMedication(prev => {
+      if (prev.drugOrderTypeLkey) return prev;
+
+      return {
+        ...prev,
+        drugOrderTypeLkey: preMed.key
+      };
+    });
+  }, [orderTypeLovQueryResponse?.object, open]);
+
   const joinValuesFromArray = values => {
     return values?.filter(Boolean).join(', ');
   };

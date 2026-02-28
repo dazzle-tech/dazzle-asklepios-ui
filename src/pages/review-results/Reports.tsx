@@ -357,7 +357,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                 <MyInput
                     column
                     width={180}
-                    fieldType="datetime"
+                    fieldType="date"
                     fieldLabel="Approval From Date"
                     fieldName="fromDate"
                     record={dateFilter}
@@ -366,7 +366,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                 <MyInput
                     width={180}
                     column
-                    fieldType="datetime"
+                    fieldType="date"
                     fieldLabel="Approval To Date"
                     fieldName="toDate"
                     record={dateFilter}
@@ -375,7 +375,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                 <MyInput
                     column
                     width={180}
-                    fieldType="datetime"
+                    fieldType="date"
                     fieldLabel="Order From Date"
                     fieldName="fromDate"
                     record={dateOrderFilter}
@@ -384,7 +384,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                 <MyInput
                     width={180}
                     column
-                    fieldType="datetime"
+                    fieldType="date"
                     fieldLabel="Order To Date"
                     fieldName="toDate"
                     record={dateOrderFilter}

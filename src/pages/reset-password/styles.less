@@ -1,26 +1,21 @@
-.blur-bg {
-  position: relative;
+.create-password-header-title {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-family: Arial, sans-serif;
+  color: #5a5a5b;
   width: 100%;
-  height: 100vh;
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
+  display: block;
 }
 
-.blur-bg::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: inherit;
-  background-size: cover;
-  background-position: center;
-  filter: blur(12px);
-  transform: scale(1.1);
-  z-index: 0;
+.create-password-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b6b6b;
 }
 
-.blur-bg > * {
-top: 10vw;
-  position: relative;
-  z-index: 1;
+.create-password-success-message {
+  margin-top: 15px;
+  font-weight: 700;
 }

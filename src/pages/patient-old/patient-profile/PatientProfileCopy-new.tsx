@@ -1,32 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { type ApPatient } from '@/types/model-types';
-import { notify } from '@/utils/uiReducerActions';
-import { useLocation } from 'react-router-dom';
-import ReactDOMServer from 'react-dom/server';
-import { Col, DOMHelper, Panel, Row, Text } from 'rsuite';
-import ProfileHeader from './ProfileHeader-new';
-import ProfileSidebar from './ProfileSidebar-new';
-import ProfileTabs from './ProfileTabs-new';
-import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
-import PatientVisitHistory from './PatientVisitHistory';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import {
   usePatientListByRoleCandidateMutation,
   useSavePatientMutation
 } from '@/services/patientService';
-import clsx from 'clsx';
 import { useLazyGetCandidatesByDepartmentKeyQuery } from '@/services/setupService';
-import PatientDuplicate from './patientsDuplicate';
-import SectionContainer from '@/components/SectionsoContainer';
-import PatientVisitHistoryTable from './PatientVisitHistoryTable';
-import PatientAppointments from './PatientAppointments';
+import { type ApPatient } from '@/types/model-types';
+import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import { notify } from '@/utils/uiReducerActions';
+import clsx from 'clsx';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Col, DOMHelper, Panel, Row } from 'rsuite';
 import BedsideRegistrationsModal from './BedsideRegistrations';
-import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import BulkRegistration from './BulkRegistration';
-import Translate from '@/components/Translate';
+import PatientAppointments from './PatientAppointments';
+import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
+import PatientDuplicate from './patientsDuplicate';
+import PatientVisitHistory from './PatientVisitHistory';
+import PatientVisitHistoryTable from './PatientVisitHistoryTable';
+import ProfileHeader from './ProfileHeader-new';
+import ProfileSidebar from './ProfileSidebar-new';
+import ProfileTabs from './ProfileTabs-new';
+import RegistrationWarningsSummary from './RegistrationWarningsSummary';
+import ViewPriceList from '@/pages/patient/patient-profile/ViewPriceList';
 
 const { getHeight } = DOMHelper;
 
@@ -47,16 +47,16 @@ const PatientProfile = () => {
   const [refetchData, setRefetchData] = useState(false);
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   const [openPatientsDuplicateModal, setOpenPatientsDuplicateModal] = useState(false);
-  const [openBedsideRegistrations,setOpenBedsideRegistrations] = useState<boolean>(false);
-  const [openRegistrationWarningsSummary,setOpenRegistrationWarningsSummary] = useState<boolean>(false);
-    const [openBulkRegistrationModal,setOpenBulkRegistrationModal] = useState<boolean>(false);
+  const [openBedsideRegistrations, setOpenBedsideRegistrations] = useState<boolean>(false);
+  const [openRegistrationWarningsSummary, setOpenRegistrationWarningsSummary] =
+    useState<boolean>(false);
+  const [openBulkRegistrationModal, setOpenBulkRegistrationModal] = useState<boolean>(false);
+  const [openViewPriceListModal, setOpenBViewPriceListModal] = useState<boolean>(false);
   const [patientList, setPatientList] = useState([]);
   const [trigger] = useLazyGetCandidatesByDepartmentKeyQuery();
   const [patientListByRoleCandidate] = usePatientListByRoleCandidateMutation();
   // Page header setup
-  const divContent = (
-    "Patient Registration"
-  );
+  const divContent = 'Patient Registration';
 
   // Handle save patient
   // const handleSave = async () => {
@@ -95,19 +95,57 @@ const PatientProfile = () => {
   //   } catch (error) {
   //   }
   // };
-  const handleSave = async () => {
-  try {
-    await savePatient({
-      ...localPatient,
-      incompletePatient: false,
-      unknownPatient: false
-    }).unwrap();
+  // Add this validation function before handleSave in PatientProfile component
 
-    setRefetchData(true);
-    dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-  } catch (error) {
-  }
-};
+  const validateRequiredFields = () => {
+    const errors = [];
+
+    // Check required fields
+    if (!localPatient.firstName) {
+      errors.push('First Name');
+    }
+    if (!localPatient.lastName) {
+      errors.push('Last Name');
+    }
+    if (!localPatient.genderLkey) {
+      errors.push('Gender');
+    }
+    if (!localPatient.dob) {
+      errors.push('DOB');
+    }
+    if (!localPatient.phoneNumber) {
+      errors.push('Primary Mobile Number');
+    }
+
+    return errors;
+  };
+
+  // Update handleSave function to include validation
+  const handleSave = async () => {
+    // Validate required fields
+    const missingFields = validateRequiredFields();
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill the following required fields: ${missingFields.join(', ')}`,
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    try {
+      await savePatient({
+        ...localPatient,
+        incompletePatient: false,
+        unknownPatient: false
+      }).unwrap();
+
+      setRefetchData(true);
+      dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+    } catch (error) {}
+  };
 
   // Handle clear patient data
   const handleClear = () => {
@@ -176,7 +214,6 @@ const PatientProfile = () => {
       dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
-
   return (
     <>
       <div className="patient-profile-container">
@@ -197,7 +234,8 @@ const PatientProfile = () => {
             setOpenBedsideRegistrations={setOpenBedsideRegistrations}
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
             setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
-            
+            setOpenBViewPriceListModal={setOpenBViewPriceListModal}
+            setLocalPatient={setLocalPatient}
           />
 
           <div className="container-of-tabs-reg">
@@ -258,19 +296,17 @@ const PatientProfile = () => {
           setQuickAppointmentModel={setQuickAppointmentModel}
         />
       )}
-      <BedsideRegistrationsModal 
-      open={openBedsideRegistrations}
-      setOpen={setOpenBedsideRegistrations}
-      setLocalPatient={setLocalPatient}
+      <BedsideRegistrationsModal
+        open={openBedsideRegistrations}
+        setOpen={setOpenBedsideRegistrations}
+        setLocalPatient={setLocalPatient}
       />
       <RegistrationWarningsSummary
-      open={openRegistrationWarningsSummary}
-      setOpen={setOpenRegistrationWarningsSummary}
+        open={openRegistrationWarningsSummary}
+        setOpen={setOpenRegistrationWarningsSummary}
       />
-      <BulkRegistration
-      open={openBulkRegistrationModal}
-      setOpen={setOpenBulkRegistrationModal}
-      />
+      <BulkRegistration open={openBulkRegistrationModal} setOpen={setOpenBulkRegistrationModal} />
+      <ViewPriceList open={openViewPriceListModal} setOpen={setOpenBViewPriceListModal} />
       <PatientDuplicate
         open={openPatientsDuplicateModal}
         setOpen={setOpenPatientsDuplicateModal}

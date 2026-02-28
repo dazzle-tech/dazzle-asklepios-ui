@@ -141,6 +141,24 @@ export const departmentService = createApi({
       providesTags: ['Department']
     }),
 
+    getActiveAppointableDepartmentByType: builder.query<
+      PagedResult<any>,
+      { type: string; facilityId: number | string } & PagedParams
+    >({
+      query: ({ type, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/department/appointable/active/by-type/${type}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Department']
+    }),
     // GET /api/setup/department/by-name/{name}?page=&size=&sort=
     getDepartmentByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
@@ -203,7 +221,6 @@ export const departmentService = createApi({
       }),
       providesTags: ['Department']
     }),
-
     getAppointableActiveDepartmentsByEncounterTypeAndFacility: builder.query<
       PagedResult<any>,
       { facilityId: number | string; encounterType: string } & PagedParams
@@ -255,6 +272,8 @@ export const {
   useGetAllDepartmentsWithoutPaginationQuery,
   useGetDepartmentsByResourceTypeQuery,
   useLazyGetDepartmentsByResourceTypeQuery,
+  useGetActiveAppointableDepartmentByTypeQuery,
+  useLazyGetActiveAppointableDepartmentByTypeQuery,
   useGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
   useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
   useGetDepartmentsBulkMutation
