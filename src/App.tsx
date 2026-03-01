@@ -177,7 +177,6 @@ import Shifts from './pages/setup/shift-setup';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 import UOMGroup from './pages/setup/uom-group-new';
-import Users from './pages/setup/users-setup';
 import UsersNew from './pages/system-configurations/users-setup-new';
 import Vaccine from './pages/setup/vaccine-setup';
 import VisitDurationSetup from './pages/setup/visit-duration-setup';
@@ -658,7 +657,6 @@ useEffect(() => {
               <Route path="questionnaire-setup" element={<Questionnaire />} />
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
-              <Route path="users" element={<Users />} />
               <Route path="users-new" element={<UsersNew />} />
               <Route path="uom-group" element={<UOMGroup />} />
               <Route path="med-matrix-setup" element={<MedicationMatrix />} />

@@ -17,7 +17,7 @@ import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrophone, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
@@ -204,7 +204,8 @@ const MyInput = ({
     if (!setRecord || typeof setRecord !== 'function') return;
 
     if (fieldType === 'date') {
-      setRecord({ ...record, [fieldName]: value });
+      const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
+      setRecord({ ...record, [fieldName]: dateStr });
       return;
     }
 
@@ -223,9 +224,9 @@ const MyInput = ({
       return props.menuMaxHeight as number;
     }
     const itemsCount = dataList?.length ?? 0;
-    const estimatedItemHeight = 38; // approx item row height for rsuite pickers
-    const headerAllowance = 24; // search header/padding allowance
-    const capHeight = 240; // sensible default cap
+    const estimatedItemHeight = 38;
+    const headerAllowance = 24;
+    const capHeight = 240;
     return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
   };
 
@@ -257,6 +258,7 @@ const MyInput = ({
     recognition.start();
     recognitionRef.current = recognition;
   };
+
   // stop speech recognition
   const stopListening = () => {
     recognitionRef.current?.stop();
@@ -325,10 +327,6 @@ const MyInput = ({
                 onClick={changeRecordingState}
                 style={{ position: 'relative' }}
               >
-                <FontAwesomeIcon
-                  icon={faMicrophone}
-                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
                 {recording && <span className="pulse-ring"></span>}
               </div>
             )}
@@ -424,8 +422,8 @@ const MyInput = ({
               (isArrayLabel
                 ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
                 : props.isEnum
-                ? (label: any) => formatEnumString(String(label))
-                : undefined)
+                  ? (label: any) => formatEnumString(String(label))
+                  : undefined)
             }
             searchBy={props.searchBy}
             container={resolveContainer()}
@@ -456,15 +454,16 @@ const MyInput = ({
                     return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
                   }
                 : props.isEnum
-                ? (value, item, selectedElement) => {
-                    const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
-                    return <span>{formatEnumString(String(base))}</span>;
-                  }
-                : undefined
+                  ? (value, item, selectedElement) => {
+                      const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
+                      return <span>{formatEnumString(String(base))}</span>;
+                    }
+                  : undefined
             }
           />
         );
       }
+
       case 'selectPagination': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
         const labelKeys = isArrayLabel
@@ -588,6 +587,7 @@ const MyInput = ({
           />
         );
       }
+
       case 'multyPicker':
         return (
           <Form.Control
@@ -655,7 +655,7 @@ const MyInput = ({
             }
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? dayjs(record[fieldName], 'YYYY-MM-DD').toDate() : null}
+            value={record[fieldName] ? dayjs(record[fieldName]).toDate() : null}
             accepter={CustomDatePicker}
             onChange={handleValueChange}
             placeholder={props.placeholder}
@@ -809,11 +809,11 @@ const MyInput = ({
               }}
             />
             {!props.disabled && (
-              <InputGroup.Button 
+              <InputGroup.Button
                 onClick={() => setShowPassword(!showPassword)}
                 className="password-toggle-button"
-                style={{ 
-                  backgroundColor: 'transparent', 
+                style={{
+                  backgroundColor: 'transparent',
                   border: 'none',
                   boxShadow: 'none',
                   padding: '8px 12px',
@@ -848,18 +848,7 @@ const MyInput = ({
                 }
               }}
             />
-            {/* {!props.disabled && (
-              <div
-                className={`container-of-search-icon ${recording ? 'recording' : ''}`}
-                onClick={changeRecordingState}
-              >
-                <FontAwesomeIcon
-                  icon={faMicrophone}
-                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
-                {recording && <span className="pulse-ring"></span>}
-              </div>
-            )} */}
+            {recording && <span className="pulse-ring"></span>}
           </div>
         );
 
@@ -886,29 +875,29 @@ const MyInput = ({
     }
   };
 
-  const conjureValidationMessages = () => {
-    if (!validationResult) return null;
-    const msgs = [];
-    let i = 0;
-    for (const vrs of validationResult) {
-      msgs.push(
-        <Form.HelpText
-          key={i++}
-          style={{
-            color:
-              vrs.validationType === 'REJECT'
-                ? 'red'
-                : vrs.validationType === 'WARN'
-                ? 'orange'
-                : 'grey'
-          }}
-        >
-          <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
-        </Form.HelpText>
-      );
-    }
-    return msgs;
-  };
+  // const conjureValidationMessages = () => {
+  //   if (!validationResult) return null;
+  //   const msgs = [];
+  //   let i = 0;
+  //   for (const vrs of validationResult) {
+  //     msgs.push(
+  //       <Form.HelpText
+  //         key={i++}
+  //         style={{
+  //           color:
+  //             vrs.validationType === 'REJECT'
+  //               ? 'red'
+  //               : vrs.validationType === 'WARN'
+  //                 ? 'orange'
+  //                 : 'grey'
+  //         }}
+  //       >
+  //         <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
+  //       </Form.HelpText>
+  //     );
+  //   }
+  //   return msgs;
+  // };
 
   return (
     <Form.Group
@@ -922,11 +911,11 @@ const MyInput = ({
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />
         )}
-        {props.required && <span className="required-field ">*</span>}
+        {props.required && <span className="required-field">*</span>}
       </Form.ControlLabel>
       {props.column && <div style={{ marginBottom: 5 }} />}
       {conjureFormControl()}
-      {validationResult && conjureValidationMessages()}
+      {/* {validationResult && conjureValidationMessages()} */}
     </Form.Group>
   );
 };
