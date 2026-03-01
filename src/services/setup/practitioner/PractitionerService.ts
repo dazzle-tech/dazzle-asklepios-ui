@@ -177,7 +177,8 @@ export const PractitionerService = createApi({
       }),
       providesTags: ["Practitioner"],
     }),
-  }),
+
+  })
 });
 
 export const {

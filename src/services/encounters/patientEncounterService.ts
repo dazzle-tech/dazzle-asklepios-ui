@@ -245,20 +245,18 @@ export const patientEncounterService = createApi({
 export const {
   useCreateEncounterMutation,
   useUpdateEncounterMutation,
+  useCountTodayEncountersByFacilityQuery,
+  useLazyCountTodayEncountersByFacilityQuery,
+  useGetPreviousEncountersSameDepartmentQuery,
+  useLazyGetPreviousEncountersSameDepartmentQuery,
 
   useStartEncounterMutation,
   useCancelEncounterMutation,
   useDischargeEncounterMutation,
   useCompleteEncounterMutation,
 
-  useCountTodayEncountersByFacilityQuery,
-  useLazyCountTodayEncountersByFacilityQuery,
-
   useFilterEncountersQuery,
   useLazyFilterEncountersQuery,
-
-  useGetPreviousEncountersSameDepartmentQuery,
-  useLazyGetPreviousEncountersSameDepartmentQuery,
 
   useCountTodayDepartmentTotalPatientsQuery,
   useCountTodayDepartmentActiveCasesQuery,
