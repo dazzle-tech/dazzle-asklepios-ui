@@ -38,12 +38,8 @@ export const patientEncounterService = createApi({
   reducerPath: 'patientEncountersApi',
   baseQuery: BaseQuery,
   tagTypes: ['PatientEncounter'],
-
   endpoints: builder => ({
-    createEncounter: builder.mutation<
-      PatientEncounter,
-      { body: PatientEncounter }
-    >({
+    createEncounter: builder.mutation<PatientEncounter, { body: PatientEncounter }>({
       query: ({ body }) => ({
         url: '/api/patient/encounter',
         method: 'POST',
@@ -51,24 +47,17 @@ export const patientEncounterService = createApi({
       }),
       invalidatesTags: ['PatientEncounter']
     }),
-    updateEncounter: builder.mutation<
-      PatientEncounter,
-      { id: Id; body: PatientEncounter }
-    >({
+
+    updateEncounter: builder.mutation<PatientEncounter, { id: Id; body: PatientEncounter }>({
       query: ({ id, body }) => ({
         url: `/api/patient/encounter/${id}`,
         method: 'PUT',
         body
       }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PatientEncounter', id },
-        'PatientEncounter'
-      ]
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
-    countTodayEncountersByFacility: builder.query<
-      number,
-      { facilityId: Id }
-    >({
+
+    countTodayEncountersByFacility: builder.query<number, { facilityId: Id }>({
       query: ({ facilityId }) => ({
         url: `/api/patient/encounter/facility/${facilityId}/count/today`,
         method: 'GET'
@@ -85,9 +74,7 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
-
         encounterReasonIn?: string[];
-
         chiefComplaint?: string;
         priorityIn?: string[];
         withPrescription?: boolean;
@@ -102,9 +89,7 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
-
         encounterReasonIn,
-
         chiefComplaint,
         priorityIn,
         withPrescription,
@@ -123,9 +108,7 @@ export const patientEncounterService = createApi({
           statusIn,
           patientName,
           mrn,
-
           encounterReasonIn,
-
           chiefComplaint,
           priorityIn,
           withPrescription,
@@ -142,51 +125,30 @@ export const patientEncounterService = createApi({
       },
       providesTags: res =>
         res
-          ? [
-            ...res.data.map(e => ({
-              type: 'PatientEncounter' as const,
-              id: e.id
-            })),
-            'PatientEncounter'
-          ]
+          ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
     }),
+
     getPreviousEncountersSameDepartment: builder.query<
       PagedResult<PatientEncounter>,
       { patientId: Id; departmentId: Id } & PagedParams
     >({
-      query: ({
-        patientId,
-        departmentId,
-        page,
-        size,
-        sort = 'id,asc'
-      }) => ({
+      query: ({ patientId, departmentId, page, size, sort = 'id,asc' }) => ({
         url: `/api/patient/encounter/patient/${patientId}/department/${departmentId}/previous`,
         method: 'GET',
         params: { page, size, sort }
       }),
       transformResponse: (response: any, meta) => {
-        const rows = Array.isArray(response)
-          ? response
-          : response?.content ?? [];
+        const rows = Array.isArray(response) ? response : response?.content ?? [];
         return mapPaged(rows, meta);
       },
       providesTags: res =>
         res
-          ? [
-            ...res.data.map(e => ({
-              type: 'PatientEncounter' as const,
-              id: e.id
-            })),
-            'PatientEncounter'
-          ]
+          ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
     }),
-    countTodayDepartmentTotalPatients: builder.query<
-      number,
-      { departmentId: Id }
-    >({
+
+    countTodayDepartmentTotalPatients: builder.query<number, { departmentId: Id }>({
       query: ({ departmentId }) => ({
         url: `/api/patient/encounter/department/${departmentId}/count/today/total-patients`,
         method: 'GET'
@@ -194,10 +156,7 @@ export const patientEncounterService = createApi({
       providesTags: ['PatientEncounter']
     }),
 
-    countTodayDepartmentActiveCases: builder.query<
-      number,
-      { departmentId: Id }
-    >({
+    countTodayDepartmentActiveCases: builder.query<number, { departmentId: Id }>({
       query: ({ departmentId }) => ({
         url: `/api/patient/encounter/department/${departmentId}/count/today/active`,
         method: 'GET'
@@ -205,16 +164,14 @@ export const patientEncounterService = createApi({
       providesTags: ['PatientEncounter']
     }),
 
-    countTodayDepartmentCompleted: builder.query<
-      number,
-      { departmentId: Id }
-    >({
+    countTodayDepartmentCompleted: builder.query<number, { departmentId: Id }>({
       query: ({ departmentId }) => ({
         url: `/api/patient/encounter/department/${departmentId}/count/today/completed`,
         method: 'GET'
       }),
       providesTags: ['PatientEncounter']
     }),
+
     startEncounter: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/start`,
@@ -223,7 +180,6 @@ export const patientEncounterService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
-    // ✅ NEW: CANCEL encounter (set status CANCELED)
     cancelEncounter: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/cancel`,
@@ -231,15 +187,45 @@ export const patientEncounterService = createApi({
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
-    countTodayDepartmentCancelled: builder.query<
-      number,
-      { departmentId: Id }
-    >({
+
+    dischargeEncounter: builder.mutation<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}/discharge`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
+    }),
+
+    completeEncounter: builder.mutation<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}/complete`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
+    }),
+
+    countTodayDepartmentCancelled: builder.query<number, { departmentId: Id }>({
       query: ({ departmentId }) => ({
         url: `/api/patient/encounter/department/${departmentId}/count/today/cancelled`,
         method: 'GET'
       }),
       providesTags: ['PatientEncounter']
+    }),
+
+    getEncountersByPatient: builder.query<PagedResult<PatientEncounter>, { patientId: Id } & PagedParams>({
+      query: ({ patientId, page, size, sort = 'createdDate,desc' }) => ({
+        url: `/api/patient/encounter/patient/${patientId}`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any, meta) => {
+        const rows = Array.isArray(response) ? response : response?.content ?? [];
+        return mapPaged(rows, meta);
+      },
+      providesTags: res =>
+        res
+          ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
+          : ['PatientEncounter']
     })
   })
 });
@@ -250,7 +236,9 @@ export const {
 
   useStartEncounterMutation,
   useCancelEncounterMutation,
-  
+  useDischargeEncounterMutation,
+  useCompleteEncounterMutation,
+
   useCountTodayEncountersByFacilityQuery,
   useLazyCountTodayEncountersByFacilityQuery,
 
@@ -263,5 +251,8 @@ export const {
   useCountTodayDepartmentTotalPatientsQuery,
   useCountTodayDepartmentActiveCasesQuery,
   useCountTodayDepartmentCompletedQuery,
-  useCountTodayDepartmentCancelledQuery
+  useCountTodayDepartmentCancelledQuery,
+
+  useGetEncountersByPatientQuery,
+  useLazyGetEncountersByPatientQuery
 } = patientEncounterService;

@@ -1,5 +1,4 @@
 import { useAppDispatch } from '@/hooks';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import MyButton from '@/components/MyButton/MyButton';
 import React, { useEffect, useRef, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
@@ -11,12 +10,9 @@ import '../styles.less';
 import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from './PatientPaymentInfo';
 import type { PatientEncounter } from '@/types/model-types-new';
-import { newPatientEncounter } from '@/types/model-types-constructor-new';
+import { newPatientEncounter, newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
 import { useCreateEncounterMutation, useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
-
-// ✅ NEW imports
 import * as modelTypes from '@/types/model-types-new';
-import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Encounter data is required.',
@@ -27,16 +23,13 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'encounterNumber.duplicate': 'Encounter number already exists.',
   'id.notfound': 'Encounter record not found.',
   notfound: 'Encounter record not found.',
-
   'followUpEncounter.required.followup': 'Follow-up Encounter is required when Reason is Follow up.',
   'followUpEncounter.required.byReason':
     'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
-
   'patient.department.date.duplicate':
     'This patient already has an encounter in this department on the selected date.',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
-
   duplicate: 'Duplicate record.',
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
@@ -110,7 +103,8 @@ const PatientQuickAppointment = ({
   setQuickAppointmentModel,
   localVisit,
   isDisabeld = false,
-  onEncounterSaved
+  onEncounterSaved,
+  initialStep = 0
 }: any) => {
   const dispatch = useAppDispatch();
 
@@ -124,11 +118,16 @@ const PatientQuickAppointment = ({
   const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
   const [isEncounterSaved, setIsEncounterSaved] = useState(false);
 
-  // ✅ payment control via ref
+  // payment control via ref
   const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
   const [isPaymentSaved, setIsPaymentSaved] = useState(false);
+
+  const isViewMode = Boolean(isDisabeld);
+  const isPaymentMode = initialStep === 1;
   const isLockedAfterPayment = Boolean(isPaymentSaved);
-  const effectiveReadOnly = Boolean(isReadOnly || isLockedAfterPayment);
+
+  const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode);
+  const paymentReadOnly = Boolean(isReadOnly || isViewMode || isLockedAfterPayment);
 
   const [createEncounter] = useCreateEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
@@ -146,7 +145,6 @@ const PatientQuickAppointment = ({
     payorName: '',
     planName: ''
   });
-
 
   useEffect(() => {
     setPaymentDraft((prev: any) => ({
@@ -226,7 +224,9 @@ const PatientQuickAppointment = ({
       setIsEncounterSaved(true);
       dispatch(notify({ msg: 'Encounter Saved Successfully', sev: 'success' }));
 
-      if (onEncounterSaved) onEncounterSaved();
+      if (onEncounterSaved) {
+        await onEncounterSaved();
+      }
     } catch (err: any) {
       setValidationResult(err?.data ?? err);
       handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
@@ -242,11 +242,10 @@ const PatientQuickAppointment = ({
     setValidationResult({});
     setIsEncounterSaved(false);
 
-    // reset payment states
+    // reset payment states + drafts
     setIsPaymentSaved(false);
     paymentRef.current?.clear?.();
 
-    // ✅ reset lifted drafts
     setPaymentDraft({
       ...newPatientPayments,
       patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
@@ -255,7 +254,6 @@ const PatientQuickAppointment = ({
       dept: 0
     });
     setPatientInsuranceDraft({ ...newPatientInsurance, payorName: '', planName: '' });
-
   };
 
   useEffect(() => {
@@ -277,8 +275,22 @@ const PatientQuickAppointment = ({
   }, [localPatient]);
 
   const handlePaymentConfirm = async () => {
-    const ok = await paymentRef.current?.confirm();
-    if (ok) setIsPaymentSaved(true);
+    try {
+      const ok = await paymentRef.current?.confirm();
+      if (!ok) return;
+
+      setIsPaymentSaved(true);
+
+      if (onEncounterSaved) {
+        await onEncounterSaved();
+      }
+
+      setQuickAppointmentModel(false);
+
+      dispatch(notify({ msg: 'Payment Confirmed Successfully', sev: 'success' }));
+    } catch (err: any) {
+      dispatch(notify({ msg: 'Error confirming payment', sev: 'error' }));
+    }
   };
 
   const handlePaymentClear = () => {
@@ -293,7 +305,7 @@ const PatientQuickAppointment = ({
           <RegistrationEncounter
             localEncounter={localEncounter}
             setLocalEncounter={setLocalEncounter}
-            isReadOnly={effectiveReadOnly}
+            isReadOnly={encounterReadOnly}
             localPatient={localPatient}
           />
         );
@@ -304,7 +316,7 @@ const PatientQuickAppointment = ({
             localPatient={localPatient}
             localEncounter={localEncounter}
             setLocalEncounter={setLocalEncounter}
-            isReadOnly={effectiveReadOnly}
+            isReadOnly={paymentReadOnly}
             showInternalButtons={false}
             payment={paymentDraft}
             setPayment={setPaymentDraft}
@@ -329,10 +341,18 @@ const PatientQuickAppointment = ({
           icon: <FontAwesomeIcon icon={faCalendarCheck} />,
           footer: (
             <>
-              <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear} disabled={effectiveReadOnly}>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                onClick={handleClear}
+                disabled={encounterReadOnly}
+              >
                 Clear
               </MyButton>
-              <MyButton disabled={effectiveReadOnly} onClick={handleSave} prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}>
+              <MyButton
+                disabled={encounterReadOnly}
+                onClick={handleSave}
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+              >
                 Save
               </MyButton>
             </>
@@ -343,11 +363,18 @@ const PatientQuickAppointment = ({
           icon: <FontAwesomeIcon icon={faFileInvoiceDollar} />,
           footer: (
             <>
-              <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handlePaymentClear} disabled={isReadOnly || isPaymentSaved}
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                onClick={handlePaymentClear}
+                disabled={paymentReadOnly}
               >
                 Clear
               </MyButton>
-              <MyButton appearance="primary" onClick={handlePaymentConfirm} disabled={isReadOnly || isPaymentSaved} prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+              <MyButton
+                appearance="primary"
+                onClick={handlePaymentConfirm}
+                disabled={paymentReadOnly}
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               >
                 Confirm
               </MyButton>
@@ -359,6 +386,7 @@ const PatientQuickAppointment = ({
       size="55vw"
       bodyheight="65vh"
       hideActionBtn={true}
+      initialStep={initialStep}
     />
   );
 };

@@ -515,10 +515,11 @@ const EncounterList = () => {
   };
 
   const handleGoToVisit = async (encounterData: any, patientData: any) => {
+    console.log('handleGoToVisit called with encounterData:', encounterData, 'and patientData:', patientData);
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
 
-    if (encounterData && encounterData.key) {
+    if (encounterData && encounterData.id) {
       dispatch(setEncounter(encounterData));
       dispatch(setPatient(encounterData['patientObject']));
     }
@@ -802,7 +803,7 @@ const EncounterList = () => {
                 </div>
               </Whisper>
             )}
-
+           
             <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
               <div>
                 <MyButton
