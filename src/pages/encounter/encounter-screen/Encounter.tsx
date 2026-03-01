@@ -63,12 +63,8 @@ const Encounter = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
-  const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
-  const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
-  const [selectedResources, setSelectedResources] = useState([]);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [edit, setEdit] = useState(false);
   const [fromPage, setFromPage] = useState(savedState);
@@ -89,7 +85,7 @@ const Encounter = () => {
   const [openAiPopup, setOpenAiPopup] = useState<boolean>(false);
 
   const [aiButtonPosition, setAiButtonPosition] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180, // جنب الزر الأول
+    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180, 
     y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
   });
 
@@ -161,15 +157,11 @@ const Encounter = () => {
   }, [isDragging, dragOffset, hasMoved]);
 
   // Use departmentKey from encounter, fallback to 5001 if not available
-  const departmentKeyToUse = localEncounter?.departmentKey || '5001';
+  const departmentKeyToUse = localEncounter?.departmentId || '5001';
 
   const { data: departmentSheets = [] } = useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
 
-  // Step 2: Fetch the resource if needed "IF Clinic"
-  const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(medicalSheetRowSourceKey!, {
-    skip: !medicalSheetRowSourceKey
-  });
-
+  
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
@@ -181,41 +173,13 @@ const Encounter = () => {
     }
   }, [location.state]);
 
-  // get Midical Sheets Data Steps
-  useEffect(() => {
-    if (!propsData?.encounter) {
-      navigate('/encounter-list');
-    } else {
-      setEdit(
-        fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === 'CLOSED'
-      );
-      //TODO convert key to code
-      if (
-        propsData?.encounter?.resourceTypeLkey === '2039516279378421' ||
-        propsData?.encounter?.resourceTypeLkey === '4217389643435490' ||
-        propsData?.encounter?.resourceTypeLkey === '6743167799449277'
-      ) {
-        // Clinic logic
-        setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
-        setMedicalSheetSourceKey(undefined);
-      } else {
-        // Not Clinic
-        setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
-        setMedicalSheetRowSourceKey(undefined);
-      }
-    }
-  }, [propsData]);
+ 
 
-  // Step 3: Set departmentKey from resource "IF Clinic"
-  useEffect(() => {
-    if (resourcesResponse?.object?.resourceKey) {
-      setMedicalSheetSourceKey(resourcesResponse.object.resourceKey);
-    }
-  }, [resourcesResponse]);
+
 
   useEffect(() => {
     if (
-      localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT' &&
+      localEncounter?.encounterType == 'INPATIENT' &&
       completeEncounterMutation.status === 'fulfilled'
     ) {
       navigate('/inpatient-encounters-list');
@@ -232,7 +196,7 @@ const Encounter = () => {
           fromPage: 'clinicalVisit'
         }
       });
-    } else if (localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT') {
+    } else if (localEncounter?.encounterType == 'INPATIENT') {
       navigate('/inpatient-encounters-list');
     } else if (propsData?.fromPage === 'DayCaseList') {
       navigate('/day-case-list');
@@ -249,7 +213,7 @@ const Encounter = () => {
     if (!patient) return null;
     return {
       patient,
-      patientKey: patient?.key
+      patientId: patient?.id
     };
   }, [propsData?.patient]);
 
