@@ -901,6 +901,12 @@ const Tests = forwardRef<any, Props>(
             filters={filters()}
             rowsPerPage={paginationParams.size}
             columns={columns}
+            onRowClick={(rowData) => {
+              setTest(rowData);
+            }}
+            rowClassName={(rowData) =>
+              rowData.id === test?.id ? 'selected-row' : ''
+            }
             onPageChange={(_, newPage) =>
               setPaginationParams(prev => ({
                 ...prev,

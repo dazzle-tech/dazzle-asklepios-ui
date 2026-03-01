@@ -8,7 +8,6 @@ import {
   useGetNotesByResultIdQuery,
 } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 import {
   useFilterDiagnosticOrderTestResultsQuery,
   useToggleReviewDiagnosticOrderTestResultMutation,
@@ -37,6 +36,8 @@ import React, {
 } from 'react';
 import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+
 
 const renderMarker = (Marker?: string) => {
   switch (Marker) {
@@ -118,12 +119,12 @@ const Result = forwardRef<any, any>(
     const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
     const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
     const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
-    const [fetchPatientById] = useLazyGetPatientByIdQuery();
     const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
-    //add new patient edits
-    const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
     const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
     const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
+    const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
 
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
 
@@ -219,6 +220,14 @@ const Result = forwardRef<any, any>(
       ...filterParams
     });
 
+    const patientIds = useMemo(() => {
+      return Object.values(ordersMap)
+        .map((o: any) => o?.patientId)
+        .filter(Boolean)
+        .map(String)
+        .filter((id, i, arr) => arr.indexOf(id) === i);
+    }, [ordersMap]);
+
     useImperativeHandle(ref, () => ({ refetch }));
 
     const results = resultsResponse?.data ?? [];
@@ -268,25 +277,30 @@ const Result = forwardRef<any, any>(
         }
       });
     }, [results]);
-//add new patient edits
-    useEffect(() => {
-      Object.values(ordersMap).forEach(order => {
-        const patientId = order?.patientId ? String(order.patientId) : null;
 
-        if (patientId && !patientsMap[patientId]) {
-          fetchPatientById(patientId)
-            .unwrap()
-            .then(patient => {
-              console.log('[PATIENT]', patientId);
-              setPatientsMap(prev => ({
-                ...prev,
-                [patientId]: patient
-              }));
-            })
-            .catch(() => { });
-        }
-      });
-    }, [ordersMap]);
+    useEffect(() => {
+      if (!patientIds.length) return;
+
+      const numericIds = patientIds.map(id => Number(id));
+
+      getBulkPatientBasicInfo(numericIds)
+        .unwrap()
+        .then((res: any[]) => {
+          const map: Record<string, any> = {};
+
+          res.forEach((p: any, index: number) => {
+            const originalId = numericIds[index];
+            map[String(originalId)] = p;
+          });
+
+          setPatientsMap(map);
+        })
+        .catch(err => {
+          console.error('❌ Bulk patient error:', err);
+        });
+
+    }, [patientIds]);
+
 
     useEffect(() => {
       Object.values(orderTestsMap).forEach((test: any) => {
@@ -318,24 +332,25 @@ const Result = forwardRef<any, any>(
       () => new Map(profilesResponse?.data?.map(p => [p.id, p]) ?? []),
       [profilesResponse]
     );
-//add new patient edits
     const normalizedResults = useMemo(() => {
       return results.map(r => {
-        const orderTest = orderTestsMap[r?.orderTestId]
-        const order = ordersMap[orderTest?.orderId];
-        const patient = patientsMap[order?.patientId];
+        const orderTest = orderTestsMap[String(r?.orderTestId)];
+        const order = ordersMap[String(orderTest?.orderId)];
+        const patient = patientsMap[String(order?.patientId)];
         const profile = profilesMap.get(r.profileTestId);
 
         return {
           ...r,
-          //add new patient edits
-          _patientName: patient?.fullName ?? ' ',
+          _patientName: patient
+            ? `${patient.firstName} ${patient.lastName}`
+            : '—',
           _profile: profile,
           _testName: profile?.name ?? '-',
           _approvedDate: r.approvedDate
         };
       });
-    }, [results, ordersMap, patientsMap, profilesMap]);
+    }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap]);
+
 
     const resolveUnitDisplay = (row: any) => {
       const profile = row._profile;
@@ -368,7 +383,6 @@ const Result = forwardRef<any, any>(
     const columns: ColumnConfig[] = useMemo(
       () => [
         {
-          //add new patient edits
           key: 'patient',
           title: <Translate>PATIENT NAME</Translate>,
           render: (r: any) => r._patientName

@@ -12,7 +12,7 @@ import {
 import {
     useLazyGetDiagnosticOrderTestByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
     useGetReportCommentsByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
@@ -57,7 +57,7 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
         fromDate: null,
         toDate: null
     });
-
+    const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
     const [orderIdIn, setOrderIdIn] = useState<number[] | null>(null);
     const [selectedReport, setSelectedReport] = useState<any>(null);
     const [openComments, setOpenComments] = useState(false);
@@ -70,7 +70,6 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
     const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
     const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
     //add new patient edits
-    const [fetchPatientById] = useLazyGetPatientByIdQuery();
     const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
 
@@ -168,10 +167,33 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
         setSelectedReport(null);
     };
 
+
+    useEffect(() => {
+        if (!patientIds.length) return;
+
+        const numericIds = patientIds.map(id => Number(id));
+
+        getBulkPatientBasicInfo(numericIds)
+            .unwrap()
+            .then((res: any[]) => {
+                const map: Record<string, any> = {};
+
+                res.forEach((p: any, index: number) => {
+                    const originalId = numericIds[index];
+                    map[String(originalId)] = p;
+                });
+
+                setPatientsMap(map);
+            })
+            .catch(err => {
+                console.error("❌ Bulk patient error:", err);
+            });
+
+    }, [patientIds]);
+
     const columns: ColumnConfig[] = useMemo(
         () => [
             {
-                //add new patient edits
                 key: 'patient',
                 title: <Translate>Patient</Translate>,
                 render: row => {
@@ -182,7 +204,11 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
                     if (!order) return '—';
 
                     const patient = patientsMap[String(order.patientId)];
-                    return patient?.fullName ?? '—';
+
+                    return patient
+                        ? (patient.fullName ||
+                        `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim())
+                        : '—';
                 }
             },
             {
@@ -368,20 +394,7 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
                 }).catch(() => { });
         });
     }, [testIds]);
-    //add new patient edits
-    useEffect(() => {
-        patientIds.forEach(id => {
-            if (patientsMap[id]) return;
 
-            fetchPatientById(id)
-                .unwrap()
-                .then(patient => {
-                    if (!patient) return;
-                    setPatientsMap(prev => ({ ...prev, [id]: patient }));
-                })
-                .catch(() => { });
-        });
-    }, [patientIds]);
 
     useEffect(() => {
         Object.values(orderTestsMap).forEach((ot: any) => {

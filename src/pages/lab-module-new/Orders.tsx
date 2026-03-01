@@ -9,6 +9,7 @@ import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { Tooltip, Whisper } from 'rsuite';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import './styles.less';
 
 type OrdersProps = {
@@ -27,6 +28,9 @@ const Orders = forwardRef<any, OrdersProps>(
   const selectedDepartment = authSlice.selectedDepartment;
   const [sortColumn, setSortColumn] = useState("id");
   const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
+const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
@@ -91,10 +95,8 @@ const Orders = forwardRef<any, OrdersProps>(
 
   const isSelected = rowData =>
     rowData && order && rowData.id === order.id ? 'selected-row' : '';
-//add new patient edits
-  const [fetchPatientById] = useLazyGetPatientByIdQuery();
-  const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
-//add new patient edits
+
+
   const patientIds = useMemo(
     () =>
       ordersList
@@ -105,28 +107,29 @@ const Orders = forwardRef<any, OrdersProps>(
     [ordersList]
   );
 
-  //add new patient edits
   useEffect(() => {
     if (!patientIds.length) return;
 
-    patientIds.forEach(id => {
-      if (patientsMap[id]) return;
+    const numericIds = patientIds.map(id => Number(id));
 
-      fetchPatientById(id)
-        .unwrap()
-        .then(patient => {
+    getBulkPatientBasicInfo(numericIds)
+      .unwrap()
+      .then((res: any[]) => {
 
-          if (!patient) return;
+        const map: Record<string, any> = {};
 
-          setPatientsMap(prev => ({
-            ...prev,
-            [id]: patient
-          }));
-        })
-        .catch(() => {
+        res.forEach((p: any, index: number) => {
+          const originalId = numericIds[index];
+          map[String(originalId)] = p;
         });
-    });
-  }, [patientIds, fetchPatientById, patientsMap]);
+
+        setPatientsMap(map);
+      })
+      .catch(err => {
+        console.error("❌ Bulk patient error:", err);
+      });
+
+  }, [patientIds]);
 
   const tableColumns = [
     {
@@ -134,7 +137,7 @@ const Orders = forwardRef<any, OrdersProps>(
       title: <Translate>ORDER ID</Translate>,
       flexGrow: 1,
       render: r => {
-        return r.orderNumber ?? '—';
+        return r.orderNumber ?? ' ';
       }
     },
     {
@@ -147,7 +150,7 @@ const Orders = forwardRef<any, OrdersProps>(
           r.submittedAt ??
           r.createdAt;
 
-        if (!rawDate) return '—';
+        if (!rawDate) return ' ';
 
         const d = new Date(rawDate);
         if (isNaN(d.getTime())) return rawDate;
@@ -172,7 +175,6 @@ const Orders = forwardRef<any, OrdersProps>(
         );
       }
     },
-    //add new patient edits
     {
       key: 'patient',
       title: <Translate>PATIENT</Translate>,
@@ -182,10 +184,14 @@ const Orders = forwardRef<any, OrdersProps>(
 
         return (
           <>
-            <span>{patient?.fullName ?? '—'}</span>
+            <span>
+              {patient
+                ? `${patient.firstName} ${patient.lastName}`
+                : '—'}
+            </span>
             <br />
             <span className="date-table-style">
-              {patient?.patientMrn ?? '—'}
+              {patient?.medicalRecordNumber ?? '—'}
             </span>
           </>
         );
@@ -252,6 +258,11 @@ const Orders = forwardRef<any, OrdersProps>(
       }));
 
     };
+
+useEffect(() => {
+  console.log("ordersList:", ordersList);
+}, [ordersList]);
+
 
   return (
     <MyTable

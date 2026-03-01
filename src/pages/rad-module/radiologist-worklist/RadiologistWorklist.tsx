@@ -11,7 +11,6 @@ import {
 import {
   useLazyGetDiagnosticOrderTestByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 import { useGetDepartmentByFacilityQuery, useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import {
   useCreateReportCommentMutation,
@@ -46,6 +45,7 @@ import { Form, Tooltip, Whisper } from 'rsuite';
 import AddReportModal from './AddReportModal';
 import RadiologyImageLogModal from './RadiologyImageLogModal';
 import './style.less';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 
 type Props = {
   refetchAllRadData: () => Promise<void>;
@@ -127,15 +127,12 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
   const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
-  //add new patient edits
   const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
+  const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   const [fetchOrderTestById] =
     useLazyGetDiagnosticOrderTestByIdQuery();
   const [fetchOrderById] =
     useLazyGetDiagnosticOrderByIdQuery();
-  //add new patient edits
-  const [fetchPatientById] =
-    useLazyGetPatientByIdQuery();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState('id');
@@ -297,7 +294,6 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         .filter((id, i, arr) => arr.indexOf(id) === i),
     [orderTestsMap]
   );
-  //add new patient edits
   const patientIds = useMemo(
     () =>
       Object.values(ordersMap)
@@ -335,20 +331,29 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         .catch(() => { });
     });
   }, [orderIds, fetchOrderById, ordersMap]);
-  //add new patient edits
-  useEffect(() => {
-    patientIds.forEach(id => {
-      if (patientsMap[id]) return;
 
-      fetchPatientById(id)
-        .unwrap()
-        .then(patient => {
-          if (!patient) return;
-          setPatientsMap(prev => ({ ...prev, [id]: patient }));
-        })
-        .catch(() => { });
-    });
-  }, [patientIds, fetchPatientById, patientsMap]);
+  useEffect(() => {
+    if (!patientIds.length) return;
+
+    const numericIds = patientIds.map(id => Number(id));
+
+    getBulkPatientBasicInfo(numericIds)
+      .unwrap()
+      .then((res: any[]) => {
+        const map: Record<string, any> = {};
+
+        res.forEach((p: any, index: number) => {
+          const originalId = numericIds[index];
+          map[String(originalId)] = p;
+        });
+
+        setPatientsMap(map);
+      })
+      .catch(err => {
+        console.error("❌ Bulk patient error:", err);
+      });
+
+  }, [patientIds]);
 
   const FilterModel = (
     <Form fluid className="table-header-content">
@@ -504,7 +509,6 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
 
     },
     {
-      //add new patient edits
       key: 'patientName',
       title: 'Patient Name',
       width: 180,
@@ -512,11 +516,13 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         const ot = orderTestsMap[String(row.orderTestId)];
         const order = ordersMap[String(ot?.orderId)];
         const patient = patientsMap[String(order?.patientId)];
-        return patient?.fullName ?? ' ';
-      }
+          return patient
+            ? (patient.fullName ||
+              `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim())
+            : ' ';
+                }
     },
     {
-      //add new patient edits
       key: 'mrn',
       title: 'MRN',
       width: 120,
@@ -524,7 +530,11 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         const ot = orderTestsMap[String(row.orderTestId)];
         const order = ordersMap[String(ot?.orderId)];
         const patient = patientsMap[String(order?.patientId)];
-        return patient?.patientMrn ?? ' ';
+
+        return (
+          patient?.medicalRecordNumber ??
+          ' '
+        );
       }
     },
     {
@@ -766,7 +776,6 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         );
       }
     }
-    //add new patient edits
   ], [orderTestsMap, ordersMap, patientsMap, localHasCommentIds]);
 
   useEffect(() => {

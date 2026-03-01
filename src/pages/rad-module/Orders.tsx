@@ -2,7 +2,6 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppSelector } from '@/hooks';
 import { useFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 import { formatEnumString } from '@/utils';
 import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,6 +9,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { Tooltip, Whisper } from 'rsuite';
 import './styles.less';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 
 type OrdersProps = {
   order: any;
@@ -93,10 +93,13 @@ const Orders = forwardRef<any, OrdersProps>(
 
     const isSelected = rowData =>
       rowData && order && rowData.id === order.id ? 'selected-row' : '';
-    //add new patient edits
-    const [fetchPatientById] = useLazyGetPatientByIdQuery();
+
+    const [fetchBulkPatients] = useGetBulkPatientBasicInfoMutation();
+
+
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
-    //add new patient edits
+    console.log('Orders component rendered. Current patientsMap:', patientsMap);
+
     const patientIds = useMemo(
       () =>
         ordersList
@@ -106,28 +109,29 @@ const Orders = forwardRef<any, OrdersProps>(
           .filter((id, i, arr) => arr.indexOf(id) === i),
       [ordersList]
     );
-    //add new patient edits
+
     useEffect(() => {
       if (!patientIds.length) return;
 
-      patientIds.forEach(id => {
-        if (patientsMap[id]) return;
+      const numericIds = patientIds.map(id => Number(id));
 
-        fetchPatientById(id)
-          .unwrap()
-          .then(patient => {
+      fetchBulkPatients(numericIds)
+        .unwrap()
+        .then((res: any[]) => {
+          const map: Record<string, any> = {};
 
-            if (!patient) return;
-
-            setPatientsMap(prev => ({
-              ...prev,
-              [id]: patient
-            }));
-          })
-          .catch(() => {
+          res.forEach((p: any, index: number) => {
+            const originalId = numericIds[index];
+            map[String(originalId)] = p;
           });
-      });
-    }, [patientIds, fetchPatientById, patientsMap]);
+
+          setPatientsMap(map);
+        })
+        .catch(err => {
+          console.error("❌ Bulk patient error:", err);
+        });
+
+    }, [patientIds]);
 
     const tableColumns = [
       {
@@ -173,9 +177,7 @@ const Orders = forwardRef<any, OrdersProps>(
           );
         }
       },
-
       {
-        //add new patient edits
         key: 'patient',
         title: <Translate>PATIENT</Translate>,
         flexGrow: 3,
@@ -184,11 +186,14 @@ const Orders = forwardRef<any, OrdersProps>(
 
           return (
             <>
-
-              <span>{patient?.fullName ?? ' '}</span>
+              <span>
+                {patient
+                  ? `${patient.firstName} ${patient.lastName}`
+                  : ' '}
+              </span>
               <br />
               <span className="date-table-style">
-                {patient?.patientMrn ?? ' '}
+                {patient?.medicalRecordNumber ?? ' '}
               </span>
             </>
           );

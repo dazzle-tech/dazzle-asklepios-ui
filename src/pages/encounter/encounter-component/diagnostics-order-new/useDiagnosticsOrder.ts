@@ -70,8 +70,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
 
-  const patientId = patient?.id || patient?.key;
-  const encounterId = encounter?.id || encounter?.key;
+  const patientId = patient?.id ;
+  const encounterId = encounter?.id ;
 
   const tableContainerRef = React.useRef<HTMLDivElement | null>(null);
 
