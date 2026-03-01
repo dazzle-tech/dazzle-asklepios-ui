@@ -293,6 +293,7 @@ export const store = configureStore({
     [MedicationCategoriesService.reducerPath]: MedicationCategoriesService.reducer,
     [MedicationCategoriesClassService.reducerPath]: MedicationCategoriesClassService.reducer,
 
+    // misc setup (age, ICD, resource, allergens)
     // uom
     [uomGroupService.reducerPath]: uomGroupService.reducer,
 
@@ -346,6 +347,7 @@ export const store = configureStore({
     [BrandMedicationActiveIngredientService.reducerPath]:
       BrandMedicationActiveIngredientService.reducer,
 
+    
     // country / geo
     [countryService.reducerPath]: countryService.reducer,
     [countryDistrictService.reducerPath]: countryDistrictService.reducer,
@@ -597,7 +599,6 @@ export const store = configureStore({
       patientInsurancesService.middleware,
       patientInsuranceCoveragesService.middleware,
       encounterVaccinationService.middleware,
-
       patientEncounterService.middleware,
       patientPaymentsService.middleware,
       priceListAttributesService.middleware,
@@ -625,5 +626,4 @@ export const store = configureStore({
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
-// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
 export type AppDispatch = typeof store.dispatch;

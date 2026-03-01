@@ -3,15 +3,27 @@ import MyButton from '@/components/MyButton/MyButton';
 import React, { useEffect, useRef, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarCheck, faBroom, faFileInvoiceDollar, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCalendarCheck,
+  faBroom,
+  faFileInvoiceDollar,
+  faCheckDouble
+} from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
 import '../styles.less';
 import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from './PatientPaymentInfo';
 import type { PatientEncounter } from '@/types/model-types-new';
-import { newPatientEncounter, newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
-import { useCreateEncounterMutation, useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import {
+  newPatientEncounter,
+  newPatientInsurance,
+  newPatientPayments
+} from '@/types/model-types-constructor-new';
+import {
+  useCreateEncounterMutation,
+  useUpdateEncounterMutation
+} from '@/services/encounters/patientEncounterService';
 import * as modelTypes from '@/types/model-types-new';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
@@ -23,7 +35,8 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'encounterNumber.duplicate': 'Encounter number already exists.',
   'id.notfound': 'Encounter record not found.',
   notfound: 'Encounter record not found.',
-  'followUpEncounter.required.followup': 'Follow-up Encounter is required when Reason is Follow up.',
+  'followUpEncounter.required.followup':
+    'Follow-up Encounter is required when Reason is Follow up.',
   'followUpEncounter.required.byReason':
     'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
   'patient.department.date.duplicate':
@@ -72,7 +85,9 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   const toLabel = (field: string) => ENCOUNTER_FIELD_LABELS[field] ?? field;
 
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    const lines = data.fieldErrors.map((fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`);
+    const lines = data.fieldErrors.map(
+      (fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`
+    );
 
     dispatch(
       notify({
@@ -85,9 +100,15 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 
   const messageProp: string = data?.message || '';
   const errorKey =
-    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) || data?.errorKey;
+    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
+    data?.errorKey;
 
-  const humanMsg = (errorKey && keyMap[errorKey]) || data?.detail || data?.title || data?.message || 'Unexpected error';
+  const humanMsg =
+    (errorKey && keyMap[errorKey]) ||
+    data?.detail ||
+    data?.title ||
+    data?.message ||
+    'Unexpected error';
 
   dispatch(
     notify({
@@ -118,7 +139,6 @@ const PatientQuickAppointment = ({
   const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
   const [isEncounterSaved, setIsEncounterSaved] = useState(false);
 
-  // payment control via ref
   const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
   const [isPaymentSaved, setIsPaymentSaved] = useState(false);
 
@@ -127,7 +147,8 @@ const PatientQuickAppointment = ({
   const isLockedAfterPayment = Boolean(isPaymentSaved);
 
   const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode);
-  const paymentReadOnly = Boolean(isReadOnly || isViewMode || isLockedAfterPayment);
+
+  const paymentReadOnly = Boolean(isViewMode || isLockedAfterPayment);
 
   const [createEncounter] = useCreateEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
@@ -157,25 +178,18 @@ const PatientQuickAppointment = ({
   useEffect(() => {
     const v: any = (localEncounter as any)?.encounterDate;
     if (!v) return;
-
     if (typeof v === 'string') {
       const d = new Date(v);
-      if (!Number.isNaN(d.getTime())) {
-        setLocalEncounter(prev => ({ ...prev, encounterDate: d }));
-      }
+      if (!Number.isNaN(d.getTime())) setLocalEncounter(prev => ({ ...prev, encounterDate: d }));
     }
-
     if (typeof v === 'number') {
       const d = new Date(v);
-      if (!Number.isNaN(d.getTime())) {
-        setLocalEncounter(prev => ({ ...prev, encounterDate: d }));
-      }
+      if (!Number.isNaN(d.getTime())) setLocalEncounter(prev => ({ ...prev, encounterDate: d }));
     }
   }, [localEncounter?.encounterDate]);
 
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
-
     if (!localEncounter?.facilityId) missingFields.push('Facility');
     if (!localEncounter?.departmentId) missingFields.push('Department');
     if (!localEncounter?.encounterType) missingFields.push('Encounter Type');
@@ -186,10 +200,7 @@ const PatientQuickAppointment = ({
     if (missingFields.length > 0) {
       const lines = missingFields.map(field => `• ${field}: is required`);
       dispatch(
-        notify({
-          msg: `Please fix the following fields:\n${lines.join('\n')}`,
-          sev: 'error'
-        })
+        notify({ msg: `Please fix the following fields:\n${lines.join('\n')}`, sev: 'warning' })
       );
       return false;
     }
@@ -215,18 +226,14 @@ const PatientQuickAppointment = ({
       const v = normalizedSaved?.encounterDate;
       if (typeof v === 'string' || typeof v === 'number') {
         const d = new Date(v);
-        if (!Number.isNaN(d.getTime())) {
-          normalizedSaved.encounterDate = d;
-        }
+        if (!Number.isNaN(d.getTime())) normalizedSaved.encounterDate = d;
       }
 
       setLocalEncounter(prev => ({ ...prev, ...normalizedSaved }));
       setIsEncounterSaved(true);
       dispatch(notify({ msg: 'Encounter Saved Successfully', sev: 'success' }));
 
-      if (onEncounterSaved) {
-        await onEncounterSaved();
-      }
+      if (onEncounterSaved) await onEncounterSaved();
     } catch (err: any) {
       setValidationResult(err?.data ?? err);
       handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
@@ -241,11 +248,8 @@ const PatientQuickAppointment = ({
     });
     setValidationResult({});
     setIsEncounterSaved(false);
-
-    // reset payment states + drafts
     setIsPaymentSaved(false);
     paymentRef.current?.clear?.();
-
     setPaymentDraft({
       ...newPatientPayments,
       patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
@@ -259,7 +263,6 @@ const PatientQuickAppointment = ({
   useEffect(() => {
     if (localVisit?.id != undefined) {
       setLocalEncounter({ ...localVisit });
-      setIsReadOnly(true);
       setIsEncounterSaved(true);
     }
   }, [localVisit]);
@@ -267,11 +270,7 @@ const PatientQuickAppointment = ({
   useEffect(() => {
     const pid = Number(localPatient?.id ?? localPatient?.key ?? 0);
     if (!pid) return;
-
-    setLocalEncounter(prev => ({
-      ...prev,
-      patientId: prev.patientId || pid
-    }));
+    setLocalEncounter(prev => ({ ...prev, patientId: prev.patientId || pid }));
   }, [localPatient]);
 
   const handlePaymentConfirm = async () => {
@@ -281,12 +280,9 @@ const PatientQuickAppointment = ({
 
       setIsPaymentSaved(true);
 
-      if (onEncounterSaved) {
-        await onEncounterSaved();
-      }
+      if (onEncounterSaved) await onEncounterSaved();
 
       setQuickAppointmentModel(false);
-
       dispatch(notify({ msg: 'Payment Confirmed Successfully', sev: 'success' }));
     } catch (err: any) {
       dispatch(notify({ msg: 'Error confirming payment', sev: 'error' }));

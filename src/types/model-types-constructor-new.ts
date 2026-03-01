@@ -1345,7 +1345,6 @@ export const newEncounterVaccination: modelTypes.EncounterVaccination = {
   cancelledAt: null,
   cancelledById: null,
   isExternalFacility: false,
-
   administeredLocation: null,
   administrationReactions: null,
   externalFacilityName: null,
@@ -1378,13 +1377,22 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
   notes: null,
 
   status: 'NEW',
-  encounterDate: null,
+   encounterDate: null,
   chiefComplaint: null,
 
   hasPrescription: false,
   hasOrder: false,
   isObserved: false
 };
+
+ 
+export const newPatientBasicInformationResponseVM: modelTypes.PatientBasicInformationResponseVM = {
+  id: 0,
+  fullName: '',
+  medicalRecordNumber: null,
+  primaryMobileNumber: null
+};
+
 
 export const newPatientPayments: modelTypes.PatientPayments = {
   id: undefined,

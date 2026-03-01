@@ -558,7 +558,7 @@ const EncounterList = () => {
           patient: patientData,
           encounter: encounterData,
           edit:
-            String(encounterData?.encounterStatus ?? encounterData?.status ?? '').toUpperCase() ===
+            String(encounterData?.status ?? encounterData?.status ?? '').toUpperCase() ===
             'CLOSED'
         }
       });

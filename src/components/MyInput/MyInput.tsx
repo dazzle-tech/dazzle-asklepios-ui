@@ -151,7 +151,6 @@ const MyInput = ({
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
-      const target = event.target as HTMLElement;
 
       const menuClassList = [
         'rs-picker-popup',
@@ -159,16 +158,20 @@ const MyInput = ({
         'rs-picker-menu',
         'rs-virtual-list',
         'rs-virtual-list-scrollbar',
-        'rs-picker-tag-menu'
+        'rs-picker-tag-menu',
+        'rs-picker-date-menu',
+        'rs-calendar-panel',
+        'rs-calendar'
       ];
 
       if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
         return;
       }
 
-      if (target.closest('.rs-picker-popup')) return;
-
-      if (target.closest('.rs-modal-body')) return;
+      const openPopup = document.querySelector('.rs-picker-popup');
+      if (openPopup && openPopup.contains(event.target as Node)) {
+        return;
+      }
 
       setIsSelectOpen(false);
       setIsDateOpen(false);
@@ -422,8 +425,8 @@ const MyInput = ({
               (isArrayLabel
                 ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
                 : props.isEnum
-                  ? (label: any) => formatEnumString(String(label))
-                  : undefined)
+                ? (label: any) => formatEnumString(String(label))
+                : undefined)
             }
             searchBy={props.searchBy}
             container={resolveContainer()}
@@ -454,11 +457,11 @@ const MyInput = ({
                     return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
                   }
                 : props.isEnum
-                  ? (value, item, selectedElement) => {
-                      const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
-                      return <span>{formatEnumString(String(base))}</span>;
-                    }
-                  : undefined
+                ? (value, item, selectedElement) => {
+                    const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
+                    return <span>{formatEnumString(String(base))}</span>;
+                  }
+                : undefined
             }
           />
         );

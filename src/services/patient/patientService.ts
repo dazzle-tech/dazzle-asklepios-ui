@@ -39,7 +39,7 @@ type PatientBasicInformationResponseVM = {
   lastName: string;
   medicalRecordNumber: string;
   dateOfBirth: string;
-  sexAtBirth: string; 
+  sexAtBirth: string;
 };
 
 export const newPatientService = createApi({
@@ -137,6 +137,7 @@ export const newPatientService = createApi({
           : ['Patient']
     }),
 
+    // ============ SEARCH BY DOCUMENT NUMBER (NEW) ============
     getPatientsByDocumentNumber: builder.query<
       PagedResult<modelTypes.Patient>,
       { number: string } & PagedParams
@@ -192,6 +193,22 @@ export const newPatientService = createApi({
       }),
       invalidatesTags: ['Patient']
     }),
+
+    getDuplicationCandidates: builder.mutation<
+      modelTypes.PatientBasicInformationResponseVM[],
+      {
+        dto: modelTypes.PatientDuplicationLookupDTO;
+      } & PagedParams
+    >({
+      query: ({ dto, page, size, sort = 'id,asc' }) => ({
+        url: `/api/patient/duplication-candidates`,
+        method: 'POST',
+        body: dto,
+        params: { page, size, sort }
+      })
+    }),
+
+
 
     getUnknownPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
@@ -249,7 +266,7 @@ export const {
   // Unknown Patients
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
+  useGetDuplicationCandidatesMutation,
   useLazyGetUnknownPatientsQuery,
-
   useGetBulkPatientBasicInfoMutation
 } = newPatientService;

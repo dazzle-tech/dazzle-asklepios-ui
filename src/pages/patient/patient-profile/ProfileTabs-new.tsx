@@ -5,6 +5,7 @@ import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupSer
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
+import dayjs from 'dayjs';
 import React, { useEffect, useRef, useState } from 'react';
 import { Panel } from 'rsuite';
 import ConsentFormTab from './ConsentFormTab';
@@ -17,7 +18,6 @@ import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
 import InsuranceTab from './tabs/InsuranceTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
-import dayjs from 'dayjs';
 
 interface ProfileTabsProps {
   localPatient: Patient;

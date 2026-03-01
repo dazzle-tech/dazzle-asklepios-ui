@@ -221,6 +221,7 @@ export const departmentService = createApi({
       }),
       providesTags: ['Department']
     }),
+
     getAppointableActiveDepartmentsByEncounterTypeAndFacility: builder.query<
       PagedResult<any>,
       { facilityId: number | string; encounterType: string } & PagedParams
