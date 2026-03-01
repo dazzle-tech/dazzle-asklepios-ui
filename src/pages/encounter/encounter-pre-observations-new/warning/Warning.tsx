@@ -80,12 +80,12 @@ const Warning = (props: WarningProps) => {
     isLoading
   } = useGetPatientWarningsByPatientIdQuery(
     {
-      patientId: patient?.key,
+      patientId: patient?.id,
       showCancelled: showCanceled,
       ...paginationParams
     },
     {
-      skip: !patient?.key
+      skip: !patient?.id
     }
   );
   const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');

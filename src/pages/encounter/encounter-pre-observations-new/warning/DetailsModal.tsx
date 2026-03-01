@@ -88,8 +88,8 @@ const DetailsModal = ({
       if (isCreate) {
         await addPatientWarning({
           ...patientWarningsCreateDTO,
-          patientId: patient?.key,
-          encounterId: encounter?.key
+          patientId: patient?.id,
+          encounterId: encounter?.id
         }).unwrap();
         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       } else {
