@@ -38,7 +38,6 @@ export const patientEncounterService = createApi({
   reducerPath: 'patientEncountersApi',
   baseQuery: BaseQuery,
   tagTypes: ['PatientEncounter'],
-
   endpoints: builder => ({
     createEncounter: builder.mutation<PatientEncounter, { body: PatientEncounter }>({
       query: ({ body }) => ({
@@ -48,17 +47,16 @@ export const patientEncounterService = createApi({
       }),
       invalidatesTags: ['PatientEncounter']
     }),
+
     updateEncounter: builder.mutation<PatientEncounter, { id: Id; body: PatientEncounter }>({
       query: ({ id, body }) => ({
         url: `/api/patient/encounter/${id}`,
         method: 'PUT',
         body
       }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PatientEncounter', id },
-        'PatientEncounter'
-      ]
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
+
     countTodayEncountersByFacility: builder.query<number, { facilityId: Id }>({
       query: ({ facilityId }) => ({
         url: `/api/patient/encounter/facility/${facilityId}/count/today`,
@@ -76,9 +74,7 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
-
         encounterReasonIn?: string[];
-
         chiefComplaint?: string;
         priorityIn?: string[];
         withPrescription?: boolean;
@@ -93,9 +89,7 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
-
         encounterReasonIn,
-
         chiefComplaint,
         priorityIn,
         withPrescription,
@@ -114,9 +108,7 @@ export const patientEncounterService = createApi({
           statusIn,
           patientName,
           mrn,
-
           encounterReasonIn,
-
           chiefComplaint,
           priorityIn,
           withPrescription,
@@ -133,15 +125,10 @@ export const patientEncounterService = createApi({
       },
       providesTags: res =>
         res
-          ? [
-              ...res.data.map(e => ({
-                type: 'PatientEncounter' as const,
-                id: e.id
-              })),
-              'PatientEncounter'
-            ]
+          ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
     }),
+
     getPreviousEncountersSameDepartment: builder.query<
       PagedResult<PatientEncounter>,
       { patientId: Id; departmentId: Id } & PagedParams
@@ -157,15 +144,10 @@ export const patientEncounterService = createApi({
       },
       providesTags: res =>
         res
-          ? [
-              ...res.data.map(e => ({
-                type: 'PatientEncounter' as const,
-                id: e.id
-              })),
-              'PatientEncounter'
-            ]
+          ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
     }),
+
     countTodayDepartmentTotalPatients: builder.query<number, { departmentId: Id }>({
       query: ({ departmentId }) => ({
         url: `/api/patient/encounter/department/${departmentId}/count/today/total-patients`,
@@ -189,27 +171,21 @@ export const patientEncounterService = createApi({
       }),
       providesTags: ['PatientEncounter']
     }),
+
     startEncounter: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/start`,
         method: 'POST'
       }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PatientEncounter', id },
-        'PatientEncounter'
-      ]
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
-    // ✅ NEW: CANCEL encounter (set status CANCELED)
     cancelEncounter: builder.mutation<PatientEncounter, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/patient/encounter/${id}/cancel`,
         method: 'POST'
       }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PatientEncounter', id },
-        'PatientEncounter'
-      ]
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
     dischargeEncounter: builder.mutation<PatientEncounter, { id: Id }>({
@@ -217,10 +193,7 @@ export const patientEncounterService = createApi({
         url: `/api/patient/encounter/${id}/discharge`,
         method: 'POST'
       }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PatientEncounter', id },
-        'PatientEncounter'
-      ]
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
     completeEncounter: builder.mutation<PatientEncounter, { id: Id }>({
@@ -228,10 +201,7 @@ export const patientEncounterService = createApi({
         url: `/api/patient/encounter/${id}/complete`,
         method: 'POST'
       }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PatientEncounter', id },
-        'PatientEncounter'
-      ]
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
     countTodayDepartmentCancelled: builder.query<number, { departmentId: Id }>({
@@ -242,10 +212,7 @@ export const patientEncounterService = createApi({
       providesTags: ['PatientEncounter']
     }),
 
-    getEncountersByPatient: builder.query<
-      PagedResult<PatientEncounter>,
-      { patientId: Id } & PagedParams
-    >({
+    getEncountersByPatient: builder.query<PagedResult<PatientEncounter>, { patientId: Id } & PagedParams>({
       query: ({ patientId, page, size, sort = 'createdDate,desc' }) => ({
         url: `/api/patient/encounter/patient/${patientId}`,
         method: 'GET',
@@ -257,13 +224,7 @@ export const patientEncounterService = createApi({
       },
       providesTags: res =>
         res
-          ? [
-              ...res.data.map(e => ({
-                type: 'PatientEncounter' as const,
-                id: e.id
-              })),
-              'PatientEncounter'
-            ]
+          ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
     })
   })
@@ -277,6 +238,7 @@ export const {
   useCancelEncounterMutation,
   useDischargeEncounterMutation,
   useCompleteEncounterMutation,
+
   useCountTodayEncountersByFacilityQuery,
   useLazyCountTodayEncountersByFacilityQuery,
 
@@ -290,6 +252,7 @@ export const {
   useCountTodayDepartmentActiveCasesQuery,
   useCountTodayDepartmentCompletedQuery,
   useCountTodayDepartmentCancelledQuery,
+
   useGetEncountersByPatientQuery,
   useLazyGetEncountersByPatientQuery
 } = patientEncounterService;

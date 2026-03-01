@@ -69,10 +69,7 @@ export const patientPaymentsService = createApi({
     /**
      * CREATE Patient Payment
      */
-    createPayment: builder.mutation<
-      modelTypes.PatientPaymentDetails,
-      { body: modelTypes.PatientPaymentDTO }
-    >({
+    createPayment: builder.mutation<modelTypes.PatientPaymentDetails, { body: modelTypes.PatientPaymentDTO }>({
       query: ({ body }) => ({
         url: '/api/patient/payment',
         method: 'POST',
@@ -107,7 +104,9 @@ export const patientPaymentsService = createApi({
         'PatientPayment',
         'PatientPaymentServices',
         { type: 'PatientBalance', id: body.patientId },
-        { type: 'PatientLedgerSummary', id: body.patientId }
+        { type: 'PatientLedgerSummary', id: body.patientId },
+        { type: 'PatientEncounter', id: body.encounterId },
+        'PatientEncounter'
       ]
     }),
 
@@ -152,10 +151,7 @@ export const patientPaymentsService = createApi({
      * LIST payment services for a payment
      * GET /api/patient/payment/{paymentId}/services
      */
-    getPaymentServicesByPaymentId: builder.query<
-      modelTypes.PatientPaymentServices[],
-      { paymentId: Id }
-    >({
+    getPaymentServicesByPaymentId: builder.query<modelTypes.PatientPaymentServices[], { paymentId: Id }>({
       query: ({ paymentId }) => ({
         url: `/api/patient/payment/${paymentId}/services`,
         method: 'GET'
@@ -174,10 +170,7 @@ export const patientPaymentsService = createApi({
      * LIST payments by patient
      * GET /api/patient/payment/patient/{patientId}
      */
-    getPaymentsByPatient: builder.query<
-      PagedResult<modelTypes.PatientPayments>,
-      { patientId: Id } & PagedParams
-    >({
+    getPaymentsByPatient: builder.query<PagedResult<modelTypes.PatientPayments>, { patientId: Id } & PagedParams>({
       query: ({ patientId, page, size, sort = 'id,desc' }) => ({
         url: `/api/patient/payment/patient/${patientId}`,
         method: 'GET',
@@ -189,10 +182,7 @@ export const patientPaymentsService = createApi({
       },
       providesTags: res =>
         res
-          ? [
-              ...res.data.map(p => ({ type: 'PatientPayment' as const, id: p.id })),
-              'PatientPayment'
-            ]
+          ? [...res.data.map(p => ({ type: 'PatientPayment' as const, id: p.id })), 'PatientPayment']
           : ['PatientPayment']
     })
   })

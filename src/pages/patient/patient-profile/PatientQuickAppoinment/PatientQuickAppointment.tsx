@@ -3,25 +3,16 @@ import MyButton from '@/components/MyButton/MyButton';
 import React, { useEffect, useRef, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faCalendarCheck,
-  faBroom,
-  faFileInvoiceDollar,
-  faCheckDouble
-} from '@fortawesome/free-solid-svg-icons';
+import { faCalendarCheck, faBroom, faFileInvoiceDollar, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
 import '../styles.less';
 import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from './PatientPaymentInfo';
 import type { PatientEncounter } from '@/types/model-types-new';
-import { newPatientEncounter } from '@/types/model-types-constructor-new';
-import {
-  useCreateEncounterMutation,
-  useUpdateEncounterMutation
-} from '@/services/encounters/patientEncounterService';
+import { newPatientEncounter, newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
+import { useCreateEncounterMutation, useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import * as modelTypes from '@/types/model-types-new';
-import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Encounter data is required.',
@@ -32,17 +23,13 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'encounterNumber.duplicate': 'Encounter number already exists.',
   'id.notfound': 'Encounter record not found.',
   notfound: 'Encounter record not found.',
-
-  'followUpEncounter.required.followup':
-    'Follow-up Encounter is required when Reason is Follow up.',
+  'followUpEncounter.required.followup': 'Follow-up Encounter is required when Reason is Follow up.',
   'followUpEncounter.required.byReason':
     'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
-
   'patient.department.date.duplicate':
     'This patient already has an encounter in this department on the selected date.',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
-
   duplicate: 'Duplicate record.',
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
@@ -85,9 +72,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   const toLabel = (field: string) => ENCOUNTER_FIELD_LABELS[field] ?? field;
 
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    const lines = data.fieldErrors.map(
-      (fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`
-    );
+    const lines = data.fieldErrors.map((fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`);
 
     dispatch(
       notify({
@@ -100,15 +85,9 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 
   const messageProp: string = data?.message || '';
   const errorKey =
-    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
-    data?.errorKey;
+    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) || data?.errorKey;
 
-  const humanMsg =
-    (errorKey && keyMap[errorKey]) ||
-    data?.detail ||
-    data?.title ||
-    data?.message ||
-    'Unexpected error';
+  const humanMsg = (errorKey && keyMap[errorKey]) || data?.detail || data?.title || data?.message || 'Unexpected error';
 
   dispatch(
     notify({
@@ -139,19 +118,21 @@ const PatientQuickAppointment = ({
   const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
   const [isEncounterSaved, setIsEncounterSaved] = useState(false);
 
-  // ✅ payment control via ref
+  // payment control via ref
   const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
   const [isPaymentSaved, setIsPaymentSaved] = useState(false);
 
+  // ✅ merges both branches:
+  // - view mode: fully read-only
+  // - payment mode (initialStep=1): encounter step read-only
+  // - after payment saved: payment read-only (locked)
+  const isViewMode = Boolean(isDisabeld);
+  const isPaymentMode = initialStep === 1;
   const isLockedAfterPayment = Boolean(isPaymentSaved);
 
-  const isViewMode = Boolean(isDisabeld);
+  const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode);
+  const paymentReadOnly = Boolean(isReadOnly || isViewMode || isLockedAfterPayment);
 
-  const isPaymentMode = initialStep === 1;
-
-  const encounterReadOnly = isViewMode || isPaymentMode;
-
-  const paymentReadOnly = isViewMode || isLockedAfterPayment;
   const [createEncounter] = useCreateEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
 
@@ -265,8 +246,10 @@ const PatientQuickAppointment = ({
     setValidationResult({});
     setIsEncounterSaved(false);
 
+    // reset payment states + drafts
     setIsPaymentSaved(false);
     paymentRef.current?.clear?.();
+
     setPaymentDraft({
       ...newPatientPayments,
       patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),

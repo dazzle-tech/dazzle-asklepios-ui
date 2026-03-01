@@ -1,3 +1,8 @@
+// PatientPaymentInfo.tsx
+// Added: dept field (read-only) + ledger summary RTK call and display
+// NOTE: You need to have added the RTK endpoint/hook: useGetPatientLedgerSummaryQuery
+// and the type: modelTypes.PatientLedgerSummaryDTO
+
 import React, {
   forwardRef,
   useEffect,
@@ -43,6 +48,9 @@ import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceSer
 
 import './style.less';
 
+// -----------------------------------------------------------------------------
+// Currency conversion (free API)
+// -----------------------------------------------------------------------------
 async function convertCurrencyFree(amount: number, from: string, to: string): Promise<number> {
   if (!amount || amount <= 0) return 0;
   if (!from || !to) return 0;
@@ -69,6 +77,9 @@ async function convertCurrencyFree(amount: number, from: string, to: string): Pr
   return Number.isFinite(numericRate) ? amount * numericRate : 0;
 }
 
+// -----------------------------------------------------------------------------
+// Types
+// -----------------------------------------------------------------------------
 type UiPaymentServiceRow = modelTypes.PatientPaymentServices & {
   serviceType?: string;
   serviceName?: string;
@@ -82,6 +93,9 @@ export type PatientPaymentInfoHandle = {
   validate: () => boolean;
 };
 
+// -----------------------------------------------------------------------------
+// Errors
+// -----------------------------------------------------------------------------
 const PAYMENT_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Payment data is required.',
   'patient.invalid': 'Invalid patient id.',
@@ -170,6 +184,9 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'error' }));
 };
 
+// -----------------------------------------------------------------------------
+// Date helpers
+// -----------------------------------------------------------------------------
 const toDateOnlyOrNull = (value: any) => {
   if (!value) return null;
   const dateObj = value instanceof Date ? value : new Date(value);
@@ -177,6 +194,9 @@ const toDateOnlyOrNull = (value: any) => {
   return dateObj.toISOString().slice(0, 10);
 };
 
+// -----------------------------------------------------------------------------
+// Component
+// -----------------------------------------------------------------------------
 const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
   (
     {
