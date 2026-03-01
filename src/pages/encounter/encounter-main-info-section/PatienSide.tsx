@@ -86,12 +86,12 @@ const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEnco
     isLoading
   } = useGetPatientWarningsByPatientIdQuery(
     {
-      patientId: patient?.key,
+      patientId: patient?.id,
       showCancelled: false,
       // ...paginationParams
     },
     {
-      skip: !patient?.key
+      skip: !patient?.id
     }
   );
 
