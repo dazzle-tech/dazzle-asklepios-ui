@@ -40,6 +40,27 @@ export const vaccineDosesIntervalService = createApi({
       providesTags: ['VaccineDosesInterval']
     }),
 
+    // ===================== NEW: GET ONE BY ID =====================
+    getIntervalById: builder.query<modelTypes.VaccineDosesInterval, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/setup/vaccine-doses-interval/${id}`
+      }),
+      transformResponse: (response: any) =>
+        (response?.data ?? response?.object ?? response) as modelTypes.VaccineDosesInterval,
+      providesTags: (_res, _err, { id }) => [{ type: 'VaccineDosesInterval', id }, 'VaccineDosesInterval']
+    }),
+
+    getIntervalByFromDoseIdOne: builder.query<modelTypes.VaccineDosesInterval | null, { fromDoseId: Id }>({
+      query: ({ fromDoseId }) => ({
+        url: `/api/setup/vaccine-doses-interval/from-dose/${fromDoseId}/one`
+      }),
+      transformResponse: (response: any) => {
+        if (response == null) return null;
+        return (response?.data ?? response?.object ?? response) as modelTypes.VaccineDosesInterval;
+      },
+      providesTags: (_res, _err, { fromDoseId }) => [{ type: 'VaccineDosesInterval', id: fromDoseId }]
+    }),
+
     createInterval: builder.mutation<
       modelTypes.VaccineDosesInterval,
       { vaccineId: Id; data: modelTypes.VaccineDosesInterval }
@@ -62,10 +83,7 @@ export const vaccineDosesIntervalService = createApi({
         params: { vaccineId },
         body: data
       }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'VaccineDosesInterval', id },
-        'VaccineDosesInterval'
-      ]
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'VaccineDosesInterval', id }, 'VaccineDosesInterval']
     }),
 
     toggleIntervalActive: builder.mutation<modelTypes.VaccineDosesInterval, { id: Id }>({
@@ -88,6 +106,13 @@ export const vaccineDosesIntervalService = createApi({
 export const {
   useGetIntervalsByVaccineIdQuery,
   useLazyGetIntervalsByVaccineIdQuery,
+
+  // NEW HOOKS
+  useGetIntervalByIdQuery,
+  useLazyGetIntervalByIdQuery,
+
+  useGetIntervalByFromDoseIdOneQuery,
+  useLazyGetIntervalByFromDoseIdOneQuery,
   useCreateIntervalMutation,
   useUpdateIntervalMutation,
   useToggleIntervalActiveMutation,
