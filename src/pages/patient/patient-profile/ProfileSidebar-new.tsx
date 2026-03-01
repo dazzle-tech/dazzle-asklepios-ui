@@ -222,7 +222,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                             const year = val.getFullYear();
                             const month = String(val.getMonth() + 1).padStart(2, '0');
                             const day = String(val.getDate()).padStart(2, '0');
-                            // نحتفظ بقيمة البحث بصيغة مناسبة للـ API (yyyy-MM-dd)
                             setSearchKeyword(`${year}-${month}-${day}`);
                           }}
                         />

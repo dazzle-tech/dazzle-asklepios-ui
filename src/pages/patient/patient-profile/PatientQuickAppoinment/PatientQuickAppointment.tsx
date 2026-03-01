@@ -302,7 +302,6 @@ const PatientQuickAppointment = ({
 
       setIsPaymentSaved(true);
 
-      // ✅ أهم سطر
       if (onEncounterSaved) {
         await onEncounterSaved();
       }
