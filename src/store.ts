@@ -138,15 +138,8 @@ import { PriceListService } from './services/billing/PriceListService';
 import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
 import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
-import { PriceListItemService } from './services/billing/PriceListItemService';
 import { BillingService } from './services/billing/BillingService';
 import { PriceListItemService } from './services/billing/PriceListItemService';
-
-import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
-import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
-
-import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
-
 import PatientRelationService from './services/patients/PatientRelationService';
 import { patientInsurancesService } from './services/patients/patientInsurancesService';
 import { patientInsuranceCoveragesService } from './services/patients/patientInsuranceCoveragesService';
@@ -340,9 +333,6 @@ export const store = configureStore({
 
     // billing
     [BillingService.reducerPath]: BillingService.reducer,
-
-    [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
-    [CdtDentalActionService.reducerPath]: CdtDentalActionService.reducer,
     //vaccine
     // vaccines
     [vaccineService.reducerPath]: vaccineService.reducer,
@@ -370,8 +360,7 @@ export const store = configureStore({
     [resultReportApi.reducerPath]: resultReportApi.reducer,
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
 
-    // invoice report
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
+
     // Visit Duration
     // visit duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
@@ -382,7 +371,6 @@ export const store = configureStore({
     [catalogDiagnosticTestService.reducerPath]: catalogDiagnosticTestService.reducer,
 
     // billing / price list
-    [BillingService.reducerPath]: BillingService.reducer,
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
@@ -429,10 +417,6 @@ export const store = configureStore({
     [diagnosticOrderTestReportCommentsService.reducerPath]: diagnosticOrderTestReportCommentsService.reducer,
     [patientDiagnosticResultHistoryService.reducerPath]: patientDiagnosticResultHistoryService.reducer,
 
-
-    
-    [medicationTestOrdersValidationService.reducerPath]:
-      medicationTestOrdersValidationService.reducer,
     [patientReportService.reducerPath]: patientReportService.reducer,
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer
