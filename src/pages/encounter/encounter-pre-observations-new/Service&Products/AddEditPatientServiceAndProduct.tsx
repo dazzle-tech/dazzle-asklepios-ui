@@ -253,8 +253,8 @@ const AddEditPatientServiceAndProduct = ({
       if (!patientServiceAndProduct?.id) {
         const createDTO: PatientServiceProductCreateDTO = {
           ...newPatientServiceProductCreateDTO,
-          patientId: patient?.key,
-          encounterId: encounter?.key,
+          patientId: patient?.id,
+          encounterId: encounter?.id,
           category: patientServiceAndProduct.category,
           serviceId: patientServiceAndProduct.serviceId,
           productId: patientServiceAndProduct.productId,
@@ -281,7 +281,7 @@ const AddEditPatientServiceAndProduct = ({
         await updatePatientServiceAndProduct({
           id: patientServiceAndProduct.id,
           body: updateDTO,
-          encounterId: encounter?.key,
+          encounterId: encounter?.id,
         }).unwrap();
         dispatch(
           notify({

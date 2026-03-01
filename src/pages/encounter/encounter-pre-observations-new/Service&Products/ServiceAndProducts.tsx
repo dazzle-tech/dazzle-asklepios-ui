@@ -41,11 +41,11 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const { data: patientServiceProductListResponse, refetch, isLoading } =
     useGetPatientServicesAndProductsByEncounterQuery(
       {
-        encounterId: encounter?.key,
+        encounterId: encounter?.id,
         ...paginationParams
       },
       {
-        skip: !encounter?.key,
+        skip: !encounter?.id,
       }
     );
 
