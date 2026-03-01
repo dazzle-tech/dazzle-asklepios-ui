@@ -407,8 +407,8 @@ const DetailsModal = ({
           await addPatientAllergy({
             ...patientAllergiesCreateDTO,
             allergicReactions: reactions.reactions.join(', '),
-            patientId: patient?.key,
-            encounterId: encounter?.key
+            patientId: patient?.id,
+            encounterId: encounter?.id
 
           }).unwrap();
           dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));

@@ -77,12 +77,12 @@ const Allergies = (props: AllergiesProps) => {
     isLoading
   } = useGetPatientAllergiesByPatientIdQuery(
     {
-      patientId: patient?.key,
+      patientId: patient?.id,
       showCancelled: showCanceled,
       ...paginationParams
     },
     {
-      skip: !patient?.key
+      skip: !patient?.id
     }
   );
   // number of all patient allergies

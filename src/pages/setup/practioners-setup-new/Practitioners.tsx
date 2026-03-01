@@ -32,9 +32,6 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
 const Practitioners = () => {
   const dispatch = useDispatch();
-  const { data: allergyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
-  console.log("allergyTypeLovQueryResponse");
-  console.log(allergyTypeLovQueryResponse);
 
   // ──────────────────────────── STATE ────────────────────────────
   const [practitioner, setPractitioner] = useState<Practitioner>({

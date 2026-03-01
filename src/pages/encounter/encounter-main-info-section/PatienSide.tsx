@@ -206,12 +206,12 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     isLoading
   } = useGetPatientAllergiesByPatientIdQuery(
     {
-      patientId: patient?.key,
+      patientId: patient?.id,
       showCancelled: false,
       // ...paginationParams
     },
     {
-      skip: !patient?.key
+      skip: !patient?.id
     }
   );
   const activeAllergies =
