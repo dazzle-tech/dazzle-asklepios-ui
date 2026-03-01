@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/Scheduling/scheduling-screen/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
-import { useCompleteEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -68,7 +68,6 @@ const Encounter = () => {
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [edit, setEdit] = useState(false);
   const [fromPage, setFromPage] = useState(savedState);
-
 
   // States for floating consultation button
   const [openConsultationPopup, setOpenConsultationPopup] = useState<boolean>(false);
@@ -157,7 +156,7 @@ const Encounter = () => {
   }, [isDragging, dragOffset, hasMoved]);
 
   // Use departmentKey from encounter, fallback to 5001 if not available
-  const departmentKeyToUse = localEncounter?.departmentId || '5001';
+  const departmentKeyToUse = localEncounter?.departmentId ;
 
   const { data: departmentSheets = [] } = useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
 
@@ -220,7 +219,7 @@ const Encounter = () => {
   const handleCompleteEncounter = async () => {
     try {
       if (propsData.encounter) {
-        await completeEncounter(propsData.encounter).unwrap();
+await completeEncounter({ id: propsData.encounter.id }).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
     } catch (error) {
@@ -476,29 +475,34 @@ const Encounter = () => {
                       <Translate>Admit to Inpatient</Translate>
                     </MyButton>
                   )}
-                {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
+               
                   <MyButton
                     prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                     onClick={() =>
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
-                        ? setOpenDischargeModal(true)
-                        : handleCompleteEncounter()
+                      //when handling inpatient logic add this condition to show discharge modal only for inpatient encounter types
+                      // propsData?.encounter?.encounterType === 'INPATIENT' ||
+                      // propsData?.encounter?.encounterType === 'DAYCASE' ||
+                      // propsData?.encounter?.encounterType === 'PROCEDURE' ||
+                      // propsData?.encounter?.encounterType === 'EMERGENCY'
+                      //   ? setOpenDischargeModal(true)
+                      //   :
+                         handleCompleteEncounter()
                     }
                     appearance="ghost"
                   >
                     <Translate>
-                      {propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                      Complete Visit
+                      {/* {propsData?.encounter?.encounterType === 'INPATIENT' ||
+                      propsData?.encounter?.encounterType === 'DAYCASE' ||
+                      propsData?.encounter?.encounterType === 'PROCEDURE' ||
+                      propsData?.encounter?.encounterType === 'EMERGENCY'
                         ? 'Discharge'
-                        : 'Complete Visit'}
+                        :
+                         'Complete Visit'
+                         } */}
                     </Translate>
                   </MyButton>
-                )}
+                
 
                 {/* show this button only on the dashboard page */}
                 {location.pathname == '/encounter' && (
