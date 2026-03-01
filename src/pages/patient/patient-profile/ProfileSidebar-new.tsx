@@ -9,8 +9,7 @@ import {
   useLazyGetPatientsByFullNameQuery,
   useLazyGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
-  useLazyGetPatientsByAnyDocumentNumberQuery,
-  useLazyGetPatientsQuery
+  useLazyGetPatientsByAnyDocumentNumberQuery
 } from '@/services/patient/patientService';
 
 import type { ApPatient } from '@/types/model-types';
@@ -57,7 +56,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const [links, setLinks] = useState<any>({});
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
 
-  const [fetchPatients] = useLazyGetPatientsQuery();
   const [fetchByMrn] = useLazyGetPatientsByMedicalRecordNumberQuery();
   const [fetchByArchiving] = useLazyGetPatientsByArchivingNumberQuery();
   const [fetchByPrimaryPhone] = useLazyGetPatientsByPrimaryPhoneQuery();

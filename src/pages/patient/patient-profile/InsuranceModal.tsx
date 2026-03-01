@@ -38,50 +38,53 @@ const INSURANCE_FIELD_LABELS: Record<string, string> = {
   isPrimary: 'Primary Insurance'
 };
 
-const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
-  const data = err?.data ?? {};
-  const traceId = data?.traceId || data?.requestId || data?.correlationId;
-  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+const normalizeFieldErrorMessage = (message: string): string => {
+  const lowerMessage = (message || '').toLowerCase();
+  if (lowerMessage.includes('must not be null')) return 'is required';
+  if (lowerMessage.includes('must not be blank')) return 'must not be blank';
+  if (lowerMessage.includes('size')) return 'length is out of range';
+  if (lowerMessage.includes('greater')) return 'value is too small';
+  if (lowerMessage.includes('less')) return 'value is too large';
+  return message || 'invalid value';
+};
 
-  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    const normalizeMsg = (msg: string) => {
-      const m = (msg || '').toLowerCase();
-      if (m.includes('must not be null')) return 'is required';
-      if (m.includes('must not be blank')) return 'must not be blank';
-      if (m.includes('size')) return 'length is out of range';
-      if (m.includes('greater')) return 'value is too small';
-      if (m.includes('less')) return 'value is too large';
-      return msg || 'invalid value';
-    };
+const getFieldLabel = (field: string): string => INSURANCE_FIELD_LABELS[field] ?? field;
 
-    const toLabel = (field: string) => INSURANCE_FIELD_LABELS[field] ?? field;
+const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, string>) => {
+  const responseData = error?.data ?? {};
+  const traceId = responseData?.traceId || responseData?.requestId || responseData?.correlationId;
+  const traceSuffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-    const lines = data.fieldErrors.map(
-      (fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`
+  if (Array.isArray(responseData?.fieldErrors) && responseData.fieldErrors.length > 0) {
+    const errorLines = responseData.fieldErrors.map(
+      (fieldError: any) =>
+        `• ${getFieldLabel(fieldError.field)}: ${normalizeFieldErrorMessage(fieldError.message)}`
     );
 
     dispatch(
       notify({
-        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
+        msg: `Please fix the following fields:\n${errorLines.join('\n')}` + traceSuffix,
         sev: 'warning'
       })
     );
     return;
   }
 
-  const messageProp: string = data?.message || '';
-  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
+  const messageProp: string = responseData?.message || '';
+  const errorKey = messageProp.startsWith('error.')
+    ? messageProp.substring(6)
+    : responseData?.errorKey;
 
-  const humanMsg =
+  const humanReadableMessage =
     (errorKey && keyMap[errorKey]) ||
-    data?.detail ||
-    data?.title ||
-    data?.message ||
+    responseData?.detail ||
+    responseData?.title ||
+    responseData?.message ||
     'Unexpected error';
 
   dispatch(
     notify({
-      msg: humanMsg + suffix,
+      msg: humanReadableMessage + traceSuffix,
       sev: 'warning'
     })
   );
@@ -139,7 +142,7 @@ const InsuranceModal = ({
     { skip: !patientInsurance?.payorId }
   );
 
-  const { data: relatives, isLoading } = useGetRelativePatientsByCategoryQuery({
+  const { data: relatives, isLoading: relativesLoading } = useGetRelativePatientsByCategoryQuery({
     patientId: patientKey?.id,
     categoryType: 'ADULT'
   });
@@ -156,7 +159,7 @@ const InsuranceModal = ({
     setPlanPage(0);
 
     if (prevPayorId !== undefined) {
-      setPatientInsurance(prev => ({ ...prev, planId: null }));
+      setPatientInsurance(prevInsurance => ({ ...prevInsurance, planId: null }));
     }
 
     setPrevPayorId(currentPayorId);
@@ -166,32 +169,32 @@ const InsuranceModal = ({
   const hasMorePlans = plansResponse?.links?.next != null;
 
   const handleLoadMorePayors = () => {
-    if (hasMorePayors && !payorFetching) setPayorPage(p => p + 1);
+    if (hasMorePayors && !payorFetching) setPayorPage(currentPage => currentPage + 1);
   };
 
   const handleLoadMorePlans = () => {
-    if (hasMorePlans && !plansFetching) setPlanPage(p => p + 1);
+    if (hasMorePlans && !plansFetching) setPlanPage(currentPage => currentPage + 1);
   };
 
   const handleSave = async () => {
-    const body: PatientInsurance = {
+    const insuranceBody: PatientInsurance = {
       ...patientInsurance,
       patientId: patientKey.id
     };
 
     try {
-      if (body.id) {
-        await updatePatientInsurance({ id: body.id, ...body }).unwrap();
+      if (insuranceBody.id) {
+        await updatePatientInsurance({ id: insuranceBody.id, ...insuranceBody }).unwrap();
       } else {
-        await addPatientInsurance(body).unwrap();
+        await addPatientInsurance(insuranceBody).unwrap();
       }
 
       refetchInsurance();
       handleClearModal();
 
       dispatch(notify({ msg: 'Insurance Saved Successfully', sev: 'success' }));
-    } catch (err: any) {
-      handleCrudError(err, dispatch, INSURANCE_ERROR_MAP);
+    } catch (error: any) {
+      handleCrudError(error, dispatch, INSURANCE_ERROR_MAP);
     }
   };
 
@@ -206,9 +209,9 @@ const InsuranceModal = ({
 
   useEffect(() => {
     const namesAndIds =
-      relations?.map(r => ({
-        name: `${r.relativePatientObject.firstName} ${r.relativePatientObject.lastName}`,
-        id: r.id
+      relations?.map(relation => ({
+        name: `${relation.relativePatientObject.firstName} ${relation.relativePatientObject.lastName}`,
+        id: relation.id
       })) || [];
     setRelationsList(namesAndIds);
   }, [relations]);
@@ -234,19 +237,19 @@ const InsuranceModal = ({
 
   useEffect(() => {
     if (!open) {
-      const timer = setTimeout(() => {
+      const resetTimer = setTimeout(() => {
         setPatientInsurance({ ...newPatientInsurance });
         setPrevPayorId(undefined);
         setPayorPage(0);
         setPayorSearchKeyword('');
         setPlanPage(0);
       }, 300);
-      return () => clearTimeout(timer);
+      return () => clearTimeout(resetTimer);
     }
   }, [open]);
 
   const renderLeftContent = () => (
-    <div style={{ padding: '16px', height: '100%' }}>
+    <div className="insurance-modal__left-content">
       <InsuranceBenefitsCard
         data={{
           remainingBenefits: patientInsurance.remainingBenefits,
@@ -260,7 +263,7 @@ const InsuranceModal = ({
   );
 
   const renderRightContent = () => (
-    <div style={{ padding: '20px' }}>
+    <div className="insurance-modal__right-content">
       <Form layout="inline" fluid>
         <MyInput
           column
@@ -301,27 +304,12 @@ const InsuranceModal = ({
           placeholder={!patientInsurance?.payorId ? 'Select Payor first...' : 'Select Plan...'}
           renderMenuItem={(label, item) => {
             if (item?.isLoadMore) {
-              return (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Load more...
-                </div>
-              );
+              return <div className="insurance-modal__plan-load-more">Load more...</div>;
             }
             return (
               <div>
-                <div style={{ fontWeight: 500 }}>{item.name}</div>
-                <div
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--primary-gray)'
-                  }}
-                >
+                <div className="insurance-modal__plan-name">{item.name}</div>
+                <div className="insurance-modal__plan-details">
                   {formatEnumString(item.planType)} • {formatEnumString(item.coverageType)} • $
                   {item.amount}
                 </div>
@@ -369,10 +357,9 @@ const InsuranceModal = ({
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
-          loading={isLoading}
+          loading={relativesLoading}
           searchable={false}
         />
-
         <MyInput
           column
           fieldLabel="Primary Insurance"
@@ -383,7 +370,7 @@ const InsuranceModal = ({
           disabled={insuranceBrowsing}
         />
       </Form>
-      <div style={{ marginTop: 20 }}>
+      <div className="insurance-modal__coverage-section">
         {patientInsurance?.planId && <PlanCoverageItemsSection planId={patientInsurance.planId} />}
       </div>
     </div>
