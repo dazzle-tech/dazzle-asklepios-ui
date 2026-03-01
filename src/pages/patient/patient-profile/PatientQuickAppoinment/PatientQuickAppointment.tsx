@@ -122,10 +122,6 @@ const PatientQuickAppointment = ({
   const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
   const [isPaymentSaved, setIsPaymentSaved] = useState(false);
 
-  // ✅ merges both branches:
-  // - view mode: fully read-only
-  // - payment mode (initialStep=1): encounter step read-only
-  // - after payment saved: payment read-only (locked)
   const isViewMode = Boolean(isDisabeld);
   const isPaymentMode = initialStep === 1;
   const isLockedAfterPayment = Boolean(isPaymentSaved);
