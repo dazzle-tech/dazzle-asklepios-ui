@@ -58,8 +58,13 @@ export type PatientLedgerSummary = {
 export const patientPaymentsService = createApi({
   reducerPath: 'patientPaymentsApi',
   baseQuery: BaseQuery,
-  tagTypes: ['PatientPayment', 'PatientPaymentServices', 'PatientBalance', 'PatientLedgerSummary'],
-
+  tagTypes: [
+    'PatientPayment',
+    'PatientPaymentServices',
+    'PatientBalance',
+    'PatientLedgerSummary',
+    'PatientEncounter'
+  ],
   endpoints: builder => ({
     /**
      * CREATE Patient Payment
@@ -75,14 +80,19 @@ export const patientPaymentsService = createApi({
         'PatientPayment',
         'PatientPaymentServices',
         { type: 'PatientBalance', id: body.patientId },
-        { type: 'PatientLedgerSummary', id: body.patientId }
+        { type: 'PatientLedgerSummary', id: body.patientId },
+        { type: 'PatientEncounter', id: body.encounterId },
+        'PatientEncounter'
       ]
     }),
 
     /**
      * UPDATE Patient Payment
      */
-    updatePayment: builder.mutation<modelTypes.PatientPaymentDetails, { id: Id; body: modelTypes.PatientPaymentDTO }>({
+    updatePayment: builder.mutation<
+      modelTypes.PatientPaymentDetails,
+      { id: Id; body: modelTypes.PatientPaymentDTO }
+    >({
       query: ({ id, body }) => ({
         url: `/api/patient/payment/${id}`,
         method: 'PUT',
@@ -94,7 +104,9 @@ export const patientPaymentsService = createApi({
         'PatientPayment',
         'PatientPaymentServices',
         { type: 'PatientBalance', id: body.patientId },
-        { type: 'PatientLedgerSummary', id: body.patientId }
+        { type: 'PatientLedgerSummary', id: body.patientId },
+        { type: 'PatientEncounter', id: body.encounterId },
+        'PatientEncounter'
       ]
     }),
 
@@ -165,7 +177,7 @@ export const patientPaymentsService = createApi({
         params: { page, size, sort }
       }),
       transformResponse: (response: any, meta: any) => {
-        const rows = Array.isArray(response) ? response : (response?.content ?? []);
+        const rows = Array.isArray(response) ? response : response?.content ?? [];
         return mapPaged(rows, meta);
       },
       providesTags: res =>
