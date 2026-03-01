@@ -135,13 +135,11 @@ import { catalogService } from './services/setup/catalog/catalogService';
 import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTestService';
 
 import { PriceListService } from './services/billing/PriceListService';
-import { PriceListItemService } from './services/billing/PriceListItemService';
-import { BillingService } from './services/billing/BillingService';
-
 import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
-
 import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
+import { BillingService } from './services/billing/BillingService';
+import { PriceListItemService } from './services/billing/PriceListItemService';
 import PatientRelationService from './services/patients/PatientRelationService';
 import { patientInsurancesService } from './services/patients/patientInsurancesService';
 import { patientInsuranceCoveragesService } from './services/patients/patientInsuranceCoveragesService';
@@ -160,6 +158,18 @@ import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
+import { favoriteDiagnosticTestService } from './services/diagnosic-order/favoriteDiagnosticTestService';
+import { diagnosticOrderService } from './services/diagnosic-order/diagnosticOrderService';
+import { diagnosticOrderTestService } from './services/diagnosic-order/diagnosticOrderTestService';
+import { diagnosticOrderTestCollectedSampleService } from './services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
+import { diagnosticOrderTestTechnicianNoteService } from './services/diagnosic-order/diagnosticOrderTestTechnicianNoteService';
+import { diagnosticTestRequestService } from './services/diagnosic-order/diagnosticTestRequestService';
+import { externalTestService } from './services/diagnosic-order/externalTestService';
+import { diagnosticOrderTestResultService } from './services/setup/diagnosticTest/diagnosticOrderTestResultService';
+import { diagnosticOrderTestResultTechnicianNoteService } from './services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
+import { diagnosticOrderTestReportService } from './services/setup/diagnosticTest/diagnosticOrderTestReportService';
+import { diagnosticOrderTestReportCommentsService } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
+import { patientDiagnosticResultHistoryService } from './services/diagnosic-order/patientDiagnosticResultHistoryService';
 import { patientReportService } from './services/patientReportService';
 import { ICDTreeService } from './services/setup/icdTreeService';
 
@@ -322,6 +332,9 @@ export const store = configureStore({
     [procedureCodingService.reducerPath]: procedureCodingService.reducer,
     [procedurePriceListService.reducerPath]: procedurePriceListService.reducer,
 
+    // billing
+    [BillingService.reducerPath]: BillingService.reducer,
+    //vaccine
     // vaccines
     [vaccineService.reducerPath]: vaccineService.reducer,
     [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
@@ -349,15 +362,17 @@ export const store = configureStore({
     [resultReportApi.reducerPath]: resultReportApi.reducer,
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
 
+
+    // Visit Duration
     // visit duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
 
+    // Templates
     // catalog
     [catalogService.reducerPath]: catalogService.reducer,
     [catalogDiagnosticTestService.reducerPath]: catalogDiagnosticTestService.reducer,
 
     // billing / price list
-    [BillingService.reducerPath]: BillingService.reducer,
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
@@ -390,13 +405,25 @@ export const store = configureStore({
     //AI Services
     [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer,
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
-    [medicationTestOrdersValidationService.reducerPath]:
-      medicationTestOrdersValidationService.reducer,
+    [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
+    [medicationTestOrdersValidationService.reducerPath]: medicationTestOrdersValidationService.reducer,
+    [diagnosticOrderService.reducerPath]: diagnosticOrderService.reducer,
+    [diagnosticOrderTestService.reducerPath]: diagnosticOrderTestService.reducer,
+    [diagnosticOrderTestCollectedSampleService.reducerPath]: diagnosticOrderTestCollectedSampleService.reducer,
+    [diagnosticOrderTestTechnicianNoteService.reducerPath]: diagnosticOrderTestTechnicianNoteService.reducer,
+    [diagnosticTestRequestService.reducerPath]: diagnosticTestRequestService.reducer,
+    [externalTestService.reducerPath]: externalTestService.reducer,
+    [diagnosticOrderTestResultService.reducerPath]: diagnosticOrderTestResultService.reducer,
+    [diagnosticOrderTestResultTechnicianNoteService.reducerPath]: diagnosticOrderTestResultTechnicianNoteService.reducer,
+    [diagnosticOrderTestReportService.reducerPath]: diagnosticOrderTestReportService.reducer,
+    [diagnosticOrderTestReportCommentsService.reducerPath]: diagnosticOrderTestReportCommentsService.reducer,
+    [patientDiagnosticResultHistoryService.reducerPath]: patientDiagnosticResultHistoryService.reducer,
+
     [patientReportService.reducerPath]: patientReportService.reducer,
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer
   },
-  // @ts-ignore
+
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware().concat([
       // ai
@@ -580,6 +607,18 @@ export const store = configureStore({
       clinicalSummaryService.middleware,
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
+      favoriteDiagnosticTestService.middleware,
+      diagnosticOrderTestService.middleware,
+      diagnosticOrderService.middleware,
+      diagnosticOrderTestCollectedSampleService.middleware,
+      diagnosticOrderTestTechnicianNoteService.middleware,
+      diagnosticTestRequestService.middleware,
+      externalTestService.middleware,
+      diagnosticOrderTestResultService.middleware,
+      diagnosticOrderTestResultTechnicianNoteService.middleware,
+      diagnosticOrderTestReportService.middleware,
+      diagnosticOrderTestReportCommentsService.middleware,
+      patientDiagnosticResultHistoryService.middleware,
       patientReportService.middleware,
       ICDTreeService.middleware
     ])

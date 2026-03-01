@@ -253,6 +253,7 @@ export const departmentService = createApi({
 export const {
   useGetDepartmentsQuery,
   useGetDepartmentByIdQuery,
+  useLazyGetDepartmentByIdQuery,
   useGetDepartmentByFacilityQuery,
   useLazyGetDepartmentByFacilityQuery,
   useGetDepartmentByTypeQuery,
