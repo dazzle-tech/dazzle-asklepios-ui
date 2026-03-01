@@ -3,10 +3,13 @@ import {
   faCalendarDays,
   faChartColumn,
   faCommentDots,
+  faFile,
+  faFileLines,
   faHeadset,
   faNoteSticky,
   faRepeat,
-  faStethoscope
+  faStethoscope,
+  faUserDoctor
 } from '@fortawesome/free-solid-svg-icons';
 import { faSun } from '@fortawesome/free-solid-svg-icons';
 import { faMoon } from '@fortawesome/free-solid-svg-icons';
@@ -58,7 +61,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const dispatch = useDispatch();
   const mode = useAppSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
-   const direction = localStorage.getItem('direction');
+  const direction = localStorage.getItem('direction');
   const authSlice = useAppSelector(state => state.auth);
   const toast = useCallback(
     (msg: string) => {
@@ -201,6 +204,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const contentOfMoreIconMenu = (
     <Popover full>
       <Dropdown.Menu>
+         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faFileLines} />
+             Customize Form
+          </div>
+        </Dropdown.Item>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faChartColumn} />
@@ -221,7 +230,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
           </div>
         </Dropdown.Item>
 
-        {/* الخيار الجديد للبوابة */}
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
@@ -364,7 +372,10 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
       localStorage.clear();
 
-      navigate('/login');
+      dispatch({ type: 'auth/logout' }); 
+
+      
+      navigate('/login', { replace: true });
     };
 
     useEffect(() => {
@@ -413,12 +424,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         {(selectedDepartment?.facilityName ||
           authSlice?.tenant?.selectedFacility?.name ||
           authSlice?.tenant?.selectedFacility?.facilityName) && (
-          <span style={{ fontSize: '12px', color: '#6c757d' }}>
-            {selectedDepartment?.facilityName ??
-              authSlice?.tenant?.selectedFacility?.name ??
-              authSlice?.tenant?.selectedFacility?.facilityName}
-          </span>
-        )}
+            <span style={{ fontSize: '12px', color: '#6c757d' }}>
+              {selectedDepartment?.facilityName ??
+                authSlice?.tenant?.selectedFacility?.name ??
+                authSlice?.tenant?.selectedFacility?.facilityName}
+            </span>
+          )}
       </div>
       <Divider style={{ margin: 0 }} />
       {isLoadingDepartments ? (
@@ -432,7 +443,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               defaultDepartmentEntity?.id != null
                 ? defaultDepartmentEntity.id === dept.id
                 : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                  defaultDepartmentEntity?.facilityId === dept.facilityId;
+                defaultDepartmentEntity?.facilityId === dept.facilityId;
             const isActive =
               selectedDepartment?.departmentId === dept.departmentId &&
               selectedDepartment?.facilityId === dept.facilityId;
@@ -517,9 +528,20 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   return (
     <>
-      <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
+      <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{ flexDirection: direction === "LTR" ? "row" : "row-reverse" }}>
         {width >= 930 ? (
           <>
+           <Tooltip title="Customize Form">
+              <IconButton size="small">
+                <FontAwesomeIcon
+                  className="header-screen-bar-icon-size-handle"
+                  icon={faFileLines}
+                     onClick={() => {
+                  navigate('/form-template-use');
+                }}
+                />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Customize Dashboard">
               <IconButton size="small">
                 <FontAwesomeIcon
@@ -553,7 +575,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               >
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
-                  icon={faStethoscope}
+                  icon={faUserDoctor}
                 />
               </IconButton>
             </Tooltip>

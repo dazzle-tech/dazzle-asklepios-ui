@@ -22,7 +22,8 @@ export const newApUser: modelTypes.ApUser = {
   birthDate: null,
   gender: null,
   jobDescription: null,
-  jobRole: null
+  jobRole: null,
+  admin: false
 };
 
 // ------------------- Candidate -------------------
@@ -671,8 +672,8 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   name: '',
   description: null,
   type: '',
-  departmentId: 0,
-  facilityId: 0
+  departmentId: undefined,
+  facilityId: undefined
 };
 
 // ------------------- Catalog Update VM -------------------
@@ -680,8 +681,8 @@ export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   name: '',
   description: null,
   type: '',
-  departmentId: 0,
-  facilityId: 0
+  departmentId: undefined,
+  facilityId: undefined
 };
 
 // ------------------- Catalog Diagnostic Test -------------------
@@ -859,7 +860,8 @@ export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM 
   createdBy: '',
   createdDate: null,
   lastModifiedBy: '',
-  lastModifiedDate: null
+  lastModifiedDate: null,
+  patientId: ''
 };
 
 export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
@@ -867,10 +869,9 @@ export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
   note: '',
   priority: '',
   priorityOrder: 0,
-  color: '--note-purple'
+  color: '--note-purple',
+  patientId: undefined
 };
-
-// ------------------- Price List Item -------------------
 export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
   priceListId: 0,
@@ -1192,8 +1193,7 @@ export const newPatient: modelTypes.Patient = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
-  ruleId: null
+  lastModifiedDate: null
 };
 
 export const newAddress: modelTypes.Address = {
@@ -1264,7 +1264,6 @@ export const newPatientInsuranceCoverage: modelTypes.PatientInsuranceCoverage = 
   lastModifiedDate: null
 };
 
-
 export const newEncounterVaccination: modelTypes.EncounterVaccination = {
   id: undefined,
 
@@ -1285,7 +1284,7 @@ export const newEncounterVaccination: modelTypes.EncounterVaccination = {
 
   cancelledAt: null,
   cancelledById: null,
-
+  isExternalFacility: false,
   administeredLocation: null,
   administrationReactions: null,
   externalFacilityName: null,
@@ -1295,6 +1294,7 @@ export const newEncounterVaccination: modelTypes.EncounterVaccination = {
   reviewedById: null
 };
 
+// ------------------- Patient Encounter Update -------------------
 export const newPatientEncounter: modelTypes.PatientEncounter = {
   id: 0,
 
@@ -1304,12 +1304,12 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
 
   practitionerId: null,
 
-  encounterType: '',      
-  encounterReason: '',  
+  encounterType: '',
+  encounterReason: '',
 
   followUpEncounterId: null,
 
-  priorityLevel: 'NORMAL',          
+  priorityLevel: 'NORMAL',
 
   originType: null,
   originName: null,
@@ -1317,9 +1317,15 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
   notes: null,
 
   status: 'NEW',
-  encounterDate: null                
+   encounterDate: null,
+  chiefComplaint: null,
+
+  hasPrescription: false,
+  hasOrder: false,
+  isObserved: false
 };
 
+ 
 export const newPatientBasicInformationResponseVM: modelTypes.PatientBasicInformationResponseVM = {
   id: 0,
   fullName: '',
@@ -1327,21 +1333,104 @@ export const newPatientBasicInformationResponseVM: modelTypes.PatientBasicInform
   primaryMobileNumber: null
 };
 
-export const newPatientDuplicationLookupDTO: modelTypes.PatientDuplicationLookupDTO = {
-  firstName: null,
-  secondName: null,
-  thirdName: null,
-  lastName: null,
 
-  dateOfBirth: null,
+export const newPatientPayments: modelTypes.PatientPayments = {
+  id: undefined,
 
-  primaryMobileNumber: null,
+  patientId: 0,
+  encounterId: 0,
 
-  medicalRecordNumber: null,
+  planId: null,
 
-  primaryDocumentNumber: null,
+  dueAmount: 0,
+  patientBalance: 0,
 
-  sexAtBirth: null,
+  paidFromAmount: 0,
+  paidFromBalance: 0,
 
-  facilityId: null
+  paymentTypes: null,
+  paymentMethods: null,
+  refunds: 0,
+
+  amount: 0,
+  currency: '',
+  facilityDefaultCurrency: '',
+  amountInFacilityCurrency: null,
+
+  remaining: 0,
+  addToFreeBalance: false,
+
+  useBalanceToSettleDebts: false,
+
+  cardNumber: null,
+  cardHolderName: null,
+  cardValidUntil: null,
+
+  chequeNumber: null,
+  chequeBankName: null,
+  chequeDueDate: null,
+
+  transferNumber: null,
+  transferBankName: null,
+  transferDate: null,
+
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newPatientPaymentService: modelTypes.PatientPaymentServices = {
+  id: undefined,
+  paymentId: 0,
+  serviceId: 0,
+  price: 0,
+  isExempted: false,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newPatientPaymentDetails: modelTypes.PatientPaymentDetails = {
+  payment: { ...newPatientPayments },
+  services: []
+};
+export const newPriceListAttribute: modelTypes.PriceListAttribute = {
+  id: undefined,
+  priceListId: undefined,
+  attributeType: null, // PriceAttributes enum as string
+  attribute: null,
+  price: null, // or string if you prefer BigDecimal string
+  isActive: true
+};
+
+export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
+  id: undefined,
+  name: '',
+  description: '',
+  address: '',
+  contactName: '',
+  contactAddress: '',
+  contactEmail: '',
+  contactMobile: '',
+  contactLandNumber: '',
+  taxValue: undefined
+};
+
+export const newFormTemplate: modelTypes.FormTemplate = {
+  id: undefined,
+  name: null,
+  description: null,
+  facilityId: null,
+  departmentId: null,
+  formJson: null
+};
+
+export const newPatientHIPAA: modelTypes.PatientHIPAA = {
+  patientId: undefined,
+  noticeOfPrivacyPractice: false,
+  privacyAuthorization: false,
+  noticeOfPrivacyPracticeDate: null,
+  privacyAuthorizationDate: null
 };

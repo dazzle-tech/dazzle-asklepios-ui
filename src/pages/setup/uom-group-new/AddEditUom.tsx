@@ -625,7 +625,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         { title: 'UOM Conversion', icon: <FontAwesomeIcon icon={faBoxesPacking} /> }
       ]}
       mainContent={conjureFormContent}
-      mainSize="sm"
+      mainSize="40vw"
     />
   );
 };

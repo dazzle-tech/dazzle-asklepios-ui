@@ -95,6 +95,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
                 !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
               }
               searchable={false}
+              required
             />
             <MyInput
               placeholder="Select Facility"
@@ -132,6 +133,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
               setRecord={
                 !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
               }
+              required
             />
 
             <MyInput
@@ -141,6 +143,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
               setRecord={
                 !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
               }
+              required
             />
           </Form>
         );

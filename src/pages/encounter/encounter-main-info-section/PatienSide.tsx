@@ -10,7 +10,7 @@ import { useGetAllergensQuery } from '@/services/setupService';
 import { RootState } from '@/store';
 import { ApAttachment } from '@/types/model-types';
 import { initialListRequest } from '@/types/types';
-import { calculateAgeFormat } from '@/utils';
+import { calculateAgeFormat, formatEnumString } from '@/utils';
 import {
   faExclamationTriangle,
   faFileWaveform,
@@ -28,6 +28,8 @@ import { Avatar, Divider, Panel, Text } from 'rsuite';
 import './styles.less';
 import { newApPatient } from '@/types/model-types-constructor';
 import { faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
+import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
+import { newPatient } from '@/types/model-types-constructor-new';
 
 const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const profileImageFileInputRef = useRef(null);
@@ -36,6 +38,8 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
   );
+const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEncounter);
+
 
   // ===== Helpers to avoid NaN / bad output =====
   const toNumber = (v: any) => {
@@ -61,7 +65,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   });
 
   // New queries for allergies and warnings
-  const { data: allergiesResponse } = useGetAllergiesQuery(
+  const { data: allergiesResponse, refetch: refetchAllergies } = useGetAllergiesQuery(
     {
       ...initialListRequest,
       pageSize: 5, // Limit to show only recent ones
@@ -75,7 +79,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     { skip: !patient?.key }
   );
 
-  const { data: warningsResponse } = useGetWarningsQuery(
+  const { data: warningsResponse, refetch: refetchWarnings } = useGetWarningsQuery(
     {
       ...initialListRequest,
       pageSize: 5, // Limit to show only recent ones
@@ -104,9 +108,9 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
-      refKey: patient?.key
+      refKey: patient?.id
     },
-    { skip: !patient?.key }
+    { skip: !patient?.id }
   );
 
   useEffect(() => {
@@ -158,7 +162,21 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     const found = allergensListToGetName.object.find(item => item.key === allergenKey);
     return found?.allergenName || 'Unknown';
   };
+useEffect(() => {
+  if (!refetchEncounter) return;
 
+  const doRefetch = async () => {
+    try {
+      await Promise.all([refetchAllergies(), refetchWarnings()]);
+    } catch (e) {
+      console.error('Error while refetching side data:', e);
+    } finally {
+      dispatch(resetRefetchEncounter());
+    }
+  };
+
+  doRefetch();
+}, [refetchEncounter, refetchAllergies, refetchWarnings, dispatch]);
   // Get active allergies & warnings
   const activeAllergies =
     allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
@@ -193,8 +211,8 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   return (
     <Panel className="patient-panel">
       {props?.setPatient && (
-        <div style={{display: 'flex', justifyContent: "end", marginBottom: "5px"}}>
-        <IoMdClose size={22} className='icons-style' onClick={() => props?.setPatient({ ...newApPatient })}/>
+        <div style={{ display: 'flex', justifyContent: "end", marginBottom: "5px" }}>
+          <IoMdClose size={22} className='icons-style' onClick={() => props?.setPatient({ ...newPatient })} />
         </div>
       )}
       <div className="div-avatar">
@@ -211,7 +229,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
         />
         <div>
           <div className="patient-info">
-            <Text className="patient-name">{textOr(patient?.fullName, 'Patient Name')}</Text>
+            <Text className="patient-name">{textOr(patient?.fullName , 'Patient Name')}</Text>
           </div>
           <div className="info-label"># {textOr(patient?.patientMrn, 'MRN')}</div>
         </div>
@@ -247,19 +265,19 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
       <div className="info-section">
         <div className="info-column">
           <Text className="info-label">Age</Text>
-          <Text className="info-value">{patient?.dob ? calculateAgeFormat(patient?.dob) : ''}</Text>
+          <Text className="info-value">{patient?.dateOfBirth ? calculateAgeFormat(patient?.dateOfBirth) : ''}</Text>
         </div>
 
         <div className="info-column">
           <Text className="info-label">Gender</Text>
-          <Text className="info-value"> {textOr(patient?.genderLvalue?.lovDisplayVale, '')}</Text>
+          <Text className="info-value"> {textOr(formatEnumString(patient?.sexAtBirth), '')}</Text>
         </div>
       </div>
       <Divider className="divider-style" />
 
       <Text className="main-info-patient-side">
         <FaWeight className="icon-color" />{' '}
-        <span className="section-title-patient-side">Physical Measurements</span>
+        <span className="section-title-patient-side">Measurements</span>
       </Text>
       <div className="details-sections">
         <br />
@@ -306,30 +324,30 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
         </div>
       </div>
       <Divider className="divider-style" />
-      
+
       {!props?.hideVisitDetails && (
-      <Text className="main-info-patient-side">
-        <FontAwesomeIcon icon={faFileWaveform} className="icon-color" />{' '}
-        <span className="section-title-patient-side">
-          {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT'
-            ? 'Visit Details'
-            : 'Admission Details'}
-        </span>
-      </Text>
+        <Text className="main-info-patient-side">
+          <FontAwesomeIcon icon={faFileWaveform} className="icon-color" />{' '}
+          <span className="section-title-patient-side">
+            {encounter?.encounterType !== 'INPATIENT'
+              ? 'Visit Details'
+              : 'Admission Details'}
+          </span>
+        </Text>
       )}
-      {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT' && !props?.hideVisitDetails && (
+      {encounter?.encounterType !== 'INPATIENT' && !props?.hideVisitDetails && (
         <div className="details-sections">
           <br />
 
           <div className="info-section">
             <div className="info-column">
               <Text className="info-label">Visit Date</Text>
-              <Text className="info-value">{textOr(encounter?.plannedStartDate, '')}</Text>
+              <Text className="info-value">{textOr(encounter?.encounterDate, '')}</Text>
             </div>
 
             <div className="info-column">
               <Text className="info-label">Visit ID</Text>
-              <Text className="info-value"> {textOr(encounter?.visitId, '')}</Text>
+              <Text className="info-value"> {textOr(encounter?.encounterNumber, '')}</Text>
             </div>
           </div>
 
@@ -344,7 +362,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
             <div className="info-column">
               <Text className="info-label">Priority</Text>
               <Text className="info-value">
-                {textOr(encounter?.encounterPriorityLvalue?.lovDisplayVale, '')}
+                {textOr(formatEnumString(encounter?.priority), '')}
               </Text>
             </div>
           </div>
@@ -353,7 +371,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
             <div className="info-column">
               <Text className="info-label">Reason</Text>
               <Text className="info-value">
-                {textOr(encounter?.reasonLvalue?.lovDisplayVale, '')}
+                {textOr(formatEnumString(encounter?.encounterReason), '')}
               </Text>
             </div>
 
@@ -361,14 +379,14 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
               <Text className="info-label">Origin</Text>
               <Text className="info-value">
                 {' '}
-                {textOr(encounter?.originLvalue?.lovDisplayVale, '')}
+                {textOr(encounter?.originName, '')}
               </Text>
             </div>
           </div>
         </div>
       )}
 
-      {encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' && (
+      {encounter?.encounterType === 'INPATIENT' && (
         <>
           <div className="details-sections">
             <div className="info-section">
@@ -409,7 +427,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
         </>
       )}
 
-     
+
 
       {/* ==== Allergy & Warning Banners ==== */}
       <div className="my-container">
@@ -448,28 +466,28 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
         ))}
       </div>
 
-     {props?.balance && (
-      <div>
-      <Text className="main-info-patient-side">
-        <FontAwesomeIcon icon={faScaleBalanced} className="icon-color" />{' '}
-        <span className="section-title-patient-side">Balance</span>
-      </Text>
-      <br />
+      {props?.balance && (
+        <div>
+          <Text className="main-info-patient-side">
+            <FontAwesomeIcon icon={faScaleBalanced} className="icon-color" />{' '}
+            <span className="section-title-patient-side">Balance</span>
+          </Text>
+          <br />
 
-      <div className="info-section">
-        <div className="info-column">
-          <Text className="info-label">Free Balance</Text>
-          <Text className="info-value">{props?.balance?.freeBalance}</Text>
-        </div>
+          <div className="info-section">
+            <div className="info-column">
+              <Text className="info-label">Free Balance</Text>
+              <Text className="info-value">{props?.balance?.freeBalance}</Text>
+            </div>
 
-        <div className="info-column">
-          <Text className="info-label">Outstanding</Text>
-          <Text className="info-value"> {props?.balance?.outstanding}</Text>
+            <div className="info-column">
+              <Text className="info-label">Outstanding</Text>
+              <Text className="info-value"> {props?.balance?.outstanding}</Text>
+            </div>
+          </div>
+          <Divider className="divider-style" />
         </div>
-      </div>
-      <Divider className="divider-style" />
-      </div>
-     )}
+      )}
     </Panel>
   );
 };

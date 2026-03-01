@@ -35,22 +35,23 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
     value: number;
   } | null>(null);
 
+  const mode = useSelector((state: any) => state.ui.mode);
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
   const [data, setData] = useState<ChartData<'pie'>>({
     labels: [],
     datasets: []
   });
-  const mode = useSelector((state: any) => state.ui.mode);
 
   const updateData = () => {
-    const labels = chartData.map(d => d.label);
-    const values = chartData.map(d => d.value);
-
     setData({
-      labels,
+      labels: chartData.map(d => d.label),
       datasets: [
         {
-          data: values,
-          backgroundColor: colors || ['#2264E5', '#93C6FA', '#FF6384', '#FFCE56', '#4BC0C0'],
+          data: chartData.map(d => d.value),
+          backgroundColor:
+            colors || ['#2264E5', '#93C6FA', '#FF6384', '#FFCE56', '#4BC0C0'],
           borderColor: mode === 'dark' ? '#565656ff' : '#fff',
           borderWidth: 2
         }
@@ -60,40 +61,52 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
 
   useEffect(() => {
     updateData();
-  }, [chartData, colors]);
+  }, [chartData, colors, mode]);
 
   const chartOptions: ChartOptions<'pie'> = {
     responsive: true,
     maintainAspectRatio: false,
+    locale: isRTL ? 'ar' : 'en',
     plugins: {
       title: {
-        display: true,
-        text: title
+        display: !!title,
+        text: title,
+        align: isRTL ? 'end' : 'start'
       },
       legend: {
         display: true,
-        position: 'top'
+        position: 'top',
+        rtl: isRTL,
+        labels: {
+          textAlign: isRTL ? 'right' : 'left'
+        }
       }
     },
     onClick: (_event, elements) => {
       if (elements.length > 0) {
         const index = elements[0].index;
-        const label = data.labels?.[index] as string;
-        const value = data.datasets[0].data[index] as number;
-        setSelectedSegment({ label, value });
+        setSelectedSegment({
+          label: data.labels?.[index] as string,
+          value: data.datasets[0].data[index] as number
+        });
       }
     }
   };
 
   return (
-    <div>
-      <span className="font-12">Current patient allocation</span>
+    <div dir={isRTL ? 'rtl' : 'ltr'}>
+      <span className="font-12">
+        Current patient allocation
+      </span>
+
       {selectable && (
         <div style={{ marginBottom: 10 }}>
           {selectedSegment ? (
             <span>
-              {selectedSegment.label}
-              <b style={{ color: 'rebeccapurple' }}>{selectedSegment.value}</b>
+              {selectedSegment.label}:{' '}
+              <b style={{ color: 'rebeccapurple' }}>
+                {selectedSegment.value}
+              </b>
             </span>
           ) : (
             <span>Click on a segment to select</span>
@@ -102,10 +115,19 @@ const DynamicPieChart: React.FC<DynamicPieChartProps> = ({
       )}
 
       <div style={{ width, height, margin: '0 auto' }}>
-        <Pie data={data} options={chartOptions} ref={chartRef} style={{ maxHeight: '400px' }} />
+        <Pie
+          data={data}
+          options={chartOptions}
+          ref={chartRef}
+        />
       </div>
+
       {refreshButton && (
-        <Button appearance="primary" style={{ marginTop: 10 }} onClick={updateData}>
+        <Button
+          appearance="primary"
+          style={{ marginTop: 10 }}
+          onClick={updateData}
+        >
           Refresh Data
         </Button>
       )}

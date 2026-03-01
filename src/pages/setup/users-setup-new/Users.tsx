@@ -3,13 +3,14 @@ import {
   useDeactivateUserMutation,
   useGetFacilitiesQuery
 } from '@/services/setupService';
-import { initialListRequest, ListRequest } from '@/types/types';
+
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
 import { FaAddressCard, FaBuilding, FaMedal } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
 import { RiLockPasswordFill } from 'react-icons/ri';
-import { Panel, Tooltip, Whisper } from 'rsuite';
+import { Panel, Tooltip, Whisper, Form } from 'rsuite';
+
 import ViewDepartments from './ViewDepartments-new';
 import ViewLicenses from './ViewLicenses';
 
@@ -19,216 +20,173 @@ import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAddUserMutation, useGetUserQuery, useUpdateUserMutation } from '@/services/userService';
-import { newApFacility } from '@/types/model-types-constructor';
+
+import {
+  useAddUserMutation,
+  useGetUsersBasicQuery,
+  useUpdateUserMutation
+} from '@/services/userService';
+
 import { newApUser } from '@/types/model-types-constructor-new';
 import { ApUser } from '@/types/model-types-new';
-import {
-  addFilterToListRequest,
-  fromCamelCaseToDBName
-} from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import ReactDOMServer from 'react-dom/server';
-import { Form } from 'rsuite';
+
 import AddEditUser from './AddEditUser';
 import ResetPassword from './ResetPassword';
 
 import './styles.less';
+import { formatEnumString } from '@/utils';
+
 const Users = () => {
   const dispatch = useAppDispatch();
-  const [user, setUser] = useState<ApUser>({
-    ...newApUser
-    // isValid: true
+
+  const [user, setUser] = useState<ApUser>({ ...newApUser });
+  const [record, setRecord] = useState({
+    login: '',
+    name: '',
+    email: ''
   });
 
-  const [record, setRecord] = useState({ filter: '', value: '' });
-  const [width, setWidth] = useState<number>(window.innerWidth);
-
-  const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
-  const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
   const [popupOpen, setPopupOpen] = useState(false);
   const [licensePopupOpen, setLicensePopupOpen] = useState(false);
   const [departmentsPopupOpen, setDepartmentsPopupOpen] = useState(false);
-  const [resetPasswordPopupOpen, setResetPasswordPopupOpen] = useState<boolean>();
-  
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  // Save user
-  const [saveUser, saveUserMutation] = useAddUserMutation();
-  // Fetch users list response
+  const [resetPasswordPopupOpen, setResetPasswordPopupOpen] = useState(false);
+  const [sortColumn, setSortColumn] = useState<string>('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
-   const { data: users, isLoading  ,refetch} = useGetUserQuery();
-   const [updateUser] = useUpdateUserMutation();
- 
-  // Fetch Facilities list response
-  const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
-    ...initialListRequest,
-    pageSize: 1000
-  });
-  // Deactivate/Activate user
+  const [canProceed, setCanProceed] = useState(false);
+  const [width, setWidth] = useState<number>(window.innerWidth);
+
+  const [pageIndex, setPageIndex] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
+
+  // ===== API =====
+  const {
+    data: usersResponse,
+    isLoading,
+    refetch
+  } = useGetUsersBasicQuery({
+  page: pageIndex,
+  size: rowsPerPage,
+  sort: `${sortColumn},${sortType}`,
+  login: record.login,
+  email: record.email,
+  name: record.name
+});
+
+const users: ApUser[] = usersResponse ?? [];
+const totalCount = usersResponse?.length ?? 0;
+
+  const [saveUser] = useAddUserMutation();
+  const [updateUser] = useUpdateUserMutation();
   const [deactivateActivateUser] = useDeactivateUserMutation();
 
-   // Pagination values
-  const [pageIndex, setPageIndex] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(15);
+  const { data: facilityListResponse } = useGetFacilitiesQuery({
+    pageSize: 1000
+  });
 
-    const handlePageChange = (_: unknown, newPage: number) => {
-        setPageIndex(newPage);
-    }
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPageIndex(0);
-
-    };
-    const totalCount = users?.length ?? 0;
-    const paginatedData = users?.slice(
-        pageIndex * rowsPerPage,
-        pageIndex * rowsPerPage + rowsPerPage
-    );
-    // Available fields for filtering
-  const filterFields = [
-    { label: 'Full Name', value: 'fullName' },
-    { label: 'User Name', value: 'login' },
-    { label: 'job Role', value: 'jobRoleLvalue' },
-    { label: 'Facility', value: 'organizationKey' },
-    { label: 'Access Role', value: 'accessRoleKey' }
-  ];
-  // Page header setup
-  const divContent = (
-    "Users"
-  );
-  dispatch(setPageCode('Users'));
-  dispatch(setDivContent(divContent));
-  // ClassName for selected row
-  const isSelected = rowData => {
-    if (rowData && user && rowData.id === user.id) {
-      return 'selected-row';
-    } else return '';
-  };
-
-  // Effects
-   useEffect(() => {
-        const handleResize = () => setWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
-
+  // ===== effects =====
   useEffect(() => {
+    dispatch(setPageCode('Users'));
+    dispatch(setDivContent('Users'));
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
+      dispatch(setDivContent(''));
     };
-  }, [location.pathname, dispatch]);
+  }, []);
 
   useEffect(() => {
-    if (saveUserMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveUserMutation.data]);
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
+  // لما يتغير البحث → رجّع الصفحة للأول
   useEffect(() => {
-    if (record['filter']) {
-      handleFilterChange(record['filter'], record['value']);
-    } else {
-      setListRequest({
-        ...initialListRequest,
-        filters: [
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          }
-        ],
-        pageSize: listRequest.pageSize,
-        pageNumber: 1
-      });
-    }
+    setPageIndex(0);
   }, [record]);
 
- 
-  // Handle Save User
-const handleSave = async () => {
-  
-  try {
-    if (user.id !== undefined) {
+  useEffect(() => {
+    setCanProceed(!!(popupOpen && user?.id));
+  }, [popupOpen, user]);
 
-   const  Response= await updateUser({ ...user } ).unwrap();
-      dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
-      setUser({...Response})
-      refetch();
-    } else {
-   
-
-     const Response=await saveUser({ ...user}).unwrap();
-      dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
-      refetch();
-    }
-  
-    refetchFacility();
-    setPopupOpen(false);
-
-  } 
-    catch (error) {
-      console.error("❌ Error saving user:", error);
-
-      let backendMessage = "Failed to save user";
-
-      const message = error?.data?.message?.toLowerCase();
-
-      if (message === "error.emailexists") {
-        backendMessage = "This email is already in use";
+  // ===== handlers =====
+  const handleSave = async () => {
+    try {
+      if (user.id) {
+        const response = await updateUser(user).unwrap();
+        setUser(response);
+        dispatch(notify({ msg: 'User updated successfully', sev: 'success' }));
+      } else {
+        await saveUser(user).unwrap();
+        dispatch(notify({ msg: 'User saved successfully', sev: 'success' }));
       }
-
+      refetch();
+      setCanProceed(true);
+    } catch (error: any) {
+      const message = error?.data?.message?.toLowerCase();
       dispatch(
         notify({
-          msg: backendMessage,
-          sev: "error",
+          msg:
+            message === 'error.emailexists'
+              ? 'This email is already in use'
+              : 'Failed to save user',
+          sev: 'error'
         })
       );
-
-      return;
     }
+  };
+
+  // const handleDeactivateUser = async (data: ApUser) => {
+  //   const action = data.isValid ? 'Deactivated' : 'Activated';
+  //   try {
+  //     await deactivateActivateUser({
+  //       user: { ...data, isValid: !data.isValid }
+  //     }).unwrap();
+  //     dispatch(notify({ msg: `User ${action} successfully`, sev: 'success' }));
+  //     refetch();
+  //   } catch {
+  //     dispatch(notify({ msg: `Failed to ${action} user`, sev: 'error' }));
+  //   }
+  // };
+
+  // ===== filters =====
+  
+  const handleSortChange = (column: string, type: 'asc' | 'desc') => {
+  setSortColumn(column);
+  setSortType(type);
+  setPageIndex(0);
 };
 
-  // Filter table
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'containsIgnoreCase',
-          value,
-          listRequest
-        )
-      );
-    } else {
-      setListRequest({ ...listRequest, filters: [] });
-    }
-  };
-  // Handle click on Add New button
-  const handleAddNew = () => {
-    setUser({ ...newApUser });
-    
-    setPopupOpen(true);
-  };
-  // Handle Deactivate/Activate
-  const handleDactivateUser = async data => {
-    const process = data.isValid ? 'Deactivated' : 'Activated';
-    try {
-      await deactivateActivateUser({
-        user: { ...data, isValid: !data.isValid }
-      })
-        .unwrap()
-        .then(() => {
-          setOpenConfirmDeleteUserModal(false);
-          dispatch(notify({ msg: 'The User was successfully ' + process, sev: 'success' }));
-          refetch();
-        });
-    } catch (error) {
-      dispatch(notify({ msg: 'Failed to ' + process + ' this User', sev: 'error' }));
-    }
-  };
- 
-  //icons column (Edit, Privilege, Licenses & Certifications, Reset Password, Departments Active/Deactivate)
+  const filters = () => (
+    <Form layout="inline" fluid>
+      <MyInput
+        fieldName="name"
+        fieldType="text"
+        record={record}
+        setRecord={setRecord}
+        showLabel={false}
+        placeholder="Search name"
+      />
+      <MyInput
+        fieldName="login"
+        fieldType="text"
+        record={record}
+        setRecord={setRecord}
+        showLabel={false}
+        placeholder="Search username"
+      />
+      <MyInput
+        fieldName="email"
+        fieldType="text"
+        record={record}
+        setRecord={setRecord}
+        showLabel={false}
+        placeholder="Search email"
+      />
+    </Form>
+  );
+
   const iconsForActions = (rowData: ApUser) => (
     <div className="container-of-icons">
       <MdModeEdit
@@ -329,52 +287,26 @@ const handleSave = async () => {
       title: <Translate>Phone Number</Translate>,
       flexGrow: 4
     },
-    // {
-    //   key: 'jobRoleLvalue',
-    //   title: <Translate>job Role</Translate>,
-    //   flexGrow: 4,
-    //   render: rowData => {
-    //     return (
-    //       <p>
-    //         {rowData.jobRoleLvalue ? rowData.jobRoleLvalue.lovDisplayVale : rowData.jobRoleLkey}
-    //       </p>
-    //     );
-    //   }
-    // },
-    // {
-    //   key: 'organizationKey',
-    //   title: <Translate>Facility</Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => (
-    //     <span>
-    //       {conjureValueBasedOnKeyFromList(
-    //         facilityListResponse?.object ?? [],
-    //         rowData.accessRoleKey,
-    //         'facilityName'
-    //       )}
-    //     </span>
-    //   )
-    // },
-    // {
-    //   key: 'accessRoleKey',
-    //   title: <Translate>Access Role</Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => (
-    //     <span>
-    //       {conjureValueBasedOnKeyFromList(
-    //         accessRoleListResponse?.object ?? [],
-    //         rowData.accessRoleKey,
-    //         'name'
-    //       )}
-    //     </span>
-    //   )
-    // },
-    // {
-    //   key: 'isValid',
-    //   title: <Translate>Is Valid</Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => (rowData.isValid ? 'Active' : 'InActive')
-    // },
+    {
+      key: 'admin',
+      title: <Translate>Admin</Translate>,
+      flexGrow: 2,
+      render: rowData => {
+        return rowData?.admin ? 'True' : 'False';
+      }
+    },
+    {
+      key: 'jobRoleLvalue',
+      title: <Translate>job Role</Translate>,
+      flexGrow: 4,
+      render: rowData => {
+        return (
+          <p>
+            {formatEnumString(rowData.jobRole)}
+          </p>
+        );
+      }
+    },
     {
       key: 'icons',
       title: <Translate></Translate>,
@@ -382,84 +314,56 @@ const handleSave = async () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-  // Filter form rendered above the table
-  const filters = () => (
-    <Form layout="inline" fluid>
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={record}
-        setRecord={updatedRecord => {
-          setRecord({
-            ...record,
-            filter: updatedRecord.filter,
-            value: ''
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={record}
-        setRecord={setRecord}
-        showLabel={false}
-        placeholder="Search"
-      />
-    </Form>
-  );
-  
-  return (
-    <div>
-      <div>
-        <Panel>
 
-          <MyTable
-            data={paginatedData ?? []}
-            columns={tableColumns}
-            rowClassName={isSelected}
-            onRowClick={rowData => {
-              setUser(rowData);
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setPageIndex(newPage);
+    }
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPageIndex(0);
+
+    };
+
+
+  return (
+    <Panel>
+      <MyTable
+        data={users}
+        columns={tableColumns}
+        loading={isLoading}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        filters={filters()}
+        tableButtons={
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            onClick={() => {
+              setUser({ ...newApUser });
+              setPopupOpen(true);
             }}
-            sortColumn={listRequest.sortBy}
-            sortType={listRequest.sortType}
-            onSortChange={(sortBy, sortType) => {
-              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-            }}
-            page={pageIndex}
-            rowsPerPage={rowsPerPage}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            filters={filters()}
-            loading={isLoading}
-            tableButtons={          <div className="container-of-add-new-button">
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={handleAddNew}
-              width="109px"
-            >
-              Add New
-            </MyButton>
-          </div>}
-          />
-          <AddEditUser
-            open={popupOpen}
-            setOpen={setPopupOpen}
-            user={user}
-            setUser={setUser}
-            handleSave={handleSave}
-           
-            width={width}
-          />
-        </Panel>
-      </div>
+          >
+            Add New
+          </MyButton>
+        }
+      />
+
+      <AddEditUser
+        open={popupOpen}
+        setOpen={setPopupOpen}
+        user={user}
+        setUser={setUser}
+        handleSave={handleSave}
+        width={width}
+        canProceed={canProceed}
+        setCanProceed={setCanProceed}
+      />
+
       <ResetPassword
         open={resetPasswordPopupOpen}
         setOpen={setResetPasswordPopupOpen}
@@ -467,16 +371,28 @@ const handleSave = async () => {
         setUser={setUser}
         width={width}
       />
-      <ViewDepartments open={departmentsPopupOpen} setOpen={setDepartmentsPopupOpen} user={user} width={width} />
-      <ViewLicenses open={licensePopupOpen} setOpen={setLicensePopupOpen} user={user} width={width} />
-      <DeletionConfirmationModal
-        open={openConfirmDeleteUserModal}
-        setOpen={setOpenConfirmDeleteUserModal}
-        itemToDelete="User"
-        actionButtonFunction={() => handleDactivateUser(user)}
-        actionType={stateOfDeleteUserModal}
+
+      <ViewDepartments
+        open={departmentsPopupOpen}
+        setOpen={setDepartmentsPopupOpen}
+        user={user}
+        width={width}
       />
-    </div>
+      <ViewLicenses
+        open={licensePopupOpen}
+        setOpen={setLicensePopupOpen}
+        user={user}
+        width={width}
+      />
+
+      {/* <DeletionConfirmationModal
+        open={false}
+        setOpen={() => {}}
+        itemToDelete="User"
+        actionButtonFunction={() => handleDeactivateUser(user)}
+        actionType="delete"
+      /> */}
+    </Panel>
   );
 };
 

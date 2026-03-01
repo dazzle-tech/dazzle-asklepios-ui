@@ -49,9 +49,9 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [openDeleteWithCoveragesModal, setOpenDeleteWithCoveragesModal] = useState(false);
-const [coveragesCount, setCoveragesCount] = useState<number>(0);
+  const [coveragesCount, setCoveragesCount] = useState<number>(0);
 
-const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
+  const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
 
   const patientInsuranceResponse = useGetInsurancesByPatientQuery({
     patientId: localPatient.id,
@@ -143,59 +143,56 @@ const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
   };
 
   const handleDeleteInsurance = async (row?: any) => {
-  const target = row ?? selectedInsurance;
-  if (!target?.id) return;
+    const target = row ?? selectedInsurance;
+    if (!target?.id) return;
 
-  setSelectedInsurance(target);
+    setSelectedInsurance(target);
 
-  try {
-    const countRes = await triggerCoveragesCount({ id: target.id }, true).unwrap();
-    const count = Number(countRes ?? 0);
-    setCoveragesCount(count);
+    try {
+      const countRes = await triggerCoveragesCount({ id: target.id }, true).unwrap();
+      const count = Number(countRes ?? 0);
+      setCoveragesCount(count);
 
-    if (count > 0) {
-      setOpenDeleteWithCoveragesModal(true); // ✅ مودال ثانية
-    } else {
-      setOpenDeleteModal(true); // ✅ مودال عادية
+      if (count > 0) {
+        setOpenDeleteWithCoveragesModal(true);
+      } else {
+        setOpenDeleteModal(true);
+      }
+    } catch {
+      // fallback
+      setOpenDeleteModal(true);
     }
-  } catch {
-    // fallback
-    setOpenDeleteModal(true);
-  }
-};
-
+  };
 
   const confirmDeleteInsurance = async () => {
-  if (!selectedInsurance?.id) return;
+    if (!selectedInsurance?.id) return;
 
-  try {
-    await deleteInsurance({ id: selectedInsurance.id, deleteCoverages: false }).unwrap();
-    patientInsuranceResponse.refetch();
-    dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: 'success' }));
-    setSelectedInsurance(null);
-    setOpenDeleteModal(false);
-  } catch (err: any) {
-    const msg = err?.data?.detail || 'Failed to delete insurance';
-    dispatch(notify({ msg, sev: 'error' }));
-  }
-};
+    try {
+      await deleteInsurance({ id: selectedInsurance.id, deleteCoverages: false }).unwrap();
+      patientInsuranceResponse.refetch();
+      dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: 'success' }));
+      setSelectedInsurance(null);
+      setOpenDeleteModal(false);
+    } catch (err: any) {
+      const msg = err?.data?.detail || 'Failed to delete insurance';
+      dispatch(notify({ msg, sev: 'error' }));
+    }
+  };
 
-const confirmDeleteInsuranceWithCoverages = async () => {
-  if (!selectedInsurance?.id) return;
+  const confirmDeleteInsuranceWithCoverages = async () => {
+    if (!selectedInsurance?.id) return;
 
-  try {
-    await deleteInsurance({ id: selectedInsurance.id, deleteCoverages: true }).unwrap();
-    patientInsuranceResponse.refetch();
-    dispatch(notify({ msg: 'Insurance & Coverages Deleted Successfully', sev: 'success' }));
-    setSelectedInsurance(null);
-    setOpenDeleteWithCoveragesModal(false);
-  } catch (err: any) {
-    const msg = err?.data?.detail || 'Failed to delete insurance';
-    dispatch(notify({ msg, sev: 'error' }));
-  }
-};
-
-
+    try {
+      await deleteInsurance({ id: selectedInsurance.id, deleteCoverages: true }).unwrap();
+      patientInsuranceResponse.refetch();
+      dispatch(notify({ msg: 'Insurance & Coverages Deleted Successfully', sev: 'success' }));
+      setSelectedInsurance(null);
+      setOpenDeleteWithCoveragesModal(false);
+    } catch (err: any) {
+      const msg = err?.data?.detail || 'Failed to delete insurance';
+      dispatch(notify({ msg, sev: 'error' }));
+    }
+  };
 
   const columns = [
     {
@@ -343,13 +340,12 @@ const confirmDeleteInsuranceWithCoverages = async () => {
       />
 
       <DeletionConfirmationModal
-  open={openDeleteWithCoveragesModal}
-  setOpen={setOpenDeleteWithCoveragesModal}
-  itemToDelete={coveragesCount}
-  actionButtonFunction={confirmDeleteInsuranceWithCoverages}
-  confirmationQuestion={`Are you sure you want to delete this Insurance (will also delete ${coveragesCount} coverages)`}
-/>
-
+        open={openDeleteWithCoveragesModal}
+        setOpen={setOpenDeleteWithCoveragesModal}
+        itemToDelete={coveragesCount}
+        actionButtonFunction={confirmDeleteInsuranceWithCoverages}
+        confirmationQuestion={`Are you sure you want to delete this Insurance (will also delete ${coveragesCount} coverages)`}
+      />
     </div>
   );
 };

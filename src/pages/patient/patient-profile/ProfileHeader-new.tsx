@@ -226,9 +226,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     if (parsedData.secondName) updatedPatient.secondName = parsedData.secondName;
     if (parsedData.thirdName) updatedPatient.thirdName = parsedData.thirdName;
     if (parsedData.dateOfBirth) updatedPatient.dateOfBirth = parsedData.dateOfBirth;
-    if (parsedData.documentNo) updatedPatient.documentNo = parsedData.documentNo;
-    if (parsedData.documentType) updatedPatient.documentTypeLkey = parsedData.documentType;
-    if (parsedData.nationality) updatedPatient.nationalityLkey = parsedData.nationality;
+    if (parsedData.nationality) updatedPatient.nationality = parsedData.nationality;
     if (parsedData.gender || parsedData.sexAtBirth)
       updatedPatient.sexAtBirth = parsedData.gender || parsedData.sexAtBirth;
 
@@ -265,7 +263,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setPatientImageUrl('');
     setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
-   console.log("localPatient=================>",localPatient);
   return (
     <>
       <Stack>

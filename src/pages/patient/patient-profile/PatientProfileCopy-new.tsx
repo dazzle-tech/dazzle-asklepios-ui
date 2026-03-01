@@ -24,9 +24,14 @@ import ProfileSidebar from './ProfileSidebar-new';
 import ProfileTabs from './ProfileTabs-new';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 
 const { getHeight } = DOMHelper;
+
+
+
+/* ========================================================= */
+/* =============== Helper Functions ======================== */
+/* ========================================================= */
 
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
@@ -41,6 +46,9 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
       ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
       : '';
 
+  /* ========================================================= */
+  /* =============== 1) Bean Validation Errors =============== */
+  /* ========================================================= */
   if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
     const lines = fieldErrors.map((e: any) => {
       const label = fieldLabels[e.field] || e.field;
@@ -50,29 +58,41 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
     return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
   }
 
+  /* ========================================================= */
+  /* =============== 2) Specific Custom Errors ============== */
+  /* ========================================================= */
+
   if (errorKey === 'payload.required') return 'Patient payload is required.' + traceId;
 
   if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
 
-  if (errorKey === 'unique.medical_record_number') return 'A patient with the same medical record number already exists.' + traceId;
+  if (errorKey === 'unique.medical_record_number')
+    return 'A patient with the same medical record number already exists.' + traceId;
 
   if (errorKey === 'db.constraint')
     return detail || 'Database constraint violated while saving or updating patient.' + traceId;
 
+  /* ========================================================= */
+  /* =============== 3) Generic unknown error ================ */
+  /* ========================================================= */
+
   return detail || title || message || 'Unexpected server error occurred.' + traceId;
 };
 
+/* ========================================================= */
+/* ======================= Component ======================== */
+/* ========================================================= */
+
 const PatientProfile = () => {
-  const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
+  const authSlice = useAppSelector(state => state.auth);
   const [localVisit] = useState({ ...newApEncounter, discharge: false });
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
-
-
+  
+  
   const [checkDuplication] = useGetDuplicationCandidatesMutation();
 
-  const [getPatientById] = useLazyGetPatientByIdQuery();
 
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
 
@@ -82,8 +102,11 @@ const PatientProfile = () => {
 
   const location = useLocation();
   const propsData = location.state;
+
+  // Create new patient
   const [addPatient, addResult] = useAddPatientMutation();
 
+  // Update existing patient
   const [updatePatient, updateResult] = useUpdatePatientMutation();
 
   const [refetchData, setRefetchData] = useState(false);
@@ -100,71 +123,107 @@ const PatientProfile = () => {
 
   const [patientList, setPatientList] = useState([]);
 
-  const divContent = 'Patient Registration';
+const divContent = 'Patient Registration';
 
-  const searchRef = useRef<(() => void) | null>(null);
+const searchRef = useRef<(() => void) | null>(null);
 
-  const selectedFacilityId =
-    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
-  console.log("SELECTED FACILITY", selectedFacilityId)
-  const { data: selectedFacility } = useGetFacilityByIdQuery(
-    selectedFacilityId, { skip: !selectedFacilityId }
-  );
+const selectedFacilityId =
+  authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
+console.log('SELECTED FACILITY', selectedFacilityId);
 
+const { data: selectedFacility } = useGetFacilityByIdQuery(selectedFacilityId, {
+  skip: !selectedFacilityId
+});
 
-  const handleSave = async () => {
-    try {
-      if (localPatient?.id) {
-        const updated = await updatePatient({
-          id: localPatient.id,
-          data: { ...localPatient, isCompletedPatient: true, isUnknown: false }
-        }).unwrap();
+/* ========================================================= */
+/* ======================= SAVE / UPDATE ==================== */
+/* ========================================================= */
 
-        setLocalPatient(updated);
-        dispatch(setPatient(updated));
-        dispatch(notify({ msg: 'Patient Updated Successfully', sev: 'success' }));
-        return;
-      }
-
-      const duplicationResponse = await checkDuplication({
-        dto: {
-          ruleId: selectedFacility?.ruleId,
-          dateOfBirth: localPatient.dateOfBirth
-            ? new Date(localPatient.dateOfBirth).toISOString().split("T")[0]
-            : null,
-          gender: localPatient.sexAtBirth,
-          firstName: localPatient.firstName,
-          lastName: localPatient.lastName,
-          documentNo: "",
-          mobileNumber: localPatient.primaryMobileNumber
-        },
-        page: 0,
-        size: 20
+const handleSave = async () => {
+  try {
+    // UPDATE flow (keep same logic + success messaging)
+    if (localPatient?.id) {
+      const updated = await updatePatient({
+        id: localPatient.id,
+        data: { ...localPatient, isCompletedPatient: true, isUnknown: false }
       }).unwrap();
 
-      if (duplicationResponse?.length > 0) {
-        setPatientList(duplicationResponse);
-        setOpenPatientsDuplicateModal(true);
-        return;
+      setLocalPatient(updated);
+      dispatch(setPatient(updated));
+      setValidationResult(undefined);
+      setRefetchData(true);
+
+      dispatch(notify({ msg: 'Patient Updated Successfully', sev: 'success' }));
+
+      if (searchRef.current) {
+        setTimeout(() => {
+          searchRef.current?.();
+        }, 500);
       }
-
-      const saved = await addPatient({
-        ...localPatient,
-        isCompletedPatient: true,
-        isUnknown: false
-      }).unwrap();
-
-      setLocalPatient(saved);
-      dispatch(setPatient(saved));
-      dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-
-    } catch (err: any) {
-      dispatch(notify({ msg: toHumanBackendError(err), sev: 'error' }));
+      return;
     }
-  };
 
+    // CREATE flow: duplication check (keep logic from HEAD)
+    const duplicationResponse = await checkDuplication({
+      dto: {
+        ruleId: selectedFacility?.ruleId,
+        dateOfBirth: localPatient?.dateOfBirth
+          ? new Date(localPatient.dateOfBirth).toISOString().split('T')[0]
+          : null,
+        gender: localPatient?.sexAtBirth,
+        firstName: localPatient?.firstName,
+        lastName: localPatient?.lastName,
+        documentNo: '',
+        mobileNumber: localPatient?.primaryMobileNumber
+      },
+      page: 0,
+      size: 20
+    }).unwrap();
 
+    if (duplicationResponse?.length > 0) {
+      setPatientList(duplicationResponse);
+      setOpenPatientsDuplicateModal(true);
+      return;
+    }
+
+    // CREATE flow: save
+    const saved = await addPatient({
+      ...localPatient,
+      isCompletedPatient: true,
+      isUnknown: false
+    }).unwrap();
+
+    setLocalPatient(saved);
+    dispatch(setPatient(saved));
+    setValidationResult(undefined);
+    setRefetchData(true);
+
+    dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+
+    if (searchRef.current) {
+      setTimeout(() => {
+        searchRef.current?.();
+      }, 500);
+    }
+  } catch (err: any) {
+    // keep the richer field mapping from the other branch
+    const msg = toHumanBackendError(err, {
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      dateOfBirth: 'Date of Birth',
+      primaryMobileNumber: 'Primary Mobile Number',
+      sexAtBirth: 'Sex At Birth',
+      nationality: 'Nationality'
+    });
+
+    dispatch(notify({ msg, sev: 'error' }));
+  }
+};
+
+/* ========================================================= */
+/* ======================= CLEAR ============================ */
+/* ========================================================= */
 
   const handleClear = () => {
     setLocalPatient({ ...newPatient });
@@ -172,6 +231,10 @@ const PatientProfile = () => {
     dispatch(setPatient(null));
     dispatch(setEncounter(null));
   };
+
+  /* ========================================================= */
+  /* ======================== EFFECTS ========================= */
+  /* ========================================================= */
 
   useEffect(() => {
     dispatch(setPageCode('Patient_Registration'));
@@ -236,6 +299,9 @@ const PatientProfile = () => {
 
 
 
+  /* ========================================================= */
+  /* ========================= RENDER ========================= */
+  /* ========================================================= */
 
   return (
     <>
@@ -346,7 +412,7 @@ const PatientProfile = () => {
         handleSave={() =>
           addPatient({
             ...localPatient,
-            isCompletedPatient: true,
+            isCompletedPatient: false,
             isUnknown: false
           })
             .unwrap()
@@ -355,6 +421,12 @@ const PatientProfile = () => {
               dispatch(setPatient(saved));
               dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
               setOpenPatientsDuplicateModal(false);
+
+              if (searchRef.current) {
+                setTimeout(() => {
+                  searchRef.current?.();
+                }, 500);
+              }
             })
         }
       />

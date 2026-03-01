@@ -41,11 +41,15 @@ const DynamicMainTableChart: React.FC<DynamicTableChartProps> = ({
 }) => {
   const tableColumns = columns || (data.length > 0 ? Object.keys(data[0]) : []);
   const mode = useSelector((state: any) => state.ui.mode);
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
 
   return (
     <Panel
       header={title}
       className="main-panel"
+      dir={isRTL ? 'rtl' : 'ltr'}
       style={{
         ...style
       }}

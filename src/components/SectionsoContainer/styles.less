@@ -1,51 +1,107 @@
+/* ============================= */
+/* Section Container */
+/* ============================= */
+
 .container-form-section {
-  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
   background-color: #ffffff;
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px;
+
   box-shadow: 0 0 6px rgba(24, 23, 23, 0.25);
+
+  overflow-x: hidden; // 🔥 يمنع أي كسر عرض
 }
+
+/* Dark Mode */
+.container-form-section.dark {
+  background-color: var(--dark-black);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 6px rgba(255, 255, 255, 0.05);
+  color: #fff !important;
+}
+.container-form-section.dark {
+  .title-div.rs-form,
+  .title-div.rs-form * {
+    color: #fff !important;
+  }
+}
+
+/* ============================= */
+/* Header */
+/* ============================= */
 
 .title-div {
   display: flex;
   justify-content: space-between;
-  height: auto;
-  margin: 0px 5px 0px 5px;
-  position: sticky;
-  // top: 0;
-  background-color: white;
-  // z-index: 10;
+  align-items: center;
+
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-
-.title-div-p {
-  margin-left: 5px;
+.title-text {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
-.title-div-s {
-  margin-top: 1px;
+.title-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
+/* ============================= */
+/* Content */
+/* ============================= */
 
-.title-div-ps {
-  margin-left: 5px;
-  margin-bottom: 5px;
+.section-content {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-.container-form-section.dark {
-  background-color: var(--dark-black);
-  // box-shadow: var(--dark-mode-box-shadow);
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.6),
-    0 0 6px rgba(255, 255, 255, 0.05);
+/* ============================= */
+/* Button Area */
+/* ============================= */
+
+.container-of-add-new-button-pre {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
 }
 
-.title-div.dark {
-  background-color: var(--dark-black);
+/* ============================= */
+/* Responsive */
+/* ============================= */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .container-form-section {
+    padding: 10px;
+  }
 }
 
-.flex-cen-between{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* Mobile */
+@media (max-width: 640px) {
+  .container-form-section {
+    padding: 8px;
+  }
+
+  .title-div {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .container-of-add-new-button-pre {
+    justify-content: center;
+  }
 }

@@ -18,7 +18,7 @@ import { MdAttachFile } from 'react-icons/md';
 import { Checkbox, Form, HStack, Tooltip, Whisper } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import PatientEMRModal from '../patient/patient-emr/PatientEMRModal';
-import Perform from '../encounter/encounter-component/procedure/Perform';
+import Perform from '../encounter/encounter-component/procedure-new/Perform';
 import MyButton from '@/components/MyButton/MyButton';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
