@@ -412,6 +412,9 @@ const MyInput = ({
           ? (props.selectDataLabel as string[])
           : [props.selectDataLabel ?? ''];
         const primaryLabelKey = labelKeys[0] ?? '';
+        const rawValue = record ? record[fieldName] : null;
+        const normalizedValue =
+          rawValue === '' || rawValue === undefined || rawValue === null ? null : rawValue;
 
         return (
           <Form.Control
@@ -481,7 +484,9 @@ const MyInput = ({
           : [props.selectDataLabel ?? 'name'];
         const labelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
-        const pickerValue = record?.[fieldName] ?? '';
+        const rawValue = record?.[fieldName];
+        const pickerValue =
+          rawValue === '' || rawValue === undefined || rawValue === null ? null : rawValue;
 
         return (
           <Form.Control
