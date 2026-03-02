@@ -379,7 +379,6 @@ export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   listOfValueId: null,
   isDefault: false,
   isActive: true
-  // resultUnit: ''
 };
 
 // ------------------- Pathology -------------------
@@ -811,6 +810,7 @@ export const newInventoryProduct: modelTypes.InventoryProduct = {
   erpIntegrationId: null,
   isActive: true
 };
+
 export const newDiagnosticTestCoding: modelTypes.DiagnosticTestCoding = {
   id: undefined,
   procedureId: undefined,
@@ -921,6 +921,7 @@ export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
   color: '--note-purple',
   patientId: undefined
 };
+
 export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
   priceListId: 0,
@@ -1455,12 +1456,13 @@ export const newPatientPaymentDetails: modelTypes.PatientPaymentDetails = {
   payment: { ...newPatientPayments },
   services: []
 };
+
 export const newPriceListAttribute: modelTypes.PriceListAttribute = {
   id: undefined,
   priceListId: undefined,
-  attributeType: null, // PriceAttributes enum as string
+  attributeType: null,
   attribute: null,
-  price: null, // or string if you prefer BigDecimal string
+  price: null,
   isActive: true
 };
 
@@ -1719,4 +1721,47 @@ export const newPatientHIPAA: modelTypes.PatientHIPAA = {
   privacyAuthorization: false,
   noticeOfPrivacyPracticeDate: null,
   privacyAuthorizationDate: null
+};
+
+// ------------------- Encounter Assessment -------------------
+export const newEncounterAssessment: modelTypes.EncounterAssessment = {
+  id: undefined,
+  patientId: null,
+  userId: null,
+  encounterId: null,
+  assessment: '',
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+// ------------------- Encounter Plan -------------------
+export const newEncounterPlan: modelTypes.EncounterPlan = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+  planInstructions: '',
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+// ------------------- Patient Diagnosis -------------------
+export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+  diagnosisId: null,
+  type: null,
+  suspected: false,
+  major: false,
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
 };

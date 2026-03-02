@@ -79,10 +79,12 @@ type MyInputProps = {
   inputColor?: string;
   disabled?: boolean;
   placeholder?: string;
+
   // picker controls (allow override)
   placement?: any;
   preventOverflow?: boolean;
   container?: HTMLElement | (() => HTMLElement);
+
   // select-related
   selectData?: any[];
   selectDataLabel?: string | string[];
@@ -97,13 +99,16 @@ type MyInputProps = {
   defaultSelectValue?: any;
   virtualized?: boolean;
   menuMaxHeight?: number;
+
   // selectPagination
   hasMore?: boolean;
   onFetchMore?: () => void;
+
   // Tag/Check picker
   creatable?: boolean;
   groupBy?: string | null;
   onSelectItem?: (item: any) => void;
+
   max?: number;
   defaultChecked?: boolean;
   checkedLabel?: string;
@@ -114,6 +119,9 @@ type MyInputProps = {
   fieldLabel?: string;
   enterClick?: () => Promise<boolean | void> | boolean | void;
   isEnum?: boolean;
+
+  // time picker
+  hideMinutes?: boolean;
 };
 
 const MyInput = ({
@@ -149,8 +157,9 @@ const MyInput = ({
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    const handleScroll = event => {
-      const path = event.composedPath ? event.composedPath() : [];
+    const handleScroll = (event: any) => {
+      const path: any[] = event?.composedPath?.() ?? [];
+      const target: any = event?.target;
 
       const menuClassList = [
         'rs-picker-popup',
@@ -164,13 +173,16 @@ const MyInput = ({
         'rs-calendar'
       ];
 
-      if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
-        return;
-      }
+      // ignore scroll inside rsuite menu/popup
+      if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) return;
 
-      const openPopup = document.querySelector('.rs-picker-popup');
-      if (openPopup && openPopup.contains(event.target as Node)) {
-        return;
+      // ignore scroll inside modal body
+      if (path.some(el => el?.classList?.contains?.('rs-modal-body'))) return;
+
+      // fallback (safe) for environments where composedPath isn't reliable
+      if (target && typeof target.closest === 'function') {
+        if (target.closest('.rs-picker-popup')) return;
+        if (target.closest('.rs-modal-body')) return;
       }
 
       setIsSelectOpen(false);
@@ -218,7 +230,6 @@ const MyInput = ({
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
 
-  // Default placement/preventOverflow for ALL pickers (can be overridden via props)
   const pickerPlacement = props.placement ?? 'bottomStart';
   const pickerPreventOverflow = props.preventOverflow ?? false;
 
@@ -233,7 +244,6 @@ const MyInput = ({
     return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
   };
 
-  // start speech recognition
   const startListening = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -262,25 +272,19 @@ const MyInput = ({
     recognitionRef.current = recognition;
   };
 
-  // stop speech recognition
   const stopListening = () => {
     recognitionRef.current?.stop();
     recognitionRef.current = null;
   };
 
-  // change recording state
   const changeRecordingState = () => {
     if (!props.disabled) {
-      if (recording) {
-        stopListening();
-      } else {
-        startListening();
-      }
+      if (recording) stopListening();
+      else startListening();
       setRecording(!recording);
     }
   };
 
-  // Resolve a good container for popups (modal-aware), with user override
   const resolveContainer = () =>
     props.container ??
     (() => {
@@ -299,7 +303,6 @@ const MyInput = ({
       return document.body;
     });
 
-  // helper: build label from single أو multiple keys
   const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
     if (!item || !labelKeys?.length) return fallback;
     const parts = labelKeys
@@ -412,6 +415,9 @@ const MyInput = ({
           ? (props.selectDataLabel as string[])
           : [props.selectDataLabel ?? ''];
         const primaryLabelKey = labelKeys[0] ?? '';
+        const rawValue = record ? record[fieldName] : null;
+        const normalizedValue =
+          rawValue === '' || rawValue === undefined || rawValue === null ? null : rawValue;
 
         return (
           <Form.Control
@@ -481,7 +487,9 @@ const MyInput = ({
           : [props.selectDataLabel ?? 'name'];
         const labelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
-        const pickerValue = record?.[fieldName] ?? '';
+        const rawValue = record?.[fieldName];
+        const pickerValue =
+          rawValue === '' || rawValue === undefined || rawValue === null ? null : rawValue;
 
         return (
           <Form.Control
@@ -520,19 +528,15 @@ const MyInput = ({
 
               if (value === null || value === '' || value === undefined) {
                 handleValueChange(null);
-                if (props.onSelectItem) {
-                  props.onSelectItem(null);
-                }
+                props.onSelectItem?.(null);
                 return;
               }
+
               const selectedItem =
                 (props.selectData ?? []).find((x: any) => x[valueKey] === value) ?? item ?? null;
 
               handleValueChange(value);
-
-              if (props.onSelectItem && selectedItem) {
-                props.onSelectItem(selectedItem);
-              }
+              if (props.onSelectItem && selectedItem) props.onSelectItem(selectedItem);
             }}
             renderValue={(value, item, selectedElement) => {
               if (!item) return selectedElement;
@@ -700,7 +704,13 @@ const MyInput = ({
               ? calculateTextWidth(rightAddon)
               : rightAddonwidth ?? addonWidth
             : 0) +
-          (rightAddon ? 2 : 0);
+          (rightAddon ? 2 : 0) +
+          (leftAddon
+            ? leftAddonwidth === 'auto'
+              ? calculateTextWidth(leftAddon)
+              : leftAddonwidth ?? addonWidth
+            : 0) +
+          (leftAddon ? 2 : 0);
 
         const inputControl = (
           <Form.Control
@@ -885,30 +895,6 @@ const MyInput = ({
     }
   };
 
-  // const conjureValidationMessages = () => {
-  //   if (!validationResult) return null;
-  //   const msgs = [];
-  //   let i = 0;
-  //   for (const vrs of validationResult) {
-  //     msgs.push(
-  //       <Form.HelpText
-  //         key={i++}
-  //         style={{
-  //           color:
-  //             vrs.validationType === 'REJECT'
-  //               ? 'red'
-  //               : vrs.validationType === 'WARN'
-  //                 ? 'orange'
-  //                 : 'grey'
-  //         }}
-  //       >
-  //         <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
-  //       </Form.HelpText>
-  //     );
-  //   }
-  //   return msgs;
-  // };
-
   return (
     <Form.Group
       className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
@@ -925,7 +911,6 @@ const MyInput = ({
       </Form.ControlLabel>
       {props.column && <div style={{ marginBottom: 5 }} />}
       {conjureFormControl()}
-      {/* {validationResult && conjureValidationMessages()} */}
     </Form.Group>
   );
 };
