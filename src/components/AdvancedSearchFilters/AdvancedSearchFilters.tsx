@@ -9,6 +9,8 @@ import MyButton from '../MyButton/MyButton';
 import './styles.less';
 const AdvancedSearchFilters = ({
   searchFilter = true,
+  showAdvanceButton = true,
+  extraActions = null,
   clearOnClick = () => {},
   searchOnClick = () => {},
   content = null
@@ -18,9 +20,17 @@ const AdvancedSearchFilters = ({
   return (
     <>
       <div className="bt-right-group">
-        <MyButton appearance="ghost" onClick={() => setShowAdvanced(!showAdvanced)} prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}>
-          Advance
-        </MyButton>
+        {showAdvanceButton && (
+          <MyButton
+            appearance="ghost"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}
+          >
+            Advance
+          </MyButton>
+        )}
+
+        {extraActions}
 
         {searchFilter && (
           <MyButton

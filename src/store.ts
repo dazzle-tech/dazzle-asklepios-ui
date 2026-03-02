@@ -67,6 +67,9 @@ import { radiologyService } from '@/services/setup/diagnosticTest/radiologyTestS
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
+import { generalAssessmentService } from './services/encounters/generalAssessmentService';
+import { chiefComplainService } from './services/encounters/chiefComplainService';
+import { emergencyTriageService } from './services/encounters/er-triage/emergencyTriageService';
 import { vaccineService } from './services/vaccine/vaccineService';
 import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
@@ -270,6 +273,11 @@ export const store = configureStore({
     [dentalActionService.reducerPath]: dentalActionService.reducer,
     [diagnosticTestNormalRangeService.reducerPath]: diagnosticTestNormalRangeService.reducer,
 
+    // encounters (new backend)
+    [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
+    [chiefComplainService.reducerPath]: chiefComplainService.reducer,
+    [emergencyTriageService.reducerPath]: emergencyTriageService.reducer,
+
     //cdt code
     [cdtCodeService.reducerPath]: cdtCodeService.reducer,
 
@@ -419,6 +427,9 @@ export const store = configureStore({
       activeIngredientsService.middleware,
       dentalActionService.middleware,
       diagnosticTestNormalRangeService.middleware,
+      generalAssessmentService.middleware,
+      chiefComplainService.middleware,
+      emergencyTriageService.middleware,
       vaccineService.middleware,
       vaccineBrandsService.middleware,
       procedureSetupService.middleware,
