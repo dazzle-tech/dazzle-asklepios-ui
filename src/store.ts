@@ -117,6 +117,9 @@ import { clinicalRecommendationsService } from './services/ai-services/clinicalR
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
 import { patientReportService } from './services/patientReportService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { encounterAssessmentService } from './services/medicalSheets/clinicalVisit/encounterAssessmentService';
+import { patientDiagnosisService } from './services/medicalSheets/clinicalVisit/patientDiagnosisService';
+import { encounterPlanService } from './services/medicalSheets/clinicalVisit/encounterPlanService';
 
 export const store = configureStore({
   reducer: {
@@ -340,6 +343,10 @@ export const store = configureStore({
     [patientReportService.reducerPath]: patientReportService.reducer,
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
+    [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
+    [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
+    [encounterPlanService.reducerPath]: encounterPlanService.reducer,
+
 
   },
   // @ts-ignore
@@ -460,6 +467,9 @@ export const store = configureStore({
       medicationTestOrdersValidationService.middleware,
       patientReportService.middleware,
       ICDTreeService.middleware,
+      encounterAssessmentService.middleware,
+      patientDiagnosisService.middleware,
+      encounterPlanService.middleware
     ])
 });
 

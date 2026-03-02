@@ -78,10 +78,12 @@ type MyInputProps = {
   inputColor?: string;
   disabled?: boolean;
   placeholder?: string;
+
   // picker controls (allow override)
   placement?: any;
   preventOverflow?: boolean;
   container?: HTMLElement | (() => HTMLElement);
+
   // select-related
   selectData?: any[];
   selectDataLabel?: string | string[];
@@ -96,13 +98,16 @@ type MyInputProps = {
   defaultSelectValue?: any;
   virtualized?: boolean;
   menuMaxHeight?: number;
+
   // selectPagination
   hasMore?: boolean;
   onFetchMore?: () => void;
+
   // Tag/Check picker
   creatable?: boolean;
   groupBy?: string | null;
   onSelectItem?: (item: any) => void;
+
   max?: number;
   defaultChecked?: boolean;
   checkedLabel?: string;
@@ -113,6 +118,9 @@ type MyInputProps = {
   fieldLabel?: string;
   enterClick?: () => Promise<boolean | void> | boolean | void;
   isEnum?: boolean;
+
+  // time picker
+  hideMinutes?: boolean;
 };
 
 const MyInput = ({
@@ -147,9 +155,9 @@ const MyInput = ({
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = event => {
-      const path = event.composedPath ? event.composedPath() : [];
-      const target = event.target as HTMLElement;
+    const handleScroll = (event: any) => {
+      const path: any[] = event?.composedPath?.() ?? [];
+      const target: any = event?.target;
 
       const menuClassList = [
         'rs-picker-popup',
@@ -160,13 +168,17 @@ const MyInput = ({
         'rs-picker-tag-menu'
       ];
 
-      if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
-        return;
+      // ignore scroll inside rsuite menu/popup
+      if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) return;
+
+      // ignore scroll inside modal body
+      if (path.some(el => el?.classList?.contains?.('rs-modal-body'))) return;
+
+      // fallback (safe) for environments where composedPath isn't reliable
+      if (target && typeof target.closest === 'function') {
+        if (target.closest('.rs-picker-popup')) return;
+        if (target.closest('.rs-modal-body')) return;
       }
-
-      if (target.closest('.rs-picker-popup')) return;
-
-      if (target.closest('.rs-modal-body')) return;
 
       setIsSelectOpen(false);
       setIsDateOpen(false);
@@ -200,19 +212,12 @@ const MyInput = ({
 
   const handleValueChange = (value: any) => {
     if (!setRecord || typeof setRecord !== 'function') return;
-
-    if (fieldType === 'date') {
-      setRecord({ ...record, [fieldName]: value });
-      return;
-    }
-
     setRecord({ ...record, [fieldName]: value });
   };
 
   const inputWidth = props?.width ?? 145;
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
 
-  // Default placement/preventOverflow for ALL pickers (can be overridden via props)
   const pickerPlacement = props.placement ?? 'bottomStart';
   const pickerPreventOverflow = props.preventOverflow ?? false;
 
@@ -221,13 +226,12 @@ const MyInput = ({
       return props.menuMaxHeight as number;
     }
     const itemsCount = dataList?.length ?? 0;
-    const estimatedItemHeight = 38; // approx item row height for rsuite pickers
-    const headerAllowance = 24; // search header/padding allowance
-    const capHeight = 240; // sensible default cap
+    const estimatedItemHeight = 38;
+    const headerAllowance = 24;
+    const capHeight = 240;
     return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
   };
 
-  // start speech recognition
   const startListening = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -255,25 +259,20 @@ const MyInput = ({
     recognition.start();
     recognitionRef.current = recognition;
   };
-  // stop speech recognition
+
   const stopListening = () => {
     recognitionRef.current?.stop();
     recognitionRef.current = null;
   };
 
-  // change recording state
   const changeRecordingState = () => {
     if (!props.disabled) {
-      if (recording) {
-        stopListening();
-      } else {
-        startListening();
-      }
+      if (recording) stopListening();
+      else startListening();
       setRecording(!recording);
     }
   };
 
-  // Resolve a good container for popups (modal-aware), with user override
   const resolveContainer = () =>
     props.container ??
     (() => {
@@ -292,7 +291,6 @@ const MyInput = ({
       return document.body;
     });
 
-  // helper: build label from single أو multiple keys
   const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
     if (!item || !labelKeys?.length) return fallback;
     const parts = labelKeys
@@ -463,6 +461,7 @@ const MyInput = ({
           />
         );
       }
+
       case 'selectPagination': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
         const labelKeys = isArrayLabel
@@ -509,19 +508,15 @@ const MyInput = ({
 
               if (value === null || value === '' || value === undefined) {
                 handleValueChange(null);
-                if (props.onSelectItem) {
-                  props.onSelectItem(null);
-                }
+                props.onSelectItem?.(null);
                 return;
               }
+
               const selectedItem =
                 (props.selectData ?? []).find((x: any) => x[valueKey] === value) ?? item ?? null;
 
               handleValueChange(value);
-
-              if (props.onSelectItem && selectedItem) {
-                props.onSelectItem(selectedItem);
-              }
+              if (props.onSelectItem && selectedItem) props.onSelectItem(selectedItem);
             }}
             renderValue={(value, item, selectedElement) => {
               if (!item) return selectedElement;
@@ -586,6 +581,7 @@ const MyInput = ({
           />
         );
       }
+
       case 'multyPicker':
         return (
           <Form.Control
@@ -688,7 +684,13 @@ const MyInput = ({
               ? calculateTextWidth(rightAddon)
               : rightAddonwidth ?? addonWidth
             : 0) +
-          (rightAddon ? 2 : 0);
+          (rightAddon ? 2 : 0) +
+          (leftAddon
+            ? leftAddonwidth === 'auto'
+              ? calculateTextWidth(leftAddon)
+              : leftAddonwidth ?? addonWidth
+            : 0) +
+          (leftAddon ? 2 : 0);
 
         const inputControl = (
           <Form.Control
@@ -805,18 +807,6 @@ const MyInput = ({
                 }
               }}
             />
-            {/* {!props.disabled && (
-              <div
-                className={`container-of-search-icon ${recording ? 'recording' : ''}`}
-                onClick={changeRecordingState}
-              >
-                <FontAwesomeIcon
-                  icon={faMicrophone}
-                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
-                {recording && <span className="pulse-ring"></span>}
-              </div>
-            )} */}
           </div>
         );
 
