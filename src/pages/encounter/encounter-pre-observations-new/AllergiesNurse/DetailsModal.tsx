@@ -178,7 +178,7 @@ const DetailsModal = ({
                   </MyButton>
                 </Col>
               </Row>
-               <br />
+              <br />
               {showAllFields && (
                 <>
                   <Row className="rows-gap">
@@ -339,8 +339,10 @@ const DetailsModal = ({
                       fieldType="textarea"
                       fieldName="note"
                       height={90}
-                      record={allerges}
-                      setRecord={setAllerges}
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
                     />
                   </Row>
                 </>
