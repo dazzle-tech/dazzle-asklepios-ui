@@ -1,3 +1,4 @@
+import { tr } from 'date-fns/locale';
 import * as modelTypes from './model-types-new';
 // ------------------- ApUser -------------------
 export const newApUser: modelTypes.ApUser = {
@@ -32,26 +33,24 @@ export const newCandidate: modelTypes.Candidate = {
   isActive: true
 };
 
-// ------------------- Department -------------------
 export const newDepartment: modelTypes.Department = {
-  id: undefined,
-  facilityId: undefined,
+  id: 0,
+  facilityId: '',
   name: '',
   createdBy: '',
-  createdDate: undefined,
-  lastModifiedBy: undefined,
-  lastModifiedDate: undefined,
-  departmentType: undefined,
-  appointable: undefined,
+  createdDate: 0,
+  lastModifiedBy: '',
+  lastModifiedDate: 0,
+  departmentType: '',
+  appointable: false,
   departmentCode: '',
   phoneNumber: '',
   email: '',
-  encounterType: undefined,
+  encounterType: '',
   isActive: true,
   hasMedicalSheets: false,
   hasNurseMedicalSheets: false
 };
-
 // ------------------- Facility -------------------
 export const newFacility: modelTypes.Facility = {
   id: undefined,
@@ -193,19 +192,18 @@ export const newServiceItem: modelTypes.ServiceItem = {
   isActive: true
 };
 
-// ------------------- Language -------------------
 export const newLanguage: modelTypes.Language = {
-  id: undefined,
-  langKey: undefined,
-  langName: undefined,
-  direction: undefined,
-  details: undefined
+  id: 0,
+  langKey: '',
+  langName: '',
+  direction: '',
+  details: null
 };
-
 // ------------------- Practitioner -------------------
 export const newPractitioner: modelTypes.Practitioner = {
   id: undefined,
-  facilityId: null,
+  facilityId: 0,
+  userId: 0,
   firstName: '',
   lastName: '',
   email: '',
@@ -216,7 +214,6 @@ export const newPractitioner: modelTypes.Practitioner = {
   secondaryMedicalLicense: '',
   educationalLevel: '',
   appointable: false,
-  userId: null,
   defaultLicenseValidUntil: undefined,
   secondaryLicenseValidUntil: undefined,
   dateOfBirth: undefined,
@@ -227,12 +224,12 @@ export const newPractitioner: modelTypes.Practitioner = {
 
 // ------------------- Language Translation -------------------
 export const newLanguageTranslation: modelTypes.LanguageTranslation = {
-  id: undefined,
-  langKey: undefined,
-  translationKey: undefined,
-  translationText: undefined,
-  verified: undefined,
-  translated: undefined
+  id: 0,
+  langKey: '',
+  translationKey: '',
+  translationText: '',
+  verified: false,
+  translated: false
 };
 
 // ------------------- Age Group -------------------
@@ -274,7 +271,7 @@ export const newProcedure: modelTypes.Procedure = {
 export const newAllergen: modelTypes.Allergen = {
   id: undefined,
   name: '',
-  type: null,
+  type: '',
   description: '',
   isActive: true,
   createdBy: '',
@@ -375,15 +372,15 @@ export const newLaboratory: modelTypes.Laboratory = {
 // default empty object
 // ------------------- DiagnosticTestProfile -------------------
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
+  id: undefined,
+  testId: undefined,
   name: '',
-  resultUnit: null,
+  resultUnit: '',
   resultType: null,
   listOfValueId: null,
   isDefault: false,
   isActive: true
-  // resultUnit: ''
 };
-
 // ------------------- Pathology -------------------
 export const newPathology: modelTypes.Pathology = {
   id: undefined,
@@ -473,14 +470,18 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
 export const newActiveIngredientPreRequestedTest: modelTypes.ActiveIngredientPreRequestedTest = {
   id: undefined,
   activeIngredientId: 0,
-  testId: 0
+  testId: 0,
+  description: '',
+  name: ''
 };
 
 // ------------------- Ingredient Synonym -------------------
 export const newActiveIngredientSynonym: modelTypes.ActiveIngredientSynonym = {
   id: undefined,
   activeIngredientId: 0,
-  synonym: ''
+  synonym: '',
+  dentalActionId: 0,
+  cdtId: 0
 };
 
 // ------------------- Special Population -------------------
@@ -498,12 +499,11 @@ export const newActiveIngredientContraindication: modelTypes.ActiveIngredientCon
   icdCodeId: 0
 };
 
-// ------------------- Dental Action -------------------
 export const newDentalAction: modelTypes.DentalAction = {
-  id: null,
-  description: '',
-  type: null,
-  imageName: null,
+  id: null, // Primary key (auto-generated)
+  description: '', // Mandatory field
+  type: null, // Enum (mandatory)
+  imageName: null, // Optional image file name
   isActive: true
 };
 
@@ -679,7 +679,9 @@ export const newVaccineDosesInterval: modelTypes.VaccineDosesInterval = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null
+  lastModifiedDate: null,
+  visitType: '',
+  durationInMinutes: 0
 };
 
 // ------------------- CDT Dental Action -------------------
@@ -852,7 +854,7 @@ export const newDistrictCommunity: modelTypes.DistrictCommunity = {
   districtId: undefined,
   name: '',
   isActive: true,
-  templateValue: null
+  templateValue: ''
 };
 
 // ------------------- Community Area -------------------
@@ -860,7 +862,13 @@ export const newCommunityArea: modelTypes.CommunityArea = {
   id: undefined,
   communityId: undefined,
   name: '',
-  isActive: true
+  isActive: true,
+  patientId: 0,
+  encounterId: 0,
+  dueAmount: 0,
+  remaining: 0,
+  currency: '',
+  facilityDefaultCurrency: ''
 };
 
 // ------------------- Visit Duration -------------------
@@ -961,7 +969,11 @@ export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
   totalAmount: 0,
   paidAmount: 0,
   balanceAmount: 0,
-  currency: null
+  currency: null,
+  encounterType: '',
+  encounterReason: '',
+  priorityLevel: '',
+  status: ''
 };
 
 export const newBillingInvoiceUpdate: modelTypes.BillingInvoiceUpdateVM = {
@@ -1162,7 +1174,14 @@ export const newPatientAccountSummary: modelTypes.PatientAccountSummaryVM = {
   freeBalance: 0,
   outstandingBalance: 0,
   totalInvoiced: 0,
-  totalPaid: 0
+  totalPaid: 0,
+  paymentTypes: '',
+  paymentMethods: '',
+  amount: 0,
+  currency: '',
+  facilityDefaultCurrency: '',
+  addToFreeBalance: false,
+  services: []
 };
 
 // ------------------- Discharge Planning -------------------
@@ -1178,21 +1197,26 @@ export const newDischargePlanning: modelTypes.DischargePlanning = {
   vitalsStable: false,
   pendingInvestigations: false,
   mobilityAdlStatus: false,
+
   diagnosisCode: '',
   diagnosisName: '',
+
   finalMedReconciliationCompleted: false,
   dischargeSummaryPrepared: false,
   dischargeOrdersSigned: false,
   nursingDischargeReportDone: false,
   patientFamilyInformed: false,
   transportArranged: false,
+
   medicalEquipment: '',
   homeCareNeeded: false,
   postDischargeDietaryPlan: '',
   postDischargeSocialNeeds: '',
+
   topicsCovered: '',
   educationDietaryPlan: '',
   educationSocialNeeds: '',
+
   materialLeaflet: false,
   materialVerbal: false,
   materialVideo: false,
@@ -1270,7 +1294,10 @@ export const newPatient: modelTypes.Patient = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null
+  lastModifiedDate: null,
+  visitType: null,
+  durationInMinutes: null,
+  resourceSpecific: false
 };
 
 export const newAddress: modelTypes.Address = {
@@ -1361,7 +1388,6 @@ export const newEncounterVaccination: modelTypes.EncounterVaccination = {
 
   cancelledAt: null,
   cancelledById: null,
-  isExternalFacility: false,
   administeredLocation: null,
   administrationReactions: null,
   externalFacilityName: null,
@@ -1399,7 +1425,9 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
 
   hasPrescription: false,
   hasOrder: false,
-  isObserved: false
+  isObserved: false,
+  paymentDate: '',
+  amount: ''
 };
 
 export const newPatientBasicInformationResponseVM: modelTypes.PatientBasicInformationResponseVM = {
@@ -1500,39 +1528,41 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   facilityId: null,
   departmentId: null,
   formJson: null
-}
+};
 
-export const newPatientServiceAndProduct: modelTypes.PatientServiceAndProduct = {
+// =====================
+// Progress Notes
+// =====================
+
+export const newProgressNote: modelTypes.ProgressNote = {
   id: undefined,
-  patientId: undefined,
+  patient: {
+    id: undefined
+  },
   encounterId: undefined,
-  category: '',
-  serviceId: undefined,
-  productId: undefined,
-  quantity: 0,
+  noteText: '',
+
+  cancelledBy: null,
+  cancelledDate: null,
+  cancellationReason: null,
+
   createdBy: '',
   createdDate: null,
-  lastModifiedBy: '',
-  lastModifiedDate: null
+  lastModifiedBy: null,
+  lastModifiedDate: null,
+  patientId: 0
 };
 
-export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProductCreateDTO = {
+export const newProgressNoteCreateVM: modelTypes.ProgressNoteCreateVM = {
   patientId: undefined,
   encounterId: undefined,
-  category: '',
-  serviceId: undefined,
-  productId: undefined,
-  quantity: 1
+  noteText: ''
 };
 
-export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProductUpdateDTO = {
+export const newProgressNoteUpdateVM: modelTypes.ProgressNoteUpdateVM = {
   id: undefined,
-  category: undefined,
-  serviceId: undefined,
-  productId: undefined,
-  quantity: 0
+  noteText: ''
 };
-
 export const newFavoriteDiagnosticTest: modelTypes.FavoriteDiagnosticTest = {
   id: undefined,
   userId: undefined,
