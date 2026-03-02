@@ -171,7 +171,6 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
       return;
     }
 
-    // ✅ منع الإرسال إذا فاضي
     if (!payload.planInstructions?.trim()) {
       dispatch(
         notify({
