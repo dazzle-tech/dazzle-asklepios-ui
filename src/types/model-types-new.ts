@@ -2690,3 +2690,39 @@ export interface PatientDiagnosis {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+export interface PatientObservationsComplaints {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  patientConditions?: string | null;
+
+  reasonOfVisit?: string | null;
+  latestFunctionalStatus?: string | null;
+  latestCognitiveCheck?: string | null;
+
+  isActive: boolean;
+  functionalStatus?: string | null;
+  cognitiveCheck?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface PainAssessment {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  painDegree?: string | null;
+  painLevel?: 'NO_PAIN' | 'MILD' | 'MODERATE' | 'SEVERE' | string | null;
+  painDescription?: string | null;
+
+  painPattern?: string | null;
+
+  isActive: boolean;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}

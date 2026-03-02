@@ -20,7 +20,7 @@ import { patientService } from '@/services/patientService';
 import { newPatientService } from './services/patient/patientService';
 import { addressService } from './services/patients/AddressService';
 import { hipaaService } from './services/patients/hipaaService';
-import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
+import { patientPreferredHealthProfessionalService } from '@/services/patients/PatientPreferredHealthProfessional';
 import { patientDocumentsService } from './services/patients/patientDocumentsService';
 
 import { setupService } from '@/services/setupService';
@@ -50,7 +50,7 @@ import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
 
 import { labService } from './services/labService';
-import { radService } from '@/services/radService';
+import { radService } from './services/radService';
 import { procedureService } from './services/procedureService';
 import { operationService } from './services/operationService';
 
@@ -103,7 +103,9 @@ import { CdtDentalActionService } from '@/services/setup/dental-action/CdtDental
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
-
+import { generalAssessmentService } from './services/encounters/generalAssessmentService';
+import { chiefComplainService } from './services/encounters/chiefComplainService';
+import { emergencyTriageService } from './services/encounters/er-triage/emergencyTriageService';
 import { vaccineService } from './services/vaccine/vaccineService';
 import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
@@ -178,6 +180,13 @@ import { diagnosticOrderTestReportService } from './services/setup/diagnosticTes
 import { diagnosticOrderTestReportCommentsService } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import { patientDiagnosticResultHistoryService } from './services/diagnosic-order/patientDiagnosticResultHistoryService';
 import { patientReportService } from './services/patientReportService';
+
+import { vitalSignsService } from '@/services/medicalSheets/observations/vitalSignsService';
+import { bodyMeasurementsService } from './services/medicalSheets/observations/bodyMeasurementsService';
+import { patientObservationsComplaintsService } from './services/medicalSheets/observations/patientObservationsComplaintsService';
+import { painAssessmentService } from './services/medicalSheets/observations/painAssessmentService';
+import { additionalMeasurementsService } from './services/medicalSheets/observations/additionalMeasurementsService';
+
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
 import { encounterAssessmentService } from './services/medicalSheets/clinicalVisit/encounterAssessmentService';
@@ -326,7 +335,12 @@ export const store = configureStore({
     [diagnosticTestNormalRangeService.reducerPath]: diagnosticTestNormalRangeService.reducer,
     [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
 
-    // coding
+    // encounters (new backend)
+    [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
+    [chiefComplainService.reducerPath]: chiefComplainService.reducer,
+    [emergencyTriageService.reducerPath]: emergencyTriageService.reducer,
+
+    //cdt code
     [cdtCodeService.reducerPath]: cdtCodeService.reducer,
     [loincCodeService.reducerPath]: loincCodeService.reducer,
     [cptCodeService.reducerPath]: cptCodeService.reducer,
@@ -418,6 +432,7 @@ export const store = configureStore({
     [surgicalHistoryService.reducerPath]: surgicalHistoryService.reducer,
     [socialHistoryService.reducerPath]: socialHistoryService.reducer,
     [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
+
     [patientReportService.reducerPath]: patientReportService.reducer,
     [consultationService.reducerPath]: consultationService.reducer,
     [portalService.reducerPath]: portalService.reducer,
@@ -440,13 +455,20 @@ export const store = configureStore({
     [patientDiagnosticResultHistoryService.reducerPath]:
       patientDiagnosticResultHistoryService.reducer,
 
+    [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+    [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
+    [patientObservationsComplaintsService.reducerPath]:
+      patientObservationsComplaintsService.reducer,
+    [painAssessmentService.reducerPath]: painAssessmentService.reducer,
+    [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
+
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
     [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
     [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
-    [encounterPlanService.reducerPath]: encounterPlanService.reducer,
+    [encounterPlanService.reducerPath]: encounterPlanService.reducer
   },
 
-  middleware: getDefaultMiddleware =>
+  middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat([
       // ai
       idParsingService.middleware,
@@ -556,6 +578,11 @@ export const store = configureStore({
       diagnosticTestNormalRangeService.middleware,
       diagnosticTestCodingService.middleware,
 
+      // encounters (new backend)
+      generalAssessmentService.middleware,
+      chiefComplainService.middleware,
+      emergencyTriageService.middleware,
+
       // dental actions
       dentalActionService.middleware,
       CdtDentalActionService.middleware,
@@ -580,6 +607,7 @@ export const store = configureStore({
       // geo
       countryService.middleware,
       countryDistrictService.middleware,
+      districtCommunityService.middleware,
       districtCommunityService.middleware,
       communityAreaService.middleware,
 
@@ -626,15 +654,18 @@ export const store = configureStore({
       priceListAttributesService.middleware,
       prescriptionPService.middleware,
       radiologyReportApi.middleware,
+
       clinicalSummaryService.middleware,
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
+
       patientProblemService.middleware,
       familyHistoryService.middleware,
       hospitalizationService.middleware,
       surgicalHistoryService.middleware,
       socialHistoryService.middleware,
       favoriteDiagnosticTestService.middleware,
+
       diagnosticOrderTestService.middleware,
       diagnosticOrderService.middleware,
       diagnosticOrderTestCollectedSampleService.middleware,
@@ -646,14 +677,22 @@ export const store = configureStore({
       diagnosticOrderTestReportService.middleware,
       diagnosticOrderTestReportCommentsService.middleware,
       patientDiagnosticResultHistoryService.middleware,
+
       patientReportService.middleware,
+
+      vitalSignsService.middleware,
+      bodyMeasurementsService.middleware,
+      patientObservationsComplaintsService.middleware,
+      painAssessmentService.middleware,
+      additionalMeasurementsService.middleware,
+
       consultationService.middleware,
       portalService.middleware,
       telephonicConsultationService.middleware,
       ICDTreeService.middleware,
       encounterAssessmentService.middleware,
       patientDiagnosisService.middleware,
-      encounterPlanService.middleware,
+      encounterPlanService.middleware
     ])
 });
 
