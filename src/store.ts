@@ -20,7 +20,7 @@ import { patientService } from '@/services/patientService';
 import { newPatientService } from './services/patient/patientService';
 import { addressService } from './services/patients/AddressService';
 import { hipaaService } from './services/patients/hipaaService';
-import { patientPreferredHealthProfessionalService } from '@/services/patients/PatientPreferredHealthProfessional';
+import { patientPreferredHealthProfessionalService } from './services/patients/PatientPreferredHealthProfessional';
 import { patientDocumentsService } from './services/patients/patientDocumentsService';
 
 import { setupService } from '@/services/setupService';
@@ -50,7 +50,7 @@ import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
 
 import { labService } from './services/labService';
-import { radService } from './services/radService';
+import { radService } from '@/services/radService';
 import { procedureService } from './services/procedureService';
 import { operationService } from './services/operationService';
 
@@ -103,9 +103,7 @@ import { CdtDentalActionService } from '@/services/setup/dental-action/CdtDental
 import { procedureSetupService } from './services/setup/procedure/procedureService';
 import { procedureCodingService } from './services/setup/procedure/procedureCodingService';
 import { procedurePriceListService } from './services/setup/procedure/procedurePriceListService';
-import { generalAssessmentService } from './services/encounters/generalAssessmentService';
-import { chiefComplainService } from './services/encounters/chiefComplainService';
-import { emergencyTriageService } from './services/encounters/er-triage/emergencyTriageService';
+
 import { vaccineService } from './services/vaccine/vaccineService';
 import { vaccineBrandsService } from './services/vaccine/vaccineBrandsService';
 import { vaccineDosesService } from './services/vaccine/vaccineDosesService';
@@ -173,11 +171,8 @@ import { diagnosticOrderTestReportService } from './services/setup/diagnosticTes
 import { diagnosticOrderTestReportCommentsService } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import { patientDiagnosticResultHistoryService } from './services/diagnosic-order/patientDiagnosticResultHistoryService';
 import { patientReportService } from './services/patientReportService';
-import { vitalSignsService } from '@/services/medicalSheets/observations/vitalSignsService';
-import { bodyMeasurementsService } from './services/medicalSheets/observations/bodyMeasurementsService';
-import { patientObservationsComplaintsService } from './services/medicalSheets/observations/patientObservationsComplaintsService';
-import { painAssessmentService } from './services/medicalSheets/observations/painAssessmentService';
-import { additionalMeasurementsService } from './services/medicalSheets/observations/additionalMeasurementsService';
+import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
+import { ICDTreeService } from './services/setup/icdTreeService';
 
 export const store = configureStore({
   reducer: {
@@ -324,12 +319,7 @@ export const store = configureStore({
     [diagnosticTestNormalRangeService.reducerPath]: diagnosticTestNormalRangeService.reducer,
     [diagnosticTestCodingService.reducerPath]: diagnosticTestCodingService.reducer,
 
-    // encounters (new backend)
-    [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
-    [chiefComplainService.reducerPath]: chiefComplainService.reducer,
-    [emergencyTriageService.reducerPath]: emergencyTriageService.reducer,
-
-    //cdt code
+    // coding
     [cdtCodeService.reducerPath]: cdtCodeService.reducer,
     [loincCodeService.reducerPath]: loincCodeService.reducer,
     [cptCodeService.reducerPath]: cptCodeService.reducer,
@@ -345,6 +335,7 @@ export const store = configureStore({
 
     // billing
     [BillingService.reducerPath]: BillingService.reducer,
+
     //vaccine
     // vaccines
     [vaccineService.reducerPath]: vaccineService.reducer,
@@ -372,7 +363,6 @@ export const store = configureStore({
     [resultReportApi.reducerPath]: resultReportApi.reducer,
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
 
-    // Visit Duration
     // visit duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
 
@@ -385,6 +375,7 @@ export const store = configureStore({
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
+    // Templates
     // report templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
@@ -414,9 +405,12 @@ export const store = configureStore({
     //AI Services
     [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer,
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
-    [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
+    [patientReportService.reducerPath]: patientReportService.reducer,
+    [telephonicConsultationService.reducerPath]: telephonicConsultationService.reducer,
+    [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
+
     [diagnosticOrderService.reducerPath]: diagnosticOrderService.reducer,
     [diagnosticOrderTestService.reducerPath]: diagnosticOrderTestService.reducer,
     [diagnosticOrderTestCollectedSampleService.reducerPath]:
@@ -434,15 +428,7 @@ export const store = configureStore({
     [patientDiagnosticResultHistoryService.reducerPath]:
       patientDiagnosticResultHistoryService.reducer,
 
-    [patientReportService.reducerPath]: patientReportService.reducer,
-
-    [vitalSignsService.reducerPath]: vitalSignsService.reducer,
-
-    [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
-    [patientObservationsComplaintsService.reducerPath]:
-      patientObservationsComplaintsService.reducer,
-    [painAssessmentService.reducerPath]: painAssessmentService.reducer,
-    [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer
+    [ICDTreeService.reducerPath]: ICDTreeService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -555,11 +541,6 @@ export const store = configureStore({
       diagnosticTestNormalRangeService.middleware,
       diagnosticTestCodingService.middleware,
 
-      // encounters (new backend)
-      generalAssessmentService.middleware,
-      chiefComplainService.middleware,
-      emergencyTriageService.middleware,
-
       // dental actions
       dentalActionService.middleware,
       CdtDentalActionService.middleware,
@@ -646,11 +627,8 @@ export const store = configureStore({
       diagnosticOrderTestReportCommentsService.middleware,
       patientDiagnosticResultHistoryService.middleware,
       patientReportService.middleware,
-      vitalSignsService.middleware,
-      bodyMeasurementsService.middleware,
-      patientObservationsComplaintsService.middleware,
-      painAssessmentService.middleware,
-      additionalMeasurementsService.middleware
+      telephonicConsultationService.middleware,
+      ICDTreeService.middleware
     ])
 });
 
