@@ -507,7 +507,7 @@ const Prescription = props => {
             .join(', ');
         }
         if (rowData.instructionsTypeLkey === '3010573499898196') {
-          return rowData.instructions;
+          return rowData?.instructions;
         }
         if (rowData.instructionsTypeLkey === '3010606785535008') {
           return (
@@ -517,11 +517,11 @@ const Prescription = props => {
             ',' +
             customeInstructions?.object?.find(
               item => item.prescriptionMedicationsKey === rowData.key
-            )?.unitLvalue.lovDisplayVale +
+            )?.unitLvalue?.lovDisplayVale +
             ',' +
             customeInstructions?.object?.find(
               item => item.prescriptionMedicationsKey === rowData.key
-            )?.frequencyLvalue.lovDisplayVale
+            )?.frequencyLvalue?.lovDisplayVale
           );
         }
 

@@ -4,10 +4,10 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
+import FollowupAppointmentModal from '@/pages/Scheduling/scheduling-screen/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
-import { useCompleteEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { notify } from '@/utils/uiReducerActions';
 import {
@@ -63,16 +63,11 @@ const Encounter = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
-  const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
-  const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
-  const [selectedResources, setSelectedResources] = useState([]);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [edit, setEdit] = useState(false);
   const [fromPage, setFromPage] = useState(savedState);
-
 
   // States for floating consultation button
   const [openConsultationPopup, setOpenConsultationPopup] = useState<boolean>(false);
@@ -89,7 +84,7 @@ const Encounter = () => {
   const [openAiPopup, setOpenAiPopup] = useState<boolean>(false);
 
   const [aiButtonPosition, setAiButtonPosition] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180, // جنب الزر الأول
+    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180, 
     y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
   });
 
@@ -161,15 +156,11 @@ const Encounter = () => {
   }, [isDragging, dragOffset, hasMoved]);
 
   // Use departmentKey from encounter, fallback to 5001 if not available
-  const departmentKeyToUse = localEncounter?.departmentKey || '5001';
+  const departmentKeyToUse = localEncounter?.departmentId ;
 
   const { data: departmentSheets = [] } = useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
 
-  // Step 2: Fetch the resource if needed "IF Clinic"
-  const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(medicalSheetRowSourceKey!, {
-    skip: !medicalSheetRowSourceKey
-  });
-
+  
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
@@ -181,41 +172,13 @@ const Encounter = () => {
     }
   }, [location.state]);
 
-  // get Midical Sheets Data Steps
-  useEffect(() => {
-    if (!propsData?.encounter) {
-      navigate('/encounter-list');
-    } else {
-      setEdit(
-        fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === 'CLOSED'
-      );
-      //TODO convert key to code
-      if (
-        propsData?.encounter?.resourceTypeLkey === '2039516279378421' ||
-        propsData?.encounter?.resourceTypeLkey === '4217389643435490' ||
-        propsData?.encounter?.resourceTypeLkey === '6743167799449277'
-      ) {
-        // Clinic logic
-        setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
-        setMedicalSheetSourceKey(undefined);
-      } else {
-        // Not Clinic
-        setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
-        setMedicalSheetRowSourceKey(undefined);
-      }
-    }
-  }, [propsData]);
+ 
 
-  // Step 3: Set departmentKey from resource "IF Clinic"
-  useEffect(() => {
-    if (resourcesResponse?.object?.resourceKey) {
-      setMedicalSheetSourceKey(resourcesResponse.object.resourceKey);
-    }
-  }, [resourcesResponse]);
+
 
   useEffect(() => {
     if (
-      localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT' &&
+      localEncounter?.encounterType == 'INPATIENT' &&
       completeEncounterMutation.status === 'fulfilled'
     ) {
       navigate('/inpatient-encounters-list');
@@ -232,7 +195,7 @@ const Encounter = () => {
           fromPage: 'clinicalVisit'
         }
       });
-    } else if (localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT') {
+    } else if (localEncounter?.encounterType == 'INPATIENT') {
       navigate('/inpatient-encounters-list');
     } else if (propsData?.fromPage === 'DayCaseList') {
       navigate('/day-case-list');
@@ -243,10 +206,20 @@ const Encounter = () => {
     }
   };
 
+  const followUpDraftAppointmentData = React.useMemo(() => {
+    // Seed the follow-up modal with the encounter's patient so it opens ready to save.
+    const patient = propsData?.patient;
+    if (!patient) return null;
+    return {
+      patient,
+      patientId: patient?.id
+    };
+  }, [propsData?.patient]);
+
   const handleCompleteEncounter = async () => {
     try {
       if (propsData.encounter) {
-        await completeEncounter(propsData.encounter).unwrap();
+await completeEncounter({ id: propsData.encounter.id }).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
     } catch (error) {
@@ -354,6 +327,33 @@ const Encounter = () => {
       };
     }
   }, [isAiDragging, aiDragOffset, aiHasMoved, aiButtonPosition]);
+
+  const selectedDeptId = useAppSelector(s => s.auth.selectedDepartment?.departmentId);
+  const selectedFacId = useAppSelector(s => s.auth.selectedDepartment?.facilityId);
+
+  const initialDeptRef = useRef<string | number | undefined>(undefined);
+  const initialFacRef = useRef<string | number | undefined>(undefined);
+  const didCaptureRef = useRef(false);
+
+  useEffect(() => {
+    if (!location.pathname.startsWith('/encounter')) return;
+
+    if (!didCaptureRef.current) {
+      if (selectedDeptId == null) return;
+      didCaptureRef.current = true;
+      initialDeptRef.current = selectedDeptId;
+      initialFacRef.current = selectedFacId;
+      return;
+    }
+
+    const deptChanged = String(selectedDeptId) !== String(initialDeptRef.current);
+    const facChanged = String(selectedFacId) !== String(initialFacRef.current);
+
+    if (deptChanged || facChanged) {
+      navigate('/encounter-list', { replace: true });
+    }
+  }, [selectedDeptId, selectedFacId, location.pathname, navigate]);
+
 
   return (
     <ActionContext.Provider value={{ action, setAction }}>
@@ -475,29 +475,34 @@ const Encounter = () => {
                       <Translate>Admit to Inpatient</Translate>
                     </MyButton>
                   )}
-                {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
+               
                   <MyButton
                     prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                     onClick={() =>
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
-                        ? setOpenDischargeModal(true)
-                        : handleCompleteEncounter()
+                      //when handling inpatient logic add this condition to show discharge modal only for inpatient encounter types
+                      // propsData?.encounter?.encounterType === 'INPATIENT' ||
+                      // propsData?.encounter?.encounterType === 'DAYCASE' ||
+                      // propsData?.encounter?.encounterType === 'PROCEDURE' ||
+                      // propsData?.encounter?.encounterType === 'EMERGENCY'
+                      //   ? setOpenDischargeModal(true)
+                      //   :
+                         handleCompleteEncounter()
                     }
                     appearance="ghost"
                   >
                     <Translate>
-                      {propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_DAYCASE' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_PROC' ||
-                      propsData?.encounter?.resourceTypeLvalue?.valueCode === 'BRT_EMERGENCY'
+                      Complete Visit
+                      {/* {propsData?.encounter?.encounterType === 'INPATIENT' ||
+                      propsData?.encounter?.encounterType === 'DAYCASE' ||
+                      propsData?.encounter?.encounterType === 'PROCEDURE' ||
+                      propsData?.encounter?.encounterType === 'EMERGENCY'
                         ? 'Discharge'
-                        : 'Complete Visit'}
+                        :
+                         'Complete Visit'
+                         } */}
                     </Translate>
                   </MyButton>
-                )}
+                
 
                 {/* show this button only on the dashboard page */}
                 {location.pathname == '/encounter' && (
@@ -661,13 +666,13 @@ const Encounter = () => {
         encounter={propsData?.encounter}
       />
 
-      <AppointmentModal
+      <FollowupAppointmentModal
         from={'Encounter'}
         isOpen={modalOpen}
         onClose={() => {
           setModalOpen(false), setShowAppointmentOnly(false);
         }}
-        appointmentData={selectedEvent?.appointmentData}
+        appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
         onSave={() => {}}

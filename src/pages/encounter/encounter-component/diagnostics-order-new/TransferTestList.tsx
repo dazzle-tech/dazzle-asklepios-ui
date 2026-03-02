@@ -1,19 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetCatalogsByDepartmentAndNotQuery, useGetCatalogTestsQuery } from '@/services/setup/catalog/catalogTestService';
 import {
   Checkbox,
+  CircularProgress,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Paper,
-  TextField,
-  CircularProgress
+  Paper
 } from '@mui/material';
-import { Col, Form, Row } from 'rsuite';
-import MyButton from '@/components/MyButton/MyButton';
+import { skipToken } from '@reduxjs/toolkit/query';
+import SearchIcon from '@rsuite/icons/Search';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import MyInput from '@/components/MyInput';
+import { Col, Form, Row } from 'rsuite';
+import './styles.less';
 
 const TransferTestList = ({
   open,
@@ -28,118 +31,165 @@ const TransferTestList = ({
   isFetching
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
+  const [checked, setChecked] = useState<any[]>([]);
+  const [searchInput, setSearchInput] = useState('');
+  const selectedDepartmentId = useSelector(
+    (state: any) => state.auth?.selectedDepartment?.departmentId
+  );
 
-  const [checked, setChecked] = useState<string[]>([]);
-  const [left, setLeft] = useState<any[]>(leftItems || []);
-  const [right, setRight] = useState<any[]>(rightItems || []);
+  const diagTypeResponse = useEnumOptions("TestType");
 
-  const { data: diagTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
+  const getItemType = (item: any) =>
+    item?.type;
 
-  useEffect(() => {
-    setLeft(leftItems || []);
-  }, [leftItems]);
+  /* ================= helpers ================= */
 
-useEffect(() => {
-  if (!rightItems) return;
+  const getItemKey = (item: any) => item?.id ?? item?.key;
+  const getItemName = (item: any) => item?.testName ?? item?.name ?? '';
 
-  setRight(prev => {
+  const intersection = (a: any[], b: any[]) =>
+    a.filter(v => b.includes(v));
 
-    if (prev.length > 0 && rightItems.length === 0) {
-      return prev;
-    }
-    const prevKeys = prev.map(i => i.key).sort().join(',');
-    const nextKeys = rightItems.map(i => i.key).sort().join(',');
+  /* ================= computed ================= */
 
-    if (prevKeys === nextKeys) {
-      return prev;
-    }
+  const { data: catalogsResponse } =
+    useGetCatalogsByDepartmentAndNotQuery(
+      selectedDepartmentId
+        ? {
+          departmentId: selectedDepartmentId,
+          page: 0,
+          size: 1000,
+        }
+        : skipToken
+    );
 
-    return rightItems;
-  });
-}, [rightItems]);
 
-  const intersection = (array1: any[], array2: any[]) => array1.filter(value => array2.includes(value));
-  const not = (array1: any[], array2: any[]) =>
-    array1.filter(value => !array2.some((x: any) => x.key === value.key));
+  const catalogs = catalogsResponse?.data ?? [];
 
-  const leftChecked = intersection(checked, left.map(item => item.key));
-  const rightChecked = intersection(checked, right.map(item => item.key));
+  const { data: catalogTestsResponse } = useGetCatalogTestsQuery(
+    searchType?.catalogId
+      ? { catalogId: searchType.catalogId, page: 0, size: 1000 }
+      : skipToken
+  );
+
+  const catalogTests = catalogTestsResponse?.data?.tests ?? [];
+
+
+  const leftChecked = intersection(
+    checked,
+    leftItems.map(getItemKey)
+  );
+
+  const rightChecked = intersection(
+    checked,
+    rightItems.map(getItemKey)
+  );
+
+
+  const filteredLeft = useMemo(() => {
+    return leftItems.filter(item => {
+      const testId = getItemKey(item);
+
+      // 🔹 name search
+      const matchesName = getItemName(item)
+        .toLowerCase()
+        .includes((searchTerm ?? '').toLowerCase());
+
+      // 🔹 type filter
+      const selectedType = searchType?.type;
+      const matchesType =
+        !selectedType || getItemType(item) === selectedType;
+
+      // 🔥 catalog filter (REAL SOURCE)
+      const matchesCatalog =
+        !searchType?.catalogId ||
+        catalogTests.some(
+          t => String(t.id) === String(testId)
+        );
+
+      return matchesName && matchesType && matchesCatalog;
+    });
+  }, [
+    leftItems,
+    searchTerm,
+    searchType?.type,
+    searchType?.catalogId,
+    catalogTests
+  ]);
+
+  /* ================= handlers ================= */
 
   const handleToggle = (item: any) => () => {
-    const currentIndex = checked.indexOf(item.key);
-    const newChecked = [...checked];
-
-    if (currentIndex === -1) newChecked.push(item.key);
-    else newChecked.splice(currentIndex, 1);
-
-    setChecked(newChecked);
-  };
-
-  const handleAllRight = () => {
-    const newRight = right.concat(left);
-    setRight(newRight);
-    setLeft([]);
-    setRightItems(newRight);
-    setLeftItems([]);
-    setChecked([]); // optional clear
+    const key = getItemKey(item);
+    setChecked(prev =>
+      prev.includes(key)
+        ? prev.filter(k => k !== key)
+        : [...prev, key]
+    );
   };
 
   const handleCheckedRight = () => {
-    const selectedItems = left.filter(item => leftChecked.includes(item.key));
-    const newRight = right.concat(selectedItems);
-    const newLeft = not(left, selectedItems);
+    const selected = leftItems.filter(i =>
+      leftChecked.includes(getItemKey(i))
+    );
 
-    setRight(newRight);
-    setLeft(newLeft);
-    setChecked(checked.filter(k => !leftChecked.includes(k)));
-
-    setRightItems(newRight);
-    setLeftItems(newLeft);
+    setRightItems([...rightItems, ...selected]);
+    setLeftItems(
+      leftItems.filter(i => !leftChecked.includes(getItemKey(i)))
+    );
+    setChecked([]);
   };
 
   const handleCheckedLeft = () => {
-    const selectedItems = right.filter(item => rightChecked.includes(item.key));
-    const newLeft = left.concat(selectedItems);
-    const newRight = not(right, selectedItems);
+    const selected = rightItems.filter(i =>
+      rightChecked.includes(getItemKey(i))
+    );
 
-    setLeft(newLeft);
-    setRight(newRight);
-    setChecked(checked.filter(k => !rightChecked.includes(k)));
+    setLeftItems([...leftItems, ...selected]);
+    setRightItems(
+      rightItems.filter(i => !rightChecked.includes(getItemKey(i)))
+    );
+    setChecked([]);
+  };
 
-    setLeftItems(newLeft);
-    setRightItems(newRight);
+  const handleAllRight = () => {
+    setRightItems([...rightItems, ...leftItems]);
+    setLeftItems([]);
+    setChecked([]);
   };
 
   const handleAllLeft = () => {
-    const newLeft = left.concat(right);
-    setLeft(newLeft);
-    setRight([]);
-    setLeftItems(newLeft);
+    setLeftItems([...leftItems, ...rightItems]);
     setRightItems([]);
-    setChecked([]); // optional clear
+    setChecked([]);
   };
 
-  const customList = (items: any[]) => (
+  /* ================= effects ================= */
+
+  useEffect(() => {
+    if (!open) return;
+    setChecked([]);
+    setSearchTerm('');
+    setSearchType({});
+  }, [open]);
+
+  /* ================= render ================= */
+
+  const renderList = (items: any[]) => (
     <Paper sx={{ height: '60vh', overflow: 'auto' }}>
-      <List dense component="div" role="list">
+      <List dense>
         {items.map(item => {
-          const labelId = `transfer-list-item-${item.key}-label`;
+          const key = getItemKey(item);
           return (
             <ListItemButton
-              key={item.key}
-              role="listitem"
+              key={key}
               onClick={handleToggle(item)}
               disabled={!!isFetching}
             >
               <ListItemIcon>
-                <Checkbox
-                  checked={checked.includes(item.key)}
-                  tabIndex={-1}
-                  disableRipple
-                  inputProps={{ 'aria-labelledby': labelId }}
-                />
+                <Checkbox checked={checked.includes(key)} />
               </ListItemIcon>
-              <ListItemText id={labelId} primary={item.testName} />
+              <ListItemText primary={getItemName(item)} />
             </ListItemButton>
           );
         })}
@@ -147,60 +197,82 @@ useEffect(() => {
     </Paper>
   );
 
-  const filteredLeft = left.filter(item =>
-    (item.testName ?? '').toLowerCase().includes((searchTerm ?? '').toLowerCase())
-  );
+  const filteredCatalogs = useMemo(() => {
+    if (!searchType?.type) return catalogs;
 
-useEffect(() => {
-  if (!open) return;
-  setChecked([]);
-  setLeft(leftItems || []);
-  setRight(rightItems || []);
-  setSearchTerm('');
-  setSearchType({});
-}, [open]);
+    return catalogs.filter(
+      (catalog: any) => catalog.type === searchType.type
+    );
+  }, [catalogs, searchType?.type]);
+
+
+  useEffect(() => {
+    setSearchType(prev => ({
+      ...prev,
+      catalogId: undefined
+    }));
+  }, [searchType?.type]);
+
 
   return (
     <Row>
       <Row>
-        <Col md={24} style={{ marginBottom: '10px' }}>
-          <Form fluid>
+        <Form fluid>
+          <div className='transfer-test-list-inputs-handle'>
             <MyInput
-              width="100%"
               fieldName="type"
               fieldType="select"
-              selectData={diagTypesLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              fieldLabel="Type"
-              selectDataValue="key"
+              selectData={diagTypeResponse ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
+              width={"20vw"}
               record={searchType}
               setRecord={setSearchType}
-              searchable={false}
               disabled={!!isFetching}
             />
-          </Form>
-        </Col>
 
-        <Col md={24}>
-          <TextField
-            label="Search Test"
-            variant="outlined"
-            size="small"
-            fullWidth
-            sx={{ mb: 1 }}
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            disabled={!!isFetching}
-          />
-        </Col>
+            <MyInput
+              fieldName="catalogId"
+              fieldType="select"
+              fieldLabel="Catalog"
+              selectData={filteredCatalogs ?? []}
+              selectDataLabel="name"
+              selectDataValue="id"
+              width="20vw"
+              record={searchType}
+              setRecord={setSearchType}
+              disabled={!!isFetching}
+            />
+
+          </div>
+        </Form>
+        <Form>
+          <div className='test-name-field-main-container'>
+            <MyInput
+              fieldName="testName"
+              fieldType="text"
+              placeholder="Search Test"
+              record={{ testName: searchInput }}
+              setRecord={(r: any) => setSearchInput(r.testName)}
+              width="100%"
+              disabled={!!isFetching}
+              showLabel={false}
+              rightAddon={<SearchIcon className='search-icon-test-name-icon' onClick={() => setSearchTerm(searchInput)} />}
+              enterClick={() => {
+                setSearchTerm(searchInput);
+              }}
+            />
+          </div>
+        </Form>
       </Row>
 
       <Row
         style={{
           position: 'relative',
-          backgroundColor: mode === 'light' ? '#F8FAFE' : 'var(--extra-dark-black)',
-          padding: '10px',
-          borderRadius: '5px'
+          padding: 10,
+          borderRadius: 5,
+          background:
+            mode === 'light' ? '#F8FAFE' : 'var(--extra-dark-black)'
         }}
       >
         {isFetching && (
@@ -208,74 +280,51 @@ useEffect(() => {
             style={{
               position: 'absolute',
               inset: 0,
-              zIndex: 10,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: mode === 'light' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.35)',
-              borderRadius: '5px'
+              background: 'rgba(0,0,0,0.25)',
+              zIndex: 10
             }}
           >
-            <CircularProgress size={34} />
+            <CircularProgress size={32} />
           </div>
         )}
 
-        <Col md={10}>{customList(filteredLeft)}</Col>
+        <Col md={10}>{renderList(filteredLeft)}</Col>
 
-        <Col md={4}>
+        <Col md={4} style={{ textAlign: 'center' }}>
           <div
             style={{
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '60vh'
+              gap: '16px',
+              alignItems: 'stretch', // 👈 مهم
+              height: '100%'
             }}
           >
-            <Row>
-              <MyButton
-                appearance="ghost"
-                width={50}
-                onClick={handleAllRight}
-                disabled={!!isFetching || left.length === 0}
-              >
-                ≫
-              </MyButton>
-            </Row>
-            <Row>
-              <MyButton
-                appearance="ghost"
-                width={50}
-                onClick={handleCheckedRight}
-                disabled={!!isFetching || leftChecked.length === 0}
-              >
-                &gt;
-              </MyButton>
-            </Row>
-            <Row>
-              <MyButton
-                appearance="ghost"
-                width={50}
-                onClick={handleCheckedLeft}
-                disabled={!!isFetching || rightChecked.length === 0}
-              >
-                &lt;
-              </MyButton>
-            </Row>
-            <Row>
-              <MyButton
-                appearance="ghost"
-                width={50}
-                onClick={handleAllLeft}
-                disabled={!!isFetching || right.length === 0}
-              >
-                ≪
-              </MyButton>
-            </Row>
+            <div style={{ flex: 1 }}>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '12px',
+                minWidth: '50px'
+              }}
+            >
+              <MyButton appearance='ghost' onClick={handleAllRight} disabled={!leftItems.length}>≫</MyButton>
+              <MyButton appearance='ghost' onClick={handleCheckedRight} disabled={!leftChecked.length}>&gt;</MyButton>
+              <MyButton appearance='ghost' onClick={handleCheckedLeft} disabled={!rightChecked.length}>&lt;</MyButton>
+              <MyButton appearance='ghost' onClick={handleAllLeft} disabled={!rightItems.length}>≪</MyButton>
+            </div>
+
+            <div style={{ flex: 1 }}>
+            </div>
           </div>
         </Col>
-
-        <Col md={10}>{customList(right)}</Col>
+        <Col md={10}>{renderList(rightItems)}</Col>
       </Row>
     </Row>
   );

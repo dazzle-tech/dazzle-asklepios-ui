@@ -556,6 +556,8 @@ export interface ApConsultationOrder {
 	facilityKey:string;
 	departmentKey:string;
 	priorityLkey:string;
+	approvalNumber?: string;
+	extraDocumentation?: string;
 } 
 
 export interface ApCpt { 

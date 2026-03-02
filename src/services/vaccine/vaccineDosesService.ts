@@ -12,6 +12,7 @@ type LinkMap = {
   first?: string | null;
   last?: string | null;
 };
+
 type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
 const mapPaged = (response: any[], meta): PagedResult<any> => {
@@ -40,16 +41,32 @@ export const vaccineDosesService = createApi({
       providesTags: ['VaccineDose']
     }),
 
-     getVaccineDoses: builder.query<
-      PagedResult<modelTypes.VaccineDose>,
-      PagedParams
-    >({
+    getVaccineDoses: builder.query<PagedResult<modelTypes.VaccineDose>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/vaccine/doses`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
       providesTags: ['VaccineDose']
+    }),
+     
+    getVaccineDosesByIds: builder.query<modelTypes.VaccineDose[], { ids: Id[] }>({
+      query: ({ ids }) => ({
+        url: `/api/setup/vaccine-doses/by-ids`,
+        params: { ids }
+      }),
+      transformResponse: (res: any) => res ?? [],
+      providesTags: (res) =>
+        res && Array.isArray(res)
+          ? [...res.map((d: any) => ({ type: 'VaccineDose' as const, id: d.id })), 'VaccineDose']
+          : ['VaccineDose']
+    }),
+
+    getVaccineDoseById: builder.query<modelTypes.VaccineDose, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/setup/vaccine-doses/${id}`
+      }),
+      providesTags: (_res, _err, { id }) => [{ type: 'VaccineDose', id }, 'VaccineDose']
     }),
 
     addVaccineDose: builder.mutation<
@@ -83,11 +100,20 @@ export const vaccineDosesService = createApi({
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'VaccineDose', id }, 'VaccineDose']
     }),
+
     getDoseNumbersUpTo: builder.query<string[], { numberOfDoses: string }>({
       query: ({ numberOfDoses }) => ({
         url: `/api/setup/vaccine-doses/dose-numbers/up-to/${numberOfDoses}`
       }),
       providesTags: ['VaccineDose']
+    }),
+
+    getNextVaccineDose: builder.query<modelTypes.VaccineDose | null, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/setup/vaccine-doses/${id}/next`
+      }),
+      transformResponse: (response: any) => response ?? null,
+      providesTags: (_res, _err, { id }) => [{ type: 'VaccineDose', id }, 'VaccineDose']
     })
   })
 });
@@ -99,5 +125,11 @@ export const {
   useGetDoseNumbersUpToQuery,
   useAddVaccineDoseMutation,
   useUpdateVaccineDoseMutation,
-  useToggleVaccineDoseActiveMutation
+  useToggleVaccineDoseActiveMutation,
+  useGetNextVaccineDoseQuery,
+  useLazyGetNextVaccineDoseQuery,
+  useGetVaccineDoseByIdQuery,
+  useLazyGetVaccineDoseByIdQuery,
+  useGetVaccineDosesByIdsQuery,
+  useLazyGetVaccineDosesByIdsQuery
 } = vaccineDosesService;

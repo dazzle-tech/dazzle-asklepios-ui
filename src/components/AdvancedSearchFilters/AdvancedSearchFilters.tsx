@@ -7,37 +7,54 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '../MyButton/MyButton';
 import './styles.less';
+
 const AdvancedSearchFilters = ({
   searchFilter = true,
   clearOnClick = () => {},
   searchOnClick = () => {},
-  content = null
+  content = null,
+  showAdvancedButton = true,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
     <>
       <div className="bt-right-group">
-        <MyButton appearance="ghost" onClick={() => setShowAdvanced(!showAdvanced)} prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}>
-          Advance
-        </MyButton>
+        {showAdvancedButton && (
+          <MyButton
+            appearance="ghost"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            prefixIcon={() => (
+              <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
+            )}
+          >
+            Advance
+          </MyButton>
+        )}
 
         {searchFilter && (
           <MyButton
-            prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
+            prefixIcon={() => (
+              <FontAwesomeIcon icon={faMagnifyingGlass} />
+            )}
             onClick={searchOnClick}
           >
             Search
           </MyButton>
         )}
 
-        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={clearOnClick}>
+        <MyButton
+          prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+          onClick={clearOnClick}
+        >
           Clear
         </MyButton>
       </div>
+
       {showAdvanced && content}
     </>
   );
 };
+
 
 export default AdvancedSearchFilters;

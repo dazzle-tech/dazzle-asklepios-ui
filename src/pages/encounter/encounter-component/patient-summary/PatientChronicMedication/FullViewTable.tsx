@@ -31,77 +31,76 @@ const FullViewTable = ({
     //   }
     // },
     {
-  key: 'medicationBrandName',
-  title: 'MEDICATION BRAND NAME',
-  render: (rowData: any) => {
-    const id = rowData.genericMedicationsKey;
+      key: 'medicationBrandName',
+      title: 'MEDICATION BRAND NAME',
+      render: (rowData: any) => {
+        const id = rowData.genericMedicationsKey;
 
-    const item = genericMedicationListResponse?.data?.find(item => {
-   
-      return item.id === id;
-    });
+        const item = genericMedicationListResponse?.data?.find(item => {
 
-    return item?.name || '-';
-  }
-},
+          return item.id === id;
+        });
+
+        return item?.name || '-';
+      }
+    },
     // don't remove this commented code, may be needed later
-    
+
     // {
     //   key: 'activeIngredients',
     //   title: 'Medication Active Ingredient(s)',
     //   render: (rowData: any) => joinValuesFromArrayo(rowData.activeIngredient, rowData.genericMedicationsKey)
     // },
     {
-         key: 'instructions',
-         dataKey: '',
-         title: 'Instructions',
-         flexGrow: 3,
-         render: (rowData: any) => {
-           if (rowData.instructionsTypeLkey === '3010591042600262') {
-             const generic = predefinedInstructionsListResponse?.data?.find(
-               item => item.id === Number(rowData.instructions)
-             );
-          
-   
-             if (generic) {
-             } else {
-               console.warn('No matching generic found for key:', rowData.instructions);
-             }
-             return [
-               generic?.dose ?? '',
-               formatEnumString(generic?.unit) ?? '',
-               formatEnumString(generic?.rout) ?? '',   // ✅ route
-               formatEnumString(generic?.frequency) ?? '',
-             ]
-               .filter(v => v != null && String(v).trim() !== '')
-               .join(', ');
-           }
-           if (rowData.instructionsTypeLkey === '3010573499898196') {
-             return rowData.instructions;
-           }
-           if (rowData.instructionsTypeLkey === '3010606785535008') {
-             return (
-               customeInstructions?.object?.find(
-                 item => item.prescriptionMedicationsKey === rowData.key
-               )?.dose +
-               ',' +
-               customeInstructions?.object?.find(
-                 item => item.prescriptionMedicationsKey === rowData.key
-               )?.unitLvalue.lovDisplayVale +
-               ',' +
-               customeInstructions?.object?.find(
-                 item => item.prescriptionMedicationsKey === rowData.key
-               )?.frequencyLvalue.lovDisplayVale
-             );
-           }
-   
-           return 'no';
-         }
-       },
+      key: 'instructions',
+      dataKey: '',
+      title: 'Instructions',
+      flexGrow: 3,
+      render: (rowData: any) => {
+        const cleanJoin = (vals: any[], sep = ', ') =>
+          vals
+            .map(v => (v == null ? '' : String(v).trim()))
+            .filter(v => v !== '' && v !== 'undefined' && v !== 'null')
+            .join(sep);
+
+        if (rowData.instructionsTypeLkey === '3010591042600262') {
+          const generic = predefinedInstructionsListResponse?.data?.find(
+            (item: any) => item.id === Number(rowData.instructions)
+          );
+
+          return cleanJoin([
+            generic?.dose,
+            formatEnumString(generic?.unit),
+            formatEnumString(generic?.rout),
+            formatEnumString(generic?.frequency),
+          ]);
+        }
+
+        if (rowData.instructionsTypeLkey === '3010573499898196') {
+          return cleanJoin([rowData?.instructions]);
+        }
+
+        if (rowData.instructionsTypeLkey === '3010606785535008') {
+          const custom = customeInstructions?.object?.find(
+            (item: any) => item?.prescriptionMedicationsKey === rowData.key
+          );
+
+          return cleanJoin([
+            custom?.dose,
+            custom?.unitLvalue?.lovDisplayVale,
+            custom?.frequencyLvalue?.lovDisplayVale,
+            formatEnumString(custom?.roaLkey),
+          ]);
+        }
+
+        return '';
+      }
+
+    },
     {
       key: 'instructionsType',
       title: 'Instructions Type',
-      render: (rowData: any) => rowData.instructionsTypeLvalue || ''
+      render: (rowData: any) => rowData?.instructionsTypeLvalue || ''
     },
     {
       key: 'startDate',

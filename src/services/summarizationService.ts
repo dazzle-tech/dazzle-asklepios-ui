@@ -1,6 +1,5 @@
-// src/services/summarizationService.ts
-import { createApi } from "@reduxjs/toolkit/query/react";
-import { baseQuery, onQueryStarted } from "../api";
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQuery, onQueryStarted } from '../api';
 
 export interface SummarizationBody {
   text: string;
@@ -11,31 +10,28 @@ export interface SummarizationResponse {
 }
 
 export const summarizationService = createApi({
-  reducerPath: "summarizationApi",
+  reducerPath: 'summarizationApi',
   baseQuery: baseQuery,
   endpoints: builder => ({
     summarizeText: builder.mutation<SummarizationResponse, SummarizationBody>({
       query: body => ({
         url: `/encounter/api/summarization/summarize`,
-        method: "POST",
-        body,
+        method: 'POST',
+        body
       }),
       onQueryStarted,
       transformResponse: (response: any) => {
         return response; // backend already provides { summary: ... }
-      },
+      }
     }),
 
     summarizationHealth: builder.query<{ status: string }, void>({
       query: () => ({
-        url: `/encounter/api/summarization/health`,
+        url: `/encounter/api/summarization/health`
       }),
-      onQueryStarted,
-    }),
-  }),
+      onQueryStarted
+    })
+  })
 });
 
-export const {
-  useSummarizeTextMutation,
-  useSummarizationHealthQuery,
-} = summarizationService;
+export const { useSummarizeTextMutation, useSummarizationHealthQuery } = summarizationService;

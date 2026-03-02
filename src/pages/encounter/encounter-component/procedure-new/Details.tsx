@@ -22,7 +22,7 @@ import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { Dropdown, Form } from 'rsuite';
-import PatientOrder from '../diagnostics-order';
+import PatientOrder from '../diagnostics-order-new';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
 import { useLazyGetProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
@@ -255,7 +255,6 @@ const Details = ({
             >
               Order Related Tests
             </MyButton>
-            <MyButton appearance="ghost">Devices & Implants</MyButton>
           </div>
         }
         rightTitle="Procedure"

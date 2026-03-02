@@ -1,452 +1,310 @@
-import Translate from '@/components/Translate';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tooltip, Form, Whisper } from 'rsuite';
-import 'react-tabs/style/react-tabs.css';
-import {
-  useGetEncountersQuery,
-  useCancelEncounterMutation,
-  useCompleteEncounterMutation
-} from '@/services/encounterService';
-import { initialListRequest, ListRequest } from '@/types/types';
-import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import MyTable from '@/components/MyTable';
-import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
+import Translate from '@/components/Translate';
+
+import {
+  useGetEncountersByPatientQuery,
+  useCancelEncounterMutation,
+  useCompleteEncounterMutation,
+  useDischargeEncounterMutation
+} from '@/services/encounters/patientEncounterService';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
+import {
+  faRectangleXmark,
+  faPowerOff,
+  faCheckDouble,
+  faFileInvoiceDollar
+} from '@fortawesome/free-solid-svg-icons';
+
 import { useDispatch } from 'react-redux';
 import { notify } from '@/utils/uiReducerActions';
+
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { faPowerOff } from '@fortawesome/free-solid-svg-icons';
-import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
-import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
-import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
-import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
+import type { Practitioner } from '@/types/model-types-new';
+import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
+import { formatEnumString } from '@/utils';
+import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import type { Department } from '@/types/model-types-new';
 
-const PatientVisitHistoryTable = ({
-  quickAppointmentModel,
-  setQuickAppointmentModel,
-  localPatient
-}) => {
-   const dispatch = useDispatch();
-  const [selectedVisit, setSelectedVisit] = useState(null);
-  const [open, setOpen] = useState(false);
-  const [openDischargeModal, setOpenDischargeModal] = useState(false);
-  // Request object for encounter list API
-  const [visitHistoryListRequest, setVisitHistoryListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    sortBy: 'plannedStartDate',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: localPatient.key || undefined
-      }
-    ],
-    pageSize: 15
-  });
+import './styles.less';
 
-  // Mutations for encounter actions
+const PatientVisitHistoryTable = ({ localPatient }: any) => {
+  const dispatch = useDispatch();
+
+  const [selectedVisit, setSelectedVisit] = useState<any>(null);
+  const [openCancelModal, setOpenCancelModal] = useState(false);
+
+  const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
+  const [quickInitialStep, setQuickInitialStep] = useState<number>(0);
+  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
+    {}
+  );
+  const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
+  const [getPractitionersBulk] = useGetPractitionersBulkMutation();
+  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
+
+  const { data, isFetching } = useGetEncountersByPatientQuery(
+    {
+      patientId: localPatient?.id,
+      page: 0,
+      size: 50,
+      sort: 'createdDate,desc'
+    },
+    {
+      refetchOnMountOrArgChange: true
+    }
+  );
+
+  const encounters = data?.data ?? [];
+
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
-  // Fetch visit history list response
-  const {
-    data: visiterHistoryResponse,
-    refetch: refetchEncounter,
-    isFetching
-  } = useGetEncountersQuery(visitHistoryListRequest, {
-    refetchOnMountOrArgChange: true, // Refetch when component mounts or arguments change
-    refetchOnFocus: true // Refetch when window regains focus
-  });
+  const [dischargeEncounter] = useDischargeEncounterMutation();
 
-  // Fetch all departments for lookup
-  const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
+  const handleCancel = async () => {
+    if (!selectedVisit) return;
 
-  // Fetch all practitioners for lookup
-  const { data: practitionersResponse } = useGetAllPractitionersQuery({
-    page: 0,
-    size: 1000, // Fetch a large number to get all practitioners
-    sort: 'id,asc'
-  });
-
-  // Fetch all resources for lookup
-  const { data: resourcesResponse } = useGetAllResourcesQuery({
-    page: 0,
-    size: 1000, // Fetch a large number to get all resources
-    sort: 'id,asc'
-  });
-
-  // Fetch all diagnostic tests for lookup
-  const { data: diagnosticTestsResponse } = useGetAllDiagnosticTestsQuery({
-    page: 0,
-    size: 1000, // Fetch a large number to get all diagnostic tests
-    sort: 'id,asc'
-  });
-
-  // Create a department lookup map by key
-  const departmentMap = useMemo(() => {
-    if (!allDepartments) return {};
-    const map = {};
-    allDepartments.forEach(dept => {
-      if (dept.key) map[dept.key] = dept;
-      if (dept.id) map[dept.id] = dept;
-    });
-    return map;
-  }, [allDepartments]);
-
-  // Create a practitioner lookup map by key
-  const practitionerMap = useMemo(() => {
-    if (!practitionersResponse?.data) return {};
-    const map = {};
-    practitionersResponse.data.forEach(practitioner => {
-      if (practitioner.key) map[practitioner.key] = practitioner;
-      if (practitioner.id) map[practitioner.id] = practitioner;
-    });
-    return map;
-  }, [practitionersResponse]);
-
-  // Create a resource lookup map by key
-  const resourceMap = useMemo(() => {
-    if (!resourcesResponse?.data) return {};
-    const map = {};
-    resourcesResponse.data.forEach(resource => {
-      if (resource.key) map[resource.key] = resource;
-      if (resource.id) map[resource.id] = resource;
-    });
-    return map;
-  }, [resourcesResponse]);
-
-  // Create a diagnostic test lookup map by key
-  const diagnosticTestMap = useMemo(() => {
-    if (!diagnosticTestsResponse?.data) return {};
-    const map = {};
-    diagnosticTestsResponse.data.forEach(test => {
-      if (test.key) map[test.key] = test;
-      if (test.id) map[test.id] = test;
-    });
-    return map;
-  }, [diagnosticTestsResponse]);
-
- 
-  // Cancel encounter handler
-  const handleCancelEncounter = async () => {
     try {
-      if (selectedVisit) {
-        await cancelEncounter(selectedVisit).unwrap();
-        refetchEncounter();
-        dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
-        setOpen(false);
-      }
-    } catch (error) {
-      dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+      await cancelEncounter({ id: selectedVisit.id }).unwrap();
+      dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
+      setOpenCancelModal(false);
+    } catch {
+      dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
     }
   };
 
-  // Complete encounter handler
-  const handleCompleteEncounter = async () => {
+  const handleComplete = async (row: any) => {
     try {
-      if (selectedVisit) {
-        await completeEncounter(selectedVisit).unwrap();
-        refetchEncounter();
-        dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
-      }
-    } catch (error) {
-      dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
+      await completeEncounter({ id: row.id }).unwrap();
+      dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
+    } catch {
+      dispatch(notify({ msg: 'Error completing encounter', sev: 'error' }));
     }
   };
-  // Table columns definition
-  const tableColumns = [
+
+  const handleDischarge = async (row: any) => {
+    try {
+      await dischargeEncounter({ id: row.id }).unwrap();
+      dispatch(notify({ msg: 'Discharged Successfully', sev: 'success' }));
+    } catch {
+      dispatch(notify({ msg: 'Error discharging encounter', sev: 'error' }));
+    }
+  };
+
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      if (!encounters.length) {
+        setPractitionersMap({});
+        return;
+      }
+
+      const uniqueIds = Array.from(
+        new Set(
+          encounters
+            .map(encounterRow => encounterRow.practitionerId)
+            .filter(practitionerId => practitionerId !== null && practitionerId !== undefined)
+        )
+      );
+
+      if (!uniqueIds.length) return;
+
+      try {
+        const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
+        const practitionersById = Object.fromEntries(
+          practitioners.map(practitioner => [practitioner.id, practitioner])
+        );
+        setPractitionersMap(practitionersById);
+      } catch {
+        // silent
+      }
+    };
+
+    loadPractitioners();
+  }, [encounters]);
+
+  useEffect(() => {
+    const loadDepartments = async () => {
+      if (!encounters.length) {
+        setDepartmentsMap({});
+        return;
+      }
+
+      const uniqueIds = Array.from(
+        new Set(
+          encounters
+            .map(encounterRow => encounterRow.departmentId)
+            .filter(departmentId => departmentId !== null && departmentId !== undefined)
+        )
+      );
+
+      if (!uniqueIds.length) return;
+
+      try {
+        const departments = await getDepartmentsBulk(uniqueIds).unwrap();
+        const departmentsById = Object.fromEntries(
+          departments.map(department => [department.id, department])
+        );
+        setDepartmentsMap(departmentsById);
+      } catch {
+        // silent
+      }
+    };
+
+    loadDepartments();
+  }, [encounters, getDepartmentsBulk]);
+
+  const columns = [
     {
-      key: 'visitId',
-      title: <Translate>key</Translate>,
-      flexGrow: 4,
-      render: (rowData: any) => (
+      key: 'key',
+      title: <Translate>Key</Translate>,
+      render: (row: any) => (
         <a
-          style={{ cursor: 'pointer' }}
+          className="visit-history__encounter-link"
           onClick={() => {
-            setSelectedVisit(rowData);
+            setSelectedVisit(row);
+            setQuickInitialStep(0);
             setQuickAppointmentModel(true);
           }}
         >
-          {rowData.visitId}
+          {row.encounterNumber}
         </a>
       )
     },
+    { key: 'encounterDate', title: <Translate>Date</Translate>, dataKey: 'encounterDate' },
     {
-      key: 'plannedStartDate',
-      title: <Translate>Date</Translate>,
-      flexGrow: 4,
-      dataKey: 'plannedStartDate'
-    },
-    {
-      key: 'departmentName',
+      key: 'department',
       title: <Translate>Department</Translate>,
-      flexGrow: 4,
-      dataKey: 'departmentName',
-      render: (rowData: any) => {
-        const departmentKey = rowData?.departmentKey;
-        const department = departmentKey ? departmentMap[departmentKey] : null;
-        
-        if (department) {
-          return department.name;
-        }
-        
-        return '';
+      render: (row: any) => {
+        const department = departmentsMap[row.departmentId];
+        if (!department) return '';
+        return department.name ?? '';
       }
     },
     {
-      key: 'resourceType',
-      title: <Translate>Resource Type</Translate>,
-      flexGrow: 4,
-      render: (rowData: any) => {
-        return formatEnumString(rowData?.resourceTypeLkey);
+      key: 'practitioner',
+      title: <Translate>Practitioner</Translate>,
+      render: (row: any) => {
+        const practitioner = practitionersMap[row.practitionerId];
+        if (!practitioner) return '';
+        return `${practitioner.firstName} ${practitioner.lastName ?? ''}`.trim();
       }
     },
     {
-      key: 'resource',
-      title: <Translate>Resource</Translate>,
-      flexGrow: 4,
-      render: (rowData: any) => {
-        // Get resource from resource map
-        const resourceKey = rowData?.resourceKey ;
-        const resource = resourceKey ? resourceMap[resourceKey] : null;
-        
-        if (!resource) {
-          return '';
-        }
-        
-        let displayName = resource.resourceKey || '';
-        const resourceType = resource.resourceType;
-        const lookupKey = resource.resourceKey;
-        
-        // Based on resource type, look up the appropriate name
-        if (resourceType === 'PRACTITIONER') {
-          const practitioner = lookupKey ? practitionerMap[lookupKey] : null;
-          
-          if (practitioner) {
-            displayName = practitioner.practitionerFullName || 
-                         `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
-          }
-        } 
-        else if (['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(resourceType)) {
-          const department = lookupKey ? departmentMap[lookupKey] : null;
-          
-          if (department) {
-            displayName = department.name;
-          }
-        }
-        else if (['MEDICAL_TEST'].includes(resourceType)) {
-          const diagnosticTest = lookupKey ? diagnosticTestMap[lookupKey] : null;
-          
-          if (diagnosticTest) {
-            displayName = diagnosticTest.name;
-          }
-        }
-        
-        // Final fallback
-        if (!displayName) {
-          displayName = resource.resourceKey || 'Unknown Resource';
-        }
-        
-        return displayName;
-      }
+      key: 'reason',
+      title: <Translate>Reason</Translate>,
+      render: (row: any) => formatEnumString(row.encounterReason)
     },
     {
       key: 'priority',
       title: <Translate>Priority</Translate>,
-      flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.encounterPriorityLvalue
-          ? rowData.encounterPriorityLvalue.lovDisplayVale
-          : rowData.encounterPriorityLkey
+      render: (row: any) => formatEnumString(row.priorityLevel)
     },
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.encounterStatusLvalue
-          ? rowData.encounterStatusLvalue.lovDisplayVale
-          : rowData.encounterStatusLkey
+      render: (row: any) => formatEnumString(row.status)
     },
     {
       key: 'actions',
-      title: <Translate> </Translate>,
-      render: rowData => {
-        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
-        const tooltipComplete = <Tooltip>Complete Visit</Tooltip>;
-        const tooltipDischarge = <Tooltip>Discharge Visit</Tooltip>;
-        const dischargeResources = ['INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'];
-        const isDischargeResource = dischargeResources.includes(
-          rowData?.resourceTypeLKey
-        );
+      title: '',
+      render: (row: any) => {
+        const encounterStatus = row.status;
+
+        const isOngoing = encounterStatus === 'ONGOING';
+        const isNew = encounterStatus === 'NEW';
+        const isPendingPayment = encounterStatus === 'PENDING_PAYMENT';
 
         return (
-          <Form layout="inline" fluid className="nurse-doctor-form">
-            {rowData?.encounterStatusLvalue?.valueCode === 'NEW' && (
-              <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
-                <div>
-                  <MyButton
-                    size="small"
-                    appearance="subtle"
-                    onClick={() => {
-                      setSelectedVisit(rowData);
-                      setOpen(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faRectangleXmark} />
-                  </MyButton>
-                </div>
+          <Form className="visit-history__actions-form">
+            {isNew && (
+              <Whisper placement="top" speaker={<Tooltip>Cancel</Tooltip>}>
+                <MyButton
+                  appearance="subtle"
+                  size="small"
+                  onClick={() => {
+                    setSelectedVisit(row);
+                    setOpenCancelModal(true);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faRectangleXmark} />
+                </MyButton>
               </Whisper>
             )}
 
-            {rowData?.encounterStatusLvalue?.valueCode === 'ONGOING' && (
-              <Whisper
-                trigger="hover"
-                placement="top"
-                speaker={isDischargeResource ? tooltipDischarge : tooltipComplete}
-              >
-                <div>
-                  <MyButton
-                    size="small"
-                    appearance="subtle"
-                    onClick={() => {
-                      if (isDischargeResource) {
-                        setSelectedVisit(rowData);
-                        setOpenDischargeModal(true);
-                      } else {
-                        setSelectedVisit(rowData);
-                        handleCompleteEncounter();
-                      }
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faPowerOff} />
-                  </MyButton>
-                </div>
+            {isOngoing && (
+              <Whisper placement="top" speaker={<Tooltip>Complete</Tooltip>}>
+                <MyButton
+                  appearance="subtle"
+                  size="small"
+                  onClick={() => handleComplete(row)}
+                >
+                  <FontAwesomeIcon icon={faCheckDouble} />
+                </MyButton>
+              </Whisper>
+            )}
+
+            {isOngoing && (
+              <Whisper placement="top" speaker={<Tooltip>Discharge</Tooltip>}>
+                <MyButton
+                  appearance="subtle"
+                  size="small"
+                  onClick={() => handleDischarge(row)}
+                >
+                  <FontAwesomeIcon icon={faPowerOff} />
+                </MyButton>
+              </Whisper>
+            )}
+
+            {isPendingPayment && (
+              <Whisper placement="top" speaker={<Tooltip>Pay</Tooltip>}>
+                <MyButton
+                  appearance="subtle"
+                  size="small"
+                  onClick={() => {
+                    setSelectedVisit(row);
+                    setQuickInitialStep(1);
+                    setQuickAppointmentModel(true);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                </MyButton>
               </Whisper>
             )}
           </Form>
         );
       }
-    },
-
-    {
-      key: 'visitTypeLvalue',
-      title: <Translate>Visit Type</Translate>,
-      expandable: true,
-      render: (rowData: any) => <span>{rowData?.visitTypeLvalue?.lovDisplayVale}</span>
-    },
-    {
-      key: 'CreatedByAt',
-      title: <Translate>Created By\At</Translate>,
-      expandable: true,
-      render: (rowData: any) =>
-        rowData?.createdAt ? (
-          <>
-            {rowData?.createdBy}
-            <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(rowData.createdAt)}
-            </span>{' '}
-          </>
-        ) : (
-          ' '
-        )
-    },
-    {
-      key: 'cancelledByAt',
-      title: <Translate>Cancelled By\At</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.deletedBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.deletedAt)}</span>
-          </>
-        );
-      }
-    },
-    {
-      key: 'cancellationReason',
-      title: <Translate>Cancellation Reason</Translate>,
-      expandable: true
-    },
-    {
-      key: 'dischargedByAt',
-      title: <Translate>Discharged By\At</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.discharge}</span>
-            <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(rowData.dischargeAt)}
-            </span>
-          </>
-        );
-      }
     }
   ];
 
-  // Effects
-  useEffect(() => {
-    setVisitHistoryListRequest({
-      ...initialListRequest,
-      sortBy: 'plannedStartDate',
-      sortType: 'desc',
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: localPatient.key || undefined
-        }
-      ]
-    });
-  }, [localPatient]);
-
   return (
     <>
-      <MyTable
-        data={visiterHistoryResponse?.object ?? []}
-        columns={tableColumns}
-        height={580}
-        loading={isFetching}
-      />
+      <MyTable data={encounters} columns={columns} loading={isFetching} height={580} />
+
       <DeletionConfirmationModal
-        open={open}
-        setOpen={setOpen}
-        actionButtonFunction={handleCancelEncounter}
-        actionType="Deactivate"
-        confirmationQuestion="Do you want to cancel this Encounter ?"
+        open={openCancelModal}
+        setOpen={setOpenCancelModal}
+        actionButtonFunction={handleCancel}
+        confirmationQuestion="Cancel this encounter?"
         actionButtonLabel="Cancel"
         cancelButtonLabel="Close"
       />
-      <EncounterDischarge
-        open={openDischargeModal}
-        setOpen={setOpenDischargeModal}
-        encounter={selectedVisit}
-      />
-      {quickAppointmentModel ? (
+
+      {quickAppointmentModel && (
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
-          localPatient={localPatient}
           setQuickAppointmentModel={setQuickAppointmentModel}
+          localPatient={localPatient}
           localVisit={selectedVisit}
-          isDisabeld={true}
-          onEncounterSaved={refetchEncounter}
+          isDisabeld={quickInitialStep === 0}
+          initialStep={quickInitialStep}
         />
-      ) : (
-        <></>
       )}
-      
     </>
   );
 };
 
 export default PatientVisitHistoryTable;
-

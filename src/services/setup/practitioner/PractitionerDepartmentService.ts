@@ -1,5 +1,29 @@
 import { BaseQuery } from "@/newApi";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
+import { parseLinkHeader } from "@/utils/paginationHelper";
+
+type LinkMap = {
+  next?: string | null;
+  prev?: string | null;
+  first?: string | null;
+  last?: string | null;
+};
+
+type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+  links?: LinkMap;
+};
+
+const mapPaged = (response: any[], meta: any): PagedResult<any> => {
+  const headers = meta?.response?.headers;
+
+  return {
+    data: response,
+    totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+    links: parseLinkHeader(headers?.get("Link")),
+  };
+};
 
 export const PractitionerDepartmentService = createApi({
   reducerPath: "practitionerDepartmentApi",
@@ -12,7 +36,7 @@ export const PractitionerDepartmentService = createApi({
       query: (body) => ({
         url: "/api/setup/practitioner-department",
         method: "POST",
-        body, // { practitionerId, departmentId }
+        body,
       }),
       invalidatesTags: ["PractitionerDepartment"],
     }),
@@ -26,7 +50,24 @@ export const PractitionerDepartmentService = createApi({
       providesTags: ["PractitionerDepartment"],
     }),
 
-    // 🔹 Delete link between practitioner and department
+    getPractitionersByDepartment: builder.query<
+      PagedResult<any>,
+      { departmentId: number; page: number; size: number; sort?: string }
+    >({
+      query: ({ departmentId, page, size, sort = "id,asc" }) => ({
+        url: `/api/setup/department/${departmentId}/practitioners`,
+        method: "GET",
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: any, meta) => {
+        const rows = Array.isArray(response)
+          ? response
+          : (response?.content ?? []);
+        return mapPaged(rows, meta);
+      },
+      providesTags: ["PractitionerDepartment"],
+    }),
+
     deletePractitionerDepartment: builder.mutation({
       query: ({ practitionerId, departmentId }) => ({
         url: `/api/setup/practitioner/${practitionerId}/departments/${departmentId}`,
@@ -40,5 +81,7 @@ export const PractitionerDepartmentService = createApi({
 export const {
   useCreatePractitionerDepartmentMutation,
   useGetDepartmentsByPractitionerQuery,
+  useGetPractitionersByDepartmentQuery,         
+  useLazyGetPractitionersByDepartmentQuery,      
   useDeletePractitionerDepartmentMutation,
 } = PractitionerDepartmentService;

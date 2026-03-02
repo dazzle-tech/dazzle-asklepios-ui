@@ -133,7 +133,8 @@ const NormalConsultation = (props: any) => {
       consultationTypeLkey: null,
       cityLkey: null,
       consultantSpecialtyLkey: null,
-      preferredConsultantKey: null
+      preferredConsultantKey: null,
+
     });
     setSelectedRows([]);
     setPreviewConsultation(null);

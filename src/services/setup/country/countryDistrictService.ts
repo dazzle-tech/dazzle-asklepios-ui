@@ -27,6 +27,7 @@ export const countryDistrictService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['CountryDistrict'],
   endpoints: builder => ({
+
     getAllDistricts: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/district',
@@ -50,7 +51,7 @@ export const countryDistrictService = createApi({
       WithCountry & { name: string } & PagedParams
     >({
       query: ({ countryId, name, page, size, sort = 'id,desc' }) => ({
-        url: `/api/setup/country/${countryId}/district`,
+        url: `/api/setup/country/${countryId}/district/by-name`,
         params: { name, page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -62,7 +63,7 @@ export const countryDistrictService = createApi({
       WithCountry & { code: string } & PagedParams
     >({
       query: ({ countryId, code, page, size, sort = 'id,desc' }) => ({
-        url: `/api/setup/country/${countryId}/district`,
+        url: `/api/setup/country/${countryId}/district/by-code`,
         params: { code, page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -93,6 +94,17 @@ export const countryDistrictService = createApi({
         method: 'PATCH'
       }),
       invalidatesTags: ['CountryDistrict']
+    }),
+    getActiveDistricts: builder.query<
+      PagedResult<any>,
+      WithCountry & PagedParams
+    >({
+      query: ({ countryId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/district/active',
+        params: { countryId, page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['CountryDistrict']
     })
   })
 });
@@ -108,5 +120,7 @@ export const {
   useLazyGetDistrictsByCodeQuery,
   useAddDistrictMutation,
   useUpdateDistrictMutation,
-  useToggleDistrictActiveMutation
+  useToggleDistrictActiveMutation,
+  useGetActiveDistrictsQuery,
+  useLazyGetActiveDistrictsQuery
 } = countryDistrictService;

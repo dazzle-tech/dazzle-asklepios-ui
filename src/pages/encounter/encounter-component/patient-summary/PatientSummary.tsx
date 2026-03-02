@@ -12,7 +12,7 @@ import PreObservation from './PreObservation/PreObservation';
 import Procedures from './Procedures/Procedures';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ChooseDashboardScreen from './ChooseDashboardSections';
-import { ActionContext } from './ActionContext';
+// import { ActionContext } from './ActionContext';
 import Last24HMedications from './Last24-hMedications';
 import IntakeOutputs from './IntakeOutputs';
 import ChiefComplainSummary from '../nursing-reports-summary/ChiefComplainSummary';
@@ -25,7 +25,7 @@ import { useGetUserDashboardComponentsQuery } from '@/services/encounterService'
 const PatientSummary = () => {
   const location = useLocation();
   const { patient, encounter } = location.state || {};
-  const { setAction } = useContext(ActionContext);
+  // const { setAction } = useContext(ActionContext);
   const [openChooseScreen, setOpenChooseScreen] = useState<boolean>(false);
   const user = JSON.parse(localStorage.getItem('user'));
   const userDashboardComponents = useGetUserDashboardComponentsQuery(user?.id);
@@ -59,36 +59,36 @@ const PatientSummary = () => {
       { id: 'c3', content: <PatientMajorProblemTable patient={patient} />, display: true },
       { id: 'c4', content: <PatientChronicMedicationTable patient={patient} />, display: true },
       { id: 'c5', content: <PreObservation patient={patient} />, display: false },
-      {
-        id: 'c6',
-        content: <FunctionalAssessmentSummary patient={patient} encounter={encounter} />,
-        display: false
-      }
+      // {
+      //   id: 'c6',
+      //   content: <FunctionalAssessmentSummary patient={patient} encounter={encounter} />,
+      //   display: false
+      // }
     ],
     col2: [
       { id: 'c7', content: <ActiveAllergies patient={patient} />, display: true },
       { id: 'c8', content: <MedicalWarnings patient={patient} />, display: true },
-      {
-        id: 'c9',
-        content: <PainAssessmentSummary patient={patient} encounter={encounter} />,
-        display: false
-      },
-      {
-        id: 'c10',
-        content: <GeneralAssessmentSummary patient={patient} encounter={encounter} />,
-        display: false
-      }
+      // {
+      //   id: 'c9',
+      //   content: <PainAssessmentSummary patient={patient} encounter={encounter} />,
+      //   display: false
+      // },
+      // {
+      //   id: 'c10',
+      //   content: <GeneralAssessmentSummary patient={patient} encounter={encounter} />,
+      //   display: false
+      // }
     ],
     col3: [
       { id: 'c11', content: <Procedures patient={patient} />, display: false },
       { id: 'c12', content: <RecentTestResults patient={patient} />, display: false },
-      { id: 'c13', content: <Last24HMedications patient={patient} />, display: false },
-      { id: 'c14', content: <IntakeOutputs patient={patient} />, display: false },
-      {
-        id: 'c15',
-        content: <ChiefComplainSummary patient={patient} encounter={encounter} />,
-        display: false
-      }
+      // { id: 'c13', content: <Last24HMedications patient={patient} />, display: false },
+      // { id: 'c14', content: <IntakeOutputs patient={patient} />, display: false },
+      // {
+      //   id: 'c15',
+      //   content: <ChiefComplainSummary patient={patient} encounter={encounter} />,
+      //   display: false
+      // }
     ]
   });
 
@@ -112,10 +112,10 @@ const PatientSummary = () => {
     }
   }, [userDashboardComponents?.data]);
 
-  useEffect(() => {
-    setAction(() => () => setOpenChooseScreen(true));
-    return () => setAction(() => () => {});
-  }, [setAction]);
+  // useEffect(() => {
+  //   setAction(() => () => setOpenChooseScreen(true));
+  //   return () => setAction(() => () => {});
+  // }, [setAction]);
   useEffect(() => {
     const arr = userDashboardComponents?.data?.object ?? [];
     const newArr = arr.map(item => item.component_key);
