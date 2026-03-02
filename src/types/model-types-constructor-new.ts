@@ -105,6 +105,7 @@ export const newUserDepartment: modelTypes.UserDepartment = {
   isDefault: false
 };
 
+// Patient Attachment Constructors
 // ------------------- Patient Attachment -------------------
 export const newPatientAttachment: modelTypes.PatientAttachment = {
   id: undefined,
@@ -285,9 +286,9 @@ export const newAllergen: modelTypes.Allergen = {
 // ------------------- Diagnostic Test -------------------
 export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   id: undefined,
-  type: null,
-  name: null,
-  internalCode: null,
+  type: '',
+  name: '',
+  internalCode: '',
 
   ageSpecific: false,
   ageGroupList: [],
@@ -344,7 +345,7 @@ export const newDiagnosticOrderTestCollectedSampleResponse: modelTypes.Diagnosti
 
 // ------------------- Laboratory -------------------
 export const newLaboratory: modelTypes.Laboratory = {
-  id: null,
+  id: undefined,
   testId: undefined,
   property: undefined,
   system: undefined,
@@ -371,6 +372,7 @@ export const newLaboratory: modelTypes.Laboratory = {
   timing: null
 };
 
+// default empty object
 // ------------------- DiagnosticTestProfile -------------------
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   name: '',
@@ -379,6 +381,7 @@ export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
   listOfValueId: null,
   isDefault: false,
   isActive: true
+  // resultUnit: ''
 };
 
 // ------------------- Pathology -------------------
@@ -514,6 +517,7 @@ export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange 
   ageTo: undefined,
   ageToUnit: undefined,
   condition: undefined,
+
   resultType: '',
   resultText: undefined,
   resultLov: undefined,
@@ -533,6 +537,7 @@ export const newProcedureCoding: modelTypes.ProcedureCoding = {
   procedureId: undefined,
   codeType: 'CPT_CODES',
   codeId: '',
+  // doseAdjustmentPugC: null,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
@@ -746,6 +751,7 @@ export const newUOMGroupUnit: modelTypes.UOMGroupUnit = {
   id: undefined,
   uom: '',
   uomOrder: 0
+  // uom_group_id: undefined
 };
 
 // ------------------- UOM Group Relation -------------------
@@ -760,6 +766,8 @@ export const newUOMGroupRelation: modelTypes.UOMGroupRelation = {
 export const newActiveIngredientAdverseEffect: modelTypes.ActiveIngredientAdverseEffect = {
   id: undefined,
   activeIngredientId: 0,
+  strength: 0,
+  unit: '',
   adverseEffect: ''
 };
 
@@ -810,7 +818,6 @@ export const newInventoryProduct: modelTypes.InventoryProduct = {
   erpIntegrationId: null,
   isActive: true
 };
-
 export const newDiagnosticTestCoding: modelTypes.DiagnosticTestCoding = {
   id: undefined,
   procedureId: undefined,
@@ -921,7 +928,6 @@ export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
   color: '--note-purple',
   patientId: undefined
 };
-
 export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
   priceListId: 0,
@@ -1008,15 +1014,24 @@ export const newPayor: modelTypes.Payor = {
   isActive: true
 };
 
-// ------------------- Payor Plan -------------------
 export const newPayorPlan: modelTypes.PayorPlan = {
   id: undefined,
-  payorId: 0,
+  code: '',
   name: '',
-  planType: null,
-  itemType: null,
-  amount: null,
-  coverageType: null,
+  category: null,
+  address: '',
+  phone: '',
+  email: '',
+  contractManagerContact: '',
+  startDate: null,
+  expiryDate: null,
+  renewable: false,
+  allowPartialCoverage: false,
+  acceptCopay: false,
+  acceptDeductibles: false,
+  allowPackagePricing: false,
+  allowDrgBilling: false,
+  forcePreApproval: false,
   isActive: true,
   createdDate: null,
   lastModifiedDate: null
@@ -1456,13 +1471,12 @@ export const newPatientPaymentDetails: modelTypes.PatientPaymentDetails = {
   payment: { ...newPatientPayments },
   services: []
 };
-
 export const newPriceListAttribute: modelTypes.PriceListAttribute = {
   id: undefined,
   priceListId: undefined,
-  attributeType: null,
+  attributeType: null, // PriceAttributes enum as string
   attribute: null,
-  price: null,
+  price: null, // or string if you prefer BigDecimal string
   isActive: true
 };
 
@@ -1691,82 +1705,3 @@ export const newPatientHIPAA: modelTypes.PatientHIPAA = {
   noticeOfPrivacyPracticeDate: null,
   privacyAuthorizationDate: null
 };
-
-// ------------------- Encounter Assessment -------------------
-export const newEncounterAssessment: modelTypes.EncounterAssessment = {
-  id: undefined,
-  patientId: null,
-  userId: null,
-  encounterId: null,
-  assessment: '',
-
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Encounter Plan -------------------
-export const newEncounterPlan: modelTypes.EncounterPlan = {
-  id: undefined,
-  patientId: null,
-  encounterId: null,
-  planInstructions: '',
-
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-// ------------------- Patient Diagnosis -------------------
-export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
-  id: undefined,
-  patientId: null,
-  encounterId: null,
-  diagnosisId: null,
-  type: null,
-  suspected: false,
-  major: false,
-
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-export interface PatientObservationsComplaints {
-  id?: number;
-
-  patientId: number;
-  encounterId: number;
-
-  patientConditions?: string | null;
-
-  reasonOfVisit?: string | null;
-  latestFunctionalStatus?: string | null;
-  latestCognitiveCheck?: string | null;
-
-  isActive: boolean;
-  functionalStatus?: string | null;
-  cognitiveCheck?: string | null;
-  createdDate?: Date | string | null;
-  lastModifiedDate?: Date | string | null;
-}
-export interface PainAssessment {
-  id?: number;
-
-  patientId: number;
-  encounterId: number;
-
-  painDegree?: string | null;
-  painLevel?: 'NO_PAIN' | 'MILD' | 'MODERATE' | 'SEVERE' | string | null;
-  painDescription?: string | null;
-
-  painPattern?: string | null;
-
-  isActive: boolean;
-
-  createdDate?: Date | string | null;
-  lastModifiedDate?: Date | string | null;
-}
