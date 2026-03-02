@@ -9,6 +9,7 @@ import QuickPatient from './QuickPatient';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import CreateNewPatient from './CreateNewPatient';
 import MyButton from '@/components/MyButton/MyButton';
+
 import './styles.less';
 const RegistrationWizard = () => {
   const [open, setOpen] = useState(false);
@@ -16,7 +17,6 @@ const RegistrationWizard = () => {
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
 
 
-  // Effects
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {

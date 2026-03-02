@@ -1,215 +1,474 @@
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
-import { useAppDispatch } from '@/hooks';
-import { faUser, faIdCard, faPhone, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
-import MyInput from '@/components/MyInput';
-import './styles.less';
-import { newApEncounter, newApPatientInsurance, newApPatient } from '@/types/model-types-constructor';
-import { ApPatientInsurance, ApPatient } from '@/types/model-types';
-import MyModal from '@/components/MyModal/MyModal';
-import { useGetLovValuesByCodeAndParentQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useSavePatientMutation, useSavePatientInsuranceMutation } from '@/services/patientService';
 import { useNavigate } from 'react-router-dom';
-import { notify } from '@/utils/uiReducerActions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import MyButton from '@/components/MyButton/MyButton';
-import { calculateAgeFormat } from '@/utils';
-import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+
+import { useAppDispatch } from '@/hooks';
+
+import MyModal from '@/components/MyModal/MyModal';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+
+import {
+  useAddPatientDocumentMutation,
+  useAddNoDocumentMutation
+} from '@/services/patients/patientDocumentsService';
+
+import { notify } from '@/utils/uiReducerActions';
+import { calculateAgeFormat } from '@/utils';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faIdCard, faPhone, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
+
+import {
+  useGetLovValuesByCodeQuery,
+  useGetLovValuesByCodeAndParentQuery
+} from '@/services/setupService';
+
+import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
-// NEW IMPORTS for Payors / Plans
-import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
-import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
+import { useAddPatientMutation, useUpdatePatientMutation } from '@/services/patient/patientService';
+
+import { newPatient, newPatientDocument } from '@/types/model-types-constructor-new';
+import { Patient } from '@/types/model-types-new';
+
+import { newApEncounter, newApPatientInsurance } from '@/types/model-types-constructor';
+import { ApPatientInsurance } from '@/types/model-types';
+
+import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
+
+const toHumanPatientDocumentError = (
+  err,
+  fieldLabels = {
+    type: 'Document Type',
+    countryId: 'Document Country',
+    number: 'Document Number',
+    isPrimary: 'Primary Document'
+  }
+) => {
+  const data = err?.data ?? {};
+  const title = data.title ?? '';
+  const detail = data.detail ?? '';
+  const message = data.message ?? '';
+  const type = data.type ?? '';
+  const traceId =
+    data.traceId || data.correlationId ? `\nTrace ID: ${data.traceId || data.correlationId}` : '';
+
+  const payloadText = [title, detail, message].filter(Boolean).join(' | ');
+
+  const isValidation =
+    data?.message === 'error.validation' ||
+    title?.toLowerCase()?.includes?.('argument not valid') ||
+    (typeof type === 'string' && type.includes('constraint-violation'));
+
+  const normalize = msg => {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('must not be null')) return 'is required';
+    if (m.includes('must not be empty')) return 'is required';
+    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('size must be between')) return 'length is out of range';
+    return msg || 'invalid value';
+  };
+
+  if (isValidation && Array.isArray(data.fieldErrors) && data.fieldErrors.length) {
+    const lines = data.fieldErrors.map(fe => {
+      const label = fieldLabels[fe.field] ?? fe.field;
+      return `• ${label}: ${normalize(fe.message)}`;
+    });
+
+    return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+  }
+
+  const looksLikeConstraintViolation =
+    payloadText.toLowerCase().includes('constraintviolation') ||
+    payloadText.toLowerCase().includes('interpolatedmessage=');
+
+  if (looksLikeConstraintViolation) {
+    const matches = [];
+    const regex = /propertyPath\s*=\s*([a-zA-Z0-9_.\[\]]+).*?interpolatedMessage\s*=\s*'([^']+)'/g;
+
+    let m;
+    while ((m = regex.exec(payloadText)) !== null) {
+      matches.push({ field: m[1], msg: m[2] });
+    }
+
+    if (matches.length) {
+      const lines = matches.map(({ field, msg }) => {
+        const base =
+          field
+            .split(/[.\[\]]/)
+            .filter(Boolean)
+            .pop() || field;
+        const label = fieldLabels[base] ?? base;
+        return `• ${label}: ${normalize(msg)}`;
+      });
+
+      return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+    }
+  }
+
+  let errorKey = data.errorKey || data.message || data.properties?.message || '';
+  errorKey = errorKey.replace(/^error\./, '');
+
+  const keyMap = {
+    'payload.required': 'Document payload is required.',
+    'patient.required': 'Patient ID is required.',
+    'country.required': 'Document country is required.',
+    'number.required': 'Document number is required.',
+    'type.required': 'Document type is required.',
+    'primary.exists': 'This patient already has a primary document.',
+    'unique.document': 'A document with the same number, type, and country already exists.',
+    'db.constraint':
+      'A document with this number already exists for this patient. Please use a different document number.',
+    notfound: 'Patient document not found.'
+  };
+
+  if (keyMap[errorKey]) {
+    return keyMap[errorKey] + traceId;
+  }
+
+  if (
+    payloadText.toLowerCase().includes('constraint') ||
+    payloadText.toLowerCase().includes('unique') ||
+    payloadText.toLowerCase().includes('duplicate')
+  ) {
+    return (
+      'A document with this number already exists for this patient. Please use a different document number.' +
+      traceId
+    );
+  }
+
+  return detail || title || message || 'Unexpected error occurred while saving document.' + traceId;
+};
+
+const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
+  const data = err?.data ?? {};
+  const title = data?.title || '';
+  const detail = data?.detail || '';
+  const message = data?.message || '';
+  const type = data?.type || '';
+  const fieldErrors = data?.fieldErrors;
+
+  const traceId =
+    data?.traceId || data?.correlationId
+      ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
+      : '';
+
+  const payloadText = [title, detail, message].filter(Boolean).join(' | ');
+
+  const isValidation =
+    data?.message === 'error.validation' ||
+    title?.toLowerCase()?.includes?.('argument not valid') ||
+    (typeof type === 'string' && type.includes('constraint-violation'));
+
+  const normalize = msg => {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('must not be null')) return 'is required';
+    if (m.includes('must not be empty')) return 'is required';
+    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('size must be between')) return 'length is out of range';
+    return msg || 'invalid value';
+  };
+
+  if (isValidation && Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+    const lines = fieldErrors.map((e: any) => {
+      const label = fieldLabels[e.field] || e.field;
+      return `• ${label}: ${normalize(e.message)}`;
+    });
+
+    return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+  }
+
+  const looksLikeConstraintViolation =
+    payloadText.toLowerCase().includes('constraintviolation') ||
+    payloadText.toLowerCase().includes('interpolatedmessage=');
+
+  if (looksLikeConstraintViolation) {
+    const matches = [];
+    const regex = /propertyPath\s*=\s*([a-zA-Z0-9_.\[\]]+).*?interpolatedMessage\s*=\s*'([^']+)'/g;
+
+    let m;
+    while ((m = regex.exec(payloadText)) !== null) {
+      matches.push({ field: m[1], msg: m[2] });
+    }
+
+    if (matches.length) {
+      const lines = matches.map(({ field, msg }) => {
+        const base =
+          field
+            .split(/[.\[\]]/)
+            .filter(Boolean)
+            .pop() || field;
+        const label = fieldLabels[base] ?? base;
+        return `• ${label}: ${normalize(msg)}`;
+      });
+
+      return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
+    }
+  }
+
+  let errorKey = data.errorKey || data.message || data.properties?.message || '';
+  errorKey = errorKey.replace(/^error\./, '');
+
+  const keyMap = {
+    'payload.required': 'Patient payload is required.',
+    notfound: 'Patient not found.',
+    'unique.medical_record_number': 'A patient with the same medical record number already exists.',
+    'db.constraint': 'Database constraint violated while saving/updating patient.'
+  };
+
+  if (keyMap[errorKey]) {
+    return keyMap[errorKey] + traceId;
+  }
+
+  return detail || title || message || 'Unexpected server error occurred.' + traceId;
+};
 
 const CreateNewPatient = ({ open, setOpen }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
-  const [savePatientInsurance] = useSavePatientInsuranceMutation();
-  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
-  const [savePatient, savePatientMutation] = useSavePatientMutation();
+
+  const pageCode = useSelector(state => state.div?.pageCode);
+
+  const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
+  const [secondaryDocument, setSecondaryDocument] = useState(newPatientDocument);
+  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({
+    ...newApPatientInsurance
+  });
   const [openNextDocument, setOpenNextDocument] = useState(false);
+
   const [localEncounter, setLocalEncounter] = useState({
     ...newApEncounter,
     visitTypeLkey: '2041082245699228',
-    patientKey: localPatient.key,
+    patientId: localPatient.id,
     plannedStartDate: new Date(),
-    patientAge: calculateAgeFormat(localPatient.dob),
-    discharge: false,
+    patientAge: calculateAgeFormat(localPatient.dateOfBirth),
+    discharge: false
   });
+
+  const [addPatient] = useAddPatientMutation();
+  const [updatePatient] = useUpdatePatientMutation();
+  const [addPatientDocument] = useAddPatientDocumentMutation();
+  const [addNoDocument] = useAddNoDocumentMutation();
   const [saveEncounter] = useCompleteEncounterRegistrationMutation();
-  const pageCode = useSelector((state: RootState) => state.div?.pageCode);
 
-  // LOVs
-  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
-  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-  const { data: preferredWayOfContactLovQueryResponse } = useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
-  const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
+  const { data: countryLov } = useGetLovValuesByCodeQuery('CNTRY');
+  const patientDocumentEnum = useEnumOptions('DocumentType');
+  const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
+  const genderEnum = useEnumOptions('Gender');
+
+  const { data: cityLov } = useGetLovValuesByCodeAndParentQuery({
     code: 'CITY',
-    parentValueKey: localPatient.countryLkey,
+    parentValueKey: localPatient.country
   });
 
-  const [prevPayorId, setPrevPayorId] = useState<number | undefined>(undefined);
+  const { data: insuranceProviderLov } = useGetLovValuesByCodeQuery('INS_PROVIDER');
+  const { data: insurancePlanLov } = useGetLovValuesByCodeQuery('INS_PLAN_TYPS');
 
-  const [payorPage, setPayorPage] = useState(0);
-  const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
+  const PAGE_SIZE = 5;
 
-  const [planPage, setPlanPage] = useState(0);
+  const [docCountryCache, setDocCountryCache] = useState<any[]>([]);
+  const [docCountryPage, setDocCountryPage] = useState(0);
+  const [docCountrySearch, setDocCountrySearch] = useState('');
+  const [docHasMoreCountries, setDocHasMoreCountries] = useState(true);
+  const [docCountryOpen, setDocCountryOpen] = useState(false);
+  const [docPaginationLoading, setDocPaginationLoading] = useState(false);
 
-  // Fetch Payors with pagination
-  const {
-    data: payorResponse,
-    isLoading: payorLoading,
-    isFetching: payorFetching,
-  } = useGetAllPayorsQuery({
-    page: payorPage,
-    size: 20,
-    sort: 'name,asc',
-    ...(payorSearchKeyword && { name: payorSearchKeyword }),
+  const { data: docCountriesData } = useGetActiveCountriesQuery({
+    page: docCountryPage,
+    size: PAGE_SIZE,
+    ...(docCountrySearch && { search: docCountrySearch }),
+    sort: 'id,asc'
   });
 
-  // Fetch Payor Plans based on selected Payor
-  const {
-    data: plansResponse,
-    isLoading: plansLoading,
-    isFetching: plansFetching,
-  } = useGetPlansByPayorQuery(
-    {
-      payorId: Number(patientInsurance?.insuranceProviderLkey) || 0,
-      page: planPage,
-      size: 20,
-      sort: 'name,asc',
-    },
-    {
-      skip: !patientInsurance?.insuranceProviderLkey,
+  useEffect(() => {
+    if (!docCountriesData?.data) return;
+
+    const mapped = docCountriesData.data.map((c: any) => ({
+      ...c,
+      displayName:
+        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
+    }));
+
+    if (docCountryPage === 0) {
+      setDocCountryCache(mapped);
+    } else {
+      setDocCountryCache(prev => [...prev, ...mapped]);
     }
-  );
 
-  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
-  const selectedFacility = tenant?.selectedFacility || null;
+    setDocHasMoreCountries(docCountriesData.last === false);
+    setDocPaginationLoading(false);
+  }, [docCountriesData, docCountryPage, countryLov]);
 
-  const handleSave = () => {
-    savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+  const loadMoreDocCountries = () => {
+    if (!docHasMoreCountries) return;
+    setDocPaginationLoading(true);
+    setDocCountryPage(prev => prev + 1);
+  };
+
+  /* ========================================================= */
+  /* ===================== SAVE PATIENT ======================= */
+  /* ========================================================= */
+
+  const handleSave = async () => {
+    try {
+      const saved = localPatient?.id
+        ? await updatePatient({
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
+        : await addPatient({
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
+
+      setLocalPatient(saved);
+
+      dispatch(
+        notify({
+          msg: localPatient?.id ? 'Patient Updated Successfully' : 'Patient Saved Successfully',
+          sev: 'success'
+        })
+      );
+    } catch (err) {
+      const msg = toHumanBackendError(err, {
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        dateOfBirth: 'Date of Birth',
+        primaryMobileNumber: 'Primary Mobile Number',
+        sexAtBirth: 'Gender'
       });
+
+      dispatch(notify({ msg, sev: 'error' }));
+    }
   };
 
   const handleSavePatientAndQuick = async () => {
     try {
-      const savedPatient = await savePatient({
-        ...localPatient,
-        incompletePatient: false,
-        unknownPatient: false,
-      }).unwrap();
+      const saved = localPatient?.id
+        ? await updatePatient({
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
+        : await addPatient({
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
+
+      setLocalPatient(saved);
 
       if (pageCode === 'ER_Triage') {
         await saveEncounter({
           ...localEncounter,
-          patientKey: savedPatient.key,
-          plannedStartDate: new Date(),
+          patientId: saved.id,
           encounterStatusLkey: '8890456518264959',
-          patientAge: calculateAgeFormat(savedPatient.dob),
-          visitTypeLkey: '2041082245699228',
-          resourceTypeLkey: 'EMERGENCY',
-          facilityKey: selectedFacility?.id,
-          resourceKey: '5006',
+          patientAge: calculateAgeFormat(saved.dateOfBirth),
+          resourceTypeLkey: '6743167799449277',
+          resourceKey: '7101086042442391'
         });
+
         dispatch(setRefetchEncounter(true));
       }
 
-      setLocalPatient(savedPatient);
-      { pageCode !== 'ER_Triage' && navigate('/patient-profile', { state: { patient: savedPatient } }); }
-
       dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
-    } catch (error) {
-    }
-  };
 
-  const goToPatientProfile = () => {
-    setOpen(false);
-    const privatePatientPath = '/patient-profile';
-    navigate(privatePatientPath, { state: { patient: localPatient } });
-    setLocalPatient({ ...newApPatient });
-    setPatientInsurance({ ...newApPatientInsurance });
-  };
-
-  const handleSaveInsurance = async () => {
-    savePatientInsurance({ ...patientInsurance, patientKey: localPatient.key })
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: 'Patient Insurance Added Successfully', sev: 'success' }));
-        const privatePatientPath = '/patient-profile';
-        navigate(privatePatientPath, { state: { patient: localPatient } });
-        setOpen(false);
-        setLocalPatient({ ...newApPatient });
-        setPatientInsurance({ ...newApPatientInsurance });
-      })
-      .catch(error => {
-        setPatientInsurance({ ...patientInsurance, primaryInsurance: false });
+      if (pageCode !== 'ER_Triage') {
+        navigate('/patient-profile', { state: { patient: saved } });
+      }
+    } catch (err) {
+      const msg = toHumanBackendError(err, {
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        dateOfBirth: 'Date of Birth',
+        primaryMobileNumber: 'Primary Mobile Number',
+        sexAtBirth: 'Gender'
       });
-  };
 
-  const hasMorePayors = payorResponse?.links?.next != null;
-  const hasMorePlans = plansResponse?.links?.next != null;
-
-  const handleLoadMorePayors = () => {
-    if (hasMorePayors && !payorFetching) {
-      setPayorPage(prev => prev + 1);
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
-  const handleLoadMorePlans = () => {
-    if (hasMorePlans && !plansFetching) {
-      setPlanPage(prev => prev + 1);
+  const handleSaveDocument = async () => {
+    const isNoDocument =
+      secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
+
+    if (isNoDocument) {
+      try {
+        await addNoDocument({
+          patientId: localPatient.id,
+          type: 'NO_DOCUMENT',
+          isPrimary: secondaryDocument.isPrimary ?? false
+        }).unwrap();
+
+        dispatch(notify({ msg: 'No Document Added Successfully', sev: 'success' }));
+        setOpenNextDocument(true);
+      } catch (err) {
+        const msg = toHumanPatientDocumentError(err);
+        dispatch(notify({ msg, sev: 'error' }));
+      }
+
+      return;
+    }
+
+    const documentData = {
+      ...secondaryDocument,
+      patientId: localPatient.id,
+      isPrimary: secondaryDocument.isPrimary ?? false,
+      number: secondaryDocument.number
+    };
+
+    try {
+      await addPatientDocument(documentData).unwrap();
+      dispatch(notify({ msg: 'Document Added Successfully', sev: 'success' }));
+      setOpenNextDocument(true);
+    } catch (err) {
+      const msg = toHumanPatientDocumentError(err);
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
-  // Reset payors page when search changes
   useEffect(() => {
-    setPayorPage(0);
-  }, [payorSearchKeyword]);
+    const isNoDocument =
+      secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
 
-  useEffect(() => {
-    const currentPayorId = patientInsurance?.insuranceProviderLkey
-      ? Number(patientInsurance.insuranceProviderLkey)
-      : undefined;
-
-    if (currentPayorId === prevPayorId) return;
-
-    setPlanPage(0);
-
-    if (prevPayorId !== undefined) {
-      setPatientInsurance(prev => ({
+    if (isNoDocument && !secondaryDocument.isPrimary) {
+      setSecondaryDocument(prev => ({
         ...prev,
-        insurancePlanTypeLkey: undefined,
+        isPrimary: true
       }));
     }
+  }, [secondaryDocument.type, secondaryDocument.isPrimary]);
 
-    setPrevPayorId(currentPayorId);
-  }, [patientInsurance?.insuranceProviderLkey, prevPayorId]);
+  useEffect(() => {
+    if (!open) {
+      setLocalPatient({ ...newPatient });
+      setPatientInsurance({ ...newApPatientInsurance });
+      setOpenNextDocument(false);
+      setSecondaryDocument({ ...newPatientDocument });
+    }
+  }, [open]);
 
-  const conjureFormContent = stepNumber => {
-    switch (stepNumber) {
+  const conjureFormContent = step => {
+    switch (step) {
       case 0:
         return (
-          <Form fluid layout="inline">
+          <Form layout="inline">
             <span className="custom-text">Basic Information</span>
+
             <MyInput
               width={200}
-              required
               column
+              required
               fieldName="firstName"
               record={localPatient}
               setRecord={setLocalPatient}
             />
             <MyInput
               width={200}
-              required
               column
               fieldName="secondName"
               record={localPatient}
@@ -222,109 +481,169 @@ const CreateNewPatient = ({ open, setOpen }) => {
               record={localPatient}
               setRecord={setLocalPatient}
             />
+
             <MyInput
               width={200}
-              required
               column
+              required
               fieldName="lastName"
               record={localPatient}
               setRecord={setLocalPatient}
             />
+
             <MyInput
               width={200}
               column
+              required
               fieldType="date"
               fieldLabel="DOB"
-              fieldName="dob"
+              fieldName="dateOfBirth"
               record={localPatient}
               setRecord={setLocalPatient}
             />
+
             <MyInput
               width={200}
-              required
               column
+              required
               fieldLabel="Gender"
               fieldType="select"
-              fieldName="genderLkey"
-              selectData={genderLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldName="sexAtBirth"
+              selectData={genderEnum ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={localPatient}
               setRecord={setLocalPatient}
             />
-            <br />
+
             <MyInput
-              column
               width={200}
+              column
               required
-              fieldName="phoneNumber"
+              fieldName="primaryMobileNumber"
               fieldLabel="Primary Mobile Number"
               record={localPatient}
               setRecord={setLocalPatient}
             />
             <MyInput
+              required
               column
+              fieldName="email"
+              record={localPatient}
+              setRecord={setLocalPatient}
               width={200}
-              fieldLabel="Private Patient"
+            />
+            <MyInput
+              width={200}
+              column
               fieldType="checkbox"
-              fieldName="privatePatient"
+              fieldName="isPrivatePatient"
+              fieldLabel="Private Patient"
               record={localPatient}
               setRecord={setLocalPatient}
             />
           </Form>
         );
+
       case 1:
         return (
           <Form fluid layout="inline">
-            <span className="custom-text">Document Information</span>
+            <span className="custom-text">Patient Document</span>
+
             <MyInput
               width={200}
               required
               column
               fieldLabel="Document Type"
               fieldType="select"
-              fieldName="documentTypeLkey"
-              selectData={docTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={localPatient}
-              setRecord={setLocalPatient}
+              fieldName="type"
+              selectData={patientDocumentEnum ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={secondaryDocument}
+              setRecord={setSecondaryDocument}
             />
+
+            {secondaryDocument.type !== 'NO_DOC' && secondaryDocument.type !== 'NO_DOCUMENT' && (
+              <MyInput
+                required
+                column
+                width={200}
+                fieldLabel="Document Country"
+                fieldType="selectPagination"
+                fieldName="countryId"
+                selectData={docCountryCache}
+                selectDataLabel="displayName"
+                selectDataValue="id"
+                searchKeyWard={docCountrySearch}
+                setSearchKeyWard={setDocCountrySearch}
+                hasMore={docHasMoreCountries}
+                onFetchMore={loadMoreDocCountries}
+                loading={docPaginationLoading}
+                open={docCountryOpen}
+                onOpen={() => setDocCountryOpen(true)}
+                onClose={() => setDocCountryOpen(false)}
+                onSelectItem={(item: any) => {
+                  setSecondaryDocument(prev => ({
+                    ...prev,
+                    countryId: item.id
+                  }));
+                  setDocCountryOpen(false);
+                }}
+                record={secondaryDocument}
+              />
+            )}
+
+            {secondaryDocument.type !== 'NO_DOC' && secondaryDocument.type !== 'NO_DOCUMENT' && (
+              <MyInput
+                width={200}
+                required
+                column
+                fieldLabel="Document Number"
+                fieldName="number"
+                disabled={
+                  secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'
+                }
+                record={secondaryDocument}
+                setRecord={newRecord => {
+                  setSecondaryDocument({
+                    ...secondaryDocument,
+                    ...newRecord,
+                    number:
+                      secondaryDocument.type === 'NO_DOC' ||
+                        secondaryDocument.type === 'NO_DOCUMENT'
+                        ? 'NO_DOCUMENT'
+                        : newRecord.number
+                  });
+                }}
+              />
+            )}
+
             <MyInput
-              required
               width={200}
               column
-              fieldLabel="Document Country"
-              fieldType="select"
-              fieldName="documentCountryLkey"
-              selectData={countryLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={localPatient}
-              setRecord={setLocalPatient}
-              disabled={localPatient.documentTypeLkey === 'NO_DOC'}
-            />
-            <MyInput
-              width={200}
-              required
-              column
-              fieldLabel="Document Number"
-              fieldName="documentNo"
-              record={localPatient}
-              setRecord={setLocalPatient}
-              disabled={localPatient.documentTypeLkey === 'NO_DOC'}
+              fieldLabel="Primary Document"
+              fieldType="checkbox"
+              fieldName="isPrimary"
+              disabled={
+                secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'
+              }
+              record={secondaryDocument}
+              setRecord={setSecondaryDocument}
             />
           </Form>
         );
+
       case 2:
         return (
-          <Form fluid layout="inline">
+          <Form layout="inline">
             <span className="custom-text">Contact Information</span>
+
             <MyInput
               width={200}
               column
-              fieldLabel="Secondary Number"
-              fieldName="secondaryMobileNumber"
+              fieldLabel="Secondary Mobile Number"
+              fieldName="secondMobileNumber"
               record={localPatient}
               setRecord={setLocalPatient}
             />
@@ -336,118 +655,134 @@ const CreateNewPatient = ({ open, setOpen }) => {
               setRecord={setLocalPatient}
             />
             <MyInput
-              width={200}
               column
               fieldName="email"
+              width={200}
               record={localPatient}
               setRecord={setLocalPatient}
             />
+
             <MyInput
-              width={200}
               column
+              width={200}
               fieldLabel="Preferred Way of Contact"
               fieldType="select"
-              fieldName="preferredContactLkey"
-              selectData={preferredWayOfContactLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldName="preferredWayOfContact"
+              selectData={preferredWayOfContactEnum ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={localPatient}
               setRecord={setLocalPatient}
+              searchable={false}
             />
+
             <MyInput
-              width={200}
               column
+              width={200}
               fieldName="emergencyContactName"
               record={localPatient}
               setRecord={setLocalPatient}
             />
             <MyInput
-              width={200}
               column
+              width={200}
               fieldName="emergencyContactPhone"
               record={localPatient}
               setRecord={setLocalPatient}
             />
+
             <span className="custom-text">Address Information</span>
+
             <MyInput
               width={200}
               column
               fieldLabel="Country"
               fieldType="select"
-              fieldName="countryLkey"
-              selectData={countryLovQueryResponse?.object ?? []}
+              fieldName="country"
+              selectData={countryLov?.object ?? []}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
             />
+
             <MyInput
               width={200}
               column
-              fieldLabel="State/Province"
+              fieldLabel="State / Province"
               fieldType="select"
-              fieldName="stateProvinceRegionLkey"
-              selectData={cityLovQueryResponse?.object ?? []}
+              fieldName="stateProvince"
+              selectData={cityLov?.object ?? []}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
             />
+
             <MyInput
               width={200}
               column
               fieldLabel="City"
               fieldType="select"
-              fieldName="cityLkey"
-              selectData={cityLovQueryResponse?.object ?? []}
+              fieldName="city"
+              selectData={cityLov?.object ?? []}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
               record={localPatient}
               setRecord={setLocalPatient}
             />
+
             <MyInput
               width={200}
               column
-              fieldLabel="Postal/ZIP code"
-              fieldName="postalCode"
+              fieldLabel="Postal Code"
+              fieldName="postalZipCode"
               record={localPatient}
               setRecord={setLocalPatient}
             />
           </Form>
         );
+
       case 3:
         return (
-          <Form fluid layout="inline">
+          <Form layout="inline">
             <span className="custom-text">Insurance Information</span>
+
             <MyInput
-              column
               width={200}
-              fieldLabel="Payor"
-              fieldType="selectPagination"
-              fieldName="insuranceProviderLkey"
-              selectData={payorResponse?.data ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
+              column
+              fieldLabel="Insurance Provider"
+              fieldType="select"
+              fieldName="insuranceProvider"
+              selectData={insuranceProviderLov?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
               record={patientInsurance}
               setRecord={setPatientInsurance}
-              disabled={!localPatient.key}
-              searchable={true}
-              loading={payorLoading || payorFetching}
-              hasMore={hasMorePayors}
-              onFetchMore={handleLoadMorePayors}
-              searchKeyWard={payorSearchKeyword}
-              setSearchKeyWard={setPayorSearchKeyword}
-              placeholder="Select Payor..."
             />
+
             <MyInput
               width={200}
               column
-              fieldLabel="Insurance Policy Number"
+              fieldLabel="Policy Number"
               fieldName="insurancePolicyNumber"
               record={patientInsurance}
               setRecord={setPatientInsurance}
-              disabled={!localPatient.key}
             />
+
+            <MyInput
+              width={200}
+              column
+              fieldLabel="Insurance Plan"
+              fieldType="select"
+              fieldName="insurancePlanType"
+              selectData={insurancePlanLov?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={patientInsurance}
+              setRecord={setPatientInsurance}
+            />
+
             <MyInput
               width={200}
               column
@@ -455,76 +790,24 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldName="groupNumber"
               record={patientInsurance}
               setRecord={setPatientInsurance}
-              disabled={!localPatient.key}
             />
-            <MyInput
-              width={200}
-              column
-              fieldLabel="Insurance Plan Type"
-              fieldType="selectPagination"
-              fieldName="insurancePlanTypeLkey"
-              selectData={plansResponse?.data ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={patientInsurance}
-              setRecord={setPatientInsurance}
-              disabled={!localPatient.key || !patientInsurance?.insuranceProviderLkey}
-              searchable={true}
-              loading={plansLoading || plansFetching}
-              hasMore={hasMorePlans}
-              onFetchMore={handleLoadMorePlans}
-              placeholder={
-                !patientInsurance?.insuranceProviderLkey
-                  ? 'Select Payor first...'
-                  : 'Select Plan...'
-              }
-            />
+
             <MyInput
               width={200}
               column
               fieldType="date"
-              fieldLabel="Expiration Date"
+              fieldLabel="Expiration"
               fieldName="expirationDate"
               record={patientInsurance}
               setRecord={setPatientInsurance}
-              disabled={!localPatient.key}
             />
           </Form>
         );
+
       default:
         return null;
     }
   };
-
-  useEffect(() => {
-    if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
-      setLocalPatient(savePatientMutation.data);
-      if (localPatient.documentTypeLkey) {
-        setOpenNextDocument(true);
-      }
-    }
-  }, [savePatientMutation]);
-
-  useEffect(() => {
-    if (!open) {
-      setLocalPatient({ ...newApPatient });
-      setPatientInsurance({ ...newApPatientInsurance });
-      setOpenNextDocument(false);
-      setLocalEncounter({
-        ...newApEncounter,
-        visitTypeLkey: '2041082245699228',
-        patientKey: localPatient.key,
-        plannedStartDate: new Date(),
-        patientAge: calculateAgeFormat(localPatient.dob),
-        discharge: false,
-      });
-
-      setPrevPayorId(undefined);
-      setPayorPage(0);
-      setPayorSearchKeyword('');
-      setPlanPage(0);
-    }
-  }, [open]);
 
   return (
     <MyModal
@@ -535,38 +818,48 @@ const CreateNewPatient = ({ open, setOpen }) => {
         {
           title: 'Basic Info',
           icon: <FontAwesomeIcon icon={faUser} />,
-          disabledNext: !localPatient?.key,
           footer: (
             <MyButton onClick={pageCode === 'ER_Triage' ? handleSavePatientAndQuick : handleSave}>
               {pageCode === 'ER_Triage' ? 'Save & Create Quick Appointment' : 'Save'}
             </MyButton>
-          ),
+          )
         },
         {
           title: 'Document',
           icon: <FontAwesomeIcon icon={faIdCard} />,
           disabledNext: !openNextDocument,
-          footer: <MyButton onClick={handleSave}>Save</MyButton>,
+          footer: <MyButton onClick={handleSaveDocument}>Save Document</MyButton>
         },
         {
           title: 'Contact',
           icon: <FontAwesomeIcon icon={faPhone} />,
-          footer: <MyButton onClick={handleSave}>Save</MyButton>,
+          footer: <MyButton onClick={handleSave}>Save</MyButton>
         },
         {
           title: 'Insurance',
           icon: <FontAwesomeIcon icon={faShieldHalved} />,
-          footer: <MyButton onClick={handleSaveInsurance}>Save Insurance</MyButton>,
-        },
+          footer: (
+            <MyButton
+              onClick={() =>
+                dispatch(notify({ msg: 'Insurance saved (placeholder)', sev: 'success' }))
+              }
+            >
+              Save Insurance
+            </MyButton>
+          )
+        }
       ]}
       size="33vw"
       position="right"
-      actionButtonLabel="Create"
+      content={conjureFormContent}
       actionButtonFunction={() => {
         handleSave();
-        goToPatientProfile();
+        navigate('/patient-profile', { state: { patient: localPatient } });
+        setOpen(false);
+        setLocalPatient({ ...newPatient });
+        setPatientInsurance({ ...newApPatientInsurance });
+        setOpenNextDocument(false);
       }}
-      content={conjureFormContent}
     />
   );
 };

@@ -27,6 +27,7 @@ export const districtCommunityService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['DistrictCommunity'],
   endpoints: builder => ({
+
     getAllCommunities: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/community',
@@ -51,7 +52,7 @@ export const districtCommunityService = createApi({
     >({
       query: ({ districtId, name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/district/${districtId}/community/by-name`,
-        params: { page, size, sort, name }
+        params: { name, page, size, sort }
       }),
       transformResponse: mapPaged,
       providesTags: ['DistrictCommunity']
@@ -81,7 +82,20 @@ export const districtCommunityService = createApi({
         method: 'PATCH'
       }),
       invalidatesTags: ['DistrictCommunity']
+    }),
+
+    getActiveCommunities: builder.query<
+      PagedResult<any>,
+      WithDistrict & PagedParams
+    >({
+      query: ({ districtId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/community/active',
+        params: { districtId, page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['DistrictCommunity']
     })
+
   })
 });
 
@@ -97,5 +111,9 @@ export const {
   // Mutations
   useAddCommunityMutation,
   useUpdateCommunityMutation,
-  useToggleCommunityActiveMutation
+  useToggleCommunityActiveMutation,
+
+  // Active communities
+  useGetActiveCommunitiesQuery,
+  useLazyGetActiveCommunitiesQuery
 } = districtCommunityService;

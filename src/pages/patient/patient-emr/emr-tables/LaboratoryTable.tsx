@@ -34,7 +34,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useState } from 'react';
 import { Checkbox, Form, HStack, Tooltip, Whisper, Message, useToaster } from 'rsuite';
-import Laboratory from '@/pages/setup/diagnostics-tests-definition/Laboratory';
+import Laboratory from '@/pages/setup/diagnostics-tests-definition-new/Laboratory';
 import { useSelector } from 'react-redux';
 
 interface ResultProps {

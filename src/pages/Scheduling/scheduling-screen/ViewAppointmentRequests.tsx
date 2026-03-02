@@ -256,9 +256,7 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
             render: (row: Row) => (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontWeight: 600 }}>{safeStr(row.resourceName) || '-'}</span>
-                    <span style={{ fontSize: 12, color: '#8F98AB' }}>
-                        {formatResourceTypeLabel(row.resourceType) || '-'}
-                    </span>
+                    <span style={{ fontSize: 12, color: '#8F98AB' }}>{formatResourceTypeLabel(row.resourceType) || '-'}</span>
                 </div>
             )
         },
@@ -305,19 +303,13 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
             expandable: true,
             render: (row: Row) => {
                 const isRejected = safeStr(row.status).toLowerCase() === 'rejected';
-                return (
-                    <span style={{ color: isRejected ? '#c10020ff' : '#8F98AB' }}>
-                        {isRejected ? row.otherReason || '' : ''}
-                    </span>
-                );
+                return <span style={{ color: isRejected ? '#c10020ff' : '#8F98AB' }}>{isRejected ? row.otherReason || '' : ''}</span>;
             }
         },
         {
             key: 'status',
             title: 'Status',
-            render: (row: Row) => (
-                <MyBadgeStatus contant={row.status || 'Pending'} color={statusColor(row.status)} />
-            )
+            render: (row: Row) => <MyBadgeStatus contant={row.status || 'Pending'} color={statusColor(row.status)} />
         },
         {
             key: 'actions',
@@ -416,35 +408,6 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
                 onRowClick={(rowData: Row) => setSelectedRowId(safeStr(rowData.id))}
                 filters={tablefilters}
             />
-
-            {/* Reject Reason Modal
-            <Modal open={rejectModalOpen} onClose={() => setRejectModalOpen(false)} size="sm">
-                <Modal.Header>
-                    <Modal.Title>Reject Appointment Request</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form fluid>
-                        <MyInput
-                            column
-                            fieldLabel="Reject Reason"
-                            fieldType="textarea"
-                            rows={3}
-                            fieldName="rejectReason"
-                            record={{ rejectReason }}
-                            setRecord={(r: any) => setRejectReason(r.rejectReason)}
-                            required
-                        />
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                    <MyButton appearance="ghost" onClick={() => setRejectModalOpen(false)}>
-                        Cancel
-                    </MyButton>
-                    <MyButton appearance="primary" onClick={confirmReject} disabled={!rejectReason.trim()}>
-                        Confirm Reject
-                    </MyButton>
-                </Modal.Footer>
-            </Modal> */}
 
             <CancellationModal
                 open={rejectModalOpen}

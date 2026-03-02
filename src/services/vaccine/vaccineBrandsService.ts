@@ -24,7 +24,7 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
   return {
     data: response,
     totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-    links: parseLinkHeader(headers?.get('Link')),
+    links: parseLinkHeader(headers?.get('Link'))
   };
 };
 
@@ -39,22 +39,41 @@ export const vaccineBrandsService = createApi({
     >({
       query: ({ vaccineId, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/vaccine-brands/by-vaccine/${vaccineId}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: (_res, _err, { vaccineId }) => [{ type: 'VaccineBrand', id: `vaccine-${vaccineId}` }, 'VaccineBrand'],
+      providesTags: (_res, _err, { vaccineId }) => [
+        { type: 'VaccineBrand', id: `vaccine-${vaccineId}` },
+        'VaccineBrand'
+      ]
     }),
 
-     getVaccineBrands: builder.query<
-      PagedResult<modelTypes.VaccineBrand>,
-      PagedParams
-    >({
-      query: ({page, size, sort = 'id,asc' }) => ({
+    getVaccineBrands: builder.query<PagedResult<modelTypes.VaccineBrand>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/vaccine-brands`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: (_res, _err, _args) => ['VaccineBrand'],
+      providesTags: (_res, _err, _args) => ['VaccineBrand']
+    }),
+
+    getVaccineBrandsByIds: builder.query<modelTypes.VaccineBrand[], { ids: Id[] }>({
+      query: ({ ids }) => ({
+        url: `/api/setup/vaccine-brands/by-ids`,
+        params: { ids }
+      }),
+      transformResponse: (res: any) => res ?? [],
+      providesTags: (res) =>
+        res && Array.isArray(res)
+          ? [...res.map((b: any) => ({ type: 'VaccineBrand' as const, id: b.id })), 'VaccineBrand']
+          : ['VaccineBrand']
+    }),
+
+    getVaccineBrandById: builder.query<modelTypes.VaccineBrand, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/setup/vaccine-brands/${id}`
+      }),
+      providesTags: (_res, _err, { id }) => [{ type: 'VaccineBrand', id }, 'VaccineBrand']
     }),
 
     addVaccineBrand: builder.mutation<
@@ -65,12 +84,12 @@ export const vaccineBrandsService = createApi({
         url: '/api/setup/vaccine-brands',
         method: 'POST',
         params: { vaccineId },
-        body: data,
+        body: data
       }),
       invalidatesTags: (_res, _err, { vaccineId }) => [
         { type: 'VaccineBrand', id: `vaccine-${vaccineId}` },
-        'VaccineBrand',
-      ],
+        'VaccineBrand'
+      ]
     }),
 
     updateVaccineBrand: builder.mutation<
@@ -81,30 +100,34 @@ export const vaccineBrandsService = createApi({
         url: `/api/setup/vaccine-brands/${id}`,
         method: 'PUT',
         params: { vaccineId },
-        body: data, 
+        body: data
       }),
       invalidatesTags: (_res, _err, { id, vaccineId }) => [
         { type: 'VaccineBrand', id },
         { type: 'VaccineBrand', id: `vaccine-${vaccineId}` },
-        'VaccineBrand',
-      ],
+        'VaccineBrand'
+      ]
     }),
 
     toggleVaccineBrandActive: builder.mutation<modelTypes.VaccineBrand, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/vaccine-brands/${id}/toggle-active`,
-        method: 'PATCH',
+        method: 'PATCH'
       }),
-      invalidatesTags: (_res, _err, { id }) => [{ type: 'VaccineBrand', id }, 'VaccineBrand'],
-    }),
-  }),
+      invalidatesTags: (_res, _err, { id }) => [{ type: 'VaccineBrand', id }, 'VaccineBrand']
+    })
+  })
 });
 
 export const {
- useGetVaccineBrandsByVaccineQuery,
- useGetVaccineBrandsQuery,
+  useGetVaccineBrandsByVaccineQuery,
+  useGetVaccineBrandsQuery,
   useLazyGetVaccineBrandsByVaccineQuery,
   useAddVaccineBrandMutation,
   useUpdateVaccineBrandMutation,
   useToggleVaccineBrandActiveMutation,
+  useGetVaccineBrandsByIdsQuery,
+  useLazyGetVaccineBrandsByIdsQuery,
+  useGetVaccineBrandByIdQuery,
+  useLazyGetVaccineBrandByIdQuery
 } = vaccineBrandsService;
