@@ -5,10 +5,9 @@ import {
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import { newLaboratory } from '@/types/model-types-constructor-new';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Form } from 'rsuite';
 const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTestLaboratory }) => {
-  const [popupOpen, setPopupOpen] = useState(false);
  
   const {data:getLaboratory}=useGetLaboratoryByTestIdQuery(diagnosticsTest?.id ,{ skip: !diagnosticsTest?.id });
  
@@ -35,12 +34,6 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
   const methods=useEnumOptions("Method");
   const timings=useEnumOptions("Timing");
 
-  // Effects
-  useEffect(() => {
-    if (diagnosticsTest.isProfile === true && diagnosticTestLaboratory.id === null) {
-      setPopupOpen(!popupOpen);
-    }
-  }, [diagnosticsTest?.isProfile]);
 
  useEffect(() => {
     if (getLaboratory) {
@@ -79,20 +72,7 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
           setRecord={setDiagnosticTestLaboratory}
         />
         </div>
-         <div className='field-in-three-fields-diagnostics' >
-         <MyInput
-            width='100%'
-          menuMaxHeight={200}
-           required
-          fieldName="resultUnit"
-          fieldType="select"
-          selectData={ValueUnitLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={diagnosticTestLaboratory}
-          setRecord={setDiagnosticTestLaboratory}
-        />
-        </div>
+       
        <div className='field-in-three-fields-diagnostics'>
         
         <MyInput
@@ -328,13 +308,7 @@ const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTes
         </div>
       </div>
       <br/>
-        <MyInput
-          width="100%"
-          fieldType="checkbox"
-          fieldName="isProfile"
-          record={diagnosticTestLaboratory}
-          setRecord={setDiagnosticTestLaboratory}
-        />
+    
 
         <MyInput
            width="100%"          

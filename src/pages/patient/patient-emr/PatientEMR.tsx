@@ -1,7 +1,7 @@
 import EMRCard from '@/components/EMRCard';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import PatientSide from '@/pages/lab-module/PatienSide';
+import PatientSide from '@/pages/lab-module-new/PatienSide';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { useGetEncountersQuery } from '@/services/encounterService';
@@ -67,7 +67,7 @@ type PatientEMRProps = {
   inModal?: boolean;
   patient?: ApPatient;
   encounter?: any;
-  hideProfileSidebar?: boolean; // ✅ جديد
+  hideProfileSidebar?: boolean;
 };
 
 const PatientEMR: React.FC<PatientEMRProps> = ({

@@ -1,23 +1,17 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import SectionContainer from '@/components/SectionsoContainer';
-
-// ✅ AI validation mutations
 import {
-  useValidateTestsMutation,
-  useValidateMedicationMutation
+  useValidateMedicationMutation,
+  useValidateTestsMutation
 } from '@/services/ai-services/medicationTestOrdersValidationService';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useMemo, useRef } from 'react';
 import './styles.less';
 
 type Props = {
   title?: any;
   button?: any;
-
-  // aggregated payload from modal
   aiPayload?: any;
-
-  // validation mode
   mode?: 'tests' | 'medications';
 };
 
@@ -27,6 +21,7 @@ const PatientHistorySummary: React.FC<Props> = ({
   aiPayload = null,
   mode = 'tests'
 }) => {
+  
   // ======================
   // AI Validation
   // ======================
@@ -73,9 +68,6 @@ const PatientHistorySummary: React.FC<Props> = ({
     }
   };
 
-  // ======================
-  // ✅ Build Validation Request (Pydantic-safe)
-  // ======================
   const validationRequest = useMemo(() => {
     if (!aiPayload) return null;
 
