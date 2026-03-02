@@ -74,11 +74,9 @@ const InformationDesk: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Header (moved to useEffect)
+  // Header
   useEffect(() => {
-    const divContent = (
-        "Information Desk"
-    );
+    const divContent = 'Information Desk';
     dispatch(setPageCode('P_Facility'));
     dispatch(setDivContent(divContent));
 

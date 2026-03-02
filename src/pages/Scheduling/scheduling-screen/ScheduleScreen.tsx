@@ -30,13 +30,14 @@ import FollowupAppointmentModal from './FollowupAppointmentModal';
 import { ApAppointment } from '@/types/model-types';
 import { faPaperPlane, faPlus, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentActionsModal from './AppointmentActionsModal';
 import {
   useGetAppointmentsQuery,
   useGetResourcesWithAvailabilityQuery,
   useSaveAppointmentMutation
 } from '@/services/appointmentService';
+import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
 import MyInput from '@/components/MyInput';
 import CalenderSimpleIcon from '@rsuite/icons/CalenderSimple';
 import ArrowLeftLineIcon from '@rsuite/icons/ArrowLeftLine';
@@ -50,6 +51,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import ViewAppointmentRequests from './ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
 import { calculateAgeFormat } from '@/utils';
+import { update } from 'lodash';
 
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
@@ -107,9 +109,13 @@ const ScheduleScreen = () => {
     return s.includes('follow') && s.includes('up');
   };
 
+  const authSlice = useAppSelector(state => state.auth);
   const ResourceTypeEnum = useEnumOptions('ResourceType');
 
   const DEFAULT_RESOURCE_TYPE = 'CLINIC';
+  // const DEFAULT_FACILITY_NAME = localStorage.getItem('tenant') || 'null';
+  // const SCHEDULE_DEFAULT_FACILITY_KEY = 'schedule_default_facility_applied_v1';
+
   useEffect(() => {
     const isEmpty =
       !selectedResourceType?.resourcesType || selectedResourceType.resourcesType.length === 0;
@@ -132,8 +138,46 @@ const ScheduleScreen = () => {
     }
   }, [ResourceTypeEnum]);
 
+  useEffect(() => {
+    if (selectedFacility?.id) return;
+
+    const raw = localStorage.getItem('tenant');
+    if (!raw) return;
+
+    try {
+      const tenant = JSON.parse(raw);
+      const f = tenant?.selectedFacility;
+
+      if (f?.id) {
+        setSelectedFacility(f);
+      }
+    } catch (e) {}
+  }, [selectedFacility?.id]);
+
   const { data: resourcesWithAvailabilityResponse } =
     useGetResourcesWithAvailabilityQuery(listRequest);
+
+  // Used for mapping resourceKey -> resource name (per requirement: use ResourceService)
+  const { data: allResourcesResponse } = useGetAllResourcesQuery({
+    page: 0,
+    size: 5000,
+    sort: 'id,asc'
+  });
+  const resourceNameById = useMemo(() => {
+    const list =
+      (allResourcesResponse as any)?.data ??
+      (allResourcesResponse as any)?.object ??
+      allResourcesResponse ??
+      [];
+    const arr = Array.isArray(list) ? list : [];
+    const m = new Map<string, string>();
+    arr.forEach((r: any) => {
+      const id = r?.id ?? r?.key;
+      const name = r?.resourceName ?? r?.name ?? r?.resource_name ?? '';
+      if (id !== null && typeof id !== 'undefined') m.set(String(id), String(name || ''));
+    });
+    return m;
+  }, [allResourcesResponse]);
 
   const {
     data: appointments,
@@ -141,7 +185,7 @@ const ScheduleScreen = () => {
     isLoading: isLoadingAppointments,
     isFetching: isFetchingAppointments
   } = useGetAppointmentsQuery({
-    resource_type: selectedResourceType?.resourcesType || null,
+    resource_type: null,
     facility_id: selectedFacility?.id || null,
     resources: selectedResources ? selectedResources.resourceKey : []
   });
@@ -165,7 +209,9 @@ const ScheduleScreen = () => {
           appointment?.patient?.fullName ||
           (appointment?.patient?.first_name && appointment?.patient?.last_name
             ? `${appointment.patient.first_name} ${appointment.patient.last_name}`.trim()
-            : appointment?.patient?.first_name || appointment?.patient?.last_name || 'Unknown Patient');
+            : appointment?.patient?.first_name ||
+              appointment?.patient?.last_name ||
+              'Unknown Patient');
 
         const resource = resourcesWithAvailabilityResponse.object.find(
           item => item.key === appointment.resourceKey
@@ -240,7 +286,9 @@ const ScheduleScreen = () => {
       const reasonKey = freshEvent?.appointmentData?.reasonLkey;
 
       const reasonLovList =
-        status === 'Canceled' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object;
+        status === 'Canceled'
+          ? cancelResonLovQueryResponse?.object
+          : noShowResonLovQueryResponse?.object;
 
       const matchedReason = reasonLovList?.find(r => r.key === reasonKey);
 
@@ -539,7 +587,9 @@ const ScheduleScreen = () => {
           const startDateParts = startDateStr.split('/');
           const endDateParts = endDateStr.split('/');
 
-          const startDate = new Date(`${startDateParts[2]}-${startDateParts[0]}-${startDateParts[1]}`);
+          const startDate = new Date(
+            `${startDateParts[2]}-${startDateParts[0]}-${startDateParts[1]}`
+          );
           const endDate = new Date(`${endDateParts[2]}-${endDateParts[0]}-${endDateParts[1]}`);
 
           const agendaAppointments = visibleAppointments.filter(appointment => {
@@ -603,7 +653,11 @@ const ScheduleScreen = () => {
 
           <button
             className="btn-scheduling"
-            style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }}
+            style={{
+              margin: '7px',
+              height: '35px',
+              color: mode === 'light' ? 'black' : 'var(--white)'
+            }}
             onClick={() => onNavigate('PREV')}
           >
             <ArrowLeftLineIcon />
@@ -640,14 +694,21 @@ const ScheduleScreen = () => {
           )}
           <button
             className="btn-scheduling"
-            style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }}
+            style={{
+              margin: '7px',
+              height: '35px',
+              color: mode === 'light' ? 'black' : 'var(--white)'
+            }}
             onClick={() => onNavigate('NEXT')}
           >
             <ArrowRightLineIcon />
           </button>
         </div>
 
-        <ButtonGroup style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }} size="md">
+        <ButtonGroup
+          style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }}
+          size="md"
+        >
           <Button
             className="btn-scheduling"
             style={{ border: 'none', height: '35px' }}
@@ -768,7 +829,9 @@ const ScheduleScreen = () => {
             size="xs"
             circle
             src={
-              image ? `data:${content_type};base64,${image}` : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+              image
+                ? `data:${content_type};base64,${image}`
+                : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
             }
           />
         </div>
@@ -839,7 +902,8 @@ const ScheduleScreen = () => {
         currentResource?.availability?.some(period => {
           const startMinutes = period.startHour * 60 + (period.startMinute || 0);
           const endMinutes = period.endHour * 60 + (period.endMinute || 0);
-          const match = period.dayOfWeek === apiDay && currentMinutes >= startMinutes && currentMinutes < endMinutes;
+          const match =
+            period.dayOfWeek === apiDay && currentMinutes >= startMinutes && currentMinutes < endMinutes;
           return match;
         }) || false;
 
@@ -853,6 +917,7 @@ const ScheduleScreen = () => {
 
   const requestsRows = useMemo(() => {
     const list = appointments?.object ?? [];
+    const resourcesList = resourcesWithAvailabilityResponse?.object ?? [];
 
     return list
       .filter((a: any) => String(a?.visitTypeLkey) === String(FOLLOW_UP_VISIT_TYPE_LKEY))
@@ -870,7 +935,32 @@ const ScheduleScreen = () => {
         const patientGender = patient?.genderLvalue?.lovDisplayVale || patient?.genderLkey || '';
         const patientAge = patient?.dob ? calculateAgeFormat(patient.dob) : '';
 
-        const patientMrn = patient?.patientMrn || '';
+        const patientMrn = patient?.patient_mrn || '';
+
+        const resourceKey = a?.resourceKey ?? a?.resource_key ?? a?.resource?.key ?? null;
+
+        const resource =
+          resourceKey != null
+            ? resourcesList.find((r: any) => String(r.key) === String(resourceKey))
+            : null;
+
+        const resourceNameFromService = resourceKey != null ? resourceNameById.get(String(resourceKey)) : '';
+        const resourceName =
+          (resourceNameFromService && String(resourceNameFromService).trim()) ||
+          resource?.resourceName ||
+          resource?.name ||
+          a?.resourceName ||
+          a?.resource_name ||
+          '-';
+
+        const resourceType =
+          resource?.resource_type ||
+          resource?.resourceType ||
+          a?.resourceType ||
+          a?.resource_type ||
+          a?.resourceTypeLkey ||
+          a?.resource_type_key ||
+          '-';
 
         return {
           id: a.key,
@@ -881,11 +971,16 @@ const ScheduleScreen = () => {
           ageText: patientAge,
           genderText: patientGender,
 
+          facilityKey: a?.facilityKey ?? a?.facility_key ?? a?.facilityId ?? a?.facility_id ?? '',
+
           createdBy: a?.createdBy ?? a?.created_by ?? '',
           createdAt: a?.createdAt ?? a?.created_at ?? null,
 
           status: a?.appointmentStatus ?? 'Pending',
 
+          resourceName,
+          resourceType,
+          resourceKey: resourceKey ?? '',
           updatedBy: a?.updatedBy ?? a?.updated_by ?? '',
           updatedAt: a?.updatedAt ?? a?.updated_at ?? null,
 
@@ -894,7 +989,7 @@ const ScheduleScreen = () => {
           _raw: a
         };
       });
-  }, [appointments]);
+  }, [appointments, resourcesWithAvailabilityResponse?.object, resourceNameById]);
 
   const handleApproveRequest = (row: any) => {
     setRequestToApprove(row?._raw);
@@ -912,7 +1007,8 @@ const ScheduleScreen = () => {
         otherReason: rejectReason,
         reasonValue: rejectReason,
         appointmentStart: null,
-        appointmentEnd: null
+        appointmentEnd: null,
+        updatedBy: authSlice.user.username
       }).unwrap();
 
       await refitchAppointments();
@@ -1098,7 +1194,9 @@ const ScheduleScreen = () => {
             timeslots={1}
             onSelectSlot={slotInfo => {
               if (slotInfo.resourceId) {
-                const currentResource = resourcesWithAvailabilityResponse?.object.find(r => r.key === slotInfo.resourceId);
+                const currentResource = resourcesWithAvailabilityResponse?.object.find(
+                  r => r.key === slotInfo.resourceId
+                );
 
                 if (currentResource && currentResource.availability) {
                   const jsDay = slotInfo.start.getDay();
@@ -1110,7 +1208,11 @@ const ScheduleScreen = () => {
                       const startMinutes = period.startHour * 60 + (period.startMinute || 0);
                       const endMinutes = period.endHour * 60 + (period.endMinute || 0);
 
-                      return period.dayOfWeek === apiDay && currentMinutes >= startMinutes && currentMinutes < endMinutes;
+                      return (
+                        period.dayOfWeek === apiDay &&
+                        currentMinutes >= startMinutes &&
+                        currentMinutes < endMinutes
+                      );
                     }) || false;
 
                   if (!isAvailable) {
@@ -1265,19 +1367,29 @@ const ScheduleScreen = () => {
       <Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
         <Modal.Header />
         <Modal.Body>
-          <Form fluid layout="inline">
-            <MyInput width={350} column fieldLabel="Reason" fieldName="reason" record={reasonViewRecord} setRecord={setReasonViewRecord} disabled />
-            <MyInput
-              width={350}
-              column
-              fieldLabel="Other Reason"
-              fieldName="otherReason"
-              fieldType="textarea"
-              rows={3}
-              record={reasonViewRecord}
-              setRecord={setReasonViewRecord}
-              disabled
-            />
+          <Form fluid layout="vertical">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 520, maxWidth: '100%' }}>
+              <MyInput
+                width="100%"
+                column
+                fieldLabel="Reason"
+                fieldName="reason"
+                record={reasonViewRecord}
+                setRecord={setReasonViewRecord}
+                disabled
+              />
+              <MyInput
+                width="100%"
+                column
+                fieldLabel="Other Reason"
+                fieldName="otherReason"
+                fieldType="textarea"
+                rows={3}
+                record={reasonViewRecord}
+                setRecord={setReasonViewRecord}
+                disabled
+              />
+            </div>
           </Form>
         </Modal.Body>
       </Modal>
@@ -1293,11 +1405,7 @@ const ScheduleScreen = () => {
           setModalOpen(false);
         }}
         content={
-          <ViewAppointmentRequests
-            data={requestsRows}
-            onApprove={handleApproveRequest}
-            onReject={handleRejectRequest}
-          />
+          <ViewAppointmentRequests data={requestsRows} onApprove={handleApproveRequest} onReject={handleRejectRequest} />
         }
       ></MyModal>
     </div>
