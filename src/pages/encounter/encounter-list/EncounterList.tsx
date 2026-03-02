@@ -47,8 +47,6 @@ import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
   if (typeof d === 'string') return d;
@@ -76,8 +74,6 @@ const derivePatientFilters = (appliedSearch: any) => {
   if (searchByField === 'patientMrn') return { patientName: undefined, mrn: raw };
   return { patientName: raw, mrn: undefined };
 };
-
-// ─── Error handling ──────────────────────────────────────────────────────────
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'id.notfound': 'Encounter not found.',
@@ -157,8 +153,6 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
 
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
 };
-
-// ─── Component ───────────────────────────────────────────────────────────────
 
 const EncounterList = () => {
   const location = useLocation();
@@ -315,13 +309,11 @@ const EncounterList = () => {
   const tableData = encountersPaged?.data ?? [];
   const totalCount = encountersPaged?.totalCount ?? 0;
 
-  // ─── Bulk patient info ───────────────────────────────────────────────────
   const patientBulkIdsRef = useRef<string[]>([]);
   const [getBulkPatientBasicInfo, { data: patientsBasicInfo, isLoading: patientsBulkLoading }] =
     useGetBulkPatientBasicInfoMutation();
 
   const patientIdsForBulk = useMemo(() => {
-    // الباك يرجع patient كـ object فيه id
     const ids = (tableData as any[])
       .map(row => row?.patient?.id)
       .filter(v => v !== null && v !== undefined)
@@ -348,14 +340,11 @@ const EncounterList = () => {
     return map;
   }, [patientsBasicInfo]);
 
-  // ─── Normalize table data - فقط حقول موجودة في الباك ────────────────────
   const normalizedTableData = useMemo(() => {
     return (tableData as any[]).map(row => {
-      // patient.id من الباك مباشرة
       const patientId = row?.patient?.id ?? null;
       const patientFromMap = patientId != null ? patientMap.get(String(patientId)) : null;
 
-      // الاسم: من البالك أو من الـ patient object المضمن
       const firstName = String(patientFromMap?.firstName ?? row?.patient?.firstName ?? '').trim();
       const secondName = String(
         patientFromMap?.secondName ?? row?.patient?.secondName ?? ''
@@ -367,7 +356,6 @@ const EncounterList = () => {
 
       const mrn = patientFromMap?.medicalRecordNumber ?? row?.patient?.medicalRecordNumber ?? null;
       const dob = patientFromMap?.dateOfBirth ?? row?.patient?.dateOfBirth ?? null;
-      // sexAtBirth هو الحقل الصحيح في الباك
       const sexAtBirth =
         formatEnumString(patientFromMap?.sexAtBirth ?? row?.patient?.sexAtBirth) || '';
       const isPrivate = patientFromMap?.isPrivatePatient ?? row?.patient?.isPrivatePatient ?? false;
@@ -376,7 +364,6 @@ const EncounterList = () => {
         ...row,
         key: row?.id,
 
-        // ─ patient object موحد ─
         patientObject: {
           id: patientId,
           fullName,
@@ -386,23 +373,10 @@ const EncounterList = () => {
           isPrivatePatient: isPrivate
         },
 
-        // ─ حقول الـ encounter بأسماء الباك الصحيحة ─
-        // status      → row.status        ✅
-        // priorityLevel → row.priorityLevel ✅
-        // encounterReason → row.encounterReason ✅
-        // isObserved  → row.isObserved     ✅
-        // hasPrescription → row.hasPrescription ✅
-        // hasOrder    → row.hasOrder       ✅
-        // chiefComplaint → row.chiefComplaint ✅
-        // encounterDate → row.encounterDate ✅
-
         patientAge: dob ? calculateAgeFormat(dob) : null
       };
     });
   }, [tableData, patientMap]);
-
-  console.log('Normalized Table Data:', normalizedTableData);
-  // ─── Actions ─────────────────────────────────────────────────────────────
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
@@ -502,8 +476,6 @@ const EncounterList = () => {
     setSearchTick(prev => prev + 1);
   };
 
-  // ─── Table columns ────────────────────────────────────────────────────────
-
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -519,7 +491,6 @@ const EncounterList = () => {
           <Tooltip>
             <div>MRN: {row?.patientObject?.medicalRecordNumber ?? '-'}</div>
             <div>Age: {row?.patientAge ?? '-'}</div>
-            {/* sexAtBirth هو الحقل الصحيح من الباك */}
             <div>Gender: {row?.patientObject?.sexAtBirth ?? '-'}</div>
           </Tooltip>
         );
@@ -545,20 +516,16 @@ const EncounterList = () => {
     {
       key: 'encounterReason',
       title: 'ENCOUNTER REASON',
-      // encounterReason موجود مباشرة في الباك
       render: (row: any) => formatEnumString(row?.encounterReason) ?? ''
     },
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      // chiefComplaint موجود في الباك
       render: (row: any) => row?.chiefComplaint ?? '-'
     },
-    // ❌ تمت إزالة عمود DIAGNOSIS - غير موجود في الباك
     {
       key: 'hasPrescription',
       title: 'PRESCRIPTION',
-      // hasPrescription موجود في الباك
       render: (row: any) =>
         row?.hasPrescription ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -569,7 +536,6 @@ const EncounterList = () => {
     {
       key: 'hasOrder',
       title: 'HAS ORDER',
-      // hasOrder موجود في الباك
       render: (row: any) =>
         row?.hasOrder ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -580,19 +546,16 @@ const EncounterList = () => {
     {
       key: 'priorityLevel',
       title: 'PRIORITY',
-      // priorityLevel هو الاسم الصحيح من الباك (مش encounterPriority)
       render: (row: any) => formatEnumString(row?.priorityLevel) ?? ''
     },
     {
       key: 'encounterDate',
       title: 'DATE',
-      // encounterDate موجود في الباك
       render: (row: any) => row?.encounterDate ?? '-'
     },
     {
       key: 'status',
       title: 'STATUS',
-      // status هو الاسم الصحيح من الباك (مش encounterStatus)
       render: (row: any) => {
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const statusColorMap: Record<string, string> = {
@@ -615,7 +578,6 @@ const EncounterList = () => {
     {
       key: 'isObserved',
       title: 'IS OBSERVED',
-      // isObserved هو الاسم الصحيح من الباك (مش hasObservation)
       render: (row: any) =>
         row?.isObserved ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
@@ -633,7 +595,6 @@ const EncounterList = () => {
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
 
-        // status هو الحقل الصحيح من الباك
         const statusUpper = String(row?.status ?? '').toUpperCase();
         const isNew = statusUpper === 'NEW';
 
@@ -646,7 +607,6 @@ const EncounterList = () => {
                   backgroundColor="black"
                   onClick={() => {
                     setLocalEncounter(row);
-                    // isObserved هو الحقل الصحيح (مش hasObservation)
                     if (row?.isObserved) {
                       handleGoToPreVisitObservations(row, row.patientObject);
                     } else {
@@ -725,8 +685,6 @@ const EncounterList = () => {
       expandable: false
     }
   ];
-
-  // ─── Filters UI ───────────────────────────────────────────────────────────
 
   const filters = () => (
     <>
@@ -871,8 +829,6 @@ const EncounterList = () => {
     </>
   );
 
-  // ─── Side effects ─────────────────────────────────────────────────────────
-
   const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
   useEffect(() => {
@@ -888,8 +844,6 @@ const EncounterList = () => {
     };
   }, [dispatch, tableLoading]);
 
-  // ─── Guard ────────────────────────────────────────────────────────────────
-
   if (!departmentId) {
     return (
       <Panel>
@@ -899,8 +853,6 @@ const EncounterList = () => {
       </Panel>
     );
   }
-
-  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <>
