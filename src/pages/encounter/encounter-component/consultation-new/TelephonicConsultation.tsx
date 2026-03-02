@@ -1,244 +1,180 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import MyButton from '@/components/MyButton/MyButton';
-import MyTable from '@/components/MyTable';
-import { MdModeEdit, MdAttachFile } from 'react-icons/md';
-import { Checkbox, Loader, Form } from 'rsuite';
-import DetailsTele from './DetailsTele';
-import MyModal from '@/components/MyModal/MyModal';
-import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
-import clsx from 'clsx';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import BlockIcon from '@rsuite/icons/Block';
-import { newTelephonicConsultation } from '@/types/model-types-constructor-new';
-import { useLocation } from 'react-router-dom';
 import CancellationModal from '@/components/CancellationModal';
-import { notify } from '@/utils/uiReducerActions';
+import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import { useAppDispatch } from '@/hooks';
-import { formatDateWithoutSeconds } from '@/utils';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import {
-  useFindAllByEncounterQuery,
-  useCancelMutation
-} from '@/services/patients/telephonicConsultationService';
-import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
-import MyInput from '@/components/MyInput';
+  useGetTelephonicConsultationOrdersListQuery,
+  useSaveTelephonicConsultationOrderMutation
+} from '@/services/encounterService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { newApTelephonicConsultation } from '@/types/model-types-constructor';
+import { initialListRequest } from '@/types/types';
+import { formatDateWithoutSeconds } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import BlockIcon from '@rsuite/icons/Block';
+import clsx from 'clsx';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { MdAttachFile, MdModeEdit } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
+import { Checkbox } from 'rsuite';
+import DetailsTele from './DetailsTele';
 import './styles.less';
-import { Practitioner } from '@/types/model-types-new';
-
-const handleCancelError = (err: any, dispatch: any) => {
-  const data = err?.data ?? err ?? {};
-
-  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
-    const lines = data.fieldErrors.map((fe: any) => {
-      if (fe.field === 'reason') {
-        return '• Cancellation Reason: is required';
-      }
-      return `• ${fe.field}: ${fe.message}`;
-    });
-
-    dispatch(
-      notify({
-        msg: `Please fix the following fields:\n${lines.join('\n')}`,
-        sev: 'error'
-      })
-    );
-    return;
-  }
-
-  dispatch(
-    notify({
-      msg: data?.message || 'Cancel failed',
-      sev: 'error'
-    })
-  );
-};
 
 const TelephonicConsultation = props => {
   const location = useLocation();
-  const dispatch = useAppDispatch();
+  const loggedInUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+  const currentPatient = props.patient || location.state?.patient;
+  const currentEncounter = props.encounter || location.state?.encounter;
+  const isEditMode = props.edit ?? location.state?.edit ?? false;
+
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const patient = props.patient || location.state?.patient;
-  const encounter = props.encounter || location.state?.encounter;
-  const edit = props.edit ?? location.state?.edit ?? false;
+  const dispatch = useAppDispatch();
+  const [saveConsultationOrder] = useSaveTelephonicConsultationOrderMutation();
 
-  const [pageIndex, setPageIndex] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [selectedConsultations, setSelectedConsultations] = useState<any[]>([]);
+  const [showCancelled, setShowCancelled] = useState(false);
 
-  const [selectedRow, setSelectedRow] = useState<any>(null);
-  const [showCanceled, setShowCanceled] = useState(false);
+  const [activeConsultation, setActiveConsultation] = useState<any>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isAttachmentsModalOpen, setIsAttachmentsModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
-  const [openModal, setOpenModal] = useState(false);
-  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const [openCancelModal, setOpenCancelModal] = useState(false);
-
-  const [consultationOrder, setConsultationOrder] = useState({
-    ...newTelephonicConsultation
+  const [consultationFormData, setConsultationFormData] = useState({
+    ...newApTelephonicConsultation
   });
 
-  const [modalKey, setModalKey] = useState(0);
-
-  const [dateFilter, setDateFilter] = useState(() => {
-    const today = new Date();
-    const onlyDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return {
-      fromDate: onlyDate,
-      toDate: onlyDate
-    };
+  const [consultationListRequest, setConsultationListRequest] = useState({
+    ...initialListRequest,
+    pageSize: 20,
+    filters: [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      },
+      {
+        fieldName: 'patient_key',
+        operator: 'match',
+        value: currentPatient?.key
+      },
+      {
+        fieldName: 'encounter_key',
+        operator: 'match',
+        value: currentEncounter?.key
+      }
+    ]
   });
 
-  const isSelected = row => (row?.id === selectedRow?.id ? 'selected-row' : '');
+  const { data: consultationListResponse, isLoading } =
+    useGetTelephonicConsultationOrdersListQuery(consultationListRequest);
 
-  const toInstantStartOfDay = (date: Date) =>
-    new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0).toISOString();
+  const { data: practitionerResponse } = useGetAllPractitionersQuery({
+    page: 0,
+    size: 9999,
+    sort: 'id,asc'
+  });
 
-  const toInstantEndOfDay = (date: Date) =>
-    new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999).toISOString();
+  const physicianList =
+    practitionerResponse?.data?.filter(practitioner => practitioner.jobRole === 'PHYSICIAN') ?? [];
 
-  const buildQueryParams = () => {
-    const params: any = {
-      encounterId: encounter?.key,
-      page: pageIndex,
-      size: rowsPerPage,
-      includeCancelled: showCanceled
-    };
+  const totalCount = consultationListResponse?.extraNumeric ?? 0;
+  const pageIndex = consultationListRequest.pageNumber - 1;
+  const rowsPerPage = consultationListRequest.pageSize;
 
-    if (dateFilter.fromDate) {
-      params.fromDate = toInstantStartOfDay(dateFilter.fromDate);
-    }
-
-    if (dateFilter.toDate) {
-      params.toDate = toInstantEndOfDay(dateFilter.toDate);
-    }
-
-    return params;
+  const isFormField = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return (
+      node.closest(`
+        input, textarea, select, button,
+        .rs-input, .rs-picker, .rs-checkbox, .rs-btn,
+        .rs-picker-toggle, .rs-calendar, .rs-dropdown
+      `) !== null
+    );
   };
 
-  const { data, isLoading, refetch } = useFindAllByEncounterQuery(buildQueryParams(), {
-    skip: !encounter?.key
-  });
+  const isInsideModalOrPopup = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return node.closest('.rs-modal, .rs-picker-popup, .my-modal') !== null;
+  };
 
-  const [cancelTeleConsultation] = useCancelMutation();
+  const isDataRow = (node: EventTarget | null) => {
+    if (!(node instanceof Element)) return false;
+    return node.closest('.rs-table-row') && !node.closest('.rs-table-row-header');
+  };
 
-  const tableData = data?.data ?? [];
-  const totalCount = data?.totalCount ?? 0;
-
-  const [getPractitionersBulk] = useGetPractitionersBulkMutation();
-  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
-    {}
-  );
-  const [loadingPractitioners, setLoadingPractitioners] = useState(false);
-
-  useEffect(() => {
-    const loadPractitioners = async () => {
-      const rows = tableData ?? [];
-
-      if (!rows.length) {
-        setPractitionersMap({});
-        setLoadingPractitioners(false);
-        return;
-      }
-
-      const uniqueIds = Array.from(
-        new Set(
-          rows
-            .map(r => r.practitionerId)
-            .filter((id): id is number | string => id !== null && id !== undefined)
-        )
-      );
-
-      if (!uniqueIds.length) {
-        setPractitionersMap({});
-        setLoadingPractitioners(false);
-        return;
-      }
-
-      setLoadingPractitioners(true);
-      try {
-        const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
-        const map = Object.fromEntries(practitioners.map(p => [p.id, p]));
-        setPractitionersMap(map);
-      } catch (e) {
-        console.error('Bulk practitioner load failed', e);
-        setPractitionersMap({});
-      } finally {
-        setLoadingPractitioners(false);
-      }
-    };
-
-    loadPractitioners();
-  }, [tableData, getPractitionersBulk]);
-
-  const handleClearSelection = useCallback(() => {
-    setSelectedRow(null);
+  const clearRowSelection = useCallback(() => {
+    setActiveConsultation(null);
+    setSelectedConsultations([]);
   }, []);
 
   useEffect(() => {
-    const handlePointer = (e: PointerEvent) => {
-      if (openCancelModal || openModal || attachmentsModalOpen) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target;
 
-      const target = e.target as HTMLElement;
-      if (!tableContainerRef.current?.contains(target)) {
-        handleClearSelection();
-      }
+      if (isFormField(target) || isInsideModalOrPopup(target)) return;
+
+      const insideTable = tableContainerRef.current?.contains(target as Node);
+      const isRowClick = isDataRow(target);
+
+      if (!insideTable) return clearRowSelection();
+      if (insideTable && !isRowClick) return clearRowSelection();
     };
 
-    document.addEventListener('pointerdown', handlePointer, true);
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') clearRowSelection();
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    document.addEventListener('keydown', handleEscapeKey);
+
     return () => {
-      document.removeEventListener('pointerdown', handlePointer, true);
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+      document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [handleClearSelection, openCancelModal, openModal, attachmentsModalOpen]);
+  }, [clearRowSelection]);
 
-  const handleCancel = async () => {
-    if (!selectedRow) return;
-
-    try {
-      await cancelTeleConsultation({
-        id: selectedRow.id,
-        reason: consultationOrder?.cancellationReason,
-        cancelledBy: user?.id
-      }).unwrap();
-
-      dispatch(notify('Consultation cancelled'));
-      setSelectedRow(null);
-      setOpenCancelModal(false);
-
-      refetch();
-    } catch (err: any) {
-      handleCancelError(err, dispatch);
-    }
+  const handleOpenAttachments = rowData => {
+    setConsultationFormData(rowData);
+    setIsAttachmentsModalOpen(true);
   };
 
-  const handleRefetchData = () => {
-    refetch();
-  };
+  const getRowClassName = row => (activeConsultation?.key === row?.key ? 'selected-row' : '');
 
-  const handleClearFilters = () => {
-    setDateFilter({
-      fromDate: null,
-      toDate: null
+  const handleCheckboxChange = (rowData: any) => {
+    setSelectedConsultations(previous => {
+      if (previous.includes(rowData)) {
+        return previous.filter(item => item !== rowData);
+      }
+      return [...previous, rowData];
     });
-    setPageIndex(0);
   };
-
-  useEffect(() => {
-    setPageIndex(0);
-    handleRefetchData();
-  }, [dateFilter.fromDate, dateFilter.toDate]);
 
   const columns = [
     {
-      key: 'practitionerId',
+      key: 'select',
+      title: '#',
+      flexGrow: 1,
+      render: (rowData: any) => (
+        <Checkbox
+          checked={selectedConsultations.includes(rowData)}
+          onChange={() => handleCheckboxChange(rowData)}
+          disabled={rowData.isValid === false}
+        />
+      )
+    },
+    {
+      key: 'physician',
       title: 'Physician',
       flexGrow: 2,
       render: row => {
-        const p = practitionersMap[row.practitionerId];
-
-        if (loadingPractitioners) return <Loader size="sm" />;
-        if (!p) return '-';
-
-        return `${p.firstName} ${p.lastName ?? ''}`.trim();
+        const physician = physicianList.find(item => item?.id === row?.physician);
+        return <p>{physician?.firstName + ' ' + physician?.lastName}</p>;
       }
     },
     {
@@ -250,7 +186,8 @@ const TelephonicConsultation = props => {
     {
       key: 'consultationContent',
       title: 'Consultation Content',
-      flexGrow: 4
+      flexGrow: 4,
+      render: row => <div className="consultation-content-container">{row.consultationContent}</div>
     },
     {
       key: 'attachments',
@@ -259,10 +196,10 @@ const TelephonicConsultation = props => {
       render: row => (
         <MdAttachFile
           size={20}
-          className='edit-pointer'
-          onClick={() => {
-            setConsultationOrder(row);
-            setAttachmentsModalOpen(true);
+          fill={row?.key ? 'var(--primary-gray)' : '#ccc'}
+          onClick={() => row?.key && handleOpenAttachments(row)}
+          style={{
+            cursor: row?.key ? 'pointer' : 'not-allowed'
           }}
         />
       )
@@ -274,40 +211,44 @@ const TelephonicConsultation = props => {
       render: row => (
         <MdModeEdit
           size={22}
-          className='edit-pointer'
+          fill="var(--primary-gray)"
+          style={{ cursor: 'pointer' }}
           onClick={() => {
-            setConsultationOrder(row);
-            setSelectedRow(row);
-            setModalKey(prev => prev + 1);
-            setOpenModal(true);
+            setActiveConsultation(row);
+            setConsultationFormData(row);
+            setIsDetailsModalOpen(true);
           }}
         />
       )
     },
     {
-      key: 'createdDate',
+      key: 'createdAt',
       title: 'CREATED BY/AT',
       expandable: true,
       render: row =>
-        row.createdDate && (
+        row?.createdAt ? (
           <>
-            {row.createdBy}
+            {row?.createdBy}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
           </>
+        ) : (
+          ' '
         )
     },
     {
-      key: 'cancelledAt',
+      key: 'deletedAt',
       title: 'CANCELLED BY/AT',
       expandable: true,
       render: row =>
-        row.cancelledAt && (
+        row?.deletedAt ? (
           <>
-            {row.cancelledBy}
+            {row?.deletedBy}
             <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledAt)}</span>
+            <span className="date-table-style">{formatDateWithoutSeconds(row?.deletedAt)}</span>
           </>
+        ) : (
+          ' '
         )
     },
     {
@@ -317,67 +258,80 @@ const TelephonicConsultation = props => {
     }
   ];
 
-  const filters = () => {
-    return (
-      <Form layout="inline" fluid className="date-filter-form">
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
-        <MyInput
-          width={180}
-          column
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
-        <div className="margin-15">
-          <MyButton onClick={handleClearFilters}>Clear</MyButton>
-        </div>
-      </Form>
-    );
+  const handleCancelConsultations = async () => {
+    try {
+      await Promise.all(
+        selectedConsultations.map(item =>
+          saveConsultationOrder({
+            ...item,
+            isValid: false,
+            deletedAt: Date.now(),
+            deletedBy: loggedInUser?.firstName + ' ' + loggedInUser?.lastName,
+            cancellationReason: consultationFormData?.cancellationReason
+          }).unwrap()
+        )
+      );
+
+      dispatch(notify('All consultations cancelled'));
+      setSelectedConsultations([]);
+      setIsCancelModalOpen(false);
+
+      setConsultationListRequest(prev => ({
+        ...prev,
+        timestamp: Date.now()
+      }));
+    } catch {
+      dispatch(notify('Cancel failed'));
+    }
   };
 
-  const isCancelled = selectedRow?.cancelledAt != null;
+  const handlePageChange = (_: any, newPage: number) => {
+    setConsultationListRequest({
+      ...consultationListRequest,
+      pageNumber: newPage + 1
+    });
+  };
+
+  const handleRowsPerPageChange = e => {
+    setConsultationListRequest({
+      ...consultationListRequest,
+      pageSize: Number(e.target.value),
+      pageNumber: 1
+    });
+  };
 
   const tableButtons = (
     <div className="bt-div-2">
       <div className="bt-left-2">
         <MyButton
           prefixIcon={() => <BlockIcon />}
-          onClick={() => {
-            if (!selectedRow || isCancelled) return;
-            setConsultationOrder(selectedRow);
-            setOpenCancelModal(true);
-          }}
-          disabled={!selectedRow || isCancelled}
+          onClick={() => setIsCancelModalOpen(true)}
+          disabled={selectedConsultations.length === 0}
         >
           Cancel
         </MyButton>
 
-        <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)}>
+        <Checkbox checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
           Show Cancelled
         </Checkbox>
       </div>
 
-      <div className={clsx('bt-right-2', { 'disabled-panel': edit })}>
+      <div
+        className={clsx('bt-right-2', {
+          'disabled-panel': isEditMode
+        })}
+      >
         <MyButton
           prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
           onClick={() => {
-            setConsultationOrder({
-              ...newTelephonicConsultation,
-              patientId: patient?.key,
-              encounterId: encounter?.key
+            setActiveConsultation(null);
+            setConsultationFormData({
+              ...newApTelephonicConsultation,
+              patientKey: currentPatient?.key,
+              encounterKey: currentEncounter?.key,
+              createdBy: 'Admin'
             });
-            setModalKey(prev => prev + 1);
-            setOpenModal(true);
+            setIsDetailsModalOpen(true);
           }}
         >
           Add Consultation
@@ -386,51 +340,79 @@ const TelephonicConsultation = props => {
     </div>
   );
 
+  useEffect(() => {
+    setConsultationListRequest(prev => ({
+      ...prev,
+      filters: [
+        {
+          fieldName: 'is_valid',
+          operator: 'equal',
+          value: !showCancelled
+        },
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: currentPatient?.key
+        }
+      ]
+    }));
+  }, [showCancelled, currentPatient?.key]);
+
   return (
-    <div ref={tableContainerRef}>
-      <MyTable
-        height={450}
-        loading={isLoading}
-        data={tableData}
-        columns={columns}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={(_, p) => setPageIndex(p)}
-        onRowsPerPageChange={e => {
-          setRowsPerPage(Number(e.target.value));
-          setPageIndex(0);
-        }}
-        onRowClick={row => setSelectedRow(row)}
-        rowClassName={isSelected}
-        filters={filters()}
-        tableButtons={tableButtons}
-      />
+    <div>
+      <div ref={tableContainerRef}>
+        <MyTable
+          height={450}
+          loading={isLoading}
+          data={consultationListResponse?.object || []}
+          columns={columns}
+          rowClassName={getRowClassName}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          onRowClick={row => setActiveConsultation(row)}
+          tableButtons={tableButtons}
+        />
+      </div>
 
       <DetailsTele
-        key={modalKey}
-        patient={patient}
-        encounter={encounter}
-        consultationOrders={consultationOrder}
-        setConsultationOrder={setConsultationOrder}
-        open={openModal}
-        setOpen={setOpenModal}
-        refetchCon={handleRefetchData}
+        patient={currentPatient}
+        encounter={currentEncounter}
+        consultationOrders={consultationFormData}
+        setConsultationOrder={setConsultationFormData}
+        open={isDetailsModalOpen}
+        setOpen={value => {
+          setIsDetailsModalOpen(value);
+          setConsultationListRequest({
+            ...consultationListRequest,
+            timestamp: Date.now()
+          });
+        }}
         editing={false}
         edit={false}
+        refetchCon={() =>
+          setConsultationListRequest({
+            ...consultationListRequest,
+            timestamp: Date.now()
+          })
+        }
       />
 
       <MyModal
-        open={attachmentsModalOpen}
-        setOpen={setAttachmentsModalOpen}
+        open={isAttachmentsModalOpen}
+        setOpen={setIsAttachmentsModalOpen}
         title="Attachments - Telephonic Consultation"
         size="lg"
-        hideActionBtn
+        hideActionBtn={true}
         content={
           <EncounterAttachment
-            localEncounter={encounter}
+            localEncounter={currentEncounter}
             source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
-            sourceId={consultationOrder?.id}
+            sourceId={consultationFormData?.key ? Number(consultationFormData.key) : undefined}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />
@@ -438,13 +420,13 @@ const TelephonicConsultation = props => {
       <CancellationModal
         title="Cancel Telephonic Consultation"
         fieldLabel="Cancellation Reason"
-        open={openCancelModal}
-        setOpen={setOpenCancelModal}
-        object={consultationOrder}
-        setObject={setConsultationOrder}
-        handleCancle={handleCancel}
+        open={isCancelModalOpen}
+        setOpen={setIsCancelModalOpen}
+        object={consultationFormData}
+        setObject={setConsultationFormData}
+        handleCancle={handleCancelConsultations}
         fieldName="cancellationReason"
-        required
+        required={true}
       />
     </div>
   );
