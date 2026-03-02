@@ -87,7 +87,6 @@ export interface CreateFacility {
   isActive?: boolean;
 }
 
-
 export interface Role {
   id?: string;
   name?: string;
@@ -488,7 +487,6 @@ export interface DiagnosticTestProfile {
   isDefault?: boolean;
   isActive?: boolean;
 }
-
 
 export interface Pathology {
   id?: number;
@@ -1014,8 +1012,6 @@ export interface BrandMedicationActiveIngredient {
   unit: string;
 }
 
-
-
 export type CatalogCreateVM = {
   name: string;
   description?: string | null;
@@ -1457,8 +1453,6 @@ export interface Payor {
   lastModifiedDate?: Date | null;
 }
 
-
-
 export interface PayorPlanItem {
   id?: number;
   payorId: number;
@@ -1736,7 +1730,8 @@ export interface CommunityArea {
   id?: number;
   communityId: number;
   name: string;
-  isActive?: boolean;}
+  isActive?: boolean;
+}
 
 export interface UserStickyNotesResponseVM {
   id: number;
@@ -1811,30 +1806,30 @@ export interface PatientInsuranceCoverage {
 export interface EncounterVaccination {
   id?: number;
 
-  patientId: number; 
+  patientId: number;
   encounterId: number;
 
   vaccineId: number;
   vaccineBrandId: number;
   vaccineDoseId: number;
 
-  vaccineLotNumber?: number | string | null; 
+  vaccineLotNumber?: number | string | null;
   dateAdministered?: string | null;
 
-  status: string; 
+  status: string;
 
   cancellationReason?: string | null;
 
-  cancelledAt?: string | null;      
-  cancelledById?: number | null;   
+  cancelledAt?: string | null;
+  cancelledById?: number | null;
 
   administeredLocation?: string | null;
   administrationReactions?: string | null;
   externalFacilityName?: string | null;
   notes?: string | null;
 
-  reviewedAt?: string | null;       
-  reviewedById?: number | null;     
+  reviewedAt?: string | null;
+  reviewedById?: number | null;
 
   createdBy?: string | null;
   createdDate?: Date | string | null;
@@ -1844,27 +1839,49 @@ export interface EncounterVaccination {
 export interface PatientEncounter {
   id: number;
 
-  patientId: number;
+  patient?: {
+    id: number;
+    firstName?: string | null;
+    secondName?: string | null;
+    thirdName?: string | null;
+    lastName?: string | null;
+    medicalRecordNumber?: string | null;
+    dateOfBirth?: string | null;
+    sexAtBirth?: string | null;
+    isPrivatePatient?: boolean | null;
+  } | null;
+
+  encounterNumber?: string | null;
+  departmentDailySequenceNumber?: number | null;
+  encounterDate?: Date | null;
+
   facilityId: number;
   departmentId: number;
-
   practitionerId?: number | null;
 
-  encounterType: string;        
-  encounterReason: string;      
+  encounterType: string;
+  encounterReason: string;
+  priorityLevel: string;
+  status: string;
 
-  followUpEncounterId?: number | null;
-
-  priorityLevel: string;        
+  followUpEncounter?: {
+    id: number;
+    encounterNumber?: string | null;
+  } | null;
 
   originType?: string | null;
   originName?: string | null;
-
   notes?: string | null;
+  chiefComplaint?: string | null;
 
-  status: string;  
- encounterDate?: Date | null;                
-             
+  hasPrescription: boolean;
+  hasOrder: boolean;
+  isObserved: boolean;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
 }
 
 export interface PatientBasicInformationResponseVM {
@@ -1877,13 +1894,12 @@ export interface PatientBasicInformationResponseVM {
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
   lastName?: string | null;
-dateOfBirth?: string | null;
+  dateOfBirth?: string | null;
   gender?: string | null;
-  ruleId:Number|null ,
+  ruleId: number | null;
   mobileNumber: string | null;
-  documentNo:string | null;
-facilityId?: number | null;
-
+  documentNo: string | null;
+  facilityId?: number | null;
 }
 
 export interface DiagnosticTestReportTemplate {
@@ -2245,7 +2261,7 @@ export enum DiagnosticStatus {
   SUBMITTED = 'SUBMITTED',
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
+  CANCELLED = 'CANCELLED'
 }
 
 export enum DiagnosticOrderTestStatus {
@@ -2259,12 +2275,12 @@ export enum DiagnosticOrderTestStatus {
   CANCELLED = 'CANCELLED',
   PARTIALLY = 'PARTIALLY',
   RESULT_REJECTED = 'RESULT_REJECTED',
-  PATIENT_ARRIVED = 'PATIENT_ARRIVED',
+  PATIENT_ARRIVED = 'PATIENT_ARRIVED'
 }
 
 export enum TestType {
   LAB = 'LAB',
-  RAD = 'RAD',
+  RAD = 'RAD'
 }
 
 export interface AuditingEntity {
@@ -2344,7 +2360,6 @@ export interface DiagnosticOrderCreateDTO {
   radStatus?: DiagnosticStatus;
   fromDepartmentId?: number;
   fromFacilityId?: number;
-
 }
 
 export interface DiagnosticOrderUpdateDTO {
@@ -2357,7 +2372,6 @@ export interface DiagnosticOrderUpdateDTO {
   submittedDate?: string;
 
   isUrgent?: boolean;
-
 }
 
 export interface DiagnosticOrderSubmitDTO {
@@ -2374,7 +2388,6 @@ export interface DiagnosticOrderTestCreateDTO {
   processingStatus?: DiagnosticOrderTestStatus;
   submitDate?: string;
   orderType?: TestType;
-
 }
 
 export interface DiagnosticOrderTestUpdateDTO extends DiagnosticOrderTestCreateDTO {
@@ -2402,7 +2415,6 @@ export interface BulkRejectDTO {
   ids: number[];
   rejectedReason: string;
 }
-
 
 export interface DiagnosticOrderTestResultCreateDTO {
   orderTestId: number;
@@ -2432,8 +2444,6 @@ export interface DiagnosticOrderTestResultRejectDTO {
   rejectedReason: string;
 }
 
-/* ================= Diagnostic Order Test Result ================= */
-
 export interface DiagnosticOrderTestResultResponseVM {
   id: number;
 
@@ -2445,9 +2455,9 @@ export interface DiagnosticOrderTestResultResponseVM {
   resultValueText?: string | null;
 
   marker?: string | null;
-  viewMarker?: string | null;          // محسوب في controller
+  viewMarker?: string | null;
   normalRangeValue?: string | null;
-  viewNormalRange?: string | null;     // محسوب في controller
+  viewNormalRange?: string | null;
 
   processingStatus?: DiagnosticOrderTestStatus;
 
@@ -2515,7 +2525,6 @@ export interface PatientArrivedResponseVM {
   createdBy?: string;
   createdDate?: string;
 }
-
 
 export interface DiagnosticOrderTestReportCreateDTO {
   orderId: number;

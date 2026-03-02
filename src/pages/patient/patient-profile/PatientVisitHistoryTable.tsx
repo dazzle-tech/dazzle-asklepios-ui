@@ -32,6 +32,8 @@ import type { Department } from '@/types/model-types-new';
 
 import './styles.less';
 
+// PatientVisitHistoryTable.tsx
+
 const PatientVisitHistoryTable = ({ localPatient }: any) => {
   const dispatch = useDispatch();
 
@@ -47,7 +49,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
   const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
 
-  const { data, isFetching } = useGetEncountersByPatientQuery(
+  const { data, isFetching, refetch } = useGetEncountersByPatientQuery(
+    // ✅ أضف refetch
     {
       patientId: localPatient?.id,
       page: 0,
@@ -67,11 +70,11 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
 
   const handleCancel = async () => {
     if (!selectedVisit) return;
-
     try {
       await cancelEncounter({ id: selectedVisit.id }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       setOpenCancelModal(false);
+      refetch(); // ✅
     } catch {
       dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
     }
@@ -81,6 +84,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     try {
       await completeEncounter({ id: row.id }).unwrap();
       dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
+      refetch(); // ✅
     } catch {
       dispatch(notify({ msg: 'Error completing encounter', sev: 'error' }));
     }
@@ -90,9 +94,15 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     try {
       await dischargeEncounter({ id: row.id }).unwrap();
       dispatch(notify({ msg: 'Discharged Successfully', sev: 'success' }));
+      refetch(); // ✅
     } catch {
       dispatch(notify({ msg: 'Error discharging encounter', sev: 'error' }));
     }
+  };
+
+  // ✅ callback يُمرر لـ PatientQuickAppointment
+  const handleEncounterSaved = async () => {
+    await refetch();
   };
 
   useEffect(() => {
@@ -101,28 +111,15 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         setPractitionersMap({});
         return;
       }
-
       const uniqueIds = Array.from(
-        new Set(
-          encounters
-            .map(encounterRow => encounterRow.practitionerId)
-            .filter(practitionerId => practitionerId !== null && practitionerId !== undefined)
-        )
+        new Set(encounters.map(e => e.practitionerId).filter(id => id != null))
       );
-
       if (!uniqueIds.length) return;
-
       try {
         const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
-        const practitionersById = Object.fromEntries(
-          practitioners.map(practitioner => [practitioner.id, practitioner])
-        );
-        setPractitionersMap(practitionersById);
-      } catch {
-        // silent
-      }
+        setPractitionersMap(Object.fromEntries(practitioners.map(p => [p.id, p])));
+      } catch {}
     };
-
     loadPractitioners();
   }, [encounters]);
 
@@ -132,28 +129,15 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         setDepartmentsMap({});
         return;
       }
-
       const uniqueIds = Array.from(
-        new Set(
-          encounters
-            .map(encounterRow => encounterRow.departmentId)
-            .filter(departmentId => departmentId !== null && departmentId !== undefined)
-        )
+        new Set(encounters.map(e => e.departmentId).filter(id => id != null))
       );
-
       if (!uniqueIds.length) return;
-
       try {
         const departments = await getDepartmentsBulk(uniqueIds).unwrap();
-        const departmentsById = Object.fromEntries(
-          departments.map(department => [department.id, department])
-        );
-        setDepartmentsMap(departmentsById);
-      } catch {
-        // silent
-      }
+        setDepartmentsMap(Object.fromEntries(departments.map(d => [d.id, d])));
+      } catch {}
     };
-
     loadDepartments();
   }, [encounters, getDepartmentsBulk]);
 
@@ -178,19 +162,15 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     {
       key: 'department',
       title: <Translate>Department</Translate>,
-      render: (row: any) => {
-        const department = departmentsMap[row.departmentId];
-        if (!department) return '';
-        return department.name ?? '';
-      }
+      render: (row: any) => departmentsMap[row.departmentId]?.name ?? ''
     },
     {
       key: 'practitioner',
       title: <Translate>Practitioner</Translate>,
       render: (row: any) => {
-        const practitioner = practitionersMap[row.practitionerId];
-        if (!practitioner) return '';
-        return `${practitioner.firstName} ${practitioner.lastName ?? ''}`.trim();
+        const p = practitionersMap[row.practitionerId];
+        if (!p) return '';
+        return `${p.firstName} ${p.lastName ?? ''}`.trim();
       }
     },
     {
@@ -212,11 +192,9 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       key: 'actions',
       title: '',
       render: (row: any) => {
-        const encounterStatus = row.status;
-
-        const isOngoing = encounterStatus === 'ONGOING';
-        const isNew = encounterStatus === 'NEW';
-        const isPendingPayment = encounterStatus === 'PENDING_PAYMENT';
+        const isOngoing = row.status === 'ONGOING';
+        const isNew = row.status === 'NEW';
+        const isPendingPayment = row.status === 'PENDING_PAYMENT';
 
         return (
           <Form className="visit-history__actions-form">
@@ -234,31 +212,20 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </MyButton>
               </Whisper>
             )}
-
             {isOngoing && (
               <Whisper placement="top" speaker={<Tooltip>Complete</Tooltip>}>
-                <MyButton
-                  appearance="subtle"
-                  size="small"
-                  onClick={() => handleComplete(row)}
-                >
+                <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)}>
                   <FontAwesomeIcon icon={faCheckDouble} />
                 </MyButton>
               </Whisper>
             )}
-
             {isOngoing && (
               <Whisper placement="top" speaker={<Tooltip>Discharge</Tooltip>}>
-                <MyButton
-                  appearance="subtle"
-                  size="small"
-                  onClick={() => handleDischarge(row)}
-                >
+                <MyButton appearance="subtle" size="small" onClick={() => handleDischarge(row)}>
                   <FontAwesomeIcon icon={faPowerOff} />
                 </MyButton>
               </Whisper>
             )}
-
             {isPendingPayment && (
               <Whisper placement="top" speaker={<Tooltip>Pay</Tooltip>}>
                 <MyButton
@@ -301,6 +268,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
           localVisit={selectedVisit}
           isDisabeld={quickInitialStep === 0}
           initialStep={quickInitialStep}
+          onEncounterSaved={handleEncounterSaved} // ✅ هون المهم
         />
       )}
     </>
