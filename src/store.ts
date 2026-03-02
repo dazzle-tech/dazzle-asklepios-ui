@@ -146,6 +146,8 @@ import { patientInsuranceCoveragesService } from './services/patients/patientIns
 import { encounterVaccinationService } from './services/encounterMedical/encounterVaccinationService';
 import { patientEncounterService } from './services/encounters/patientEncounterService';
 import { patientPaymentsService } from './services/encounters/patientPaymentsService';
+import { consultationService } from './services/consultation/consultationService';
+import { portalService } from './services/portalService';
 import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
@@ -299,17 +301,14 @@ export const store = configureStore({
     [MedicationCategoriesService.reducerPath]: MedicationCategoriesService.reducer,
     [MedicationCategoriesClassService.reducerPath]: MedicationCategoriesClassService.reducer,
 
-    // misc setup (age, ICD, resource, allergens)
     // uom
     [uomGroupService.reducerPath]: uomGroupService.reducer,
-
-    // Translation slice
 
     // Form slice
     [formTemplateService.reducerPath]: formTemplateService.reducer,
     [FormEntriesService.reducerPath]: FormEntriesService.reducer,
 
-    //age group
+    // age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
     [ResourceService.reducerPath]: ResourceService.reducer,
@@ -341,7 +340,6 @@ export const store = configureStore({
     // billing
     [BillingService.reducerPath]: BillingService.reducer,
 
-    //vaccine
     // vaccines
     [vaccineService.reducerPath]: vaccineService.reducer,
     [vaccineBrandsService.reducerPath]: vaccineBrandsService.reducer,
@@ -371,7 +369,6 @@ export const store = configureStore({
     // visit duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
 
-    // Templates
     // catalog
     [catalogService.reducerPath]: catalogService.reducer,
     [catalogDiagnosticTestService.reducerPath]: catalogDiagnosticTestService.reducer,
@@ -380,7 +377,6 @@ export const store = configureStore({
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
-    // Templates
     // report templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
@@ -407,11 +403,12 @@ export const store = configureStore({
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
 
-    //AI Services
+    // AI Services
     [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer,
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
+
     [patientProblemService.reducerPath]: patientProblemService.reducer,
     [familyHistoryService.reducerPath]: familyHistoryService.reducer,
     [hospitalizationService.reducerPath]: hospitalizationService.reducer,
@@ -419,6 +416,8 @@ export const store = configureStore({
     [socialHistoryService.reducerPath]: socialHistoryService.reducer,
     [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
     [patientReportService.reducerPath]: patientReportService.reducer,
+    [consultationService.reducerPath]: consultationService.reducer,
+    [portalService.reducerPath]: portalService.reducer,
     [telephonicConsultationService.reducerPath]: telephonicConsultationService.reducer,
 
     [diagnosticOrderService.reducerPath]: diagnosticOrderService.reducer,
@@ -642,6 +641,8 @@ export const store = configureStore({
       diagnosticOrderTestReportCommentsService.middleware,
       patientDiagnosticResultHistoryService.middleware,
       patientReportService.middleware,
+      consultationService.middleware,
+      portalService.middleware,
       telephonicConsultationService.middleware,
       ICDTreeService.middleware
     ])
