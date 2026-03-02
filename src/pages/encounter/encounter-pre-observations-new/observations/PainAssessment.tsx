@@ -277,8 +277,6 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
                   required
                 />
               </Col>
-
-              {/* ✅ added: Pain Pattern LOV */}
               <Col md={12}>
                 <MyInput
                   disabled={disabled}
