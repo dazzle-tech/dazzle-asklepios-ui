@@ -180,6 +180,9 @@ import { patientDiagnosticResultHistoryService } from './services/diagnosic-orde
 import { patientReportService } from './services/patientReportService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { encounterAssessmentService } from './services/medicalSheets/clinicalVisit/encounterAssessmentService';
+import { patientDiagnosisService } from './services/medicalSheets/clinicalVisit/patientDiagnosisService';
+import { encounterPlanService } from './services/medicalSheets/clinicalVisit/encounterPlanService';
 
 export const store = configureStore({
   reducer: {
@@ -437,7 +440,10 @@ export const store = configureStore({
     [patientDiagnosticResultHistoryService.reducerPath]:
       patientDiagnosticResultHistoryService.reducer,
 
-    [ICDTreeService.reducerPath]: ICDTreeService.reducer
+    [ICDTreeService.reducerPath]: ICDTreeService.reducer,
+    [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
+    [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
+    [encounterPlanService.reducerPath]: encounterPlanService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -644,7 +650,10 @@ export const store = configureStore({
       consultationService.middleware,
       portalService.middleware,
       telephonicConsultationService.middleware,
-      ICDTreeService.middleware
+      ICDTreeService.middleware,
+      encounterAssessmentService.middleware,
+      patientDiagnosisService.middleware,
+      encounterPlanService.middleware,
     ])
 });
 

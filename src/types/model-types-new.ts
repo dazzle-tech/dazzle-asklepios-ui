@@ -2654,3 +2654,39 @@ export interface ProfileTestGroupedHistoryVM {
 
   results: DiagnosticHistoryResultVM[];
 }
+export interface EncounterAssessment {
+  id?: number;
+  patientId: number | null;
+  userId: number | null;
+  encounterId: number | null;
+  assessment: string | null;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface EncounterPlan {
+  id?: number;
+  patientId: number | null;
+  encounterId: number | null;
+  planInstructions: string | null;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface PatientDiagnosis {
+  id?: number;
+  patientId: number | null;
+  encounterId: number | null;
+  diagnosisId: number | null;
+  type: string | null;
+  suspected: boolean | null;
+  major: boolean | null;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
