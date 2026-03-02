@@ -18,7 +18,7 @@ import CheckIcon from '@rsuite/icons/Check';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
-import PatientOrder from '../diagnostics-order';
+import PatientOrder from '../diagnostics-order-new';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
 import { useLazyGetProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
