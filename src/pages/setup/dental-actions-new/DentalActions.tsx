@@ -34,14 +34,12 @@ import { PaginationPerPage } from "@/utils/paginationPerPage";
 const DentalActions = () => {
   const dispatch = useAppDispatch();
   const [dentalAction, setDentalAction] = useState<DentalAction>({ ...newDentalAction});
-  const [popupOpen, setPopupOpen] = useState(false); // open add/edit dental action pop up
+  const [popupOpen, setPopupOpen] = useState(false);
   const [proceduresOpen, setProceduresOpen] = useState(false);
   const [openConfirmDeleteDentalAction, setOpenConfirmDeleteDentalAction] =
     useState<boolean>(false);
   const [stateOfDeleteDentalAction, setStateOfDeleteDentalAction] = useState<string>('delete');
   const [width, setWidth] = useState<number>(window.innerWidth);
-
-  // ───────────── NEW FILTER & SORT STATES ─────────────
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredList, setFilteredList] = useState<DentalAction[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
@@ -65,20 +63,13 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
     ,
     sort: "id,asc",
   });
-  // Fetch dental action list response
-
-
-
 
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-  // Available fields for filtering
   const filterFields = [
     { label: 'Description', value: 'description' },
     { label: 'Type', value: 'type' }
   ];
 
-
-  // Header page setUp
     useEffect(() => {
       dispatch(setPageCode('Dental_Actions'));
       dispatch(setDivContent("Dental Actions"));
@@ -89,15 +80,13 @@ const [toggleDentalActionActive] = useToggleDiagnosticTestActiveMutation();
       };
     }, [dispatch]);
 
-  // class name for selected row
   const isSelected = rowData => {
     if (rowData && dentalAction && rowData.key === dentalAction.id) {
       return 'selected-row';
     } else return '';
   };
 
-  // Handle page change in navigation
-const handlePageChange = (event, newPage) => {
+  const handlePageChange = (event, newPage) => {
   if (isFiltered) {
     setFilterPagination((prev) => ({
       ...prev,
@@ -111,10 +100,6 @@ const handlePageChange = (event, newPage) => {
   }
 };
 
-
-
-
-  // handle click on add new button (open the pop up of add/edit dental action)
   const handleNew = () => {
     setDentalAction({ ...newDentalAction });
     setPopupOpen(true);
@@ -126,8 +111,6 @@ const handlePageChange = (event, newPage) => {
       isFetching: isDentalActionFetching,
     } = useGetAllDentalActionsQuery(!isFiltered ? paginationParams : skipToken);
 
-
-  // handle save dental action and close the pop up
     const handleSave = async () => {
       try {
         dispatch(showSystemLoader());
@@ -140,13 +123,11 @@ const handlePageChange = (event, newPage) => {
         };
 
         if (dentalAction.id) {
-          // ✅ Update requires id IN the body
           const payload = { ...basePayload, id: dentalAction.id };
 
           await updateDentalAction({ id: dentalAction.id, body: payload }).unwrap();
           dispatch(notify({ msg: 'Dental Action updated successfully', sev: 'success' }));
         } else {
-          // ✅ Create → NEVER send id
           await createDentalAction(basePayload).unwrap();
           dispatch(notify({ msg: 'Dental Action created successfully', sev: 'success' }));
         }
@@ -160,13 +141,6 @@ const handlePageChange = (event, newPage) => {
       }
     };
 
-
-
-
-
-
-
-  // handle deactivate/reactivate dental action (need to handle from the back)
     const handleDeactiveReactivateDentalAction = async () => {
       try {
         dispatch(showSystemLoader());
@@ -196,7 +170,6 @@ const handlePageChange = (event, newPage) => {
       }
     };
 
-  // Icons column (Linked Procedures, Edit, reactive/Deactivate)
   const iconsForActions = (rowData: DentalAction) => (
     <div className="container-of-icons">
       <PiToothFill
@@ -249,7 +222,7 @@ const handlePageChange = (event, newPage) => {
       )}
     </div>
   );
-  //Table columns
+
   const tableColumns = [
     {
       key: 'description',
@@ -277,7 +250,6 @@ const handlePageChange = (event, newPage) => {
 
   const actiontype = useEnumOptions('DentalActionType');
 
-  // Filter table
 const filters = () => (
   <Form layout="inline" fluid>
     <MyInput
@@ -332,7 +304,6 @@ const filters = () => (
 
 
 
-  // change the width variable when the size of window is changed
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
@@ -392,9 +363,6 @@ const filters = () => (
     setRecordOfFilter({ filter: field, value });
   };
 
-
-
-// ───────────── SORT HANDLER ─────────────
 const handleSortChange = (sortColumn: string, sortType: "asc" | "desc") => {
   setSortColumn(sortColumn);
   setSortType(sortType);
@@ -413,10 +381,6 @@ const handleSortChange = (sortColumn: string, sortType: "asc" | "desc") => {
   }
 };
 
-
-
-
-  // Pagination values
   const totalCount = dentalActionListResponse?.totalCount ?? 0;
   const links = dentalActionListResponse?.links || {};
   const pageIndex = paginationParams.page;
