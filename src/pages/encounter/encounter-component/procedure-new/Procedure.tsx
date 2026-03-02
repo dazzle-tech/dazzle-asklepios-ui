@@ -30,26 +30,12 @@ import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/securi
 import { cond } from 'lodash';
 import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
 import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+import './styles.less';
 
 const TableLoader = () => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '4px 0'
-    }}
-  >
+  <div className="table-loader">
     <Loader size="xs" />
-    <span
-      style={{
-        color: '#999',
-        fontSize: '12px',
-        fontStyle: 'italic'
-      }}
-    >
-      Loading...
-    </span>
+    <span className="table-loader-text">Loading...</span>
   </div>
 );
 
@@ -407,7 +393,7 @@ const Referrals = (props: any) => {
                   setAttachmentsModalOpen(true);
                 }
               }}
-              style={{ cursor: rowData?.id ? 'pointer' : 'not-allowed' }}
+              className={rowData?.id ? 'attachment-icon active' : 'attachment-icon disabled'}
             />
           );
         }
@@ -421,7 +407,7 @@ const Referrals = (props: any) => {
           <MdModeEdit
             size={24}
             fill="var(--primary-gray)"
-            style={{ cursor: 'pointer' }}
+            className="edit-icon"
             onClick={async e => {
               e.stopPropagation();
 
