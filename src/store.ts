@@ -178,6 +178,7 @@ import { diagnosticOrderTestReportService } from './services/setup/diagnosticTes
 import { diagnosticOrderTestReportCommentsService } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import { patientDiagnosticResultHistoryService } from './services/diagnosic-order/patientDiagnosticResultHistoryService';
 import { patientReportService } from './services/patientReportService';
+import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
@@ -384,6 +385,7 @@ export const store = configureStore({
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
+    // Templates
     // report templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
     [DiagnosticTestTemplateService.reducerPath]: DiagnosticTestTemplateService.reducer,
@@ -410,11 +412,14 @@ export const store = configureStore({
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
 
+    //AI Services
     // AI Services
     [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer,
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
+    [patientReportService.reducerPath]: patientReportService.reducer,
+    [patientProcedureService.reducerPath]: patientProcedureService.reducer,
 
     [patientProblemService.reducerPath]: patientProblemService.reducer,
     [familyHistoryService.reducerPath]: familyHistoryService.reducer,
@@ -422,7 +427,6 @@ export const store = configureStore({
     [surgicalHistoryService.reducerPath]: surgicalHistoryService.reducer,
     [socialHistoryService.reducerPath]: socialHistoryService.reducer,
     [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
-    [patientReportService.reducerPath]: patientReportService.reducer,
     [consultationService.reducerPath]: consultationService.reducer,
     [portalService.reducerPath]: portalService.reducer,
     [telephonicConsultationService.reducerPath]: telephonicConsultationService.reducer,
@@ -444,10 +448,7 @@ export const store = configureStore({
     [patientDiagnosticResultHistoryService.reducerPath]:
       patientDiagnosticResultHistoryService.reducer,
 
-    [ICDTreeService.reducerPath]: ICDTreeService.reducer,
-    [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
-    [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
-    [encounterPlanService.reducerPath]: encounterPlanService.reducer,
+    [ICDTreeService.reducerPath]: ICDTreeService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -651,19 +652,15 @@ export const store = configureStore({
       diagnosticOrderTestReportCommentsService.middleware,
       patientDiagnosticResultHistoryService.middleware,
       patientReportService.middleware,
-      ICDTreeService.middleware,
-      patientServicesAndProductsService.middleware,
-      telephonicConsultationService.middleware,
+      patientProcedureService.middleware,
       consultationService.middleware,
       portalService.middleware,
       telephonicConsultationService.middleware,
-      ICDTreeService.middleware,
-      encounterAssessmentService.middleware,
-      patientDiagnosisService.middleware,
-      encounterPlanService.middleware,
+      ICDTreeService.middleware
     ])
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
+// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
 export type AppDispatch = typeof store.dispatch;
