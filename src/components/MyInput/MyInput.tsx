@@ -17,7 +17,7 @@ import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
@@ -50,6 +50,7 @@ type MyInputProps = {
   fieldName: string;
   fieldType?:
     | 'text'
+    | 'password'
     | 'textarea'
     | 'checkbox'
     | 'datetime'
@@ -153,6 +154,7 @@ const MyInput = ({
   const [isTimeOpen, setIsTimeOpen] = useState(false);
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const handleScroll = (event: any) => {
@@ -165,7 +167,10 @@ const MyInput = ({
         'rs-picker-menu',
         'rs-virtual-list',
         'rs-virtual-list-scrollbar',
-        'rs-picker-tag-menu'
+        'rs-picker-tag-menu',
+        'rs-picker-date-menu',
+        'rs-calendar-panel',
+        'rs-calendar'
       ];
 
       // ignore scroll inside rsuite menu/popup
@@ -212,6 +217,13 @@ const MyInput = ({
 
   const handleValueChange = (value: any) => {
     if (!setRecord || typeof setRecord !== 'function') return;
+
+    if (fieldType === 'date') {
+      const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
+      setRecord({ ...record, [fieldName]: dateStr });
+      return;
+    }
+
     setRecord({ ...record, [fieldName]: value });
   };
 
@@ -321,10 +333,6 @@ const MyInput = ({
                 onClick={changeRecordingState}
                 style={{ position: 'relative' }}
               >
-                <FontAwesomeIcon
-                  icon={faMicrophone}
-                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
                 {recording && <span className="pulse-ring"></span>}
               </div>
             )}
@@ -407,6 +415,9 @@ const MyInput = ({
           ? (props.selectDataLabel as string[])
           : [props.selectDataLabel ?? ''];
         const primaryLabelKey = labelKeys[0] ?? '';
+        const rawValue = record ? record[fieldName] : null;
+        const normalizedValue =
+          rawValue === '' || rawValue === undefined || rawValue === null ? null : rawValue;
 
         return (
           <Form.Control
@@ -434,8 +445,15 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={primaryLabelKey}
             valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : ''}
-            onChange={handleValueChange}
+            value={record?.[fieldName] ?? null}
+            onChange={(value: any) => {
+              if (!setRecord) return;
+              setRecord({
+                ...record,
+                [fieldName]:
+                  value === null || value === undefined || value === '' ? null : Number(value)
+              });
+            }}
             defaultValue={props.defaultSelectValue}
             placeholder={props.placeholder}
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
@@ -469,7 +487,9 @@ const MyInput = ({
           : [props.selectDataLabel ?? 'name'];
         const labelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
-        const pickerValue = record?.[fieldName] ?? '';
+        const rawValue = record?.[fieldName];
+        const pickerValue =
+          rawValue === '' || rawValue === undefined || rawValue === null ? null : rawValue;
 
         return (
           <Form.Control
@@ -649,7 +669,7 @@ const MyInput = ({
             }
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? dayjs(record[fieldName], 'YYYY-MM-DD').toDate() : null}
+            value={record[fieldName] ? dayjs(record[fieldName]).toDate() : null}
             accepter={CustomDatePicker}
             onChange={handleValueChange}
             placeholder={props.placeholder}
@@ -783,7 +803,48 @@ const MyInput = ({
         const displayValue =
           props.isEnum && typeof rawValue === 'string' ? formatEnumString(rawValue) : rawValue;
 
-        const inputControl = (
+        const isPassword = fieldType === 'password';
+
+        const inputControl = isPassword ? (
+          <InputGroup inside style={{ width: defaultInputWidth }}>
+            <Form.Control
+              style={{
+                width: '100%',
+                height: props?.height ?? 30
+              }}
+              disabled={props.disabled}
+              name={fieldName}
+              type={showPassword ? 'text' : 'password'}
+              value={displayValue}
+              onChange={handleValueChange}
+              placeholder={props.placeholder}
+              onKeyDown={async e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const result = await props.enterClick?.();
+                  if (result !== false) {
+                    focusNextField(e);
+                  }
+                }
+              }}
+            />
+            {!props.disabled && (
+              <InputGroup.Button
+                onClick={() => setShowPassword(!showPassword)}
+                className="password-toggle-button"
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  boxShadow: 'none',
+                  padding: '8px 12px',
+                  outline: 'none'
+                }}
+              >
+                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+              </InputGroup.Button>
+            )}
+          </InputGroup>
+        ) : (
           <div style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}>
             <Form.Control
               style={{
@@ -807,6 +868,7 @@ const MyInput = ({
                 }
               }}
             />
+            {recording && <span className="pulse-ring"></span>}
           </div>
         );
 
@@ -833,30 +895,6 @@ const MyInput = ({
     }
   };
 
-  const conjureValidationMessages = () => {
-    if (!validationResult) return null;
-    const msgs = [];
-    let i = 0;
-    for (const vrs of validationResult) {
-      msgs.push(
-        <Form.HelpText
-          key={i++}
-          style={{
-            color:
-              vrs.validationType === 'REJECT'
-                ? 'red'
-                : vrs.validationType === 'WARN'
-                ? 'orange'
-                : 'grey'
-          }}
-        >
-          <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
-        </Form.HelpText>
-      );
-    }
-    return msgs;
-  };
-
   return (
     <Form.Group
       className={clsx(`my-input-container ${className} ${mode == 'light' ? 'light' : 'dark'}`)}
@@ -869,11 +907,10 @@ const MyInput = ({
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />
         )}
-        {props.required && <span className="required-field ">*</span>}
+        {props.required && <span className="required-field">*</span>}
       </Form.ControlLabel>
       {props.column && <div style={{ marginBottom: 5 }} />}
       {conjureFormControl()}
-      {validationResult && conjureValidationMessages()}
     </Form.Group>
   );
 };
