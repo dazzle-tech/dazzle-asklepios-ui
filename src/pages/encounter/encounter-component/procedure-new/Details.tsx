@@ -84,9 +84,6 @@ const handleProcedureCrudError = (
     return msg || 'invalid value';
   };
 
-  // ======================================================
-  // ✅ MAIN CASE: backend fieldErrors موجودة
-  // ======================================================
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
     // ✅ Copy errors array (avoid frozen redux object)
     let errors = [...data.fieldErrors];
@@ -392,7 +389,7 @@ const Details = ({
             })}
           >
             <Form fluid>
-              <div style={{ marginBottom: '10px' }}>
+              <div className="margin-bottom-10" >
                 <SectionContainer
                   title="Procedure Details"
                   content={
