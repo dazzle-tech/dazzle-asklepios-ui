@@ -4,7 +4,6 @@ import { BaseQuery } from '../../../newApi';
 
 type Id = number | string;
 
-
 export type SpringPage<T> = {
   content: T[];
   totalElements: number;
@@ -20,7 +19,7 @@ export type SpringPage<T> = {
 };
 
 export type VitalSignsResponseVM = {
-  temperature: number | null; 
+  temperature: number | null;
   pulseRate: number | null;
   respiratoryRate: number | null;
   bloodPressureSystolic: number | null;
@@ -30,7 +29,7 @@ export type VitalSignsResponseVM = {
 
 export type TemperatureResponseVM = {
   temperature: number | null;
-  createdAt: string; 
+  createdAt: string;
 };
 
 export type PulseRateResponseVM = {
@@ -55,16 +54,11 @@ export type BloodPressureResponseVM = {
 };
 
 // --------- DTOs ---------
-
-export type VitalSignsCreateDTO = Omit<
-  VitalSigns,
-  'id' | 'createdDate' | 'lastModifiedDate'
->;
+export type VitalSignsCreateDTO = Omit<VitalSigns, 'id' | 'createdDate' | 'lastModifiedDate'>;
 
 export type VitalSignsUpdateDTO = VitalSignsCreateDTO;
 
 // --------- API ---------
-
 export const vitalSignsService = createApi({
   reducerPath: 'newVitalSignsApi',
   baseQuery: BaseQuery,
@@ -74,58 +68,62 @@ export const vitalSignsService = createApi({
       query: (body) => ({
         url: '/api/patient/vital-signs',
         method: 'POST',
-        body,
+        body
       }),
-      invalidatesTags: ['VitalSigns'],
+      invalidatesTags: ['VitalSigns']
     }),
 
     updateVitalSigns: builder.mutation<VitalSigns, { id: Id } & VitalSignsUpdateDTO>({
       query: ({ id, ...body }) => ({
         url: `/api/patient/vital-signs/${id}`,
         method: 'PUT',
-        body,
+        body
       }),
-      invalidatesTags: ['VitalSigns'],
+      invalidatesTags: ['VitalSigns']
     }),
 
     getLatestVitalSignsByEncounterId: builder.query<VitalSigns, { encounterId: Id }>({
       query: ({ encounterId }) => ({
-        url: `/api/patient/vital-signs/latest/encounter/${encodeURIComponent(String(encounterId))}`,
+        url: `/api/patient/vital-signs/latest/encounter/${encodeURIComponent(String(encounterId))}`
       }),
-      providesTags: ['VitalSigns'],
+      providesTags: ['VitalSigns']
     }),
 
     getLatestTriageVitalSignsByEncounterId: builder.query<VitalSigns, { encounterId: Id }>({
       query: ({ encounterId }) => ({
-        url: `/api/patient/vital-signs/latest/triage/encounter/${encodeURIComponent(String(encounterId))}`,
+        url: `/api/patient/vital-signs/latest/triage/encounter/${encodeURIComponent(
+          String(encounterId)
+        )}`
       }),
-      providesTags: ['VitalSigns'],
+      providesTags: ['VitalSigns']
     }),
 
     // ===================== NEW ENDPOINTS =====================
 
-    // Page<VitalSignsResponseVM>
     getVitalSignsBetweenDatesByPatientId: builder.query<
       SpringPage<VitalSignsResponseVM>,
       { patientId: Id; from: string; to: string; page?: number; size?: number; sort?: string }
     >({
       query: ({ patientId, from, to, page, size, sort }) => ({
-        url: `/api/patient/vital-signs/patient/${encodeURIComponent(String(patientId))}/between-dates`,
-        params: { from, to, page, size, sort },
+        url: `/api/patient/vital-signs/patient/${encodeURIComponent(
+          String(patientId)
+        )}/between-dates`,
+        params: { from, to, page, size, sort }
       }),
-      providesTags: ['VitalSigns'],
+      providesTags: ['VitalSigns']
     }),
 
-    // List endpoints
     getRespiratoryRateListByPatientBetweenDates: builder.query<
       RespiratoryRateResponseVM[],
       { patientId: Id; from: string; to: string }
     >({
       query: ({ patientId, from, to }) => ({
-        url: `/api/patient/vital-signs/patient/${encodeURIComponent(String(patientId))}/respiratory-rate/list`,
-        params: { from, to },
+        url: `/api/patient/vital-signs/patient/${encodeURIComponent(
+          String(patientId)
+        )}/respiratory-rate/list`,
+        params: { from, to }
       }),
-      providesTags: ['VitalSigns'],
+      providesTags: ['VitalSigns']
     }),
 
     getTemperatureListByPatientBetweenDates: builder.query<
@@ -133,10 +131,12 @@ export const vitalSignsService = createApi({
       { patientId: Id; from: string; to: string }
     >({
       query: ({ patientId, from, to }) => ({
-        url: `/api/patient/vital-signs/patient/${encodeURIComponent(String(patientId))}/temperature/list`,
-        params: { from, to },
+        url: `/api/patient/vital-signs/patient/${encodeURIComponent(
+          String(patientId)
+        )}/temperature/list`,
+        params: { from, to }
       }),
-      providesTags: ['VitalSigns'],
+      providesTags: ['VitalSigns']
     }),
 
     getPulseRateListByPatientBetweenDates: builder.query<
@@ -144,10 +144,12 @@ export const vitalSignsService = createApi({
       { patientId: Id; from: string; to: string }
     >({
       query: ({ patientId, from, to }) => ({
-        url: `/api/patient/vital-signs/patient/${encodeURIComponent(String(patientId))}/pulse-rate/list`,
-        params: { from, to },
+        url: `/api/patient/vital-signs/patient/${encodeURIComponent(
+          String(patientId)
+        )}/pulse-rate/list`,
+        params: { from, to }
       }),
-      providesTags: ['VitalSigns'],
+      providesTags: ['VitalSigns']
     }),
 
     getOxygenSaturationListByPatientBetweenDates: builder.query<
@@ -155,10 +157,12 @@ export const vitalSignsService = createApi({
       { patientId: Id; from: string; to: string }
     >({
       query: ({ patientId, from, to }) => ({
-        url: `/api/patient/vital-signs/patient/${encodeURIComponent(String(patientId))}/oxygen-saturation/list`,
-        params: { from, to },
+        url: `/api/patient/vital-signs/patient/${encodeURIComponent(
+          String(patientId)
+        )}/oxygen-saturation/list`,
+        params: { from, to }
       }),
-      providesTags: ['VitalSigns'],
+      providesTags: ['VitalSigns']
     }),
 
     getBloodPressureListByPatientBetweenDates: builder.query<
@@ -166,12 +170,14 @@ export const vitalSignsService = createApi({
       { patientId: Id; from: string; to: string }
     >({
       query: ({ patientId, from, to }) => ({
-        url: `/api/patient/vital-signs/patient/${encodeURIComponent(String(patientId))}/blood-pressure/list`,
-        params: { from, to },
+        url: `/api/patient/vital-signs/patient/${encodeURIComponent(
+          String(patientId)
+        )}/blood-pressure/list`,
+        params: { from, to }
       }),
-      providesTags: ['VitalSigns'],
-    }),
-  }),
+      providesTags: ['VitalSigns']
+    })
+  })
 });
 
 export const {
@@ -181,8 +187,6 @@ export const {
   useLazyGetLatestVitalSignsByEncounterIdQuery,
   useGetLatestTriageVitalSignsByEncounterIdQuery,
   useLazyGetLatestTriageVitalSignsByEncounterIdQuery,
-
-  // NEW hooks
   useGetVitalSignsBetweenDatesByPatientIdQuery,
   useLazyGetVitalSignsBetweenDatesByPatientIdQuery,
   useGetRespiratoryRateListByPatientBetweenDatesQuery,
@@ -194,5 +198,5 @@ export const {
   useGetOxygenSaturationListByPatientBetweenDatesQuery,
   useLazyGetOxygenSaturationListByPatientBetweenDatesQuery,
   useGetBloodPressureListByPatientBetweenDatesQuery,
-  useLazyGetBloodPressureListByPatientBetweenDatesQuery,
+  useLazyGetBloodPressureListByPatientBetweenDatesQuery
 } = vitalSignsService;

@@ -116,7 +116,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   useEffect(() => {
     if (!latestByEncounter) return;
 
-    setRecord(prev => ({
+    setRecord((prev) => ({
       ...prev,
       ...latestByEncounter,
       id: undefined,
@@ -135,7 +135,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       encounterId,
       painDegree: record.painDegree ?? null,
       painDescription: record.painDescription ?? null,
-      painPattern: (record as any)?.painPattern ?? null, 
+      painPattern: (record as any)?.painPattern ?? null,
       painLevel: (record as any)?.painLevel ?? null,
       isActive: typeof record.isActive === 'boolean' ? record.isActive : true
     };
@@ -167,7 +167,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
         patientId: 'Patient',
         encounterId: 'Encounter',
         painDegree: 'Pain Degree',
-        painPattern: 'Pain Pattern', 
+        painPattern: 'Pain Pattern',
         painLevel: 'Pain Level',
         painDescription: 'Pain Description',
         isActive: 'Active',
@@ -222,7 +222,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     try {
       const created = await createPainAssessment(createPayload as any).unwrap();
 
-      setRecord(prev => ({
+      setRecord((prev) => ({
         ...prev,
         ...created,
         patientId,
@@ -277,6 +277,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
                   required
                 />
               </Col>
+
               <Col md={12}>
                 <MyInput
                   disabled={disabled}
@@ -306,7 +307,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
                         const enumItem = painLevelSteps.find((x) => x.n === v);
                         const enumValue = enumItem?.value ?? `LEVEL_${v}`;
 
-                        setRecord(prev => ({
+                        setRecord((prev) => ({
                           ...prev,
                           painLevel: enumValue as any
                         }));

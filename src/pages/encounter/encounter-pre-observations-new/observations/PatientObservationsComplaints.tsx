@@ -5,7 +5,9 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
+
 import './styles.less';
+
 import type { PatientObservationsComplaints as PatientObservationsComplaintsModel } from '@/types/model-types-new';
 import { newPatientObservationsComplaints } from '@/types/model-types-constructor-new';
 
@@ -13,8 +15,9 @@ import {
   useCreatePatientObservationsComplaintsMutation,
   useGetLatestPatientObservationsComplaintsByEncounterIdQuery
 } from '@/services/medicalSheets/observations/patientObservationsComplaintsService';
+
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useEnumByName, useEnumOptions } from '@/services/enumsApi';
+import { useEnumOptions } from '@/services/enumsApi';
 import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
 
 type PatientObservationsComplaintsProps = {
@@ -57,7 +60,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
   useEffect(() => {
     if (!latestByEncounter) return;
 
-    setRecord(prev => ({
+    setRecord((prev) => ({
       ...prev,
       ...latestByEncounter,
       id: undefined,
@@ -164,7 +167,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     try {
       const created = await createPatientObservationsComplaints(createPayload as any).unwrap();
 
-      setRecord(prev => ({
+      setRecord((prev) => ({
         ...prev,
         ...created,
         patientId,
@@ -245,7 +248,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
               optionValue="value"
               object={(record as any).patientConditions ?? ''}
               setObject={(value: string) =>
-                setRecord(prev => ({
+                setRecord((prev) => ({
                   ...(prev as any),
                   patientConditions: value
                 }))

@@ -4,7 +4,6 @@ import type { BodyMeasurements } from '@/types/model-types-new';
 
 type Id = number | string;
 
-
 export type SpringPage<T> = {
   content: T[];
   totalElements: number;
@@ -20,22 +19,21 @@ export type SpringPage<T> = {
 };
 
 export type BodyMeasurementsResponseVM = {
-  weight: number | null; 
-  height: number | null; 
+  weight: number | null;
+  height: number | null;
 };
 
 export type WeightResponseVM = {
   weight: number | null;
-  createdAt: string; 
+  createdAt: string;
 };
 
 export type HeightResponseVM = {
   height: number | null;
-  createdAt: string; 
+  createdAt: string;
 };
 
 // -------- DTOs --------
-
 export type BodyMeasurementsCreateDTO = Omit<
   BodyMeasurements,
   'id' | 'createdDate' | 'lastModifiedDate'
@@ -44,7 +42,6 @@ export type BodyMeasurementsCreateDTO = Omit<
 export type BodyMeasurementsUpdateDTO = BodyMeasurementsCreateDTO;
 
 // -------- API --------
-
 export const bodyMeasurementsService = createApi({
   reducerPath: 'newBodyMeasurementsApi',
   baseQuery: BaseQuery,
@@ -54,32 +51,39 @@ export const bodyMeasurementsService = createApi({
       query: (body) => ({
         url: '/api/patient/body-measurements',
         method: 'POST',
-        body,
+        body
       }),
-      invalidatesTags: ['BodyMeasurements'],
+      invalidatesTags: ['BodyMeasurements']
     }),
 
-    updateBodyMeasurements: builder.mutation<BodyMeasurements, { id: Id } & BodyMeasurementsUpdateDTO>({
+    updateBodyMeasurements: builder.mutation<
+      BodyMeasurements,
+      { id: Id } & BodyMeasurementsUpdateDTO
+    >({
       query: ({ id, ...body }) => ({
         url: `/api/patient/body-measurements/${id}`,
         method: 'PUT',
-        body,
+        body
       }),
-      invalidatesTags: ['BodyMeasurements'],
+      invalidatesTags: ['BodyMeasurements']
     }),
 
     getLatestBodyMeasurementsByPatientId: builder.query<BodyMeasurements, { patientId: Id }>({
       query: ({ patientId }) => ({
-        url: `/api/patient/body-measurements/latest/patient/${encodeURIComponent(String(patientId))}`,
+        url: `/api/patient/body-measurements/latest/patient/${encodeURIComponent(
+          String(patientId)
+        )}`
       }),
-      providesTags: ['BodyMeasurements'],
+      providesTags: ['BodyMeasurements']
     }),
 
     getLatestBodyMeasurementsByEncounterId: builder.query<BodyMeasurements, { encounterId: Id }>({
       query: ({ encounterId }) => ({
-        url: `/api/patient/body-measurements/latest/encounter/${encodeURIComponent(String(encounterId))}`,
+        url: `/api/patient/body-measurements/latest/encounter/${encodeURIComponent(
+          String(encounterId)
+        )}`
       }),
-      providesTags: ['BodyMeasurements'],
+      providesTags: ['BodyMeasurements']
     }),
 
     // ===================== NEW ENDPOINTS =====================
@@ -90,9 +94,9 @@ export const bodyMeasurementsService = createApi({
     >({
       query: ({ patientId, from, to, page, size, sort }) => ({
         url: `/api/patient/body-measurements/patient/${encodeURIComponent(String(patientId))}`,
-        params: { from, to, page, size, sort },
+        params: { from, to, page, size, sort }
       }),
-      providesTags: ['BodyMeasurements'],
+      providesTags: ['BodyMeasurements']
     }),
 
     getWeightListByPatientBetweenDates: builder.query<
@@ -100,10 +104,12 @@ export const bodyMeasurementsService = createApi({
       { patientId: Id; from: string; to: string }
     >({
       query: ({ patientId, from, to }) => ({
-        url: `/api/patient/body-measurements/patient/${encodeURIComponent(String(patientId))}/weight/list`,
-        params: { from, to },
+        url: `/api/patient/body-measurements/patient/${encodeURIComponent(
+          String(patientId)
+        )}/weight/list`,
+        params: { from, to }
       }),
-      providesTags: ['BodyMeasurements'],
+      providesTags: ['BodyMeasurements']
     }),
 
     getHeightListByPatientBetweenDates: builder.query<
@@ -111,12 +117,14 @@ export const bodyMeasurementsService = createApi({
       { patientId: Id; from: string; to: string }
     >({
       query: ({ patientId, from, to }) => ({
-        url: `/api/patient/body-measurements/patient/${encodeURIComponent(String(patientId))}/height/list`,
-        params: { from, to },
+        url: `/api/patient/body-measurements/patient/${encodeURIComponent(
+          String(patientId)
+        )}/height/list`,
+        params: { from, to }
       }),
-      providesTags: ['BodyMeasurements'],
-    }),
-  }),
+      providesTags: ['BodyMeasurements']
+    })
+  })
 });
 
 export const {
@@ -126,11 +134,10 @@ export const {
   useLazyGetLatestBodyMeasurementsByPatientIdQuery,
   useGetLatestBodyMeasurementsByEncounterIdQuery,
   useLazyGetLatestBodyMeasurementsByEncounterIdQuery,
-
   useGetBodyMeasurementsBetweenDatesByPatientIdQuery,
   useLazyGetBodyMeasurementsBetweenDatesByPatientIdQuery,
   useGetWeightListByPatientBetweenDatesQuery,
   useLazyGetWeightListByPatientBetweenDatesQuery,
   useGetHeightListByPatientBetweenDatesQuery,
-  useLazyGetHeightListByPatientBetweenDatesQuery,
+  useLazyGetHeightListByPatientBetweenDatesQuery
 } = bodyMeasurementsService;
