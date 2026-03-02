@@ -367,6 +367,8 @@ export const newPatientObservationsComplaints: modelTypes.PatientObservationsCom
   latestFunctionalStatus: null,
   latestCognitiveCheck: null,
 
+  patientConditions: null,
+
   isActive: true,
   functionalStatus: null,
   cognitiveCheck: null,
@@ -383,6 +385,8 @@ export const newPainAssessment: modelTypes.PainAssessment = {
   painDegree: null,
   painLevel: null,
   painDescription: null,
+
+  painPattern: null,
 
   isActive: true,
 

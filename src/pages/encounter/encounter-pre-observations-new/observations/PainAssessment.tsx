@@ -38,6 +38,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   const dispatch = useAppDispatch();
 
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
+  const { data: painPatternLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_PATTERN');
 
   const painLevelEnum = useEnumOptions('PainLevel', {
     labelOverrides: {
@@ -118,7 +119,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     setRecord(prev => ({
       ...prev,
       ...latestByEncounter,
-      id: undefined, 
+      id: undefined,
       patientId,
       encounterId,
       isActive:
@@ -134,7 +135,8 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       encounterId,
       painDegree: record.painDegree ?? null,
       painDescription: record.painDescription ?? null,
-      painLevel: (record as any)?.painLevel ?? null, 
+      painPattern: (record as any)?.painPattern ?? null, 
+      painLevel: (record as any)?.painLevel ?? null,
       isActive: typeof record.isActive === 'boolean' ? record.isActive : true
     };
   }, [record, patientId, encounterId]);
@@ -165,6 +167,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
         patientId: 'Patient',
         encounterId: 'Encounter',
         painDegree: 'Pain Degree',
+        painPattern: 'Pain Pattern', 
         painLevel: 'Pain Level',
         painDescription: 'Pain Description',
         isActive: 'Active',
@@ -274,7 +277,24 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
                   required
                 />
               </Col>
+              <Col md={12}>
+                <MyInput
+                  disabled={disabled}
+                  width="100%"
+                  fieldLabel="Pain Pattern"
+                  fieldType="select"
+                  fieldName="painPattern"
+                  selectData={painPatternLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={record}
+                  setRecord={setRecord}
+                  searchable={false}
+                />
+              </Col>
+            </Row>
 
+            <Row className="pain-assessment__row">
               <Col md={12}>
                 <div className="pain-assessment__slider">
                   <MyLabel label={`Pain Level (${painLevelValue}-${maxLevel})`} required />

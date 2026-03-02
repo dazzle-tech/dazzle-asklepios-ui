@@ -437,6 +437,8 @@ export interface PatientObservationsComplaints {
   patientId: number;
   encounterId: number;
 
+  patientConditions?: string | null;
+
   reasonOfVisit?: string | null;
   latestFunctionalStatus?: string | null;
   latestCognitiveCheck?: string | null;
@@ -457,6 +459,8 @@ export interface PainAssessment {
   painDegree?: string | null;
   painLevel?: 'NO_PAIN' | 'MILD' | 'MODERATE' | 'SEVERE' | string | null;
   painDescription?: string | null;
+
+  painPattern?: string | null;
 
   isActive: boolean;
 
