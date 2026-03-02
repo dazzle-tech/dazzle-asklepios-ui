@@ -158,6 +158,11 @@ import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
+import { patientProblemService } from './services/patients/patientProblemService';
+import { familyHistoryService } from './services/patients/familyHistoryService';
+import { hospitalizationService } from './services/patients/hospitalizationsService';
+import { surgicalHistoryService } from './services/patients/surgicalHistoryService';
+import { socialHistoryService } from './services/patients/socialHistoryService';
 import { favoriteDiagnosticTestService } from './services/diagnosic-order/favoriteDiagnosticTestService';
 import { diagnosticOrderService } from './services/diagnosic-order/diagnosticOrderService';
 import { diagnosticOrderTestService } from './services/diagnosic-order/diagnosticOrderTestService';
@@ -407,9 +412,14 @@ export const store = configureStore({
     [clinicalRecommendationsService.reducerPath]: clinicalRecommendationsService.reducer,
     [medicationTestOrdersValidationService.reducerPath]:
       medicationTestOrdersValidationService.reducer,
+    [patientProblemService.reducerPath]: patientProblemService.reducer,
+    [familyHistoryService.reducerPath]: familyHistoryService.reducer,
+    [hospitalizationService.reducerPath]: hospitalizationService.reducer,
+    [surgicalHistoryService.reducerPath]: surgicalHistoryService.reducer,
+    [socialHistoryService.reducerPath]: socialHistoryService.reducer,
+    [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
     [patientReportService.reducerPath]: patientReportService.reducer,
     [telephonicConsultationService.reducerPath]: telephonicConsultationService.reducer,
-    [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
 
     [diagnosticOrderService.reducerPath]: diagnosticOrderService.reducer,
     [diagnosticOrderTestService.reducerPath]: diagnosticOrderTestService.reducer,
@@ -614,6 +624,11 @@ export const store = configureStore({
       clinicalSummaryService.middleware,
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
+      patientProblemService.middleware,
+      familyHistoryService.middleware,
+      hospitalizationService.middleware,
+      surgicalHistoryService.middleware,
+      socialHistoryService.middleware,
       favoriteDiagnosticTestService.middleware,
       diagnosticOrderTestService.middleware,
       diagnosticOrderService.middleware,
