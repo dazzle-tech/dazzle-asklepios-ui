@@ -1,6 +1,4 @@
-import { da } from 'date-fns/locale';
 import * as modelTypes from './model-types-new';
-
 // ------------------- ApUser -------------------
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
@@ -290,19 +288,59 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
   type: null,
   name: null,
   internalCode: null,
+
   ageSpecific: false,
   ageGroupList: [],
+
   genderSpecific: false,
   gender: null,
+
   specialPopulation: false,
   specialPopulationValues: [],
+
   price: null,
   currency: null,
   specialNotes: '',
+
   isActive: true,
-  isProfile: false,
-  appointable: false
+  appointable: false,
+
+  defaultProfileResultType: '',
+  defaultProfileResultUnit: '',
+  listOfValueId: null
 };
+
+export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO =
+  {
+    orderId: 0,
+    orderTestId: 0,
+    unit: '',
+    quantity: 0,
+    collectedAt: ''
+  };
+
+export const newDiagnosticOrderTestCollectedSampleBulkSame: modelTypes.DiagnosticOrderTestCollectedSampleBulkSameDTO =
+  {
+    orderId: 0,
+    orderTestIds: [],
+    unit: '',
+    quantity: 0,
+    collectedAt: ''
+  };
+
+export const newDiagnosticOrderTestCollectedSampleResponse: modelTypes.DiagnosticOrderTestCollectedSampleResponseVM =
+  {
+    id: 0,
+    orderId: 0,
+    orderTestId: 0,
+    unit: '',
+    quantity: 0,
+    collectedAt: '',
+    createdBy: null,
+    createdDate: null,
+    lastModifiedBy: null,
+    lastModifiedDate: null
+  };
 
 // ------------------- Laboratory -------------------
 export const newLaboratory: modelTypes.Laboratory = {
@@ -316,7 +354,6 @@ export const newLaboratory: modelTypes.Laboratory = {
   testDurationTime: undefined,
   timeUnit: undefined,
   resultUnit: undefined,
-  isProfile: false,
   sampleContainer: undefined,
   sampleVolume: undefined,
   sampleVolumeUnit: undefined,
@@ -336,10 +373,13 @@ export const newLaboratory: modelTypes.Laboratory = {
 
 // ------------------- DiagnosticTestProfile -------------------
 export const newDiagnosticTestProfile: modelTypes.DiagnosticTestProfile = {
-  id: undefined,
-  testId: undefined,
   name: '',
-  resultUnit: ''
+  resultUnit: null,
+  resultType: null,
+  listOfValueId: null,
+  isDefault: false,
+  isActive: true
+  // resultUnit: ''
 };
 
 // ------------------- Pathology -------------------
@@ -485,11 +525,10 @@ export const newDiagnosticTestNormalRange: modelTypes.DiagnosticTestNormalRange 
   criticalValueLessThan: undefined,
   criticalValueMoreThan: undefined,
   profileTestId: undefined,
-  isProfile: false,
+
   lovKeys: []
 };
 
-// ------------------- Procedure Coding -------------------
 export const newProcedureCoding: modelTypes.ProcedureCoding = {
   id: undefined,
   procedureId: undefined,
@@ -522,7 +561,6 @@ export const newActiveIngredientDrugInteraction: modelTypes.ActiveIngredientDrug
   lastModifiedDate: null
 };
 
-// ------------------- Brand Medication -------------------
 export const newBrandMedication: modelTypes.BrandMedication = {
   id: undefined,
   name: '',
@@ -773,6 +811,16 @@ export const newInventoryProduct: modelTypes.InventoryProduct = {
   erpIntegrationId: null,
   isActive: true
 };
+export const newDiagnosticTestCoding: modelTypes.DiagnosticTestCoding = {
+  id: undefined,
+  procedureId: undefined,
+  codeType: null,
+  codeId: '',
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
 
 // ------------------- Country -------------------
 export const newCountry: modelTypes.Country = {
@@ -796,7 +844,8 @@ export const newDistrictCommunity: modelTypes.DistrictCommunity = {
   id: undefined,
   districtId: undefined,
   name: '',
-  isActive: true
+  isActive: true,
+  templateValue: null
 };
 
 // ------------------- Community Area -------------------
@@ -972,6 +1021,17 @@ export const newPayorPlan: modelTypes.PayorPlan = {
   lastModifiedDate: null
 };
 
+export const newPayorPlanItem: modelTypes.PayorPlanItem = {
+  id: undefined,
+  payorId: 0,
+  itemType: null,
+  amount: null,
+  coverageType: null,
+  isActive: true,
+  createdDate: null,
+  lastModifiedDate: null
+};
+
 // ------------------- Invoice Item -------------------
 export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
   invoiceId: 0,
@@ -1097,6 +1157,7 @@ export const newDischargePlanning: modelTypes.DischargePlanning = {
   expectedDischargeDate: null,
   estimatedLos: '',
   readinessStatus: '',
+
   medicalConditionStable: false,
   vitalsStable: false,
   pendingInvestigations: false,
@@ -1285,7 +1346,6 @@ export const newEncounterVaccination: modelTypes.EncounterVaccination = {
   cancelledAt: null,
   cancelledById: null,
   isExternalFacility: false,
-
   administeredLocation: null,
   administrationReactions: null,
   externalFacilityName: null,
@@ -1324,6 +1384,13 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
   hasPrescription: false,
   hasOrder: false,
   isObserved: false
+};
+
+export const newPatientBasicInformationResponseVM: modelTypes.PatientBasicInformationResponseVM = {
+  id: 0,
+  fullName: '',
+  medicalRecordNumber: null,
+  primaryMobileNumber: null
 };
 
 export const newPatientPayments: modelTypes.PatientPayments = {
@@ -1449,6 +1516,202 @@ export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProduct
   productId: undefined,
   quantity: 0
 };
+
+export const newFavoriteDiagnosticTest: modelTypes.FavoriteDiagnosticTest = {
+  id: undefined,
+  userId: undefined,
+  testId: undefined
+};
+
+export const newDiagnosticOrder: modelTypes.DiagnosticOrder = {
+  id: undefined,
+
+  patientId: undefined,
+  encounterId: undefined,
+  submittedBy: undefined,
+  submittedDate: undefined,
+
+  isUrgent: false,
+
+  labStatus: modelTypes.DiagnosticStatus.NEW,
+  radStatus: modelTypes.DiagnosticStatus.NEW
+};
+
+export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
+  id: undefined,
+
+  orderId: undefined,
+  testId: undefined,
+
+  receivedDepartmentId: undefined,
+
+  reason: undefined,
+  notes: undefined,
+
+  status: modelTypes.DiagnosticOrderTestStatus.NEW,
+  processingStatus: modelTypes.DiagnosticOrderTestStatus.NEW,
+
+  submitDate: undefined,
+
+  orderType: undefined,
+
+  fromDepartmentId: undefined,
+  fromFacilityId: undefined,
+  toFacilityId: undefined,
+
+  acceptedDate: undefined,
+  rejectedDate: undefined,
+  patientArrivedDate: undefined,
+  readyDate: undefined,
+  approvedDate: undefined,
+  cancelledDate: undefined,
+
+  acceptedBy: undefined,
+  rejectedBy: undefined,
+  rejectedReason: undefined,
+
+  patientArrivedNoteRad: undefined,
+
+  cancellationReason: undefined,
+  cancelledBy: undefined
+};
+
+export const newDiagnosticOrderTestResultCreate: modelTypes.DiagnosticOrderTestResultCreateDTO = {
+  orderTestId: 0,
+  profileTestId: null,
+
+  resultValueNumber: null,
+  resultValueText: null,
+
+  marker: null,
+  normalRangeValue: null
+};
+
+export const newDiagnosticOrderTestResultUpdate: modelTypes.DiagnosticOrderTestResultUpdateDTO = {
+  id: 0,
+  orderTestId: 0,
+  profileTestId: null,
+
+  resultValueNumber: null,
+  resultValueText: null,
+
+  marker: null,
+  normalRangeValue: null
+};
+
+export const newDiagnosticOrderTestResultReject: modelTypes.DiagnosticOrderTestResultRejectDTO = {
+  rejectedReason: ''
+};
+
+export const newDiagnosticOrderTestResultResponse: modelTypes.DiagnosticOrderTestResultResponseVM =
+  {
+    id: 0,
+
+    orderId: 0,
+    orderTestId: 0,
+    profileTestId: null,
+
+    resultValueNumber: null,
+    resultValueText: null,
+
+    marker: null,
+    viewMarker: null,
+    normalRangeValue: null,
+    viewNormalRange: null,
+
+    processingStatus: null,
+
+    approvedBy: null,
+    approvedDate: null,
+
+    rejectedBy: null,
+    rejectedDate: null,
+    rejectedReason: null,
+
+    reviewBy: null,
+    reviewDate: null,
+
+    createdBy: null,
+    createdDate: null,
+    lastModifiedBy: null,
+    lastModifiedDate: null
+  };
+
+export const newFilledProfileTestIdsParams: modelTypes.FilledProfileTestIdsParams = {
+  orderTestIds: []
+};
+
+export const newDiagnosticOrderTestResultTechnicianNote: modelTypes.DiagnosticOrderTestResultTechnicianNote =
+  {
+    id: undefined,
+    orderId: undefined,
+    orderTestId: undefined,
+    resultId: undefined,
+    note: '',
+    createdBy: undefined,
+    createdDate: undefined
+  };
+
+export const newDiagnosticOrderTestResultTechnicianNoteCreateDTO: modelTypes.DiagnosticOrderTestResultTechnicianNoteCreateDTO =
+  {
+    resultId: undefined,
+    orderTestId: undefined,
+    note: ''
+  };
+
+export const newLabResultLogResponseVM: modelTypes.LabResultLogResponseVM = {
+  id: undefined,
+  resultId: undefined,
+  action: '',
+  oldValue: undefined,
+  newValue: undefined,
+  resultDate: '',
+  createdBy: undefined
+};
+
+export const newDiagnosticOrderTestReportCreateRequestDTO: modelTypes.DiagnosticOrderTestReportCreateDTO =
+  {
+    orderId: undefined,
+    orderTestId: undefined,
+    report: '',
+    severity: ''
+  };
+
+export const newDiagnosticOrderTestReportUpdateRequestDTO: modelTypes.DiagnosticOrderTestReportUpdateDTO =
+  {
+    id: undefined,
+    report: '',
+    severity: ''
+  };
+
+export const newDiagnosticOrderTestReportResponseVM: modelTypes.DiagnosticOrderTestReportResponseVM =
+  {
+    id: undefined,
+
+    orderId: undefined,
+    orderTestId: undefined,
+
+    report: '',
+    severity: '',
+
+    approvedBy: undefined,
+    approvedDate: undefined,
+
+    rejectedBy: undefined,
+    rejectedDate: undefined,
+    rejectedReason: '',
+
+    reviewBy: undefined,
+    reviewDate: undefined,
+
+    processingStatus: undefined,
+    imageStatus: undefined,
+
+    createdDate: undefined,
+    createdBy: undefined,
+    lastModifiedDate: undefined,
+    lastModifiedBy: undefined
+  };
 
 export const newPatientHIPAA: modelTypes.PatientHIPAA = {
   patientId: undefined,

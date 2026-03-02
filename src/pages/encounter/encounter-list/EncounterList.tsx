@@ -1,53 +1,57 @@
-import MyInput from '@/components/MyInput';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { newApEncounter } from '@/types/model-types-constructor';
-import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import MyButton from '@/components/MyButton/MyButton';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faUserNurse,
-  faUserDoctor,
-  faPrint,
-  faFileWaveform,
-  faRectangleXmark
-} from '@fortawesome/free-solid-svg-icons';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
-import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
-import 'react-tabs/style/react-tabs.css';
-import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
-import DetailsCard from '@/components/DetailsCard';
-import MyModal from '@/components/MyModal/MyModal';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import './styles.less';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
+
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { notify } from '@/utils/uiReducerActions';
+import DetailsCard from '@/components/DetailsCard';
+import MyModal from '@/components/MyModal/MyModal';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
-import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
-import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
-import { useLocation, useNavigate } from 'react-router-dom';
+import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
+import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
+import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
+
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
-import {
-  useFilterEncountersQuery,
-  useCountTodayDepartmentTotalPatientsQuery,
-  useCountTodayDepartmentActiveCasesQuery,
-  useCountTodayDepartmentCompletedQuery,
-  useCountTodayDepartmentCancelledQuery,
-  useStartEncounterMutation,
-  useCancelEncounterMutation
-} from '@/services/encounters/patientEncounterService';
+import { newApEncounter } from '@/types/model-types-constructor';
 
 import { useAppSelector } from '@/hooks';
-
 import { useEnumOptions } from '@/services/enumsApi';
 
+import {
+  useCancelEncounterMutation,
+  useCountTodayDepartmentActiveCasesQuery,
+  useCountTodayDepartmentCancelledQuery,
+  useCountTodayDepartmentCompletedQuery,
+  useCountTodayDepartmentTotalPatientsQuery,
+  useFilterEncountersQuery,
+  useStartEncounterMutation
+} from '@/services/encounters/patientEncounterService';
+
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+
+import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faFileWaveform,
+  faPrint,
+  faRectangleXmark,
+  faUserDoctor,
+  faUserNurse
+} from '@fortawesome/free-solid-svg-icons';
+
+import 'react-tabs/style/react-tabs.css';
+import './styles.less';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -170,9 +174,10 @@ const EncounterList = () => {
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
 
-  const divContent = 'Patients Visit List';
-  dispatch(setPageCode('P_Encounters'));
-  dispatch(setDivContent(divContent));
+  useEffect(() => {
+    dispatch(setPageCode('P_Encounters'));
+    dispatch(setDivContent('Patients Visit List'));
+  }, [dispatch]);
 
   const [encounter, setLocalEncounter] = useState<any>({
     ...newApEncounter,
@@ -262,8 +267,7 @@ const EncounterList = () => {
     const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
     const normalizedEncounterReasonIn = uniqueNonEmpty(encounterReasonIn);
     const normalizedPriorityIn =
-      uniqueNonEmpty(priorityIn) ??
-      uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
+      uniqueNonEmpty(priorityIn) ?? uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
 
     const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
 
@@ -292,7 +296,6 @@ const EncounterList = () => {
     };
   }, [
     DEFAULT_STATUS,
-    DEFAULT_SORT,
     dateFilter.fromDate,
     dateFilter.toDate,
     departmentId,
@@ -353,15 +356,15 @@ const EncounterList = () => {
       .map(
         row =>
           row?.patientId ??
-          row?.patientKey ??
           row?.patient?.id ??
-          row?.patient?.key ??
           row?.patientObject?.id ??
+          row?.patientKey ??
+          row?.patient?.key ??
           row?.patientObject?.key ??
           row?.patientObject?.patientId
       )
-      .filter(value => value !== null && value !== undefined && String(value).trim() !== '')
-      .map(value => String(value));
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+      .map(v => String(v));
 
     return Array.from(new Set(ids));
   }, [tableData]);
@@ -376,16 +379,15 @@ const EncounterList = () => {
       .catch(() => {});
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
-  const patientMap = useMemo(() => {
-    const map = new Map<string, any>();
-    const ids = patientBulkIdsRef.current;
+  const patientByIdMap = useMemo(() => {
+    const byId = new Map<string, any>();
 
-    (patientsBasicInfo ?? []).forEach((patient: any, index: number) => {
-      const patientIdOrKey = patient?.id ?? patient?.key ?? ids[index];
-      if (!patientIdOrKey) return;
+    (patientsBasicInfo ?? []).forEach((patient: any) => {
+      const idKey = patient?.id ?? null;
+      if (idKey === null || idKey === undefined || String(idKey).trim() === '') return;
 
-      map.set(String(patientIdOrKey), {
-        id: patientIdOrKey,
+      byId.set(String(idKey), {
+        id: idKey,
         firstName: patient?.firstName,
         secondName: patient?.secondName,
         thirdName: patient?.thirdName,
@@ -396,7 +398,7 @@ const EncounterList = () => {
       });
     });
 
-    return map;
+    return byId;
   }, [patientsBasicInfo]);
 
   const normalizedTableData = useMemo(() => {
@@ -405,17 +407,13 @@ const EncounterList = () => {
       const priorityCode = String(encounterRow?.priorityLevel ?? '').toUpperCase();
       const reasonCode = String(encounterRow?.encounterReason ?? '').toUpperCase();
 
-      const patientKey =
+      const patientId =
         encounterRow?.patientId ??
-        encounterRow?.patientKey ??
         encounterRow?.patient?.id ??
-        encounterRow?.patient?.key ??
         encounterRow?.patientObject?.id ??
-        encounterRow?.patientObject?.key ??
-        encounterRow?.patientObject?.patientId ??
         null;
 
-      const patientFromMap = patientKey != null ? patientMap.get(String(patientKey)) : null;
+      const patientFromMap = patientId != null ? patientByIdMap.get(String(patientId)) : null;
 
       const firstName = String(
         patientFromMap?.firstName ?? encounterRow?.patient?.firstName ?? ''
@@ -426,26 +424,18 @@ const EncounterList = () => {
       const thirdName = String(
         patientFromMap?.thirdName ?? encounterRow?.patient?.thirdName ?? ''
       ).trim();
-      const lastName = String(
-        patientFromMap?.lastName ?? encounterRow?.patient?.lastName ?? ''
-      ).trim();
+      const lastName = String(patientFromMap?.lastName ?? encounterRow?.patient?.lastName ?? '').trim();
 
-      const bulkFullName = [firstName, secondName, thirdName, lastName]
-        .filter(Boolean)
-        .join(' ')
-        .trim();
+      const fullName = [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim();
 
-      const bulkMrn =
-        patientFromMap?.medicalRecordNumber ??
-        encounterRow?.patientObject?.patientMrn ??
-        encounterRow?.patientMrn ??
-        encounterRow?.mrn ??
-        encounterRow?.encounterNumber ??
-        encounterRow?.departmentDailySequenceNumber ??
-        encounterRow?.id;
+      const patientMrn =
+        patientFromMap?.medicalRecordNumber ?? encounterRow?.patientObject?.patientMrn ?? undefined;
 
-      const bulkDob = patientFromMap?.dateOfBirth ?? null;
-      const bulkGender = formatEnumString(patientFromMap?.sexAtBirth) || '';
+      const dateOfBirth =
+        patientFromMap?.dateOfBirth ?? encounterRow?.patientObject?.dateOfBirth ?? null;
+
+      const sexAtBirth =
+        formatEnumString(patientFromMap?.sexAtBirth ?? encounterRow?.patientObject?.sexAtBirth) || '';
 
       return {
         ...encounterRow,
@@ -454,24 +444,27 @@ const EncounterList = () => {
         patientObject: {
           ...(encounterRow?.patientObject ?? {}),
           ...(encounterRow?.patient ?? {}),
-          id: patientKey ?? encounterRow?.patientObject?.id ?? encounterRow?.patient?.id,
-          patientMrn: bulkMrn,
+
+          id: patientId ?? encounterRow?.patientObject?.id ?? encounterRow?.patient?.id,
+          patientMrn,
+
           fullName:
-            bulkFullName ||
+            fullName ||
             encounterRow?.patientObject?.fullName ||
             encounterRow?.patientFullName ||
             encounterRow?.fullName ||
             '-',
+
           privatePatient:
             encounterRow?.patientObject?.privatePatient ?? encounterRow?.privatePatient ?? false,
 
-          dateOfBirth: bulkDob,
-          sexAtBirth: bulkGender,
+          dateOfBirth,
+          sexAtBirth,
 
           gender: encounterRow?.patientObject?.gender ?? null
         },
 
-        patientAge: encounterRow?.patientAge ?? (bulkDob ? calculateAgeFormat(bulkDob) : null),
+        patientAge: encounterRow?.patientAge ?? (dateOfBirth ? calculateAgeFormat(dateOfBirth) : null),
 
         visitId: encounterRow?.visitId ?? encounterRow?.id,
 
@@ -483,7 +476,7 @@ const EncounterList = () => {
         plannedStartDate: encounterRow?.plannedStartDate ?? encounterRow?.encounterDate
       };
     });
-  }, [tableData, patientMap]);
+  }, [tableData, patientByIdMap]);
 
   const getEncounterId = (row: any) => row?.id ?? row?.key ?? null;
 
@@ -518,7 +511,7 @@ const EncounterList = () => {
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
 
-    if (encounterData && encounterData.key) {
+    if (encounterData && encounterData.id) {
       dispatch(setEncounter(encounterData));
       dispatch(setPatient(encounterData['patientObject']));
     }
@@ -556,9 +549,7 @@ const EncounterList = () => {
         state: {
           patient: patientData,
           encounter: encounterData,
-          edit:
-            String(encounterData?.encounterStatus ?? encounterData?.status ?? '').toUpperCase() ===
-            'CLOSED'
+          edit: String(encounterData?.status ?? '').toUpperCase() === 'CLOSED'
         }
       });
     }
@@ -601,7 +592,6 @@ const EncounterList = () => {
     setPage(0);
     setSearchTick(previousTick => previousTick + 1);
   };
-
   const tableColumns = [
     {
       key: 'queueNumber',
@@ -893,9 +883,11 @@ const EncounterList = () => {
                     const rawValue = Array.isArray(updatedReason)
                       ? updatedReason
                       : updatedReason?.encounterReasonIn;
+
                     const nextReasons = Array.isArray(rawValue)
                       ? rawValue.map((reasonItem: any) => String(reasonItem)).filter(Boolean)
                       : [];
+
                     setEncounterReasonIn(nextReasons);
                     setPage(0);
                   }}

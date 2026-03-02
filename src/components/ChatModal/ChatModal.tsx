@@ -10,7 +10,7 @@ import { formatDateWithoutSeconds } from "@/utils";
 import { useSelector } from "react-redux";
 const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowName,
     disabled = false
- }) => {
+}) => {
     const [newMessage, setNewMessage] = useState({ message: "" });
     const endOfMessagesRef = useRef(null);
     const mode = useSelector((state: any) => state.ui.mode);
@@ -24,6 +24,7 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
 
         return () => clearTimeout(timeout);
     }, [list]);
+
 
     return (
         <div className='chat-modal'>
@@ -42,13 +43,18 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                             {list?.length > 0 ? (
                                 list?.map((msg, index) => (
                                     <div key={index} className="message-box">
-                                        <span
-                                            className="message-text"
-                                        >
+                                        <div className="message-bubble">
                                             {msg[fieldShowName]}
-                                        </span>
-                                        <div className="message-date">
-                                            {formatDateWithoutSeconds(msg.createdAt)}
+                                        </div>
+
+                                        <div className="message-meta">
+                                            <span className="message-user">
+                                                {msg.createdBy}
+                                            </span>
+                                            <span className="dot">•</span>
+                                            <span className="message-date">
+                                                {formatDateWithoutSeconds(msg.createdDate)}
+                                            </span>
                                         </div>
                                     </div>
                                 ))
@@ -58,32 +64,35 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
 
                             <div ref={endOfMessagesRef}></div>
                         </div>
-                        <div className={`send-message-box ${mode === 'light' ? 'light' : 'dark'}`}>
-                            <Form fluid className="fill-width">
-                                <MyInput
-                                    placeholder="write note.."
-                                    showLabel={false}
-                                    fieldName={"message"}
-                                    record={newMessage}
-                                    setRecord={setNewMessage}
-                                    width={"95%"}
-                                    enterClick={()=> {handleSendMessage(newMessage.message);
-                                        setNewMessage({ message: "" })
+                        {!disabled && (
+                            <div className={`send-message-box ${mode === 'light' ? 'light' : 'dark'}`}>
+                                <Form fluid className="fill-width">
+                                    <MyInput
+                                        placeholder="write note.."
+                                        showLabel={false}
+                                        fieldName={"message"}
+                                        record={newMessage}
+                                        setRecord={setNewMessage}
+                                        width={"95%"}
+                                        enterClick={() => {
+                                            handleSendMessage(newMessage.message);
+                                            setNewMessage({ message: "" });
+                                        }}
+                                    />
+                                </Form>
+
+                                <MyButton
+                                    appearance="primary"
+                                    disabled={newMessage.message.trim() === ""}
+                                    onClick={() => {
+                                        handleSendMessage(newMessage.message);
+                                        setNewMessage({ message: "" });
                                     }}
-                                ></MyInput></Form>
-
-                            <MyButton appearance="primary"
-                            disabled={disabled || newMessage.message.trim() === ""}
-                             onClick={() => {
-                                if(disabled) return;
-                                handleSendMessage(newMessage.message);
-                                setNewMessage({ message: "" })
-                            }
-
-                            }>
-                                <FontAwesomeIcon icon={faPaperPlane} />
-                            </MyButton>
-                        </div>
+                                >
+                                    <FontAwesomeIcon icon={faPaperPlane} />
+                                </MyButton>
+                            </div>
+                        )}
                     </div>
                 }
             ></MyModal>

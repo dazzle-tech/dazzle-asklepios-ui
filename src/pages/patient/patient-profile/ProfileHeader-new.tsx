@@ -216,6 +216,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const handleIdParsed = (parsedData: any) => {
+
     const updatedPatient: Partial<Patient> = {
       ...localPatient
     };
@@ -262,7 +263,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setPatientImageUrl('');
     setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
-  console.log('localPatient=================>', localPatient);
   return (
     <>
       <Stack>
