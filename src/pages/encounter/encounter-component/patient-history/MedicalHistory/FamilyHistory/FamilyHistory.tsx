@@ -14,6 +14,7 @@ import {
 } from '@/services/patients/familyHistoryService';
 import { useEnumOptions } from '@/services/enumsApi';
 import '../styles.less';
+import './familyHistory.less';
 
 const FamilyHistory = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -91,17 +92,11 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
             title: '',
             flexGrow: 1,
             render: row => (
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <MdModeEdit
-                  size={24}
-                  fill="var(--primary-gray)"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => handleEdit(row)}
-                />
+              <div className="family-history-actions">
+                <MdModeEdit size={24} className="edit-icon" onClick={() => handleEdit(row)} />
                 <MdDelete
                   size={24}
-                  fill="var(--primary-pink)"
-                  style={{ cursor: 'pointer' }}
+                  className="delete-icon"
                   onClick={() => {
                     setRowToDelete(row);
                     setOpenDeleteModal(true);
