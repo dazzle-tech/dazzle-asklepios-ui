@@ -15,7 +15,6 @@ import {
   ApDoctorRound,
   ApNurseNotes,
   ApRepositioning,
-  ApDayCaseEncounters,
   ApPreOperationAdministeredMedications,
   ApEmergencyTriage,
   ApEncounterAssignToBed,

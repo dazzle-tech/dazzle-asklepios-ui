@@ -159,6 +159,7 @@ export const departmentService = createApi({
       },
       providesTags: ['Department']
     }),
+
     // GET /api/setup/department/by-name/{name}?page=&size=&sort=
     getDepartmentByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
@@ -222,6 +223,25 @@ export const departmentService = createApi({
       providesTags: ['Department']
     }),
 
+    getAppointableActiveDepartmentsByEncounterTypeAndFacility: builder.query<
+      PagedResult<any>,
+      { facilityId: number | string; encounterType: string } & PagedParams
+    >({
+      query: ({ facilityId, encounterType, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/department/appointable/active/by-encounter-type/${encounterType}/${facilityId}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Department']
+    }),
+
     getDepartmentsBulk: builder.mutation({
       query: (ids: number[]) => ({
         url: '/api/setup/department/bulk',
@@ -235,6 +255,7 @@ export const departmentService = createApi({
 export const {
   useGetDepartmentsQuery,
   useGetDepartmentByIdQuery,
+  useLazyGetDepartmentByIdQuery,
   useGetDepartmentByFacilityQuery,
   useLazyGetDepartmentByFacilityQuery,
   useGetDepartmentByTypeQuery,
@@ -257,5 +278,7 @@ export const {
   useLazyGetDepartmentsByResourceTypeQuery,
   useGetActiveAppointableDepartmentByTypeQuery,
   useLazyGetActiveAppointableDepartmentByTypeQuery,
+  useGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
+  useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
   useGetDepartmentsBulkMutation
 } = departmentService;
