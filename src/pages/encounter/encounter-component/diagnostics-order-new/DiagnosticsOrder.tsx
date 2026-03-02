@@ -15,6 +15,8 @@ const DiagnosticsOrder = (props: any) => {
   const encounter = location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
 
+console.log("patient/encounter/edit",patient, encounter, edit);
+
   const vm = useDiagnosticsOrder({ patient, encounter, edit });
 
   const isInsideModalOrPopup = (node: EventTarget | null) => {

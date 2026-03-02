@@ -14,7 +14,7 @@ import DetailsCard from '@/components/DetailsCard';
 import MyInput from '@/components/MyInput';
 import MyStepper from '@/components/MyStepper';
 import MyTab from '@/components/MyTab';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
@@ -32,6 +32,7 @@ import Orders from './Orders';
 import PatientSide from './PatienSide';
 import Result from './Result';
 import Tests from './Tests';
+import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
@@ -49,12 +50,12 @@ const Lab = () => {
 
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-  const [patient, setPatient] = useState({ ...newApPatient });
-  const [encounter] = useState({ ...newApEncounter });
+  const [patient, setPatient] = useState({ ...newPatient });
+  const [encounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const [visibleTests, setVisibleTests] = useState<any[]>([]);
 
-  const [fetchPatientById] = useLazyGetPatientByIdQuery();
+const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
 
   const [activeKey, setActiveKey] = useState<'1' | '2'>('1');
 
@@ -165,17 +166,25 @@ const Lab = () => {
     //add new patient edits
   useEffect(() => {
     if (!order?.patientId) {
-      setPatient({ ...newApPatient });
+      setPatient({ ...newPatient });
       return;
     }
 
-    fetchPatientById(order.patientId)
+    getBulkPatientBasicInfo([Number(order.patientId)])
       .unwrap()
-      .then(res => {
-        setPatient(res);
+      .then((res: any[]) => {
+        if (res?.length > 0) {
+          const raw = res[0];
+
+          setPatient(raw);
+          console.log("RAW PATIENT", raw);
+
+} else {
+          setPatient({ ...newPatient });
+        }
       })
       .catch(() => {
-        setPatient({ ...newApPatient });
+        setPatient({ ...newPatient });
       });
 
   }, [order?.patientId]);
@@ -206,7 +215,28 @@ const Lab = () => {
 
   const totalTestsCount = visibleTests.length;
 
+  useEffect(() => {
+    if (!order?.patientId) {
+      setPatient({ ...newPatient });
+      return;
+    }
 
+    getBulkPatientBasicInfo([Number(order.patientId)])
+      .unwrap()
+      .then((res: any[]) => {
+        if (res?.length > 0) {
+          const raw = res[0];
+
+          setPatient(raw);
+        } else {
+          setPatient({ ...newPatient });
+        }
+      })
+      .catch(() => {
+        setPatient({ ...newPatient });
+      });
+
+  }, [order?.patientId]);
 
   const tabData = [
     {
@@ -342,6 +372,8 @@ const Lab = () => {
       content: <RequestedTest requestType="LABORATORY" />
     },
   ];
+
+
 
 
   return (
