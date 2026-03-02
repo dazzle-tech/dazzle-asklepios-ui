@@ -176,6 +176,7 @@ import { diagnosticOrderTestReportService } from './services/setup/diagnosticTes
 import { diagnosticOrderTestReportCommentsService } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import { patientDiagnosticResultHistoryService } from './services/diagnosic-order/patientDiagnosticResultHistoryService';
 import { patientReportService } from './services/patientReportService';
+import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
 
 export const store = configureStore({
@@ -417,6 +418,9 @@ export const store = configureStore({
     [surgicalHistoryService.reducerPath]: surgicalHistoryService.reducer,
     [socialHistoryService.reducerPath]: socialHistoryService.reducer,
     [favoriteDiagnosticTestService.reducerPath]: favoriteDiagnosticTestService.reducer,
+    [patientReportService.reducerPath]: patientReportService.reducer,
+    [telephonicConsultationService.reducerPath]: telephonicConsultationService.reducer,
+
     [diagnosticOrderService.reducerPath]: diagnosticOrderService.reducer,
     [diagnosticOrderTestService.reducerPath]: diagnosticOrderTestService.reducer,
     [diagnosticOrderTestCollectedSampleService.reducerPath]:
@@ -433,8 +437,6 @@ export const store = configureStore({
       diagnosticOrderTestReportCommentsService.reducer,
     [patientDiagnosticResultHistoryService.reducerPath]:
       patientDiagnosticResultHistoryService.reducer,
-
-    [patientReportService.reducerPath]: patientReportService.reducer,
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer
   },
@@ -640,6 +642,7 @@ export const store = configureStore({
       diagnosticOrderTestReportCommentsService.middleware,
       patientDiagnosticResultHistoryService.middleware,
       patientReportService.middleware,
+      telephonicConsultationService.middleware,
       ICDTreeService.middleware
     ])
 });
