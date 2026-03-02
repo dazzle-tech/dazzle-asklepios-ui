@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import './styles.less';
-import MyModal from '@/components/MyModal/MyModal';
-import { Col, Form, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
+import { useGetDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { faVials } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetDepartmentListByTypeQuery } from '@/services/setupService';
-import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
+import { skipToken } from '@reduxjs/toolkit/query';
 import clsx from 'clsx';
-import { useGetDepartmentByTypeQuery, useLazyGetDepartmentByTypeQuery } from '@/services/security/departmentService';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
+import './styles.less';
 
 const DetailsModal = ({
   test,
@@ -22,18 +22,21 @@ const DetailsModal = ({
   order,
   edit
 }) => {
-  const [actionType, setActionType] = useState(null);
-  const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
+  const [actionType] = useState(null);
+  const [requestedPatientAttacment] = useState();
   const [receivedType, setReceivedType] = useState('');
-  const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
 
-  const { data: orderPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
-  const { data: timeUnitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-   const [deptPage, setDeptPage] = useState(0);
-  const { data: receivedLabList } = useGetDepartmentByTypeQuery({ type: receivedType ,
+  const [deptPage, setDeptPage] = useState(0);
+  const { data: receivedLabList } = useGetDepartmentByTypeQuery(
+    receivedType
+      ? {
+        type: receivedType,
         page: deptPage,
-    size: 3,});
+        size: 3
+      }
+      : skipToken
+  );
 
   const {
     data: fetchAttachmentByKeyResponce,
@@ -44,29 +47,32 @@ const DetailsModal = ({
     refetch
   } = useFetchAttachmentByKeyQuery(
     { key: requestedPatientAttacment },
-    { skip: !requestedPatientAttacment || !order.key }
+    { skip: !requestedPatientAttacment || (!order?.id && !order?.key) }
   );
 
   useEffect(() => {
-    if (test?.testTypeLkey == '862810597620632') {
+    const testType = test?.type;
+    if (testType === 'LABORATORY') {
       setReceivedType('LABORATORY');
-    } else if (test?.testTypeLkey == '862828331135792') {
+    } else if (testType === 'RADIOLOGY') {
       setReceivedType('RADIOLOGY');
-    } else if (test?.testTypeLkey == '862842242812880') {
+    } else if (testType === 'PATHOLOGY') {
       setReceivedType('PATHOLOGY');
     } else {
       setReceivedType('');
     }
   }, [test]);
+
   const [allDepartments, setAllDepartments] = useState([]);
+
   useEffect(() => {
-     if (receivedLabList?.data) {
-       setAllDepartments((prev) =>
-         deptPage === 0 ? receivedLabList.data : [...prev, ...receivedLabList.data]
-       );
-     }
-   }, [receivedLabList]);
- 
+    if (receivedLabList?.data) {
+      setAllDepartments((prev) =>
+        deptPage === 0 ? receivedLabList.data : [...prev, ...receivedLabList.data]
+      );
+    }
+  }, [receivedLabList]);
+
   useEffect(() => {
     if (isSuccess && fetchAttachmentByKeyResponce) {
       if (actionType === 'download') {
@@ -76,14 +82,17 @@ const DetailsModal = ({
   }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
 
   useEffect(() => {
-    // Initialize repeat checkbox state based on orderTest data
-    setIsRepeatEnabled(!!orderTest?.isRepeat);
-  }, [orderTest?.isRepeat]);
+    if (orderTest?.receivedLabId && !orderTest?.receivedDepartmentId) {
+      setOrderTest(prev => ({
+        ...prev,
+        receivedDepartmentId: orderTest.receivedLabId
+      }));
+    }
+  }, [orderTest?.receivedLabId, orderTest?.receivedDepartmentId, setOrderTest]);
 
   const handleDownload = async attachment => {
     try {
       if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
-        console.error('Invalid attachment data.');
         return;
       }
 
@@ -111,26 +120,24 @@ const DetailsModal = ({
     }
   };
 
- 
+  const statusValue =
+    orderTest?.status ?? orderTest?.statusLkey ?? orderTest?.statusLvalue?.valueCode;
+  const isEditable =
+    !edit && (statusValue === 'NEW' || statusValue === 'DIAG_ORDER_STAT_NEW');
 
-  const handleRepeatCheckboxChange = checked => {
-    setIsRepeatEnabled(checked);
-    setOrderTest(prev => ({
-      ...prev,
-      isRepeat: checked,
-      // Clear repeat fields if unchecked
-      ...(checked
-        ? {}
-        : {
-          repeatEveryNumber: null,
-          repeatEveryUnit: null,
-          periodNumber: null,
-          periodUnit: null,
-          firstOccurrenceDateTime: null
-        })
-    }));
-  };
+  const testTypeLabel =
+    test?.testTypeLvalue?.lovDisplayVale ?? test?.type ?? test?.testTypeLkey ?? '';
+  const testNameLabel = test?.testName ?? test?.name ?? '';
 
+  useEffect(() => {
+    if (
+      openDetailsModel &&
+      orderTest?.reasonLkey &&
+      ReasonLovQueryResponse?.object?.length
+    ) {
+      setOrderTest(prev => ({ ...prev }));
+    }
+  }, [ReasonLovQueryResponse?.object]);
 
   return (
     <>
@@ -139,178 +146,61 @@ const DetailsModal = ({
         setOpen={setOpenDetailsModel}
         title="Add Test Details"
         actionButtonFunction={handleSaveTest}
-        isDisabledActionBtn={
-          edit ? true : orderTest?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'
-        }
+        isDisabledActionBtn={!isEditable}
         position="right"
         bodyheight="60vh"
         size="35vw"
         steps={[
           {
-            title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''),
+            title: `${testTypeLabel} - ${testNameLabel}`,
             icon: <FontAwesomeIcon icon={faVials} />
           }
         ]}
         content={
           <div className={clsx('', { 'disabled-panel': edit })}>
             <Form fluid>
-              <Row>
-                <Col md={8}>
-                  <MyInput
-                    width="100%"
-                    fieldType="select"
-                    fieldLabel="Order Priority"
-                    selectData={orderPriorityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'priorityLkey'}
-                    record={orderTest}
-                    setRecord={setOrderTest}
-                    searchable={false}
-                  />
-                </Col>
-                <Col md={8}>
-                  <MyInput
-                    width="100%"
-                    fieldType="select"
-                    fieldLabel="Reason"
-                    selectData={ReasonLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'reasonLkey'}
-                    record={orderTest}
-                    setRecord={setOrderTest}
-                    value={orderTest?.reasonLkey}
-                  />
+              <div className='details-modal-diagnostic-order-inputs'>
+                <MyInput
+                  fieldType="select"
+                  fieldLabel="Reason"
+                  selectData={ReasonLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldName={'reasonLkey'}
+                  record={orderTest}
+                  setRecord={setOrderTest}
+                  width={"12vw"}
+                />
 
-                </Col>
-                <Col md={8}>
-                
+                <MyInput
+                  fieldType="selectPagination"
+                  fieldLabel="Add Department"
+                  fieldName="receivedDepartmentId"
+                  selectData={allDepartments}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={orderTest}
+                  setRecord={setOrderTest}
+                  searchable
+                  width={"12vw"}
+                  hasMore={receivedLabList?.links?.next ? true : false}
+                  onFetchMore={() => {
+                    if (receivedLabList?.links?.next) {
+                      const { page } = extractPaginationFromLink(receivedLabList.links.next);
+                      setDeptPage(page);
+                    }
+                  }}
+                />
+              </div>
+              <MyInput
+                height={70}
+                width={'100%'}
+                fieldLabel="Notes"
+                fieldName={'notes'}
+                record={orderTest}
+                setRecord={setOrderTest}
+              />
 
-                  <MyInput
-                    fieldType="selectPagination"
-                    fieldLabel="Add Department"
-                    fieldName="receivedLabId"
-                    selectData={allDepartments}
-                    selectDataLabel="name"
-                    selectDataValue="id"
-                   record={orderTest}
-                    setRecord={setOrderTest}
-                    searchable
-                    width={520}
-                    hasMore={receivedLabList?.links?.next ? true : false}
-                    onFetchMore={() => {
-                      if (receivedLabList?.links?.next) {
-                        const { page } = extractPaginationFromLink(receivedLabList.links.next);
-                        setDeptPage(page);
-                      }
-                    }}
-                  />
-                </Col>
-              </Row>
-
-              {/* Repeat Section */}
-              <Row style={{ marginTop: '16px' }}>
-                <Col md={24}>
-                  <MyInput
-                    fieldType="checkbox"
-                    fieldLabel="Repeat"
-                    fieldName={'isRepeat'}
-                    record={orderTest}
-                    setRecord={setOrderTest}
-                    onChange={handleRepeatCheckboxChange}
-                  />
-                </Col>
-              </Row>
-
-              {/* Repeat Fields - Only show when repeat is enabled */}
-              {isRepeatEnabled && (
-                <>
-                  <Row>
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="number"
-                        fieldLabel="Repeat every"
-                        fieldName={'repeatEveryNumber'}
-                        record={orderTest}
-                        setRecord={setOrderTest}
-                        min={1}
-                      />
-                    </Col>
-                    <div className="margin-top">
-                      <Col md={8}>
-                        <MyInput
-                          width="100%"
-                          fieldType="select"
-                          fieldLabel=""
-                          selectData={timeUnitsLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName={'repeatEveryUnit'}
-                          record={orderTest}
-                          setRecord={setOrderTest}
-                        />
-                      </Col>
-                    </div>
-                  </Row>
-
-                  <Row>
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="number"
-                        fieldLabel="For period of"
-                        fieldName={'periodNumber'}
-                        record={orderTest}
-                        setRecord={setOrderTest}
-                        min={1}
-                      />
-                    </Col>
-                    <div className="margin-top">
-                      <Col md={8}>
-                        <MyInput
-                          width="100%"
-                          fieldType="select"
-                          fieldLabel=""
-                          selectData={timeUnitsLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName={'periodUnit'}
-                          record={orderTest}
-                          setRecord={setOrderTest}
-                        />
-                      </Col>
-                    </div>
-                  </Row>
-
-                  <Row>
-                    <Col md={16}>
-                      <MyInput
-                        width="100%"
-                        fieldType="datetime"
-                        fieldLabel="First occurrence time"
-                        fieldName={'firstOccurrenceDateTime'}
-                        record={orderTest}
-                        setRecord={setOrderTest}
-                      />
-                    </Col>
-                  </Row>
-                </>
-              )}
-
-              <Row>
-                <Col md={24}>
-                  <MyInput
-                    height={70}
-                    width={'100%'}
-                    fieldLabel="Notes"
-                    fieldName={'notes'}
-                    record={orderTest}
-                    setRecord={setOrderTest}
-                  />
-                </Col>
-              </Row>
             </Form>
           </div>
         }

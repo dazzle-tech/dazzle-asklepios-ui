@@ -34,13 +34,12 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
   };
 };
 
-// ====== NEW: Bulk Basic Info types ======
 type PatientBasicInformationResponseVM = {
   firstName: string;
   lastName: string;
   medicalRecordNumber: string;
-  dateOfBirth: string; // إذا الباك يرجع ISO string. لو يرجع Date فعليًا (نادر) غيّرها حسب الحاجة
-  sexAtBirth: modelTypes.Gender; // أو string إذا Gender غير موجود عندك في modelTypes
+  dateOfBirth: string;
+  sexAtBirth: string;
 };
 
 export const newPatientService = createApi({
@@ -60,26 +59,27 @@ export const newPatientService = createApi({
           : ['Patient']
     }),
 
-    getPatientsByMrn: builder.query<PagedResult<modelTypes.Patient>, { mrn: string } & PagedParams>(
-      {
-        query: ({ mrn, page, size, sort = 'id,asc' }) => ({
-          url: `/api/patient/patients/by-mrn/${encodeURIComponent(mrn)}`,
-          params: { page, size, sort }
-        }),
-        transformResponse: mapPaged,
-        providesTags: res =>
-          res
-            ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
-            : ['Patient']
-      }
-    ),
+    getPatientsByMedicalRecordNumber: builder.query<
+      PagedResult<modelTypes.Patient>,
+      { medicalRecordNumber: string } & PagedParams
+    >({
+      query: ({ medicalRecordNumber, page, size, sort = 'id,asc' }) => ({
+        url: `/api/patient/by-medicalRecordNumber/${encodeURIComponent(medicalRecordNumber)}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: res =>
+        res
+          ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
+          : ['Patient']
+    }),
 
     getPatientsByArchivingNumber: builder.query<
       PagedResult<modelTypes.Patient>,
       { archivingNumber: string } & PagedParams
     >({
       query: ({ archivingNumber, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-archiving-number/${encodeURIComponent(archivingNumber)}`,
+        url: `/api/patient/by-archiving-number/${encodeURIComponent(archivingNumber)}`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -94,7 +94,7 @@ export const newPatientService = createApi({
       { phone: string } & PagedParams
     >({
       query: ({ phone, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-primary-phone/${encodeURIComponent(phone)}`,
+        url: `/api/patient/by-primary-phone/${encodeURIComponent(phone)}`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -109,7 +109,7 @@ export const newPatientService = createApi({
       { date: string } & PagedParams
     >({
       query: ({ date, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-date-of-birth/${encodeURIComponent(date)}`,
+        url: `/api/patient/by-date-of-birth/${encodeURIComponent(date)}`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -124,7 +124,7 @@ export const newPatientService = createApi({
       { keyword: string } & PagedParams
     >({
       query: ({ keyword, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-full-name/${encodeURIComponent(keyword)}`,
+        url: `/api/patient/by-full-name/${encodeURIComponent(keyword)}`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -139,7 +139,7 @@ export const newPatientService = createApi({
       { number: string } & PagedParams
     >({
       query: ({ number, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-document-number`,
+        url: `/api/patient/by-document-number`,
         params: { number, page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -151,7 +151,7 @@ export const newPatientService = createApi({
 
     addPatient: builder.mutation<modelTypes.Patient, modelTypes.Patient>({
       query: data => ({
-        url: '/api/patient/patients',
+        url: '/api/patient',
         method: 'POST',
         body: data
       }),
@@ -160,7 +160,7 @@ export const newPatientService = createApi({
 
     updatePatient: builder.mutation<modelTypes.Patient, { id: Id; data: modelTypes.Patient }>({
       query: ({ id, data }) => ({
-        url: `/api/patient/patients/${id}`,
+        url: `/api/patient/${id}`,
         method: 'PUT',
         body: data
       }),
@@ -172,7 +172,7 @@ export const newPatientService = createApi({
       { number: string } & PagedParams
     >({
       query: ({ number, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/by-any-document-number`,
+        url: `/api/patient/by-any-document-number`,
         params: { number, page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -184,15 +184,29 @@ export const newPatientService = createApi({
 
     addUnknownPatient: builder.mutation<modelTypes.Patient, void>({
       query: () => ({
-        url: '/api/patient/patients/unknown',
+        url: '/api/patient/unknown',
         method: 'POST'
       }),
       invalidatesTags: ['Patient']
     }),
 
+    getDuplicationCandidates: builder.mutation<
+      modelTypes.PatientBasicInformationResponseVM[],
+      {
+        dto: modelTypes.PatientDuplicationLookupDTO;
+      } & PagedParams
+    >({
+      query: ({ dto, page, size, sort = 'id,asc' }) => ({
+        url: `/api/patient/duplication-candidates`,
+        method: 'POST',
+        body: dto,
+        params: { page, size, sort }
+      })
+    }),
+
     getUnknownPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patients/unknown`,
+        url: `/api/patient/unknown`,
         params: { page, size, sort }
       }),
       transformResponse: (response: any, meta) => {
@@ -204,12 +218,11 @@ export const newPatientService = createApi({
           : ['Patient']
     }),
 
-    // ============ NEW: BULK BASIC INFO (POST) ============
     getBulkPatientBasicInfo: builder.mutation<PatientBasicInformationResponseVM[], number[]>({
-      query: (ids) => ({
-        url: '/api/patient/patients/bulk/basic-info',
+      query: body => ({
+        url: '/api/patient/bulk/basic-info',
         method: 'POST',
-        body: ids
+        body
       })
     })
   })
@@ -221,8 +234,8 @@ export const {
   useLazyGetPatientsQuery,
 
   // filters
-  useGetPatientsByMrnQuery,
-  useLazyGetPatientsByMrnQuery,
+  useGetPatientsByMedicalRecordNumberQuery,
+  useLazyGetPatientsByMedicalRecordNumberQuery,
   useGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByArchivingNumberQuery,
   useGetPatientsByPrimaryPhoneQuery,
@@ -232,11 +245,11 @@ export const {
   useGetPatientsByFullNameQuery,
   useLazyGetPatientsByFullNameQuery,
 
-  // NEW
+  // document number
   useGetPatientsByDocumentNumberQuery,
   useLazyGetPatientsByDocumentNumberQuery,
 
-  // NEW - any document number
+  // any document number
   useGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsByAnyDocumentNumberQuery,
 
@@ -244,11 +257,14 @@ export const {
   useAddPatientMutation,
   useUpdatePatientMutation,
 
-  // Unknown Patients
+  // unknown patients
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
   useLazyGetUnknownPatientsQuery,
 
-  // NEW: bulk basic info
+  // duplication
+  useGetDuplicationCandidatesMutation,
+
+  // bulk basic info
   useGetBulkPatientBasicInfoMutation
 } = newPatientService;

@@ -1,0 +1,140 @@
+.collapsible-container {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &.open {
+    border-width: 2px;
+    border-style: solid;
+  }
+
+  &.closed {
+    border: 2px solid #e0e0e0;
+    background-color: #ffffff;
+  }
+}
+
+.collapsible-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  user-select: none;
+
+  &.clickable {
+    cursor: pointer;
+  }
+
+  &.not-clickable {
+    cursor: default;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+  }
+
+  &.closed {
+    background: #f8f9fa;
+  }
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon {
+  font-size: 18px;
+  transition: color 0.2s ease;
+
+  &.closed {
+    color: #6c757d;
+  }
+}
+
+.title-1 {
+  font-size: 15px;
+  transition: all 0.2s ease;
+
+  &.open {
+    font-weight: 600;
+  }
+
+  &.closed {
+    font-weight: 500;
+    color: #495057;
+  }
+}
+
+.badge {
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.chevron {
+  transition: all 0.3s ease;
+  font-size: 14px;
+
+  &.closed {
+    color: #6c757d;
+  }
+}
+
+.content-wrapper {
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.open {
+    max-height: 800px;
+  }
+
+  &.closed {
+    max-height: 0;
+  }
+}
+
+.content {
+  transition: padding 0.3s ease;
+
+  &.open {
+    padding: 20px 16px 16px 16px;
+  }
+
+  &.closed {
+    padding: 0 16px;
+  }
+}
+
+// Keep this as the last style in the file to override styles when dark mode is active
+.collapsible-dark {
+  &.collapsible-container.closed {
+    border-color: var(--dark-border-color, #3a3a3a);
+    background-color: var(--dark-black, #1a1a1a);
+  }
+
+  .collapsible-header.closed {
+    background: var(--dark-bg-secondary, #2a2a2a);
+  }
+
+  .icon.closed {
+    color: var(--dark-text-secondary, #b0b0b0);
+  }
+
+  .title-1.closed {
+    color: var(--dark-text-primary, #f5f5f5);
+  }
+
+  .title-1.open {
+    color: inherit;
+  }
+
+  .chevron.closed {
+    color: var(--dark-text-secondary, #b0b0b0);
+  }
+}

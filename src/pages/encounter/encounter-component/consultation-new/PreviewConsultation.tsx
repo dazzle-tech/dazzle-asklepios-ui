@@ -106,15 +106,11 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
     formData?.consultantSpeciality
   ]);
 
-
-
   useEffect(() => {
     if (practitionersResult?.data?.data?.content) {
       setAllPractitioners(practitionersResult.data.data.content);
     }
   }, [practitionersResult?.data?.data?.content]);
-
-
 
   if (!consultation) return null;
 
@@ -156,10 +152,10 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                   required
                 />
 
-                <div style={{ width: '14vw' }}>
-                  <label style={{ marginBottom: '8px', display: 'block' }}>
+                <div className="destination-type-wrapper">
+                  <label className="destination-type-label">
                     <Translate>Destination Type</Translate>
-                    <span style={{ color: 'red' }}>*</span>
+                    <span className="required-asterisk">*</span>
                   </label>
                   <RadioGroup
                     name="destinationType"
@@ -371,7 +367,7 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
                 <div className="ai-panel-body">
                   {aiLoading && <div className="ai-spinner" />}
                   {!aiLoading && !aiError && (
-                    <div style={{ whiteSpace: 'pre-line' }}>
+                    <div className="ai-summary-text">
                       {aiSummary ?? 'Suggestions will appear here'}
                     </div>
                   )}
