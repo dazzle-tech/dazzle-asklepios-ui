@@ -170,9 +170,8 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
 
   const messageProp: string = responseData?.message || '';
   const errorKey =
-    (messageProp && messageProp.startsWith('error.')
-      ? messageProp.substring(6)
-      : undefined) || responseData?.errorKey;
+    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
+    responseData?.errorKey;
 
   const humanReadableMessage =
     (errorKey && keyMap[errorKey]) ||
@@ -194,9 +193,6 @@ const toDateOnlyOrNull = (value: any) => {
   return dateObj.toISOString().slice(0, 10);
 };
 
-// -----------------------------------------------------------------------------
-// Component
-// -----------------------------------------------------------------------------
 const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
   (
     {
@@ -242,12 +238,16 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
     useEffect(() => {
       if (!facilityDefaultCurrency) return;
-      setPayment((previousPayment: any) => ({
-        ...previousPayment,
-        patientId: localPatient?.id ?? localPatient?.key ?? previousPayment.patientId ?? 0,
-        encounterId: localEncounter?.id ?? previousPayment.encounterId ?? 0,
+      setPayment((prev: any) => ({
+        ...prev,
+        patientId: localPatient?.id ?? localPatient?.key ?? prev.patientId ?? 0,
+        encounterId: localEncounter?.id ?? prev.encounterId ?? 0,
         facilityDefaultCurrency: facilityDefaultCurrency,
-        currency: previousPayment.currency ?? facilityDefaultCurrency
+
+        currency:
+          prev.currency && String(prev.currency).trim() !== ''
+            ? prev.currency
+            : facilityDefaultCurrency
       }));
     }, [localPatient?.id, localPatient?.key, localEncounter?.id, facilityDefaultCurrency]);
 
@@ -346,7 +346,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         const policyNumber = String(insuranceItem?.policyNumber ?? '');
         const groupNumber = String(insuranceItem?.groupNumber ?? '');
 
-        const searchableText = `${payorName} ${planName} ${policyNumber} ${groupNumber}`.toLowerCase();
+        const searchableText =
+          `${payorName} ${planName} ${policyNumber} ${groupNumber}`.toLowerCase();
         return searchableText.includes(keyword);
       });
     }, [patientInsurancesList, insuranceSearchKeyword, payorsList, plansByPayorId]);
@@ -516,7 +517,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         return mappedRows.map(mappedRow => {
           const key = String((mappedRow as any).serviceId ?? mappedRow.id ?? '');
           const existingRow = previousByServiceId.get(key);
-          return existingRow ? { ...mappedRow, isExempted: Boolean(existingRow.isExempted) } : mappedRow;
+          return existingRow
+            ? { ...mappedRow, isExempted: Boolean(existingRow.isExempted) }
+            : mappedRow;
         });
       });
 
@@ -628,17 +631,22 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       showBankTransferFields
     ]);
 
-    const allExempted = servicesRows.length > 0 && servicesRows.every(serviceRow => !!serviceRow.isExempted);
+    const allExempted =
+      servicesRows.length > 0 && servicesRows.every(serviceRow => !!serviceRow.isExempted);
     const someExempted = servicesRows.some(serviceRow => !!serviceRow.isExempted);
 
     const toggleAllExempted = (checked: boolean) => {
-      setServicesRows(previousRows => previousRows.map(serviceRow => ({ ...serviceRow, isExempted: checked })));
+      setServicesRows(previousRows =>
+        previousRows.map(serviceRow => ({ ...serviceRow, isExempted: checked }))
+      );
     };
 
     const toggleOneExempted = (rowId: any, checked: boolean) => {
       setServicesRows(previousRows =>
         previousRows.map(serviceRow =>
-          String(serviceRow.id) === String(rowId) ? { ...serviceRow, isExempted: checked } : serviceRow
+          String(serviceRow.id) === String(rowId)
+            ? { ...serviceRow, isExempted: checked }
+            : serviceRow
         )
       );
     };
@@ -706,7 +714,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         dept: previousPayment.dept ?? 0
       }));
 
-      setServicesRows(previousRows => previousRows.map(serviceRow => ({ ...serviceRow, isExempted: false })));
+      setServicesRows(previousRows =>
+        previousRows.map(serviceRow => ({ ...serviceRow, isExempted: false }))
+      );
       savedExemptedByServiceIdRef.current = new Map();
       setPatientInsurance({ ...newPatientInsurance, payorName: '', planName: '' });
       setValidationResult({});
@@ -780,10 +790,6 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         paymentDetails = await createPayment({ body: paymentDto }).unwrap();
       }
 
-      const toFiniteNumber = (value: any) => {
-        const numericValue = Number(value);
-        return Number.isFinite(numericValue) ? numericValue : 0;
-      };
 
       if (paymentDetails?.payment) {
         const savedPayment: any = paymentDetails.payment;
@@ -828,7 +834,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
           )
           .map(
             field =>
-              `• ${PAYMENT_FIELD_LABELS[field] ?? field}: ${validationDetails[field]?.[0]?.message ?? 'is required'}`
+              `• ${PAYMENT_FIELD_LABELS[field] ?? field}: ${
+                validationDetails[field]?.[0]?.message ?? 'is required'
+              }`
           );
 
         dispatch(
@@ -849,7 +857,6 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       try {
         await handleConfirm();
         setLockAfterConfirm(true);
-        dispatch(notify({ msg: 'Payment Saved Successfully', sev: 'success' }));
         return true;
       } catch (error: any) {
         setValidationResult(error?.data ?? error);

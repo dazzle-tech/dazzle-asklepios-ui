@@ -31,7 +31,7 @@ import { initialListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Col, Divider, Form, Radio, RadioGroup, Row, Text } from 'rsuite';
-import PatientOrder from '@/pages/encounter/encounter-component/diagnostics-order';
+import PatientOrder from '@/pages/encounter/encounter-component/diagnostics-order-new';
 import clsx from 'clsx';
 import Section from '@/components/Section';
 const IntraoperativeEventsTracking = ({ operation, patient, encounter, editable, activeTab, setActiveTab }) => {

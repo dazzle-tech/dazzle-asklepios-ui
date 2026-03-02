@@ -10,7 +10,7 @@ import { useGetAllergensQuery } from '@/services/setupService';
 import { RootState } from '@/store';
 import { ApAttachment } from '@/types/model-types';
 import { initialListRequest } from '@/types/types';
-import { calculateAgeFormat } from '@/utils';
+import { calculateAgeFormat, formatEnumString } from '@/utils';
 import {
   faExclamationTriangle,
   faFileWaveform,
@@ -31,6 +31,8 @@ import { faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import Translate from '@/components/Translate';
 import { useGetPatientWarningsByPatientIdQuery } from '@/services/encounters/patientWarningsService';
+import { newPatient } from '@/types/model-types-constructor-new';
+ 
 
 const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const profileImageFileInputRef = useRef(null);
@@ -110,9 +112,9 @@ const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEnco
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
-      refKey: patient?.key
+      refKey: patient?.id
     },
-    { skip: !patient?.key }
+    { skip: !patient?.id }
   );
 
   useEffect(() => {
@@ -208,7 +210,7 @@ useEffect(() => {
     <Panel className="patient-panel">
       {props?.setPatient && (
         <div style={{ display: 'flex', justifyContent: "end", marginBottom: "5px" }}>
-          <IoMdClose size={22} className='icons-style' onClick={() => props?.setPatient({ ...newApPatient })} />
+          <IoMdClose size={22} className='icons-style' onClick={() => props?.setPatient({ ...newPatient })} />
         </div>
       )}
       <div className="div-avatar">
@@ -225,7 +227,7 @@ useEffect(() => {
         />
         <div>
           <div className="patient-info">
-            <Text className="patient-name">{textOr(patient?.fullName, 'Patient Name')}</Text>
+            <Text className="patient-name">{textOr(patient?.fullName , 'Patient Name')}</Text>
           </div>
           <div className="info-label"># {textOr(patient?.patientMrn, 'MRN')}</div>
         </div>
@@ -261,12 +263,12 @@ useEffect(() => {
       <div className="info-section">
         <div className="info-column">
           <Text className="info-label">Age</Text>
-          <Text className="info-value">{patient?.dob ? calculateAgeFormat(patient?.dob) : ''}</Text>
+          <Text className="info-value">{patient?.dateOfBirth ? calculateAgeFormat(patient?.dateOfBirth) : ''}</Text>
         </div>
 
         <div className="info-column">
           <Text className="info-label">Gender</Text>
-          <Text className="info-value"> {textOr(patient?.genderLvalue?.lovDisplayVale, '')}</Text>
+          <Text className="info-value"> {textOr(formatEnumString(patient?.sexAtBirth), '')}</Text>
         </div>
       </div>
       <Divider className="divider-style" />
@@ -325,25 +327,25 @@ useEffect(() => {
         <Text className="main-info-patient-side">
           <FontAwesomeIcon icon={faFileWaveform} className="icon-color" />{' '}
           <span className="section-title-patient-side">
-            {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT'
+            {encounter?.encounterType !== 'INPATIENT'
               ? 'Visit Details'
               : 'Admission Details'}
           </span>
         </Text>
       )}
-      {encounter?.resourceTypeLvalue?.valueCode !== 'BRT_INPATIENT' && !props?.hideVisitDetails && (
+      {encounter?.encounterType !== 'INPATIENT' && !props?.hideVisitDetails && (
         <div className="details-sections">
           <br />
 
           <div className="info-section">
             <div className="info-column">
               <Text className="info-label">Visit Date</Text>
-              <Text className="info-value">{textOr(encounter?.plannedStartDate, '')}</Text>
+              <Text className="info-value">{textOr(encounter?.encounterDate, '')}</Text>
             </div>
 
             <div className="info-column">
               <Text className="info-label">Visit ID</Text>
-              <Text className="info-value"> {textOr(encounter?.visitId, '')}</Text>
+              <Text className="info-value"> {textOr(encounter?.encounterNumber, '')}</Text>
             </div>
           </div>
 
@@ -358,7 +360,7 @@ useEffect(() => {
             <div className="info-column">
               <Text className="info-label">Priority</Text>
               <Text className="info-value">
-                {textOr(encounter?.encounterPriorityLvalue?.lovDisplayVale, '')}
+                {textOr(formatEnumString(encounter?.priority), '')}
               </Text>
             </div>
           </div>
@@ -367,7 +369,7 @@ useEffect(() => {
             <div className="info-column">
               <Text className="info-label">Reason</Text>
               <Text className="info-value">
-                {textOr(encounter?.reasonLvalue?.lovDisplayVale, '')}
+                {textOr(formatEnumString(encounter?.encounterReason), '')}
               </Text>
             </div>
 
@@ -375,14 +377,14 @@ useEffect(() => {
               <Text className="info-label">Origin</Text>
               <Text className="info-value">
                 {' '}
-                {textOr(encounter?.originLvalue?.lovDisplayVale, '')}
+                {textOr(encounter?.originName, '')}
               </Text>
             </div>
           </div>
         </div>
       )}
 
-      {encounter?.resourceTypeLvalue?.valueCode === 'BRT_INPATIENT' && (
+      {encounter?.encounterType === 'INPATIENT' && (
         <>
           <div className="details-sections">
             <div className="info-section">

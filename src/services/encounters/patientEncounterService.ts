@@ -201,9 +201,21 @@ export const patientEncounterService = createApi({
         url: `/api/patient/encounter/${id}/complete`,
         method: 'POST'
       }),
-      invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
-    }),
 
+      async onQueryStarted(arg, { queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          console.log('completeEncounter success:', data);
+        } catch (error) {
+          console.error('completeEncounter error:', error);
+        }
+      },
+
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'PatientEncounter', id },
+        'PatientEncounter'
+      ]
+    }),
     countTodayDepartmentCancelled: builder.query<number, { departmentId: Id }>({
       query: ({ departmentId }) => ({
         url: `/api/patient/encounter/department/${departmentId}/count/today/cancelled`,
@@ -233,20 +245,18 @@ export const patientEncounterService = createApi({
 export const {
   useCreateEncounterMutation,
   useUpdateEncounterMutation,
+  useCountTodayEncountersByFacilityQuery,
+  useLazyCountTodayEncountersByFacilityQuery,
+  useGetPreviousEncountersSameDepartmentQuery,
+  useLazyGetPreviousEncountersSameDepartmentQuery,
 
   useStartEncounterMutation,
   useCancelEncounterMutation,
   useDischargeEncounterMutation,
   useCompleteEncounterMutation,
 
-  useCountTodayEncountersByFacilityQuery,
-  useLazyCountTodayEncountersByFacilityQuery,
-
   useFilterEncountersQuery,
   useLazyFilterEncountersQuery,
-
-  useGetPreviousEncountersSameDepartmentQuery,
-  useLazyGetPreviousEncountersSameDepartmentQuery,
 
   useCountTodayDepartmentTotalPatientsQuery,
   useCountTodayDepartmentActiveCasesQuery,

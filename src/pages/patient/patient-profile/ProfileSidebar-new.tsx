@@ -7,9 +7,11 @@ import {
   useLazyGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByDateOfBirthQuery,
   useLazyGetPatientsByFullNameQuery,
-  useLazyGetPatientsByMedicalRecordNumberQuery,
+ useLazyGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
-  useLazyGetPatientsByAnyDocumentNumberQuery
+  useLazyGetPatientsByAnyDocumentNumberQuery,
+  useLazyGetPatientsQuery,
+ 
 } from '@/services/patient/patientService';
 
 import type { ApPatient } from '@/types/model-types';
@@ -67,8 +69,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     switch (selectedCriterion) {
       case 'patientMrn':
         return fetchByMrn;
-      case 'documentNo':
-        return fetchByDocumentNo;
       case 'archivingNumber':
         return fetchByArchiving;
       case 'phoneNumber':

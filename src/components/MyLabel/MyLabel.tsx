@@ -1,51 +1,81 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Tooltip, Whisper } from 'rsuite';
 import Translate from '../Translate';
 import { useSelector } from 'react-redux';
-const MyLabel = props => {
-  const [errorType, setErrorType] = useState(undefined);
+import clsx from 'clsx';
+
+type MyLabelProps = {
+  label?: any;
+  tooltip?: any;
+  error?: any;
+  size?: 'small' | 'medium' | 'large' | 'larger';
+  color?: string;
+  required?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+const MyLabel: React.FC<MyLabelProps> = props => {
+  const [errorType, setErrorType] = useState<'ERROR' | 'WARN' | undefined>(undefined);
   const mode = useSelector((state: any) => state.ui.mode);
+
   useEffect(() => {
-    if (props.error) {
-      if (props.error === 'ERROR') {
-        setErrorType('ERROR');
-      } else if (props.error === 'WARN') {
-        setErrorType('WARN');
-      } else if (Array.isArray(props.error)) {
-        props.error.forEach(errorItem => {
-          const validationType = errorItem.validationType;
-          if (validationType === 'WARN' && !errorType) {
-            setErrorType('WARN');
-          } else if (validationType === 'REJECT') {
-            setErrorType('ERROR');
-          }
-        });
-      } else {
-        setErrorType(undefined);
-      }
+    if (!props.error) {
+      setErrorType(undefined);
+      return;
     }
+
+    if (props.error === 'ERROR') {
+      setErrorType('ERROR');
+      return;
+    }
+
+    if (props.error === 'WARN') {
+      setErrorType('WARN');
+      return;
+    }
+
+    if (Array.isArray(props.error)) {
+      let next: 'ERROR' | 'WARN' | undefined = undefined;
+
+      props.error.forEach((errorItem: any) => {
+        const validationType = errorItem?.validationType;
+        if (validationType === 'WARN' && !next) next = 'WARN';
+        if (validationType === 'REJECT') next = 'ERROR';
+      });
+
+      setErrorType(next);
+      return;
+    }
+
+    setErrorType(undefined);
   }, [props.error]);
 
-  const labelStyle = () => {
-    let fontSize = '13px';
-    if (props.size) {
-      switch (props.size) {
-        case 'small':
-          fontSize = '12px';
-        case 'medium':
-          fontSize = '14px';
-        case 'large':
-          fontSize = '18px';
-        case 'larger':
-          fontSize = '21px';
-      }
-    }
+  const fontSize = useMemo(() => {
+    let fs = '13px';
+    if (!props.size) return fs;
 
+    switch (props.size) {
+      case 'small':
+        return '12px';
+      case 'medium':
+        return '14px';
+      case 'large':
+        return '18px';
+      case 'larger':
+        return '21px';
+      default:
+        return fs;
+    }
+  }, [props.size]);
+
+  const labelStyle = useMemo<React.CSSProperties>(() => {
     return {
       fontSize,
-      color: props.color
+      color: props.color,
+      ...(props.style ?? {})
     };
-  };
+  }, [fontSize, props.color, props.style]);
 
   return (
     <Whisper
@@ -58,23 +88,14 @@ const MyLabel = props => {
         </Tooltip>
       }
     >
-      <span>
-        {/* <Badge
-        className={'label-placement'.concat(
-          (props.error && errorType)
-            ? ''
-            : ' badge-hidden'
-        )}
-        color={errorType === 'ERROR' ? 'red' : errorType === 'WARN' ? 'orange' : 'blue'}
-        content={errorType === 'ERROR' ? 'Error' : errorType === 'WARN' ? 'Warning' : undefined}
-      >
-        <span style={labelStyle()}>
+      <span className={clsx('my-label', props.className, mode === 'light' ? 'light' : 'dark')}>
+        <span style={labelStyle}>
           <Translate>{props.label}</Translate>
+          {props.required && <span className="required-field"> *</span>}
         </span>
-      </Badge> */}
-        <span style={labelStyle()}>
-          <Translate>{props.label}</Translate>
-        </span>
+
+        {/* optional: if you want to visually indicate error/warn on label, you can use errorType here */}
+        {/* <span className={clsx('my-label__badge', errorType && `is-${errorType.toLowerCase()}`)} /> */}
       </span>
     </Whisper>
   );
