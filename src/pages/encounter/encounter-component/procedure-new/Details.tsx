@@ -23,7 +23,6 @@ import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
 import { useLazyGetProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
-
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
 
