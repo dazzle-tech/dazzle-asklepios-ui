@@ -2398,6 +2398,15 @@ export interface OrganizationDefinition {
   taxValue?: number;
 }
 
+export type PatientServiceAndProduct = {
+  id: number;
+  patientId: number;
+  encounterId: number;
+  category: string;
+  serviceId?: number | null;
+  productId?: number | null;
+  productType?: string | null;
+  quantity: number;}
 export interface FavoriteDiagnosticTest {
   id?: number;
   userId?: number;
@@ -2440,7 +2449,25 @@ export interface AuditingEntity {
   createdDate?: string;
   lastModifiedBy?: string;
   lastModifiedDate?: string;
-}
+};
+
+export type PatientServiceProductCreateDTO = {
+  patientId: number;
+  encounterId: number;
+  category: string;
+  serviceId?: number;
+  productId?: number;
+  quantity: number;
+};
+
+export type PatientServiceProductUpdateDTO = {
+  id: number;
+  category: string;
+  serviceId?: number;
+  productId?: number;
+  quantity: number;
+};
+
 
 // CREATE
 export type PatientProcedureCreateVM = {

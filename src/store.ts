@@ -181,6 +181,10 @@ import { patientReportService } from './services/patientReportService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
+import { encounterAssessmentService } from './services/medicalSheets/clinicalVisit/encounterAssessmentService';
+import { patientDiagnosisService } from './services/medicalSheets/clinicalVisit/patientDiagnosisService';
+import { encounterPlanService } from './services/medicalSheets/clinicalVisit/encounterPlanService';
 
 export const store = configureStore({
   reducer: {
@@ -242,6 +246,9 @@ export const store = configureStore({
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
+    [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
+
+    //dental
     [dentalService.reducerPath]: dentalService.reducer,
     [observationService.reducerPath]: observationService.reducer,
 
