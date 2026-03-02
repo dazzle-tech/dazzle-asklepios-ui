@@ -21,7 +21,7 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
   };
 };
 
-export const hospitalizationservice = createApi({
+export const hospitalizationService = createApi({
   reducerPath: 'hospitalizationApi',
   baseQuery: BaseQuery,
   tagTypes: ['Hospitalization'],
@@ -77,4 +77,4 @@ export const {
   useAddHospitalizationMutation,
   useUpdateHospitalizationMutation,
   useDeleteHospitalizationMutation
-} = hospitalizationservice;
+} = hospitalizationService;
