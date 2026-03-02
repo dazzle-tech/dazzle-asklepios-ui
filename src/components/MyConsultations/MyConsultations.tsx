@@ -47,6 +47,36 @@ import {
   formatEnumString
 } from '@/utils';
 
+// ─── Helper: status color ───────────────────────────────────────────────────
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'REQUESTED':
+      return '#E6A100';
+    case 'CONFIRMED':
+      return '#0DAA41';
+    case 'REJECTED':
+      return '#D64545';
+    case 'SUBMITTED':
+      return '#0B5ED7';
+    case 'READY':
+      return '#17A2B8';
+    default:
+      return '#6c757d';
+  }
+};
+
+// ─── Helper: priority color ──────────────────────────────────────────────────
+const getPriorityColor = (level: string): string => {
+  switch (level) {
+    case 'CRITICAL':
+      return '#D64545';
+    case 'REGULAR':
+      return '#0DAA41';
+    default:
+      return '#6c757d';
+  }
+};
+
 const MyConsultations = () => {
   const dispatch = useDispatch();
   const authSlice = useAppSelector(state => state.auth);
@@ -56,6 +86,7 @@ const MyConsultations = () => {
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
   const todayString = new Date().toISOString().slice(0, 10);
+
   const toISOStartOfDay = (value: Date | string) => {
     const d = value instanceof Date ? new Date(value) : new Date(String(value));
     d.setHours(0, 0, 0, 0);
@@ -67,6 +98,7 @@ const MyConsultations = () => {
     d.setHours(23, 59, 59, 999);
     return d.toISOString();
   };
+
   const formatDateTime = useCallback(
     (value?: string | number | Date | null) => (value ? formatDateWithoutSeconds(value) : ''),
     []
@@ -87,7 +119,6 @@ const MyConsultations = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
-  // Response modal states
   const [openResponseModal, setOpenResponseModal] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<any>(null);
   const [responseForm, setResponseForm] = useState({ responseText: '' });
@@ -128,7 +159,6 @@ const MyConsultations = () => {
     useGetDepartmentsBulkMutation();
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
 
-  // Search consultations via portal API
   const searchParams = useMemo(() => {
     const fromFacilityId = record.facilityId ?? selectedFacilityId;
     const toDepartmentId = selectedDepartment?.departmentId;
@@ -175,6 +205,7 @@ const MyConsultations = () => {
 
   const consultationResponse = searchResult.data;
   const consultationsLoading = searchResult.isFetching || searchResult.isLoading;
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const refetchConsultations = useCallback(() => {
     if (lastSearchParamsRef.current) {
@@ -195,16 +226,11 @@ const MyConsultations = () => {
     setPage(newPage);
   }, []);
 
-  const handleRowsPerPageChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setPageSize(parseInt(event.target.value, 10));
-      setPage(0);
-    },
-    []
-  );
+  const handleRowsPerPageChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setPageSize(parseInt(event.target.value, 10));
+    setPage(0);
+  }, []);
 
-  // Extract consultation data from API response
-  // API now returns a flat list of all visible consultations
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const allConsultations = consultationResponse?.data ?? [];
   const visibleConsultations = useMemo(() => {
@@ -212,19 +238,16 @@ const MyConsultations = () => {
     return allConsultations.slice(start, start + pageSize);
   }, [allConsultations, page, pageSize]);
 
-  // Get unique patient ids from consultations
+  // ── Use only consultation.patientId (per review comment) ──
   const patientIdsForBulk = useMemo(
     () =>
       Array.from(
         new Set(
           visibleConsultations
-            .map(
-              (consultation: any) =>
-                consultation.patientId ?? consultation.patient?.id ?? consultation.patientKey
-            )
+            .map((consultation: any) => consultation.patientId)
             .filter(Boolean)
-            .map((patientIdValue: any) => Number(patientIdValue))
-            .filter(patientIdValue => !Number.isNaN(patientIdValue))
+            .map((id: any) => Number(id))
+            .filter((id: number) => !Number.isNaN(id))
         )
       ),
     [visibleConsultations]
@@ -248,7 +271,6 @@ const MyConsultations = () => {
     return map;
   }, [patientsBasicInfo]);
 
-  // Get unique department ids from consultations (toDepartmentId preferred)
   const departmentIdsForBulk = useMemo(
     () =>
       Array.from(
@@ -261,8 +283,8 @@ const MyConsultations = () => {
                 consultation.departmentKey
             )
             .filter(Boolean)
-            .map((departmentIdValue: any) => Number(departmentIdValue))
-            .filter(departmentIdValue => !Number.isNaN(departmentIdValue))
+            .map((id: any) => Number(id))
+            .filter((id: number) => !Number.isNaN(id))
         )
       ),
     [visibleConsultations]
@@ -278,9 +300,9 @@ const MyConsultations = () => {
               consultation.responseBy,
               consultation.rejectedBy
             ])
-            .filter(userIdValue => userIdValue !== null && userIdValue !== undefined)
-            .map((userIdValue: any) => Number(userIdValue))
-            .filter(userIdValue => !Number.isNaN(userIdValue))
+            .filter((id: any) => id !== null && id !== undefined)
+            .map((id: any) => Number(id))
+            .filter((id: number) => !Number.isNaN(id))
         )
       ),
     [visibleConsultations]
@@ -340,12 +362,9 @@ const MyConsultations = () => {
     setResponseForm({ responseText: '' });
   }, [openResponseModal]);
 
-  // Header setup
   useEffect(() => {
-    const divContent = 'My Consultation';
     dispatch(setPageCode('My Consultation'));
-    dispatch(setDivContent(divContent));
-
+    dispatch(setDivContent('My Consultation'));
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
@@ -358,7 +377,6 @@ const MyConsultations = () => {
     }
   }, [getPractitionerByUserId, loggedInUser.id]);
 
-  // Default facility selection (when available)
   useEffect(() => {
     if (selectedFacilityId === null || selectedFacilityId === undefined) return;
     setRecord(prev => {
@@ -439,110 +457,58 @@ const MyConsultations = () => {
   const handleConfirmAction = useCallback(async () => {
     if (!selectedRow) return;
     if (!loggedInUser?.id) {
-      dispatch(
-        notify({
-          msg: 'User ID is required to confirm consultations',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'User ID is required to confirm consultations', sev: 'error' }));
       return;
     }
     if (!selectedRow?.id) {
-      dispatch(
-        notify({
-          msg: 'Consultation ID is missing',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'Consultation ID is missing', sev: 'error' }));
       return;
     }
 
     try {
       await confirmConsultation({
         id: Number(selectedRow.id),
-        body: {
-          confirmedBy: Number(loggedInUser.id)
-        }
+        body: { confirmedBy: Number(loggedInUser.id) }
       }).unwrap();
 
-      dispatch(
-        notify({
-          msg: 'Consultation confirmed successfully',
-          sev: 'success'
-        })
-      );
-
+      dispatch(notify({ msg: 'Consultation confirmed successfully', sev: 'success' }));
       refetchConsultations();
       setOpenActionModal(false);
       setSelectedRow(null);
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to update consultation status',
-          sev: 'error'
-        })
-      );
+    } catch {
+      dispatch(notify({ msg: 'Failed to update consultation status', sev: 'error' }));
     }
   }, [confirmConsultation, dispatch, loggedInUser?.id, refetchConsultations, selectedRow]);
 
   const handleRejectAction = useCallback(async () => {
     if (!selectedRow?.id) {
-      dispatch(
-        notify({
-          msg: 'Consultation ID is missing',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'Consultation ID is missing', sev: 'error' }));
       return;
     }
     if (!loggedInUser?.id) {
-      dispatch(
-        notify({
-          msg: 'User ID is required to reject consultations',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'User ID is required to reject consultations', sev: 'error' }));
       return;
     }
 
     const reason = String(rejectForm?.reason ?? '').trim();
     if (!reason) {
-      dispatch(
-        notify({
-          msg: 'Reject reason is required',
-          sev: 'warning'
-        })
-      );
+      dispatch(notify({ msg: 'Reject reason is required', sev: 'warning' }));
       return;
     }
 
     try {
       await rejectConsultation({
         id: Number(selectedRow.id),
-        body: {
-          reason,
-          rejectedBy: Number(loggedInUser.id)
-        }
+        body: { reason, rejectedBy: Number(loggedInUser.id) }
       }).unwrap();
 
-      dispatch(
-        notify({
-          msg: 'Consultation rejected successfully',
-          sev: 'success'
-        })
-      );
-
+      dispatch(notify({ msg: 'Consultation rejected successfully', sev: 'success' }));
       refetchConsultations();
       setOpenRejectModal(false);
       setRejectForm({ reason: '' });
       setSelectedRow(null);
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to update consultation status',
-          sev: 'error'
-        })
-      );
+    } catch {
+      dispatch(notify({ msg: 'Failed to update consultation status', sev: 'error' }));
     }
   }, [
     dispatch,
@@ -556,17 +522,13 @@ const MyConsultations = () => {
   const toggleRowSelection = useCallback(rowData => {
     setSelectedRows(previousRows => {
       const alreadySelected = previousRows.some(
-        selectedRowItem =>
-          String(selectedRowItem.id ?? selectedRowItem.key) === String(rowData.id ?? rowData.key)
+        item => String(item.id ?? item.key) === String(rowData.id ?? rowData.key)
       );
-
       if (alreadySelected) {
         return previousRows.filter(
-          selectedRowItem =>
-            String(selectedRowItem.id ?? selectedRowItem.key) !== String(rowData.id ?? rowData.key)
+          item => String(item.id ?? item.key) !== String(rowData.id ?? rowData.key)
         );
       }
-
       return [...previousRows, rowData];
     });
   }, []);
@@ -574,18 +536,12 @@ const MyConsultations = () => {
   const handleSubmit = useCallback(async () => {
     if (selectedRows.length === 0) return;
 
-    // Filter only READY consultations
     const readyConsultations = selectedRows.filter(
       (consultation: any) => String(consultation.status ?? '').toUpperCase() === 'READY'
     );
 
     if (readyConsultations.length === 0) {
-      dispatch(
-        notify({
-          msg: 'Only READY consultations can be submitted',
-          sev: 'warning'
-        })
-      );
+      dispatch(notify({ msg: 'Only READY consultations can be submitted', sev: 'warning' }));
       return;
     }
 
@@ -595,35 +551,21 @@ const MyConsultations = () => {
         .filter(id => !Number.isNaN(id));
 
       if (consultationIds.length === 0) {
-        dispatch(
-          notify({
-            msg: 'No valid consultation IDs found',
-            sev: 'error'
-          })
-        );
+        dispatch(notify({ msg: 'No valid consultation IDs found', sev: 'error' }));
         return;
       }
 
-      await submitConsultations({
-        consultationIds
-      }).unwrap();
-
+      await submitConsultations({ consultationIds }).unwrap();
       dispatch(
         notify({
           msg: `${readyConsultations.length} consultation(s) submitted successfully`,
           sev: 'success'
         })
       );
-
       refetchConsultations();
       setSelectedRows([]);
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to submit consultations',
-          sev: 'error'
-        })
-      );
+    } catch {
+      dispatch(notify({ msg: 'Failed to submit consultations', sev: 'error' }));
     }
   }, [dispatch, refetchConsultations, selectedRows, submitConsultations]);
 
@@ -642,21 +584,11 @@ const MyConsultations = () => {
   const handleSaveResponse = useCallback(async () => {
     if (!selectedConsultation) return;
     if (!loggedInUser?.id) {
-      dispatch(
-        notify({
-          msg: 'User ID is required to submit a response',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'User ID is required to submit a response', sev: 'error' }));
       return;
     }
     if (!selectedConsultation?.id) {
-      dispatch(
-        notify({
-          msg: 'Consultation ID is missing',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'Consultation ID is missing', sev: 'error' }));
       return;
     }
 
@@ -669,22 +601,11 @@ const MyConsultations = () => {
         }
       }).unwrap();
 
-      dispatch(
-        notify({
-          msg: 'Response saved successfully',
-          sev: 'success'
-        })
-      );
-
+      dispatch(notify({ msg: 'Response saved successfully', sev: 'success' }));
       refetchConsultations();
       handleCloseResponseModal();
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to save response',
-          sev: 'error'
-        })
-      );
+    } catch {
+      dispatch(notify({ msg: 'Failed to save response', sev: 'error' }));
     }
   }, [
     dispatch,
@@ -701,17 +622,12 @@ const MyConsultations = () => {
     if (allSelectableSelected) {
       setSelectedRows(previousRows =>
         previousRows.filter(
-          selectedRowItem =>
-            !selectableRows.some(
-              selectableRow =>
-                String(selectableRow.id ?? selectableRow.key) ===
-                String(selectedRowItem.id ?? selectedRowItem.key)
-            )
+          item =>
+            !selectableRows.some(row => String(row.id ?? row.key) === String(item.id ?? item.key))
         )
       );
       return;
     }
-
     setSelectedRows(selectableRows);
   }, [allSelectableSelected, selectableRows]);
 
@@ -728,13 +644,11 @@ const MyConsultations = () => {
         ),
         width: 50,
         render: row => {
-          const status = String(row.status ?? '').toUpperCase();
-          const isReady = status === 'READY';
+          const isReady = String(row.status ?? '').toUpperCase() === 'READY';
           return (
             <Checkbox
               checked={selectedRows.some(
-                selectedRowItem =>
-                  String(selectedRowItem.id ?? selectedRowItem.key) === String(row.id ?? row.key)
+                item => String(item.id ?? item.key) === String(row.id ?? row.key)
               )}
               onChange={() => toggleRowSelection(row)}
               disabled={!isReady}
@@ -747,13 +661,11 @@ const MyConsultations = () => {
         title: <Translate>Patient Name</Translate>,
         flexGrow: 4,
         render: row => {
-          // Get patient data from the map using patientKey
-          const patientKey = row.patientId ?? row.patient?.id ?? row.patientKey;
-          const patientFromMap = patientKey != null ? patientMap.get(String(patientKey)) : null;
-          const patient: any = patientFromMap;
-          const firstName = String(patient?.firstName).trim();
-          const lastName = String(patient?.lastName).trim();
-          const patientName = `${firstName} ${lastName}`.trim();
+          const patientKey = row.patientId;
+          const patient: any = patientKey != null ? patientMap.get(String(patientKey)) : null;
+          const patientName = `${String(patient?.firstName ?? '').trim()} ${String(
+            patient?.lastName ?? ''
+          ).trim()}`.trim();
           const patientMedicalRecordNumber = patient?.medicalRecordNumber;
           const patientGender = formatEnumString(patient?.sexAtBirth) || '';
           const patientDob = patient?.dateOfBirth ?? patient?.dob;
@@ -765,7 +677,7 @@ const MyConsultations = () => {
               placement="top"
               speaker={
                 <Tooltip>
-                  <div style={{ padding: '4px 8px' }}>
+                  <div className="patient-tooltip">
                     {patientGender && (
                       <div>
                         <b>Gender:</b> {patientGender}
@@ -785,7 +697,7 @@ const MyConsultations = () => {
                 </Tooltip>
               }
             >
-              <span style={{ cursor: 'pointer' }}>{patientName}</span>
+              <span className="clickable-cell">{patientName}</span>
             </Whisper>
           );
         }
@@ -794,12 +706,12 @@ const MyConsultations = () => {
         key: 'consultationLevel',
         title: <Translate>Priority</Translate>,
         flexGrow: 1,
-        render: row => {
-          let color = '#6c757d';
-          if (row.consultationLevel === 'CRITICAL') color = '#D64545';
-          if (row.consultationLevel === 'REGULAR') color = '#0DAA41';
-          return <MyBadgeStatus contant={row?.consultationLevel} color={color} />;
-        }
+        render: row => (
+          <MyBadgeStatus
+            contant={row?.consultationLevel}
+            color={getPriorityColor(row?.consultationLevel)}
+          />
+        )
       },
       {
         key: 'diagnosis',
@@ -825,11 +737,9 @@ const MyConsultations = () => {
             <Whisper
               trigger={isLong ? 'hover' : 'none'}
               placement="top"
-              speaker={
-                <Tooltip style={{ maxWidth: '300px', whiteSpace: 'normal' }}>{text}</Tooltip>
-              }
+              speaker={<Tooltip className="tooltip-wide">{text}</Tooltip>}
             >
-              <span style={{ cursor: isLong ? 'pointer' : 'default' }}>{shortText}</span>
+              <span className={isLong ? 'clickable-cell' : ''}>{shortText}</span>
             </Whisper>
           );
         }
@@ -869,14 +779,7 @@ const MyConsultations = () => {
         render: row => {
           const status = String(row.status ?? '').toUpperCase();
           const statusDisplay = status ? status.replace(/_/g, ' ') : '';
-          let color = '#6c757d';
-          if (status === 'REQUESTED') color = '#E6A100';
-          if (status === 'CONFIRMED') color = '#0DAA41';
-          if (status === 'REJECTED') color = '#D64545';
-          if (status === 'SUBMITTED') color = '#0B5ED7';
-          if (status === 'READY') color = '#17A2B8';
-
-          return <MyBadgeStatus contant={statusDisplay} color={color} />;
+          return <MyBadgeStatus contant={statusDisplay} color={getStatusColor(status)} />;
         }
       },
       {
@@ -962,7 +865,7 @@ const MyConsultations = () => {
           const disableResponse = status !== 'CONFIRMED';
 
           return (
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="actions-cell">
               <Whisper trigger="hover" placement="top" speaker={<Tooltip>Open EMR</Tooltip>}>
                 <div>
                   <MyButton
@@ -970,17 +873,15 @@ const MyConsultations = () => {
                     radius="6px"
                     backgroundColor="violet"
                     onClick={() => {
-                      const patientKey = row.patientId ?? row.patient?.id ?? row.patientKey;
+                      const patientKey = row.patientId;
                       const encounterKey = row.encounterId ?? row.visitKey;
                       const patientFromMap =
                         patientKey != null ? patientMap.get(String(patientKey)) : null;
                       const patient = patientFromMap ?? row.patient;
 
-                      if (patient) {
-                        dispatch(setPatient(patient));
-                      }
-
+                      if (patient) dispatch(setPatient(patient));
                       setEmrPatient(patient ?? null);
+
                       if (patientKey != null) {
                         emrPatientKeyRef.current = String(patientKey);
                       }
@@ -1136,7 +1037,7 @@ const MyConsultations = () => {
               setRecord={setRecord}
               disabled={departments.length === 0}
             />
-            <div style={{ marginTop: '23px' }}>
+            <div className="show-rejected-checkbox">
               <Checkbox checked={showRejected} onChange={() => setShowRejected(!showRejected)}>
                 Show Rejected
               </Checkbox>
@@ -1152,7 +1053,6 @@ const MyConsultations = () => {
     () => (
       <div className="bt-div-2">
         <div className="bt-left-2"></div>
-
         <div className="bt-right-2">
           <MyButton
             color="var(--deep-blue)"
@@ -1172,7 +1072,7 @@ const MyConsultations = () => {
   if (!selectedDepartment?.departmentId) {
     return (
       <Panel>
-        <div style={{ padding: '20px', textAlign: 'center' }}>
+        <div className="no-department-message">
           <p>Please select a department to view consultations.</p>
         </div>
       </Panel>
@@ -1245,7 +1145,7 @@ const MyConsultations = () => {
               fieldName="reason"
               fieldType="textarea"
               rows={4}
-              width={'100%'}
+              width="100%"
               record={rejectForm}
               setRecord={setRejectForm}
             />
@@ -1262,7 +1162,7 @@ const MyConsultations = () => {
           emrPatient && emrEncounter ? (
             <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
           ) : (
-            <div style={{ padding: 16 }}>No patient selected.</div>
+            <div className="no-patient-selected">No patient selected.</div>
           )
         }
         actionButtonLabel="Close"

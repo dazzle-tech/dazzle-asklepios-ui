@@ -36,8 +36,9 @@ import { Consultation } from '@/types/model-types-new';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
 import Details from './Details';
-import PreviewConsultation from './PreviewConsultation';
 import './styles.less';
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 const toISOStartOfDay = (d: Date) => {
   const x = new Date(d);
@@ -50,6 +51,29 @@ const toISOEndOfDay = (d: Date) => {
   x.setHours(23, 59, 59, 999);
   return x.toISOString();
 };
+
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'REQUESTED':
+      return '#E6A100';
+    case 'CONFIRMED':
+      return '#0DAA41';
+    case 'REJECTED':
+      return '#D64545';
+    case 'SUBMITTED':
+      return '#0B5ED7';
+    case 'READY':
+      return '#17A2B8';
+    case 'CANCELLED':
+      return '#D64545';
+    case 'NEW':
+      return '#17A2B8';
+    default:
+      return '#6c757d';
+  }
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 const NormalConsultation = props => {
   const location = useLocation();
@@ -88,10 +112,7 @@ const NormalConsultation = props => {
   }>(() => {
     const today = new Date();
     const onlyDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return {
-      fromDate: onlyDate,
-      toDate: onlyDate
-    };
+    return { fromDate: onlyDate, toDate: onlyDate };
   });
 
   const { data: facilityListResponse, isLoading: facilitiesLoading } =
@@ -132,6 +153,7 @@ const NormalConsultation = props => {
         .catch(() => {});
     }
   }, [practitionerIds, getPractitionersBulk]);
+
   const hasDateRange = !!dateFilter.fromDate && !!dateFilter.toDate;
 
   const allQuery = useFindByEncounterAllQuery(
@@ -187,10 +209,10 @@ const NormalConsultation = props => {
     dateRangeNotCancelledQuery.refetch();
   };
 
-  // Select the appropriate data source
   const rows: Consultation[] = consultationData?.data ?? [];
   const totalCount = consultationData?.totalCount ?? 0;
   const isLoading = consultationLoading;
+
   const sortedRows = useMemo(() => {
     return [...rows].sort((first, second) => {
       const firstTime = first.createdDate ? new Date(first.createdDate).getTime() : -Infinity;
@@ -228,10 +250,7 @@ const NormalConsultation = props => {
   }, []);
 
   const handleClearFilters = () => {
-    setDateFilter({
-      fromDate: null,
-      toDate: null
-    });
+    setDateFilter({ fromDate: null, toDate: null });
     setPage(0);
   };
 
@@ -242,7 +261,6 @@ const NormalConsultation = props => {
   useEffect(() => {
     const handlePointer = (e: PointerEvent) => {
       if (openConfirmCancelModel || openDetailsMdal || attachmentsModalOpen) return;
-
       const target = e.target as HTMLElement;
       if (!tableContainerRef.current?.contains(target)) {
         handleClearSelection();
@@ -296,9 +314,7 @@ const NormalConsultation = props => {
         title: <Translate>TO FACILITY</Translate>,
         flexGrow: 1,
         render: rowData => {
-          if (isFacilitiesDataLoading) {
-            return <Loader size="xs" />;
-          }
+          if (isFacilitiesDataLoading) return <Loader size="xs" />;
           return (
             <span>
               {conjureValueBasedOnIDFromList(
@@ -338,9 +354,7 @@ const NormalConsultation = props => {
         title: <Translate>CONSULTATION TARGET</Translate>,
         flexGrow: 1,
         render: (rowData: Consultation) => {
-          if (isTargetsDataLoading) {
-            return <Loader size="xs" />;
-          }
+          if (isTargetsDataLoading) return <Loader size="xs" />;
 
           const destType = String(rowData.destinationType ?? '').toUpperCase();
 
@@ -360,9 +374,7 @@ const NormalConsultation = props => {
             const id = String(rowData.practitionerId ?? '');
             const record = (practitionersBulk ?? []).find(r => String(r.id) === id);
             if (!record) return <span>{rowData.practitionerId ?? ''}</span>;
-            const first = String(record.firstName ?? '').trim();
-            const last = String(record.lastName ?? '').trim();
-            const full = `${first} ${last}`.trim();
+            const full = `${String(record.firstName ?? '').trim()} ${String(record.lastName ?? '').trim()}`.trim();
             return <span>{full || rowData.practitionerId}</span>;
           }
 
@@ -375,18 +387,12 @@ const NormalConsultation = props => {
         flexGrow: 1,
         render: (rowData: Consultation) => {
           const status = String(rowData.status ?? '').toUpperCase();
-          const statusDisplay = formatEnumString(status);
-          let color = '#6c757d';
-
-          if (status === 'REQUESTED') color = '#E6A100';
-          if (status === 'CONFIRMED') color = '#0DAA41';
-          if (status === 'REJECTED') color = '#D64545';
-          if (status === 'SUBMITTED') color = '#0B5ED7';
-          if (status === 'READY') color = '#17A2B8';
-          if (status === 'CANCELLED') color = '#D64545';
-          if (status === 'NEW') color = '#17A2B8';
-
-          return <MyBadgeStatus contant={statusDisplay} color={color} />;
+          return (
+            <MyBadgeStatus
+              contant={formatEnumString(status)}
+              color={getStatusColor(status)}
+            />
+          );
         }
       },
       {
@@ -403,9 +409,9 @@ const NormalConsultation = props => {
             <Whisper
               trigger={isLong ? 'hover' : 'none'}
               placement="top"
-              speaker={<Tooltip style={{ maxWidth: '300px', whiteSpace: 'normal' }}>{text}</Tooltip>}
+              speaker={<Tooltip className="tooltip-wide">{text}</Tooltip>}
             >
-              <span style={{ cursor: isLong ? 'pointer' : 'default' }}>{shortText}</span>
+              <span className={isLong ? 'clickable-cell' : ''}>{shortText}</span>
             </Whisper>
           );
         }
@@ -425,9 +431,9 @@ const NormalConsultation = props => {
             <Whisper
               trigger={isLong ? 'hover' : 'none'}
               placement="top"
-              speaker={<Tooltip style={{ maxWidth: '300px', whiteSpace: 'normal' }}>{text}</Tooltip>}
+              speaker={<Tooltip className="tooltip-wide">{text}</Tooltip>}
             >
-              <span style={{ cursor: isLong ? 'pointer' : 'default' }}>{shortText}</span>
+              <span className={isLong ? 'clickable-cell' : ''}>{shortText}</span>
             </Whisper>
           );
         }
@@ -446,7 +452,7 @@ const NormalConsultation = props => {
                 setAttachmentsModalOpen(true);
               }
             }}
-            style={{ cursor: rowData?.id ? 'pointer' : 'not-allowed' }}
+            className={rowData?.id ? 'clickable-cell' : 'not-allowed-cell'}
           />
         )
       },
@@ -483,33 +489,31 @@ const NormalConsultation = props => {
     ]
   );
 
-  const filters = () => {
-    return (
-      <Form layout="inline" fluid className="date-filter-form">
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
-        <MyInput
-          width={180}
-          column
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
-        <div className="margin-15">
-          <MyButton onClick={handleClearFilters}>Clear</MyButton>
-        </div>
-      </Form>
-    );
-  };
+  const filters = () => (
+    <Form layout="inline" fluid className="date-filter-form">
+      <MyInput
+        column
+        width={180}
+        fieldType="date"
+        fieldLabel="From Date"
+        fieldName="fromDate"
+        record={dateFilter}
+        setRecord={setDateFilter}
+      />
+      <MyInput
+        width={180}
+        column
+        fieldType="date"
+        fieldLabel="To Date"
+        fieldName="toDate"
+        record={dateFilter}
+        setRecord={setDateFilter}
+      />
+      <div className="margin-15">
+        <MyButton onClick={handleClearFilters}>Clear</MyButton>
+      </div>
+    </Form>
+  );
 
   const pageIndex = page;
 
@@ -551,7 +555,7 @@ const NormalConsultation = props => {
 
                 <MyButton appearance="ghost" disabled={selectedRows.length === 0}>
                   <FontAwesomeIcon icon={faPrint} />
-                  <span style={{ marginInlineStart: 8 }}>Print</span>
+                  <span className="print-label">Print</span>
                 </MyButton>
 
                 <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
@@ -611,7 +615,7 @@ const NormalConsultation = props => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - Consultation`}
+        title="Attachments - Consultation"
         size="lg"
         hideActionBtn={true}
         content={
