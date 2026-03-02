@@ -60,7 +60,6 @@ const NormalConsultation = props => {
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
 
-  console.log('user-======>', user);
   const [selectedRows, setSelectedRows] = useState<Consultation[]>([]);
   const [selectedRow, setSelectedRow] = useState<Consultation | null>(null);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -132,6 +131,7 @@ const NormalConsultation = props => {
         .catch(() => {});
     }
   }, [practitionerIds, getPractitionersBulk]);
+
   const hasDateRange = !!dateFilter.fromDate && !!dateFilter.toDate;
 
   const allQuery = useFindByEncounterAllQuery(
@@ -166,18 +166,6 @@ const NormalConsultation = props => {
     { skip: !encounterIdStr || !hasDateRange || showCanceled }
   );
 
-  console.log({ encounterIdStr, showCanceled, hasDateRange });
-  console.log({
-    all: {
-      skip: !encounterIdStr || !showCanceled || hasDateRange,
-      isUninitialized: allQuery.isUninitialized
-    },
-    notCancelled: {
-      skip: !encounterIdStr || showCanceled || hasDateRange,
-      isUninitialized: notCancelledQuery.isUninitialized
-    }
-  });
-
   const consultationData = hasDateRange
     ? showCanceled
       ? dateRangeQuery.data
@@ -199,7 +187,6 @@ const NormalConsultation = props => {
     dateRangeNotCancelledQuery.refetch();
   };
 
-  // Select the appropriate data source
   const rows: Consultation[] = consultationData?.data ?? [];
   const totalCount = consultationData?.totalCount ?? 0;
   const isLoading = consultationLoading;
@@ -371,7 +358,7 @@ const NormalConsultation = props => {
         key: 'response',
         title: <Translate>RESPONSE</Translate>,
         flexGrow: 1,
-        render: (rowData: Consultation) => (rowData.responseText)
+        render: (rowData: Consultation) => rowData.responseText
       },
       {
         key: 'attachedFile',
@@ -492,7 +479,7 @@ const NormalConsultation = props => {
 
                 <MyButton appearance="ghost" disabled={selectedRows.length === 0}>
                   <FontAwesomeIcon icon={faPrint} />
-                  <span style={{ marginInlineStart: 8 }}>Print</span>
+                  <span className="print-label">Print</span>
                 </MyButton>
 
                 <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
