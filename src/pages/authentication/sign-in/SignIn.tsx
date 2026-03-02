@@ -136,6 +136,10 @@ const SignIn = () => {
     }
   };
 
+  const storedUser = JSON.parse(localStorage.getItem('user'));
+
+console.log(storedUser);
+
   // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
