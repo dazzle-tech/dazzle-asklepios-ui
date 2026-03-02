@@ -60,7 +60,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -344,7 +344,11 @@ const Details = ({
       ...newConsultation,
       patientId: patient?.key,
       encounterId: encounter?.key,
-      destinationType: 'DEPARTMENT'
+      destinationType: 'DEPARTMENT',
+      toFacilityId: null,
+      toDepartmentId: null,
+      consultantSpeciality: null,
+      practitionerId: null
     });
     setAllPractitioners([]);
     setPractitionerPage(0);
@@ -467,7 +471,7 @@ const Details = ({
                       fieldName={'toFacilityId'}
                       record={{
                         ...formData,
-                        toFacilityId: formData?.toFacilityId ? formData.toFacilityId : undefined
+                        toFacilityId: formData?.toFacilityId ?? null
                       }}
                       setRecord={value => {
                         setFormData({

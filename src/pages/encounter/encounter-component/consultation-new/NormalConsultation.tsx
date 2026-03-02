@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Checkbox, Loader, Form } from 'rsuite';
+import { Checkbox, Loader, Form, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
@@ -13,10 +13,11 @@ import CancellationModal from '@/components/CancellationModal';
 import MyModal from '@/components/MyModal/MyModal';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import MyInput from '@/components/MyInput';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
+import { conjureValueBasedOnIDFromList, formatEnumString, formatDateWithoutSeconds } from '@/utils';
 
 import {
   useCancelMutation,
@@ -35,8 +36,9 @@ import { Consultation } from '@/types/model-types-new';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
 import Details from './Details';
-import PreviewConsultation from './PreviewConsultation';
 import './styles.less';
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 const toISOStartOfDay = (d: Date) => {
   const x = new Date(d);
@@ -49,6 +51,29 @@ const toISOEndOfDay = (d: Date) => {
   x.setHours(23, 59, 59, 999);
   return x.toISOString();
 };
+
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'REQUESTED':
+      return '#E6A100';
+    case 'CONFIRMED':
+      return '#0DAA41';
+    case 'REJECTED':
+      return '#D64545';
+    case 'SUBMITTED':
+      return '#0B5ED7';
+    case 'READY':
+      return '#17A2B8';
+    case 'CANCELLED':
+      return '#D64545';
+    case 'NEW':
+      return '#17A2B8';
+    default:
+      return '#6c757d';
+  }
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 const NormalConsultation = props => {
   const location = useLocation();
@@ -87,10 +112,7 @@ const NormalConsultation = props => {
   }>(() => {
     const today = new Date();
     const onlyDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return {
-      fromDate: onlyDate,
-      toDate: onlyDate
-    };
+    return { fromDate: onlyDate, toDate: onlyDate };
   });
 
   const { data: facilityListResponse, isLoading: facilitiesLoading } =
@@ -191,6 +213,14 @@ const NormalConsultation = props => {
   const totalCount = consultationData?.totalCount ?? 0;
   const isLoading = consultationLoading;
 
+  const sortedRows = useMemo(() => {
+    return [...rows].sort((first, second) => {
+      const firstTime = first.createdDate ? new Date(first.createdDate).getTime() : -Infinity;
+      const secondTime = second.createdDate ? new Date(second.createdDate).getTime() : -Infinity;
+      return secondTime - firstTime;
+    });
+  }, [rows]);
+
   const isFacilitiesDataLoading = facilitiesLoading;
   const isTargetsDataLoading =
     departmentIdsLoading ||
@@ -220,10 +250,7 @@ const NormalConsultation = props => {
   }, []);
 
   const handleClearFilters = () => {
-    setDateFilter({
-      fromDate: null,
-      toDate: null
-    });
+    setDateFilter({ fromDate: null, toDate: null });
     setPage(0);
   };
 
@@ -234,7 +261,6 @@ const NormalConsultation = props => {
   useEffect(() => {
     const handlePointer = (e: PointerEvent) => {
       if (openConfirmCancelModel || openDetailsMdal || attachmentsModalOpen) return;
-
       const target = e.target as HTMLElement;
       if (!tableContainerRef.current?.contains(target)) {
         handleClearSelection();
@@ -263,7 +289,7 @@ const NormalConsultation = props => {
       setOpenConfirmCancelModel(false);
       handleRefetchData();
     } catch {
-      dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
+      dispatch(notify({ msg: 'Cancel failed', sev: 'warning' }));
       setOpenConfirmCancelModel(false);
     }
   };
@@ -288,9 +314,7 @@ const NormalConsultation = props => {
         title: <Translate>TO FACILITY</Translate>,
         flexGrow: 1,
         render: rowData => {
-          if (isFacilitiesDataLoading) {
-            return <Loader size="xs" />;
-          }
+          if (isFacilitiesDataLoading) return <Loader size="xs" />;
           return (
             <span>
               {conjureValueBasedOnIDFromList(
@@ -311,13 +335,26 @@ const NormalConsultation = props => {
         )
       },
       {
+        key: 'created',
+        title: <Translate>Created By / At</Translate>,
+        expandable: true,
+        flexGrow: 2,
+        render: (rowData: Consultation) => (
+          <>
+            {rowData.createdBy ?? ''}
+            <br />
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(rowData.createdDate)}
+            </span>
+          </>
+        )
+      },
+      {
         key: 'target',
         title: <Translate>CONSULTATION TARGET</Translate>,
         flexGrow: 1,
         render: (rowData: Consultation) => {
-          if (isTargetsDataLoading) {
-            return <Loader size="xs" />;
-          }
+          if (isTargetsDataLoading) return <Loader size="xs" />;
 
           const destType = String(rowData.destinationType ?? '').toUpperCase();
 
@@ -337,9 +374,7 @@ const NormalConsultation = props => {
             const id = String(rowData.practitionerId ?? '');
             const record = (practitionersBulk ?? []).find(r => String(r.id) === id);
             if (!record) return <span>{rowData.practitionerId ?? ''}</span>;
-            const first = String(record.firstName ?? '').trim();
-            const last = String(record.lastName ?? '').trim();
-            const full = `${first} ${last}`.trim();
+            const full = `${String(record.firstName ?? '').trim()} ${String(record.lastName ?? '').trim()}`.trim();
             return <span>{full || rowData.practitionerId}</span>;
           }
 
@@ -350,15 +385,58 @@ const NormalConsultation = props => {
         key: 'status',
         title: <Translate>STATUS</Translate>,
         flexGrow: 1,
-        render: (rowData: Consultation) => (
-          <span>{formatEnumString(String(rowData.status ?? ''))}</span>
-        )
+        render: (rowData: Consultation) => {
+          const status = String(rowData.status ?? '').toUpperCase();
+          return (
+            <MyBadgeStatus
+              contant={formatEnumString(status)}
+              color={getStatusColor(status)}
+            />
+          );
+        }
+      },
+      {
+        key: 'questionToConsultant',
+        title: <Translate>Question To Consultant</Translate>,
+        flexGrow: 4,
+        render: row => {
+          const text = row.consultationContent || '';
+          const MAX = 20;
+          const isLong = text.length > MAX;
+          const shortText = isLong ? text.substring(0, MAX) + '...' : text;
+
+          return (
+            <Whisper
+              trigger={isLong ? 'hover' : 'none'}
+              placement="top"
+              speaker={<Tooltip className="tooltip-wide">{text}</Tooltip>}
+            >
+              <span className={isLong ? 'clickable-cell' : ''}>{shortText}</span>
+            </Whisper>
+          );
+        }
       },
       {
         key: 'response',
         title: <Translate>RESPONSE</Translate>,
         flexGrow: 1,
-        render: (rowData: Consultation) => rowData.responseText
+        expandable: true,
+        render: row => {
+          const text = row.responseText || '';
+          const MAX = 20;
+          const isLong = text.length > MAX;
+          const shortText = isLong ? text.substring(0, MAX) + '...' : text;
+
+          return (
+            <Whisper
+              trigger={isLong ? 'hover' : 'none'}
+              placement="top"
+              speaker={<Tooltip className="tooltip-wide">{text}</Tooltip>}
+            >
+              <span className={isLong ? 'clickable-cell' : ''}>{shortText}</span>
+            </Whisper>
+          );
+        }
       },
       {
         key: 'attachedFile',
@@ -374,7 +452,7 @@ const NormalConsultation = props => {
                 setAttachmentsModalOpen(true);
               }
             }}
-            style={{ cursor: rowData?.id ? 'pointer' : 'not-allowed' }}
+            className={rowData?.id ? 'clickable-cell' : 'not-allowed-cell'}
           />
         )
       },
@@ -411,33 +489,31 @@ const NormalConsultation = props => {
     ]
   );
 
-  const filters = () => {
-    return (
-      <Form layout="inline" fluid className="date-filter-form">
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
-        <MyInput
-          width={180}
-          column
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={setDateFilter}
-        />
-        <div className="margin-15">
-          <MyButton onClick={handleClearFilters}>Clear</MyButton>
-        </div>
-      </Form>
-    );
-  };
+  const filters = () => (
+    <Form layout="inline" fluid className="date-filter-form">
+      <MyInput
+        column
+        width={180}
+        fieldType="date"
+        fieldLabel="From Date"
+        fieldName="fromDate"
+        record={dateFilter}
+        setRecord={setDateFilter}
+      />
+      <MyInput
+        width={180}
+        column
+        fieldType="date"
+        fieldLabel="To Date"
+        fieldName="toDate"
+        record={dateFilter}
+        setRecord={setDateFilter}
+      />
+      <div className="margin-15">
+        <MyButton onClick={handleClearFilters}>Clear</MyButton>
+      </div>
+    </Form>
+  );
 
   const pageIndex = page;
 
@@ -446,7 +522,7 @@ const NormalConsultation = props => {
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
-          data={rows}
+          data={sortedRows}
           onRowClick={(rowData: Consultation) => {
             setConsultation(rowData);
             setSelectedRow(rowData);
@@ -539,7 +615,7 @@ const NormalConsultation = props => {
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - Consultation`}
+        title="Attachments - Consultation"
         size="lg"
         hideActionBtn={true}
         content={
