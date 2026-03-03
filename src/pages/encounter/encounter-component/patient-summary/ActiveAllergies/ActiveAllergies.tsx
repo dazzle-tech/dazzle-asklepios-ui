@@ -23,6 +23,7 @@ const ActiveAllergies = ({ patient }) => {
         skip: !patient?.id
       }
     );
+     const activeAllergies = allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
 
    const { data: allergensListResponse } = useGetAllergensQuery({});
      const { data: medicationClassesListResponse } = useGetAllMedicationCategoriesClassesQuery({});
@@ -69,7 +70,7 @@ const ActiveAllergies = ({ patient }) => {
       title="Active Allergies"
       content={
         <MyTable
-          data={allergiesListResponse?.data || []}
+          data={activeAllergies}
           columns={tableColumns}
           height={250}
           loading={isLoading}
