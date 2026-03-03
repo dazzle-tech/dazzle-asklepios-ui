@@ -410,7 +410,8 @@ const DetailsModal = ({
             ...patientAllergiesCreateDTO,
             allergicReactions: reactions.reactions.join(', '),
             patientId: patient?.id,
-            encounterId: encounter?.id
+            encounterId: encounter?.id,
+            onsetDate: patientAllergiesCreateDTO?.onsetDate ? new Date(patientAllergiesCreateDTO?.onsetDate).toISOString() : ''
 
           }).unwrap();
           dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
@@ -424,6 +425,7 @@ const DetailsModal = ({
           dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
       } catch (error) {
+        console.log("error: ", error);
         const errorMsg = extractErrorMessage(error) || 'Save Failed';
         dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       }
@@ -452,7 +454,7 @@ const DetailsModal = ({
             errorMsg = errorMsg + ", Onset Date can`t be in the future";
         }
         if (!errorMsg) {
-          const objToAdd = { ...patientAllergiesUpdateDTO, allergicReactions: reactions.reactions.join(', ') }
+          const objToAdd = { ...patientAllergiesUpdateDTO, allergicReactions: reactions.reactions.join(', '), onsetDate: patientAllergiesUpdateDTO?.onsetDate ? new Date(patientAllergiesUpdateDTO?.onsetDate).toISOString() : '' }
           await updatePatientAllergy({ id: allerges.id, dto: objToAdd })
             .unwrap();
           dispatch(notify({ msg: 'The patient Allergy has been updated successfully', sev: 'success' }));
@@ -467,6 +469,7 @@ const DetailsModal = ({
         }
       }
       catch (error) {
+         console.log("error: ", error);
         const errorMsg = extractErrorMessage(error) || 'Save Failed';
         dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       }
@@ -562,6 +565,19 @@ const DetailsModal = ({
       }
     }
   }, [patientAllergiesCreateDTO?.onsetDateUndefined, patientAllergiesUpdateDTO?.onsetDateUndefined]);
+
+  useEffect(() => {
+     if (allerges?.id) {
+      if(patientAllergiesUpdateDTO.byPatient){
+        setPatientAllergiesUpdateDTO({...patientAllergiesUpdateDTO, sourceOfInformation: null})
+      }
+     }
+     else{
+      if(patientAllergiesCreateDTO.byPatient){
+        setPatientAllergiesCreateDTO({...patientAllergiesCreateDTO, sourceOfInformation: null})
+      }
+     }
+  },[patientAllergiesCreateDTO.byPatient, patientAllergiesUpdateDTO.byPatient]);
 
   useEffect(() => {
     if (openToAdd) {

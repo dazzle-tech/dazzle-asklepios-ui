@@ -1593,7 +1593,7 @@ export const newPatientAllergiesActiveIngredientCreate : modelTypes.PatientAller
 
 export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO = {
   patientId: undefined,
-  encounterId: undefined,   
+  encounterId: undefined,
   allergenType: '',
   allergenId: undefined,
   severity: '',
@@ -1604,10 +1604,17 @@ export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO 
   treatmentStrategy: '',
 
   onset: '',
-  onsetDateUndefined: true,
-  onsetDate: '',
+  onsetDateUndefined: true, 
+  onsetDate: '', 
 
   typeOfPropensity: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  status: 'ACTIVE',
+  allergicReactions: '',
+
+  activeIngredients: []
 }
 
 export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = {
