@@ -27,7 +27,6 @@ const MedicationsRecord = () => {
       content: (
         <Prescriptions
           // genericMedicationListResponse={genericMedicationListResponse?.object}
-          customeInstructions={customeInstructions?.object}
           patient={patient}
         />
       )

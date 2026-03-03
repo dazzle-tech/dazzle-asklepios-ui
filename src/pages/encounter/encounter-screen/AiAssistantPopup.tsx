@@ -147,6 +147,7 @@ const AiAssistantPopup: React.FC<AiAssistantPopupProps> = ({
     { skip: !patientKey || !encounterKey || !open }
   );
 
+
   // ✅ Payload مثل الصورة (UserRoleRecommendationRequest shape)
   const aiPayload = useMemo(() => {
     const practitionerStr = formatPractitioner(practitioner);

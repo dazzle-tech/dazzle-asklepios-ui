@@ -1,7 +1,7 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import {
   useCreatePathologyMutation,
@@ -28,6 +28,8 @@ import Laboratory from './Laboratory';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import './styles.less';
+import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
+import { skipToken } from '@tanstack/react-query';
 
 
 interface AddEditDiagnosticTestProps {
@@ -54,6 +56,8 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
   testRequest
 }) => {
   const dispatch = useAppDispatch();
+    const authSlice = useAppSelector(state => state.auth);
+  const selectedDepartment = authSlice.selectedDepartment;
   const [diagnosticTestPathology, setDiagnosticTestPathology] = useState({ ...newPathology });
   const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<any>([]);
   const [ageGroupList, setAgeGroupList] = useState<any>([]);
@@ -79,6 +83,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
     ...initialListRequest,
     pageSize: 1000
   });
+  const {data:facility}=useGetFacilityByIdQuery(selectedDepartment?.facilityId ?? skipToken, { skip: !selectedDepartment?.facilityId });
   // Fetch Age Group Lov response
 
   const ageGroups = useEnumOptions('AgeGroupType');
@@ -314,6 +319,16 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
       }));
     }
   }, [open, testRequest?.type]);
+
+  useEffect(() => {
+   if(open && !diagnosticsTest?.id){
+    console.log('Facility data in useEffect:', facility);
+    
+    setDiagnosticsTest(prev => ({
+      ...prev,
+      currency:facility?.defaultCurrency ?? null 
+    }));}
+  }, [open,facility]);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -441,6 +456,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
             <div className="container-of-two-fields-diagnostic">
               <div className="container-of-field-diagnostic">
                 <MyInput
+                required
                   width="100%"
                   fieldName="price"
                   fieldType='number'
@@ -450,6 +466,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
               </div>
               <div className="container-of-field-diagnostic">
                 <MyInput
+                  disabled={true}
                   width="%100%"
                   fieldLabel="Currency"
                   fieldType="select"

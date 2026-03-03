@@ -180,10 +180,10 @@ const Facilities = () => {
     dispatch(notify({ msg: 'The Facility has been saved successfully', sev: 'success' }));
     refetchFacility();
    }).catch(() => {
-    dispatch(notify({ msg: 'Failed to save this Facility', sev: 'error' }));
+    dispatch(notify({ msg: 'Failed to save this Facility', sev: 'warning' }));
    });
   } else{
-     dispatch(notify({ msg: errMsg, sev: 'error' }));
+     dispatch(notify({ msg: errMsg, sev: 'warning' }));
   }
    setLoad(false);
   };
@@ -196,7 +196,7 @@ const Facilities = () => {
     dispatch(notify({ msg: 'The Facility has been updated successfully', sev: 'success' }));
     refetchFacility();
    }).catch(() => {
-    dispatch(notify({ msg: 'Failed to update this Facility', sev: 'error' }));
+    dispatch(notify({ msg: 'Failed to update this Facility', sev: 'warning' }));
    });
    setLoad(false);
   };
@@ -211,7 +211,7 @@ const Facilities = () => {
         refetchFacility();
         dispatch(notify({ msg: 'The Facility was deactivated  successfully', sev: 'success' }));
       }).catch(() => {
-        dispatch(notify({ msg: 'Failed to deactivated this Facility', sev: 'error' }));
+        dispatch(notify({ msg: 'Failed to deactivated this Facility', sev: 'warning' }));
       });
       setLoad(false);
       setOpenConfirmDeleteModel(false);

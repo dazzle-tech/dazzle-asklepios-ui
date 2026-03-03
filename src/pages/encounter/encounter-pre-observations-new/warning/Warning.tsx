@@ -1,26 +1,35 @@
 import CancellationModal from '@/components/CancellationModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import MyButton from '@/components/MyButton/MyButton';
-import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { useGetWarningsQuery, useSaveWarningsMutation } from '@/services/observationService';
-import { newApVisitWarning } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { useAppDispatch } from '@/hooks';
+import {
+  useCancelPatientWarningMutation,
+  useGetPatientWarningsByPatientIdQuery,
+  useResolvePatientWarningMutation,
+  useUndoResolvePatientWarningMutation
+} from '@/services/encounters/patientWarningsService';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newPatientWarnings } from '@/types/model-types-constructor-new';
+import { PatientWarnings } from '@/types/model-types-new';
+import { conjureValueBasedOnKeyFromListOfValues, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import { faArrowRotateRight, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import ReloadIcon from '@rsuite/icons/Reload';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
 import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
+import WarningDetailsSection from './WarningDetailsSection';
 import './styles.less';
-import { formatDateWithoutSeconds } from '@/utils';
-import { resetRefetchEncounter, setRefetchEncounter } from '@/reducers/refetchEncounterState';
+
 interface WarningProps {
   patient?: any;
   encounter?: any;
@@ -29,278 +38,285 @@ interface WarningProps {
   showTableButtons?: boolean;
 }
 
+const NameCell = ({ login }: { login?: string | null }) => {
+  const { data: fullName } = useGetUserFullNameByLoginQuery(login ?? '', {
+    skip: !login
+  });
+  console.log("fullName: ", fullName);
+  return <span>{fullName || login || '-'}</span>;
+};
+
 const Warning = (props: WarningProps) => {
   const location = useLocation();
+  const dispatch = useAppDispatch();
+
+  // Derived props/context
   const patient = props.patient ?? location.state?.patient ?? {};
   const encounter = props.encounter ?? location.state?.encounter ?? {};
   const edit = props.edit ?? location.state?.edit ?? false;
   const { showTableActions = true, showTableButtons = true } = props;
-  const authSlice = useAppSelector(state => state.auth);
-  const [warning, setWarning] = useState<any>({ ...newApVisitWarning });
+
+  // State
+  const [warning, setWarning] = useState<PatientWarnings>({ ...newPatientWarnings });
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
-  const [showCanceled, setShowCanceled] = useState(true);
-  const [showPrev, setShowPrev] = useState(true);
-
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-      {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '3196709905099521'
-      }
-    ]
+  const [showCanceled, setShowCanceled] = useState(false);
+  const [sortColumn, setSortColumn] = useState('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc',
+    timestamp: Date.now()
   });
 
+  // Data fetching + mutations
   const {
     data: warningsListResponse,
     refetch: fetchWarnings,
     isLoading
-  } = useGetWarningsQuery({
-    ...listRequest
-  });
-
-  const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
-  const dispatch = useAppDispatch();
-
-  const isSelected = (rowData: any) =>
-    rowData && warning && rowData.key === warning.key ? 'selected-row' : '';
-
-  useEffect(() => {
-    if (showPrev) {
-      setListRequest(prev => ({
-        ...prev,
-        filters: [
-          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-          {
-            fieldName: 'status_lkey',
-            operator: showCanceled ? 'notMatch' : 'match',
-            value: '3196709905099521'
-          },
-          { fieldName: 'visit_key', operator: 'match', value: encounter.key }
-        ]
-      }));
-    } else {
-      setListRequest(prev => ({
-        ...prev,
-        filters: [
-          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-          {
-            fieldName: 'status_lkey',
-            operator: showCanceled ? 'notMatch' : 'match',
-            value: '3196709905099521'
-          }
-        ]
-      }));
+  } = useGetPatientWarningsByPatientIdQuery(
+    {
+      patientId: patient?.id,
+      showCancelled: showCanceled,
+      ...paginationParams
+    },
+    {
+      skip: !patient?.id
     }
-  }, [showPrev, showCanceled]);
+  );
+  const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
+  const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
+  const [cancelPatientWarning] = useCancelPatientWarningMutation();
+  const [resolvePatientWarning] = useResolvePatientWarningMutation();
+  const [undoResolvePatientWarning] = useUndoResolvePatientWarningMutation();
 
-  useEffect(() => {
-    fetchWarnings();
-  }, [saveWarningMutation, listRequest]);
+  const totalCount = warningsListResponse?.totalCount ?? 0;
 
-  const handleClear = () => {
-    setWarning({
-      ...newApVisitWarning,
-      sourceOfInformationLkey: null,
-      severityLkey: null,
-      warningTypeLkey: null
-    });
-  };
-
-  const handleCancle = async () => {
-    try {
-      await saveWarning({
-        ...warning,
-        statusLkey: '3196709905099521',
-        isValid: false,
-        deletedAt: Date.now(),
-        deletedBy: authSlice.user?.login
-      }).unwrap();
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-      await fetchWarnings();
-      setOpenCancellationReasonModel(false);
-    } catch {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
-    }
-  };
-
-  const handleResolved = async () => {
-    try {
-      await saveWarning({
-        ...warning,
-        statusLkey: '9766179572884232',
-        resolvedAt: Date.now()
-        , resolvedBy: authSlice.user?.login
-
-      }).unwrap();
-      dispatch(notify('Resolved Successfully'));
-      setShowPrev(false);
-      await fetchWarnings();
-      setOpenConfirmResolvedModel(false);
-      setShowPrev(true);
-      setWarning({ ...newApVisitWarning });
-      dispatch(resetRefetchEncounter());
-      dispatch(setRefetchEncounter(true))
-    } catch {
-      dispatch(notify('Resolved Failed'));
-    }
-  };
-
-  const handleUndoResolved = async () => {
-    try {
-      await saveWarning({ ...warning, statusLkey: '9766169155908512' }).unwrap();
-      dispatch(notify('Undo Resolved Successfully'));
-      setShowPrev(false);
-      await fetchWarnings();
-      setOpenConfirmUndoResolvedModel(false);
-      setShowPrev(true);
-      setWarning({ ...newApVisitWarning });
-      dispatch(resetRefetchEncounter());
-      dispatch(setRefetchEncounter(true))
-    } catch {
-      dispatch(notify('Undo Resolved Failed'));
-    }
-  };
-
+  // table column
   const tableColumns: any[] = [
     {
-      key: 'warningTypeLvalue',
-      dataKey: 'warningTypeLvalue',
+      key: 'warningType',
       title: <Translate>Warning Type</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => rowData.warningTypeLvalue?.lovDisplayVale
-    },
-    {
-      key: 'severityLvalue',
-      dataKey: 'severityLvalue',
-      title: <Translate>Severity</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
-    },
-    {
-      key: 'firstTimeRecorded',
-      dataKey: 'firstTimeRecorded',
-      title: <Translate>First Time Recorded</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) =>
-        rowData.firstTimeRecorded
-          ? new Date(rowData.firstTimeRecorded).toLocaleDateString('en-GB')
-          : 'Undefined'
-    },
-    {
-      key: 'sourceOfInformationLvalue',
-      dataKey: 'sourceOfInformationLvalue',
-      title: <Translate>Source of information</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient'
-    },
-    {
-      key: 'warning',
-      dataKey: 'warning',
-      title: <Translate>Warning</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => rowData.warning
-    },
-    {
-      key: 'actionTake',
-      dataKey: 'actionTake',
-      title: <Translate>Action Taken</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => rowData.actionTake
-    },
-    {
-      key: 'statusLvalue',
-      dataKey: 'statusLvalue',
-      title: <Translate>Status</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale
-    },
-    showTableActions && {
-      key: 'actions',
-      dataKey: 'actions',
-      title: <Translate>Actions</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => (
-        <MdModeEdit
-          title="Edit"
-          size={24}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setOpenDetailsModal(true);
-            setOpenToAdd(false);
-          }}
-        />
+      render: (rowData: PatientWarnings) => (
+        <p>
+          {conjureValueBasedOnKeyFromListOfValues(
+            warningTypeLovQueryResponse?.object ?? [],
+            rowData.warningType,
+            'lovDisplayVale'
+          )}
+        </p>
       )
     },
     {
-      key: 'notes',
-      dataKey: 'notes',
-      title: <Translate>Notes </Translate>,
-      expandable: true
+      key: 'warning',
+      title: <Translate>Warning</Translate>
     },
+    {
+      key: 'severity',
+      title: <Translate>Severity</Translate>,
+      render: (rowData: PatientWarnings) => <p>{formatEnumString(rowData.severity)}</p>
+    },
+    {
+      key: 'onsetDate',
+      title: <Translate>onset Date</Translate>,
+      render: (rowData: PatientWarnings) =>
+        rowData.onsetDateUndefined ? <p>Undefined</p> : <p>{new Date(rowData.onsetDate).toLocaleDateString()}</p>
+    },
+    {
+      key: 'sourceOfInformation',
+      title: <Translate>Source of information</Translate>,
+      render: (rowData: PatientWarnings) =>
+        rowData.byPatient ? (
+          <p>By Patient</p>
+        ) : (
+          <p>
+            {conjureValueBasedOnKeyFromListOfValues(
+              sourceofinformationLovQueryResponse?.object ?? [],
+              rowData.sourceOfInformation,
+              'lovDisplayVale'
+            )}
+          </p>
+        )
+    },
+    {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      render: rowData => (
+        <MyBadgeStatus
+          color={
+            rowData?.status === 'CANCELLED'
+              ? '#969fb0'
+              : rowData?.status === 'RESOLVED'
+                ? '#800080'
+                : '#45b887'
+          }
+          contant={
+            <Translate>
+              {formatEnumString(rowData?.status)}
+            </Translate>
+          }
+        />
+      )
+    },
+    showTableActions !== false && {
+      key: 'actions',
+      title: <Translate>Actions</Translate>,
+      render: rowData => {
+        const createdDate = new Date(rowData.createdDate);
+        const today = new Date();
 
+        createdDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+
+        const isPast = createdDate < today;
+
+        return (
+          <MdModeEdit
+            title="Edit"
+            className="icons-style"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              if (isPast) return;
+              setOpenDetailsModal(true);
+              setOpenToAdd(false);
+            }}
+            style={{
+              cursor: isPast || rowData.status !== 'ACTIVE' ? 'not-allowed' : 'pointer',
+              opacity: isPast || rowData.status !== 'ACTIVE' ? 0.5 : 1
+            }}
+          />
+        );
+      }
+    },
     {
       key: 'createdByAt',
       title: 'Created By/At',
-      dataKey: 'createdByAt',
-      width: 220,
       expandable: true,
-
-      render: (row: any) => (
+      render: (row: PatientWarnings) => (
         <>
-          {row.createdBy}
+          <NameCell login={row.createdBy} />
           <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
+          <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
         </>
       )
     },
     {
       key: 'resolvedByAt',
       title: 'Resolved By/At',
-      dataKey: 'resolvedByAt',
-      width: 220,
       expandable: true,
-      render: (row: any) => (
+      render: (row: PatientWarnings) => (
         <>
-          {row.resolvedBy}
+          <NameCell login={row.resolvedBy} />
           <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(row.resolvedAt)}</span>
+          <span className="date-table-style">{formatDateWithoutSeconds(row.resolvedDate)}</span>
         </>
       )
-
     },
     {
-      key: 'deletedByAt',
+      key: 'cancelledByAt',
       title: 'Cancelled By/At',
-      dataKey: 'deletedByAt',
-      width: 220,
       expandable: true,
-      render: (row: any) => (
+      render: (row: PatientWarnings) => (
         <>
-          {row.deletedBy}
+          <NameCell login={row.cancelledBy} />
           <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(row.deletedAt)}</span>
+          <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledDate)}</span>
         </>
       )
-
     },
     {
       key: 'cancellationReason',
-      dataKey: 'cancellationReason',
       title: <Translate>Cancellation Reason</Translate>,
       expandable: true
     }
   ].filter(Boolean);
 
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = warningsListResponse?.extraNumeric ?? 0;
+  // class name for selected row
+  const isSelected = (rowData: any) =>
+    rowData && warning && rowData.id === warning?.id ? 'selected-row' : '';
+
+  // handle clear the warning object
+  const handleClear = () => {
+    setWarning({ ...newPatientWarnings });
+  };
+
+  // handle cancel warning
+  const handleCancel = async () => {
+    let reason;
+    if (warning?.cancellationReason) {
+      reason = warning?.cancellationReason;
+    } else {
+      reason = undefined;
+      dispatch(notify({ msg: 'Cancellation Reason is required', sev: 'warning' }));
+    }
+
+    if (!reason) return;
+
+    try {
+      const result = await cancelPatientWarning({
+        id: warning.id,
+        reason
+      }).unwrap();
+      setWarning(result);
+      setOpenCancellationReasonModel(false);
+      dispatch(notify({ msg: 'Warning cancelled successfully', sev: 'success' }));
+      await fetchWarnings();
+    } catch {
+      dispatch(notify({ msg: 'Failed to cancel warning', sev: 'warning' }));
+    }
+  };
+
+  // handle resolve warning
+  const handleResolve = async () => {
+    try {
+      const result = await resolvePatientWarning({
+        id: warning.id
+      }).unwrap();
+      setWarning(result);
+      dispatch(notify({ msg: 'Warning resolved successfully', sev: 'success' }));
+      setOpenConfirmResolvedModel(false);
+      await fetchWarnings();
+    } catch {
+      dispatch(notify({ msg: 'Failed to resolve warning', sev: 'error' }));
+    }
+  };
+
+  // handle undo resolve for warning
+  const handleUndoResolve = async () => {
+    try {
+      const result = await undoResolvePatientWarning({
+        id: warning.id
+      }).unwrap();
+      setOpenConfirmUndoResolvedModel(false);
+      setWarning(result);
+      dispatch(notify({ msg: 'Resolve undone successfully', sev: 'success' }));
+      await fetchWarnings();
+    } catch {
+      dispatch(notify({ msg: 'Failed to undo resolve', sev: 'error' }));
+    }
+  };
+
+  const handlePageChange = (event, newPage) => {
+    setPaginationParams({ ...paginationParams, page: newPage });
+  };
+
+  const handleSortChange = (newSortColumn: string, newSortType: 'asc' | 'desc') => {
+    setSortColumn(newSortColumn);
+    setSortType(newSortType);
+
+    const sortValue = `${newSortColumn},${newSortType}`;
+    setPaginationParams({
+      ...paginationParams,
+      sort: sortValue,
+      page: 0,
+      timestamp: Date.now()
+    });
+  };
 
   return (
     <div>
@@ -311,31 +327,30 @@ const Warning = (props: WarningProps) => {
               <MyButton
                 prefixIcon={() => <CloseOutlineIcon />}
                 onClick={() => setOpenCancellationReasonModel(true)}
-                disabled={!edit ? (warning?.key == null ? true : false) : true}
+                disabled={!warning?.id || warning?.status === 'CANCELLED'}
               >
                 Cancel
               </MyButton>
+
               <MyButton
-                disabled={!edit ? (warning?.statusLkey != '9766169155908512' ? true : false) : true}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
                 onClick={() => setOpenConfirmResolvedModel(true)}
+                disabled={!warning?.id || warning?.status === 'RESOLVED' || warning?.status === 'CANCELLED'}
               >
                 Resolved
               </MyButton>
+
               <MyButton
                 prefixIcon={() => <ReloadIcon />}
-                disabled={!edit ? (warning?.statusLkey != '9766179572884232' ? true : false) : true}
                 onClick={() => setOpenConfirmUndoResolvedModel(true)}
+                disabled={!warning?.id || warning?.status === 'ACTIVE' || warning?.status === 'CANCELLED'}
               >
                 Undo Resolved
               </MyButton>
-              <Checkbox checked={!showPrev} onChange={() => setShowPrev(!showPrev)}>
-                Show Previous Warnings
-              </Checkbox>
             </>
           )}
-          {/* Show Cancelled always showed*/}
-          <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+
+          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
             Show Cancelled
           </Checkbox>
         </div>
@@ -357,72 +372,74 @@ const Warning = (props: WarningProps) => {
         )}
       </div>
 
-      <MyTable
-        columns={tableColumns}
-        data={warningsListResponse?.object || []}
-        onRowClick={rowData => {
-          setWarning(rowData);
-          setOpenToAdd(false);
-        }}
-        rowClassName={isSelected}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => setListRequest({ ...listRequest, sortBy, sortType })}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={(_, newPage) => setListRequest({ ...listRequest, pageNumber: newPage + 1 })}
-        onRowsPerPageChange={e =>
-          setListRequest({ ...listRequest, pageSize: parseInt(e.target.value, 10), pageNumber: 1 })
-        }
-        loading={isLoading}
-      />
+      <div className="container-of-table-and-section-patient-warning">
+        <MyTable
+          columns={tableColumns}
+          data={warningsListResponse?.data || []}
+          totalCount={totalCount}
+          onRowClick={rowData => {
+            setWarning(rowData);
+            setOpenToAdd(false);
+          }}
+          rowClassName={isSelected}
+          loading={isLoading}
+          page={paginationParams.page}
+          rowsPerPage={paginationParams.size}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={e => {
+            const newSize = Number(e.target.value);
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            });
+          }}
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={handleSortChange}
+        />
+        <WarningDetailsSection
+          warning={warning}
+          setWarning={setWarning}
+          edit={edit}
+        />
+      </div>
 
-      {/* Cancel modal */}
       <CancellationModal
         open={openCancellationReasonModel}
         setOpen={setOpenCancellationReasonModel}
         object={warning}
         setObject={setWarning}
-        handleCancle={handleCancle}
+        handleCancle={handleCancel}
         fieldName="cancellationReason"
-        fieldLabel={'Cancellation Reason'}
-        title={'Cancellation'}
+        fieldLabel="Cancellation Reason"
+        title="Cancellation"
       />
 
-      {/* Resolve modal */}
-      <MyModal
+      <DeletionConfirmationModal
         open={openConfirmResolvedModel}
         setOpen={setOpenConfirmResolvedModel}
-        actionButtonFunction={handleResolved}
-        actionButtonLabel="Yes"
-        title="Resolve"
-        bodyheight="30vh"
-        steps={[{ title: 'Is this warning resolved?', icon: <FontAwesomeIcon icon={faCheck} /> }]}
-        content={<></>}
+        itemToDelete="Patient Warning"
+        actionType="confirm"
+        actionButtonFunction={handleResolve}
+        confirmationQuestion="Are you sure you want to Resolve this Patient Warning?"
       />
 
-      {/* Undo resolve modal */}
-      <MyModal
+      <DeletionConfirmationModal
         open={openConfirmUndoResolvedModel}
         setOpen={setOpenConfirmUndoResolvedModel}
-        actionButtonFunction={handleUndoResolved}
-        actionButtonLabel="Yes"
-        title="Undo Resolve"
-        bodyheight="30vh"
-        steps={[
-          { title: 'Is this warning active?', icon: <FontAwesomeIcon icon={faArrowRotateRight} /> }
-        ]}
-        content={<></>}
+        itemToDelete="Patient Warning"
+        actionType="confirm"
+        actionButtonFunction={handleUndoResolve}
+        confirmationQuestion="Are you sure you want to Undo Resolve this Patient Warning?"
       />
 
-      {/* Details modal */}
       <DetailsModal
         open={openDetailsModal}
         setOpen={setOpenDetailsModal}
         warning={warning}
         setWarning={setWarning}
-        handleClear={handleClear}
         edit={edit}
         patient={patient}
         encounter={encounter}

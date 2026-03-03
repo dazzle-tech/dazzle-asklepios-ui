@@ -295,32 +295,43 @@
   margin-top: 2.4vw;
 }
 
-.print-label {
-  margin-inline-start: 8px;
+.tooltip-wide {
+  max-width: 300px;
+  white-space: normal;
 }
 
-
-.destination-type-wrapper {
-  width: 14vw;
+.clickable-cell {
+  cursor: pointer;
 }
 
-.destination-type-label {
-  margin-bottom: 8px;
-  display: block;
+.not-allowed-cell {
+  cursor: not-allowed;
+  .print-label {
+    margin-inline-start: 8px;
+  }
+
+  .destination-type-wrapper {
+    width: 14vw;
+  }
+
+  .destination-type-label {
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .required-asterisk {
+    color: red;
+  }
+
+  .ai-summary-text {
+    white-space: pre-line;
+  }
+
+  .print-label {
+    margin-inline-start: 8px;
+  }
 }
 
-.required-asterisk {
-  color: red;
-}
-
-.ai-summary-text {
-  white-space: pre-line;
-}
-
-.print-label {
-  margin-inline-start: 8px;
-}
-  
 .edit-pointer {
   cursor: pointer;
   color: gray;

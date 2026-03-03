@@ -1,142 +1,98 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import PlusIcon from '@rsuite/icons/Plus';
 import { useLocation } from 'react-router-dom';
-import { faTrash, faStar } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import MyModal from '@/components/MyModal/MyModal';
-import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetServicesQuery } from '@/services/setup/serviceService';
-import { initialListRequest, ListRequest } from '@/types/types';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { ApNurseServiceProduct } from '@/types/model-types';
-import { newApNurseServiceProduct } from '@/types/model-types-constructor';
-import {
-  useGetNurseServiceProductListQuery,
-  useRemoveNurseServiceProductMutation,
-  useSaveNurseServiceProductMutation,
-} from '@/services/encounterService';
-import {
-  useGetInventoryProductsQuery,
-} from '@/services/inventory/inventory-products/inventoryProductsService';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useGetServicesQuery } from '@/services/setup/serviceService';
+import { useGetInventoryProductsQuery } from '@/services/inventory/inventory-products/inventoryProductsService';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
 import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
 import { notify } from '@/utils/uiReducerActions';
-import { BrandMedication, InventoryProduct } from '@/types/model-types-new';
-
-const SERVICE_CATEGORY_LKEY = '19257854232732994';
-const PRODUCT_CATEGORY_LKEY = '19257880375908711';
+import { BrandMedication, InventoryProduct, PatientServiceAndProduct } from '@/types/model-types-new';
+import {
+  useDeletePatientServiceOrProductMutation,
+  useGetPatientServicesAndProductsByEncounterQuery,
+} from '@/services/encounters/patientServicesAndProductsService';
+import { formatEnumString } from '@/utils';
+import { newPatientServiceAndProduct } from '@/types/model-types-constructor-new';
+import AddEditPatientServiceAndProduct from './AddEditPatientServiceAndProduct';
 
 const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const location = useLocation();
-  const patient = location.state?.patient;
   const encounter = location.state?.encounter;
-
-  const [nurseServiceProductListRequest, setNurseServiceProductListRequest] =
-    useState<ListRequest>({
-      ...initialListRequest,
-      filters: [
-        { fieldName: 'encounter_key', operator: 'match', value: encounter?.key },
-        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-        { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-      ],
-      pageSize: 100,
-    });
 
   const authSlice = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
 
-  const page = 0;
-  const size = 100;
-  const sort = 'id,asc';
-
-  // LOVs & master data
-  const { data: categoryLovResponse } = useGetLovValuesByCodeQuery('CATEGORY');
-  const { data: serviceListResponse } = useGetServicesQuery({
-    facilityId: authSlice?.tenant?.selectedFacility?.id,
-    page,
-    size,
-    sort,
-  });
-  const { data: inventoryProductsResponse } = useGetInventoryProductsQuery({
-    page,
-    size,
-    sort,
-  });
-  const { data: brandMedicationList } = useGetAllBrandMedicationsQuery({
+   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 500,
+    size: 15,
     sort: 'id,asc',
+    timestamp: Date.now()
   });
 
-  const [saveNurseServiceProduct] = useSaveNurseServiceProductMutation();
-  const [removeNurseServiceProduct] = useRemoveNurseServiceProductMutation();
-  const { data: nurseServiceProductListResponse, refetch } =
-    useGetNurseServiceProductListQuery(nurseServiceProductListRequest);
+  // Delete mutation for selected service/product row.
+  const [deletePatientServiceProduct] = useDeletePatientServiceOrProductMutation();
 
-  const productType = useEnumOptions('ProductTypes');
-  const [selectedProductType, setSelectedProductType] = useState<{ type: string }>({ type: '' });
+  // Main list for the current encounter.
+  const { data: patientServiceProductListResponse, refetch, isLoading } =
+    useGetPatientServicesAndProductsByEncounterQuery(
+      {
+        encounterId: encounter?.id,
+        ...paginationParams
+      },
+      {
+        skip: !encounter?.id,
+      }
+    );
 
   const state = location.state || {};
   const edit = propEdit ?? state.edit;
 
   const [openModal, setOpenModal] = useState(false);
-  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupOpen, setPopupOpen] = useState<boolean>(false);
+  const [patientServiceAndProduct, setPatientServiceAndProduct] =
+    useState<PatientServiceAndProduct>({ ...newPatientServiceAndProduct });
+    const [sortColumn, setSortColumn] = useState('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
-  const [nurseServiceAndProduct, setNurseServiceAndProduct] =
-    useState<ApNurseServiceProduct>({ ...newApNurseServiceProduct });
-
-  // ---- Helpers ----
+  // Master data used to resolve display names in the table.
+  const { data: serviceListResponse } = useGetServicesQuery({
+    facilityId: authSlice?.tenant?.selectedFacility?.id,
+  });
+  const { data: inventoryProductsResponse } = useGetInventoryProductsQuery({});
+  const { data: brandMedicationList } = useGetAllBrandMedicationsQuery({});
 
   const products: InventoryProduct[] = inventoryProductsResponse?.data ?? [];
   const brands: BrandMedication[] = brandMedicationList?.data ?? [];
   const services = serviceListResponse?.data ?? [];
 
-  const filteredProducts: InventoryProduct[] = useMemo(() => {
-    if (!selectedProductType?.type) return products;
-    return products.filter((p) => p.type === selectedProductType.type);
-  }, [products, selectedProductType]);
+  const getProductById = (id?: number) => products.find((p) => p.Id === id);
 
-  const productsWithDisplayName = useMemo(() => {
-    return filteredProducts.map((p) => {
-      let displayName = p.name;
-      if (p.type === 'MEDICATION' && p.brandId) {
-        const brand = brands.find((b) => String(b.id) === String(p.brandId));
-        if (brand) displayName = brand.name;
-      }
-      return { ...p, displayName };
-    });
-  }, [filteredProducts, brands]);
+  const totalCount = patientServiceProductListResponse?.totalCount ?? 0;
 
-  const getProductById = (id?: number | string) =>
-    products.find((p) => String(p.Id) === String(id));
-
-  const getBrandById = (id?: number | string) =>
-    brands.find((b) => String(b.id) === String(id));
-
-  // ---- Actions ----
-
-  const handleAddNewService = () => {
-    setNurseServiceAndProduct({ ...newApNurseServiceProduct });
-    setSelectedProductType({ type: '' });
-    setPopupOpen(true);
+   // Class name for selected row
+  const isSelected = (rowData: PatientServiceAndProduct) => {
+    if (rowData && patientServiceAndProduct && rowData.id === patientServiceAndProduct.id) {
+      return 'selected-row';
+    } else return '';
   };
 
+  // Delete the currently selected row after user confirmation.
   const handleDelete = async () => {
-    if (nurseServiceAndProduct?.key === undefined) return;
+    if (patientServiceAndProduct?.id === undefined) return;
 
     try {
-      await removeNurseServiceProduct({
-        ...nurseServiceAndProduct,
+      await deletePatientServiceProduct({
+        id: patientServiceAndProduct?.id,
       }).unwrap();
       dispatch(
         notify({ msg: 'Patient Service/Product Deleted Successfully', sev: 'success' })
       );
-      setNurseServiceAndProduct({ ...newApNurseServiceProduct });
+      setPatientServiceAndProduct({ ...newPatientServiceAndProduct });
       refetch();
       setOpenModal(false);
     } catch (error) {
@@ -146,180 +102,67 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      const payload: ApNurseServiceProduct = {
-        ...nurseServiceAndProduct,
-        patientKey: patient?.key,
-        encounterKey: encounter?.key,
-        departmentId: authSlice?.tenant?.selectedFacility?.departmentId,
-        ...(nurseServiceAndProduct.key === undefined
-          ? { createdBy: authSlice?.user?.key }
-          : { updatedBy: authSlice?.user?.key }),
-      };
-
-      await saveNurseServiceProduct(payload).unwrap();
-
-      dispatch(
-        notify({
-          msg:
-            nurseServiceAndProduct.key === undefined
-              ? 'Patient Service/Product Added Successfully'
-              : 'Patient Service/Product Updated Successfully',
-          sev: 'success',
-        })
-      );
-
-      setNurseServiceAndProduct({ ...newApNurseServiceProduct });
-      refetch();
-      setPopupOpen(false);
-    } catch (error) {
-      dispatch(
-        notify({ msg: 'Failed to save Patient Service/Product', sev: 'error' })
-      );
-    }
+  const handlePageChange = (event, newPage) => {
+    setPaginationParams({ ...paginationParams, page: newPage });
   };
 
-  // ---- Effects ----
+  const handleSortChange = (newSortColumn: string, newSortType: 'asc' | 'desc') => {
+    setSortColumn(newSortColumn);
+    setSortType(newSortType);
 
-  // refresh list filter when encounter/patient change
-  useEffect(() => {
-    setNurseServiceProductListRequest((prev) => ({
-      ...prev,
-      filters: [
-        { fieldName: 'encounter_key', operator: 'match', value: encounter?.key },
-        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-        { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-      ],
-    }));
-  }, [encounter, patient]);
+    const sortValue = `${newSortColumn},${newSortType}`;
+    setPaginationParams({
+      ...paginationParams,
+      sort: sortValue,
+      page: 0,
+      timestamp: Date.now()
+    });
+  };
 
-  // Pricing for PRODUCTS (all types)
-  useEffect(() => {
-    if (nurseServiceAndProduct.categoryLkey !== PRODUCT_CATEGORY_LKEY) return;
-
-    const product = getProductById(nurseServiceAndProduct.warehouseProductId);
-    if (!product) {
-      setNurseServiceAndProduct((prev) => ({
-        ...prev,
-        baseUomId: 0,
-        baseUOM: '',
-        unitPrice: 0,
-        totalPrice: 0,
-        brandId: undefined,
-      }));
-      return;
-    }
-
-    const baseUomId = product.baseUom ?? 0;
-    const baseUomName = product.dispenseUom ?? '';
-
-    // parse pricePerBaseUom safely
-    let unitPrice = 0;
-    if (product.pricePerBaseUom != null) {
-      const raw = String(product.pricePerBaseUom);
-      const cleaned = raw.replace(/[^0-9.,-]/g, '').replace(',', '.');
-      const parsed = parseFloat(cleaned);
-      unitPrice = isNaN(parsed) ? 0 : parsed;
-    }
-
-    const qty = Number(nurseServiceAndProduct.quantity) || 0;
-
-    setNurseServiceAndProduct((prev) => ({
-      ...prev,
-      brandId:
-        product.type === 'MEDICATION' && product.brandId
-          ? Number(product.brandId)
-          : prev.brandId,
-      baseUomId,
-      baseUOM: baseUomName,
-      unitPrice,
-      totalPrice: unitPrice * qty,
-    }));
-  }, [
-    nurseServiceAndProduct.categoryLkey,
-    nurseServiceAndProduct.warehouseProductId,
-    nurseServiceAndProduct.quantity,
-    inventoryProductsResponse,
-  ]);
-
-  // Pricing for SERVICES
-  useEffect(() => {
-    if (nurseServiceAndProduct.categoryLkey !== SERVICE_CATEGORY_LKEY) return;
-    if (!services.length) return;
-    if (!nurseServiceAndProduct.serviceId) return;
-
-    const selectedService = services.find(
-      (s) => s.id === nurseServiceAndProduct.serviceId
-    );
-    const unitPrice = selectedService?.price ?? 0;
-    const qty = Number(nurseServiceAndProduct.quantity) || 0;
-
-    setNurseServiceAndProduct((prev) => ({
-      ...prev,
-      unitPrice,
-      totalPrice: unitPrice * qty,
-    }));
-  }, [
-    nurseServiceAndProduct.categoryLkey,
-    nurseServiceAndProduct.serviceId,
-    nurseServiceAndProduct.quantity,
-    serviceListResponse,
-  ]);
-
-  // ---- Table columns ----
-
+  // Table columns.
   const columns = [
     {
-      key: 'Category',
+      key: 'category',
       title: 'Category',
-      render: (rowData) =>
-        rowData?.categoryLkey
-          ? rowData.categoryLvalue.lovDisplayVale
-          : rowData.categoryLkey,
+      render: (rowData: any) => <span>{formatEnumString(rowData.category)}</span>,
     },
     {
       key: 'name',
       title: 'Name',
       isLink: true,
       render: (rowData) => {
-        if (rowData.categoryLkey === PRODUCT_CATEGORY_LKEY) {
-          const product = getProductById(rowData.warehouseProductId);
-          if (!product) return rowData.name;
-
-          if (product.type === 'MEDICATION' && product.brandId) {
-            const brand = getBrandById(product.brandId);
-            return <span>{brand?.name ?? product.name}</span>;
-          }
-
-          return <span>{product.name}</span>;
+        // Product name
+        if (rowData.productId) {
+          const product = products.find((p) => p.Id === rowData.productId);
+          if (!product) return '-';
+          return <span>{product?.name}</span>;
         }
 
-        if (rowData.categoryLkey === SERVICE_CATEGORY_LKEY) {
-          const service = services.find((s) => s.id === rowData.serviceId);
+        // Service name lookup.
+        if (rowData.serviceId) {
+          const service = services.find((s) => String(s.id) === String(rowData.serviceId));
           return <span>{service?.name ?? rowData.name}</span>;
         }
 
-        return rowData.name;
+        // Fallback when data is incomplete.
+        return <span>-</span>;
       },
     },
     {
       key: 'type',
       title: 'Type',
       render: (rowData) => {
-        if (rowData.categoryLkey === SERVICE_CATEGORY_LKEY) {
-          const service = services.find((s) => s.id === rowData.serviceId);
-          return service?.category ?? '';
+        if (rowData.category === 'SERVICE') {
+          return '-';
         }
 
-        if (rowData.categoryLkey === PRODUCT_CATEGORY_LKEY) {
-          const product = getProductById(rowData.warehouseProductId);
-          if (!product) return rowData.type ?? '';
-          if (product.type === 'MEDICATION') return 'Medication';
-          return product.type;
+        if (rowData.category === 'PRODUCT') {
+          const product = getProductById(rowData.productId);
+          if (product) return <span>{formatEnumString(product?.type)}</span>;
+          return '-';
         }
 
-        return rowData.type ?? '';
+        return '-';
       },
     },
     { key: 'quantity', title: 'Quantity' },
@@ -327,148 +170,85 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       key: '',
       title: '',
       render: (rowData) => (
-        <FontAwesomeIcon
-          icon={faTrash}
-          style={{ cursor: 'pointer', color: 'var(--primary-pink)' }}
-          onClick={() => {
-            setNurseServiceAndProduct(rowData);
-            setOpenModal(true);
-          }}
-          title="Delete"
-        />
+        <div className="container-of-icons">
+          <MdModeEdit
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
+            className="icons-style"
+            onClick={() => {
+              setPopupOpen(true);
+            }}
+          />
+          <MdDelete
+            title="Delete"
+            size={24}
+            fill="var(--primary-pink)"
+            className="icons-style"
+            onClick={() => {
+              setPatientServiceAndProduct(rowData);
+              setOpenModal(true);
+            }}
+          />
+        </div>
       ),
     },
   ];
 
   return (
     <div>
-      {/* Add button */}
+      {/* Add new row entry */}
       <div className="bt-div">
         <div className="bt-right">
           <MyButton
             prefixIcon={() => <PlusIcon />}
             disabled={edit}
-            onClick={handleAddNewService}
+            onClick={() => {
+              setPopupOpen(true);
+              setPatientServiceAndProduct({ ...newPatientServiceAndProduct });
+            }}
           >
             Add
           </MyButton>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Current encounter services/products list */}
       <MyTable
-        data={nurseServiceProductListResponse?.object ?? []}
+        data={patientServiceProductListResponse?.data ?? []}
         columns={columns}
+        rowClassName={isSelected}
+        onRowClick={(rowData) => {
+          setPatientServiceAndProduct(rowData);
+        }}
+         totalCount={totalCount}
+          loading={isLoading}
+          page={paginationParams.page}
+          rowsPerPage={paginationParams.size}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={e => {
+            const newSize = Number(e.target.value);
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            });
+          }}
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={handleSortChange}
       />
 
-      {/* Modal for adding service/product */}
-      <MyModal
+      {/* Add/Edit modal */}
+      <AddEditPatientServiceAndProduct
         open={popupOpen}
         setOpen={setPopupOpen}
-        title="Add New Service or Product"
-        actionButtonLabel="Save"
-        actionButtonFunction={handleSave}
-        position="right"
-        size="30vw"
-        bodyheight="80vh"
-        steps={[{ title: 'New Service or Product', icon: <FontAwesomeIcon icon={faStar} /> }]}
-        content={() => (
-          <Form>
-            {/* Category selection */}
-            <MyInput
-              width={150}
-              fieldName="categoryLkey"
-              fieldType="select"
-              selectData={categoryLovResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              fieldLabel="Category"
-              selectDataValue="key"
-              record={nurseServiceAndProduct}
-              setRecord={setNurseServiceAndProduct}
-              searchable={false}
-            />
-
-            {/* Service */}
-            {nurseServiceAndProduct.categoryLkey === SERVICE_CATEGORY_LKEY && (
-              <>
-                <MyInput
-                  fieldName="serviceId"
-                  fieldLabel="Services"
-                  fieldType="select"
-                  record={nurseServiceAndProduct}
-                  setRecord={setNurseServiceAndProduct}
-                  selectData={services}
-                  selectDataLabel="name"
-                  selectDataValue="id"
-                  searchable={false}
-                  width={150}
-                />
-                <MyInput
-                  fieldName="quantity"
-                  fieldType="number"
-                  record={nurseServiceAndProduct}
-                  setRecord={setNurseServiceAndProduct}
-                  min={1}
-                  width={150}
-                  required
-                />
-              </>
-            )}
-
-            {/* Product */}
-            {nurseServiceAndProduct.categoryLkey === PRODUCT_CATEGORY_LKEY && (
-              <>
-                <MyInput
-                  fieldLabel="Type"
-                  fieldName="type"
-                  fieldType="select"
-                  selectData={productType ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={selectedProductType}
-                  setRecord={setSelectedProductType}
-                  menuMaxHeight={200}
-                  width={150}
-                  searchable={false}
-                />
-
-                <MyInput
-                  fieldName="warehouseProductId"
-                  fieldLabel="Product"
-                  fieldType="select"
-                  record={nurseServiceAndProduct}
-                  setRecord={setNurseServiceAndProduct}
-                  selectData={productsWithDisplayName}
-                  selectDataLabel="displayName"
-                  selectDataValue="Id"
-                  searchable={true}
-                  width={150}
-                />
-
-                <MyInput
-                  fieldName="quantity"
-                  fieldType="number"
-                  record={nurseServiceAndProduct}
-                  setRecord={setNurseServiceAndProduct}
-                  min={1}
-                  width={150}
-                  required
-                />
-{/* 
-                <MyInput
-                  fieldName="baseUOM"
-                  fieldLabel="Base UOM"
-                  record={nurseServiceAndProduct}
-                  setRecord={setNurseServiceAndProduct}
-                  disabled={true}
-                  width={150}
-                /> */}
-              </>
-            )}
-          </Form>
-        )}
+        patientServiceAndProduct={patientServiceAndProduct}
+        setPatientServiceAndProduct={setPatientServiceAndProduct}
       />
 
+      {/* Delete confirmation modal */}
       <DeletionConfirmationModal
         open={openModal}
         setOpen={setOpenModal}

@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Checkbox, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import './styles.less';
@@ -43,19 +43,50 @@ import { notify } from '@/utils/uiReducerActions';
 import {
   conjureValueBasedOnIDFromList,
   formatDateWithoutSeconds,
-  calculateAgeFormat
+  calculateAgeFormat,
+  formatEnumString
 } from '@/utils';
+
+// ─── Helper: status color ───────────────────────────────────────────────────
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'REQUESTED':
+      return '#E6A100';
+    case 'CONFIRMED':
+      return '#0DAA41';
+    case 'REJECTED':
+      return '#D64545';
+    case 'SUBMITTED':
+      return '#0B5ED7';
+    case 'READY':
+      return '#17A2B8';
+    default:
+      return '#6c757d';
+  }
+};
+
+// ─── Helper: priority color ──────────────────────────────────────────────────
+const getPriorityColor = (level: string): string => {
+  switch (level) {
+    case 'CRITICAL':
+      return '#D64545';
+    case 'REGULAR':
+      return '#0DAA41';
+    default:
+      return '#6c757d';
+  }
+};
 
 const MyConsultations = () => {
   const dispatch = useDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
   const loggedInUser = authSlice.user;
-  console.log('Selected Department--------> :', selectedDepartment);
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
-  console.log('Selected Facility ID:', selectedFacilityId);
+
   const todayString = new Date().toISOString().slice(0, 10);
+
   const toISOStartOfDay = (value: Date | string) => {
     const d = value instanceof Date ? new Date(value) : new Date(String(value));
     d.setHours(0, 0, 0, 0);
@@ -67,7 +98,8 @@ const MyConsultations = () => {
     d.setHours(23, 59, 59, 999);
     return d.toISOString();
   };
-  const formatDateTime = React.useCallback(
+
+  const formatDateTime = useCallback(
     (value?: string | number | Date | null) => (value ? formatDateWithoutSeconds(value) : ''),
     []
   );
@@ -87,7 +119,6 @@ const MyConsultations = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
-  // Response modal states
   const [openResponseModal, setOpenResponseModal] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<any>(null);
   const [responseForm, setResponseForm] = useState({ responseText: '' });
@@ -96,7 +127,12 @@ const MyConsultations = () => {
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
+  const [emrEncounterKey, setEmrEncounterKey] = useState<string | null>(null);
+
   const emrPatientKeyRef = useRef<string | null>(null);
+  const usersBulkIdsRef = useRef<number[]>([]);
+  const patientBulkIdsRef = useRef<number[]>([]);
+  const lastSearchParamsRef = useRef<any>(null);
 
   const [triggerSearch, searchResult] = useLazySearchConsultationsQuery();
   const [confirmConsultation] = useConfirmConsultationMutation();
@@ -108,43 +144,14 @@ const MyConsultations = () => {
     useGetBulkPatientBasicInfoMutation();
   const [getUsersBasicNamesBulk, { data: usersBasicNames, isLoading: usersBulkLoading }] =
     useGetUsersBasicNamesBulkMutation();
-  const [emrEncounterKey, setEmrEncounterKey] = useState<string | null>(null);
   const { data: emrEncounterData } = useGetEncounterByIdQuery(emrEncounterKey ?? '', {
     skip: !emrEncounterKey
   });
-  const usersBulkIdsRef = useRef<number[]>([]);
-  const patientBulkIdsRef = useRef<number[]>([]);
-  const lastSearchParamsRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (openResponseModal) return;
-    setSelectedConsultation(null);
-    setResponseForm({ responseText: '' });
-  }, [openResponseModal]);
-
-  // Header setup
-  useEffect(() => {
-    const divContent = 'My Consultation';
-    dispatch(setPageCode('My Consultation'));
-    dispatch(setDivContent(divContent));
-
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(''));
-    };
-  }, [dispatch]);
 
   const [getPractitionerByUserId, { data: practitionerResponse }] =
     useLazyGetPractitionerByUserIdQuery();
 
-  useEffect(() => {
-    if (loggedInUser?.id) {
-      getPractitionerByUserId(loggedInUser.id);
-    }
-  }, [loggedInUser?.id]);
-
   const practitionerId = practitionerResponse?.id?.toString() || '';
-  console.log('Practitioner ID:', practitionerId);
 
   const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
@@ -152,19 +159,6 @@ const MyConsultations = () => {
     useGetDepartmentsBulkMutation();
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
 
-  // Default facility selection (when available)
-  useEffect(() => {
-    if (selectedFacilityId === null || selectedFacilityId === undefined) return;
-    setRecord(prev => {
-      if (prev?.facilityId !== undefined && prev?.facilityId !== null && prev?.facilityId !== '') {
-        return prev;
-      }
-      return { ...prev, facilityId: selectedFacilityId };
-    });
-    getDepartmentsByFacility({ facilityId: selectedFacilityId });
-  }, [selectedFacilityId, getDepartmentsByFacility]);
-
-  // Search consultations via portal API
   const searchParams = useMemo(() => {
     const fromFacilityId = record.facilityId ?? selectedFacilityId;
     const toDepartmentId = selectedDepartment?.departmentId;
@@ -209,69 +203,55 @@ const MyConsultations = () => {
     todayString
   ]);
 
-  useEffect(() => {
-    if (!searchParams) return;
-    lastSearchParamsRef.current = searchParams;
-    triggerSearch(searchParams);
-  }, [searchParams, triggerSearch]);
-
   const consultationResponse = searchResult.data;
   const consultationsLoading = searchResult.isFetching || searchResult.isLoading;
-  const refetchConsultations = () => {
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const refetchConsultations = useCallback(() => {
     if (lastSearchParamsRef.current) {
       triggerSearch(lastSearchParamsRef.current);
     }
-  };
+  }, [triggerSearch]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const facilities = Array.isArray(facilityListResponse) ? facilityListResponse : [];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const departments = Array.isArray(departmentListResponse) ? departmentListResponse : [];
 
   const pageIndex = page;
   const rowsPerPage = pageSize;
-  const totalCount = consultationResponse?.totalCount ?? (consultationResponse?.data?.length ?? 0);
+  const totalCount = consultationResponse?.totalCount ?? consultationResponse?.data?.length ?? 0;
 
-  const handlePageChange = React.useCallback((_: unknown, newPage: number) => {
+  const handlePageChange = useCallback((_: unknown, newPage: number) => {
     setPage(newPage);
   }, []);
 
-  const handleRowsPerPageChange = React.useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setPageSize(parseInt(event.target.value, 10));
-      setPage(0);
-    },
-    []
-  );
+  const handleRowsPerPageChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setPageSize(parseInt(event.target.value, 10));
+    setPage(0);
+  }, []);
 
-  // Extract consultation data from API response
-  // API now returns a flat list of all visible consultations
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const allConsultations = consultationResponse?.data ?? [];
   const visibleConsultations = useMemo(() => {
     const start = page * pageSize;
     return allConsultations.slice(start, start + pageSize);
   }, [allConsultations, page, pageSize]);
 
-  // Get unique patient ids from consultations
+  // ── Use only consultation.patientId (per review comment) ──
   const patientIdsForBulk = useMemo(
     () =>
       Array.from(
         new Set(
           visibleConsultations
-            .map((c: any) => c.patientId ?? c.patient?.id ?? c.patientKey)
+            .map((consultation: any) => consultation.patientId)
             .filter(Boolean)
             .map((id: any) => Number(id))
-            .filter(id => !Number.isNaN(id))
+            .filter((id: number) => !Number.isNaN(id))
         )
       ),
     [visibleConsultations]
   );
-  console.log('patientIdsForBulk=====>', patientIdsForBulk);
-  useEffect(() => {
-    if (patientIdsForBulk.length === 0) return;
-    patientBulkIdsRef.current = patientIdsForBulk;
-    getBulkPatientBasicInfo(patientIdsForBulk)
-      .unwrap()
-      .catch(() => {});
-  }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -291,22 +271,20 @@ const MyConsultations = () => {
     return map;
   }, [patientsBasicInfo]);
 
-  // Get unique encounter keys/ids from consultations
-  // const uniqueEncounterKeys = new Set(
-  //   allConsultations.map((c: any) => c.encounterId ?? c.visitKey).filter(Boolean)
-  // );
-  // const encounterKeysArray = Array.from(uniqueEncounterKeys).map(id => String(id));
-
-  // Get unique department ids from consultations (toDepartmentId preferred)
   const departmentIdsForBulk = useMemo(
     () =>
       Array.from(
         new Set(
           visibleConsultations
-            .map((c: any) => c.toDepartmentId ?? c.fromDepartmentId ?? c.departmentKey)
+            .map(
+              (consultation: any) =>
+                consultation.toDepartmentId ??
+                consultation.fromDepartmentId ??
+                consultation.departmentKey
+            )
             .filter(Boolean)
             .map((id: any) => Number(id))
-            .filter(id => !Number.isNaN(id))
+            .filter((id: number) => !Number.isNaN(id))
         )
       ),
     [visibleConsultations]
@@ -317,37 +295,26 @@ const MyConsultations = () => {
       Array.from(
         new Set(
           visibleConsultations
-            .flatMap((c: any) => [c.confirmedBy, c.responseBy, c.rejectedBy])
-            .filter(id => id !== null && id !== undefined)
+            .flatMap((consultation: any) => [
+              consultation.confirmedBy,
+              consultation.responseBy,
+              consultation.rejectedBy
+            ])
+            .filter((id: any) => id !== null && id !== undefined)
             .map((id: any) => Number(id))
-            .filter(id => !Number.isNaN(id))
+            .filter((id: number) => !Number.isNaN(id))
         )
       ),
     [visibleConsultations]
   );
 
-  useEffect(() => {
-    if (departmentIdsForBulk.length === 0) return;
-    getDepartmentsBulk(departmentIdsForBulk)
-      .unwrap()
-      .catch(() => {});
-  }, [departmentIdsForBulk, getDepartmentsBulk]);
-
-  useEffect(() => {
-    if (userIdsForBulk.length === 0) return;
-    usersBulkIdsRef.current = userIdsForBulk;
-    getUsersBasicNamesBulk(userIdsForBulk)
-      .unwrap()
-      .catch(() => {});
-  }, [userIdsForBulk, getUsersBasicNamesBulk]);
-
   const usersNameMap = useMemo(() => {
     const map = new Map<string, string>();
     const ids = usersBulkIdsRef.current;
-    (usersBasicNames ?? []).forEach((u: any, idx: number) => {
-      const id = u?.id ?? ids[idx];
+    (usersBasicNames ?? []).forEach((user: any, idx: number) => {
+      const id = user?.id ?? ids[idx];
       if (id == null) return;
-      const fullName = `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim();
+      const fullName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
       map.set(String(id), fullName || String(id));
     });
     return map;
@@ -358,71 +325,98 @@ const MyConsultations = () => {
     return usersNameMap.get(String(id)) ?? String(id);
   };
 
-  // Fetch all encounters
-  // const { data: encountersResponse, isLoading: encountersLoading } = useGetEncountersQuery(
-  //   {
-  //     ...initialListRequest,
-  //     pageSize: 1000,
-  //     ignore: false,
-  //     filters:
-  //       encounterKeysArray.length > 0
-  //         ? [
-  //             {
-  //               fieldName: 'key',
-  //               operator: 'in',
-  //               value: encounterKeysArray.map(key => `(${key})`).join(' ')
-  //             }
-  //           ]
-  //         : []
-  //   },
-  //   {
-  //     skip: encounterKeysArray.length === 0
-  //   }
-  // );
+  const selectableRows = useMemo(
+    () =>
+      visibleConsultations.filter(
+        (consultation: any) => String(consultation.status ?? '').toUpperCase() === 'READY'
+      ),
+    [visibleConsultations]
+  );
 
-  // Create a lookup map for encounters
-  // const encounterMap = new Map();
-  // (encountersResponse?.object || []).forEach((encounter: any) => {
-  //   if (encounter?.key != null) {
-  //     encounterMap.set(String(encounter.key), encounter);
-  //   }
-  //   if (encounter?.id != null) {
-  //     encounterMap.set(String(encounter.id), encounter);
-  //   }
-  // });
+  const selectedSelectableCount = useMemo(
+    () =>
+      selectedRows.filter(selectedRowItem =>
+        selectableRows.some(
+          selectableRow =>
+            String(selectableRow.id ?? selectableRow.key) ===
+            String(selectedRowItem.id ?? selectedRowItem.key)
+        )
+      ).length,
+    [selectableRows, selectedRows]
+  );
 
-  // Fetch patient diagnoses for all consultations
-  // const { data: diagnosisResponse, isLoading: diagnosisLoading } = useGetPatientDiagnosisQuery(
-  //   {
-  //     ...initialListRequest,
-  //     pageSize: 1000,
-  //     ignore: false,
-  //     sortBy: 'createdAt',
-  //     sortType: 'desc',
-  //     filters:
-  //       encounterKeysArray.length > 0
-  //         ? [
-  //             {
-  //               fieldName: 'visit_key',
-  //               operator: 'in',
-  //               value: encounterKeysArray.map(key => `(${key})`).join(' ')
-  //             }
-  //           ]
-  //         : []
-  //   },
-  //   {
-  //     skip: encounterKeysArray.length === 0
-  //   }
-  // );
+  const allSelectableSelected =
+    selectableRows.length > 0 && selectedSelectableCount === selectableRows.length;
+  const isIndeterminate =
+    selectedSelectableCount > 0 && selectedSelectableCount < selectableRows.length;
 
-  // Group diagnoses by visit_key and get the first diagnosis for each
-  // const diagnosisMap = new Map();
-  // (diagnosisResponse?.object || []).forEach((diagnosis: any) => {
-  //   const visitKey = diagnosis?.visitKey != null ? String(diagnosis.visitKey) : '';
-  //   if (visitKey && !diagnosisMap.has(visitKey)) {
-  //     diagnosisMap.set(visitKey, diagnosis);
-  //   }
-  // });
+  const bulkLoading =
+    visibleConsultations.length > 0 &&
+    (patientsBulkLoading || usersBulkLoading || departmentsBulkLoading);
+
+  const tableLoading = consultationsLoading || bulkLoading;
+
+  useEffect(() => {
+    if (openResponseModal) return;
+    setSelectedConsultation(null);
+    setResponseForm({ responseText: '' });
+  }, [openResponseModal]);
+
+  useEffect(() => {
+    dispatch(setPageCode('My Consultation'));
+    dispatch(setDivContent('My Consultation'));
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (loggedInUser?.id) {
+      getPractitionerByUserId(loggedInUser.id);
+    }
+  }, [getPractitionerByUserId, loggedInUser.id]);
+
+  useEffect(() => {
+    if (selectedFacilityId === null || selectedFacilityId === undefined) return;
+    setRecord(prev => {
+      if (prev?.facilityId !== undefined && prev?.facilityId !== null && prev?.facilityId !== '') {
+        return prev;
+      }
+      return { ...prev, facilityId: selectedFacilityId };
+    });
+    getDepartmentsByFacility({ facilityId: selectedFacilityId });
+  }, [selectedFacilityId, getDepartmentsByFacility]);
+
+  useEffect(() => {
+    if (!searchParams) return;
+    lastSearchParamsRef.current = searchParams;
+    triggerSearch(searchParams);
+  }, [searchParams, triggerSearch]);
+
+  useEffect(() => {
+    if (patientIdsForBulk.length === 0) return;
+    patientBulkIdsRef.current = patientIdsForBulk;
+    getBulkPatientBasicInfo(patientIdsForBulk)
+      .unwrap()
+      .catch(() => {});
+  }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+
+  useEffect(() => {
+    if (departmentIdsForBulk.length === 0) return;
+    getDepartmentsBulk(departmentIdsForBulk)
+      .unwrap()
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      .catch(() => {});
+  }, [departmentIdsForBulk, getDepartmentsBulk]);
+
+  useEffect(() => {
+    if (userIdsForBulk.length === 0) return;
+    usersBulkIdsRef.current = userIdsForBulk;
+    getUsersBasicNamesBulk(userIdsForBulk)
+      .unwrap()
+      .catch(() => {});
+  }, [userIdsForBulk, getUsersBasicNamesBulk]);
 
   useEffect(() => {
     if (!emrPatientData) return;
@@ -441,123 +435,80 @@ const MyConsultations = () => {
     }
   }, [emrEncounterData, emrEncounterKey, dispatch]);
 
-  const bulkLoading =
-    visibleConsultations.length > 0 &&
-    (patientsBulkLoading || usersBulkLoading || departmentsBulkLoading);
-
-  const tableLoading = consultationsLoading || bulkLoading;
   useEffect(() => {
     if (page > 0 && page * pageSize >= totalCount) {
       setPage(0);
     }
   }, [page, pageSize, totalCount]);
-  const handleConfirmAction = React.useCallback(async () => {
+
+  useEffect(() => {
+    if (selectedRows.length === 0) return;
+    setSelectedRows(previousRows =>
+      previousRows.filter(selectedRowItem =>
+        selectableRows.some(
+          selectableRow =>
+            String(selectableRow.id ?? selectableRow.key) ===
+            String(selectedRowItem.id ?? selectedRowItem.key)
+        )
+      )
+    );
+  }, [selectableRows]);
+
+  const handleConfirmAction = useCallback(async () => {
     if (!selectedRow) return;
     if (!loggedInUser?.id) {
-      dispatch(
-        notify({
-          msg: 'User ID is required to confirm consultations',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'User ID is required to confirm consultations', sev: 'error' }));
       return;
     }
     if (!selectedRow?.id) {
-      dispatch(
-        notify({
-          msg: 'Consultation ID is missing',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'Consultation ID is missing', sev: 'error' }));
       return;
     }
 
     try {
       await confirmConsultation({
         id: Number(selectedRow.id),
-        body: {
-          confirmedBy: Number(loggedInUser.id)
-        }
+        body: { confirmedBy: Number(loggedInUser.id) }
       }).unwrap();
 
-      dispatch(
-        notify({
-          msg: 'Consultation confirmed successfully',
-          sev: 'success'
-        })
-      );
-
+      dispatch(notify({ msg: 'Consultation confirmed successfully', sev: 'success' }));
       refetchConsultations();
       setOpenActionModal(false);
       setSelectedRow(null);
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to update consultation status',
-          sev: 'error'
-        })
-      );
+    } catch {
+      dispatch(notify({ msg: 'Failed to update consultation status', sev: 'error' }));
     }
   }, [confirmConsultation, dispatch, loggedInUser?.id, refetchConsultations, selectedRow]);
 
-  const handleRejectAction = React.useCallback(async () => {
+  const handleRejectAction = useCallback(async () => {
     if (!selectedRow?.id) {
-      dispatch(
-        notify({
-          msg: 'Consultation ID is missing',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'Consultation ID is missing', sev: 'error' }));
       return;
     }
     if (!loggedInUser?.id) {
-      dispatch(
-        notify({
-          msg: 'User ID is required to reject consultations',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'User ID is required to reject consultations', sev: 'error' }));
       return;
     }
 
     const reason = String(rejectForm?.reason ?? '').trim();
     if (!reason) {
-      dispatch(
-        notify({
-          msg: 'Reject reason is required',
-          sev: 'warning'
-        })
-      );
+      dispatch(notify({ msg: 'Reject reason is required', sev: 'warning' }));
       return;
     }
 
     try {
       await rejectConsultation({
         id: Number(selectedRow.id),
-        body: {
-          reason,
-          rejectedBy: Number(loggedInUser.id)
-        }
+        body: { reason, rejectedBy: Number(loggedInUser.id) }
       }).unwrap();
 
-      dispatch(
-        notify({
-          msg: 'Consultation rejected successfully',
-          sev: 'success'
-        })
-      );
-
+      dispatch(notify({ msg: 'Consultation rejected successfully', sev: 'success' }));
       refetchConsultations();
       setOpenRejectModal(false);
       setRejectForm({ reason: '' });
       setSelectedRow(null);
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to update consultation status',
-          sev: 'error'
-        })
-      );
+    } catch {
+      dispatch(notify({ msg: 'Failed to update consultation status', sev: 'error' }));
     }
   }, [
     dispatch,
@@ -568,29 +519,29 @@ const MyConsultations = () => {
     selectedRow
   ]);
 
-  const toggleRowSelection = React.useCallback(rowData => {
-    setSelectedRows(prev =>
-      prev.some(r => String(r.id ?? r.key) === String(rowData.id ?? rowData.key))
-        ? prev.filter(r => String(r.id ?? r.key) !== String(rowData.id ?? rowData.key))
-        : [...prev, rowData]
-    );
+  const toggleRowSelection = useCallback(rowData => {
+    setSelectedRows(previousRows => {
+      const alreadySelected = previousRows.some(
+        item => String(item.id ?? item.key) === String(rowData.id ?? rowData.key)
+      );
+      if (alreadySelected) {
+        return previousRows.filter(
+          item => String(item.id ?? item.key) !== String(rowData.id ?? rowData.key)
+        );
+      }
+      return [...previousRows, rowData];
+    });
   }, []);
 
-  const handleSubmit = React.useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     if (selectedRows.length === 0) return;
 
-    // Filter only READY consultations
     const readyConsultations = selectedRows.filter(
       (consultation: any) => String(consultation.status ?? '').toUpperCase() === 'READY'
     );
 
     if (readyConsultations.length === 0) {
-      dispatch(
-        notify({
-          msg: 'Only READY consultations can be submitted',
-          sev: 'warning'
-        })
-      );
+      dispatch(notify({ msg: 'Only READY consultations can be submitted', sev: 'warning' }));
       return;
     }
 
@@ -600,68 +551,44 @@ const MyConsultations = () => {
         .filter(id => !Number.isNaN(id));
 
       if (consultationIds.length === 0) {
-        dispatch(
-          notify({
-            msg: 'No valid consultation IDs found',
-            sev: 'error'
-          })
-        );
+        dispatch(notify({ msg: 'No valid consultation IDs found', sev: 'error' }));
         return;
       }
 
-      await submitConsultations({
-        consultationIds
-      }).unwrap();
-
+      await submitConsultations({ consultationIds }).unwrap();
       dispatch(
         notify({
           msg: `${readyConsultations.length} consultation(s) submitted successfully`,
           sev: 'success'
         })
       );
-
       refetchConsultations();
       setSelectedRows([]);
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to submit consultations',
-          sev: 'error'
-        })
-      );
+    } catch {
+      dispatch(notify({ msg: 'Failed to submit consultations', sev: 'error' }));
     }
   }, [dispatch, refetchConsultations, selectedRows, submitConsultations]);
 
-  const handleOpenResponseModal = React.useCallback((consultation: any) => {
+  const handleOpenResponseModal = useCallback((consultation: any) => {
     setSelectedConsultation(consultation);
     setResponseForm({ responseText: consultation?.responseText ?? '' });
     setOpenResponseModal(true);
   }, []);
 
-  const handleCloseResponseModal = React.useCallback(() => {
+  const handleCloseResponseModal = useCallback(() => {
     setOpenResponseModal(false);
     setSelectedConsultation(null);
     setResponseForm({ responseText: '' });
   }, []);
 
-  const handleSaveResponse = React.useCallback(async () => {
+  const handleSaveResponse = useCallback(async () => {
     if (!selectedConsultation) return;
     if (!loggedInUser?.id) {
-      dispatch(
-        notify({
-          msg: 'User ID is required to submit a response',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'User ID is required to submit a response', sev: 'error' }));
       return;
     }
     if (!selectedConsultation?.id) {
-      dispatch(
-        notify({
-          msg: 'Consultation ID is missing',
-          sev: 'error'
-        })
-      );
+      dispatch(notify({ msg: 'Consultation ID is missing', sev: 'error' }));
       return;
     }
 
@@ -674,22 +601,11 @@ const MyConsultations = () => {
         }
       }).unwrap();
 
-      dispatch(
-        notify({
-          msg: 'Response saved successfully',
-          sev: 'success'
-        })
-      );
-
+      dispatch(notify({ msg: 'Response saved successfully', sev: 'success' }));
       refetchConsultations();
       handleCloseResponseModal();
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Failed to save response',
-          sev: 'error'
-        })
-      );
+    } catch {
+      dispatch(notify({ msg: 'Failed to save response', sev: 'error' }));
     }
   }, [
     dispatch,
@@ -701,375 +617,344 @@ const MyConsultations = () => {
     submitConsultationResponse
   ]);
 
-  const selectableRows = useMemo(
-    () => visibleConsultations.filter((row: any) => String(row.status ?? '').toUpperCase() === 'READY'),
-    [visibleConsultations]
-  );
-
-  const selectedSelectableCount = useMemo(
-    () =>
-      selectedRows.filter(r =>
-        selectableRows.some(s => String(s.id ?? s.key) === String(r.id ?? r.key))
-      ).length,
-    [selectableRows, selectedRows]
-  );
-
-  const allSelectableSelected =
-    selectableRows.length > 0 && selectedSelectableCount === selectableRows.length;
-  const isIndeterminate =
-    selectedSelectableCount > 0 && selectedSelectableCount < selectableRows.length;
-
-  useEffect(() => {
-    if (selectedRows.length === 0) return;
-    setSelectedRows(prev =>
-      prev.filter(r => selectableRows.some(s => String(s.id ?? s.key) === String(r.id ?? r.key)))
-    );
-  }, [selectableRows]);
-
-  const handleSelectAll = React.useCallback(() => {
+  const handleSelectAll = useCallback(() => {
     if (selectableRows.length === 0) return;
     if (allSelectableSelected) {
-      setSelectedRows(prev =>
-        prev.filter(r => !selectableRows.some(s => String(s.id ?? s.key) === String(r.id ?? r.key)))
+      setSelectedRows(previousRows =>
+        previousRows.filter(
+          item =>
+            !selectableRows.some(row => String(row.id ?? row.key) === String(item.id ?? item.key))
+        )
       );
       return;
     }
-
     setSelectedRows(selectableRows);
   }, [allSelectableSelected, selectableRows]);
 
   const tableColumns = useMemo(
     () => [
-    {
-      key: 'select',
-      title: (
-        <Checkbox
-          checked={allSelectableSelected}
-          indeterminate={isIndeterminate}
-          onChange={handleSelectAll}
-        />
-      ),
-      width: 50,
-      render: row => {
-        const status = String(row.status ?? '').toUpperCase();
-        const isReady = status === 'READY';
-        return (
+      {
+        key: 'select',
+        title: (
           <Checkbox
-            checked={selectedRows.some(r => String(r.id ?? r.key) === String(row.id ?? row.key))}
-            onChange={() => toggleRowSelection(row)}
-            disabled={!isReady}
+            checked={allSelectableSelected}
+            indeterminate={isIndeterminate}
+            onChange={handleSelectAll}
           />
-        );
-      }
-    },
-    {
-      key: 'patientInfo',
-      title: <Translate>Patient Name</Translate>,
-      flexGrow: 4,
-      render: row => {
-        // Get patient data from the map using patientKey
-        const patientKey = row.patientId ?? row.patient?.id ?? row.patientKey;
-        const patientFromMap = patientKey != null ? patientMap.get(String(patientKey)) : null;
-        const patient: any = patientFromMap ?? row.patient;
-        const firstName = String(patient?.firstName).trim();
-        const lastName = String(patient?.lastName).trim();
-        const patientName = `${firstName} ${lastName}`.trim();
-        const patientGender =
-          patient?.genderLvalue?.lovDisplayVale || patient?.genderLkey || patient?.sexAtBirth || '';
-        const patientDob = patient?.dateOfBirth ?? patient?.dob;
-        const patientAge = patientDob ? calculateAgeFormat(patientDob) : '';
+        ),
+        width: 50,
+        render: row => {
+          const isReady = String(row.status ?? '').toUpperCase() === 'READY';
+          return (
+            <Checkbox
+              checked={selectedRows.some(
+                item => String(item.id ?? item.key) === String(row.id ?? row.key)
+              )}
+              onChange={() => toggleRowSelection(row)}
+              disabled={!isReady}
+            />
+          );
+        }
+      },
+      {
+        key: 'patientInfo',
+        title: <Translate>Patient Name</Translate>,
+        flexGrow: 4,
+        render: row => {
+          const patientKey = row.patientId;
+          const patient: any = patientKey != null ? patientMap.get(String(patientKey)) : null;
+          const patientName = `${String(patient?.firstName ?? '').trim()} ${String(
+            patient?.lastName ?? ''
+          ).trim()}`.trim();
+          const patientMedicalRecordNumber = patient?.medicalRecordNumber;
+          const patientGender = formatEnumString(patient?.sexAtBirth) || '';
+          const patientDob = patient?.dateOfBirth ?? patient?.dob;
+          const patientAge = patientDob ? calculateAgeFormat(patientDob) : '';
 
-        return (
-          <Whisper
-            trigger="hover"
-            placement="top"
-            speaker={
-              <Tooltip>
-                <div style={{ padding: '4px 8px' }}>
-                  {patientGender && (
-                    <div>
-                      <b>Gender:</b> {patientGender}
-                    </div>
-                  )}
-                  {patientAge && (
-                    <div>
-                      <b>Age:</b> {patientAge}
-                    </div>
-                  )}
+          return (
+            <Whisper
+              trigger="hover"
+              placement="top"
+              speaker={
+                <Tooltip>
+                  <div className="patient-tooltip">
+                    {patientGender && (
+                      <div>
+                        <b>Gender:</b> {patientGender}
+                      </div>
+                    )}
+                    {patientAge && (
+                      <div>
+                        <b>Age:</b> {patientAge}
+                      </div>
+                    )}
+                    {patientMedicalRecordNumber && (
+                      <div>
+                        <b>MRN:</b> {patientMedicalRecordNumber}
+                      </div>
+                    )}
+                  </div>
+                </Tooltip>
+              }
+            >
+              <span className="clickable-cell">{patientName}</span>
+            </Whisper>
+          );
+        }
+      },
+      {
+        key: 'consultationLevel',
+        title: <Translate>Priority</Translate>,
+        flexGrow: 1,
+        render: row => (
+          <MyBadgeStatus
+            contant={row?.consultationLevel}
+            color={getPriorityColor(row?.consultationLevel)}
+          />
+        )
+      },
+      {
+        key: 'diagnosis',
+        title: <Translate>Diagnosis</Translate>,
+        flexGrow: 3
+      },
+      {
+        key: 'findings',
+        title: <Translate>Findings</Translate>,
+        flexGrow: 3
+      },
+      {
+        key: 'questionToConsultant',
+        title: <Translate>Question To Consultant</Translate>,
+        flexGrow: 4,
+        render: row => {
+          const text = row.consultationContent || '';
+          const MAX = 20;
+          const isLong = text.length > MAX;
+          const shortText = isLong ? text.substring(0, MAX) + '...' : text;
+
+          return (
+            <Whisper
+              trigger={isLong ? 'hover' : 'none'}
+              placement="top"
+              speaker={<Tooltip className="tooltip-wide">{text}</Tooltip>}
+            >
+              <span className={isLong ? 'clickable-cell' : ''}>{shortText}</span>
+            </Whisper>
+          );
+        }
+      },
+      {
+        key: 'department',
+        title: <Translate>FROM Department</Translate>,
+        flexGrow: 2,
+        render: row => {
+          const deptId = row.fromDepartmentId;
+          return conjureValueBasedOnIDFromList(
+            departmentsBulk ?? departments,
+            deptId ? Number(deptId) : deptId,
+            'name'
+          );
+        }
+      },
+      {
+        key: 'created',
+        title: <Translate>Created By / At</Translate>,
+        expandable: true,
+        flexGrow: 2,
+        render: row => (
+          <>
+            {row.createdBy}
+            <br />
+            <span className="date-table-style">
+              {row.createdDate ? formatDateWithoutSeconds(row.createdDate) : ''}
+            </span>
+          </>
+        )
+      },
+      {
+        key: 'status',
+        title: <Translate>Status</Translate>,
+        flexGrow: 2,
+        render: row => {
+          const status = String(row.status ?? '').toUpperCase();
+          const statusDisplay = status ? status.replace(/_/g, ' ') : '';
+          return <MyBadgeStatus contant={statusDisplay} color={getStatusColor(status)} />;
+        }
+      },
+      {
+        key: 'confirmedByAt',
+        title: 'Confirmed By/At',
+        expandable: true,
+        flexGrow: 2,
+        render: (row: any) => {
+          const confirmedAt = row.confirmedDate ?? row.confirmedAt;
+          return (
+            <>
+              {resolveUserName(row.confirmedBy)}
+              <br />
+              <span className="date-table-style">{formatDateTime(confirmedAt)}</span>
+            </>
+          );
+        }
+      },
+      {
+        key: 'responseByAt',
+        title: 'Response By/At',
+        expandable: true,
+        flexGrow: 2,
+        render: (row: any) => {
+          const responseAt = row.responseDate ?? row.responseAt;
+          return (
+            <>
+              {resolveUserName(row.responseBy)}
+              <br />
+              <span className="date-table-style">{formatDateTime(responseAt)}</span>
+            </>
+          );
+        }
+      },
+      {
+        key: 'rejectedByAt',
+        expandable: true,
+        title: 'Rejected By/At',
+        flexGrow: 2,
+        render: (row: any) => {
+          const rejectedAt = row.rejectedDate ?? row.rejectedAt;
+          return (
+            <>
+              {resolveUserName(row.rejectedBy)}
+              <br />
+              <span className="date-table-style">{formatDateTime(rejectedAt)}</span>
+            </>
+          );
+        }
+      },
+      {
+        key: 'rejectReason',
+        expandable: true,
+        title: 'Reject Reason',
+        flexGrow: 2,
+        render: (row: any) => row.rejectReason || row.rejectReasonText || ''
+      },
+      {
+        key: 'submittedByAt',
+        title: 'Submitted By/At',
+        expandable: true,
+        flexGrow: 2,
+        render: (row: any) => {
+          const submittedAt = row.submittedDate ?? row.submittedAt;
+          return (
+            <>
+              {resolveUserName(row.submittedBy)}
+              <br />
+              <span className="date-table-style">{formatDateTime(submittedAt)}</span>
+            </>
+          );
+        }
+      },
+      {
+        key: 'actions',
+        title: <Translate>ACTIONS</Translate>,
+        flexGrow: 4,
+        render: row => {
+          const status = String(row.status ?? '').toUpperCase();
+          const disableActions = ['SUBMITTED', 'READY'].includes(status);
+          const disableConfirm = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
+          const disableReject = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
+          const disableResponse = status !== 'CONFIRMED';
+
+          return (
+            <div className="actions-cell">
+              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Open EMR</Tooltip>}>
+                <div>
+                  <MyButton
+                    size="small"
+                    radius="6px"
+                    backgroundColor="violet"
+                    onClick={() => {
+                      const patientKey = row.patientId;
+                      const encounterKey = row.encounterId ?? row.visitKey;
+                      const patientFromMap =
+                        patientKey != null ? patientMap.get(String(patientKey)) : null;
+                      const patient = patientFromMap ?? row.patient;
+
+                      if (patient) dispatch(setPatient(patient));
+                      setEmrPatient(patient ?? null);
+
+                      if (patientKey != null) {
+                        emrPatientKeyRef.current = String(patientKey);
+                      }
+                      if (!patient && patientKey != null) {
+                        fetchPatientById(String(patientKey));
+                      }
+                      if (encounterKey != null) {
+                        setEmrEncounterKey(String(encounterKey));
+                      }
+                      setOpenEMRModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faFileLines} color="white" />
+                  </MyButton>
                 </div>
-              </Tooltip>
-            }
-          >
-            <span style={{ cursor: 'pointer' }}>{patientName}</span>
-          </Whisper>
-        );
+              </Whisper>
+              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Confirm</Tooltip>}>
+                <div>
+                  <MyButton
+                    size="small"
+                    radius="6px"
+                    backgroundColor="darkblue"
+                    disabled={disableConfirm}
+                    onClick={() => {
+                      setSelectedRow(row);
+                      setOpenActionModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faCircleCheck} color="white" />
+                  </MyButton>
+                </div>
+              </Whisper>
+              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Reject</Tooltip>}>
+                <div>
+                  <MyButton
+                    size="small"
+                    radius="6px"
+                    backgroundColor="gray"
+                    disabled={disableReject}
+                    onClick={() => {
+                      setSelectedRow(row);
+                      setRejectForm({ reason: '' });
+                      setOpenRejectModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faCircleXmark} color="white" />
+                  </MyButton>
+                </div>
+              </Whisper>
+              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Response</Tooltip>}>
+                <div>
+                  <MyButton
+                    size="small"
+                    radius="6px"
+                    backgroundColor="light-blue"
+                    disabled={disableResponse}
+                    onClick={() => handleOpenResponseModal(row)}
+                  >
+                    <FontAwesomeIcon icon={faFilePen} color="white" />
+                  </MyButton>
+                </div>
+              </Whisper>
+              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Report</Tooltip>}>
+                <div>
+                  <MyButton size="small" radius="6px" backgroundColor="black">
+                    <FontAwesomeIcon icon={faUpload} color="white" />
+                  </MyButton>
+                </div>
+              </Whisper>
+            </div>
+          );
+        }
       }
-    },
-    {
-      key: 'consultationLevel',
-      title: <Translate>Priority</Translate>,
-      flexGrow: 1,
-      render: row => {
-        let color = '#6c757d';
-        if (row.consultationLevel === 'CRITICAL') color = '#D64545';
-        if (row.consultationLevel === 'REGULAR') color = '#0DAA41';
-        return <MyBadgeStatus contant={row?.consultationLevel} color={color} />;
-      }
-    },
-    {
-      key: 'diagnosis',
-      title: <Translate>Diagnosis</Translate>,
-      flexGrow: 3
-      // render: row => {
-      //   const diagnosisKey =
-      //     row.encounterId != null ? String(row.encounterId) : String(row.visitKey ?? '');
-      //   const diagnosis: any = diagnosisKey ? diagnosisMap.get(diagnosisKey) : null;
-      //   const diagnosisObject = diagnosis?.diagnosisObject;
-      //   if (diagnosisObject && diagnosisObject.icdCode && diagnosisObject.description) {
-      //     return `${diagnosisObject.icdCode}, ${diagnosisObject.description}`;
-      //   }
-      //   return '';
-      // }
-    },
-    {
-      key: 'findings',
-      title: <Translate>Findings</Translate>,
-      flexGrow: 3
-      // render: row => {
-      //   const encounter: any = encounterMap.get(String(row.encounterId ?? row.visitKey));
-      //   return encounter?.physicalExamNote || encounter?.findings || '';
-      // }
-    },
-    {
-      key: 'questionToConsultant',
-      title: <Translate>Question To Consultant</Translate>,
-      flexGrow: 4,
-      render: row => {
-        const text = row.consultationContent || '';
-        const MAX = 35;
-        const isLong = text.length > MAX;
-        const shortText = isLong ? text.substring(0, MAX) + '...' : text;
-
-        return (
-          <Whisper
-            trigger={isLong ? 'hover' : 'none'}
-            placement="top"
-            speaker={<Tooltip style={{ maxWidth: '300px', whiteSpace: 'normal' }}>{text}</Tooltip>}
-          >
-            <span style={{ cursor: isLong ? 'pointer' : 'default' }}>{shortText}</span>
-          </Whisper>
-        );
-      }
-    },
-    {
-      key: 'department',
-      title: <Translate>FROM Department</Translate>,
-      flexGrow: 2,
-      render: row => {
-        const deptId = row.fromDepartmentId;
-        return conjureValueBasedOnIDFromList(
-          departmentsBulk ?? departments,
-          deptId ? Number(deptId) : deptId,
-          'name'
-        );
-      }
-    },
-    {
-      key: 'created',
-      title: <Translate>Created By / At</Translate>,
-      expandable: true,
-      flexGrow: 2,
-      render: row => (
-        <>
-          {row.createdBy}
-          <br />
-          <span className="date-table-style">
-            {row.createdAt ? formatDateWithoutSeconds(row.createdAt) : ''}
-          </span>
-        </>
-      )
-    },
-    {
-      key: 'status',
-      title: <Translate>Status</Translate>,
-      flexGrow: 2,
-      render: row => {
-        const status = String(row.status ?? '').toUpperCase();
-        const statusDisplay = status ? status.replace(/_/g, ' ') : '';
-        let color = '#6c757d';
-        if (status === 'REQUESTED') color = '#E6A100';
-        if (status === 'CONFIRMED') color = '#0DAA41';
-        if (status === 'REJECTED') color = '#D64545';
-        if (status === 'SUBMITTED') color = '#0B5ED7';
-        if (status === 'READY') color = '#17A2B8';
-
-        return <MyBadgeStatus contant={statusDisplay} color={color} />;
-      }
-    },
-    {
-      key: 'confirmedByAt',
-      title: 'Confirmed By/At',
-      expandable: true,
-      flexGrow: 2,
-      render: (row: any) => {
-        const confirmedAt = row.confirmedDate ?? row.confirmedAt;
-        return (
-          <>
-            {resolveUserName(row.confirmedBy)}
-            <br />
-            <span className="date-table-style">{formatDateTime(confirmedAt)}</span>
-          </>
-        );
-      }
-    },
-    {
-      key: 'responseByAt',
-      title: 'Response By/At',
-      expandable: true,
-      flexGrow: 2,
-      render: (row: any) => {
-        const responseAt = row.responseDate ?? row.responseAt;
-        return (
-          <>
-            {resolveUserName(row.responseBy)}
-            <br />
-            <span className="date-table-style">{formatDateTime(responseAt)}</span>
-          </>
-        );
-      }
-    },
-    {
-      key: 'rejectedByAt',
-      expandable: true,
-      title: 'Rejected By/At',
-      flexGrow: 2,
-      render: (row: any) => {
-        const rejectedAt = row.rejectedDate ?? row.rejectedAt;
-        return (
-          <>
-            {resolveUserName(row.rejectedBy)}
-            <br />
-            <span className="date-table-style">{formatDateTime(rejectedAt)}</span>
-          </>
-        );
-      }
-    },
-    {
-      key: 'rejectReason',
-      expandable: true,
-      title: 'Reject Reason',
-      flexGrow: 2,
-      render: (row: any) => row.rejectReason || row.rejectReasonText || ''
-    },
-    {
-      key: 'actions',
-      title: <Translate>ACTIONS</Translate>,
-      flexGrow: 4,
-      render: row => {
-        const status = String(row.status ?? '').toUpperCase();
-        const disableActions = ['SUBMITTED', 'READY'].includes(status);
-        const disableConfirm = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
-        const disableReject = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
-        const disableResponse = status !== 'CONFIRMED';
-
-        return (
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Whisper trigger="hover" placement="top" speaker={<Tooltip>Open EMR</Tooltip>}>
-              <div>
-                <MyButton
-                  size="small"
-                  radius="6px"
-                  backgroundColor="violet"
-                  onClick={() => {
-                    const patientKey = row.patientId ?? row.patient?.id ?? row.patientKey;
-                    const encounterKey = row.encounterId ?? row.visitKey;
-                    const patientFromMap =
-                      patientKey != null ? patientMap.get(String(patientKey)) : null;
-                    const patient = patientFromMap ?? row.patient;
-                    // const encounter = encounterMap.get(String(encounterKey));
-
-                    if (patient) {
-                      dispatch(setPatient(patient));
-                    }
-                    // if (encounter) {
-                    //   dispatch(setEncounter(encounter));
-                    // }
-
-                    setEmrPatient(patient ?? null);
-                    // setEmrEncounter(encounter ?? null);
-                    if (patientKey != null) {
-                      emrPatientKeyRef.current = String(patientKey);
-                    }
-                    if (!patient && patientKey != null) {
-                      fetchPatientById(String(patientKey));
-                    }
-                    if (encounterKey != null) {
-                      setEmrEncounterKey(String(encounterKey));
-                    }
-                    setOpenEMRModal(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faFileLines} color="white" />
-                </MyButton>
-              </div>
-            </Whisper>
-            <Whisper trigger="hover" placement="top" speaker={<Tooltip>Confirm</Tooltip>}>
-              <div>
-                <MyButton
-                  size="small"
-                  radius="6px"
-                  backgroundColor="darkblue"
-                  disabled={disableConfirm}
-                  onClick={() => {
-                    setSelectedRow(row);
-                    setOpenActionModal(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faCircleCheck} color="white" />
-                </MyButton>
-              </div>
-            </Whisper>
-            <Whisper trigger="hover" placement="top" speaker={<Tooltip>Reject</Tooltip>}>
-              <div>
-                <MyButton
-                  size="small"
-                  radius="6px"
-                  backgroundColor="gray"
-                  disabled={disableReject}
-                  onClick={() => {
-                    setSelectedRow(row);
-                    setRejectForm({ reason: '' });
-                    setOpenRejectModal(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faCircleXmark} color="white" />
-                </MyButton>
-              </div>
-            </Whisper>
-            <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Response</Tooltip>}>
-              <div>
-                <MyButton
-                  size="small"
-                  radius="6px"
-                  backgroundColor="light-blue"
-                  disabled={disableResponse}
-                  onClick={() => handleOpenResponseModal(row)}
-                >
-                  <FontAwesomeIcon icon={faFilePen} color="white" />
-                </MyButton>
-              </div>
-            </Whisper>
-            <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Report</Tooltip>}>
-              <div>
-                <MyButton size="small" radius="6px" backgroundColor="black">
-                  <FontAwesomeIcon icon={faUpload} color="white" />
-                </MyButton>
-              </div>
-            </Whisper>
-          </div>
-        );
-      }
-    }
     ],
     [
       allSelectableSelected,
@@ -1152,7 +1037,7 @@ const MyConsultations = () => {
               setRecord={setRecord}
               disabled={departments.length === 0}
             />
-            <div style={{ marginTop: '23px' }}>
+            <div className="show-rejected-checkbox">
               <Checkbox checked={showRejected} onChange={() => setShowRejected(!showRejected)}>
                 Show Rejected
               </Checkbox>
@@ -1168,7 +1053,6 @@ const MyConsultations = () => {
     () => (
       <div className="bt-div-2">
         <div className="bt-left-2"></div>
-
         <div className="bt-right-2">
           <MyButton
             color="var(--deep-blue)"
@@ -1188,7 +1072,7 @@ const MyConsultations = () => {
   if (!selectedDepartment?.departmentId) {
     return (
       <Panel>
-        <div style={{ padding: '20px', textAlign: 'center' }}>
+        <div className="no-department-message">
           <p>Please select a department to view consultations.</p>
         </div>
       </Panel>
@@ -1261,7 +1145,7 @@ const MyConsultations = () => {
               fieldName="reason"
               fieldType="textarea"
               rows={4}
-              width={'100%'}
+              width="100%"
               record={rejectForm}
               setRecord={setRejectForm}
             />
@@ -1276,9 +1160,9 @@ const MyConsultations = () => {
         size="90vw"
         content={
           emrPatient && emrEncounter ? (
-            <PatientEMRModal inModal patient={emrPatient} encounter={emrEncounter} />
+            <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
           ) : (
-            <div style={{ padding: 16 }}>No patient selected.</div>
+            <div className="no-patient-selected">No patient selected.</div>
           )
         }
         actionButtonLabel="Close"

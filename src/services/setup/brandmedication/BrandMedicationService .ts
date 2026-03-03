@@ -232,7 +232,7 @@ export const BrandMedicationService = createApi({
       { keyword: string }
     >({
       query: ({ keyword }) => ({
-        url: `/api/setup/brand-medication/search/${encodeURIComponent(keyword)}`,
+        url: `/api/setup/brand-medication/search/${encodeURIComponent(keyword || '')}`,
         method: "GET",
       }),
       providesTags: ["BrandMedication"],
