@@ -286,7 +286,6 @@ const Accounting: React.FC = () => {
 
   // ---------- EFFECTS ----------
 
-  // إعداد الفلاتر حسب المريض + is_valid = true
   useEffect(() => {
     if (!patient?.key) {
       setNurseServiceProductListRequest(prev => ({
@@ -310,7 +309,6 @@ const Accounting: React.FC = () => {
     }));
   }, [patient]);
 
-  // تحويل ApNurseServiceProduct[] → BillingItem[]
   useEffect(() => {
     if (!patient?.key || !nurseServiceProductListResponse?.object) {
       setAllBillingItems([]);
@@ -322,7 +320,7 @@ const Accounting: React.FC = () => {
     const apiRows: ApNurseServiceProduct[] =
       nurseServiceProductListResponse.object ?? [];
 
-    setNurseRows(apiRows); // نخزن الأصل للاستعمال في الـ update
+    setNurseRows(apiRows);
 
     const mapped: BillingItem[] = apiRows.map((row, index) => {
       const id = String(row.key ?? index);
