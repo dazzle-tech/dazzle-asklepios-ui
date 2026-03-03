@@ -1249,7 +1249,7 @@ export const newPatient: modelTypes.Patient = {
 
   isVerified: false,
   isCompletedPatient: false,
-
+  securityAccessLevel: null,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
