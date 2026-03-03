@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Tooltip, Form, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -32,10 +32,11 @@ import type { Department } from '@/types/model-types-new';
 
 import './styles.less';
 
-// PatientVisitHistoryTable.tsx
 
 const PatientVisitHistoryTable = ({ localPatient }: any) => {
   const dispatch = useDispatch();
+  const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
+  const getTooltipContainer = () => tooltipContainerRef.current || document.body;
 
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [openCancelModal, setOpenCancelModal] = useState(false);
@@ -50,7 +51,6 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
   const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
 
   const { data, isFetching, refetch } = useGetEncountersByPatientQuery(
-    // ✅ أضف refetch
     {
       patientId: localPatient?.id,
       page: 0,
@@ -74,7 +74,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       await cancelEncounter({ id: selectedVisit.id }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       setOpenCancelModal(false);
-      refetch(); // ✅
+      refetch(); 
     } catch {
       dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
     }
@@ -84,7 +84,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     try {
       await completeEncounter({ id: row.id }).unwrap();
       dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
-      refetch(); // ✅
+      refetch(); 
     } catch {
       dispatch(notify({ msg: 'Error completing encounter', sev: 'error' }));
     }
@@ -94,13 +94,12 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     try {
       await dischargeEncounter({ id: row.id }).unwrap();
       dispatch(notify({ msg: 'Discharged Successfully', sev: 'success' }));
-      refetch(); // ✅
+      refetch(); 
     } catch {
       dispatch(notify({ msg: 'Error discharging encounter', sev: 'error' }));
     }
   };
 
-  // ✅ callback يُمرر لـ PatientQuickAppointment
   const handleEncounterSaved = async () => {
     await refetch();
   };
@@ -199,46 +198,70 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         return (
           <Form className="visit-history__actions-form">
             {isNew && (
-              <Whisper placement="top" speaker={<Tooltip>Cancel</Tooltip>}>
-                <MyButton
-                  appearance="subtle"
-                  size="small"
-                  onClick={() => {
-                    setSelectedVisit(row);
-                    setOpenCancelModal(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faRectangleXmark} />
-                </MyButton>
+              <Whisper
+                placement="top"
+                speaker={<Tooltip>Cancel</Tooltip>}
+                container={getTooltipContainer}
+              >
+                <span className="visit-history__tooltip-trigger">
+                  <MyButton
+                    appearance="subtle"
+                    size="small"
+                    onClick={() => {
+                      setSelectedVisit(row);
+                      setOpenCancelModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faRectangleXmark} />
+                  </MyButton>
+                </span>
               </Whisper>
             )}
             {isOngoing && (
-              <Whisper placement="top" speaker={<Tooltip>Complete</Tooltip>}>
-                <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)}>
-                  <FontAwesomeIcon icon={faCheckDouble} />
-                </MyButton>
+              <Whisper
+                placement="top"
+                speaker={<Tooltip>Complete</Tooltip>}
+                container={getTooltipContainer}
+              >
+                <span className="visit-history__tooltip-trigger">
+                  <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)}>
+                    <FontAwesomeIcon icon={faCheckDouble} />
+                  </MyButton>
+                </span>
               </Whisper>
             )}
             {isOngoing && (
-              <Whisper placement="top" speaker={<Tooltip>Discharge</Tooltip>}>
-                <MyButton appearance="subtle" size="small" onClick={() => handleDischarge(row)}>
-                  <FontAwesomeIcon icon={faPowerOff} />
-                </MyButton>
+              <Whisper
+                placement="top"
+                speaker={<Tooltip>Discharge</Tooltip>}
+                container={getTooltipContainer}
+              >
+                <span className="visit-history__tooltip-trigger">
+                  <MyButton appearance="subtle" size="small" onClick={() => handleDischarge(row)}>
+                    <FontAwesomeIcon icon={faPowerOff} />
+                  </MyButton>
+                </span>
               </Whisper>
             )}
             {isPendingPayment && (
-              <Whisper placement="top" speaker={<Tooltip>Pay</Tooltip>}>
-                <MyButton
-                  appearance="subtle"
-                  size="small"
-                  onClick={() => {
-                    setSelectedVisit(row);
-                    setQuickInitialStep(1);
-                    setQuickAppointmentModel(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faFileInvoiceDollar} />
-                </MyButton>
+              <Whisper
+                placement="top"
+                speaker={<Tooltip>Pay</Tooltip>}
+                container={getTooltipContainer}
+              >
+                <span className="visit-history__tooltip-trigger">
+                  <MyButton
+                    appearance="subtle"
+                    size="small"
+                    onClick={() => {
+                      setSelectedVisit(row);
+                      setQuickInitialStep(1);
+                      setQuickAppointmentModel(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                  </MyButton>
+                </span>
               </Whisper>
             )}
           </Form>
@@ -248,7 +271,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
   ];
 
   return (
-    <>
+    <div ref={tooltipContainerRef} className="visit-history__wrapper">
       <MyTable data={encounters} columns={columns} loading={isFetching} height={580} />
 
       <DeletionConfirmationModal
@@ -268,10 +291,10 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
           localVisit={selectedVisit}
           isDisabeld={quickInitialStep === 0}
           initialStep={quickInitialStep}
-          onEncounterSaved={handleEncounterSaved} // ✅ هون المهم
+          onEncounterSaved={handleEncounterSaved}
         />
       )}
-    </>
+    </div>
   );
 };
 

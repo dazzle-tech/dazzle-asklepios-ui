@@ -310,7 +310,6 @@ const Receipt: React.FC<ReceiptProps> = ({ patient }) => {
 
   return (
     <div>
-      {/* ممكن في المستقبل تضيفي dropdown لاختيار الفاتورة */}
       <MyTable data={receiptRows} columns={columns} loading={isLoading} />
     </div>
   );
