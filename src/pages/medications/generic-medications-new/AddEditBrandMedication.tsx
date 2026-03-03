@@ -306,6 +306,7 @@ const AddEditBrandMedication = ({
         title={brandMedication?.id ? 'Edit Brand Medication' : 'New Brand Medication'}
         actionButtonFunction={handleSave}
         content={conjureFormContent}
+        position='right'
         steps={[
           {
             title: 'Information',

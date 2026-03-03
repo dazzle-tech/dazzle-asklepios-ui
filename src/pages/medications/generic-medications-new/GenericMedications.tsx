@@ -106,26 +106,62 @@ const GenericMedications = () => {
   }, [dispatch]);
 
   // ---------- Handlers ----------
+
+  const validateBrandMedication = () => {
+      const missing = [];
+
+      if (!brandMedication.name?.trim()) missing.push('Brand Name');
+      if (!brandMedication.dosageForm) missing.push('Dosage Form');
+      if (!brandMedication.roa || !brandMedication.roa.length) missing.push('ROA');
+      if (!brandMedication.uomGroupId) missing.push('UOM Group');
+      if (!brandMedication.uomGroupUnitId) missing.push('Base UOM');
+
+      if (brandMedication.expiresAfterOpening) {
+        if (!brandMedication.expiresAfterOpeningValue) missing.push('Expiration Value');
+        if (!brandMedication.expiresAfterOpeningUnit) missing.push('Expiration Unit');
+      }
+
+      if (missing.length) {
+        dispatch(
+          notify({
+            msg: `Please fill: ${missing.join(', ')}`,
+            sev: 'warning'
+          })
+        );
+        return false;
+      }
+
+      return true;
+  };
+
   const handleSave = async () => {
+    if (!validateBrandMedication()) return;
+
     try {
       if (brandMedication.id) {
         const { hasActiveIngredient, ...updatePayload } = brandMedication;
 
         await updateBrandMedication(updatePayload).unwrap();
-
-
-        dispatch(notify({ msg: "Updated successfully", sev: "success" }));
+        dispatch(notify({ msg: 'Updated successfully', sev: 'success' }));
       } else {
         const { hasActiveIngredient, ...payload } = brandMedication;
 
         await addBrandMedication(payload).unwrap();
-        dispatch(notify({ msg: "Added successfully", sev: "success" }));
+        dispatch(notify({ msg: 'Added successfully', sev: 'success' }));
       }
+
       setOpenAddEditPopup(false);
-    } catch (error) {
-      dispatch(notify({ msg: "Error saving medication", sev: "error" }));
+      refetch();
+    } catch {
+      dispatch(
+        notify({
+          msg: 'Failed to save Brand Medication',
+          sev: 'error'
+        })
+      );
     }
   };
+
 
   const handleToggleActive = async (id: number) => {
 

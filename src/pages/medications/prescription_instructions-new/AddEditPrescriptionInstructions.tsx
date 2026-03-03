@@ -23,41 +23,85 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
     const [updatePrescriptionInstruction] =
     useUpdatePrescriptionInstructionMutation();
 
-  const handleSave = () => {
-      setOpen(false);
-      if(!prescriptionInstructions?.id){
-      createPrescriptionInstruction(prescriptionInstructions)
-        .unwrap()
-        .then(() => {
-          refetchPrescriotionInstructions();
-          dispatch(
-            notify({
-              msg: 'The Prescription Instruction has been created successfully',
-              sev: 'success'
-            })
-          );
-        })
-        .catch(() => {
-          dispatch(notify({ msg: 'Failed to save this Prescription Instruction', sev: 'error' }));
-        });
+
+    const validatePrescriptionInstruction = () => {
+      if (!prescriptionInstructions?.category) {
+        dispatch(notify({ msg: 'Category is required', sev: 'warning' }));
+        return false;
       }
-      else{
-      updatePrescriptionInstruction(prescriptionInstructions)
-        .unwrap()
-        .then(() => {
-          refetchPrescriotionInstructions();
-          dispatch(
-            notify({
-              msg: 'The Prescription Instruction has been updated successfully',
-              sev: 'success'
-            })
-          );
-        })
-        .catch(() => {
-          dispatch(notify({ msg: 'Failed to save this Prescription Instruction', sev: 'error' }));
-        });
+
+      if (!prescriptionInstructions?.dose) {
+        dispatch(notify({ msg: 'Dose is required', sev: 'warning' }));
+        return false;
+      }
+
+      if (!prescriptionInstructions?.unit) {
+        dispatch(notify({ msg: 'Unit is required', sev: 'warning' }));
+        return false;
+      }
+
+      if (!prescriptionInstructions?.rout) {
+        dispatch(notify({ msg: 'Route is required', sev: 'warning' }));
+        return false;
+      }
+
+      if (!prescriptionInstructions?.frequency) {
+        dispatch(notify({ msg: 'Frequency is required', sev: 'warning' }));
+        return false;
+      }
+
+      return true;
+    };
+
+
+    const handleSave = () => {
+      if (!validatePrescriptionInstruction()) return;
+
+      if (!prescriptionInstructions?.id) {
+        createPrescriptionInstruction(prescriptionInstructions)
+          .unwrap()
+          .then(() => {
+            refetchPrescriotionInstructions();
+            dispatch(
+              notify({
+                msg: 'The Prescription Instruction has been created successfully',
+                sev: 'success'
+              })
+            );
+            setOpen(false);
+          })
+          .catch(() => {
+            dispatch(
+              notify({
+                msg: 'Failed to create Prescription Instruction',
+                sev: 'error'
+              })
+            );
+          });
+      } else {
+        updatePrescriptionInstruction(prescriptionInstructions)
+          .unwrap()
+          .then(() => {
+            refetchPrescriotionInstructions();
+            dispatch(
+              notify({
+                msg: 'The Prescription Instruction has been updated successfully',
+                sev: 'success'
+              })
+            );
+            setOpen(false);
+          })
+          .catch(() => {
+            dispatch(
+              notify({
+                msg: 'Failed to update Prescription Instruction',
+                sev: 'error'
+              })
+            );
+          });
       }
     };
+
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -76,10 +120,11 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
             setRecord={setPrescriptionInstructions}
             menuMaxHeight={200}
             searchable={false}
+            required
             />
              <div className="container-of-two-fields-prescription">
                 <div className="container-of-field-prescription">
-            <MyInput width="100%" fieldName="dose" fieldType="number" record={prescriptionInstructions} setRecord={setPrescriptionInstructions} />
+            <MyInput width="100%" fieldName="dose" fieldType="number" record={prescriptionInstructions} setRecord={setPrescriptionInstructions} required/>
             </div>
             <div className="container-of-field-prescription">
             <MyInput
@@ -92,7 +137,8 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
               record={prescriptionInstructions}
               setRecord={setPrescriptionInstructions}
               menuMaxHeight={200}
-              searchable={false}
+              searchable={true}
+              required
             />
             </div>
             </div>
@@ -110,6 +156,7 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
               setRecord={setPrescriptionInstructions}
               menuMaxHeight={200}
               searchable={false}
+              required
               />
               </div>
               <div className="container-of-field-prescription">
@@ -124,6 +171,7 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
               setRecord={setPrescriptionInstructions} 
               menuMaxHeight={200}
               searchable={false}
+              required
               />
               </div>
               </div>

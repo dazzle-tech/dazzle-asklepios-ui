@@ -133,6 +133,7 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
       actionButtonFunction={readOnly ? undefined : handleSave}
       size="50vw"
       bodyheight="37vw"
+      position="right"
       content={
         <Form fluid>
           <div className="test-name-my-input-handle">

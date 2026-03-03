@@ -97,7 +97,7 @@ const TeleconsultationRequests = () => {
   const [sortColumn, setSortColumn] = useState('patientName');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
 
   const {
     data: orders,

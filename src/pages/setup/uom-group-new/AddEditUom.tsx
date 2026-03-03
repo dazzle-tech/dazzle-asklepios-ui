@@ -427,162 +427,205 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
     }
   };
 
-  // Handle Save Uom
-  const handleSave = () => {
-    if (!uom?.id)
-      createUomGroup(uom)
-        .unwrap()
-        .then(result => {
-          setUom(result);
-          refetchUomGroups();
-          dispatch(
-            notify({
-              msg: 'The UOM group Added/Edited successfully ',
-              sev: 'success'
-            })
-          );
-        })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
-        });
-    else {
-      const updatedUom = { id: uom?.id, description: uom?.description, name: uom?.name };
-      updateUomGroup(updatedUom)
-        .unwrap()
-        .then(result => {
-          setUom(result);
-          refetchUomGroups();
-          dispatch(
-            notify({
-              msg: 'The UOM group updated successfully ',
-              sev: 'success'
-            })
-          );
-        })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
-        });
-    }
-  };
+    const handleSave = () => {
+      if (!uom?.name?.trim() || !uom?.description?.trim()) {
+        dispatch(
+          notify({
+            msg: 'Please fill Group Name and Description',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
 
-  // Handle Save Uom unit
-  const handleSaveUnits = () => {
-    if (!uomUnit?.id) {
-      createUomGroupUnits({
-        groupId: uom?.id,
-        UomGroupUnit: uomUnit
-      })
-        .unwrap()
-        .then(() => {
-          uomUnitRefetch();
-          setUomUnit({
-            ...newUOMGroupUnit
+      if (!uom?.id) {
+        createUomGroup(uom)
+          .unwrap()
+          .then(result => {
+            setUom(result);
+            refetchUomGroups();
+            dispatch(
+              notify({
+                msg: 'The UOM group added successfully',
+                sev: 'success'
+              })
+            );
+          })
+          .catch(e => {
+            dispatch(
+              notify({
+                msg: 'An unexpected error occurred',
+                sev: 'error'
+              })
+            );
           });
-          dispatch(
-            notify({
-              msg: 'The UOM group unit was created successfully ',
-              sev: 'success'
-            })
-          );
-        })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
-        });
-    } else {
-      updateUomGroupUnits(uomUnit)
-        .unwrap()
-        .then(() => {
-          uomUnitRefetch();
-          setUomUnit({
-            ...newUOMGroupUnit
-          });
-          dispatch(
-            notify({
-              msg: 'The UOM group unit was updated successfully',
-              sev: 'success'
-            })
-          );
-        })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
-        });
-    }
-  };
+      } 
+      else {
+        const updatedUom = {
+          id: uom.id,
+          name: uom.name,
+          description: uom.description
+        };
 
-  // Handle Save Uom relation
-  const handleSaveRelation = () => {
-    if (!uomRelation?.id) {
-      createUomGroupRelation({
-        groupId: uom?.id,
-        UomGroupRelation: uomRelationUpdated
-      })
-        .unwrap()
-        .then(() => {
-          uomRelationRefetch();
-          setUomRelation({
-            ...newUOMGroupRelation
+        updateUomGroup(updatedUom)
+          .unwrap()
+          .then(result => {
+            setUom(result);
+            refetchUomGroups();
+            dispatch(
+              notify({
+                msg: 'The UOM group updated successfully',
+                sev: 'success'
+              })
+            );
+          })
+          .catch(() => {
+            dispatch(
+              notify({
+                msg: 'An unexpected error occurred',
+                sev: 'error'
+              })
+            );
           });
-          setUomRelationUpdated({
-            // id: undefined,
-            fromUnitId: null,
-            toUnitId: null,
-            // relation: 0
-          });
-          dispatch(
-            notify({
-              msg: 'The UOM group Relation was successfully ',
-              sev: 'success'
-            })
-          );
+      }
+    };
+
+    const handleSaveUnits = () => {
+      if (!uomUnit?.uom || uomUnit?.uom === '') {
+        dispatch(
+          notify({
+            msg: 'Please select a UOM unit',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (
+        uomUnit?.uomOrder === null ||
+        uomUnit?.uomOrder === undefined ||
+        uomUnit?.uomOrder === ''
+      ) {
+        dispatch(
+          notify({
+            msg: 'Please enter UOM order',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!uomUnit?.id) {
+        createUomGroupUnits({
+          groupId: uom?.id,
+          UomGroupUnit: uomUnit
         })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
-        });
-    } else {
-      const updated = { id: uomRelation?.id, relation: uomRelationUpdated?.relation };
-      updateUomRelation({ groupId: uom?.id, uomRelation: updated })
-        .unwrap()
-        .then(() => {
-          uomRelationRefetch();
-          setUomRelation({
-            ...newUOMGroupRelation
+          .unwrap()
+          .then(() => {
+            uomUnitRefetch();
+            setUomUnit({ ...newUOMGroupUnit });
+            dispatch(
+              notify({
+                msg: 'The UOM group unit was created successfully',
+                sev: 'success'
+              })
+            );
           });
-          setUomRelationUpdated({
-            // id: undefined,
-            // fromUnitId: undefined,
-            // toUnitId: undefined,
-            // relation: 0
+      }
+      else {
+        updateUomGroupUnits(uomUnit)
+          .unwrap()
+          .then(() => {
+            uomUnitRefetch();
+            setUomUnit({ ...newUOMGroupUnit });
+            dispatch(
+              notify({
+                msg: 'The UOM group unit was updated successfully',
+                sev: 'success'
+              })
+            );
           });
-          dispatch(
-            notify({
-              msg: 'The UOM group Relation was successfully ',
-              sev: 'success'
-            })
-          );
+      }
+    };
+
+    const handleSaveRelation = () => {
+      if (!uomRelationUpdated?.fromUnitId) {
+        dispatch(
+          notify({
+            msg: 'Please select From Unit',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!uomRelationUpdated?.toUnitId) {
+        dispatch(
+          notify({
+            msg: 'Please select To Unit',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (
+        uomRelationUpdated?.relation === null ||
+        uomRelationUpdated?.relation === undefined ||
+        uomRelationUpdated?.relation === ''
+      ) {
+        dispatch(
+          notify({
+            msg: 'Please enter relation value',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      if (!uomRelation?.id) {
+        createUomGroupRelation({
+          groupId: uom?.id,
+          UomGroupRelation: uomRelationUpdated
         })
-        .catch(e => {
-          if (e.status === 422) {
-          } else {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warning' }));
-          }
-        });
-    }
-  };
+          .unwrap()
+          .then(() => {
+            uomRelationRefetch();
+            setUomRelation({ ...newUOMGroupRelation });
+            setUomRelationUpdated({
+              fromUnitId: null,
+              toUnitId: null
+            });
+            dispatch(
+              notify({
+                msg: 'The UOM group relation was created successfully',
+                sev: 'success'
+              })
+            );
+          });
+      }
+      else {
+        const updated = {
+          id: uomRelation.id,
+          relation: uomRelationUpdated.relation
+        };
+
+        updateUomRelation({ groupId: uom?.id, uomRelation: updated })
+          .unwrap()
+          .then(() => {
+            uomRelationRefetch();
+            setUomRelation({ ...newUOMGroupRelation });
+            setUomRelationUpdated({});
+            dispatch(
+              notify({
+                msg: 'The UOM group relation was updated successfully',
+                sev: 'success'
+              })
+            );
+          });
+      }
+    };
+
   const handleClear = () => {
     setUom({
       ...newUOMGroup
@@ -606,15 +649,18 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
           icon: <FontAwesomeIcon icon={faBox} />,
           footer: (
             <>
-              <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
-                Clear
-              </MyButton>
-              <MyButton
+
+                          <MyButton
                 onClick={handleSave}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
               >
                 Save
-              </MyButton>{' '}
+              </MyButton>
+              
+              <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
+                Clear
+              </MyButton>
+{' '}
             </>
           )
         },
@@ -625,7 +671,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         { title: 'UOM Conversion', icon: <FontAwesomeIcon icon={faBoxesPacking} /> }
       ]}
       mainContent={conjureFormContent}
-      mainSize="40vw"
+      mainSize="36vw"
     />
   );
 };
