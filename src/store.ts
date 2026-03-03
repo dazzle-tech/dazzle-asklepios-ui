@@ -298,7 +298,6 @@ export const store = configureStore({
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
     [languageService.reducerPath]: languageService.reducer,
-    [translationService.reducerPath]: translationService.reducer,
 
     // practitioner
     [PractitionerService.reducerPath]: PractitionerService.reducer,
@@ -374,7 +373,6 @@ export const store = configureStore({
 
     // reporting
     [resultReportApi.reducerPath]: resultReportApi.reducer,
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
 
     // invoice report
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,

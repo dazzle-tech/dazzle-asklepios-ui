@@ -90,8 +90,16 @@ const DetailsModal = ({
   const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
 
+  // Only search when modal is open and keyword is valid (at least 2 characters)
+  const shouldSkipSearch = !open || !searchKeyword || searchKeyword.trim().length < 2;
+  
   const { data: genericMedicationListResponse } =
-    useSearchBrandMedicationsByNameOrActiveQuery({ keyword: searchKeyword });
+    useSearchBrandMedicationsByNameOrActiveQuery(
+      { keyword: searchKeyword },
+      { 
+        skip: shouldSkipSearch
+      }
+    );
   const genericMedicationData: any[] = Array.isArray(genericMedicationListResponse)
     ? genericMedicationListResponse
     : (genericMedicationListResponse as any)?.data ?? [];
@@ -139,7 +147,11 @@ const DetailsModal = ({
     useUpdatePatientPrescriptionMedicationMutation();
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Reset search keyword when modal closes to prevent unnecessary queries
+      setSearchKeyword('');
+      return;
+    }
     setEditingKey(prescriptionMedication?.key ?? null);
   }, [open, prescriptionMedication?.key]);
 

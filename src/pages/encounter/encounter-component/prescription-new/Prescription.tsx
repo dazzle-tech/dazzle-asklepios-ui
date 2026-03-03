@@ -200,7 +200,7 @@ const Prescription = (props: Props) => {
           patientId,
           encounterId,
           fromFacilityId: authSlice?.tenant?.selectedFacility?.id ?? (null as any),
-          fromDepartmentId: encounter?.departmentKey ?? (null as any),
+          fromDepartmentId: encounter?.departmentId ?? (null as any),
           urgencyLevel: 'NORMAL' 
         } as any).unwrap();
 
@@ -287,30 +287,24 @@ const Prescription = (props: Props) => {
     const lovList = list ?? [];
     if (!lovList.length) return '';
     
-    // Normalize key to string and number for comparison
     const keyStr = String(key);
     const keyNum = Number(key);
     
-    // Try multiple matching strategies
     for (const item of lovList) {
-      // Match by key (string or number) - most common case
       if (String(item?.key) === keyStr || Number(item?.key) === keyNum) {
         const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
         if (display) return String(display);
       }
-      // Match by id (string or number)
       if (String(item?.id) === keyStr || Number(item?.id) === keyNum) {
         const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
         if (display) return String(display);
       }
-      // Match by valueCode (for enum-based LOVs)
       if (item?.valueCode && String(item?.valueCode) === keyStr) {
         const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
         if (display) return String(display);
       }
     }
     
-    // Fallback to original utility function
     const fallback = conjureValueBasedOnKeyFromList(lovList, key, labelKey);
     if (fallback && fallback !== key) return String(fallback);
     
@@ -589,12 +583,10 @@ const Prescription = (props: Props) => {
     }
   };
 
-  // Submit prescription (NEW API)
   const [updatePrescription] = useUpdatePatientPrescriptionMutation();
   const [updateMedicationStatus] = useUpdatePatientPrescriptionMedicationMutation();
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
 
-  // Keep validation flow unchanged: this is called from validation modal "Save".
   const handleSubmitPres = () => {
     if (!currentPrescription?.id) return;
     setSubmitAssignment({
