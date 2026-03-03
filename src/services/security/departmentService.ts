@@ -159,6 +159,7 @@ export const departmentService = createApi({
       },
       providesTags: ['Department']
     }),
+
     // GET /api/setup/department/by-name/{name}?page=&size=&sort=
     getDepartmentByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
@@ -240,6 +241,7 @@ export const departmentService = createApi({
       },
       providesTags: ['Department']
     }),
+
     getDepartmentsBulk: builder.mutation({
       query: (ids: number[]) => ({
         url: '/api/setup/department/bulk',

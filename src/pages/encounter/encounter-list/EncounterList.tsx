@@ -36,7 +36,7 @@ import {
   useStartEncounterMutation
 } from '@/services/encounters/patientEncounterService';
 
-import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import { useGetBulkPatientBasicInfoMutation, useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
@@ -52,6 +52,7 @@ import {
 
 import 'react-tabs/style/react-tabs.css';
 import './styles.less';
+import { skipToken } from '@tanstack/react-query';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -183,7 +184,10 @@ const EncounterList = () => {
     ...newApEncounter,
     discharge: false
   });
-
+  console.log('Initial encounter state:', encounter);
+const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
+const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
+// getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
@@ -241,7 +245,6 @@ const EncounterList = () => {
     searchByField: 'fullName',
     patientName: ''
   });
-
   const [searchTick, setSearchTick] = useState(0);
 
   const [record, setRecord] = useState<any>({});
@@ -368,6 +371,13 @@ const EncounterList = () => {
 
     return Array.from(new Set(ids));
   }, [tableData]);
+  useEffect(() => {
+  const pid =
+  
+    encounter?.patient?.id ;
+
+  if (pid) triggerGetPatientById({ id: pid });
+}, [encounter?.patient?.id]);
 
   useEffect(() => {
     if (patientIdsForBulk.length === 0) return;
@@ -506,31 +516,53 @@ const EncounterList = () => {
       return false;
     }
   };
+  const fetchPatientForEncounter = async (enc: any) => {
+  const pid =
+    enc?.patient?.id ??
+    null;
 
-  const handleGoToVisit = async (encounterData: any, patientData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
+  if (!pid) return null;
 
-    if (encounterData && encounterData.id) {
-      dispatch(setEncounter(encounterData));
-      dispatch(setPatient(encounterData['patientObject']));
+  try {
+    const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
+    return fullPatient;
+  } catch (e) {
+    handleCrudError(e, dispatch, { 'patient.notfound': 'Patient not found.' });
+    return null;
+  }
+};
+const handleGoToVisit = async (encounterData: any) => {
+  const isStarted = await startEncounterSafe(encounterData);
+  if (!isStarted) return;
+
+  dispatch(showSystemLoader());
+  const fullPatient = await fetchPatientForEncounter(encounterData);
+  dispatch(hideSystemLoader());
+
+  if (!fullPatient) {
+    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+    return;
+  }
+
+  dispatch(setEncounter(encounterData));
+  dispatch(setPatient(fullPatient));
+
+  
+  const privatePatientPath = '/user-access-patient-private';
+  const encounterPath = '/encounter';
+  const targetPath = fullPatient.privatePatient ? privatePatientPath : encounterPath;
+
+  navigate(targetPath, {
+    state: {
+      info: 'toEncounter',
+      fromPage: 'EncounterList',
+      patient: fullPatient,
+      encounter: encounterData
     }
+  });
 
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
-
-    navigate(targetPath, {
-      state: {
-        info: 'toEncounter',
-        fromPage: 'EncounterList',
-        patient: patientData,
-        encounter: encounterData
-      }
-    });
-
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
-  };
+  sessionStorage.setItem('encounterPageSource', 'EncounterList');
+};
 
   const handleGoToPreVisitObservations = async (encounterData: any, patientData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
@@ -748,6 +780,7 @@ const EncounterList = () => {
                   onClick={() => {
                     const patientData = rowData?.patientObject;
                     setLocalEncounter(rowData);
+
                     handleGoToVisit(rowData, patientData);
                   }}
                 >

@@ -147,9 +147,6 @@ const AiAssistantPopup: React.FC<AiAssistantPopupProps> = ({
     { skip: !patientKey || !encounterKey || !open }
   );
 
-  console.log('practitioner', practitioner);
-  console.log('encounter==>', encounter);
-  console.log('dia', miniSummary?.diagnosis);
 
   // ✅ Payload مثل الصورة (UserRoleRecommendationRequest shape)
   const aiPayload = useMemo(() => {
@@ -180,7 +177,6 @@ const AiAssistantPopup: React.FC<AiAssistantPopupProps> = ({
     };
   }, [practitioner, patient, encounter, miniSummary]);
 
-  console.log('AI Payload:', aiPayload);
 
   return (
     <MyModal

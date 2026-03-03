@@ -114,6 +114,7 @@ type MyInputProps = {
   fieldLabel?: string;
   enterClick?: () => Promise<boolean | void> | boolean | void;
   isEnum?: boolean;
+  allowEnterNewLine?: boolean;
 };
 
 const MyInput = ({
@@ -322,7 +323,14 @@ const MyInput = ({
               value={record[fieldName] ? record[fieldName] : ''}
               accepter={Textarea}
               onChange={handleValueChange}
-              onKeyDown={focusNextField}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  if (props.allowEnterNewLine) {
+                    return;
+                  }
+                  focusNextField(e);
+                }
+              }}
             />
             {!props.disabled && (
               <div
@@ -439,15 +447,8 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={primaryLabelKey}
             valueKey={props?.selectDataValue ?? ''}
-            value={record?.[fieldName] ?? null}
-            onChange={(value: any) => {
-              if (!setRecord) return;
-              setRecord({
-                ...record,
-                [fieldName]:
-                  value === null || value === undefined || value === '' ? null : Number(value)
-              });
-            }}
+            value={record ? record[fieldName] : ''}
+            onChange={handleValueChange}
             defaultValue={props.defaultSelectValue}
             placeholder={props.placeholder}
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}

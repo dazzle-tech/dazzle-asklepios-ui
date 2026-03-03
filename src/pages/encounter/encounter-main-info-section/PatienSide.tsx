@@ -31,8 +31,7 @@ import { faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import Translate from '@/components/Translate';
 import { useGetPatientWarningsByPatientIdQuery } from '@/services/encounters/patientWarningsService';
-import { newPatient } from '@/types/model-types-constructor-new';
- 
+import { newPatient} from '@/types/model-types-constructor-new';
 
 const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const profileImageFileInputRef = useRef(null);
@@ -227,9 +226,9 @@ useEffect(() => {
         />
         <div>
           <div className="patient-info">
-            <Text className="patient-name">{textOr(patient?.fullName , 'Patient Name')}</Text>
+            <Text className="patient-name">{textOr(patient?.firstName + " " + patient?.lastName, 'Patient Name')}</Text>
           </div>
-          <div className="info-label"># {textOr(patient?.patientMrn, 'MRN')}</div>
+          <div className="info-label"># {textOr(patient?.medicalRecordNumber, 'MRN')}</div>
         </div>
       </div>
 
