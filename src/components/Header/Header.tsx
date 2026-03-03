@@ -155,9 +155,7 @@ const Header: React.FC<HeaderProps> = ({
           childrenNavs={childrenNavs}
         />
         <div className="headerItem">
-          {(pageCode === 'P_Facility' || pageCode === 'ER_Triage') && (
-            <RegistrationWizard />
-          )}
+          {pageCode === 'P_Facility' && <RegistrationWizard />}
           <div className="main-screen-bar-icons-main-container-header">
             <MainScreenBar
               setExpandNotes={setExpandNotes}

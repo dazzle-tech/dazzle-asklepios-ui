@@ -25,7 +25,7 @@ import { faRightLeft, faPills } from '@fortawesome/free-solid-svg-icons';
 import Instructions from './Instructions';
 import Substitues from '../drug-order/SubstitutesNew';
 import clsx from 'clsx';
-import DiagnosticsOrder from '../diagnostics-order';
+import DiagnosticsOrder from '../diagnostics-order-new';
 import CheckIcon from '@rsuite/icons/Check';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
@@ -941,3 +941,4 @@ const DetailsModal = ({
   );
 };
 export default DetailsModal;
+

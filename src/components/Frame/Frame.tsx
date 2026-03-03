@@ -15,7 +15,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../images/mainPageScreenLogo.svg';
+import Logo from '../../images/Logo_BLUE_New.svg';
 import DLogo from '../../images/Logo_Dark.svg';
 import { setScreenKey } from '@/utils/uiReducerActions';
 import MyInput from '../MyInput';
@@ -468,7 +468,7 @@ const Frame = (props: FrameProps) => {
                   ? authSlice.tenant.tenantLogoPath
                   : mode === 'light'
                     ? Logo
-                    : Logo
+                    : DLogo
               }
             />
           )}

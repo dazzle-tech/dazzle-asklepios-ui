@@ -1,33 +1,28 @@
 import MyInput from '@/components/MyInput';
 import {
+  useGetLovDefultByCodeQuery,
   useGetLovValuesByCodeQuery,
-  useSaveUserMutation,
-  useGetLovDefultByCodeQuery
+  useSaveUserMutation
 } from '@/services/setupService';
-import { ApUser } from '@/types/model-types';
-import { newApUser } from '@/types/model-types-constructor';
 
-import { initialListRequest } from '@/types/types';
+import { setMenu, setTenant, setToken, setUser } from '@/reducers/authSlice';
+import { setLang, setTranslations } from '@/reducers/uiSlice';
+import { useLazyGetAccountQuery } from '@/services/accountService';
+import { useLoginMutation } from '@/services/authServiceApi';
+import { enumsApi } from '@/services/enumsApi';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useLazyGetMenuQuery } from '@/services/security/UserRoleService';
+import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
+import { useLazyGetDictionaryQuery } from '@/services/setup/translationService';
+import { store } from '@/store';
 import RemindIcon from '@rsuite/icons/legacy/Remind';
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
-import Logo from '../../../images/mainPageScreenLogo.svg';
+import Logo from '../../../images/Logo_BLUE_New.svg';
 import './styles.less';
-import uiSlice, { setLang, setTranslations } from '@/reducers/uiSlice';
-import { useLoginMutation } from '@/services/authServiceApi';
-import { useDispatch } from 'react-redux';
-import { useLazyGetAccountQuery } from '@/services/accountService';
-import { setDictionary, setMenu, setTenant, setToken, setUser } from '@/reducers/authSlice';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { store } from '@/store';
-import { enumsApi } from '@/services/enumsApi';
-import { useAppSelector } from '@/hooks';
-import { useGetMenuQuery, useLazyGetMenuQuery } from '@/services/security/UserRoleService';
-import { useGetAllLanguagesQuery, useGetLanguageByKeyQuery} from '@/services/setup/languageService';
-import { useLazyGetDictionaryQuery } from '@/services/setup/translationService';
-import { setTranslate3d } from 'rsuite/esm/List/helper/utils';
 
 const SignIn = () => {
   const [getDictionary] = useLazyGetDictionaryQuery();
@@ -135,6 +130,10 @@ const SignIn = () => {
       }
     }
   };
+
+  const storedUser = JSON.parse(localStorage.getItem('user'));
+
+console.log(storedUser);
 
   // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {

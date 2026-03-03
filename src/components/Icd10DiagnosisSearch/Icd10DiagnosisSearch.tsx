@@ -307,7 +307,7 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
         <Col md={24}>
           <Input
             as="textarea"
-            rows={2}
+            rows={4}
             disabled
             value={
               isByIdLoading

@@ -73,6 +73,30 @@ export const catalogDiagnosticTestService = createApi({
       invalidatesTags: ['CatalogTests'],
     }),
 
+    getCatalogsByDepartmentAndNot: builder.query<
+      PagedResult<any>,
+      { departmentId: number | string } & PagedParams
+    >({
+      query: ({ departmentId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/catalog/by-department-or-unassigned',
+        params: {
+          departmentId,
+          page,
+          size,
+          sort,
+        },
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: ['CatalogTests'],
+    }),
+
     /** DELETE by link id — DELETE /api/setup/catalog-diagnostic-test/{id}
      *  */
     deleteCatalogDiagnosticLink: builder.mutation<void, number | string>({
@@ -87,6 +111,7 @@ export const catalogDiagnosticTestService = createApi({
 
 export const {
   useGetAllCatalogDiagnosticTestsQuery,
+  useGetCatalogsByDepartmentAndNotQuery,
   useGetCatalogTestsQuery,
   useLazyGetCatalogTestsQuery,
   useAddTestsToCatalogMutation,

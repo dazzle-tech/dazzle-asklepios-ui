@@ -1,90 +1,103 @@
-import React, { useEffect, useState } from 'react';
-import { Panel, Form, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
-import { skipToken } from '@reduxjs/toolkit/query';
 import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { skipToken } from '@reduxjs/toolkit/query';
+import React, { useEffect, useState } from 'react';
+import { Col, Form, Panel, Row } from 'rsuite';
 import './styles.less';
 
 interface PreviewDiagnosticsOrderProps {
     open: boolean;
-    setOpen: (open: boolean) => void;
     orderTest: any;
 }
 
 const PreviewDiagnosticsOrder: React.FC<PreviewDiagnosticsOrderProps> = ({
     open,
-    setOpen,
     orderTest
 }) => {
-const [previewData, setPreviewData] = useState<any>({
-  testName: '',
-  orderType: '',
-  repeatEveryNumber: '',
-  repeatEveryUnit: '',
-  periodNumber: '',
-  periodUnit: '',
-  firstOccurrenceDateTime: '',
-  notes: '',
-  isRepeat: false,
-  reason: '',
-  receivedLab: ''
-});
+    const [previewData, setPreviewData] = useState<any>({
+        testName: '',
+        orderType: '',
+        repeatEveryNumber: '',
+        repeatEveryUnit: '',
+        periodNumber: '',
+        periodUnit: '',
+        firstOccurrenceDateTime: '',
+        notes: '',
+        isRepeat: false,
+        reason: '',
+        receivedLab: ''
+    });
 
 
 
-const labDepartmentId =
-  orderTest?.receivedLabId && orderTest.receivedLabId !== 0
-    ? orderTest.receivedLabId
-    : null;
+    const labDepartmentId =
+        (orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId) &&
+            (orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId) !== 0
+            ? orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId
+            : null;
 
 
     const {
-    data: receivedDepartment,
-    isFetching: isFetchingDepartment,
-    isError,
-    error
+        data: receivedDepartment,
+        isFetching: isFetchingDepartment
     } = useGetDepartmentByIdQuery(
-    labDepartmentId ?? skipToken
-    );  
+        labDepartmentId ?? skipToken
+    );
 
 
+    useEffect(() => {
+        if (!orderTest) return;
 
+        setPreviewData(prev => ({
+            ...prev,
+            testName: orderTest.test?.testName ?? orderTest.test?.name ?? '-',
+            orderType:
+                orderTest.orderTypeLvalue?.lovDisplayVale ??
+                orderTest.orderType ??
+                orderTest.test?.type ??
+                '-',
+            repeatEveryNumber: orderTest.repeatEveryNumber ?? '',
+            repeatEveryUnit: orderTest.repeatEveryUnit ?? '',
+            periodNumber: orderTest.periodNumber ?? '',
+            periodUnit: orderTest.periodUnit ?? '',
+            firstOccurrenceDateTime: orderTest.firstOccurrenceDateTime ?? '',
+            notes: orderTest.notes ?? '',
+            isRepeat: Boolean(orderTest.isRepeat),
+            reason:
+                orderTest.reasonLvalue?.lovDisplayVale ??
+                orderTest.reason ??
+                '-'
+        }));
+    }, [orderTest]);
 
-        
-useEffect(() => {
-  if (!orderTest) return;
+    useEffect(() => {
+        if (!labDepartmentId) {
+            setPreviewData(prev => ({ ...prev, receivedLab: '-' }));
+            return;
+        }
 
-  if (!labDepartmentId) {
-    setPreviewData(prev => ({
-      ...prev,
-      receivedLab: '-'
-    }));
-    return;
-  }
+        if (isFetchingDepartment) {
+            setPreviewData(prev => ({ ...prev, receivedLab: 'Loading...' }));
+            return;
+        }
 
-  setPreviewData({
-    testName: orderTest.test?.testName ?? '-',
-    orderType: orderTest.orderTypeLvalue?.lovDisplayVale ?? '-',
-    repeatEveryNumber: orderTest.repeatEveryNumber ?? '-',
-    repeatEveryUnit: orderTest.repeatEveryUnit ?? '-',
-    periodNumber: orderTest.periodNumber ?? '-',
-    periodUnit: orderTest.periodUnit ?? '-',
-    firstOccurrenceDateTime: orderTest.firstOccurrenceDateTime ?? '-',
-    notes: orderTest.notes ?? '-',
-    isRepeat: !!orderTest.isRepeat,
-    reason: orderTest.reasonLvalue?.lovDisplayVale ?? '-',
+        setPreviewData(prev => ({
+            ...prev,
+            receivedLab:
+                receivedDepartment?.name ??
+                receivedDepartment?.translatedObject?.name ??
+                '-'
+        }));
+    }, [labDepartmentId, receivedDepartment, isFetchingDepartment]);
 
-    receivedLab: isFetchingDepartment
-      ? 'Loading...'
-      : receivedDepartment?.name
-        ?? receivedDepartment?.translatedObject?.name
-        ?? '-'
-  });
-}, [orderTest, receivedDepartment, isFetchingDepartment, labDepartmentId]);
 
 
     if (!orderTest) return null;
+
+
+
+
 
     return (
         <>
@@ -123,15 +136,6 @@ useEffect(() => {
                                                 disabled
                                             />
                                         </Col>
-                                        {/* <Col md={8}>
-                      <MyInput
-                        fieldType="text"
-                        fieldLabel="Order Priority"
-                        record={previewData}
-                        fieldName="priority"
-                        disabled
-                      />
-                    </Col> */}
                                         <Col md={8}>
                                             <MyInput
                                                 fieldType="text"
@@ -154,7 +158,6 @@ useEffect(() => {
                                 }
                             />
 
-                            {/* Repeat Details */}
                             {previewData.isRepeat && (
                                 <SectionContainer
                                     title="Repeat Details"
@@ -167,9 +170,9 @@ useEffect(() => {
                                                     record={previewData}
                                                     fieldName="repeatEveryNumber"
                                                     disabled
-                                                    afterLabel={previewData.repeatEveryUnit}
                                                 />
                                             </Col>
+
                                             <Col md={8}>
                                                 <MyInput
                                                     fieldType="text"
@@ -177,9 +180,9 @@ useEffect(() => {
                                                     record={previewData}
                                                     fieldName="periodNumber"
                                                     disabled
-                                                    afterLabel={previewData.periodUnit}
                                                 />
                                             </Col>
+
                                             <Col md={8}>
                                                 <MyInput
                                                     fieldType="datetime"
@@ -193,6 +196,7 @@ useEffect(() => {
                                     }
                                 />
                             )}
+
 
                             {/* Notes */}
                             <SectionContainer
@@ -224,7 +228,6 @@ useEffect(() => {
                                                     record={previewData}
                                                     fieldName="repeatEveryNumber"
                                                     disabled
-                                                    afterLabel={previewData.repeatEveryUnit}
                                                 />
                                             </Col>
                                         </Row>
@@ -238,7 +241,6 @@ useEffect(() => {
                                                     record={previewData}
                                                     fieldName="periodNumber"
                                                     disabled
-                                                    afterLabel={previewData.periodUnit}
                                                 />
                                             </Col>
                                         </Row>
