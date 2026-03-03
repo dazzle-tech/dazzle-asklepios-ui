@@ -8,7 +8,7 @@ import {
 import { useGetAllergensQuery } from '@/services/setupService';
 import { ApAttachment } from '@/types/model-types';
 import { initialListRequest } from '@/types/types';
-import { calculateAgeFormat } from '@/utils';
+import { calculateAgeFormat, formatEnumString } from '@/utils';
 import {
   faExclamationTriangle,
   faHandDots,
@@ -27,6 +27,7 @@ import './styles.less';
 //add new patient edits
 
 const PatientSide = ({ patient, encounter }) => {
+  console.log("PATIENT SIDE", patient);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
   const profileImageFileInputRef = useRef(null);
@@ -40,7 +41,7 @@ const PatientSide = ({ patient, encounter }) => {
       {
         fieldName: 'patient_key',
         operator: 'match',
-        value: patient?.key ?? undefined
+        value: patient?.id ?? undefined
       }
     ]
   });
@@ -53,11 +54,11 @@ const PatientSide = ({ patient, encounter }) => {
       sortBy: 'createdAt',
       sortType: 'desc',
       filters: [
-        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+        { fieldName: 'patient_key', operator: 'match', value: patient?.id },
         { fieldName: 'status_lkey', operator: 'notMatch', value: '3196709905099521' } // Exclude cancelled
       ]
     },
-    { skip: !patient?.key }
+    { skip: !patient?.id }
   );
 
   const { data: warningsResponse, isLoading: warningsLoading } = useGetWarningsQuery(
@@ -67,11 +68,11 @@ const PatientSide = ({ patient, encounter }) => {
       sortBy: 'createdAt',
       sortType: 'desc',
       filters: [
-        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+        { fieldName: 'patient_key', operator: 'match', value: patient?.id },
         { fieldName: 'status_lkey', operator: 'notMatch', value: '3196709905099521' } // Exclude cancelled
       ]
     },
-    { skip: !patient?.key }
+    { skip: !patient?.id }
   );
 
   const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
@@ -89,9 +90,9 @@ const PatientSide = ({ patient, encounter }) => {
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
-      refKey: patient?.key
+      refKey: patient?.id
     },
-    { skip: !patient?.key }
+    { skip: !patient?.id }
   );
 
   const toNumber = (v: any) => {
@@ -185,9 +186,9 @@ const PatientSide = ({ patient, encounter }) => {
         />
         <div>
           <div className="patient-info">
-            <Text className="info-label-full-name">{textOr(patient?.fullName, 'Patient Name')}</Text>
+            <Text className="info-label-full-name">{textOr(`${patient?.firstName ?? ''} ${patient?.lastName ?? ''}`, 'Patient Name')}</Text>
           </div>
-          <div className="info-label"># {textOr(patient?.patientMrn, 'MRN')}</div>
+          <div className="info-label"># {textOr(patient?.medicalRecordNumber, 'MRN')}</div>
         </div>
       </div>
 
@@ -221,12 +222,12 @@ const PatientSide = ({ patient, encounter }) => {
       <div className="info-section">
         <div className="info-column">
           <Text className="info-label">Age</Text>
-          <Text className="info-value">{patient?.dob ? calculateAgeFormat(patient?.dob) : ''}</Text>
+          <Text className="info-value">{patient?.dateOfBirth ? calculateAgeFormat(patient?.dateOfBirth) : ''}</Text>
         </div>
 
         <div className="info-column">
           <Text className="info-label">Gender</Text>
-          <Text className="info-value">{textOr(patient?.genderLvalue?.lovDisplayVale, '')}</Text>
+          <Text className="info-value">{textOr(formatEnumString(patient?.sexAtBirth), '')}</Text>
         </div>
       </div>
       <Divider className="divider-thin" />

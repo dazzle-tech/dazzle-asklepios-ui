@@ -52,7 +52,7 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
         fromDate: today,
         toDate: today
     });
-
+    const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
     const [orderDate, setOrderDate] = useState({
         fromDate: null,
         toDate: null
@@ -73,6 +73,8 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
     const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
 
+const isSelected = (row: any) =>
+  selectedReportId === row.id ? 'selected-row' : '';
 
     const queryParams: any = {
         processingStatus: 'RESULT_APPROVED',
@@ -456,10 +458,27 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
                 page={page}
                 rowsPerPage={rowsPerPage}
                 totalCount={totalCount}
+                rowClassName={isSelected}
                 onPageChange={(_, p) => setPage(p)}
                 onRowsPerPageChange={e => {
                     setRowsPerPage(+e.target.value);
                     setPage(0);
+                }}
+                onRowClick={(row: any) => {
+                    setSelectedReportId(row.id); // 🔥 مهم للتحديد
+
+                    const ot = orderTestsMap[String(row.orderTestId)];
+                    if (!ot) return;
+
+                    const order = ordersMap[String(ot.orderId)];
+                    if (!order) return;
+
+                    const rawPatient = patientsMap[String(order.patientId)];
+                    if (!rawPatient) return;
+
+                    setPatient(rawPatient);
+
+                    setEncounter(order);
                 }}
             />
 

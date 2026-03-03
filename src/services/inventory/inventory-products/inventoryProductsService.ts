@@ -36,7 +36,7 @@ export const inventoryProductsService = createApi({
   endpoints: (builder) => ({
     getInventoryProducts: builder.query<PagedResult<InventoryProduct>, PagedParams>({
       query: (params) => ({
-        url: '/api/inventory/inventory-products',
+        url: '/api/setup/inventory-products',
         params,
       }),
       transformResponse: (response: InventoryProduct[], meta) =>
@@ -60,7 +60,7 @@ export const inventoryProductsService = createApi({
       { name: string } & PagedParams
     >({
       query: ({ name, page, size, sort = 'id,asc', timestamp }) => ({
-        url: `/api/inventory/inventory-products/by-name/${encodeURIComponent(name)}`,
+        url: `/api/setup/inventory-products/by-name/${encodeURIComponent(name)}`,
         params: { name, page, size, sort, timestamp },
       }),
       transformResponse: (response: InventoryProduct[], meta) =>
@@ -73,7 +73,7 @@ export const inventoryProductsService = createApi({
       { type: string } & PagedParams
     >({
       query: ({ type, page, size, sort = 'id,asc', timestamp }) => ({
-        url: `/api/inventory/inventory-products/by-type/${encodeURIComponent(type)}`,
+        url: `/api/setup/inventory-products/by-type/${encodeURIComponent(type)}`,
         params: { type, page, size, sort, timestamp },
       }),
       transformResponse: (response: InventoryProduct[], meta) =>
@@ -86,7 +86,7 @@ export const inventoryProductsService = createApi({
       { inventoryType: string } & PagedParams
     >({
       query: ({ inventoryType, page, size, sort = 'id,asc', timestamp }) => ({
-        url: `/api/inventory/inventory-products/by-inventory-type/${encodeURIComponent(
+        url: `/api/setup/inventory-products/by-inventory-type/${encodeURIComponent(
           inventoryType
         )}`,
         params: { inventoryType, page, size, sort, timestamp },
@@ -101,7 +101,7 @@ export const inventoryProductsService = createApi({
       { baseUom: number } & PagedParams
     >({
       query: ({ baseUom, page, size, sort = 'id,asc', timestamp }) => ({
-        url: `/api/inventory/inventory-products/by-base-uom/${encodeURIComponent(baseUom)}`,
+        url: `/api/setup/inventory-products/by-base-uom/${encodeURIComponent(baseUom)}`,
         params: { baseUom, page, size, sort, timestamp },
       }),
       transformResponse: (response: InventoryProduct[], meta) =>
@@ -111,7 +111,7 @@ export const inventoryProductsService = createApi({
 
     getInventoryProductById: builder.query<InventoryProduct, { id: number | string }>({
       query: ({ id }) => ({
-        url: `/api/inventory/inventory-products/${id}`,
+        url: `/api/setup/inventory-products/${id}`,
       }),
       transformResponse: (response: InventoryProduct) => response,
       providesTags: (result, error, id) => [
@@ -121,7 +121,7 @@ export const inventoryProductsService = createApi({
 
     createInventoryProduct: builder.mutation<InventoryProduct, InventoryProduct>({
       query: (inventoryProduct) => ({
-        url: '/api/inventory/inventory-products',
+        url: '/api/setup/inventory-products',
         method: 'POST',
         body: inventoryProduct,
       }),
@@ -130,7 +130,7 @@ export const inventoryProductsService = createApi({
 
     updateInventoryProduct: builder.mutation<InventoryProduct, InventoryProduct>({
       query: (inventoryProduct) => ({
-        url: `/api/inventory/inventory-products/${inventoryProduct.id}`,
+        url: `/api/setup/inventory-products/${inventoryProduct.id}`,
         method: 'PUT',
         body: inventoryProduct,
       }),
@@ -145,7 +145,7 @@ export const inventoryProductsService = createApi({
       { id: number | string }
     >({
       query: ({ id }) => ({
-        url: `/api/inventory/inventory-products/${id}/toggle-active`,
+        url: `/api/setup/inventory-products/${id}/toggle-active`,
         method: 'POST',
       }),
       invalidatesTags: (result, error, { id }) => [
@@ -159,7 +159,7 @@ export const inventoryProductsService = createApi({
       { criteria: InventoryProductsSearchCriteria } & PagedParams
     >({
       query: ({ criteria, page, size, sort = 'id,asc', timestamp }) => ({
-        url: '/api/inventory/inventory-products/advance-search',
+        url: '/api/setup/inventory-products/advance-search',
         method: 'POST',
         body: criteria,
         params: { page, size, sort, timestamp },

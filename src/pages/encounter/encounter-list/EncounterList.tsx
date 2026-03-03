@@ -45,7 +45,12 @@ import {
 
 import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+
+import { useGetBulkPatientBasicInfoMutation, useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
+
+import 'react-tabs/style/react-tabs.css';
+import './styles.less';
+import { skipToken } from '@tanstack/react-query';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -166,8 +171,14 @@ const EncounterList = () => {
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent('Patients Visit List'));
 
-  const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
-
+  const [encounter, setLocalEncounter] = useState<any>({
+    ...newApEncounter,
+    discharge: false
+  });
+  console.log('Initial encounter state:', encounter);
+const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
+const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
+// getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
@@ -320,6 +331,13 @@ const EncounterList = () => {
       .map(v => String(v));
     return Array.from(new Set(ids));
   }, [tableData]);
+  useEffect(() => {
+  const pid =
+  
+    encounter?.patient?.id ;
+
+  if (pid) triggerGetPatientById({ id: pid });
+}, [encounter?.patient?.id]);
 
   useEffect(() => {
     if (patientIdsForBulk.length === 0) return;
@@ -404,27 +422,53 @@ const EncounterList = () => {
       return false;
     }
   };
+  const fetchPatientForEncounter = async (enc: any) => {
+  const pid =
+    enc?.patient?.id ??
+    null;
 
-  const handleGoToVisit = async (encounterData: any, patientData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
+  if (!pid) return null;
 
-    dispatch(setEncounter(encounterData));
-    dispatch(setPatient(patientData));
+  try {
+    const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
+    return fullPatient;
+  } catch (e) {
+    handleCrudError(e, dispatch, { 'patient.notfound': 'Patient not found.' });
+    return null;
+  }
+};
+const handleGoToVisit = async (encounterData: any) => {
+  const isStarted = await startEncounterSafe(encounterData);
+  if (!isStarted) return;
 
-    const targetPath = patientData?.isPrivatePatient
-      ? '/user-access-patient-private'
-      : '/encounter';
-    navigate(targetPath, {
-      state: {
-        info: 'toEncounter',
-        fromPage: 'EncounterList',
-        patient: patientData,
-        encounter: encounterData
-      }
-    });
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
-  };
+  dispatch(showSystemLoader());
+  const fullPatient = await fetchPatientForEncounter(encounterData);
+  dispatch(hideSystemLoader());
+
+  if (!fullPatient) {
+    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+    return;
+  }
+
+  dispatch(setEncounter(encounterData));
+  dispatch(setPatient(fullPatient));
+
+  
+  const privatePatientPath = '/user-access-patient-private';
+  const encounterPath = '/encounter';
+  const targetPath = fullPatient.privatePatient ? privatePatientPath : encounterPath;
+
+  navigate(targetPath, {
+    state: {
+      info: 'toEncounter',
+      fromPage: 'EncounterList',
+      patient: fullPatient,
+      encounter: encounterData
+    }
+  });
+
+  sessionStorage.setItem('encounterPageSource', 'EncounterList');
+};
 
   const handleGoToPreVisitObservations = async (encounterData: any, patientData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
