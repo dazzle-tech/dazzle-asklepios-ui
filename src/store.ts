@@ -182,7 +182,10 @@ import { progressNoteService } from './services/patients/progressNoteService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { patientPrescriptionService } from './services/patients/Prescription/patientPrescriptionService';
+import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
+
 
 export const store = configureStore({
   reducer: {
@@ -203,6 +206,9 @@ export const store = configureStore({
     // patient
     [patientSlice.name]: patientSlice.reducer,
     [patientService.reducerPath]: patientService.reducer,
+
+    [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
+    [patientPrescriptionMedicationService.reducerPath]: patientPrescriptionMedicationService.reducer,
     [newPatientService.reducerPath]: newPatientService.reducer,
     [addressService.reducerPath]: addressService.reducer,
     [hipaaService.reducerPath]: hipaaService.reducer,
@@ -297,7 +303,6 @@ export const store = configureStore({
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
     [languageService.reducerPath]: languageService.reducer,
-    [translationService.reducerPath]: translationService.reducer,
 
     // practitioner
     [PractitionerService.reducerPath]: PractitionerService.reducer,
@@ -373,7 +378,6 @@ export const store = configureStore({
 
     // reporting
     [resultReportApi.reducerPath]: resultReportApi.reducer,
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
 
     // invoice report
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
@@ -472,6 +476,8 @@ export const store = configureStore({
 
       // patient
       patientService.middleware,
+      patientPrescriptionService.middleware,
+      patientPrescriptionMedicationService.middleware,
       newPatientService.middleware,
       addressService.middleware,
       hipaaService.middleware,

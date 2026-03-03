@@ -1528,6 +1528,59 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   facilityId: null,
   departmentId: null,
   formJson: null
+}
+
+
+export const newPatientPrescription: modelTypes.PatientPrescription = {
+  id: undefined as any, 
+  patientId: null as any,
+  encounterId: null as any,
+  prescriptionNum: null as any,
+  prescriptionDate: null as any,
+  urgencyLevel: null,
+  status: null,
+  fromFacilityId: null as any,
+  fromDepartmentId: null as any,
+  toFacilityId: null,
+  toDepartmentId: null,
+  createdBy: null as any,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+
+export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMedication = {
+  id: undefined as any,
+  prescriptionHeaderId: null as any,
+  medicationsId: null as any,
+  instructionsType: null,
+  instructions: null,
+  dose: null,
+  doesUnit: null,
+  rout: null,
+  frequency: null,
+  duration: null,
+  durationType: null,
+  chronicMedication: false,
+  maximumDose: null,
+  validUtil: null,
+  allowedSubstitute: false,
+  indicationManually: null,
+  indicationUse: null,
+  indicationIcd: null,
+  parametersToMonitor: null,
+  numberOfRefills: null,
+  refillValue: null,
+  refillUnit: null,
+  notes: null,
+  extraDocumentation: null,
+  administrationInstructions: null,
+  status: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
 };
 
 // =====================

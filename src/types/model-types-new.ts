@@ -1950,6 +1950,59 @@ export interface OrganizationDefinition {
   taxValue?: number;
 }
 
+
+export interface PatientPrescription {
+  id: number;
+  patientId: number;
+  encounterId: number;
+  prescriptionNum: number;
+  prescriptionDate: string; 
+  urgencyLevel: string;
+  status: string;
+  fromFacilityId: number;
+  fromDepartmentId: number;
+  toFacilityId?: number | null;
+  toDepartmentId?: number | null;
+  createdBy: string;
+  createdDate?: string | null;       
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;  
+}
+
+
+export interface PatientPrescriptionMedication {
+  id: number;
+  prescriptionHeaderId: number;
+  medicationsId: number;
+  instructionsType: null;
+  instructions?: string | null;
+  dose?: number | null;
+  doesUnit?: string | null;
+  rout?: string | null;
+  frequency?: string | null;
+  duration?: number | null;
+  durationType?: string | null;
+  chronicMedication?: boolean | null;
+  maximumDose?: number | null;
+  validUtil?: string | null;
+  allowedSubstitute?: boolean | null;
+  indicationManually?: string | null;
+  indicationUse?: string | null;
+  indicationIcd?: string | null;
+  parametersToMonitor?: string | null;
+  numberOfRefills?: number | null;
+  refillValue?: number | null;
+  refillUnit?: string | null;
+  notes?: string | null;
+  extraDocumentation?: string | null;
+  administrationInstructions?: string | null;
+  status?: null;
+  createdBy: string;
+  createdDate?: string | null;       
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;  
+}
+
 export interface ProgressNote {
   id: number;
   patient?: {
@@ -2277,6 +2330,7 @@ export interface DiagnosticOrderTestResultResponseVM {
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
 }
+
 
 export interface FilledProfileTestIdsParams {
   orderTestIds: number[];
