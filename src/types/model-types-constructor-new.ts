@@ -1905,3 +1905,31 @@ export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProduct
   productId: undefined,
   quantity: 0
 };
+export const newPatientAdministrativeWarning: modelTypes.PatientAdministrativeWarningsResponseVM = {
+  id: undefined,
+  patientId: undefined,
+  warningTypeLkey: undefined,
+  warningTypeDisplay: undefined,
+  description: '',
+  isValid: true,
+  createdAt: undefined,
+  createdBy: undefined,
+  dateResolved: undefined,
+  resolvedBy: undefined,
+  resolutionUndoDate: undefined,
+  resolvedUndoBy: undefined
+};
+
+export const newPatientAdministrativeWarningCreateDTO: modelTypes.PatientAdministrativeWarningsCreateDTO = {
+  patientId: undefined,
+  warningType: undefined,
+  description: ''
+};
+
+export const newPatientAdministrativeWarningResolveDTO: modelTypes.PatientAdministrativeWarningsResolveDTO = {
+  id: undefined
+};
+
+export const newPatientAdministrativeWarningUndoResolveDTO: modelTypes.PatientAdministrativeWarningsUndoResolveDTO = {
+  id: undefined
+};

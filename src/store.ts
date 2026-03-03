@@ -188,6 +188,7 @@ import { patientPrescriptionService } from './services/patients/Prescription/pat
 import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 
+import {patientAdministrativeWarningsService} from './services/patient/patientAdministrativeWarningsService';
 
 export const store = configureStore({
   reducer: {
@@ -465,7 +466,8 @@ export const store = configureStore({
     [patientDiagnosticResultHistoryService.reducerPath]:
       patientDiagnosticResultHistoryService.reducer,
 
-    [ICDTreeService.reducerPath]: ICDTreeService.reducer
+    [ICDTreeService.reducerPath]: ICDTreeService.reducer,
+    [patientAdministrativeWarningsService.reducerPath]: patientAdministrativeWarningsService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -680,7 +682,8 @@ export const store = configureStore({
       portalService.middleware,
       telephonicConsultationService.middleware,
       ICDTreeService.middleware,
-      patientServicesAndProductsService.middleware
+      patientServicesAndProductsService.middleware,
+      patientAdministrativeWarningsService.middleware,
     ])
 });
 

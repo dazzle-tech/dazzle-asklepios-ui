@@ -2739,3 +2739,34 @@ export type PatientServiceProductUpdateDTO = {
   productId?: number;
   quantity: number;
 };
+export interface PatientAdministrativeWarningsResponseVM {
+  id: number;
+  patientId: number;
+  warningTypeLkey: string;
+  warningTypeDisplay?: string;
+  description?: string;
+  isValid: boolean;
+
+  createdAt?: string;
+  createdBy?: string;
+
+  dateResolved?: string;
+  resolvedBy?: string;
+
+  resolutionUndoDate?: string;
+  resolvedUndoBy?: string;
+}
+
+export interface PatientAdministrativeWarningsCreateDTO {
+  patientId: number;
+  warningType: string;
+  description?: string;
+}
+
+export interface PatientAdministrativeWarningsResolveDTO {
+  id: number;
+}
+
+export interface PatientAdministrativeWarningsUndoResolveDTO {
+  id: number;
+}
