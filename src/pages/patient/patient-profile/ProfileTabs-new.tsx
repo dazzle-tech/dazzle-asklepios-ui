@@ -18,6 +18,7 @@ import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
 import InsuranceTab from './tabs/InsuranceTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
+import NextOfKin from './tabs/NextOfKin/NextOfKin';
 
 interface ProfileTabsProps {
   localPatient: Patient;
@@ -152,6 +153,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     {
       title: 'Family Members',
       content: <PatientFamilyMembers localPatient={localPatient} />
+    },
+    {
+      title: 'Next of Kin',
+      content: <NextOfKin patient={localPatient} isClick={!localPatient.id}/>
     },
     {
       title: 'Documents',
