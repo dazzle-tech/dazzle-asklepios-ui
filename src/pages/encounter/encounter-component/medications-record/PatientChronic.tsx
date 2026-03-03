@@ -266,16 +266,18 @@ const PatientChronic = ({ genericMedicationListResponse, customeInstructions, pa
 
   console.log('orderMedicationsPatient', paginatedData);
 
-    return (<>
-        <MyTable
-            data={paginatedData ?? []}
-            columns={tableColumns}
-            page={pageIndex}
-            rowsPerPage={rowsPerPage}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-        />
-    </>)
-}
-export default PatientChronic
+  return (
+    <>
+      <MyTable
+        data={paginatedData ?? []}
+        columns={tableColumns}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+    </>
+  );
+};
+export default PatientChronic;
