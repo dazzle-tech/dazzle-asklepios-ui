@@ -86,7 +86,6 @@ const StartTriage = ({ patient, encounter, sourcePage }) => {
   useEffect(() => {
     if (saveTriageMutation && saveTriageMutation.status === "fulfilled") {
       setEmergencyTriage(saveTriageMutation.data);
-      // لو حابب تحدث الـ encounter من الأب، لازم تستقبل setEncounter من الـ props
       // setEncounter({ ...encounter, emergencyLevelLkey: emergencyTriage?.emergencyLevelLkey });
     }
   }, [saveTriageMutation]);
@@ -230,7 +229,6 @@ const StartTriage = ({ patient, encounter, sourcePage }) => {
               onClick={() => {
                 setOpenSendToModal(true);
               }}
-              // التعديل المهم: الاعتماد فقط على emergencyTriage.emergencyLevelLkey
               disabled={!emergencyTriage?.emergencyLevelLkey}
             >
               <Translate> Send to </Translate>
