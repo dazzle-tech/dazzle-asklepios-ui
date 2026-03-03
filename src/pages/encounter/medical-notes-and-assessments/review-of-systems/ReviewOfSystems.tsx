@@ -42,7 +42,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
     data: rosList,
     refetch: refetchRos,
     isLoading: rosLoading
-  } = useGetReviewOfSystemByEncounterQuery(encounter.key, { skip: !encounter?.key });
+  } = useGetReviewOfSystemByEncounterQuery(encounter.id, { skip: !encounter?.id });
 
   const [createRos] = useCreateReviewOfSystemMutation();
   const [updateRos] = useUpdateReviewOfSystemMutation();
@@ -88,7 +88,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
         title: <Translate>#</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
-          const detailId = String(rowData.key);
+          const detailId = String(rowData.id);
           const existing = mainData[detailId]; // { id, bodySystem, systemDetail, note, ... }
           return (
             <Checkbox
@@ -99,8 +99,8 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
                   if (checked) {
                     // ✅ Create (upsert behavior from backend) - store keys
                     const saved = await createRos({
-                      patientId: patient.key, // ✅ adjust if your patient id field is patient.id not key
-                      encounterId: encounter.key,
+                      patientId: patient.id, // ✅ adjust if your patient id field is patient.id not key
+                      encounterId: encounter.id,
                       bodySystem: String(selectedSystem.key),
                       systemDetail: detailId,
                       note: existing?.note ?? ''

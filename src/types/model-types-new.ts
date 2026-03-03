@@ -2832,3 +2832,38 @@ export type PatientServiceProductUpdateDTO = {
   productId?: number;
   quantity: number;
 };
+export type NextOfKin = {
+  id: number;
+  patientId: number; 
+  name: string;
+  relationship: string;
+  address: string;
+  email: string;
+  mobileNumber: string;
+  telephone?: string | null;
+  internationalNumber?: string | null;
+  landlineNumber?: string | null;
+};
+
+export type NextOfKinCreateDTO = {
+  patientId: number;
+  name: string;
+  relationship: string;
+  address: string;
+  email: string;
+  mobileNumber: string;
+  telephone?: string | null;
+  internationalNumber?: string | null;
+  landlineNumber?: string | null;
+};
+
+export type NextOfKinUpdateDTO = {
+  name: string;
+  relationship: string;
+  address: string;
+  email: string;
+  mobileNumber: string;
+  telephone?: string | null;
+  internationalNumber?: string | null;
+  landlineNumber?: string | null;
+};

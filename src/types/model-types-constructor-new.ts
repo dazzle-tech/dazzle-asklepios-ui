@@ -1988,3 +1988,15 @@ export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProduct
   productId: undefined,
   quantity: 0
 };
+export const newNextOfKin: modelTypes.NextOfKin = {
+  id: undefined,
+  patientId: undefined,
+  name: '',
+  relationship: '',
+  address: '',  
+  email: '',
+  mobileNumber: '',
+  telephone: null,
+  internationalNumber: null,
+  landlineNumber: null
+};
