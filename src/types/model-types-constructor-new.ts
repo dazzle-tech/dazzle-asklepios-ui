@@ -1629,9 +1629,7 @@ export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = 
   sourceOfInformation: null,
   note: '',
   status: 'ACTIVE',
-  allergicReactions: '',
-
-  activeIngredients: [],
+  actionTaken: ''
 }
 
 export const newPatientAllergiesUpdateDTO: modelTypes.PatientAllergiesUpdateDTO = {
@@ -1655,7 +1653,6 @@ export const newPatientAllergiesUpdateDTO: modelTypes.PatientAllergiesUpdateDTO 
   note: '',
   allergicReactions: '',
   activeIngredients: [],   
-  actionTaken: ''
 }
 
 export const newPatientWarningsUpdateDTO: modelTypes.PatientWarningsUpdateDTO = {
