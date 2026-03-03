@@ -1,28 +1,30 @@
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
-import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { useGetAllergiesQuery, useSaveAllergiesMutation } from '@/services/observationService';
-import { useGetAllergensQuery } from '@/services/setupService';
-import { ApVisitAllergies } from '@/types/model-types';
-import { newApVisitAllergies } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import { faArrowRotateRight, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import ReloadIcon from '@rsuite/icons/Reload';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
 import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
-import { formatDateWithoutSeconds } from '@/utils';
-import { resetRefetchEncounter, setRefetchEncounter } from '@/reducers/refetchEncounterState';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { useCancelPatientAllergyMutation, useGetPatientAllergiesByPatientIdQuery, useResolvePatientAllergyMutation, useUndoResolvePatientAllergyMutation } from '@/services/encounters/patientAllergiesService';
+import { PatientAllergiesResponseVM } from '@/types/model-types-new';
+import { patientAllergiesResponseVM } from '@/types/model-types-constructor-new';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
+import { useGetAllergensQuery } from '@/services/setup/allergensService';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import AllergyDetailsSection from './AllergyDetailsSection';
+import { useGetUserFullNameByLoginQuery } from '@/services/userService';
 
 interface AllergiesProps {
   patient?: any;
@@ -32,264 +34,281 @@ interface AllergiesProps {
   showTableButtons?: boolean;
 }
 
-const Allergies = (props: AllergiesProps) => {
-  const location = useLocation();
+const NameCell = ({ login }: { login?: string | null }) => {
+  const { data: fullName } = useGetUserFullNameByLoginQuery(login ?? '', {
+    skip: !login
+  });
+  return <span>{fullName || login || '-'}</span>;
+};
 
+const Allergies = (props: AllergiesProps) => {
+
+  const location = useLocation();
+  const dispatch = useAppDispatch();
+  const authSlice = useAppSelector(state => state.auth);
   const patient = props.patient ?? location.state?.patient ?? {};
   const encounter = props.encounter ?? location.state?.encounter ?? {};
   const edit = props.edit ?? location.state?.edit ?? false;
-  const { showTableActions = true, showTableButtons = true } = props;
-   const authSlice = useAppSelector(state => state.auth);
 
-  const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
-  const [showCanceled, setShowCanceled] = useState(true);
-  const [showPrev, setShowPrev] = useState(true);
+  const [allerges, setAllerges] = useState<PatientAllergiesResponseVM>({ ...patientAllergiesResponseVM });
+  const [showCanceled, setShowCanceled] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [openToAdd, setOpenToAdd] = useState(true);
-
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-      {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '3196709905099521'
-      }
-    ]
-  });
-
-  const {
-    data: allergiesListResponse,
-    refetch: fetchallerges,
-    isLoading
-  } = useGetAllergiesQuery({ ...listRequest });
-
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
 
-  const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
-  const [saveAllergies] = useSaveAllergiesMutation();
-  const dispatch = useAppDispatch();
+  // Pagination values
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
+  const [sortColumn, setSortColumn] = useState('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
-  const isSelected = (rowData: any) =>
-    rowData && allerges && rowData.key === allerges.key ? 'selected-row' : '';
-
-  useEffect(() => {
-    if (showPrev) {
-      setListRequest(prev => ({
-        ...prev,
-        filters: [
-          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-          {
-            fieldName: 'status_lkey',
-            operator: showCanceled ? 'notMatch' : 'match',
-            value: '3196709905099521'
-          },
-          { fieldName: 'visit_key', operator: 'match', value: encounter.key }
-        ]
-      }));
-    } else {
-      setListRequest(prev => ({
-        ...prev,
-        filters: [
-          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-          {
-            fieldName: 'status_lkey',
-            operator: showCanceled ? 'notMatch' : 'match',
-            value: '3196709905099521'
-          }
-        ]
-      }));
-    }
-  }, [showPrev, showCanceled, patient?.key, encounter.key]);
-
-  useEffect(() => {
-    fetchallerges();
-  }, [listRequest, fetchallerges]);
-
-  const handleClear = () => {
-    setAllerges({
-      ...newApVisitAllergies,
-      allergyTypeLkey: null,
-      allergenKey: null,
-      onsetLkey: null,
-      reactionDescription: null,
-      sourceOfInformationLkey: null,
-      treatmentStrategyLkey: null,
-      severityLkey: null,
-      criticalityLkey: null,
-      typeOfPropensityLkey: null
-    });
-  };
-
-  const handleCancle = async () => {
-    try {
-      await saveAllergies({
-        ...allerges,
-        statusLkey: '3196709905099521',
-        isValid: false,
-        deletedAt: Date.now(),
-        deletedBy: authSlice.user?.login
-      }).unwrap();
-
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-      dispatch(setRefetchEncounter(true));
-      await fetchallerges();
-
-      setOpenCancellationReasonModel(false);
-    } catch {
-      dispatch(notify({ msg: 'Deleted Failed', sev: 'error' }));
-    }
-  };
-
-  const handleResolved = async () => {
-    try {
-      await saveAllergies({
-        ...allerges,
-        statusLkey: '9766179572884232',
-        resolvedAt: Date.now(),
-        resolvedBy: authSlice.user?.login
-      }).unwrap();
-
-      dispatch(notify('Resolved Successfully'));
-      dispatch(setRefetchEncounter(true));
-      await fetchallerges();
-       dispatch(resetRefetchEncounter());
-      dispatch(setRefetchEncounter(true));
-      setOpenConfirmResolvedModel(false);
-      setAllerges({ ...newApVisitAllergies });
-    } catch {
-      dispatch(notify('Resolved Fail'));
-    }
-  };
-
-  const handleUndoResolved = async () => {
-    try {
-      await saveAllergies({ ...allerges, statusLkey: '9766169155908512' }).unwrap();
-
-      dispatch(notify('Undo Resolved Successfully'));
-      dispatch(setRefetchEncounter(true)); 
-      await fetchallerges();
-       dispatch(resetRefetchEncounter());
-      dispatch(setRefetchEncounter(true));
-
-      setOpenConfirmUndoResolvedModel(false);
-      setAllerges({ ...newApVisitAllergies });
-    } catch {
-      dispatch(notify('Undo Resolved Fail'));
-    }
-  };
-
-  const tableColumns: any[] = [
+  // fetch lists
+  const { data: allergensListResponse } = useGetAllergensQuery({});
+  const { data: medicationClassesListResponse } = useGetAllMedicationCategoriesClassesQuery({});
+  const {
+    data: allergiesListResponse,
+    refetch: fetchallerges,
+    isLoading
+  } = useGetPatientAllergiesByPatientIdQuery(
     {
-      key: 'allergyTypeLvalue',
-      dataKey: 'allergyTypeLvalue',
-      title: <Translate>Allergy Typesss</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => rowData.allergyTypeLvalue?.lovDisplayVale
+      patientId: patient?.id,
+      showCancelled: showCanceled,
+      ...paginationParams
     },
     {
-      key: 'allergenKey',
-      dataKey: 'allergenKey',
+      skip: !patient?.id
+    }
+  );
+  // number of all patient allergies
+  const totalCount = allergiesListResponse?.totalCount ?? 0;
+
+
+  // actions
+  const [cancelPatientAllergy] = useCancelPatientAllergyMutation();
+  const [resolvePatientAllergy] = useResolvePatientAllergyMutation();
+  const [undoResolvePatientAllergy] = useUndoResolvePatientAllergyMutation();
+
+  // class name for selected row
+  const isSelected = (rowData: PatientAllergiesResponseVM) =>
+    rowData && allerges && rowData.id === allerges?.id ? 'selected-row' : '';
+
+  // table column
+  const tableColumns: any[] = [
+    {
+      key: 'allergenType',
+      title: <Translate>Allergy Type</Translate>,
+      render: (rowData: PatientAllergiesResponseVM) => <p>{formatEnumString(rowData.allergenType)}</p>
+    },
+
+    {
+      key: 'allergen',
       title: <Translate>Allergen</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => {
-        if (!allergensListToGetName?.object) return 'Loading...';
-        const found = allergensListToGetName.object.find(
-          (item: any) => item.key === rowData.allergenKey
-        );
-        return found?.allergenName || 'No Name';
+      render: (rowData: PatientAllergiesResponseVM) => {
+        if (rowData?.allergenId && allergensListResponse?.data) {
+          const allergen = allergensListResponse.data.find(
+            (item: any) => item.id === rowData.allergenId
+          );
+          return <p>{allergen?.name ?? '-'}</p>;
+        }
+
+        else if (rowData?.medicationClassId && medicationClassesListResponse) {
+          const medicationClass = medicationClassesListResponse.find(
+            (item: any) => item.id === rowData.medicationClassId
+          );
+          return <p>{medicationClass?.name ?? '-'}</p>;
+        }
+
+        return <p>-</p>;
       }
     },
     {
-      key: 'statusLvalue',
-      dataKey: 'statusLvalue',
+      key: 'status',
       title: <Translate>Status</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale
+      render: rowData =>
+        <MyBadgeStatus
+          color={rowData?.status === 'CANCELLED' ? '#969fb0' : rowData?.status === 'RESOLVED' ? '#800080' : '#45b887'}
+          contant={
+            <Translate>
+              {formatEnumString(rowData?.status)}
+            </Translate>
+          }
+        />
+    },
+    {
+      key: 'severity',
+      title: <Translate>Severity</Translate>,
+      render: rowData => <p>{formatEnumString(rowData?.severity)}</p>,
     },
     props.showTableActions !== false && {
       key: 'actions',
-      dataKey: 'actions',
       title: <Translate>Actions</Translate>,
-      flexGrow: 1,
-      render: () => (
-        <MdModeEdit
-          title="Edit"
-          size={24}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setOpenDetailsModal(true);
-            setOpenToAdd(false);
-          }}
-        />
+      render: rowData => {
+        const createdDate = new Date(rowData.createdDate);
+        const today = new Date();
+
+        createdDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+
+        const isPast = createdDate < today;
+
+        return (
+          <MdModeEdit
+            title="Edit"
+            className="icons-style"
+            size={24}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              if (isPast) return;
+              setOpenDetailsModal(true);
+              setOpenToAdd(false);
+            }}
+            style={{
+              cursor: isPast || rowData.status !== 'ACTIVE' ? 'not-allowed' : 'pointer',
+              opacity: isPast || rowData.status !== 'ACTIVE' ? 0.5 : 1
+            }}
+          />
+        );
+      }
+
+    },
+
+    {
+      key: 'createdByAt',
+      title: 'Created By/At',
+      expandable: true,
+
+     render: (row: PatientAllergiesResponseVM) => (
+        <>
+          <NameCell login={row.createdBy} />
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
+        </>
       )
     },
-    
-         {
-          key: 'createdByAt',
-          title: 'Created By/At',
-          dataKey: 'createdByAt',
-          width: 220,
-          expandable: true,
-    
-          render: (row: any) => (
-            <>
-              {row.createdBy}
-              <br />
-              <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
-            </>
-          )
-        },
-        {
-          key: 'resolvedByAt',
-          title: 'Resolved By/At',
-          dataKey: 'resolvedByAt',
-          width: 220,
-          expandable: true,
-          render: (row: any) => (
-            <>
-              {row.resolvedBy}
-              <br />  
-              <span className="date-table-style">{formatDateWithoutSeconds(row.resolvedAt)}</span>
-            </>
-          )
-    
-        },
-        {
-          key: 'deletedByAt',
-          title: 'Cancelled By/At',
-          dataKey: 'deletedByAt',
-          width: 220,
-          expandable: true,
-          render: (row: any) => (
-            <>
-              {row.deletedBy}
-              <br />
-              <span className="date-table-style">{formatDateWithoutSeconds(row.deletedAt)}</span>
-            </>
-          )
-    
-        },
-        {
-          key: 'cancellationReason',
-          dataKey: 'cancellationReason',
-          title: <Translate>Cancellation Reason</Translate>,
-          expandable: true
-        }
+    {
+      key: 'resolvedByAt',
+      title: 'Resolved By/At',
+      expandable: true,
+      render: (row: PatientAllergiesResponseVM) => (
+        <>
+          <NameCell login={row.resolvedBy} />
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(row.resolvedDate)}</span>
+        </>
+      )
+
+    },
+    {
+      key: 'cancelledByAt',
+      title: 'Cancelled By/At',
+      expandable: true,
+      render: (row: PatientAllergiesResponseVM) => (
+        <>
+          <NameCell login={row.cancelledBy} />
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledDate)}</span>
+        </>
+      )
+
+    },
+    {
+      key: 'cancellationReason',
+      title: <Translate>Cancellation Reason</Translate>,
+      expandable: true
+    }
   ].filter(Boolean);
 
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = allergiesListResponse?.extraNumeric ?? 0;
+  // handle clear data 
+  const handleClear = () => {
+    setAllerges({
+      ...patientAllergiesResponseVM
+    });
+  };
 
-  const handlePageChange = (_: unknown, newPage: number) =>
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  // handle cancel allergy
+  const handleCancel = async () => {
+    let reason;
+    if (allerges?.cancellationReason) {
+      reason = allerges?.cancellationReason;
+    }
+    else {
+      reason = undefined;
+      dispatch(notify({ msg: "Cancellation Reason is required", sev: 'warning' }));
+    }
+    if (reason) {
+      try {
+        const result = await cancelPatientAllergy({
+          id: allerges.id,
+          cancelledBy: authSlice?.user?.firstName + " " + authSlice?.user?.lastName,
+          reason: reason, // optional
+        }).unwrap();
+        setAllerges(result);
+        setOpenCancellationReasonModel(false);
+        dispatch(notify({ msg: 'Allergy cancelled successfully', sev: 'success' }));
+        await fetchallerges();
+      } catch (error) {
+        dispatch(notify({ msg: 'Failed to cancel allergy', sev: 'warning' }));
+      }
+    }
+  };
 
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setListRequest({ ...listRequest, pageSize: parseInt(event.target.value, 10), pageNumber: 1 });
+  // handle resolve allergy
+  const handleResolve = async () => {
+    try {
+      const result = await resolvePatientAllergy({
+        id: allerges.id,
+        resolvedBy: authSlice?.user?.firstName + " " + authSlice?.user?.lastName,
+      }).unwrap();
+      setAllerges(result);
+
+      dispatch(notify({ msg: 'Allergy resolved successfully', sev: 'success' }));
+      setOpenConfirmResolvedModel(false);
+      await fetchallerges();
+    } catch (error) {
+      dispatch(notify({ msg: 'Failed to resolve allergy', sev: 'error' }));
+    }
+  };
+
+  // handle undo resolve
+  const handleUndoResolve = async () => {
+    try {
+      const result = await undoResolvePatientAllergy({
+        id: allerges.id,
+      }).unwrap();
+      setOpenConfirmUndoResolvedModel(false);
+      setAllerges(result);
+      dispatch(notify({ msg: 'Resolve undone successfully', sev: 'success' }));
+      await fetchallerges();
+    } catch (error) {
+      dispatch(notify({ msg: 'Failed to undo resolve', sev: 'error' }));
+    }
+  };
+
+  // ──────────────────────────── PAGINATION ────────────────────────────
+  const handlePageChange = (event, newPage) => {
+    setPaginationParams({ ...paginationParams, page: newPage });
+  };
+
+  //_________________________SORT LOGIC______________________
+  const handleSortChange = (sortColumn: string, sortType: 'asc' | 'desc') => {
+    setSortColumn(sortColumn);
+    setSortType(sortType);
+
+    const sortValue = `${sortColumn},${sortType}`;
+    setPaginationParams({
+      ...paginationParams,
+      sort: sortValue,
+      page: 0,
+      timestamp: Date.now()
+    });
+  };
+
 
   return (
     <div>
@@ -298,32 +317,28 @@ const Allergies = (props: AllergiesProps) => {
           <MyButton
             prefixIcon={() => <CloseOutlineIcon />}
             onClick={() => setOpenCancellationReasonModel(true)}
-            disabled={!edit ? (allerges?.key == null ? true : false) : true}
+            disabled={!allerges?.id || allerges?.status === "CANCELLED"}
           >
             Cancel
           </MyButton>
 
           <MyButton
-            disabled={!edit ? (allerges?.statusLkey != '9766169155908512' ? true : false) : true}
             prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
             onClick={() => setOpenConfirmResolvedModel(true)}
+            disabled={!allerges?.id || allerges?.status === "RESOLVED" || allerges?.status === "CANCELLED"}
           >
             Resolved
           </MyButton>
 
           <MyButton
             prefixIcon={() => <ReloadIcon />}
-            disabled={!edit ? (allerges?.statusLkey != '9766179572884232' ? true : false) : true}
             onClick={() => setOpenConfirmUndoResolvedModel(true)}
+            disabled={!allerges?.id || allerges?.status === "ACTIVE" || allerges?.status === "CANCELLED"}
           >
             Undo Resolved
           </MyButton>
 
-          <Checkbox checked={!showPrev} onChange={() => setShowPrev(!showPrev)}>
-            Show Previous Allergies
-          </Checkbox>
-
-          <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
             Show Cancelled
           </Checkbox>
         </div>
@@ -342,59 +357,66 @@ const Allergies = (props: AllergiesProps) => {
           </MyButton>
         </div>
       </div>
-
-      <MyTable
-        columns={tableColumns}
-        data={allergiesListResponse?.object || []}
-        onRowClick={rowData => {
-          setAllerges(rowData);
-          setOpenToAdd(false);
-        }}
-        rowClassName={isSelected}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => setListRequest({ ...listRequest, sortBy, sortType })}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        loading={isLoading}
-      />
-
+      <div className='container-of-table-and-section-patient-allergy'>
+        <MyTable
+          columns={tableColumns}
+          data={allergiesListResponse?.data || []}
+          totalCount={totalCount}
+          onRowClick={rowData => {
+            setAllerges(rowData);
+            setOpenToAdd(false);
+          }}
+          rowClassName={isSelected}
+          loading={isLoading}
+          page={paginationParams.page}
+          rowsPerPage={paginationParams.size}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={e => {
+            const newSize = Number(e.target.value);
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            });
+          }}
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={handleSortChange}
+        />
+        <AllergyDetailsSection
+          allerges={allerges}
+          setAllerges={setAllerges}
+          edit={edit}
+        />
+      </div>
       <CancellationModal
         open={openCancellationReasonModel}
         setOpen={setOpenCancellationReasonModel}
         object={allerges}
         setObject={setAllerges}
-        handleCancle={handleCancle}
+        handleCancle={handleCancel}
         fieldName="cancellationReason"
         fieldLabel="Cancellation Reason"
         title="Cancellation"
       />
 
-      <MyModal
+      <DeletionConfirmationModal
         open={openConfirmResolvedModel}
         setOpen={setOpenConfirmResolvedModel}
-        actionButtonFunction={handleResolved}
-        actionButtonLabel="Yes"
-        title="Resolve"
-        bodyheight="30vh"
-        steps={[{ title: 'Is this allergy resolved?', icon: <FontAwesomeIcon icon={faCheck} /> }]}
-        content={<></>}
+        itemToDelete="Patient Allergy"
+        actionType="confirm"
+        actionButtonFunction={handleResolve}
+        confirmationQuestion="Are you sure you want to Resolve this Patient Allergy?"
       />
 
-      <MyModal
+      <DeletionConfirmationModal
         open={openConfirmUndoResolvedModel}
         setOpen={setOpenConfirmUndoResolvedModel}
-        actionButtonFunction={handleUndoResolved}
-        actionButtonLabel="Yes"
-        title="Undo Resolve"
-        bodyheight="30vh"
-        steps={[
-          { title: 'Is this allergy active?', icon: <FontAwesomeIcon icon={faArrowRotateRight} /> }
-        ]}
-        content={<></>}
+        itemToDelete="Patient Allergy"
+        actionType="confirm"
+        actionButtonFunction={handleUndoResolve}
+        confirmationQuestion="Are you sure you want to Undo Resolve this Patient Allergy?"
       />
 
       <DetailsModal
@@ -402,7 +424,6 @@ const Allergies = (props: AllergiesProps) => {
         setOpen={setOpenDetailsModal}
         allerges={allerges}
         setAllerges={setAllerges}
-        handleClear={handleClear}
         edit={edit}
         patient={patient}
         encounter={encounter}

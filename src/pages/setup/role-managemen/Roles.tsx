@@ -24,15 +24,13 @@ const Roles = ({ selected, setSelected, facilityId }) => {
   const [saveRole] = useAddRoleMutation();
   const [updateRole] = useUpdateRoleMutation();
 
-  // 🔹 حالتان منفصلتان
   const [newRoleData, setNewRoleData] = useState<Role>({ ...newRole });
   const [editRole, setEditRole] = useState<Role | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
 
-  // ✅ إضافة Role جديد
   const addRole = async () => {
     try {
-      const { id, ...data } = newRoleData; // لا ترسل id
+      const { id, ...data } = newRoleData;
       const created = await saveRole({ ...data, facilityId }).unwrap();
 
       dispatch(notify({ msg: "The Role has been saved successfully", sev: "success" }));

@@ -50,6 +50,13 @@ export const allergensService = createApi({
       providesTags: ['Allergens'],
     }),
 
+    getAllergensByTypewithoutPagination: builder.query<any[], { type: string }>({
+      query: ({ type }) => ({
+        url: `/api/setup/allergen/by-type/${encodeURIComponent(type)}`,
+      }),
+      providesTags: ['Allergens'],
+    }),
+
     getAllergensByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/allergen/by-name/${encodeURIComponent(name)}`,
@@ -103,4 +110,5 @@ export const {
   useUpdateAllergenMutation,
   useDeleteAllergenMutation,
   useToggleAllergenIsActiveMutation,
+  useGetAllergensByTypewithoutPaginationQuery
 } = allergensService;
