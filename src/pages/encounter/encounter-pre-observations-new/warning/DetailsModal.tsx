@@ -86,16 +86,30 @@ const DetailsModal = ({
       }
 
       if (isCreate) {
+        console.log("cre: ", {
+          ...patientWarningsCreateDTO,
+          patientId: patient?.id,
+          encounterId: encounter?.id,
+          onsetDate: patientWarningsCreateDTO?.onsetDate ? new Date(patientWarningsCreateDTO?.onsetDate).toISOString() : ''
+        })
         await addPatientWarning({
           ...patientWarningsCreateDTO,
           patientId: patient?.id,
-          encounterId: encounter?.id
+          encounterId: encounter?.id,
+          onsetDate: patientWarningsCreateDTO?.onsetDate ? new Date(patientWarningsCreateDTO?.onsetDate).toISOString() : ''
         }).unwrap();
         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       } else {
+        console.log("pda: ", {
+           ...patientWarningsUpdateDTO,
+            onsetDate: patientWarningsUpdateDTO?.onsetDate ? new Date(patientWarningsUpdateDTO?.onsetDate).toISOString() : ''
+          })
         await updatePatientWarning({
           id: warning.id,
-          dto: patientWarningsUpdateDTO
+          dto: {
+           ...patientWarningsUpdateDTO,
+            onsetDate: patientWarningsUpdateDTO?.onsetDate ? new Date(patientWarningsUpdateDTO?.onsetDate).toISOString() : ''
+          }
         }).unwrap();
         dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       }
@@ -106,6 +120,7 @@ const DetailsModal = ({
       dispatch(setRefetchEncounter(true));
       handleClear();
     } catch (error) {
+      console.log("error: ", error);
       const errorMsg = extractErrorMessage(error) || 'Save Failed';
       dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
@@ -278,6 +293,32 @@ const DetailsModal = ({
       setPatientWarningsCreateDTO({ ...newPatientWarningsCreateDTO });
     }
   }, [warning]);
+
+  useEffect(() => {
+     if (warning?.id) {
+      if(patientWarningsUpdateDTO.onsetDateUndefined){
+        setPatientWarningsUpdateDTO({...patientWarningsUpdateDTO, onsetDate: ''})
+      }
+     }
+     else{
+      if(patientWarningsCreateDTO.onsetDateUndefined){
+        setPatientWarningsCreateDTO({...patientWarningsCreateDTO, onsetDate: ''})
+      }
+     }
+  },[patientWarningsCreateDTO.onsetDateUndefined, patientWarningsUpdateDTO.onsetDateUndefined]);
+
+  useEffect(() => {
+     if (warning?.id) {
+      if(patientWarningsUpdateDTO.byPatient){
+        setPatientWarningsUpdateDTO({...patientWarningsUpdateDTO, sourceOfInformation: null})
+      }
+     }
+     else{
+      if(patientWarningsCreateDTO.byPatient){
+        setPatientWarningsCreateDTO({...patientWarningsCreateDTO, sourceOfInformation: null})
+      }
+     }
+  },[patientWarningsCreateDTO.byPatient, patientWarningsUpdateDTO.byPatient]);
 
   useEffect(() => {
     if (openToAdd) handleClear();
