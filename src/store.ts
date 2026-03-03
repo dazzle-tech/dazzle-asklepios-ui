@@ -150,9 +150,10 @@ import { consultationService } from './services/consultation/consultationService
 import { portalService } from './services/portalService';
 import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
-import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
+import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
+import {ReviewOfSystemService} from "@/services/medicalsheets/ReviewOfSystemService";
+import {DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
-import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { formTemplateService } from './services/setup/formTemplateService';
 import { FormEntriesService } from './services/setup/formEntriesService';
 import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
@@ -408,6 +409,8 @@ export const store = configureStore({
     [PayorService.reducerPath]: PayorService.reducer,
     [PayorPlanService.reducerPath]: PayorPlanService.reducer,
 
+    [DischargePlanningService.reducerPath]: DischargePlanningService.reducer,
+    [ReviewOfSystemService.reducerPath] : ReviewOfSystemService.reducer,
     [patientInsurancesService.reducerPath]: patientInsurancesService.reducer,
     [patientInsuranceCoveragesService.reducerPath]: patientInsuranceCoveragesService.reducer,
 
@@ -602,6 +605,7 @@ export const store = configureStore({
       // discharge
       dischargePService.middleware,
       DischargePlanningService.middleware,
+      ReviewOfSystemService.middleware,
 
       // reporting
       resultReportApi.middleware,
