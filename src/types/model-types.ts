@@ -340,6 +340,7 @@ export interface ApAppointment {
 	noShowReasonLkey:string;
 	noShowReasonValue:string;
 	noShowOtherReason:string;
+	departmentKey:string;
 } 
 
 export interface ApAttachment { 
@@ -535,12 +536,9 @@ export interface ApConsultationOrder {
 	visitKey:string;
 	consultantSpecialtyLkey:string;
 	cityLkey:string;
-	facilityKey:string;
-	departmentKey:string;
 	preferredConsultantKey:string;
 	consultationMethodLkey:string;
 	consultationTypeLkey:string;
-	priorityLkey:string;
 	consultationContent:string;
 	notes:string;
 	statusLkey:string;
@@ -555,6 +553,11 @@ export interface ApConsultationOrder {
 	deletedAt:number;
 	isValid:boolean;
 	cancellationReason:string;
+	facilityKey:string;
+	departmentKey:string;
+	priorityLkey:string;
+	approvalNumber?: string;
+	extraDocumentation?: string;
 } 
 
 export interface ApCpt { 
@@ -1492,9 +1495,9 @@ export interface ApEncounterVaccination {
 	key:string;
 	patientKey:string;
 	encounterKey:string;
-	vaccineKey:string;
-	vaccineBrandKey:string;
-	vaccineDoseKey:string;
+	vaccineId:number;
+	vaccineBrandId:number;
+	vaccineDoseId:number;
 	vaccineLotNumber:string;
 	dateAdministered:number;
 	actualSide:string;
@@ -2229,6 +2232,10 @@ export interface ApNurseServiceProduct {
 	deletedAt:number;
 	isValid:boolean;
 	brandId:number;
+	priceListId:number;
+	priceListItemId:number;
+	priceListItemPrice:number;
+	priceListItemTotalPrice:number;
 } 
 
 export interface ApOperationAnesthesiaCarePlan { 
@@ -2870,6 +2877,10 @@ export interface ApPatient {
 	countryId:string;
 	bloodGroupLkey:string;
 	genderLkey:string;
+	gdprNoticeOfPrivacyPractice:boolean;
+	gdprNoticeOfPrivacyPracticeDate:Date;
+	gdprPrivacyAuthorization:boolean;
+	gdprPrivacyAuthorizationDate:Date;
 } 
 
 export interface ApPatientAddresses { 
@@ -3199,6 +3210,9 @@ export interface ApPatientObservationSummary {
 	latestCognitiveCheck:string;
 	platestCognitiveCheck:string;
 	reasonOfVisit:string;
+	notes:string;
+	priorityLkey:string;
+	measurementLkey:string;
 } 
 
 export interface ApPatientPlan { 
@@ -3742,7 +3756,7 @@ export interface ApPrescriptionMedications {
 
 export interface ApProcedure { 
 	key:string;
-	procedureNameKey:string;
+	procedureNameId:number;
 	procedureId:string;
 	procedureLevelLkey:string;
 	categoryKey:string;
@@ -4260,7 +4274,7 @@ export interface ApTelephonicConsultation {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
-  	cancellationReason: string,
+	cancellationReason:string;
 } 
 
 export interface ApTenant { 
@@ -4765,27 +4779,5 @@ export interface ApWarehouseUser {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
-} 
-export interface AppUser { 
-	id:;
-	login:string;
-	passwordHash:string;
-	firstName:string;
-	lastName:string;
-	email:string;
-	imageUrl:string;
-	activated:boolean;
-	langKey:string;
-	resetKey:string;
-	createdBy:string;
-	createdDate:;
-	resetDate:;
-	lastModifiedBy:string;
-	lastModifiedDate:;
-	phoneNumber:string;
-	birthDate:Date;
-	gender:string;
-	jobRole:string;
-	securityAccessLeve:string;
 } 
 

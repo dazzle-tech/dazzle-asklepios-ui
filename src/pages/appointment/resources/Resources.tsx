@@ -26,7 +26,6 @@ import { formatEnumString } from "@/utils";
 import { PaginationPerPage } from "@/utils/paginationPerPage";
 import { useEnumOptions } from "@/services/enumsApi";
 import { useState, useEffect } from "react";
-import appConfig from "../../../../app-config";
 
 // Resource type definition
 type Resource = {
@@ -35,6 +34,7 @@ type Resource = {
   resourceKey: string;
   isAllowParallel?: boolean;
   isActive?: boolean;
+  resourceName?: string;
 };
 
 const newResource: Resource = {
@@ -68,23 +68,29 @@ const Resources = () => {
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5,
+    size: 15,
     sort: "id,asc",
     timestamp: Date.now(),
   });
+  const [filterPagination, setFilterPagination] = useState({
+      page: 0,
+      size: 15,
+      sort: 'id,asc'
+    });
 
   // ──────────────────────────── DATA ────────────────────────────
-  const { data: resourceListResponse, isFetching } =
+  const { data: resourceListResponse, refetch ,isFetching } =
     useGetAllResourcesQuery(paginationParams);
+
   const [createResource] = useCreateResourceMutation();
   const [updateResource] = useUpdateResourceMutation();
   const [toggleResourceActive] = useToggleResourceActiveMutation();
   const [getResourcesByType] = useLazyGetResourcesByTypeQuery();
   const resourceTypeEnum = useEnumOptions("ResourceType");
-  const [resourceNamesCache, setResourceNamesCache] = useState<Record<string, string>>({});
 
   const totalCount = resourceListResponse?.totalCount ?? 0;
-  const links = resourceListResponse?.links || {};
+  const [links, setLinks] = useState({});
+ 
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 
@@ -105,51 +111,67 @@ const Resources = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+   useEffect(() => {
+      setLinks(resourceListResponse?.links);
+    }, [resourceListResponse?.links]);
+
+    useEffect(() => {
+         if(!openAddEditResource && isFiltered){
+          handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+         }
+      },[resourceListResponse]);
+
   // ──────────────────────────── FILTER LOGIC ────────────────────────────
   const filterFields = [
     { label: "Resource Type", value: "resourceType" },
     { label: "Resource Name", value: "resourceName" },
   ];
 
-  const handleFilterChange = async (field: string, value: string) => {
+  const handleFilterChange = async (field: string, value: string, page = 0, size?: number) => {
     try {
       if (!field || !value) {
         setIsFiltered(false);
         setFilteredList([]);
         return;
       }
+       const currentSize = size ?? filterPagination.size;
 
       let response;
+      const params = {
+        page,
+        size: currentSize,
+        sort: filterPagination.sort
+      };
 
       if (field === "resourceType") {
         response = await getResourcesByType({
           resourceType: value,
-          page: 0,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
+          ...params
         }).unwrap();
         setFilteredList(response.data ?? []);
         setFilteredTotal(response.totalCount ?? 0);
         setIsFiltered(true);
+        setFilterPagination({ ...filterPagination, page, size: currentSize });
       } else if (field === "resourceName") {
         // Filter by resource name - search in the current list
         const allResources = resourceListResponse?.data ?? [];
         const searchTerm = value.toLowerCase().trim();
         
         const filtered = allResources.filter((r: Resource) => {
-          const resourceName = getResourceName(r.resourceType, r.resourceKey).toLowerCase();
+          const resourceName = (r.resourceName || r.resourceKey || '').toLowerCase();
           return resourceName.includes(searchTerm);
         });
-        
+
+         
         setFilteredList(filtered);
         setFilteredTotal(filtered.length);
         setIsFiltered(true);
+        setFilterPagination({ ...filterPagination, page, size: currentSize });
       } else {
         setIsFiltered(false);
         return;
       }
     } catch (error) {
-      console.error("Error filtering resources:", error);
         dispatch(
           notify({
           msg: "Failed to filter resources",
@@ -161,45 +183,53 @@ const Resources = () => {
   };
 
   // ──────────────────────────── CRUD HANDLERS ────────────────────────────
-  const handleAddNew = async () => {
+  const handleAddNew = async (resourceNameParam?: string) => {
     try {
+      // Get resourceName from parameter (passed from AddEditResources) or from state or use resourceKey as fallback
+      const resourceName = resourceNameParam || resource.resourceName || resource.resourceKey;
+      
       const payload = {
         resourceType: resource.resourceType,
         resourceKey: resource.resourceKey,
         isAllowParallel: resource.isAllowParallel ?? true,
         isActive: resource.isActive ?? true,
+        resourceName: resourceName
       };
 
       const Response = await createResource(payload).unwrap();
-        dispatch(
+      dispatch(
         notify({ msg: "Resource added successfully", sev: "success" })
       );
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
+      refetch();
       setResource({ ...Response });
       setOpenAddEditResource(false);
     } catch (error) {
-      console.error("Error creating resource:", error);
 
       if (error?.data?.fieldErrors?.length) {
         const messages = error.data.fieldErrors
-          .map((fe) => `${fe.field}: ${fe.message}`)
+          .map(fe => `${fe.field}: ${fe.message}`)
           .join("\n");
-        dispatch(notify({ msg: messages, sev: "error" }));
+        dispatch(notify({ msg: messages, sev: "warning" }));
       } else if (error?.data?.detail) {
-        dispatch(notify({ msg: error.data.detail, sev: "error" }));
+        dispatch(notify({ msg: error.data.detail, sev: "warning" }));
       } else {
         dispatch(notify({ msg: "Failed to create resource", sev: "error" }));
       }
     }
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (resourceNameParam?: string) => {
     try {
+      // Get resourceName from parameter (passed from AddEditResources) or from state or use resourceKey as fallback
+      const resourceName = resourceNameParam || resource.resourceName || resource.resourceKey;
+      
       const payload = {
         resourceType: resource.resourceType,
         resourceKey: resource.resourceKey,
         isAllowParallel: resource.isAllowParallel ?? true,
         isActive: resource.isActive ?? true,
+        resourceName: resourceName
       };
 
       await updateResource({ id: resource.id!, ...payload }).unwrap();
@@ -214,7 +244,7 @@ const Resources = () => {
 
       if (error?.data?.fieldErrors?.length) {
         const messages = error.data.fieldErrors
-          .map((fe) => `${fe.field}: ${fe.message}`)
+          .map(fe => `${fe.field}: ${fe.message}`)
           .join("\n");
         dispatch(notify({ msg: messages, sev: "error" }));
       } else if (error?.data?.detail) {
@@ -240,104 +270,6 @@ const Resources = () => {
     setOpenConfirmDeleteResourceModal(false);
   };
 
-  // ──────────────────────────── RESOURCE NAME FETCHING ────────────────────────────
-  // Fetch resource names for all resources in the current page - Static implementation
-  useEffect(() => {
-    const fetchResourceNames = async () => {
-      if (!resourceListResponse?.data) return;
-
-      const resourcesToFetch = resourceListResponse.data.filter(
-        (r: Resource) => {
-          const cacheKey = `${r.resourceType}_${r.resourceKey}`;
-          return r.resourceType && r.resourceKey && !resourceNamesCache[cacheKey];
-        }
-      );
-
-      if (resourcesToFetch.length === 0) return;
-
-      const newNames: Record<string, string> = {};
-      const baseURL = appConfig.backendBaseURL || 'http://localhost:8080';
-      const jwt = localStorage.getItem('id_token') || localStorage.getItem('token');
-
-      await Promise.all(
-        resourcesToFetch.map(async (r: Resource) => {
-          try {
-            let endpoint = '';
-            let name = '';
-
-            // Static switch statement - easy to read and edit
-            switch (r.resourceType) {
-              case 'PRACTITIONER':
-                endpoint = `/api/setup/practitioner/${r.resourceKey}`;
-                break;
-              case 'MEDICAL_TEST':
-                endpoint = `/api/setup/diagnostic-test/${r.resourceKey}`;
-                break;
-              case 'CLINIC':
-                endpoint = `/api/setup/department/${r.resourceKey}`;
-                break;
-              // case 'INPATIENT_ADMISSION':
-              //   endpoint = `/api/setup/inpatient-admission/${r.resourceKey}`;
-              //   break;
-              // case 'DAY_CASE':
-              //   endpoint = `/api/setup/day-case/${r.resourceKey}`;
-              //   break;
-              // case 'EMERGENCY':
-              //   endpoint = `/api/setup/emergency/${r.resourceKey}`;
-              //   break;
-              // case 'OPERATION':
-              //   endpoint = `/api/setup/operation/${r.resourceKey}`;
-              //   break;
-              default:
-                return; // Skip unknown resource types
-            }
-
-            if (!endpoint) return;
-
-            const response = await fetch(`${baseURL}${endpoint}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(jwt && { Authorization: `Bearer ${jwt}` }),
-              },
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              
-              if (r.resourceType === 'PRACTITIONER') {
-                name = `${data.firstName || ''} ${data.lastName || ''}`.trim() || `Practitioner ${r.resourceKey}`;
-              } else if (r.resourceType === 'MEDICAL_TEST') {
-                name = data.name || r.resourceKey;
-              } else if (r.resourceType === 'CLINIC') {
-                name = data.name || r.resourceKey;
-              }
-              // else if (r.resourceType === 'INPATIENT_ADMISSION') {
-              //   name = data.name || r.resourceKey;
-              // }
-
-              if (name) {
-                newNames[`${r.resourceType}_${r.resourceKey}`] = name;
-              }
-            }
-          } catch (error) {
-            console.error(`Error fetching resource name for ${r.resourceType} ${r.resourceKey}:`, error);
-          }
-        })
-      );
-
-      if (Object.keys(newNames).length > 0) {
-        setResourceNamesCache((prev) => ({ ...prev, ...newNames }));
-      }
-    };
-
-    fetchResourceNames();
-  }, [resourceListResponse?.data]);
-
-  const getResourceName = (resourceType: string, resourceKey: string): string => {
-    const cacheKey = `${resourceType}_${resourceKey}`;
-    return resourceNamesCache[cacheKey] || resourceKey;
-  };
 
   // ──────────────────────────── TABLE LOGIC ────────────────────────────
   const isSelected = (rowData: Resource) =>
@@ -403,15 +335,16 @@ const Resources = () => {
       key: "resourceType",
       title: <Translate>Resource Type</Translate>,
       flexGrow: 3,
-      render: (rowData) => <p>{formatEnumString(rowData?.resourceType)}</p>,
+      render: rowData => <p>{formatEnumString(rowData?.resourceType)}</p>,
     },
     {
       key: "resourceKey",
       title: <Translate>Resource</Translate>,
       flexGrow: 3,
-      render: (rowData: Resource) => (
-        <p>{getResourceName(rowData.resourceType, rowData.resourceKey)}</p>
-      ),
+      render: (rowData: Resource) => {
+        const displayName = rowData?.resourceName || rowData?.resourceKey || '-';
+        return <p>{displayName}</p>;
+      },
     },
     {
       key: "isAllowParallel",
@@ -443,15 +376,19 @@ const Resources = () => {
   ];
 
   // ──────────────────────────── PAGINATION ────────────────────────────
-  const handlePageChange = (event: unknown, newPage: number) => {
-    PaginationPerPage.handlePageChange(
-      event,
-      newPage,
-      paginationParams,
-      links,
-      setPaginationParams
-    );
-  };
+  const handlePageChange = (event, newPage) => {
+      if (isFiltered) {
+        handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+      } else {
+        PaginationPerPage.handlePageChange(
+          event,
+          newPage,
+          paginationParams,
+          links,
+          setPaginationParams
+        );
+      }
+    };
 
   // ──────────────────────────── FILTER UI ────────────────────────────
   const filters = () => (
@@ -463,7 +400,7 @@ const Resources = () => {
         selectDataLabel="label"
         selectDataValue="value"
         record={recordOfFilter}
-        setRecord={(u) => setRecordOfFilter({ filter: u.filter, value: "" })}
+        setRecord={u => setRecordOfFilter({ filter: u.filter, value: "" })}
         placeholder="Select Filter"
         showLabel={false}
         width="180px"
@@ -477,7 +414,7 @@ const Resources = () => {
           selectDataLabel="label"
           selectDataValue="value"
           record={recordOfFilter}
-          setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
           showLabel={false}
           placeholder="Select Resource Type"
         />
@@ -525,12 +462,27 @@ const Resources = () => {
         totalCount={isFiltered ? filteredTotal : totalCount}
         columns={tableColumns}
         rowClassName={isSelected}
-        onRowClick={(rowData) => setResource(rowData)}
+        onRowClick={rowData => setResource(rowData)}
         filters={filters()}
         loading={isFetching}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
+       page={isFiltered ? filterPagination.page : pageIndex}
+        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
         onPageChange={handlePageChange}
+        onRowsPerPageChange={e => {
+          const newSize = Number(e.target.value);
+
+          if (isFiltered) {
+            setFilterPagination({ ...filterPagination, size: newSize, page: 0 });
+            handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+          } else {
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            });
+          }
+        }}
         tableButtons={
           <div className="container-of-add-new-button">
         <MyButton

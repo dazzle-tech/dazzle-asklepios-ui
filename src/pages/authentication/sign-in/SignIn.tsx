@@ -1,33 +1,28 @@
 import MyInput from '@/components/MyInput';
 import {
+  useGetLovDefultByCodeQuery,
   useGetLovValuesByCodeQuery,
-  useSaveUserMutation,
-  useGetLovDefultByCodeQuery
+  useSaveUserMutation
 } from '@/services/setupService';
-import { ApUser } from '@/types/model-types';
-import { newApUser } from '@/types/model-types-constructor';
 
-import { initialListRequest } from '@/types/types';
+import { setMenu, setTenant, setToken, setUser } from '@/reducers/authSlice';
+import { setLang, setTranslations } from '@/reducers/uiSlice';
+import { useLazyGetAccountQuery } from '@/services/accountService';
+import { useLoginMutation } from '@/services/authServiceApi';
+import { enumsApi } from '@/services/enumsApi';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useLazyGetMenuQuery } from '@/services/security/UserRoleService';
+import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
+import { useLazyGetDictionaryQuery } from '@/services/setup/translationService';
+import { store } from '@/store';
 import RemindIcon from '@rsuite/icons/legacy/Remind';
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New.svg';
 import './styles.less';
-import uiSlice, { setLang, setTranslations } from '@/reducers/uiSlice';
-import { useLoginMutation } from '@/services/authServiceApi';
-import { useDispatch } from 'react-redux';
-import { useLazyGetAccountQuery } from '@/services/accountService';
-import { setDictionary, setMenu, setTenant, setToken, setUser } from '@/reducers/authSlice';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { store } from '@/store';
-import { enumsApi } from '@/services/enumsApi';
-import { useAppSelector } from '@/hooks';
-import { useGetMenuQuery, useLazyGetMenuQuery } from '@/services/security/UserRoleService';
-import { useGetAllLanguagesQuery} from '@/services/setup/languageService';
-import { useLazyGetDictionaryQuery } from '@/services/setup/translationService';
-import { setTranslate3d } from 'rsuite/esm/List/helper/utils';
 
 const SignIn = () => {
   const [getDictionary] = useLazyGetDictionaryQuery();
@@ -42,8 +37,11 @@ const SignIn = () => {
     username: '',
     password: '',
     orgKey: '',
-    language: ''
+    language: '',
+    direction: ''
   });
+
+
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -60,10 +58,11 @@ const SignIn = () => {
     isFetching: langsLoading,
     refetch: refetchLangs
   } = useGetAllLanguagesQuery({});
-
+ 
   const [saveUser] = useSaveUserMutation();
   const [getMenuTrigger] = useLazyGetMenuQuery();
-  // Handle login
+
+  // Handle login 
   const handleLogin = async () => {
     if (!credentials.username || !credentials.password || !credentials.orgKey || !credentials.language) {
       setErrText('Please fill all required fields.');
@@ -107,12 +106,10 @@ const SignIn = () => {
       
 
       const dict = await getDictionary(credentials.language).unwrap(); // { translation_key: value }
-      console.log(dict );
       // optional local cache:
       localStorage.setItem('language', credentials.language);
       dispatch(setLang(credentials.language));
       localStorage.setItem('dict', JSON.stringify(dict));
-      console.log("dict" + dict)
       dispatch(setTranslations(dict));
       localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
@@ -121,7 +118,6 @@ const SignIn = () => {
       setErrText(' ');
       navigate('/');
     } catch (err: any) {
-      console.error(err);
 
       if (err?.status === 401 || err?.data?.detail === 'Invalid credentials') {
         setErrText('Invalid username or password.');
@@ -134,6 +130,10 @@ const SignIn = () => {
       }
     }
   };
+
+  const storedUser = JSON.parse(localStorage.getItem('user'));
+
+console.log(storedUser);
 
   // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -165,9 +165,16 @@ const SignIn = () => {
     setErrText(' ');
   }, [newPassword, newPasswordConfirm]);
 
+  useEffect(() =>{
+     const selectedObject = langData?.find(
+    item => item?.langKey === credentials?.language
+  );
+   localStorage.setItem('direction', selectedObject?.direction);
+  },[credentials.language]);
+
+
   // useEffect(() => {
   //   dispatch(setLang(langRecord['lang']));
-  //   console.log('lang: ' + langRecord['lang']);
   // }, [langRecord]);
 
   return (
@@ -197,7 +204,7 @@ const SignIn = () => {
                   selectDataValue="langKey"
                   defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
                   record={credentials}
-                  setRecord={setCredentials}
+                  setRecord={setCredentials}                  
                   placeholder="Select Language"
                   showLabel={false}
                   searchable={false}

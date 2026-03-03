@@ -124,7 +124,6 @@ const AddEditWarehouseProduct = ({ open, setOpen, warehouseProduct, setWarehouse
         const response = saveWarehouseProduct({
             ...warehouseProduct,
         }).unwrap().then(() => {
-            console.log(response)
             setWarehouseProduct(response);
             refetch();
             setOpen(false);
@@ -140,10 +139,8 @@ const AddEditWarehouseProduct = ({ open, setOpen, warehouseProduct, setWarehouse
         }).catch((e) => {
 
             if (e.status === 422) {
-                console.log("Validation error: Unprocessable Entity", e);
 
             } else {
-                console.log("An unexpected error occurred", e);
                 dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
             }
         });;
@@ -193,7 +190,6 @@ const AddEditWarehouseProduct = ({ open, setOpen, warehouseProduct, setWarehouse
 
 
     useEffect(() => {
-        console.log(productselectListResponseLoading);
         if (productselectListResponseLoading?.object?.length > 0) {
             const firstItem = productselectListResponseLoading.object[0];
             setSelectedProduct(firstItem);

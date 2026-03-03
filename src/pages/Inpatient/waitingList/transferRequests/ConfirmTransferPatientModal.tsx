@@ -4,7 +4,7 @@ import MyInput from '@/components/MyInput';
 import { newApTransferPatient } from '@/types/model-types-constructor';
 import { Form } from 'rsuite';
 import { ApTransferPatient } from '@/types/model-types';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
+import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import MyLabel from '@/components/MyLabel';
 import { useSaveApprovalTransferMutation } from '@/services/encounterService';
 import { notify } from '@/utils/uiReducerActions';
@@ -16,7 +16,12 @@ import { useGetRoomListQuery } from '@/services/setupService';
 import { useGetBedListQuery } from '@/services/setupService';
 const ConfirmTransferPatientModal = ({ open, setOpen, localTransfer, refetchInpatientList }) => {
     const [transferPatient, setTransferPatient] = useState<ApTransferPatient>({ ...newApTransferPatient });
-    const inpatientDepartmentListResponse = useGetResourceTypeQuery("4217389643435490");
+    const { data: inpatientDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
+      resourceType: 'INPATIENT_ADMISSION',
+      page: 0,
+      size: 1000,
+      sort: 'id,asc'
+    });
     const [saveApprovalTransferPatient] = useSaveApprovalTransferMutation();
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
@@ -125,7 +130,7 @@ const ConfirmTransferPatientModal = ({ open, setOpen, localTransfer, refetchInpa
                     fieldType='select'
                     fieldLabel="Confirm Ward"
                     fieldName="toInpatientDepartmentKey"
-                    selectData={inpatientDepartmentListResponse?.data?.object ?? []}
+                    selectData={inpatientDepartmentListResponse?.data ?? []}
                     selectDataLabel="name"
                     selectDataValue="key"
                     record={transferPatient}

@@ -28,7 +28,6 @@ const OperativeTimeOut = ({ operation, refetch, editable, activeTab, setActiveTa
 
     useEffect(() => {
         if (timeoutData) {
-            console.log("tim", timeoutData?.object)
             setTimeOut({
                 ...timeoutData?.object,
                 timeoutStartTime: timeoutData?.object?.timeoutStartTime ? new Date(timeoutData?.object?.timeoutStartTime) : null

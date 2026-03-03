@@ -59,7 +59,6 @@ const AddEditWarehouse = ({ open, setOpen, warehouse, setWarehouse, edit_new, se
       const response = saveWarehouse({
         ...warehouse,
       }).unwrap().then(() => {
-        console.log(response)
         setWarehouse(response);
         refetch();
         dispatch(
@@ -71,10 +70,8 @@ const AddEditWarehouse = ({ open, setOpen, warehouse, setWarehouse, edit_new, se
       }).catch((e) => {
   
         if (e.status === 422) {
-          console.log("Validation error: Unprocessable Entity", e);
   
         } else {
-          console.log("An unexpected error occurred", e);
           dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
         }
       });;
@@ -89,7 +86,6 @@ const AddEditWarehouse = ({ open, setOpen, warehouse, setWarehouse, edit_new, se
     }
     generateFiveDigitCode();
     setRecordOfWarehouseCode({ warehouseId: warehouse?.warehouseId ?? generateCode });
-       console.log(recordOfWarehouseCode);
   }, [warehouse?.warehouseId?.length]);
 
 

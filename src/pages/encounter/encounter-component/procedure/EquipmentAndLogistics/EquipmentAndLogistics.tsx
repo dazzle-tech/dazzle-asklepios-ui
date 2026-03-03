@@ -166,7 +166,6 @@ const handleSave = async () => {
                   actionButtonFunction={async () => {
                       try {
                           const Response=await deleteEquipment(ProcedureServiceEquipment.key).unwrap();
-                          console.log("Response",Response);
                          dispatch(notify({ msg:Response.msg, sev: "success" }));
                          refetch();
                          setConfirmDeleteOpen(false);

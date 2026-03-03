@@ -48,7 +48,6 @@ const InventoryAttachment = ({ transaction , setTransaction, refetchAttachmentLi
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const dispatch = useAppDispatch();
 
-    console.log( transaction);
     // Initialize list request with default filters
     const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
         ...initialListRequest,

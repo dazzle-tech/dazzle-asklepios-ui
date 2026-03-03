@@ -1,23 +1,53 @@
-import { useGetIcdListQuery } from '@/services/setupService';
+import { useGetIcdListQuery, useGetIcdByIdQuery } from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
 import React, { useEffect, useState } from 'react';
 import SearchIcon from '@rsuite/icons/Search';
 import './styles.less';
 import { Col, Dropdown, Input, InputGroup, Row, Text } from 'rsuite';
 
-const Icd10Search = ({ object, setOpject, fieldName, ...props }) => {
+type Props = {
+  object: any;
+  setOpject: (val: any) => void;
+  fieldName: string;
+  label?: string;
+  disabled?: boolean;
+};
+
+const Icd10Search: React.FC<Props> = ({
+  object,
+  setOpject,
+  fieldName,
+  label,
+  disabled,
+}) => {
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [listIcdRequest, setListIcdRequest] = useState({ ...initialListRequest, pageSize: 1000 });
+  const [listIcdRequest, setListIcdRequest] = useState({
+    ...initialListRequest,
+    pageSize: 1000,
+  });
+
+  /** 🔹 List (search results) */
   const { data: icdListResponseData } = useGetIcdListQuery(listIcdRequest);
 
-  const modifiedData = (icdListResponseData?.object ?? []).map(item => ({
+  /** 🔹 Selected ICD by ID (solution 1) */
+  const diagnosisId = object?.[fieldName];
+
+  const { data: icdById } = useGetIcdByIdQuery(diagnosisId, {
+    skip: !diagnosisId,
+  });
+  
+
+  const modifiedData = (icdListResponseData?.object ?? []).map((item: any) => ({
     ...item,
-    combinedLabel: `${item.icdCode} - ${item.description}`
+    combinedLabel: `${item.icdCode} - ${item.description}`,
   }));
 
-  const handleSearch = value => setSearchKeyword(value);
+  /** 🔹 Handle search */
+  const handleSearch = (value: string) => {
+    setSearchKeyword(value);
+  };
 
-  const selectedItem = modifiedData.find(item => item.key === object?.[fieldName]);
+  /** 🔹 Apply filters when searching */
   useEffect(() => {
     if (searchKeyword.trim() !== '') {
       setListIcdRequest({
@@ -27,46 +57,50 @@ const Icd10Search = ({ object, setOpject, fieldName, ...props }) => {
           {
             fieldName: 'icd_code',
             operator: 'containsIgnoreCase',
-            value: searchKeyword
+            value: searchKeyword,
           },
           {
             fieldName: 'description',
             operator: 'containsIgnoreCase',
-            value: searchKeyword
-          }
-        ]
+            value: searchKeyword,
+          },
+        ],
       });
     }
   }, [searchKeyword]);
+
   return (
     <>
+      {/* 🔹 Search input */}
       <Row>
-        <Text>{props?.label ? props?.label : 'Diagnosis'}</Text>
+        <Text>{label ?? 'Diagnosis'}</Text>
         <Col md={24}>
           <div style={{ position: 'relative' }}>
-            <InputGroup style={{ height: '32px' }} inside>
+            <InputGroup inside style={{ height: '32px' }}>
               <Input
+                required
                 placeholder="Search ICD-10"
                 value={searchKeyword}
                 onChange={handleSearch}
-                disabled={props?.disabled ? props?.disabled : false}
+                disabled={disabled ?? false}
               />
-              <InputGroup.Button style={{ height: '32px' }}>
+              <InputGroup.Button>
                 <SearchIcon />
               </InputGroup.Button>
             </InputGroup>
 
-            {searchKeyword && (
+            {/* 🔹 Dropdown results */}
+            {searchKeyword && modifiedData.length > 0 && (
               <div className="dropdown-list">
                 <Dropdown.Menu>
-                  {modifiedData.map(mod => (
+                  {modifiedData.map((mod: any) => (
                     <Dropdown.Item
                       key={mod.key}
                       eventKey={mod.key}
                       onClick={() => {
                         setOpject({
                           ...object,
-                          [fieldName]: mod.key
+                          [fieldName]: mod.key,
                         });
                         setSearchKeyword('');
                       }}
@@ -82,12 +116,18 @@ const Icd10Search = ({ object, setOpject, fieldName, ...props }) => {
           </div>
         </Col>
       </Row>
+
+      {/* 🔹 Selected ICD (always correct via byId API) */}
       <Row>
         <Col md={24}>
           <InputGroup style={{ height: '32px' }}>
             <Input
               disabled
-              value={selectedItem ? `${selectedItem.icdCode}, ${selectedItem.description}` : ''}
+              value={
+                icdById
+                  ? `${icdById.icdCode}, ${icdById.description}`
+                  : ''
+              }
             />
           </InputGroup>
         </Col>

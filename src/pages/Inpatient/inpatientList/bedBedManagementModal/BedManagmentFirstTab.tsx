@@ -1,3 +1,4 @@
+import DetailsCard from '@/components/DetailsCard';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
@@ -6,21 +7,20 @@ import { useFetchBedsRelatedToDepartmentQuery, useSaveBedMutation } from '@/serv
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBed,
+  faBroom,
   faExclamationTriangle,
-  faIdCard,
+  // faIdCard,
   faStopCircle,
-  faTable,
+  // faTable,
   faThumbsUp,
-  faUser,
-  faBroom
+  faUser
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Form, Tooltip, Whisper } from 'rsuite';
 import BedCards from './BedCards';
 import './BedManagmentFirstTab.less';
-import DetailsCard from '@/components/DetailsCard';
-import { useSelector } from 'react-redux';
 
 const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -30,18 +30,18 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
   const [viewMode, setViewMode] = useState('table'); // view mode state
 
   // Sort data to show occupied beds first
-  const sortedData = [...data].sort((a, b) => {
-    const statusA = a?.bed?.statusLvalue?.lovDisplayVale || a?.bed?.statusLkey || '';
-    const statusB = b?.bed?.statusLvalue?.lovDisplayVale || b?.bed?.statusLkey || '';
+  // const sortedData = [...data].sort((a, b) => {
+  //   const statusA = a?.bed?.statusLvalue?.lovDisplayVale || a?.bed?.statusLkey || '';
+  //   const statusB = b?.bed?.statusLvalue?.lovDisplayVale || b?.bed?.statusLkey || '';
 
-    if (statusA.toLowerCase() === 'occupied' && statusB.toLowerCase() !== 'occupied') {
-      return -1;
-    }
-    if (statusA.toLowerCase() !== 'occupied' && statusB.toLowerCase() === 'occupied') {
-      return 1;
-    }
-    return 0;
-  });
+  //   if (statusA.toLowerCase() === 'occupied' && statusB.toLowerCase() !== 'occupied') {
+  //     return -1;
+  //   }
+  //   if (statusA.toLowerCase() !== 'occupied' && statusB.toLowerCase() === 'occupied') {
+  //     return 1;
+  //   }
+  //   return 0;
+  // });
   const {
     data: fetchBedsRelatedToDepartmentResponse,
     refetch,
@@ -156,7 +156,6 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
   // Calculate statistics (use latest fetched data)
   const bedsData = fetchBedsRelatedToDepartmentResponse ?? [];
 
-  console.log('bedsData==>', bedsData);
   const totalBeds = bedsData.length;
   const occupiedBeds = bedsData.filter(item => {
     const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
@@ -178,7 +177,7 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
   return (
     <>
       {/* Toggle view icons */}
-      <div className="icons-2">
+      {/* <div className="icons-2">
         <FontAwesomeIcon
           icon={faIdCard}
           className={`fa-table-cells-row-lock-icon ${viewMode === 'card' ? 'active' : ''}`}
@@ -189,7 +188,7 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
           className={`fa-table-cells-row-unlock-icon ${viewMode === 'table' ? 'active' : ''}`}
           onClick={() => setViewMode('table')}
         />
-      </div>
+      </div> */}
       {/* Statistics Cards */}
       <div className="statistics-container">
         <DetailsCard

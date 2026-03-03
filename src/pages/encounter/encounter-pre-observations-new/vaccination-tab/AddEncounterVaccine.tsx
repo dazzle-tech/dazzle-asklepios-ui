@@ -1,37 +1,67 @@
 import React, { useEffect, useState } from 'react';
-import MyInput from '@/components/MyInput';
 import AdvancedModal from '@/components/AdvancedModal';
-import { InputGroup, Form, Input, Dropdown, Stack, DatePicker } from 'rsuite';
-import {
-  ApVaccine,
-  ApVaccineBrands,
-  ApVaccineDose,
-  ApVaccineDosesInterval
-} from '@/types/model-types';
-import { useSaveEncounterVaccineMutation } from '@/services/observationService';
-import {
-  newApVaccine,
-  newApVaccineBrands,
-  newApVaccineDose,
-  newApVaccineDosesInterval,
-  newApEncounterVaccination
-} from '@/types/model-types-constructor';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetVaccineListQuery,
-  useGetVaccineBrandsListQuery,
-  useGetVaccineDosesListQuery,
-  useGetVaccineDosesIntervalListQuery
-} from '@/services/setupService';
-import SearchIcon from '@rsuite/icons/Search';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useAppSelector, useAppDispatch } from '@/hooks';
+import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
-import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
-import './styles.less';
 import InfoCardList from '@/components/InfoCardList';
+import { InputGroup, Form, Input, Dropdown } from 'rsuite';
+import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
+import './styles.less';
+
+import {
+  useAddEncounterVaccinationMutation,
+  useUpdateEncounterVaccinationMutation
+} from '@/services/encounterMedical/encounterVaccinationService';
+
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useLazyGetVaccinesByNameQuery } from '@/services/vaccine/vaccineService';
+import {
+  useGetVaccineDosesByVaccineIdQuery,
+  useGetNextVaccineDoseQuery
+} from '@/services/vaccine/vaccineDosesService';
+import { useGetIntervalByFromDoseIdOneQuery } from '@/services/vaccine/vaccineDosesIntervalService';
+import { useGetVaccineBrandsByVaccineQuery } from '@/services/vaccine/vaccineBrandsService';
+
+import { useEnumOptions } from '@/services/enumsApi';
+
+import type {
+  Vaccine,
+  VaccineBrand,
+  VaccineDose,
+  VaccineDosesInterval,
+  EncounterVaccination
+} from '@/types/model-types-new';
+
+import {
+  newEncounterVaccination,
+  newVaccine,
+  newVaccineBrand,
+  newVaccineDose,
+  newVaccineDosesInterval
+} from '@/types/model-types-constructor-new';
+
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { toHumanEncounterVaccinationError } from './toHumanEncounterVaccinationError';
+
+interface Props {
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  patient: any;
+  encounter: any;
+  encounterVaccination: EncounterVaccination;
+  setEncounterVaccination: React.Dispatch<React.SetStateAction<EncounterVaccination>>;
+  vaccineObject: Vaccine;
+  vaccineDoseObjet: VaccineDose;
+  vaccineBrandObject: VaccineBrand;
+  refetch: () => void;
+  isDisabled?: boolean;
+  edit?: boolean;
+}
+
+const PAGE_SIZE = 5;
 
 const AddEncounterVaccine = ({
   open,
@@ -46,415 +76,405 @@ const AddEncounterVaccine = ({
   refetch,
   isDisabled = false,
   edit
-}) => {
+}: Props) => {
   const authSlice = useAppSelector(state => state.auth);
-  const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [vaccine, setVaccine] = useState<ApVaccine>({ ...vaccineObject });
-  const [vaccineBrand, setVaccineBrand] = useState<ApVaccineBrands>({ ...vaccineBrandObject });
-  const [isDisabledField, setIsDisabledField] = useState(false);
-  const [vaccineDose, setVaccineDose] = useState<any>({ ...vaccineDoseObjet });
-  const [vaccineToDose, setVaccineToDose] = useState<ApVaccineDose>({ ...newApVaccineDose });
-  const [administrationReaction, setAdministrationReactions] = useState({
-    administrationReactionsLkey: ''
-  });
-  const [isEncounterVaccineStatusClose, setIsEncounterVacineStatusClose] = useState(false);
-  const [hasExternalFacility, setHasExternalFacility] = useState({
-    isHas: encounterVaccination?.externalFacilityName === '' ? false : true
-  });
-  const [vaccineDoseInterval, setVaccineDoseInterval] = useState<ApVaccineDosesInterval>({
-    ...newApVaccineDosesInterval
-  });
-  const [saveEncounterVaccine] = useSaveEncounterVaccineMutation();
   const dispatch = useAppDispatch();
 
-  // Fetch LOV data for various fields
-  const { data: typeLovQueryResponse } = useGetLovValuesByCodeQuery('VACCIN_TYP');
-  const { data: rOALovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-  const { data: numofDossLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
+  const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
+  const [isEncounterVaccineStatusClose, setIsEncounterVacineStatusClose] = useState(false);
+  const [isDisabledField, setIsDisabledField] = useState(false);
+
+  const [inputValue, setInputValue] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [vaccinePage, setVaccinePage] = useState(0);
+  const [vaccinesAccum, setVaccinesAccum] = useState<Vaccine[]>([]);
+  const [hasMoreVaccines, setHasMoreVaccines] = useState(false);
+  const [searchSession, setSearchSession] = useState(0);
+
+  const [triggerSearchVaccines, vaccinesSearchState] = useLazyGetVaccinesByNameQuery();
+
+  const executeSearch = () => {
+    const q = inputValue.trim();
+    if (!q) return;
+
+    setSearchSession(prev => prev + 1);
+    setSearchKeyword(q);
+    setVaccinePage(0);
+    setVaccinesAccum([]);
+    setHasMoreVaccines(false);
+
+    triggerSearchVaccines({ name: q, page: 0, size: PAGE_SIZE, sort: 'id,asc' }, true);
+  };
+
+  const handleLoadMoreVaccines = () => {
+    if (!searchKeyword) return;
+    if (vaccinesSearchState.isFetching) return;
+    if (!hasMoreVaccines) return;
+
+    const nextPage = vaccinePage + 1;
+    setVaccinePage(nextPage);
+
+    triggerSearchVaccines(
+      { name: searchKeyword, page: nextPage, size: PAGE_SIZE, sort: 'id,asc' },
+      true
+    );
+  };
+
+  const [vaccine, setVaccine] = useState<Vaccine>({ ...vaccineObject });
+  const [vaccineBrand, setVaccineBrand] = useState<VaccineBrand>({ ...vaccineBrandObject });
+  const [vaccineDose, setVaccineDose] = useState<VaccineDose>({ ...vaccineDoseObjet });
+  const [vaccineToDose, setVaccineToDose] = useState<VaccineDose>({
+    ...newVaccineDose,
+    doseNumber: ''
+  });
+
+  const [intervalRecord, setIntervalRecord] = useState<VaccineDosesInterval>({
+    ...(newVaccineDosesInterval as VaccineDosesInterval)
+  });
+
+  const [brandPicker, setBrandPicker] = useState<{ vaccineBrandId: number | null }>({
+    vaccineBrandId: vaccineBrand?.id ?? null
+  });
+  const [dosePicker, setDosePicker] = useState<{ vaccineDoseId: number | null }>({
+    vaccineDoseId: vaccineDose?.id ?? null
+  });
+
+  const [administrationReaction, setAdministrationReactions] = useState<{
+    administrationReactionsLkey: string | null;
+  }>({ administrationReactionsLkey: '' });
+
+  /**
+   * NEW (toggle using MyInput checkbox):
+   * source of truth is encounterVaccination.isExternalFacility (boolean)
+   * clear-name rule:
+   * - if isExternalFacility === false => externalFacilityName must be '' (empty string)
+   */
+  const [externalFacilityToggle, setExternalFacilityToggle] = useState<{
+    isExternalFacility: boolean;
+  }>({
+    isExternalFacility: !!encounterVaccination?.isExternalFacility
+  });
+
+  const [brandPage, setBrandPage] = useState(0);
+  const [allBrands, setAllBrands] = useState<VaccineBrand[]>([]);
+
+  const [dosePage, setDosePage] = useState(0);
+  const [allDoses, setAllDoses] = useState<VaccineDose[]>([]);
+
+  const [addEncounterVaccination] = useAddEncounterVaccinationMutation();
+  const [updateEncounterVaccination] = useUpdateEncounterVaccinationMutation();
+
+  const typeEnumOptions = useEnumOptions('VaccineType');
+  const roaEnumOptions = useEnumOptions('MedRoa');
+  const numOfDosesEnumOptions = useEnumOptions('NumberOfDoses');
+  const unitEnumOptions = useEnumOptions('DurationUnit');
+
   const { data: manufacturerLovQueryResponse } = useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
   const { data: medAdversLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
-  const { data: numSerialLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS_SERIAL');
-  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-  const { data: volumUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
-  // Initialize List Request Filters
-  const [vaccineListRequest, setVaccineListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'is_valid',
-        operator: 'match',
-        value: 'true'
-      }
-    ]
-  });
-
-  const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
-  });
-
-  const [vaccineDosesListRequest, setVaccineDosesListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
-  });
-
-  const [vaccineDosesIntevalListRequest, setVaccineDosesIntervalListRequest] =
-    useState<ListRequest>({
-      ...initialListRequest,
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        }
-      ]
-    });
-
-  //List Responses
-  // Fetch vaccine doses list based on selected vaccine, brand, & dose
-  const { data: vaccineDosesListResponseLoading } = useGetVaccineDosesListQuery(
-    vaccineDosesListRequest,
+  const { data: vaccineBrandsPage } = useGetVaccineBrandsByVaccineQuery(
     {
-      skip: !vaccine?.key && !vaccineBrand?.key && !vaccineDose?.key
-    }
+      vaccineId: vaccine?.id as number | undefined,
+      page: brandPage,
+      size: PAGE_SIZE,
+      sort: 'id,asc'
+    },
+    { skip: !vaccine?.id }
   );
-  // Fetch full vaccine list
-  const { data: vaccineListResponseLoading } = useGetVaccineListQuery(vaccineListRequest);
-  // Fetch vaccine brands list based on selected vaccine
-  const { data: vaccineBrandsListResponseLoading } = useGetVaccineBrandsListQuery(
-    vaccineBrandsListRequest,
-    {
-      skip: !vaccine?.key
-    }
-  );
-  // Fetch vaccine dose intervals based on selected brand & dose
-  const { data: vaccineDosesIntervalListResponseLoading } = useGetVaccineDosesIntervalListQuery(
-    vaccineDosesIntevalListRequest,
-    {
-      skip: !vaccineBrand?.key && !vaccineDose?.key
-    }
-  );
-  // Prepare vaccine list with a combined label for display
-  const modifiedData = (vaccineListResponseLoading?.object ?? []).map(item => ({
-    ...item,
-    combinedLabel: `${item.vaccineName}`
-  }));
-  // Prepare vaccine brands list for dropdown selection
-  const brandsNameList = (vaccineBrandsListResponseLoading?.object ?? []).map(item => ({
-    value: item?.key,
-    label: item?.brandName,
-    vaccineBrand: item
-  }));
-  // Prepare vaccine doses list with display name for dropdown selection
-  const dosesList = (vaccineDosesListResponseLoading?.object ?? []).map(item => {
-    const label = item?.doseNameLvalue?.lovDisplayVale ?? item?.doseNameLkey ?? '';
-    return {
-      value: item.key,
-      label,
-      vaccineDoses: item
-    };
-  });
 
-  console.log('📋 Raw API Response:', searchKeyword);
-  //handle Search Function
-  const handleSearch = value => {
-    setSearchKeyword(value);
-  };
-  //handle Clear Fields
+  const { data: vaccineDosesPage } = useGetVaccineDosesByVaccineIdQuery(
+    {
+      vaccineId: vaccine?.id as number | undefined,
+      page: dosePage,
+      size: PAGE_SIZE,
+      sort: 'id,asc'
+    },
+    { skip: !vaccine?.id }
+  );
+
+  const { data: intervalOneData } = useGetIntervalByFromDoseIdOneQuery(
+    { fromDoseId: vaccineDose?.id as number },
+    { skip: !vaccineDose?.id }
+  );
+
+  const { data: nextDoseData } = useGetNextVaccineDoseQuery(
+    { id: vaccineDose?.id as number },
+    { skip: !vaccineDose?.id }
+  );
+
   const handleClearField = () => {
-    setEncounterVaccination({ ...newApEncounterVaccination, statusLkey: null });
-    setVaccine({
-      ...newApVaccine,
-      typeLkey: null,
-      roaLkey: null,
-      durationUnitLkey: null,
-      numberOfDosesLkey: null
+    setEncounterVaccination({
+      ...(newEncounterVaccination as EncounterVaccination),
+      status: null,
+      // NEW defaults
+      isExternalFacility: false,
+      externalFacilityName: ''
     });
-    setVaccineBrand({
-      ...newApVaccineBrands,
-      brandName: '',
-      manufacturerLkey: null,
-      unitLkey: null
-    });
-    setVaccineDose({
-      ...newApVaccineDose,
-      fromAgeUnitLkey: null,
-      toAgeUnitLkey: null,
-      doseNameLkey: null
-    });
-    setVaccineToDose({
-      ...newApVaccineDose,
-      fromAgeUnitLkey: null,
-      toAgeUnitLkey: null,
-      doseNameLkey: null
-    });
-    setIsEncounterVacineStatusClose(false);
-    setVaccineDoseInterval({ ...newApVaccineDosesInterval });
-    setHasExternalFacility({ isHas: false });
+
+    setExternalFacilityToggle({ isExternalFacility: false });
+
+    setVaccine({ ...(newVaccine as Vaccine) });
+    setVaccineBrand({ ...(newVaccineBrand as VaccineBrand) });
+    setVaccineDose({ ...(newVaccineDose as VaccineDose) });
+    setVaccineToDose({ ...(newVaccineDose as VaccineDose), doseNumber: '' });
+
+    setIntervalRecord({ ...(newVaccineDosesInterval as VaccineDosesInterval) });
+
+    setBrandPicker({ vaccineBrandId: null });
+    setDosePicker({ vaccineDoseId: null });
+
     setAdministrationReactions({ administrationReactionsLkey: null });
+
+    setInputValue('');
     setSearchKeyword('');
-  };
-  //handle Save Encounter Vaccine
-  const handleSaveEncounterVaccine = () => {
-    if (encounterVaccination.key === undefined) {
-      saveEncounterVaccine({
-        ...encounterVaccination,
-        vaccineKey: vaccine.key,
-        vaccineBrandKey: vaccineBrand.key,
-        vaccineDoseKey: vaccineDose.key,
-        patientKey: patient.key,
-        encounterKey: encounter.key,
-        statusLkey: '9766169155908512',
-        createdBy: authSlice.user.key
-      })
-        .unwrap()
-        .then(() => {
-          dispatch(notify({ msg: 'Encounter Vaccine Added Successfully', sev: 'success' }));
-          setEncounterVaccination({ ...newApEncounterVaccination, statusLkey: null });
-          refetch();
-          handleClearField();
-          setOpen(false);
-        });
-    } else if (encounterVaccination.key) {
-      saveEncounterVaccine({
-        ...encounterVaccination,
-        vaccineKey: vaccine.key,
-        vaccineBrandKey: vaccineBrand.key,
-        vaccineDoseKey: vaccineDose.key,
-        patientKey: patient.key,
-        encounterKey: encounter.key,
-        updatedBy: authSlice.user.key
-      })
-        .unwrap()
-        .then(() => {
-          dispatch(notify({ msg: 'Encounter Vaccine Updated Successfully', sev: 'success' }));
-          refetch();
-          handleClearField();
-          setOpen(false);
-        });
-    }
+    setVaccinePage(0);
+    setVaccinesAccum([]);
+    setHasMoreVaccines(false);
+
+    setBrandPage(0);
+    setAllBrands([]);
+    setDosePage(0);
+    setAllDoses([]);
   };
 
-  // Effects
-  useEffect(() => {
-    // TODO update status to be a LOV value
-    if (encounter?.encounterStatusLkey === '91109811181900') {
-      setIsEncounterStatusClosed(true);
+  const handleSaveEncounterVaccine = async () => {
+    if (!patient?.key) {
+      dispatch(notify({ msg: 'Patient is required.', sev: 'error' }));
+      return;
     }
-  }, [encounter?.encounterStatusLkey]);
+    if (!encounter?.key) {
+      dispatch(notify({ msg: 'Encounter is required.', sev: 'error' }));
+      return;
+    }
+    if (!vaccine?.id) {
+      dispatch(notify({ msg: 'Vaccine is required.', sev: 'error' }));
+      return;
+    }
+    if (!vaccineDose?.id) {
+      dispatch(notify({ msg: 'Dose Number is required.', sev: 'error' }));
+      return;
+    }
+    if (!encounterVaccination?.dateAdministered) {
+      dispatch(notify({ msg: 'Date Administered is required.', sev: 'error' }));
+      return;
+    }
 
-  console.log('vaccineListResponseLoading Out==>', vaccineListResponseLoading);
+    const payload = {
+      ...encounterVaccination,
+      vaccineId: vaccine?.id,
+      vaccineBrandId: vaccineBrand?.id,
+      vaccineDoseId: vaccineDose?.id,
+      patientId: parseInt(patient.key, 10),
+      encounterId: encounter.key
+    };
 
-  useEffect(() => {
-    setVaccineDosesIntervalListRequest(prev => ({
-      ...prev,
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        ...(vaccine?.key
-          ? [
-              {
-                fieldName: 'vaccine_key',
-                operator: 'match',
-                value: vaccine.key
-              }
-            ]
-          : [])
-      ]
-    }));
-    setVaccineDosesListRequest(prev => ({
-      ...prev,
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        ...(vaccine?.key
-          ? [
-              {
-                fieldName: 'vaccine_key',
-                operator: 'match',
-                value: vaccine.key
-              }
-            ]
-          : [])
-      ]
-    }));
-    setVaccineBrandsListRequest(prev => ({
-      ...prev,
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        ...(vaccine?.key
-          ? [
-              {
-                fieldName: 'vaccine_key',
-                operator: 'match',
-                value: vaccine.key
-              }
-            ]
-          : [])
-      ]
-    }));
-  }, [vaccine?.key]);
+    // NEW: normalize using clear-name rule
+    const normalizedPayload = {
+      ...payload,
+      isExternalFacility: !!payload.isExternalFacility,
+      externalFacilityName: payload.isExternalFacility ? payload.externalFacilityName ?? '' : ''
+    };
 
-  useEffect(() => {
-    setVaccineDosesIntervalListRequest(prev => ({
-      ...prev,
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        ...(vaccine?.key
-          ? [
-              {
-                fieldName: 'vaccine_key',
-                operator: 'match',
-                value: vaccine.key
-              }
-            ]
-          : []),
-        ...(vaccineDose?.key
-          ? [
-              {
-                fieldName: 'from_dose_key',
-                operator: 'match',
-                value: vaccineDose.key
-              }
-            ]
-          : [])
-      ]
-    }));
-  }, [vaccineDose?.key, vaccine?.key]);
-
-  useEffect(() => {
-    if (vaccine?.key && vaccineBrand?.key && vaccineDose?.key) {
-      if (vaccineDosesIntervalListResponseLoading?.object[0] != undefined) {
-        setVaccineDoseInterval(vaccineDosesIntervalListResponseLoading?.object[0]);
-        setVaccineToDose(vaccineDosesIntervalListResponseLoading?.object[0].toDose);
+    try {
+      if (!encounterVaccination?.id) {
+        await addEncounterVaccination({ ...normalizedPayload, status: 'ACTIVE' }).unwrap();
+        dispatch(notify({ msg: 'Encounter Vaccine Added Successfully', sev: 'success' }));
       } else {
-        setVaccineDoseInterval(newApVaccineDosesInterval);
-        setVaccineToDose(newApVaccineDose);
+        await updateEncounterVaccination({
+          id: encounterVaccination.id,
+          ...normalizedPayload
+        }).unwrap();
+        dispatch(notify({ msg: 'Encounter Vaccine Updated Successfully', sev: 'success' }));
       }
+
+      refetch();
+      handleClearField();
+      setOpen(false);
+    } catch (err) {
+      const msg = toHumanEncounterVaccinationError(err);
+      dispatch(notify({ msg, sev: 'error' }));
     }
-  }, [vaccineDosesIntervalListResponseLoading, vaccineDose?.key, vaccine?.key, vaccineBrand?.key]);
+  };
 
   useEffect(() => {
-    if (administrationReaction.administrationReactionsLkey != null) {
-      const foundItemKey = medAdversLovQueryResponse?.object?.find(
-        item => item.key === administrationReaction.administrationReactionsLkey
-      );
-      const foundItem = foundItemKey?.lovDisplayVale || '';
-      setEncounterVaccination(prevEncounterVaccination => ({
-        ...prevEncounterVaccination,
-        administrationReactions: prevEncounterVaccination.administrationReactions
-          ? prevEncounterVaccination.administrationReactions.includes(foundItem)
-            ? prevEncounterVaccination.administrationReactions
-            : `${prevEncounterVaccination.administrationReactions}, ${foundItem}`
-          : foundItem
-      }));
+    setIsEncounterStatusClosed(encounter?.encounterStatus === 'CANCELLED');
+  }, [encounter?.encounterStatus]);
+
+  useEffect(() => {
+    setIsEncounterVacineStatusClose(encounterVaccination?.status === 'CANCELLED');
+  }, [encounterVaccination?.status]);
+
+  useEffect(() => {
+    setIsDisabledField(isEncounterStatusClosed || isDisabled || isEncounterVaccineStatusClose);
+  }, [isEncounterStatusClosed, isDisabled, isEncounterVaccineStatusClose]);
+
+  // sync from props
+  useEffect(() => setVaccine({ ...vaccineObject }), [vaccineObject]);
+  useEffect(() => setVaccineBrand({ ...vaccineBrandObject }), [vaccineBrandObject]);
+  useEffect(() => setVaccineDose({ ...vaccineDoseObjet }), [vaccineDoseObjet]);
+
+  useEffect(() => {
+    setBrandPicker({ vaccineBrandId: vaccineBrand?.id ?? null });
+  }, [vaccineBrand?.id]);
+
+  useEffect(() => {
+    setDosePicker({ vaccineDoseId: vaccineDose?.id ?? null });
+  }, [vaccineDose?.id]);
+
+  // merge vaccine search pages
+  useEffect(() => {
+    const pageData = (vaccinesSearchState.data?.data ?? []) as Vaccine[];
+
+    setVaccinesAccum(prev => {
+      if (vaccinePage === 0) return pageData;
+
+      const prevIds = new Set(prev.map(v => v.id));
+      const merged = [...prev];
+
+      for (const v of pageData) {
+        if (!prevIds.has(v.id)) merged.push(v);
+      }
+      return merged;
+    });
+
+    const totalPages = (vaccinesSearchState.data as any)?.totalPages;
+    if (typeof totalPages === 'number') {
+      setHasMoreVaccines(vaccinePage + 1 < totalPages);
+    } else {
+      setHasMoreVaccines(pageData.length === PAGE_SIZE);
     }
+  }, [vaccinesSearchState.data, vaccinePage, searchSession]);
+
+  // accumulate brands pages (NO DUPLICATES)
+  useEffect(() => {
+    const pageData = (vaccineBrandsPage?.data ?? []) as VaccineBrand[];
+    if (!pageData.length) return;
+
+    setAllBrands(prev => {
+      if (brandPage === 0) return pageData;
+
+      const prevIds = new Set(prev.map(b => b.id));
+      const merged = [...prev];
+
+      for (const b of pageData) {
+        if (!prevIds.has(b.id)) merged.push(b);
+      }
+      return merged;
+    });
+  }, [vaccineBrandsPage?.data, brandPage]);
+
+  // accumulate doses pages (NO DUPLICATES)
+  useEffect(() => {
+    const pageData = (vaccineDosesPage?.data ?? []) as VaccineDose[];
+    if (!pageData.length) return;
+
+    setAllDoses(prev => {
+      if (dosePage === 0) return pageData;
+
+      const prevIds = new Set(prev.map(d => d.id));
+      const merged = [...prev];
+
+      for (const d of pageData) {
+        if (!prevIds.has(d.id)) merged.push(d);
+      }
+      return merged;
+    });
+  }, [vaccineDosesPage?.data, dosePage]);
+
+  // build administrationReactions string
+  useEffect(() => {
+    const key = administrationReaction.administrationReactionsLkey;
+    if (!key) return;
+
+    const foundItem =
+      medAdversLovQueryResponse?.object?.find((item: any) => item.key === key)?.lovDisplayVale ??
+      '';
+    if (!foundItem) return;
+
+    setEncounterVaccination(prev => {
+      const current = (prev.administrationReactions ?? '').trim();
+      if (!current) return { ...prev, administrationReactions: foundItem };
+
+      const parts = current.split(',').map(s => s.trim());
+      if (parts.includes(foundItem)) return prev;
+
+      return { ...prev, administrationReactions: `${current}, ${foundItem}` };
+    });
   }, [
     administrationReaction.administrationReactionsLkey,
     medAdversLovQueryResponse,
     setEncounterVaccination
   ]);
 
+  // intervalRecord sync
   useEffect(() => {
-    setHasExternalFacility({
-      isHas: encounterVaccination?.externalFacilityName === '' ? false : true
-    });
-  }, [encounterVaccination]);
-
-  useEffect(() => {
-    if (searchKeyword.trim() !== '') {
-      console.log('inside if st==>', searchKeyword);
-      setVaccineListRequest({
-        ...initialListRequest,
-        filterLogic: 'and',
-        filters: [
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          },
-          {
-            fieldName: 'vaccine_name',
-            operator: 'containsIgnoreCase',
-            value: searchKeyword
-          },
-          {
-            fieldName: 'is_valid',
-            operator: 'match',
-            value: 'true'
-          }
-        ]
-      });
+    if (!vaccineDose?.id) {
+      setIntervalRecord({ ...(newVaccineDosesInterval as VaccineDosesInterval) });
+      return;
     }
-  }, [searchKeyword]);
 
-  useEffect(() => {
-    setVaccine({ ...vaccineObject });
-  }, [vaccineObject]);
-
-  useEffect(() => {
-    setVaccineBrand({ ...vaccineBrandObject });
-  }, [vaccineBrandObject]);
-
-  useEffect(() => {
-    setVaccineDose({ ...vaccineDoseObjet });
-  }, [vaccineDoseObjet]);
-
-  useEffect(() => {
-    if (encounterVaccination?.statusLkey === '3196709905099521') {
-      setIsEncounterVacineStatusClose(true);
-    } else {
-      setIsEncounterVacineStatusClose(false);
+    if (intervalOneData) {
+      setIntervalRecord(intervalOneData as VaccineDosesInterval);
+      return;
     }
-  }, [encounterVaccination?.statusLkey]);
 
+    setIntervalRecord({ ...(newVaccineDosesInterval as VaccineDosesInterval) });
+  }, [vaccineDose?.id, intervalOneData]);
+
+  // next dose sync
   useEffect(() => {
-    if (isEncounterStatusClosed || isDisabled || isEncounterVaccineStatusClose) {
-      setIsDisabledField(true);
-    } else {
-      setIsDisabledField(false);
+    if (!vaccineDose?.id) {
+      setVaccineToDose({ ...(newVaccineDose as VaccineDose), doseNumber: '' });
+      return;
     }
-  }, [isEncounterStatusClosed, isDisabled, isEncounterVaccineStatusClose]);
+
+    if (nextDoseData) {
+      setVaccineToDose({ ...(newVaccineDose as VaccineDose), ...(nextDoseData as VaccineDose) });
+      return;
+    }
+
+    if (!intervalOneData) {
+      setVaccineToDose({ ...(newVaccineDose as VaccineDose), doseNumber: '' });
+      return;
+    }
+
+    const interval = intervalOneData as VaccineDosesInterval;
+    const toDose = (allDoses as VaccineDose[]).find(d => d.id === interval.toDoseId);
+
+    setVaccineToDose(
+      toDose
+        ? ({ ...(newVaccineDose as VaccineDose), ...toDose } as VaccineDose)
+        : ({ ...(newVaccineDose as VaccineDose), doseNumber: '' } as VaccineDose)
+    );
+  }, [vaccineDose?.id, nextDoseData, intervalOneData, allDoses]);
+
+  /**
+   * NEW: sync toggle from encounterVaccination (edit / initial load)
+   */
+  useEffect(() => {
+    setExternalFacilityToggle({ isExternalFacility: !!encounterVaccination?.isExternalFacility });
+  }, [encounterVaccination?.isExternalFacility]);
+
+  /**
+   * NEW: when toggle changes -> update encounterVaccination + apply clear-name rule
+   */
+  useEffect(() => {
+    const isExternal = !!externalFacilityToggle.isExternalFacility;
+
+    setEncounterVaccination(prev => ({
+      ...prev,
+      isExternalFacility: isExternal,
+      externalFacilityName: isExternal ? prev.externalFacilityName ?? '' : ''
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalFacilityToggle.isExternalFacility]);
 
   return (
     <AdvancedModal
       open={open}
       setOpen={setOpen}
       isDisabledActionBtn={edit}
-      leftTitle={`${vaccine?.vaccineName} Vaccine`}
+      leftTitle={`${vaccine?.name || ''} Vaccine`}
       rightTitle="Add Vaccine"
       size="87vw"
       actionButtonFunction={handleSaveEncounterVaccine}
@@ -471,39 +491,84 @@ const AddEncounterVaccine = ({
               <Input
                 disabled={isDisabledField}
                 placeholder="Search"
-                value={searchKeyword}
-                onChange={handleSearch}
+                value={inputValue}
+                onChange={value => {
+                  setInputValue(value);
+
+                  if (searchKeyword && value.trim() !== searchKeyword) {
+                    setVaccinesAccum([]);
+                    setHasMoreVaccines(false);
+                    setVaccinePage(0);
+                    setSearchKeyword('');
+                  }
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') executeSearch();
+                }}
               />
-              <InputGroup.Button disabled={isDisabledField}>
+              <InputGroup.Button disabled={isDisabledField} onClick={executeSearch}>
                 <SearchIcon />
               </InputGroup.Button>
             </InputGroup>
-            {searchKeyword && (
-              <Dropdown.Menu className="dropdown-menuresult">
-                {modifiedData?.map(mod => (
+
+            {!!vaccinesAccum.length && (
+              <Dropdown.Menu key={searchSession} className="dropdown-menuresult">
+                {vaccinesAccum.map(v => (
                   <Dropdown.Item
-                    key={mod.key}
-                    eventKey={mod.key}
+                    key={v.id}
                     onClick={() => {
-                      setVaccine(mod);
+                      setVaccine({ ...(newVaccine as Vaccine), ...v });
+
+                      setVaccineBrand({ ...(newVaccineBrand as VaccineBrand) });
+                      setVaccineDose({ ...(newVaccineDose as VaccineDose) });
+                      setVaccineToDose({ ...(newVaccineDose as VaccineDose), doseNumber: '' });
+                      setIntervalRecord({ ...(newVaccineDosesInterval as VaccineDosesInterval) });
+
+                      setBrandPicker({ vaccineBrandId: null });
+                      setDosePicker({ vaccineDoseId: null });
+
+                      setBrandPage(0);
+                      setAllBrands([]);
+                      setDosePage(0);
+                      setAllDoses([]);
+
+                      setInputValue('');
                       setSearchKeyword('');
+                      setVaccinesAccum([]);
+                      setHasMoreVaccines(false);
+                      setVaccinePage(0);
                     }}
                   >
-                    <span>{mod.vaccineName}</span>
+                    {v.name}
                   </Dropdown.Item>
                 ))}
+
+                {hasMoreVaccines && (
+                  <Dropdown.Item
+                    disabled={vaccinesSearchState.isFetching}
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleLoadMoreVaccines();
+                    }}
+                  >
+                    <strong>{vaccinesSearchState.isFetching ? 'Loading...' : 'Load more...'}</strong>
+                  </Dropdown.Item>
+                )}
               </Dropdown.Menu>
             )}
           </div>
+
           <Form layout="inline" fluid className="fields-container">
             <MyInput
               column
               disabled
               fieldType="text"
               fieldLabel="Vaccin Name"
-              fieldName="vaccineName"
+              fieldName="name"
               record={vaccine}
               setRecord={setVaccine}
+              required
             />
             <MyInput
               column
@@ -518,10 +583,10 @@ const AddEncounterVaccine = ({
               column
               fieldLabel="Type"
               fieldType="select"
-              fieldName="typeLkey"
-              selectData={typeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldName="type"
+              selectData={typeEnumOptions ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={vaccine}
               setRecord={setVaccine}
               disabled
@@ -530,10 +595,10 @@ const AddEncounterVaccine = ({
               column
               fieldLabel="Number of Doses"
               fieldType="select"
-              fieldName="numberOfDosesLkey"
-              selectData={numofDossLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldName="numberOfDoses"
+              selectData={numOfDosesEnumOptions ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={vaccine}
               setRecord={setVaccine}
               disabled
@@ -542,10 +607,10 @@ const AddEncounterVaccine = ({
               column
               fieldLabel="ROA"
               fieldType="select"
-              fieldName="roaLkey"
-              selectData={rOALovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldName="roa"
+              selectData={roaEnumOptions ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={vaccine}
               setRecord={setVaccine}
               disabled
@@ -558,29 +623,40 @@ const AddEncounterVaccine = ({
               setRecord={setVaccine}
               disabled
             />
+
             <MyInput
               column
-              searchable={false}
+              required
               fieldLabel="Used Brand"
-              fieldType="select"
-              fieldName="key"
-              selectData={brandsNameList}
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={{ key: vaccineBrand?.key || '' }}
-              setRecord={updated => {
-                if (!updated.key) {
-                  setVaccineBrand(null);
-                } else {
-                  const selectedItem = brandsNameList.find(item => item.value === updated.key);
-                  if (selectedItem) {
-                    setVaccineBrand({ ...selectedItem.vaccineBrand });
-                  }
-                }
+              fieldType="selectPagination"
+              fieldName="vaccineBrandId"
+              selectData={allBrands}
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={brandPicker}
+              setRecord={setBrandPicker}
+              searchable
+              cleanable
+              hasMore={!!(vaccineBrandsPage as any)?.links?.next}
+              onFetchMore={() => {
+                const next = (vaccineBrandsPage as any)?.links?.next;
+                if (!next) return;
+                const { page } = extractPaginationFromLink(next);
+                setBrandPage(page);
               }}
-              placeholder="Select"
+              onSelectItem={(item: VaccineBrand | null) => {
+                if (!item) {
+                  setVaccineBrand({ ...(newVaccineBrand as VaccineBrand) });
+                  setBrandPicker({ vaccineBrandId: null });
+                  return;
+                }
+                setVaccineBrand({ ...(newVaccineBrand as VaccineBrand), ...(item as VaccineBrand) });
+                setBrandPicker({ vaccineBrandId: item.id as number });
+              }}
+              placeholder={vaccineBrand?.name ? vaccineBrand.name : 'Select'}
               disabled={isDisabledField}
             />
+
             <MyInput
               column
               disabled
@@ -590,23 +666,25 @@ const AddEncounterVaccine = ({
               record={vaccineBrand}
               setRecord={setVaccineBrand}
             />
+
             <MyInput
               disabled
               column
               fieldLabel="Unit"
               fieldType="select"
-              fieldName="unitLkey"
-              selectData={volumUnitLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldName="unit"
+              selectData={unitEnumOptions ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={vaccineBrand}
               setRecord={setVaccineBrand}
             />
+
             <MyInput
               column
               fieldLabel="Vaccine Manufacturer"
               fieldType="select"
-              fieldName="manufacturerLkey"
+              fieldName="manufacture"
               selectData={manufacturerLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
@@ -614,6 +692,7 @@ const AddEncounterVaccine = ({
               setRecord={setVaccineBrand}
               disabled
             />
+
             <MyInput
               column
               disabled={isDisabledField}
@@ -623,74 +702,81 @@ const AddEncounterVaccine = ({
               record={encounterVaccination}
               setRecord={setEncounterVaccination}
             />
+
             <MyInput
               column
-              searchable={false}
-              fieldLabel="Dose Name"
-              fieldType="select"
-              fieldName="key"
-              selectData={dosesList}
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={{ key: vaccineDose?.key || '' }}
-              setRecord={updated => {
-                const selectedItem = dosesList.find(item => item.value === updated.key);
-                if (selectedItem) {
-                  setVaccineDose({ ...selectedItem.vaccineDoses });
-                } else {
-                  setVaccineDose({});
-                }
+              required
+              fieldLabel="Dose Number"
+              fieldType="selectPagination"
+              fieldName="vaccineDoseId"
+              selectData={allDoses}
+              selectDataLabel="doseNumber"
+              selectDataValue="id"
+              record={dosePicker}
+              setRecord={setDosePicker}
+              searchable
+              cleanable
+              hasMore={!!(vaccineDosesPage as any)?.links?.next}
+              onFetchMore={() => {
+                const next = (vaccineDosesPage as any)?.links?.next;
+                if (!next) return;
+                const { page } = extractPaginationFromLink(next);
+                setDosePage(page);
               }}
-              placeholder={
-                vaccineDose?.key ? vaccineDose?.doseNameLvalue?.lovDisplayVale : 'Select'
-              }
+              onSelectItem={(item: VaccineDose | null) => {
+                if (!item) {
+                  setVaccineDose({ ...(newVaccineDose as VaccineDose) });
+                  setDosePicker({ vaccineDoseId: null });
+                  return;
+                }
+                setVaccineDose({ ...(newVaccineDose as VaccineDose), ...(item as VaccineDose) });
+                setDosePicker({ vaccineDoseId: item.id as number });
+              }}
+              placeholder={vaccineDose?.doseNumber ? String(vaccineDose.doseNumber) : 'Select'}
               disabled={isDisabledField}
             />
+
             <MyInput
               column
               fieldLabel="Next Dose"
-              fieldType="select"
-              fieldName="doseNameLkey"
-              selectData={numSerialLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldType="text"
+              fieldName="doseNumber"
               record={vaccineToDose}
+              setRecord={setVaccineToDose}
               disabled
             />
+
             <MyInput
               column
               fieldLabel="Next Dose Due Date"
-              fieldName="combined"
-              placeholder={
-                vaccineDoseInterval?.intervalBetweenDoses && vaccineDoseInterval?.unitLkey
-                  ? `${vaccineDoseInterval.intervalBetweenDoses} ${
-                      unitLovQueryResponse?.object?.find(
-                        u => u.key === vaccineDoseInterval.unitLkey
-                      )?.lovDisplayVale || ''
-                    }`
-                  : ' '
-              }
-              record={''}
+              fieldType="text"
+              fieldName="intervalBetweenDoses"
+              record={intervalRecord}
+              setRecord={setIntervalRecord}
               disabled
             />
+
             <MyInput
               column
               disabled={isDisabledField}
               fieldType="text"
-              fieldLabel="Administration Site"
-              fieldName="actualSide"
+              fieldLabel="Administered Location"
+              fieldName="administeredLocation"
               record={encounterVaccination}
               setRecord={setEncounterVaccination}
             />
+
+            {/* NEW: toggle isExternalFacility using MyInput checkbox */}
             <MyInput
               column
-              fieldLabel="External Facility"
+              fieldLabel="Is External Facility"
               fieldType="checkbox"
-              fieldName="isHas"
-              record={hasExternalFacility}
-              setRecord={setHasExternalFacility}
+              fieldName="isExternalFacility"
+              record={externalFacilityToggle}
+              setRecord={setExternalFacilityToggle}
               disabled={isDisabledField}
             />
+
             <MyInput
               column
               fieldType="text"
@@ -698,50 +784,21 @@ const AddEncounterVaccine = ({
               fieldName="externalFacilityName"
               record={encounterVaccination}
               setRecord={setEncounterVaccination}
-              disabled={!hasExternalFacility.isHas}
+              disabled={isDisabledField || !externalFacilityToggle.isExternalFacility}
             />
-            <div className="vaccine-input-wrapper">
-              <div>
-                <MyLabel label="Date Administered" />
-              </div>
-              <Stack
-                spacing={10}
-                direction="column"
-                alignItems="flex-start"
-                className="date-time-picker"
-              >
-                <DatePicker
-                  format="MM/dd/yyyy hh:mm"
-                  showMeridian
-                  disabled={isDisabledField}
-                  style={{ width: '145px' }}
-                  value={
-                    encounterVaccination.dateAdministered
-                      ? new Date(encounterVaccination.dateAdministered)
-                      : null
-                  }
-                  placeholder={
-                    encounterVaccination.dateAdministered
-                      ? new Date(encounterVaccination.dateAdministered).toLocaleString('en-GB')
-                      : 'M/d/y hh:mm'
-                  }
-                  onChange={newValue => {
-                    if (newValue) {
-                      setEncounterVaccination(prev => ({
-                        ...prev,
-                        dateAdministered: newValue.getTime()
-                      }));
-                    } else {
-                      setEncounterVaccination(prev => ({
-                        ...prev,
-                        dateAdministered: null
-                      }));
-                    }
-                  }}
-                />
-              </Stack>
-            </div>
+
+            <MyInput
+              column
+              fieldLabel="Date Administered"
+              fieldType="datetime"
+              fieldName="dateAdministered"
+              record={encounterVaccination}
+              setRecord={setEncounterVaccination}
+              disabled={isDisabledField}
+              required
+            />
           </Form>
+
           <Form layout="inline" fluid className="form-container">
             <div className="inputs-group">
               <MyInput
@@ -768,6 +825,7 @@ const AddEncounterVaccine = ({
                 rows={4}
               />
             </div>
+
             <MyInput
               disabled={isDisabledField}
               column
@@ -784,15 +842,6 @@ const AddEncounterVaccine = ({
       leftContent={
         <div className="left-main-container">
           <Form layout="inline" fluid className="fields-container">
-            <MyInput
-              width={160}
-              column
-              fieldLabel="Vaccine Code"
-              fieldName="vaccineCode"
-              record={vaccine}
-              setRecord={setVaccine}
-              disabled
-            />
             <MyInput
               width={160}
               column
@@ -816,39 +865,43 @@ const AddEncounterVaccine = ({
               column
               fieldLabel="Duration Unit"
               fieldType="select"
-              fieldName="durationUnitLkey"
-              selectData={unitLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldName="durationUnit"
+              selectData={unitEnumOptions ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
               record={vaccine}
               setRecord={setVaccine}
               disabled
             />
           </Form>
+
           <div>
             <h6>Vaccine Brands</h6>
             <InfoCardList
-              list={vaccine?.key ? vaccineBrandsListResponseLoading?.object ?? [] : []}
-              fields={[
-                'manufacturerLkey',
-                'volume',
-                'unitLkey',
-                'marketingAuthorizationHolder',
-                'isValid'
-              ]}
+              list={vaccine?.id ? allBrands : []}
+              fields={['manufacture', 'volume', 'unit', 'marketingAuthorizationHolder', 'isActive']}
               fieldLabels={{
-                manufacturerLkey: 'Manufacturer',
+                manufacture: 'Manufacturer',
                 volume: 'Volume',
-                unitLkey: 'Unit',
+                unit: 'Unit',
                 marketingAuthorizationHolder: 'MAH',
-                isValid: 'isValid'
+                isActive: 'isActive'
               }}
-              titleField="brandName"
-            ></InfoCardList>
+              computedFields={{
+                manufacture: (item: any) =>
+                  manufacturerLovQueryResponse?.object?.find((i: any) => i.key === item.manufacture)
+                    ?.lovDisplayVale || ' ',
+                isActive: (item: any) => {
+                  const active = allBrands?.find((i: any) => i.id === item.id)?.isActive;
+                  return active ? 'Yes' : 'No';
+                }
+              }}
+              titleField="name"
+            />
           </div>
         </div>
       }
-    ></AdvancedModal>
+    />
   );
 };
 

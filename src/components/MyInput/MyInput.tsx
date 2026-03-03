@@ -1,4 +1,4 @@
-import { camelCaseToLabel, fromCamelCaseToDBName } from '@/utils';
+import { camelCaseToLabel, fromCamelCaseToDBName, formatEnumString } from '@/utils';
 import React, { useEffect, useState, useRef } from 'react';
 import { CheckPicker, TimePicker } from 'rsuite';
 import {
@@ -17,9 +17,10 @@ import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import dayjs from 'dayjs';
 
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
@@ -48,18 +49,19 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-  | 'text'
-  | 'textarea'
-  | 'checkbox'
-  | 'datetime'
-  | 'time'
-  | 'select'
-  | 'selectPagination'
-  | 'multyPicker'
-  | 'checkPicker'
-  | 'date'
-  | 'number'
-  | 'check';
+    | 'text'
+    | 'password'
+    | 'textarea'
+    | 'checkbox'
+    | 'datetime'
+    | 'time'
+    | 'select'
+    | 'selectPagination'
+    | 'multyPicker'
+    | 'checkPicker'
+    | 'date'
+    | 'number'
+    | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -83,9 +85,10 @@ type MyInputProps = {
   container?: HTMLElement | (() => HTMLElement);
   // select-related
   selectData?: any[];
-  selectDataLabel?: string;
+  selectDataLabel?: string | string[];
   selectDataValue?: string;
   renderMenuItem?: any;
+  renderOptionLabel?: (item: any) => string;
   searchBy?: any;
   searchable?: boolean;
   cleanable?: boolean;
@@ -100,7 +103,7 @@ type MyInputProps = {
   // Tag/Check picker
   creatable?: boolean;
   groupBy?: string | null;
-  // number
+  onSelectItem?: (item: any) => void;
   max?: number;
   defaultChecked?: boolean;
   checkedLabel?: string;
@@ -110,6 +113,8 @@ type MyInputProps = {
   column?: boolean;
   fieldLabel?: string;
   enterClick?: () => Promise<boolean | void> | boolean | void;
+  isEnum?: boolean;
+  allowEnterNewLine?: boolean;
 };
 
 const MyInput = ({
@@ -142,7 +147,7 @@ const MyInput = ({
   const [isTimeOpen, setIsTimeOpen] = useState(false);
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const handleScroll = event => {
@@ -154,10 +159,18 @@ const MyInput = ({
         'rs-picker-menu',
         'rs-virtual-list',
         'rs-virtual-list-scrollbar',
-        'rs-picker-tag-menu'
+        'rs-picker-tag-menu',
+        'rs-picker-date-menu',
+        'rs-calendar-panel',
+        'rs-calendar'
       ];
 
       if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
+        return;
+      }
+
+      const openPopup = document.querySelector('.rs-picker-popup');
+      if (openPopup && openPopup.contains(event.target as Node)) {
         return;
       }
 
@@ -172,7 +185,6 @@ const MyInput = ({
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
   }, []);
-
 
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
@@ -193,9 +205,15 @@ const MyInput = ({
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
 
   const handleValueChange = (value: any) => {
-    if (setRecord && typeof setRecord === 'function') {
-      setRecord({ ...record, [fieldName]: value });
+    if (!setRecord || typeof setRecord !== 'function') return;
+
+    if (fieldType === 'date') {
+      const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
+      setRecord({ ...record, [fieldName]: dateStr });
+      return;
     }
+
+    setRecord({ ...record, [fieldName]: value });
   };
 
   const inputWidth = props?.width ?? 145;
@@ -210,9 +228,9 @@ const MyInput = ({
       return props.menuMaxHeight as number;
     }
     const itemsCount = dataList?.length ?? 0;
-    const estimatedItemHeight = 38; // approx item row height for rsuite pickers
-    const headerAllowance = 24; // search header/padding allowance
-    const capHeight = 240; // sensible default cap
+    const estimatedItemHeight = 38;
+    const headerAllowance = 24;
+    const capHeight = 240;
     return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
   };
 
@@ -244,6 +262,7 @@ const MyInput = ({
     recognition.start();
     recognitionRef.current = recognition;
   };
+
   // stop speech recognition
   const stopListening = () => {
     recognitionRef.current?.stop();
@@ -281,6 +300,16 @@ const MyInput = ({
       return document.body;
     });
 
+  // helper: build label from single أو multiple keys
+  const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
+    if (!item || !labelKeys?.length) return fallback;
+    const parts = labelKeys
+      .map(key => (key ? item[key] : undefined))
+      .filter(v => v !== undefined && v !== null && v !== '');
+    const combined = parts.join(' ').trim();
+    return combined || fallback;
+  };
+
   const conjureFormControl = () => {
     switch (fieldType) {
       case 'textarea':
@@ -294,7 +323,14 @@ const MyInput = ({
               value={record[fieldName] ? record[fieldName] : ''}
               accepter={Textarea}
               onChange={handleValueChange}
-              onKeyDown={focusNextField}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  if (props.allowEnterNewLine) {
+                    return;
+                  }
+                  focusNextField(e);
+                }
+              }}
             />
             {!props.disabled && (
               <div
@@ -302,10 +338,6 @@ const MyInput = ({
                 onClick={changeRecordingState}
                 style={{ position: 'relative' }}
               >
-                <FontAwesomeIcon
-                  icon={faMicrophone}
-                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
                 {recording && <span className="pulse-ring"></span>}
               </div>
             )}
@@ -378,10 +410,17 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            hideMinutes={props?.hideMinutes ? props?.hideMinutes : false}
           />
         );
 
-      case 'select':
+      case 'select': {
+        const isArrayLabel = Array.isArray(props.selectDataLabel);
+        const labelKeys = isArrayLabel
+          ? (props.selectDataLabel as string[])
+          : [props.selectDataLabel ?? ''];
+        const primaryLabelKey = labelKeys[0] ?? '';
+
         return (
           <Form.Control
             style={{ width: styleWidth, height: props?.height ?? 30 }}
@@ -389,7 +428,14 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={SelectPicker}
-            renderMenuItem={props.renderMenuItem}
+            renderMenuItem={
+              props.renderMenuItem ??
+              (isArrayLabel
+                ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
+                : props.isEnum
+                ? (label: any) => formatEnumString(String(label))
+                : undefined)
+            }
             searchBy={props.searchBy}
             container={resolveContainer()}
             placement={pickerPlacement}
@@ -399,7 +445,7 @@ const MyInput = ({
             readOnly={props.readOnly !== undefined ? props.readOnly : false}
             name={fieldName}
             data={props?.selectData ?? []}
-            labelKey={props?.selectDataLabel ?? ''}
+            labelKey={primaryLabelKey}
             valueKey={props?.selectDataValue ?? ''}
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
@@ -412,12 +458,31 @@ const MyInput = ({
             onOpen={() => setIsSelectOpen(true)}
             onClose={() => setIsSelectOpen(false)}
             virtualized={props?.virtualized ?? true}
+            renderValue={
+              isArrayLabel
+                ? (value, item, selectedElement) => {
+                    if (!item) return selectedElement;
+                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                  }
+                : props.isEnum
+                ? (value, item, selectedElement) => {
+                    const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
+                    return <span>{formatEnumString(String(base))}</span>;
+                  }
+                : undefined
+            }
           />
         );
+      }
 
       case 'selectPagination': {
-        const labelKey = props.selectDataLabel ?? 'name';
+        const isArrayLabel = Array.isArray(props.selectDataLabel);
+        const labelKeys = isArrayLabel
+          ? (props.selectDataLabel as string[])
+          : [props.selectDataLabel ?? 'name'];
+        const labelKey = labelKeys[0] ?? 'name';
         const valueKey = props.selectDataValue ?? 'id';
+        const pickerValue = record?.[fieldName] ?? '';
 
         return (
           <Form.Control
@@ -428,34 +493,64 @@ const MyInput = ({
             disabled={props.disabled}
             accepter={SelectPicker}
             searchKeyWard={props?.searchKeyWard}
-            // setSearchKeyWard={props?.setSearchKeyWard}
-            onSearch={(searchText) => {
-             
+            onSearch={searchText => {
               props.setSearchKeyWard?.(searchText);
             }}
             data={[
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                  {
-                    [valueKey]: '__load_more__',
-                    [labelKey]: 'Load more...',
-                    isLoadMore: true
-                  }
-                ]
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
                 : [])
             ]}
             labelKey={labelKey}
             valueKey={valueKey}
-            value={record?.[fieldName] ?? ''}
+            value={pickerValue}
             onChange={(value, item, event) => {
-              if (item?.isLoadMore) {
+              if (item?.isLoadMore || value === '__load_more__') {
                 event?.preventDefault?.();
                 event?.stopPropagation?.();
                 props.onFetchMore?.();
-              } else {
-                handleValueChange(value);
+                return;
               }
+
+              if (value === null || value === '' || value === undefined) {
+                handleValueChange(null);
+                if (props.onSelectItem) {
+                  props.onSelectItem(null);
+                }
+                return;
+              }
+              const selectedItem =
+                (props.selectData ?? []).find((x: any) => x[valueKey] === value) ?? item ?? null;
+
+              handleValueChange(value);
+
+              if (props.onSelectItem && selectedItem) {
+                props.onSelectItem(selectedItem);
+              }
+            }}
+            renderValue={(value, item, selectedElement) => {
+              if (!item) return selectedElement;
+              if (item.isLoadMore) return selectedElement;
+
+              if (props.renderOptionLabel) {
+                const base = props.renderOptionLabel(item);
+                return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
+              }
+
+              if (isArrayLabel) {
+                const base = buildCombinedLabel(item, labelKeys, selectedElement);
+                return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
+              }
+
+              const base = item[labelKey];
+              return <span>{props.isEnum ? formatEnumString(String(base)) : base}</span>;
             }}
             renderMenuItem={(label, item) => {
               if (item?.isLoadMore) {
@@ -476,7 +571,18 @@ const MyInput = ({
                   </div>
                 );
               }
-              return label;
+
+              if (props.renderOptionLabel) {
+                const base = props.renderOptionLabel(item);
+                return props.isEnum ? formatEnumString(String(base)) : base;
+              }
+
+              if (isArrayLabel) {
+                const base = buildCombinedLabel(item, labelKeys, label);
+                return props.isEnum ? formatEnumString(String(base)) : base;
+              }
+
+              return props.isEnum ? formatEnumString(String(label)) : label;
             }}
             placeholder={props.placeholder ?? 'Select...'}
             searchable
@@ -507,12 +613,12 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
             valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : []} // Multiple values as array
-            onChange={handleValueChange} // Pass handler for multiple value selection
+            value={record ? record[fieldName] : []}
+            onChange={handleValueChange}
             placeholder={props.placeholder ?? 'Select...'}
-            creatable={props.creatable ?? false} // Optional: Allow users to create new tags
-            groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
-            searchBy={props.searchBy} // Optional: Search function for TagPicker
+            creatable={props.creatable ?? false}
+            groupBy={props.groupBy ?? null}
+            searchBy={props.searchBy}
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isMultyPickerOpen}
@@ -535,11 +641,11 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
             valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : []} // Multiple values as array
-            onChange={handleValueChange} // Pass handler for multiple value selection
+            value={record ? record[fieldName] : []}
+            onChange={handleValueChange}
             placeholder={props.placeholder ?? 'Select...'}
-            groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
-            searchBy={props.searchBy} // Optional: Search function for checkPicker
+            groupBy={props.groupBy ?? null}
+            searchBy={props.searchBy}
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isCheckPickerOpen}
@@ -560,7 +666,7 @@ const MyInput = ({
             }
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? new Date(record[fieldName]) : null}
+            value={record[fieldName] ? dayjs(record[fieldName]).toDate() : null}
             accepter={CustomDatePicker}
             onChange={handleValueChange}
             placeholder={props.placeholder}
@@ -684,18 +790,23 @@ const MyInput = ({
           (leftAddon ? (leftAddonwidth ? leftAddonwidth : addonWidth) : 0) +
           (rightAddon ? (rightAddonwidth ? rightAddonwidth : addonWidth) : 0);
 
-        const inputControl = (
-          <div style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}>
+        const rawValue = record ? record[fieldName] : '';
+        const displayValue =
+          props.isEnum && typeof rawValue === 'string' ? formatEnumString(rawValue) : rawValue;
+
+        const isPassword = fieldType === 'password';
+
+        const inputControl = isPassword ? (
+          <InputGroup inside style={{ width: defaultInputWidth }}>
             <Form.Control
               style={{
                 width: '100%',
-                height: props?.height ?? 30,
-                paddingRight: '35px'
+                height: props?.height ?? 30
               }}
               disabled={props.disabled}
               name={fieldName}
-              type={fieldType}
-              value={record ? record[fieldName] : ''}
+              type={showPassword ? 'text' : 'password'}
+              value={displayValue}
               onChange={handleValueChange}
               placeholder={props.placeholder}
               onKeyDown={async e => {
@@ -709,17 +820,46 @@ const MyInput = ({
               }}
             />
             {!props.disabled && (
-              <div
-                className={`container-of-search-icon ${recording ? 'recording' : ''}`}
-                onClick={changeRecordingState}
+              <InputGroup.Button
+                onClick={() => setShowPassword(!showPassword)}
+                className="password-toggle-button"
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  boxShadow: 'none',
+                  padding: '8px 12px',
+                  outline: 'none'
+                }}
               >
-                <FontAwesomeIcon
-                  icon={faMicrophone}
-                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
-                {recording && <span className="pulse-ring"></span>}
-              </div>
+                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+              </InputGroup.Button>
             )}
+          </InputGroup>
+        ) : (
+          <div style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}>
+            <Form.Control
+              style={{
+                width: '100%',
+                height: props?.height ?? 30,
+                paddingRight: '35px'
+              }}
+              disabled={props.disabled}
+              name={fieldName}
+              type={fieldType}
+              value={displayValue}
+              onChange={handleValueChange}
+              placeholder={props.placeholder}
+              onKeyDown={async e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const result = await props.enterClick?.();
+                  if (result !== false) {
+                    focusNextField(e);
+                  }
+                }
+              }}
+            />
+            {recording && <span className="pulse-ring"></span>}
           </div>
         );
 
@@ -746,29 +886,29 @@ const MyInput = ({
     }
   };
 
-  const conjureValidationMessages = () => {
-    if (!validationResult) return null;
-    const msgs = [];
-    let i = 0;
-    for (const vrs of validationResult) {
-      msgs.push(
-        <Form.HelpText
-          key={i++}
-          style={{
-            color:
-              vrs.validationType === 'REJECT'
-                ? 'red'
-                : vrs.validationType === 'WARN'
-                  ? 'orange'
-                  : 'grey'
-          }}
-        >
-          <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
-        </Form.HelpText>
-      );
-    }
-    return msgs;
-  };
+  // const conjureValidationMessages = () => {
+  //   if (!validationResult) return null;
+  //   const msgs = [];
+  //   let i = 0;
+  //   for (const vrs of validationResult) {
+  //     msgs.push(
+  //       <Form.HelpText
+  //         key={i++}
+  //         style={{
+  //           color:
+  //             vrs.validationType === 'REJECT'
+  //               ? 'red'
+  //               : vrs.validationType === 'WARN'
+  //                 ? 'orange'
+  //                 : 'grey'
+  //         }}
+  //       >
+  //         <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
+  //       </Form.HelpText>
+  //     );
+  //   }
+  //   return msgs;
+  // };
 
   return (
     <Form.Group
@@ -782,11 +922,11 @@ const MyInput = ({
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />
         )}
-        {props.required && <span className="required-field ">*</span>}
+        {props.required && <span className="required-field">*</span>}
       </Form.ControlLabel>
-      {props.column && <br />}
+      {props.column && <div style={{ marginBottom: 5 }} />}
       {conjureFormControl()}
-      {validationResult && conjureValidationMessages()}
+      {/* {validationResult && conjureValidationMessages()} */}
     </Form.Group>
   );
 };

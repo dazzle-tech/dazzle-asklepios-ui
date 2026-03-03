@@ -152,17 +152,11 @@ const MedicationMatrix = () => {
               case 'cat':
                 setOpenConfirmDeleteModalCat(true);
                 setOpenConfirmDeleteModalClass(false);
-
-                console.log(type);
-                console.log('IAM HERE BUSHRA Cat');
                 break;
               case 'class':
                 setOpenConfirmDeleteModalCat(false);
                 setOpenConfirmDeleteModalClass(true);
                 break;
-
-                console.log(type);
-                console.log('IAM HERE BUSHRA Class');
             }
           }}
         />
@@ -176,16 +170,10 @@ const MedicationMatrix = () => {
               case 'cat':
                 setOpenConfirmDeleteModalCat(true);
                 setOpenConfirmDeleteModalClass(false);
-
-                console.log(type);
-                console.log('IAM HERE BUSHRA 2 cat');
                 break;
               case 'class':
                 setOpenConfirmDeleteModalCat(false);
                 setOpenConfirmDeleteModalClass(true);
-
-                console.log(type);
-                console.log('IAM HERE BUSHRA 2 class');
                 break;
             }
           }}

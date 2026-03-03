@@ -176,7 +176,6 @@ const AddEditTransaction = ({
       .unwrap()
       .then(result => {
         setTransaction(result);
-        console.log(result);
         refetch();
         setOpenNextDocument(true);
         dispatch(
@@ -188,9 +187,7 @@ const AddEditTransaction = ({
       })
       .catch(e => {
         if (e.status === 422) {
-          console.log('Validation error: Unprocessable Entity', e);
         } else {
-          console.log('An unexpected error occurred', e);
           dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
         }
       });
@@ -202,7 +199,6 @@ const AddEditTransaction = ({
   //         createdAt: null
   //     }).unwrap().then(() => {
   //         setTransaction(response );
-  //         console.log(response);
   //         refetch();
   //         setOpenNextDocument(true);
   //         dispatch(
@@ -214,20 +210,14 @@ const AddEditTransaction = ({
   //     }).catch((e) => {
 
   //         if (e.status === 422) {
-  //             console.log("Validation error: Unprocessable Entity", e);
 
   //         } else {
-  //             console.log("An unexpected error occurred", e);
   //             dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
   //         }
   //     });;
 
   // };
 
-  useEffect(() => {
-    console.log('this is a transaction');
-    console.log(transaction);
-  }, [openNextDocument]);
 
   // Handle Go To Patient Profile
   const goToPatientProfile = () => {
@@ -284,7 +274,6 @@ const AddEditTransaction = ({
     }
     generateFiveDigitCode();
     setRecordOfWarehouseCode({ transId: transaction?.transI ?? generateCode });
-    console.log(recordOfWarehouseCode);
   }, [transaction?.transId?.length]);
 
   // Main modal content
@@ -480,7 +469,6 @@ const AddEditTransaction = ({
     })
       .unwrap()
       .then(result => {
-        console.log(result);
         setTransProduct(result);
         refetch();
         refetchTransProductList();
@@ -494,9 +482,7 @@ const AddEditTransaction = ({
       })
       .catch(e => {
         if (e.status === 422) {
-          console.log('Validation error: Unprocessable Entity', e);
         } else {
-          console.log('An unexpected error occurred', e);
           dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
         }
       });

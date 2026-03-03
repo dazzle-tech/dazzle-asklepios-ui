@@ -203,9 +203,6 @@ const DentalChart = ({
     }
   }, [removeToothActionMutation]);
 
-  const handleRemoveRow = (rowIndex: number) => {
-    console.log(rowIndex);
-  };
 
   return (
     <>
@@ -654,7 +651,6 @@ const DentalChart = ({
                             appearance="primary"
                             color="red"
                             icon={<Trash />}
-                            onClick={() => handleRemoveRow(rowIndex)}
                           />
                         )}
                       </Table.Cell>
@@ -708,8 +704,8 @@ const DentalChart = ({
                         appearance="primary"
                         color="red"
                         icon={<Trash />}
-                        onClick={() => handleRemoveRow(rowIndex)}
-                      />
+
+                        />
                     )}
                   </Table.Cell>
                 </Table.Column>

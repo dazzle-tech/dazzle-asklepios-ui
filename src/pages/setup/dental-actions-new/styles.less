@@ -1,5 +1,67 @@
-
 .container-of-linked-procedures-dental{
-   display: flex;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel {
+  padding: 2vh 2vw !important;
+}
+
+.container-of-add-new-button {
+  display: flex;
+  justify-content: flex-end;
+
+  @media (max-width: 48em) {
+    justify-content: center;
+    margin-top: 2vh;
+  }
+}
+
+.rs-form.rs-form-inline {
+  flex-wrap: wrap;
+  gap: 0 !important;
+
+  @media (max-width: 48em) {
     flex-direction: column;
+    align-items: stretch;
+
+    .rs-picker,
+    .rs-input,
+    button {
+      width: 100% !important;
+    }
+  }
+}
+
+.container-of-icons {
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  justify-content: center;
+
+  @media (max-width: 37.5em) {
+    gap: 0.5vw;
+
+    svg {
+      width: 4vw !important;
+      height: 4vw !important;
+      max-width: 20px;
+      max-height: 20px;
+    }
+  }
+}
+
+.rs-table-cell-content {
+  font-size: 1.1vw;
+
+  @media (max-width: 37.5em) {
+    font-size: 3vw;
+  }
+}
+
+.custom-modal {
+  @media (max-width: 48em) {
+    width: 95vw !important;
+    max-width: 95vw !important;
+  }
 }

@@ -19,44 +19,101 @@ import {
 import './styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useLocation } from 'react-router-dom';
-import { newApPatientDiagnose } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
+
+import {
+  useUpsertDischargePlanningMutation,
+  useUpdateDischargePlanningMutation,
+  useGetDischargePlanningByEncounterQuery
+} from '@/services/setup/DischargePlanningService';
+
 import {
   useGetEncounterReviewOfSystemsQuery,
   useGetPatientDiagnosisQuery,
   useGetPrescriptionMedicationsQuery,
   useGetDiagnosticOrderTestQuery
 } from '@/services/encounterService';
-import { useGetProceduresQuery } from '@/services/procedureService';
-import { calculateAgeFormat } from '@/utils';
-import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
 
-// Helper: join values into one string, ignoring empty values
+import { useGetProceduresQuery } from '@/services/procedureService';
+
+import { calculateAgeFormat } from '@/utils';
+import { newDischargePlanning } from '@/types/model-types-constructor-new';
+import { useGetGenericMedicationWithActiveIngredientQuery } from '@/services/medicationsSetupService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useAppDispatch } from '@/hooks';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+import Prescription from '../prescription';
+import MyModal from '@/components/MyModal/MyModal';
+import PrescriptionNew from '@/pages/encounter/encounter-component/prescription-new';
+
+// Helper to join values
 const joinValuesFromArray = (values: any[]) => {
-  return values
-    .filter(v => v !== undefined && v !== null && v !== '')
-    .join(' ');
+  return values.filter(v => v !== undefined && v !== null && v !== '').join(' ');
 };
 
 const DischargePlanning = () => {
+  const dispatch = useAppDispatch();
+
+
   const location = useLocation();
   const state = location.state || {};
   const patient = state.patient;
   const encounter = state.encounter;
 
-  // Get user and facility from localStorage
+const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+
+  // Local
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
 
-  const [selectedDiagnose, setSelectedDiagnose] = useState<any>({
-    ...newApPatientDiagnose,
-    visitKey: encounter.key,
-    patientKey: patient.key,
-    createdBy: 'Administrator'
+  const toaster = useToaster();
+
+  // ------------------ FETCH EXISTING ------------------
+  const {
+    data: existingData,
+    isFetching: loadingExisting
+  } = useGetDischargePlanningByEncounterQuery(Number(encounter.key));
+
+  // ------------------ STATE ------------------
+  const [object, setObject] = useState({
+    ...newDischargePlanning,
+    patientId: Number(patient.key),
+    encounterId: Number(encounter.key)
   });
 
-  // Fetch diagnoses
+  // tags
+  const [medicalEquipmentTags, setMedicalEquipmentTags] = useState<string[]>([]);
+  const [topicsCoveredTags, setTopicsCoveredTags] = useState<string[]>([]);
+  const [homeCareNeedsTags] = useState<string[]>([]); // unused but kept
+
+  // ------------------ WHEN EXISTING DATA ------------------
+  useEffect(() => {
+    if (existingData) {
+      setObject(existingData);
+
+      setMedicalEquipmentTags(
+        existingData.medicalEquipment
+          ? existingData.medicalEquipment
+            .split(",")
+            .map(v => v.trim())
+            .filter(v => v.length > 0)
+          : []
+      );
+
+      setTopicsCoveredTags(
+        existingData.topicsCovered
+          ? existingData.topicsCovered
+            .split(",")
+            .map(v => v.trim())
+            .filter(v => v.length > 0)
+          : []
+      );
+
+    }
+  }, [existingData]);
+
+  // ------------------ PDF & OTHER DATA FETCHES (unchanged) ------------------
   const [diagnosisListRequest] = useState({
     ...initialListRequest,
     sortBy: 'createdAt',
@@ -69,34 +126,27 @@ const DischargePlanning = () => {
 
   const {
     data: patientDiagnoseListResponse,
-    isFetching: isDiagnosisFetching // NEW
+    isFetching: isDiagnosisFetching
   } = useGetPatientDiagnosisQuery(diagnosisListRequest);
 
-  useEffect(() => {
-    if (patientDiagnoseListResponse?.object?.length > 0) {
-      setSelectedDiagnose(patientDiagnoseListResponse.object[0]);
-    }
-  }, [patientDiagnoseListResponse]);
-
-  // Fetch review of systems
   const {
     data: encounterReviewOfSystemsSummaryResponse,
-    isFetching: isReviewSystemsFetching // NEW
+    isFetching: isReviewSystemsFetching
   } = useGetEncounterReviewOfSystemsQuery(encounter.key);
 
-  // Fetch procedures
   const [proceduresListRequest] = useState({
     ...initialListRequest,
     filters: [
       { fieldName: 'encounter_key', operator: 'match', value: encounter?.key }
     ]
   });
+
   const {
     data: proceduresResponse,
-    isFetching: isProceduresFetching // NEW
+    isFetching: isProceduresFetching
   } = useGetProceduresQuery(proceduresListRequest);
 
-  const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
+  const [listOrdersTestRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
@@ -109,11 +159,9 @@ const DischargePlanning = () => {
 
   const {
     data: orderTestList,
-    refetch: orderTestRefetch,
     isLoading: loadTests
   } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
 
-  // Fetch prescriptions
   const [prescriptionsListRequest] = useState({
     ...initialListRequest,
     filters: [
@@ -121,17 +169,17 @@ const DischargePlanning = () => {
       { fieldName: 'visit_key', operator: 'match', value: encounter.key }
     ]
   });
+
   const {
     data: prescriptionsResponse,
-    isFetching: isPrescriptionsFetching // NEW
+    isFetching: isPrescriptionsFetching
   } = useGetPrescriptionMedicationsQuery(prescriptionsListRequest);
 
   const {
     data: genericMedicationListResponse,
-    isFetching: isGenericMedicationsFetching // NEW
+    isFetching: isGenericMedicationsFetching
   } = useGetGenericMedicationWithActiveIngredientQuery('');
 
-  // Fetch diagnostic tests
   const [diagnosticTestsListRequest] = useState({
     ...initialListRequest,
     filters: [
@@ -139,30 +187,17 @@ const DischargePlanning = () => {
       { fieldName: 'status_lkey', operator: 'notMatch', value: '7076094029034732' }
     ]
   });
+
   const {
     data: diagnosticTestsResponse,
-    isFetching: isDiagnosticTestsFetching // NEW
+    isFetching: isDiagnosticTestsFetching
   } = useGetDiagnosticOrderTestQuery(diagnosticTestsListRequest);
 
-  // Fetch readiness Status Lov response
-  const {
-    data: readinessStatusLovQueryResponse,
-    isFetching: isReadinessStatusLoading // NEW
-  } = useGetLovValuesByCodeQuery('READINESS_STATUS');
+  const readinessStatus = useEnumOptions("ReadinessStatus");
 
-  // Discharge PDF Generation
+
   const [generateDischargePdf, { isLoading: isGeneratingPdf }] =
     useGenerateDischargePdfMutation();
-
-  const toaster = useToaster();
-
-  const [object, setObject] = useState({
-    homeCareNeeded: false,
-    readinessStatus: ''
-  });
-  const [medicalEquipmentTags, setMedicalEquipmentTags] = useState([]);
-  const [homeCareNeedsTags, setHomeCareNeedsTags] = useState([]);
-  const [topicsCoveredTags, setTopicsCoveredTags] = useState([]);
 
   const isDataLoading =
     isGeneratingPdf ||
@@ -173,17 +208,112 @@ const DischargePlanning = () => {
     isPrescriptionsFetching ||
     isGenericMedicationsFetching ||
     isDiagnosticTestsFetching ||
-    isReadinessStatusLoading;
+    loadingExisting;
 
-  // Helper function to format date
+  // ------------------ UPSERT / UPDATE ------------------
+  const [upsertDischargePlanning, { isLoading: isSaving }] =
+    useUpsertDischargePlanningMutation();
+
+  const [updateDischargePlanning, { isLoading: isSubmitting }] =
+    useUpdateDischargePlanningMutation();
+
+  const buildPayload = () => ({
+    ...object,
+    medicalEquipment: medicalEquipmentTags.join(', '),
+    topicsCovered: topicsCoveredTags.join(', ')
+  });
+
+
+
+  const handleSave = async () => {
+        const requiredFields = [
+      { field: "expectedDischargeDate", label: "Expected discharge date" },
+      { field: "readinessStatus", label: "Readiness status" },
+      { field: "diagnosisCode", label: "Diagnosis" }
+    ];
+
+    for (const item of requiredFields) {
+      if (
+        object[item.field] === null ||
+        object[item.field] === undefined ||
+        object[item.field] === "" ||
+        object[item.field]?.toString().trim() === ""
+      ) {
+        dispatch(
+          notify({
+            msg: `${item.label} cannot be empty.`,
+            sev: "warning",
+          })
+        );
+        return;
+      }
+    }
+
+    try {
+      dispatch(showSystemLoader());
+
+      // Base payload
+      const basePayload: any = {
+        ...object,
+        medicalEquipment: medicalEquipmentTags.join(", "),
+        topicsCovered: topicsCoveredTags.join(", "),
+        patientId: Number(patient.key),
+        encounterId: Number(encounter.key),
+      };
+
+
+      // Remove audit fields ALWAYS before sending
+      delete basePayload.createdDate;
+      delete basePayload.lastModifiedDate;
+      delete basePayload.createdBy;
+      delete basePayload.lastModifiedBy;
+
+      if (object.id) {
+        // ========== UPDATE ==========
+        const payload = { ...basePayload, id: object.id };
+
+        await updateDischargePlanning(payload).unwrap();
+
+        dispatch(
+          notify({
+            msg: "Discharge Planning updated successfully",
+            sev: "success",
+          })
+        );
+      } else {
+        // ========== CREATE ==========
+        delete basePayload.id;
+
+        await upsertDischargePlanning(basePayload).unwrap();
+
+        dispatch(
+          notify({
+            msg: "Discharge Planning saved successfully",
+            sev: "success",
+          })
+        );
+      }
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: "Failed to save Discharge Planning",
+          sev: "error",
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
+
+
   const formatDate = (timestamp: number) => {
     if (!timestamp) return '';
     return new Date(timestamp).toLocaleDateString('en-GB');
   };
 
-  // Prepare discharge data - Complete structure
+  // PDF preparation unchanged (kept exactly as your code)
   const prepareDischargeData = () => {
-    // Patient data
     const patientData = {
       fullName: patient?.fullName || '',
       patientMrn: patient?.patientMrn || '',
@@ -192,24 +322,21 @@ const DischargePlanning = () => {
       gender: patient?.genderLvalue?.lovDisplayVale || 'Not specified'
     };
 
-    // Encounter data
     const encounterData = {
       chiefComplain: encounter?.chiefComplaint || 'Not specified',
       admissionDate: formatDate(encounter?.createdAt)
     };
 
-    // User data
     const userData = {
-      fullName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Unknown',
+      fullName:
+        `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Unknown',
       email: user?.email || ''
     };
 
-    // Facility data
     const facilityData = {
       name: selectedFacility?.name || 'Health Organization'
     };
 
-    // Diagnoses data
     const diagnosesData =
       patientDiagnoseListResponse?.object?.map((diag: any) => {
         const diagType =
@@ -217,6 +344,7 @@ const DischargePlanning = () => {
           (diag?.diagnoseTypeLvalue?.valueCode === 'DIAG_TYP_PRIMARY'
             ? 'Primary'
             : 'Secondary');
+
         return {
           diagnoseType: diagType,
           icdCode: diag?.diagnosisObject?.icdCode || '',
@@ -224,23 +352,24 @@ const DischargePlanning = () => {
         };
       }) || [];
 
-    // Review of systems data
     const reviewSystemsData =
       encounterReviewOfSystemsSummaryResponse?.object?.map((item: any) => ({
         system: item?.systemLvalue?.lovDisplayVale || '',
         systemDetail:
-          item?.systemDetailLvalue?.lovDisplayVale || item?.systemDetailLkey || '',
+          item?.systemDetailLvalue?.lovDisplayVale ||
+          item?.systemDetailLkey ||
+          '',
         notes: item?.notes || ''
       })) || [];
 
-    // Procedures data
-    const joinValues = (keys: any[], lovValues: any) => {
-      return keys
-        .map(key => lovValues?.object?.find((lov: any) => lov.key === key))
+    const joinValues = (keys: any[], lovValues: any) =>
+      keys
+        .map(key =>
+          lovValues?.object?.find((lov: any) => lov.key === key)
+        )
         .filter(obj => obj !== undefined)
         .map(obj => obj.lovDisplayVale)
         .join(', ');
-    };
 
     const proceduresData = [
       ...(proceduresResponse?.object?.map((proc: any) => ({
@@ -257,8 +386,10 @@ const DischargePlanning = () => {
       prescriptionsResponse?.object?.map((rowData: any) => {
         const medicationName =
           genericMedicationListResponse?.object?.find(
-            (item: any) => item.key === rowData.genericMedicationsKey
+            (item: any) =>
+              item.key === rowData.genericMedicationsKey
           )?.genericName || 'Unknown Medication';
+
         const instructions = joinValuesFromArray([
           rowData.dose,
           rowData.doseUnitLvalue?.lovDisplayVale,
@@ -272,7 +403,6 @@ const DischargePlanning = () => {
         };
       }) || [];
 
-    // Diagnostic tests data
     const diagnosticTestsData =
       diagnosticTestsResponse?.object?.map((test: any) => ({
         testName: test?.test?.testName || '',
@@ -282,7 +412,7 @@ const DischargePlanning = () => {
           ''
       })) || [];
 
-    const completeData = {
+    return {
       patient: patientData,
       encounter: encounterData,
       user: userData,
@@ -293,17 +423,13 @@ const DischargePlanning = () => {
       prescriptions: prescriptionsData,
       diagnosticTests: diagnosticTestsData
     };
-
-    return completeData;
   };
 
-  // Function to handle PDF generation
   const handleGenerateReport = async () => {
     try {
       const dischargeData = prepareDischargeData();
       const result = await generateDischargePdf(dischargeData).unwrap();
 
-      // Create blob URL and trigger download
       const blob = new Blob([result], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -315,7 +441,6 @@ const DischargePlanning = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      // Show success message
       toaster.push(
         <Message showIcon type="success" closable>
           Discharge Summary Report generated successfully for {patient?.fullName}!
@@ -323,33 +448,20 @@ const DischargePlanning = () => {
         { placement: 'topEnd', duration: 5000 }
       );
     } catch (error: any) {
-      console.error('==========================================');
-      console.error('Error generating Discharge PDF:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        stack: error?.stack,
-        data: error?.data
-      });
-      console.error('==========================================');
-
-      // Show error message
-      const errorMessage = error?.message || 'Unknown error occurred';
       toaster.push(
         <Message showIcon type="error" closable>
-          Failed to generate Discharge Summary Report: {errorMessage}
+          Failed to generate report
         </Message>,
-        { placement: 'topEnd', duration: 7000 }
+        { placement: 'topEnd' }
       );
     }
   };
 
-  // Function to handle print
   const handlePrintReport = async () => {
     try {
       const dischargeData = prepareDischargeData();
       const result = await generateDischargePdf(dischargeData).unwrap();
 
-      // Create blob URL and open in new window
       const blob = new Blob([result], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const printWindow = window.open(url, '_blank');
@@ -358,31 +470,25 @@ const DischargePlanning = () => {
         printWindow.onload = () => {
           printWindow.print();
         };
-      } else {
-        throw new Error('Failed to open print window. Please check your browser settings.');
       }
 
-      // Show success message
       toaster.push(
         <Message showIcon type="success" closable>
-          Discharge Summary Report opened for printing!
+          Print Window Opened!
         </Message>,
-        { placement: 'topEnd', duration: 5000 }
+        { placement: 'topEnd' }
       );
     } catch (error: any) {
-      console.error('Error generating Discharge PDF for printing:', error);
-
-      // Show error message
-      const errorMessage = error?.message || 'Unknown error occurred';
       toaster.push(
         <Message showIcon type="error" closable>
-          Failed to open Discharge Summary Report for printing: {errorMessage}
+          Failed to open print
         </Message>,
-        { placement: 'topEnd', duration: 7000 }
+        { placement: 'topEnd' }
       );
     }
   };
 
+  // ------------------ RENDER ------------------
   return (
     <>
       <Row gutter={15} className="d">
@@ -397,42 +503,43 @@ const DischargePlanning = () => {
                       <MyInput
                         width="100%"
                         fieldType="date"
-                        fieldName="Expected Discharge Date"
-                        record=""
-                        setRecord=""
+                        fieldName="expectedDischargeDate"
+                        fieldLabel="Expected Discharge Date"
+                        record={object}
+                        setRecord={setObject}
+                        required
                       />
                     </Col>
+
                     <Col md={8}>
                       <MyInput
                         width="100%"
                         disabled
-                        fieldName="Estimated Length of Stay (LOS)"
+                        fieldName="estimatedLos"
                         fieldLabel="Estimated LOS"
-                        record=""
-                        setRecord=""
-                      />
-                    </Col>
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        selectData={readinessStatusLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldType="select"
-                        fieldName="readinessStatus"
                         record={object}
                         setRecord={setObject}
                       />
                     </Col>
-                    {object.readinessStatus == '7081919156301225' && (
-                      <Col md={12}>
-                        <MyInput width="100%" fieldName="ReasonForDelay" record="" setRecord="" />
-                      </Col>
-                    )}
+
+                    <Col md={8}>
+                      <MyInput
+                        width="100%"
+                        selectData={readinessStatus ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        fieldType="select"
+                        fieldName="readinessStatus"
+                        record={object}
+                        setRecord={setObject}
+                        required
+                      />
+                    </Col>
                   </Row>
                 }
               />
             </Row>
+
             <Row>
               <SectionContainer
                 title="Clinical Clearance"
@@ -448,6 +555,7 @@ const DischargePlanning = () => {
                           setRecord={setObject}
                         />
                       </Col>
+
                       <Col md={12}>
                         <MyInput
                           width="100%"
@@ -458,6 +566,7 @@ const DischargePlanning = () => {
                         />
                       </Col>
                     </Row>
+
                     <Row>
                       <Col md={12}>
                         <MyInput
@@ -468,23 +577,30 @@ const DischargePlanning = () => {
                           setRecord={setObject}
                         />
                       </Col>
+
                       <Col md={12}>
                         <MyInput
                           width="100%"
                           fieldType="checkbox"
                           checkedLabel="Dependent"
                           unCheckedLabel="Independent"
-                          fieldName="mobility"
                           fieldLabel="Mobility / ADL status"
+                          fieldName="mobilityAdlStatus"
                           record={object}
                           setRecord={setObject}
                         />
                       </Col>
                     </Row>
+
                     <Row>
                       <Col md={24}>
                         <div className="container-ofiicd10-search-discharge-planning">
-                          <Icd10Search object="" setOpject="" fieldName="diagnosisKey" />
+                          <Icd10Search
+                          
+                            object={object}
+                            setOpject={setObject}
+                            fieldName="diagnosisCode"
+                          />
                         </div>
                       </Col>
                     </Row>
@@ -492,6 +608,7 @@ const DischargePlanning = () => {
                 }
               />
             </Row>
+
             <Row>
               <SectionContainer
                 title="Discharge Checklist"
@@ -502,11 +619,12 @@ const DischargePlanning = () => {
                         <MyInput
                           width="100%"
                           fieldType="checkbox"
-                          fieldName="finalMedicationReconciliationCompleted"
+                          fieldName="finalMedReconciliationCompleted"
                           record={object}
                           setRecord={setObject}
                         />
                       </Col>
+
                       <Col md={12}>
                         <MyInput
                           width="100%"
@@ -517,6 +635,7 @@ const DischargePlanning = () => {
                         />
                       </Col>
                     </Row>
+
                     <Row>
                       <Col md={12}>
                         <MyInput
@@ -527,6 +646,7 @@ const DischargePlanning = () => {
                           setRecord={setObject}
                         />
                       </Col>
+
                       <Col md={12}>
                         <MyInput
                           width="100%"
@@ -537,16 +657,18 @@ const DischargePlanning = () => {
                         />
                       </Col>
                     </Row>
+
                     <Row>
                       <Col md={12}>
                         <MyInput
                           width="100%"
                           fieldType="checkbox"
-                          fieldName="patient/familyInformed"
+                          fieldName="patientFamilyInformed"
                           record={object}
                           setRecord={setObject}
                         />
                       </Col>
+
                       <Col md={12}>
                         <MyInput
                           width="100%"
@@ -562,6 +684,7 @@ const DischargePlanning = () => {
               />
             </Row>
           </Col>
+
           <Col md={12}>
             <Row>
               <SectionContainer
@@ -573,11 +696,16 @@ const DischargePlanning = () => {
                         <Text>Medications to Continue</Text>
                       </Col>
                       <Col md={12}>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPills} />}>
+                        <MyButton
+                          prefixIcon={() => <FontAwesomeIcon icon={faPills} />}
+                          onClick={() => setPrescriptionModalOpen(true)}
+                        >
                           Prescription
                         </MyButton>
+
                       </Col>
                     </Row>
+
                     <Row>
                       <Col md={24}>
                         <MyTagInput
@@ -587,6 +715,7 @@ const DischargePlanning = () => {
                         />
                       </Col>
                     </Row>
+
                     <Row>
                       <Col md={12}>
                         <MyInput
@@ -597,36 +726,40 @@ const DischargePlanning = () => {
                           setRecord={setObject}
                         />
                       </Col>
-                      {object.homeCareNeeded == true && (
+
+                      {object.homeCareNeeded && (
                         <Col md={12}>
                           <MyTagInput
                             tags={homeCareNeedsTags}
-                            setTags={setHomeCareNeedsTags}
+                            setTags={() => { }}
                             labelText="Home Care Needs"
                           />
                         </Col>
                       )}
                     </Row>
+
                     <Row>
                       <Col md={12}>
                         <MyInput
                           width="100%"
                           fieldType="textarea"
-                          fieldName="dietaryPlan"
+                          fieldName="postDischargeDietaryPlan"
                           record={object}
                           setRecord={setObject}
                         />
                       </Col>
+
                       <Col md={12}>
                         <MyInput
                           width="100%"
                           fieldType="textarea"
-                          fieldName="socialNeeds"
+                          fieldName="postDischargeSocialNeeds"
                           record={object}
                           setRecord={setObject}
                         />
                       </Col>
                     </Row>
+
                     <Row>
                       <Col md={12}>
                         <Text>Follow-up Plan</Text>
@@ -641,6 +774,7 @@ const DischargePlanning = () => {
                 }
               />
             </Row>
+
             <Row>
               <SectionContainer
                 title="Patient Education"
@@ -655,61 +789,68 @@ const DischargePlanning = () => {
                         />
                       </Col>
                     </Row>
+
                     <Row>
                       <Col md={12}>
                         <MyInput
                           width="100%"
                           fieldType="textarea"
-                          fieldName="dietaryPlan"
+                          fieldName="educationDietaryPlan"
                           record={object}
                           setRecord={setObject}
                         />
                       </Col>
+
                       <Col md={12}>
                         <MyInput
                           width="100%"
                           fieldType="textarea"
-                          fieldName="socialNeeds"
+                          fieldName="educationSocialNeeds"
                           record={object}
                           setRecord={setObject}
                         />
                       </Col>
                     </Row>
+
                     <Row className="container-of-checks">
                       <Col md={6}>
                         <MyLabel label="Material Given" />
                       </Col>
+
                       <Col md={6}>
                         <MyInput
                           width="100%"
                           fieldType="check"
-                          fieldName="Leaflet"
+                          fieldName="materialLeaflet"
+                          showLabel={false}
                           record={object}
                           setRecord={setObject}
-                          showLabel={false}
                         />
                       </Col>
+
                       <Col md={6}>
                         <MyInput
                           width="100%"
                           fieldType="check"
-                          fieldName="Verbal"
+                          fieldName="materialVerbal"
+                          showLabel={false}
                           record={object}
                           setRecord={setObject}
-                          showLabel={false}
                         />
                       </Col>
+
                       <Col md={6}>
                         <MyInput
                           width="100%"
                           fieldType="check"
-                          fieldName="Video"
+                          fieldName="materialVideo"
+                          showLabel={false}
                           record={object}
                           setRecord={setObject}
-                          showLabel={false}
                         />
                       </Col>
                     </Row>
+
                     <Row>
                       <Col md={12}>
                         <MyInput
@@ -720,6 +861,7 @@ const DischargePlanning = () => {
                           setRecord={setObject}
                         />
                       </Col>
+
                       <Col md={12}>
                         <MyInput
                           width="100%"
@@ -739,11 +881,13 @@ const DischargePlanning = () => {
           </Col>
         </Form>
       </Row>
+
       <div className="container-of-buttons-discharge">
+
         <MyButton
           onClick={handleGenerateReport}
-          loading={isDataLoading}      // NEW
-          disabled={isDataLoading}     // NEW
+          loading={isDataLoading}
+          disabled={isDataLoading}
         >
           <FaModx title="Generate Report" size={20} />
           {isDataLoading ? 'Preparing...' : isGeneratingPdf ? 'Generating...' : 'Generate Report'}
@@ -759,23 +903,40 @@ const DischargePlanning = () => {
         </MyButton>
 
         <MyButton
+          onClick={handleSave}
           color="var(--deep-blue)"
           width="80px"
           height="32px"
+          loading={isSaving}
+          disabled={isSaving}
           prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
         >
           Save
         </MyButton>
-
-        <MyButton
-          color="var(--deep-blue)"
-          width="119px"
-          height="32px"
-          prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-        >
-          Sign & Submit
-        </MyButton>
       </div>
+
+        <MyModal
+          open={prescriptionModalOpen}
+          setOpen={setPrescriptionModalOpen}
+          title="Prescription"
+          size="70vw"
+          hideBack={true}
+          steps={[{ title: 'Prescription', icon: <FontAwesomeIcon icon={faPills} /> }]}
+
+          content={
+            <PrescriptionNew
+              patient={patient}
+              encounter={encounter}
+              closeModal={() => setPrescriptionModalOpen(false)}
+            />
+          }
+
+          actionButtonLabel="Save"
+          hideActionBtn={true}
+        />
+
+
+
     </>
   );
 };

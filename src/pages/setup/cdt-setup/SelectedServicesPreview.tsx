@@ -1,14 +1,12 @@
-
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import { ColumnConfig } from "@/components/MyTable/MyTable";
-import { Box, Chip, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import Translate from "@/components/Translate";
 import { formatEnumString } from "@/utils";
-import {
-  useGetLinkedServiceDetailsQuery,
-} from "@/services/setup/cdtCodeService";
+import { extractPaginationFromLink } from "@/utils/paginationHelper";
+import { useGetLinkedServiceDetailsQuery } from "@/services/setup/cdtCodeService";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 
 export type ServiceLite = {
@@ -30,76 +28,126 @@ type Props = {
 
 const SelectedServicesPreview: React.FC<Props> = ({ open, setOpen, cdtId }) => {
   const shouldSkip = !open || !cdtId;
-  const { data: details = [], isFetching, isLoading, refetch } =
-    useGetLinkedServiceDetailsQuery(cdtId, { skip: shouldSkip });
+
+  const [pager, setPager] = useState({
+    page: 0,
+    size: 10,
+    sort: "id,asc",
+    timestamp: Date.now(),
+  });
+
+  useEffect(() => {
+    if (open && cdtId) {
+      setPager((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+    }
+  }, [open, cdtId]);
+
+  const {
+    data: resp,
+    isFetching,
+    isLoading,
+    refetch,
+  } = useGetLinkedServiceDetailsQuery(
+    { cdtId, page: pager.page, size: pager.size, sort: pager.sort, timestamp: pager.timestamp },
+    { skip: shouldSkip }
+  );
 
   useEffect(() => {
     if (open && cdtId) refetch();
   }, [open, cdtId, refetch]);
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const totalCount = resp?.totalCount ?? 0;
+  const links = resp?.links || {};
+  const tableData: ServiceLite[] = (resp?.data ?? []) as ServiceLite[];
 
-  useEffect(() => {
-    if (open) setPage(0);
-  }, [open, cdtId]);
+  const page = pager.page;
+  const rowsPerPage = pager.size;
 
-  const totalCount = details.length;
+  const onPageChange = useCallback(
+    (_: unknown, newPage: number) => {
+      const currentPage = pager.page;
+      let targetLink: string | null | undefined = null;
 
-  const pagedData: ServiceLite[] = useMemo(() => {
-    const start = page * rowsPerPage;
-    const end = start + rowsPerPage;
-    return details.slice(start, end) as ServiceLite[];
-  }, [details, page, rowsPerPage]);
+      if (newPage > currentPage && links.next) targetLink = links.next;
+      else if (newPage < currentPage && links.prev) targetLink = links.prev;
+      else if (newPage === 0 && links.first) targetLink = links.first;
+      else if (newPage > currentPage + 1 && links.last) targetLink = links.last;
 
-  const onPageChange = (_: unknown, newPage: number) => setPage(newPage);
-  const onRowsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(Number(e.target.value));
-    setPage(0);
-  };
-
-  const columns: ColumnConfig[] = [
-    {
-      key: "name",
-      title: <Translate>Service Name</Translate>,
-      render: (row: ServiceLite) => (
-        <Box display="flex" alignItems="center" gap={1.2}>
-          <Typography variant="body2"><Translate>{row.name}</Translate></Typography>
-        </Box>
-      ),
-      width: 280,
+      if (targetLink) {
+        const { page, size } = extractPaginationFromLink(targetLink);
+        setPager((prev) => ({
+          ...prev,
+          page,
+          size,
+          timestamp: Date.now(),
+        }));
+      } else {
+        // fallback (in case Link header missing)
+        setPager((prev) => ({ ...prev, page: newPage, timestamp: Date.now() }));
+      }
     },
-    { key: "code", title: <Translate>Code</Translate>, width: 120 },
-    {
-      key: "category",
-      title: <Translate>Category</Translate>,
-      render: (row: ServiceLite) =>
-        row?.category ? formatEnumString(row.category) : "",
-      width: 160,
+    [pager.page, links, setPager]
+  );
+
+  const onRowsPerPageChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newSize = parseInt(e.target.value, 10);
+      setPager((prev) => ({
+        ...prev,
+        size: newSize,
+        page: 0,
+        timestamp: Date.now(),
+      }));
     },
-    {
-      key: "price",
-      title: <Translate>Price</Translate>,
-      render: (row: ServiceLite) => (
-        <span>
-          {row?.price ?? ""} {row?.currency ?? ""}
-        </span>
-      ),
-      width: 140,
-      align: "right",
-    },
-    {
-      key: "isActive",
-      title: <Translate>Status</Translate>,
-      render: (rowData) =>
-        rowData.isActive ? (
-          <MyBadgeStatus contant="Active" color="#45b887" />
-        ) : (
-          <MyBadgeStatus contant="Inactive" color="#969fb0" />
+    []
+  );
+
+  const columns: ColumnConfig[] = useMemo(
+    () => [
+      {
+        key: "name",
+        title: <Translate>Service Name</Translate>,
+        render: (row: ServiceLite) => (
+          <Box display="flex" alignItems="center" gap={1.2}>
+            <Typography variant="body2">
+              <Translate>{row.name}</Translate>
+            </Typography>
+          </Box>
         ),
-      width: 120,
-    },
-  ];
+        width: 280,
+      },
+      { key: "code", title: <Translate>Code</Translate>, width: 120 },
+      {
+        key: "category",
+        title: <Translate>Category</Translate>,
+        render: (row: ServiceLite) => (row?.category ? formatEnumString(row.category) : ""),
+        width: 160,
+      },
+      {
+        key: "price",
+        title: <Translate>Price</Translate>,
+        render: (row: ServiceLite) => (
+          <span>
+            {row?.price ?? ""} {row?.currency ?? ""}
+          </span>
+        ),
+        width: 140,
+        align: "right",
+      },
+      {
+        key: "isActive",
+        title: <Translate>Status</Translate>,
+        render: (rowData: ServiceLite) =>
+          rowData.isActive ? (
+            <MyBadgeStatus contant="Active" color="#45b887" />
+          ) : (
+            <MyBadgeStatus contant="Inactive" color="#969fb0" />
+          ),
+        width: 120,
+      },
+    ],
+    []
+  );
 
   const combinedLoading = isFetching || isLoading;
 
@@ -119,14 +167,14 @@ const SelectedServicesPreview: React.FC<Props> = ({ open, setOpen, cdtId }) => {
           </Typography>
 
           <MyTable
-            data={pagedData}
+            data={tableData}          
             columns={columns}
-            totalCount={totalCount}
+            totalCount={totalCount}  
             loading={combinedLoading}
             page={page}
             rowsPerPage={rowsPerPage}
-            onPageChange={onPageChange}
-            onRowsPerPageChange={onRowsPerPageChange}
+            onPageChange={onPageChange}             
+            onRowsPerPageChange={onRowsPerPageChange} 
             height={500}
           />
         </>

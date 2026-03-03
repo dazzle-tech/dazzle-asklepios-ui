@@ -27,7 +27,6 @@ const BedAssignmentModal = ({ open, setOpen, encounter, refetchEncounter, depart
             }],
         pageSize: 100,
     });
-    
     // State to hold the request object for fetching bed list
     const [bedListRequest, setBedListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -114,7 +113,7 @@ const BedAssignmentModal = ({ open, setOpen, encounter, refetchEncounter, depart
     const modalContent = (
         <Form fluid layout="inline" className='fields-container'>
             <MyInput
-                require
+                required
                 column
                 fieldLabel="Select Room"
                 fieldType="select"
@@ -128,7 +127,7 @@ const BedAssignmentModal = ({ open, setOpen, encounter, refetchEncounter, depart
                 searchable={false}
             />
             <MyInput
-                require
+                required
                 column
                 fieldLabel="Select Bed"
                 fieldType="select"

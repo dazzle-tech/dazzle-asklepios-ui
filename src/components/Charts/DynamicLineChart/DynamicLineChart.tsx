@@ -106,7 +106,6 @@ const DynamicLineChart = props => {
       requestAnimationFrame(animate);
     } catch (e) {
       alert('Error starting motion');
-      console.log(e);
     }
   };
 
@@ -155,7 +154,6 @@ const DynamicLineChart = props => {
           });
         } catch (e) {
           alert('error selecting point');
-          console.log(e);
         }
       }
     }

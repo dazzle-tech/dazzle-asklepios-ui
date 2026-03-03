@@ -26,15 +26,14 @@ const ChangePassword = ({ open, onClose }) => {
 
         if (!currentPassword || !newPassword || !confirmPassword) {
             setError('Please fill in all fields');
-            dispatch(notify({ msg: 'Please fill in all fields', sev: 'info' }))
+            dispatch(notify({ msg: 'Please fill in all fields', sev: 'warning' }))
             return;
         }
 
         if (newPassword.newPassword !== confirmPassword.confirmPassword) {
-            console.log("new", newPassword);
-            console.log("confirm", confirmPassword)
+          
             setError('New passwords do not match');
-            dispatch(notify({ msg: 'New passwords do not match', sev: 'info' }))
+            dispatch(notify({ msg: 'New passwords do not match', sev: 'warning' }))
             return;
         }
 
@@ -42,10 +41,7 @@ const ChangePassword = ({ open, onClose }) => {
 
             const Current = currentPassword.currentPassword;
             const New = newPassword.newPassword
-            console.log({
-                "currentPassword": Current,
-                "newPassword": New
-            });
+            
             await changePassword({
                 "currentPassword": Current,
                 "newPassword": New
@@ -55,7 +51,7 @@ const ChangePassword = ({ open, onClose }) => {
               clearFields();
 
         } catch (err) {
-            console.error('Password change failed:', err);
+            
             setError('Failed to change password. Please try again.');
             dispatch(notify({ msg: 'Failed to change password. Please try again.', sev: 'error' }));
         }
@@ -67,9 +63,8 @@ const ChangePassword = ({ open, onClose }) => {
                 <Modal.Title>Change Password</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Form layout="inline">
+                <Form fluid layout="inline">
                     <MyInput
-
                         width={350}
                         column
                         fieldLabel="Current Password"
@@ -85,7 +80,6 @@ const ChangePassword = ({ open, onClose }) => {
                         record={newPassword}
                         setRecord={setNewPassword}
                     />
-
                     <MyInput
                         width={350}
                         column

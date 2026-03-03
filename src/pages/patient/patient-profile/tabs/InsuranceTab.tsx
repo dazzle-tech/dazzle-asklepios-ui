@@ -1,157 +1,286 @@
-import React from 'react';
-import { useState } from 'react';
-import { type ApPatient, type ApPatientInsurance } from '@/types/model-types';
-import { newApPatientInsurance } from '@/types/model-types-constructor';
-import { PlusRound } from '@rsuite/icons';
-import { faUserPen, faLock, faEllipsis } from '@fortawesome/free-solid-svg-icons';
-import { useGetPatientInsuranceQuery, useDeletePatientInsuranceMutation } from '@/services/patientService';
-import InsuranceModal from '../InsuranceModal';
-import SpecificCoverageModa from '../SpecificCoverageModa';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge } from 'rsuite';
-import MyTable from '@/components/MyTable';
-import './styles.less'
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { faEllipsis, faLock, faTrash, faUserPen } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { PlusRound } from '@rsuite/icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Badge } from 'rsuite';
+import InsuranceModal from '../InsuranceModal';
+import SpecificCoverageModa from '../SpecificCoverageModa';
+import './styles.less';
+
+import { newPatientInsurance } from '@/types/model-types-constructor-new';
+import { PatientInsurance } from '@/types/model-types-new';
+
+import {
+  useDeletePatientInsuranceMutation,
+  useGetInsurancesByPatientQuery,
+  useLazyGetInsuranceCoveragesCountQuery
+} from '@/services/patients/patientInsurancesService';
+
+import { useLazyGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
+import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+
+import { Patient } from '@/types/model-types-new';
+import { conjureValueBasedOnIDFromList } from '@/utils';
+
 interface InsuranceTabProps {
-  localPatient: ApPatient;
+  localPatient: Patient;
 }
+
 const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const dispatch = useAppDispatch();
-  const [selectedInsurance, setSelectedInsurance] = useState<ApPatientInsurance | null>();
+
+  const [selectedInsurance, setSelectedInsurance] = useState<PatientInsurance | null>(null);
+
   const [InsuranceModalOpen, setInsuranceModalOpen] = useState(false);
   const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);
   const [insuranceBrowsing, setInsuranceBrowsing] = useState(false);
+
   const [deleteInsurance] = useDeletePatientInsuranceMutation();
+
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [hideSaveBtn, setHideSaveBtn] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  // Define the table columns
-  const columns = [
-    {
-      key: 'insuranceProvider',
-      title: <Translate>Insurance Provider</Translate>,
-      flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.primaryInsurance ? (
-          <div>
-            <Badge color="blue" content="Primary">
-              <p className="insurance-badge-text">{rowData.insuranceProvider}</p>
-            </Badge>
-          </div>
-        ) : (
-          <p>{rowData.insuranceProvider}</p>
-        ),
-    },
-    {
-      key: 'insurancePolicyNumber',
-      title: <Translate>Insurance Policy Number</Translate>,
-      flexGrow: 4,
-      dataKey: 'insurancePolicyNumber',
-    },
-    {
-      key: 'groupNumber',
-      title: <Translate>Group Number</Translate>,
-      flexGrow: 4,
-      dataKey: 'groupNumber',
-    },
-    {
-      key: 'insurancePlanType',
-      title: <Translate>Insurance Plan Type</Translate>,
-      flexGrow: 4,
-      dataKey: 'insurancePlanType',
-    },
-    {
-      key: 'expirationDate',
-      title: <Translate>Expiration Date</Translate>,
-      flexGrow: 4,
-      dataKey: 'expirationDate',
-    },
-    {
-      key: 'details',
-      title: <Translate>Details</Translate>,
-      flexGrow: 2,
-      render: (rowData: any) => (
-        <MyButton
-          onClick={() => {
-            handleShowInsuranceDetails();
-          }}
-          appearance="subtle"
+  const [openDeleteWithCoveragesModal, setOpenDeleteWithCoveragesModal] = useState(false);
+  const [coveragesCount, setCoveragesCount] = useState<number>(0);
 
-        >
-          <FontAwesomeIcon icon={faEllipsis} />
-        </MyButton>
-      ),
-    },
-  ];
+  const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
 
-  // Fetch patient insurance data
-  const patientInsuranceResponse = useGetPatientInsuranceQuery({
-    patientKey: localPatient.key
+  const patientInsuranceResponse = useGetInsurancesByPatientQuery({
+    patientId: localPatient.id,
+    page: 0,
+    size: 100,
+    sort: 'id,desc'
   });
 
-  // Function to check if the current row is the selected one
-  const isSelected = rowData => {
-    if (rowData && selectedInsurance && rowData.key === selectedInsurance.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  const { data: payorListResponse, isFetching: payorFetching } = useGetAllPayorsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'name,asc'
+  });
 
-  // Handle edit insurance
-  const handleEditModal = () => {
-    if (selectedInsurance) {
-      setInsuranceModalOpen(true);
-      setHideSaveBtn(false);
-    }
-  };
-  // Handle close insurance modal
-  const handleCloseInsuranceModal = () => {
-    setInsuranceModalOpen(false);
-    setSelectedInsurance(null);
+  const payorsList = payorListResponse?.data ?? [];
+
+  const [plansByPayorId, setPlansByPayorId] = useState<Record<number, any[]>>({});
+
+  const [triggerGetPlans] = useLazyGetPlansByPayorQuery();
+
+  const paginatedData = patientInsuranceResponse?.data?.data?.slice(
+    pageIndex * rowsPerPage,
+    pageIndex * rowsPerPage + rowsPerPage
+  );
+
+  const visiblePayorIds = useMemo(() => {
+    const ids = new Set<number>();
+    (paginatedData ?? []).forEach(row => {
+      const payorId = Number(row?.payorId);
+      if (!Number.isNaN(payorId)) ids.add(payorId);
+    });
+    return Array.from(ids);
+  }, [paginatedData]);
+
+  useEffect(() => {
+    const loadPlans = async () => {
+      for (const payorId of visiblePayorIds) {
+        if (plansByPayorId[payorId]) continue;
+
+        try {
+          const res = await triggerGetPlans(
+            {
+              payorId,
+              page: 0,
+              size: 1000,
+              sort: 'name,asc'
+            },
+            true
+          ).unwrap();
+
+          setPlansByPayorId(prev => ({
+            ...prev,
+            [payorId]: res?.data ?? []
+          }));
+        } catch {
+          setPlansByPayorId(prev => ({
+            ...prev,
+            [payorId]: []
+          }));
+        }
+      }
+    };
+
+    if (visiblePayorIds.length > 0) loadPlans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visiblePayorIds]);
+
+  const handleEditModal = (row?: any) => {
+    const target = row ?? selectedInsurance;
+    if (!target) return;
+    setSelectedInsurance(target);
+    setInsuranceModalOpen(true);
     setInsuranceBrowsing(false);
+    setHideSaveBtn(false);
   };
 
-  // Handle show insurance details
-  const handleShowInsuranceDetails = () => {
+  const handleShowInsuranceDetails = (row?: any) => {
+    if (row) setSelectedInsurance(row);
     setInsuranceModalOpen(true);
     setInsuranceBrowsing(true);
     setHideSaveBtn(true);
   };
 
-  // Handle delete insurance
-  const handleDeleteInsurance = () => {
-    deleteInsurance({
-      key: selectedInsurance.key
-    }).then(
-      () => (
-        patientInsuranceResponse.refetch(),
-        dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: "success" })),
-        setSelectedInsurance(null),
-        setOpenDeleteModal(false)
+  const handleOpenSpecificCoverage = (row?: any) => {
+    const target = row ?? selectedInsurance;
+    if (!target?.id) return;
+    setSelectedInsurance(target);
+    setSpecificCoverageModalOpen(true);
+  };
+
+  const handleDeleteInsurance = async (row?: any) => {
+    const target = row ?? selectedInsurance;
+    if (!target?.id) return;
+
+    setSelectedInsurance(target);
+
+    try {
+      const countRes = await triggerCoveragesCount({ id: target.id }, true).unwrap();
+      const count = Number(countRes ?? 0);
+      setCoveragesCount(count);
+
+      if (count > 0) {
+        setOpenDeleteWithCoveragesModal(true);
+      } else {
+        setOpenDeleteModal(true);
+      }
+    } catch {
+      // fallback
+      setOpenDeleteModal(true);
+    }
+  };
+
+  const confirmDeleteInsurance = async () => {
+    if (!selectedInsurance?.id) return;
+
+    try {
+      await deleteInsurance({ id: selectedInsurance.id, deleteCoverages: false }).unwrap();
+      patientInsuranceResponse.refetch();
+      dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: 'success' }));
+      setSelectedInsurance(null);
+      setOpenDeleteModal(false);
+    } catch (err: any) {
+      const msg = err?.data?.detail || 'Failed to delete insurance';
+      dispatch(notify({ msg, sev: 'error' }));
+    }
+  };
+
+  const confirmDeleteInsuranceWithCoverages = async () => {
+    if (!selectedInsurance?.id) return;
+
+    try {
+      await deleteInsurance({ id: selectedInsurance.id, deleteCoverages: true }).unwrap();
+      patientInsuranceResponse.refetch();
+      dispatch(notify({ msg: 'Insurance & Coverages Deleted Successfully', sev: 'success' }));
+      setSelectedInsurance(null);
+      setOpenDeleteWithCoveragesModal(false);
+    } catch (err: any) {
+      const msg = err?.data?.detail || 'Failed to delete insurance';
+      dispatch(notify({ msg, sev: 'error' }));
+    }
+  };
+
+  const columns = [
+    {
+      key: 'payor',
+      title: <Translate>Insurance Provider</Translate>,
+      flexGrow: 4,
+      render: (row: any) => {
+        const payorName = conjureValueBasedOnIDFromList(payorsList, row.payorId, 'name');
+
+        return row.isPrimary ? (
+          <Badge color="blue" content="Primary">
+            <span className="insurance-badge-text" style={{ fontSize: '14px' }}>
+              {payorName}
+            </span>
+          </Badge>
+        ) : (
+          <p>{payorName}</p>
+        );
+      }
+    },
+    {
+      key: 'policyNumber',
+      title: <Translate>Insurance Policy Number</Translate>,
+      flexGrow: 4,
+      dataKey: 'policyNumber'
+    },
+    {
+      key: 'groupNumber',
+      title: <Translate>Group Number</Translate>,
+      flexGrow: 4,
+      dataKey: 'groupNumber'
+    },
+    {
+      key: 'plan',
+      title: <Translate>Insurance Plan Type</Translate>,
+      flexGrow: 4,
+      render: (row: any) => {
+        const plans = plansByPayorId[row.payorId] ?? [];
+        return <span>{conjureValueBasedOnIDFromList(plans, row.planId, 'name')}</span>;
+      }
+    },
+    {
+      key: 'expirationDate',
+      title: <Translate>Expiration Date</Translate>,
+      flexGrow: 4,
+      dataKey: 'expirationDate'
+    },
+    {
+      key: 'actions',
+      title: <Translate>ACTIONS</Translate>,
+      flexGrow: 4,
+      render: (rowData: PatientInsurance) => (
+        <div className="container-of-icons">
+          <MyButton
+            className="icons-style"
+            appearance="subtle"
+            onClick={() => handleEditModal(rowData)}
+          >
+            <FontAwesomeIcon className="icons-style" color="var(--primary-gray)" icon={faUserPen} />
+          </MyButton>
+
+          <MyButton
+            className="icons-style"
+            appearance="subtle"
+            onClick={() => handleOpenSpecificCoverage(rowData)}
+          >
+            <FontAwesomeIcon icon={faLock} />
+          </MyButton>
+
+          <MyButton
+            className="icons-style"
+            appearance="subtle"
+            onClick={() => handleDeleteInsurance(rowData)}
+          >
+            <FontAwesomeIcon className="icons-style" color="var(--primary-pink)" icon={faTrash} />
+          </MyButton>
+
+          <MyButton
+            className="icons-style"
+            appearance="subtle"
+            onClick={() => handleShowInsuranceDetails(rowData)}
+          >
+            <FontAwesomeIcon icon={faEllipsis} />
+          </MyButton>
+        </div>
       )
-    );
-  };
-
-  // Pagination values
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setPageIndex(newPage);
-  }
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPageIndex(0);
-
-  };
-  const totalCount = patientInsuranceResponse?.data?.length ?? 0;
-  const paginatedData = patientInsuranceResponse?.data?.slice(
-    pageIndex * rowsPerPage,
-    pageIndex * rowsPerPage + rowsPerPage
-  );
+    }
+  ];
 
   return (
     <div className="tab-main-container">
@@ -159,65 +288,64 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
         <MyButton
           onClick={() => {
             setInsuranceModalOpen(true);
-            setSelectedInsurance(newApPatientInsurance);
+            setSelectedInsurance(newPatientInsurance);
+            setInsuranceBrowsing(false);
             setHideSaveBtn(false);
           }}
-          disabled={!localPatient.key}
+          disabled={!localPatient.id}
           prefixIcon={() => <PlusRound />}
-        >New Insurance
-        </MyButton>
-        <MyButton
-          onClick={handleEditModal}
-          disabled={!selectedInsurance?.key}
-          prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
-        >Edit
-        </MyButton>
-        <MyButton
-          onClick={() => setSpecificCoverageModalOpen(true)}
-          disabled={!selectedInsurance?.key}
-          prefixIcon={() => <FontAwesomeIcon icon={faLock} />}
-        >Specific Coverage
-        </MyButton>
-        <MyButton
-          onClick={() => { setOpenDeleteModal(true) }}
-          disabled={!selectedInsurance?.key}
-          prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}
-        >Delete
+        >
+          New Insurance
         </MyButton>
       </div>
+
       <InsuranceModal
         relations={[]}
-        editing={selectedInsurance ? selectedInsurance : null}
+        editing={selectedInsurance}
         refetchInsurance={patientInsuranceResponse.refetch}
-        patientKey={localPatient ?? localPatient.key}
+        patientKey={localPatient}
         open={InsuranceModalOpen}
         setOpen={setInsuranceModalOpen}
         insuranceBrowsing={insuranceBrowsing}
-        onClose={handleCloseInsuranceModal}
+        onClose={() => setInsuranceModalOpen(false)}
         hideSaveBtn={hideSaveBtn}
       />
+
       <SpecificCoverageModa
-        insurance={selectedInsurance?.key}
+        insurance={selectedInsurance?.id}
         open={specificCoverageModalOpen}
         setOpen={setSpecificCoverageModalOpen}
       />
+
       <MyTable
         data={paginatedData ?? []}
         columns={columns}
         onRowClick={setSelectedInsurance}
-        rowClassName={isSelected}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
+        totalCount={patientInsuranceResponse?.data?.data?.length ?? 0}
+        onPageChange={(_, p) => setPageIndex(p)}
+        onRowsPerPageChange={e => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPageIndex(0);
+        }}
+        loading={patientInsuranceResponse.isFetching || payorFetching}
       />
+
       <DeletionConfirmationModal
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
-        itemToDelete='Insurance'
-        actionButtonFunction={handleDeleteInsurance}>
-      </DeletionConfirmationModal>
+        itemToDelete="Insurance"
+        actionButtonFunction={confirmDeleteInsurance}
+      />
+
+      <DeletionConfirmationModal
+        open={openDeleteWithCoveragesModal}
+        setOpen={setOpenDeleteWithCoveragesModal}
+        itemToDelete={coveragesCount}
+        actionButtonFunction={confirmDeleteInsuranceWithCoverages}
+        confirmationQuestion={`Are you sure you want to delete this Insurance (will also delete ${coveragesCount} coverages)`}
+      />
     </div>
   );
 };

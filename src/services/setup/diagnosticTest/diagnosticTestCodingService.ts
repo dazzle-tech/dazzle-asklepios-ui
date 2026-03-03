@@ -27,9 +27,6 @@ export const diagnosticTestCodingService = createApi({
   tagTypes: ['DiagnosticTestCoding'],
   endpoints: (builder) => ({
 
-    // -----------------------------------------------------
-    // GET BY DIAGNOSTIC TEST (Paginated)
-    // -----------------------------------------------------
     getDiagnosticTestCodingsByTest: builder.query<
       PagedResult<DiagnosticTestCoding>,
       { diagnosticTestId: Id } & PagedParams
@@ -44,9 +41,6 @@ export const diagnosticTestCodingService = createApi({
       providesTags: ['DiagnosticTestCoding'],
     }),
 
-    // -----------------------------------------------------
-    // GET CODE OPTIONS BY TYPE (CPT, CDT, ICD10, LOINC)
-    // -----------------------------------------------------
     getDiagnosticCodeOptionsByType: builder.query<
       PagedResult<CodeOption>,
       { type: string } & PagedParams
@@ -59,9 +53,6 @@ export const diagnosticTestCodingService = createApi({
       providesTags: ['DiagnosticTestCoding'],
     }),
 
-    // -----------------------------------------------------
-    // CREATE
-    // -----------------------------------------------------
     addDiagnosticTestCoding: builder.mutation<DiagnosticTestCoding, { diagnosticTestId: Id } & DiagnosticTestCodingCreate>({
       query: ({ diagnosticTestId, ...body }) => ({
         url: `/api/setup/diagnostic-test-coding`,
@@ -72,9 +63,6 @@ export const diagnosticTestCodingService = createApi({
       invalidatesTags: ['DiagnosticTestCoding'],
     }),
 
-    // -----------------------------------------------------
-    // DELETE
-    // -----------------------------------------------------
     deleteDiagnosticTestCoding: builder.mutation<void, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/diagnostic-test-coding/${id}`,

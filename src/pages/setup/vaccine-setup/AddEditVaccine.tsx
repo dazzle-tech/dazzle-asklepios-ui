@@ -14,10 +14,7 @@ import {
   useToggleVaccineBrandActiveMutation,
   useUpdateVaccineBrandMutation
 } from '@/services/vaccine/vaccineBrandsService';
-import {
-  useAddVaccineMutation,
-  useUpdateVaccineMutation
-} from '@/services/vaccine/vaccineService';
+import { useAddVaccineMutation, useUpdateVaccineMutation } from '@/services/vaccine/vaccineService';
 
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -150,7 +147,6 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
   return humanMsg + suffix;
 };
 
-/** ===================== Component ===================== */
 const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_new, refetch }) => {
   const dispatch = useAppDispatch();
   const [vaccineBrand, setVaccineBrand] = useState<VaccineBrand>({ ...newVaccineBrand });
@@ -160,7 +156,6 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const [openConfirmDeleteBrandModal, setOpenConfirmDeleteBrandModal] = useState<boolean>(false);
   const [stateOfDeleteBrandModal, setStateOfDeleteBrandModal] = useState<string>('delete');
 
-  // Pagination & sorting (like Vaccine)
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(5);
   const [sortBy, setSortBy] = useState<'id' | 'name'>('id');
@@ -324,83 +319,113 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
     }
   ];
 
-  // ===== actions (main vaccine) =====
+  // actions (main vaccine)
   const handleSave = async () => {
-    const raw = {
+  try {
+    const payload = stripUndefined({
       ...(vaccine?.id ? { id: vaccine.id } : {}),
-      ...vaccine
-    };
-    const payload = stripUndefined(raw);
 
-    try {
-      const saved = vaccine?.id
-        ? await updateVaccine({ id: vaccine.id, data: payload as any }).unwrap()
-        : await addVaccine(payload as any).unwrap();
+      name: toNullIfEmpty(vaccine?.name),
+      atcCode: toNullIfEmpty(vaccine?.atcCode),
 
-      setVaccine(saved);
-      dispatch(
-        notify({
-          msg: vaccine?.id ? 'Vaccine Updated Successfully' : 'Vaccine Added Successfully',
-          sev: 'success'
-        })
-      );
-      refetch?.();
-      setEdit_new(false);
-      setEditBrand(true);
-    } catch (err: any) {
-      const msg = toHumanBackendError(err, {
-        name: 'Vaccine Name',
-        type: 'Type',
-        roa: 'ROA',
-        atcCode: 'ATC Code',
-        siteOfAdministration: 'Site of Administration',
-        postOpeningDuration: 'Post Opening Duration',
-        durationUnit: 'Duration Unit',
-        numberOfDoses: 'Number of Doses',
-        indications: 'Indications',
-        possibleReactions: 'Possible Reactions',
-        contraindicationsAndPrecautions: 'Contraindications & Precautions',
-        storageAndHandling: 'Storage & Handling',
-        isActive: 'Active'
-      });
-      dispatch(notify({ msg, sev: 'error' }));
-    }
-  };
+      type: toNullIfEmpty(getSelectValue(vaccine?.type, 'value')),
+      roa: toNullIfEmpty(getSelectValue(vaccine?.roa, 'value')),
 
-  // ===== actions (brand) =====
+      siteOfAdministration: toNullIfEmpty(vaccine?.siteOfAdministration),
+      postOpeningDuration: toNumberOrNull(vaccine?.postOpeningDuration),
+
+      durationUnit: toNullIfEmpty(getSelectValue(vaccine?.durationUnit, 'value')),
+      numberOfDoses: toNullIfEmpty(getSelectValue(vaccine?.numberOfDoses, 'value')),
+
+      indications: vaccine?.indications ?? [],
+      possibleReactions: vaccine?.possibleReactions ?? [],
+
+      contraindicationsAndPrecautions: toNullIfEmpty(vaccine?.contraindicationsAndPrecautions),
+      storageAndHandling: toNullIfEmpty(vaccine?.storageAndHandling),
+
+      isActive: vaccine?.isActive ?? true
+    });
+
+    const saved = vaccine?.id
+      ? await updateVaccine({ id: vaccine.id, data: payload as any }).unwrap()
+      : await addVaccine(payload as any).unwrap();
+
+    setVaccine(saved);
+
+    dispatch(
+      notify({
+        msg: vaccine?.id
+          ? 'Vaccine Updated Successfully'
+          : 'Vaccine Added Successfully',
+        sev: 'success'
+      })
+    );
+
+    refetch?.();
+    setEdit_new(false);
+    setEditBrand(true);
+
+  } catch (err: any) {
+    const msg = toHumanBackendError(err, {
+      name: 'Vaccine Name',
+      type: 'Type',
+      roa: 'ROA',
+      atcCode: 'ATC Code',
+      siteOfAdministration: 'Site of Administration',
+      postOpeningDuration: 'Post Opening Duration',
+      durationUnit: 'Duration Unit',
+      numberOfDoses: 'Number of Doses',
+      indications: 'Indications',
+      possibleReactions: 'Possible Reactions',
+      contraindicationsAndPrecautions: 'Contraindications & Precautions',
+      storageAndHandling: 'Storage & Handling',
+      isActive: 'Active'
+    });
+
+    dispatch(notify({ msg, sev: 'error' }));
+  }
+};
+
+
+  // actions (brand) 
   const handleSaveVaccineBrand = async () => {
-    const manufactureVal = getSelectValue((vaccineBrand as any)?.manufacture, 'key');
-    const unitVal = getSelectValue((vaccineBrand as any)?.unit, 'value');
-
-    const createRaw = {
-      name: vaccineBrand?.name?.trim?.(),
-      manufacture: toNullIfEmpty(manufactureVal),
-      volume: toNumberOrNull((vaccineBrand as any)?.volume),
-      unit: toNullIfEmpty(unitVal),
-      marketingAuthorizationHolder: toNullIfEmpty(
-        (vaccineBrand as any)?.marketingAuthorizationHolder
-      ),
-      isActive: vaccineBrand?.isActive ?? true
-    };
-    const updateRaw = { id: vaccineBrand?.id, ...createRaw };
-
-    const createData = stripUndefined(createRaw);
-    const updateData = stripUndefined(updateRaw);
-
     try {
+      const payload = stripUndefined({
+        id: vaccineBrand?.id,
+
+        name: toNullIfEmpty(vaccineBrand?.name?.trim?.()),
+        manufacture: toNullIfEmpty(getSelectValue(vaccineBrand?.manufacture, 'key')),
+        volume: toNumberOrNull(vaccineBrand?.volume),
+        unit: toNullIfEmpty(getSelectValue(vaccineBrand?.unit, 'value')),
+        marketingAuthorizationHolder: toNullIfEmpty(vaccineBrand?.marketingAuthorizationHolder),
+        isActive: vaccineBrand?.isActive ?? true
+      });
+
       if (vaccineBrand?.id) {
         await updateVaccineBrand({
-          id: vaccineBrand.id, // path
-          vaccineId: vaccine?.id, // query
-          data: updateData
+          id: vaccineBrand.id,
+          vaccineId: vaccine?.id,
+          data: payload
         }).unwrap();
-        dispatch(notify({ msg: 'Vaccine Brand Updated Successfully', sev: 'success' }));
+
+        dispatch(
+          notify({
+            msg: 'Vaccine Brand Updated Successfully',
+            sev: 'success'
+          })
+        );
       } else {
         await addVaccineBrand({
-          vaccineId: vaccine?.id, // query
-          data: createData // body
+          vaccineId: vaccine?.id,
+          data: payload
         }).unwrap();
-        dispatch(notify({ msg: 'Vaccine Brand Added Successfully', sev: 'success' }));
+
+        dispatch(
+          notify({
+            msg: 'Vaccine Brand Added Successfully',
+            sev: 'success'
+          })
+        );
       }
 
       setVaccineBrand({ ...newVaccineBrand, vaccineId: vaccine?.id });
@@ -418,6 +443,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
         marketingAuthorizationHolder: 'Marketing Authorization Holder',
         isActive: 'Active'
       });
+
       dispatch(notify({ msg, sev: 'error' }));
     }
   };
@@ -443,14 +469,12 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
     setOpenConfirmDeleteBrandModal(false);
   };
 
-  // ===== sorting like Vaccine page =====
   const handleSortChange = (column: 'id' | 'name', type: 'asc' | 'desc') => {
     setSortBy(column);
     setSortType(type);
-    setPage(0); // go to first page on sort change
+    setPage(0);
   };
 
-  // ===== pagination like Vaccine page =====
   const handlePageChange = (_: unknown, newPage: number) => {
     const currentPage = page;
     const linksMap = links || {};
@@ -709,7 +733,6 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
               columns={tableColumns}
               rowClassName={isSelectedBrand}
               onRowClick={(rowData: VaccineBrand) => setVaccineBrand(rowData)}
-              // sorting like Vaccine page
               sortColumn={sortBy}
               sortType={sortType}
               onSortChange={(col, type) => {
@@ -717,7 +740,6 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
                 const safeCol = col === 'id' || col === 'name' ? col : 'id';
                 handleSortChange(safeCol as 'id' | 'name', type as 'asc' | 'desc');
               }}
-              // pagination like Vaccine page
               page={page}
               rowsPerPage={size}
               onPageChange={handlePageChange}

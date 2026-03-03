@@ -19,38 +19,50 @@ const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
     const [saveEncounter, saveEncounterMutation] = useSentToERMutation();
     const [showModal, setShowModal] = useState(false);
     const [emergencyTriage, setEmergencyTriage] = useState<any>({ ...newApEmergencyTriage });
-
     // Handle Save Encounter
-    const handleSave = (destinationKey) => {
-        if (localEncounter && localEncounter.patientKey) {
-            saveEncounter({
-                encounter: {
-                    ...localEncounter,
-                    encounterStatusLkey: "6742317684600328"
-                },
-                triageKey: emergencyTriage?.key,
-                destinationKey: destinationKey
-            }).unwrap().then(() => {
-                dispatch(notify({ msg: 'Patient has been successfully moved to the ER Waiting List' }));
-                setShowModal(false);
-                setOpen(false);
-                if (refetch !== null) {
-                    refetch();
-                }
-            }).catch((e) => {
+  const handleSave = async (destinationKey: string) => {
+    if (!localEncounter || !localEncounter.patientKey) {
+        dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
+        return;
+    }
 
-                if (e.status === 422) {
-                    console.log("Validation error: Unprocessable Entity", e);
+    try {
+        await saveEncounter({
+            encounter: {
+                ...localEncounter,
+                encounterStatusLkey: "6742317684600328"
+            },
+            triageKey: emergencyTriage?.key,
+            destinationKey: destinationKey
+        }).unwrap();
 
-                } else {
-                    console.log("An unexpected error occurred", e);
-                    dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-                }
-            });
-        } else {
-            dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
+        dispatch(notify({ msg: 'Patient has been successfully moved to the ER Waiting List' }));
+        setShowModal(false);
+        setOpen(false);
+        if (refetch) {
+            refetch();
         }
-    };
+    } catch (e: any) {
+
+        // RTK Query error shapes
+        const status = e?.status;
+        const backendMessage =
+            e?.data?.message ||
+            e?.error ||
+            (typeof e?.data === 'string' ? e.data : null);
+
+        if (status === 422) {
+            dispatch(notify({ msg: backendMessage || 'Validation error (422)', sev: 'warn' }));
+        } else if (backendMessage) {
+            dispatch(notify({ msg: backendMessage, sev: 'error' }));
+        } else if (status === 'FETCH_ERROR') {
+            dispatch(notify({ msg: 'Network error, please check your connection', sev: 'error' }));
+        } else {
+            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
+        }
+    }
+};
+
     // handle Complete Encounter Function
     const handleCompleteEncounter = async (destinationKey) => {
         try {

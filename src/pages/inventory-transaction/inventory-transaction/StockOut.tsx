@@ -193,7 +193,6 @@ const StockOut = ({ transProduct, setTransProduct, transaction, setTransaction, 
             filters: updatedFilters
         }));
         setProducts(transactionProductListResponseLoading?.object ?? []);
-console.log(transactionProductListResponseLoading?.object);
 
           
     }, [transaction?.key, transactionProductListResponseLoading]);
@@ -441,18 +440,15 @@ console.log(transactionProductListResponseLoading?.object);
 
 
     useEffect(() => {
-        console.log(productselectListResponseLoading);
         if (productselectListResponseLoading?.object?.length > 0) {
             const firstItem = productselectListResponseLoading.object[0];
             setSelectedProduct(firstItem);
-            console.log(firstItem);
         }
     }, [productselectListResponseLoading?.object]);
 
 
     useEffect(() => {
         setTotalCost(Number(calculateCost(transProduct?.newQuentity, transProduct?.newCost)) || 0);
-        console.log("Total Cost:", totalCost);
     }, [transProduct?.newQuantity, transProduct?.newCost]);
 
 
@@ -465,7 +461,6 @@ console.log(transactionProductListResponseLoading?.object);
 
     const actionsForItems = rowData => {
         const handleViewTransactions = () => {
-            console.log('View transactions for:', rowData.name);
             // TODO: Implement view transactions logic
         };
 

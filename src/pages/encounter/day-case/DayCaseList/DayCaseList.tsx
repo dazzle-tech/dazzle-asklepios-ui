@@ -9,7 +9,7 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { faBoxOpen, faFile, faListCheck, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
+import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
   useGetDayCaseEncountersQuery,
@@ -86,7 +86,12 @@ const DayCaseList = () => {
   });
 
   // Fetch department list response
-  const departmentListResponse = useGetResourceTypeQuery('5433343011954425');
+  const { data: departmentListResponse } = useGetActiveResourcesByTypeQuery({
+    resourceType: 'DAY_CASE',
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
   // Fetch lovs
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
@@ -399,7 +404,7 @@ const DayCaseList = () => {
             fieldLabel="Select Department"
             fieldType="select"
             fieldName="key"
-            selectData={departmentListResponse?.data?.object ?? []}
+            selectData={departmentListResponse?.data ?? []}
             selectDataLabel="name"
             selectDataValue="key"
             record={departmentFilter}
@@ -659,9 +664,6 @@ const DayCaseList = () => {
           </>
         }
         actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
         cancelButtonLabel="Close"
       />
 
@@ -676,9 +678,6 @@ const DayCaseList = () => {
           </>
         }
         actionButtonLabel="Save"
-        actionButtonFunction={() => {
-          console.log('Save refill clicked');
-        }}
         cancelButtonLabel="Close"
       />
 

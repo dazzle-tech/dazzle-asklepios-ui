@@ -1,70 +1,137 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MyTable from '@/components/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import Translate from '@/components/Translate';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
+import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 const ClinicVisitsTable = ({ patient }) => {
-  const [sortColumn, setSortColumn] = useState('plannedStartDate');
+  const [sortColumn, setSortColumn] = useState('dateTime');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
-
-  // pageNumber في الباك عندك 1-based حسب اللي شفناه
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [visitHistoryListRequest, setVisitHistoryListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    pageNumber: page,
-    pageSize: rowsPerPage,
-    sortBy: sortColumn,
-    sortType,
+    sortBy: 'plannedStartDate',
+    sortType: 'desc',
     filters: [
       {
         fieldName: 'patient_key',
         operator: 'match',
-        value: patient?.key || undefined
+        value: patient.key || undefined
+      },
+      {
+        fieldName: 'resource_type_lkey',
+        operator: 'match',
+        value: 'CLINIC'
       }
-    ]
+    ],
+    pageSize: 15
   });
 
-  const { data: visiterHistoryResponse, isFetching } =
-    useGetEncountersQuery(visitHistoryListRequest);
+  const {
+    data: visiterHistoryResponse,
+    refetch: refetchEncounter,
+    isFetching
+  } = useGetEncountersQuery(visitHistoryListRequest, {
+    refetchOnMountOrArgChange: true, // Refetch when component mounts or arguments change
+    refetchOnFocus: true // Refetch when window regains focus
+  });
 
-  // لما المريض يتغير: رجع لأول صفحة وحدث الفلتر
   useEffect(() => {
-    setPage(1);
-    setVisitHistoryListRequest(prev => ({
-      ...prev,
-      pageNumber: 1,
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key || undefined
-        }
-      ]
-    }));
-  }, [patient?.key]);
+    refetchEncounter();
+  }, [patient]);
+  const sortedData = [...visiterHistoryResponse?.object].sort((a, b) => {
+    const aValue = a[sortColumn];
+    const bValue = b[sortColumn];
+    if (aValue === bValue) return 0;
+    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
+  });
 
-  // لما الصفحة/الحجم/السورت يتغيروا: حدّث الريكوست
-  useEffect(() => {
-    setVisitHistoryListRequest(prev => ({
-      ...prev,
-      pageNumber: page,
-      pageSize: rowsPerPage,
-      sortBy: sortColumn,
-      sortType
-    }));
-  }, [page, rowsPerPage, sortColumn, sortType]);
+  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
 
+  // Fetch all practitioners for lookup
+  const { data: practitionersResponse } = useGetAllPractitionersQuery({
+    page: 0,
+    size: 1000, // Fetch a large number to get all practitioners
+    sort: 'id,asc'
+  });
+
+  // Fetch all resources for lookup
+  const { data: resourcesResponse } = useGetAllResourcesQuery({
+    page: 0,
+    size: 1000, // Fetch a large number to get all resources
+    sort: 'id,asc'
+  });
+
+  // Fetch all diagnostic tests for lookup
+  const { data: diagnosticTestsResponse } = useGetAllDiagnosticTestsQuery({
+    page: 0,
+    size: 1000, // Fetch a large number to get all diagnostic tests
+    sort: 'id,asc'
+  });
+
+  // Create a department lookup map by key
+  const departmentMap = useMemo(() => {
+    if (!allDepartments) return {};
+    const map = {};
+    allDepartments.forEach(dept => {
+      if (dept.key) map[dept.key] = dept;
+      if (dept.id) map[dept.id] = dept;
+    });
+    return map;
+  }, [allDepartments]);
+
+  // Create a practitioner lookup map by key
+  const practitionerMap = useMemo(() => {
+    if (!practitionersResponse?.data) return {};
+    const map = {};
+    practitionersResponse.data.forEach(practitioner => {
+      if (practitioner.key) map[practitioner.key] = practitioner;
+      if (practitioner.id) map[practitioner.id] = practitioner;
+    });
+    return map;
+  }, [practitionersResponse]);
+
+  // Create a resource lookup map by key
+  const resourceMap = useMemo(() => {
+    if (!resourcesResponse?.data) return {};
+    const map = {};
+    resourcesResponse.data.forEach(resource => {
+      if (resource.key) map[resource.key] = resource;
+      if (resource.id) map[resource.id] = resource;
+    });
+    return map;
+  }, [resourcesResponse]);
+
+  // Create a diagnostic test lookup map by key
+  const diagnosticTestMap = useMemo(() => {
+    if (!diagnosticTestsResponse?.data) return {};
+    const map = {};
+    diagnosticTestsResponse.data.forEach(test => {
+      if (test.key) map[test.key] = test;
+      if (test.id) map[test.id] = test;
+    });
+    return map;
+  }, [diagnosticTestsResponse]);
   const tableColumns = [
     {
       key: 'visitId',
       title: <Translate>key</Translate>,
       flexGrow: 4,
       render: (rowData: any) => (
-        <a style={{ cursor: 'pointer' }}>
+        <a
+          style={{ cursor: 'pointer' }}
+          onClick={() => {
+            // setSelectedVisit(rowData);
+          }}
+        >
           {rowData.visitId}
         </a>
       )
@@ -80,28 +147,74 @@ const ClinicVisitsTable = ({ patient }) => {
       title: <Translate>Department</Translate>,
       flexGrow: 4,
       dataKey: 'departmentName',
-      render: (rowData: any) =>
-        rowData?.resourceTypeLkey === '2039534205961578'
-          ? rowData?.departmentName
-          : rowData.resourceObject?.name
+      render: (rowData: any) => {
+        const departmentKey = rowData?.departmentKey;
+        const department = departmentKey ? departmentMap[departmentKey] : null;
+
+        if (department) {
+          return department.name;
+        }
+
+        return '';
+      }
     },
     {
-      key: 'encountertype',
-      title: <Translate>Encounter Type</Translate>,
+      key: 'resourceType',
+      title: <Translate>Resource Type</Translate>,
       flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.resourceObject?.departmentTypeLkey
-          ? rowData.resourceObject?.departmentTypeLvalue?.lovDisplayVale
-          : rowData.resourceObject?.departmentTypeLkey
+      render: (rowData: any) => {
+        return formatEnumString(rowData?.resourceTypeLkey);
+      }
     },
     {
-      key: 'physician',
-      title: <Translate>Physician</Translate>,
+      key: 'resource',
+      title: <Translate>Resource</Translate>,
       flexGrow: 4,
-      render: (rowData: any) =>
-        rowData?.resourceTypeLkey === '2039534205961578'
-          ? rowData?.resourceObject?.practitionerFullName
-          : ''
+      render: (rowData: any) => {
+        // Get resource from resource map
+        const resourceKey = rowData?.resourceKey;
+        const resource = resourceKey ? resourceMap[resourceKey] : null;
+
+        if (!resource) {
+          return '';
+        }
+
+        let displayName = resource.resourceKey || '';
+        const resourceType = resource.resourceType;
+        const lookupKey = resource.resourceKey;
+
+        // Based on resource type, look up the appropriate name
+        if (resourceType === 'PRACTITIONER') {
+          const practitioner = lookupKey ? practitionerMap[lookupKey] : null;
+
+          if (practitioner) {
+            displayName =
+              practitioner.practitionerFullName ||
+              `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
+          }
+        } else if (
+          ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(resourceType)
+        ) {
+          const department = lookupKey ? departmentMap[lookupKey] : null;
+
+          if (department) {
+            displayName = department.name;
+          }
+        } else if (['MEDICAL_TEST'].includes(resourceType)) {
+          const diagnosticTest = lookupKey ? diagnosticTestMap[lookupKey] : null;
+
+          if (diagnosticTest) {
+            displayName = diagnosticTest.name;
+          }
+        }
+
+        // Final fallback
+        if (!displayName) {
+          displayName = resource.resourceKey || 'Unknown Resource';
+        }
+
+        return displayName;
+      }
     },
     {
       key: 'priority',
@@ -121,6 +234,7 @@ const ClinicVisitsTable = ({ patient }) => {
           ? rowData.encounterStatusLvalue.lovDisplayVale
           : rowData.encounterStatusLkey
     },
+
     {
       key: 'visitTypeLvalue',
       title: <Translate>Visit Type</Translate>,
@@ -138,38 +252,89 @@ const ClinicVisitsTable = ({ patient }) => {
             <br />
             <span className="date-table-style">
               {formatDateWithoutSeconds(rowData.createdAt)}
-            </span>
+            </span>{' '}
           </>
         ) : (
           ' '
         )
+    },
+    {
+      key: 'cancelledByAt',
+      title: <Translate>Cancelled By\At</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (
+          <>
+            <span>{rowData.deletedBy}</span>
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(rowData.deletedAt)}</span>
+          </>
+        );
+      }
+    },
+    {
+      key: 'cancellationReason',
+      title: <Translate>Cancellation Reason</Translate>,
+      expandable: true
+    },
+    {
+      key: 'dischargedByAt',
+      title: <Translate>Discharged By\At</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (
+          <>
+            <span>{rowData.discharge}</span>
+            <br />
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(rowData.dischargeAt)}
+            </span>
+          </>
+        );
+      }
     }
   ];
 
-  const totalCount =
-    visiterHistoryResponse?.totalCount ??
-    visiterHistoryResponse?.totalElements ??
-    0;
+  useEffect(() => {
+    setVisitHistoryListRequest({
+      ...initialListRequest,
+      sortBy: 'plannedStartDate',
+      sortType: 'desc',
+      filters: [
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: patient.key || undefined
+        },
+        {
+          fieldName: 'resource_type_lkey',
+          operator: 'match',
+          value: 'CLINIC'
+        }
+      ],
+      pageNumber: 1
+    });
+  }, [patient?.key]);
 
   return (
     <MyTable
-      data={visiterHistoryResponse?.object ?? []}
+      data={paginatedData ?? []}
       columns={tableColumns}
+      height={580}
       loading={isFetching}
       sortColumn={sortColumn}
       sortType={sortType}
       onSortChange={(col, type) => {
         setSortColumn(col);
         setSortType(type);
-        setPage(1); // ارجع لأول صفحة عند تغيير السورت
       }}
       page={page}
       rowsPerPage={rowsPerPage}
-      totalCount={totalCount}
+      totalCount={visiterHistoryResponse?.object.length}
       onPageChange={(_, newPage) => setPage(newPage)}
       onRowsPerPageChange={e => {
         setRowsPerPage(parseInt(e.target.value, 10));
-        setPage(1);
+        setPage(0);
       }}
     />
   );

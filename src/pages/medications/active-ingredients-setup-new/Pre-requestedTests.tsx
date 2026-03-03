@@ -87,12 +87,12 @@ const PreRequestedTests = ({ activeIngredient }) => {
   // -------------------------------
   const save = async () => {
     if (!activeIngredient?.id) {
-      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Active Ingredient is required", sev: "warning" }));
       return;
     }
 
     if (!record.testId) {
-      dispatch(notify({ msg: "Please fix the following fields: • Diagnostic Test is required", sev: "error" }));
+      dispatch(notify({ msg: "Please fix the following fields: • Diagnostic Test is required", sev: "warning" }));
       return;
     }
 
@@ -117,7 +117,6 @@ const PreRequestedTests = ({ activeIngredient }) => {
       setRecord({ ...newActiveIngredientPreRequestedTest });
 
     } catch (err) {
-      console.log("Save error:", err);
       dispatch(notify({ msg: "Save failed!", sev: "error" }));
     }
   };
@@ -142,7 +141,6 @@ const PreRequestedTests = ({ activeIngredient }) => {
       setRecord({ ...newActiveIngredientPreRequestedTest });
 
     } catch (err) {
-      console.log("Delete error:", err);
       dispatch(notify({ msg: "Delete failed!", sev: "error" }));
     }
   };

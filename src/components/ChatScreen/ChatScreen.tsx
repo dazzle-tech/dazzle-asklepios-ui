@@ -556,14 +556,12 @@ const ChatScreen = () => {
         type="file"
         ref={fileInputRef}
         className="hiddenInput"
-        onChange={e => console.log('File selected:', e.target?.files?.[0])}
       />
       <input
         type="file"
         ref={imageInputRef}
         accept="image/*"
         className="hiddenInput"
-        onChange={e => console.log('Image selected:', e.target?.files?.[0])}
       />
 
       {/* Group Chat Modal */}

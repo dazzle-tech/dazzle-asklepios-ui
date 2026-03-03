@@ -80,7 +80,6 @@ const FilmAndReagentsTableModal: React.FC<FilmAndReagentsTableModalProps> = ({ o
               setTableData(newData);
             }}
             max={row.availableQty}
-            min={0}
             width={120}
           />
         </Form>
@@ -103,7 +102,6 @@ const FilmAndReagentsTableModal: React.FC<FilmAndReagentsTableModalProps> = ({ o
           }
         ]}
         actionButtonFunction={() => {
-          console.log('Saved data:', tableData);
           setOpen(false);
         }}
         content={() => (

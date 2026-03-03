@@ -300,28 +300,6 @@ const DepartmentStock = () => {
   const paginatedData = itemsData.slice(startIndex, endIndex);
 
   /**
-   * Button event handlers for main actions
-   */
-
-  /**
-   * Handle Export XLS button click
-   * TODO: Implement export functionality
-   */
-  const handleExportXLS = () => {
-    console.log('Export XLS clicked');
-    // TODO: Add export logic here
-  };
-
-  /**
-   * Handle Refill Request button click
-   * TODO: Implement refill request functionality
-   */
-  const handleRefillRequest = () => {
-    console.log('Refill Request clicked');
-    // TODO: Add refill request logic here
-  };
-
-  /**
    * Main component render
    * Returns the complete Department Stock interface
    */

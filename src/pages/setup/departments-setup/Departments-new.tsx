@@ -116,10 +116,6 @@ const Departments = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-
-  useEffect(() => {
-    console.log("ShowScreen", showScreen)
-  }, [showScreen])
   
   useEffect(() => {
     if (departmentListResponse?.links) {
@@ -185,7 +181,7 @@ const Departments = () => {
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}`,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return false;

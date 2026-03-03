@@ -71,12 +71,6 @@ const EchoDopplerTestModal = ({
   const handleSave = async () => {
     try {
       // TODO: Replace this with real save API when ready
-      console.log('Saving Echo Doppler Test:', {
-        ...echoTest,
-        patientKey: patient?.key,
-        encounterKey: encounter?.key,
-        createdBy: authSlice?.user?.key
-      });
 
       dispatch(notify({ msg: 'Echo Doppler Test Saved Successfully', sev: 'success' }));
       setOpen(false);

@@ -3,10 +3,13 @@ import {
   faCalendarDays,
   faChartColumn,
   faCommentDots,
+  faFile,
+  faFileLines,
   faHeadset,
   faNoteSticky,
   faRepeat,
-  faStethoscope
+  faStethoscope,
+  faUserDoctor
 } from '@fortawesome/free-solid-svg-icons';
 import { faSun } from '@fortawesome/free-solid-svg-icons';
 import { faMoon } from '@fortawesome/free-solid-svg-icons';
@@ -54,10 +57,11 @@ import { UserDepartment } from '@/types/model-types-new';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
-const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
+const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expandNotes }) => {
   const dispatch = useDispatch();
   const mode = useAppSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
+  const direction = localStorage.getItem('direction');
   const authSlice = useAppSelector(state => state.auth);
   const toast = useCallback(
     (msg: string) => {
@@ -87,12 +91,20 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
   };
   const selectedDepartment = authSlice.selectedDepartment;
   const hasWarnedNoDepartmentRef = useRef(false);
+  const selectedFacilityId =
+    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
+  const facilityKey = selectedFacilityId ?? 'no-facility';
   const {
     data: activeDepartmentsResponse,
-    isLoading: isLoadingDepartments
-  } = useGetActiveUserDepartmentsByUserQuery(userId as number, {
-    skip: !userId
-  });
+    isLoading: isLoadingDepartments,
+    isFetching: isFetchingDepartments
+  } = useGetActiveUserDepartmentsByUserQuery(
+    { userId: userId as number, facilityId: facilityKey },
+    {
+      skip: !userId,
+      refetchOnMountOrArgChange: true
+    }
+  );
   const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
   const storedDepartmentMatch =
     selectedDepartment &&
@@ -111,9 +123,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
     }
   );
 
-  const defaultDepartment = (defaultDepartmentResponse ?? null) as
-    | UserDepartmentWithNames
-    | null;
+  const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
   const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
   const selectedDepartmentEffective =
     storedDepartmentMatch ??
@@ -142,6 +152,10 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
   };
 
   useEffect(() => {
+    if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
+      return;
+    }
+
     if (activeDepartments.length === 0 && !isLoadingDepartments && !selectedDepartment) {
       if (!hasWarnedNoDepartmentRef.current) {
         toast(
@@ -151,11 +165,14 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
       }
       return;
     }
+
     if (!selectedDepartmentEffective) {
       return;
     }
+
     const resolvedDepartmentName = resolveDepartmentName(selectedDepartmentEffective.departmentId);
     const resolvedFacilityName = resolveFacilityName(selectedDepartmentEffective.facilityId);
+
     if (
       !selectedDepartment ||
       selectedDepartment?.departmentId !== selectedDepartmentEffective.departmentId ||
@@ -189,30 +206,14 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
       <Dropdown.Menu>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faFileLines} />
+            Customize Form
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faChartColumn} />
             Customize Dashboard
-          </div>
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => {
-            setOpenMoreMenu(false);
-            setShowChatModal(true);
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faCommentDots} />
-            Secure Messaging
-          </div>
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => {
-            setOpenMoreMenu(false);
-            setShowAppointmentsModal(true);
-          }}
-        >
-          <div className="container-of-icon-and-key1">
-            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faCalendarDays} />
-            My Appointments
           </div>
         </Dropdown.Item>
 
@@ -229,7 +230,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
           </div>
         </Dropdown.Item>
 
-        {/* الخيار الجديد للبوابة */}
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
@@ -302,7 +302,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
       </Popover>
     );
   };
- const uiSlice = useAppSelector(state => state.ui);
+  const uiSlice = useAppSelector(state => state.ui);
   const renderLangSpeaker = ({ onClose, left, top, className }: any, ref) => {
     // const uiSlice = useAppSelector(state => state.ui);
 
@@ -325,14 +325,19 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
           <Dropdown.Item divider />
           {langData?.map(lang => (
             <>
-            <Dropdown.Item
-              key={lang.langKey}
-              active={uiSlice?.lang === lang?.langKey} 
-              onClick={() => dispatch(setLang(lang?.langKey))}
-            >
-              {lang.langName}
-            </Dropdown.Item>
-            <Dropdown.Item divider />
+              <Dropdown.Item
+                key={lang.langKey}
+                active={uiSlice?.lang === lang?.langKey}
+                onClick={() => {
+                  dispatch(setLang(lang?.langKey));
+                  const selectedObject = langData.find(item => item?.langKey === lang?.langKey);
+                  localStorage.setItem('direction', selectedObject?.direction);
+                  localStorage.setItem('language', selectedObject?.langKey);
+                }}
+              >
+                {lang.langName}
+              </Dropdown.Item>
+              <Dropdown.Item divider />
             </>
           ))}
         </Dropdown.Menu>
@@ -365,7 +370,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
 
       localStorage.clear();
 
-      navigate('/login');
+      dispatch({ type: 'auth/logout' });
+
+      navigate('/login', { replace: true });
     };
 
     useEffect(() => {
@@ -379,7 +386,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
         <Dropdown.Menu onSelect={handleSelect}>
           <Dropdown.Item panel style={{ padding: 10, width: 200 }}>
             <p>Signed in as</p>
-            <strong>{authSlice.user?.firstName}-{authSlice.user?.lastName}</strong>
+            <strong>
+              {authSlice.user?.firstName}-{authSlice.user?.lastName}
+            </strong>
           </Dropdown.Item>
           <Dropdown.Item panel style={{ padding: 10, width: 160 }}>
             <p>Job Role</p>
@@ -516,9 +525,23 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
 
   return (
     <>
-      <div className={`main-screen-bar-icons-main-container-header ${mode}`}>
+      <div
+        className={`main-screen-bar-icons-main-container-header ${mode}`}
+        style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
+      >
         {width >= 930 ? (
           <>
+            <Tooltip title="Customize Form">
+              <IconButton size="small">
+                <FontAwesomeIcon
+                  className="header-screen-bar-icon-size-handle"
+                  icon={faFileLines}
+                  onClick={() => {
+                    navigate('/form-template-use');
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Customize Dashboard">
               <IconButton size="small">
                 <FontAwesomeIcon
@@ -527,30 +550,38 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Secure Messaging">
+            {/* <Tooltip title="Secure Messaging">
               <IconButton size="small" onClick={() => setShowChatModal(true)}>
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faCommentDots}
                 />
               </IconButton>
-            </Tooltip>
-            <Tooltip title="My Appointments">
+            </Tooltip> */}
+            {/* <Tooltip title="My Appointments">
               <IconButton size="small" onClick={() => setShowAppointmentsModal(true)}>
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faCalendarDays}
                 />
               </IconButton>
-            </Tooltip>
-            <Tooltip title="My Consultations">
-              <IconButton size="small" onClick={() => {navigate('/my-consultations');}}>
-                <FontAwesomeIcon
-                  className="header-screen-bar-icon-size-handle"
-                  icon={faStethoscope}
-                />
-              </IconButton>
-            </Tooltip>
+            </Tooltip> */}
+            {authSlice.user?.admin && authSlice.user?.jobRole === 'PHYSICIAN' && (
+              <Tooltip title="My Consultations">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    navigate('/my-consultations');
+                  }}
+                >
+                  <FontAwesomeIcon
+                    className="header-screen-bar-icon-size-handle"
+                    icon={faUserDoctor}
+                  />
+                </IconButton>
+              </Tooltip>
+            )}
+
             <Tooltip title="Announcements">
               <IconButton size="small">
                 <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBullhorn} />
@@ -562,7 +593,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
               </IconButton>
             </Tooltip>
             <Tooltip title="Sticky Notes">
-              <IconButton size="small" onClick={() => setExpandNotes(true)}>
+              <IconButton size="small" onClick={() => setExpandNotes(!expandNotes)}>
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faNoteSticky}
@@ -618,7 +649,10 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
               <span>
                 <Tooltip title="Switch Department">
                   <IconButton size="small">
-                    <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faRepeat} />
+                    <FontAwesomeIcon
+                      className="header-screen-bar-icon-size-handle"
+                      icon={faRepeat}
+                    />
                   </IconButton>
                 </Tooltip>
               </span>
@@ -679,7 +713,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
       </div>
 
       {/* Chat Screen Modal */}
-      <Dialog
+      {/* <Dialog
         open={showChatModal}
         onClose={() => setShowChatModal(false)}
         maxWidth="lg"
@@ -697,9 +731,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
         <DialogContent className="chat-modal-content">
           <ChatScreen />
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
-      <MyModal
+      {/* <MyModal
         open={showAppointmentsModal}
         setOpen={setShowAppointmentsModal}
         title="My Appointments"
@@ -708,7 +742,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch }) => {
         content={<MyAppointmentScreen />}
         hideBack={true}
         actionButtonLabel="Save"
-      />
+      /> */}
     </>
   );
 };

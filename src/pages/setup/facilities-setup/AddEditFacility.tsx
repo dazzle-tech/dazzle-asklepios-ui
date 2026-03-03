@@ -24,11 +24,6 @@ const AddEditFacility = ({
   const [validationResult] = useState({});
   
 
-
-  useEffect(() => {
-    console.log('facility data in modal:', facility);
-  }, [handleSave]);
-
   // Fetch  facilityTypeOptions list response
   const facilityTypeOptions = useEnumOptions("FacilityType"); 
 
@@ -57,11 +52,11 @@ const AddEditFacility = ({
                 required
                 record={facility}
                 setRecord={setFacility}
-                width={250}
+                width={"13vw"}
               />
               <MyInput
                 required
-                width={250}
+                width={"13vw"}
                 vr={validationResult}
                 fieldLabel="Facility Type"
                 fieldType="select"
@@ -78,7 +73,7 @@ const AddEditFacility = ({
               fieldName="name"
               record={facility}
               setRecord={setFacility}
-              width={width > 600 ? 520 : 250}
+              width={"26vw"}
             />
             <div
               className={clsx('', {
@@ -90,11 +85,11 @@ const AddEditFacility = ({
                 fieldType="date"
                 record={facility}
                 setRecord={setFacility}
-                width={250}
+                width={"13vw"}
               />
               <MyInput
                 required
-                width={250}
+                width={"13vw"}
                 vr={validationResult}
                 fieldLabel="Default Currency"
                 fieldType="select"
@@ -112,7 +107,7 @@ const AddEditFacility = ({
               fieldType="textarea"
               record={facility}
               setRecord={setFacility}
-              width={width > 600 ? 520 : 250}
+              width={"26vw"}
             />
           </Form>
         );
@@ -125,7 +120,7 @@ const AddEditFacility = ({
               })}
             >
               <MyInput
-                width={250}
+                width={"13vw"}
                 vr={validationResult}
                 fieldLabel="Facility Country"
                 fieldType="select"
@@ -137,7 +132,7 @@ const AddEditFacility = ({
                 setRecord={setAddress}
               />
               <MyInput
-                width={250}
+                width={"13vw"}
                 vr={validationResult}
                 fieldLabel="Facility City"
                 fieldType="select"
@@ -155,7 +150,7 @@ const AddEditFacility = ({
               })}
             >
               <MyInput
-                width={250}
+                width={"13vw"}
                 vr={validationResult}
                 fieldLabel="State/Region"
                 fieldType="select"
@@ -171,7 +166,7 @@ const AddEditFacility = ({
                 fieldName="streetAddressLine1"
                 record={address}
                 setRecord={setAddress}
-                width={250}
+                width={"13vw"}
               />
             </div>
             <MyInput
@@ -179,7 +174,7 @@ const AddEditFacility = ({
               fieldName="postalCode"
               record={address}
               setRecord={setAddress}
-              width={width > 600 ? 520 : 250}
+              width={"26vw"}
             />
           </Form>
         );
@@ -196,27 +191,27 @@ const AddEditFacility = ({
                 fieldLabel="Primary Phone Number"
                 record={facility}
                 setRecord={setFacility}
-                width={250}
+                width={"13vw"}
               />
               <MyInput
                 fieldName="phone2"
                 fieldLabel="Secondary Phone Number"
                 record={facility}
                 setRecord={setFacility}
-                width={250}
+                width={"13vw"}
               />
             </div>
             <MyInput
               fieldName="emailAddress"
               record={facility}
               setRecord={setFacility}
-              width={width > 600 ? 520 : 250}
+              width={"26vw"}
             />
             <MyInput
               fieldName="fax"
               record={facility}
               setRecord={setFacility}
-              width={width > 600 ? 520 : 250}
+              width={"26vw"}
             />
           </Form>
         );
@@ -231,8 +226,8 @@ const AddEditFacility = ({
       content={conjureFormContent}
       actionButtonLabel={facility?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      size={width > 600 ? '36vw' : '25vw'}
-      steps={[
+      size="38vw"
+        steps={[
         { title: 'Basic Info', icon:<FontAwesomeIcon icon={ faUser }/>},
         { title: 'Address', icon:<FontAwesomeIcon icon={ faLocationDot }/>},
         { title: 'Contact', icon: <FontAwesomeIcon icon={faPhone }/>}

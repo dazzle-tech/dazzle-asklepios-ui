@@ -123,11 +123,15 @@ export const setupService = createApi({
       },
     }),
     getAccessRoles: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/setup/access-role-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
+      queryFn: async () => {
+        return {
+          data: {
+            object: [],
+            extraNumeric: 0,
+          },
+        };
+      },
+      keepUnusedDataFor: 5,
     }),
     saveAccessRole: builder.mutation({
       query: (facility: ApFacility) => ({
@@ -584,6 +588,18 @@ export const setupService = createApi({
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 3600
+    }),
+        getIcdById: builder.query({
+      query: (diagnosisId: string) => ({
+        url: `/setup/icd-list-by-id`,
+        params: {
+          key: diagnosisId,
+        }
+
+      }),
+      transformResponse: (response: any) => {
+        return response?.object;
+      }
     }),
     getDiagnosticsTestNormalRangeList: builder.query({
       query: (listRequest: ListRequest) => ({
@@ -1614,5 +1630,6 @@ export const {
   useGetWarehouseProductsDetailsQuery,
   useSaveWarehouseProductsDetailsMutation,
   useRemoveWarehouseProductsDetailsMutation,
-  useLazyGetCandidatesByDepartmentKeyQuery
+  useLazyGetCandidatesByDepartmentKeyQuery,
+ useGetIcdByIdQuery
 } = setupService;

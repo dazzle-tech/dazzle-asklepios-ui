@@ -5,16 +5,26 @@ import SurgicalHistory from './SurgicalHistory';
 import SocialHistory from './SocialHistory';
 import { useLocation } from 'react-router-dom';
 import MyTab from '@/components/MyTab';
-const PatientHistory = () => {
+const PatientHistory = ({ toShowData = false,
+  patient: patientProp,
+  encounter: encounterProp,
+  edit: editProp}) => {
   const location = useLocation();
-  const { patient, encounter, edit } = location.state || {};
+ 
+  const state = location.state || {};
 
+  const patient = patientProp ?? state.patient;
+  const encounter = encounterProp ?? state.encounter;
+  const edit = editProp ?? state.edit;
   const tabData = [
-    {title: "Medical History", content: <MedicalHistory patient={patient} encounter={encounter} edit={edit} />},
-    {title: "Surgical History", content: <SurgicalHistory patient={patient} encounter={encounter} edit={edit} />},
-    {title: "Social History", content: <SocialHistory patient={patient} encounter={encounter} edit={edit} />}
+    {title: "Medical History", content: <MedicalHistory patient={patient} encounter={encounter} edit={edit}  toShowData={toShowData}/>},
+    {title: "Surgical History", content: <SurgicalHistory patient={patient} encounter={encounter} edit={edit}  toShowData={toShowData}/>},
+    {title: "Social History", content: <SocialHistory patient={patient} encounter={encounter} edit={edit}  toShowData={toShowData}/>}
   ];
 
+
+
+  
   return (
    <MyTab
     data={tabData}

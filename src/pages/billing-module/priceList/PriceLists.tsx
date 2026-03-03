@@ -27,6 +27,8 @@ import { Form, Panel, Tooltip, Whisper } from "rsuite";
 import "./styles.less";
 import { PriceList } from "@/types/model-types-new";
 import AddEditPriceList from "./AddEditPriceList";
+import { MdRule } from "react-icons/md";
+import AddEditPriceListAttribuite from "./AddEditPriceListAttributes";
 
 // ✅ new imports
 import { MdPlaylistAdd } from "react-icons/md";
@@ -44,8 +46,8 @@ const PriceLists = () => {
 
   // ✅ state for items modal
   const [openItemsModal, setOpenItemsModal] = useState(false);
-  const [selectedPriceListForItems, setSelectedPriceListForItems] =
-    useState<PriceList | null>(null);
+  const [openAttributesModal, setOpenAttributesModal] = useState(false);
+
 
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: "", value: "" });
   const [isFiltered, setIsFiltered] = useState(false);
@@ -216,21 +218,35 @@ const PriceLists = () => {
 
   // ✅ new icon column renderer
   const itemsIcon = (rowData: PriceList) => (
-    <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Items</Tooltip>}>
-      <span
-        className="icons-style"
-        style={{ cursor: "pointer", display: "inline-flex" }}
-        onClick={(e) => {
-          e.stopPropagation();
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Items</Tooltip>}>
+        <span
+          className="icons-style"
+          style={{ cursor: "pointer", display: "inline-flex" }}
+          onClick={(e) => {
+            e.stopPropagation();
             setPriceList(rowData);
-          setSelectedPriceListForItems(rowData);
-          setOpenItemsModal(true);
-        
-        }}
-      >
-        <MdPlaylistAdd size={22} />
-      </span>
-    </Whisper>
+
+            setOpenItemsModal(true);
+
+          }}
+        >
+          <MdPlaylistAdd size={22} />
+        </span>
+      </Whisper>
+      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Attributes</Tooltip>}>
+        <span
+          className="icons-style"
+          style={{ cursor: "pointer", display: "inline-flex" }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setPriceList(rowData);
+            setOpenAttributesModal(true);
+          }}
+        >
+          <MdRule size={22} />
+        </span>
+      </Whisper></div>
   );
 
   const tableColumns = [
@@ -271,7 +287,7 @@ const PriceLists = () => {
     // ✅ add items icon column BEFORE actions (or where you want)
     {
       key: "items",
-      title: <Translate>Items</Translate>,
+      title: <Translate></Translate>,
       flexGrow: 1,
       render: (rowData: PriceList) => itemsIcon(rowData)
     },
@@ -423,7 +439,12 @@ const PriceLists = () => {
         open={openItemsModal}
         setOpen={setOpenItemsModal}
         priceList={priceList}
-        
+
+      />
+      <AddEditPriceListAttribuite
+        open={openAttributesModal}
+        setOpen={setOpenAttributesModal}
+        priceList={priceList}
       />
 
       <DeletionConfirmationModal

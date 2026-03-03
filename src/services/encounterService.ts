@@ -15,7 +15,6 @@ import {
   ApDoctorRound,
   ApNurseNotes,
   ApRepositioning,
-  ApDayCaseEncounters,
   ApPreOperationAdministeredMedications,
   ApEmergencyTriage,
   ApEncounterAssignToBed,
@@ -51,6 +50,24 @@ import {
   ApDiagnosticOrderTestsSamples,
   ApTelephonicConsultation
 } from '@/types/model-types';
+
+type ParentResponse<T> = {
+  object: T;
+  msg?: string;
+};
+
+export type PatientSummaryResponse = {
+  age: any;
+  gender: string;
+  symptoms: string;
+  vitals: string;
+  diagnosis: string;
+  allergies: string[];
+  medicalWarnings: string;
+  surgeries: string[];
+  problems: string[];
+  medications: string[];
+};
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
   baseQuery: baseQuery,
@@ -322,6 +339,28 @@ export const encounterService = createApi({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/consultation-orders-list?${fromListRequestToQueryParams(listRequest)}`
       }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    getConsultationOrdersByDepartment: builder.query({
+      query: ({
+        listRequest,
+        department_key,
+        preferred_consultant_key
+      }: {
+        listRequest: ListRequest;
+        department_key: string;
+        preferred_consultant_key?: string;
+      }) => {
+        const params = new URLSearchParams(fromListRequestToQueryParams(listRequest));
+        params.append('department_key', department_key);
+        if (preferred_consultant_key) {
+          params.append('preferred_consultant_key', preferred_consultant_key);
+        }
+        return {
+          url: `/encounter/consultation-orders-by-department?${params.toString()}`
+        };
+      },
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
@@ -1092,7 +1131,6 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-
     getNurseServiceProductList: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/nurse-service-product-list?${fromListRequestToQueryParams(listRequest)}`
@@ -1147,6 +1185,50 @@ export const encounterService = createApi({
           lang
         }
       })
+    }),
+    getPatientSummary: builder.query<
+      PatientSummaryResponse,
+      { patientKey: string; encounterKey: string; lang?: string; medications?: string[] }
+    >({
+      query: ({ patientKey, encounterKey, lang, medications }) => ({
+        url: `/encounter/summary`,
+        method: 'GET',
+        params: {
+          patientKey,
+          encounterKey,
+          medications
+        },
+        headers: lang ? { lang } : undefined
+      }),
+      transformResponse: (response: ParentResponse<PatientSummaryResponse>) => {
+        const obj = response?.object ?? ({} as any);
+        return {
+          age: obj.age ?? '',
+          gender: obj.gender ?? '',
+          symptoms: obj.symptoms ?? '',
+          vitals: obj.vitals ?? '',
+          diagnosis: obj.diagnosis ?? '',
+          allergies: obj.allergies ?? [],
+          medicalWarnings: obj.medicalWarnings ?? '',
+          surgeries: obj.surgeries ?? [],
+          problems: obj.problems ?? [],
+          medications: obj.medications ?? []
+        };
+      }
+    }),
+    getMiniSummary: builder.query({
+      query: ({ patientKey, encounterKey, lang = 'en' }) => ({
+        url: `/encounter/mini-summary`,
+        method: 'GET',
+        params: {
+          patientKey,
+          encounterKey,
+          lang
+        }
+      }),
+      transformResponse: (response: any) => {
+        return response?.object;
+      }
     })
   })
 });
@@ -1180,6 +1262,7 @@ export const {
   useGetCustomeInstructionsQuery,
   useSaveCustomeInstructionsMutation,
   useGetConsultationOrdersQuery,
+  useGetConsultationOrdersByDepartmentQuery,
   useSaveConsultationOrdersMutation,
   useGetDrugOrderQuery,
   useSaveDrugOrderMutation,
@@ -1265,5 +1348,7 @@ export const {
   useGetUserDashboardComponentsQuery,
   useAddUserDashboardComponentsMutation,
   useDeleteUserDashboardComponentsMutation,
-  useGetClinicalSummaryQuery
+  useGetClinicalSummaryQuery,
+  useGetPatientSummaryQuery,
+  useGetMiniSummaryQuery
 } = encounterService;

@@ -52,7 +52,7 @@ const Vaccine: React.FC = () => {
   // Unfiltered pagination (main API)
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 5,
+    size: 15,
     sort: 'id,asc',
     timestamp: Date.now()
   });
@@ -60,7 +60,7 @@ const Vaccine: React.FC = () => {
   // Filtered pagination
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
-    size: 5,
+    size: 15,
     sort: 'id,desc'
   });
 

@@ -12,29 +12,12 @@ import ChangePriceListModal from './ChangePriceListModal';
 
 import { useGenerateInvoicePdfMutation } from '@/services/setup/invoiceReportApi';
 import { calculateAgeFormat } from '@/utils';
+import type { BillingItem } from '@/types/model-types-new';
 
-type BillingItem = {
-  id: string;
-  clinic: string;
-  chargeDate: string;
-  type: string;
-  name: string;
-  price: number;
-  currency: string;
-  discount: number;
-  priceList: string;
-  patientKey: string;
-  quantity: number; // <-- مضافة من الكود القديم (عمود الكمية)
-};
 
-type BillingProps = {
-  data: BillingItem[];
-  patient?: any; // Patient object from your system
-  onCreateInvoice: (ids: string[]) => void; // من الكود القديم
-};
-
-const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => {
+const Billing = ({ data, patient, onCreateInvoice }) => {
   const toaster = useToaster();
+  const [currentRecord, setCurrentRecord] = useState(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [openDiscountModal, setOpenDiscountModal] = useState<boolean>(false);
   const [openRefundModal, setOpenRefundModal] = useState<boolean>(false);
@@ -42,11 +25,9 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
     useState<boolean>(false);
   const [forAllServises, setForAllServices] = useState<boolean>(false);
 
-  // RTK Query mutation
   const [generateInvoicePdf, { isLoading: isGeneratingPdf }] =
     useGenerateInvoicePdfMutation();
 
-  // Handle selection
   const handleCheckboxChange = (key: string) => {
     setSelectedRows(prev => {
       if (prev.includes(key)) {
@@ -57,10 +38,19 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
     });
   };
 
-  console.log('patient', patient);
-  console.log('Billing data:', data);
+  const handleToggleSelectAll = () => {
+    if (selectedRows.length === data.length) {
+      setSelectedRows([]);
+    } else {
+      const allIds = data.map(item => item.id);
+      setSelectedRows(allIds);
+    }
+  };
 
-  // Generate Invoice PDF + استدعاء onCreateInvoice القديم
+  const allSelected = data.length > 0 && selectedRows.length === data.length;
+  const isIndeterminate =
+    selectedRows.length > 0 && selectedRows.length < data.length;
+
   const handleCreateInvoice = async () => {
     if (selectedRows.length === 0) {
       toaster.push(
@@ -72,47 +62,38 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
       return;
     }
 
-    // 🔹 استدعاء سلوكك القديم: إنشاء الفاتورة في الباك إند/الستيت
+    // 🔹 يروح على Accounting → handleCreateInvoiceFromBilling
     onCreateInvoice(selectedRows);
 
     try {
-      // Filter selected items
       const selectedItems = data.filter(item => selectedRows.includes(item.id));
 
-      // Calculate total (حسب الخصم كنسبة مئوية)
       const totalAmount = selectedItems.reduce((sum, item) => {
         const discountedPrice =
           item.price - (item.price * (item.discount || 0)) / 100;
         return sum + discountedPrice;
       }, 0);
 
-      // Generate invoice number
       const invoiceNumber = `INV-${Date.now()}`;
 
-      // Build patient full name
       const patientFullName = patient
-        ? `${patient.firstName || ''} ${patient.secondName || ''} ${
-            patient.thirdName || ''
+        ? `${patient.firstName || ''} ${patient.secondName || ''} ${patient.thirdName || ''
           } ${patient.lastName || ''}`.trim()
         : 'N/A';
 
-      // Get gender display value
       const genderDisplay =
         patient?.genderLvalue?.lovDisplayVale || 'Not specified';
 
-      // Calculate age
       const ageDisplay = patient?.dob
         ? calculateAgeFormat(patient.dob)
         : 'N/A';
 
-      // Get phone number
       const phoneNumber =
         patient?.phoneNumber ||
         patient?.mobileNumber ||
         patient?.homePhone ||
         'N/A';
 
-      // Prepare data for backend
       const invoiceData = {
         patientInfo: {
           name: patientFullName || 'N/A',
@@ -120,16 +101,16 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
           dob: patient?.dob || 'N/A',
           age: ageDisplay || 'N/A',
           gender: genderDisplay || 'N/A',
-          phoneNumber: phoneNumber || 'N/A'
+          phoneNumber: phoneNumber || 'N/A',
         },
         visitInfo: {
           visitDate: new Date().toLocaleDateString('en-GB'),
-          visitType: 'General'
+          visitType: 'General',
         },
         invoiceInfo: {
           invoiceNumber: invoiceNumber || 'N/A',
           totalAmount: totalAmount.toFixed(2) || '0.00',
-          currency: selectedItems[0]?.currency || 'USD'
+          currency: selectedItems[0]?.currency || 'USD',
         },
         items: selectedItems.map(item => ({
           chargeDate: item.chargeDate || 'N/A',
@@ -139,16 +120,12 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
           price: item.price || 0,
           currency: item.currency || 'USD',
           discount: item.discount || 0,
-          quantity: item.quantity || 1 // <-- إضافة الكمية للـ PDF أيضاً
-        }))
+          quantity: item.quantity || 1,
+        })),
       };
 
-      console.log('Sending invoice data:', invoiceData);
-
-      // Call API
       const blob = await generateInvoicePdf(invoiceData).unwrap();
 
-      // Download PDF
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -165,7 +142,6 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
         { placement: 'topEnd', duration: 3000 }
       );
 
-      // Clear selection
       setSelectedRows([]);
     } catch (error: any) {
       console.error('Error generating invoice:', error);
@@ -188,14 +164,14 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
         {isGeneratingPdf ? 'Generating...' : 'Invoice'}
       </MyButton>
 
-      <MyButton
+      {/* <MyButton
         onClick={() => {
           setOpenChangePriceListModal(true);
           setForAllServices(true);
         }}
       >
         Bulk Price List Change
-      </MyButton>
+      </MyButton> */}
 
       <MyButton onClick={() => setOpenRefundModal(true)}>Refund</MyButton>
     </div>
@@ -224,13 +200,19 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
   const columns = [
     {
       key: 'select',
-      title: '',
+      title: (
+        <Checkbox
+          checked={allSelected}
+          indeterminate={isIndeterminate}
+          onChange={handleToggleSelectAll}
+        />
+      ),
       render: (rowData: BillingItem) => (
         <Checkbox
           checked={selectedRows.includes(rowData.id)}
           onChange={() => handleCheckboxChange(rowData.id)}
         />
-      )
+      ),
     },
     { key: 'clinic', title: 'Clinic' },
     { key: 'chargeDate', title: 'Charge Date' },
@@ -238,15 +220,15 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
     { key: 'name', title: 'Name' },
     { key: 'price', title: 'Price' },
     { key: 'currency', title: 'Currency' },
-    { key: 'quantity', title: 'Quantity' }, // <-- العمود اللي كان في الكود الأول
-    { key: 'totalPrice', title: 'Total Price' }, 
+    { key: 'quantity', title: 'Quantity' },
+    { key: 'totalPrice', title: 'Total Price' },
     { key: 'discount', title: 'Discount' },
     { key: 'priceList', title: 'Price List' },
     {
       key: 'actions',
       title: '',
-      render: () => iconsForActions()
-    }
+      render: () => iconsForActions(),
+    },
   ];
 
   return (
@@ -254,6 +236,9 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
       <MyTable
         data={data}
         columns={columns}
+        onRowClick={(row) => {
+          setSelectedRows(row)
+        }}
         loading={false}
         tableButtons={tableButtons}
       />
@@ -273,8 +258,8 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
       <ChangePriceListModal
         open={openChangePriceListModal}
         setOpen={setOpenChangePriceListModal}
-        record=""
-        setRecord=""
+        record={currentRecord}
+        setRecord={setCurrentRecord}
         forAllServises={forAllServises}
       />
     </div>
@@ -282,3 +267,4 @@ const Billing: React.FC<BillingProps> = ({ data, patient, onCreateInvoice }) => 
 };
 
 export default Billing;
+
