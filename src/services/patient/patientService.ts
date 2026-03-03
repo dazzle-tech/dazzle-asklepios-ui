@@ -64,9 +64,7 @@ export const newPatientService = createApi({
       { medicalRecordNumber: string } & PagedParams
     >({
       query: ({ medicalRecordNumber, page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/by-medicalRecordNumber/${encodeURIComponent(
-          medicalRecordNumber
-        )}`,
+        url: `/api/patient/by-medicalRecordNumber/${encodeURIComponent(medicalRecordNumber)}`,
         params: { page, size, sort }
       }),
       transformResponse: mapPaged,
@@ -75,7 +73,6 @@ export const newPatientService = createApi({
           ? [...res.data.map(p => ({ type: 'Patient' as const, id: p.id })), 'Patient']
           : ['Patient']
     }),
-
 
     getPatientsByArchivingNumber: builder.query<
       PagedResult<modelTypes.Patient>,
@@ -137,7 +134,6 @@ export const newPatientService = createApi({
           : ['Patient']
     }),
 
-    // ============ SEARCH BY DOCUMENT NUMBER (NEW) ============
     getPatientsByDocumentNumber: builder.query<
       PagedResult<modelTypes.Patient>,
       { number: string } & PagedParams
@@ -208,8 +204,6 @@ export const newPatientService = createApi({
       })
     }),
 
-
-
     getUnknownPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: `/api/patient/unknown`,
@@ -224,8 +218,8 @@ export const newPatientService = createApi({
           : ['Patient']
     }),
 
-    getBulkPatientBasicInfo: builder.mutation<any, any>({
-      query: (body) => ({
+    getBulkPatientBasicInfo: builder.mutation<PatientBasicInformationResponseVM[], number[]>({
+      query: body => ({
         url: '/api/patient/bulk/basic-info',
         method: 'POST',
         body,
@@ -257,11 +251,11 @@ export const {
   useGetPatientsByFullNameQuery,
   useLazyGetPatientsByFullNameQuery,
 
-  // NEW
+  // document number
   useGetPatientsByDocumentNumberQuery,
   useLazyGetPatientsByDocumentNumberQuery,
 
-  // NEW - any document number
+  // any document number
   useGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsByAnyDocumentNumberQuery,
 
@@ -269,12 +263,16 @@ export const {
   useAddPatientMutation,
   useUpdatePatientMutation,
 
-  // Unknown Patients
+  // unknown patients
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
-  useGetDuplicationCandidatesMutation,
   useLazyGetUnknownPatientsQuery,
-  useGetBulkPatientBasicInfoMutation,
   useGetPatientByIdQuery,
-  useLazyGetPatientByIdQuery
+  useLazyGetPatientByIdQuery,
+
+  // duplicaton
+  useGetDuplicationCandidatesMutation,
+
+  // bulk basic info
+  useGetBulkPatientBasicInfoMutation
 } = newPatientService;
