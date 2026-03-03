@@ -461,15 +461,22 @@ const MyInput = ({
             renderValue={
               isArrayLabel
                 ? (value, item, selectedElement) => {
-                    if (!item) return selectedElement;
-                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                  }
+                  if (!item) return selectedElement;
+                  return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                }
                 : props.isEnum
                 ? (value, item, selectedElement) => {
                     const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
                     return <span>{formatEnumString(String(base))}</span>;
                   }
                 : undefined
+            }
+            disabledItemValues={
+              props.disabledItemValues
+                ? (props?.selectData ?? []).map(
+                  item => item[props?.selectDataValue]
+                )
+                : []
             }
           />
         );
@@ -500,12 +507,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                    {
-                      [valueKey]: '__load_more__',
-                      [labelKey]: 'Load more...',
-                      isLoadMore: true
-                    }
-                  ]
+                  {
+                    [valueKey]: '__load_more__',
+                    [labelKey]: 'Load more...',
+                    isLoadMore: true
+                  }
+                ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -595,6 +602,13 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            disabledItemValues={
+              props.disabledItemValues
+                ? (props?.selectData ?? []).map(
+                  item => item[props?.selectDataValue]
+                )
+                : []
+            }
           />
         );
       }
@@ -624,6 +638,13 @@ const MyInput = ({
             open={isMultyPickerOpen}
             onOpen={() => setIsMultyPickerOpen(true)}
             onClose={() => setIsMultyPickerOpen(false)}
+            disabledItemValues={
+              props.disabledItemValues
+                ? (props?.selectData ?? []).map(
+                  item => item[props?.selectDataValue]
+                )
+                : []
+            }
           />
         );
 
@@ -651,6 +672,14 @@ const MyInput = ({
             open={isCheckPickerOpen}
             onOpen={() => setIsCheckPickerOpen(true)}
             onClose={() => setIsCheckPickerOpen(false)}
+            disabledItemValues={
+              props.disabledItemValues
+                ? (props?.selectData ?? []).map(
+                  item => item[props?.selectDataValue]
+                )
+                : []
+            }
+
           />
         );
 
@@ -885,6 +914,7 @@ const MyInput = ({
       }
     }
   };
+
 
   // const conjureValidationMessages = () => {
   //   if (!validationResult) return null;

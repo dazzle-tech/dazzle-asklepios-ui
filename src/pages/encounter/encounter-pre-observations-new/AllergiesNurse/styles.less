@@ -1,61 +1,74 @@
 .disabled-panel {
-    pointer-events: none;
-    opacity: 0.6;
-  }
- .fill-width{
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.fill-width {
   width: 100%;
- }
- .margin-label{
+}
+
+.margin-label {
   margin-top: 14px;
- }
- .expand-table-padding{
+}
+
+.expand-table-padding {
   padding: 5px !important;
- }
- .column-div{
-  display:flex;
-   flex-direction:column;
- }
-  .div-parent{
-    display:flex !important;
-    gap:17px !important;
-  }
-  .flex1{
-    flex:1 !important;
-  }
-  .font-style{
-    font-family: 'Inter Medium';
-    font-size: 14px;
-    margin-top: 8px;
-  }
-  .date-width{
-    width: 200px;
-  }
-  .padding-expand-table{
-    padding: 5;
-  }
-  .bt-div{
-    display: flex;
-     gap: 5px;
-  }
-  .bt-right{
-    margin-left:auto;
-  }
-  .rows-gap{
-    margin-bottom: 15px !important;
+}
+
+.column-div {
+  display: flex;
+  flex-direction: column;
+}
+
+.div-parent {
+  display: flex !important;
+  gap: 17px !important;
+}
+
+.flex1 {
+  flex: 1 !important;
+}
+
+.font-style {
+  font-family: 'Inter Medium';
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.date-width {
+  width: 200px;
+}
+
+.padding-expand-table {
+  padding: 5;
+}
+
+.bt-div {
+  display: flex;
+  gap: 5px;
+}
+
+.bt-right {
+  margin-left: auto;
+}
+
+.rows-gap {
+  margin-bottom: 15px !important;
+}
+
+@media (max-width: 500px) {
+
+  .bt-div {
+    flex-direction: column;
   }
 
-  @media (max-width: 500px) {
-
-    .bt-div{
-      flex-direction: column;
-    }
-    .div-parent{
-      flex-direction: column;
-    }
+  .div-parent {
+    flex-direction: column;
   }
+}
 
 
-  //for floating button 
+//for floating button 
 
 .allergy-floating-fab {
   position: fixed;
@@ -119,7 +132,9 @@
   transition: background-color 0.3s;
 }
 
-.fab-toggle-button:active{cursor: grabbing;}
+.fab-toggle-button:active {
+  cursor: grabbing;
+}
 
 .fab-toggle-button:hover {
   background-color: var(--orange-600);
@@ -130,8 +145,15 @@
   overflow-y: auto;
 }
 
-.dark{
-  .allergy-floating-fab{
+.container-of-table-and-section-patient-allergy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px
+}
+
+.dark {
+  .allergy-floating-fab {
     background-color: var(--dark-black);
   }
 }

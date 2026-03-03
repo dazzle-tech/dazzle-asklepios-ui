@@ -6,7 +6,6 @@ import {
   useGetObservationSummariesQuery,
   useGetWarningsQuery
 } from '@/services/observationService';
-import { useGetAllergensQuery } from '@/services/setupService';
 import { RootState } from '@/store';
 import { ApAttachment } from '@/types/model-types';
 import { initialListRequest } from '@/types/types';
@@ -29,6 +28,9 @@ import './styles.less';
 import { newApPatient } from '@/types/model-types-constructor';
 import { faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
+import { useGetPatientAllergiesByPatientIdQuery } from '@/services/encounters/patientAllergiesService';
+import { useGetAllergensQuery } from '@/services/setup/allergensService';
+import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import Translate from '@/components/Translate';
 import { useGetPatientWarningsByPatientIdQuery } from '@/services/encounters/patientWarningsService';
 import { newPatient} from '@/types/model-types-constructor-new';
@@ -40,7 +42,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
   );
-const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEncounter);
+  const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEncounter);
 
 
   // ===== Helpers to avoid NaN / bad output =====
@@ -81,10 +83,12 @@ const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEnco
     { skip: !patient?.key }
   );
 
+  const { data: allergensListResponse } = useGetAllergensQuery({});
+  const { data: medicationClassesListResponse } = useGetAllMedicationCategoriesClassesQuery({});
+
    const {
     data: warningsListResponse,
     refetch: refetchWarnings,
-    isLoading
   } = useGetPatientWarningsByPatientIdQuery(
     {
       patientId: patient?.id,
@@ -96,7 +100,6 @@ const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEnco
     }
   );
 
-  const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
 
   const [bodyMeasurements, setBodyMeasurements] = useState<{
     height: number | string | null;
@@ -160,31 +163,61 @@ const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEnco
   }, [refetchPatientSide, refetch, dispatch]);
 
   // Helper function to get allergen name
-  const getAllergenName = (allergenKey: string) => {
-    if (!allergensListToGetName?.object) return 'Loading...';
-    const found = allergensListToGetName.object.find(item => item.key === allergenKey);
-    return found?.allergenName || 'Unknown';
-  };
-useEffect(() => {
-  if (!refetchEncounter) return;
-
-  const doRefetch = async () => {
-    try {
-      await Promise.all([refetchAllergies(), refetchWarnings()]);
-    } catch (e) {
-      console.error('Error while refetching side data:', e);
-    } finally {
-      dispatch(resetRefetchEncounter());
+  const getAllergenName = (allergenId: number, medicationClassId: number) => {
+    // if (!allergensListToGetName?.object) return 'Loading...';
+    // const found = allergensListToGetName.object.find(item => item.key === allergenKey);
+    // return found?.allergenName || 'Unknown';
+    if (allergenId && allergensListResponse?.data) {
+      const allergen = allergensListResponse.data.find(
+        (item: any) => item.id === allergenId
+      );
+      return <p>{allergen?.name ?? '-'}</p>;
     }
-  };
 
-  doRefetch();
-}, [refetchEncounter, refetchAllergies, refetchWarnings, dispatch]);
+    else if (medicationClassId && medicationClassesListResponse) {
+      const medicationClass = medicationClassesListResponse.find(
+        (item: any) => item.id === medicationClassId
+      );
+      return <p>{medicationClass?.name ?? '-'}</p>;
+    }
+
+    return <p>-</p>;
+  };
+  useEffect(() => {
+    if (!refetchEncounter) return;
+
+    const doRefetch = async () => {
+      try {
+        await Promise.all([refetchAllergies(), refetchWarnings()]);
+      } catch (e) {
+        console.error('Error while refetching side data:', e);
+      } finally {
+        dispatch(resetRefetchEncounter());
+      }
+    };
+
+    doRefetch();
+  }, [refetchEncounter, refetchAllergies, refetchWarnings, dispatch]);
   // Get active allergies & warnings
-  const activeAllergies =
-    allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
-   const activeWarnings =
-    warningsListResponse?.data?.filter(warning => warning.status === 'ACTIVE') || [];
+  // const activeAllergies =
+  //   allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
+
+  const {
+    data: allergiesListResponse,
+    refetch: fetchallerges,
+    isLoading
+  } = useGetPatientAllergiesByPatientIdQuery(
+    {
+      patientId: patient?.id,
+      showCancelled: false,
+      // ...paginationParams
+    },
+    {
+      skip: !patient?.id
+    }
+  );
+  const activeAllergies = allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
+   const activeWarnings = warningsListResponse?.data?.filter(warning => warning.status === 'ACTIVE') || [];
 
   // Helper function to get allergy severity background + text color
   const getAllergySeverityColors = (severity: string) => {
@@ -430,37 +463,30 @@ useEffect(() => {
       <div className="my-container">
         {/* Individual Allergies Badges */}
         {activeAllergies.map((allergy, index) => (
-          <MyBadgeStatus
-            key={`allergy-${allergy.key || index}`}
-            backgroundColor={
-              getAllergySeverityColors(allergy.severityLvalue?.lovDisplayVale || '').bg
-            }
-            color={getAllergySeverityColors(allergy.severityLvalue?.lovDisplayVale || '').text}
-            contant={
-              <>
-                <FontAwesomeIcon icon={faHandDots} className="margin-right-size" />
-                {getAllergenName(allergy.allergenKey)}
-              </>
-            }
-          />
+
+          <Whisper placement='top' speaker={<Tooltip><Translate>Allergy</Translate></Tooltip>}>
+            <span>
+            <MyBadgeStatus
+              key={`allergy-${allergy.id || index}`}
+              backgroundColor={
+                getAllergySeverityColors(allergy.severity || '').bg
+              }
+              color={getAllergySeverityColors(allergy.severity || '').text}
+              contant={
+                <>
+                  <FontAwesomeIcon icon={faHandDots} className="margin-right-size" />
+                  {getAllergenName(allergy?.allergenId, allergy?.medicationClassId)}
+                </>
+              }
+            />
+            </span>
+          </Whisper>
+
+
         ))}
 
         {/* Individual Warnings Badges */}
-        {/* {activeWarnings.map((warning, index) => (
-          <MyBadgeStatus
-            key={`warning-${warning.key || index}`}
-            backgroundColor={
-              getAllergySeverityColors(warning.severityLvalue?.lovDisplayVale || '').bg
-            }
-            color={getAllergySeverityColors(warning.severityLvalue?.lovDisplayVale || '').text}
-            contant={
-              <>
-                <FontAwesomeIcon icon={faExclamationTriangle} className="margin-right-size" />
-                {warning.warning}
-              </>
-            }
-          />
-        ))} */}
+
         {activeWarnings.map((warning, index) => (
 
           <Whisper placement='top' speaker={<Tooltip><Translate>Warning</Translate></Tooltip>}>
@@ -480,8 +506,6 @@ useEffect(() => {
             />
             </span>
           </Whisper>
-
-
         ))}
       </div>
 

@@ -1530,6 +1530,34 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   formJson: null
 }
 
+
+export const patientAllergiesResponseVM: modelTypes.PatientAllergiesResponseVM = {
+  id: undefined,
+  patientId: undefined,
+  encounterId: undefined,
+
+  allergenType: '',
+  allergenId: undefined,
+  severity: '',
+
+  medicationClassId: undefined,
+  criticality: '',
+  certainty: '',
+  treatmentStrategy: '',
+
+  onset: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+
+  typeOfPropensity: '',
+  byPatient: true,
+  sourceOfInformation: '',
+  note: '',
+  status: '',
+  allergicReactions: '',
+
+  resolvedBy: '',
+}
 export const newPatientWarnings:  modelTypes.PatientWarnings = {
   id: undefined,
   patientId: undefined,
@@ -1555,6 +1583,38 @@ export const newPatientWarnings:  modelTypes.PatientWarnings = {
   createdDate: '',
   lastModifiedBy: '',
   lastModifiedDate: '',
+
+  activeIngredients: []
+}
+
+export const newPatientAllergiesActiveIngredientCreate : modelTypes.PatientAllergiesActiveIngredientCreate = {
+  activeIngredientId: undefined
+}
+
+export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,
+  allergenType: '',
+  allergenId: undefined,
+  severity: '',
+
+  medicationClassId: undefined,
+  criticality: '',
+  certainty: '',
+  treatmentStrategy: '',
+
+  onset: '',
+  onsetDateUndefined: true, 
+  onsetDate: '', 
+
+  typeOfPropensity: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  status: 'ACTIVE',
+  allergicReactions: '',
+
+  activeIngredients: []
 }
 
 export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = {
@@ -1569,6 +1629,32 @@ export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = 
   sourceOfInformation: null,
   note: '',
   status: 'ACTIVE',
+  allergicReactions: '',
+
+  activeIngredients: [],
+}
+
+export const newPatientAllergiesUpdateDTO: modelTypes.PatientAllergiesUpdateDTO = {
+  id: undefined, 
+  allergenType: '',
+  allergenId: undefined,
+  severity: '',
+
+  medicationClassId: undefined,
+  criticality: '',
+  certainty: '',
+  treatmentStrategy: '',
+
+  onset: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+
+  typeOfPropensity: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  allergicReactions: '',
+  activeIngredients: [],   
   actionTaken: ''
 }
 
