@@ -182,6 +182,7 @@ import { progressNoteService } from './services/patients/progressNoteService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 
 export const store = configureStore({
   reducer: {
@@ -289,6 +290,9 @@ export const store = configureStore({
 
     // medical sheets
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
+
+     [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
+    
 
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
@@ -658,7 +662,8 @@ export const store = configureStore({
       consultationService.middleware,
       portalService.middleware,
       telephonicConsultationService.middleware,
-      ICDTreeService.middleware
+      ICDTreeService.middleware,
+      patientServicesAndProductsService.middleware
     ])
 });
 
