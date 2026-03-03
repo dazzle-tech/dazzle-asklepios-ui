@@ -68,10 +68,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       dob instanceof Date
         ? dayjs(dob).format('YYYY-MM-DD')
         : typeof dob === 'string'
-          ? dob
-          : dob != null
-            ? String(dob)
-            : '';
+        ? dob
+        : dob != null
+        ? String(dob)
+        : '';
 
     // avoid re-processing same DOB
     if (lastProcessedDOB.current === dobStr) {
