@@ -1,380 +1,389 @@
-import ChatModal from "@/components/ChatModal";
-import MyInput from "@/components/MyInput";
-import MyModal from "@/components/MyModal/MyModal";
-import MyTable from "@/components/MyTable";
-import Translate from "@/components/Translate";
-import { useAppDispatch } from "@/hooks";
-import AddReportModal from "@/pages/rad-module/AddReportModal";
-import { useGetDiagnosticOrderTestRadReportListQuery, useGetDiagnosticOrderTestReportNotesByReportIdQuery, useSaveDiagnosticOrderTestRadReportMutation, useSaveDiagnosticOrderTestReportNotesMutation } from "@/services/radService";
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsRadReport, newApDiagnosticOrderTestsReportNotes } from "@/types/model-types-constructor";
-import { initialListRequest, ListRequest } from "@/types/types";
-import { addFilterToListRequest, formatDateWithoutSeconds } from "@/utils";
-import { notify } from "@/utils/uiReducerActions";
-import { faComment, faFileLines, faPrint, faStar } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useEffect, useState } from "react";
-import { Col, Form, HStack, Row, Tooltip, Whisper } from "rsuite";
-const Reports = ({ patient, user }) => {
-    const dispatch = useAppDispatch();
-    const [openReportModal, setOpenReportModal] = useState(false);
-    const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
-    const [report, setReport] = useState<any>({ ...newApDiagnosticOrderTestsRadReport });
-    const [record, setRecord] = useState({});
-    const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-    const [dateOrderFilter, setDateOrderFilter] = useState({
-        fromDate: new Date(),
-        toDate: new Date()
+import ChatModal from '@/components/ChatModal';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
+import {
+  useLazyGetDiagnosticOrderByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
+import {
+  useLazyGetDiagnosticOrderTestByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+import {
+  useCreateReportCommentMutation,
+  useGetReportCommentsByReportIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
+import {
+  useFilterRadiologyReportsQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
+import {
+  useLazyGetDiagnosticTestByIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useMemo, useState } from 'react';
+import { MdAttachFile } from 'react-icons/md';
+import { Form, HStack, Tooltip, Whisper } from 'rsuite';
+
+
+const startOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+const endOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+};
+
+const Reports = ({ patient }) => {
+  const dispatch = useAppDispatch();
+
+  const today = new Date();
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [openReportModal, setOpenReportModal] = useState(false);
+  const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
+  const [testsMap, setTestsMap] = useState<Record<string, any>>({});
+
+  const [orderDate, setOrderDate] = useState({
+    fromDate: today,
+    toDate: today
+  });
+
+  const queryParams: any = {
+    processingStatus: 'RESULT_APPROVED',
+    reviewed: true,
+    ...(orderDate.fromDate
+      ? { approvedDateFrom: startOfDay(orderDate.fromDate).toISOString() }
+      : {}),
+    ...(orderDate.toDate
+      ? { approvedDateTo: endOfDay(orderDate.toDate).toISOString() }
+      : {})
+  };
+
+  const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
+  const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [selectedReportForAttachments, setSelectedReportForAttachments] = useState<any>(null);
+  const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
+
+  const { data, isFetching, refetch } =
+    useFilterRadiologyReportsQuery({
+      page,
+      size: rowsPerPage,
+      sort: 'id,desc',
+      params: queryParams
     });
-    const [listReportResponse, setListReportResponse] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: "patient_key",
-                operator: 'match',
-                value: patient?.key,
-            },
-            {
-                fieldName: "review_at",
-                operator: 'notMatch',
-                value: 0,
-            }
-        ]
-    });
 
-    const isSelected = rowData => {
-        if (rowData && report && rowData.key === report.key) {
-            return 'selected-row';
-        } else return '';
-    };
-
-    const { data: reportList, refetch: reportFetch, isLoading } = useGetDiagnosticOrderTestRadReportListQuery({
-        ...listReportResponse
-    });
-    const { data: messagesResultList, refetch: fecthResultNotes } =
-        useGetDiagnosticOrderTestReportNotesByReportIdQuery(report?.key || undefined, {
-            skip: report.key == null
-        });
-    const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-    const [saveReportNote] = useSaveDiagnosticOrderTestReportNotesMutation();
-    useEffect(() => {
-        setTest({ ...report?.test });
-    }, [report]);
+  const reports = Array.isArray(data?.data) ? data.data : [];
+  const totalCount = data?.totalCount ?? 0;
 
 
-    useEffect(() => {
-        setListReportResponse(prev => ({
-            ...prev,
-            filters: [
-                {
-                    fieldName: "patient_key",
-                    operator: "match",
-                    value: patient?.key,
-                },
-                {
-                    fieldName: "review_at",
-                    operator: "notMatch",
-                    value: 0,
-                },
-            ],
-        }));
-    }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
-    useEffect(() => {
-        const isDateRangeValid = dateOrderFilter.fromDate !== null && dateOrderFilter.toDate !== null;
-        const isResultsLoaded = Array.isArray(reportList?.object) && reportList.object.length > 0;
+  const orderTestIds = useMemo(() => {
+    if (!Array.isArray(reports)) return [];
 
-        if (isDateRangeValid && isResultsLoaded) {
-            const fromDate = new Date(dateOrderFilter.fromDate);
-            fromDate.setHours(0, 0, 0, 0);
+    return reports
+      .map(r => r.orderTestId)
+      .filter(Boolean)
+      .map(String)
+      .filter((id, i, arr) => arr.indexOf(id) === i);
+  }, [reports]);
 
-            const toDate = new Date(dateOrderFilter.toDate);
-            toDate.setHours(23, 59, 59, 999);
-
-            const filtered = reportList.object.filter(item => {
-                const createdAt = new Date(item.test?.order?.createdAt);
-                return createdAt >= fromDate && createdAt <= toDate;
-            });
-
-            const value = filtered.map(order => `(${order.key})`).join(" ") || '("")';
-
-            setListReportResponse(prev =>
-                addFilterToListRequest("key", "in", value, prev)
-            );
-        }
-    }, [dateOrderFilter, reportList]);
-
-    const handleSendResultMessage = async value => {
-        try {
-            await saveReportNote({
-                ...newApDiagnosticOrderTestsReportNotes,
-                notes: value,
-                testKey: report.test.key,
-                // orderKey: order.key,
-                reportKey: report.key
-            }).unwrap();
-            dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
-
-        } catch (error) {
-            dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
-        }
-        fecthResultNotes();
-    };
+  const testIds = useMemo(() => {
+    return Object.values(orderTestsMap)
+      .map((ot: any) => ot?.testId)
+      .filter(Boolean)
+      .map(String)
+      .filter((id, i, arr) => arr.indexOf(id) === i);
+  }, [orderTestsMap]);
 
 
-    //Table
-    const reportColumns = [
+  const isDataLoaded =
+    orderTestIds.every(id => orderTestsMap[id]) &&
+    testIds.every(id => testsMap[id]);
 
-        {
-            key: "orderId",
-            title: <Translate>ORDER ID</Translate>,
-            flexGrow: 1,
-
-            render: (rowData: any) => {
-                return rowData.test?.order?.orderId;
-            }
-        },
-
-        {
-            key: "testName",
-            dataKey: "testName",
-            title: <Translate>TEST NAME</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.test?.test?.testName;
-            }
-        }
-        ,
-        {
-            key: "approvedAt",
-            title: <Translate>Report Date</Translate>,
-            flexGrow: 1,
-
-            render: (rowData: any) => {
-                return formatDateWithoutSeconds(rowData.approvedAt);
-            }
-        },
-        {
-            key: "report",
-            dataKey: "report",
-            title: <Translate>Report</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return (
-                    <HStack spacing={10}>
-                        <FontAwesomeIcon
-                            icon={faFileLines}
-                            style={{ fontSize: '1em' }}
-                            onClick={() => setOpenReportModal(true)}
-                        />
-                    </HStack>
-                )
-            }
-
-        }
-        ,
-        {
-            key: "comment",
-
-            title: <Translate>COMMENTS</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => (
-                <HStack spacing={10}>
-                    <FontAwesomeIcon
-                        icon={faComment}
-                         style={{
-                        fontSize: "1em",
-                        color: rowData.hasComments ? "#007bff" : "gray" 
-                    }}
-                        onClick={() => setOpenNoteResultModal(true)}
-                    />
-                </HStack>
-            )
-
-        },
+  const {
+    data: comments,
+    refetch: refetchComments
+  } = useGetReportCommentsByReportIdQuery(
+    openNoteResultModal && selectedReport?.id
+      ? selectedReport.id
+      : undefined
+  );
 
 
+  const reportColumns:ColumnConfig[] = [
+    {
+      key: 'orderId',
+      title: <Translate>ORDER ID</Translate>,
+      render: (rowData: any) => {
+        const ot = orderTestsMap[String(rowData.orderTestId)];
+        return ot?.orderId ?? '—';
+      }
+    },
+    {
+      key: 'testName',
+      title: <Translate>TEST NAME</Translate>,
+      render: (rowData: any) => {
+        const ot = orderTestsMap[String(rowData.orderTestId)];
+        if (!ot) return '';
 
-        {
-            key: "statusLkey",
-            dataKey: "statusLkey",
-            title: <Translate>REPORT SATUTS</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.statusLvalue
-                    ? rowData.statusLvalue.lovDisplayVale
-                    : rowData.statusLkey
-            }
+        const test = testsMap[String(ot.testId)];
+        return test?.name ?? '';
+      }
+    },
+    {
+      key: 'approvedAt',
+      title: <Translate>Report Date</Translate>,
+      render: (rowData: any) =>
+        rowData.createdDate
+          ? new Date(rowData.createdDate).toLocaleString()
+          : ''
+    },
+    {
+      key: 'report',
+      title: <Translate>Report</Translate>,
+      render: (rowData: any) => (
+        <HStack spacing={10}>
+          <FontAwesomeIcon
+            icon={faFileLines}
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              setSelectedReport(rowData);
+              setOpenReportModal(true);
+            }}
+          />
+        </HStack>
+      )
+    },
+    {
+      key: 'comment',
+      title: 'COMMENTS',
+      width: 100,
+      align: 'center',
+      render: (row: any) => {
 
-        },
-        {
-            key: "lab",
-            title: <Translate>EXTERNEL LAB NAME</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return null;
-            }
-
-        },
-        {
-            key: "patientArrived",
-            title: <Translate>ATTACHMENT</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return null;
-            }
-
-        },
-        ,
-        {
-            key: "file",
-
-            title: <Translate>ATTACHED BY/DATE</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-
-                return null;
-
-            }
-        }
-
-        ,
-        {
-            key: "print",
-
-            title: <Translate>Print</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-
-                return (
-                    <HStack spacing={10}>
-
-                        <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Print</Tooltip>}
-                            onClick={()=>{setOpenReportModal(true)}}
-                        >
-                            <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
-                        </Whisper>
-
-                    </HStack>
-                )
-
-            }
-
-        },
-        {
-            key: "",
-            title: <Translate>Review At/By</Translate>,
-            expandable: true,
-            render: (rowData: any) => {
-                return (<>
-                    <span>{rowData.reviewByUser?.fullName}</span>
-                    <br />
-                    <span className='date-table-style'>{rowData.reviewAt ? new Date(rowData.reviewAt).toLocaleString() : ''}</span>
-                </>)
-            }
-
-        },
-
-    ]
-
-    const pageIndexReport = listReportResponse.pageNumber - 1;
-
-    // how many rows per page:
-    const rowsPerPageReport = listReportResponse.pageSize;
-
-    // total number of items in the backend:
-    const totalCountReport = reportList?.extraNumeric ?? 0;
-
-    // handler when the user clicks a new page number:
-    const handlePageChangeReport = (_: unknown, newPage: number) => {
-        // MUI gives you a zero-based page, so add 1 for your API
-
-        setListReportResponse({ ...listReportResponse, pageNumber: newPage + 1 });
-    };
-
-    // handler when the user chooses a different rows-per-page:
-    const handleRowsPerPageChangeReport = (event: React.ChangeEvent<HTMLInputElement>) => {
-
-        setListReportResponse({
-            ...listReportResponse,
-            pageSize: parseInt(event.target.value, 10),
-            pageNumber: 1 // reset to first page
-        });
-    };
-
-    const filters = () => {
+        const hasComment = !!row?.hasNote;
         return (
-            <Form layout="inline" fluid className="date-filter-form">
-
-                <MyInput
-                    column
-                    width={180}
-                    fieldType="date"
-                    fieldLabel="Order From Date"
-                    fieldName="fromDate"
-                    record={dateOrderFilter}
-                    setRecord={setDateOrderFilter}
-                />
-                <MyInput
-                    width={180}
-                    column
-                    fieldType="date"
-                    fieldLabel="Order To Date"
-                    fieldName="toDate"
-                    record={dateOrderFilter}
-                    setRecord={setDateOrderFilter}
-                />
-
-                <MyInput
-                    width={'100%'}
-                    column
-                    fieldLabel="Test Name"
-                    fieldType="text"
-                    fieldName="testName"
-                    record={record}
-                    setRecord={setRecord}
-                />
-            </Form>
+          <Whisper speaker={<Tooltip>Comments</Tooltip>}>
+            <span style={{ cursor: 'pointer' }}>
+              <FontAwesomeIcon
+                className='icon-radiologist-worklist-size'
+                icon={faComment}
+                style={{
+                  color: hasComment ? '#1675e0' : '#999'
+                }}
+                onClick={() => {
+                  setSelectedReport(row);
+                  setOpenNoteResultModal(true);
+                }}
+              />
+            </span>
+          </Whisper>
         );
-    };
-    return (<>
-        <MyTable
-            filters={filters()}
-            columns={reportColumns}
-            data={reportList?.object ?? []}
-            onRowClick={rowData => {
-                setReport(rowData);
-            }}
-            rowClassName={isSelected}
-            loading={isLoading}
-            page={pageIndexReport}
-            rowsPerPage={rowsPerPageReport}
-            totalCount={totalCountReport}
-            onPageChange={handlePageChangeReport}
-            onRowsPerPageChange={handleRowsPerPageChangeReport}
-            sortColumn={listReportResponse.sortBy}
-            sortType={listReportResponse.sortType}
-            onSortChange={(sortBy, sortType) => {
-                setListReportResponse({ ...listReportResponse, sortBy, sortType });
-            }}
+      }
+    },
+    {
+      key: 'status',
+      title: <Translate>REPORT STATUS</Translate>,
+      render: (rowData: any) =>
+        formatEnumString(rowData.processingStatus)
+    },
+    {
+      key: 'attachment',
+      title: <Translate>ATTACHMENT</Translate>,
+      render: (rowData: any) => (
+        <MdAttachFile
+          size={18}
+          style={{ cursor: 'pointer', color: '#666' }}
+          onClick={async () => {
+            const ot = orderTestsMap[String(rowData.orderTestId)];
+            if (!ot?.orderId) return;
+
+            try {
+              const order = await fetchOrderById(ot.orderId).unwrap();
+
+              if (!order?.encounterId) {
+                dispatch(notify({
+                  msg: 'Encounter not found',
+                  sev: 'warning'
+                }));
+                return;
+              }
+
+              setSelectedReportForAttachments({
+                reportId: rowData.id,
+                encounterId: order.encounterId
+              });
+
+              setAttachmentsModalOpen(true);
+            } catch {
+              dispatch(notify({
+                msg: 'Failed to load encounter',
+                sev: 'error'
+              }));
+            }
+          }}
         />
-        <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
-        
-          <AddReportModal
-                  open={openReportModal}
-                  setOpen={setOpenReportModal}
-                  test={test}
-                  setTest={setTest}
-                  resultFetch={reportFetch}
-                  report={report}
-                  setReport={setReport}
-                  saveReport={()=>{}}
-                  saveTest={()=>{}}
-                  disableEdit={true}
-                  attachmentRefetch={()=>{}}
-                />
-        </>)
-}
+      )
+    },
+    {
+      key: 'review',
+      title: <Translate>Review At/By</Translate>,
+      render: (rowData: any) => (
+        <>
+          <span>{rowData.reviewBy}</span>
+          <br />
+          <span className="date-table-style">
+            {rowData.reviewDate
+              ? new Date(rowData.reviewDate).toLocaleString()
+              : ''}
+          </span>
+        </>
+      )
+    }
+  ];
+
+
+  const filters = (
+    <Form layout="inline" fluid>
+      <MyInput
+        column
+        width={180}
+        fieldType="date"
+        fieldLabel="From Date"
+        fieldName="fromDate"
+        record={orderDate}
+        setRecord={setOrderDate}
+      />
+      <MyInput
+        column
+        width={180}
+        fieldType="date"
+        fieldLabel="To Date"
+        fieldName="toDate"
+        record={orderDate}
+        setRecord={setOrderDate}
+      />
+    </Form>
+  );
+
+  const closeModal = () => {
+    setOpenReportModal(false);
+    setSelectedReport(null);
+  };
+
+
+  useEffect(() => {
+    orderTestIds.forEach(id => {
+      if (orderTestsMap[id]) return;
+
+      fetchOrderTestById(Number(id))
+        .unwrap()
+        .then(res => {
+          if (!res) return;
+          setOrderTestsMap(prev => ({
+            ...prev,
+            [id]: res
+          }));
+        })
+        .catch(() => { });
+    });
+  }, [orderTestIds]);
+
+  useEffect(() => {
+    testIds.forEach(id => {
+      if (testsMap[id]) return;
+
+      fetchDiagnosticTestById(id)
+        .unwrap()
+        .then(res => {
+          const test = res?.data;
+          if (!test) return;
+
+          setTestsMap(prev => ({
+            ...prev,
+            [id]: test
+          }));
+        })
+        .catch(() => { });
+    });
+  }, [testIds]);
+
+  return (
+    <>
+      <MyTable
+        filters={filters}
+        columns={reportColumns}
+        data={reports}
+        loading={isFetching || !isDataLoaded}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={(_, p) => setPage(p)}
+        onRowsPerPageChange={e => {
+          setRowsPerPage(+e.target.value);
+          setPage(0);
+        }}
+      />
+
+      <ChatModal
+        open={openNoteResultModal}
+        setOpen={setOpenNoteResultModal}
+        handleSendMessage={() => {}}
+        title="Comments"
+        list={comments ?? []}
+        fieldShowName="note"
+        disabled
+      />
+
+      {openReportModal && selectedReport && (
+        <AddReportModal
+          key={selectedReport.id}
+          open={openReportModal}
+          setOpen={closeModal}
+          report={selectedReport}
+          setReport={setSelectedReport}
+          disableEdit
+          disableDefaultTemplate
+        />
+      )}
+
+
+
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title="Attachments - Radiology Report"
+        size="lg"
+        hideActionBtn
+        content={
+          selectedReportForAttachments && (
+            <EncounterAttachment
+              localEncounter={{ id: selectedReportForAttachments.encounterId }}
+              source="RADIOLOGIST_WORKLIST_ATTACHMENT"
+              sourceId={Number(selectedReportForAttachments.reportId)}
+              refetchAttachmentList={false}
+              setRefetchAttachmentList={() => { }}
+            />
+          )
+        }
+      />
+
+    </>
+  );
+};
+
 export default Reports;

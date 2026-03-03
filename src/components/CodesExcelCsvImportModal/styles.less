@@ -103,7 +103,6 @@
   font-size: 12px;
 }
 
-
 .codes-import-example-table span {
   background-color: #f3f4f6;
   padding: 6px 8px;
@@ -163,4 +162,83 @@
   font-size: 13px;
   color: #6b7280;
   background-color: #f9fafb;
+}
+
+/* Dark Mode */
+
+.codes-import-wrapper.dark {
+  @text-1: #e5e7eb; 
+  @text-2: #cbd5e1; 
+  @text-3: #94a3b8; 
+
+  @border: #374151;
+
+  @surface-card: var(--dark-black);
+  @surface-soft: #0f172a;
+  @surface-field: #020617;
+
+  @accent-border: #60a5fa;
+
+  @badge-bg: #1e3a8a;
+  @badge-text: #dbeafe;
+
+  color: @text-2; 
+
+  /* Header */
+  .codes-import-title {
+    color: @text-1;
+  }
+
+  .codes-import-subtitle {
+    color: @text-3;
+  }
+
+  .codes-import-header-icon {
+    background-color: #1e293b;
+    border-color: @accent-border;
+  }
+
+  /* Cards */
+  .codes-import-card {
+    background-color: @surface-card;
+    border-color: @border;
+  }
+
+  .codes-import-instructions {
+    background-color: @surface-soft;
+  }
+
+  .codes-import-card-icon {
+    background-color: #3b82f6;
+  }
+
+  .codes-import-card-title {
+    color: @text-1;
+  }
+
+  .codes-import-steps,
+  .codes-import-steps li {
+    color: @text-2;
+  }
+
+  /* Badge */
+  .codes-import-badge {
+    background-color: @badge-bg;
+    color: @badge-text;
+  }
+
+  /* Upload */
+  .codes-import-upload-label {
+    color: @text-1;
+  }
+
+  .codes-import-upload-subtext {
+    color: @text-3;
+  }
+
+  .codes-import-file-display {
+    background-color: @surface-field;
+    border-color: @border;
+    color: @text-3;
+  }
 }

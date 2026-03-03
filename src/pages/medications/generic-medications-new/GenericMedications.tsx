@@ -35,10 +35,11 @@ import "./styles.less";
 import { GiMedicines } from "react-icons/gi";
 import AddActiveIngredient from "./AddActiveIngredient";
 import { HiOutlineSwitchHorizontal } from "react-icons/hi";
-import { conjureValueBasedOnKeyFromList, conjureValuesFromList } from "@/utils";
+import { conjureValueBasedOnKeyFromList, conjureValuesFromList, formatEnumString } from "@/utils";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import AddBrandSubstitute from "./AddBrandSubstitute";
 import { title } from "process";
+import { useEnumOptions } from "@/services/enumsApi";
 
 const GenericMedications = () => {
   const dispatch = useAppDispatch();
@@ -47,7 +48,7 @@ const GenericMedications = () => {
   const [brandMedication, setBrandMedication] = useState<BrandMedication>({
     ...newBrandMedication,
   });
- 
+
   const [openActiveIngredientPopup, setOpenActiveIngredientPopup] = useState(false);
   const [openSubstitute, setOpenSubstitute] = useState(false)
   const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
@@ -59,8 +60,8 @@ const GenericMedications = () => {
   const [filteredList, setFilteredList] = useState<BrandMedication[]>([]);
   const [filteredTotal, setFilteredTotal] = useState(0);
 
-   const isSelected = (rowData:BrandMedication) =>
-      rowData?.id === brandMedication?.id ? "selected-row" : "";
+  const isSelected = (rowData: BrandMedication) =>
+    rowData?.id === brandMedication?.id ? "selected-row" : "";
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -72,14 +73,14 @@ const GenericMedications = () => {
   const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
   // ---------- Queries ----------
-  const { data: allMedications, isFetching,refetch } = useGetAllBrandMedicationsQuery(paginationParams);
+  const { data: allMedications, isFetching, refetch } = useGetAllBrandMedicationsQuery(paginationParams);
   const totalCount = allMedications?.totalCount ?? 0;
   // Fetch Generic Medication Lov  list response
   const { data: brandMedicationLovQueryResponse } =
     useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
   // Fetch doseage Form Lov  list response
   const { data: doseageFormLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
-  const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
+  const roaEnumOptions = useEnumOptions('MedRoa');
   const [addBrandMedication] = useCreateBrandMedicationMutation();
   const [updateBrandMedication] = useUpdateBrandMedicationMutation();
   const [toggleActive] = useToggleBrandMedicationActiveMutation();
@@ -108,26 +109,26 @@ const GenericMedications = () => {
   const handleSave = async () => {
     try {
       if (brandMedication.id) {
-       const { hasActiveIngredient, ...updatePayload } = brandMedication;
+        const { hasActiveIngredient, ...updatePayload } = brandMedication;
 
-await updateBrandMedication(updatePayload).unwrap();
-       
+        await updateBrandMedication(updatePayload).unwrap();
+
 
         dispatch(notify({ msg: "Updated successfully", sev: "success" }));
       } else {
-         const { hasActiveIngredient, ...payload } = brandMedication;
+        const { hasActiveIngredient, ...payload } = brandMedication;
 
-    await addBrandMedication(payload).unwrap();
+        await addBrandMedication(payload).unwrap();
         dispatch(notify({ msg: "Added successfully", sev: "success" }));
       }
       setOpenAddEditPopup(false);
-    } catch(error) {
+    } catch (error) {
       dispatch(notify({ msg: "Error saving medication", sev: "error" }));
     }
   };
 
   const handleToggleActive = async (id: number) => {
-  
+
     try {
       await toggleActive(brandMedication?.id).unwrap();
       dispatch(notify({ msg: "Status toggled", sev: "success" }));
@@ -246,11 +247,11 @@ await updateBrandMedication(updatePayload).unwrap();
       case "roa":
         return (
           <MyInput
-            fieldName="value"
             fieldType="select"
-            selectData={medRoutLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
+            fieldName="roa"
+            selectData={roaEnumOptions ?? []}
+            selectDataLabel="label"
+            selectDataValue="value"
             record={recordOfFilter}
             showLabel={false}
             setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
@@ -311,7 +312,7 @@ await updateBrandMedication(updatePayload).unwrap();
           { label: "Brand Name", value: "name" },
           { label: "Manufacturer", value: "manufacturer" },
           { label: "Dosage Form", value: "dosageForm" },
-       
+
           { label: "ROA", value: "roa" },
           { label: "Expires After Opening", value: "expiresAfterOpening" },
           { label: "Single Patient Use", value: "useSinglePatient" },
@@ -347,51 +348,53 @@ await updateBrandMedication(updatePayload).unwrap();
           setOpenAddEditPopup(true);
         }}
       />
-       {row.isActive ? (
-              <MdDelete
-                title="Deactivate"
-                size={24}
-                fill="var(--primary-pink)"
-                className="icons-style"
-                onClick={() => {
-                  setBrandMedication(row);
-                  setOpenConfirmModal(true);
-                }}
-              />
-            ) : (
-              <FaUndo
-                title="Activate"
-                size={24}
-                fill="var(--primary-gray)"
-                className="icons-style"
-                onClick={() => {
-                  setBrandMedication(row);
-                 setOpenConfirmModal(true);
-                }}
-              />
-            )}
-   
+      {row.isActive ? (
+        <MdDelete
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          className="icons-style"
+          onClick={() => {
+            setBrandMedication(row);
+            setOpenConfirmModal(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          title="Activate"
+          size={24}
+          fill="var(--primary-gray)"
+          className="icons-style"
+          onClick={() => {
+            setBrandMedication(row);
+            setOpenConfirmModal(true);
+          }}
+        />
+      )}
+
       <Whisper placement="top" speaker={<Tooltip><Translate>Active Ingredient</Translate></Tooltip>}>
         <GiMedicines
           className="icons-style"
           title="Active Ingredient"
           size={22}
-          onClick={() =>{
+          onClick={() => {
             setBrandMedication(row);
-             setOpenActiveIngredientPopup(true)}}
+            setOpenActiveIngredientPopup(true)
+          }}
         />
       </Whisper>
-  { row.hasActiveIngredient&&
-      <Whisper placement="top" speaker={<Tooltip><Translate>Substitute</Translate></Tooltip>}>
-        <HiOutlineSwitchHorizontal
-          className="icons-style"
-          title="Substitute"
-          size={22}
-          onClick={() =>{
-            setBrandMedication(row);
-             setOpenSubstitute(true)}}
-        />
-      </Whisper>}
+      {row.hasActiveIngredient &&
+        <Whisper placement="top" speaker={<Tooltip><Translate>Substitute</Translate></Tooltip>}>
+          <HiOutlineSwitchHorizontal
+            className="icons-style"
+            title="Substitute"
+            size={22}
+            onClick={() => {
+              setBrandMedication(row);
+              setOpenSubstitute(true)
+            }}
+          />
+        </Whisper>}
     </div>
   );
 
@@ -417,25 +420,22 @@ await updateBrandMedication(updatePayload).unwrap();
 
     {
       key: "roa", title: <Translate>ROA</Translate>, flexGrow: 3,
-      render: (rowData) => conjureValuesFromList(
-        medRoutLovQueryResponse?.object,
-        rowData.roa,
-        "lovDisplayVale")
+     render: rowData => <p>{formatEnumString(rowData?.roa)}</p>,
     },
     { key: "isActive", title: <Translate>Status</Translate>, flexGrow: 2, render: (r: BrandMedication) => (r.isActive ? "Active" : "Inactive") },
     { key: "actions", title: "", flexGrow: 2, render: iconsForActions },
-   
 
-{
-  key: "hasActiveIngredient",
-  title: "Active Ingredient",
-  render: (row) =>
-    row.hasActiveIngredient &&(
-      <MdCheckCircle size={22} color="var(--success)" />
-    ) 
-}
 
-     
+    {
+      key: "hasActiveIngredient",
+      title: "Active Ingredient",
+      render: (row) =>
+        row.hasActiveIngredient && (
+          <MdCheckCircle size={22} color="var(--success)" />
+        )
+    }
+
+
   ];
 
   return (
@@ -494,9 +494,9 @@ await updateBrandMedication(updatePayload).unwrap();
         setOpen={setOpenActiveIngredientPopup}
       />
       <AddBrandSubstitute
-      open={openSubstitute}
-      setOpen={setOpenSubstitute}
-      brandMedication={brandMedication}
+        open={openSubstitute}
+        setOpen={setOpenSubstitute}
+        brandMedication={brandMedication}
       />
     </Panel>
   );

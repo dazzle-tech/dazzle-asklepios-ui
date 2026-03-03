@@ -38,6 +38,7 @@ interface MyTableProps {
   data: any[];
   columns: ColumnConfig[];
   height?: number;
+  loadingHeight?: number | string;
   loading?: boolean;
   onRowClick?: (rowData: any) => void;
   rowClassName?: (rowData: any) => string;
@@ -57,6 +58,7 @@ const MyTable: React.FC<MyTableProps> = ({
   data,
   columns,
   height = 450,
+  loadingHeight,
   loading,
   onRowClick,
   rowClassName,
@@ -101,7 +103,11 @@ const MyTable: React.FC<MyTableProps> = ({
       <Box className="my-table-content-wrapper">
         <TableContainer
           component={Paper}
-          sx={{ maxHeight: height, overflowY: 'auto' }}
+          sx={{
+            maxHeight: height,
+            height: loading ? loadingHeight ?? height : 'auto',
+            overflowY: 'auto'
+          }}
           className="my-table-container"
         >
           <Table stickyHeader size="small">
@@ -146,7 +152,11 @@ const MyTable: React.FC<MyTableProps> = ({
                             : 'flex-start'
                         }
                       >
-                       <Translate>{col.title}</Translate>
+                        {typeof col.title === 'string' || typeof col.title === 'number' ? (
+                          <Translate>{col.title}</Translate>
+                        ) : (
+                          col.title
+                        )}
                         {sortIcon}
                       </Box>
                     </TableCell>
@@ -164,10 +174,10 @@ const MyTable: React.FC<MyTableProps> = ({
                     <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>
-              ) : data.length === 0 ? (
+              ) : data?.length === 0 ? (
                 emptyTable()
               ) : (
-                data.map((row, index) => {
+                data?.map((row, index) => {
                   const isEvenRow = index % 2 === 1;
 
                   return (

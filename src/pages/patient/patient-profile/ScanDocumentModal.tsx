@@ -7,7 +7,8 @@ import { useUploadAttachmentsMutation } from '@/services/patients/attachmentServ
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { SelectPicker } from 'rsuite';
-
+import { useSelector } from 'react-redux';
+import './styles.less';
 type ScanDocumentModalProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -29,6 +30,8 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
   const [documentType, setDocumentType] = useState<string>('');
   const [details, setDetails] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const mode = useSelector((state: any) => state.ui.mode);
 
   const [parseIdDocument] = useParseIdDocumentMutation();
   const [uploadAttachments] = useUploadAttachmentsMutation();
@@ -74,7 +77,6 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
       // Step 2: Upload the attachment if patient exists
       if (patientId) {
         try {
-
           await uploadAttachments({
             patientId: Number(patientId),
             file: selectedFile,
@@ -163,9 +165,7 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
         source: 'PATIENT_DOCUMENT'
       };
 
-
       const result = await uploadAttachments(uploadParams).unwrap();
-
 
       dispatch(
         notify({
@@ -212,245 +212,129 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
   const canUploadOnly = selectedFile && !isIdDocument && patientId;
 
   const content = (
-    <div style={{ padding: '20px' }}>
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '15px',
-          marginBottom: '25px',
-          paddingBottom: '20px',
-          borderBottom: '1px solid #e5e5ea'
-        }}
-      >
-        <div
-          style={{
-            width: '50px',
-            height: '50px',
-            borderRadius: '12px',
-            backgroundColor: '#f0f0f5',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '24px'
-          }}
-        >
-          📄
-        </div>
-        <div>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
-            <Translate>Scan & Upload Document</Translate>
-          </h3>
-          <p style={{ margin: '5px 0 0', color: '#8e8e93', fontSize: '14px' }}>
-            <Translate>Upload and automatically parse patient ID documents</Translate>
-          </p>
-        </div>
-      </div>
-
-      {/* Instructions */}
-      <div
-        style={{
-          backgroundColor: '#f9f9fb',
-          padding: '15px',
-          borderRadius: '8px',
-          marginBottom: '20px'
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            marginBottom: '12px'
-          }}
-        >
-          <span
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: '#007aff',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: 'bold'
-            }}
-          >
-            i
-          </span>
-          <span style={{ fontWeight: 600, fontSize: '15px' }}>
-            <Translate>How it works</Translate>
-          </span>
-        </div>
-        <ol style={{ margin: '0', paddingLeft: '20px', fontSize: '14px', lineHeight: '1.8' }}>
-          <li>
-            <Translate>Select document type (ID Card/Passport for auto-parsing)</Translate>
-          </li>
-          <li>
-            <Translate>Choose the document file to scan</Translate>
-          </li>
-          <li>
-            <Translate>Click Scan & Parse to extract information automatically</Translate>
-          </li>
-          <li>
-            <Translate>Patient data will be auto-filled from the document</Translate>
-          </li>
-        </ol>
-      </div>
-
-      {/* Document Type Selection */}
-      <div style={{ marginBottom: '20px' }}>
-        <label
-          style={{
-            display: 'block',
-            marginBottom: '8px',
-            fontWeight: 500,
-            fontSize: '14px'
-          }}
-        >
-          <Translate>Document Type</Translate>
-          {isIdDocument && (
-            <span
-              style={{
-                marginLeft: '8px',
-                padding: '2px 8px',
-                backgroundColor: '#007aff',
-                color: 'white',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 600
-              }}
-            >
-              AUTO-PARSE
-            </span>
-          )}
-        </label>
-        <SelectPicker
-          data={documentTypes}
-          value={documentType}
-          onChange={setDocumentType}
-          placeholder="Select document type"
-          style={{ width: '100%' }}
-          searchable={false}
-        />
-      </div>
-
-      {/* Details Input */}
-      <div style={{ marginBottom: '20px' }}>
-        <label
-          style={{
-            display: 'block',
-            marginBottom: '8px',
-            fontWeight: 500,
-            fontSize: '14px'
-          }}
-        >
-          <Translate>Details (Optional)</Translate>
-        </label>
-        <input
-          type="text"
-          value={details}
-          onChange={e => setDetails(e.target.value)}
-          placeholder="Add description or notes"
-          style={{
-            width: '100%',
-            padding: '10px 12px',
-            border: '1px solid #e5e5ea',
-            borderRadius: '6px',
-            fontSize: '14px',
-            boxSizing: 'border-box'
-          }}
-        />
-      </div>
-
-      {/* Upload File */}
-      <div
-        style={{
-          backgroundColor: '#f9f9fb',
-          padding: '20px',
-          borderRadius: '8px',
-          marginBottom: '20px'
-        }}
-      >
-        <div style={{ marginBottom: '12px' }}>
-          <span style={{ fontWeight: 500, fontSize: '14px' }}>
-            <Translate>Upload Document</Translate>
-          </span>
-        </div>
-
-        <p
-          style={{
-            margin: '0 0 15px',
-            color: '#8e8e93',
-            fontSize: '13px'
-          }}
-        >
-          <Translate>Supports</Translate> <strong>PDF, JPG, PNG, JPEG</strong>{' '}
-          <Translate>files. Maximum size 10MB.</Translate>
+  <div className={`scan-doc-wrapper ${mode === 'dark' ? 'dark' : 'light'}`}>
+    {/* Header */}
+    <div className="scan-doc-header">
+      <div className="scan-doc-icon">📄</div>
+      <div>
+        <h3 className="scan-doc-title">
+          <Translate>Scan & Upload Document</Translate>
+        </h3>
+        <p className="scan-doc-subtitle">
+          <Translate>Upload and automatically parse patient ID documents</Translate>
         </p>
-
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          accept=".pdf,.jpg,.jpeg,.png"
-          onChange={handleFileChange}
-        />
-
-        <div
-          style={{
-            display: 'flex',
-            gap: '10px',
-            marginBottom: '15px'
-          }}
-        >
-          <div
-            style={{
-              flex: 1,
-              padding: '10px 12px',
-              backgroundColor: 'white',
-              border: '1px solid #e5e5ea',
-              borderRadius: '6px',
-              fontSize: '14px',
-              color: selectedFile ? '#000' : '#8e8e93',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {selectedFile ? selectedFile.name : <Translate>No file selected</Translate>}
-          </div>
-          <MyButton appearance="ghost" onClick={handleClickUpload}>
-            <Translate>Choose File</Translate>
-          </MyButton>
-        </div>
-
-        {/* Action Buttons */}
-        {isIdDocument ? (
-          <MyButton
-            onClick={handleScanAndParse}
-            disabled={!canScanAndParse || isProcessing}
-            loading={isProcessing}
-            block
-          >
-            <Translate>Scan & Parse ID</Translate>
-          </MyButton>
-        ) : (
-          <MyButton
-            onClick={handleUploadOnly}
-            disabled={!canUploadOnly || isProcessing}
-            loading={isProcessing}
-            block
-          >
-            <Translate>Upload Document</Translate>
-          </MyButton>
-        )}
       </div>
     </div>
-  );
+
+    {/* Instructions */}
+    <div className="scan-doc-card">
+      <div className="scan-doc-card-header">
+        <span className="scan-doc-card-icon">i</span>
+        <span className="scan-doc-card-title">
+          <Translate>How it works</Translate>
+        </span>
+      </div>
+
+      <ol className="scan-doc-steps">
+        <li>
+          <Translate>Select document type (ID Card/Passport for auto-parsing)</Translate>
+        </li>
+        <li>
+          <Translate>Choose the document file to scan</Translate>
+        </li>
+        <li>
+          <Translate>Click Scan & Parse to extract information automatically</Translate>
+        </li>
+        <li>
+          <Translate>Patient data will be auto-filled from the document</Translate>
+        </li>
+      </ol>
+    </div>
+
+    {/* Document Type Selection */}
+    <div>
+      <label className="scan-doc-label">
+        <Translate>Document Type</Translate>
+        {isIdDocument && <span className="scan-doc-badge">AUTO-PARSE</span>}
+      </label>
+
+      <SelectPicker
+        data={documentTypes}
+        value={documentType}
+        onChange={setDocumentType}
+        placeholder="Select document type"
+        searchable={false}
+        style={{ width: '100%' }}
+      />
+    </div>
+
+    {/* Details Input */}
+    <div>
+      <label className="scan-doc-label">
+        <Translate>Details (Optional)</Translate>
+      </label>
+      <input
+        className="scan-doc-input"
+        type="text"
+        value={details}
+        onChange={e => setDetails(e.target.value)}
+        placeholder="Add description or notes"
+      />
+    </div>
+
+    {/* Upload File */}
+    <div className="scan-doc-upload">
+      <span className="scan-doc-label">
+        <Translate>Upload Document</Translate>
+      </span>
+
+      <p className="scan-doc-upload-subtext">
+        <Translate>Supports</Translate> <strong>PDF, JPG, PNG, JPEG</strong>{' '}
+        <Translate>files. Maximum size 10MB.</Translate>
+      </p>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        hidden
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={handleFileChange}
+      />
+
+      <div className="scan-doc-file-row">
+        <div className="scan-doc-file-display">
+          {selectedFile ? selectedFile.name : <Translate>No file selected</Translate>}
+        </div>
+
+        <MyButton appearance="ghost" onClick={handleClickUpload}>
+          <Translate>Choose File</Translate>
+        </MyButton>
+      </div>
+
+      {/* Action Buttons */}
+      {isIdDocument ? (
+        <MyButton
+          onClick={handleScanAndParse}
+          disabled={!canScanAndParse || isProcessing}
+          loading={isProcessing}
+          block
+        >
+          <Translate>Scan & Parse ID</Translate>
+        </MyButton>
+      ) : (
+        <MyButton
+          onClick={handleUploadOnly}
+          disabled={!canUploadOnly || isProcessing}
+          loading={isProcessing}
+          block
+        >
+          <Translate>Upload Document</Translate>
+        </MyButton>
+      )}
+    </div>
+  </div>
+);
+
 
   return (
     <MyModal

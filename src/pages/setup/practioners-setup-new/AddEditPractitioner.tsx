@@ -16,7 +16,7 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetUserQuery } from '@/services/userService';
 import { AppUser } from '@/types/model-types';
 import MyButton from '@/components/MyButton/MyButton';
-import { useGetDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetAppointableDepartmentsQuery, useGetDepartmentsQuery } from '@/services/security/departmentService';
 import {
   useCreatePractitionerDepartmentMutation,
   useDeletePractitionerDepartmentMutation,
@@ -41,14 +41,28 @@ const AddEditPractitioner = ({
   const [recordOfSearch, setRecordOfSearch] = useState({ searchKeyword: '' });
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [localSelection, setLocalSelection] = useState({ selectedDepartment: null });
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
 
   // Facilities
   const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
   const [deptPage, setDeptPage] = useState(0);
-  const { data: deptResponse, isFetching: loadingDepartments } = useGetDepartmentsQuery({
+  
+const {
+  data: deptResponse,
+  isFetching: loadingDepartments,
+  refetch: refetchDepartments,
+} = useGetAppointableDepartmentsQuery(
+  {
+    facilityId: practitioner?.facilityId,
     page: deptPage,
-    size: 3,
-  });
+    size: 10,
+  },
+  {
+    skip: !practitioner?.facilityId,
+  }
+);
+
+
 
 
   // Practitioner Departments API
@@ -79,7 +93,6 @@ const AddEditPractitioner = ({
 
   
 
-  const [allDepartments, setAllDepartments] = useState([]);
 
   useEffect(() => {
     if (deptResponse?.data) {
@@ -110,7 +123,7 @@ const AddEditPractitioner = ({
       dispatch(
         notify({
           msg: messages.join(', '),
-          sev: 'error',
+          sev: 'warning',
         })
       );
 
@@ -167,12 +180,12 @@ setSearchResultVisible(true);
         return (
           <Form fluid>
             {/* User Search */}
-
+      <div className='first-case-modal-container-handle'>
           <SectionContainer title="Facility"
           content={<>
           <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
                         <MyInput
-                          width={250}
+                          width={"100%"}
                           column
                           fieldLabel="Facility"
                           fieldType="select"
@@ -185,7 +198,7 @@ setSearchResultVisible(true);
                           required
                         />
                         <MyInput
-                          width={250}
+                          width={"100%"}
                           column
                           fieldLabel="Appointable"
                           fieldType="checkbox"
@@ -221,7 +234,7 @@ setSearchResultVisible(true);
                 required
                 record={practitioner}
                 setRecord={setPractitioner}
-                width={250}
+                width={"100%"}
               />
               <MyInput
                 column
@@ -229,13 +242,13 @@ setSearchResultVisible(true);
                 required
                 record={practitioner}
                 setRecord={setPractitioner}
-                width={250}
+                width={"100%"}
               />
             </div>
 
             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
-                width={250}
+                width={"100%"}
                 fieldLabel="Gender"
                 fieldType="select"
                 fieldName="gender"
@@ -253,7 +266,7 @@ setSearchResultVisible(true);
                 fieldName="dateOfBirth"
                 record={practitioner}
                 setRecord={setPractitioner}
-                width={250}
+                width={"100%"}
               />
             </div>
 
@@ -263,14 +276,14 @@ setSearchResultVisible(true);
                 fieldName="email"
                 record={practitioner}
                 setRecord={setPractitioner}
-                width={250}
+                width={"100%"}
               />
               <MyInput
                 column
                 fieldName="phoneNumber"
                 record={practitioner}
                 setRecord={setPractitioner}
-                width={250}
+                width={"100%"}
               />
             </div>
           </>}/>
@@ -289,7 +302,7 @@ setSearchResultVisible(true);
                     selectDataValue="value"
                     record={practitioner}
                     setRecord={setPractitioner}
-                    width={250}
+                    width={"100%"}
                     required
                     column
                   />
@@ -303,11 +316,11 @@ setSearchResultVisible(true);
                     selectDataValue="key"
                     record={practitioner}
                     setRecord={setPractitioner}
-                    width={250}
+                    width={"100%"}
                   />
 
                   <MyInput
-                    width={250}
+                    width={"100%"}
                     fieldLabel="Specialty"
                     fieldType="select"
                     fieldName="specialty"
@@ -329,14 +342,12 @@ setSearchResultVisible(true);
                       selectDataValue="key"
                       record={practitioner}
                       setRecord={setPractitioner}
-                      width={250}
+                      width={"100%"}
                     />
                   )}</div>
               </>
             }
           />
-
-
 
           <SectionContainer title="Medical License Information"
           content={<>             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
@@ -347,7 +358,7 @@ setSearchResultVisible(true);
                                       fieldName="defaultMedicalLicense"
                                       record={practitioner}
                                       setRecord={setPractitioner}
-                                      width={250}
+                                      width={"100%"}
                                     />
                                     <MyInput
                                       column
@@ -356,7 +367,7 @@ setSearchResultVisible(true);
                                       fieldName="defaultLicenseValidUntil"
                                       record={practitioner}
                                       setRecord={setPractitioner}
-                                      width={250}
+                                      width={"100%"}
                                     />
                                   </div>
                                   <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
@@ -367,7 +378,7 @@ setSearchResultVisible(true);
                                       fieldName="secondaryMedicalLicense"
                                       record={practitioner}
                                       setRecord={setPractitioner}
-                                      width={250}
+                                      width={"100%"}
                                     />
                                     <MyInput
                                       column
@@ -376,30 +387,31 @@ setSearchResultVisible(true);
                                       fieldName="secondaryLicenseValidUntil"
                                       record={practitioner}
                                       setRecord={setPractitioner}
-                                      width={250}
+                                      width={"100%"}
                                     />
             </div></>}/>
 
 
-
+        </div>
           </Form>
         );
 
       case 1:
         return (
-          <Form layout="inline" fluid>
+          <Form fluid>
             {/* Department Linking */}
             <MyInput
               fieldType="selectPagination"
               fieldLabel="Add Department"
               fieldName="selectedDepartment"
-              selectData={allDepartments} 
+              selectData={allDepartments ?? []} 
               selectDataLabel="name"
               selectDataValue="id"
               record={localSelection}
               setRecord={setLocalSelection}
               searchable
               width={520}
+              disabled={loadingDepartments}
               hasMore={deptResponse?.links?.next?true:false} 
               onFetchMore={() => {
                 if (deptResponse?.links?.next) {
@@ -408,11 +420,6 @@ setSearchResultVisible(true);
                 }
               }}
             />
-
-
-
-
-
             <MyButton
              
               disabled={!practitioner?.id || !localSelection.selectedDepartment}
@@ -437,12 +444,10 @@ setSearchResultVisible(true);
             >
               Link
             </MyButton>
-
             {practitioner?.id && (
               <div style={{ marginTop: 16 }}>
                 <Translate>Linked Departments:</Translate>
                 <MyTable
-                  height={300}
                   data={linkedDepartments ?? []}
                   columns={[
                     { key: 'departmentName', title: 'Department Name' },
@@ -518,6 +523,8 @@ setSearchResultVisible(true);
     </Form>
   );
 
+
+
   return (
     <ChildModal
       actionButtonLabel={practitioner?.id ? 'Save' : 'Create'}
@@ -539,8 +546,8 @@ setSearchResultVisible(true);
       ]}
       childTitle="User List - Search Results"
       childContent={conjureFormContentOfChildModal}
-      mainSize="sm"
-      childSize="sm"
+      mainSize={width > 1200 ? '40vw' : '75vw'}
+      childSize="55vw"
     />
   );
 };

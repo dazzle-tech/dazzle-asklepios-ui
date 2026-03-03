@@ -26,7 +26,6 @@ const PrescriptionPreview = ({ orderMedication }) => {
   return (
 <div className="prescription-preview-container">
 
-  {/* ---------------- Prescription Details ---------------- */}
   <SectionContainer
     title={<Text className="font-style">Prescription Details</Text>}
     content={
@@ -34,7 +33,6 @@ const PrescriptionPreview = ({ orderMedication }) => {
 
         <div className="prescription-medication-form-row">
 
-          {/* BLOCK 1 */}
           <div className="prescription-full-block">
             <div className="prescription-inputs-inline">
 
@@ -88,7 +86,6 @@ const PrescriptionPreview = ({ orderMedication }) => {
     }
   />
 
-  {/* ---------------- Indication Details ---------------- */}
   <SectionContainer
     title={<Text className="font-style">Indication Details</Text>}
     content={

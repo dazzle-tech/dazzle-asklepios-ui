@@ -1,63 +1,159 @@
-import React, { useState } from 'react';
-import type { ApPatient } from '@/types/model-types';
-import { Form, Divider } from 'rsuite';
-import MyInput from '@/components/MyInput';
-import { PlusRound } from '@rsuite/icons';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { Patient, PatientHIPAA } from '@/types/model-types-new';
+import { PlusRound, CheckRound } from '@rsuite/icons';
+import React, { useEffect, useState } from 'react';
+import { Divider, Form, Loader, Message, useToaster } from 'rsuite';
+import '../styles.less';
+import AddVerification from './AddVerification';
+import {
+  useGetPatientHIPAAQuery,
+  useCreatePatientHIPAAMutation,
+  useUpdatePatientHIPAAMutation
+} from '@/services/patients/hipaaService';
+import { newPatientHIPAA } from '@/types/model-types-constructor-new';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { useEnumOptions } from '@/services/enumsApi';
+
 interface PrivacySecurityTabProps {
-  localPatient: ApPatient;
-  setLocalPatient: (patient: ApPatient) => void;
+  localPatient: Patient;
+  setLocalPatient: (patient: Patient) => void;
   validationResult: any;
 }
-import '../styles.less'
-import AddVerification from './AddVerification';
+
 const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult
 }) => {
+  const dispatch = useAppDispatch();
+  const toaster = useToaster();
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
+  const [hippa, setHippa] = useState({ ...newPatientHIPAA });
+  // ========== LOV ==========
 
-  // Fetch LOV data for various fields
-  const { data: securityAccessLevelLovQueryResponse } = useGetLovValuesByCodeQuery('SEC_ACCESS_LEVEL');
+  const SecurityLevel = useEnumOptions('SecurityLevel');
+  // ========== HIPAA API ==========
+  const {
+    data: hipaaData,
+    error: hipaaError,
+    isError: isHipaaError,
+    isFetching: hipaaLoading
+  } = useGetPatientHIPAAQuery({ patientId: localPatient.id! }, { skip: !localPatient.id });
+
+
+  const [createHIPAA, { isLoading: creating }] = useCreatePatientHIPAAMutation();
+  const [updateHIPAA, { isLoading: updating }] = useUpdatePatientHIPAAMutation();
+
+  useEffect(() => {
+    if (!localPatient.id) {
+      setHippa({ ...newPatientHIPAA });
+      return;
+    }
+
+    if (isHipaaError && (hipaaError as any)?.status === 404) {
+      setHippa({ ...newPatientHIPAA });
+      return;
+    }
+
+    if (hipaaData) {
+      setHippa(hipaaData);
+      return;
+    }
+
+    if (hipaaLoading) {
+      return;
+    }
+
+    setHippa({ ...newPatientHIPAA });
+  }, [localPatient.id, hipaaData, hipaaError, hipaaLoading]);
+
+  // ========== Save HIPAA ==========
+  const handleSaveHIPAA = async () => {
+
+    if (!localPatient.id) {
+      toaster.push(
+        <Message type="warning" showIcon>
+          Please save the patient first.
+        </Message>,
+        { duration: 3000 }
+      );
+      return;
+    }
+
+    const payload: PatientHIPAA = {
+      ...hippa,
+      patientId: localPatient.id
+    };
+
+    try {
+      if (hipaaData) {
+        await updateHIPAA({ patientId: localPatient.id, body: payload }).unwrap();
+      } else {
+        await createHIPAA({ body: payload }).unwrap();
+      }
+      dispatch(notify({ msg: 'HIPAA saved successfully', sev: 'success' }));
+    } catch (err) {
+      console.log(err);
+      dispatch(notify({ msg: err, sev: 'error' }));
+    }
+  };
 
   return (
     <div className="tab-main-container">
-    
-        <AddVerification open={verificationModalOpen} setOpen={setVerificationModalOpen} localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
-        <Form layout="inline" className='btn-fileds-style'>
+      <AddVerification
+        open={verificationModalOpen}
+        setOpen={setVerificationModalOpen}
+        localPatient={localPatient}
+        setLocalPatient={setLocalPatient}
+        validationResult={validationResult}
+      />
+
+      {/* Security Access Level */}
+      <Form layout="inline" className="btn-fileds-style">
         <MyInput
           vr={validationResult}
           column
           fieldLabel="Security Access Level"
           fieldType="select"
-          fieldName="securityAccessLevelLkey"
-          selectData={securityAccessLevelLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          fieldName="securityAccessLevel"
+          selectData={SecurityLevel ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
           record={localPatient}
           setRecord={setLocalPatient}
         />
-          <MyButton
+
+        <MyButton
           onClick={() => setVerificationModalOpen(true)}
-          disabled={!localPatient.key}
-          prefixIcon={() => <PlusRound />}>
+          disabled={!localPatient.id}
+          prefixIcon={() => <PlusRound />}
+        >
           Patient Verification
         </MyButton>
       </Form>
-      
+
+      {/* HIPAA */}
       <Form layout="inline" fluid>
-        <h5 className='border-top'>HIPAA</h5>
-        <div className='covg-content'>
+        <h5 className="border-top">HIPAA</h5>
+
+        {hipaaLoading && (
+          <div className="loader">
+            <Loader content=" Loading HIPAA data..." />
+          </div>
+        )}
+
+        <div className="covg-content">
           <MyInput
             column
             vr={validationResult}
             fieldType="checkbox"
             fieldLabel="Notice of Privacy Practices"
             fieldName="noticeOfPrivacyPractice"
-            record={localPatient}
-            setRecord={setLocalPatient}
+            record={hippa}
+            setRecord={setHippa}
           />
           <MyInput
             column
@@ -65,28 +161,41 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
             fieldType="date"
             showLabel={false}
             fieldName="noticeOfPrivacyPracticeDate"
-            record={localPatient}
-            setRecord={setLocalPatient}
+            record={hippa}
+            setRecord={setHippa}
           />
-          <Divider className='divider-line-vertical' vertical />
+
+          <Divider className="divider-line-vertical" vertical />
+
           <MyInput
-            vr={validationResult}
             column
+            vr={validationResult}
             fieldType="checkbox"
             fieldLabel="Privacy Authorization"
             fieldName="privacyAuthorization"
-            record={localPatient}
-            setRecord={setLocalPatient}
+            record={hippa}
+            setRecord={setHippa}
           />
           <MyInput
-            vr={validationResult}
             column
+            vr={validationResult}
             fieldType="date"
             showLabel={false}
             fieldName="privacyAuthorizationDate"
-            record={localPatient}
-            setRecord={setLocalPatient}
+            record={hippa}
+            setRecord={setHippa}
           />
+
+          {/* ======== SAVE HIPAA BUTTON ======== */}
+          <MyButton
+            className="ml-3"
+            appearance="primary"
+            loading={creating || updating}
+            prefixIcon={() => <CheckRound />}
+            onClick={handleSaveHIPAA}
+          >
+            Save HIPAA
+          </MyButton>
         </div>
       </Form>
     </div>

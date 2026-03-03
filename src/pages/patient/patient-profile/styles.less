@@ -191,6 +191,8 @@
       font-family: 'Manrope Medium' !important;
       .patient-name {
         font-size: 14px;
+        display: flex !important;
+        flex-direction: row !important;
       }
 
       .patient-info {
@@ -265,7 +267,7 @@
   gap: 10px;
   align-items: center;
 }
-.container-of-uploader-bulk-registration{
+.container-of-uploader-bulk-registration {
   display: flex !important;
   justify-content: center !important;
   padding: 7px !important;
@@ -277,12 +279,12 @@
   background-color: #e8f3fc;
   padding: 10px;
 }
-.download-color-text{
-  color: #353B66 !important;
+.download-color-text {
+  color: #353b66 !important;
   font-weight: bold;
 }
-.gray-color-text{
-  color: #B1B7BD !important;
+.gray-color-text {
+  color: #b1b7bd !important;
 }
 
 .button-group-left-align {
@@ -291,13 +293,390 @@
   justify-content: flex-end;
 }
 
-
-
 .profile-sidebar-container.dark {
   .sidebar-panel {
-   background-color: var(--black);
+    background-color: var(--black);
   }
   .profile-sidebar {
-  background: var(--black) !important;
+    background: var(--black) !important;
+  }
+}
+
+.rs-avatar-group {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: nowrap !important;
+  width: 40% !important;
+}
+
+.scan-doc-wrapper {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header */
+.scan-doc-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e5ea;
+}
+
+.scan-doc-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background-color: #f0f0f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.scan-doc-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.scan-doc-subtitle {
+  font-size: 14px;
+  color: #8e8e93;
+  margin: 4px 0 0;
+}
+
+/* Card */
+.scan-doc-card {
+  background-color: #f9f9fb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* Card Header */
+.scan-doc-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.scan-doc-card-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #007aff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.scan-doc-card-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* Steps */
+.scan-doc-steps {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* Labels */
+.scan-doc-label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Badge */
+.scan-doc-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  background-color: #007aff;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Input */
+.scan-doc-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e5ea;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Upload */
+.scan-doc-upload {
+  background-color: #f9f9fb;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.scan-doc-upload-subtext {
+  font-size: 13px;
+  color: #8e8e93;
+  margin-bottom: 15px;
+}
+
+.scan-doc-file-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.scan-doc-file-display {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e5e5ea;
+  border-radius: 6px;
+  background-color: #fff;
+  font-size: 14px;
+  color: #8e8e93;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scan-doc-wrapper.dark {
+  /* Text system */
+  @text-1: #e5e7eb;
+  @text-2: #cbd5e1;
+  @text-3: #94a3b8;
+
+  @border: #374151;
+
+  @surface-main: var(--dark-black);
+  @surface-soft: #0f172a;
+  @surface-field: #020617;
+
+  color: @text-2;
+
+  /* Header */
+  .scan-doc-header {
+    border-color: @border;
+  }
+
+  .scan-doc-icon {
+    background-color: #1e293b;
+  }
+
+  .scan-doc-title {
+    color: @text-1;
+  }
+
+  .scan-doc-subtitle {
+    color: @text-3;
+  }
+
+  /* Cards */
+  .scan-doc-card,
+  .scan-doc-upload {
+    background-color: @surface-soft;
+  }
+
+  .scan-doc-card-title {
+    color: @text-1;
+  }
+
+  .scan-doc-card-icon {
+    background-color: #3b82f6;
+  }
+
+  /* Steps */
+  .scan-doc-steps,
+  .scan-doc-steps li {
+    color: @text-2;
+  }
+
+  /* Labels */
+  .scan-doc-label {
+    color: @text-1;
+  }
+
+  /* Badge */
+  .scan-doc-badge {
+    background-color: #1e3a8a;
+    color: #dbeafe;
+  }
+
+  /* Input */
+  .scan-doc-input {
+    background-color: @surface-field;
+    border-color: @border;
+    color: @text-2;
+  }
+
+  /* Upload */
+  .scan-doc-upload-subtext {
+    color: @text-3;
+  }
+
+  .scan-doc-file-display {
+    background-color: @surface-field;
+    border-color: @border;
+    color: @text-3;
+  }
+}
+
+.visit-history {
+
+  &__encounter-link {
+    cursor: pointer;
+  }
+
+  &__actions-form {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+}
+
+// Insurance Modal
+.insurance-modal {
+  &__left-content {
+    padding: 16px;
+    height: 100%;
+  }
+
+  &__right-content {
+    padding: 20px;
+  }
+
+  &__plan-load-more {
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  &__plan-name {
+    font-weight: 500;
+  }
+
+  &__plan-details {
+    font-size: 12px;
+    color: var(--primary-gray);
+  }
+
+  &__coverage-section {
+    margin-top: 20px;
+  }
+}
+
+// Insurance Benefits Card
+.benefits-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  height: 100%;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f3f4f6;
+  }
+
+  &__header-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+  }
+
+  &__header-icon-svg {
+    font-size: 16px;
+  }
+
+  &__header-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background-color: #fafafa;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+    transition: all 0.2s;
+
+    &--has-value:hover {
+      background-color: #f5f5f5;
+      border-color: color-mix(in srgb, var(--item-color) 25%, transparent);
+    }
+  }
+
+  &__item-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--item-color) 8%, transparent);
+    color: var(--item-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__item-icon-svg {
+    font-size: 14px;
+  }
+
+  &__item-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__item-label {
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 2px;
+    font-weight: 500;
+  }
+
+  &__item-value {
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &--filled {
+      color: #111827;
+    }
+
+    &--empty {
+      color: #d1d5db;
+    }
   }
 }

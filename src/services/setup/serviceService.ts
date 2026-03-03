@@ -114,7 +114,7 @@ export const serviceService = createApi({
         url: `/api/setup/service/${id}`,
         method: 'PUT',
         params: { facilityId },
-        body: { id, ...body }, 
+        body: { id, ...body },
       }),
       invalidatesTags: ['Service'],
     }),
@@ -138,9 +138,9 @@ export const serviceService = createApi({
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map((i: any) => ({ type: 'ServiceItems' as const, id: i.id })),
-              { type: 'ServiceItems', id: 'LIST' },
-            ]
+            ...result.data.map((i: any) => ({ type: 'ServiceItems' as const, id: i.id })),
+            { type: 'ServiceItems', id: 'LIST' },
+          ]
           : [{ type: 'ServiceItems', id: 'LIST' }],
     }),
 
@@ -154,9 +154,9 @@ export const serviceService = createApi({
       providesTags: (result, _err, args) =>
         result?.data
           ? [
-              ...result.data.map((i: any) => ({ type: 'ServiceItemsByService' as const, id: i.id })),
-              { type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` },
-            ]
+            ...result.data.map((i: any) => ({ type: 'ServiceItemsByService' as const, id: i.id })),
+            { type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` },
+          ]
           : [{ type: 'ServiceItemsByService', id: `LIST_${args.serviceId}` }],
     }),
 
@@ -225,6 +225,16 @@ export const serviceService = createApi({
         { type: 'ServiceItemsSources', id: `${type}_${facilityId}` },
       ],
     }),
+    // GET /api/setup/service/by-department?sourceId=...
+    getServicesByDepartment: builder.query<PagedResult<any>, { sourceId: Id } & PagedParams>({
+      query: ({ sourceId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/service/by-department',
+        params: { sourceId, page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
   }),
 });
 
@@ -232,7 +242,7 @@ export const {
   // SERVICES
   useGetAllServicesQuery,
   useGetServicesQuery,
-  useLazyGetServicesQuery, 
+  useLazyGetServicesQuery,
   useGetServicesByCategoryQuery,
   useLazyGetServicesByCategoryQuery,
   useGetServicesByCodeQuery,
@@ -253,5 +263,8 @@ export const {
   useDeleteServiceItemMutation,
   useGetServiceItemSourcesByFacilityQuery,
   useLazyGetServiceItemSourcesByFacilityQuery,
+  useGetServicesByDepartmentQuery,
+  useLazyGetServicesByDepartmentQuery,
+
 } = serviceService;
 

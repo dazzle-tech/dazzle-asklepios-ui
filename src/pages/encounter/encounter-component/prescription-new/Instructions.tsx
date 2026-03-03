@@ -1,13 +1,42 @@
 import MyInput from '@/components/MyInput';
-import { useGetPrescriptionInstructionQuery } from '@/services/medicationsSetupService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { initialListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Col, Dropdown, Form, Row } from 'rsuite';
 import './styles.less';
+
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 
+const OPTION_CUSTOM = 'CUSTOM_INSTRUCTIONS';
+const OPTION_PREDEFINED = 'PRE_DEFINED_INSTRUCTIONS';
+const OPTION_MANUAL = 'MANUAL_INSTRUCTIONS';
 
+type RoaOption = { label: string; value: string };
+
+/* ---------- helpers ---------- */
+const toTitleCase = (s: string) =>
+  s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
+const formatRoaLabel = (code: string) => {
+  const cleaned = String(code ?? '').trim();
+  if (!cleaned) return '';
+
+  const parts = cleaned.split('_').filter(Boolean);
+
+  if (parts.length === 1) return toTitleCase(parts[0]);
+
+  const short = parts.pop()!;
+  const text = toTitleCase(parts.join(' '));
+  return short ? `${text} (${short})` : text;
+};
+
+const buildInstructionTitle = (inst?: any) =>
+  !inst
+    ? 'Pre-defined Instructions'
+    : [inst.dose, inst.unit, inst.rout, inst.frequency]
+        .filter(Boolean)
+        .join(', ');
+
+/* ---------- component ---------- */
 const Instructions = ({
   prescriptionMedication,
   selectedOption,
@@ -15,58 +44,88 @@ const Instructions = ({
   setCustomeinst,
   selectedGeneric,
   setInst
-}) => {
+}: any) => {
   const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
-  const { data: FrequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
-  const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-  const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({page:0, size:1000, sort:'id,asc'});
-  const [filteredList, setFilteredList] = useState([]);
-  const [selectedPreDefine, setSelectedPreDefine] = useState(null);
- 
-  const [munial, setMunial] = useState(null);
+  const { data: frequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
+
+  const { data: predefinedInstructionsListResponse } =
+    useGetAllPrescriptionInstructionsQuery({
+      page: 0,
+      size: 1000,
+      sort: 'id,asc'
+    });
+
+  const [selectedPreDefine, setSelectedPreDefine] = useState<any>(null);
+  const [manual, setManual] = useState<string | null>(null);
+
+  /* ---------- ROA options ---------- */
+  const roaOptions: RoaOption[] = useMemo(() => {
+    const raw = String(selectedGeneric?.roa ?? '').trim();
+    if (!raw) return [];
+
+    return raw
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(code => ({
+        label: formatRoaLabel(code),
+        value: code
+      }));
+  }, [selectedGeneric?.roa]);
+
+  /* ---------- option change handling ---------- */
+  useEffect(() => {
+    if (selectedOption === OPTION_CUSTOM) {
+      setSelectedPreDefine(null);
+      setManual(null);
+      return;
+    }
+
+    if (selectedOption === OPTION_PREDEFINED) {
+      const found = predefinedInstructionsListResponse?.data?.find(
+        (item: any) => item.id === Number(prescriptionMedication?.instructions)
+      );
+      setSelectedPreDefine(found ?? null);
+      setManual(null);
+      return;
+    }
+
+    if (selectedOption === OPTION_MANUAL) {
+      setManual(prescriptionMedication?.instructions ?? null);
+      setSelectedPreDefine(null);
+    }
+  }, [
+    selectedOption,
+    predefinedInstructionsListResponse?.data,
+    prescriptionMedication?.instructions
+  ]);
+
+  /* ---------- push value to parent ---------- */
+  useEffect(() => {
+    if (selectedOption === OPTION_MANUAL) setInst(manual);
+  }, [manual, selectedOption, setInst]);
+
+  useEffect(() => {
+    if (selectedOption === OPTION_PREDEFINED) setInst(selectedPreDefine?.id);
+  }, [selectedPreDefine, selectedOption, setInst]);
 
 useEffect(() => {
-  if (!selectedGeneric?.roa || !roaLovQueryResponse?.object) {
-    setFilteredList([]);
-    return;
-  }
+  if (selectedOption !== OPTION_CUSTOM) return;
 
- 
-  const roaKeys = selectedGeneric.roa
-    .split(',')
-    .map(x => x.trim())
-    .filter(Boolean);
+  if (!roaOptions.length) return;
 
-  const newList = roaLovQueryResponse.object.filter(item =>
-    roaKeys.includes(String(item.key))
-  );
+  setCustomeinst((prev: any) => {
+    const current = String(prev?.roa ?? '').trim();
+    const stillValid = current && roaOptions.some(o => o.value === current);
+    if (stillValid) return prev;
 
-  setFilteredList(newList);
-}, [selectedGeneric?.roa, roaLovQueryResponse?.object]);
-
-  useEffect(() => {
-    if (selectedOption === '3010606785535008') {
-      //Custome  Instruction
-    } else if (selectedOption === '3010591042600262') {
-      // Pre defined Instruction
-      const t = predefinedInstructionsListResponse?.data?.find(
-        item => item.id === Number(prescriptionMedication.instructions)
-      );
-      setSelectedPreDefine(t);
-    } else if (selectedOption === '3010573499898196') {
-      //Mnuil  Instruction
-      setMunial(prescriptionMedication.instructions);
-    }
-  }, [selectedOption]);
-  useEffect(() => {
-    setInst(munial);
-  }, [munial]);
-  useEffect(() => {
-    setInst(selectedPreDefine?.id);
-  }, [selectedPreDefine]);
+    return { ...prev, roa: roaOptions[0].value };
+  });
+}, [selectedOption, roaOptions, setCustomeinst]);
   return (
     <>
-      {selectedOption === '3010606785535008' && (
+      {/* -------- Custom Instruction -------- */}
+      {selectedOption === OPTION_CUSTOM && (
         <Form fluid layout="inline">
           <Row gutter={16}>
             <Col md={6}>
@@ -77,8 +136,10 @@ useEffect(() => {
                 fieldLabel="Dose"
                 record={customeinst}
                 setRecord={setCustomeinst}
+                required={true}
               />
             </Col>
+
             <Col md={6}>
               <MyInput
                 width={95}
@@ -90,89 +151,88 @@ useEffect(() => {
                 fieldName="unit"
                 record={customeinst}
                 setRecord={setCustomeinst}
+                required={true}
               />
             </Col>
+
             <Col md={6}>
               <MyInput
                 width={95}
                 fieldType="select"
                 fieldLabel="Frequency"
-                selectData={FrequencyLovQueryResponse?.object ?? []}
+                selectData={frequencyLovQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
                 fieldName="frequency"
                 record={customeinst}
                 setRecord={setCustomeinst}
+                required={true}
               />
             </Col>
+
             <Col md={6}>
               <MyInput
                 width={95}
                 fieldType="select"
                 fieldLabel="ROA"
-                selectData={filteredList ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectData={roaOptions}
+                selectDataLabel="label"
+                selectDataValue="value"
                 fieldName="roa"
                 record={customeinst}
                 setRecord={setCustomeinst}
+                required={true}
               />
             </Col>
           </Row>
         </Form>
       )}
-      {selectedOption === '3010591042600262' && (
+
+      {/* -------- Predefined Instruction -------- */}
+      {selectedOption === OPTION_PREDEFINED && (
         <Form fluid layout="inline" className="fill-width-instructions">
+          <div style={{ marginBottom: 6 }}>
+            <span>
+              Pre-defined Instructions <span style={{ color: 'red' }}>*</span>
+            </span>
+          </div>
           <Dropdown
             className="fill-width-instructions"
-            title={
-              !selectedPreDefine
-                ? 'Pre-defined Instructions'
-                : [
-                    selectedPreDefine.dose,
-
-                    selectedPreDefine.unit,
-                    selectedPreDefine.rout,
-                    selectedPreDefine.frequency
-                  ]
-                    .filter(Boolean)
-                    .join(', ')
-            }
+            title={buildInstructionTitle(selectedPreDefine)}
           >
-            {predefinedInstructionsListResponse &&
-              predefinedInstructionsListResponse?.data?.map((item, index) => (
-                <Dropdown.Item key={index} onClick={() => setSelectedPreDefine(item)}>
-                  {[
-                    item.dose,
-
-                    item.unit,
-                    item.rout,
-                    item.frequency
-                  ]
-                    .filter(Boolean)
-                    .join(', ')}
-                </Dropdown.Item>
-              ))}
+            {predefinedInstructionsListResponse?.data?.map((item: any) => (
+              <Dropdown.Item
+                key={item.id}
+                onClick={() => setSelectedPreDefine(item)}
+              >
+                {[item.dose, item.unit, item.rout, item.frequency]
+                  .filter(Boolean)
+                  .join(', ')}
+              </Dropdown.Item>
+            ))}
           </Dropdown>
         </Form>
       )}
-      {selectedOption === '3010573499898196' && (
+
+      {/* -------- Manual Instruction -------- */}
+      {selectedOption === OPTION_MANUAL && (
         <Form fluid layout="inline" className="fill-width-instructions">
           <MyInput
-            fieldName="munial"
+            fieldName="manual"
             fieldType="textarea"
-            record={{ munial }}
-            setRecord={newRecord => setMunial(newRecord.munial)}
-            showLabel={false}
-            className='fill-width-instructions'
+            fieldLabel="Manual Instructions"
+            record={{ manual }}
+            setRecord={(newRecord: any) => setManual(newRecord.manual)}
+            className="fill-width-instructions"
             width="100%"
             height={80}
             placeholder="Enter instructions..."
+            required={true}
           />
-
         </Form>
       )}
     </>
   );
 };
+
 export default Instructions;

@@ -1,5 +1,5 @@
 // Import required dependencies and components
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import PlusIcon from '@rsuite/icons/Plus';
 import ModalContent from './ModalContent';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -30,7 +30,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import BackButton from '@/components/BackButton/BackButton';
 import PatientSide from '../../encounter-main-info-section/PatienSide';
 import MyModal from '@/components/MyModal/MyModal';
-import DetailsModal from '../../encounter-component/prescription/DetailsModal';
+import DetailsModal from '../../encounter-component/prescription-new/DetailsModal';
 import Procedures from '../../encounter-component/patient-summary/Procedures/Procedures';
 import TeleScreenProcedures from './TeleScreenProcedures';
 import TeleScreenOperationRequests from './TeleScreenOperationRequests';
@@ -43,7 +43,7 @@ import './styles.less';
 import { useSelector } from 'react-redux';
 import ICU from '../../encounter-component/i.c.u';
 import ProgressNote from './ProgressNotes';
-import { useSaveTeleConsultationMutation } from '@/services/encounterService';
+import { useGetEncounterByIdQuery, useGetEncountersQuery, useGetPrescriptionsQuery, useSaveTeleConsultationMutation } from '@/services/encounterService';
 
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import FloatingPiPJitsi from './JitsiPip';
@@ -52,22 +52,56 @@ import { startCall } from '@/store/callSlice';
 import { useDispatch } from 'react-redux';
 
 import Translate from '@/components/Translate';
+import { newApEncounter, newApPrescriptionMedications } from '@/types/model-types-constructor';
+import { ApPrescriptionMedications } from '@/types/model-types';
+import { initialListRequest } from '@/types/types';
+import Observations from './Observation';
 
 const StartTeleConsultation = () => {
   const navigate = useNavigate();
   const mode = useSelector((state: any) => state.ui.mode);
   const { state } = useLocation();
-  const { patient, encounter, fromPage, consultaition, notelist } = state || {};
+  const { patient, encounterId, fromPage, consultaition, notelist } = state || {};
+  const [encounter, setEncounter] = useState<any>({ ...newApEncounter });
+  const { data: encounterData } = useGetEncounterByIdQuery(encounterId ?? '', {
+      skip: !encounterId
+    });
+    
+    useEffect(() => {
+       setEncounter(encounterData);
+    },[encounterData]);
+     const {
+        data: prescriptions,
+        isLoading: isLoadingPrescriptions,
+        refetch: preRefetch
+      } = useGetPrescriptionsQuery({
+        ...initialListRequest,
+        filters: [
+          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+          { fieldName: 'visit_key', operator: 'match', value: encounter?.key }
+        ]
+      });
+    const [preKeyRecord, setPreKeyRecord] = useState<{ preKey: any }>({ preKey: null });
+     useEffect(() => {
+        if (preKeyRecord.preKey !== null) return;
+    
+        const foundDraft = prescriptions?.object?.find((p: any) => p.saveDraft === true);
+        if (foundDraft?.key) setPreKeyRecord({ preKey: foundDraft.key });
+      }, [prescriptions]);
+    
+    const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>({
+        ...newApPrescriptionMedications,
+        duration: null,
+        numberOfRefills: null
+      });
   const sliceauth = useSelector((state: any) => state.auth);
 
   const [showProcedureDetails, setShowProcedureDetails] = useState(false);
-  const [showOperationRequest, setShowOperationRequest] = useState(false);
   const [showConsultationModal, setShowConsultationModal] = useState(false);
   const [showSelectTestsModal, setShowSelectTestsModal] = useState(false);
-  const [showMedicationOrderModal, setShowMedicationOrderModal] = useState(false);
   const [openVitalModal, setOpenVitalModal] = useState(false);
 
-  const [save, saveMutation] = useSaveTeleConsultationMutation();
+  const [save] = useSaveTeleConsultationMutation();
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
 
   const noop = () => {};
@@ -77,38 +111,29 @@ const StartTeleConsultation = () => {
   const [selectedModalContent, setSelectedModalContent] = useState<React.ReactNode | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const dummyPatient = { name: 'John Doe', hasAllergy: true, hasWarning: true };
-  const dummyEncounter = { editable: true };
-
   const sheetButtons = [
     { label: 'Observation', icon: faClipboardList },
     { label: 'Prescription', icon: faPrescriptionBottle },
-    { label: 'Medication Order', icon: faPills },
     { label: 'Diagnostics Order', icon: faVials },
     { label: 'Consultation', icon: faStethoscope },
-    { label: 'Operation Requests', icon: faNotesMedical },
     { label: 'Procedures', icon: faProcedures }
   ];
 
   const handleOpenModal = (label: string) => {
     switch (label) {
       case 'Observation':
-        setSelectedModalContent(<ContinuousObservations />);
+        setSelectedModalContent(
+        <Observations patient={patient} encounter={encounter} setOpen={setIsModalOpen}/>
+      );
         break;
       case 'Prescription':
         setShowPrescriptionModal(true);
-        return;
-      case 'Medication Order':
-        setShowMedicationOrderModal(true);
         return;
       case 'Diagnostics Order':
         setShowSelectTestsModal(true);
         return;
       case 'Consultation':
         setShowConsultationModal(true);
-        return;
-      case 'Operation Requests':
-        setShowOperationRequest(true);
         return;
       case 'Procedures':
         setShowProcedureDetails(true);
@@ -154,9 +179,9 @@ const StartTeleConsultation = () => {
                 Create Follow-up
               </MyButton>
               <MyButton
-                disabled={!encounter.hasAllergy}
+                disabled={!encounter?.hasAllergy}
                 backgroundColor={
-                  encounter.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'
+                  encounter?.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'
                 }
                 prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
               >
@@ -190,17 +215,17 @@ const StartTeleConsultation = () => {
 
             <div className={`page-content-main-container ${mode === 'light' ? 'light' : 'dark'}`}>
               <div className="patient-summary-section">
-                <PatientMajorProblem patient={dummyPatient} />
-                <PatientChronicMedication patient={dummyPatient} />
-                <RecentTestResults patient={dummyPatient} />
-                <Procedures patient={dummyPatient} />
+                <PatientMajorProblem patient={patient} />
+                <PatientChronicMedication patient={patient} />
+                <RecentTestResults patient={patient} />
+                <Procedures patient={patient} />
               </div>
 
               <div className="camera-tele-consultaition">
                 <div>
                   <PatientHistorySummary
-                    patient={dummyPatient}
-                    encounter={dummyEncounter}
+                    patient={patient}
+                    encounter={encounter}
                     edit={edit}
                   />
                 </div>
@@ -208,7 +233,7 @@ const StartTeleConsultation = () => {
                 <div>
                   <SectionContainer
                     title={<Translate>Progress Note</Translate>}
-                    content={<ProgressNote consultaition={consultaition} list={notelist} />}
+                    content={<ProgressNote patient={patient} encounter={encounter} />}
                     minHeight={'17vw'}
                   />
                 </div>
@@ -241,22 +266,19 @@ const StartTeleConsultation = () => {
           content={selectedModalContent}
           hideCancel={false}
           hideActionBtn={true}
+          // size="100vw"
           size="60vw"
           handleCancelFunction={() => setSelectedModalContent(null)}
         />
 
         {showPrescriptionModal && (
           <DetailsModal
-            edit={true}
+            edit={false}
             open={showPrescriptionModal}
             setOpen={setShowPrescriptionModal}
-            prescriptionMedication={{
-              medicationItems: [],
-              instructions: '',
-              dosage: ''
-            }}
-            setPrescriptionMedications={noop}
-            preKey={null}
+            prescriptionMedication={prescriptionMedication}
+            setPrescriptionMedications={setPrescriptionMedications}
+            preKey={preKeyRecord['preKey']}
             patient={patient}
             encounter={encounter}
             medicRefetch={noop}
@@ -271,44 +293,31 @@ const StartTeleConsultation = () => {
           <TeleScreenProcedures
             open={showProcedureDetails}
             onClose={() => setShowProcedureDetails(false)}
-          />
-        )}
-        {showOperationRequest && (
-          <TeleScreenOperationRequests
-            open={showOperationRequest}
-            onClose={() => setShowOperationRequest(false)}
-            patient={dummyPatient}
-            encounter={dummyEncounter}
-            refetch={() => {}}
+            patient={patient}
+            encounter={encounter}
           />
         )}
         {showConsultationModal && (
           <TeleScreenConsultation
             open={showConsultationModal}
             onClose={() => setShowConsultationModal(false)}
-            patient={dummyPatient}
-            encounter={dummyEncounter}
+            patient={patient}
+            encounter={encounter}
             refetch={() => {}}
           />
         )}
         {showSelectTestsModal && (
           <TeleScreenSelectTests
             open={showSelectTestsModal}
-            onClose={() => setShowSelectTestsModal(false)}
+            setOpen={setShowSelectTestsModal}
+            patient={patient}
+            encounter={encounter}
           />
         )}
-        {showMedicationOrderModal && (
-          <TeleScreenMedicationOrder
-            open={showMedicationOrderModal}
-            onClose={() => setShowMedicationOrderModal(false)}
-            patient={dummyPatient}
-            encounter={dummyEncounter}
-            medicRefetch={() => {}}
-          />
-        )}
+        
       </div>
-      {/* Extra Sections */}
-      <div className="coulmns-part-tele-consultation-screen">
+      {/* Extra Sections  // hide  */}
+      <div className="coulmns-part-tele-consultation-screen"> 
         <div>
           <ICU />
         </div>

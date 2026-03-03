@@ -88,7 +88,7 @@ const PreviuosVisitData = ({ patient, encounter }) => {
   }, [prevencounter]);
   return (
     <Section
-      title="Previuos Visit"
+      title="Previous Visit"
       content={
         <Form disabled layout="inline" fluid>
           <MyInput

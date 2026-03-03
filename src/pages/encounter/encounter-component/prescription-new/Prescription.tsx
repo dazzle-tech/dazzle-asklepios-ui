@@ -4,284 +4,521 @@ import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
-import {
-  useGetCustomeInstructionsQuery,
-  useGetPrescriptionMedicationsQuery,
-  useGetPrescriptionsQuery,
-  useSavePrescriptionMedicationMutation,
-  useSavePrescriptionMutation
-} from '@/services/encounterService';
+import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
+import { useGeneratePrescriptionPdfMutation } from '@/services/setup/PrescriptionReportRequest';
 import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
-import { ApPrescription, ApPrescriptionMedications } from '@/types/model-types';
-import { newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import {
+   useCreateOrGetPatientPrescriptionMutation,
+   useGetPatientPrescriptionQuery,
+   useUpdatePatientPrescriptionMutation,
+   useSubmitPatientPrescriptionMutation
+} from '@/services/patients/Prescription/patientPrescriptionService';
+import {
+  useGetPatientPrescriptionMedicationsQuery,
+  useUpdatePatientPrescriptionMedicationMutation,
+  useDeletePatientPrescriptionMedicationMutation
+} from '@/services/patients/Prescription/patientPrescriptionMedicationService';
+
 import { notify } from '@/utils/uiReducerActions';
-import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { faPrint, faStar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
 import clsx from 'clsx';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaFilePrescription } from 'react-icons/fa6';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
 import { Checkbox, Divider, Form } from 'rsuite';
+
 import AllergyFloatingButton from '../../encounter-pre-observations/AllergiesNurse/AllergyFloatingButton';
 import UrgencyButton from '../drug-order/UrgencyButton';
 import DetailsModal from './DetailsModal';
 import PrescriptionPreview from './PrescriptionPreview';
+import PatientHistorySummaryModal from './PatientHistorySummaryModal';
+import BrandActivesPrefetcher from './BrandActivesPrefetcher';
 import './styles.less';
 
-const Prescription = props => {
+import type { PatientPrescription, PatientPrescriptionMedication } from '@/types/model-types-new';
+import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
+
+type Props = any;
+
+const Prescription = (props: Props) => {
   const location = useLocation();
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
+
   const dispatch = useAppDispatch();
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const authSlice = useAppSelector(state => state.auth);
+  const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
+
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
-  const [showCanceled, setShowCanceled] = useState(true);
-  const [prescription,setPrescription]=useState<ApPrescription>({...newApPrescription});
-  const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+  const [showCanceled, setShowCanceled] = useState(false);
 
-  const [customeinst, setCustomeinst] = useState({
-    dose: null,
-    unit: null,
-    frequency: null,
-    roa: null
-  });
+  const [currentPrescription, setCurrentPrescription] = useState<PatientPrescription | null>(null);
+  const [preKeyRecord, setPreKeyRecord] = useState<{ preKey: number | null }>({ preKey: null });
 
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
-  const [selectedRows, setSelectedRows] = useState([]);
-  const { data: genericMedicationListResponse } =
-    useGetAllBrandMedicationsQuery({ page: 0, size: 1000, sort: 'id,asc' });
+  const [selectedRows, setSelectedRows] = useState<PatientPrescriptionMedication[]>([]);
+  const [selectedPreviewMedication, setSelectedPreviewMedication] =
+    useState<PatientPrescriptionMedication | null>(null);
 
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] =
+    useState<PatientPrescriptionMedication | null>(null);
 
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [submitAssignModalOpen, setSubmitAssignModalOpen] = useState(false);
+  const [submitAssignment, setSubmitAssignment] = useState<{
+    toFacilityId: number | null;
+    toDepartmentId: number | null;
+  }>({
+    toFacilityId: null,
+    toDepartmentId: null
+  });
+
+  const [patientPrescriptionMedicationObject, setPatientPrescriptionMedicationObject] =
+    useState<PatientPrescriptionMedication>({
+      ...newPatientPrescriptionMedication,
+      prescriptionHeaderId: null as any
+    });
+
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+  const { data: departmentByFacility = [] } = useGetActiveDepartmentByFacilityListQuery(
+    { facilityId: Number(submitAssignment.toFacilityId) },
+    { skip: !submitAssignment.toFacilityId }
+  );
+  const departmentOptions = (departmentByFacility ?? []).map((d: any) => ({
+    id: Number(d?.id ?? d?.key),
+    name: d?.name ?? d?.departmentName ?? d?.label ?? `Department ${d?.id ?? d?.key}`
+  }));
+  const facilityName = conjureValueBasedOnIDFromList(
+    facilityListResponse ?? [],
+    selectedFacility?.id,
+    'name'
+  );
+
+  const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+  const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
+  const { data: unitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+  const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
+
+  type ActiveRel = any;
+  type BrandActiveCache = Record<string, ActiveRel[]>;
+  const [brandActivesCache, setBrandActivesCache] = useState<BrandActiveCache>({});
+
+  const onActivesLoaded = (brandId: string, actives: ActiveRel[]) => {
+    setBrandActivesCache(prev => {
+      const existing = prev[brandId];
+      if (existing) return prev;
+      return { ...prev, [brandId]: actives ?? [] };
+    });
+  };
+
+  const asArray = (x: any): any[] => {
+    if (!x) return [];
+    if (Array.isArray(x)) return x;
+    if (Array.isArray(x.object)) return x.object;
+    if (Array.isArray(x.data)) return x.data;
+    if (Array.isArray(x.content)) return x.content;
+    return [];
+  };
+  const isCanceledStatus = (status: any) => String(status ?? '').toUpperCase().includes('CANCEL');
+
+  // Brand medications (for names in table/preview)
+  const { data: genericMedicationListResponse } = useGetAllBrandMedicationsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+  // Patient / encounter ids (prefer numeric id; fallback to key)
+  const patientId = patient?.id ? Number(patient.id) : patient?.key ? Number(patient.key) : undefined;
+  const encounterId = encounter?.id
+    ? Number(encounter.id)
+    : encounter?.key
+      ? Number(encounter.key)
+      : undefined;
+
+  // List prescriptions
   const {
-    data: prescriptions,
+    data: prescriptionsResponse,
     isLoading: isLoadingPrescriptions,
     refetch: preRefetch
-  } = useGetPrescriptionsQuery({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'patient_key', operator: 'match', value: patient.key },
-      { fieldName: 'visit_key', operator: 'match', value: encounter.key }
-    ]
-  });
-  const filteredPrescriptions =
-    prescriptions?.object?.filter(item => item.statusLkey === '1804482322306061') ?? [];
+  } = useGetPatientPrescriptionQuery(
+    {
+      patientId,
+      encounterId,
+      includeCanceled: showCanceled,
+      page: 0,
+      size: 500,
+      sort: 'prescriptionNum,desc'
+    },
+    { skip: !patientId }
+  );
+  const prescriptions = prescriptionsResponse?.data ?? [];
 
-  const [preKeyRecord, setPreKeyRecord] = useState({ preKey: null });
-  const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>({
-    ...newApPrescriptionMedications,
-    prescriptionKey: preKeyRecord['preKey'],
-    duration: null,
-    numberOfRefills: null
+  // Default: hide canceled prescriptions, show all only when checkbox is enabled.
+  const filteredPrescriptions = (prescriptions as PatientPrescription[]).filter(p =>
+    showCanceled ? true : !isCanceledStatus(p.status)
+  );
+
+  const prescriptionOptions = (filteredPrescriptions as PatientPrescription[]).map(p => ({
+    key: p.id,
+    label: String(p.prescriptionNum ?? p.id)
+  }));
+
+  // Create or get draft prescription
+  const [createOrGetPrescription, { isLoading: isLoadingCreateOrGet }] =
+    useCreateOrGetPatientPrescriptionMutation();
+
+  useEffect(() => {
+    if (!patientId || !encounterId) return;
+    if (currentPrescription?.id) return;
+
+    (async () => {
+      try {
+        const result = await createOrGetPrescription({
+          patientId,
+          encounterId,
+          fromFacilityId: authSlice?.tenant?.selectedFacility?.id ?? (null as any),
+          fromDepartmentId: encounter?.departmentId ?? (null as any),
+          urgencyLevel: 'NORMAL' 
+        } as any).unwrap();
+
+        setCurrentPrescription(result);
+        setPreKeyRecord({ preKey: result.id });
+
+        dispatch(
+          notify({
+            msg:
+              result.status === 'DRAFT'
+                ? `Draft prescription loaded (No. ${result.prescriptionNum})`
+                : `Prescription opened (No. ${result.prescriptionNum})`,
+            type: 'success'
+          } as any)
+        );
+
+        await preRefetch();
+      } catch {
+        dispatch(
+          notify({
+            msg: 'Failed to load or create prescription',
+            type: 'error'
+          } as any)
+        );
+      }
+    })();
+  }, [
+    patientId,
+    encounterId,
+    currentPrescription?.id,
+    createOrGetPrescription,
+    dispatch,
+    authSlice?.tenant?.selectedFacility?.id,
+    encounter?.departmentKey,
+    preRefetch
+  ]);
+
+  // Keep currentPrescription in sync with dropdown selection
+  useEffect(() => {
+    if (!preKeyRecord.preKey) {
+      setCurrentPrescription(null);
+      return;
+    }
+    const selected = (prescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey);
+    if (selected) setCurrentPrescription(selected);
+  }, [preKeyRecord.preKey, prescriptions]);
+
+  // Auto-select first prescription if none selected
+  useEffect(() => {
+    if (preKeyRecord.preKey !== null) return;
+    const first = (filteredPrescriptions as PatientPrescription[])?.[0];
+    if (first?.id) setPreKeyRecord({ preKey: first.id });
+  }, [filteredPrescriptions, preKeyRecord.preKey]);
+
+  // List medications for selected prescription
+  const {
+    data: patientPrescriptionMedicationsRaw,
+    isLoading: isLoadingPrescriptionMedications,
+    refetch: medicRefetch
+  } = useGetPatientPrescriptionMedicationsQuery(
+    currentPrescription?.id
+      ? { prescriptionHeaderId: currentPrescription.id, page: 0, size: 500, sort: 'id,desc' }
+      : (undefined as any),
+    { skip: !currentPrescription?.id }
+  );
+
+  const patientPrescriptionMedications = asArray(
+    patientPrescriptionMedicationsRaw
+  ) as PatientPrescriptionMedication[];
+  const visiblePatientPrescriptionMedications = patientPrescriptionMedications.filter(m =>
+    showCanceled ? true : !isCanceledStatus((m as any)?.status)
+  );
+
+  // Custom instructions (legacy table formatting uses this)
+  const { data: customeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
+    ...({} as any)
   });
 
-  const [selectedPreviewMedication, setSelectedPreviewMedication] = useState(null);
-  const [favoriteMedications, setFavoriteMedications] = useState([]);
-  const [openFavoritesModal, setOpenFavoritesModal] = useState(false);
-  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] = useState(null);
+  // Helpers for summary payload
+  const toStr = (v: any) => (v === null || v === undefined ? '' : String(v));
+
+  const getLovDisplay = (list: any[] = [], key: any, labelKey = 'lovDisplayVale') => {
+    if (!key && key !== 0) return '';
+    const lovList = list ?? [];
+    if (!lovList.length) return '';
+    
+    const keyStr = String(key);
+    const keyNum = Number(key);
+    
+    for (const item of lovList) {
+      if (String(item?.key) === keyStr || Number(item?.key) === keyNum) {
+        const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
+        if (display) return String(display);
+      }
+      if (String(item?.id) === keyStr || Number(item?.id) === keyNum) {
+        const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
+        if (display) return String(display);
+      }
+      if (item?.valueCode && String(item?.valueCode) === keyStr) {
+        const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
+        if (display) return String(display);
+      }
+    }
+    
+    const fallback = conjureValueBasedOnKeyFromList(lovList, key, labelKey);
+    if (fallback && fallback !== key) return String(fallback);
+    
+    return '';
+  };
+
+  const getMedicationName = (brandMedications: any[] = [], id: any) =>
+    toStr(brandMedications.find(m => String(m?.id) === String(id))?.name);
+
+  const formatActiveIngredientsLikeUI = (brandId: any) => {
+    const rels = brandActivesCache[String(brandId)] ?? [];
+    if (!rels.length) return '-';
+
+    return rels
+      .map((rel: any) => {
+        const ai = rel?.activeIngredient ?? {};
+        const name = toStr(ai?.name);
+        const atc = toStr(ai?.atcCode);
+
+        const unitTxt = rel?.unit ? ` ${getLovDisplay(unitLov?.object ?? [], rel.unit)}` : '';
+        const strength = toStr(rel?.strength);
+        const strengthTxt = strength ? `${strength}${unitTxt}`.trim() : '';
+
+        return `${name}${atc ? ` (${atc})` : ''}${strengthTxt ? ` - ${strengthTxt}` : ''}`.trim();
+      })
+      .filter(Boolean)
+      .join('\n');
+  };
+
+  const formatInstructionsLikeTable = (
+    row: any,
+    predefinedInstructions: any[] = [],
+    customInstructions: any[] = []
+  ) => {
+    const type = toStr(row?.instructionsType ?? row?.instructionsTypeLkey);
+
+    // Predefined (supports both old enum & new string)
+    if (type === 'PRE_DEFINED_INSTRUCTIONS' || type === '3010591042600262') {
+      const instId = Number(row?.instructions);
+      const inst = predefinedInstructions.find((x: any) => Number(x.id) === instId);
+      if (!inst) return '';
+
+      return [
+        toStr(inst?.dose),
+        formatEnumString(inst?.unit) ?? '',
+        formatEnumString(inst?.rout) ?? '',
+        formatEnumString(inst?.frequency) ?? ''
+      ]
+        .map(s => toStr(s).trim())
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    // Manual
+    if (type === 'MANUAL_INSTRUCTIONS' || type === '3010573499898196') {
+      return toStr(row?.instructions);
+    }
+
+    // Custom instructions: read directly from medication object
+    if (type === 'CUSTOM_INSTRUCTIONS' ) {
+      // Try reading from medication object first (new API)
+      if (row?.dose != null || row?.doesUnit || row?.frequency || row?.rout) {
+        // Get LOV arrays - handle both object and direct array formats
+        const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
+        const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
+        
+        const unitDisplay = getLovDisplay(unitLovArray, row?.doesUnit) || 
+                            formatEnumString(row?.doesUnit) ||
+                            (row?.doesUnit ? String(row.doesUnit) : '');
+        const freqDisplay = getLovDisplay(freqLovArray, row?.frequency) || 
+                           formatEnumString(row?.frequency) ||
+                           (row?.frequency ? String(row.frequency) : '');
+        return [
+          toStr(row?.dose),
+          unitDisplay,
+          formatEnumString(row?.rout),
+          freqDisplay
+        ]
+          .map(s => s.trim())
+          .filter(Boolean)
+          .join(', ');
+      }
+      
+      // Fallback to legacy custom instructions lookup
+      const ci = customInstructions.find(
+        (x: any) => String(x.prescriptionMedicationsKey) === String(row?.id ?? row?.key)
+      );
+
+      return [
+        toStr(ci?.dose),
+        toStr(ci?.unitLvalue?.lovDisplayVale),
+        formatEnumString(ci?.roaLkey),
+        toStr(ci?.frequencyLvalue?.lovDisplayVale)
+      ]
+        .map(s => s.trim())
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    return '';
+  };
+
+  function buildPrescriptionSummaryPayload(
+    patientX: any,
+    encounterX: any,
+    meds: any[] = [],
+    brandMedicationsForNames: any[] = [],
+    predefinedInstructions: any[] = [],
+    customInstructions: any[] = []
+  ) {
+    const patientInfo = {
+      mrn: toStr(patientX?.patientMrn),
+      fullName: toStr(patientX?.fullName || patientX?.patientFullName),
+      gender: toStr(patientX?.genderLvalue?.lovDisplayVale || patientX?.genderLvalue?.valueCode),
+      dob: toStr(patientX?.dob)
+    };
+
+    const encounterInfo = {
+      visitId: toStr(encounterX?.visitId),
+      visitType: toStr(encounterX?.visitTypeLvalue?.lovDisplayVale),
+      plannedStartDate: toStr(encounterX?.plannedStartDate),
+      chiefComplaint: toStr(encounterX?.chiefComplaint),
+      patientAge: toStr(encounterX?.patientAge),
+      diagnosis: toStr(encounterX?.diagnosis)
+    };
+
+    const medicationsAsStrings: string[] = (meds ?? []).map((row: any) => {
+      const medId = row?.medicationsId ?? row?.genericMedicationsId;
+      const medicationName = getMedicationName(brandMedicationsForNames, medId);
+      const activeIngredientsText = formatActiveIngredientsLikeUI(medId);
+      const instructionsText = formatInstructionsLikeTable(row, predefinedInstructions, customInstructions);
+
+      const parts = [
+        `Medication Name: ${toStr(medicationName)}`,
+        `Active Ingredients: ${activeIngredientsText || '-'}`,
+        `Instructions: ${toStr(instructionsText)}`,
+        `Instructions Type: ${toStr(row?.instructionsType ?? row?.instructionsTypeLkey)}`,
+        `Valid Until: ${toStr(row?.validUtil)}`,
+        `Is Chronic: ${row?.chronicMedication ? 'Yes' : 'No'}`,
+        `Duration: ${toStr(row?.duration)}`,
+        `Duration Type: ${toStr(row?.durationType ?? row?.durationTypeLkey)}`,
+        `Maximum Dose: ${toStr(row?.maximumDose)}`,
+        `ICD-10: ${toStr(row?.indicationIcd)}`
+      ];
+
+      return parts
+        .map(s => s.trim())
+        .filter(Boolean)
+        .join(' | ');
+    });
+
+    return {
+      patient: patientInfo,
+      encounter: encounterInfo,
+      complain: toStr(encounterX?.chiefComplaint),
+      diagnosis: { type: 'Encounter Diagnosis', value: toStr(encounterX?.diagnosis) },
+      medications: medicationsAsStrings
+    };
+  }
+
+  const uniqueBrandIds = useMemo(() => {
+    const ids = (patientPrescriptionMedications ?? [])
+      .map((m: any) => m?.medicationsId ?? m?.genericMedicationsId)
+      .filter(Boolean)
+      .map((x: any) => String(x));
+    return Array.from(new Set(ids));
+  }, [patientPrescriptionMedications]);
+
+  const payload = useMemo(() => {
+    return buildPrescriptionSummaryPayload(
+      patient,
+      encounter,
+      patientPrescriptionMedications ?? [],
+      genericMedicationListResponse?.data ?? [],
+      predefinedInstructionsListResponse?.data ?? [],
+      customeInstructions?.object ?? []
+    );
+  }, [
+    patient,
+    encounter,
+    patientPrescriptionMedications,
+    genericMedicationListResponse,
+    predefinedInstructionsListResponse,
+    customeInstructions,
+    brandActivesCache,
+    unitLovQueryResponse,
+    frequencyLov
+  ]);
 
   const isFormField = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
-    // Check if inside any form field or picker menu (including SelectPicker dropdown)
-    if (
+    return (
       node.closest(
-        'input, textarea, select, button, [contenteditable="true"], .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-picker-menu, .rs-picker-select-menu, .rs-picker-popup, .rs-modal, .rs-modal-body'
+        'input, textarea, select, button, [contenteditable="true"], .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-picker-menu, .rs-picker-select-menu, .rs-picker-popup, .rs-modal, .rs-modal-body, .rs-modal-dialog'
       ) !== null
-    ) {
-      return true;
-    }
-    return false;
-  };
-  const addToFavorites = rowData => {
-    const alreadyExists = favoriteMedications.some(
-      item => item.genericMedicationsId === rowData.genericMedicationsId
     );
-
-    if (alreadyExists) {
-      setFavoriteMedications(prev =>
-        prev.filter(item => item.genericMedicationsId !== rowData.genericMedicationsId)
-      );
-      const genericMedication = genericMedicationListResponse?.data?.find(
-        item => item.id === rowData.genericMedicationsId
-      );
-      const medicationName = genericMedication ? genericMedication.name : 'Medication';
-      dispatch(notify({ msg: `${medicationName} removed from favorites`, type: 'info' }));
-    } else {
-      const genericMedication = genericMedicationListResponse?.data?.find(
-        item => item.id === rowData.genericMedicationsId
-      );
-
-      const medicationToAdd = {
-        ...rowData,
-        name: genericMedication ? genericMedication.name : 'Unnamed Medication',
-        administrationInstructions: rowData.administrationInstructions || null,
-        parametersToMonitor: rowData.parametersToMonitor || ''
-      };
-
-      setFavoriteMedications(prev => [...prev, medicationToAdd]);
-      dispatch(
-        notify({ msg: `${medicationToAdd.name} added to favorites`, type: 'success' })
-      );
-    }
   };
 
-  const handleRecall = async (rowData: any) => {
-    const genericMedication = genericMedicationListResponse?.data?.find(
-      item => item.id === rowData.genericMedicationsId
-    );
-    await Promise.resolve();
-
-    setPrescriptionMedications({
-      ...rowData,
-      prescriptionKey: preKeyRecord['preKey'],
-      name: genericMedication?.name || ''
-    });
-
-    setOpenDetailsModal(true);
-    setOpenFavoritesModal(false);
-  };
-
-  const isSelected = rowData => {
-    if (rowData && prescriptionMedication && rowData.key === prescriptionMedication.key) {
-      return 'selected-row';
-    } else return '';
-  };
-
-  const [savePrescription, savePrescriptionMutation] = useSavePrescriptionMutation();
-
-  const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] =
-    useSavePrescriptionMedicationMutation();
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'prescription_key',
-        operator: '',
-        value: preKeyRecord['preKey']
-      },
-      {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '1804447528780744'
-      }
-    ]
-  });
-
-  const {
-    data: prescriptionMedications,
-    isLoading: isLoadingPrescriptionMedications,
-    refetch: medicRefetch
-  } = useGetPrescriptionMedicationsQuery(listRequest);
-  const [selectedRowoMedicationKey, setSelectedRowoMedicationKey] = useState('');
-  const {
-    data: customeInstructions,
-    isLoading: isLoadingCustomeInstructions,
-    refetch: refetchCo
-  } = useGetCustomeInstructionsQuery({
-    ...initialListRequest
-  });
-
-  const [isdraft, setIsDraft] = useState(
-    prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey'])
-      ?.saveDraft 
-  );
-
-  // Effects
-    useEffect(() => {
-      if (preKeyRecord.preKey !== null) return;
-
-      const foundDraft = prescriptions?.object?.find(p => p.saveDraft === true);
-
-      if (foundDraft?.key) {
-        setPreKeyRecord({ preKey: foundDraft.key });
-      }
-    }, [prescriptions]);
-
-  useEffect(() => {
-    setListRequest(prev => ({
-      ...prev,
-      filters: [
-        {
-          fieldName: 'prescription_key',
-          operator: '',
-          value: preKeyRecord['preKey']
-        },
-        {
-          fieldName: 'status_lkey',
-          operator: showCanceled ? 'notMatch' : 'match',
-          value: '1804447528780744'
-        }
-      ]
-    }));
-  }, [preKeyRecord['preKey'], showCanceled]);
-
-  useEffect(() => {
-    refetchCo();
-    setCustomeinst({
-      ...customeinst,
-      unit: customeInstructions?.object?.find(
-        item => item.prescriptionMedicationsKey === selectedRowoMedicationKey
-      )?.unitLkey,
-      frequency: customeInstructions?.object?.find(
-        item => item.prescriptionMedicationsKey === selectedRowoMedicationKey
-      )?.frequencyLkey,
-      dose: customeInstructions?.object?.find(
-        item => item.prescriptionMedicationsKey === selectedRowoMedicationKey
-      )?.dose
-    });
-  }, [selectedRowoMedicationKey]);
-
-  useEffect(() => {
-    if (preKeyRecord['preKey'] == null) {
-      handleCleare();
-    }
-  }, [preKeyRecord['preKey']]);
-
-  useEffect(() => {
-    if (showCanceled) {
-      handleCleare();
-    }
-  }, [showCanceled]);
-
+  // Global click to clear selection
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node | null;
 
-      // If inside table: ignore
       if (tableContainerRef.current?.contains(target as Node)) return;
-
-      // If on field/button: ignore
       if (isFormField(e.target)) return;
-
-      // If inside a modal (like DetailsModal): ignore
       if ((e.target as Element)?.closest('.rs-modal, .rs-modal-body, .rs-modal-dialog')) return;
 
-      // Hide under table + clean row selection
       setSelectedPreviewMedication(null);
-      setPrescriptionMedications(prev => ({
-        ...prev,
-        key: undefined // if you want to clear everything Or call handleCleare() .
-      }));
       setSelectedRows([]);
     };
 
     document.addEventListener('mousedown', handleGlobalClick);
     document.addEventListener('touchstart', handleGlobalClick);
 
-    // Support ESC to hide the preview
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedPreviewMedication(null);
@@ -297,278 +534,339 @@ const Prescription = props => {
     };
   }, []);
 
-  // Functions
-  const handleCheckboxChange = (rowData: any) => {
+  const isSelected = (rowData: any) => {
+    if (rowData && patientPrescriptionMedicationObject && String(rowData.id) === String(patientPrescriptionMedicationObject.id)) {
+      return 'selected-row';
+    }
+    return '';
+  };
+
+  const handleCheckboxChange = (rowData: PatientPrescriptionMedication) => {
     setSelectedRows(prev => {
-      let updatedRows;
-      if (prev.includes(rowData)) {
-        updatedRows = prev.filter(item => item !== rowData);
+      const exists = prev.some(x => String(x.id) === String(rowData.id));
+      if (exists) {
         setSelectedPreviewMedication(null);
-      } else {
-        updatedRows = [...prev, rowData];
+        return prev.filter(x => String(x.id) !== String(rowData.id));
       }
-      return updatedRows;
+      return [...prev, rowData];
     });
   };
 
+  // Cancel/Delete meds (NEW API)
+  const [deleteMedication] = useDeletePatientPrescriptionMedicationMutation();
+
   const handleCancle = async () => {
+    const rowsToCancel = selectedRows.length
+      ? selectedRows
+      : patientPrescriptionMedicationObject?.id
+        ? [patientPrescriptionMedicationObject]
+        : [];
+
+    if (!rowsToCancel.length) {
+      dispatch(notify({ msg: 'Please select medication(s) to cancel', type: 'warning' } as any));
+      return;
+    }
+
     try {
       await Promise.all(
-        selectedRows.map(item =>
-          savePrescriptionMedication({
-            ...item,
-            isValid: false,
-            statusLkey: '1804447528780744',
-            deletedAt: Date.now()
+        rowsToCancel
+          .filter(r => r?.id != null)
+          .map(r => deleteMedication(Number(r.id)).unwrap())
+      );
+
+      dispatch(notify({ msg: 'Selected medications deleted successfully', type: 'success' } as any));
+      setOpenCancellation(false);
+      setSelectedRows([]);
+      await medicRefetch();
+    } catch {
+      dispatch(notify({ msg: 'One or more deletions failed', type: 'error' } as any));
+    }
+  };
+
+  const [updatePrescription] = useUpdatePatientPrescriptionMutation();
+  const [updateMedicationStatus] = useUpdatePatientPrescriptionMedicationMutation();
+  const [submitPrescription] = useSubmitPatientPrescriptionMutation();
+
+  const handleSubmitPres = () => {
+    if (!currentPrescription?.id) return;
+    setSubmitAssignment({
+      toFacilityId: currentPrescription?.toFacilityId ?? selectedFacility?.id ?? null,
+      toDepartmentId: currentPrescription?.toDepartmentId ?? null
+    });
+    setSubmitAssignModalOpen(true);
+  };
+
+  const handleConfirmSubmitPres = async () => {
+    if (!currentPrescription?.id) return;
+    if (!submitAssignment.toFacilityId || !submitAssignment.toDepartmentId) {
+      dispatch(
+        notify({
+          msg: 'Please select To Facility and Department',
+          type: 'warning'
+        } as any)
+      );
+      return;
+    }
+
+    try {
+      await updatePrescription({
+        id: Number(currentPrescription.id),
+        body: {
+          toFacilityId: Number(submitAssignment.toFacilityId),
+          toDepartmentId: Number(submitAssignment.toDepartmentId),
+          lastModifiedBy: authSlice?.user?.login ?? 'system'
+        }
+      }).unwrap();
+
+      const nonCanceledMeds = (patientPrescriptionMedications ?? []).filter(
+        (m: any) =>
+          m?.id != null &&
+          !isCanceledStatus(m?.status) &&
+          String(m?.status ?? '').toUpperCase() !== 'SUBMITTED'
+      );
+
+      await Promise.all(
+        nonCanceledMeds.map((m: any) =>
+          updateMedicationStatus({
+            id: Number(m.id),
+            body: {
+              status: 'SUBMITTED',
+              lastModifiedBy: authSlice?.user?.login ?? 'system'
+            } as any
           }).unwrap()
         )
       );
 
-      dispatch(notify({ msg: 'All Medication Deleted Successfully', sev: 'success' }));
-      setOpenCancellation(false);
-      medicRefetch()
-        .then(() => { })
-        .catch(error => { });
-
-      medicRefetch()
-        .then(() => { })
-        .catch(error => { });
-
-      setSelectedRows([]);
-    } catch (error) {
-      dispatch(notify({ msg: 'One or more deleted failed', sev: 'error' }));
-    }
-  };
-
-  const handleSubmitPres = async () => {
-    try {
-      await savePrescription({
-        ...prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey']),
-
-        statusLkey: '1804482322306061',
-        saveDraft: false,
-        submittedAt: Date.now()
+      await submitPrescription({
+        id: currentPrescription.id,
+        lastModifiedBy: authSlice?.user?.login ?? 'system'
       }).unwrap();
-      dispatch(notify('submetid  Successfully'));
-      await handleCleare();
-      setPreKeyRecord({ preKey: null });
-      preRefetch().then(() => '');
-      medicRefetch().then(() => '');
-    } catch (error) {
-      console.error('Error saving prescription or medications:', error);
-    }
+      dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
 
-    prescriptionMedications?.object?.map(item => {
-      savePrescriptionMedication({ ...item, statusLkey: '1804482322306061' });
-    });
-    medicRefetch().then(() => '');
-  };
+      setSubmitAssignModalOpen(false);
+      setSummaryModalOpen(false);
+      await preRefetch();
+      await medicRefetch();
 
-  const handleCleare = () => {
-    setPrescriptionMedications({
-      ...newApPrescriptionMedications,
-      durationTypeLkey: null,
-      administrationInstructions: null,
-      instructionsTypeLkey: null,
-      genericSubstitute: false,
-      chronicMedication: false,
-      refillIntervalUnitLkey: null,
-      indicationUseLkey: null
-    });
-
-    setCustomeinst({ dose: null, frequency: null, unit: null, roa: null });
-  };
-
-  const saveDraft = async () => {
-    try {
-      await savePrescription({
-        ...prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey']),
-        saveDraft: true
-      }).then(() => {
-        dispatch(notify({ msg: 'Saved Draft successfully', sev: 'success' }));
-        setIsDraft(true);
-      });
-    } catch (error) { }
-  };
-
-  const cancleDraft = async () => {
-    try {
-      await savePrescription({
-        ...prescriptions?.object?.find(prescription => prescription.key === preKeyRecord['preKey']),
-        saveDraft: false
-      }).then(() => {
-        dispatch(notify({ msg: 'Draft Cancelled', sev: 'success' }));
-        setIsDraft(false);
-      });
-    } catch (error) { }
-  };
-
-  const handleSavePrescription = async () => {
-    await handleCleare();
-    setPreKeyRecord({ preKey: null });
-
-    if (patient && encounter) {
+      // After submit, open/create next draft header automatically for continued ordering.
       try {
-        const response = await savePrescription({
-          ...newApPrescription,
-          patientKey: patient.key,
-          visitKey: encounter.key,
-          statusLkey: '164797574082125',
-          saveDraft: true
-        });
-
-        dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
-
-        setPreKeyRecord({ preKey: response?.data?.key });
-
-        preRefetch().then(() => '');
-      } catch (error) {
-        console.error('Error saving prescription:', error);
+        const nextDraft = await createOrGetPrescription({
+          patientId,
+          encounterId,
+          fromFacilityId: authSlice?.tenant?.selectedFacility?.id ?? (null as any),
+          fromDepartmentId: encounter?.departmentKey ?? (null as any),
+          urgencyLevel: 'NORMAL'
+        } as any).unwrap();
+        setCurrentPrescription(nextDraft);
+        setPreKeyRecord({ preKey: nextDraft?.id ?? null });
+        setSelectedRows([]);
+        setSelectedPreviewMedication(null);
+        setPatientPrescriptionMedicationObject({
+          ...newPatientPrescriptionMedication,
+          prescriptionHeaderId: nextDraft?.id ?? null
+        } as any);
+      } catch {
+        dispatch(
+          notify({
+            msg: 'Prescription submitted, but failed to open next draft',
+            type: 'warning'
+          } as any)
+        );
       }
-    } else {
-      console.warn('Patient or encounter is missing. Cannot save prescription.');
+    } catch {
+      dispatch(notify({ msg: 'Submit failed', type: 'error' } as any));
     }
   };
 
   const handleNewPrescriptionAndAddMedication = async () => {
-    try {
-      if (!preKeyRecord['preKey']) {
-        await handleSavePrescription();
-      }
+    if (!currentPrescription?.id) {
+      dispatch(notify({ msg: 'No prescription loaded yet', type: 'warning' } as any));
+      return;
+    }
+    if (String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED') {
+      dispatch(
+        notify({
+          msg: 'Cannot add medication to submitted prescription',
+          type: 'warning'
+        } as any)
+      );
+      return;
+    }
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+    setPatientPrescriptionMedicationObject({
+      ...newPatientPrescriptionMedication,
+      prescriptionHeaderId: currentPrescription.id
+    } as any);
 
-      handleCleare();
       setOpenDetailsModal(true);
       setOpenToAdd(true);
+  };
 
-    
-    } catch (error) {
-      dispatch(notify({ msg: 'Failed to complete actions', type: 'error' }));
+  const [generatePrescriptionPdf, { isLoading: isGeneratingPdf }] =
+    useGeneratePrescriptionPdfMutation();
+
+  const handleGeneratePrescriptionPdf = async () => {
+    try {
+      if (!patient || !encounter || !currentPrescription?.id) {
+        dispatch(notify({ msg: 'Missing patient, encounter or prescription', type: 'error' } as any));
+        return;
+      }
+
+      const blob = await generatePrescriptionPdf({
+        patient,
+        encounter,
+        prescriptionKey: currentPrescription.id,
+        genericMedicationList: genericMedicationListResponse?.data ?? [],
+        facilityName,
+        authenticatedUserName: `${authSlice?.user?.firstName} ${authSlice?.user?.lastName}`,
+        authenticatedUserEmail: authSlice?.user?.email,
+        predefinedInstructions: predefinedInstructionsListResponse?.data ?? [],
+        customInstructions: customeInstructions?.object ?? []
+      }).unwrap();
+
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = `Prescription_${currentPrescription.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: error?.message || 'Failed to generate prescription PDF',
+          type: 'error'
+        } as any)
+      );
     }
   };
 
-  const tableColumns = [
+  // Table columns
+  const tableColumns: any[] = [
     {
       key: '#',
       title: <Translate> #</Translate>,
       flexGrow: 1,
-
-      render: (rowData: any) => {
-        return (
-          <Checkbox
-            className="check-box"
-            key={rowData.id}
-            checked={selectedRows.includes(rowData)}
-            onChange={() => handleCheckboxChange(rowData)}
-            disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
-          />
-        );
-      }
+      render: (rowData: PatientPrescriptionMedication) => (
+        <Checkbox
+          className="check-box"
+          key={rowData.id}
+          checked={selectedRows.some(x => String(x.id) === String(rowData.id))}
+          onChange={() => handleCheckboxChange(rowData)}
+          disabled={edit}
+        />
+      )
     },
-
     {
       key: 'medicationName',
-      dataKey: 'genericMedicationsId',
+      dataKey: 'medicationsId',
       title: <Translate> Medication Name</Translate>,
       flexGrow: 2,
       render: (rowData: any) => {
-        return genericMedicationListResponse?.data?.find(
-          item => item.id === rowData.genericMedicationsId
-        )?.name;
+        const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
+        return genericMedicationListResponse?.data?.find((item: any) => String(item.id) === String(medId))?.name;
       }
     },
     {
       key: 'instructions',
-      dataKey: '',
       title: 'Instructions',
       flexGrow: 3,
       render: (rowData: any) => {
-        if (rowData.instructionsTypeLkey === '3010591042600262') {
+        const cleanJoin = (vals: any[], sep = ', ') =>
+          vals
+            .map(v => (v == null ? '' : String(v).trim()))
+            .filter(v => v !== '' && v !== 'undefined' && v !== 'null')
+            .join(sep);
+
+        const type = String(rowData.instructionsType ?? rowData.instructionsTypeLkey ?? '');
+
+        if (type === 'PRE_DEFINED_INSTRUCTIONS' || type === '3010591042600262') {
           const generic = predefinedInstructionsListResponse?.data?.find(
-            item => item.id === Number(rowData.instructions)
+            (item: any) => item.id === Number(rowData.instructions)
           );
-       
 
-          if (generic) {
-          } else {
-            console.warn('No matching generic found for key:', rowData.instructions);
+          return cleanJoin([
+            generic?.dose,
+            formatEnumString(generic?.unit),
+            formatEnumString(generic?.rout),
+            formatEnumString(generic?.frequency)
+          ]);
+        }
+
+        if (type === 'MANUAL_INSTRUCTIONS' || type === '3010573499898196') {
+          return cleanJoin([rowData?.instructions]);
+        }
+
+        // Custom instructions: read directly from medication object
+        if (type === 'CUSTOM_INSTRUCTIONS' || type === '3010606785535008') {
+          // Try reading from medication object first (new API)
+          if (rowData?.dose != null || rowData?.doesUnit || rowData?.frequency || rowData?.rout) {
+            // Get LOV arrays - handle both object and direct array formats
+            const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
+            const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
+            
+            const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) || 
+                                formatEnumString(rowData?.doesUnit) ||
+                                (rowData?.doesUnit ? String(rowData.doesUnit) : '');
+            const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) || 
+                               formatEnumString(rowData?.frequency) ||
+                               (rowData?.frequency ? String(rowData.frequency) : '');
+            return cleanJoin([
+              rowData?.dose,
+              unitDisplay,
+              formatEnumString(rowData?.rout),
+              freqDisplay
+            ]);
           }
-          return [
-            generic?.dose ?? '',
-            formatEnumString(generic?.unit) ?? '',
-            formatEnumString(generic?.rout) ?? '',   // ✅ route
-            formatEnumString(generic?.frequency) ?? '',
-          ]
-            .filter(v => v != null && String(v).trim() !== '')
-            .join(', ');
-        }
-        if (rowData.instructionsTypeLkey === '3010573499898196') {
-          return rowData.instructions;
-        }
-        if (rowData.instructionsTypeLkey === '3010606785535008') {
-          return (
-            customeInstructions?.object?.find(
-              item => item.prescriptionMedicationsKey === rowData.key
-            )?.dose +
-            ',' +
-            customeInstructions?.object?.find(
-              item => item.prescriptionMedicationsKey === rowData.key
-            )?.unitLvalue.lovDisplayVale +
-            ',' +
-            customeInstructions?.object?.find(
-              item => item.prescriptionMedicationsKey === rowData.key
-            )?.frequencyLvalue.lovDisplayVale
+          
+          // Fallback to legacy custom instructions lookup
+          const custom = customeInstructions?.object?.find(
+            (item: any) => String(item?.prescriptionMedicationsKey) === String(rowData.id)
           );
+
+          return cleanJoin([
+            custom?.dose,
+            custom?.unitLvalue?.lovDisplayVale,
+            formatEnumString(custom?.roaLkey),
+            custom?.frequencyLvalue?.lovDisplayVale
+          ]);
         }
 
-        return 'no';
+        return '';
       }
     },
     {
       key: 'instructionsType',
-      dataKey: 'instructionsTypeLkey',
       title: 'Instructions Type',
       flexGrow: 2,
-      render: (rowData: any) => {
-        return rowData.instructionsTypeLvalue
-          ? rowData.instructionsTypeLvalue.lovDisplayVale
-          : rowData.instructionsTypeLkey;
-      }
+      render: (rowData: any) => rowData.instructionsType ? formatEnumString(rowData.instructionsType) : ''
     },
-    {
-      key: 'validUtil',
-      dataKey: 'validUtil',
-      title: 'Valid Util',
-      flexGrow: 2
-    },
+    { key: 'validUtil', dataKey: 'validUtil', title: 'Valid Util', flexGrow: 2 },
     {
       key: 'isChronic',
       dataKey: 'chronicMedication',
       title: 'Is Chronic',
       flexGrow: 2,
-      render: (rowData: any) => {
-        return rowData.chronicMedication ? 'Yes' : 'No';
-      }
+      render: (rowData: any) => (rowData.chronicMedication ? 'Yes' : 'No')
     },
-
     {
       key: 'status',
-      dataKey: 'statusLkey',
+      dataKey: 'status',
       title: 'Status',
       flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey;
-      }
+      render: (rowData: any) => ( rowData?.status? formatEnumString(rowData.status) : '')
     },
     {
       key: 'actions',
       title: 'Actions',
       flexGrow: 1.5,
-      render: rowData => {
-        const isInFavorites = favoriteMedications.some(
-          item => item.genericMedicationsId === rowData.genericMedicationsId
-        );
+      render: (rowData: any) => {
+        const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
+        
+
         return (
           <div className="flex-c8">
             <MdModeEdit
@@ -576,18 +874,11 @@ const Prescription = props => {
               size={20}
               className={'font-aws'}
               onClick={() => {
-                if (rowData.statusLvalue?.lovDisplayVale === 'New') {
-                  setPrescriptionMedications(rowData);
+                if (edit) return;
+                setPatientPrescriptionMedicationObject(rowData);
                   setOpenDetailsModal(true);
                   setOpenToAdd(false);
-                }
               }}
-            />
-            <FontAwesomeIcon
-              icon={faStar}
-              onClick={() => addToFavorites(rowData)}
-              className={isInFavorites ? 'font-awsy' : 'font-aws'}
-              title={isInFavorites ? 'Remove from favorites' : 'Add to favorites'}
             />
           </div>
         );
@@ -597,98 +888,55 @@ const Prescription = props => {
       key: 'attachments',
       title: <Translate>Attachments</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return (
-          <MdAttachFile
-            size={20}
-            fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
-            onClick={() => {
-              if (rowData?.key) {
-                setSelectedMedicationForAttachments(rowData);
-                setAttachmentsModalOpen(true);
-              }
-            }}
-            style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
-            title="View Attachments"
-          />
-        );
-      }
+      render: (rowData: any) => (
+        <MdAttachFile
+          size={20}
+          fill={rowData?.id ? 'var(--primary-gray)' : '#ccc'}
+          onClick={() => {
+            if (rowData?.id) {
+              setSelectedMedicationForAttachments(rowData);
+              setAttachmentsModalOpen(true);
+            }
+          }}
+          style={{ cursor: rowData?.id ? 'pointer' : 'not-allowed' }}
+          title="View Attachments"
+        />
+      )
     },
     {
-      key: '',
+      key: 'created',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.createdBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdAt)}</span>
-          </>
-        );
-      }
+      render: (rowData: any) => (
+        <>
+          <span>{rowData.createdBy}</span>
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(rowData.createdDate)}</span>
+        </>
+      )
     },
     {
-      key: '',
+      key: 'updated',
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.updatedBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.updatedAt)}</span>
-          </>
-        );
-      }
-    },
-
-    {
-      key: '',
-      title: <Translate>Cancelled At/By</Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.deletedBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData.deletedAt)}</span>
-          </>
-        );
-      }
+      render: (rowData: any) => (
+        <>
+          <span>{rowData.lastModifiedBy}</span>
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(rowData.lastModifiedDate)}</span>
+        </>
+      )
     }
   ];
-  const pageIndex = listRequest.pageNumber - 1;
 
-  // how many rows per page:
-  const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
-  const totalCount = prescriptionMedications?.extraNumeric ?? 0;
-
-  // handler when the user clicks a new page number:
-  const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
-
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-
-  // handler when the user chooses a different rows-per-page:
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
-    });
-  };
-
-
-
-  
   return (
     <>
+      {uniqueBrandIds.map((id: string) => (
+        <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
+      ))}
+
       <div className="bt-div">
-        <div style={{ width: '500px' }}>
+        <div style={{ width: '500px', display: 'flex', flexDirection: 'row', gap: '6px' }}>
           <Form fluid>
             <MyInput
               placeholder="Prescription"
@@ -696,29 +944,24 @@ const Prescription = props => {
               fieldType="select"
               record={preKeyRecord}
               setRecord={setPreKeyRecord}
-              selectData={filteredPrescriptions ?? []}
-              selectDataLabel="prescriptionId"
+              selectData={prescriptionOptions}
+              selectDataLabel="label"
               selectDataValue="key"
               showLabel={false}
             />
           </Form>
-        </div>
-        <div className="icon-style">
-          <FaFilePrescription size={18} />
-        </div>
-        <div>
-          <div className="prescripton-word-style">Prescription</div>
-          <div className="prescripton-number-style">
-            {prescriptions?.object?.find(
-              prescription => prescription.key === preKeyRecord['preKey']
-            )?.prescriptionId || '_'}
+
+          <div className="icon-style">
+            <FaFilePrescription size={18} />
           </div>
-        </div>
-        <div
-          className={clsx('bt-right', {
-            'disabled-panel': edit
-          })}
-        >
+
+          <div>
+            <div className="prescripton-word-style">Prescription</div>
+            <div className="prescripton-number-style">
+              {currentPrescription?.prescriptionNum || currentPrescription?.id || '_'}
+            </div>
+          </div>
+
           <Form fluid>
             <MyInput
               fieldName=""
@@ -728,52 +971,62 @@ const Prescription = props => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => { }}
+              setRecord={() => {}}
               width={110}
             />
           </Form>
+        </div>
+
+        <div className={clsx('bt-right', { 'disabled-panel': edit })}>
           <UrgencyButton />
-          <MyButton loading={isLoadingPrescriptions}
-          >Validate With</MyButton>
-          {/* <MyButton onClick={() => setOpenFavoritesModal(true)}>Recall Favorite</MyButton> */}
-          <MyButton onClick={handleNewPrescriptionAndAddMedication} prefixIcon={() => <PlusIcon />}
-          loading={isLoadingPrescriptions}>
+
+          <MyButton loading={isLoadingPrescriptions}>Validate with Gallon Reasoner</MyButton>
+
+          <MyButton
+            onClick={handleNewPrescriptionAndAddMedication}
+            prefixIcon={() => <PlusIcon />}
+            loading={isLoadingPrescriptions || isLoadingCreateOrGet}
+            disabled={edit || String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'}
+          >
             Add Medication
           </MyButton>
+
           <MyButton
             prefixIcon={() => <BlockIcon />}
-            onClick={() => setOpenCancellation(true)}
-            disabled={selectedRows.length === 0}
+            onClick={() => {
+              if (!selectedRows.length && patientPrescriptionMedicationObject?.id) {
+                setSelectedRows([patientPrescriptionMedicationObject]);
+              }
+              setOpenCancellation(true);
+            }}
+            disabled={(!selectedRows.length && !patientPrescriptionMedicationObject?.id) || edit}
           >
             Cancel
           </MyButton>
+
           <MyButton
             loading={isLoadingPrescriptions}
-            onClick={handleSubmitPres}
-            disabled={
-              preKeyRecord['preKey']
-                ? prescriptions?.object?.find(
-                  prescription => prescription.key === preKeyRecord['preKey']
-                )?.statusLkey === '1804482322306061'
-                : true
-            }
-            prefixIcon={() => <CheckIcon />
-            }
+            onClick={() => setSummaryModalOpen(true)}
+            disabled={edit || !currentPrescription || currentPrescription?.status === 'SUBMITTED'}
+            prefixIcon={() => <CheckIcon />}
           >
             Sign & Submit Order
           </MyButton>
         </div>
+
+        <MyButton
+          onClick={handleGeneratePrescriptionPdf}
+          loading={isGeneratingPdf}
+          disabled={!currentPrescription?.id}
+          prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+        />
       </div>
+
       <Divider />
 
       <div className="bt-div">
         <div className="bt-right">
-          <Checkbox
-            checked={!showCanceled}
-            onChange={() => {
-              setShowCanceled(!showCanceled);
-            }}
-          >
+          <Checkbox checked={showCanceled} onChange={() => setShowCanceled(v => !v)}>
             Show cancelled
           </Checkbox>
         </div>
@@ -782,31 +1035,22 @@ const Prescription = props => {
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
-          data={prescriptionMedications?.object ?? []}
-          onRowClick={rowData => {
+          data={visiblePatientPrescriptionMedications ?? []}
+          onRowClick={(rowData: any) => {
             setSelectedPreviewMedication(rowData);
-            setPrescriptionMedications(rowData);
+            setPatientPrescriptionMedicationObject(rowData);
             setOpenToAdd(false);
-            if (rowData.instructionsTypeLkey == '3010606785535008') {
-              setSelectedRowoMedicationKey(rowData.key);
-            }
           }}
           loading={isLoadingPrescriptionMedications}
           rowClassName={isSelected}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
         />
       </div>
 
       {selectedPreviewMedication && (
         <div className="mt-4">
           <PrescriptionPreview
-            orderMedication={selectedPreviewMedication}
-            // fluidOrder={selectedPreviewMedication?.fluidOrder ?? {}}
-            genericMedicationListResponse={genericMedicationListResponse}
+            orderMedication={selectedPreviewMedication as any}
+            genericMedicationListResponse={genericMedicationListResponse as any}
             orderTypeLovQueryResponse={{ object: [] }}
             unitLovQueryResponse={{ object: [] }}
             unitsLovQueryResponse={{ object: [] }}
@@ -827,149 +1071,113 @@ const Prescription = props => {
         setOpen={setOpenDetailsModal}
         patient={patient}
         encounter={encounter}
-        prescriptionMedication={prescriptionMedication}
-        setPrescriptionMedications={setPrescriptionMedications}
-        preKey={preKeyRecord['preKey']}
+        prescriptionMedication={patientPrescriptionMedicationObject}
+        setPrescriptionMedications={setPatientPrescriptionMedicationObject}
+        preKey={currentPrescription?.id}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => { }}
+        setOrderMedication={() => {}}
         drugKey={null}
         editing={false}
       />
+
       <CancellationModal
         open={openCancellation}
         setOpen={setOpenCancellation}
-        object={prescriptionMedication}
-        setObject={setPrescriptionMedications}
+        object={patientPrescriptionMedicationObject as any}
+        setObject={setPatientPrescriptionMedicationObject as any}
         handleCancle={handleCancle}
         withReason={false}
         title={'Cancellation'}
       />
 
+      <PatientHistorySummaryModal
+        patient={patient}
+        encounter={encounter}
+        edit={edit}
+        open={summaryModalOpen}
+        setOpen={setSummaryModalOpen}
+        handleSave={handleSubmitPres}
+        medicationValidationPayload={payload}
+      />
       <MyModal
-        open={openFavoritesModal}
-        setOpen={setOpenFavoritesModal}
-        title="Favorite Medications"
-        size="lg"
+        open={submitAssignModalOpen}
+        setOpen={setSubmitAssignModalOpen}
+        title="Submit Assignment"
+        actionButtonLabel="Save"
+        actionButtonFunction={handleConfirmSubmitPres}
         content={
-          <div>
-            <MyTable
-              columns={[
-                {
-                  key: 'medicationName',
-                  dataKey: 'genericMedicationsId',
-                  title: 'Medication Name',
-                  render: (rowData: any) => {
-                    return (
-                      genericMedicationListResponse?.data?.find(
-                        item => item.id === rowData.genericMedicationsId
-                      )?.name || 'Unknown Medication'
-                    );
-                  }
-                },
-                {
-                  key: 'instruction',
-                  dataKey: '',
-                  title: 'Instruction',
-                  render: (rowData: any) => {
-                    return [
-                      rowData.dose,
-                      rowData.doseUnitLvalue?.lovDisplayVale,
-                      rowData.drugOrderTypeLkey == '2937757567806213'
-                        ? 'STAT'
-                        : 'every ' + rowData.frequency + ' hours',
-                      rowData.roaLvalue?.lovDisplayVale
-                    ]
-                      .filter(Boolean)
-                      .join(', ');
-                  }
-                },
-                {
-                  key: 'administrationInstruction',
-                  dataKey: 'administrationInstructions',
-                  title: 'Administration Instruction',
-                  render: (rowData: any) => {
-                    if (rowData.administrationInstructions?.lovDisplayVale) {
-                      return rowData.administrationInstructions.lovDisplayVale;
-                    } else if (rowData.administrationInstructions) {
-                      const instruction = predefinedInstructionsListResponse?.data?.find(
-                        item => item.id === rowData.administrationInstructions
-                      );
-                      return instruction?.lovDisplayVale || rowData.administrationInstructions;
-                    }
-                    return 'No instruction';
-                  }
-                },
-                {
-                  key: 'parametersToMonitor',
-                  dataKey: 'parametersToMonitorKey',
-                  title: 'Parameters To Monitor',
-                  render: (rowData: any) => {
-                    if (rowData.parametersToMonitor) {
-                      return rowData.parametersToMonitor;
-                    } else if (rowData.parametersToMonitorValue?.lovDisplayVale) {
-                      return rowData.parametersToMonitorValue.lovDisplayVale;
-                    } else if (rowData.parametersToMonitorKey) {
-                      return rowData.parametersToMonitorKey;
-                    }
-                    return 'No parameters specified';
-                  }
-                },
-                {
-                  key: 'actions',
-                  title: 'Actions',
-                  render: rowData => {
-                    return (
-                      <div className="flex-c8">
-                        <MyButton
-                          size="xs"
-                          onClick={() => {
-                            handleRecall(rowData);
-                          }}
-                        >
-                          Recall
-                        </MyButton>
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          onClick={() => addToFavorites(rowData)}
-                          className="star-favorite-icon"
-                          title="Remove from favorites"
-                        />
-                      </div>
-                    );
-                  }
-                }
-              ]}
-              onRowClick={rowData => {
-                setPrescriptionMedications({ ...rowData, parametersToMonitor: '' });
-              }}
-              data={favoriteMedications}
+          <Form fluid>
+            <MyInput
+              fieldName="toFacilityId"
+              fieldType="select"
+              fieldLabel="To Facility"
+              selectData={facilityListResponse ?? []}
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={submitAssignment}
+              setRecord={(obj: any) =>
+                setSubmitAssignment(prev => ({
+                  ...prev,
+                  toFacilityId: obj?.toFacilityId ? Number(obj.toFacilityId) : null,
+                  toDepartmentId:
+                    Number(prev?.toFacilityId) === Number(obj?.toFacilityId)
+                      ? prev.toDepartmentId
+                      : null
+                }))
+              }
+              required
             />
-          </div>
+            <MyInput
+              fieldName="toDepartmentId"
+              fieldType="select"
+              fieldLabel="To Department"
+              selectData={departmentOptions}
+              selectDataLabel="name"
+              selectDataValue="id"
+              record={submitAssignment}
+              setRecord={(obj: any) =>
+                setSubmitAssignment(prev => ({
+                  ...prev,
+                  toDepartmentId: obj?.toDepartmentId ? Number(obj.toDepartmentId) : null
+                }))
+              }
+              disabled={!submitAssignment?.toFacilityId}
+              required
+            />
+          </Form>
         }
       />
 
-      {/* Attachments Modal */}
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${selectedMedicationForAttachments ? genericMedicationListResponse?.data?.find(
-          item => item.id === selectedMedicationForAttachments.genericMedicationsId
-        )?.name || 'Medication' : 'Medication'}`}
+        title={`Attachments - ${
+          selectedMedicationForAttachments
+            ? genericMedicationListResponse?.data?.find(
+                (item: any) =>
+                  String(item.id) ===
+                  String(
+                    (selectedMedicationForAttachments as any)?.medicationsId ??
+                      (selectedMedicationForAttachments as any)?.genericMedicationsId
+                  )
+            )?.name || 'Medication'
+            : 'Medication'
+          }`}
         size="lg"
         hideActionBtn={true}
         content={
           <EncounterAttachment
             localEncounter={encounter}
             source="PRESCRIPTION_ORDER_ATTACHMENT"
-            sourceId={selectedMedicationForAttachments?.key ? Number(selectedMedicationForAttachments.key) : undefined}
+            sourceId={selectedMedicationForAttachments?.id ?? undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />
 
-      <AllergyFloatingButton patientKey={patient.key} />
+      <AllergyFloatingButton patientKey={patient?.key} />
     </>
   );
 };

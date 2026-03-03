@@ -3,10 +3,13 @@ import {
   faCalendarDays,
   faChartColumn,
   faCommentDots,
+  faFile,
+  faFileLines,
   faHeadset,
   faNoteSticky,
   faRepeat,
-  faStethoscope
+  faStethoscope,
+  faUserDoctor
 } from '@fortawesome/free-solid-svg-icons';
 import { faSun } from '@fortawesome/free-solid-svg-icons';
 import { faMoon } from '@fortawesome/free-solid-svg-icons';
@@ -58,7 +61,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const dispatch = useDispatch();
   const mode = useAppSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
-   const direction = localStorage.getItem('direction');
+  const direction = localStorage.getItem('direction');
   const authSlice = useAppSelector(state => state.auth);
   const toast = useCallback(
     (msg: string) => {
@@ -203,6 +206,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       <Dropdown.Menu>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faFileLines} />
+            Customize Form
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faChartColumn} />
             Customize Dashboard
           </div>
@@ -221,7 +230,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
           </div>
         </Dropdown.Item>
 
-        {/* الخيار الجديد للبوابة */}
         <Dropdown.Item
           onClick={() => {
             setOpenMoreMenu(false);
@@ -322,9 +330,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 active={uiSlice?.lang === lang?.langKey}
                 onClick={() => {
                   dispatch(setLang(lang?.langKey));
-                  const selectedObject = langData.find(
-                    item => item?.langKey === lang?.langKey
-                  );
+                  const selectedObject = langData.find(item => item?.langKey === lang?.langKey);
                   localStorage.setItem('direction', selectedObject?.direction);
                   localStorage.setItem('language', selectedObject?.langKey);
                 }}
@@ -364,7 +370,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
       localStorage.clear();
 
-      navigate('/login');
+      dispatch({ type: 'auth/logout' });
+
+      navigate('/login', { replace: true });
     };
 
     useEffect(() => {
@@ -517,9 +525,23 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   return (
     <>
-      <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
+      <div
+        className={`main-screen-bar-icons-main-container-header ${mode}`}
+        style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
+      >
         {width >= 930 ? (
           <>
+            <Tooltip title="Customize Form">
+              <IconButton size="small">
+                <FontAwesomeIcon
+                  className="header-screen-bar-icon-size-handle"
+                  icon={faFileLines}
+                  onClick={() => {
+                    navigate('/form-template-use');
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Customize Dashboard">
               <IconButton size="small">
                 <FontAwesomeIcon
@@ -544,19 +566,22 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Tooltip> */}
-            <Tooltip title="My Consultations">
-              <IconButton
-                size="small"
-                onClick={() => {
-                  navigate('/my-consultations');
-                }}
-              >
-                <FontAwesomeIcon
-                  className="header-screen-bar-icon-size-handle"
-                  icon={faStethoscope}
-                />
-              </IconButton>
-            </Tooltip>
+            {authSlice.user?.admin && authSlice.user?.jobRole === 'PHYSICIAN' && (
+              <Tooltip title="My Consultations">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    navigate('/my-consultations');
+                  }}
+                >
+                  <FontAwesomeIcon
+                    className="header-screen-bar-icon-size-handle"
+                    icon={faUserDoctor}
+                  />
+                </IconButton>
+              </Tooltip>
+            )}
+
             <Tooltip title="Announcements">
               <IconButton size="small">
                 <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBullhorn} />
