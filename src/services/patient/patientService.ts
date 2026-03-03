@@ -222,9 +222,15 @@ export const newPatientService = createApi({
       query: body => ({
         url: '/api/patient/bulk/basic-info',
         method: 'POST',
-        body
-      })
-    })
+        body,
+      }),
+    }),
+    getPatientById: builder.query<modelTypes.Patient, { id: Id }>({
+  query: ({ id }) => ({
+    url: `/api/patient/${id}`
+  }),
+  providesTags: (_res, _err, { id }) => [{ type: 'Patient' as const, id }]
+}),
   })
 });
 
@@ -261,8 +267,10 @@ export const {
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
   useLazyGetUnknownPatientsQuery,
+  useGetPatientByIdQuery,
+  useLazyGetPatientByIdQuery,
 
-  // duplication
+  // duplicaton
   useGetDuplicationCandidatesMutation,
 
   // bulk basic info
