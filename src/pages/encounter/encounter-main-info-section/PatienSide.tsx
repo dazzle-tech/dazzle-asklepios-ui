@@ -199,8 +199,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     doRefetch();
   }, [refetchEncounter, refetchAllergies, refetchWarnings, dispatch]);
   // Get active allergies & warnings
-  // const activeAllergies =
-  //   allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
+  
 
   const {
     data: allergiesListResponse,
