@@ -1766,3 +1766,34 @@ export const newPatientHIPAA: modelTypes.PatientHIPAA = {
   noticeOfPrivacyPracticeDate: null,
   privacyAuthorizationDate: null
 };
+
+export const newPatientServiceAndProduct: modelTypes.PatientServiceAndProduct = {
+  id: undefined,
+  patientId: undefined,
+  encounterId: undefined,
+  category: '',
+  serviceId: undefined,
+  productId: undefined,
+  quantity: 0,
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: '',
+  lastModifiedDate: null
+};
+
+export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProductCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,
+  category: '',
+  serviceId: undefined,
+  productId: undefined,
+  quantity: 1
+};
+
+export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProductUpdateDTO = {
+  id: undefined,
+  category: undefined,
+  serviceId: undefined,
+  productId: undefined,
+  quantity: 0
+};
