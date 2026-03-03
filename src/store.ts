@@ -183,6 +183,7 @@ import { progressNoteService } from './services/patients/progressNoteService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { patientWarningsService } from './services/encounters/patientWarningsService';
 import { patientPrescriptionService } from './services/patients/Prescription/patientPrescriptionService';
 import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
@@ -251,6 +252,10 @@ export const store = configureStore({
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
+    [patientWarningsService.reducerPath]: patientWarningsService.reducer,
+
+
+    //dental
     [dentalService.reducerPath]: dentalService.reducer,
     [observationService.reducerPath]: observationService.reducer,
 
@@ -667,6 +672,8 @@ export const store = configureStore({
       diagnosticOrderTestReportCommentsService.middleware,
       patientDiagnosticResultHistoryService.middleware,
       patientReportService.middleware,
+      ICDTreeService.middleware,
+      patientWarningsService.middleware,
       progressNoteService.middleware,
       patientProcedureService.middleware,
       consultationService.middleware,

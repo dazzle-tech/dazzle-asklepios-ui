@@ -2168,6 +2168,29 @@ export interface OrganizationDefinition {
   taxValue?: number;
 }
 
+export interface PatientWarnings {
+  id?: number;
+  patientId: number;
+  encounterId: number;
+  warningType: string;
+  warning: string;
+  severity: string;
+  onsetDateUndefined?: boolean;
+  onsetDate?: string;
+  byPatient?: boolean;
+  sourceOfInformation?: string;
+  note?: string;
+  status?: string;
+  actionTaken?: string;
+  resolvedBy?: string;
+  resolvedDate?: string;
+  cancelledBy?: string;
+  cancelledDate?: string;
+  cancellationReason?: string;
+  createdBy: string;
+  createdDate: string;
+}
+
 export interface PatientPrescription {
   id: number;
   patientId: number;
@@ -2308,6 +2331,33 @@ export interface AuditingEntity {
   lastModifiedDate?: string;
 }
 
+export interface PatientWarningsCreateDTO {
+  patientId: number;
+  encounterId: number;
+  warningType: string;
+  warning: string;
+  severity: string;
+  onsetDateUndefined?: boolean;
+  onsetDate?: string;
+  byPatient?: boolean;
+  sourceOfInformation?: string;
+  note?: string;
+  status?: string;
+  actionTaken?: string;
+}
+
+export type PatientWarningsUpdateDTO = {
+  id: number;
+  warningType: string; 
+  warning?: string;
+  severity: string; 
+  onsetDateUndefined?: boolean;
+  onsetDate?: string;
+  byPatient?: boolean;
+  sourceOfInformation?: string;
+  note?: string;
+  actionTaken?: string;
+};
 // CREATE
 export type PatientProcedureCreateVM = {
   procedureId: number;

@@ -24,11 +24,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { FaWeight } from 'react-icons/fa';
 import { GiMedicalThermometer } from 'react-icons/gi';
 import { useDispatch, useSelector } from 'react-redux';
-import { Avatar, Divider, Panel, Text } from 'rsuite';
+import { Avatar, Divider, Panel, Text, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
 import { newApPatient } from '@/types/model-types-constructor';
 import { faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
+import Translate from '@/components/Translate';
+import { useGetPatientWarningsByPatientIdQuery } from '@/services/encounters/patientWarningsService';
 import { newPatient} from '@/types/model-types-constructor-new';
 
 const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
@@ -79,18 +81,19 @@ const refetchEncounter = useSelector((state: any) => state?.refetch?.refetchEnco
     { skip: !patient?.key }
   );
 
-  const { data: warningsResponse, refetch: refetchWarnings } = useGetWarningsQuery(
+   const {
+    data: warningsListResponse,
+    refetch: refetchWarnings,
+    isLoading
+  } = useGetPatientWarningsByPatientIdQuery(
     {
-      ...initialListRequest,
-      pageSize: 5, // Limit to show only recent ones
-      sortBy: 'createdAt',
-      sortType: 'desc',
-      filters: [
-        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-        { fieldName: 'status_lkey', operator: 'notMatch', value: '3196709905099521' } // Exclude cancelled
-      ]
+      patientId: patient?.id,
+      showCancelled: false,
+      // ...paginationParams
     },
-    { skip: !patient?.key }
+    {
+      skip: !patient?.id
+    }
   );
 
   const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
@@ -180,21 +183,15 @@ useEffect(() => {
   // Get active allergies & warnings
   const activeAllergies =
     allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
-  const activeWarnings =
-    warningsResponse?.object?.filter(warning => warning.statusLkey === '9766169155908512') || [];
+   const activeWarnings =
+    warningsListResponse?.data?.filter(warning => warning.status === 'ACTIVE') || [];
 
   // Helper function to get allergy severity background + text color
   const getAllergySeverityColors = (severity: string) => {
-    const lowerSeverity = severity?.toLowerCase()?.trim();
 
-    if (
-      lowerSeverity === 'mild' ||
-      lowerSeverity === 'minor' ||
-      lowerSeverity?.includes('mild') ||
-      lowerSeverity?.includes('minor')
-    ) {
+    if (severity === 'MILD_MINOR') {
       return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
-    } else if (lowerSeverity === 'moderate') {
+    } else if (severity === 'MODERATE') {
       return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
     } else {
       return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
@@ -449,7 +446,7 @@ useEffect(() => {
         ))}
 
         {/* Individual Warnings Badges */}
-        {activeWarnings.map((warning, index) => (
+        {/* {activeWarnings.map((warning, index) => (
           <MyBadgeStatus
             key={`warning-${warning.key || index}`}
             backgroundColor={
@@ -463,6 +460,28 @@ useEffect(() => {
               </>
             }
           />
+        ))} */}
+        {activeWarnings.map((warning, index) => (
+
+          <Whisper placement='top' speaker={<Tooltip><Translate>Warning</Translate></Tooltip>}>
+            <span>
+            <MyBadgeStatus
+              key={`warning-${warning.id || index}`}
+              backgroundColor={
+                getAllergySeverityColors(warning.severity || '').bg
+              }
+              color={getAllergySeverityColors(warning.severity || '').text}
+              contant={
+                <>
+                  <FontAwesomeIcon icon={faHandDots} className="margin-right-size" />
+                  {warning.warning}
+                </>
+              }
+            />
+            </span>
+          </Whisper>
+
+
         ))}
       </div>
 

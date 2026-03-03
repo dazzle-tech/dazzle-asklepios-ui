@@ -1530,6 +1530,61 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   formJson: null
 }
 
+export const newPatientWarnings:  modelTypes.PatientWarnings = {
+  id: undefined,
+  patientId: undefined,
+  encounterId: undefined,
+  warningType: '',
+  warning: '',
+  severity: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+  byPatient: true,
+  sourceOfInformation: '',
+  note: '',
+  status: 'ACTIVE',
+  actionTaken: '',
+   resolvedBy: '',
+  resolvedDate: '',
+
+  cancelledBy: '',
+  cancelledDate: '',
+  cancellationReason: '',
+
+  createdBy: '',
+  createdDate: '',
+  lastModifiedBy: '',
+  lastModifiedDate: '',
+}
+
+export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,   
+  warningType: '',
+  warning: '',
+  severity: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  status: 'ACTIVE',
+  actionTaken: ''
+}
+
+export const newPatientWarningsUpdateDTO: modelTypes.PatientWarningsUpdateDTO = {
+  id: undefined, 
+  warningType: '',
+  warning: '',
+  severity: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  actionTaken: ''
+}
+
 
 export const newPatientPrescription: modelTypes.PatientPrescription = {
   id: undefined as any, 
