@@ -193,6 +193,12 @@ import { additionalMeasurementsService } from './services/medicalsheetsEncounter
 import { patientAllergiesService } from './services/encounters/patientAllergiesService';
 import { ReviewOfSystemService } from './services/medicalsheetsEncounter/ReviewOfSystemService';
 import { patientWarningsService } from './services/encounters/patientWarningsService';
+import { patientPrescriptionService } from './services/patients/Prescription/patientPrescriptionService';
+import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
+import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
+import { NextOfKinService } from './services/patients/NextOfKinService';
+
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -470,7 +476,11 @@ export const store = configureStore({
       patientObservationsComplaintsService.reducer,
     [painAssessmentService.reducerPath]: painAssessmentService.reducer,
     [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
-    [ReviewOfSystemService.reducerPath]: additionalMeasurementsService.reducer
+    [ReviewOfSystemService.reducerPath]: ReviewOfSystemService.reducer,
+    [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
+    [patientPrescriptionMedicationService.reducerPath]: patientPrescriptionMedicationService.reducer,
+    [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
+    [NextOfKinService.reducerPath]: NextOfKinService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -691,7 +701,11 @@ export const store = configureStore({
       patientAllergiesService.middleware,
       patientWarningsService.middleware,
       procedureSetupService.middleware,
-      ReviewOfSystemService.middleware
+      ReviewOfSystemService.middleware,
+      patientPrescriptionService.middleware,
+      patientPrescriptionMedicationService.middleware,
+      patientServicesAndProductsService.middleware,
+      NextOfKinService.middleware
     ])
 });
 
