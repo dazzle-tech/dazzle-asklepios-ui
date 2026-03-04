@@ -279,8 +279,7 @@ const NormalConsultation = props => {
     try {
       await cancelConsultation({
         id: selectedRow.id,
-        cancellationReason: consultation?.cancellationReason ?? '',
-        cancelledBy: user?.id
+        cancellationReason: consultation?.cancellationReason ?? ''
       }).unwrap();
 
       dispatch(notify({ msg: 'Cancelled successfully', sev: 'success' }));
@@ -374,7 +373,9 @@ const NormalConsultation = props => {
             const id = String(rowData.practitionerId ?? '');
             const record = (practitionersBulk ?? []).find(r => String(r.id) === id);
             if (!record) return <span>{rowData.practitionerId ?? ''}</span>;
-            const full = `${String(record.firstName ?? '').trim()} ${String(record.lastName ?? '').trim()}`.trim();
+            const full = `${String(record.firstName ?? '').trim()} ${String(
+              record.lastName ?? ''
+            ).trim()}`.trim();
             return <span>{full || rowData.practitionerId}</span>;
           }
 
@@ -388,10 +389,7 @@ const NormalConsultation = props => {
         render: (rowData: Consultation) => {
           const status = String(rowData.status ?? '').toUpperCase();
           return (
-            <MyBadgeStatus
-              contant={formatEnumString(status)}
-              color={getStatusColor(status)}
-            />
+            <MyBadgeStatus contant={formatEnumString(status)} color={getStatusColor(status)} />
           );
         }
       },

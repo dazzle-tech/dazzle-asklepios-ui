@@ -1528,11 +1528,65 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   facilityId: null,
   departmentId: null,
   formJson: null
-}
+};
 
+export const newPatientWarnings: modelTypes.PatientWarnings = {
+  id: undefined,
+  patientId: undefined,
+  encounterId: undefined,
+  warningType: '',
+  warning: '',
+  severity: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+  byPatient: true,
+  sourceOfInformation: '',
+  note: '',
+  status: 'ACTIVE',
+  actionTaken: '',
+  resolvedBy: '',
+  resolvedDate: '',
+
+  cancelledBy: '',
+  cancelledDate: '',
+  cancellationReason: '',
+
+  createdBy: '',
+  createdDate: '',
+  lastModifiedBy: '',
+  lastModifiedDate: ''
+};
+
+export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,
+  warningType: '',
+  warning: '',
+  severity: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  status: 'ACTIVE',
+  actionTaken: ''
+};
+
+export const newPatientWarningsUpdateDTO: modelTypes.PatientWarningsUpdateDTO = {
+  id: undefined,
+  warningType: '',
+  warning: '',
+  severity: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  actionTaken: ''
+};
 
 export const newPatientPrescription: modelTypes.PatientPrescription = {
-  id: undefined as any, 
+  id: undefined as any,
   patientId: null as any,
   encounterId: null as any,
   prescriptionNum: null as any,
@@ -1548,7 +1602,6 @@ export const newPatientPrescription: modelTypes.PatientPrescription = {
   lastModifiedBy: null,
   lastModifiedDate: null
 };
-
 
 export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMedication = {
   id: undefined as any,
@@ -1589,12 +1642,11 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
 
 export const newProgressNote: modelTypes.ProgressNote = {
   id: undefined,
-  patient: {
-    id: undefined
-  },
+  patient: { id: undefined },
   encounterId: undefined,
   noteText: '',
 
+  // ✅ String بدل number
   cancelledBy: null,
   cancelledDate: null,
   cancellationReason: null,
@@ -1849,4 +1901,117 @@ export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProduct
   serviceId: undefined,
   productId: undefined,
   quantity: 0
+};
+
+// =====================
+// Consultation
+// =====================
+
+export const newConsultation: modelTypes.Consultation = {
+  id: undefined,
+  patient: null,
+  encounterId: 0,
+  fromFacilityId: 0,
+  toFacilityId: 0,
+  fromDepartmentId: 0,
+  toDepartmentId: null,
+  consultationNumber: null,
+  destinationType: 'DEPARTMENT',
+  consultationType: '',
+  consultantSpeciality: null,
+  consultationMethod: '',
+  practitionerId: null,
+  consultationLevel: 'ROUTINE',
+  consultationContent: '',
+  notes: null,
+  extraDocument: null,
+  approvalNumber: null,
+  status: 'REQUESTED',
+  responseDate: null,
+  responseBy: null,
+  responseText: null,
+  rejectedDate: null,
+  rejectedBy: null,
+  rejectReason: null,
+  cancellationReason: null,
+  cancelledDate: null,
+  cancelledBy: null,
+  confirmedDate: null,
+  confirmedBy: null,
+  submittedDate: null,
+  submittedBy: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newConsultationCreateVM: modelTypes.ConsultationCreateVM = {
+  patientId: 0,
+  encounterId: 0,
+  fromFacilityId: 0,
+  toFacilityId: 0,
+  fromDepartmentId: 0,
+  toDepartmentId: null,
+  consultationType: '',
+  consultantSpeciality: null,
+  practitionerId: null,
+  destinationType: 'DEPARTMENT',
+  consultationMethod: '',
+  consultationLevel: 'ROUTINE',
+  consultationContent: '',
+  notes: null,
+  extraDocument: null,
+  approvalNumber: null
+};
+
+export const newConsultationCancelVM: modelTypes.ConsultationCancelVM = {
+  cancellationReason: ''
+};
+
+export const newConsultationRejectVM: modelTypes.ConsultationRejectVM = {
+  reason: ''
+};
+
+export const newConsultationResponseVM: modelTypes.ConsultationResponseVM = {
+  responseText: ''
+};
+
+export const newConsultationSubmitRequestVM: modelTypes.ConsultationSubmitRequestVM = {
+  consultationIds: []
+};
+
+export const newTelephonicConsultation: modelTypes.TelephonicConsultations = {
+  id: undefined,
+  patient: null,
+  encounterId: 0,
+  practitionerId: 0,
+  dateOfCall: '',
+  consultationContent: '',
+  approvalNumber: null,
+  notes: null,
+  extraDocumentation: null,
+  status: 'NEW',
+  cancellationReason: null,
+  cancelledAt: null,
+  cancelledBy: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newTelephonicConsultationCreateVM: modelTypes.TelephonicConsultationCreateVM = {
+  patientId: 0,
+  encounterId: 0,
+  practitionerId: 0,
+  dateOfCall: '',
+  consultationContent: '',
+  approvalNumber: null,
+  notes: null,
+  extraDocumentation: null
+};
+
+export const newTelephonicConsultationCancelVM: modelTypes.TelephonicConsultationCancelVM = {
+  reason: ''
 };
