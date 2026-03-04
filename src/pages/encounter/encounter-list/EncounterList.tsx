@@ -463,7 +463,7 @@ const handleGoToVisit = async (encounterData: any) => {
   
   const privatePatientPath = '/user-access-patient-private';
   const encounterPath = '/encounter';
-  const targetPath = fullPatient.privatePatient ? privatePatientPath : encounterPath;
+  const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
 
   navigate(targetPath, {
     state: {
@@ -477,19 +477,28 @@ const handleGoToVisit = async (encounterData: any) => {
   sessionStorage.setItem('encounterPageSource', 'EncounterList');
 };
 
-  const handleGoToPreVisitObservations = async (encounterData: any, patientData: any) => {
+  const handleGoToPreVisitObservations = async (encounterData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
+      dispatch(showSystemLoader());
+  const fullPatient = await fetchPatientForEncounter(encounterData);
+  dispatch(hideSystemLoader());
+      if (!fullPatient) {
+    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+    return;
+  }
 
-    const targetPath = patientData?.isPrivatePatient
+  dispatch(setEncounter(encounterData));
+  dispatch(setPatient(fullPatient));
+    const targetPath = fullPatient?.isPrivatePatient
       ? '/user-access-patient-private'
       : '/nurse-station';
     navigate(targetPath, {
       state: {
-        info: patientData?.isPrivatePatient ? 'toNurse' : undefined,
-        patient: patientData,
+        info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
+        patient: fullPatient,
         encounter: encounterData,
-        edit: String(encounterData?.status ?? '').toUpperCase() === 'CLOSED'
+        edit: encounterData?.status ?.toUpperCase() === 'CLOSED'
       }
     });
   };
@@ -659,7 +668,7 @@ const handleGoToVisit = async (encounterData: any) => {
                   onClick={() => {
                     setLocalEncounter(row);
                     if (row?.isObserved) {
-                      handleGoToPreVisitObservations(row, row.patientObject);
+                      handleGoToPreVisitObservations(row);
                     } else {
                       setOpenNurseAssessment(true);
                     }
@@ -676,7 +685,7 @@ const handleGoToVisit = async (encounterData: any) => {
                   size="small"
                   onClick={() => {
                     setLocalEncounter(row);
-                    handleGoToVisit(row, row.patientObject);
+                    handleGoToVisit(row);
                   }}
                 >
                   <FontAwesomeIcon icon={faUserDoctor} />
