@@ -1849,7 +1849,7 @@ export interface PatientEncounter {
   departmentId: number;
 
   practitionerId?: number | null;
-
+  appointmentId?: string | null;
   encounterType: string;        
   encounterReason: string;      
 

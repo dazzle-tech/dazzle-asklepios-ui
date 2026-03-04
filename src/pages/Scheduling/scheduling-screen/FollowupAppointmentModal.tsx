@@ -55,9 +55,8 @@ import PatientCardWithPicture from '@/components/PatientCard/PatientCardWithPict
 import { Box, Skeleton } from '@mui/material';
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
-// Follow Up visit type LOV key (fixed)
-const FOLLOW_UP_VISIT_TYPE_KEY = '2041067508470007';
-const FOLLOW_UP_VISIT_TYPE_KEY_STR = String(FOLLOW_UP_VISIT_TYPE_KEY);
+// Follow Up visit type enum value
+const FOLLOW_UP_VISIT_TYPE = 'FOLLOW_UP';
 
 const FollowupAppointmentModal = ({
   isOpen,
@@ -83,6 +82,32 @@ const FollowupAppointmentModal = ({
 
   const [selectedSlices, setSelectedSlices] = useState([]);
 
+  const patientSlice = useAppSelector(state => state.patient);
+  const authSlice = useAppSelector(state => state.auth);
+
+  // Get current logged-in facility from localStorage or auth slice
+  const currentLoggedInFacility = useMemo(() => {
+    // Try to get from auth slice first
+    if (authSlice?.tenant?.selectedFacility) {
+      return authSlice.tenant.selectedFacility;
+    }
+    
+    // Fallback to localStorage
+    try {
+      const raw = localStorage.getItem('tenant');
+      if (raw) {
+        const tenant = JSON.parse(raw);
+        if (tenant?.selectedFacility) {
+          return tenant.selectedFacility;
+        }
+      }
+    } catch (e) {
+      // Error parsing tenant from localStorage
+    }
+    
+    return null;
+  }, [authSlice?.tenant?.selectedFacility]);
+
   const seedFromAppointmentData = () => {
     const seedPatient = (appointmentData as any)?.patient;
     if (seedPatient?.key) {
@@ -91,7 +116,7 @@ const FollowupAppointmentModal = ({
     // Keep existing appointment fields if editing, but always enforce follow-up visit type + patientKey when available.
     setAppointment(prev => ({
       ...prev,
-      visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR,
+      visitTypeLkey: FOLLOW_UP_VISIT_TYPE,
       patientKey: seedPatient?.key ?? prev?.patientKey,
       createdBy: authSlice.user.username || '',
     }));
@@ -110,15 +135,22 @@ const FollowupAppointmentModal = ({
         ...appointmentData,
         departmentKey: departmentKey,
         // Ensure Follow Up visit type is always set for this modal
-        visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR
+        visitTypeLkey: FOLLOW_UP_VISIT_TYPE
       });
       setLocalPatient(appointmentData?.patient || newApPatient);
     } else {
+      // For new appointments, initialize with current logged-in facility
+      const initialFacilityKey = currentLoggedInFacility?.id || currentLoggedInFacility?.facilityKey;
       // Ensure Follow Up visit type is always set for this modal
-      setAppointment({ ...newApAppointment, visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR } as any);
+      // resourceTypeLkey will be set by the dedicated useEffect below
+      setAppointment({ 
+        ...newApAppointment, 
+        visitTypeLkey: FOLLOW_UP_VISIT_TYPE,
+        facilityKey: initialFacilityKey || null
+      } as any);
       setLocalPatient(newApPatient);
     }
-  }, [appointmentData]);
+  }, [appointmentData, currentLoggedInFacility]);
 
   // When reopening the modal, re-seed patient/visit type from `appointmentData` even if it didn't change.
   useEffect(() => {
@@ -154,11 +186,12 @@ const FollowupAppointmentModal = ({
       }
     } else if (!appointmentData) {
       // Only clear if we don't have appointmentData (i.e., creating new appointment)
+      // Don't clear resourceTypeLkey - let the default useEffect set it to CLINIC
       setAppointment(prev => ({
         ...prev,
         resourceKey: null,
-        resourceTypeLkey: null,
         facilityKey: null
+        // Don't touch resourceTypeLkey - let the default useEffect handle it
       }));
     }
   }, [selectedSlot, resourcesListResponse, facility, appointmentData, showOnly]);
@@ -185,9 +218,6 @@ const FollowupAppointmentModal = ({
   };
   const [dailySlices, setDailySlices] = useState({});
   const sortedDaysWithSlices = Object.keys(dailySlices).sort((a, b) => parseInt(a) - parseInt(b));
-
-  const patientSlice = useAppSelector(state => state.patient);
-  const authSlice = useAppSelector(state => state.auth);
 
   const loggedInUsername = useMemo(() => {
     const u = authSlice?.user;
@@ -508,6 +538,8 @@ const FollowupAppointmentModal = ({
   // const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
   const ResourceTypeEnum = useEnumOptions('ResourceType');
 
+  const DEFAULT_RESOURCE_TYPE = 'CLINIC';
+
   // Get active filter tags
   const activeFilters = useMemo(() => {
     const filters = [];
@@ -571,11 +603,13 @@ const FollowupAppointmentModal = ({
   //     code: 'CITY',
   //     parentValueKey: localPatient.countryLkey
   //   });
-  const { data: visitTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
-  // Ensure Visit Type is always set even if LOVs haven't loaded yet
+  // Use EncounterReason enum instead of LOV query
+  const EncounterReasonEnum = useEnumOptions('EncounterReason');
+  
+  // Ensure Visit Type is always set to FOLLOW_UP for this modal
   useEffect(() => {
-    if (String(appointment?.visitTypeLkey ?? '') === FOLLOW_UP_VISIT_TYPE_KEY_STR) return;
-    setAppointment(prev => ({ ...prev, visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR }));
+    if (appointment?.visitTypeLkey === 'FOLLOW_UP') return;
+    setAppointment(prev => ({ ...prev, visitTypeLkey: 'FOLLOW_UP' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appointment?.visitTypeLkey]);
 
@@ -623,7 +657,7 @@ const FollowupAppointmentModal = ({
     // For follow-up creation from Encounter, keep the seeded patient when clearing the form.
     const seedPatient = (appointmentData as any)?.patient;
     setLocalPatient(seedPatient?.key ? seedPatient : newApPatient);
-    setAppointment({ ...newApAppointment, visitTypeLkey: FOLLOW_UP_VISIT_TYPE_KEY_STR, patientKey: seedPatient?.key } as any);
+    setAppointment({ ...newApAppointment, visitTypeLkey: FOLLOW_UP_VISIT_TYPE, patientKey: seedPatient?.key } as any);
     setPatientAge(null);
     setValidationResult(undefined);
     setReRenderModal(!reRenderModal);
@@ -741,12 +775,83 @@ const FollowupAppointmentModal = ({
   }, [instructionValue]);
 
   useEffect(() => {
-    if (resourceType) setAppointment(prev => ({ ...prev, resourceTypeLkey: resourceType?.resourcesType }));
+    if (resourceType?.resourcesType && Array.isArray(resourceType.resourcesType) && resourceType.resourcesType.length > 0) {
+      // Extract the first value from the array (resourceType.resourcesType is an array like ['CLINIC'])
+      const firstResourceType = resourceType.resourcesType[0];
+      setAppointment(prev => ({
+        ...prev,
+        resourceTypeLkey: firstResourceType
+      }));
+    }
   }, [resourceType]);
 
+  // Set default resource type to CLINIC for new appointments
   useEffect(() => {
-    if (facility) setAppointment(prev => ({ ...prev, facilityKey: facility?.id || facility?.facilityKey }));
-  }, [facility]);
+    // Skip if we have appointmentData (editing existing appointment)
+    if (appointmentData) {
+      return;
+    }
+
+    // Skip if resourceTypeLkey is already set to a valid value (and it's not empty/null)
+    if (appointment?.resourceTypeLkey && appointment.resourceTypeLkey !== null && appointment.resourceTypeLkey !== '') {
+      return;
+    }
+
+    // If resourceType prop has values (filter is applied from ScheduleScreen), use the first one
+    if (resourceType?.resourcesType && Array.isArray(resourceType.resourcesType) && resourceType.resourcesType.length > 0) {
+      const firstResourceType = resourceType.resourcesType[0];
+      setAppointment(prev => ({
+        ...prev,
+        resourceTypeLkey: firstResourceType
+      }));
+      return;
+    }
+
+    // Set default to CLINIC when modal opens for new appointment
+    if (isOpen) {
+      // If ResourceTypeEnum is loaded, try to match the value
+      if (Array.isArray(ResourceTypeEnum) && ResourceTypeEnum.length > 0) {
+        const normalize = (v: any) => String(v ?? '').trim().toLowerCase();
+
+        const match =
+          ResourceTypeEnum.find(
+            (x: any) =>
+              normalize(x?.label) === normalize(DEFAULT_RESOURCE_TYPE) ||
+              normalize(x?.value) === normalize(DEFAULT_RESOURCE_TYPE)
+          ) || null;
+
+        if (match?.value) {
+          setAppointment(prev => ({
+            ...prev,
+            resourceTypeLkey: match.value
+          }));
+          return;
+        }
+      }
+      
+      // Fallback: use DEFAULT_RESOURCE_TYPE directly (works even if enum not loaded yet)
+      setAppointment(prev => ({
+        ...prev,
+        resourceTypeLkey: DEFAULT_RESOURCE_TYPE
+      }));
+    }
+  }, [ResourceTypeEnum, appointment?.resourceTypeLkey, appointmentData, resourceType, isOpen]);
+
+  useEffect(() => {
+    // If facility prop is provided, use it
+    if (facility) {
+      setAppointment(prev => ({ ...prev, facilityKey: facility?.id || facility?.facilityKey }));
+      return;
+    }
+    
+    // Otherwise, use current logged-in facility if no facility is set
+    if (!appointment?.facilityKey && currentLoggedInFacility) {
+      setAppointment(prev => ({ 
+        ...prev, 
+        facilityKey: currentLoggedInFacility?.id || currentLoggedInFacility?.facilityKey 
+      }));
+    }
+  }, [facility, currentLoggedInFacility, appointment?.facilityKey]);
 
   useEffect(() => {
     const currentFacilityKey = appointment?.facilityKey ? String(appointment.facilityKey) : null;
@@ -1313,6 +1418,7 @@ const FollowupAppointmentModal = ({
                             </div>
                             <div className="input-wrapper" style={{ flex: 3, minWidth: 260 }}>
                               <MyInput
+                                disabled
                                 width={'15vw'}
                                 column
                                 fieldLabel="Facility"
@@ -1321,7 +1427,6 @@ const FollowupAppointmentModal = ({
                                 selectDataLabel="name"
                                 selectDataValue="id"
                                 fieldName="facilityKey"
-                                disabled={showOnly}
                                 record={normalizedAppointment || appointment}
                                 setRecord={setAppointment}
                                 searchable={false}
@@ -1335,7 +1440,7 @@ const FollowupAppointmentModal = ({
                           <div className="flex-container">
                             <div className="input-wrapper" style={{ flex: 3 }}>
                               <MyInput
-                                disabled={showOnly}
+                                disabled
                                 width={'15vw'}
                                 vr={validationResult}
                                 column
@@ -1415,14 +1520,9 @@ const FollowupAppointmentModal = ({
                                 fieldLabel="Visit Type"
                                 fieldType="select"
                                 fieldName="visitTypeLkey"
-                                // Provide a fallback option so the disabled field shows a value even before LOVs load
-                                selectData={
-                                  (visitTypeQueryResponse?.object?.length
-                                    ? visitTypeQueryResponse.object.map((v: any) => ({ ...v, key: String(v?.key) }))
-                                    : [{ key: FOLLOW_UP_VISIT_TYPE_KEY_STR, lovDisplayVale: 'Follow Up' }]) as any
-                                }
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
+                                selectData={EncounterReasonEnum ?? []}
+                                selectDataLabel="label"
+                                selectDataValue="value"
                                 record={appointment}
                                 setRecord={setAppointment}
                                 disabled={true}

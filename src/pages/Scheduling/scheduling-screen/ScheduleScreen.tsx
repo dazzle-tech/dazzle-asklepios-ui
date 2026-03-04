@@ -1029,6 +1029,7 @@ const ScheduleScreen = () => {
 
                   <Form fluid layout="inline">
                     <MyInput
+                      disabled
                       height={35}
                       width={'11.5vw'}
                       column

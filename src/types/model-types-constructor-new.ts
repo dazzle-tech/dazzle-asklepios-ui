@@ -1363,7 +1363,7 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
   departmentId: 0,
 
   practitionerId: null,
-
+  appointmentId: null,
   encounterType: '',
   encounterReason: '',
 

@@ -26,6 +26,8 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { useGetDocumentsByPatientQuery } from '@/services/patients/patientDocumentsService';
+import { useLazyGetPreviousEncountersSameDepartmentQuery } from '@/services/encounters/patientEncounterService';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { ApAppointment, ApAttachment, ApPatient } from '@/types/model-types';
 import { newApAppointment, newApPatient } from '@/types/model-types-constructor';
 import { conjureValueBasedOnKeyFromListOfValues, formatEnumString } from '@/utils';
@@ -144,12 +146,10 @@ const AppointmentModal = ({
       });
       const patient = appointmentData?.patient || newApPatient;
       if (patient && (patient.key || patient.id)) {
-        console.log('Patient loaded from appointmentData (new format):', patient);
         // Convert if it's in new format (has id but no key, or has new format fields)
         const convertedPatient = (patient.id && !patient.key) || patient.medicalRecordNumber 
           ? convertNewPatientToApPatient(patient)
           : patient;
-        console.log('Converted Patient (ApPatient format):', convertedPatient);
         setLocalPatient(convertedPatient);
       } else {
         setLocalPatient(patient);
@@ -190,11 +190,13 @@ const AppointmentModal = ({
       }
     } else if (!appointmentData) {
       // Only clear if we don't have appointmentData (i.e., creating new appointment)
+      // Don't clear resourceTypeLkey - let the default useEffect set it to CLINIC
+      // Only clear resourceKey and facilityKey, preserve resourceTypeLkey
       setAppointment(prev => ({
         ...prev,
         resourceKey: null,
-        resourceTypeLkey: null,
         facilityKey: null
+        // Don't touch resourceTypeLkey - let the default useEffect handle it
       }));
     }
   }, [selectedSlot, resourcesListResponse, facility, appointmentData, showOnly]);
@@ -296,6 +298,14 @@ const AppointmentModal = ({
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [showMore, setShowMore] = useState(false);
   const prevFacilityKeyRef = useRef<string | null>(null);
+
+  // Previous encounters for follow-up
+  const [prevEncounterPage, setPrevEncounterPage] = useState(0);
+  const prevEncounterSize = 15;
+  const [allPrevEncounters, setAllPrevEncounters] = useState<any[]>([]);
+  const [triggerPreviousEncounters, { data: prevEncountersList, isFetching: isPrevEncountersFetching }] =
+    useLazyGetPreviousEncountersSameDepartmentQuery();
+
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
@@ -323,12 +333,6 @@ const AppointmentModal = ({
     { skip: !patientId }
   );
 
-  // Print documents when they're fetched
-  useEffect(() => {
-    if (patientId) {
-      console.log('Fetching documents for patient ID:', patientId);
-    }
-  }, [patientId]);
 
   // Extract primary document
   const primaryDocument = useMemo(() => {
@@ -339,35 +343,6 @@ const AppointmentModal = ({
     return primary || null;
   }, [patientDocumentsResponse]);
 
-  useEffect(() => {
-    if (patientDocumentsResponse?.data) {
-      console.log('=== Patient Documents Retrieved ===');
-      console.log('Total Documents:', patientDocumentsResponse.totalCount);
-      console.log('All Documents:', patientDocumentsResponse.data);
-      
-      // Print primary document
-      if (primaryDocument) {
-        console.log('\n=== PRIMARY DOCUMENT ===');
-        console.log('Document Type:', primaryDocument.type);
-        console.log('Document Number:', primaryDocument.number);
-        console.log('Full Primary Document:', primaryDocument);
-      } else {
-        console.log('No primary document found');
-      }
-      
-      // Print each document with details
-      if (Array.isArray(patientDocumentsResponse.data)) {
-        patientDocumentsResponse.data.forEach((doc: any, index: number) => {
-          console.log(`\n--- Document ${index + 1} ---`);
-          console.log('Document ID:', doc.id);
-          console.log('Document Type:', doc.type || doc.documentType);
-          console.log('Document Number:', doc.number || doc.documentNumber);
-          console.log('Is Primary:', doc.isPrimary);
-          console.log('Full Document:', doc);
-        });
-      }
-    }
-  }, [patientDocumentsResponse, primaryDocument]);
 
   useEffect(() => {
     if (fetchPatientImageResponse.isSuccess && fetchPatientImageResponse.data && fetchPatientImageResponse.data.key) {
@@ -605,7 +580,6 @@ const AppointmentModal = ({
     // When editing/viewing an existing appointment, localPatient should come from `appointmentData`.
     // Don't overwrite it from the global patient slice (which may be empty or from a previous flow).
     if (!appointmentData && patientSlice?.patient) {
-      console.log('Patient loaded from patientSlice:', patientSlice.patient);
       setLocalPatient(patientSlice?.patient);
     }
   }, [patientSlice, appointmentData]);
@@ -616,17 +590,29 @@ const AppointmentModal = ({
   const DEFAULT_RESOURCE_TYPE = 'CLINIC';
 
   useEffect(() => {
-    if (appointmentData || appointment?.resourceTypeLkey) {
+    // Skip if we have appointmentData (editing existing appointment)
+    if (appointmentData) {
       return;
     }
 
-     if (resourceType?.resourcesType && Array.isArray(resourceType.resourcesType) && resourceType.resourcesType.length > 0) {
+    // Skip if resourceTypeLkey is already set to a valid value
+    if (appointment?.resourceTypeLkey) {
       return;
     }
 
-    const isEmpty = !appointment?.resourceTypeLkey;
+    // If resourceType prop has values (filter is applied from ScheduleScreen), use the first one
+    if (resourceType?.resourcesType && Array.isArray(resourceType.resourcesType) && resourceType.resourcesType.length > 0) {
+      const firstResourceType = resourceType.resourcesType[0];
+      setAppointment(prev => ({
+        ...prev,
+        resourceTypeLkey: firstResourceType
+      }));
+      return;
+    }
 
-    if (isEmpty && Array.isArray(ResourceTypeEnum) && ResourceTypeEnum.length) {
+    // Set default to CLINIC when modal opens for new appointment
+    // Only set if modal is open, ResourceTypeEnum is loaded, and resourceTypeLkey is not set
+    if (isOpen && !appointment?.resourceTypeLkey && Array.isArray(ResourceTypeEnum) && ResourceTypeEnum.length) {
       const normalize = (v: any) => String(v ?? '').trim().toLowerCase();
 
       const match =
@@ -648,7 +634,7 @@ const AppointmentModal = ({
         }));
       }
     }
-  }, [ResourceTypeEnum, appointment?.resourceTypeLkey, appointmentData, resourceType]);
+  }, [ResourceTypeEnum, appointment?.resourceTypeLkey, appointmentData, resourceType, isOpen]);
 
   // Get active filter tags
   const activeFilters = useMemo(() => {
@@ -791,7 +777,8 @@ const AppointmentModal = ({
   //     code: 'CITY',
   //     parentValueKey: localPatient.countryLkey
   //   });
-  const { data: visitTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
+  // Use EncounterReason enum instead of LOV query
+  const EncounterReasonEnum = useEnumOptions('EncounterReason');
 
   // Use new patient service hooks conditionally based on selected criterion
   const { data: patientsByMrn, isLoading: isLoadingMrn, isFetching: isFetchingMrn } = useGetPatientsByMedicalRecordNumberQuery(
@@ -945,10 +932,8 @@ const AppointmentModal = ({
 
   const handleSelectPatient = data => {
     if (patientSearchTarget === 'primary') {
-      console.log('Selected Patient (new format):', data);
       // Convert new patient format to ApPatient format
       const convertedPatient = convertNewPatientToApPatient(data);
-      console.log('Converted Patient (ApPatient format):', convertedPatient);
       setLocalPatient(convertedPatient);
     } else if (patientSearchTarget === 'relation') {
     }
@@ -985,7 +970,6 @@ const AppointmentModal = ({
   useEffect(() => {
     calculateAge(localPatient?.dob);
     if (from === 'Encounter' && patientSlice.patient) {
-      console.log('Patient loaded from Encounter slice:', patientSlice.patient);
       setLocalPatient(patientSlice.patient);
     }
   }, [localPatient, from, patientSlice]);
@@ -1497,6 +1481,91 @@ const AppointmentModal = ({
     }
   }, [appointment?.durationLkey]);
 
+  // Fetch previous encounters when FOLLOW_UP is selected
+  useEffect(() => {
+    if (appointment?.visitTypeLkey !== 'FOLLOW_UP') {
+      setAllPrevEncounters([]);
+      return;
+    }
+    
+    const patientAny = localPatient as any;
+    const patientIdNum = Number(patientAny?.id ?? localPatient?.key ?? 0);
+    if (!patientIdNum || patientIdNum === 0) return;
+
+    // Get department ID from appointment
+    // For department-based resources, departmentKey is the resourceKey
+    // For other resources, use departmentKey directly
+    const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(appointment?.resourceTypeLkey);
+    const departmentId = isDepartmentBasedResource 
+      ? Number(appointment?.resourceKey || 0)
+      : Number(appointment?.departmentKey || 0);
+
+    if (!departmentId || departmentId === 0) return;
+
+    setPrevEncounterPage(0);
+    setAllPrevEncounters([]);
+
+    triggerPreviousEncounters({
+      patientId: patientIdNum,
+      departmentId: departmentId,
+      page: 0,
+      size: prevEncounterSize,
+      sort: 'id,desc'
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointment?.visitTypeLkey, localPatient?.key, appointment?.resourceKey, appointment?.departmentKey, appointment?.resourceTypeLkey]);
+
+  // Handle pagination for previous encounters
+  useEffect(() => {
+    if (appointment?.visitTypeLkey !== 'FOLLOW_UP') return;
+    
+    const patientAny = localPatient as any;
+    const patientIdNum = Number(patientAny?.id ?? localPatient?.key ?? 0);
+    if (!patientIdNum || patientIdNum === 0) return;
+
+    const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(appointment?.resourceTypeLkey);
+    const departmentId = isDepartmentBasedResource 
+      ? Number(appointment?.resourceKey || 0)
+      : Number(appointment?.departmentKey || 0);
+
+    if (!departmentId || departmentId === 0) return;
+    if (prevEncounterPage === 0) return;
+
+    triggerPreviousEncounters({
+      patientId: patientIdNum,
+      departmentId: departmentId,
+      page: prevEncounterPage,
+      size: prevEncounterSize,
+      sort: 'id,desc'
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prevEncounterPage, appointment?.visitTypeLkey, localPatient?.key, appointment?.resourceKey, appointment?.departmentKey, appointment?.resourceTypeLkey]);
+
+  // Merge previous encounters data
+  useEffect(() => {
+    const rows = prevEncountersList?.data ?? [];
+    if (!rows.length) return;
+
+    setAllPrevEncounters(previousEncounters => {
+      const seenIds = new Set(previousEncounters.map((encounter: any) => encounter.id));
+      const merged = [...previousEncounters];
+      rows.forEach((encounter: any) => {
+        if (!seenIds.has(encounter.id)) merged.push(encounter);
+      });
+      return merged;
+    });
+  }, [prevEncountersList]);
+
+  // Format previous encounters for display
+  const modifiedPrevEncounters = useMemo(() => {
+    return (allPrevEncounters ?? []).map((encounter: any) => ({
+      ...encounter,
+      combinedLabel: `${encounter.encounterNumber} , ${encounter.encounterDate ?? ''} `
+    }));
+  }, [allPrevEncounters]);
+
+  const prevEncountersHasMore = Boolean(prevEncountersList?.links?.next);
+
   useEffect(() => {
     const today = new Date();
     const currentDay = today.getDate();
@@ -1587,10 +1656,8 @@ const AppointmentModal = ({
                             open={quickPatientModalOpen} 
                             setOpen={() => setQuickPatientModalOpen(false)} 
                             setPatient={(patient) => {
-                              console.log('Patient selected from QuickPatient (new format):', patient);
                               // Convert new patient format to ApPatient format
                               const convertedPatient = convertNewPatientToApPatient(patient);
-                              console.log('Converted Patient (ApPatient format):', convertedPatient);
                               setLocalPatient(convertedPatient);
                             }} 
                           />
@@ -1833,9 +1900,9 @@ const AppointmentModal = ({
                                 fieldLabel="Visit Type"
                                 fieldType="select"
                                 fieldName="visitTypeLkey"
-                                selectData={visitTypeQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
+                                selectData={EncounterReasonEnum ?? []}
+                                selectDataLabel="label"
+                                selectDataValue="value"
                                 record={appointment}
                                 setRecord={setAppointment}
                                 disabled={showOnly}
@@ -1845,6 +1912,41 @@ const AppointmentModal = ({
                             </div>
                           </div>
                         </div>
+
+                        {/* Previous Encounters field for FOLLOW_UP visit type */}
+                        {appointment?.visitTypeLkey === 'FOLLOW_UP' && (
+                          <div className="show-grid">
+                            <div className="flex-container">
+                              <div className="input-wrapper" style={{ flex: 3 }}>
+                                <MyInput
+                                  width={'15vw'}
+                                  vr={validationResult}
+                                  column
+                                  fieldLabel="Previous Encounters"
+                                  fieldType="selectPagination"
+                                  fieldName="followUpEncounterId"
+                                  selectData={modifiedPrevEncounters}
+                                  selectDataLabel="combinedLabel"
+                                  selectDataValue="id"
+                                  record={appointment}
+                                  setRecord={setAppointment}
+                                  menuMaxHeight={200}
+                                  loading={isPrevEncountersFetching}
+                                  searchable={false}
+                                  hasMore={prevEncountersHasMore}
+                                  disabled={showOnly}
+                                  required={appointment?.visitTypeLkey === 'FOLLOW_UP'}
+                                  onFetchMore={() => {
+                                    if (prevEncountersList?.links?.next) {
+                                      const { page } = extractPaginationFromLink(prevEncountersList.links.next);
+                                      setPrevEncounterPage(page);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </Form>
                     }
                   />

@@ -238,6 +238,14 @@ export const patientEncounterService = createApi({
         res
           ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
+    }),
+
+    getEncountersByAppointment:builder.query<string,{ appointmentId: Id }>({
+      query: ({ appointmentId}) => ({
+        url: `/api/patient/encounter/appointment/${appointmentId}`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
     })
   })
 });
@@ -264,5 +272,6 @@ export const {
   useCountTodayDepartmentCancelledQuery,
 
   useGetEncountersByPatientQuery,
-  useLazyGetEncountersByPatientQuery
+  useLazyGetEncountersByPatientQuery,
+  useGetEncountersByAppointmentQuery
 } = patientEncounterService;
