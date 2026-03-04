@@ -151,7 +151,7 @@ import { portalService } from './services/portalService';
 import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
-import { ReviewOfSystemService } from './services/medicalSheets/ReviewOfSystemService';
+import { ReviewOfSystemService } from './services/medicalSheets/ReviewOfsystemService';
 import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
 import { formTemplateService } from './services/setup/formTemplateService';
