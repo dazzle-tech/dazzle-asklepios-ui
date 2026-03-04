@@ -143,20 +143,17 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
 
   useEffect(() => {
     if (initialData) {
-      console.log(' Number(patient?.key) ==> ', Number(patient?.key));
-      setFormData({ ...initialData, patientId: Number(patient?.key) });
+      setFormData({ ...initialData, patientId: Number(patient?.id) });
     } else {
-      setFormData({ ...emptyPatientProblem, patientId: Number(patient?.key) });
+      setFormData({ ...emptyPatientProblem, patientId: Number(patient?.id) });
     }
-  }, [initialData, open, patient?.key]);
+  }, [initialData, open, patient?.id]);
 
   /* SAVE */
-  console.log(' Number(patient?.key) ==> ', Number(patient?.key));
-  console.log(' sourceLov ==> ', sourceLov);
   const handleSave = async () => {
     const payload = {
       id: formData.id,
-      patientId: Number(patient.key),
+      patientId: Number(patient.id),
       condition: formData.condition,
       dateOfDiagnosis: formData.dateOfDiagnosis,
       status: formData.status,

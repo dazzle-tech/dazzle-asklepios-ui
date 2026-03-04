@@ -15,8 +15,11 @@ import {
   useDeleteReviewOfSystemByIdMutation,
   useGetReviewOfSystemByEncounterQuery,
   useUpdateReviewOfSystemMutation
-} from '@/services/medicalsheets/ReviewOfSystemService'; // ✅ new service
-import { useGetLovValuesByCodeAndParentQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+} from '@/services/medicalSheets/ReviewOfsystemService'; // ✅ new service
+import {
+  useGetLovValuesByCodeAndParentQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
 import { newApLovValues } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
@@ -181,7 +184,17 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
         }
       }
     ],
-    [mainData, edit, selectedSystem?.key, patient?.key, encounter?.key, createRos, deleteRos, updateRos, refetchRos]
+    [
+      mainData,
+      edit,
+      selectedSystem?.key,
+      patient?.key,
+      encounter?.key,
+      createRos,
+      deleteRos,
+      updateRos,
+      refetchRos
+    ]
   );
 
   return (
@@ -189,7 +202,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
       <Panel>
         <Grid fluid>
           <div className="top-div">
-            <div style={{ ...((props?.noTitle) && { display: 'none' }) }}>
+            <div style={{ ...(props?.noTitle && { display: 'none' }) }}>
               <Translate>Physical Examination & Findings</Translate>
             </div>
 
@@ -214,12 +227,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
             </div>
 
             <div className="system-details">
-              <MyTable
-                data={paginatedData}
-                columns={tableColumns}
-                loading={rosLoading}
-    
-              />
+              <MyTable data={paginatedData} columns={tableColumns} loading={rosLoading} />
             </div>
           </div>
         </Grid>

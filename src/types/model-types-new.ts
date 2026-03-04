@@ -1802,7 +1802,8 @@ export type PatientProcedure = {
   status?: ProcStatus;
 
   cancelledDate?: string | null;
-  cancelledBy?: number | null;
+  // ✅ String بدل number
+  cancelledBy?: string | null;
   cancellationReason?: string | null;
 };
 export interface PatientInsuranceCoverage {
@@ -2172,7 +2173,7 @@ export interface PatientAllergiesActiveIngredientResponse {
   id?: number;
   activeIngredientId?: number;
   createdBy?: string;
-  createdDate?: string;      // Instant → string (ISO)
+  createdDate?: string; // Instant → string (ISO)
   lastModifiedBy?: string;
   lastModifiedDate?: string; // Instant → string (ISO)
 }
@@ -2285,14 +2286,12 @@ export interface PatientPrescriptionMedication {
 
 export interface ProgressNote {
   id: number;
-  patient?: {
-    id: number;
-  };
+  patient?: { id: number };
   patientId: number;
   encounterId: number;
   noteText: string;
 
-  cancelledBy?: number | null;
+  cancelledBy?: string | null;
   cancelledDate?: string | null;
   cancellationReason?: string | null;
 
@@ -2316,7 +2315,6 @@ export interface ProgressNoteUpdateVM {
 export interface ProgressNoteCancelVM {
   id: number;
   cancellationReason: string;
-  cancelledBy: number;
 }
 
 export type ProgressNoteLogVM = {
@@ -2328,7 +2326,7 @@ export type ProgressNoteLogVM = {
   lastModifiedDate?: string;
 
   activeIngredients?: PatientAllergiesActiveIngredientResponse[];
-}
+};
 
 export interface PatientAllergiesActiveIngredientCreate {
   activeIngredientId?: number;
@@ -2441,9 +2439,9 @@ export interface PatientWarningsCreateDTO {
 
 export type PatientWarningsUpdateDTO = {
   id: number;
-  warningType: string; 
+  warningType: string;
   warning?: string;
-  severity: string; 
+  severity: string;
   onsetDateUndefined?: boolean;
   onsetDate?: string;
   byPatient?: boolean;
@@ -2498,7 +2496,7 @@ export type PatientProcedureUpdateVM = {
 export type PatientProcedureCancelVM = {
   id: number;
   cancellationReason: string;
-  cancelledBy?: number | null;
+  // ✅ شيلنا cancelledBy - بيتاخد من SecurityUtils
 };
 
 export interface DiagnosticOrder extends AuditingEntity {
@@ -2832,9 +2830,192 @@ export type PatientServiceProductUpdateDTO = {
   productId?: number;
   quantity: number;
 };
+
+// =============================
+//  Consultation
+// =============================
+
+export type ConsultationStatus =
+  | 'REQUESTED'
+  | 'CONFIRMED'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'READY'
+  | 'SUBMITTED';
+
+export type ConsultationLevel = 'CRITICAL' | 'URGENT' | 'ROUTINE';
+
+export type DestinationType = 'DEPARTMENT' | 'CONSULTANT';
+
+export interface Consultation {
+  id?: number;
+
+  patientId?: number | null;
+  encounterId: number;
+
+  fromFacilityId: number;
+  toFacilityId: number;
+  fromDepartmentId: number;
+  toDepartmentId?: number | null;
+
+  consultationNumber?: number | null;
+
+  destinationType: DestinationType;
+  consultationType: string;
+  consultantSpeciality?: string | null;
+  consultationMethod: string;
+  practitionerId?: number | null;
+  consultationLevel: ConsultationLevel;
+  consultationContent: string;
+
+  notes?: string | null;
+  extraDocument?: string | null;
+  approvalNumber?: number | null;
+
+  status: ConsultationStatus;
+
+  responseDate?: string | null;
+  responseBy?: string | null; // ✅ String - CAPTURE من SecurityUtils
+  responseText?: string | null;
+
+  rejectedDate?: string | null;
+  rejectedBy?: string | null; // ✅ String - CAPTURE من SecurityUtils
+  rejectReason?: string | null;
+
+  cancellationReason?: string | null;
+  cancelledDate?: string | null;
+  cancelledBy?: string | null; // ✅ String - CAPTURE من SecurityUtils
+
+  confirmedDate?: string | null;
+  confirmedBy?: string | null; // ✅ String - CAPTURE من SecurityUtils
+
+  submittedDate?: string | null;
+  submittedBy?: string | null; // ✅ String - CAPTURE من SecurityUtils
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+// DTOs - Create
+export interface ConsultationCreateVM {
+  patientId: number;
+  encounterId: number;
+  fromFacilityId: number;
+  toFacilityId: number;
+  fromDepartmentId: number;
+  toDepartmentId?: number | null;
+  consultationType: string;
+  consultantSpeciality?: string | null;
+  practitionerId?: number | null;
+  destinationType: DestinationType;
+  consultationMethod: string;
+  consultationLevel: ConsultationLevel;
+  consultationContent: string;
+  notes?: string | null;
+  extraDocument?: string | null;
+  approvalNumber?: number | null;
+}
+
+// Update
+export interface ConsultationUpdateVM {
+  id: number;
+  destinationType: DestinationType;
+  toFacilityId: number;
+  toDepartmentId?: number | null;
+  consultantSpeciality?: string | null;
+  practitionerId?: number | null;
+  consultationMethod: string;
+  consultationType: string;
+  consultationLevel: ConsultationLevel;
+  consultationContent: string;
+  notes?: string | null;
+  extraDocument?: string | null;
+  approvalNumber?: number | null;
+}
+
+// Cancel - بس reason، الـ cancelledBy من SecurityUtils
+export interface ConsultationCancelVM {
+  cancellationReason: string;
+}
+
+// Reject - بس reason، الـ rejectedBy من SecurityUtils
+export interface ConsultationRejectVM {
+  reason: string;
+}
+
+// Response - بس responseText، الـ responseBy من SecurityUtils
+export interface ConsultationResponseVM {
+  responseText: string;
+}
+
+// Submit
+export interface ConsultationSubmitRequestVM {
+  consultationIds: number[];
+}
+
+export interface ConsultationSubmitErrorVM {
+  consultationId: number;
+  consultationNumber: number;
+  error: string;
+}
+
+export interface ConsultationSubmitResultVM {
+  submittedCount: number;
+  errors: ConsultationSubmitErrorVM[];
+}
+
+// export type DiagnosticStatus = 'NEW' | 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+export interface TelephonicConsultations {
+  id?: number;
+  patientId?: number | null;
+  encounterId: number;
+  practitionerId: number;
+  dateOfCall: string;
+  consultationContent: string;
+  approvalNumber?: number | null;
+  notes?: string | null;
+  extraDocumentation?: string | null;
+  status?: string | null;
+  cancellationReason?: string | null;
+  cancelledAt?: string | null;
+  cancelledBy?: string | null; // ✅ String
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface TelephonicConsultationCreateVM {
+  patientId: number;
+  encounterId: number;
+  practitionerId: number;
+  dateOfCall: string;
+  consultationContent: string;
+  approvalNumber?: number | null;
+  notes?: string | null;
+  extraDocumentation?: string | null;
+}
+
+export interface TelephonicConsultationUpdateVM {
+  id: number;
+  practitionerId: number;
+  dateOfCall: string;
+  consultationContent: string;
+  approvalNumber?: number | null;
+  notes?: string | null;
+  extraDocumentation?: string | null;
+}
+
+export interface TelephonicConsultationCancelVM {
+  reason: string;
+  // ✅ شيلنا cancelledBy
+}
 export type NextOfKin = {
   id: number;
-  patientId: number; 
+  patientId: number;
   name: string;
   relationship: string;
   address: string;
@@ -2897,7 +3078,7 @@ export interface PatientDiagnosis {
   patientId: number | null;
   encounterId: number | null;
   diagnosisId: number | null;
-  type: string | null; 
+  type: string | null;
   suspected: boolean | null;
   major: boolean | null;
 

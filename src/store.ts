@@ -150,8 +150,8 @@ import { consultationService } from './services/consultation/consultationService
 import { portalService } from './services/portalService';
 import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
-import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
-import { ReviewOfSystemService } from "@/services/medicalsheets/ReviewOfSystemService";
+import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
+import { ReviewOfSystemService } from './services/medicalSheets/ReviewOfsystemService';
 import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
 import { formTemplateService } from './services/setup/formTemplateService';
@@ -219,7 +219,8 @@ export const store = configureStore({
     [patientService.reducerPath]: patientService.reducer,
 
     [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
-    [patientPrescriptionMedicationService.reducerPath]: patientPrescriptionMedicationService.reducer,
+    [patientPrescriptionMedicationService.reducerPath]:
+      patientPrescriptionMedicationService.reducer,
     [newPatientService.reducerPath]: newPatientService.reducer,
     [addressService.reducerPath]: addressService.reducer,
     [hipaaService.reducerPath]: hipaaService.reducer,
@@ -264,7 +265,6 @@ export const store = configureStore({
 
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
-
 
     //dental
     [dentalService.reducerPath]: dentalService.reducer,
@@ -315,7 +315,6 @@ export const store = configureStore({
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
 
     [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
-
 
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
@@ -487,6 +486,7 @@ export const store = configureStore({
     [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
 
 
+    [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -712,6 +712,7 @@ export const store = configureStore({
       patientObservationsComplaintsService.middleware,
       painAssessmentService.middleware,
       additionalMeasurementsService.middleware,
+      procedureSetupService.middleware
     ])
 });
 
