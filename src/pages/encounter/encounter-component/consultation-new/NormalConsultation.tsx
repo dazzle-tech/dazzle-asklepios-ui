@@ -37,6 +37,7 @@ import { useGetDepartmentsBulkMutation } from '@/services/security/departmentSer
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
 import Details from './Details';
 import './styles.less';
+import PreviewConsultation from './PreviewConsultation';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
