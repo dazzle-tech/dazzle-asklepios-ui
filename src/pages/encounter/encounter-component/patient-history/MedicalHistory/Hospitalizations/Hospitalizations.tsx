@@ -34,7 +34,7 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
 
   /*  API  */
 
-  const patientId = Number(patient?.key);
+  const patientId = Number(patient?.id);
   const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
   const { data, isFetching } = useGetHospitalizationsQuery(

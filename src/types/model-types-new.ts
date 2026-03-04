@@ -2850,7 +2850,7 @@ export type DestinationType = 'DEPARTMENT' | 'CONSULTANT';
 export interface Consultation {
   id?: number;
 
-  patient?: { id: number } | null;
+  patientId?: number | null;
   encounterId: number;
 
   fromFacilityId: number;
@@ -2970,7 +2970,7 @@ export interface ConsultationSubmitResultVM {
 
 export interface TelephonicConsultations {
   id?: number;
-  patient?: { id: number } | null;
+  patientId?: number | null;
   encounterId: number;
   practitionerId: number;
   dateOfCall: string;
@@ -2978,7 +2978,7 @@ export interface TelephonicConsultations {
   approvalNumber?: number | null;
   notes?: string | null;
   extraDocumentation?: string | null;
-  status?: DiagnosticStatus;
+  status?: string | null;
   cancellationReason?: string | null;
   cancelledAt?: string | null;
   cancelledBy?: string | null; // ✅ String

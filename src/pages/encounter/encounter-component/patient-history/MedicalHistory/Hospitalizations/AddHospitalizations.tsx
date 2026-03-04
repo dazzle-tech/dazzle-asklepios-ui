@@ -114,15 +114,15 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...initialData,
-        patientId: Number(patient?.key)
+        patientId: Number(patient?.id)
       });
     } else {
       setFormData({
         ...newHospitalization,
-        patientId: Number(patient?.key)
+        patientId: Number(patient?.id)
       });
     }
-  }, [initialData, open, patient?.key]);
+  }, [initialData, open, patient?.id]);
 
   /*  MUTATIONS  */
 
@@ -149,7 +149,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
 
     const payload = {
       id: formData.id,
-      patientId: Number(patient.key),
+      patientId: Number(patient.id),
       facility: formData.facility,
       reason: formData.reason,
       admissionType: formData.admissionType,

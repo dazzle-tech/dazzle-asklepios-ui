@@ -32,7 +32,7 @@ const FamilyHistory = ({ patient, edit, toShowData = false }) => {
   /*  API  */
 
   const { data: familyHistoryData, isLoading } = useGetFamilyHistoryQuery({
-    patientId: Number(patient?.key),
+    patientId: Number(patient?.id),
     page,
     size,
     sort: 'id,desc'

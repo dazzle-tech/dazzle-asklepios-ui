@@ -1992,7 +1992,7 @@ export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProduct
 
 export const newConsultation: modelTypes.Consultation = {
   id: undefined,
-  patient: null,
+  patientId: null,
   encounterId: 0,
   fromFacilityId: 0,
   toFacilityId: 0,
@@ -2066,7 +2066,7 @@ export const newConsultationSubmitRequestVM: modelTypes.ConsultationSubmitReques
 
 export const newTelephonicConsultation: modelTypes.TelephonicConsultations = {
   id: undefined,
-  patient: null,
+  patientId: null,
   encounterId: 0,
   practitionerId: 0,
   dateOfCall: '',
@@ -2074,14 +2074,7 @@ export const newTelephonicConsultation: modelTypes.TelephonicConsultations = {
   approvalNumber: null,
   notes: null,
   extraDocumentation: null,
-  status: 'NEW',
-  cancellationReason: null,
-  cancelledAt: null,
-  cancelledBy: null,
-  createdBy: null,
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
+  status: 'NEW'
 };
 
 export const newTelephonicConsultationCreateVM: modelTypes.TelephonicConsultationCreateVM = {

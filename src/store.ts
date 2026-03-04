@@ -150,8 +150,8 @@ import { consultationService } from './services/consultation/consultationService
 import { portalService } from './services/portalService';
 import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
-import { PayorPlanService } from "@/services/setup/payer/PayorPlanService";
-import { ReviewOfSystemService } from "@/services/medicalsheets/ReviewOfSystemService";
+import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
+import { ReviewOfSystemService } from './services/medicalSheets/ReviewOfSystemService';
 import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
 import { formTemplateService } from './services/setup/formTemplateService';
@@ -193,7 +193,6 @@ import { encounterAssessmentService } from './services/medicalSheets/clinicalVis
 import { encounterPlanService } from './services/medicalSheets/clinicalVisit/encounterPlanService';
 import { patientDiagnosisService } from './services/medicalSheets/clinicalVisit/patientDiagnosisService';
 
-
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -215,7 +214,8 @@ export const store = configureStore({
     [patientService.reducerPath]: patientService.reducer,
 
     [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
-    [patientPrescriptionMedicationService.reducerPath]: patientPrescriptionMedicationService.reducer,
+    [patientPrescriptionMedicationService.reducerPath]:
+      patientPrescriptionMedicationService.reducer,
     [newPatientService.reducerPath]: newPatientService.reducer,
     [addressService.reducerPath]: addressService.reducer,
     [hipaaService.reducerPath]: hipaaService.reducer,
@@ -260,7 +260,6 @@ export const store = configureStore({
 
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
-
 
     //dental
     [dentalService.reducerPath]: dentalService.reducer,
@@ -311,7 +310,6 @@ export const store = configureStore({
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
 
     [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
-
 
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
@@ -475,7 +473,7 @@ export const store = configureStore({
     [NextOfKinService.reducerPath]: NextOfKinService.reducer,
     [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
     [encounterPlanService.reducerPath]: encounterPlanService.reducer,
-    [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
+    [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -696,6 +694,7 @@ export const store = configureStore({
       encounterAssessmentService.middleware,
       encounterPlanService.middleware,
       patientDiagnosisService.middleware,
+      procedureSetupService.middleware
     ])
 });
 

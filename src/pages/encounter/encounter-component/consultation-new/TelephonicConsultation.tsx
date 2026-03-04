@@ -37,14 +37,16 @@ const TelephonicConsultation = props => {
 
   const [cancelConsultation] = useCancelMutation();
 
-  const [selectedConsultations, setSelectedConsultations] = useState<TelephonicConsultation[]>([]);
+  const [selectedConsultations, setSelectedConsultations] = useState<TelephonicConsultations[]>([]);
   const [showCancelled, setShowCancelled] = useState(false);
-  const [activeConsultation, setActiveConsultation] = useState<TelephonicConsultation | null>(null);
+  const [activeConsultation, setActiveConsultation] = useState<TelephonicConsultations | null>(
+    null
+  );
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isAttachmentsModalOpen, setIsAttachmentsModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
-  const [consultationFormData, setConsultationFormData] = useState<TelephonicConsultation>({
+  const [consultationFormData, setConsultationFormData] = useState<TelephonicConsultations>({
     ...newTelephonicConsultation
   });
 
@@ -65,7 +67,7 @@ const TelephonicConsultation = props => {
   );
 
   const activeQuery = showCancelled ? allQuery : notCancelledQuery;
-  const consultations: TelephonicConsultation[] = activeQuery.data?.data ?? [];
+  const consultations: TelephonicConsultations[] = activeQuery.data?.data ?? [];
   const totalCount = activeQuery.data?.totalCount ?? 0;
   const isLoading = activeQuery.isLoading;
 
@@ -130,16 +132,15 @@ const TelephonicConsultation = props => {
     };
   }, [clearRowSelection]);
 
-  const getRowClassName = (row: TelephonicConsultation) =>
+  const getRowClassName = (row: TelephonicConsultations) =>
     activeConsultation?.id === row?.id ? 'selected-row' : '';
 
-  const handleCheckboxChange = (rowData: TelephonicConsultation) => {
+  const handleCheckboxChange = (rowData: TelephonicConsultations) => {
     setSelectedConsultations(prev =>
       prev.includes(rowData) ? prev.filter(item => item !== rowData) : [...prev, rowData]
     );
   };
 
-  // ✅ cancelledBy بيتاخد من SecurityUtils في الـ Backend
   const handleCancelConsultations = async () => {
     if (!selectedConsultations.length) return;
 
@@ -149,7 +150,6 @@ const TelephonicConsultation = props => {
           cancelConsultation({
             id: item.id,
             reason: consultationFormData?.cancellationReason ?? ''
-            // ✅ شيلنا cancelledBy
           }).unwrap()
         )
       );
@@ -168,7 +168,7 @@ const TelephonicConsultation = props => {
       key: 'select',
       title: '#',
       flexGrow: 1,
-      render: (rowData: TelephonicConsultation) => (
+      render: (rowData: TelephonicConsultations) => (
         <Checkbox
           checked={selectedConsultations.includes(rowData)}
           onChange={() => handleCheckboxChange(rowData)}
@@ -180,7 +180,7 @@ const TelephonicConsultation = props => {
       key: 'practitionerId',
       title: 'Physician',
       flexGrow: 2,
-      render: (row: TelephonicConsultation) => {
+      render: (row: TelephonicConsultations) => {
         const physician = physicianList.find(p => p.id === row.practitionerId);
         if (!physician) return <span>{row.practitionerId ?? ''}</span>;
         return <span>{`${physician.firstName} ${physician.lastName}`.trim()}</span>;
@@ -190,14 +190,14 @@ const TelephonicConsultation = props => {
       key: 'dateOfCall',
       title: 'Date Of Call',
       flexGrow: 2,
-      render: (row: TelephonicConsultation) =>
+      render: (row: TelephonicConsultations) =>
         row.dateOfCall ? new Date(row.dateOfCall).toLocaleString() : ''
     },
     {
       key: 'consultationContent',
       title: 'Consultation Content',
       flexGrow: 4,
-      render: (row: TelephonicConsultation) => (
+      render: (row: TelephonicConsultations) => (
         <div className="consultation-content-container">{row.consultationContent}</div>
       )
     },
@@ -205,13 +205,13 @@ const TelephonicConsultation = props => {
       key: 'status',
       title: 'Status',
       flexGrow: 1,
-      render: (row: TelephonicConsultation) => <span>{row.status ?? ''}</span>
+      render: (row: TelephonicConsultations) => <span>{row.status ?? ''}</span>
     },
     {
       key: 'attachments',
       title: 'Attachments',
       flexGrow: 1,
-      render: (row: TelephonicConsultation) => (
+      render: (row: TelephonicConsultations) => (
         <MdAttachFile
           size={20}
           fill={row?.id ? 'var(--primary-gray)' : '#ccc'}
@@ -229,7 +229,7 @@ const TelephonicConsultation = props => {
       key: 'edit',
       title: '',
       flexGrow: 1,
-      render: (row: TelephonicConsultation) => (
+      render: (row: TelephonicConsultations) => (
         <MdModeEdit
           size={22}
           fill="var(--primary-gray)"
@@ -246,7 +246,7 @@ const TelephonicConsultation = props => {
       key: 'createdAt',
       title: 'CREATED BY/AT',
       expandable: true,
-      render: (row: TelephonicConsultation) =>
+      render: (row: TelephonicConsultations) =>
         row?.createdDate ? (
           <>
             {row.createdBy}
@@ -261,10 +261,9 @@ const TelephonicConsultation = props => {
       key: 'cancelledAt',
       title: 'CANCELLED BY/AT',
       expandable: true,
-      render: (row: TelephonicConsultation) =>
+      render: (row: TelephonicConsultations) =>
         row?.cancelledAt ? (
           <>
-            {/* ✅ cancelledBy هلق String */}
             {row.cancelledBy}
             <br />
             <span className="date-table-style">{formatDateWithoutSeconds(row.cancelledAt)}</span>
@@ -277,7 +276,7 @@ const TelephonicConsultation = props => {
       key: 'cancellationReason',
       title: 'Cancellation Reason',
       expandable: true,
-      render: (row: TelephonicConsultation) => row.cancellationReason ?? ''
+      render: (row: TelephonicConsultations) => row.cancellationReason ?? ''
     }
   ];
 
@@ -306,8 +305,8 @@ const TelephonicConsultation = props => {
             setActiveConsultation(null);
             setConsultationFormData({
               ...newTelephonicConsultation,
-              encounterId: currentEncounter?.id ?? currentEncounter?.key,
-              patient: { id: currentPatient?.id ?? currentPatient?.key }
+              encounterId: currentEncounter?.id,
+              patientId: currentPatient?.id
             });
             setIsDetailsModalOpen(true);
           }}
@@ -331,10 +330,10 @@ const TelephonicConsultation = props => {
           rowsPerPage={size}
           totalCount={totalCount}
           onPageChange={handlePageChange}
-          onRowsPerPageChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onRowsPerPageChange={() => {
             setPage(0);
           }}
-          onRowClick={(row: TelephonicConsultation) => setActiveConsultation(row)}
+          onRowClick={(row: TelephonicConsultations) => setActiveConsultation(row)}
           tableButtons={tableButtons}
         />
       </div>
@@ -343,7 +342,7 @@ const TelephonicConsultation = props => {
         patient={currentPatient}
         encounter={currentEncounter}
         consultationOrders={consultationFormData}
-        setConsultationOrder={setConsultationFormData}
+        // setConsultationOrder={setConsultationFormData}
         open={isDetailsModalOpen}
         setOpen={(value: boolean) => {
           setIsDetailsModalOpen(value);

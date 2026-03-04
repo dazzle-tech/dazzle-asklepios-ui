@@ -63,10 +63,10 @@ const ProgressNotes: React.FC = () => {
 
   const { data, isLoading, refetch } = queryHook(
     {
-      encounterId: encounter?.key
+      encounterId: encounter?.id
     },
     {
-      skip: !encounter?.key
+      skip: !encounter?.id
     }
   );
 

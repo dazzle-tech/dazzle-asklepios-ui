@@ -67,8 +67,8 @@ const Referrals = (props: any) => {
   const [pageSize, setPageSize] = useState(20);
 
   const [procedure, setProcedure] = useState<any>({
-    encounterId: encounter?.id || encounter?.key,
-    patientId: patient?.id || patient?.key,
+    encounterId: encounter?.id,
+    patientId: patient?.id,
     currentDepartment: true
   });
 
@@ -213,7 +213,7 @@ const Referrals = (props: any) => {
   const handleCancle = async () => {
     try {
       if (!procedure?.id) {
-        dispatch(notify({ msg: 'No procedure selected', sev: 'error' }));
+        dispatch(notify({ msg: 'No procedure selected', sev: 'warning' }));
         return;
       }
 
@@ -227,7 +227,7 @@ const Referrals = (props: any) => {
       CloseCancellationReasonModel();
       handleClear();
     } catch (error) {
-      dispatch(notify({ msg: 'Cancellation failed', sev: 'error' }));
+      dispatch(notify({ msg: 'Cancellation failed', sev: 'warning' }));
       console.error('Cancel error:', error);
     }
   };
@@ -412,7 +412,7 @@ const Referrals = (props: any) => {
               e.stopPropagation();
 
               if (!rowData?.procedureId) {
-                dispatch(notify({ msg: 'Procedure ID is missing', sev: 'error' }));
+                dispatch(notify({ msg: 'Procedure ID is missing', sev: 'warning' }));
                 return;
               }
 
@@ -444,7 +444,7 @@ const Referrals = (props: any) => {
                 setOpenDetailsModal(true);
               } catch (error) {
                 console.error('GET PROCEDURE ERROR', error);
-                dispatch(notify({ msg: 'Failed to load procedure details', sev: 'error' }));
+                dispatch(notify({ msg: 'Failed to load procedure details', sev: 'warning' }));
               }
             }}
           />

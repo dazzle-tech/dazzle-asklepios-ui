@@ -24,8 +24,8 @@ const PatientHistorySummary: React.FC<Props> = ({
   button = null,
   lang = 'en'
 }) => {
-  const patientKey = patient?.key ?? patient?.patientKey;
-  const encounterKey = encounter?.key ?? encounter?.encounterKey;
+  const patientKey = patient?.id;
+  const encounterKey = encounter?.id;
 
   // UI loading state (covers: fetch patientSummary + building payload + calling AI + waiting AI result)
   const [isUiLoading, setIsUiLoading] = useState(false);

@@ -100,10 +100,11 @@ const NormalConsultation = props => {
 
   const [consultation, setConsultation] = useState<Consultation>({
     ...newConsultation,
-    patientId: patient?.id ?? patient?.key,
-    encounterId: encounter?.id ?? encounter?.key
+    patientId: patient?.id,
+    encounterId: encounter?.id
   });
 
+  console.log(consultation);
   const [modalKey, setModalKey] = useState(0);
 
   const [dateFilter, setDateFilter] = useState<{
@@ -235,8 +236,8 @@ const NormalConsultation = props => {
   const handleClear = useCallback(() => {
     setConsultation({
       ...newConsultation,
-      patientId: patient?.id ?? patient?.key,
-      encounterId: encounter?.id ?? encounter?.key
+      patientId: patient?.id,
+      encounterId: encounter?.id
     });
     setSelectedRows([]);
     setSelectedRow(null);
