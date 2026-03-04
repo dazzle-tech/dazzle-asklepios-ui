@@ -168,8 +168,15 @@ const EncounterList = () => {
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
 
+ useEffect(() => {
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent('Patients Visit List'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(' '));
+  };
+}, [dispatch]);
 
   const [encounter, setLocalEncounter] = useState<any>({
     ...newApEncounter,
@@ -875,10 +882,10 @@ const handleGoToVisit = async (encounterData: any) => {
 
   const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch]);
+  // useEffect(() => {
+  //   dispatch(setPageCode(''));
+  //   dispatch(setDivContent(' '));
+  // }, [location.pathname, dispatch]);
 
   useEffect(() => {
     if (tableLoading) dispatch(showSystemLoader());

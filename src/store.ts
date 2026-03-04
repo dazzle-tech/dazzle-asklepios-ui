@@ -192,7 +192,11 @@ import { NextOfKinService } from './services/patients/NextOfKinService';
 import { encounterAssessmentService } from './services/medicalSheets/clinicalVisit/encounterAssessmentService';
 import { encounterPlanService } from './services/medicalSheets/clinicalVisit/encounterPlanService';
 import { patientDiagnosisService } from './services/medicalSheets/clinicalVisit/patientDiagnosisService';
-
+import { vitalSignsService } from '@/services/medicalSheets/observations/vitalSignsService';
+import { bodyMeasurementsService } from './services/medicalSheets/observations/bodyMeasurementsService';
+import { patientObservationsComplaintsService } from './services/medicalSheets/observations/patientObservationsComplaintsService';
+import { painAssessmentService } from './services/medicalSheets/observations/painAssessmentService';
+import { additionalMeasurementsService } from './services/medicalSheets/observations/additionalMeasurementsService';
 
 export const store = configureStore({
   reducer: {
@@ -476,6 +480,13 @@ export const store = configureStore({
     [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
     [encounterPlanService.reducerPath]: encounterPlanService.reducer,
     [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
+    [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+    [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
+    [patientObservationsComplaintsService.reducerPath]: patientObservationsComplaintsService.reducer,
+    [painAssessmentService.reducerPath]: painAssessmentService.reducer,
+    [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
+
+
   },
 
   middleware: getDefaultMiddleware =>
@@ -696,6 +707,11 @@ export const store = configureStore({
       encounterAssessmentService.middleware,
       encounterPlanService.middleware,
       patientDiagnosisService.middleware,
+      vitalSignsService.middleware,
+      bodyMeasurementsService.middleware,
+      patientObservationsComplaintsService.middleware,
+      painAssessmentService.middleware,
+      additionalMeasurementsService.middleware,
     ])
 });
 

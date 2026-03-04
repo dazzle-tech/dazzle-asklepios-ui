@@ -105,7 +105,7 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
     ...newAdditionalMeasurements,
     patientId,
     encounterId,
-    ageGroup: (apiAgeGroup as any) ?? (newAdditionalMeasurements as any).ageGroup
+    ageGroup: (apiAgeGroup as any) ?? (newAdditionalMeasurements as any)?.ageGroup
   });
 
   useEffect(() => {
