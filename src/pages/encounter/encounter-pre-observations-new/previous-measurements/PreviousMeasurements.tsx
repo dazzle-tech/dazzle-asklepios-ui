@@ -27,7 +27,7 @@ import {
   type BodyMeasurementsResponseVM,
   type WeightResponseVM,
   type HeightResponseVM,
-} from '@/services/medicalSheets/observations/bodyMeasurementsService';
+} from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 
 // VITAL APIs
 import {
@@ -43,7 +43,7 @@ import {
   type RespiratoryRateResponseVM,
   type OxygenSaturationResponseVM,
   type BloodPressureResponseVM,
-} from '@/services/medicalSheets/observations/vitalSignsService';
+} from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
