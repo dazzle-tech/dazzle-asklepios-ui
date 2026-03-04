@@ -15,7 +15,7 @@ import {
   useDeleteReviewOfSystemByIdMutation,
   useGetReviewOfSystemByEncounterQuery,
   useUpdateReviewOfSystemMutation
-} from '@/services/medicalSheets/ReviewOfsystemService'; // ✅ new service
+} from '@/services/medicalsheetsEncounter/ReviewOfSystemService'; // ✅ new service
 import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery

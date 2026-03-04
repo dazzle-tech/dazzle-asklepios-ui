@@ -18,7 +18,7 @@ import {
   useGetLatestAdditionalMeasurementsByEncounterIdQuery,
   type AdditionalMeasurementsInfantCreateDTO,
   type AdditionalMeasurementsGeriatricCreateDTO
-} from '@/services/medicalSheets/observations/additionalMeasurementsService';
+} from '@/services/medicalsheetsEncounter/observations/additionalMeasurementsService';
 
 import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupService';
 

@@ -9,7 +9,7 @@ import {
   useCreateEncounterAssessmentMutation,
   useUpdateEncounterAssessmentMutation,
   useGetLatestEncounterAssessmentQuery,
-} from '@/services/medicalSheets/clinicalVisit/encounterAssessmentService';
+} from '@/services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
 import type { EncounterAssessment } from '@/types/model-types-new';
 
 type EncounterAssessmentSectionProps = {

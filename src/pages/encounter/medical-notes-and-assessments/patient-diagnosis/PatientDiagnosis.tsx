@@ -14,7 +14,7 @@ import {
   useCreatePatientDiagnosisMutation,
   useGetLatestPatientDiagnosisQuery,
   useGetPatientDiagnosesByPatientIdQuery
-} from '@/services/medicalSheets/clinicalVisit/patientDiagnosisService';
+} from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 
 import { useEnumOptions } from '@/services/enumsApi';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';

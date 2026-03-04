@@ -13,7 +13,7 @@ import { newPainAssessment } from '@/types/model-types-constructor-new';
 import {
   useCreatePainAssessmentMutation,
   useGetLatestPainAssessmentByEncounterIdQuery
-} from '@/services/medicalSheets/observations/painAssessmentService';
+} from '@/services/medicalsheetsEncounter/observations/painAssessmentService';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';

@@ -10,7 +10,7 @@ import {
   useCreateEncounterPlanMutation,
   useUpdateEncounterPlanMutation,
   useGetLatestEncounterPlanQuery,
-} from '@/services/medicalSheets/clinicalVisit/encounterPlanService';
+} from '@/services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
 import type { EncounterPlan } from '@/types/model-types-new';
 import './styles.less';
 
