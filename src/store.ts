@@ -476,8 +476,6 @@ export const store = configureStore({
     [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
     [encounterPlanService.reducerPath]: encounterPlanService.reducer,
     [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
-
-
   },
 
   middleware: getDefaultMiddleware =>
@@ -698,7 +696,6 @@ export const store = configureStore({
       encounterAssessmentService.middleware,
       encounterPlanService.middleware,
       patientDiagnosisService.middleware,
-
     ])
 });
 
