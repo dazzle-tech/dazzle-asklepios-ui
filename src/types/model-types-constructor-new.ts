@@ -1530,6 +1530,46 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   formJson: null
 };
 
+export const newPatientWarningsUpdateDTO: modelTypes.PatientWarningsUpdateDTO = {
+  id: undefined,
+  warningType: '',
+  warning: '',
+  severity: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  actionTaken: ''
+};
+
+export const patientAllergiesResponseVM: modelTypes.PatientAllergiesResponseVM = {
+  id: undefined,
+  patientId: undefined,
+  encounterId: undefined,
+
+  allergenType: '',
+  allergenId: undefined,
+  severity: '',
+
+  medicationClassId: undefined,
+  criticality: '',
+  certainty: '',
+  treatmentStrategy: '',
+
+  onset: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+
+  typeOfPropensity: '',
+  byPatient: true,
+  sourceOfInformation: '',
+  note: '',
+  status: '',
+  allergicReactions: '',
+
+  resolvedBy: ''
+};
 export const newPatientWarnings: modelTypes.PatientWarnings = {
   id: undefined,
   patientId: undefined,
@@ -1554,7 +1594,40 @@ export const newPatientWarnings: modelTypes.PatientWarnings = {
   createdBy: '',
   createdDate: '',
   lastModifiedBy: '',
-  lastModifiedDate: ''
+  lastModifiedDate: '',
+
+  activeIngredients: []
+};
+
+export const newPatientAllergiesActiveIngredientCreate: modelTypes.PatientAllergiesActiveIngredientCreate =
+  {
+    activeIngredientId: undefined
+  };
+
+export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,
+  allergenType: '',
+  allergenId: undefined,
+  severity: '',
+
+  medicationClassId: undefined,
+  criticality: '',
+  certainty: '',
+  treatmentStrategy: '',
+
+  onset: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+
+  typeOfPropensity: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  status: 'ACTIVE',
+  allergicReactions: '',
+
+  activeIngredients: []
 };
 
 export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = {
@@ -1572,17 +1645,27 @@ export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = 
   actionTaken: ''
 };
 
-export const newPatientWarningsUpdateDTO: modelTypes.PatientWarningsUpdateDTO = {
+export const newPatientAllergiesUpdateDTO: modelTypes.PatientAllergiesUpdateDTO = {
   id: undefined,
-  warningType: '',
-  warning: '',
+  allergenType: '',
+  allergenId: undefined,
   severity: '',
+
+  medicationClassId: undefined,
+  criticality: '',
+  certainty: '',
+  treatmentStrategy: '',
+
+  onset: '',
   onsetDateUndefined: true,
   onsetDate: '',
+
+  typeOfPropensity: '',
   byPatient: true,
   sourceOfInformation: null,
   note: '',
-  actionTaken: ''
+  allergicReactions: '',
+  activeIngredients: []
 };
 
 export const newPatientPrescription: modelTypes.PatientPrescription = {
@@ -2014,4 +2097,55 @@ export const newTelephonicConsultationCreateVM: modelTypes.TelephonicConsultatio
 
 export const newTelephonicConsultationCancelVM: modelTypes.TelephonicConsultationCancelVM = {
   reason: ''
+};
+export const newNextOfKin: modelTypes.NextOfKin = {
+  id: undefined,
+  patientId: undefined,
+  name: '',
+  relationship: '',
+  address: '',
+  email: '',
+  mobileNumber: '',
+  telephone: null,
+  internationalNumber: null,
+  landlineNumber: null
+};
+export const newEncounterAssessment: modelTypes.EncounterAssessment = {
+  id: undefined,
+  patientId: null,
+  userId: null,
+  encounterId: null,
+  assessment: '',
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newEncounterPlan: modelTypes.EncounterPlan = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+  planInstructions: '',
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+  diagnosisId: null,
+  type: null,
+  suspected: false,
+  major: false,
+
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
 };

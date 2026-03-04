@@ -5,7 +5,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Col, Form, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
-const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter})=>{
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter,system})=>{
+
+  const { data: bodySystemsDetailLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_SYS_DETAIL');
+  console.log("details",bodySystemsDetailLovQueryResponse)
     return(<>
         <MyModal
         position='right'
@@ -26,10 +30,11 @@ const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter})=>{
           
             {list?.map((item, index) => (
               <div key={index} className='summery-div-child'>
-                <p>{item.systemLvalue?.lovDisplayVale}</p>
+                <p>{system?.object?.find((i)=>i.key===item.bodySystem)?.lovDisplayVale}</p>
                 <p>{item.systemDetailLvalue ? item.systemDetailLvalue.lovDisplayVale
                   : item.systemDetailLkey}</p>
-                <p> {item.notes}</p>
+                  <p>{bodySystemsDetailLovQueryResponse?.object.find((i)=>i.key===item.systemDetail)?.lovDisplayVale}</p>
+                <p> {item.note}</p>
               </div>
             ))}
          
