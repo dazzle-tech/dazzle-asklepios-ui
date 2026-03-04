@@ -190,6 +190,8 @@ import { bodyMeasurementsService } from './services/medicalsheetsEncounter/obser
 import { patientObservationsComplaintsService } from './services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
 import { additionalMeasurementsService } from './services/medicalsheetsEncounter/observations/additionalMeasurementsService';
+import { patientAllergiesService } from './services/encounters/patientAllergiesService';
+import { patientWarningsService } from './services/encounters/patientWarningsService';
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -418,6 +420,9 @@ export const store = configureStore({
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
+
+    [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
+    [patientWarningsService.reducerPath]: patientAllergiesService.reducer,
 
     //AI Services
     // AI Services
@@ -685,6 +690,8 @@ export const store = configureStore({
       patientObservationsComplaintsService.middleware,
       painAssessmentService.middleware,
       additionalMeasurementsService.middleware,
+      patientAllergiesService.middleware,
+      patientWarningsService.middleware
     ])
 });
 
