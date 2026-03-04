@@ -151,7 +151,7 @@ import { portalService } from './services/portalService';
 import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
-import { ReviewOfSystemService } from '@/services/medicalsheets/ReviewOfSystemService';
+import { ReviewOfSystemService } from '@/services/medicalsheetsEncounter/ReviewOfSystemService';
 import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
 import { formTemplateService } from './services/setup/formTemplateService';
@@ -189,14 +189,14 @@ import { patientPrescriptionService } from './services/patients/Prescription/pat
 import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 import { NextOfKinService } from './services/patients/NextOfKinService';
-import { encounterAssessmentService } from './services/medicalsheets/clinicalVisit/encounterAssessmentService';
-import { encounterPlanService } from './services/medicalsheets/clinicalVisit/encounterPlanService';
-import { patientDiagnosisService } from './services/medicalsheets/clinicalVisit/patientDiagnosisService';
-import { vitalSignsService } from '@/services/medicalsheets/observations/vitalSignsService';
-import { bodyMeasurementsService } from './services/medicalsheets/observations/bodyMeasurementsService';
-import { patientObservationsComplaintsService } from './services/medicalsheets/observations/patientObservationsComplaintsService';
-import { painAssessmentService } from './services/medicalsheets/observations/painAssessmentService';
-import { additionalMeasurementsService } from './services/medicalsheets/observations/additionalMeasurementsService';
+import { encounterAssessmentService } from './services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
+import { encounterPlanService } from './services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
+import { patientDiagnosisService } from './services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import { vitalSignsService } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
+import { bodyMeasurementsService } from './services/medicalsheetsEncounter/observations/bodyMeasurementsService';
+import { patientObservationsComplaintsService } from './services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
+import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
+import { additionalMeasurementsService } from './services/medicalsheetsEncounter/observations/additionalMeasurementsService';
 
 export const store = configureStore({
   reducer: {
