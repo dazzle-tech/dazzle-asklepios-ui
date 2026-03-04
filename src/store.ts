@@ -191,6 +191,7 @@ import { patientObservationsComplaintsService } from './services/medicalsheetsEn
 import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
 import { additionalMeasurementsService } from './services/medicalsheetsEncounter/observations/additionalMeasurementsService';
 import { patientAllergiesService } from './services/encounters/patientAllergiesService';
+import { ReviewOfSystemService } from './services/medicalsheetsEncounter/ReviewOfSystemService';
 import { patientWarningsService } from './services/encounters/patientWarningsService';
 export const store = configureStore({
   reducer: {
@@ -316,8 +317,6 @@ export const store = configureStore({
     [uomGroupService.reducerPath]: uomGroupService.reducer,
 
     // Translation slice
-    [translationService.reducerPath]: translationService.reducer,
-
     // Form slice
     [formTemplateService.reducerPath]: formTemplateService.reducer,
     [FormEntriesService.reducerPath]: FormEntriesService.reducer,
@@ -381,8 +380,6 @@ export const store = configureStore({
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
 
     // invoice report
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
-    // Visit Duration
     // visit duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
 
@@ -467,12 +464,14 @@ export const store = configureStore({
     [encounterPlanService.reducerPath]: encounterPlanService.reducer,
     [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
 
-     [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+    [vitalSignsService.reducerPath]: vitalSignsService.reducer,
 
     [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
-    [patientObservationsComplaintsService.reducerPath]: patientObservationsComplaintsService.reducer,
+    [patientObservationsComplaintsService.reducerPath]:
+      patientObservationsComplaintsService.reducer,
     [painAssessmentService.reducerPath]: painAssessmentService.reducer,
     [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
+    [ReviewOfSystemService.reducerPath]: additionalMeasurementsService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -691,7 +690,9 @@ export const store = configureStore({
       painAssessmentService.middleware,
       additionalMeasurementsService.middleware,
       patientAllergiesService.middleware,
-      patientWarningsService.middleware
+      patientWarningsService.middleware,
+      procedureSetupService.middleware,
+      ReviewOfSystemService.middleware
     ])
 });
 
