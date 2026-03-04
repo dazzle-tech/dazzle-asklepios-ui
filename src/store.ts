@@ -182,14 +182,14 @@ import { progressNoteService } from './services/patients/progressNoteService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
-import { encounterAssessmentService } from './services/medicalSheets/clinicalVisit/encounterAssessmentService';
-import { encounterPlanService } from './services/medicalSheets/clinicalVisit/encounterPlanService';
-import { patientDiagnosisService } from './services/medicalSheets/clinicalVisit/patientDiagnosisService';
-import { vitalSignsService } from '@/services/medicalSheets/observations/vitalSignsService';
-import { bodyMeasurementsService } from './services/medicalSheets/observations/bodyMeasurementsService';
-import { patientObservationsComplaintsService } from './services/medicalSheets/observations/patientObservationsComplaintsService'; 
-import { painAssessmentService } from './services/medicalSheets/observations/painAssessmentService'; 
-import { additionalMeasurementsService } from './services/medicalSheets/observations/additionalMeasurementsService';
+import { encounterAssessmentService } from './services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
+import { encounterPlanService } from './services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
+import { patientDiagnosisService } from './services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import { vitalSignsService } from './services/medicalsheetsEncounter/observations/vitalSignsService';
+import { bodyMeasurementsService } from './services/medicalsheetsEncounter/observations/bodyMeasurementsService';
+import { patientObservationsComplaintsService } from './services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
+import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
+import { additionalMeasurementsService } from './services/medicalsheetsEncounter/observations/additionalMeasurementsService';
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
