@@ -2103,45 +2103,7 @@ export const newNextOfKin: modelTypes.NextOfKin = {
   internationalNumber: null,
   landlineNumber: null
 };
-export const newEncounterAssessment: modelTypes.EncounterAssessment = {
-  id: undefined,
-  patientId: null,
-  userId: null,
-  encounterId: null,
-  assessment: '',
 
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-export const newEncounterPlan: modelTypes.EncounterPlan = {
-  id: undefined,
-  patientId: null,
-  encounterId: null,
-  planInstructions: '',
-
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
-
-export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
-  id: undefined,
-  patientId: null,
-  encounterId: null,
-  diagnosisId: null,
-  type: null,
-  suspected: false,
-  major: false,
-
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: null,
-  lastModifiedDate: null
-};
 export const newEncounterAssessment: modelTypes.EncounterAssessment = {
   id: undefined,
   patientId: null,
@@ -2181,7 +2143,7 @@ export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
   lastModifiedBy: null,
   lastModifiedDate: null,
 };
-export const newVitalSigns: VitalSigns = {
+export const newVitalSigns: modelTypes.VitalSigns = {
   id: undefined,
  
   patientId: 0,
