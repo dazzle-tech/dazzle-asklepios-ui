@@ -31,10 +31,7 @@ export const consultationService = createApi({
       invalidatesTags: ['Consultation']
     }),
 
-    cancel: builder.mutation<
-      Consultation,
-      { id: number; cancellationReason: string; cancelledBy?: number }
-    >({
+    cancel: builder.mutation<Consultation, { id: number; cancellationReason: string }>({
       query: ({ id, ...body }) => ({
         url: `/api/patient/consultation/${id}/cancel`,
         method: 'PUT',

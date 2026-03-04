@@ -38,7 +38,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
 
   const previewRef = useRef<HTMLDivElement>(null);
 
-  const patientId = Number(patient?.key);
+  const patientId = Number(patient?.id);
   const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
   const { data, isFetching } = useGetSocialHistoryQuery(

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { MdModeEdit } from 'react-icons/md';
@@ -29,7 +29,6 @@ import ProgressNoteLogsModal from './ProgressNoteLogsModal';
 
 const ProgressNotes: React.FC = () => {
   const dispatch = useAppDispatch();
-  const auth = useAppSelector(state => state.auth);
 
   const location = useLocation();
   const { patient, encounter, edit } = (location.state || {}) as {
@@ -64,10 +63,10 @@ const ProgressNotes: React.FC = () => {
 
   const { data, isLoading, refetch } = queryHook(
     {
-      encounterId: encounter?.key
+      encounterId: encounter?.id
     },
     {
-      skip: !encounter?.key
+      skip: !encounter?.id
     }
   );
 
@@ -80,8 +79,7 @@ const ProgressNotes: React.FC = () => {
     try {
       await cancelNote({
         id: selectedNote.id,
-        cancellationReason: selectedNote.cancellationReason!,
-        cancelledBy: auth.user?.id
+        cancellationReason: selectedNote.cancellationReason!
       }).unwrap();
 
       dispatch(

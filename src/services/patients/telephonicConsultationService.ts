@@ -49,10 +49,7 @@ export const telephonicConsultationService = createApi({
       invalidatesTags: ['TelephonicConsultation']
     }),
 
-    cancel: builder.mutation<
-      TelephonicConsultation,
-      { id: number; reason: string; cancelledBy?: number }
-    >({
+    cancel: builder.mutation<TelephonicConsultation, { id: number; reason: string }>({
       query: ({ id, ...body }) => ({
         url: `/api/patient/telephonic-consultation/${id}/cancel`,
         method: 'PUT',

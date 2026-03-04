@@ -35,7 +35,7 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
 
-  const patientId = Number(patient?.key);
+  const patientId = Number(patient?.id);
   const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
   const { data, isFetching } = useGetSurgicalHistoryQuery(

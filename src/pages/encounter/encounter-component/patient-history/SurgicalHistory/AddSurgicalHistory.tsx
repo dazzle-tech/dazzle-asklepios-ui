@@ -144,7 +144,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       setFormData({
         ...emptySurgicalHistoryForm,
         ...initialData,
-        patientId: Number(patient?.key),
+        patientId: Number(patient?.id),
         dateOfSurgery: toDate(initialData.dateOfSurgery),
         adverseReactionsToAnesthesia: toStringArray(initialData.adverseReactionsToAnesthesia)
       });
@@ -152,11 +152,11 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     } else {
       setFormData({
         ...emptySurgicalHistoryForm,
-        patientId: Number(patient?.key)
+        patientId: Number(patient?.id)
       });
       setOpenImplants({ open: false });
     }
-  }, [initialData, open, patient?.key]);
+  }, [initialData, open, patient?.id]);
 
   const validateBeforeSave = () => {
     const errors: string[] = [];
@@ -199,7 +199,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
 
     const payload = {
       ...formData,
-      patientId: Number(patient?.key),
+      patientId: Number(patient?.id),
       dateOfSurgery: toNoonTimestamp(formData.dateOfSurgery),
       hasImplantsOrDevices: openImplants.open,
       implantsOrDevicesDescription: openImplants.open

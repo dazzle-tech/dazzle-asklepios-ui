@@ -1528,8 +1528,20 @@ export const newFormTemplate: modelTypes.FormTemplate = {
   facilityId: null,
   departmentId: null,
   formJson: null
-}
+};
 
+export const newPatientWarningsUpdateDTO: modelTypes.PatientWarningsUpdateDTO = {
+  id: undefined,
+  warningType: '',
+  warning: '',
+  severity: '',
+  onsetDateUndefined: true,
+  onsetDate: '',
+  byPatient: true,
+  sourceOfInformation: null,
+  note: '',
+  actionTaken: ''
+};
 
 export const patientAllergiesResponseVM: modelTypes.PatientAllergiesResponseVM = {
   id: undefined,
@@ -1556,9 +1568,9 @@ export const patientAllergiesResponseVM: modelTypes.PatientAllergiesResponseVM =
   status: '',
   allergicReactions: '',
 
-  resolvedBy: '',
-}
-export const newPatientWarnings:  modelTypes.PatientWarnings = {
+  resolvedBy: ''
+};
+export const newPatientWarnings: modelTypes.PatientWarnings = {
   id: undefined,
   patientId: undefined,
   encounterId: undefined,
@@ -1572,7 +1584,7 @@ export const newPatientWarnings:  modelTypes.PatientWarnings = {
   note: '',
   status: 'ACTIVE',
   actionTaken: '',
-   resolvedBy: '',
+  resolvedBy: '',
   resolvedDate: '',
 
   cancelledBy: '',
@@ -1585,11 +1597,12 @@ export const newPatientWarnings:  modelTypes.PatientWarnings = {
   lastModifiedDate: '',
 
   activeIngredients: []
-}
+};
 
-export const newPatientAllergiesActiveIngredientCreate : modelTypes.PatientAllergiesActiveIngredientCreate = {
-  activeIngredientId: undefined
-}
+export const newPatientAllergiesActiveIngredientCreate: modelTypes.PatientAllergiesActiveIngredientCreate =
+  {
+    activeIngredientId: undefined
+  };
 
 export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO = {
   patientId: undefined,
@@ -1604,8 +1617,8 @@ export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO 
   treatmentStrategy: '',
 
   onset: '',
-  onsetDateUndefined: true, 
-  onsetDate: '', 
+  onsetDateUndefined: true,
+  onsetDate: '',
 
   typeOfPropensity: '',
   byPatient: true,
@@ -1615,11 +1628,11 @@ export const newPatientAllergiesCreateDTO: modelTypes.PatientAllergiesCreateDTO 
   allergicReactions: '',
 
   activeIngredients: []
-}
+};
 
 export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = {
   patientId: undefined,
-  encounterId: undefined,   
+  encounterId: undefined,
   warningType: '',
   warning: '',
   severity: '',
@@ -1630,10 +1643,10 @@ export const newPatientWarningsCreateDTO: modelTypes.PatientWarningsCreateDTO = 
   note: '',
   status: 'ACTIVE',
   actionTaken: ''
-}
+};
 
 export const newPatientAllergiesUpdateDTO: modelTypes.PatientAllergiesUpdateDTO = {
-  id: undefined, 
+  id: undefined,
   allergenType: '',
   allergenId: undefined,
   severity: '',
@@ -1652,25 +1665,11 @@ export const newPatientAllergiesUpdateDTO: modelTypes.PatientAllergiesUpdateDTO 
   sourceOfInformation: null,
   note: '',
   allergicReactions: '',
-  activeIngredients: [],   
-}
-
-export const newPatientWarningsUpdateDTO: modelTypes.PatientWarningsUpdateDTO = {
-  id: undefined, 
-  warningType: '',
-  warning: '',
-  severity: '',
-  onsetDateUndefined: true,
-  onsetDate: '',
-  byPatient: true,
-  sourceOfInformation: null,
-  note: '',
-  actionTaken: ''
-}
-
+  activeIngredients: []
+};
 
 export const newPatientPrescription: modelTypes.PatientPrescription = {
-  id: undefined as any, 
+  id: undefined as any,
   patientId: null as any,
   encounterId: null as any,
   prescriptionNum: null as any,
@@ -1686,7 +1685,6 @@ export const newPatientPrescription: modelTypes.PatientPrescription = {
   lastModifiedBy: null,
   lastModifiedDate: null
 };
-
 
 export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMedication = {
   id: undefined as any,
@@ -1727,12 +1725,11 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
 
 export const newProgressNote: modelTypes.ProgressNote = {
   id: undefined,
-  patient: {
-    id: undefined
-  },
+  patient: { id: undefined },
   encounterId: undefined,
   noteText: '',
 
+  // ✅ String بدل number
   cancelledBy: null,
   cancelledDate: null,
   cancellationReason: null,
@@ -1988,12 +1985,118 @@ export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProduct
   productId: undefined,
   quantity: 0
 };
+
+// =====================
+// Consultation
+// =====================
+
+export const newConsultation: modelTypes.Consultation = {
+  id: undefined,
+  patientId: null,
+  encounterId: 0,
+  fromFacilityId: 0,
+  toFacilityId: 0,
+  fromDepartmentId: 0,
+  toDepartmentId: null,
+  consultationNumber: null,
+  destinationType: 'DEPARTMENT',
+  consultationType: '',
+  consultantSpeciality: null,
+  consultationMethod: '',
+  practitionerId: null,
+  consultationLevel: 'ROUTINE',
+  consultationContent: '',
+  notes: null,
+  extraDocument: null,
+  approvalNumber: null,
+  status: 'REQUESTED',
+  responseDate: null,
+  responseBy: null,
+  responseText: null,
+  rejectedDate: null,
+  rejectedBy: null,
+  rejectReason: null,
+  cancellationReason: null,
+  cancelledDate: null,
+  cancelledBy: null,
+  confirmedDate: null,
+  confirmedBy: null,
+  submittedDate: null,
+  submittedBy: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newConsultationCreateVM: modelTypes.ConsultationCreateVM = {
+  patientId: 0,
+  encounterId: 0,
+  fromFacilityId: 0,
+  toFacilityId: 0,
+  fromDepartmentId: 0,
+  toDepartmentId: null,
+  consultationType: '',
+  consultantSpeciality: null,
+  practitionerId: null,
+  destinationType: 'DEPARTMENT',
+  consultationMethod: '',
+  consultationLevel: 'ROUTINE',
+  consultationContent: '',
+  notes: null,
+  extraDocument: null,
+  approvalNumber: null
+};
+
+export const newConsultationCancelVM: modelTypes.ConsultationCancelVM = {
+  cancellationReason: ''
+};
+
+export const newConsultationRejectVM: modelTypes.ConsultationRejectVM = {
+  reason: ''
+};
+
+export const newConsultationResponseVM: modelTypes.ConsultationResponseVM = {
+  responseText: ''
+};
+
+export const newConsultationSubmitRequestVM: modelTypes.ConsultationSubmitRequestVM = {
+  consultationIds: []
+};
+
+export const newTelephonicConsultation: modelTypes.TelephonicConsultations = {
+  id: undefined,
+  patientId: null,
+  encounterId: 0,
+  practitionerId: 0,
+  dateOfCall: '',
+  consultationContent: '',
+  approvalNumber: null,
+  notes: null,
+  extraDocumentation: null,
+  status: 'NEW'
+};
+
+export const newTelephonicConsultationCreateVM: modelTypes.TelephonicConsultationCreateVM = {
+  patientId: 0,
+  encounterId: 0,
+  practitionerId: 0,
+  dateOfCall: '',
+  consultationContent: '',
+  approvalNumber: null,
+  notes: null,
+  extraDocumentation: null
+};
+
+export const newTelephonicConsultationCancelVM: modelTypes.TelephonicConsultationCancelVM = {
+  reason: ''
+};
 export const newNextOfKin: modelTypes.NextOfKin = {
   id: undefined,
   patientId: undefined,
   name: '',
   relationship: '',
-  address: '',  
+  address: '',
   email: '',
   mobileNumber: '',
   telephone: null,
@@ -2010,7 +2113,7 @@ export const newEncounterAssessment: modelTypes.EncounterAssessment = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 export const newEncounterPlan: modelTypes.EncounterPlan = {
@@ -2022,7 +2125,7 @@ export const newEncounterPlan: modelTypes.EncounterPlan = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 
 export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
@@ -2037,6 +2140,5 @@ export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
-
