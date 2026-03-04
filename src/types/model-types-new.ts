@@ -2394,3 +2394,115 @@ export interface ProfileTestGroupedHistoryVM {
 
   results: DiagnosticHistoryResultVM[];
 }
+
+export interface GeneralAssessment {
+  id?: number;
+  patientId?: number | null;
+  encounterId?: number | null;
+  positionStatus?: string | null;
+  bodyMovements?: string | null;
+  levelOfConsciousness?: string | null;
+  facialExpression?: string | null;
+  speech?: string | null;
+  moodBehavior?: string | null;
+  memoryRemote?: boolean;
+  memoryRecent?: boolean;
+  signsOfAgitation?: boolean;
+  signsOfDepression?: boolean;
+  signsOfSuicidalIdeation?: boolean;
+  signsOfSubstanceUse?: boolean;
+  isTriage?: boolean;
+}
+
+export interface ChiefComplain {
+  id?: number;
+
+  // Domain: `patient` is a required ManyToOne. On the wire we typically send `patientId`.
+  patientId?: number | null;
+
+  encounterId?: number | null;
+
+  chiefComplaint?: string | null;
+  severity?: string | null;
+  onsetDateTime?: string | Date | null; // Instant
+  caseUnderstanding?: string | null;
+
+  provocation?: string | null;
+  palliation?: string | null;
+  quality?: string | null;
+  region?: string | null;
+
+  patientCondition?: string | null;
+  isTriage?: boolean;
+}
+
+export interface EmergencyTriage {
+  id?: number;
+  patientId?: number | null;
+  encounterId?: number | null;
+  createdDate?: string | Date | null;
+  lastModifiedDate?: string | Date | null;
+
+  emergencyLevel?: string | null;
+
+  rightEyeLightResponse?: boolean;
+  rightEyePupilSize?: string | null;
+
+  leftEyeLightResponse?: boolean;
+  leftEyePupilSize?: string | null;
+
+  hpiAdditionalNotes?: string | null;
+
+  lifeSaving?: string | null;
+  unresponsive?: string | null;
+  highRisk?: string | null;
+
+  avpuScale?: string | null;
+  painScore?: string | null;
+
+  labsRequired?: string | null;
+  imagingRequired?: string | null;
+  ivFluidsRequired?: string | null;
+  medicationRequired?: string | null;
+  ecgRequired?: string | null;
+  consultationRequired?: string | null;
+
+  destination?: string | null;
+  completedDate?: string | Date | null;
+}
+
+
+export type EmergencyTriageCreate = Pick<EmergencyTriage, 'patientId' | 'encounterId'> &
+  Partial<EmergencyTriage>;
+
+// PUT /api/patient/emergency-triage/{id}/eye-assessment
+// Matches backend `EmergencyTriageUpdateDTO`
+export type EmergencyTriageEyeAssessmentUpdate = {
+  id: number;
+  rightEyeLightResponse: boolean;
+  rightEyePupilSize?: string | null;
+  leftEyeLightResponse: boolean;
+  leftEyePupilSize?: string | null;
+  hpiAdditionalNotes?: string | null;
+};
+
+// PUT /api/patient/emergency-triage/{id}/level-assessment
+export type EmergencyTriageLevelAssessmentUpdate = Pick<
+  EmergencyTriage,
+  | 'id'
+  | 'lifeSaving'
+  | 'unresponsive'
+  | 'highRisk'
+  | 'avpuScale'
+  | 'painScore'
+  | 'labsRequired'
+  | 'imagingRequired'
+  | 'ivFluidsRequired'
+  | 'medicationRequired'
+  | 'ecgRequired'
+  | 'consultationRequired'
+>;
+
+// PUT /api/patient/emergency-triage/{id}/destination
+export type EmergencyTriageDestinationUpdate = Pick<EmergencyTriage, 'id' | 'destination'>;
+

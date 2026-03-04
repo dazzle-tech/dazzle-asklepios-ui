@@ -71,6 +71,7 @@ export const patientEncounterService = createApi({
         departmentId: Id;
         fromDate?: string;
         toDate?: string;
+        statuses?: string | string[];
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
@@ -86,6 +87,7 @@ export const patientEncounterService = createApi({
         departmentId,
         fromDate,
         toDate,
+        statuses,
         statusIn,
         patientName,
         mrn,
@@ -98,27 +100,32 @@ export const patientEncounterService = createApi({
         page,
         size,
         sort = 'id,desc'
-      }) => ({
-        url: `/api/patient/encounter`,
-        method: 'GET',
-        params: {
-          departmentId,
-          fromDate,
-          toDate,
-          statusIn,
-          patientName,
-          mrn,
-          encounterReasonIn,
-          chiefComplaint,
-          priorityIn,
-          withPrescription,
-          hasOrders,
-          isObserved,
-          page,
-          size,
-          sort
-        }
-      }),
+      }) => {
+        const src = statuses ?? statusIn;
+        const statusesCsv = Array.isArray(src) ? src.join(',') : src;
+
+        return {
+          url: `/api/patient/encounter`,
+          method: 'GET',
+          params: {
+            departmentId,
+            fromDate,
+            toDate,
+            statuses: statusesCsv,
+            patientName,
+            mrn,
+            encounterReasonIn,
+            chiefComplaint,
+            priorityIn,
+            withPrescription,
+            hasOrders,
+            isObserved,
+            page,
+            size,
+            sort
+          }
+        };
+      },
       transformResponse: (response: any, meta) => {
         const rows = Array.isArray(response) ? response : response?.content ?? [];
         return mapPaged(rows, meta);

@@ -70,6 +70,7 @@ import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
 
 import { MedicalsheetsService } from './services/MedicalSheetsService';
+import { vitalSignsService } from '@/services/medicalSheets/observations/vitalSignsService';
 
 import { serviceService } from './services/setup/serviceService';
 import { languageService } from './services/setup/languageService';
@@ -182,6 +183,9 @@ import { progressNoteService } from './services/patients/progressNoteService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { generalAssessmentService } from './services/encounters/generalAssessmentService';
+import { chiefComplainService } from './services/encounters/chiefComplainService';
+import { emergencyTriageService } from './services/encounters/er-triage/emergencyTriageService';
 
 export const store = configureStore({
   reducer: {
@@ -245,6 +249,7 @@ export const store = configureStore({
     [encounterService.reducerPath]: encounterService.reducer,
     [dentalService.reducerPath]: dentalService.reducer,
     [observationService.reducerPath]: observationService.reducer,
+    [vitalSignsService.reducerPath]: vitalSignsService.reducer,
 
     // attachments
     [attachmentService.reducerPath]: attachmentService.reducer,
@@ -449,7 +454,12 @@ export const store = configureStore({
     [patientDiagnosticResultHistoryService.reducerPath]:
       patientDiagnosticResultHistoryService.reducer,
 
-    [ICDTreeService.reducerPath]: ICDTreeService.reducer
+    [ICDTreeService.reducerPath]: ICDTreeService.reducer,
+
+    //er-triage
+    [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
+    [chiefComplainService.reducerPath]: chiefComplainService.reducer,
+    [emergencyTriageService.reducerPath]: emergencyTriageService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -530,6 +540,7 @@ export const store = configureStore({
 
       // medical sheets
       MedicalsheetsService.middleware,
+    vitalSignsService.middleware,
 
       // services / language / translation
       serviceService.middleware,
@@ -658,7 +669,11 @@ export const store = configureStore({
       consultationService.middleware,
       portalService.middleware,
       telephonicConsultationService.middleware,
-      ICDTreeService.middleware
+      ICDTreeService.middleware,
+      //er-triage
+      generalAssessmentService.middleware,
+      chiefComplainService.middleware,
+      emergencyTriageService.middleware,
     ])
 });
 

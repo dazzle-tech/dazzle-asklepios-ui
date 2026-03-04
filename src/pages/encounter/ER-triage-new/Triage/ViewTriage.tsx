@@ -55,7 +55,7 @@ const ViewTriage = () => {
   );
 
   const encounterPriorityValue =
-    (encounter as any)?.encounterPriorityLkey ?? (encounter as any)?.encounterPriority ?? null;
+    (encounter as any)?.priorityLevel ?? (encounter as any)?.encounterPriority ?? (encounter as any)?.encounterPriorityLkey ?? null;
   const selectedEncounterPriority = encounterPriorityEnumOptions.find(
     (item: any) => String(item?.value) === String(encounterPriorityValue ?? '')
   );
