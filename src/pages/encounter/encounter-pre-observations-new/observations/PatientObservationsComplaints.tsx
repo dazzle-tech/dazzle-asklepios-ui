@@ -14,7 +14,7 @@ import { newPatientObservationsComplaints } from '@/types/model-types-constructo
 import {
   useCreatePatientObservationsComplaintsMutation,
   useGetLatestPatientObservationsComplaintsByEncounterIdQuery
-} from '@/services/medicalSheets/observations/patientObservationsComplaintsService';
+} from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';

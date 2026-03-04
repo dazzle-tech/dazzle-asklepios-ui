@@ -118,15 +118,15 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
   const [isBulkLoading, setIsBulkLoading] = useState(false);
   const bulkKeyRef = useRef<string>('');
 
-  const encounterId = parseInt(encounter?.key, 10);
-  const patientId = parseInt(patient.key, 10);
+  const encounterId = parseInt(encounter?.id, 10);
+  const patientId = parseInt(patient.id, 10);
 
   useEffect(() => {
-    if (encounter?.encounterStatusLkey === '91109811181900') setIsEncounterStatusClosed(true);
+    if (encounter?.encounterStatusLkey === 'CLOSED') setIsEncounterStatusClosed(true);
   }, [encounter?.encounterStatusLkey]);
 
   // ---------------------------------------------------------
-  // ✅ EXACT rules you requested:
+  //  EXACT rules you requested:
   // 1) no checks          -> Encounter ACTIVE (not cancelled)
   // 2) showCancelled only -> Encounter ALL (cancelled + not)
   // 3) showAll only       -> Patient ACTIVE (not cancelled)
@@ -234,12 +234,11 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
     setPopupOpen(true);
   };
 
-  // ✅ after pressing cancel, show Encounter ALL (cancelled + not cancelled)
+  // after pressing cancel, show Encounter ALL (cancelled + not cancelled)
   const handleCancel = () => {
     cancelEncounterVaccination({
       id: (encounterVaccination as any).id,
       cancellationReason: (encounterVaccination as any).cancellationReason,
-      cancelledById: Number(authSlice.user.id)
     } as any)
       .unwrap()
       .then(() => {
@@ -261,7 +260,6 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
   const handleReview = () => {
     reviewEncounterVaccination({
       id: (encounterVaccination as any).id,
-      reviewedById: Number(authSlice.user.id)
     } as any)
       .unwrap()
       .then(() => {
@@ -471,7 +469,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
         render: (row: any) =>
           (row as any)?.reviewedAt ? (
             <>
-              {(row as any)?.reviewedById}
+              {(row as any)?.reviewedBy}
               <br />
               <span className="date-table-style">{formatDateWithoutSeconds((row as any).reviewedAt)}</span>{' '}
             </>
@@ -501,7 +499,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
         render: (row: any) =>
           (row as any)?.cancelledAt ? (
             <>
-              {(row as any)?.cancelledById} <br />
+              {(row as any)?.cancelledBy} <br />
               <span className="date-table-style">{formatDateWithoutSeconds((row as any).cancelledAt)}</span>
             </>
           ) : (
@@ -581,7 +579,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
                     (encounterVaccination as any).status === 'CANCELLED' ||
                     isEncounterStatusClosed ||
                     disabled ||
-                    ((encounterVaccination as any).id != undefined ? encounter.key != (encounterVaccination as any).encounterId : false)
+                    ((encounterVaccination as any).id != undefined ? encounter.id != (encounterVaccination as any).encounterId : false)
                   }
                 >
                   Cancel
@@ -592,7 +590,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
                     (encounterVaccination as any).id === undefined ||
                     (encounterVaccination as any).status === 'REVIEW' ||
                     (encounterVaccination as any).status === 'CANCELLED' ||
-                    ((encounterVaccination as any).id != undefined ? encounter.key != (encounterVaccination as any).encounterId : false) ||
+                    ((encounterVaccination as any).id != undefined ? encounter.id != (encounterVaccination as any).encounterId : false) ||
                     isEncounterStatusClosed ||
                     disabled
                   }

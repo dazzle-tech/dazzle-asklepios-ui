@@ -1,57 +1,56 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
-
 import MyInput from '@/components/MyInput';
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
+import { newApEncounter } from '@/types/model-types-constructor';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
-import MyTable from '@/components/MyTable';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faUserNurse,
+  faUserDoctor,
+  faPrint,
+  faFileWaveform,
+  faRectangleXmark
+} from '@fortawesome/free-solid-svg-icons';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
+import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
+import 'react-tabs/style/react-tabs.css';
+import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
 import DetailsCard from '@/components/DetailsCard';
 import MyModal from '@/components/MyModal/MyModal';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
+import { useDispatch } from 'react-redux';
+import './styles.less';
+import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
+import MyTable from '@/components/MyTable';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
+import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 
-import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
-import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
-import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
-import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
-
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
-import { newApEncounter } from '@/types/model-types-constructor';
+import {
+  useFilterEncountersQuery,
+  useCountTodayDepartmentTotalPatientsQuery,
+  useCountTodayDepartmentActiveCasesQuery,
+  useCountTodayDepartmentCompletedQuery,
+  useCountTodayDepartmentCancelledQuery,
+  useStartEncounterMutation,
+  useCancelEncounterMutation
+} from '@/services/encounters/patientEncounterService';
 
 import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 
-import {
-  useCancelEncounterMutation,
-  useCountTodayDepartmentActiveCasesQuery,
-  useCountTodayDepartmentCancelledQuery,
-  useCountTodayDepartmentCompletedQuery,
-  useCountTodayDepartmentTotalPatientsQuery,
-  useFilterEncountersQuery,
-  useStartEncounterMutation
-} from '@/services/encounters/patientEncounterService';
-
-import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
-
-import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
-import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
-
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faFileWaveform,
-  faPrint,
-  faRectangleXmark,
-  faUserDoctor,
-  faUserNurse
-} from '@fortawesome/free-solid-svg-icons';
+import { useGetBulkPatientBasicInfoMutation, useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
 
 import 'react-tabs/style/react-tabs.css';
 import './styles.less';
+import { skipToken } from '@tanstack/react-query';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -67,7 +66,6 @@ const uniqueNonEmpty = (arr?: any[]) => {
 
 const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
-
   const raw = String(
     appliedSearch?.patientName ??
       appliedSearch?.searchText ??
@@ -76,12 +74,9 @@ const derivePatientFilters = (appliedSearch: any) => {
       ''
   ).trim();
 
-  if (!raw) {
+  if (!raw)
     return { patientName: undefined as string | undefined, mrn: undefined as string | undefined };
-  }
-
   if (searchByField === 'patientMrn') return { patientName: undefined, mrn: raw };
-
   return { patientName: raw, mrn: undefined };
 };
 
@@ -89,7 +84,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'id.notfound': 'Encounter not found.',
   'patient.notfound': 'Patient not found.',
   'patient.hasOngoing.notAllowed':
-    'Patient already has an ONGOING encounter. Starting another one is not allowed.',
+    'Patient already has an ongoing encounter. Starting another one is not allowed.',
   'cancel.notAllowed.rule': 'Cancel is allowed only when status is NEW and isObserved is false.',
   'followUpEncounter.required.byReason':
     'Follow-up encounter is required when reason is FOLLOW_UP (and must be empty otherwise).',
@@ -140,11 +135,10 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
       (fieldError: any) =>
         `• ${getFieldLabel(fieldError.field)}: ${normalizeFieldErrorMessage(fieldError.message)}`
     );
-
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${errorLines.join('\n')}` + traceSuffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -162,7 +156,7 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
     responseData?.message ||
     'Unexpected error';
 
-  dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'error' }));
+  dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
 };
 
 const EncounterList = () => {
@@ -174,22 +168,29 @@ const EncounterList = () => {
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
 
-  useEffect(() => {
-    dispatch(setPageCode('P_Encounters'));
-    dispatch(setDivContent('Patients Visit List'));
-  }, [dispatch]);
+ useEffect(() => {
+  dispatch(setPageCode('P_Encounters'));
+  dispatch(setDivContent('Patients Visit List'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(' '));
+  };
+}, [dispatch]);
 
   const [encounter, setLocalEncounter] = useState<any>({
     ...newApEncounter,
     discharge: false
   });
-
+  console.log('Initial encounter state:', encounter);
+const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
+const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
+// getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
   const [openEncounterLogsModal, setOpenEncounterLogsModal] = useState(false);
   const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
-
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
@@ -210,7 +211,6 @@ const EncounterList = () => {
       'PENDING_PAYMENT'
     ]
   });
-
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
   const EncounterReasonEnum = useEnumOptions('EncounterReason');
 
@@ -225,7 +225,6 @@ const EncounterList = () => {
 
   const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
-
   const [encounterReasonIn, setEncounterReasonIn] = useState<string[]>([]);
   const [priorityIn, setPriorityIn] = useState<string[]>([]);
   const [withPrescription, setWithPrescription] = useState<boolean | undefined>(undefined);
@@ -236,23 +235,17 @@ const EncounterList = () => {
     searchByField: 'fullName',
     patientName: ''
   });
-
   const [patientSearchApplied, setPatientSearchApplied] = useState<any>({
     searchByField: 'fullName',
     patientName: ''
   });
-
   const [searchTick, setSearchTick] = useState(0);
-
   const [record, setRecord] = useState<any>({});
 
   const handlePatientSearchClick = useCallback(() => {
-    setPatientSearchApplied((previousSearch: any) => ({
-      ...previousSearch,
-      ...(patientSearchDraft ?? {})
-    }));
+    setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
     setPage(0);
-    setSearchTick(previousTick => previousTick + 1);
+    setSearchTick(prev => prev + 1);
   }, [patientSearchDraft]);
 
   const filterParams = useMemo(() => {
@@ -260,15 +253,13 @@ const EncounterList = () => {
 
     const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
     const toDate = toISODate(dateFilter.toDate) ?? todayStr;
-
     const chiefComplaint =
       String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
-
     const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
     const normalizedEncounterReasonIn = uniqueNonEmpty(encounterReasonIn);
     const normalizedPriorityIn =
-      uniqueNonEmpty(priorityIn) ?? uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
-
+      uniqueNonEmpty(priorityIn) ??
+      uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
     const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
 
     return {
@@ -276,22 +267,17 @@ const EncounterList = () => {
       fromDate,
       toDate,
       statusIn: normalizedStatusIn,
-
       patientName,
       mrn,
-
       encounterReasonIn: normalizedEncounterReasonIn,
       chiefComplaint,
       priorityIn: normalizedPriorityIn,
-
       withPrescription,
       hasOrders,
       isObserved,
-
       page,
       size: pageSize,
       sort: DEFAULT_SORT,
-
       timestamp: searchTick
     };
   }, [
@@ -321,22 +307,18 @@ const EncounterList = () => {
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
 
   const todayCountsSkip = !departmentId;
-
   const { data: totalPatientsCount } = useCountTodayDepartmentTotalPatientsQuery(
     { departmentId: String(departmentId ?? '') },
     { skip: todayCountsSkip }
   );
-
   const { data: activeCasesCount } = useCountTodayDepartmentActiveCasesQuery(
     { departmentId: String(departmentId ?? '') },
     { skip: todayCountsSkip }
   );
-
   const { data: completedCount } = useCountTodayDepartmentCompletedQuery(
     { departmentId: String(departmentId ?? '') },
     { skip: todayCountsSkip }
   );
-
   const { data: cancelledCount } = useCountTodayDepartmentCancelledQuery(
     { departmentId: String(departmentId ?? '') },
     { skip: todayCountsSkip }
@@ -350,140 +332,82 @@ const EncounterList = () => {
     useGetBulkPatientBasicInfoMutation();
 
   const patientIdsForBulk = useMemo(() => {
-    const rows = (tableData ?? []) as any[];
-
-    const ids = rows
-      .map(
-        row =>
-          row?.patientId ??
-          row?.patient?.id ??
-          row?.patientObject?.id ??
-          row?.patientKey ??
-          row?.patient?.key ??
-          row?.patientObject?.key ??
-          row?.patientObject?.patientId
-      )
-      .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+    const ids = (tableData as any[])
+      .map(row => row?.patient?.id)
+      .filter(v => v !== null && v !== undefined)
       .map(v => String(v));
-
     return Array.from(new Set(ids));
   }, [tableData]);
+  useEffect(() => {
+  const pid =
+  
+    encounter?.patient?.id ;
+
+  if (pid) triggerGetPatientById({ id: pid });
+}, [encounter?.patient?.id]);
 
   useEffect(() => {
     if (patientIdsForBulk.length === 0) return;
-
     patientBulkIdsRef.current = patientIdsForBulk;
-
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
       .catch(() => {});
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
-  const patientByIdMap = useMemo(() => {
-    const byId = new Map<string, any>();
-
-    (patientsBasicInfo ?? []).forEach((patient: any) => {
-      const idKey = patient?.id ?? null;
-      if (idKey === null || idKey === undefined || String(idKey).trim() === '') return;
-
-      byId.set(String(idKey), {
-        id: idKey,
-        firstName: patient?.firstName,
-        secondName: patient?.secondName,
-        thirdName: patient?.thirdName,
-        lastName: patient?.lastName,
-        dateOfBirth: patient?.dateOfBirth,
-        sexAtBirth: patient?.sexAtBirth,
-        medicalRecordNumber: patient?.medicalRecordNumber
-      });
+  const patientMap = useMemo(() => {
+    const map = new Map<string, any>();
+    const ids = patientBulkIdsRef.current;
+    (patientsBasicInfo ?? []).forEach((patient: any, index: number) => {
+      const key = patient?.id ?? ids[index];
+      if (!key) return;
+      map.set(String(key), patient);
     });
-
-    return byId;
+    return map;
   }, [patientsBasicInfo]);
 
   const normalizedTableData = useMemo(() => {
-    return (tableData ?? []).map((encounterRow: any) => {
-      const statusCode = String(encounterRow?.status ?? '').toUpperCase();
-      const priorityCode = String(encounterRow?.priorityLevel ?? '').toUpperCase();
-      const reasonCode = String(encounterRow?.encounterReason ?? '').toUpperCase();
+    return (tableData as any[]).map(row => {
+      const patientId = row?.patient?.id ?? null;
+      const patientFromMap = patientId != null ? patientMap.get(String(patientId)) : null;
 
-      const patientId =
-        encounterRow?.patientId ??
-        encounterRow?.patient?.id ??
-        encounterRow?.patientObject?.id ??
-        null;
-
-      const patientFromMap = patientId != null ? patientByIdMap.get(String(patientId)) : null;
-
-      const firstName = String(
-        patientFromMap?.firstName ?? encounterRow?.patient?.firstName ?? ''
-      ).trim();
+      const firstName = String(patientFromMap?.firstName ?? row?.patient?.firstName ?? '').trim();
       const secondName = String(
-        patientFromMap?.secondName ?? encounterRow?.patient?.secondName ?? ''
+        patientFromMap?.secondName ?? row?.patient?.secondName ?? ''
       ).trim();
-      const thirdName = String(
-        patientFromMap?.thirdName ?? encounterRow?.patient?.thirdName ?? ''
-      ).trim();
-      const lastName = String(patientFromMap?.lastName ?? encounterRow?.patient?.lastName ?? '').trim();
+      const thirdName = String(patientFromMap?.thirdName ?? row?.patient?.thirdName ?? '').trim();
+      const lastName = String(patientFromMap?.lastName ?? row?.patient?.lastName ?? '').trim();
+      const fullName =
+        [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim() || '-';
 
-      const fullName = [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim();
-
-      const patientMrn =
-        patientFromMap?.medicalRecordNumber ?? encounterRow?.patientObject?.patientMrn ?? undefined;
-
-      const dateOfBirth =
-        patientFromMap?.dateOfBirth ?? encounterRow?.patientObject?.dateOfBirth ?? null;
-
+      const mrn = patientFromMap?.medicalRecordNumber ?? row?.patient?.medicalRecordNumber ?? null;
+      const dob = patientFromMap?.dateOfBirth ?? row?.patient?.dateOfBirth ?? null;
       const sexAtBirth =
-        formatEnumString(patientFromMap?.sexAtBirth ?? encounterRow?.patientObject?.sexAtBirth) || '';
+        formatEnumString(patientFromMap?.sexAtBirth ?? row?.patient?.sexAtBirth) || '';
+      const isPrivate = patientFromMap?.isPrivatePatient ?? row?.patient?.isPrivatePatient ?? false;
 
       return {
-        ...encounterRow,
-        key: encounterRow?.key ?? encounterRow?.id,
+        ...row,
+        key: row?.id,
 
         patientObject: {
-          ...(encounterRow?.patientObject ?? {}),
-          ...(encounterRow?.patient ?? {}),
-
-          id: patientId ?? encounterRow?.patientObject?.id ?? encounterRow?.patient?.id,
-          patientMrn,
-
-          fullName:
-            fullName ||
-            encounterRow?.patientObject?.fullName ||
-            encounterRow?.patientFullName ||
-            encounterRow?.fullName ||
-            '-',
-
-          privatePatient:
-            encounterRow?.patientObject?.privatePatient ?? encounterRow?.privatePatient ?? false,
-
-          dateOfBirth,
+          id: patientId,
+          fullName,
+          medicalRecordNumber: mrn,
+          dateOfBirth: dob,
           sexAtBirth,
-
-          gender: encounterRow?.patientObject?.gender ?? null
+          isPrivatePatient: isPrivate
         },
 
-        patientAge: encounterRow?.patientAge ?? (dateOfBirth ? calculateAgeFormat(dateOfBirth) : null),
-
-        visitId: encounterRow?.visitId ?? encounterRow?.id,
-
-        encounterReason: encounterRow?.encounterReason ?? reasonCode,
-        encounterPriority:
-          encounterRow?.encounterPriority ?? encounterRow?.priorityLevel ?? priorityCode,
-        encounterStatus: encounterRow?.encounterStatus ?? encounterRow?.status ?? statusCode,
-
-        plannedStartDate: encounterRow?.plannedStartDate ?? encounterRow?.encounterDate
+        patientAge: dob ? calculateAgeFormat(dob) : null
       };
     });
-  }, [tableData, patientByIdMap]);
+  }, [tableData, patientMap]);
 
-  const getEncounterId = (row: any) => row?.id ?? row?.key ?? null;
+  const getEncounterId = (row: any) => row?.id ?? null;
 
   const startEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
-
     try {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
@@ -496,7 +420,6 @@ const EncounterList = () => {
   const cancelEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
-
     try {
       await cancelEncounter({ id: encounterId }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
@@ -506,61 +429,75 @@ const EncounterList = () => {
       return false;
     }
   };
+  const fetchPatientForEncounter = async (enc: any) => {
+  const pid =
+    enc?.patient?.id ??
+    null;
 
-  const handleGoToVisit = async (encounterData: any, patientData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
+  if (!pid) return null;
 
-    if (encounterData && encounterData.id) {
-      dispatch(setEncounter(encounterData));
-      dispatch(setPatient(encounterData['patientObject']));
+  try {
+    const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
+    return fullPatient;
+  } catch (e) {
+    handleCrudError(e, dispatch, { 'patient.notfound': 'Patient not found.' });
+    return null;
+  }
+};
+const handleGoToVisit = async (encounterData: any) => {
+  const isStarted = await startEncounterSafe(encounterData);
+  if (!isStarted) return;
+
+  dispatch(showSystemLoader());
+  const fullPatient = await fetchPatientForEncounter(encounterData);
+  dispatch(hideSystemLoader());
+
+  if (!fullPatient) {
+    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+    return;
+  }
+
+  dispatch(setEncounter(encounterData));
+  dispatch(setPatient(fullPatient));
+
+  
+  const privatePatientPath = '/user-access-patient-private';
+  const encounterPath = '/encounter';
+  const targetPath = fullPatient.privatePatient ? privatePatientPath : encounterPath;
+
+  navigate(targetPath, {
+    state: {
+      info: 'toEncounter',
+      fromPage: 'EncounterList',
+      patient: fullPatient,
+      encounter: encounterData
     }
+  });
 
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
-
-    navigate(targetPath, {
-      state: {
-        info: 'toEncounter',
-        fromPage: 'EncounterList',
-        patient: patientData,
-        encounter: encounterData
-      }
-    });
-
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
-  };
+  sessionStorage.setItem('encounterPageSource', 'EncounterList');
+};
 
   const handleGoToPreVisitObservations = async (encounterData: any, patientData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
 
-    const privatePatientPath = '/user-access-patient-private';
-    const preObservationsPath = '/nurse-station';
-    const targetPath = patientData.privatePatient ? privatePatientPath : preObservationsPath;
-
-    if (patientData.privatePatient) {
-      navigate(targetPath, {
-        state: { info: 'toNurse', patient: patientData, encounter: encounterData }
-      });
-    } else {
-      navigate(targetPath, {
-        state: {
-          patient: patientData,
-          encounter: encounterData,
-          edit: String(encounterData?.status ?? '').toUpperCase() === 'CLOSED'
-        }
-      });
-    }
+    const targetPath = patientData?.isPrivatePatient
+      ? '/user-access-patient-private'
+      : '/nurse-station';
+    navigate(targetPath, {
+      state: {
+        info: patientData?.isPrivatePatient ? 'toNurse' : undefined,
+        patient: patientData,
+        encounter: encounterData,
+        edit: String(encounterData?.status ?? '').toUpperCase() === 'CLOSED'
+      }
+    });
   };
 
   const handleCancelEncounter = async () => {
     if (!encounter) return;
-
     const isCancelled = await cancelEncounterSafe(encounter);
     if (!isCancelled) return;
-
     refetchEncounters();
     setOpen(false);
   };
@@ -568,7 +505,6 @@ const EncounterList = () => {
   const handlePageChange = useCallback((_: unknown, newPage: number) => {
     setPage(newPage);
   }, []);
-
   const handleRowsPerPageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setPageSize(parseInt(event.target.value, 10));
     setPage(0);
@@ -584,46 +520,43 @@ const EncounterList = () => {
     setWithPrescription(undefined);
     setHasOrders(undefined);
     setIsObserved(undefined);
-
     const clearedSearch = { searchByField: 'fullName', patientName: '' };
     setPatientSearchDraft(clearedSearch);
     setPatientSearchApplied(clearedSearch);
-
     setPage(0);
-    setSearchTick(previousTick => previousTick + 1);
+    setSearchTick(prev => prev + 1);
   };
+
   const tableColumns = [
     {
-      key: 'queueNumber',
+      key: 'encounterNumber',
       title: '#',
-      dataKey: 'queueNumber',
-      render: (rowData: any) => rowData?.encounterNumber
+      render: (row: any) => row?.encounterNumber ?? row?.departmentDailySequenceNumber ?? row?.id
     },
     {
       key: 'patientFullName',
       title: 'PATIENT NAME',
       fullText: true,
-      render: (rowData: any) => {
-        const tooltipSpeaker = (
+      render: (row: any) => {
+        const speaker = (
           <Tooltip>
-            <div>MRN : {rowData?.patientObject?.patientMrn}</div>
-            <div>Age : {rowData?.patientAge}</div>
-            <div>Gender : {rowData?.patientObject?.sexAtBirth || ''}</div>
+            <div>MRN: {row?.patientObject?.medicalRecordNumber ?? '-'}</div>
+            <div>Age: {row?.patientAge ?? '-'}</div>
+            <div>Gender: {row?.patientObject?.sexAtBirth ?? '-'}</div>
           </Tooltip>
         );
-
         return (
-          <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
             <div className="encounter-list__patient-name-cell">
-              {rowData?.patientObject?.privatePatient ? (
+              {row?.patientObject?.isPrivatePatient ? (
                 <Badge color="blue" content="Private">
                   <p className="encounter-list__patient-name encounter-list__patient-name--clickable">
-                    {rowData?.patientObject?.fullName}
+                    {row?.patientObject?.fullName}
                   </p>
                 </Badge>
               ) : (
                 <p className="encounter-list__patient-name encounter-list__patient-name--clickable">
-                  {rowData?.patientObject?.fullName}
+                  {row?.patientObject?.fullName}
                 </p>
               )}
             </div>
@@ -634,23 +567,18 @@ const EncounterList = () => {
     {
       key: 'encounterReason',
       title: 'ENCOUNTER REASON',
-      render: (rowData: any) => rowData?.encounterReason ?? ''
+      render: (row: any) => formatEnumString(row?.encounterReason) ?? ''
     },
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      render: (rowData: any) => rowData?.chiefComplaint
-    },
-    {
-      key: 'diagnosis',
-      title: 'DIAGNOSIS',
-      render: (rowData: any) => rowData?.diagnosis
+      render: (row: any) => row?.chiefComplaint ?? '-'
     },
     {
       key: 'hasPrescription',
       title: 'PRESCRIPTION',
-      render: (rowData: any) =>
-        rowData.hasPrescription ? (
+      render: (row: any) =>
+        row?.hasPrescription ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
         ) : (
           <MyBadgeStatus contant="NO" color="#969fb0" />
@@ -659,50 +587,50 @@ const EncounterList = () => {
     {
       key: 'hasOrder',
       title: 'HAS ORDER',
-      render: (rowData: any) =>
-        rowData.hasOrder ? (
+      render: (row: any) =>
+        row?.hasOrder ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
         ) : (
           <MyBadgeStatus contant="NO" color="#969fb0" />
         )
     },
     {
-      key: 'encounterPriority',
+      key: 'priorityLevel',
       title: 'PRIORITY',
-      render: (rowData: any) => rowData?.encounterPriority ?? ''
+      render: (row: any) => formatEnumString(row?.priorityLevel) ?? ''
     },
     {
-      key: 'plannedStartDate',
+      key: 'encounterDate',
       title: 'DATE',
-      dataKey: 'plannedStartDate'
+      render: (row: any) => row?.encounterDate ?? '-'
     },
     {
       key: 'status',
       title: 'STATUS',
-      render: (rowData: any) => {
-        const statusUpperCase = String(rowData?.encounterStatus ?? '').toUpperCase();
-
+      render: (row: any) => {
+        const statusUpper = String(row?.status ?? '').toUpperCase();
         const statusColorMap: Record<string, string> = {
           NEW: '#0d6efd',
           ONGOING: '#198754',
           CANCELED: '#ffc107',
           CANCELLED: '#ffc107',
-          CLOSED: '#6c757d'
+          CLOSED: '#6c757d',
+          DISCHARGED: '#adb5bd',
+          PENDING_PAYMENT: '#fd7e14'
         };
-
         return (
           <MyBadgeStatus
-            color={statusColorMap[statusUpperCase] ?? '#969fb0'}
-            contant={String(rowData?.encounterStatus ?? rowData?.status ?? '')}
+            color={statusColorMap[statusUpper] ?? '#969fb0'}
+            contant={formatEnumString(row?.status) ?? row?.status ?? ''}
           />
         );
       }
     },
     {
-      key: 'hasObservation',
+      key: 'isObserved',
       title: 'IS OBSERVED',
-      render: (rowData: any) =>
-        rowData.hasObservation ? (
+      render: (row: any) =>
+        row?.isObserved ? (
           <MyBadgeStatus contant="YES" color="#45b887" />
         ) : (
           <MyBadgeStatus contant="NO" color="#969fb0" />
@@ -711,12 +639,15 @@ const EncounterList = () => {
     {
       key: 'actions',
       title: ' ',
-      render: (rowData: any) => {
+      render: (row: any) => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         const tooltipPrint = <Tooltip>Print Visit Report</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+
+        const statusUpper = String(row?.status ?? '').toUpperCase();
+        const isNew = statusUpper === 'NEW';
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
@@ -726,11 +657,9 @@ const EncounterList = () => {
                   size="small"
                   backgroundColor="black"
                   onClick={() => {
-                    const patientData = rowData.patientObject;
-                    setLocalEncounter(rowData);
-
-                    if (rowData.hasObservation) {
-                      handleGoToPreVisitObservations(rowData, patientData);
+                    setLocalEncounter(row);
+                    if (row?.isObserved) {
+                      handleGoToPreVisitObservations(row, row.patientObject);
                     } else {
                       setOpenNurseAssessment(true);
                     }
@@ -746,9 +675,8 @@ const EncounterList = () => {
                 <MyButton
                   size="small"
                   onClick={() => {
-                    const patientData = rowData?.patientObject;
-                    setLocalEncounter(rowData);
-                    handleGoToVisit(rowData, patientData);
+                    setLocalEncounter(row);
+                    handleGoToVisit(row, row.patientObject);
                   }}
                 >
                   <FontAwesomeIcon icon={faUserDoctor} />
@@ -762,13 +690,11 @@ const EncounterList = () => {
                   size="small"
                   backgroundColor="violet"
                   onClick={() => {
-                    setLocalEncounter(rowData);
-                    setEmrEncounter(rowData);
-                    setEmrPatient(rowData?.patientObject || null);
-
-                    dispatch(setEncounter(rowData));
-                    if (rowData?.patientObject) dispatch(setPatient(rowData.patientObject));
-
+                    setLocalEncounter(row);
+                    setEmrEncounter(row);
+                    setEmrPatient(row?.patientObject ?? null);
+                    dispatch(setEncounter(row));
+                    if (row?.patientObject) dispatch(setPatient(row.patientObject));
                     setOpenEMRModal(true);
                   }}
                 >
@@ -777,13 +703,13 @@ const EncounterList = () => {
               </div>
             </Whisper>
 
-            {String(rowData?.encounterStatus ?? rowData?.status ?? '').toUpperCase() === 'NEW' && (
+            {isNew && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
                   <MyButton
                     size="small"
                     onClick={() => {
-                      setLocalEncounter(rowData);
+                      setLocalEncounter(row);
                       setOpen(true);
                     }}
                   >
@@ -798,9 +724,7 @@ const EncounterList = () => {
                 <MyButton
                   size="small"
                   backgroundColor="light-blue"
-                  onClick={() => {
-                    setLocalEncounter(rowData);
-                  }}
+                  onClick={() => setLocalEncounter(row)}
                 >
                   <FontAwesomeIcon icon={faPrint} />
                 </MyButton>
@@ -813,171 +737,159 @@ const EncounterList = () => {
     }
   ];
 
-  const filters = () => {
-    return (
-      <>
-        <Form layout="inline" fluid className="date-filter-form">
-          <MyInput
-            column
-            width={180}
-            fieldType="date"
-            fieldLabel="From Date"
-            fieldName="fromDate"
-            record={dateFilter}
-            setRecord={updatedFilter => {
-              setDateFilter(updatedFilter);
-              setPage(0);
-            }}
-          />
-          <MyInput
-            width={180}
-            column
-            fieldType="date"
-            fieldLabel="To Date"
-            fieldName="toDate"
-            record={dateFilter}
-            setRecord={updatedFilter => {
-              setDateFilter(updatedFilter);
-              setPage(0);
-            }}
-          />
-
-          <SearchPatientCriteria
-            record={patientSearchDraft}
-            setRecord={setPatientSearchDraft}
-            onSearchClick={handlePatientSearchClick}
-          />
-
-          <MyInput
-            column
-            width={260}
-            fieldType="checkPicker"
-            fieldLabel="Encounter Status"
-            fieldName="statusIn"
-            selectData={EncounterStatusEnum}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={{ statusIn }}
-            setRecord={(updatedStatus: any) => {
-              setStatusIn(Array.isArray(updatedStatus?.statusIn) ? updatedStatus.statusIn : []);
-              setPage(0);
-            }}
-          />
-        </Form>
-
-        <AdvancedSearchFilters
-          searchFilter={true}
-          clearOnClick={handleClearFilters}
-          content={
-            <div className="advanced-filters">
-              <Form key={JSON.stringify(record)} fluid className="dissss">
-                <MyInput
-                  fieldName="encounterReasonIn"
-                  fieldType="checkPicker"
-                  selectData={EncounterReasonEnum}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  fieldLabel="Encounter Reason"
-                  record={{ encounterReasonIn }}
-                  setRecord={(updatedReason: any) => {
-                    const rawValue = Array.isArray(updatedReason)
-                      ? updatedReason
-                      : updatedReason?.encounterReasonIn;
-
-                    const nextReasons = Array.isArray(rawValue)
-                      ? rawValue.map((reasonItem: any) => String(reasonItem)).filter(Boolean)
-                      : [];
-
-                    setEncounterReasonIn(nextReasons);
-                    setPage(0);
-                  }}
-                  searchable
-                  width={220}
-                />
-
-                <MyInput
-                  width={200}
-                  fieldName="chiefComplain"
-                  fieldType="text"
-                  record={record}
-                  setRecord={updatedRecord => {
-                    setRecord(updatedRecord);
-                    setPage(0);
-                  }}
-                  fieldLabel="Chief Complain"
-                />
-
-                <MyInput
-                  width={130}
-                  fieldName="withPrescription"
-                  fieldType="checkbox"
-                  record={{ withPrescription: !!withPrescription }}
-                  setRecord={(updatedValue: any) => {
-                    setWithPrescription(!!updatedValue?.withPrescription);
-                    setPage(0);
-                  }}
-                  label="With Prescription"
-                />
-                <MyInput
-                  width={110}
-                  fieldName="hasOrders"
-                  fieldType="checkbox"
-                  record={{ hasOrders: !!hasOrders }}
-                  setRecord={(updatedValue: any) => {
-                    setHasOrders(!!updatedValue?.hasOrders);
-                    setPage(0);
-                  }}
-                  label="Has Orders"
-                />
-                <MyInput
-                  width={110}
-                  fieldName="isObserved"
-                  fieldType="checkbox"
-                  record={{ isObserved: !!isObserved }}
-                  setRecord={(updatedValue: any) => {
-                    setIsObserved(!!updatedValue?.isObserved);
-                    setPage(0);
-                  }}
-                  label="Is Observed"
-                />
-
-                <MyInput
-                  width={200}
-                  fieldName="priorityIn"
-                  fieldType="checkPicker"
-                  record={{ priorityIn }}
-                  setRecord={(updatedPriority: any) => {
-                    setPriorityIn(
-                      Array.isArray(updatedPriority?.priorityIn) ? updatedPriority.priorityIn : []
-                    );
-                    setPage(0);
-                  }}
-                  selectData={EncounterPriorityEnum}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  placeholder="Select Priority"
-                  fieldLabel="Priority"
-                  searchable={true}
-                />
-              </Form>
-            </div>
-          }
+  const filters = () => (
+    <>
+      <Form layout="inline" fluid className="date-filter-form">
+        <MyInput
+          column
+          width={180}
+          fieldType="date"
+          fieldLabel="From Date"
+          fieldName="fromDate"
+          record={dateFilter}
+          setRecord={v => {
+            setDateFilter(v);
+            setPage(0);
+          }}
         />
-      </>
-    );
-  };
+        <MyInput
+          column
+          width={180}
+          fieldType="date"
+          fieldLabel="To Date"
+          fieldName="toDate"
+          record={dateFilter}
+          setRecord={v => {
+            setDateFilter(v);
+            setPage(0);
+          }}
+        />
+
+        <SearchPatientCriteria
+          record={patientSearchDraft}
+          setRecord={setPatientSearchDraft}
+          onSearchClick={handlePatientSearchClick}
+        />
+
+        <MyInput
+          column
+          width={260}
+          fieldType="checkPicker"
+          fieldLabel="Encounter Status"
+          fieldName="statusIn"
+          selectData={EncounterStatusEnum}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={{ statusIn }}
+          setRecord={(v: any) => {
+            setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
+            setPage(0);
+          }}
+        />
+      </Form>
+
+      <AdvancedSearchFilters
+        searchFilter={true}
+        clearOnClick={handleClearFilters}
+        content={
+          <div className="advanced-filters">
+            <Form key={JSON.stringify(record)} fluid className="dissss">
+              <MyInput
+                fieldName="encounterReasonIn"
+                fieldType="checkPicker"
+                selectData={EncounterReasonEnum}
+                selectDataLabel="label"
+                selectDataValue="value"
+                fieldLabel="Encounter Reason"
+                record={{ encounterReasonIn }}
+                setRecord={(v: any) => {
+                  const raw = Array.isArray(v) ? v : v?.encounterReasonIn;
+                  setEncounterReasonIn(Array.isArray(raw) ? raw.map(String).filter(Boolean) : []);
+                  setPage(0);
+                }}
+                searchable
+                width={220}
+              />
+
+              <MyInput
+                width={200}
+                fieldName="chiefComplain"
+                fieldType="text"
+                record={record}
+                setRecord={v => {
+                  setRecord(v);
+                  setPage(0);
+                }}
+                fieldLabel="Chief Complain"
+              />
+
+              <MyInput
+                width={130}
+                fieldName="withPrescription"
+                fieldType="checkbox"
+                record={{ withPrescription: !!withPrescription }}
+                setRecord={(v: any) => {
+                  setWithPrescription(!!v?.withPrescription);
+                  setPage(0);
+                }}
+                label="With Prescription"
+              />
+              <MyInput
+                width={110}
+                fieldName="hasOrders"
+                fieldType="checkbox"
+                record={{ hasOrders: !!hasOrders }}
+                setRecord={(v: any) => {
+                  setHasOrders(!!v?.hasOrders);
+                  setPage(0);
+                }}
+                label="Has Orders"
+              />
+              <MyInput
+                width={110}
+                fieldName="isObserved"
+                fieldType="checkbox"
+                record={{ isObserved: !!isObserved }}
+                setRecord={(v: any) => {
+                  setIsObserved(!!v?.isObserved);
+                  setPage(0);
+                }}
+                label="Is Observed"
+              />
+
+              <MyInput
+                width={200}
+                fieldName="priorityIn"
+                fieldType="checkPicker"
+                record={{ priorityIn }}
+                setRecord={(v: any) => {
+                  setPriorityIn(Array.isArray(v?.priorityIn) ? v.priorityIn : []);
+                  setPage(0);
+                }}
+                selectData={EncounterPriorityEnum}
+                selectDataLabel="label"
+                selectDataValue="value"
+                placeholder="Select Priority"
+                fieldLabel="Priority"
+                searchable={true}
+              />
+            </Form>
+          </div>
+        }
+      />
+    </>
+  );
 
   const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch]);
+  // useEffect(() => {
+  //   dispatch(setPageCode(''));
+  //   dispatch(setDivContent(' '));
+  // }, [location.pathname, dispatch]);
 
   useEffect(() => {
     if (tableLoading) dispatch(showSystemLoader());
     else dispatch(hideSystemLoader());
-
     return () => {
       dispatch(hideSystemLoader());
     };
@@ -1002,7 +914,7 @@ const EncounterList = () => {
           color="--primary-blue"
           backgroundClassName="result-ready-section"
           position="center"
-          width={'15vw'}
+          width="15vw"
         />
         <DetailsCard
           title="Active Cases"
@@ -1010,15 +922,15 @@ const EncounterList = () => {
           color="--green-600"
           backgroundClassName="sample-collected-section"
           position="center"
-          width={'15vw'}
+          width="15vw"
         />
         <DetailsCard
           title="Completed"
           number={completedCount ?? 0}
-          color="--primary-purple "
+          color="--primary-purple"
           backgroundClassName="new-section"
           position="center"
-          width={'15vw'}
+          width="15vw"
         />
         <DetailsCard
           title="Cancelled"
@@ -1026,7 +938,7 @@ const EncounterList = () => {
           color="--primary-yellow"
           backgroundClassName="total-test-section"
           position="center"
-          width={'15vw'}
+          width="15vw"
         />
       </div>
 
@@ -1036,11 +948,11 @@ const EncounterList = () => {
           height={600}
           data={normalizedTableData}
           columns={tableColumns}
-          rowClassName={(rowData: any) =>
-            rowData && encounter && rowData.key === encounter.key ? 'selected-row' : ''
+          rowClassName={(row: any) =>
+            row && encounter && row.key === encounter.key ? 'selected-row' : ''
           }
           loading={tableLoading}
-          onRowClick={(rowData: any) => setLocalEncounter(rowData)}
+          onRowClick={(row: any) => setLocalEncounter(row)}
           page={page}
           rowsPerPage={pageSize}
           totalCount={totalCount}
@@ -1063,7 +975,7 @@ const EncounterList = () => {
           setOpen={setOpen}
           actionButtonFunction={handleCancelEncounter}
           actionType="Deactivate"
-          confirmationQuestion="Do you want to cancel this Encounter ?"
+          confirmationQuestion="Do you want to cancel this Encounter?"
           actionButtonLabel="Cancel"
           cancelButtonLabel="Close"
         />
@@ -1072,7 +984,7 @@ const EncounterList = () => {
           open={openNurseAssessment}
           setOpen={setOpenNurseAssessment}
           actionButtonFunction={async () => {
-            if (encounter && encounter.patientObject) {
+            if (encounter?.patientObject) {
               await handleGoToPreVisitObservations(encounter, encounter.patientObject);
             }
           }}

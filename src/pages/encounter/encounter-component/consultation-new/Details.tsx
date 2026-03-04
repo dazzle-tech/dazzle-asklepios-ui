@@ -94,7 +94,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${violations.join('\n')}` + suffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -115,7 +115,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
         dispatch(
           notify({
             msg: `${fieldLabel} is required` + suffix,
-            sev: 'error'
+            sev: 'warning'
           })
         );
         return;
@@ -158,7 +158,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     dispatch(
       notify({
         msg: `Please fix the following fields:\n• ${normalizedItems.join('\n• ')}` + suffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -173,7 +173,7 @@ const handleCrudError = (err, dispatch, keyMap: Record<string, string>) => {
     data?.message ||
     'Unexpected error';
 
-  dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+  dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
 };
 
 const CONSULTATION_ERROR_MAP: Record<string, string> = {
@@ -254,20 +254,20 @@ const Details = ({
     if (consultationOrders?.id) {
       setFormData({
         ...consultationOrders,
-        patientId: patient?.key,
-        encounterId: encounter?.key
+        patientId: patient?.id,
+        encounterId: encounter?.id
       });
     } else {
       setFormData({
         ...newConsultation,
-        patientId: patient?.key,
-        encounterId: encounter?.key,
+        patientId: patient?.id,
+        encounterId: encounter?.id,
         destinationType: 'DEPARTMENT'
       });
       setAllPractitioners([]);
       setPractitionerPage(0);
     }
-  }, [open, consultationOrders, patient?.key, encounter?.key]);
+  }, [open, consultationOrders, patient?.id, encounter?.id]);
 
   useEffect(() => {
     if (!open) {
@@ -291,7 +291,7 @@ const Details = ({
 
     setLocalAiSummary(null);
     getSpecialtyConsultation({
-      request_id: `req-${patient?.key ?? ''}-${encounter?.key ?? ''}`,
+      request_id: `req-${patient?.id ?? ''}-${encounter?.id ?? ''}`,
       specialty: specialtyApi
     })
       .unwrap()
@@ -301,7 +301,7 @@ const Details = ({
       .catch(error => {
         setLocalAiSummary(null);
       });
-  }, [specialtyName, getSpecialtyConsultation, patient?.key, encounter?.key, open]);
+  }, [specialtyName, getSpecialtyConsultation, patient?.id, encounter?.id, open]);
 
   useEffect(() => {
     setShowAiPanel(false);
@@ -342,8 +342,8 @@ const Details = ({
   const handleClear = () => {
     setFormData({
       ...newConsultation,
-      patientId: patient?.key,
-      encounterId: encounter?.key,
+      patientId: patient?.id,
+      encounterId: encounter?.id,
       destinationType: 'DEPARTMENT',
       toFacilityId: null,
       toDepartmentId: null,
@@ -594,7 +594,7 @@ const Details = ({
                                 dispatch(
                                   notify({
                                     msg: 'Please select Consultant Specialty first.',
-                                    sev: 'error'
+                                    sev: 'warning'
                                   })
                                 );
                                 return;
@@ -614,7 +614,7 @@ const Details = ({
                                   dispatch(
                                     notify({
                                       msg: 'Specialty name not found. Please re-select Consultant Specialty.',
-                                      sev: 'error'
+                                      sev: 'warning'
                                     })
                                   );
                                   return;

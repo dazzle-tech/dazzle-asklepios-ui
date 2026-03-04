@@ -36,7 +36,7 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
 
   /* QUERY */
 
-  const patientId = Number(patient?.key);
+  const patientId = Number(patient?.id);
   const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
   const {

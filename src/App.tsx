@@ -215,7 +215,7 @@ import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseS
 import AvailabilityTemplatePage from './pages/setup/availability_template';
 import "survey-core/survey-core.min.css";
 import "survey-creator-core/survey-creator-core.min.css";
-import Logo from './images/eWaveLogocopy.svg';
+import Logo from './images/Logo_BLUE_New.svg';
 
 type BackendMenuItem = { screen?: string | null };
 

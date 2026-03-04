@@ -21,13 +21,12 @@ import {
 import { newTelephonicConsultation, newPractitioner } from '@/types/model-types-constructor-new';
 
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { Practitioner, TelephonicConsultation } from '@/types/model-types-new';
+import { Practitioner, TelephonicConsultations } from '@/types/model-types-new';
 
 import {
   useLazyGetPractitionersByFacilityQuery,
   useLazyGetPractitionerByIdQuery
 } from '@/services/setup/practitioner/PractitionerService';
-
 
 const TELEPHONIC_FIELD_LABELS: Record<string, string> = {
   facilityId: 'Facility',
@@ -63,7 +62,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -79,7 +78,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n• Facility: is required${suffix}`,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -89,7 +88,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: keyMap[errorKey] + suffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -100,11 +99,10 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   dispatch(
     notify({
       msg: fallbackMsg + suffix,
-      sev: 'error'
+      sev: 'warning'
     })
   );
 };
-
 
 const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Telephonic consultation payload is required.',
@@ -131,7 +129,6 @@ const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
 
   'db.constraint': 'Database constraint violation.'
 };
-
 
 const DetailsTele = ({
   patient,
@@ -165,27 +162,26 @@ const DetailsTele = ({
   const [triggerGetPractitionerById, { data: practitionerById, isSuccess: practitionerLoaded }] =
     useLazyGetPractitionerByIdQuery();
 
-
   useEffect(() => {
     if (!open) return;
 
     if (consultationOrders?.id) {
       setFormData({
         ...consultationOrders,
-        patientId: Number(patient?.key),
-        encounterId: Number(encounter?.key)
+        patientId: patient?.id,
+        encounterId: encounter?.id
       });
     } else {
       setFormData({
         ...newTelephonicConsultation,
-        patientId: Number(patient?.key),
-        encounterId: Number(encounter?.key)
+        patientId: patient?.id,
+        encounterId: encounter?.id
       });
       setPractitioner({ ...newPractitioner });
       setAllPractitioners([]);
       setPractitionerPage(0);
     }
-  }, [open, consultationOrders, patient?.key, encounter?.key]);
+  }, [open, consultationOrders, patient?.id, encounter?.id]);
 
   useEffect(() => {
     if (!open || !consultationOrders?.practitionerId) return;
@@ -235,8 +231,8 @@ const DetailsTele = ({
   const handleClear = () => {
     setFormData({
       ...newTelephonicConsultation,
-      patientId: Number(patient.key),
-      encounterId: Number(encounter?.key)
+      patientId: patient.id,
+      encounterId: encounter?.id
     });
     setPractitioner({ ...newPractitioner });
     setAllPractitioners([]);
@@ -245,7 +241,7 @@ const DetailsTele = ({
 
   const handleSave = async () => {
     try {
-      if ((formData as TelephonicConsultation).id) {
+      if ((formData as TelephonicConsultations).id) {
         const payload = {
           id: consultationOrders?.id,
           practitionerId: formData.practitionerId,
@@ -258,7 +254,11 @@ const DetailsTele = ({
         await updateConsultation(payload).unwrap();
         dispatch(notify({ msg: 'Telephonic consultation updated successfully', sev: 'success' }));
       } else {
-        await createConsultation(formData).unwrap();
+        const createPayload = {
+          ...formData,
+          patientId: patient?.id
+        };
+        await createConsultation(createPayload).unwrap();
         dispatch(notify({ msg: 'Telephonic consultation created successfully', sev: 'success' }));
       }
 
@@ -273,7 +273,6 @@ const DetailsTele = ({
     if (!(formData as any)?.id) return;
     setShowAttachmentModal(true);
   };
-
 
   return (
     <>
@@ -421,7 +420,7 @@ const DetailsTele = ({
             </div>
           </Form>
         }
-        leftContent={<Diagnosis patient={patient} encounter={encounter} />}
+        leftContent={<></>}
       />
 
       <AttachmentUploadModal

@@ -182,7 +182,16 @@ import { progressNoteService } from './services/patients/progressNoteService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
-
+import { encounterAssessmentService } from './services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
+import { encounterPlanService } from './services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
+import { patientDiagnosisService } from './services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import { vitalSignsService } from './services/medicalsheetsEncounter/observations/vitalSignsService';
+import { bodyMeasurementsService } from './services/medicalsheetsEncounter/observations/bodyMeasurementsService';
+import { patientObservationsComplaintsService } from './services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
+import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
+import { additionalMeasurementsService } from './services/medicalsheetsEncounter/observations/additionalMeasurementsService';
+import { patientAllergiesService } from './services/encounters/patientAllergiesService';
+import { patientWarningsService } from './services/encounters/patientWarningsService';
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -412,6 +421,8 @@ export const store = configureStore({
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
 
+    [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
+    [patientWarningsService.reducerPath]: patientAllergiesService.reducer,
     //AI Services
     // AI Services
     [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer,
@@ -449,7 +460,18 @@ export const store = configureStore({
     [patientDiagnosticResultHistoryService.reducerPath]:
       patientDiagnosticResultHistoryService.reducer,
 
-    [ICDTreeService.reducerPath]: ICDTreeService.reducer
+    [ICDTreeService.reducerPath]: ICDTreeService.reducer,
+
+    [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
+    [encounterPlanService.reducerPath]: encounterPlanService.reducer,
+    [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
+
+     [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+
+    [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
+    [patientObservationsComplaintsService.reducerPath]: patientObservationsComplaintsService.reducer,
+    [painAssessmentService.reducerPath]: painAssessmentService.reducer,
+    [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -473,6 +495,8 @@ export const store = configureStore({
       hipaaService.middleware,
       patientPreferredHealthProfessionalService.middleware,
       patientDocumentsService.middleware,
+
+      
 
       // inventory
       inventoryService.middleware,
@@ -658,7 +682,17 @@ export const store = configureStore({
       consultationService.middleware,
       portalService.middleware,
       telephonicConsultationService.middleware,
-      ICDTreeService.middleware
+      ICDTreeService.middleware,
+      encounterAssessmentService.middleware,
+      encounterPlanService.middleware,
+      patientDiagnosisService.middleware,
+      vitalSignsService.middleware,
+      bodyMeasurementsService.middleware,
+      patientObservationsComplaintsService.middleware,
+      painAssessmentService.middleware,
+      additionalMeasurementsService.middleware,
+      patientAllergiesService.middleware,
+      patientWarningsService.middleware
     ])
 });
 

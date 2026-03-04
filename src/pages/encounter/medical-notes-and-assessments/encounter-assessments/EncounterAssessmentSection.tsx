@@ -3,17 +3,16 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import SectionContainer from '@/components/SectionsoContainer';
 import { Form } from 'rsuite';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import {
   useCreateEncounterAssessmentMutation,
   useUpdateEncounterAssessmentMutation,
   useGetLatestEncounterAssessmentQuery,
-} from '@/services/medicalSheets/clinicalVisit/encounterAssessmentService';
-import type { EncounterAssessment } from '@/types/model-types-new';
-
+} from '@/services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
+import type { EncounterAssessment, Patient } from '@/types/model-types-new';
 type EncounterAssessmentSectionProps = {
-  patient: any;
+  patient: Patient;
   encounterId: number | string;
   disabled?: boolean;
   title?: React.ReactNode;
@@ -29,15 +28,8 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
-  const authSlice = useAppSelector(state => state.auth);
-  const userIdNumber: number | null =
-    authSlice?.user?.id ? Number(authSlice.user.id) : null;
-
-  const patientIdNumber: number | null =
-    patient?.key ? Number(patient.key) : null;
-
-  const encounterIdNumber: number | null =
-    encounterId ? Number(encounterId) : null;
+  const patientIdNumber: number | null = patient?.id ? Number(patient.id) : null;
+  const encounterIdNumber: number | null = encounterId ? Number(encounterId) : null;
 
   const {
     data: latestAssessment,
@@ -45,8 +37,8 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
     refetch,
     error: latestError,
   } = useGetLatestEncounterAssessmentQuery(
-    { encounterId: encounterIdNumber as any, userId: userIdNumber as any },
-    { skip: !encounterIdNumber || !userIdNumber }
+    { encounterId: encounterIdNumber as any },
+    { skip: !encounterIdNumber }
   );
 
   const [createEncounterAssessment, { isLoading: isSavingCreate }] =
@@ -61,12 +53,11 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
 
   useEffect(() => {
     setAssessmentText(latestAssessment?.assessment ?? '');
-  }, [latestAssessment?.id, encounterIdNumber, userIdNumber]);
+  }, [latestAssessment?.id, encounterIdNumber]);
 
   const showApiError = (error: any) => {
     const data = error?.data ?? {};
 
-    // handle bean validation errors
     if (data?.errors?.length) {
       dispatch(
         notify({
@@ -85,13 +76,12 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
     const keyMap: Record<string, string> = {
       'payload.required': 'Assessment payload is required.',
       'encounterId.required': 'Encounter id is required.',
-      'userId.required': 'User id is required.',
       'notfound': 'No assessment found for this encounter.',
       'fk.patient': 'Invalid patient (patient does not exist).',
-      'fk.user': 'Invalid user.',
       'required.fields': 'Required fields are missing.',
       'duplicate.record': 'Assessment already exists for this encounter.',
       'db.constraint': 'Database constraint violated while saving assessment.',
+      'user.notfound': 'Current user not found.',
     };
 
     const humanMessage =
@@ -114,18 +104,11 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
   const payload: EncounterAssessment = useMemo(() => {
     return {
       id: latestAssessment?.id ?? undefined,
-      patientId: patientIdNumber,
-      userId: userIdNumber,
-      encounterId: encounterIdNumber,
+      patientId: patientIdNumber as any,
+      encounterId: encounterIdNumber as any,
       assessment: (assessmentText ?? '').trim(),
     } as any;
-  }, [
-    latestAssessment?.id,
-    patientIdNumber,
-    userIdNumber,
-    encounterIdNumber,
-    assessmentText,
-  ]);
+  }, [latestAssessment?.id, patientIdNumber, encounterIdNumber, assessmentText]);
 
   const handleSave = async () => {
     if (!payload.patientId) {
@@ -138,18 +121,8 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
       return;
     }
 
-    if (!payload.userId) {
-      dispatch(notify({ msg: 'User id is required.', sev: 'warning' }));
-      return;
-    }
-
     if (!payload.assessment?.trim()) {
-      dispatch(
-        notify({
-          msg: 'Assessment cannot be empty.',
-          sev: 'warning',
-        })
-      );
+      dispatch(notify({ msg: 'Assessment cannot be empty.', sev: 'warning' }));
       return;
     }
 
@@ -163,12 +136,7 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
         await createEncounterAssessment(payload as any).unwrap();
       }
 
-      dispatch(
-        notify({
-          msg: 'Assessment saved successfully',
-          sev: 'success',
-        })
-      );
+      dispatch(notify({ msg: 'Assessment saved successfully', sev: 'success' }));
 
       refetch();
     } catch (error: any) {
@@ -189,9 +157,7 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
               fieldType="textarea"
               fieldName="assessment"
               record={{ assessment: assessmentText }}
-              setRecord={(r: any) =>
-                setAssessmentText(r?.assessment ?? '')
-              }
+              setRecord={(r: any) => setAssessmentText(r?.assessment ?? '')}
               disabled={disabled}
             />
           </Form>
