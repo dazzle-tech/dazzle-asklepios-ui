@@ -38,14 +38,15 @@ export const encounterAssessmentService = createApi({
 
     getLatestEncounterAssessment: builder.query<
       modelTypes.EncounterAssessment,
-      { encounterId: Id; userId: Id; timestamp?: number }
+      { encounterId: Id; timestamp?: number }
     >({
-      query: ({ encounterId, userId }) => ({
+      query: ({ encounterId }) => ({
         url: `/api/patient/encounter-assessments/latest`,
-        params: { encounterId, userId },
+        params: { encounterId },
       }),
-      providesTags: (_res, _err, { encounterId, userId }) => [
-        { type: 'EncounterAssessment', id: `latest-${encounterId}-${userId}` },
+
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'EncounterAssessment', id: `latest-${encounterId}` },
         'EncounterAssessment',
       ],
     }),

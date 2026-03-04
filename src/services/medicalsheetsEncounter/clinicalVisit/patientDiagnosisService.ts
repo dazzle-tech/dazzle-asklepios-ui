@@ -51,24 +51,12 @@ export const patientDiagnosisService = createApi({
     }),
 
     getPatientDiagnosesByPatientId: builder.query<
-      {
-        content: modelTypes.PatientDiagnosis[];
-        totalElements: number;
-        totalPages: number;
-        number: number;
-        size: number;
-        first: boolean;
-        last: boolean;
-        numberOfElements: number;
-        empty: boolean;
-        sort?: any;
-        pageable?: any;
-      },
+      modelTypes.PatientDiagnosis[],
       { patientId: Id; page?: number; size?: number; sort?: string; timestamp?: number }
     >({
       query: ({ patientId, page = 0, size = 20, sort = 'createdDate,desc' }) => ({
-        url: `/api/patient/patient-diagnoses`,
-        params: { patientId, page, size, sort },
+        url: `/api/patient/patient-diagnoses/patient/${patientId}`,
+        params: { page, size, sort },
       }),
       providesTags: (_res, _err, { patientId }) => [
         { type: 'PatientDiagnosis', id: `patient-${patientId}` },
@@ -86,3 +74,4 @@ export const {
   useGetPatientDiagnosesByPatientIdQuery,
   useLazyGetPatientDiagnosesByPatientIdQuery,
 } = patientDiagnosisService;
+
