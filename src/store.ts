@@ -189,14 +189,14 @@ import { patientPrescriptionService } from './services/patients/Prescription/pat
 import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 import { NextOfKinService } from './services/patients/NextOfKinService';
-import { encounterAssessmentService } from './services/medicalSheets/clinicalVisit/encounterAssessmentService';
-import { encounterPlanService } from './services/medicalSheets/clinicalVisit/encounterPlanService';
-import { patientDiagnosisService } from './services/medicalSheets/clinicalVisit/patientDiagnosisService';
-import { vitalSignsService } from '@/services/medicalSheets/observations/vitalSignsService';
-import { bodyMeasurementsService } from './services/medicalSheets/observations/bodyMeasurementsService';
-import { patientObservationsComplaintsService } from './services/medicalSheets/observations/patientObservationsComplaintsService';
-import { painAssessmentService } from './services/medicalSheets/observations/painAssessmentService';
-import { additionalMeasurementsService } from './services/medicalSheets/observations/additionalMeasurementsService';
+import { encounterAssessmentService } from './services/medicalsheets/clinicalVisit/encounterAssessmentService';
+import { encounterPlanService } from './services/medicalsheets/clinicalVisit/encounterPlanService';
+import { patientDiagnosisService } from './services/medicalsheets/clinicalVisit/patientDiagnosisService';
+import { vitalSignsService } from '@/services/medicalsheets/observations/vitalSignsService';
+import { bodyMeasurementsService } from './services/medicalsheets/observations/bodyMeasurementsService';
+import { patientObservationsComplaintsService } from './services/medicalsheets/observations/patientObservationsComplaintsService';
+import { painAssessmentService } from './services/medicalsheets/observations/painAssessmentService';
+import { additionalMeasurementsService } from './services/medicalsheets/observations/additionalMeasurementsService';
 
 export const store = configureStore({
   reducer: {
@@ -484,9 +484,6 @@ export const store = configureStore({
     [patientObservationsComplaintsService.reducerPath]: patientObservationsComplaintsService.reducer,
     [painAssessmentService.reducerPath]: painAssessmentService.reducer,
     [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
-
-
-    [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer
   },
 
   middleware: getDefaultMiddleware =>
