@@ -3087,3 +3087,143 @@ export interface PatientDiagnosis {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
 }
+export interface EncounterAssessment {
+  id?: number;
+  patientId: number | null;
+  encounterId: number | null;
+  assessment: string | null;
+ 
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+ 
+export interface EncounterPlan {
+  id?: number;
+  patientId: number | null;
+  encounterId: number | null;
+  planInstructions: string | null;
+ 
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+ 
+export interface PatientDiagnosis {
+  id?: number;
+  patientId: number | null;
+  encounterId: number | null;
+  diagnosisId: number | null;
+  type: string | null;
+  suspected: boolean | null;
+  major: boolean | null;
+ 
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+export interface VitalSigns {
+  id?: number;
+ 
+  patientId: number;
+  encounterId: number;
+ 
+  bloodPressureSystolic?: number | null;
+  bloodPressureDiastolic?: number | null;
+  measurementSite?: string | null;
+ 
+  heartRate?: number | null;
+  temperature?: number | null;
+  oxygenSaturation?: number | null;
+  respiratoryRate?: number | null;
+ 
+  isTriage?: boolean | null;
+  isActive: boolean;
+ 
+  notes?: string | null;
+ 
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+ 
+}
+ 
+export interface BodyMeasurements {
+  id?: number;
+ 
+  patientId: number;
+  encounterId: number;
+ 
+  weight?: number | null;
+  height?: number | null;
+  headCircumference?: number | null;
+ 
+  isActive: boolean;
+ 
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+ 
+export interface PatientObservationsComplaints {
+  id?: number;
+ 
+  patientId: number;
+  encounterId: number;
+ 
+  reasonOfVisit?: string | null;
+  latestFunctionalStatus?: string | null;
+  latestCognitiveCheck?: string | null;
+ 
+  isActive: boolean;
+  functionalStatus?: string | null;
+  cognitiveCheck?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+ 
+export interface PainAssessment {
+  id?: number;
+ 
+  patientId: number;
+  encounterId: number;
+ 
+  painDegree?: string | null;
+  painLevel?: 'NO_PAIN' | 'MILD' | 'MODERATE' | 'SEVERE' | string | null;
+  painDescription?: string | null;
+ 
+  isActive: boolean;
+ 
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+ 
+export interface AdditionalMeasurements {
+  id?: number;
+ 
+  patientId: number;
+  encounterId: number;
+ 
+  ageGroup: string;
+  hearingTest?: string | null;
+ 
+  dehydration?: boolean;
+  nasalFlaring?: boolean;
+  responseToLight?: boolean;
+  pupilResponse?: boolean;
+  abilityToFollowTarget?: boolean;
+  colorTesting?: boolean;
+  fallRisk?: boolean;
+  visionProblemsAffectingFunction?: boolean;
+  hearingProblemsAffectingFunction?: boolean;
+ 
+  details?: string | null;
+  actionToTake?: string | null;
+ 
+  isActive: boolean;
+ 
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+ 

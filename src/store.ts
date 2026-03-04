@@ -151,9 +151,8 @@ import { portalService } from './services/portalService';
 import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
-import { ReviewOfSystemService } from '@/services/medicalsheets/ReviewOfSystemService';
-import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
+import { DischargePlanningService } from '@/services/setup/DischargePlanningService';
 import { formTemplateService } from './services/setup/formTemplateService';
 import { FormEntriesService } from './services/setup/formEntriesService';
 import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
@@ -161,7 +160,6 @@ import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
-import { patientAllergiesService } from './services/encounters/patientAllergiesService';
 import { patientProblemService } from './services/patients/patientProblemService';
 import { familyHistoryService } from './services/patients/familyHistoryService';
 import { hospitalizationService } from './services/patients/hospitalizationsService';
@@ -184,19 +182,22 @@ import { progressNoteService } from './services/patients/progressNoteService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { encounterAssessmentService } from './services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
+import { encounterPlanService } from './services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
+import { patientDiagnosisService } from './services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import { vitalSignsService } from './services/medicalsheetsEncounter/observations/vitalSignsService';
+import { bodyMeasurementsService } from './services/medicalsheetsEncounter/observations/bodyMeasurementsService';
+import { patientObservationsComplaintsService } from './services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
+import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
+import { additionalMeasurementsService } from './services/medicalsheetsEncounter/observations/additionalMeasurementsService';
+import { patientAllergiesService } from './services/encounters/patientAllergiesService';
+import { ReviewOfSystemService } from './services/medicalsheetsEncounter/ReviewOfSystemService';
 import { patientWarningsService } from './services/encounters/patientWarningsService';
 import { patientPrescriptionService } from './services/patients/Prescription/patientPrescriptionService';
 import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 import { NextOfKinService } from './services/patients/NextOfKinService';
-import { encounterAssessmentService } from './services/medicalsheets/clinicalVisit/encounterAssessmentService';
-import { encounterPlanService } from './services/medicalsheets/clinicalVisit/encounterPlanService';
-import { patientDiagnosisService } from './services/medicalsheets/clinicalVisit/patientDiagnosisService';
-import { vitalSignsService } from '@/services/medicalsheets/observations/vitalSignsService';
-import { bodyMeasurementsService } from './services/medicalsheets/observations/bodyMeasurementsService';
-import { patientObservationsComplaintsService } from './services/medicalsheets/observations/patientObservationsComplaintsService';
-import { painAssessmentService } from './services/medicalsheets/observations/painAssessmentService';
-import { additionalMeasurementsService } from './services/medicalsheets/observations/additionalMeasurementsService';
+
 
 export const store = configureStore({
   reducer: {
@@ -217,10 +218,6 @@ export const store = configureStore({
     // patient
     [patientSlice.name]: patientSlice.reducer,
     [patientService.reducerPath]: patientService.reducer,
-
-    [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
-    [patientPrescriptionMedicationService.reducerPath]:
-      patientPrescriptionMedicationService.reducer,
     [newPatientService.reducerPath]: newPatientService.reducer,
     [addressService.reducerPath]: addressService.reducer,
     [hipaaService.reducerPath]: hipaaService.reducer,
@@ -262,11 +259,6 @@ export const store = configureStore({
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
-
-    [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
-    [patientWarningsService.reducerPath]: patientWarningsService.reducer,
-
-    //dental
     [dentalService.reducerPath]: dentalService.reducer,
     [observationService.reducerPath]: observationService.reducer,
 
@@ -314,11 +306,10 @@ export const store = configureStore({
     // medical sheets
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
 
-    [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
-
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
     [languageService.reducerPath]: languageService.reducer,
+    [translationService.reducerPath]: translationService.reducer,
 
     // practitioner
     [PractitionerService.reducerPath]: PractitionerService.reducer,
@@ -332,8 +323,6 @@ export const store = configureStore({
     [uomGroupService.reducerPath]: uomGroupService.reducer,
 
     // Translation slice
-    [translationService.reducerPath]: translationService.reducer,
-
     // Form slice
     [formTemplateService.reducerPath]: formTemplateService.reducer,
     [FormEntriesService.reducerPath]: FormEntriesService.reducer,
@@ -394,10 +383,9 @@ export const store = configureStore({
 
     // reporting
     [resultReportApi.reducerPath]: resultReportApi.reducer,
+    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
 
     // invoice report
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
-    // Visit Duration
     // visit duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
 
@@ -424,7 +412,6 @@ export const store = configureStore({
     [PayorService.reducerPath]: PayorService.reducer,
     [PayorPlanService.reducerPath]: PayorPlanService.reducer,
 
-    [ReviewOfSystemService.reducerPath]: ReviewOfSystemService.reducer,
     [patientInsurancesService.reducerPath]: patientInsurancesService.reducer,
     [patientInsuranceCoveragesService.reducerPath]: patientInsuranceCoveragesService.reducer,
 
@@ -437,6 +424,8 @@ export const store = configureStore({
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
 
+    [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
+    [patientWarningsService.reducerPath]: patientAllergiesService.reducer,
     //AI Services
     // AI Services
     [clinicalSummaryService.reducerPath]: clinicalSummaryService.reducer,
@@ -475,15 +464,23 @@ export const store = configureStore({
       patientDiagnosticResultHistoryService.reducer,
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
-    [NextOfKinService.reducerPath]: NextOfKinService.reducer,
+
     [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
     [encounterPlanService.reducerPath]: encounterPlanService.reducer,
     [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
+
     [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+
     [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
-    [patientObservationsComplaintsService.reducerPath]: patientObservationsComplaintsService.reducer,
+    [patientObservationsComplaintsService.reducerPath]:
+      patientObservationsComplaintsService.reducer,
     [painAssessmentService.reducerPath]: painAssessmentService.reducer,
     [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
+    [ReviewOfSystemService.reducerPath]: ReviewOfSystemService.reducer,
+    [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
+    [patientPrescriptionMedicationService.reducerPath]: patientPrescriptionMedicationService.reducer,
+    [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
+    [NextOfKinService.reducerPath]: NextOfKinService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -502,8 +499,6 @@ export const store = configureStore({
 
       // patient
       patientService.middleware,
-      patientPrescriptionService.middleware,
-      patientPrescriptionMedicationService.middleware,
       newPatientService.middleware,
       addressService.middleware,
       hipaaService.middleware,
@@ -628,7 +623,6 @@ export const store = configureStore({
       // discharge
       dischargePService.middleware,
       DischargePlanningService.middleware,
-      ReviewOfSystemService.middleware,
 
       // reporting
       resultReportApi.middleware,
@@ -672,7 +666,6 @@ export const store = configureStore({
       clinicalSummaryService.middleware,
       clinicalRecommendationsService.middleware,
       medicationTestOrdersValidationService.middleware,
-      patientAllergiesService.middleware,
       patientProblemService.middleware,
       familyHistoryService.middleware,
       hospitalizationService.middleware,
@@ -691,16 +684,12 @@ export const store = configureStore({
       diagnosticOrderTestReportCommentsService.middleware,
       patientDiagnosticResultHistoryService.middleware,
       patientReportService.middleware,
-      ICDTreeService.middleware,
-      patientWarningsService.middleware,
       progressNoteService.middleware,
       patientProcedureService.middleware,
       consultationService.middleware,
       portalService.middleware,
       telephonicConsultationService.middleware,
       ICDTreeService.middleware,
-      patientServicesAndProductsService.middleware,
-      NextOfKinService.middleware,
       encounterAssessmentService.middleware,
       encounterPlanService.middleware,
       patientDiagnosisService.middleware,
@@ -709,7 +698,14 @@ export const store = configureStore({
       patientObservationsComplaintsService.middleware,
       painAssessmentService.middleware,
       additionalMeasurementsService.middleware,
-      procedureSetupService.middleware
+      patientAllergiesService.middleware,
+      patientWarningsService.middleware,
+      procedureSetupService.middleware,
+      ReviewOfSystemService.middleware,
+      patientPrescriptionService.middleware,
+      patientPrescriptionMedicationService.middleware,
+      patientServicesAndProductsService.middleware,
+      NextOfKinService.middleware
     ])
 });
 

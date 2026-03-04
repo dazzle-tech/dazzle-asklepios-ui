@@ -2103,31 +2103,32 @@ export const newNextOfKin: modelTypes.NextOfKin = {
   internationalNumber: null,
   landlineNumber: null
 };
+
 export const newEncounterAssessment: modelTypes.EncounterAssessment = {
   id: undefined,
   patientId: null,
   userId: null,
   encounterId: null,
   assessment: '',
-
+ 
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null
+  lastModifiedDate: null,
 };
-
+ 
 export const newEncounterPlan: modelTypes.EncounterPlan = {
   id: undefined,
   patientId: null,
   encounterId: null,
   planInstructions: '',
-
+ 
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null
+  lastModifiedDate: null,
 };
-
+ 
 export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
   id: undefined,
   patientId: null,
@@ -2136,9 +2137,111 @@ export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
   type: null,
   suspected: false,
   major: false,
-
+ 
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
+  lastModifiedDate: null,
+};
+export const newVitalSigns: modelTypes.VitalSigns = {
+  id: undefined,
+ 
+  patientId: 0,
+  encounterId: 0,
+ 
+  bloodPressureSystolic: null,
+  bloodPressureDiastolic: null,
+  measurementSite: null,
+ 
+  heartRate: null,
+  temperature: null,
+  oxygenSaturation: null,
+  respiratoryRate: null,
+ 
+  isTriage: false,
+  isActive: true,
+ 
+  notes: null,
+ 
+  createdDate: null,
+  lastModifiedDate: null,
+};
+export const newBodyMeasurements: modelTypes.BodyMeasurements = {
+  id: undefined,
+ 
+  patientId: 0,
+  encounterId: 0,
+ 
+  weight: null,
+  height: null,
+  headCircumference: null,
+ 
+  isActive: true,
+ 
+  createdDate: null,
   lastModifiedDate: null
 };
+ 
+export const newPatientObservationsComplaints: modelTypes.PatientObservationsComplaints = {
+  id: undefined,
+ 
+  patientId: 0,
+  encounterId: 0,
+ 
+  reasonOfVisit: null,
+  latestFunctionalStatus: null,
+  latestCognitiveCheck: null,
+ 
+  isActive: true,
+  functionalStatus: null,
+  cognitiveCheck: null,
+  createdDate: null,
+  lastModifiedDate: null
+};
+ 
+export const newPainAssessment: modelTypes.PainAssessment = {
+  id: undefined,
+ 
+  patientId: 0,
+  encounterId: 0,
+ 
+  painDegree: null,
+  painLevel: null,
+  painDescription: null,
+ 
+  isActive: true,
+ 
+  createdDate: null,
+  lastModifiedDate: null
+};
+ 
+export const newAdditionalMeasurements: modelTypes.AdditionalMeasurements = {
+  id: undefined,
+ 
+  patientId: 0,
+  encounterId: 0,
+ 
+  ageGroup: "",
+ 
+  hearingTest: null,
+ 
+  dehydration: false,
+  nasalFlaring: false,
+  responseToLight: false,
+  pupilResponse: false,
+  abilityToFollowTarget: false,
+  colorTesting: false,
+ 
+  fallRisk: false,
+  visionProblemsAffectingFunction: false,
+  hearingProblemsAffectingFunction: false,
+ 
+  details: null,
+  actionToTake: null,
+ 
+  isActive: true,
+ 
+  createdDate: null,
+  lastModifiedDate: null
+};
+ 

@@ -7,7 +7,7 @@ import {
   useCreateVitalSignsMutation,
   useGetLatestVitalSignsByEncounterIdQuery,
   useGetLatestTriageVitalSignsByEncounterIdQuery
-} from '@/services/medicalSheets/observations/vitalSignsService';
+} from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newVitalSigns } from '@/types/model-types-constructor-new';
 import type { VitalSigns as VitalSignsModelObject } from '@/types/model-types-new';
