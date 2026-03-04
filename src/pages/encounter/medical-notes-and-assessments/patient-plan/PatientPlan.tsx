@@ -10,8 +10,8 @@ import {
   useCreateEncounterPlanMutation,
   useUpdateEncounterPlanMutation,
   useGetLatestEncounterPlanQuery,
-} from '@/services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
-import type { EncounterPlan } from '@/types/model-types-new';
+}from '@/services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
+import type { EncounterPlan, Patient ,PatientEncounter } from '@/types/model-types-new';
 import './styles.less';
 
 const normalizeLine = (s: string) => s.trim().replace(/\s+/g, ' ');
@@ -29,8 +29,8 @@ const appendUniqueLine = (text: string | null | undefined, line: string) => {
 };
 
 type PatientPlanProps = {
-  patient: any;
-  localEncounter: any;
+  patient: Patient;
+  localEncounter: PatientEncounter;
   disabled?: boolean;
   title?: React.ReactNode;
   width?: string;
@@ -46,11 +46,12 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
   const dispatch = useAppDispatch();
 
   const patientIdNumber: number | null =
-    patient?.key ? Number(patient.key) : null;
+    patient?.id ? Number(patient.id) : null;
 
   const encounterIdNumber: number | null =
-    localEncounter?.key ? Number(localEncounter?.key) : null;
-
+    localEncounter?.id ? Number(localEncounter?.id) : null;
+  
+    console.log("encounterIdNumber", encounterIdNumber);
   const { data: planLovQueryResponse } =
     useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');
 

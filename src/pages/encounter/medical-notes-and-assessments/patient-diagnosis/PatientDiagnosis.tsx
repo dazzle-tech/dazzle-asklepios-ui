@@ -39,8 +39,8 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
-  const patientIdNumber: number | null = patient?.key ? Number(patient.key) : null;
-  const encounterIdNumber: number | null = encounter?.key ? Number(encounter?.key) : null;
+  const patientIdNumber: number | null = patient?.id ? Number(patient.id) : null;
+  const encounterIdNumber: number | null = encounter?.id ? Number(encounter.id) : null;
 
   const diagnosisTypeOptions = useEnumOptions('DiagnosisType');
 
@@ -146,8 +146,14 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     { skip: !patientIdNumber }
   );
 
-  const tableData = useMemo(() => patientDiagnosesResp?.content ?? [], [patientDiagnosesResp?.content]);
-  const totalCount = useMemo(() => patientDiagnosesResp?.totalElements ?? 0, [patientDiagnosesResp?.totalElements]);
+  // ✅ FIX: backend returns array not Page
+  const tableData = useMemo(
+    () => (Array.isArray(patientDiagnosesResp) ? patientDiagnosesResp : []),
+    [patientDiagnosesResp]
+  );
+
+  // ✅ FIX: totalCount from array length (or later from header if you implement it)
+  const totalCount = tableData.length;
 
   const [fetchIcdByIds] = useLazyGetIcdDiagnosesByIdsQuery();
   const [icdMap, setIcdMap] = useState<Record<number, any>>({});
@@ -189,7 +195,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [pageDiagnosisIds, fetchIcdByIds]);
+  }, [pageDiagnosisIds, fetchIcdByIds, icdMap]);
 
   const tableColumns = useMemo(
     () => [
@@ -290,6 +296,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
               label="Diagnosis"
               disabled={disabled}
             />
+
             <div className="pd-fields-inline">
               <div className="pd-field">
                 <MyInput
@@ -328,7 +335,6 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                 />
               </div>
             </div>
-
 
             <div className="pd-footer">
               <MyButton onClick={handleSave} disabled={disabled || savingBusy}>

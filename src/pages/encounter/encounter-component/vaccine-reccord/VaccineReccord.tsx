@@ -64,7 +64,7 @@ const VaccineReccord = () => {
   });
 
 
-  const patientId = Number(patient?.key);
+  const patientId = Number(patient?.id);
 
   const { data: patientVaccineIdsResp, isFetching: isFetchingVaccineIds } = useGetPatientVaccineIdsQuery(
     { patientId },

@@ -1,5 +1,5 @@
 // PatientPaymentInfo.tsx
-// Added: dept field (read-only) + ledger summary RTK call and display
+// Added: debt field (read-only) + ledger summary RTK call and display
 // NOTE: You need to have added the RTK endpoint/hook: useGetPatientLedgerSummaryQuery
 // and the type: modelTypes.PatientLedgerSummaryDTO
 
@@ -118,13 +118,14 @@ const PAYMENT_FIELD_LABELS: Record<string, string> = {
   currency: 'Currency',
   facilityDefaultCurrency: 'Default Currency',
   amountInFacilityCurrency: 'Amount in default currency',
+  exchangeRate: 'Exchange Rate',
   remaining: 'Remaining',
   refunds: 'Refunds',
   addToFreeBalance: 'Add to free balance',
   useBalanceToSettleDebts: 'Use balance to settle debts',
   paidFromAmount: 'Paid from amount',
   paidFromBalance: 'Paid from balance',
-  dept: 'Debt',
+  debt: 'Debt',
   cardNumber: 'Card Number',
   cardHolderName: 'Holder Name',
   cardValidUntil: 'Valid until',
@@ -224,10 +225,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       authSlice?.tenant?.selectedFacility?.id ??
       null;
 
-    const { data: facilityResponse, isFetching: facilityLoading } = useGetFacilityByIdQuery(
-      selectedFacilityId,
-      { skip: !selectedFacilityId }
-    );
+    const { data: facilityResponse } = useGetFacilityByIdQuery(selectedFacilityId, {
+      skip: !selectedFacilityId
+    });
 
     const facilityDefaultCurrency =
       facilityResponse?.defaultCurrency ?? facilityResponse?.data?.defaultCurrency ?? null;
@@ -249,7 +249,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
             ? prev.currency
             : facilityDefaultCurrency
       }));
-    }, [localPatient?.id, localPatient?.key, localEncounter?.id, facilityDefaultCurrency]);
+    }, [localPatient?.id, localPatient?.key, localEncounter?.id, facilityDefaultCurrency, setPayment]);
 
     const effectivePatientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
 
@@ -265,8 +265,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
       const totalDebt = Number((summary as any)?.totalDebt ?? 0);
 
-      if (Number(payment?.dept ?? NaN) !== Number(totalDebt)) {
-        setPayment((previousPayment: any) => ({ ...previousPayment, dept: totalDebt }));
+      if (Number(payment?.debt ?? NaN) !== totalDebt) {
+        setPayment((previousPayment: any) => ({ ...previousPayment, debt: totalDebt }));
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ledgerSummaryResponse?.data]);
@@ -346,8 +346,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         const policyNumber = String(insuranceItem?.policyNumber ?? '');
         const groupNumber = String(insuranceItem?.groupNumber ?? '');
 
-        const searchableText =
-          `${payorName} ${planName} ${policyNumber} ${groupNumber}`.toLowerCase();
+        const searchableText = `${payorName} ${planName} ${policyNumber} ${groupNumber}`.toLowerCase();
         return searchableText.includes(keyword);
       });
     }, [patientInsurancesList, insuranceSearchKeyword, payorsList, plansByPayorId]);
@@ -542,27 +541,32 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
           const toCurrency = payment?.facilityDefaultCurrency;
 
           if (!isCurrencyChanged) {
-            if (payment?.amountInFacilityCurrency != null) {
+            if (payment?.amountInFacilityCurrency != null || payment?.exchangeRate != null) {
               setPayment((previousPayment: any) => ({
                 ...previousPayment,
-                amountInFacilityCurrency: null
+                amountInFacilityCurrency: null,
+                exchangeRate: null
               }));
             }
             return;
           }
 
           const convertedAmount = await convertCurrencyFree(amount, fromCurrency, toCurrency);
+          const rate = amount > 0 ? convertedAmount / amount : null;
+
           if (!isCancelled) {
             setPayment((previousPayment: any) => ({
               ...previousPayment,
-              amountInFacilityCurrency: convertedAmount
+              amountInFacilityCurrency: convertedAmount,
+              exchangeRate: rate
             }));
           }
         } catch {
           if (!isCancelled) {
             setPayment((previousPayment: any) => ({
               ...previousPayment,
-              amountInFacilityCurrency: null
+              amountInFacilityCurrency: null,
+              exchangeRate: null
             }));
           }
         }
@@ -711,7 +715,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         facilityDefaultCurrency: previousPayment.facilityDefaultCurrency,
         currency: previousPayment.facilityDefaultCurrency,
         useBalanceToSettleDebts: false,
-        dept: previousPayment.dept ?? 0
+        debt: previousPayment.debt ?? 0
       }));
 
       setServicesRows(previousRows =>
@@ -756,8 +760,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         paymentMethods: payment.paymentMethods,
 
         amount: Number(payment.amount ?? 0),
-        currency: payment.currency ?? null,
-        facilityDefaultCurrency: payment.facilityDefaultCurrency ?? null,
+        currency: String(payment.currency ?? payment.facilityDefaultCurrency ?? ''),
+        facilityDefaultCurrency: String(payment.facilityDefaultCurrency ?? ''),
+        exchangeRate: payment.exchangeRate ?? null,
         amountInFacilityCurrency: payment.amountInFacilityCurrency ?? null,
 
         addToFreeBalance: Boolean(payment.addToFreeBalance),
@@ -790,14 +795,13 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         paymentDetails = await createPayment({ body: paymentDto }).unwrap();
       }
 
-
       if (paymentDetails?.payment) {
         const savedPayment: any = paymentDetails.payment;
 
         setPayment((previousPayment: any) => ({
           ...previousPayment,
           ...savedPayment,
-          paidFromAmount: Number(savedPayment?.amountPaid ?? 0),
+          paidFromAmount: Number(savedPayment?.paidFromAmount ?? 0),
           paidFromBalance: Number(savedPayment?.paidFromBalance ?? 0),
           refunds: Number(savedPayment?.refunds ?? 0)
         }));
@@ -912,7 +916,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
           column
           disabled={true}
           fieldLabel="Debt"
-          fieldName="dept"
+          fieldName="debt"
           record={payment}
           setRecord={setPayment}
         />

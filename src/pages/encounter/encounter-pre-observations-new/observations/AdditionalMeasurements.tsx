@@ -39,7 +39,7 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
-  const patientId = Number((patient as any)?.id ?? (patient as any)?.key ?? 0);
+  const patientId = Number((patient as any)?.id);
 
   const [ageGroupValue, setAgeGroupValue] = useState<{ ageGroup: string }>({ ageGroup: '' });
   const lastProcessedDOB = useRef<string | null>(null);
@@ -48,9 +48,7 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
 
   useEffect(() => {
     const dob =
-      (patient as any)?.dateOfBirth ??
-      (patient as any)?.dob ??
-      null;
+      (patient as any)?.dateOfBirth
 
     if (!dob) {
       setAgeGroupValue({ ageGroup: '' });
@@ -74,7 +72,7 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
         console.error('Age group API error:', err);
         setAgeGroupValue({ ageGroup: '' });
       });
-  }, [(patient as any)?.id, (patient as any)?.dateOfBirth, (patient as any)?.dob]);
+  }, [(patient as any)?.id, (patient as any)?.dateOfBirth]);
 
   const apiAgeGroup = useMemo(() => {
     const ag = (ageGroupValue?.ageGroup ?? '').toUpperCase();
