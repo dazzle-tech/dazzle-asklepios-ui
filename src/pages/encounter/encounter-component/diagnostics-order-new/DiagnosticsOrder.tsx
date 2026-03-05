@@ -10,7 +10,7 @@ import { useDiagnosticsOrder } from './useDiagnosticsOrder';
 
 const DiagnosticsOrder = (props: any) => {
   const location = useLocation();
-//add new patient edits
+  //add new patient edits
   const patient = location.state?.patient;
   const encounter = location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;

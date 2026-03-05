@@ -396,7 +396,6 @@ const LOINCSetup: React.FC = () => {
   const pagedConflicts =
     conflicts?.slice(conflictsPage * conflictsPageSize, conflictsPage * conflictsPageSize + conflictsPageSize) || [];
 
-  // فتح/إغلاق مودال الاستيراد (CodesExcelCsvImportModal)
   const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
 
   return (

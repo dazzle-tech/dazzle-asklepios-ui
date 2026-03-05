@@ -7,3 +7,43 @@
 .font-size-14 {
   font-size: 14px;
 }
+.pm-grid {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: nowrap; 
+}
+
+.pm-grid .pm-col {
+  min-width: 320px;
+}
+
+.pm-grid .pm-col:first-child {
+  flex: 0 0 38%;
+  max-width: 38%;
+}
+
+.pm-grid .pm-col:last-child {
+  flex: 1 1 62%;
+  max-width: 62%;
+}
+
+@media (max-width: 992px) {
+  .pm-grid .pm-col:first-child,
+  .pm-grid .pm-col:last-child {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+.margin-top-100 {
+  position: relative;
+  height: 360px;         
+  padding-bottom: 24px;   
+  overflow: visible;      
+}
+
+.margin-top-100 canvas {
+  display: block;
+}
+
+

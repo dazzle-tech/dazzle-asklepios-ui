@@ -223,7 +223,13 @@ export const patientEncounterService = createApi({
       }),
       providesTags: ['PatientEncounter']
     }),
-
+    getEncounterById: builder.query<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}`,
+        method: 'GET'
+      }),
+      providesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }]
+    }),
     getEncountersByPatient: builder.query<PagedResult<PatientEncounter>, { patientId: Id } & PagedParams>({
       query: ({ patientId, page, size, sort = 'createdDate,desc' }) => ({
         url: `/api/patient/encounter/patient/${patientId}`,
@@ -270,7 +276,8 @@ export const {
   useCountTodayDepartmentActiveCasesQuery,
   useCountTodayDepartmentCompletedQuery,
   useCountTodayDepartmentCancelledQuery,
-
+  useGetEncounterByIdQuery,
+  useLazyGetEncounterByIdQuery,
   useGetEncountersByPatientQuery,
   useLazyGetEncountersByPatientQuery,
   useGetEncountersByAppointmentQuery

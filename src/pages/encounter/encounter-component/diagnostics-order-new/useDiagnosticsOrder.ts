@@ -69,7 +69,6 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
-
   const patientId = patient?.id ;
   const encounterId = encounter?.id ;
 

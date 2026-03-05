@@ -103,7 +103,7 @@ const resolveLovDisplayValue = (
 
 
 const Result = forwardRef<any, any>(
-  ({ loading, setTest, refetchAllLabData }, ref) => {
+  ({ loading, setTest, refetchAllLabData, setPatient }, ref) => {
     const today = new Date();
     const [page, setPage] = useState(0);
     const [size, setSize] = useState(15);
@@ -551,6 +551,9 @@ const Result = forwardRef<any, any>(
       </Form>
     );
 
+    const isSelected = (rowData: any) =>
+      selectedResultId === rowData.id ? 'selected-row' : '';
+
     useEffect(() => {
       console.log('[RESULTS]', results.map(r => ({
         id: r.id,
@@ -607,9 +610,24 @@ const Result = forwardRef<any, any>(
           rowsPerPage={size}
           totalCount={totalCount}
           onPageChange={(_, newPage) => setPage(newPage)}
+          rowClassName={isSelected}
           onRowsPerPageChange={e => {
             setSize(Number(e.target.value));
             setPage(0);
+          }}
+          onRowClick={(row: any) => {
+            const orderTest = orderTestsMap[String(row.orderTestId)];
+            const order = ordersMap[String(orderTest?.orderId)];
+
+            const patientId = order?.patientId;
+            if (!patientId) return;
+
+            const rawPatient = patientsMap[String(patientId)];
+            if (!rawPatient) return;
+
+            setSelectedResultId(row.id);
+             console.log("RAW PATIENT", rawPatient);
+            setPatient(rawPatient);
           }}
         />
 

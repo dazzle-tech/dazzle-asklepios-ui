@@ -152,7 +152,11 @@ const MyTable: React.FC<MyTableProps> = ({
                             : 'flex-start'
                         }
                       >
-                       <Translate>{col.title}</Translate>
+                        {typeof col.title === 'string' || typeof col.title === 'number' ? (
+                          <Translate>{col.title}</Translate>
+                        ) : (
+                          col.title
+                        )}
                         {sortIcon}
                       </Box>
                     </TableCell>

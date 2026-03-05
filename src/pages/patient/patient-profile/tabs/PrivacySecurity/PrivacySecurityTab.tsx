@@ -15,6 +15,7 @@ import {
 import { newPatientHIPAA } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { useEnumOptions } from '@/services/enumsApi';
 
 interface PrivacySecurityTabProps {
   localPatient: Patient;
@@ -32,9 +33,8 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
   const [verificationModalOpen, setVerificationModalOpen] = useState(false);
   const [hippa, setHippa] = useState({ ...newPatientHIPAA });
   // ========== LOV ==========
-  const { data: securityAccessLevelLovQueryResponse } =
-    useGetLovValuesByCodeQuery('SEC_ACCESS_LEVEL');
 
+  const SecurityLevel = useEnumOptions('SecurityLevel');
   // ========== HIPAA API ==========
   const {
     data: hipaaData,
@@ -43,7 +43,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
     isFetching: hipaaLoading
   } = useGetPatientHIPAAQuery({ patientId: localPatient.id! }, { skip: !localPatient.id });
 
-  console.log(hipaaData);
 
   const [createHIPAA, { isLoading: creating }] = useCreatePatientHIPAAMutation();
   const [updateHIPAA, { isLoading: updating }] = useUpdatePatientHIPAAMutation();
@@ -73,7 +72,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
 
   // ========== Save HIPAA ==========
   const handleSaveHIPAA = async () => {
-    console.log('iam in save');
 
     if (!localPatient.id) {
       toaster.push(
@@ -120,10 +118,10 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           column
           fieldLabel="Security Access Level"
           fieldType="select"
-          fieldName="securityAccessLevelLkey"
-          selectData={securityAccessLevelLovQueryResponse?.object ?? []}
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
+          fieldName="securityAccessLevel"
+          selectData={SecurityLevel ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
           record={localPatient}
           setRecord={setLocalPatient}
         />

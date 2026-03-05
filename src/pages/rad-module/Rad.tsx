@@ -7,7 +7,6 @@ import {
   useFilterDiagnosticOrderTestsQuery,
   useUpdateDiagnosticOrderTestMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 import {
   newApEncounter,
   newApPatient
@@ -33,6 +32,8 @@ import { Col, Form, Row, Tabs } from 'rsuite';
 import PatientSide from '../lab-module-new/PatienSide';
 import Orders from './Orders';
 import Tests from './Tests';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+
 
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
@@ -68,7 +69,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [order, setOrder] = useState<any>({ ...newDiagnosticOrder });
   const [test, setTest] = useState<any>({ ...newDiagnosticOrder });
   const [visibleRadTests, setVisibleRadTests] = useState<any[]>([]);
-  //add new patient edits
+  const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   const [patient, setPatient] = useState({ ...newApPatient });
   const [encounter] = useState({ ...newApEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
@@ -78,7 +79,6 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     toDate: today
   });
 //add new patient edits
-  const [fetchPatientById] = useLazyGetPatientByIdQuery();
 
   const {
     data: todayRadTestsResponse
@@ -189,23 +189,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   useEffect(() => {
     fetchAllTests();
   }, [dateFilter.fromDate, dateFilter.toDate]);
-//add new patient edits
-  useEffect(() => {
-    if (!order?.patientId) {
-      setPatient({ ...newApPatient });
-      return;
-    }
 
-    fetchPatientById(order.patientId)
-      .unwrap()
-      .then(res => {
-        setPatient(res);
-      })
-      .catch(() => {
-        setPatient({ ...newApPatient });
-      });
-
-  }, [order?.patientId]);
 
   const newTestsCount = useMemo(
     () =>
@@ -232,6 +216,37 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   );
 
   const totalRadTestsCount = visibleRadTests.length;
+
+  useEffect(() => {
+    if (!order?.patientId) {
+      setPatient({ ...newApPatient });
+      return;
+    }
+
+    getBulkPatientBasicInfo([Number(order.patientId)])
+      .unwrap()
+      .then((res: any[]) => {
+        if (res?.length > 0) {
+          const raw = res[0];
+
+          setPatient({
+            key: order.patientId,
+            fullName: `${raw.firstName ?? ''} ${raw.lastName ?? ''}`,
+            patientMrn: raw.medicalRecordNumber,
+            dob: raw.dateOfBirth,
+            genderLvalue: {
+              lovDisplayVale: raw.sexAtBirth
+            }
+          });
+        } else {
+          setPatient({ ...newApPatient });
+        }
+      })
+      .catch(() => {
+        setPatient({ ...newApPatient });
+      });
+
+  }, [order?.patientId]);
 
   return (
     <>

@@ -1,60 +1,116 @@
-import React, { useEffect } from 'react';
-import { Panel, Form } from 'rsuite';
+import React, { useEffect, useState } from 'react';
+import { Panel, Form, RadioGroup, Radio } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRobot } from '@fortawesome/free-solid-svg-icons';
+
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
+
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import { useLazyGetActivePractitionersBySubSpecialtyQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useLazyGetSpecialistPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetSpecialtyConsultationMutation } from '@/services/ai-services/clinicalRecommendationsService';
+
 import './styles.less';
 
 interface PreviewConsultationProps {
   consultation: any;
+  patient?: any;
+  encounter?: any;
   onClose?: () => void;
 }
 
 const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
   consultation,
+  patient,
+  encounter,
   onClose
 }) => {
-  // LOV Queries
+  const [formData, setFormData] = useState<any>(consultation || {});
+  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [localAiSummary, setLocalAiSummary] = useState<string | null>(null);
+  const [specialtyName, setSpecialtyName] = useState<string | null>(null);
+
   const { data: consultantSpecialtyLovQueryResponse } =
-    useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY ');
+    useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
-  const [getDepartmentsByFacility, { data: departmentListResponse }] = 
+  const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
-  const [getPractitionersBySpecialty, { data: practitionerListResponse }] = 
-    useLazyGetActivePractitionersBySubSpecialtyQuery();
-  const { data: consultationMethodLovQueryResponse } =
-    useGetLovValuesByCodeQuery('CONSULT_METHOD');
-  const { data: consultationTypeLovQueryResponse } =
-    useGetLovValuesByCodeQuery('CONSULT_TYPE');
-  const { data: orderPriorityLovQueryResponse } =
-    useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+  const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
+  const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
+  const consultationLevel = useEnumOptions('ConsultationLevel');
 
-  // Transform practitioner data to show firstName + lastName
-  const practitionerList = (practitionerListResponse?.data ?? []).map(practitioner => ({
-    ...practitioner,
-    fullName: `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim()
-  }));
+  const [triggerGetSpecialistPractitioners, practitionersResult] =
+    useLazyGetSpecialistPractitionersQuery();
 
-  // Load departments when facilityKey exists
+  const [
+    getSpecialtyConsultation,
+    { data: aiConsultationData, isLoading: aiLoading, error: aiError }
+  ] = useGetSpecialtyConsultationMutation();
+
+  const aiSummary = localAiSummary;
+  const destinationType = formData?.destinationType ?? 'DEPARTMENT';
+
   useEffect(() => {
-    if (consultation?.facilityKey) {
-      getDepartmentsByFacility({ facilityId: consultation.facilityKey });
+    if (consultation) {
+      setFormData(consultation);
     }
-  }, [consultation?.facilityKey, getDepartmentsByFacility]);
+  }, [consultation]);
 
-  // Load practitioners when consultantSpecialtyLkey exists
   useEffect(() => {
-    if (consultation?.consultantSpecialtyLkey) {
-      getPractitionersBySpecialty({ 
-        specialty: consultation.consultantSpecialtyLkey,
-        page: 0,
-        size: 100
+    if (formData?.toFacilityId) {
+      getDepartmentsByFacility({ facilityId: formData.toFacilityId });
+    }
+  }, [formData?.toFacilityId, getDepartmentsByFacility]);
+
+  useEffect(() => {
+    if (!formData?.consultantSpeciality || !formData?.toFacilityId) return;
+
+    triggerGetSpecialistPractitioners({
+      facilityId: formData.toFacilityId,
+      subSpecialty: formData.consultantSpeciality,
+      page: 0,
+      size: 100,
+      sort: 'id,asc'
+    }).catch(() => {
+      setAllPractitioners([]);
+    });
+  }, [formData?.consultantSpeciality, formData?.toFacilityId]);
+
+  useEffect(() => {
+    if (!specialtyName || !formData?.consultantSpeciality) return;
+
+    const specialtyApi = specialtyName.toLowerCase().replace(/\s+/g, ' ').trim();
+
+    setLocalAiSummary(null);
+    getSpecialtyConsultation({
+      request_id: `req-${patient?.key ?? ''}-${encounter?.key ?? ''}`,
+      specialty: specialtyApi
+    })
+      .unwrap()
+      .then((res: any) => {
+        setLocalAiSummary(res?.summary ?? null);
+      })
+      .catch(() => {
+        setLocalAiSummary(null);
       });
+  }, [
+    specialtyName,
+    getSpecialtyConsultation,
+    patient?.key,
+    encounter?.key,
+    formData?.consultantSpeciality
+  ]);
+
+  useEffect(() => {
+    if (practitionersResult?.data?.data?.content) {
+      setAllPractitioners(practitionersResult.data.data.content);
     }
-  }, [consultation?.consultantSpecialtyLkey, getPractitionersBySpecialty]);
+  }, [practitionersResult?.data?.data?.content]);
 
   if (!consultation) return null;
 
@@ -73,174 +129,252 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
         </div>
       }
     >
-      <Form fluid>
+      <Form fluid className="disabled-panel">
         <div className="main-details-consultion-page-container">
-          {/* Choose Consultant */}
           <SectionContainer
-            title="Choose Consultant"
+            title={<Translate>Choose Consultant</Translate>}
             content={
               <div className="consultion-details-modal-handle-position">
                 <MyInput
-                  disabled
-                  width={'8vw'}
+                  width={'12vw'}
+                  disabled={true}
                   fieldType="select"
                   fieldLabel="Facility"
                   selectData={Array.isArray(facilityListResponse) ? facilityListResponse : []}
                   selectDataLabel="name"
                   selectDataValue="id"
-                  fieldName="facilityKey"
+                  fieldName={'toFacilityId'}
                   record={{
-                    ...consultation,
-                    facilityKey: consultation?.facilityKey ? Number(consultation.facilityKey) : undefined
+                    ...formData,
+                    toFacilityId: formData?.toFacilityId ? Number(formData.toFacilityId) : undefined
                   }}
-                  setRecord={() => { }}
+                  setRecord={() => {}}
+                  required
                 />
-                <MyInput
-                  disabled
-                  width={'8vw'}
-                  fieldType="select"
-                  fieldLabel="Department"
-                  selectData={Array.isArray(departmentListResponse) ? departmentListResponse : []}
-                  selectDataLabel="name"
-                  selectDataValue="id"
-                  fieldName="departmentKey"
-                  record={{
-                    ...consultation,
-                    departmentKey: consultation?.departmentKey ? Number(consultation.departmentKey) : undefined
-                  }}
-                  setRecord={() => { }}
-                />
-                <MyInput
-                  disabled
-                  width={'8vw'}
-                  fieldType="select"
-                  fieldLabel="Consultant Specialty"
-                  selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="consultantSpecialtyLkey"
-                  record={consultation}
-                  setRecord={() => { }}
-                />
-                <MyInput
-                  width={'8vw'}
-                  disabled
-                  fieldType="select"
-                  fieldLabel="Consultant"
-                  fieldName="preferredConsultantKey"
-                  selectData={practitionerList}
-                  selectDataLabel="fullName"
-                  selectDataValue="id"
-                  record={{
-                    ...consultation,
-                    preferredConsultantKey: consultation?.preferredConsultantKey ? Number(consultation.preferredConsultantKey) : undefined
-                  }}
-                  setRecord={() => { }}
-                />
+
+                <div className="destination-type-wrapper">
+                  <label className="destination-type-label">
+                    <Translate>Destination Type</Translate>
+                    <span className="required-asterisk">*</span>
+                  </label>
+                  <RadioGroup
+                    name="destinationType"
+                    inline
+                    value={destinationType}
+                    onChange={() => {}}
+                    disabled={true}
+                  >
+                    <Radio value="DEPARTMENT">
+                      <Translate>Department</Translate>
+                    </Radio>
+                    <Radio value="CONSULTANT">
+                      <Translate>Consultant</Translate>
+                    </Radio>
+                  </RadioGroup>
+                </div>
+
+                {destinationType === 'DEPARTMENT' && (
+                  <MyInput
+                    width={'12vw'}
+                    disabled={true}
+                    fieldType="select"
+                    fieldLabel="Department"
+                    selectData={Array.isArray(departmentListResponse) ? departmentListResponse : []}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    fieldName={'toDepartmentId'}
+                    record={{
+                      ...formData,
+                      toDepartmentId: formData?.toDepartmentId
+                        ? Number(formData.toDepartmentId)
+                        : undefined
+                    }}
+                    setRecord={() => {}}
+                    required
+                  />
+                )}
+
+                {destinationType === 'CONSULTANT' && (
+                  <>
+                    <div className="consultant-specialty-ai">
+                      <MyInput
+                        disabled={true}
+                        width={'12vw'}
+                        fieldType="select"
+                        fieldLabel="Consultant Specialty"
+                        selectData={
+                          Array.isArray(consultantSpecialtyLovQueryResponse?.object)
+                            ? consultantSpecialtyLovQueryResponse.object
+                            : []
+                        }
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'consultantSpeciality'}
+                        record={formData}
+                        setRecord={() => {}}
+                        required
+                      />
+
+                      <button
+                        type="button"
+                        className="ai-icon-btn"
+                        disabled={true}
+                        title="AI Assistant"
+                      >
+                        <FontAwesomeIcon icon={faRobot} />
+                        <span className="ai-badge">AI</span>
+                      </button>
+                    </div>
+
+                    <MyInput
+                      width={'12vw'}
+                      disabled={true}
+                      fieldType="select"
+                      fieldLabel="Consultant"
+                      fieldName={'practitionerId'}
+                      selectData={Array.isArray(allPractitioners) ? allPractitioners : []}
+                      selectDataLabel={['firstName', 'lastName']}
+                      selectDataValue="id"
+                      record={{
+                        ...formData,
+                        practitionerId: formData?.practitionerId
+                          ? Number(formData.practitionerId)
+                          : undefined
+                      }}
+                      setRecord={() => {}}
+                      searchable
+                      required
+                    />
+                  </>
+                )}
               </div>
             }
           />
 
-          {/* Details */}
           <SectionContainer
-            title="Details"
+            title={<Translate>Details</Translate>}
             content={
               <div className="consultion-details-modal-handle-position">
                 <MyInput
-                  width={'8vw'}
-                  disabled
+                  width={'12vw'}
+                  disabled={true}
                   fieldType="select"
                   fieldLabel="Consultation Method"
-                  selectData={consultationMethodLovQueryResponse?.object ?? []}
+                  selectData={
+                    Array.isArray(consultationMethodLovQueryResponse?.object)
+                      ? consultationMethodLovQueryResponse.object
+                      : []
+                  }
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
-                  fieldName="consultationMethodLkey"
-                  record={consultation}
-                  setRecord={() => { }}
-                  searchable={false}
+                  fieldName={'consultationMethod'}
+                  record={formData}
+                  setRecord={() => {}}
+                  required
                 />
                 <MyInput
-                  width={'8vw'}
-                  disabled
+                  width={'12vw'}
+                  disabled={true}
                   fieldType="select"
                   fieldLabel="Consultation Type"
-                  selectData={consultationTypeLovQueryResponse?.object ?? []}
+                  selectData={
+                    Array.isArray(consultationTypeLovQueryResponse?.object)
+                      ? consultationTypeLovQueryResponse.object
+                      : []
+                  }
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
-                  fieldName="consultationTypeLkey"
-                  record={consultation}
-                  setRecord={() => { }}
-                  searchable={false}
+                  fieldName={'consultationType'}
+                  record={formData}
+                  setRecord={() => {}}
+                  required
                 />
                 <MyInput
-                  width={'8vw'}
-                  disabled
+                  width={'12vw'}
+                  disabled={true}
                   fieldType="select"
-                  fieldLabel="Priority Level"
-                  fieldName="priorityLkey"
-                  selectData={orderPriorityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={consultation}
-                  setRecord={() => { }}
+                  fieldLabel="Consultation Level"
+                  fieldName="consultationLevel"
+                  selectData={Array.isArray(consultationLevel) ? consultationLevel : []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={formData}
+                  setRecord={() => {}}
+                  required
                 />
               </div>
             }
           />
 
-          {/* Question */}
           <SectionContainer
-            title="Question to Consultant"
+            title={'Question to Consultant'}
             content={
               <div className="text-area-positions-detail-consultion">
                 <MyInput
-                  width={'24vw'}
-                  disabled
+                  width={'35vw'}
+                  disabled={true}
                   fieldName="consultationContent"
                   rows={6}
                   fieldType="textarea"
-                  record={consultation}
-                  setRecord={() => { }}
+                  record={formData}
+                  setRecord={() => {}}
+                  required
                 />
               </div>
             }
           />
 
-          {/* Notes */}
           <SectionContainer
-            title="Notes & Documentation"
+            title={<Translate>Notes & Documentation</Translate>}
             content={
               <div className="text-area-positions-detail-consultion">
                 <MyInput
-                  width={'8vw'}
-                  disabled
+                  width={'12vw'}
+                  disabled={true}
                   fieldName="notes"
                   rows={6}
                   fieldType="textarea"
-                  record={consultation}
-                  setRecord={() => { }}
+                  record={formData}
+                  setRecord={() => {}}
                 />
                 <MyInput
-                  width={'8vw'}
-                  disabled
-                  fieldName="extra documentation"
+                  width={'12vw'}
+                  disabled={true}
+                  fieldName="extraDocument"
+                  fieldLabel="Extra Documentation"
                   rows={6}
                   fieldType="textarea"
-                  record={consultation}
-                  setRecord={() => { }}
+                  record={formData}
+                  setRecord={() => {}}
                 />
                 <MyInput
-                  width={'8vw'}
-                  disabled
+                  width={'12vw'}
+                  disabled={true}
                   fieldType="text"
                   fieldLabel="Approval Number"
                   fieldName="approvalNumber"
-                  record={consultation}
-                  setRecord={() => { }}
+                  record={formData}
+                  setRecord={() => {}}
                 />
               </div>
             }
           />
+
+          {showAiPanel && destinationType === 'CONSULTANT' && (
+            <SectionContainer
+              title={<Translate>Specialty Recommendations</Translate>}
+              content={
+                <div className="ai-panel-body">
+                  {aiLoading && <div className="ai-spinner" />}
+                  {!aiLoading && !aiError && (
+                    <div className="ai-summary-text">
+                      {aiSummary ?? 'Suggestions will appear here'}
+                    </div>
+                  )}
+                </div>
+              }
+            />
+          )}
         </div>
       </Form>
     </Panel>

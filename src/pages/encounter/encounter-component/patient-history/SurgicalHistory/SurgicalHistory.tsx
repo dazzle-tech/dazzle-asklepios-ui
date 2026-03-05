@@ -1,216 +1,176 @@
-import React, { useState } from "react";
-import PlusIcon from "@rsuite/icons/Plus";
-import MyButton from "@/components/MyButton/MyButton";
-import "../styles.less";
-import MyTable from "@/components/MyTable";
-import { MdModeEdit, MdDelete } from "react-icons/md";
-import SectionContainer from "@/components/SectionsoContainer";
-import {
-  useGetPatientSurgicalHistoryQuery,
-  useRemovePatientSurgicalHistoryMutation,
-} from "@/services/patientService";
-import { initialListRequest } from "@/types/types";
-import { formatDateWithoutSeconds } from "@/utils";
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import { useAppDispatch } from "@/hooks";
-import { notify } from "@/utils/uiReducerActions";
-import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
-import AddSurgicalHistory from "./AddSurgicalHistory";
+import PlusIcon from '@rsuite/icons/Plus';
+import React, { useState } from 'react';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
 
-const SurgicalHistory = ({ patient, edit,
-  toShowData=false
- }) => {
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
+import SectionContainer from '@/components/SectionsoContainer';
+import AddSurgicalHistory from './AddSurgicalHistory';
+
+import {
+  useDeleteSurgicalHistoryMutation,
+  useGetSurgicalHistoryQuery
+} from '@/services/patients/surgicalHistoryService';
+
+import { useAppDispatch } from '@/hooks';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+
+import '../styles.less';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
+const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
 
+  const { data: anesthesiaLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
+  const { data: complicationsLov } = useGetLovValuesByCodeQuery('PROC_COMPLIC');
+
   const [open, setOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState(null);
+  const [rowToDelete, setRowToDelete] = useState<any>(null);
 
-  const [listRequest, setListRequest] = useState({
-    ...initialListRequest,
-    pageSize: 20,
-    filters: [
-      { fieldName: "deleted_at", operator: "isNull", value: undefined },
-      { fieldName: "patient_key", operator: "match", value: patient?.key },
-    ],
-  });
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(15);
 
-  const { data, isLoading } = useGetPatientSurgicalHistoryQuery(listRequest);
+  const patientId = Number(patient?.id);
+  const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
-  const { data: anesthLov } = useGetLovValuesByCodeQuery("ANESTH_TYPES");
-  const { data: compLov } = useGetLovValuesByCodeQuery("PROC_COMPLIC");
-  const { data: advLov } = useGetLovValuesByCodeQuery("MED_ADVERS_EFFECTS");
+  const { data, isFetching } = useGetSurgicalHistoryQuery(
+    { patientId, page, size, sort: 'id,desc' },
+    { skip: !isValidPatientId }
+  );
 
-const [removePatientSurgicalHistory] = useRemovePatientSurgicalHistoryMutation();
+  const [deleteSurgicalHistory] = useDeleteSurgicalHistoryMutation();
 
-const handleDelete = (row) => {
-  if (!row?.key) return;
+  const handleEdit = (row: any) => {
+    setSelectedRow(row);
+    setOpen(true);
+  };
 
-  removePatientSurgicalHistory({
-    key: row.key,
-    patientKey: patient?.key
-  })
-    .unwrap()
-    .then(() => {
-      dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
+  const handleDelete = async () => {
+    if (!rowToDelete?.id) return;
 
-      // refresh list
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime(),
-      });
-    })
-    .catch((err) => {
-      dispatch(notify({ msg: "Delete failed", sev: "error" }));
-    });
-};
+    try {
+      await deleteSurgicalHistory({ id: rowToDelete.id }).unwrap();
+      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
+      setOpenDeleteModal(false);
+      setRowToDelete(null);
+    } catch {
+      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
+    }
+  };
 
+  const columns = [
+    { key: 'surgery', title: 'SURGERY', flexGrow: 3 },
+    {
+      key: 'dateOfSurgery',
+      title: 'DATE OF SURGERY',
+      flexGrow: 3,
+      render: (row: any) =>
+        row?.dateOfSurgery ? new Date(row.dateOfSurgery).toLocaleDateString() : ''
+    },
+    { key: 'facility', title: 'FACILITY', flexGrow: 3 },
+    {
+      key: 'anesthesiaType',
+      title: 'ANESTHESIA TYPE',
+      flexGrow: 3,
+      render: (row: any) => {
+        const value = conjureValueBasedOnKeyFromList(
+          anesthesiaLov?.object ?? [],
+          row?.anesthesiaType,
+          'lovDisplayVale'
+        );
 
-const mapKeysToLovLabels = (keys?: string, lovList?: any[]) => {
-  if (!keys || !lovList?.length) return '-';
+        return value ?? row?.anesthesiaType ?? '';
+      }
+    },
+    {
+      key: 'complications',
+      title: 'COMPLICATIONS',
+      flexGrow: 3,
+      render: (row: any) => {
+        const value = conjureValueBasedOnKeyFromList(
+          complicationsLov?.object ?? [],
+          row?.complications,
+          'lovDisplayVale'
+        );
 
-  const arr = keys.split(',');
+        return value ?? row?.complications ?? '';
+      }
+    },
+    {
+      key: 'hasImplantsOrDevices',
+      title: 'IMPLANTS / DEVICES',
+      flexGrow: 3,
+      render: row => (row?.hasImplantsOrDevices ? row?.implantsOrDevicesDescription : 'No')
+    },
+    ...(!toShowData
+      ? [
+          {
+            key: 'actions',
+            title: '',
+            flexGrow: 1,
+            render: row => (
+              <div className="flex-gap-12">
+                <MdModeEdit
+                  size={22}
+                  fill="var(--primary-gray)"
+                  className="pointer"
+                  onClick={() => handleEdit(row)}
+                />
+                <MdDelete
+                  size={22}
+                  className="pointer"
+                  fill="var(--primary-pink)"
+                  onClick={() => {
+                    setRowToDelete(row);
+                    setOpenDeleteModal(true);
+                  }}
+                />
+              </div>
+            )
+          }
+        ]
+      : [])
+  ];
 
-  return lovList
-    .filter(lov => arr.includes(lov.key))
-    .map(lov => lov.lovDisplayVale)
-    .join(', ');
-};
-
-
-
- const columns = [
-  { key: "surgery", title: "SURGERY", dataKey: "surgery", flexGrow: 3 },
-
-  {
-    key: "dateOfSurgery",
-    title: "DATE OF SURGERY",
-    flexGrow: 3,
-    render: (row) =>
-      row.dateOfSurgery ? formatDateWithoutSeconds(row.dateOfSurgery) : "",
-  },
-
-  { key: "facility", title: "FACILITY", dataKey: "facility", flexGrow: 2 },
-
-  {
-    key: "complicationsLkey",
-    title: "COMPLICATIONS",
-    flexGrow: 3,
-    render: (row) =>
-      compLov?.object?.find((x) => x.key === row.complicationsLkey)
-        ?.lovDisplayVale ?? "",
-  },
-
-  {
-    key: "anesthesiaTypeLkey",
-    title: "TYPE OF ANESTHESIA",
-    flexGrow: 3,
-    render: (row) =>
-      anesthLov?.object?.find((x) => x.key === row.anesthesiaTypeLkey)
-        ?.lovDisplayVale ?? "",
-  },
-
-  {
-    key: "adverseReactionsToAnesthesiaLkey",
-    title: "ADVERSE REACTIONS",
-    flexGrow: 3,
-    render: (row) =>
-      mapKeysToLovLabels(
-        row.adverseReactionsToAnesthesiaLkey,
-        advLov?.object
-      ),
-  },
-
-
-  {
-    key: "isImplantsOrDevices",
-    title: "IMPLANTS OR DEVICES",
-    flexGrow: 3,
-    render: (row) =>
-      row.isImplantsOrDevices ? row.implantsOrDevicesDescription : "No",
-  },
-
-  ...(!toShowData
-    ? [
-        {
-          key: "actions",
-          title: "",
-          flexGrow: 1,
-          render: (row) => (
-            <div style={{ display: "flex", gap: "12px" }}>
-              <MdModeEdit
-                size={22}
-                fill="var(--primary-gray)"
-                style={{ cursor: "pointer" }}
-                onClick={() => {
-                  setSelectedRow(row);
-                  setOpen(true);
-                }}
-              />
-              <MdDelete
-                size={22}
-                fill="var(--primary-pink)"
-                style={{ cursor: "pointer" }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setRowToDelete(row);
-                  setOpenDeleteModal(true);
-                }}
-              />
-            </div>
-          ),
-        },
-      ]
-    : []),
-];
-
-
-
-    const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-    };
-
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-        ...listRequest,
-        pageSize: parseInt(event.target.value, 10),
-        pageNumber: 1
-    });
-    };
-
-
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = data?.extraNumeric ?? 0;
-
+  const handlePageChange = (_: unknown, newPage: number) => setPage(newPage);
+  const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSize(parseInt(e.target.value, 10));
+    setPage(0);
+  };
 
   return (
     <div className="medical-container-div">
       <SectionContainer
-        title={
-          <>
-            Surgical History
-          { !toShowData&&<MyButton
+        title="Surgical History"
+        action={
+          !toShowData && (
+            <MyButton
               disabled={edit}
               prefixIcon={() => <PlusIcon />}
-              onClick={() => setOpen(true)}
+              onClick={() => {
+                setSelectedRow(null);
+                setOpen(true);
+              }}
             >
               Add
-            </MyButton>}
-          </>
+            </MyButton>
+          )
         }
         content={
           <>
             <MyTable
               height={450}
-              data={data?.object || []}
-              loading={isLoading}
+              data={data?.data ?? []}
+              loading={isFetching}
               columns={columns}
-              page={pageIndex}
-              rowsPerPage={rowsPerPage}
-              totalCount={totalCount}
+              page={page}
+              rowsPerPage={size}
+              totalCount={data?.totalCount ?? 0}
               onPageChange={handlePageChange}
               onRowsPerPageChange={handleRowsPerPageChange}
             />
@@ -218,12 +178,8 @@ const mapKeysToLovLabels = (keys?: string, lovList?: any[]) => {
             <AddSurgicalHistory
               open={open}
               setOpen={() => {
-                setSelectedRow(null);
                 setOpen(false);
-                setListRequest({
-                  ...listRequest,
-                  timestamp: new Date().getTime(),
-                });
+                setSelectedRow(null);
               }}
               initialData={selectedRow}
               patient={patient}
@@ -234,14 +190,7 @@ const mapKeysToLovLabels = (keys?: string, lovList?: any[]) => {
               setOpen={setOpenDeleteModal}
               itemToDelete="Surgical History"
               actionType="delete"
-              actionButtonFunction={() => {
-              if (rowToDelete) {
-                handleDelete(rowToDelete);
-                setOpenDeleteModal(false);
-                setRowToDelete(null);
-              }
-              }}
-
+              actionButtonFunction={handleDelete}
             />
           </>
         }

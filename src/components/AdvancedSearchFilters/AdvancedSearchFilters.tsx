@@ -3,13 +3,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faMagnifyingGlass,
   faMagnifyingGlassPlus,
-  faBroom
+  faBroom,
 } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '../MyButton/MyButton';
 import './styles.less';
 
 const AdvancedSearchFilters = ({
   searchFilter = true,
+  extraActions = null,
   clearOnClick = () => {},
   searchOnClick = () => {},
   content = null,
@@ -24,19 +25,17 @@ const AdvancedSearchFilters = ({
           <MyButton
             appearance="ghost"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            prefixIcon={() => (
-              <FontAwesomeIcon icon={faMagnifyingGlassPlus} />
-            )}
+            prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}
           >
-            Advance
+            Advanced
           </MyButton>
         )}
 
+        {extraActions}
+
         {searchFilter && (
           <MyButton
-            prefixIcon={() => (
-              <FontAwesomeIcon icon={faMagnifyingGlass} />
-            )}
+            prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
             onClick={searchOnClick}
           >
             Search
@@ -55,6 +54,5 @@ const AdvancedSearchFilters = ({
     </>
   );
 };
-
 
 export default AdvancedSearchFilters;

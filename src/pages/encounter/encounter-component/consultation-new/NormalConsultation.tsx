@@ -1,460 +1,579 @@
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Checkbox, Loader, Form, Tooltip, Whisper } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPrint, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { MdAttachFile, MdModeEdit } from 'react-icons/md';
+import clsx from 'clsx';
+
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
-import {
-  useGetConsultationOrdersQuery,
-  useSaveConsultationOrdersMutation
-} from '@/services/encounterService';
-import { ApConsultationOrder } from '@/types/model-types';
-import { newApConsultationOrder } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { notify } from '@/utils/uiReducerActions';
-import { faPrint, faClone, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import BlockIcon from '@rsuite/icons/Block';
-import CheckIcon from '@rsuite/icons/Check';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { IoIosMore } from 'react-icons/io';
-import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import CancellationModal from '@/components/CancellationModal';
-import { Checkbox, HStack } from 'rsuite';
-import ConsultationResponseModal from '@/components/ConsultationResponseModal';
+import MyModal from '@/components/MyModal/MyModal';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import MyInput from '@/components/MyInput';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { conjureValueBasedOnIDFromList, formatEnumString, formatDateWithoutSeconds } from '@/utils';
+
+import {
+  useCancelMutation,
+  useGetDepartmentIdsByEncounterQuery,
+  useGetPractitionerIdsByEncounterQuery,
+  useFindByEncounterAllQuery,
+  useFindByEncounterNotCancelledQuery,
+  useFindByEncounterWithDateRangeQuery,
+  useFindByEncounterWithDateRangeNotCancelledQuery
+} from '@/services/consultation/consultationService';
+
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { newConsultation } from '@/types/model-types-constructor-new';
+import { Consultation } from '@/types/model-types-new';
+import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
 import Details from './Details';
 import './styles.less';
-import { formatDateWithoutSeconds } from '@/utils';
-import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
-import MyModal from '@/components/MyModal/MyModal';
-import { useLocation } from 'react-router-dom';
-import clsx from 'clsx';
-
-// preview component
 import PreviewConsultation from './PreviewConsultation';
 
-const NormalConsultation = (props: any) => {
-  const location = useLocation();
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-  // Table-only container to detect inside/outside clicks
+const toISOStartOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x.toISOString();
+};
+
+const toISOEndOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x.toISOString();
+};
+
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'REQUESTED':
+      return '#E6A100';
+    case 'CONFIRMED':
+      return '#0DAA41';
+    case 'REJECTED':
+      return '#D64545';
+    case 'SUBMITTED':
+      return '#0B5ED7';
+    case 'READY':
+      return '#17A2B8';
+    case 'CANCELLED':
+      return '#D64545';
+    case 'NEW':
+      return '#17A2B8';
+    default:
+      return '#6c757d';
+  }
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
+const NormalConsultation = props => {
+  const location = useLocation();
+  const dispatch = useAppDispatch();
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
 
-  const dispatch = useAppDispatch();
-
-  const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const [showCanceled, setShowCanceled] = useState(true);
-  const [showPrev, setShowPrev] = useState(true);
+  const [selectedRows, setSelectedRows] = useState<Consultation[]>([]);
+  const [selectedRow, setSelectedRow] = useState<Consultation | null>(null);
+  const [showCanceled, setShowCanceled] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [openDetailsMdal, setOpenDetailsModal] = useState(false);
   const [openConfirmCancelModel, setOpenConfirmCancelModel] = useState(false);
-  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 
-  const [previewConsultation, setPreviewConsultation] = useState<ApConsultationOrder | null>(null);
+  const [previewConsultation, setPreviewConsultation] = useState<Consultation | null>(null);
 
-  // Response modal states
-  const [openResponseModal, setOpenResponseModal] = useState(false);
-  const [selectedConsultation, setSelectedConsultation] = useState<ApConsultationOrder | null>(
-    null
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(20);
+
+  const [consultation, setConsultation] = useState<Consultation>({
+    ...newConsultation,
+    patientId: patient?.id,
+    encounterId: encounter?.id
+  });
+
+  console.log(consultation);
+  const [modalKey, setModalKey] = useState(0);
+
+  const [dateFilter, setDateFilter] = useState<{
+    fromDate: Date | null;
+    toDate: Date | null;
+  }>(() => {
+    const today = new Date();
+    const onlyDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return { fromDate: onlyDate, toDate: onlyDate };
+  });
+
+  const { data: facilityListResponse, isLoading: facilitiesLoading } =
+    useGetAllFacilitiesQuery(null);
+  const [getDepartmentsByFacility, { data: departmentListResponse }] =
+    useLazyGetActiveDepartmentByFacilityListQuery();
+
+  const [cancelConsultation] = useCancelMutation();
+
+  const encounterIdStr = String(encounter?.id ?? encounter?.key ?? '');
+
+  const { data: departmentIds, isLoading: departmentIdsLoading } =
+    useGetDepartmentIdsByEncounterQuery({ encounterId: encounterIdStr }, { skip: !encounterIdStr });
+
+  const { data: practitionerIds, isLoading: practitionerIdsLoading } =
+    useGetPractitionerIdsByEncounterQuery(
+      { encounterId: encounterIdStr },
+      { skip: !encounterIdStr }
+    );
+
+  const [getDepartmentsBulk, { data: departmentsBulk, isLoading: departmentsBulkLoading }] =
+    useGetDepartmentsBulkMutation();
+  const [getPractitionersBulk, { data: practitionersBulk, isLoading: practitionersBulkLoading }] =
+    useGetPractitionersBulkMutation();
+
+  useEffect(() => {
+    if (Array.isArray(departmentIds) && departmentIds.length > 0) {
+      getDepartmentsBulk(departmentIds)
+        .unwrap()
+        .catch(() => {});
+    }
+  }, [departmentIds, getDepartmentsBulk]);
+
+  useEffect(() => {
+    if (Array.isArray(practitionerIds) && practitionerIds.length > 0) {
+      getPractitionersBulk(practitionerIds)
+        .unwrap()
+        .catch(() => {});
+    }
+  }, [practitionerIds, getPractitionersBulk]);
+
+  const hasDateRange = !!dateFilter.fromDate && !!dateFilter.toDate;
+
+  const allQuery = useFindByEncounterAllQuery(
+    { encounterId: encounterIdStr, page, size },
+    { skip: !encounterIdStr || !showCanceled || hasDateRange }
   );
 
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-      ...(showPrev ? [{ fieldName: 'visit_key', operator: 'match', value: encounter?.key }] : []),
-      {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '1804447528780744' // cancelled code
-      }
-    ]
-  });
+  const notCancelledQuery = useFindByEncounterNotCancelledQuery(
+    { encounterId: encounterIdStr, page, size },
+    { skip: !encounterIdStr || showCanceled || hasDateRange }
+  );
 
-  const {
-    data: consultationOrderListResponse,
-    refetch: refetchCon,
-    isLoading: consaultLoading
-  } = useGetConsultationOrdersQuery(listRequest);
+  const dateRangeQuery = useFindByEncounterWithDateRangeQuery(
+    {
+      encounterId: encounterIdStr,
+      fromDate: toISOStartOfDay(dateFilter.fromDate!),
+      toDate: toISOEndOfDay(dateFilter.toDate!),
+      page,
+      size
+    },
+    { skip: !encounterIdStr || !hasDateRange || !showCanceled }
+  );
 
-  const [saveconsultationOrders] = useSaveConsultationOrdersMutation();
+  const dateRangeNotCancelledQuery = useFindByEncounterWithDateRangeNotCancelledQuery(
+    {
+      encounterId: encounterIdStr,
+      fromDate: toISOStartOfDay(dateFilter.fromDate!),
+      toDate: toISOEndOfDay(dateFilter.toDate!),
+      page,
+      size
+    },
+    { skip: !encounterIdStr || !hasDateRange || showCanceled }
+  );
 
-  const [consultationOrders, setConsultationOrder] = useState<ApConsultationOrder>({
-    ...newApConsultationOrder
-  });
+  const consultationData = hasDateRange
+    ? showCanceled
+      ? dateRangeQuery.data
+      : dateRangeNotCancelledQuery.data
+    : showCanceled
+    ? allQuery.data
+    : notCancelledQuery.data;
 
-  /** Highlight selected row */
-  const isSelected = (rowData: any) =>
-    rowData && consultationOrders && rowData.key === consultationOrders.key ? 'selected-row' : '';
+  const consultationLoading =
+    allQuery.isLoading ||
+    notCancelledQuery.isLoading ||
+    dateRangeQuery.isLoading ||
+    dateRangeNotCancelledQuery.isLoading;
 
-  /** Helpers to classify click targets */
-  const isFormField = (node: EventTarget | null) => {
-    if (!(node instanceof Element)) return false;
-    return (
-      node.closest(`
-        input, textarea, select, button, [contenteditable="true"],
-        .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-datepicker,
-        .rs-picker-toggle, .rs-calendar, .rs-dropdown, .rs-auto-complete,
-        .rs-input-group, .rs-select, .rs-slider
-      `) !== null
-    );
+  const refetch = () => {
+    allQuery.refetch();
+    notCancelledQuery.refetch();
+    dateRangeQuery.refetch();
+    dateRangeNotCancelledQuery.refetch();
   };
 
-  const isInsideModalOrPopup = (node: EventTarget | null) => {
-    if (!(node instanceof Element)) return false;
-    return (
-      node.closest(`
-        .rs-modal, .rs-drawer, .rs-picker-select-menu, .rs-picker-popup,
-        .my-modal, .my-popup
-      `) !== null
-    );
-  };
+  const rows: Consultation[] = consultationData?.data ?? [];
+  const totalCount = consultationData?.totalCount ?? 0;
+  const isLoading = consultationLoading;
 
-  const isTableDataRow = (node: EventTarget | null) => {
-    if (!(node instanceof Element)) return false;
-    return (
-      node.closest('.rs-table-row, .MuiTableRow-root, [data-row="true"], [role="row"]') !== null &&
-      node.closest('.rs-table-row-header, .MuiTableHead-root, [data-header="true"]') === null
-    );
-  };
+  const sortedRows = useMemo(() => {
+    return [...rows].sort((first, second) => {
+      const firstTime = first.createdDate ? new Date(first.createdDate).getTime() : -Infinity;
+      const secondTime = second.createdDate ? new Date(second.createdDate).getTime() : -Infinity;
+      return secondTime - firstTime;
+    });
+  }, [rows]);
 
-  /** Handle open attachment modal */
-  const handleOpenAttachmentModal = () => {
-    setAttachmentsModalOpen(true);
-  };
+  const isFacilitiesDataLoading = facilitiesLoading;
+  const isTargetsDataLoading =
+    departmentIdsLoading ||
+    practitionerIdsLoading ||
+    departmentsBulkLoading ||
+    practitionersBulkLoading;
 
-  /** Clear selection and preview */
+  const handleRefetchData = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
   const handleClear = useCallback(() => {
-    setConsultationOrder({
-      ...newApConsultationOrder,
-      consultationMethodLkey: null,
-      consultationTypeLkey: null,
-      cityLkey: null,
-      consultantSpecialtyLkey: null,
-      preferredConsultantKey: null,
-
+    setConsultation({
+      ...newConsultation,
+      patientId: patient?.id,
+      encounterId: encounter?.id
     });
     setSelectedRows([]);
+    setSelectedRow(null);
     setPreviewConsultation(null);
     setEditing(false);
+  }, [patient?.id, patient?.key, encounter?.id, encounter?.key]);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedRow(null);
+    setSelectedRows([]);
   }, []);
 
-  /** Keep list filters in sync with toggles (cancelled / previous) */
+  const handleClearFilters = () => {
+    setDateFilter({ fromDate: null, toDate: null });
+    setPage(0);
+  };
+
   useEffect(() => {
-    setListRequest(prev => ({
-      ...prev,
-      filters: [
-        { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-        ...(showPrev ? [{ fieldName: 'visit_key', operator: 'match', value: encounter?.key }] : []),
-        {
-          fieldName: 'status_lkey',
-          operator: showCanceled ? 'notMatch' : 'match',
-          value: '1804447528780744'
-        }
-      ]
-    }));
-  }, [showCanceled, showPrev, patient?.key, encounter?.key]);
+    setPage(0);
+  }, [dateFilter.fromDate, dateFilter.toDate, showCanceled]);
 
-  /** Global listeners to clear selection when appropriate */
   useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as EventTarget | null;
-
-      // Ignore clicks on inputs/modals/menus
-      if (isFormField(target) || isInsideModalOrPopup(target)) return;
-
-      const insideTable = tableContainerRef.current?.contains(target as Node) ?? false;
-      const onRow = isTableDataRow(target);
-
-      // Outside table => clear
-      if (!insideTable) {
-        handleClear();
-        return;
-      }
-
-      // Inside table but NOT on a data row (header/empty/pagination) => clear
-      if (insideTable && !onRow) {
-        handleClear();
+    const handlePointer = (e: PointerEvent) => {
+      if (openConfirmCancelModel || openDetailsMdal || attachmentsModalOpen) return;
+      const target = e.target as HTMLElement;
+      if (!tableContainerRef.current?.contains(target)) {
+        handleClearSelection();
       }
     };
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClear();
-    };
-
-    document.addEventListener('pointerdown', onPointerDown, true);
-    document.addEventListener('keydown', onKeyDown);
-
+    document.addEventListener('pointerdown', handlePointer, true);
     return () => {
-      document.removeEventListener('pointerdown', onPointerDown, true);
-      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', handlePointer, true);
     };
-  }, [handleClear]);
+  }, [handleClearSelection, openConfirmCancelModel, openDetailsMdal, attachmentsModalOpen]);
 
-  /** Row selection checkbox handler */
-  const handleCheckboxChange = (rowData: any) => {
-    setSelectedRows(prev => {
-      if (prev.includes(rowData)) return prev.filter(item => item !== rowData);
-      return [...prev, rowData];
-    });
-  };
+  const handleCancel = async () => {
+    if (!selectedRow?.id) return;
 
-  const OpenConfirmDeleteModel = () => setOpenConfirmCancelModel(true);
-  const CloseConfirmDeleteModel = () => setOpenConfirmCancelModel(false);
-
-  /** Bulk cancel */
-  const handleCancle = async () => {
     try {
-      await Promise.all(
-        selectedRows.map(item =>
-          saveconsultationOrders({
-            ...item,
-            statusLkey: '1804447528780744',
-            isValid: false,
-            deletedAt: Date.now(),
-            cancellationReason: consultationOrders?.cancellationReason
-          }).unwrap()
-        )
-      );
-      dispatch(notify('All orders deleted successfully'));
-      refetchCon();
+      await cancelConsultation({
+        id: selectedRow.id,
+        cancellationReason: consultation?.cancellationReason ?? ''
+      }).unwrap();
+
+      dispatch(notify({ msg: 'Cancelled successfully', sev: 'success' }));
+      setSelectedRow(null);
       setSelectedRows([]);
-      CloseConfirmDeleteModel();
+      setOpenConfirmCancelModel(false);
+      handleRefetchData();
     } catch {
-      dispatch(notify('One or more deleted failed'));
-      CloseConfirmDeleteModel();
+      dispatch(notify({ msg: 'Cancel failed', sev: 'warning' }));
+      setOpenConfirmCancelModel(false);
     }
   };
 
-  /** Bulk submit */
-  const handleSubmit = async () => {
-    try {
-      await Promise.all(
-        selectedRows.map(item =>
-          saveconsultationOrders({
-            ...item,
-            submitDate: Date.now(),
-            statusLkey: '1804482322306061'
-          }).unwrap()
-        )
-      );
-      dispatch(notify('All submitted successfully'));
-      refetchCon();
-      setSelectedRows([]);
-    } catch {
-      dispatch(notify('One or more saves failed'));
+  const isSelected = (row: Consultation) => (row?.id === selectedRow?.id ? 'selected-row' : '');
+
+  useEffect(() => {
+    if (selectedRow?.toFacilityId) {
+      getDepartmentsByFacility({ facilityId: selectedRow.toFacilityId });
     }
-  };
+  }, [selectedRow?.toFacilityId, getDepartmentsByFacility]);
 
-  /** Add new record */
-  const handelAddNew = () => {
-    handleClear();
-    setOpenDetailsModal(true);
-    setEditing(false);
-  };
-
-  /** Handle open response modal (readonly) */
-  const handleOpenResponseModal = (consultation: ApConsultationOrder) => {
-    setSelectedConsultation(consultation);
-    setOpenResponseModal(true);
-  };
-
-  /** Handle close response modal */
-  const handleCloseResponseModal = () => {
-    setOpenResponseModal(false);
-    setSelectedConsultation(null);
-  };
-
-  /** Table columns */
   const tableColumns = useMemo(
     () => [
       {
-        key: 'select',
-        title: '#',
+        key: 'consultationNumber',
+        title: <Translate>CONSULTATION NUMBER</Translate>,
+        flexGrow: 1
+      },
+      {
+        key: 'toFacilityId',
+        title: <Translate>TO FACILITY</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => (
-          <Checkbox
-            key={rowData.id}
-            checked={selectedRows.includes(rowData)}
-            onChange={() => handleCheckboxChange(rowData)}
-            disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
-          />
+        render: rowData => {
+          if (isFacilitiesDataLoading) return <Loader size="xs" />;
+          return (
+            <span>
+              {conjureValueBasedOnIDFromList(
+                facilityListResponse ?? [],
+                rowData.toFacilityId,
+                'name'
+              )}
+            </span>
+          );
+        }
+      },
+      {
+        key: 'destinationType',
+        title: <Translate>DESTINATION TYPE</Translate>,
+        flexGrow: 1,
+        render: (rowData: Consultation) => (
+          <span>{formatEnumString(String(rowData.destinationType ?? ''))}</span>
         )
       },
       {
-        key: 'createdAt',
-        dataKey: 'createdAt',
-        title: <Translate>CONSULTATION DATE</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) =>
-          rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''
+        key: 'created',
+        title: <Translate>Created By / At</Translate>,
+        expandable: true,
+        flexGrow: 2,
+        render: (rowData: Consultation) => (
+          <>
+            {rowData.createdBy ?? ''}
+            <br />
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(rowData.createdDate)}
+            </span>
+          </>
+        )
       },
       {
-        key: 'consultantSpecialtyLkey',
-        title: <Translate>CONSULTANT SPECIALTY</Translate>,
+        key: 'target',
+        title: <Translate>CONSULTATION TARGET</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => rowData.consultantSpecialtyLvalue?.lovDisplayVale
+        render: (rowData: Consultation) => {
+          if (isTargetsDataLoading) return <Loader size="xs" />;
+
+          const destType = String(rowData.destinationType ?? '').toUpperCase();
+
+          if (destType === 'DEPARTMENT') {
+            return (
+              <span>
+                {conjureValueBasedOnIDFromList(
+                  departmentsBulk ?? [],
+                  rowData.toDepartmentId,
+                  'name'
+                )}
+              </span>
+            );
+          }
+
+          if (destType === 'CONSULTANT') {
+            const id = String(rowData.practitionerId ?? '');
+            const record = (practitionersBulk ?? []).find(r => String(r.id) === id);
+            if (!record) return <span>{rowData.practitionerId ?? ''}</span>;
+            const full = `${String(record.firstName ?? '').trim()} ${String(
+              record.lastName ?? ''
+            ).trim()}`.trim();
+            return <span>{full || rowData.practitionerId}</span>;
+          }
+
+          return <span></span>;
+        }
       },
       {
-        key: 'statusLkey',
+        key: 'status',
         title: <Translate>STATUS</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale ?? null
+        render: (rowData: Consultation) => {
+          const status = String(rowData.status ?? '').toUpperCase();
+          return (
+            <MyBadgeStatus contant={formatEnumString(status)} color={getStatusColor(status)} />
+          );
+        }
       },
       {
-        key: 'resposeStatusLkey',
-        title: <Translate>RESPOSE STATUS</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => rowData.resposeStatusLvalue?.lovDisplayVale
+        key: 'questionToConsultant',
+        title: <Translate>Question To Consultant</Translate>,
+        flexGrow: 4,
+        render: row => {
+          const text = row.consultationContent || '';
+          const MAX = 20;
+          const isLong = text.length > MAX;
+          const shortText = isLong ? text.substring(0, MAX) + '...' : text;
+
+          return (
+            <Whisper
+              trigger={isLong ? 'hover' : 'none'}
+              placement="top"
+              speaker={<Tooltip className="tooltip-wide">{text}</Tooltip>}
+            >
+              <span className={isLong ? 'clickable-cell' : ''}>{shortText}</span>
+            </Whisper>
+          );
+        }
       },
       {
-        key: 'viewResponse',
-        title: <Translate>VIEW RESPONSE</Translate>,
+        key: 'response',
+        title: <Translate>RESPONSE</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => (
-          <IoIosMore
-            size={22}
-            fill={rowData?.viewResponse ? 'var(--primary-gray)' : '#ccc'}
-            onClick={() => {
-              if (rowData?.viewResponse) {
-                handleOpenResponseModal(rowData);
-              }
-            }}
-            style={{ cursor: rowData?.viewResponse ? 'pointer' : 'not-allowed' }}
-          />
-        )
+        expandable: true,
+        render: row => {
+          const text = row.responseText || '';
+          const MAX = 20;
+          const isLong = text.length > MAX;
+          const shortText = isLong ? text.substring(0, MAX) + '...' : text;
+
+          return (
+            <Whisper
+              trigger={isLong ? 'hover' : 'none'}
+              placement="top"
+              speaker={<Tooltip className="tooltip-wide">{text}</Tooltip>}
+            >
+              <span className={isLong ? 'clickable-cell' : ''}>{shortText}</span>
+            </Whisper>
+          );
+        }
       },
       {
         key: 'attachedFile',
         title: <Translate>ATTACHMENTS</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => {
-          return (
-            <MdAttachFile
-              size={20}
-              fill={rowData?.key ? 'var(--primary-gray)' : '#ccc'}
-              onClick={() => {
-                if (rowData?.key) {
-                  setConsultationOrder(rowData);
-                  handleOpenAttachmentModal();
-                }
-              }}
-              style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
-            />
-          );
-        }
+        render: (rowData: Consultation) => (
+          <MdAttachFile
+            size={20}
+            fill={rowData?.id ? 'var(--primary-gray)' : '#ccc'}
+            onClick={() => {
+              if (rowData?.id) {
+                setConsultation(rowData);
+                setAttachmentsModalOpen(true);
+              }
+            }}
+            className={rowData?.id ? 'clickable-cell' : 'not-allowed-cell'}
+          />
+        )
       },
       {
         key: 'action',
-        title: <Translate>Action</Translate>,
+        title: <Translate>ACTIONS</Translate>,
         flexGrow: 1,
-        render: () => (
-          <div className="icons-consultation-main-container">
-            <MdModeEdit
-              title="Edit"
-              size={24}
-              fill="var(--primary-gray)"
-              onClick={() => setOpenDetailsModal(true)}
-              className="icon-button"
-            />
-            {/* <FontAwesomeIcon
-              icon={faClone}
-              title="Clone"
-              className="icon-button clone-icon-main-style"
-            /> */}
-          </div>
+        render: (rowData: Consultation) => (
+          <MdModeEdit
+            size={22}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              if (rowData.toFacilityId) {
+                getDepartmentsByFacility({ facilityId: rowData.toFacilityId });
+              }
+              setConsultation(rowData);
+              setSelectedRow(rowData);
+              setEditing(String(rowData.status ?? '').toUpperCase() !== 'NEW');
+              setModalKey(prev => prev + 1);
+              setOpenDetailsModal(true);
+            }}
+            className="icon-button"
+          />
         )
       }
     ],
-    [selectedRows]
+    [
+      facilityListResponse,
+      departmentsBulk,
+      practitionersBulk,
+      isFacilitiesDataLoading,
+      isTargetsDataLoading,
+      getDepartmentsByFacility
+    ]
   );
 
-  const pageIndex = (listRequest.pageNumber ?? 1) - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = consultationOrderListResponse?.extraNumeric ?? 0;
+  const filters = () => (
+    <Form layout="inline" fluid className="date-filter-form">
+      <MyInput
+        column
+        width={180}
+        fieldType="date"
+        fieldLabel="From Date"
+        fieldName="fromDate"
+        record={dateFilter}
+        setRecord={setDateFilter}
+      />
+      <MyInput
+        width={180}
+        column
+        fieldType="date"
+        fieldLabel="To Date"
+        fieldName="toDate"
+        record={dateFilter}
+        setRecord={setDateFilter}
+      />
+      <div className="margin-15">
+        <MyButton onClick={handleClearFilters}>Clear</MyButton>
+      </div>
+    </Form>
+  );
 
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setManualSearchTriggered(true);
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setManualSearchTriggered(true);
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    });
-  };
+  const pageIndex = page;
 
   return (
     <div>
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
-          data={consultationOrderListResponse?.object ?? []}
-          onRowClick={rowData => {
-            setConsultationOrder(rowData);
-            setEditing(rowData.statusLkey === '164797574082125' ? false : true);
+          data={sortedRows}
+          onRowClick={(rowData: Consultation) => {
+            setConsultation(rowData);
+            setSelectedRow(rowData);
+            setSelectedRows([rowData]);
+            setEditing(String(rowData.status ?? '').toUpperCase() !== 'NEW');
             setPreviewConsultation(rowData);
           }}
-          rowClassName={isSelected}
-          loading={consaultLoading || (manualSearchTriggered && consaultLoading)}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortChange={(sortBy, sortType) => {
-            setListRequest({ ...listRequest, sortBy, sortType });
-          }}
+          loading={isLoading}
           page={pageIndex}
-          rowsPerPage={rowsPerPage}
+          rowsPerPage={size}
           totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
+          onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
+          onRowsPerPageChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setSize(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowClassName={isSelected}
+          filters={filters()}
           tableButtons={
             <div className="bt-div-2">
               <div className="bt-left-2">
                 <MyButton
-                  prefixIcon={() => <BlockIcon />}
-                  onClick={OpenConfirmDeleteModel}
-                  disabled={selectedRows.length === 0}
+                  disabled={
+                    !selectedRow || String(selectedRow.status ?? '').toUpperCase() === 'CANCELLED'
+                  }
+                  onClick={() => setOpenConfirmCancelModel(true)}
                 >
                   Cancel
                 </MyButton>
-                <MyButton
-                  appearance="ghost"
-                  disabled={selectedRows.length === 0}
-                  prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
-                >
-                  Print
+
+                <MyButton appearance="ghost" disabled={selectedRows.length === 0}>
+                  <FontAwesomeIcon icon={faPrint} />
+                  <span className="print-label">Print</span>
                 </MyButton>
-                <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
+
+                <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
                   Show Cancelled
-                </Checkbox>
-                <Checkbox checked={!showPrev} onChange={() => setShowPrev(!showPrev)}>
-                  Show Previous Consultations
                 </Checkbox>
               </div>
 
-              <div
-                className={clsx('bt-right-2', {
-                  'disabled-panel': edit
-                })}
-              >
+              <div className={clsx('bt-right-2', { 'disabled-panel': edit })}>
                 <MyButton
-                  onClick={handelAddNew}
+                  onClick={() => {
+                    handleClear();
+                    setModalKey(prev => prev + 1);
+                    setOpenDetailsModal(true);
+                  }}
                   prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
                 >
                   Add Consultation
                 </MyButton>
-                {/* <MyButton
-                  onClick={handleSubmit}
-                  disabled={selectedRows.length === 0 || edit}
-                  prefixIcon={() => <CheckIcon />}
-                >
-                  Submit
-                </MyButton> */}
               </div>
             </div>
           }
@@ -473,48 +592,41 @@ const NormalConsultation = (props: any) => {
         fieldLabel="Cancellation Reason"
         open={openConfirmCancelModel}
         setOpen={setOpenConfirmCancelModel}
-        object={consultationOrders}
-        setObject={setConsultationOrder}
-        handleCancle={handleCancle}
+        object={consultation}
+        setObject={setConsultation}
+        handleCancle={handleCancel}
         fieldName="cancellationReason"
+        required
       />
 
       <Details
+        key={modalKey}
         patient={patient}
         encounter={encounter}
         editing={editing}
-        consultationOrders={consultationOrders}
-        setConsultationOrder={setConsultationOrder}
+        consultationOrders={consultation}
+        setConsultationOrder={setConsultation}
         open={openDetailsMdal}
         setOpen={setOpenDetailsModal}
-        refetchCon={refetchCon}
+        refetchCon={handleRefetchData}
         edit={edit}
       />
 
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${
-          (consultationOrders as any)?.consultantSpecialtyLvalue?.lovDisplayVale || 'Consultation'
-        }`}
+        title="Attachments - Consultation"
         size="lg"
         hideActionBtn={true}
         content={
           <EncounterAttachment
             localEncounter={encounter}
             source="CONSULTATION_ORDER_ATTACHMENT"
-            sourceId={consultationOrders?.key ? Number(consultationOrders.key) : undefined}
+            sourceId={consultation?.id ? Number(consultation.id) : undefined}
             refetchAttachmentList={false}
             setRefetchAttachmentList={() => {}}
           />
         }
-      />
-
-      <ConsultationResponseModal
-        open={openResponseModal}
-        consultation={selectedConsultation}
-        readonly={true}
-        onClose={handleCloseResponseModal}
       />
     </div>
   );
