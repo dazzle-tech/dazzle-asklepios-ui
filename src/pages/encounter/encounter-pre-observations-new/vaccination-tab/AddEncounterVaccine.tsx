@@ -206,7 +206,6 @@ const AddEncounterVaccine = ({
     setEncounterVaccination({
       ...(newEncounterVaccination as EncounterVaccination),
       status: null,
-      // NEW defaults
       isExternalFacility: false,
       externalFacilityName: ''
     });
@@ -238,11 +237,11 @@ const AddEncounterVaccine = ({
   };
 
   const handleSaveEncounterVaccine = async () => {
-    if (!patient?.key) {
+    if (!patient?.id) {
       dispatch(notify({ msg: 'Patient is required.', sev: 'error' }));
       return;
     }
-    if (!encounter?.key) {
+    if (!encounter?.id) {
       dispatch(notify({ msg: 'Encounter is required.', sev: 'error' }));
       return;
     }
@@ -264,8 +263,8 @@ const AddEncounterVaccine = ({
       vaccineId: vaccine?.id,
       vaccineBrandId: vaccineBrand?.id,
       vaccineDoseId: vaccineDose?.id,
-      patientId: parseInt(patient.key, 10),
-      encounterId: encounter.key
+      patientId: Number(patient.id),
+      encounterId: encounter.id
     };
 
     // NEW: normalize using clear-name rule

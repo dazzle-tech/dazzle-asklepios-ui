@@ -277,8 +277,8 @@ const Details = ({
       toDepartmentId: null,
       categoryKey: null,
       procedureId: null,
-      encounterId: encounter?.key,
-      patientId: patient?.key,
+      encounterId: encounter?.id,
+      patientId: patient?.id,
       currentDepartment: true,
       notes: null,
       extraDocumentation: null,
@@ -291,8 +291,8 @@ const Details = ({
     try {
       const procedureData = {
         procedureId: procedure.procedureId,
-        patientId: patient?.key,
-        encounterId: encounter?.key,
+        patientId: patient?.id,
+        encounterId: encounter?.id,
 
         fromFacilityId: authSlice?.selectedDepartment?.facilityId,
         toFacilityId: procedure.currentDepartment
@@ -388,7 +388,7 @@ const Details = ({
             })}
           >
             <Form fluid>
-              <div className="margin-bottom-10" >
+              <div className="margin-bottom-10">
                 <SectionContainer
                   title="Procedure Details"
                   content={
@@ -619,7 +619,7 @@ const Details = ({
       <AttachmentUploadModal
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
-        encounterId={encounter?.id || encounter?.key}
+        encounterId={encounter?.id}
         refetchData={() => {}}
         source="PROCEDURE_REQUEST_ATTACHMENT"
         sourceId={procedure?.id ? Number(procedure.id) : 0}

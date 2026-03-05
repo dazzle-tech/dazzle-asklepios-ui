@@ -27,7 +27,7 @@ import {
   type BodyMeasurementsResponseVM,
   type WeightResponseVM,
   type HeightResponseVM,
-} from '@/services/medicalSheets/observations/bodyMeasurementsService';
+} from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 
 // VITAL APIs
 import {
@@ -43,12 +43,12 @@ import {
   type RespiratoryRateResponseVM,
   type OxygenSaturationResponseVM,
   type BloodPressureResponseVM,
-} from '@/services/medicalSheets/observations/vitalSignsService';
+} from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
 interface PreviousMeasurementsProps {
-  patient?: { id?: number | string; key?: string };
+  patient?: { id?: number };
 }
 
 type BodyMetricKey = 'weight' | 'height';
@@ -90,7 +90,7 @@ const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: pa
   const patientFromLocation = (location.state as any)?.patient;
   const patient = patientProp ?? patientFromLocation;
 
-  const patientId = Number(patient?.key);
+  const patientId = Number(patient?.id);
 
   const [dateFilter, setDateFilter] = useState(() => {
     const now = new Date();

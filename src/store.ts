@@ -70,7 +70,6 @@ import { enumService } from './services/enumService';
 import { userDepartmentService } from './services/security/userDepartmentsService';
 
 import { MedicalsheetsService } from './services/MedicalSheetsService';
-import { vitalSignsService } from '@/services/medicalSheets/observations/vitalSignsService';
 
 import { serviceService } from './services/setup/serviceService';
 import { languageService } from './services/setup/languageService';
@@ -186,6 +185,21 @@ import { ICDTreeService } from './services/setup/icdTreeService';
 import { generalAssessmentService } from './services/encounters/generalAssessmentService';
 import { chiefComplainService } from './services/encounters/chiefComplainService';
 import { emergencyTriageService } from './services/encounters/er-triage/emergencyTriageService';
+import { encounterAssessmentService } from './services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
+import { encounterPlanService } from './services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
+import { patientDiagnosisService } from './services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import { vitalSignsService } from './services/medicalsheetsEncounter/observations/vitalSignsService';
+import { bodyMeasurementsService } from './services/medicalsheetsEncounter/observations/bodyMeasurementsService';
+import { patientObservationsComplaintsService } from './services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
+import { painAssessmentService } from './services/medicalsheetsEncounter/observations/painAssessmentService';
+import { additionalMeasurementsService } from './services/medicalsheetsEncounter/observations/additionalMeasurementsService';
+import { patientAllergiesService } from './services/encounters/patientAllergiesService';
+import { ReviewOfSystemService } from './services/medicalsheetsEncounter/ReviewOfSystemService';
+import { patientWarningsService } from './services/encounters/patientWarningsService';
+import { patientPrescriptionService } from './services/patients/Prescription/patientPrescriptionService';
+import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
+import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
+import { NextOfKinService } from './services/patients/NextOfKinService';
 
 export const store = configureStore({
   reducer: {
@@ -249,7 +263,6 @@ export const store = configureStore({
     [encounterService.reducerPath]: encounterService.reducer,
     [dentalService.reducerPath]: dentalService.reducer,
     [observationService.reducerPath]: observationService.reducer,
-    [vitalSignsService.reducerPath]: vitalSignsService.reducer,
 
     // attachments
     [attachmentService.reducerPath]: attachmentService.reducer,
@@ -312,8 +325,6 @@ export const store = configureStore({
     [uomGroupService.reducerPath]: uomGroupService.reducer,
 
     // Translation slice
-    [translationService.reducerPath]: translationService.reducer,
-
     // Form slice
     [formTemplateService.reducerPath]: formTemplateService.reducer,
     [FormEntriesService.reducerPath]: FormEntriesService.reducer,
@@ -377,8 +388,6 @@ export const store = configureStore({
     [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
 
     // invoice report
-    [invoiceReportApi.reducerPath]: invoiceReportApi.reducer,
-    // Visit Duration
     // visit duration
     [visitDurationService.reducerPath]: visitDurationService.reducer,
 
@@ -416,6 +425,9 @@ export const store = configureStore({
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
+
+    [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
+    [patientWarningsService.reducerPath]: patientAllergiesService.reducer,
 
     //AI Services
     // AI Services
@@ -460,10 +472,26 @@ export const store = configureStore({
     [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
     [chiefComplainService.reducerPath]: chiefComplainService.reducer,
     [emergencyTriageService.reducerPath]: emergencyTriageService.reducer,
+    [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
+    [encounterPlanService.reducerPath]: encounterPlanService.reducer,
+    [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
+
+    [vitalSignsService.reducerPath]: vitalSignsService.reducer,
+
+    [bodyMeasurementsService.reducerPath]: bodyMeasurementsService.reducer,
+    [patientObservationsComplaintsService.reducerPath]:
+      patientObservationsComplaintsService.reducer,
+    [painAssessmentService.reducerPath]: painAssessmentService.reducer,
+    [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
+    [ReviewOfSystemService.reducerPath]: ReviewOfSystemService.reducer,
+    [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
+    [patientPrescriptionMedicationService.reducerPath]: patientPrescriptionMedicationService.reducer,
+    [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
+    [NextOfKinService.reducerPath]: NextOfKinService.reducer
   },
 
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware().concat([
+    (getDefaultMiddleware().concat(...[
       // ai
       idParsingService.middleware,
       summarizationService.middleware,
@@ -674,7 +702,23 @@ export const store = configureStore({
       generalAssessmentService.middleware,
       chiefComplainService.middleware,
       emergencyTriageService.middleware,
-    ])
+      encounterAssessmentService.middleware,
+      encounterPlanService.middleware,
+      patientDiagnosisService.middleware,
+      vitalSignsService.middleware,
+      bodyMeasurementsService.middleware,
+      patientObservationsComplaintsService.middleware,
+      painAssessmentService.middleware,
+      additionalMeasurementsService.middleware,
+      patientAllergiesService.middleware,
+      patientWarningsService.middleware,
+      procedureSetupService.middleware,
+      ReviewOfSystemService.middleware,
+      patientPrescriptionService.middleware,
+      patientPrescriptionMedicationService.middleware,
+      patientServicesAndProductsService.middleware,
+      NextOfKinService.middleware
+    ]) as any)
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

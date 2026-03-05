@@ -6,9 +6,9 @@ import './styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 
-const OPTION_CUSTOM = '3010606785535008';
-const OPTION_PREDEFINED = '3010591042600262';
-const OPTION_MANUAL = '3010573499898196';
+const OPTION_CUSTOM = 'CUSTOM_INSTRUCTIONS';
+const OPTION_PREDEFINED = 'PRE_DEFINED_INSTRUCTIONS';
+const OPTION_MANUAL = 'MANUAL_INSTRUCTIONS';
 
 type RoaOption = { label: string; value: string };
 
@@ -136,6 +136,7 @@ useEffect(() => {
                 fieldLabel="Dose"
                 record={customeinst}
                 setRecord={setCustomeinst}
+                required={true}
               />
             </Col>
 
@@ -150,6 +151,7 @@ useEffect(() => {
                 fieldName="unit"
                 record={customeinst}
                 setRecord={setCustomeinst}
+                required={true}
               />
             </Col>
 
@@ -164,6 +166,7 @@ useEffect(() => {
                 fieldName="frequency"
                 record={customeinst}
                 setRecord={setCustomeinst}
+                required={true}
               />
             </Col>
 
@@ -178,6 +181,7 @@ useEffect(() => {
                 fieldName="roa"
                 record={customeinst}
                 setRecord={setCustomeinst}
+                required={true}
               />
             </Col>
           </Row>
@@ -187,6 +191,11 @@ useEffect(() => {
       {/* -------- Predefined Instruction -------- */}
       {selectedOption === OPTION_PREDEFINED && (
         <Form fluid layout="inline" className="fill-width-instructions">
+          <div style={{ marginBottom: 6 }}>
+            <span>
+              Pre-defined Instructions <span style={{ color: 'red' }}>*</span>
+            </span>
+          </div>
           <Dropdown
             className="fill-width-instructions"
             title={buildInstructionTitle(selectedPreDefine)}
@@ -211,13 +220,14 @@ useEffect(() => {
           <MyInput
             fieldName="manual"
             fieldType="textarea"
+            fieldLabel="Manual Instructions"
             record={{ manual }}
             setRecord={(newRecord: any) => setManual(newRecord.manual)}
-            showLabel={false}
             className="fill-width-instructions"
             width="100%"
             height={80}
             placeholder="Enter instructions..."
+            required={true}
           />
         </Form>
       )}

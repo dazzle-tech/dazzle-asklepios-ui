@@ -230,7 +230,13 @@ export const patientEncounterService = createApi({
       }),
       providesTags: ['PatientEncounter']
     }),
-
+    getEncounterById: builder.query<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}`,
+        method: 'GET'
+      }),
+      providesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }]
+    }),
     getEncountersByPatient: builder.query<PagedResult<PatientEncounter>, { patientId: Id } & PagedParams>({
       query: ({ patientId, page, size, sort = 'createdDate,desc' }) => ({
         url: `/api/patient/encounter/patient/${patientId}`,
@@ -245,6 +251,14 @@ export const patientEncounterService = createApi({
         res
           ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
+    }),
+
+    getEncountersByAppointment:builder.query<string,{ appointmentId: Id }>({
+      query: ({ appointmentId}) => ({
+        url: `/api/patient/encounter/appointment/${appointmentId}`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
     })
   })
 });
@@ -269,7 +283,9 @@ export const {
   useCountTodayDepartmentActiveCasesQuery,
   useCountTodayDepartmentCompletedQuery,
   useCountTodayDepartmentCancelledQuery,
-
+  useGetEncounterByIdQuery,
+  useLazyGetEncounterByIdQuery,
   useGetEncountersByPatientQuery,
-  useLazyGetEncountersByPatientQuery
+  useLazyGetEncountersByPatientQuery,
+  useGetEncountersByAppointmentQuery
 } = patientEncounterService;

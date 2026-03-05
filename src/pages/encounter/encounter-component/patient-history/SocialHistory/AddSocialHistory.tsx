@@ -14,9 +14,60 @@ import {
 } from '@/services/patients/socialHistoryService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { newSocialHistory } from '@/types/model-types-constructor-new';
-import { SocialHistory } from '@/types/model-types-new';
+
 import './style.less';
+
+type SocialHistory = {
+  id?: number | null;
+  patientId?: number | null;
+
+  isCurrentSmoker?: boolean;
+  smokeStartDate?: any;
+  cigaretteAmount?: number | null;
+  cigaretteType?: string;
+
+  isPreviousSmoker?: boolean;
+  smokeQuitDate?: any;
+
+  exposureToSecondHandSmoke?: boolean;
+
+  alcoholConsumption?: boolean;
+  typeOfAlcohol?: string;
+  alcoholSinceWhen?: any;
+
+  substanceUse?: boolean;
+  route?: any;
+  frequency?: any;
+
+  physicalLimitation?: any;
+  diagnosedEatingDisorders?: any;
+};
+
+const newSocialHistory: SocialHistory = {
+  id: null,
+  patientId: null,
+
+  isCurrentSmoker: false,
+  smokeStartDate: null,
+  cigaretteAmount: null,
+  cigaretteType: '',
+
+  isPreviousSmoker: false,
+  smokeQuitDate: null,
+
+  exposureToSecondHandSmoke: false,
+
+  alcoholConsumption: false,
+  typeOfAlcohol: '',
+  alcoholSinceWhen: null,
+
+  substanceUse: false,
+  route: null,
+  frequency: null,
+
+  physicalLimitation: null,
+  diagnosedEatingDisorders: null
+};
 
 const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
   const data = err?.data ?? {};
@@ -79,8 +130,10 @@ const SOCIAL_HISTORY_ERROR_MAP: Record<string, string> = {
 const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
 
-  const [record, setRecord] = useState<SocialHistory>(newSocialHistory);
-
+  const [record, setRecord] = useState<SocialHistory>(() => ({
+    ...newSocialHistory,
+    patientId: patient?.id
+  }));
   const { data: routeLov } = useGetLovValuesByCodeQuery('MED_ROA');
   const { data: freqLov } = useGetLovValuesByCodeQuery('FREQUENT_USE');
   const { data: physicalLov } = useGetLovValuesByCodeQuery('PHYSICAL_LIMITATION');
@@ -97,7 +150,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
   const resetAll = () => {
     setRecord({
       ...newSocialHistory,
-      patientId: Number(patient?.key)
+      patientId: patient?.id
     });
   };
 
@@ -107,7 +160,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     if (initialData?.id) {
       setRecord({
         id: initialData.id,
-        patientId: Number(patient?.key),
+        patientId: patient?.id,
 
         isCurrentSmoker: initialData.isCurrentSmoker || false,
         smokeStartDate: initialData.smokeStartDate || null,
@@ -133,12 +186,12 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     } else {
       resetAll();
     }
-  }, [open, initialData, patient?.key]);
+  }, [open, initialData, patient?.id]);
 
   const handleSave = async () => {
     const payload = {
       ...record,
-      patientId: Number(patient?.key),
+      patientId: patient?.id,
 
       smokeStartDate:
         record.isCurrentSmoker && record.smokeStartDate
@@ -178,7 +231,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
         color="#415be7"
         isOpen={smokingExpanded}
         onToggle={() => setSmokingExpanded(!smokingExpanded)}
-        badge={record.isCurrentSmoker ? 'Active' : record.isPreviousSmoker ? 'Former' : null}
+        badge={record?.isCurrentSmoker ? 'Active' : record?.isPreviousSmoker ? 'Former' : null}
       >
         <Form fluid layout="inline" className="fields-container">
           <div className="full-row">
@@ -190,10 +243,10 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               fieldName="isCurrentSmoker"
               record={record}
               setRecord={setRecord}
-              disabled={record.isPreviousSmoker}
+              disabled={record?.isPreviousSmoker}
             />
           </div>
-          {record.isCurrentSmoker && (
+          {record?.isCurrentSmoker && (
             <>
               <MyInput
                 width={180}
@@ -237,10 +290,10 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               fieldName="isPreviousSmoker"
               record={record}
               setRecord={setRecord}
-              disabled={record.isCurrentSmoker}
+              disabled={record?.isCurrentSmoker}
             />
           </div>
-          {record.isPreviousSmoker && (
+          {record?.isPreviousSmoker && (
             <div className="full-row">
               <MyInput
                 width={180}
@@ -287,7 +340,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               setRecord={setRecord}
             />
           </div>
-          {record.alcoholConsumption && (
+          {record?.alcoholConsumption && (
             <>
               <MyInput
                 width={180}
@@ -333,7 +386,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               setRecord={setRecord}
             />
           </div>
-          {record.substanceUse && (
+          {record?.substanceUse && (
             <>
               <MyInput
                 width={180}
@@ -409,11 +462,11 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
   return (
     <MyModal
       open={open}
-      setOpen={() => {
-        setOpen(false);
-        resetAll();
+      setOpen={value => {
+        if (!value) resetAll();
+        setOpen(value);
       }}
-      title={record.id ? 'Edit Social History' : 'Add Social History'}
+      title={record?.id ? 'Edit Social History' : 'Add Social History'}
       steps={[{ title: 'Social History', icon: <FontAwesomeIcon icon={faSmoking} /> }]}
       actionButtonFunction={handleSave}
       position="right"

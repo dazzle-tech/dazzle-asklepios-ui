@@ -6,7 +6,7 @@ import { useAppDispatch } from '@/hooks';
 import {
   useCreateBodyMeasurementsMutation,
   useGetLatestBodyMeasurementsByEncounterIdQuery
-} from '@/services/medicalSheets/observations/bodyMeasurementsService';
+} from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 import type { BodyMeasurements as BodyMeasurementsModelObject } from '@/types/model-types-new';
 import { newBodyMeasurements } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';

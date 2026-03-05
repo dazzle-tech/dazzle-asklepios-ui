@@ -136,15 +136,15 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
     if (initialData) {
       setFormData({
         ...initialData,
-        patientId: Number(patient?.key)
+        patientId: Number(patient?.id)
       });
     } else {
       setFormData({
         ...emptyFamilyHistory,
-        patientId: Number(patient?.key)
+        patientId: Number(patient?.id)
       });
     }
-  }, [initialData, open, patient?.key]);
+  }, [initialData, open, patient?.id]);
 
   /* SAVE */
 
@@ -166,7 +166,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
 
     const payload = {
       id: formData.id,
-      patientId: Number(patient.key),
+      patientId: Number(patient.id),
       condition: formData.condition,
       relation: formData.relation,
       inheritedDiseases: Boolean(formData.inheritedDiseases)
