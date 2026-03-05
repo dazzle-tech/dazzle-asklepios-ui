@@ -182,6 +182,9 @@ import { progressNoteService } from './services/patients/progressNoteService';
 import { patientProcedureService } from './services/patients/patientProcedureService';
 import { telephonicConsultationService } from './services/patients/telephonicConsultationService';
 import { ICDTreeService } from './services/setup/icdTreeService';
+import { generalAssessmentService } from './services/encounters/generalAssessmentService';
+import { chiefComplainService } from './services/encounters/chiefComplainService';
+import { emergencyTriageService } from './services/encounters/er-triage/emergencyTriageService';
 import { encounterAssessmentService } from './services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
 import { encounterPlanService } from './services/medicalsheetsEncounter/clinicalVisit/encounterPlanService';
 import { patientDiagnosisService } from './services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
@@ -197,7 +200,6 @@ import { patientPrescriptionService } from './services/patients/Prescription/pat
 import { patientPrescriptionMedicationService } from './services/patients/Prescription/patientPrescriptionMedicationService';
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 import { NextOfKinService } from './services/patients/NextOfKinService';
-
 
 export const store = configureStore({
   reducer: {
@@ -466,6 +468,10 @@ export const store = configureStore({
 
     [ICDTreeService.reducerPath]: ICDTreeService.reducer,
 
+    //er-triage
+    [generalAssessmentService.reducerPath]: generalAssessmentService.reducer,
+    [chiefComplainService.reducerPath]: chiefComplainService.reducer,
+    [emergencyTriageService.reducerPath]: emergencyTriageService.reducer,
     [encounterAssessmentService.reducerPath]: encounterAssessmentService.reducer,
     [encounterPlanService.reducerPath]: encounterPlanService.reducer,
     [patientDiagnosisService.reducerPath]: patientDiagnosisService.reducer,
@@ -485,7 +491,7 @@ export const store = configureStore({
   },
 
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware().concat([
+    (getDefaultMiddleware().concat(...[
       // ai
       idParsingService.middleware,
       summarizationService.middleware,
@@ -562,6 +568,7 @@ export const store = configureStore({
 
       // medical sheets
       MedicalsheetsService.middleware,
+    vitalSignsService.middleware,
 
       // services / language / translation
       serviceService.middleware,
@@ -691,6 +698,10 @@ export const store = configureStore({
       portalService.middleware,
       telephonicConsultationService.middleware,
       ICDTreeService.middleware,
+      //er-triage
+      generalAssessmentService.middleware,
+      chiefComplainService.middleware,
+      emergencyTriageService.middleware,
       encounterAssessmentService.middleware,
       encounterPlanService.middleware,
       patientDiagnosisService.middleware,
@@ -707,7 +718,7 @@ export const store = configureStore({
       patientPrescriptionMedicationService.middleware,
       patientServicesAndProductsService.middleware,
       NextOfKinService.middleware
-    ])
+    ]) as any)
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

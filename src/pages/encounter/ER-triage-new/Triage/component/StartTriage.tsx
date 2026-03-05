@@ -11,8 +11,7 @@ import EmergencyLevelAssessment from "./EmergencyLevelAssessment";
 import EyeAssessmentHPI from "./EyeAssessmentHPI";
 import {
   useCompleteEncounterMutation,
-  useSaveEncounterChangesMutation,
-} from "@/services/encounterService";
+} from "@/services/encounters/patientEncounterService";
 import {
   useUpdateEmergencyTriageLevelAssessmentMutation,
 } from "@/services/encounters/er-triage/emergencyTriageService";
@@ -35,7 +34,6 @@ type StartTriageProps = {
 const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: StartTriageProps) => {
   const navigate = useNavigate();
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
-  const [saveEncounterChanges] = useSaveEncounterChangesMutation();
   const [updateLevelAssessment] = useUpdateEmergencyTriageLevelAssessmentMutation();
   const dispatch = useAppDispatch();
 
@@ -74,7 +72,7 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
   );
 
   const encounterPriorityValue =
-    encounter?.encounterPriorityLkey ?? encounter?.encounterPriority ?? null;
+    encounter?.priorityLevel ?? encounter?.encounterPriority ?? encounter?.encounterPriorityLkey ?? null;
   const selectedEncounterPriority = encounterPriorityEnumOptions.find(
     (item: any) => String(item?.value) === String(encounterPriorityValue ?? "")
   );
@@ -122,14 +120,6 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
 
       setTriage((prev: any) => ({ ...prev, ...updated }));
 
-      // Also persist the derived emergency level on the ENCOUNTER record (used by ER list/table).
-      if (updated?.emergencyLevel != null) {
-        await saveEncounterChanges({
-          ...encounter,
-          emergencyLevelLkey: String(updated.emergencyLevel),
-        }).unwrap();
-      }
-
       dispatch(notify({ msg: "Emergency assessment saved", sev: "success" }));
     } catch (error) {
       console.error("Error saving emergency assessment", error);
@@ -148,8 +138,12 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
 
   const handleCompleteEncounter = async () => {
     try {
-      await completeEncounter(encounter).unwrap();
+      const id = encounter?.id ?? encounter?.key ?? null;
+      if (!id) throw new Error("Missing encounter id");
+      await completeEncounter({ id }).unwrap();
       dispatch(notify({ msg: "Completed Successfully", sev: "success" }));
+      // After completing the visit, return to ER Triage list
+      navigate("/ER-triage");
     } catch (error) {
       console.error("Encounter completion error:", error);
       dispatch(
