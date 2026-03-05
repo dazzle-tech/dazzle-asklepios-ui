@@ -9,6 +9,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
+import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBed,
@@ -53,6 +54,26 @@ const Encounter = () => {
   const propsData = location.state;
   
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
+
+  // Debug: print the patient object that comes from navigation state
+  useEffect(() => {
+ 
+      // eslint-disable-next-line no-console
+      console.log('[Encounter] propsData.patient:', propsData?.patient);
+    
+  }, [propsData?.patient]);
+
+  const patientIdToFetch =
+    (propsData?.patient as any)?.id ??
+    (propsData?.patient as any)?.key ??
+    (propsData?.patient as any)?.patientId ??
+    null;
+
+  const { data: fetchedPatient } = useGetPatientByIdQuery(patientIdToFetch, {
+    skip: patientIdToFetch == null
+  });
+
+  const patientToSend = fetchedPatient ?? propsData?.patient;
 
   // const outletPatient = propsData?.patient;
   // const outletEncounter = propsData?.encounter;
@@ -207,14 +228,12 @@ const Encounter = () => {
   };
 
   const followUpDraftAppointmentData = React.useMemo(() => {
-    // Seed the follow-up modal with the encounter's patient so it opens ready to save.
-    const patient = propsData?.patient;
-    if (!patient) return null;
+    // Send appointment-related draft data only. Patient is passed separately via `patient` prop.
+    if (!patientToSend) return null;
     return {
-      patient,
-      patientId: patient?.id
+      patientId: (patientToSend as any)?.id ?? (patientToSend as any)?.key ?? null
     };
-  }, [propsData?.patient]);
+  }, [patientToSend]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -672,6 +691,7 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
         onClose={() => {
           setModalOpen(false), setShowAppointmentOnly(false);
         }}
+        patient={patientToSend}
         appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
