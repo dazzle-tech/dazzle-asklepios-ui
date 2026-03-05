@@ -68,7 +68,7 @@ const ScheduleScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
-  const FOLLOW_UP_VISIT_TYPE_LKEY = 2041067508470007;
+  const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
 
   const [saveAppointment] = useSaveAppointmentMutation();
 
@@ -1294,6 +1294,12 @@ const ScheduleScreen = () => {
           setShowAppointmentOnly(false);
           setViewAppointmentData(null);
         }}
+        patient={
+          followUpDraftData?.patient ??
+          viewAppointmentData?.patient ??
+          selectedEvent?.appointmentData?.patient ??
+          null
+        }
         appointmentData={followUpDraftData || viewAppointmentData || selectedEvent?.appointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}

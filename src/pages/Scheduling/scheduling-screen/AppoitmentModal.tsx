@@ -26,7 +26,10 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { useGetDocumentsByPatientQuery } from '@/services/patients/patientDocumentsService';
-import { useLazyGetPreviousEncountersSameDepartmentQuery } from '@/services/encounters/patientEncounterService';
+import {
+  useCreateEncounterMutation,
+  useLazyGetPreviousEncountersSameDepartmentQuery
+} from '@/services/encounters/patientEncounterService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { ApAppointment, ApAttachment, ApPatient } from '@/types/model-types';
 import { newApAppointment, newApPatient } from '@/types/model-types-constructor';
@@ -62,6 +65,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import PatientSearchBar from './PatientSearchBar';
 import PatientCardWithPicture from '@/components/PatientCard/PatientCardWithPicture';
 import { Box, Skeleton } from '@mui/material';
+import type { PatientEncounter } from '@/types/model-types-new';
 // TODO: we have to use css clases insted of inline styles for better maintainability and performance.
 
 type AppointmentModalProps = {
@@ -92,6 +96,8 @@ const AppointmentModal = ({
   onSwitchToFollowUp
 }: AppointmentModalProps) => {
   const mode = useSelector((state: any) => state.ui.mode);
+  // Keep the selected appointment date in a ref to avoid stale state when user clicks Save immediately after picking a date
+  const selectedDateRef = useRef<Date | null>(null);
 
   const [resourcesPaginationParams] = useState({
     page: 0,
@@ -204,6 +210,7 @@ const AppointmentModal = ({
   useEffect(() => {
     if (selectedSlot?.start) {
       const slotDate = new Date(selectedSlot.start);
+      selectedDateRef.current = slotDate;
       setSelectedDate(slotDate);
 
       const jsDay = slotDate.getDay();
@@ -364,6 +371,7 @@ const AppointmentModal = ({
   useEffect(() => {
     if (appointmentData?.appointmentStart) {
       const date = new Date(appointmentData?.appointmentStart);
+      selectedDateRef.current = date;
       setSelectedDate(date);
       setSelectedYear(date.getFullYear());
       setSelectedMonth(date.getMonth());
@@ -575,6 +583,7 @@ const AppointmentModal = ({
   }, [appointment, departmentListResponse, dayCaseDepartmentListResponse]);
 
   const [saveAppointment, saveAppointmentMutation] = useSaveAppointmentMutation();
+  const [createEncounter] = useCreateEncounterMutation();
 
   useEffect(() => {
     // When editing/viewing an existing appointment, localPatient should come from `appointmentData`.
@@ -1129,6 +1138,7 @@ const AppointmentModal = ({
     // When facility changes, clear any picked availability selections (times must depend on facility)
     if (prevFacilityKeyRef.current !== currentFacilityKey) {
       setSelectedSlices([]);
+      selectedDateRef.current = null;
       setSelectedDate(null);
       setSelectedTime(null);
       setOpenDay(null);
@@ -1307,11 +1317,29 @@ const AppointmentModal = ({
     return true;
   };
 
-  const handleSaveAppointment = () => {
+  const handleSaveAppointment = async () => {
     // Validate required fields first
     if (!validateRequiredFields()) {
       return;
     }
+
+    const extractErrorMessage = (e: any) => {
+      const direct =
+        e?.data?.message ||
+        e?.data?.title ||
+        e?.data?.detail ||
+        e?.error ||
+        e?.message ||
+        null;
+
+      const problemMessage =
+        e?.data?.properties?.message ||
+        e?.data?.properties?.errorKey ||
+        null;
+
+      const msg = String(problemMessage || direct || 'An unexpected error occurred').trim();
+      return msg;
+    };
 
     let finalResourceKey = appointment.resourceKey;
 
@@ -1348,9 +1376,7 @@ const AppointmentModal = ({
       appointmentEnd: appointmentEnd,
       instructions: instructions,
       // appointmentStatus: appointment.appointmentStatus ? appointment.appointmentStatus : 'New-Appointment',
-      appointmentStatus: forceStatus
-        ? forceStatus
-        : (appointment.appointmentStatus ? appointment.appointmentStatus : 'New-Appointment'),
+      appointmentStatus: appointment.appointmentStatus ? appointment.appointmentStatus : 'New-Appointment',
       selectedSlices: selectedSlices ?? [],
       appointmentDate: selectedDate,
       resourceKey: finalResourceKey,
@@ -1358,23 +1384,142 @@ const AppointmentModal = ({
       facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey
     };
 
-    if (localPatient?.key) {
-      const sanitizedAppointmentToSave = sanitizeAppointmentPayload(appointmentToSave);
-
-      saveAppointment(sanitizedAppointmentToSave)
-        .unwrap()
-        .then(() => {
-          closeModal();
-          handleClear();
-          onSave();
-        })
-        .catch(e => {
-          if (e.status !== 422) {
-            dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
-          }
-        });
-    } else {
+    if (!localPatient?.key) {
       dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
+      return;
+    }
+
+    try {
+      // Desired status (from callers like request approval modal).
+      // IMPORTANT: If encounter creation fails in confirm flow, we do NOT save anything.
+      const desiredStatus = String(
+        forceStatus ? forceStatus : appointmentToSave?.appointmentStatus ?? 'New-Appointment'
+      ).trim();
+      const isConfirmFlow = desiredStatus.toLowerCase() === 'confirmed';
+
+      if (isConfirmFlow) {
+        // Step 1 (Confirm flow): Create encounter first (no appointment changes persisted yet)
+        try {
+          const patientAny = ((appointmentData as any)?.patient ?? localPatient) as any;
+          const patientId = Number(patientAny?.id ?? patientAny?.key ?? localPatient?.key ?? 0);
+
+          const facilityId = Number(
+            appointmentToSave?.facilityKey ??
+              facility?.id ??
+              facility?.facilityKey ??
+              currentLoggedInFacility?.id ??
+              currentLoggedInFacility?.facilityKey ??
+              0
+          );
+
+          const encounterType = appointmentToSave?.resourceTypeLkey ?? appointment?.resourceTypeLkey ?? 'CLINIC';
+          const isDepartmentBasedResource2 = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(
+            String(encounterType)
+          );
+
+          const departmentId = Number(
+            (isDepartmentBasedResource2 ? finalResourceKey : appointmentToSave?.departmentKey) ?? 0
+          );
+
+          const appointmentId = Number(appointmentData?.key ?? (appointmentData as any)?.id ?? 0);
+
+          if (!patientId || patientId === 0) {
+            dispatch(notify({ msg: 'Patient ID is required to create encounter', sev: 'warning' }));
+            return;
+          }
+          if (!facilityId || facilityId === 0) {
+            dispatch(notify({ msg: 'Facility ID is required to create encounter', sev: 'warning' }));
+            return;
+          }
+          if (!departmentId || departmentId === 0) {
+            dispatch(notify({ msg: 'Department ID is required to create encounter', sev: 'warning' }));
+            return;
+          }
+          if (!appointmentId || appointmentId === 0) {
+            dispatch(notify({ msg: 'Appointment ID is required to create encounter', sev: 'warning' }));
+            return;
+          }
+
+          const encounterReason = appointmentToSave?.visitTypeLkey || 'APPOINTMENT';
+          const followUpEncounterId = Number(appointmentToSave?.followUpEncounterId ?? 0);
+
+          if (
+            String(encounterReason).toUpperCase() === 'FOLLOW_UP' &&
+            (!followUpEncounterId || followUpEncounterId === 0)
+          ) {
+            dispatch(
+              notify({
+                msg: 'Previous encounter is required for Follow-up visits. Please select it and try again.',
+                sev: 'warning'
+              })
+            );
+            return;
+          }
+
+          const encounterDatePicked = selectedDateRef.current ?? selectedDate ?? null;
+          if (!encounterDatePicked) {
+            dispatch(
+              notify({
+                msg: 'Appointment Date is required to create encounter. Please select the appointment date and try again.',
+                sev: 'warning'
+              })
+            );
+            return;
+          }
+
+          const encounterBody: any = {
+            patientId,
+            facilityId,
+            departmentId,
+            encounterType,
+            encounterReason,
+            priorityLevel: 'NORMAL',
+            status: 'NEW',
+            // Use the selected appointment date (never fallback to "today")
+            encounterDate: new Date(encounterDatePicked),
+            notes: appointmentToSave?.notes || null,
+            chiefComplaint: null,
+            hasPrescription: false,
+            hasOrder: false,
+            isObserved: false,
+            appointmentId: String(appointmentId),
+
+            followUpEncounterId: followUpEncounterId || null,
+            patientEncounter: followUpEncounterId ? { id: followUpEncounterId } : null
+          };
+
+          await createEncounter({ body: encounterBody as PatientEncounter }).unwrap();
+        } catch (encErr: any) {
+          const reason = extractErrorMessage(encErr);
+          dispatch(
+            notify({
+              msg: `Encounter creation failed. \nReason: ${reason}`,
+              sev: 'warn'
+            })
+          );
+          return;
+        }
+
+        // Step 2 (Confirm flow): now persist the appointment updates + Confirmed status
+        const confirmedToSave = {
+          ...appointmentToSave,
+          appointmentStatus: 'Confirmed'
+        };
+        await saveAppointment(sanitizeAppointmentPayload(confirmedToSave)).unwrap();
+      } else {
+        // Non-confirm flow: regular save
+        const saved = await saveAppointment(sanitizeAppointmentPayload({ ...appointmentToSave, appointmentStatus: desiredStatus })).unwrap();
+        void saved;
+      }
+
+      closeModal();
+      handleClear();
+      onSave();
+    } catch (e: any) {
+      if (e?.status !== 422) {
+        const msg = extractErrorMessage(e);
+        dispatch(notify({ msg: `Failed to save appointment.\nReason: ${msg}`, sev: 'warn' }));
+      }
     }
   };
 
@@ -1576,12 +1721,55 @@ const AppointmentModal = ({
 
   const [modalKey, setModalKey] = useState(0);
 
+  const getNextDateForCustomDay = (customDay: DayValue, fromDate: Date = new Date()) => {
+    // Custom: 0=Saturday ... 6=Friday
+    // JS: 0=Sunday ... 6=Saturday
+    const customToJs: Record<DayValue, number> = {
+      '0': 6, // Saturday
+      '1': 0, // Sunday
+      '2': 1, // Monday
+      '3': 2, // Tuesday
+      '4': 3, // Wednesday
+      '5': 4, // Thursday
+      '6': 5  // Friday
+    };
+
+    const base = new Date(fromDate);
+    base.setHours(0, 0, 0, 0);
+
+    const todayJs = base.getDay();
+    const targetJs = customToJs[customDay];
+    const diff = (targetJs - todayJs + 7) % 7; // include today if it matches
+
+    const next = new Date(base);
+    next.setDate(base.getDate() + diff);
+    return next;
+  };
+
   const handleDayClick = day => {
     const isDeselecting = openDay === day;
+
+    if (!isDeselecting) {
+      // Keep appointment date + selected day always in sync:
+      // - if no date selected OR selected date is a different weekday, auto-fill with the next occurrence of this day
+      const selectedCustomDay =
+        selectedDate instanceof Date && !isNaN(selectedDate.getTime()) ? mapJsDayToCustom(selectedDate.getDay()) : null;
+
+      if (!selectedDate || selectedCustomDay !== (day as DayValue)) {
+        const next = getNextDateForCustomDay(day as DayValue, new Date());
+        selectedDateRef.current = next;
+        setSelectedDate(next);
+        setSelectedYear(next.getFullYear());
+        setSelectedMonth(next.getMonth());
+        setSelectedMonthDay(next.getDate());
+      }
+    }
+
     setOpenDay(isDeselecting ? null : day);
     // Don't clear selectedDate when selecting a day - keep the date if it was already selected
     // Only clear if deselecting the day and no time slices are selected
     if (isDeselecting && (!selectedSlices || selectedSlices.length === 0)) {
+      selectedDateRef.current = null;
       setSelectedDate(null);
     }
   };
@@ -1974,24 +2162,19 @@ const AppointmentModal = ({
                                     value={selectedDate}
                                     disabled={showOnly || !appointment?.facilityKey}
                                     onChange={date => {
+                                      selectedDateRef.current = date ?? null;
                                       setSelectedDate(date);
                                       if (date) {
-                                        // Convert JavaScript day to API day format (same as NewAvailabilityTimeModal)
+                                        // Sync "day" buttons with picked date
                                         const jsDay = date.getDay(); // 0=Sunday, 6=Saturday
-                                        const apiDay = String((jsDay + 1) % 7); // Convert to 0=Saturday, 1=Sunday, etc.
+                                        const apiDay = String((jsDay + 1) % 7); // 0=Saturday, 1=Sunday, ...
                                         setOpenDay(apiDay as DayValue);
+                                        setSelectedYear(date.getFullYear());
+                                        setSelectedMonth(date.getMonth());
+                                        setSelectedMonthDay(date.getDate());
                                       } else {
                                         setOpenDay(null);
                                       }
-                                    }}
-                                    shouldDisableDate={date => {
-                                      if (openDay !== null) {
-                                        // Convert JavaScript day to API day format (same as NewAvailabilityTimeModal)
-                                        const jsDay = date.getDay(); // 0=Sunday, 6=Saturday
-                                        const apiDay = String((jsDay + 1) % 7); // Convert to 0=Saturday, 1=Sunday, etc.
-                                        return apiDay !== openDay;
-                                      }
-                                      return false;
                                     }}
                                     size="md"
                                     placeholder="DD/MM/YYYY"
@@ -2045,8 +2228,7 @@ const AppointmentModal = ({
                                   border: '1px solid var(--rs-border-primary)'
                                 }}
                               >
-                                {sortedDaysWithSlices.map(day => {
-                                  const dayLabel = DAYS.find(d => d.value === day)?.label;
+                                {DAYS.map(({ value: day, label: dayLabel }) => {
 
                                   return (
                                     <div
