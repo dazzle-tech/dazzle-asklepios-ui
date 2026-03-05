@@ -233,12 +233,6 @@ export const newPatientService = createApi({
         body,
       }),
     }),
-    getPatientById: builder.query<modelTypes.Patient, { id: Id }>({
-  query: ({ id }) => ({
-    url: `/api/patient/${id}`
-  }),
-  providesTags: (_res, _err, { id }) => [{ type: 'Patient' as const, id }]
-}),
   })
 });
 
@@ -276,7 +270,6 @@ export const {
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
   useLazyGetUnknownPatientsQuery,
-  useGetPatientByIdQuery,
   useLazyGetPatientByIdQuery,
 
   // duplicaton
