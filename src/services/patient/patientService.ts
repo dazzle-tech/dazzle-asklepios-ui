@@ -47,6 +47,14 @@ export const newPatientService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['Patient'],
   endpoints: builder => ({
+    getPatientById: builder.query<modelTypes.Patient, Id>({
+      query: (id) => ({
+        url: `/api/patient/${encodeURIComponent(String(id))}`,
+        method: 'GET',
+      }),
+      providesTags: (_res, _err, id) => [{ type: 'Patient' as const, id }, 'Patient'],
+    }),
+
     getPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/patient/patients',
@@ -235,6 +243,7 @@ export const newPatientService = createApi({
 });
 
 export const {
+  useGetPatientByIdQuery,
   // list
   useGetPatientsQuery,
   useLazyGetPatientsQuery,

@@ -341,6 +341,7 @@ export interface ApAppointment {
 	noShowReasonValue:string;
 	noShowOtherReason:string;
 	departmentKey:string;
+	followUpEncounterId?: number | null;
 } 
 
 export interface ApAttachment { 
