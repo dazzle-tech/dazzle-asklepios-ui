@@ -7,10 +7,9 @@ import {
   useLazyGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByDateOfBirthQuery,
   useLazyGetPatientsByFullNameQuery,
- useLazyGetPatientsByMedicalRecordNumberQuery,
+  useLazyGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
   useLazyGetPatientsByAnyDocumentNumberQuery,
-  useLazyGetPatientsQuery,
  
 } from '@/services/patient/patientService';
 
@@ -73,6 +72,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         return fetchByArchiving;
       case 'phoneNumber':
         return fetchByPrimaryPhone;
+      case 'documentNo':
+        return fetchByDocumentNo;
       case 'dob':
         return fetchByDob;
       default:
@@ -126,7 +127,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       const params = buildParams(page);
 
       const resp = await trigger(params).unwrap();
-
+      console.log('Search response:', resp);
       if (page === 0) setPatients(resp.data);
       else setPatients(prev => [...prev, ...resp.data]);
 
