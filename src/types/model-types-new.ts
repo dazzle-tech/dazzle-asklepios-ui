@@ -3226,4 +3226,13 @@ export interface AdditionalMeasurements {
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
 }
- 
+export interface  SampleLabelVM  {
+  orderTestId: number;
+  patientName: string;
+  facilityName: string;
+  mrn: string;
+  testName: string;
+  sampleDateTime: string; 
+  sampleQuantity: number;
+  sampleUnit: string;
+};
