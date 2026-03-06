@@ -90,7 +90,13 @@ export const patientDocumentsService = createApi({
         body
       }),
       invalidatesTags: ['PatientDocument']
-    })
+    }),
+    getPrimaryDocumentByPatient: builder.query<any, number>({
+      query: patientId => ({
+        url: `/api/patient/documents/patient/${patientId}/primary`
+      }),
+      providesTags: ['PatientDocument']
+    }),
   })
 });
 
@@ -110,5 +116,7 @@ export const {
   useAddPatientDocumentMutation,
   useAddNoDocumentMutation,
   useUpdatePatientDocumentMutation,
-  useDeletePatientDocumentMutation
+  useDeletePatientDocumentMutation,
+  useGetPrimaryDocumentByPatientQuery,
+  useLazyGetPrimaryDocumentByPatientQuery,
 } = patientDocumentsService;
