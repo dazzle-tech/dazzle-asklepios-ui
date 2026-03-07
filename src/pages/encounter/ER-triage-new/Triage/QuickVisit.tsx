@@ -7,7 +7,7 @@ import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import Translate from '@/components/Translate';
 import '../styles.less';
 import MyButton from '@/components/MyButton/MyButton';
-import { useCompleteEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Tabs } from 'rsuite';
@@ -50,7 +50,9 @@ const QuickVisit = () => {
     const handleCompleteEncounter = async () => {
         try {
             if (localEncounter) {
-                await completeEncounter(localEncounter).unwrap();
+                const id = (localEncounter as any)?.id ?? (localEncounter as any)?.key ?? null;
+                if (!id) throw new Error('Missing encounter id');
+                await completeEncounter({ id } as any).unwrap();
                 dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
             }
             setReadOnly(true);
@@ -70,10 +72,10 @@ const QuickVisit = () => {
     }, [location.pathname, dispatch]);
     useEffect(() => {
         // TODO update status to be a LOV value
-        if (localEncounter?.encounterStatusLkey === '91109811181900') {
+        if (String((localEncounter as any)?.status ?? (localEncounter as any)?.encounterStatus ?? '').toUpperCase() === 'CLOSED') {
             setIsEncounterStatusClosed(true);
         }
-    }, [localEncounter?.encounterStatusLkey]);
+    }, [localEncounter]);
     const obsRef = useRef(null);
     const handleSaveObsarvationClick = () => {
         obsRef.current?.handleSave();
@@ -99,7 +101,7 @@ const QuickVisit = () => {
                                 />
                                 <div className="left-buttons-contant">
                                     {/* TODO update status to be a LOV value */}
-                                    {!localEncounter.discharge && localEncounter.encounterStatusLkey !== "91109811181900" && (<MyButton
+                                    {!localEncounter.discharge && String((localEncounter as any)?.status ?? (localEncounter as any)?.encounterStatus ?? '').toUpperCase() !== "CLOSED" && (<MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                                         onClick={()=>localEncounter?.resourceTypeLkey == "EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
 

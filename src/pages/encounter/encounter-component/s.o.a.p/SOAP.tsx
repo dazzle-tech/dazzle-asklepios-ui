@@ -22,6 +22,8 @@ import {
   useUpdateEncounterMutation,
 } from '@/services/encounters/patientEncounterService';
 
+import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
+
 import type { PatientEncounter } from '@/types/model-types-new';
 
 const SOAP = (props) => {
@@ -45,16 +47,29 @@ const SOAP = (props) => {
     }
   );
 
+  const { data: nurseComplaints } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
+    { encounterId },
+    { skip: !encounterId }
+  );
+
   useEffect(() => {
-    if (encounterFromServer) setLocalEncounter(encounterFromServer);
-  }, [encounterFromServer]);
+    if (encounterFromServer) {
+      setLocalEncounter({
+        ...encounterFromServer,
+        chiefComplaint:
+          encounterFromServer.chiefComplaint ||
+          nurseComplaints?.reasonOfVisit ||
+          '',
+      });
+    }
+  }, [encounterFromServer, nurseComplaints]);
 
   const [updateEncounter] = useUpdateEncounterMutation();
 
   const toEncounterPayload = (encounter: any): PatientEncounter => ({
     id: Number(encounter?.id),
 
-    patientId: Number(encounter?.patientId ?? encounter?.patient?.id), 
+    patientId: Number(encounter?.patientId ?? encounter?.patient?.id),
 
     encounterNumber: encounter?.encounterNumber ?? null,
 
@@ -63,7 +78,7 @@ const SOAP = (props) => {
 
     practitionerId: encounter?.practitionerId ?? null,
 
-    paymentDate: encounter?.paymentDate, 
+    paymentDate: encounter?.paymentDate,
     amount: encounter?.amount,
 
     encounterType: encounter?.encounterType,
@@ -124,7 +139,7 @@ const SOAP = (props) => {
 
       const updatedEncounter = await updateEncounter({
         id: idToUpdate,
-        body: payload, 
+        body: payload,
       }).unwrap();
 
       setLocalEncounter(updatedEncounter);

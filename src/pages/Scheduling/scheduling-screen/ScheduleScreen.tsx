@@ -68,7 +68,7 @@ const ScheduleScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
-  const FOLLOW_UP_VISIT_TYPE_LKEY = 2041067508470007;
+  const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
 
   const [saveAppointment] = useSaveAppointmentMutation();
 
@@ -1052,6 +1052,7 @@ const ScheduleScreen = () => {
 
                   <Form fluid layout="inline">
                     <MyInput
+                      disabled
                       height={35}
                       width={'11.5vw'}
                       column
@@ -1068,6 +1069,7 @@ const ScheduleScreen = () => {
                   </Form>
                   <Form fluid layout="inline">
                     <MyInput
+                      disabled
                       height={35}
                       width={'11.5vw'}
                       vr={validationResult}
@@ -1321,6 +1323,12 @@ const ScheduleScreen = () => {
           setShowAppointmentOnly(false);
           setViewAppointmentData(null);
         }}
+        patient={
+          followUpDraftData?.patient ??
+          viewAppointmentData?.patient ??
+          selectedEvent?.appointmentData?.patient ??
+          null
+        }
         appointmentData={followUpDraftData || viewAppointmentData || selectedEvent?.appointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}

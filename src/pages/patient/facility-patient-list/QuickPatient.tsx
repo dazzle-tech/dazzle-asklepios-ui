@@ -3,22 +3,22 @@ import { Form, Toggle } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { newApEncounter } from '@/types/model-types-constructor';
+
 import { faBoltLightning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
-import { calculateAgeFormat } from '@/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { notify } from '@/utils/uiReducerActions';
-import type { Patient } from '@/types/model-types-new';
-import { newPatient } from '@/types/model-types-constructor-new';
+
+import type { Patient, PatientEncounter } from '@/types/model-types-new';
+import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import {
   useAddPatientMutation,
   useAddUnknownPatientMutation
 } from '@/services/patient/patientService';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useCreateEncounterMutation } from '@/services/encounters/patientEncounterService';
 
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
@@ -59,22 +59,12 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
 const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const dispatch = useAppDispatch();
 
-  const [isUnknown, setIsUnknown] = useState(false);
+const [isUnknown, setIsUnknown] = useState(false);
   const [validationResult, setValidationResult] = useState<any>({});
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
-
   const [addPatient] = useAddPatientMutation();
   const [addUnknownPatient] = useAddUnknownPatientMutation();
-  const [saveEncounter] = useCompleteEncounterRegistrationMutation();
-
-  const [localEncounter, setLocalEncounter] = useState({
-    ...newApEncounter,
-    visitTypeLkey: '2041082245699228',
-    plannedStartDate: new Date(),
-    patientAge: null,
-    discharge: false,
-    patientKey: undefined
-  });
+  const [createEncounter] = useCreateEncounterMutation();
 
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
   const genderEnum = useEnumOptions('Gender');
@@ -113,16 +103,36 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
       }
 
       if (pageCode === 'ER_Triage') {
-        await saveEncounter({
-          ...localEncounter,
-          patientKey: savedPatient.id?.toString(),
-          plannedStartDate: new Date(),
-          encounterStatusLkey: '8890456518264959',
-          patientAge: calculateAgeFormat(savedPatient.dateOfBirth),
-          visitTypeLkey: '2041082245699228',
-          resourceTypeLkey: '6743167799449277',
-          resourceKey: '7101086042442391'
-        });
+
+        const selectedDepartment = JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
+        const departmentId = Number(selectedDepartment?.departmentId ?? 0);
+        const facilityId = Number(selectedDepartment?.facilityId ?? 0);
+
+        if (!departmentId || !facilityId) {
+          dispatch(
+            notify({
+              msg: 'Missing logged-in department. Please select a department then try again.',
+              sev: 'error'
+            })
+          );
+          return;
+        }
+
+        const encounterBody: PatientEncounter = {
+          ...newPatientEncounter,
+          id: 0,
+          patientId: Number(savedPatient.id ?? 0),
+          facilityId,
+          departmentId,
+          encounterType: 'EMERGENCY',
+          encounterReason: 'URGENT_VISIT',
+          status: 'WAITING_TRIAGE',
+          encounterDate: new Date(),
+          paymentDate: new Date().toISOString(),
+          amount: 0
+        };
+
+        await createEncounter({ body: encounterBody }).unwrap();
 
         dispatch(setRefetchEncounter(true));
       }
@@ -159,21 +169,12 @@ const QuickPatient = ({ open, setOpen, setPatient = null }) => {
   const handleClearModal = () => {
     setIsUnknown(false);
     setLocalPatient({ ...newPatient });
-    setLocalEncounter({
-      ...newApEncounter,
-      visitTypeLkey: '2041082245699228',
-      plannedStartDate: new Date(),
-      patientAge: null,
-      discharge: false,
-      patientKey: undefined
-    });
   };
 
   useEffect(() => {
     if (!open) {
-      handleClearModal();
-      setValidationResult(undefined);
-    }
+      setLocalPatient({ ...newPatient });
+         }
   }, [open]);
 
  const quickPatientContent = (

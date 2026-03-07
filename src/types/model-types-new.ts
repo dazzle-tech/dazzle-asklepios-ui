@@ -1516,7 +1516,162 @@ export interface CommunityArea {
   id?: number;
   communityId: number;
   name: string;
-  isActive?: boolean;
+  isActive?: boolean;}
+
+export interface UserStickyNotesResponseVM {
+  id: number;
+  userId: number;
+  note: string;
+  priority: string;
+  priorityOrder: number;
+  color: string;
+  createdBy: string;
+  createdDate: Date;
+  lastModifiedBy: string;
+  lastModifiedDate: Date;
+}
+
+export interface UserStickyNotesCreateVM {
+  userId: number;
+  note: string;
+  priority: string;
+  priorityOrder: number;
+  color: string;
+}
+
+export interface PatientDocument {
+  id?: number;
+  patientId: number;
+  countryId: number;
+  type: string;
+  number: string;
+  isPrimary?: boolean | null;
+  createdBy?: string | null;
+  createdDate?: Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | null;
+}
+
+export interface PatientInsurance {
+  id?: number;
+  patientId: number;
+  payorId: number;
+  planId?: number | null;
+  policyHolderId?: number | null;
+
+  policyNumber: number | string; // BigDecimal on backend
+  groupNumber?: number | string | null; // BigDecimal on backend
+
+  expirationDate: string; // LocalDate -> string (YYYY-MM-DD)
+  remainingBenefits?: number | string | null; // BigDecimal
+  remainingDeductibles?: number | string | null; // BigDecimal
+  isPrimary?: boolean | null;
+
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface PatientInsuranceCoverage {
+  id?: number;
+
+  insuranceId: number; // FK patient_insurances.id
+
+  itemType: string; // BillingItemTypes enum as string
+  coverageType: string; // InsuranceCoverageType enum as string
+  amount: number | string; // BigDecimal
+
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
+export interface EncounterVaccination {
+  id?: number;
+
+  patientId: number; 
+  encounterId: number;
+
+  vaccineId: number;
+  vaccineBrandId: number;
+  vaccineDoseId: number;
+
+  vaccineLotNumber?: number | string | null; 
+  dateAdministered?: string | null;
+
+  status: string; 
+
+  cancellationReason?: string | null;
+
+  cancelledAt?: string | null;      
+  cancelledById?: number | null;   
+
+  administeredLocation?: string | null;
+  administrationReactions?: string | null;
+  externalFacilityName?: string | null;
+  notes?: string | null;
+
+  reviewedAt?: string | null;       
+  reviewedById?: number | null;     
+
+  createdBy?: string | null;
+  createdDate?: Date | string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: Date | string | null;
+}
+export interface PatientEncounter {
+  id: number;
+
+  patientId: number;
+  facilityId: number;
+  departmentId: number;
+
+  practitionerId?: number | null;
+  appointmentId?: string | null;
+  encounterType: string;        
+  encounterReason: string;      
+
+  followUpEncounterId?: number | null;
+
+  priorityLevel: string;        
+
+  originType?: string | null;
+  originName?: string | null;
+
+  notes?: string | null;
+
+  status: string;  
+ encounterDate?: Date | null;                
+             
+}
+
+export interface PatientBasicInformationResponseVM {
+  id: number;
+  fullName: string;
+  medicalRecordNumber?: string;
+  primaryMobileNumber?: string;
+}
+
+export interface PatientDuplicationLookupDTO {
+  firstName?: string | null;
+  lastName?: string | null;
+dateOfBirth?: string | null;
+  gender?: string | null;
+  ruleId:Number|null ,
+  mobileNumber: string | null;
+  documentNo:string | null;
+facilityId?: number | null;
+
+}
+
+export interface DiagnosticTestReportTemplate {
+  id: number;
+  diagnosticTest: string;
+  name: string;
+  templateValue: string;
+  isActive: boolean;
 }
 
 export interface UserStickyNotesResponseVM {
@@ -2803,6 +2958,118 @@ export interface ProfileTestGroupedHistoryVM {
   results: DiagnosticHistoryResultVM[];
 }
 
+export interface GeneralAssessment {
+  id?: number;
+  patientId?: number | null;
+  encounterId?: number | null;
+  positionStatus?: string | null;
+  bodyMovements?: string | null;
+  levelOfConsciousness?: string | null;
+  facialExpression?: string | null;
+  speech?: string | null;
+  moodBehavior?: string | null;
+  memoryRemote?: boolean;
+  memoryRecent?: boolean;
+  signsOfAgitation?: boolean;
+  signsOfDepression?: boolean;
+  signsOfSuicidalIdeation?: boolean;
+  signsOfSubstanceUse?: boolean;
+  isTriage?: boolean;
+}
+
+export interface ChiefComplain {
+  id?: number;
+
+  // Domain: `patient` is a required ManyToOne. On the wire we typically send `patientId`.
+  patientId?: number | null;
+
+  encounterId?: number | null;
+
+  chiefComplaint?: string | null;
+  severity?: string | null;
+  onsetDateTime?: string | Date | null; // Instant
+  caseUnderstanding?: string | null;
+
+  provocation?: string | null;
+  palliation?: string | null;
+  quality?: string | null;
+  region?: string | null;
+
+  patientCondition?: string | null;
+  isTriage?: boolean;
+}
+
+export interface EmergencyTriage {
+  id?: number;
+  patientId?: number | null;
+  encounterId?: number | null;
+  createdDate?: string | Date | null;
+  lastModifiedDate?: string | Date | null;
+
+  emergencyLevel?: string | null;
+
+  rightEyeLightResponse?: boolean;
+  rightEyePupilSize?: string | null;
+
+  leftEyeLightResponse?: boolean;
+  leftEyePupilSize?: string | null;
+
+  hpiAdditionalNotes?: string | null;
+
+  lifeSaving?: string | null;
+  unresponsive?: string | null;
+  highRisk?: string | null;
+
+  avpuScale?: string | null;
+  painScore?: string | null;
+
+  labsRequired?: string | null;
+  imagingRequired?: string | null;
+  ivFluidsRequired?: string | null;
+  medicationRequired?: string | null;
+  ecgRequired?: string | null;
+  consultationRequired?: string | null;
+
+  destination?: string | null;
+  completedDate?: string | Date | null;
+}
+
+
+export type EmergencyTriageCreate = Pick<EmergencyTriage, 'patientId' | 'encounterId'> &
+  Partial<EmergencyTriage>;
+
+// PUT /api/patient/emergency-triage/{id}/eye-assessment
+// Matches backend `EmergencyTriageUpdateDTO`
+export type EmergencyTriageEyeAssessmentUpdate = {
+  id: number;
+  rightEyeLightResponse: boolean;
+  rightEyePupilSize?: string | null;
+  leftEyeLightResponse: boolean;
+  leftEyePupilSize?: string | null;
+  hpiAdditionalNotes?: string | null;
+};
+
+// PUT /api/patient/emergency-triage/{id}/level-assessment
+export type EmergencyTriageLevelAssessmentUpdate = Pick<
+  EmergencyTriage,
+  | 'id'
+  | 'lifeSaving'
+  | 'unresponsive'
+  | 'highRisk'
+  | 'avpuScale'
+  | 'painScore'
+  | 'labsRequired'
+  | 'imagingRequired'
+  | 'ivFluidsRequired'
+  | 'medicationRequired'
+  | 'ecgRequired'
+  | 'consultationRequired'
+>;
+
+// PUT /api/patient/emergency-triage/{id}/destination
+export type EmergencyTriageDestinationUpdate = Pick<EmergencyTriage, 'id' | 'destination'>;
+
+
 export type PatientServiceAndProduct = {
   id: number;
   patientId: number;
@@ -3236,3 +3503,22 @@ export interface  SampleLabelVM  {
   sampleQuantity: number;
   sampleUnit: string;
 };
+ 
+export interface PatientRelation {
+  patientId: number;
+  relativePatientId: number;
+  relationType: string;
+  categoryType?: string | null;
+  isActive?: boolean;
+}
+
+/**
+ * relations_matrix response
+ */
+export interface RelationsMatrix {
+  id: number;
+  firstPatientGender: string | null;
+  secondPatientGender: string | null;
+  firstRelationCode: string;
+  secondRelationCode: string;
+}

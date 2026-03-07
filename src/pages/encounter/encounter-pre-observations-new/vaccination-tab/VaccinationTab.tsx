@@ -33,6 +33,7 @@ import { useLazyGetVaccineDosesByIdsQuery } from '@/services/vaccine/vaccineDose
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 import { toHumanEncounterVaccinationError } from './toHumanEncounterVaccinationError';
+
 const uniqueNums = (arr: any[]): number[] =>
   Array.from(
     new Set(
@@ -45,7 +46,6 @@ const uniqueNums = (arr: any[]): number[] =>
 
 const getVaccineId = (row: any) => row?.vaccineId ?? row?.vaccine?.id;
 
-// NOTE: keep as-is (your data inconsistencies)
 const getBrandId = (row: any) =>
   row?.vaccineBrandId ?? row?.vaccineBranvaccineDoseId ?? row?.vaccineBrandDoseId ?? row?.brandId;
 
@@ -74,22 +74,16 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
   const authSlice = useAppSelector((s: any) => s.auth);
   const dispatch = useAppDispatch();
 
-  const [vaccine, setVaccine] = useState<Vaccine>({ ...newVaccine });
-  const [vaccineBrand, setVaccineBrand] = useState<VaccineBrand>({ ...newVaccineBrand, volume: null });
-  const [vaccineDose, setVaccineDose] = useState<VaccineDose>({ ...newVaccineDose });
-
   const [encounterVaccination, setEncounterVaccination] = useState<EncounterVaccination>({
     ...newEncounterVaccination
   });
 
-  const [selectedVaccineId, setSelectedVaccineId] = useState<number | undefined>();
-  const [selectedBrandId, setSelectedBrandId] = useState<number | undefined>();
-  const [selectedDoseId, setSelectedDoseId] = useState<number | undefined>();
+  const [selectedRow, setSelectedRow] = useState<any>(null);
 
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupCancelOpen, setPopupCancelOpen] = useState(false);
+  const [modalKey, setModalKey] = useState(0);
 
-  // Filters
   const [showCancelled, setShowCancelled] = useState(false);
   const [showAllVaccines, setShowAllVaccines] = useState(false);
 
@@ -125,25 +119,14 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
     if (encounter?.encounterStatusLkey === 'CLOSED') setIsEncounterStatusClosed(true);
   }, [encounter?.encounterStatusLkey]);
 
-  // ---------------------------------------------------------
-  //  EXACT rules you requested:
-  // 1) no checks          -> Encounter ACTIVE (not cancelled)
-  // 2) showCancelled only -> Encounter ALL (cancelled + not)
-  // 3) showAll only       -> Patient ACTIVE (not cancelled)
-  // 4) both checked       -> Patient ALL (cancelled + not)
-  // ---------------------------------------------------------
   const encounterScope = !showAllVaccines;
   const patientScope = showAllVaccines;
 
   const encounterActive = encounterScope && !showCancelled;
   const encounterAll = encounterScope && showCancelled;
-
   const patientActive = patientScope && !showCancelled;
   const patientAll = patientScope && showCancelled;
 
-  // ---------------------------
-  // Queries
-  // ---------------------------
   const {
     data: encounterActiveResp,
     isLoading: encounterActiveLoading,
@@ -180,9 +163,6 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
     { skip: !patientId || !patientAll }
   );
 
-  // ---------------------------
-  // Pick current response
-  // ---------------------------
   const activeResp = useMemo(() => {
     if (encounterActive) return encounterActiveResp;
     if (encounterAll) return encounterAllResp;
@@ -211,30 +191,20 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
 
   const clearSelection = () => {
     setEncounterVaccination({ ...newEncounterVaccination } as any);
-    setSelectedVaccineId(undefined);
-    setSelectedBrandId(undefined);
-    setSelectedDoseId(undefined);
-    setVaccine({ ...newVaccine });
-    setVaccineBrand({ ...newVaccineBrand });
-    setVaccineDose({ ...newVaccineDose });
+    setSelectedRow(null);
   };
 
   const handleClearField = () => {
     setEncounterVaccination({ ...newEncounterVaccination, status: null } as any);
-    setVaccine({ ...newVaccine });
-    setVaccineBrand({ ...newVaccineBrand });
-    setVaccineDose({ ...newVaccineDose });
-    setSelectedVaccineId(undefined);
-    setSelectedBrandId(undefined);
-    setSelectedDoseId(undefined);
+    setSelectedRow(null);
   };
 
   const handleAddNewVaccine = () => {
     handleClearField();
+    setModalKey(prev => prev + 1);
     setPopupOpen(true);
   };
 
-  // after pressing cancel, show Encounter ALL (cancelled + not cancelled)
   const handleCancel = () => {
     cancelEncounterVaccination({
       id: (encounterVaccination as any).id,
@@ -243,11 +213,8 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Encounter Vaccine Canceled Successfully', sev: 'success' }));
-
-        // switch to encounter ALL
         setShowAllVaccines(false);
         setShowCancelled(true);
-
         setPagination(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
       })
       .catch((err: any) => {
@@ -334,10 +301,26 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
     (baseLoading && tableData.length === 0) ||
     (tableData.length > 0 && (isBulkLoading || !isMappingsCompleteForRows(tableData)));
 
-  const loadSelectedEntitiesFromMaps = (vaccineId?: number, brandId?: number, doseId?: number) => {
-    setVaccine(vaccineId && vaccinesById[vaccineId] ? { ...newVaccine, ...vaccinesById[vaccineId] } : { ...newVaccine });
-    setVaccineBrand(brandId && brandsById[brandId] ? { ...newVaccineBrand, ...brandsById[brandId] } : { ...newVaccineBrand });
-    setVaccineDose(doseId && dosesById[doseId] ? { ...newVaccineDose, ...dosesById[doseId] } : { ...newVaccineDose });
+  const vaccine: Vaccine = useMemo(() => {
+    const id = selectedRow ? getVaccineId(selectedRow) : undefined;
+    return id && vaccinesById[id] ? { ...newVaccine, ...vaccinesById[id] } : { ...newVaccine };
+  }, [selectedRow, vaccinesById]);
+
+  const vaccineBrand: VaccineBrand = useMemo(() => {
+    const id = selectedRow ? getBrandId(selectedRow) : undefined;
+    return id && brandsById[id] ? { ...newVaccineBrand, ...brandsById[id] } : { ...newVaccineBrand, volume: null };
+  }, [selectedRow, brandsById]);
+
+  const vaccineDose: VaccineDose = useMemo(() => {
+    const id = selectedRow ? getDoseId(selectedRow) : undefined;
+    return id && dosesById[id] ? { ...newVaccineDose, ...dosesById[id] } : { ...newVaccineDose };
+  }, [selectedRow, dosesById]);
+
+  const handleEditRow = (row: any) => {
+    setEncounterVaccination({ ...(row as any) });
+    setSelectedRow(row);
+    setModalKey(prev => prev + 1);
+    setPopupOpen(true);
   };
 
   const handlePageChange = (_: unknown, newPage: number) => {
@@ -430,20 +413,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
             title="Edit"
             size={24}
             fill="var(--primary-gray)"
-            onClick={() => {
-              setEncounterVaccination({ ...(row as any) });
-
-              const vaccineId = getVaccineId(row) as number | undefined;
-              const brandId = getBrandId(row) as number | undefined;
-              const doseId = getDoseId(row) as number | undefined;
-
-              setSelectedVaccineId(vaccineId);
-              setSelectedBrandId(brandId);
-              setSelectedDoseId(doseId);
-
-              loadSelectedEntitiesFromMaps(vaccineId, brandId, doseId);
-              setTimeout(() => setPopupOpen(true), 0);
-            }}
+            onClick={() => handleEditRow(row)}
           />
         )
       },
@@ -513,7 +483,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
         expandable: true
       }
     ],
-    [vaccinesById, brandsById, dosesById]
+    [vaccinesById, brandsById, dosesById, popupOpen]
   );
 
   const handleShowCancelledToggle = (isShowCancelledChecked: boolean) => {
@@ -531,6 +501,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
   return (
     <div>
       <AddEncounterVaccine
+        key={modalKey}
         open={popupOpen}
         setOpen={setPopupOpen}
         patient={patient}
@@ -557,16 +528,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
           onRowsPerPageChange={handleRowsPerPageChange}
           onRowClick={(row: any) => {
             setEncounterVaccination({ ...(row as any) });
-
-            const vaccineId = getVaccineId(row) as number | undefined;
-            const brandId = getBrandId(row) as number | undefined;
-            const doseId = getDoseId(row) as number | undefined;
-
-            setSelectedVaccineId(vaccineId);
-            setSelectedBrandId(brandId);
-            setSelectedDoseId(doseId);
-
-            loadSelectedEntitiesFromMaps(vaccineId, brandId, doseId);
+            setSelectedRow(row);
           }}
           tableButtons={
             <div className="bt-div-2">
