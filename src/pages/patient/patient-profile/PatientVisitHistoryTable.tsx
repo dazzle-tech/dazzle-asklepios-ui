@@ -32,7 +32,6 @@ import type { Department } from '@/types/model-types-new';
 
 import './styles.less';
 
-
 const PatientVisitHistoryTable = ({ localPatient }: any) => {
   const dispatch = useDispatch();
   const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
@@ -58,7 +57,9 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       sort: 'createdDate,desc'
     },
     {
-      refetchOnMountOrArgChange: true
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true, 
+      pollingInterval: 0
     }
   );
 
@@ -74,7 +75,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       await cancelEncounter({ id: selectedVisit.id }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       setOpenCancelModal(false);
-      refetch(); 
+      refetch();
     } catch {
       dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
     }
@@ -84,7 +85,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     try {
       await completeEncounter({ id: row.id }).unwrap();
       dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
-      refetch(); 
+      refetch();
     } catch {
       dispatch(notify({ msg: 'Error completing encounter', sev: 'error' }));
     }
@@ -94,7 +95,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     try {
       await dischargeEncounter({ id: row.id }).unwrap();
       dispatch(notify({ msg: 'Discharged Successfully', sev: 'success' }));
-      refetch(); 
+      refetch();
     } catch {
       dispatch(notify({ msg: 'Error discharging encounter', sev: 'error' }));
     }
@@ -194,6 +195,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         const isOngoing = row.status === 'ONGOING';
         const isNew = row.status === 'NEW';
         const isPendingPayment = row.status === 'PENDING_PAYMENT';
+        const isClinicVisit = row.visitType === 'CLINIC';
 
         return (
           <Form className="visit-history__actions-form">
@@ -217,7 +219,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </span>
               </Whisper>
             )}
-            {isOngoing && (
+
+            {isOngoing && isClinicVisit && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Complete</Tooltip>}
@@ -230,7 +233,9 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </span>
               </Whisper>
             )}
-            {isOngoing && (
+
+            {/* DISCHARGE فقط لغير CLINIC */}
+            {isOngoing && !isClinicVisit && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Discharge</Tooltip>}
@@ -243,6 +248,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </span>
               </Whisper>
             )}
+
             {isPendingPayment && (
               <Whisper
                 placement="top"
@@ -286,7 +292,10 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       {quickAppointmentModel && (
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
-          setQuickAppointmentModel={setQuickAppointmentModel}
+          setQuickAppointmentModel={val => {
+            setQuickAppointmentModel(val);
+            if (!val) refetch();
+          }}
           localPatient={localPatient}
           localVisit={selectedVisit}
           isDisabeld={quickInitialStep === 0}

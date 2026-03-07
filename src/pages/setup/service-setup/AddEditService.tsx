@@ -23,7 +23,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
   width,
   service,
   setService,
-  handleSave,
+  handleSave
 }) => {
   // enums
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
@@ -31,7 +31,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
 
   // facilities (same pattern used in AddEditDepartment)
   const [facilityListRequest] = useState<ListRequest>({
-    ...initialListRequest,
+    ...initialListRequest
   });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
 
@@ -63,13 +63,20 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   width="100%"
                   fieldName="name"
                   record={service}
-                  setRecord={setService} />
+                  setRecord={setService}
+                />
               </div>
             </div>
             <br />
             <div className="container-of-two-fields-service">
               <div className="container-of-field-service">
-                <MyInput required width="100%" fieldName="code" record={service} setRecord={setService} />
+                <MyInput
+                  required
+                  width="100%"
+                  fieldName="code"
+                  record={service}
+                  setRecord={setService}
+                />
               </div>
               <div className="container-of-field-service">
                 <MyInput
@@ -102,6 +109,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   fieldType="number"
                   record={service}
                   setRecord={setService}
+                  required
                 />
               </div>
             </div>
