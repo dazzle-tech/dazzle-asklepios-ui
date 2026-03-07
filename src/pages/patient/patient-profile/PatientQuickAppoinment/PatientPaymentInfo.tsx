@@ -1,8 +1,4 @@
 // PatientPaymentInfo.tsx
-// Added: debt field (read-only) + ledger summary RTK call and display
-// NOTE: You need to have added the RTK endpoint/hook: useGetPatientLedgerSummaryQuery
-// and the type: modelTypes.PatientLedgerSummaryDTO
-
 import React, {
   forwardRef,
   useEffect,
@@ -48,9 +44,6 @@ import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceSer
 
 import './style.less';
 
-// -----------------------------------------------------------------------------
-// Currency conversion (free API)
-// -----------------------------------------------------------------------------
 async function convertCurrencyFree(amount: number, from: string, to: string): Promise<number> {
   if (!amount || amount <= 0) return 0;
   if (!from || !to) return 0;
@@ -77,9 +70,6 @@ async function convertCurrencyFree(amount: number, from: string, to: string): Pr
   return Number.isFinite(numericRate) ? amount * numericRate : 0;
 }
 
-// -----------------------------------------------------------------------------
-// Types
-// -----------------------------------------------------------------------------
 type UiPaymentServiceRow = modelTypes.PatientPaymentServices & {
   serviceType?: string;
   serviceName?: string;
@@ -93,9 +83,6 @@ export type PatientPaymentInfoHandle = {
   validate: () => boolean;
 };
 
-// -----------------------------------------------------------------------------
-// Errors
-// -----------------------------------------------------------------------------
 const PAYMENT_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Payment data is required.',
   'patient.invalid': 'Invalid patient id.',
@@ -184,9 +171,6 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'error' }));
 };
 
-// -----------------------------------------------------------------------------
-// Date helpers
-// -----------------------------------------------------------------------------
 const toDateOnlyOrNull = (value: any) => {
   if (!value) return null;
   const dateObj = value instanceof Date ? value : new Date(value);
@@ -204,7 +188,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       payment,
       setPayment,
       patientInsurance,
-      setPatientInsurance
+      setPatientInsurance,
+      onPaymentSaved
     }: any,
     ref
   ) => {
@@ -243,13 +228,18 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         patientId: localPatient?.id ?? localPatient?.key ?? prev.patientId ?? 0,
         encounterId: localEncounter?.id ?? prev.encounterId ?? 0,
         facilityDefaultCurrency: facilityDefaultCurrency,
-
         currency:
           prev.currency && String(prev.currency).trim() !== ''
             ? prev.currency
             : facilityDefaultCurrency
       }));
-    }, [localPatient?.id, localPatient?.key, localEncounter?.id, facilityDefaultCurrency, setPayment]);
+    }, [
+      localPatient?.id,
+      localPatient?.key,
+      localEncounter?.id,
+      facilityDefaultCurrency,
+      setPayment
+    ]);
 
     const effectivePatientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
 
@@ -346,7 +336,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         const policyNumber = String(insuranceItem?.policyNumber ?? '');
         const groupNumber = String(insuranceItem?.groupNumber ?? '');
 
-        const searchableText = `${payorName} ${planName} ${policyNumber} ${groupNumber}`.toLowerCase();
+        const searchableText =
+          `${payorName} ${planName} ${policyNumber} ${groupNumber}`.toLowerCase();
         return searchableText.includes(keyword);
       });
     }, [patientInsurancesList, insuranceSearchKeyword, payorsList, plansByPayorId]);
@@ -854,6 +845,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       return true;
     };
 
+    // ✅ التعديل الرئيسي - استدعاء onPaymentSaved بعد الحفظ
     const handleConfirmSafe = async () => {
       if (isReadOnly) return false;
       if (!validateBeforeSave()) return false;
@@ -861,6 +853,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       try {
         await handleConfirm();
         setLockAfterConfirm(true);
+
+        if (onPaymentSaved) await onPaymentSaved();
+
         return true;
       } catch (error: any) {
         setValidationResult(error?.data ?? error);
