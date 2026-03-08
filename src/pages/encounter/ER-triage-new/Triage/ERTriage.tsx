@@ -1,7 +1,7 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { newApEncounter } from '@/types/model-types-constructor';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
@@ -55,6 +55,8 @@ import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientSe
 
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
+
+const DEFAULT_ENCOUNTER_STATUS_CODES = ['WAITING_TRIAGE', 'PENDING_PAYMENT', 'TRIAGE_STARTED'] as const;
 
 const toNumberOrNaN = (v: unknown) => {
   if (typeof v === 'number') return v;
@@ -281,15 +283,14 @@ const ERTriage = () => {
   const [cancelEncounter] = useCancelEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
-  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  // Start in "searched" mode so the list loads immediately on screen open (same as clicking Search).
+  const [manualSearchTriggered, setManualSearchTriggered] = useState(true);
   const [openSendToModal, setOpenSendToModal] = useState(false);
   const [sendToEmergencyTriageNew, setSendToEmergencyTriageNew] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  // Default EncounterStatus enum codes for ER triage list
-  const defaultEncounterStatusCodes = ['WAITING_TRIAGE', 'PENDING_PAYMENT', 'TRIAGE_STARTED'];
-  const [encounterStatus, setEncounterStatus] = useState<{ codes: string[] }>({
-    codes: defaultEncounterStatusCodes
-  });
+  const [encounterStatus, setEncounterStatus] = useState<{ codes: string[] }>(() => ({
+    codes: [...DEFAULT_ENCOUNTER_STATUS_CODES]
+  }));
   const [createOrGetEmergencyTriage] = useCreateOrGetEmergencyTriageMutation();
   const navigate = useNavigate();
   const selectedDepartment = useMemo(() => {
@@ -359,8 +360,8 @@ const ERTriage = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(15);
   const DEFAULT_SORT = 'id,desc';
-  const [searchTick, setSearchTick] = useState(0);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [searchTick, setSearchTick] = useState(1);
+  const [hasSearched, setHasSearched] = useState(true);
 
   const filterParams = useMemo(() => {
     if (!departmentId) return null;
@@ -378,7 +379,7 @@ const ERTriage = () => {
     const patientName = sp?.fullName || sp?.patientFullName || sp?.name || undefined;
     const mrn = sp?.patientMrn || sp?.medicalRecordNumber || undefined;
 
-    const statuses = (es?.codes?.length ? es.codes : defaultEncounterStatusCodes).map((v: any) =>
+    const statuses = (es?.codes?.length ? es.codes : DEFAULT_ENCOUNTER_STATUS_CODES).map((v: any) =>
       String(v ?? '').toUpperCase()
     );
     const statusesCsv = statuses.join(',');
@@ -395,7 +396,7 @@ const ERTriage = () => {
       sort: DEFAULT_SORT,
       timestamp: searchTick
     };
-  }, [departmentId, page, pageSize, searchTick, defaultEncounterStatusCodes]);
+  }, [departmentId, page, pageSize, searchTick]);
 
   const {
     data: encountersPaged,
@@ -896,27 +897,56 @@ const ERTriage = () => {
     }
   }, [refetch, refetchEncounter, dispatch]);
 
-  const handleSearchClick = () => {
+  // Trigger the same behavior as clicking "Search" (load/reload list).
+  const triggerSearch = useCallback(() => {
     setManualSearchTriggered(true);
     setPage(0);
     setHasSearched(true);
-    setSearchTick(t => t + 1);
+    setSearchTick((t) => t + 1);
+  }, []);
+
+  const handleSearchClick = () => {
+    triggerSearch();
   };
 
   const handleClearClick = () => {
     const nextDateFilter = { fromDate: new Date(), toDate: new Date() };
-    const nextEncounterStatus = { codes: defaultEncounterStatusCodes };
+    const nextEncounterStatus = { codes: [...DEFAULT_ENCOUNTER_STATUS_CODES] };
 
     setDateFilterSafe(nextDateFilter);
     setEncounterStatusSafe(nextEncounterStatus);
     setSelectedPatientSafe(null);
-    setPatientSearchResetToken(v => v + 1);
+    setPatientSearchResetToken((v) => v + 1);
 
-    setManualSearchTriggered(true);
-    setPage(0);
-    setHasSearched(true);
-    setSearchTick(t => t + 1);
+    triggerSearch();
   };
+
+  // Auto-load the list when the screen opens (once departmentId is available).
+  useEffect(() => {
+    if (!departmentId) return;
+    if (hasSearched) return;
+    triggerSearch();
+  }, [departmentId, hasSearched, triggerSearch]);
+
+  // Refresh list after closing "Create New Patient" / "Quick Patient" modals.
+  const prevOpenCreatePatientRef = useRef(openCreatePatient);
+  const prevOpenQuickPatientRef = useRef(openQuickPatient);
+
+  useEffect(() => {
+    const wasOpen = prevOpenCreatePatientRef.current;
+    if (wasOpen && !openCreatePatient) {
+      triggerSearch();
+    }
+    prevOpenCreatePatientRef.current = openCreatePatient;
+  }, [openCreatePatient, triggerSearch]);
+
+  useEffect(() => {
+    const wasOpen = prevOpenQuickPatientRef.current;
+    if (wasOpen && !openQuickPatient) {
+      triggerSearch();
+    }
+    prevOpenQuickPatientRef.current = openQuickPatient;
+  }, [openQuickPatient, triggerSearch]);
 
   // table Columns
   const tableColumns = [
