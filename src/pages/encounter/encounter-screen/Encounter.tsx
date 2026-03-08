@@ -6,13 +6,13 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/Scheduling/scheduling-screen/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
+// import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import {
-  faBed,
+  // faBed, // (commented) used by the hidden "Admit to Inpatient" button below
   faChartLine,
   faCheckDouble,
   faClockRotateLeft,
@@ -487,6 +487,8 @@ const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
                 >
                   Create Follow-up
                 </MyButton>
+
+                {/*
                 {!(propsData?.encounter?.resourceTypeLkey === '4217389643435490') &&
                   !(propsData?.encounter?.resourceTypeLkey === '91084250213000') && (
                     <MyButton
@@ -499,6 +501,7 @@ const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
                       <Translate>Admit to Inpatient</Translate>
                     </MyButton>
                   )}
+                */}
 
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
