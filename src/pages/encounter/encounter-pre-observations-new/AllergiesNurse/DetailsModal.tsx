@@ -23,7 +23,7 @@ import {
 
 } from '@/services/setup/allergensService';
 import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
-import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
+import { useGetActiveIngredientsByDrugClassQuery, useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
 import { PatientAllergiesCreateDTO, PatientAllergiesUpdateDTO } from '@/types/model-types-new';
 import { newPatientAllergiesCreateDTO, newPatientAllergiesUpdateDTO } from '@/types/model-types-constructor-new';
 
@@ -61,9 +61,18 @@ const DetailsModal = ({
     data: medicationClassesListResponse,
     isLoading: isMedicationClassesLoaded
   } = useGetAllMedicationCategoriesClassesQuery({});
-  const {
-    data: activeIngredientsAll,
-  } = useGetActiveIngredientsQuery({});
+  // const {
+  //   data: activeIngredientsAll,
+  // } = useGetActiveIngredientsQuery({});
+  const drugClassId = !allerges?.id
+  ? patientAllergiesCreateDTO.medicationClassId
+  : patientAllergiesUpdateDTO.medicationClassId;
+
+const { data: activeIngredientsAll } =
+  useGetActiveIngredientsByDrugClassQuery(
+    { drugClassIds: drugClassId ? [drugClassId] : [] },
+    { skip: !drugClassId }
+  );
   // fetch enum lists 
   const allergyTypeEnumResponse = useEnumOptions('AllergenTypes');
   const severityEnumResponse = useEnumOptions('Severity');
