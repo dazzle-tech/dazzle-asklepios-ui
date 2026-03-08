@@ -8,13 +8,24 @@ import { useGetPatientDiagnosisQuery } from '@/services/encounterService';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import Section from '@/components/Section';
+import { useGetPreviousClosedEncounterQuery } from '@/services/encounters/patientEncounterService';
+import { useEnumOptions } from '@/services/enumsApi';
 const PreviuosVisitData = ({ patient, encounter }) => {
   const [prevencounter, setPrevencounter] = useState<ApEncounter>({
     ...newApEncounter,
     discharge: false
   });
 
-  const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
+  const {
+  data: previousEncounter,
+  isFetching
+} = useGetPreviousClosedEncounterQuery(
+  { encounterId: encounter?.id as number },
+  { skip: !encounter?.id }
+);
+console.log("previousEncounter: ", previousEncounter);
+
+  const  encounterReasonEnumQueryResponse = useEnumOptions('EncounterReason');
   const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
   const [patientVisitListRequest, setPatientVisitListReques] = useState<ListRequest>({
     ...initialListRequest,
@@ -96,31 +107,21 @@ const PreviuosVisitData = ({ patient, encounter }) => {
             width={140}
             fieldLabel="Visit Date"
             fieldType="date"
-            fieldName="plannedStartDate"
-            record={prevencounter || {}}
+            fieldName="encounterDate"
+            record={previousEncounter || {}}
           />
           <MyInput
             column
             width={140}
             fieldType="select"
-            fieldLabel="Visit Type"
-            fieldName="visitTypeLkey"
-            selectData={encounterTypeLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={prevencounter || {}}
+            fieldLabel="Reason  "
+            fieldName="encounterReason"
+            selectData={encounterReasonEnumQueryResponse ?? []}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={previousEncounter || {}}
           />
-          <MyInput
-            column
-            width={140}
-            fieldType="select"
-            fieldLabel="Reason"
-            fieldName="reasonLkey"
-            selectData={encounterReasonLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={prevencounter || {}}
-          />
+          
 
           <MyInput
             column
