@@ -57,7 +57,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     },
     {
       refetchOnMountOrArgChange: true,
-      skip: !localPatient?.id
+      skip: !localPatient?.id,
       refetchOnFocus: true, 
       pollingInterval: 0
     }

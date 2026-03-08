@@ -1432,17 +1432,7 @@ export interface BillingItem {
  *  Referrals / Discharge
  * ========================= */
 
-export interface ReferralRequest {
-  id: number | null;
-  patientId: number;
-  encounterId: number | null;
-  referralType: string;
-  facilityId: number | null;
-  departmentId: number;
-  referralReason: string;
-  priority: string;
-  isActive: boolean;
-}
+
 
 export interface DischargePlanning {
   id?: number;
