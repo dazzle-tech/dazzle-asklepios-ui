@@ -27,7 +27,7 @@ const Textarea = React.forwardRef((props, ref: any) => (
 ));
 
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
-  <DatePicker {...props} oneTap cleanable={false} block ref={ref} />
+  <DatePicker {...props} format="dd-MM-yyyy" editable cleanable={false} block ref={ref} />
 ));
 
 const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
@@ -208,6 +208,11 @@ const MyInput = ({
     if (!setRecord || typeof setRecord !== 'function') return;
 
     if (fieldType === 'date') {
+      if (typeof value === 'string') {
+        setRecord({ ...record, [fieldName]: value || null });
+        return;
+      }
+
       const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
       setRecord({ ...record, [fieldName]: dateStr });
       return;
@@ -461,9 +466,9 @@ const MyInput = ({
             renderValue={
               isArrayLabel
                 ? (value, item, selectedElement) => {
-                  if (!item) return selectedElement;
-                  return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                }
+                    if (!item) return selectedElement;
+                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                  }
                 : props.isEnum
                 ? (value, item, selectedElement) => {
                     const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
@@ -473,9 +478,7 @@ const MyInput = ({
             }
             disabledItemValues={
               props.disabledItemValues
-                ? (props?.selectData ?? []).map(
-                  item => item[props?.selectDataValue]
-                )
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
                 : []
             }
           />
@@ -507,12 +510,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                  {
-                    [valueKey]: '__load_more__',
-                    [labelKey]: 'Load more...',
-                    isLoadMore: true
-                  }
-                ]
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -604,9 +607,7 @@ const MyInput = ({
             container={resolveContainer()}
             disabledItemValues={
               props.disabledItemValues
-                ? (props?.selectData ?? []).map(
-                  item => item[props?.selectDataValue]
-                )
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
                 : []
             }
           />
@@ -640,9 +641,7 @@ const MyInput = ({
             onClose={() => setIsMultyPickerOpen(false)}
             disabledItemValues={
               props.disabledItemValues
-                ? (props?.selectData ?? []).map(
-                  item => item[props?.selectDataValue]
-                )
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
                 : []
             }
           />
@@ -674,12 +673,9 @@ const MyInput = ({
             onClose={() => setIsCheckPickerOpen(false)}
             disabledItemValues={
               props.disabledItemValues
-                ? (props?.selectData ?? []).map(
-                  item => item[props?.selectDataValue]
-                )
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
                 : []
             }
-
           />
         );
 
@@ -695,11 +691,45 @@ const MyInput = ({
             }
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? dayjs(record[fieldName]).toDate() : null}
-            accepter={CustomDatePicker}
-            onChange={handleValueChange}
-            placeholder={props.placeholder}
-            onKeyDown={focusNextField}
+            accepter={DatePicker}
+            format="dd-MM-yyyy"
+            editable
+            cleanable={false}
+            defaultValue={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
+            inputRef={(ref: HTMLInputElement) => {
+              if (!ref) return;
+
+              const handleFocus = () => {
+                setTimeout(() => {
+                  if (!ref.value) {
+                    ref.value = '__-__-____'.replace(/_/g, '');
+                    ref.setSelectionRange(0, 2);
+                  }
+                }, 0);
+              };
+
+              ref.addEventListener('focus', handleFocus);
+            }}
+            onChange={(value: Date | null) => {
+              const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
+              setRecord?.({ ...record, [fieldName]: dateStr });
+            }}
+            placeholder={props.placeholder ?? 'DD-MM-YYYY'}
+            onKeyDown={(e: any) => {
+              const input = e.target as HTMLInputElement;
+
+              if (e.ctrlKey && e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+
+                setTimeout(() => {
+                  input.setSelectionRange(0, 2);
+                }, 0);
+
+                return;
+              }
+
+              focusNextField(e);
+            }}
             open={isDateOpen}
             onOpen={() => setIsDateOpen(true)}
             onClose={() => setIsDateOpen(false)}
@@ -708,7 +738,6 @@ const MyInput = ({
             container={resolveContainer()}
           />
         );
-
       case 'number': {
         const numInputWidth = props?.width ?? 145;
         const addonWidth = 40;
@@ -914,7 +943,6 @@ const MyInput = ({
       }
     }
   };
-
 
   // const conjureValidationMessages = () => {
   //   if (!validationResult) return null;
