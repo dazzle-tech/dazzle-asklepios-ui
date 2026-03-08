@@ -63,7 +63,31 @@ export const patientDiagnosisService = createApi({
         'PatientDiagnosis',
       ],
     }),
+    getPatientDiagnosesByEncounterId: builder.query<
+  modelTypes.PatientDiagnosis[],
+  { encounterId: Id; timestamp?: number }
+>({
+  query: ({ encounterId }) => ({
+    url: `/api/patient/patient-diagnoses/by-encounter/${encounterId}`,
+  }),
+  providesTags: (_res, _err, { encounterId }) => [
+    { type: 'PatientDiagnosis', id: `encounter-${encounterId}` },
+    'PatientDiagnosis',
+  ],
+}),
 
+getPrimaryPatientDiagnosisByEncounterId: builder.query<
+  modelTypes.PatientDiagnosis,
+  { encounterId: Id; timestamp?: number }
+>({
+  query: ({ encounterId }) => ({
+    url: `/api/patient/patient-diagnoses/by-encounter/${encounterId}/primary`,
+  }),
+  providesTags: (_res, _err, { encounterId }) => [
+    { type: 'PatientDiagnosis', id: `primary-${encounterId}` },
+    'PatientDiagnosis',
+  ],
+}),
     existsPatientDiagnosisByEncounterId: builder.query<
       boolean,
       { encounterId: Id }
@@ -73,6 +97,14 @@ export const patientDiagnosisService = createApi({
         method: 'GET',
       }),
     }),
+
+hardDeletePatientDiagnosis: builder.mutation<void, { id: Id }>({
+  query: ({ id }) => ({
+    url: `/api/patient/patient-diagnoses/${id}/hard`,
+    method: 'DELETE',
+  }),
+  invalidatesTags: ['PatientDiagnosis'],
+}),
   }),
 });
 
@@ -83,7 +115,15 @@ export const {
   useLazyGetLatestPatientDiagnosisQuery,
   useGetPatientDiagnosesByPatientIdQuery,
   useLazyGetPatientDiagnosesByPatientIdQuery,
-  useExistsPatientDiagnosisByEncounterIdQuery,
-  useLazyExistsPatientDiagnosisByEncounterIdQuery
-} = patientDiagnosisService;
 
+  useGetPatientDiagnosesByEncounterIdQuery,
+  useLazyGetPatientDiagnosesByEncounterIdQuery,
+
+  useGetPrimaryPatientDiagnosisByEncounterIdQuery,
+  useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery,
+
+  useHardDeletePatientDiagnosisMutation,
+    useExistsPatientDiagnosisByEncounterIdQuery,
+  useLazyExistsPatientDiagnosisByEncounterIdQuery
+
+} = patientDiagnosisService;
