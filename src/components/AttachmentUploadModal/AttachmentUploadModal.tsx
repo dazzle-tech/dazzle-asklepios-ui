@@ -48,7 +48,7 @@ const AttachmentModal = ({
   attatchmentType,
   patientKey
 }: // onSuccess,
-AttachmentModalProps) => {
+  AttachmentModalProps) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const attachmentFileInputRef = useRef<HTMLInputElement>(null);
