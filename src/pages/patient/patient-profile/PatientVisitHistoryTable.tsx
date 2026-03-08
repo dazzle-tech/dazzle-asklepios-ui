@@ -58,7 +58,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     },
     {
       refetchOnMountOrArgChange: true,
-      refetchOnFocus: true, 
+      refetchOnFocus: true,
       pollingInterval: 0
     }
   );
@@ -122,7 +122,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     };
     loadPractitioners();
   }, [encounters]);
-
+  console.log('departmentsMap-------', departmentsMap);
   useEffect(() => {
     const loadDepartments = async () => {
       if (!encounters.length) {
@@ -136,6 +136,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       try {
         const departments = await getDepartmentsBulk(uniqueIds).unwrap();
         setDepartmentsMap(Object.fromEntries(departments.map(d => [d.id, d])));
+        console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa', departments);
       } catch {}
     };
     loadDepartments();
@@ -195,7 +196,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         const isOngoing = row.status === 'ONGOING';
         const isNew = row.status === 'NEW';
         const isPendingPayment = row.status === 'PENDING_PAYMENT';
-        const isClinicVisit = row.visitType === 'CLINIC';
+
+        const isOutpatient = departmentsMap[row.departmentId]?.type === 'OUTPATIENT_CLINIC';
 
         return (
           <Form className="visit-history__actions-form">
@@ -220,7 +222,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
               </Whisper>
             )}
 
-            {isOngoing && isClinicVisit && (
+            {isOngoing && isOutpatient && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Complete</Tooltip>}
@@ -234,8 +236,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
               </Whisper>
             )}
 
-            {/* DISCHARGE فقط لغير CLINIC */}
-            {isOngoing && !isClinicVisit && (
+            {isOngoing && !isOutpatient && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Discharge</Tooltip>}
