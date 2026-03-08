@@ -201,6 +201,7 @@ import { patientPrescriptionMedicationService } from './services/patients/Prescr
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
