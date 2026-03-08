@@ -355,13 +355,13 @@ useEffect(() => {
       to: '/'
     });
 
-    // Always show Availability Templates (bypass permissions)
-    navsTemp.push({
-      eventKey: 'nav:availability-templates',
-      icon: <Icon as={icons.FaCalendarDays} />,
-      title: 'Availability Templates',
-      to: '/availability-template'
-    });
+    // // Always show Availability Templates (bypass permissions)
+    // navsTemp.push({
+    //   eventKey: 'nav:availability-templates',
+    //   icon: <Icon as={icons.FaCalendarDays} />,
+    //   title: 'Availability Templates',
+    //   to: '/availability-template'
+    // });
 
     const lookups = buildPermissionLookup(authSlice?.menu as BackendMenuItem[]);
 
