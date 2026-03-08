@@ -182,7 +182,6 @@ const EncounterList = () => {
     ...newApEncounter,
     discharge: false
   });
-  console.log('Initial encounter state:', encounter);
 const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
 const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
 // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  

@@ -384,11 +384,13 @@ const Allergies = (props: AllergiesProps) => {
           sortType={sortType}
           onSortChange={handleSortChange}
         />
+        {allerges?.id && (
         <AllergyDetailsSection
           allerges={allerges}
           setAllerges={setAllerges}
           edit={edit}
         />
+        )}
       </div>
       <CancellationModal
         open={openCancellationReasonModel}

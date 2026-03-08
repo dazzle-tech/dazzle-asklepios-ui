@@ -1,156 +1,206 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
-import { initialListRequest, ListRequest } from "@/types/types";
-import { formatDateWithoutSeconds } from "@/utils";
-import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
-import { useLocation } from "react-router-dom";
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import { useGetProceduresQuery } from "@/services/procedureService";
+import { formatDateWithoutSeconds, formatEnumString } from "@/utils";
 
-const ProceduresTable = ({ patient }) => {
+import { useFindProcduresByPatientQuery } from "@/services/patients/patientProcedureService";
+import { useGetProceduresByIdsQuery } from "@/services/setup/procedure/procedureService";
+import { useGetIcdDiagnosesByIdsQuery } from "@/services/setup/icdTreeService";
 
+import { useNavigate } from "react-router-dom";
 
+const ProceduresTable = ({ patient}) => {
+ console.log("ProceduresTable ==> ", { patient});
+  const navigate = useNavigate();
 
-  const [listRequest, setListRequest] = useState<ListRequest | null>({
-    ...initialListRequest,
-        pageNumber: 1,
-        pageSize: 15,
-        sortBy: "createdAt",
-        sortType: "desc",
-    filters: [
-      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-    ]
-  });
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
 
-  const {
-    data: procedures,
-    refetch: proRefetch,
-    isLoading: procedureLoding
-  } = useGetProceduresQuery(listRequest);
-
-
-
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-
-
-  const tableColumns = useMemo(
-    () => [
-      {
-        key: 'procedureId',
-        dataKey: 'procedureId',
-        title: <Translate>PROCEDURE ID</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => rowData?.procedureId ?? ''
-      },
-      {
-        key: 'procedureName',
-        dataKey: 'procedureName',
-        title: <Translate>Procedure Name</Translate>,
-        flexGrow: 1
-      },
-      {
-        key: 'scheduledDateTime',
-        dataKey: 'scheduledDateTime',
-        title: <Translate>SCHEDULED DATE TIME</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) =>
-          rowData?.scheduledDateTime ? formatDateWithoutSeconds(rowData.scheduledDateTime) : ' '
-      },
-      {
-        key: 'categoryKey',
-        dataKey: 'categoryKey',
-        title: <Translate>CATEGORY</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === rowData?.categoryKey
-          );
-          return category?.lovDisplayVale || ' ';
-        }
-      },
-      {
-        key: 'priorityLkey',
-        dataKey: 'priorityLkey',
-        title: <Translate>PRIORITY</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) =>
-          rowData?.priorityLvalue?.lovDisplayVale ?? rowData?.priorityLkey ?? ''
-      },
-      {
-        key: 'procedureLevelLkey',
-        dataKey: 'procedureLevelLkey',
-        title: <Translate>LEVEL</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) =>
-          rowData?.procedureLevelLvalue?.lovDisplayVale ?? rowData?.procedureLevelLkey ?? ''
-      },
-      {
-        key: 'indications',
-        dataKey: 'indications',
-        title: <Translate>INDICATIONS</Translate>,
-        flexGrow: 1
-      },
-      {
-        key: 'statusLkey',
-        dataKey: 'statusLkey',
-        title: <Translate>STATUS</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => rowData?.statusLvalue?.lovDisplayVale ?? rowData?.statusLkey ?? ''
-      },
-    ],
-    [CategoryLovQueryResponse]
+  const { data, isLoading } = useFindProcduresByPatientQuery(
+    {
+      patientId: patient?.id,
+      page,
+      size,
+      includeCancelled: true
+    },
+    { skip: !patient?.id }
   );
 
-      const handlePageChange = (_ , newPage) => {
-        setListRequest(prev => ({
-          ...prev,
-          pageNumber: newPage + 1
-        }));
-      };
+  const procedures = data?.data ?? [];
+  const totalCount = data?.totalCount ?? 0;
 
-      const handleRowsPerPageChange = (e) => {
-        setListRequest(prev => ({
-          ...prev,
-          pageSize: Number(e.target.value),
-          pageNumber: 1
-        }));
-      };
+  // -------- PROCEDURE IDS --------
 
-      const handleSortChange = (sortBy, sortType) => {
-        setListRequest(prev => ({
-          ...prev,
-          sortBy,
-          sortType,
-          pageNumber: 1
-        }));
-      };
+  const procedureIds = useMemo(() => {
+    const ids = procedures.map(p => Number(p.procedureId)).filter(id => !isNaN(id));
+    return Array.from(new Set(ids));
+  }, [procedures]);
 
+  const indicationIds = useMemo(() => {
+    const ids: any[] = [];
 
-useEffect(() => {
-  setListRequest(prev => ({
-    ...prev!,
-    filters: [
-      { fieldName: "patient_key", operator: "match", value: patient?.key }
-    ],
-    pageNumber: 1,
-  }));
-}, [patient?.key]);
+    procedures.forEach(p => {
+      if (!p.indicationId) return;
 
+      if (Array.isArray(p.indicationId)) {
+        ids.push(...p.indicationId);
+      } else {
+        ids.push(p.indicationId);
+      }
+    });
+
+    return Array.from(new Set(ids));
+  }, [procedures]);
+
+  // -------- LOOKUPS --------
+
+  const { data: proceduresByIds } = useGetProceduresByIdsQuery(procedureIds, {
+    skip: !procedureIds.length
+  });
+
+  const { data: icdDiagnoses } = useGetIcdDiagnosesByIdsQuery(
+    { ids: indicationIds },
+    { skip: !indicationIds.length }
+  );
+
+  const proceduresMap = useMemo(() => {
+    const map = new Map();
+    (proceduresByIds ?? []).forEach(p => map.set(p.id, p));
+    return map;
+  }, [proceduresByIds]);
+
+  const icdMap = useMemo(() => {
+    const map = new Map();
+    (icdDiagnoses ?? []).forEach(d => map.set(d.id ?? d.icdDiagnosisUid, d));
+    return map;
+  }, [icdDiagnoses]);
+
+  // -------- OPEN VISIT --------
+
+  const openVisit = (visitId: number) => {
+
+    navigate("/encounter", {
+      state: {
+        patient,
+        encounter: { id: visitId },
+        edit: false,   // read only
+        readOnly: true
+      }
+    });
+
+  };
+
+  // -------- COLUMNS --------
+
+  const columns = useMemo(() => [
+    {
+      key: "visitId",
+      title: <Translate>VISIT ID</Translate>,
+      flexGrow: 1,
+      render: row => (
+
+        <span
+          style={{
+            color: "#0d6efd",
+            cursor: "pointer",
+            textDecoration: "underline"
+          }}
+          onClick={() => openVisit(row.encounterId)}
+        >
+          {row.encounterId ?? "-"}
+        </span>
+
+      )
+    },
+    {
+      key: "procedureId",
+      title: <Translate>PROCEDURE ID</Translate>,
+      flexGrow: 1
+    },
+    {
+      key: "procedureName",
+      title: <Translate>PROCEDURE NAME</Translate>,
+      flexGrow: 2,
+      render: row => {
+        const proc = proceduresMap.get(Number(row.procedureId));
+        return proc?.name ?? "-";
+      }
+    },
+    {
+      key: "scheduledDateTime",
+      title: <Translate>SCHEDULED DATE</Translate>,
+      flexGrow: 1,
+      render: row =>
+        row?.scheduledDateTime
+          ? formatDateWithoutSeconds(row.scheduledDateTime)
+          : "-"
+    },
+    {
+      key: "priority",
+      title: <Translate>PRIORITY</Translate>,
+      flexGrow: 1,
+      render: row => formatEnumString(row?.priority)
+    },
+    {
+      key: "procedureLevel",
+      title: <Translate>LEVEL</Translate>,
+      flexGrow: 1,
+      render: row => formatEnumString(row?.procedureLevel)
+    },
+    {
+      key: "indication",
+      title: <Translate>INDICATIONS</Translate>,
+      flexGrow: 2,
+      render: row => {
+
+        if (!row?.indicationId) return "-";
+
+        const ids = Array.isArray(row.indicationId)
+          ? row.indicationId
+          : [row.indicationId];
+
+        const names = ids
+          .map(id => {
+            const diag = icdMap.get(Number(id));
+            return diag?.icdShortDescription || diag?.icdCode;
+          })
+          .filter(Boolean);
+
+        return names.join(", ");
+      }
+    },
+    {
+      key: "created",
+      title: <Translate>CREATED BY / AT</Translate>,
+      expandable: true,
+      render: row => (
+        <>
+          {row?.createdBy ?? ""}
+          <br />
+          <span style={{ fontSize: 11, color: "#777" }}>
+            {row?.createdDate
+              ? formatDateWithoutSeconds(row.createdDate)
+              : ""}
+          </span>
+        </>
+      )
+    }
+  ], [proceduresMap, icdMap]);
 
   return (
     <MyTable
-      columns={tableColumns}
-      data={procedures?.object ?? []}
-      loading={procedureLoding}
-      sortColumn={listRequest.sortBy}
-      sortType={listRequest.sortType}
-      page={(listRequest.pageNumber ?? 1) - 1}
-      rowsPerPage={listRequest.pageSize}
-      totalCount={procedures?.extraNumeric ?? 0}
-      onSortChange={handleSortChange}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
+      columns={columns}
+      data={procedures}
+      loading={isLoading}
+      page={page}
+      rowsPerPage={size}
+      totalCount={totalCount}
+      onPageChange={(_, p) => setPage(p)}
+      onRowsPerPageChange={(e) => {
+        setSize(Number(e.target.value));
+        setPage(0);
+      }}
+      height={400}
     />
   );
 };
