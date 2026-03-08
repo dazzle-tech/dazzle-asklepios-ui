@@ -104,7 +104,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
     useGenerateLabResultsPdfMutation();
 
   /* ================= QUERY ================= */
-//add new patient edits
+  //add new patient edits
   const queryParams = useMemo(() => {
     const patientId = patient?.id;
     if (!patientId) return null;
@@ -213,13 +213,13 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
   );
 
   const {
-  data: orderTestsResponse,
-  isFetching: isOrderTestsFetching
-} = useFilterDiagnosticOrderTestsQuery(
-  orderTestIds.length
-    ? { orderTestIdIn: orderTestIds, page: 0, size: 100 }
-    : skipToken
-);
+    data: orderTestsResponse,
+    isFetching: isOrderTestsFetching
+  } = useFilterDiagnosticOrderTestsQuery(
+    orderTestIds.length
+      ? { orderTestIdIn: orderTestIds, page: 0, size: 100 }
+      : skipToken
+  );
 
   const orderTests = orderTestsResponse?.data ?? [];
 
@@ -230,10 +230,10 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
 
   /* ================= ALL TESTS ================= */
 
- const {
-  data: allTestsResponse,
-  isFetching: isAllTestsFetching
-} = useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
+  const {
+    data: allTestsResponse,
+    isFetching: isAllTestsFetching
+  } = useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
 
   const allTests = allTestsResponse?.data ?? [];
 
@@ -284,7 +284,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
 
 
   const normalizedResults = useMemo(() => {
-  if (!allTestsResponse) return [];
+    if (!allTestsResponse) return [];
 
     return results.map((r: any) => {
       const orderTest = orderTestMap.get(r.orderTestId);
@@ -418,11 +418,11 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
   ];
 
   /* ================= FILTER UI ================= */
-console.log("LOADING STATES:", {
-  isFetching,
-  isOrderTestsFetching,
-  isAllTestsFetching
-});
+  console.log("LOADING STATES:", {
+    isFetching,
+    isOrderTestsFetching,
+    isAllTestsFetching
+  });
   const filters = (
     <Form fluid>
       <div className='diagnostics-result-filters-main-container'>
@@ -474,6 +474,7 @@ console.log("LOADING STATES:", {
     setPageIndex(0);
   }, [dateFilter, showAbnormal]);
 
+  console.log()
   return (
     <Panel defaultExpanded>
       <MyTable
@@ -482,9 +483,8 @@ console.log("LOADING STATES:", {
         data={normalizedResults}
         loading={
           isFetching ||
-          !orderTestsResponse ||
-          !allTestsResponse 
-          // isGeneratingPdf
+          isOrderTestsFetching ||
+          isAllTestsFetching
         }
         page={pageIndex}
         tableButtons={tableButtons}
