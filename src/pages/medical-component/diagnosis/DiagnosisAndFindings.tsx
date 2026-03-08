@@ -34,17 +34,17 @@ const DiagnosisAndFindings = ({ encounter, patient }) => {
     ]
   });
   const patientDiagnoseListResponse = useGetPatientDiagnosisQuery(listRequest);
-  const { data: encounterReviewOfSystemsSummaryResponse, refetch } =
-    useGetEncounterReviewOfSystemsQuery(encounter?.key);
-  const summaryText =
-    encounterReviewOfSystemsSummaryResponse?.object
-      ?.map((item, index) => {
-        const systemDetail = item.systemDetailLvalue
-          ? item.systemDetailLvalue.lovDisplayVale
-          : item.systemDetailLkey;
-        return `${index + 1} : ${systemDetail}\n note: ${item.notes}`;
-      })
-      .join('\n') + (encounter?.physicalExamNote ?? '');
+  // const { data: encounterReviewOfSystemsSummaryResponse, refetch } =
+  //   useGetEncounterReviewOfSystemsQuery(encounter?.key);
+  // const summaryText =
+  //   encounterReviewOfSystemsSummaryResponse?.object
+  //     ?.map((item, index) => {
+  //       const systemDetail = item.systemDetailLvalue
+  //         ? item.systemDetailLvalue.lovDisplayVale
+  //         : item.systemDetailLkey;
+  //       return `${index + 1} : ${systemDetail}\n note: ${item.notes}`;
+  //     })
+  //     .join('\n') + (encounter?.physicalExamNote ?? '');
   useEffect(() => {
     if (patientDiagnoseListResponse.data?.object?.length > 0) {
       setSelectedDiagnose(patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject);
@@ -66,7 +66,7 @@ const DiagnosisAndFindings = ({ encounter, patient }) => {
       </Row>
       <Row>
         <Col md={24}>
-          <MyCard title={'Physical Examination'} contant={summaryText}></MyCard>
+          <MyCard title={'Physical Examination'} contant={''}></MyCard>
         </Col>
       </Row>
     </>
