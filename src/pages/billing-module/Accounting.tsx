@@ -19,7 +19,7 @@ import Billing from './Billing';
 import Invoices from './Invoices';
 import Receipt from './Receipt';
 import ProfileSidebar from '../patient/patient-profile/ProfileSidebar-new';
-import PatientSide from '../encounter/encounter-main-info-section/PatienSide';
+import PatientBillingSide from './PatientBillingSide';
 
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
@@ -465,7 +465,7 @@ const Accounting: React.FC = () => {
 
   return (
     <div className="container">
-      <div className="left-box" style={{ width: '100%' }}>
+      <div className="left-box">
         <SectionContainer
           title="Search Patient"
           content={contentOfSearchSection()}
@@ -473,10 +473,18 @@ const Accounting: React.FC = () => {
         <MyTab data={tabData} />
       </div>
 
-      <br />
+      {patient?.id && (
+        <div className="right-box">
+          <PatientBillingSide
+            patient={patient}
+            balance={balance}
+            setPatient={setPatient}
+          />
+        </div>
+      )}
 
-      <div>
-        {!patient?.key ? (
+      {!patient?.id && (
+        <div className="right-box">
           <ProfileSidebar
             expand={expand}
             setExpand={setExpand}
@@ -485,23 +493,8 @@ const Accounting: React.FC = () => {
             refetchData={refetchData}
             setRefetchData={setRefetchData}
           />
-        ) : (
-          <div
-            style={{
-              border: '1px solid var(--rs-border-primary)',
-              borderRadius: '5px',
-            }}
-          >
-            <PatientSide
-              patient={patient}
-              encounter={encounter}
-              setPatient={setPatient}
-              hideVisitDetails
-              balance={balance}
-            />
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
