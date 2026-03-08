@@ -6,8 +6,58 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetObservationSummariesQuery } from '@/services/observationService';
 import Translate from '@/components/Translate';
 import Section from '@/components/Section';
+import { useGetBodyMeasurementsBetweenDatesByPatientIdQuery } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
+import { useGetVitalSignsBetweenDatesByPatientIdQuery } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 const PreObservation = ({ patient }) => {
   const [open, setOpen] = useState(false);
+  const patientId = Number(patient?.id);
+   const [bodyTableReq, setBodyTableReq] = useState({
+      page: 0,
+      size: 5,
+      sort: 'createdDate,desc',
+    });
+    const [vitalTableReq, setVitalTableReq] = useState({
+        page: 0,
+        size: 5,
+        sort: 'createdDate,desc',
+      });
+  const {
+      data: bodyPage,
+      isLoading: bodyLoading,
+      isFetching: bodyFetching,
+    } = useGetBodyMeasurementsBetweenDatesByPatientIdQuery(
+     patientId
+        ? {
+             patientId,
+            // from: undefined,
+            // to: undefined,
+            page: bodyTableReq.page,
+            size: bodyTableReq.size,
+            sort: bodyTableReq.sort,
+          }
+        : (undefined as any),
+      { skip: !patientId }
+    );
+    console.log("bodyPage: ", bodyPage);
+     const {
+        data: vitalPage,
+        isLoading: vitalLoading,
+        isFetching: vitalFetching,
+      } = useGetVitalSignsBetweenDatesByPatientIdQuery(
+        patientId
+          ? {
+              patientId,
+              // from: '',
+              // to: '',
+              page: vitalTableReq.page,
+              size: vitalTableReq.size,
+              sort: vitalTableReq.sort,
+            }
+          : (undefined as any),
+        { skip: !patientId }
+      );
+      console.log("vitalPage: ", vitalPage);
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
