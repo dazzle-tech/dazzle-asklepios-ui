@@ -480,7 +480,8 @@ const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
                 >
                   Create Follow-up
                 </MyButton>
-                {!(propsData?.encounter?.resourceTypeLkey === '4217389643435490') &&
+               
+                {/* {!(propsData?.encounter?.resourceTypeLkey === '4217389643435490') &&
                   !(propsData?.encounter?.resourceTypeLkey === '91084250213000') && (
                     <MyButton
                       prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
@@ -491,7 +492,7 @@ const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
                     >
                       <Translate>Admit to Inpatient</Translate>
                     </MyButton>
-                  )}
+                  )} */}
 
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}

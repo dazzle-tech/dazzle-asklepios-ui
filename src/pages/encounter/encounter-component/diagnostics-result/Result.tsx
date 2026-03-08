@@ -85,7 +85,7 @@ const renderMarker = (marker?: string) => {
 };
 
 const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
-
+  console.log("Rendering ReviewedResults for patient", patient);
   const toaster = useToaster();
 
   const [pageIndex, setPageIndex] = useState(0);
@@ -106,7 +106,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
   /* ================= QUERY ================= */
 //add new patient edits
   const queryParams = useMemo(() => {
-    const patientId = patient?.id ?? patient?.key;
+    const patientId = patient?.id;
     if (!patientId) return null;
 
     const params: any = {
@@ -212,12 +212,14 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
     [results]
   );
 
-  const { data: orderTestsResponse } =
-    useFilterDiagnosticOrderTestsQuery(
-      orderTestIds.length
-        ? { orderTestIdIn: orderTestIds, page: 0, size: 100 }
-        : skipToken
-    );
+  const {
+  data: orderTestsResponse,
+  isFetching: isOrderTestsFetching
+} = useFilterDiagnosticOrderTestsQuery(
+  orderTestIds.length
+    ? { orderTestIdIn: orderTestIds, page: 0, size: 100 }
+    : skipToken
+);
 
   const orderTests = orderTestsResponse?.data ?? [];
 
@@ -228,8 +230,10 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
 
   /* ================= ALL TESTS ================= */
 
-  const { data: allTestsResponse } =
-    useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
+ const {
+  data: allTestsResponse,
+  isFetching: isAllTestsFetching
+} = useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
 
   const allTests = allTestsResponse?.data ?? [];
 
@@ -280,7 +284,7 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
 
 
   const normalizedResults = useMemo(() => {
-    if (!orderTests.length || !allTests.length) return [];
+  if (!allTestsResponse) return [];
 
     return results.map((r: any) => {
       const orderTest = orderTestMap.get(r.orderTestId);
@@ -339,7 +343,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
 
 
 
-  console.log("normalizedResults", normalizedResults);
 
   const columns = [
     {
@@ -415,7 +418,11 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
   ];
 
   /* ================= FILTER UI ================= */
-
+console.log("LOADING STATES:", {
+  isFetching,
+  isOrderTestsFetching,
+  isAllTestsFetching
+});
   const filters = (
     <Form fluid>
       <div className='diagnostics-result-filters-main-container'>
@@ -461,7 +468,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
       style={{ marginLeft: 'auto' }}>
       Generate Complete Report
     </MyButton></>)
-  console.log("normalizedResults", normalizedResults);
 
 
   useEffect(() => {
@@ -477,8 +483,8 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }) => {
         loading={
           isFetching ||
           !orderTestsResponse ||
-          !allTestsResponse ||
-          isGeneratingPdf
+          !allTestsResponse 
+          // isGeneratingPdf
         }
         page={pageIndex}
         tableButtons={tableButtons}
