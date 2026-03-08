@@ -58,6 +58,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     {
       refetchOnMountOrArgChange: true,
       skip: !localPatient?.id
+      refetchOnFocus: true, 
+      pollingInterval: 0
     }
   );
 
@@ -243,6 +245,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         const isOngoing = row.status === 'ONGOING';
         const isNew = row.status === 'NEW';
         const isPendingPayment = row.status === 'PENDING_PAYMENT';
+        const isClinicVisit = row.visitType === 'CLINIC';
 
         return (
           <Form className="visit-history__actions-form">
@@ -266,7 +269,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </span>
               </Whisper>
             )}
-            {isOngoing && (
+
+            {isOngoing && isClinicVisit && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Complete</Tooltip>}
@@ -279,7 +283,9 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </span>
               </Whisper>
             )}
-            {isOngoing && (
+
+            {/* DISCHARGE فقط لغير CLINIC */}
+            {isOngoing && !isClinicVisit && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Discharge</Tooltip>}
@@ -292,6 +298,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </span>
               </Whisper>
             )}
+
             {isPendingPayment && (
               <Whisper
                 placement="top"
@@ -335,7 +342,10 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       {quickAppointmentModel && (
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
-          setQuickAppointmentModel={setQuickAppointmentModel}
+          setQuickAppointmentModel={val => {
+            setQuickAppointmentModel(val);
+            if (!val) refetch();
+          }}
           localPatient={localPatient}
           localVisit={selectedVisit}
           isDisabeld={quickInitialStep === 0}

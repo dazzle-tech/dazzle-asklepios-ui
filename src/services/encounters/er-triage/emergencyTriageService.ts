@@ -23,11 +23,13 @@ export const emergencyTriageService = createApi({
       })
     }),
 
-    getLatestEmergencyTriageByEncounter: builder.query<EmergencyTriage, EncounterId>({
+    // Backend returns Optional<EmergencyTriage> (may be null when no triage exists)
+    getLatestEmergencyTriageByEncounter: builder.query<EmergencyTriage | null, EncounterId>({
       query: encounterId => ({
         url: `/api/patient/emergency-triage/encounter/${encounterId}/latest`,
         method: 'GET'
-      })
+      }),
+      transformResponse: (response: any) => response ?? null
     }),
 
     updateEmergencyTriageEyeAssessment: builder.mutation<EmergencyTriage, EmergencyTriageEyeAssessmentUpdate>({

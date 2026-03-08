@@ -129,10 +129,10 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
     isFetching: isDiagnosisFetching
   } = useGetPatientDiagnosisQuery(diagnosisListRequest);
 
-  const {
-    data: encounterReviewOfSystemsSummaryResponse,
-    isFetching: isReviewSystemsFetching
-  } = useGetEncounterReviewOfSystemsQuery(encounter.key);
+  // const {
+  //   data: encounterReviewOfSystemsSummaryResponse,
+  //   isFetching: isReviewSystemsFetching
+  // } = useGetEncounterReviewOfSystemsQuery(encounter.key);
 
   const [proceduresListRequest] = useState({
     ...initialListRequest,
@@ -202,7 +202,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
   const isDataLoading =
     isGeneratingPdf ||
     isDiagnosisFetching ||
-    isReviewSystemsFetching ||
+    // isReviewSystemsFetching ||
     isProceduresFetching ||
     loadTests ||
     isPrescriptionsFetching ||
@@ -352,15 +352,15 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         };
       }) || [];
 
-    const reviewSystemsData =
-      encounterReviewOfSystemsSummaryResponse?.object?.map((item: any) => ({
-        system: item?.systemLvalue?.lovDisplayVale || '',
-        systemDetail:
-          item?.systemDetailLvalue?.lovDisplayVale ||
-          item?.systemDetailLkey ||
-          '',
-        notes: item?.notes || ''
-      })) || [];
+    // const reviewSystemsData =
+    //   encounterReviewOfSystemsSummaryResponse?.object?.map((item: any) => ({
+    //     system: item?.systemLvalue?.lovDisplayVale || '',
+    //     systemDetail:
+    //       item?.systemDetailLvalue?.lovDisplayVale ||
+    //       item?.systemDetailLkey ||
+    //       '',
+    //     notes: item?.notes || ''
+    //   })) || [];
 
     const joinValues = (keys: any[], lovValues: any) =>
       keys
@@ -418,7 +418,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
       user: userData,
       facility: facilityData,
       diagnoses: diagnosesData,
-      reviewSystems: reviewSystemsData,
+      // reviewSystems: reviewSystemsData,
       procedures: proceduresData,
       prescriptions: prescriptionsData,
       diagnosticTests: diagnosticTestsData

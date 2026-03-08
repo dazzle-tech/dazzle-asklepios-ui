@@ -133,26 +133,20 @@ const AddEncounterVaccine = ({
   });
 
   const [brandPicker, setBrandPicker] = useState<{ vaccineBrandId: number | null }>({
-    vaccineBrandId: vaccineBrand?.id ?? null
+    vaccineBrandId: vaccineBrandObject?.id ?? null
   });
   const [dosePicker, setDosePicker] = useState<{ vaccineDoseId: number | null }>({
-    vaccineDoseId: vaccineDose?.id ?? null
+    vaccineDoseId: vaccineDoseObjet?.id ?? null
   });
 
   const [administrationReaction, setAdministrationReactions] = useState<{
     administrationReactionsLkey: string | null;
   }>({ administrationReactionsLkey: '' });
 
-  /**
-   * NEW (toggle using MyInput checkbox):
-   * source of truth is encounterVaccination.isExternalFacility (boolean)
-   * clear-name rule:
-   * - if isExternalFacility === false => externalFacilityName must be '' (empty string)
-   */
   const [externalFacilityToggle, setExternalFacilityToggle] = useState<{
     isExternalFacility: boolean;
   }>({
-    isExternalFacility: !!encounterVaccination?.isExternalFacility
+    isExternalFacility: !!(encounterVaccination as any)?.isExternalFacility
   });
 
   const [brandPage, setBrandPage] = useState(0);
@@ -172,24 +166,26 @@ const AddEncounterVaccine = ({
   const { data: manufacturerLovQueryResponse } = useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
   const { data: medAdversLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
 
-  const { data: vaccineBrandsPage } = useGetVaccineBrandsByVaccineQuery(
+  const activeVaccineId = vaccine?.id as number | undefined;
+
+  const { data: vaccineBrandsPage, refetch: refetchBrands } = useGetVaccineBrandsByVaccineQuery(
     {
-      vaccineId: vaccine?.id as number | undefined,
+      vaccineId: activeVaccineId,
       page: brandPage,
       size: PAGE_SIZE,
       sort: 'id,asc'
     },
-    { skip: !vaccine?.id }
+    { skip: !activeVaccineId }
   );
 
-  const { data: vaccineDosesPage } = useGetVaccineDosesByVaccineIdQuery(
+  const { data: vaccineDosesPage, refetch: refetchDoses } = useGetVaccineDosesByVaccineIdQuery(
     {
-      vaccineId: vaccine?.id as number | undefined,
+      vaccineId: activeVaccineId,
       page: dosePage,
       size: PAGE_SIZE,
       sort: 'id,asc'
     },
-    { skip: !vaccine?.id }
+    { skip: !activeVaccineId }
   );
 
   const { data: intervalOneData } = useGetIntervalByFromDoseIdOneQuery(
@@ -205,10 +201,8 @@ const AddEncounterVaccine = ({
   const handleClearField = () => {
     setEncounterVaccination({
       ...(newEncounterVaccination as EncounterVaccination),
-      status: null,
-      isExternalFacility: false,
-      externalFacilityName: ''
-    });
+      status: null
+    } as any);
 
     setExternalFacilityToggle({ isExternalFacility: false });
 
@@ -267,11 +261,12 @@ const AddEncounterVaccine = ({
       encounterId: encounter.id
     };
 
-    // NEW: normalize using clear-name rule
     const normalizedPayload = {
       ...payload,
-      isExternalFacility: !!payload.isExternalFacility,
-      externalFacilityName: payload.isExternalFacility ? payload.externalFacilityName ?? '' : ''
+      isExternalFacility: !!(payload as any).isExternalFacility,
+      externalFacilityName: (payload as any).isExternalFacility
+        ? payload.externalFacilityName ?? ''
+        : ''
     };
 
     try {
@@ -307,20 +302,19 @@ const AddEncounterVaccine = ({
     setIsDisabledField(isEncounterStatusClosed || isDisabled || isEncounterVaccineStatusClose);
   }, [isEncounterStatusClosed, isDisabled, isEncounterVaccineStatusClose]);
 
-  // sync from props
-  useEffect(() => setVaccine({ ...vaccineObject }), [vaccineObject]);
-  useEffect(() => setVaccineBrand({ ...vaccineBrandObject }), [vaccineBrandObject]);
-  useEffect(() => setVaccineDose({ ...vaccineDoseObjet }), [vaccineDoseObjet]);
-
+  const prevVaccineIdRef = React.useRef<number | string | undefined>(undefined);
   useEffect(() => {
-    setBrandPicker({ vaccineBrandId: vaccineBrand?.id ?? null });
-  }, [vaccineBrand?.id]);
+    if (!vaccine?.id) return;
+    prevVaccineIdRef.current = vaccine.id;
+    setBrandPage(0);
+    setAllBrands([]);
+    setDosePage(0);
+    setAllDoses([]);
+    refetchBrands();
+    refetchDoses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vaccine?.id, open]);
 
-  useEffect(() => {
-    setDosePicker({ vaccineDoseId: vaccineDose?.id ?? null });
-  }, [vaccineDose?.id]);
-
-  // merge vaccine search pages
   useEffect(() => {
     const pageData = (vaccinesSearchState.data?.data ?? []) as Vaccine[];
 
@@ -344,17 +338,15 @@ const AddEncounterVaccine = ({
     }
   }, [vaccinesSearchState.data, vaccinePage, searchSession]);
 
-  // accumulate brands pages (NO DUPLICATES)
   useEffect(() => {
     const pageData = (vaccineBrandsPage?.data ?? []) as VaccineBrand[];
-    if (!pageData.length) return;
 
     setAllBrands(prev => {
       if (brandPage === 0) return pageData;
 
+      if (!pageData.length) return prev;
       const prevIds = new Set(prev.map(b => b.id));
       const merged = [...prev];
-
       for (const b of pageData) {
         if (!prevIds.has(b.id)) merged.push(b);
       }
@@ -362,17 +354,15 @@ const AddEncounterVaccine = ({
     });
   }, [vaccineBrandsPage?.data, brandPage]);
 
-  // accumulate doses pages (NO DUPLICATES)
   useEffect(() => {
     const pageData = (vaccineDosesPage?.data ?? []) as VaccineDose[];
-    if (!pageData.length) return;
 
     setAllDoses(prev => {
       if (dosePage === 0) return pageData;
 
+      if (!pageData.length) return prev;
       const prevIds = new Set(prev.map(d => d.id));
       const merged = [...prev];
-
       for (const d of pageData) {
         if (!prevIds.has(d.id)) merged.push(d);
       }
@@ -447,24 +437,16 @@ const AddEncounterVaccine = ({
     );
   }, [vaccineDose?.id, nextDoseData, intervalOneData, allDoses]);
 
-  /**
-   * NEW: sync toggle from encounterVaccination (edit / initial load)
-   */
-  useEffect(() => {
-    setExternalFacilityToggle({ isExternalFacility: !!encounterVaccination?.isExternalFacility });
-  }, [encounterVaccination?.isExternalFacility]);
-
-  /**
-   * NEW: when toggle changes -> update encounterVaccination + apply clear-name rule
-   */
   useEffect(() => {
     const isExternal = !!externalFacilityToggle.isExternalFacility;
 
-    setEncounterVaccination(prev => ({
-      ...prev,
-      isExternalFacility: isExternal,
-      externalFacilityName: isExternal ? prev.externalFacilityName ?? '' : ''
-    }));
+    setEncounterVaccination(
+      prev =>
+        ({
+          ...prev,
+          externalFacilityName: isExternal ? (prev as any).externalFacilityName ?? '' : ''
+        } as any)
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalFacilityToggle.isExternalFacility]);
 
@@ -526,10 +508,7 @@ const AddEncounterVaccine = ({
                       setBrandPicker({ vaccineBrandId: null });
                       setDosePicker({ vaccineDoseId: null });
 
-                      setBrandPage(0);
-                      setAllBrands([]);
-                      setDosePage(0);
-                      setAllDoses([]);
+                      prevVaccineIdRef.current = undefined;
 
                       setInputValue('');
                       setSearchKeyword('');
@@ -551,7 +530,9 @@ const AddEncounterVaccine = ({
                       handleLoadMoreVaccines();
                     }}
                   >
-                    <strong>{vaccinesSearchState.isFetching ? 'Loading...' : 'Load more...'}</strong>
+                    <strong>
+                      {vaccinesSearchState.isFetching ? 'Loading...' : 'Load more...'}
+                    </strong>
                   </Dropdown.Item>
                 )}
               </Dropdown.Menu>
@@ -649,7 +630,10 @@ const AddEncounterVaccine = ({
                   setBrandPicker({ vaccineBrandId: null });
                   return;
                 }
-                setVaccineBrand({ ...(newVaccineBrand as VaccineBrand), ...(item as VaccineBrand) });
+                setVaccineBrand({
+                  ...(newVaccineBrand as VaccineBrand),
+                  ...(item as VaccineBrand)
+                });
                 setBrandPicker({ vaccineBrandId: item.id as number });
               }}
               placeholder={vaccineBrand?.name ? vaccineBrand.name : 'Select'}
@@ -765,7 +749,6 @@ const AddEncounterVaccine = ({
               setRecord={setEncounterVaccination}
             />
 
-            {/* NEW: toggle isExternalFacility using MyInput checkbox */}
             <MyInput
               column
               fieldLabel="Is External Facility"

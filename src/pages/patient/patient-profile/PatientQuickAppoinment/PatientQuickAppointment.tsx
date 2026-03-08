@@ -356,6 +356,7 @@ const PatientQuickAppointment = ({
             setPayment={setPaymentDraft}
             patientInsurance={patientInsuranceDraft}
             setPatientInsurance={setPatientInsuranceDraft}
+            onPaymentSaved={onEncounterSaved} 
           />
         );
       default:

@@ -3,7 +3,6 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppSelector } from '@/hooks';
 import { useFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
-import { useLazyGetPatientByIdQuery } from '@/services/patientService';
 import { formatEnumString } from '@/utils';
 import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

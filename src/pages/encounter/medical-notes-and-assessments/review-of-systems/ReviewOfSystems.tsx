@@ -91,7 +91,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
         title: <Translate>#</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
-          const detailId = String(rowData.id);
+          const detailId = String(rowData.key);
           const existing = mainData[detailId]; // { id, bodySystem, systemDetail, note, ... }
           return (
             <Checkbox

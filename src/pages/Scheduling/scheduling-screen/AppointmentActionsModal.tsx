@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Button, ButtonToolbar, Divider, Form, IconButton, Input, Modal } from "rsuite";
 import "./styles.less";
 import PageIcon from '@rsuite/icons/Page';
@@ -6,24 +6,27 @@ import { faPrint, faSackDollar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useChangeAppointmentStatusMutation } from "@/services/appointmentService";
 import { notify } from "@/utils/uiReducerActions";
-import { useAppDispatch } from "@/hooks";
+import { useAppDispatch, useAppSelector } from "@/hooks";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import MyInput from "@/components/MyInput";
 import CheckIcon from '@rsuite/icons/Check';
 import BlockIcon from '@rsuite/icons/Block';
-import { useCompleteEncounterRegistrationMutation } from "@/services/encounterService";
-import { newApEncounter } from "@/types/model-types-constructor";
+import { useCreateEncounterMutation, useGetEncountersByAppointmentQuery } from "@/services/encounters/patientEncounterService";
+import type { PatientEncounter } from "@/types/model-types-new";
 import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
 import { calculateAgeFormat } from "@/utils";
 import MyModal from "@/components/MyModal/MyModal";
 import MyButton from "@/components/MyButton/MyButton";
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { useGetResourceByIdQuery } from '@/services/setup/resource/ResourceService';
+import PatientPaymentInfo, { PatientPaymentInfoHandle } from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
+import { newPatientPayments, newPatientInsurance } from '@/types/model-types-constructor-new';
 
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
 
     const [changeAppointmentStatus, changeAppointmentStatusMutation] = useChangeAppointmentStatusMutation()
     const dispatch = useAppDispatch();
+    const authSlice = useAppSelector(state => state.auth);
     const [localAppointmentData, setLocalAppoitmentData] = useState(appointment)
     const [resonModal, setResonModal] = useState(false)
     const [resonType, setResonType] = useState(null)
@@ -31,8 +34,48 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const { data: cancelResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
     const [reasonKey, setResonKey] = useState<any>(null)
     const [otherReason, setOtherReason] = useState<any>(null)
-    const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
-    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter,discharge:false });
+    const [createEncounter] = useCreateEncounterMutation();
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [createdEncounter, setCreatedEncounter] = useState<PatientEncounter | null>(null);
+    const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
+    
+    // Payment draft state
+    const [paymentDraft, setPaymentDraft] = useState<any>({
+        ...newPatientPayments,
+        patientId: 0,
+        encounterId: 0,
+        useBalanceToSettleDebts: false,
+        dept: 0
+    });
+    
+    const [patientInsuranceDraft, setPatientInsuranceDraft] = useState<any>({
+        ...newPatientInsurance,
+        payorName: '',
+        planName: ''
+    });
+
+    // Get current logged-in facility from localStorage or auth slice
+    const currentLoggedInFacility = useMemo(() => {
+        // Try to get from auth slice first
+        if (authSlice?.tenant?.selectedFacility) {
+            return authSlice.tenant.selectedFacility;
+        }
+        
+        // Fallback to localStorage
+        try {
+            const raw = localStorage.getItem('tenant');
+            if (raw) {
+                const tenant = JSON.parse(raw);
+                if (tenant?.selectedFacility) {
+                    return tenant.selectedFacility;
+                }
+            }
+        } catch (e) {
+            // Error parsing tenant from localStorage
+        }
+        
+        return null;
+    }, [authSlice?.tenant?.selectedFacility]);
 
     // Fetch the selected resource to get its resourceKey (similar to PatientQuickAppointment)
     const { data: selectedResource } = useGetResourceByIdQuery(localAppointmentData?.resourceKey, {
@@ -47,10 +90,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 dispatch(notify({ msg: 'Appointment Checked-In Successfully', sev: 'success' }));
                 onStatusChange()
                 onActionsModalClose()
-                setLocalEncounter({ ...newApEncounter, discharge: false })
             })
             .catch((error) => {
-                console.error('Error checking in appointment:', error);
                 if (error?.status === 422) {
                     // Validation error - already handled by the mutation
                 } else {
@@ -58,81 +99,258 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 }
             });
     }
-    const handleSaveVisit = (data) => {
-        // Check if the resource type is department-based (similar to PatientQuickAppointment)
-        const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(data?.resourceTypeLkey);
-        
-        // Get resourceKey - use data.resourceKey or fallback to localAppointmentData.resourceKey
-        const resourceKeyToUse = data?.resourceKey || localAppointmentData?.resourceKey;
-        
-        // For department-based resources, use the resourceKey as departmentKey
-        // For other resources, use the departmentKey as is (or null if not set)
-        const departmentKeyToSave = isDepartmentBasedResource 
-            ? resourceKeyToUse 
-            : (data?.departmentKey || localAppointmentData?.departmentKey);
+    const handleSaveVisit = async (data) => {
+        try {
+            // Check if the resource type is department-based (similar to PatientQuickAppointment)
+            const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(data?.resourceTypeLkey);
+            
+            // Get resourceKey - use data.resourceKey or fallback to localAppointmentData.resourceKey
+            const resourceKeyToUse = data?.resourceKey || localAppointmentData?.resourceKey;
+            
+            // For department-based resources, use the resourceKey as departmentKey
+            // For other resources, use the departmentKey as is (or null if not set)
+            const departmentKeyToSave = isDepartmentBasedResource 
+                ? resourceKeyToUse 
+                : (data?.departmentKey || localAppointmentData?.departmentKey);
 
-        const visit = {
-            ...localEncounter,
-            patientAge: data?.patient?.dob ? calculateAgeFormat(data.patient.dob) + '' : '',
-            patientKey: data?.patient?.key,
-            patientFullName: data?.patient?.fullName,
-            encounterStatusLkey: "91063195286200",
-            plannedStartDate: data?.appointmentStart,
-            resourceTypeLkey: data?.resourceTypeLkey || localAppointmentData?.resourceTypeLkey,
-            visitTypeLkey: data?.visitTypeLkey || localAppointmentData?.visitTypeLkey,
-            resourceKey: resourceKeyToUse,
-            departmentKey: departmentKeyToSave ? String(departmentKeyToSave) : departmentKeyToSave
+            // Get patient ID - convert from key/id to number
+            const patientId = Number(data?.patient?.id || data?.patient?.key || 0);
+            if (!patientId || patientId === 0) {
+                dispatch(notify({ msg: 'Patient ID is required to create encounter', sev: 'warning' }));
+                return;
+            }
+
+            // Get facility ID - from appointment or current logged-in facility
+            const facilityId = Number(
+                data?.facilityKey || 
+                localAppointmentData?.facilityKey || 
+                currentLoggedInFacility?.id || 
+                currentLoggedInFacility?.facilityKey || 
+                0
+            );
+            if (!facilityId || facilityId === 0) {
+                dispatch(notify({ msg: 'Facility ID is required to create encounter', sev: 'warning' }));
+                return;
+            }
+
+            // Get department ID - convert to number
+            const departmentId = Number(departmentKeyToSave || 0);
+            if (!departmentId || departmentId === 0) {
+                dispatch(notify({ msg: 'Department ID is required to create encounter', sev: 'warning' }));
+                return;
+            }
+
+            // Map resourceTypeLkey to encounterType (you may need to adjust this mapping)
+            const encounterType = data?.resourceTypeLkey || localAppointmentData?.resourceTypeLkey || 'CLINIC';
+            
+            // Get encounter date from appointment start or use current date
+            const encounterDate = data?.appointmentStart 
+                ? new Date(data.appointmentStart) 
+                : new Date();
+
+            // Get appointment ID/key
+            const appointmentId = Number(
+                data?.key || 
+                data?.id || 
+                localAppointmentData?.key || 
+                localAppointmentData?.id || 
+                0
+            );
+
+            // Create new encounter object (id is optional for creation)
+            const encounterBody: any = {
+                patientId: patientId,
+                facilityId: facilityId,
+                departmentId: departmentId,
+                encounterType: encounterType,
+                encounterReason: data?.visitTypeLkey || 'APPOINTMENT',
+                priorityLevel: 'NORMAL', // Default priority, adjust as needed
+                status: 'NEW', // Default status, adjust as needed
+                encounterDate: encounterDate,
+                notes: data?.notes || null,
+                chiefComplaint: null,
+                hasPrescription: false,
+                hasOrder: false,
+                isObserved: false,
+                appointmentId: appointmentId || null
+            };
+
+            // Create the encounter
+            const createdEncounterResult = await createEncounter({ body: encounterBody as PatientEncounter }).unwrap();
+            
+            // Store the created encounter
+            setCreatedEncounter(createdEncounterResult as PatientEncounter);
+            
+            // Update payment draft with encounter ID
+            setPaymentDraft((prev: any) => ({
+                ...prev,
+                patientId: patientId,
+                encounterId: (createdEncounterResult as any)?.id ?? 0
+            }));
+            
+            dispatch(notify({ msg: 'Encounter created successfully', sev: 'success' }));
+            
+            return createdEncounterResult;
+        } catch (error: any) {
+            // Extract error message from API response
+            const errorMessage = error?.data?.message || error?.message || 'An error occurred while creating the encounter';
+            
+            // Always show error message to user
+            dispatch(notify({ msg: errorMessage, sev: 'warning' }));
+            throw error; // Re-throw to allow caller to handle
         }
-        
-        saveEncounter(visit)
-            .unwrap()
-            .then(() => {
-                // Success - encounter saved
-            })
-            .catch((error) => {
-                console.error('Error saving encounter:', error);
-                // Extract error message from API response
-                const errorMessage = error?.data?.message || error?.message || 'An error occurred while saving the encounter';
-                
-                // Always show error message to user, regardless of status code
-                dispatch(notify({ msg: errorMessage, sev: 'warning' }));
-            });
     };
+
+    // Get current appointment status (from local state or appointment prop)
+    const currentAppointmentStatus = localAppointmentData?.appointmentStatus || appointment?.appointmentData?.appointmentStatus;
+
+    // Get appointment ID for fetching encounter
+    const appointmentId = useMemo(() => {
+        const appointmentData = appointment?.appointmentData || localAppointmentData;
+        return Number(appointmentData?.key || appointmentData?.id || 0);
+    }, [appointment?.appointmentData, localAppointmentData]);
+
+    // Fetch encounter for confirmed appointments
+    const { data: encounterByAppointmentResponse, isLoading: isLoadingEncounter } = useGetEncountersByAppointmentQuery(
+        { appointmentId: appointmentId },
+        { 
+            skip: !appointmentId || !isActionsModalOpen || currentAppointmentStatus !== "Confirmed"
+        }
+    );
 
     useEffect(() => {
         if (appointment)
             setLocalAppoitmentData(appointment.appointmentData)
     }, [appointment])
 
+    // Set encounter when fetched for confirmed appointment
+    useEffect(() => {
+        if (encounterByAppointmentResponse && currentAppointmentStatus === "Confirmed") {
+            // The API returns a string (encounter ID), but we need the full encounter object
+            // If it's just an ID string, we might need to fetch the full encounter
+            // For now, we'll try to use it as is - if it's an ID, we'll need to handle it differently
+            const encounterId = encounterByAppointmentResponse;
+            
+            // If the response is a string (ID), we'll need to construct a minimal encounter object
+            // or fetch the full encounter. For now, let's assume the API might return the full object
+            // despite the type saying string. We'll handle both cases.
+            if (typeof encounterId === 'string' && !isNaN(Number(encounterId))) {
+                // It's an ID string - construct a minimal encounter object with required fields
+                // The payment component will use the encounter ID primarily
+                const patientAny = localAppointmentData?.patient as any;
+                const minimalEncounter: any = {
+                    id: Number(encounterId),
+                    patientId: Number(patientAny?.id ?? localAppointmentData?.patient?.key ?? 0),
+                    facilityId: Number(localAppointmentData?.facilityKey || 0),
+                    departmentId: Number(localAppointmentData?.departmentKey || localAppointmentData?.resourceKey || 0),
+                    appointmentId: appointmentId,
+                    encounterType: localAppointmentData?.resourceTypeLkey || 'CLINIC',
+                    encounterReason: localAppointmentData?.visitTypeLkey || 'APPOINTMENT',
+                    priorityLevel: 'NORMAL',
+                    status: 'NEW',
+                    encounterDate: new Date(),
+                    hasPrescription: false,
+                    hasOrder: false,
+                    isObserved: false
+                };
+                setCreatedEncounter(minimalEncounter as PatientEncounter);
+            } else if (typeof encounterId === 'object' && encounterId !== null) {
+                // It's already an encounter object
+                setCreatedEncounter(encounterId as PatientEncounter);
+            }
+        }
+    }, [encounterByAppointmentResponse, currentAppointmentStatus, localAppointmentData, appointmentId]);
+
     useEffect(() => {
         if (localAppointmentData) {
             // Handle local appointment data if needed
         }
-    }, [localAppointmentData])
+    }, [localAppointmentData]);
 
-    const handleConfirm = () => {
-        const appointmentData = appointment?.appointmentData || localAppointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed", reasonLkey: null, otherReason: null })
-            .unwrap()
-            .then(() => {
-                dispatch(notify({ msg: 'Appointment Confirmed Successfully', sev: 'success' }));
-                onStatusChange()
-                onActionsModalClose()
-                setLocalEncounter({ ...newApEncounter, discharge: false })
-                
-                // Save encounter after appointment is confirmed
-                // Use localAppointmentData which is properly set and has the resourceKey
-                handleSaveVisit(localAppointmentData || appointmentData)
-            })
-            .catch((error) => {
-                console.error('Error confirming appointment:', error);
-                // Extract error message from API response
-                const errorMessage = error?.data?.message || error?.message || 'An error occurred while confirming the appointment';
-                
-                // Always show error message to user
-                dispatch(notify({ msg: errorMessage, sev: 'warning' }));
-            });
+    // Update payment draft when encounter is created or patient changes
+    useEffect(() => {
+        if (createdEncounter && localAppointmentData?.patient) {
+            const patientAny = localAppointmentData.patient as any;
+            const patientId = Number(patientAny?.id ?? localAppointmentData.patient?.key ?? 0);
+            const encounterId = Number((createdEncounter as any)?.id ?? 0);
+            
+            setPaymentDraft((prev: any) => ({
+                ...prev,
+                patientId: patientId,
+                encounterId: encounterId
+            }));
+        }
+    }, [createdEncounter, localAppointmentData?.patient]);
+
+    const handleConfirm = async () => {
+        try {
+            const appointmentData = appointment?.appointmentData || localAppointmentData;
+            
+            // First, create the encounter
+            await handleSaveVisit(localAppointmentData || appointmentData);
+            
+            // Then, confirm the appointment
+            await changeAppointmentStatus({ 
+                ...appointmentData, 
+                appointmentStatus: "Confirmed", 
+                reasonLkey: null, 
+                otherReason: null 
+            }).unwrap();
+            
+            // Update local appointment data to reflect confirmed status
+            setLocalAppoitmentData(prev => ({
+                ...prev,
+                appointmentStatus: "Confirmed"
+            }));
+            
+            dispatch(notify({ msg: 'Appointment Confirmed and Encounter Created Successfully', sev: 'success' }));
+            onStatusChange();
+            // Don't close the modal - keep it open so user can add payment
+        } catch (error: any) {
+            // Extract error message from API response
+            const errorMessage = error?.data?.message || error?.message || 'An error occurred while confirming the appointment';
+            
+            // Always show error message to user
+            dispatch(notify({ msg: errorMessage, sev: 'warning' }));
+        }
     }
+
+    const handleOpenPaymentModal = () => {
+        if (!createdEncounter) {
+            dispatch(notify({ msg: 'Please confirm the appointment first to create an encounter', sev: 'warning' }));
+            return;
+        }
+        
+        // Ensure payment draft is initialized with current patient and encounter
+        if (localAppointmentData?.patient && createdEncounter) {
+            const patientAny = localAppointmentData.patient as any;
+            const patientId = Number(patientAny?.id ?? localAppointmentData.patient?.key ?? 0);
+            const encounterId = Number((createdEncounter as any)?.id ?? 0);
+            
+            setPaymentDraft((prev: any) => ({
+                ...prev,
+                patientId: patientId,
+                encounterId: encounterId
+            }));
+        }
+        
+        setPaymentModalOpen(true);
+    };
+
+    const handlePaymentConfirm = async () => {
+        if (!paymentRef.current) return;
+        
+        try {
+            const success = await paymentRef.current.confirm();
+            if (success) {
+                dispatch(notify({ msg: 'Payment confirmed successfully', sev: 'success' }));
+                setPaymentModalOpen(false);
+                onStatusChange(); // Refresh appointment list
+            }
+        } catch (error: any) {
+            // Error handling is done inside PatientPaymentInfo component
+        }
+    };
 
 const handleNonShow = () => {
   const payload = {
@@ -141,8 +359,6 @@ const handleNonShow = () => {
     reasonLkey: reasonKey?.reasonLkey,
     otherReason: otherReason?.otherReason
   };
-
-  console.log('🚨 NO-SHOW PAYLOAD', payload);
 
   changeAppointmentStatus(payload)
     .unwrap()
@@ -168,8 +384,6 @@ const handleCancel = () => {
     otherReason: otherReason?.otherReason
   };
 
-  console.log('🚨 CANCEL PAYLOAD', payload);
-
   changeAppointmentStatus(payload)
     .unwrap()
     .then(() => {
@@ -188,26 +402,25 @@ const handleCancel = () => {
         onActionsModalClose()
     }
 
-
     // Appoinment Actions Modal Content
     const actionsModalContent = (
         <Form fluid layout="inline">
-            <MyButton width="250px" disabled={["Checked-In", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={handleCheckIn} color="cyan" appearance="primary">
+            <MyButton width="250px" disabled={["Checked-In", "Confirmed"].includes(currentAppointmentStatus)} onClick={handleCheckIn} color="cyan" appearance="primary">
                 Check-In
             </MyButton>
-            <MyButton width="250px" disabled={appointment?.appointmentData.appointmentStatus == "Confirmed"} onClick={handleConfirm} color="violet" appearance="primary">
+            <MyButton width="250px" disabled={currentAppointmentStatus == "Confirmed"} onClick={handleConfirm} color="violet" appearance="primary">
                 Confirm
             </MyButton>
-            <MyButton width="250px" disabled={["No-Show", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} color="blue" appearance="primary">
+            <MyButton width="250px" disabled={["No-Show", "Confirmed"].includes(currentAppointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} color="blue" appearance="primary">
                 No-show
             </MyButton>
             <MyButton width="250px" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
                 View
             </MyButton>
-            <MyButton width="250px" disabled={["Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => editAppointment()} color="violet" appearance="primary">
+            <MyButton width="250px" disabled={["Confirmed"].includes(currentAppointmentStatus)} onClick={() => editAppointment()} color="violet" appearance="primary">
                 Change
             </MyButton>
-            <MyButton width="250px" disabled={["Canceled", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('Cancel') }} color="blue" appearance="primary">
+            <MyButton width="250px" disabled={["Canceled", "Confirmed"].includes(currentAppointmentStatus)} onClick={() => { setResonType('Cancel') }} color="blue" appearance="primary">
                 Cancel
             </MyButton>
         </Form>
@@ -244,7 +457,7 @@ const handleCancel = () => {
             <MyModal
                 open={isActionsModalOpen}
                 setOpen={onActionsModalClose}
-                title={`${appointment?.title}  ${appointment?.fromTo}  ${appointment?.appointmentData.appointmentStatus}`}
+                title={`${appointment?.title}  ${appointment?.fromTo}  ${currentAppointmentStatus}`}
                 size="38vw"
                 bodyheight="50vh"
                 position="right"
@@ -257,7 +470,12 @@ const handleCancel = () => {
                         <MyButton appearance="ghost" prefixIcon={() => <PageIcon />}>
                             Print Certificate
                         </MyButton>
-                        <MyButton appearance="ghost" prefixIcon={() => <FontAwesomeIcon icon={faSackDollar} />}>
+                        <MyButton 
+                            appearance="ghost" 
+                            prefixIcon={() => <FontAwesomeIcon icon={faSackDollar} />}
+                            disabled={currentAppointmentStatus !== "Confirmed"}
+                            onClick={handleOpenPaymentModal}
+                        >
                             Add Payment
                         </MyButton>
                     </>
@@ -274,6 +492,37 @@ const handleCancel = () => {
                 actionButtonFunction={() => { resonType === 'Cancel' ? handleCancel() : handleNonShow() }}
                 isDisabledActionBtn={!(otherReason || reasonKey)}
                 steps={[{ title: "Reason", icon: <FontAwesomeIcon icon={faClock} /> }]}
+            />
+            
+            {/* Payment Modal */}
+            <MyModal
+                open={paymentModalOpen}
+                setOpen={setPaymentModalOpen}
+                title="Add Payment"
+                size="70vw"
+                bodyheight="80vh"
+                position="center"
+                hideActionBtn={false}
+                actionButtonLabel="Confirm Payment"
+                actionButtonFunction={handlePaymentConfirm}
+                content={
+                    createdEncounter && localAppointmentData?.patient ? (
+                        <PatientPaymentInfo
+                            ref={paymentRef}
+                            localPatient={localAppointmentData.patient}
+                            localEncounter={createdEncounter}
+                            setLocalEncounter={setCreatedEncounter}
+                            isReadOnly={false}
+                            showInternalButtons={false}
+                            payment={paymentDraft}
+                            setPayment={setPaymentDraft}
+                            patientInsurance={patientInsuranceDraft}
+                            setPatientInsurance={setPatientInsuranceDraft}
+                        />
+                    ) : (
+                        <div>Loading...</div>
+                    )
+                }
             />
         </div>
     );

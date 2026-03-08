@@ -123,10 +123,10 @@ const GeneralAssessmentTriage = ({ patient, encounter, readOnly = false }) => {
   };
 
   useEffect(() => {
-    if (encounter?.encounterStatusLkey === '91109811181900' || encounter?.discharge) {
+    if (String(encounter?.status ?? encounter?.encounterStatus ?? '').toUpperCase() === 'CLOSED' || encounter?.discharge) {
       setIsEncounterStatusClosed(true);
     }
-  }, [encounter?.encounterStatusLkey]);
+  }, [encounter?.status, encounter?.encounterStatus, encounter?.discharge]);
   useEffect(() => {
     if (isEncounterStatusClosed) {
       setIsDisabledField(true);

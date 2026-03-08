@@ -6,12 +6,13 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/Scheduling/scheduling-screen/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
+// import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
+import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import {
-  faBed,
+  // faBed, // (commented) used by the hidden "Admit to Inpatient" button below
   faChartLine,
   faCheckDouble,
   faClockRotateLeft,
@@ -39,20 +40,45 @@ import WarningiesModal from './WarningiesModal';
 // import AiAssistantPopup from './AiAssistantPopup';
 import PatientHistorySummaryModal from '../encounter-component/patient-history/MedicalHistory/PatientHistorySummaryModal';
 import AiAssistantPopup from './AiAssistantPopup';
-
+import { useLazyExistsPatientDiagnosisByEncounterIdQuery  } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 const Encounter = () => {
 
   const mode = useSelector((state: any) => state.ui.mode);
   // create the action for the Customize Dashboard that we defined it in Patient summary page
-  const [action, setAction] = useState(() => () => {});
+  const [action, setAction] = useState(() => () => { });
 
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
-  
+
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
+
+  // Debug: print the patient object that comes from navigation state
+
+const encounterId = propsData?.encounter?.id;
+const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
+  useLazyExistsPatientDiagnosisByEncounterIdQuery();
+ 
+  const patientIdToFetch =
+    (propsData?.patient as any)?.id ??
+    (propsData?.patient as any)?.key ??
+    (propsData?.patient as any)?.patientId ??
+    null;
+
+  const shouldFetchPatient =
+    patientIdToFetch != null && String(patientIdToFetch).trim() !== '' && String(patientIdToFetch) !== 'undefined';
+
+  // `useGetPatientByIdQuery` expects: { id }
+  const { data: fetchedPatient } = useGetPatientByIdQuery(
+    { id: patientIdToFetch as any },
+    {
+      skip: !shouldFetchPatient,
+    }
+  );
+
+  const patientToSend = fetchedPatient ?? propsData?.patient;
 
   // const outletPatient = propsData?.patient;
   // const outletEncounter = propsData?.encounter;
@@ -84,7 +110,7 @@ const Encounter = () => {
   const [openAiPopup, setOpenAiPopup] = useState<boolean>(false);
 
   const [aiButtonPosition, setAiButtonPosition] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180, 
+    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180,
     y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
   });
 
@@ -112,7 +138,7 @@ const Encounter = () => {
     if (!hasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (buttonPosition.x + dragOffset.x), 2) +
-          Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
+        Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
       );
 
       if (movedDistance > 5) {
@@ -156,11 +182,11 @@ const Encounter = () => {
   }, [isDragging, dragOffset, hasMoved]);
 
   // Use departmentKey from encounter, fallback to 5001 if not available
-  const departmentKeyToUse = localEncounter?.departmentId ;
+  const departmentKeyToUse = localEncounter?.departmentId;
 
   const { data: departmentSheets = [] } = useGetMedicalSheetsByDepartmentQuery(departmentKeyToUse);
 
-  
+
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
@@ -172,7 +198,7 @@ const Encounter = () => {
     }
   }, [location.state]);
 
- 
+
 
 
 
@@ -207,19 +233,17 @@ const Encounter = () => {
   };
 
   const followUpDraftAppointmentData = React.useMemo(() => {
-    // Seed the follow-up modal with the encounter's patient so it opens ready to save.
-    const patient = propsData?.patient;
-    if (!patient) return null;
+    // Send appointment-related draft data only. Patient is passed separately via `patient` prop.
+    if (!patientToSend) return null;
     return {
-      patient,
-      patientId: patient?.id
+      patientId: (patientToSend as any)?.id ?? (patientToSend as any)?.key ?? null
     };
-  }, [propsData?.patient]);
+  }, [patientToSend]);
 
   const handleCompleteEncounter = async () => {
     try {
       if (propsData.encounter) {
-await completeEncounter({ id: propsData.encounter.id }).unwrap();
+        await completeEncounter({ id: propsData.encounter.id }).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
     } catch (error) {
@@ -243,7 +267,7 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
     if (!aiHasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (aiButtonPosition.x + aiDragOffset.x), 2) +
-          Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
+        Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
       );
 
       if (movedDistance > 5) setAiHasMoved(true);
@@ -463,6 +487,8 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                 >
                   Create Follow-up
                 </MyButton>
+
+                {/*
                 {!(propsData?.encounter?.resourceTypeLkey === '4217389643435490') &&
                   !(propsData?.encounter?.resourceTypeLkey === '91084250213000') && (
                     <MyButton
@@ -475,24 +501,61 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                       <Translate>Admit to Inpatient</Translate>
                     </MyButton>
                   )}
-               
-                  <MyButton
-                    prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                    onClick={() =>
-                      //when handling inpatient logic add this condition to show discharge modal only for inpatient encounter types
-                      // propsData?.encounter?.encounterType === 'INPATIENT' ||
-                      // propsData?.encounter?.encounterType === 'DAYCASE' ||
-                      // propsData?.encounter?.encounterType === 'PROCEDURE' ||
-                      // propsData?.encounter?.encounterType === 'EMERGENCY'
-                      //   ? setOpenDischargeModal(true)
-                      //   :
-                         handleCompleteEncounter()
-                    }
-                    appearance="ghost"
-                  >
-                    <Translate>
-                      Complete Visit
-                      {/* {propsData?.encounter?.encounterType === 'INPATIENT' ||
+                */}
+
+                <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                  // onClick={() =>
+                  //   //when handling inpatient logic add this condition to show discharge modal only for inpatient encounter types
+                  //   // propsData?.encounter?.encounterType === 'INPATIENT' ||
+                  //   // propsData?.encounter?.encounterType === 'DAYCASE' ||
+                  //   // propsData?.encounter?.encounterType === 'PROCEDURE' ||
+                  //   // propsData?.encounter?.encounterType === 'EMERGENCY'
+                  //   //   ? setOpenDischargeModal(true)
+                  //   //   :
+                  //   handleCompleteEncounter()
+                  // }
+                onClick={async () => {
+    try {
+      if (!encounterId) {
+        dispatch(
+          notify({
+            msg: 'Encounter not found',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      const exists = await checkDiagnosisExists({ encounterId }).unwrap();
+
+      if (!exists) {
+        dispatch(
+          notify({
+            msg: 'Please add patient diagnosis before completing the visit',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      handleCompleteEncounter();
+    } catch (error) {
+      console.error('Diagnosis check error:', error);
+      dispatch(
+        notify({
+          msg: 'Failed to validate patient diagnosis',
+          sev: 'error'
+        })
+      );
+    }
+  }}
+  disabled={!encounterId || isCheckingPatientDiagnosis}
+                  appearance="ghost"
+                >
+                  <Translate>
+                    Complete Visit
+                    {/* {propsData?.encounter?.encounterType === 'INPATIENT' ||
                       propsData?.encounter?.encounterType === 'DAYCASE' ||
                       propsData?.encounter?.encounterType === 'PROCEDURE' ||
                       propsData?.encounter?.encounterType === 'EMERGENCY'
@@ -500,9 +563,9 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
                         :
                          'Complete Visit'
                          } */}
-                    </Translate>
-                  </MyButton>
-                
+                  </Translate>
+                </MyButton>
+
 
                 {/* show this button only on the dashboard page */}
                 {location.pathname == '/encounter' && (
@@ -672,10 +735,11 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
         onClose={() => {
           setModalOpen(false), setShowAppointmentOnly(false);
         }}
+        patient={patientToSend}
         appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
-        onSave={() => {}}
+        onSave={() => { }}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
       />
@@ -703,7 +767,7 @@ await completeEncounter({ id: propsData.encounter.id }).unwrap();
       />
 
       <AiAssistantPopup
-       open={openAiPopup}
+        open={openAiPopup}
         setOpen={setOpenAiPopup}
         patient={propsData?.patient}
         encounter={propsData?.encounter}

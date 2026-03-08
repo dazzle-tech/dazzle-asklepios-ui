@@ -232,7 +232,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
               Show Canceled
             </Checkbox>
 
-            <MyButton disabled={orders.id == null} onClick={() => setOpenTestsModal(true)}>
+            <MyButton disabled={isSubmitDisabled} onClick={() => setOpenTestsModal(true)}>
               <FontAwesomeIcon icon={faPlus} /> Add Test
             </MyButton>
 
