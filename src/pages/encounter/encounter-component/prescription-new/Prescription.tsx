@@ -1208,7 +1208,7 @@ const Prescription = (props: Props) => {
         }
       />
 
-      <AllergyFloatingButton patientKey={patient?.key} />
+      <AllergyFloatingButton patient={patient} />
     </>
   );
 };
