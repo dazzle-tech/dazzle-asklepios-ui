@@ -32,6 +32,7 @@ type PatientDiagnosisProps = {
   disabled?: boolean;
   title?: React.ReactNode;
   width?: string;
+  onDiagnosisSaved?: () => void;
 };
 
 const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
@@ -39,7 +40,8 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
   encounter,
   disabled = false,
   title = 'Patient Diagnosis',
-  width = '100%'
+  width = '100%',
+  onDiagnosisSaved
 }) => {
   const dispatch = useAppDispatch();
 
@@ -159,9 +161,15 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
 
   const tableData = useMemo(() => {
     if (Array.isArray(patientDiagnosesResp)) return patientDiagnosesResp;
-    if (Array.isArray((patientDiagnosesResp as any)?.data)) return (patientDiagnosesResp as any).data;
-    if (Array.isArray((patientDiagnosesResp as any)?.content)) return (patientDiagnosesResp as any).content;
-    if (Array.isArray((patientDiagnosesResp as any)?.items)) return (patientDiagnosesResp as any).items;
+    if (Array.isArray((patientDiagnosesResp as any)?.data)) {
+      return (patientDiagnosesResp as any).data;
+    }
+    if (Array.isArray((patientDiagnosesResp as any)?.content)) {
+      return (patientDiagnosesResp as any).content;
+    }
+    if (Array.isArray((patientDiagnosesResp as any)?.items)) {
+      return (patientDiagnosesResp as any).items;
+    }
     return [];
   }, [patientDiagnosesResp]);
 
@@ -185,6 +193,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     const ids = (tableData ?? [])
       .map((r: any) => Number(r?.diagnosisId))
       .filter((v: any) => Number.isFinite(v) && v > 0);
+
     return Array.from(new Set(ids));
   }, [tableData]);
 
@@ -210,7 +219,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
           return next;
         });
       } catch {
-        // ignore
+        //
       }
     };
 
@@ -234,11 +243,15 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
 
     try {
       await hardDeletePatientDiagnosis({ id: selectedDiagnosisToDelete.id }).unwrap();
+
       dispatch(notify({ msg: 'Diagnosis deleted successfully', sev: 'success' }));
       setDeleteModalOpen(false);
       setSelectedDiagnosisToDelete(null);
-      refetchLatest();
-      refetchTable();
+
+      await refetchLatest();
+      await refetchTable();
+
+      onDiagnosisSaved?.();
     } catch (error: any) {
       showApiError(error);
     }
@@ -324,30 +337,48 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
       return;
     }
+
     if (!payload.encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
       return;
     }
+
     if (!payload.diagnosisId) {
       dispatch(notify({ msg: 'Diagnosis is required.', sev: 'warning' }));
       return;
     }
+
     if (!payload.type) {
       dispatch(notify({ msg: 'Type is required.', sev: 'warning' }));
       return;
     }
 
     try {
-      await createPatientDiagnosis(payload as any).unwrap();
+      const createResponse = await createPatientDiagnosis(payload as any).unwrap();
+
+      setDiagnosis(previousDiagnosis => ({
+        ...previousDiagnosis,
+        ...createResponse,
+        patientId: patientIdNumber,
+        encounterId: encounterIdNumber,
+        id: undefined
+      }));
+
       dispatch(notify({ msg: 'Diagnosis saved successfully', sev: 'success' }));
-      refetchLatest();
-      refetchTable();
-      clearForm();
+
+      await refetchLatest();
+      await refetchTable();
+
+      onDiagnosisSaved?.();
     } catch (error: any) {
       showApiError(error);
     }
   };
-console.log("tableData", tableData)
+
+  const handleClear = () => {
+    clearForm();
+  };
+
   return (
     <div className="pd-root" style={width ? { width } : {}}>
       <div className="pd-grid">
@@ -359,7 +390,9 @@ console.log("tableData", tableData)
           <Form fluid>
             <Icd10DiagnosisSearch
               diagnosisId={(diagnosis.diagnosisId as any) ?? null}
-              setDiagnosisId={(id: number | null) => setDiagnosis(prev => ({ ...prev, diagnosisId: id }))}
+              setDiagnosisId={(id: number | null) =>
+                setDiagnosis(prev => ({ ...prev, diagnosisId: id }))
+              }
               label=""
               disabled={disabled}
             />
@@ -408,7 +441,7 @@ console.log("tableData", tableData)
                 Save
               </MyButton>
 
-              <MyButton onClick={clearForm} disabled={disabled || savingBusy}>
+              <MyButton onClick={handleClear} disabled={disabled || savingBusy}>
                 Clear
               </MyButton>
             </div>
