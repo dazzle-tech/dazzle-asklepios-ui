@@ -197,7 +197,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           source: 'PATIENT_PROFILE_PICTURE'
         }).unwrap();
 
-        refetchProfilePicture();
+        // No manual refetch: calling refetch() while the query is skipped/uninitialized throws.
+        // We rely on RTK Query tag invalidation in `attachmentService` to refresh the picture.
         setRefetchAttachmentList(true);
         dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
       } catch (error) {
