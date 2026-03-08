@@ -17,7 +17,11 @@ import TrashIcon from '@rsuite/icons/Trash';
 import CloseIcon from '@rsuite/icons/Close';
 import CheckIcon from '@rsuite/icons/Check';
 import EditIcon from '@rsuite/icons/Edit';
-import { useLazySearchIcd10Query } from '../../services/setup/icd10service';
+import {
+  type ICDDiagnosisDTO,
+  type PagedResult,
+  useLazySearchIcdDiagnosesQuery
+} from '@/services/setup/icdTreeService';
 
 import './styles.less';
 import Translate from '../Translate';
@@ -34,7 +38,6 @@ type Props = {
   required?: boolean;
 };
 
-
 const Icd10Search: React.FC<Props> = ({
   object,
   setOpject,
@@ -48,20 +51,17 @@ const Icd10Search: React.FC<Props> = ({
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const size = 30;
-  const sort = 'id,asc';
+  const sort = 'icdCode,asc';
   const [openList, setOpenList] = useState(false);
   const [picked, setPicked] = useState<any | null>(null);
   const [addedFeedback, setAddedFeedback] = useState<string | null>(null);
   const [isTextareaEditable, setIsTextareaEditable] = useState(false);
 
-  const textFromParent: string =
-    mode === 'multiICD10' ? String(object?.[fieldName] ?? '') : '';
-  
+  const textFromParent: string = mode === 'multiICD10' ? String(object?.[fieldName] ?? '') : '';
+
   const isInternalUpdateRef = useRef(false);
 
-  const [triggerSearch, { /* isFetching, isLoading, */ isUninitialized, error }] =
-    useLazySearchIcd10Query();
-
+  const [triggerSearch, { isUninitialized, error }] = useLazySearchIcdDiagnosesQuery();
 
   const [selfLoading, setSelfLoading] = useState(false);
 
@@ -69,19 +69,28 @@ const Icd10Search: React.FC<Props> = ({
   const instanceId = `${fieldName}-${mode}`;
 
   const runSearch = async (reset = true) => {
-    if (!keyword) return;
+    if (!keyword || keyword.length < 3) return;
     const nextPage = reset ? 0 : page + 1;
 
     setSelfLoading(true);
     try {
-      const res = await triggerSearch({ keyword, page: nextPage, size, sort }).unwrap();
+      const res = await triggerSearch({
+        keyword,
+        page: nextPage,
+        size,
+        sort,
+        timestamp: Date.now()
+      }).unwrap();
 
-      const pageData =
-        (res?.data ?? []).map((it: any) => ({
-          id: it.id,
-          code: it.code,
-          description: it.description
-        })) || [];
+      const pr = res as unknown as PagedResult<ICDDiagnosisDTO>;
+
+      const rawData = pr?.data ?? (Array.isArray(res) ? (res as any[]) : []);
+
+      const pageData = rawData.map((it: ICDDiagnosisDTO) => ({
+        id: it.id ?? it.icdDiagnosisUid,
+        code: it.icdCode ?? '',
+        description: it.icdFullDescription ?? it.icdShortDescription ?? ''
+      }));
 
       setItems(prev => {
         if (reset) return pageData;
@@ -89,9 +98,16 @@ const Icd10Search: React.FC<Props> = ({
         return [...prev, ...pageData.filter(p => !seen.has(String(p.id)))];
       });
 
-      setTotal(res?.totalCount ?? 0);
+      setTotal(pr?.totalCount ?? pageData.length);
       setPage(nextPage);
       setOpenList(true);
+    } catch (err) {
+      console.error('ICD10 search error:', err);
+      if (reset) {
+        setItems([]);
+        setTotal(0);
+        setOpenList(false);
+      }
     } finally {
       setSelfLoading(false);
     }
@@ -99,17 +115,17 @@ const Icd10Search: React.FC<Props> = ({
 
   const hasMore = items.length < total && !selfLoading;
 
-  const selectedItem = useMemo(
-    () => {
-      if (mode !== 'singleICD10') return null;
-      return picked ?? items.find(it => String(it.id) === String(object?.[fieldName])) ?? null;
-    },
-    [picked, items, object, fieldName, mode, instanceId]
-  );
+  const selectedItem = useMemo(() => {
+    if (mode !== 'singleICD10') return null;
+    return picked ?? items.find(it => String(it.id) === String(object?.[fieldName])) ?? null;
+  }, [picked, items, object, fieldName, mode, instanceId]);
 
   const getAddedItemsSet = useMemo(() => {
     if (mode !== 'multiICD10' || !textFromParent) return new Set<string>();
-    const lines = textFromParent.split('\n').map(l => l.trim()).filter(l => l);
+    const lines = textFromParent
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l);
     return new Set(lines);
   }, [textFromParent, mode, instanceId]);
 
@@ -126,7 +142,10 @@ const Icd10Search: React.FC<Props> = ({
     setOpject((prev: any) => {
       const currentText = String(prev?.[fieldName] ?? '').trim();
       if (!currentText) return prev;
-      const lines = currentText.split('\n').map(l => l.trim()).filter(l => l);
+      const lines = currentText
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l);
       const filteredLines = lines.filter(l => l !== line.trim());
       const next = filteredLines.join('\n');
       return { ...prev, [fieldName]: next };
@@ -164,19 +183,17 @@ const Icd10Search: React.FC<Props> = ({
         }
         return { ...prev, [fieldName]: next };
       });
-      
-      // Reset the flag after a short delay
+
       setTimeout(() => {
         isInternalUpdateRef.current = false;
       }, 100);
 
       setAddedFeedback(mod.code);
       setTimeout(() => setAddedFeedback(null), 2000);
-      
+
       setValue('');
     }
   };
-
 
   useEffect(() => {
     if (!keyword) {
@@ -192,10 +209,7 @@ const Icd10Search: React.FC<Props> = ({
   const highlight = (text: string) => {
     if (!keyword) return text;
     try {
-      const rx = new RegExp(
-        `(${keyword.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')})`,
-        'ig'
-      );
+      const rx = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')})`, 'ig');
       return (
         <span
           dangerouslySetInnerHTML={{
@@ -243,12 +257,13 @@ const Icd10Search: React.FC<Props> = ({
   return (
     <div key={instanceId} data-instance-id={instanceId} className="icd10-root">
       <Row>
-          <Text>
-            <Translate>
-              {props?.label ?? (mode === 'singleICD10' ? 'Diagnosis (ICD-10)' : 'Select ICD-10 Codes')}
-            </Translate>
-              {required && <span style={{ color: 'var(--primary-pink)' }}> *</span>}
-          </Text>
+        <Text>
+          <Translate>
+            {props?.label ??
+              (mode === 'singleICD10' ? 'Diagnosis (ICD-10)' : 'Select ICD-10 Codes')}
+          </Translate>
+          {required && <span style={{ color: 'var(--primary-pink)' }}> *</span>}
+        </Text>
         <Col md={24}>
           <div className="search-wrap">
             <InputGroup className="search-group" inside>
@@ -259,7 +274,7 @@ const Icd10Search: React.FC<Props> = ({
                     : 'Search indication by code or description'
                 }
                 value={value}
-                onChange={(val) => setValue(String(val))}
+                onChange={val => setValue(String(val))}
                 onPressEnter={() => runSearch(true)}
                 disabled={!!props?.disabled}
                 className="search-input"
@@ -273,7 +288,14 @@ const Icd10Search: React.FC<Props> = ({
                 {selfLoading ? <Loader /> : <SearchIcon />}
               </InputGroup.Button>
               {mode === 'multiICD10' && value && (
-                <Whisper placement="top" speaker={<Tooltip><Translate>Clear search</Translate></Tooltip>}>
+                <Whisper
+                  placement="top"
+                  speaker={
+                    <Tooltip>
+                      <Translate>Clear search</Translate>
+                    </Tooltip>
+                  }
+                >
                   <InputGroup.Button
                     className="clear-btn"
                     onClick={clearSearch}
@@ -285,7 +307,14 @@ const Icd10Search: React.FC<Props> = ({
                 </Whisper>
               )}
               {mode === 'singleICD10' && hasContent && (
-                <Whisper placement="top" speaker={<Tooltip><Translate>Clear selection</Translate></Tooltip>}>
+                <Whisper
+                  placement="top"
+                  speaker={
+                    <Tooltip>
+                      <Translate>Clear selection</Translate>
+                    </Tooltip>
+                  }
+                >
                   <InputGroup.Button
                     className="clear-icon-btn"
                     onClick={clearAll}
@@ -308,9 +337,15 @@ const Icd10Search: React.FC<Props> = ({
                   {!selfLoading && items.length === 0 && (
                     <div className="empty">
                       {isUninitialized ? (
-                        <span><Translate>Type a keyword and click search to find ICD-10 codes</Translate></span>
+                        <span>
+                          <Translate>
+                            Type a keyword and click search to find ICD-10 codes
+                          </Translate>
+                        </span>
                       ) : (
-                        <span><Translate>No results found. Try a different keyword.</Translate></span>
+                        <span>
+                          <Translate>No results found. Try a different keyword.</Translate>
+                        </span>
                       )}
                     </div>
                   )}
@@ -319,19 +354,21 @@ const Icd10Search: React.FC<Props> = ({
                     const isJustAdded = addedFeedback === mod.code;
                     const alreadyAdded = isItemAdded(mod);
                     const showAddedState = alreadyAdded || isJustAdded;
-                    
+
                     return (
                       <Dropdown.Item
                         key={String(mod.id)}
                         eventKey={String(mod.id)}
                         onClick={() => !alreadyAdded && selectAndClose(mod)}
-                        className={`dropdown-item ${showAddedState ? 'added' : ''} ${alreadyAdded ? 'disabled' : ''}`}
-                        onMouseEnter={(e) => {
+                        className={`dropdown-item ${showAddedState ? 'added' : ''} ${
+                          alreadyAdded ? 'disabled' : ''
+                        }`}
+                        onMouseEnter={e => {
                           if (!showAddedState) {
                             (e.currentTarget as HTMLDivElement).classList.add('hover');
                           }
                         }}
-                        onMouseLeave={(e) => {
+                        onMouseLeave={e => {
                           if (!showAddedState) {
                             (e.currentTarget as HTMLDivElement).classList.remove('hover');
                           }
@@ -350,12 +387,19 @@ const Icd10Search: React.FC<Props> = ({
                               {alreadyAdded ? (
                                 <div className="added-actions">
                                   <CheckIcon className="check" />
-                                  <Whisper placement="left" speaker={<Tooltip><Translate>Remove</Translate></Tooltip>}>
+                                  <Whisper
+                                    placement="left"
+                                    speaker={
+                                      <Tooltip>
+                                        <Translate>Remove</Translate>
+                                      </Tooltip>
+                                    }
+                                  >
                                     <Button
                                       size="xs"
                                       appearance="subtle"
                                       className="remove-btn"
-                                      onClick={(e) => {
+                                      onClick={e => {
                                         e.stopPropagation();
                                         removeItem(mod);
                                       }}
@@ -365,12 +409,19 @@ const Icd10Search: React.FC<Props> = ({
                                   </Whisper>
                                 </div>
                               ) : (
-                                <Whisper placement="left" speaker={<Tooltip><Translate>Click to add</Translate></Tooltip>}>
+                                <Whisper
+                                  placement="left"
+                                  speaker={
+                                    <Tooltip>
+                                      <Translate>Click to add</Translate>
+                                    </Tooltip>
+                                  }
+                                >
                                   <Button
                                     size="xs"
                                     appearance="subtle"
                                     className="add-btn"
-                                    onClick={(e) => {
+                                    onClick={e => {
                                       e.stopPropagation();
                                       selectAndClose(mod);
                                     }}
@@ -388,19 +439,23 @@ const Icd10Search: React.FC<Props> = ({
 
                   {selfLoading && (
                     <div className="loading">
-                      <Loader /> <span><Translate>Loading results…</Translate></span>
+                      <Loader />{' '}
+                      <span>
+                        <Translate>Loading results…</Translate>
+                      </span>
                     </div>
                   )}
 
                   {hasMore && (
                     <div className="load-more">
-                      <Button 
-                        appearance="subtle" 
+                      <Button
+                        appearance="subtle"
                         onClick={() => runSearch(false)}
                         className="load-more-btn"
                         disabled={selfLoading}
                       >
-                        <Translate>Load more</Translate> ({total - items.length} <Translate>remaining</Translate>)
+                        <Translate>Load more</Translate> ({total - items.length}{' '}
+                        <Translate>remaining</Translate>)
                       </Button>
                     </div>
                   )}
@@ -411,7 +466,9 @@ const Icd10Search: React.FC<Props> = ({
             {error && (
               <div className="error">
                 <CloseIcon className="error-icon" />
-                <span><Translate>Failed to fetch results. Please try again.</Translate></span>
+                <span>
+                  <Translate>Failed to fetch results. Please try again.</Translate>
+                </span>
               </div>
             )}
           </div>
@@ -432,7 +489,9 @@ const Icd10Search: React.FC<Props> = ({
                   </span>
                 </div>
               ) : (
-                <span className="summary-empty"><Translate>No diagnosis selected</Translate></span>
+                <span className="summary-empty">
+                  <Translate>No diagnosis selected</Translate>
+                </span>
               )}
             </div>
           </Col>
@@ -443,12 +502,16 @@ const Icd10Search: React.FC<Props> = ({
             <div className="indications-wrap">
               <div className="indications-editor">
                 <textarea
-                  placeholder={'Click search results above to add indications, or type freely here...\n\nEach indication will appear on a new line.'}
+                  placeholder={
+                    'Click search results above to add indications, or type freely here...\n\nEach indication will appear on a new line.'
+                  }
                   value={textFromParent}
                   disabled={!!props?.disabled}
                   readOnly={!isTextareaEditable && !props?.disabled}
-                  className={`indications-textarea ${(!isTextareaEditable && !props?.disabled) ? 'readonly' : ''}`}
-                  onChange={(e) => {
+                  className={`indications-textarea ${
+                    !isTextareaEditable && !props?.disabled ? 'readonly' : ''
+                  }`}
+                  onChange={e => {
                     if (isTextareaEditable && !props?.disabled) {
                       const v = e.target.value;
                       isInternalUpdateRef.current = true;
@@ -458,12 +521,12 @@ const Icd10Search: React.FC<Props> = ({
                       }, 100);
                     }
                   }}
-                  onFocus={(e) => {
+                  onFocus={e => {
                     if (isTextareaEditable && !props?.disabled) {
                       e.currentTarget.classList.add('focus');
                     }
                   }}
-                  onBlur={(e) => {
+                  onBlur={e => {
                     e.currentTarget.classList.remove('focus');
                   }}
                 />
@@ -477,8 +540,17 @@ const Icd10Search: React.FC<Props> = ({
                 )}
               </div>
               <Stack direction="column" spacing={8}>
-                <Whisper placement="left" speaker={<Tooltip><Translate>{isTextareaEditable ? 'Disable editing' : 'Enable editing'}</Translate></Tooltip>}>
-                  <Button 
+                <Whisper
+                  placement="left"
+                  speaker={
+                    <Tooltip>
+                      <Translate>
+                        {isTextareaEditable ? 'Disable editing' : 'Enable editing'}
+                      </Translate>
+                    </Tooltip>
+                  }
+                >
+                  <Button
                     appearance={isTextareaEditable ? 'primary' : 'subtle'}
                     onClick={() => setIsTextareaEditable(!isTextareaEditable)}
                     disabled={!!props?.disabled}
@@ -487,9 +559,16 @@ const Icd10Search: React.FC<Props> = ({
                     <EditIcon />
                   </Button>
                 </Whisper>
-                <Whisper placement="left" speaker={<Tooltip><Translate>Clear all ICD 10 codes</Translate></Tooltip>}>
-                  <Button 
-                    appearance="primary" 
+                <Whisper
+                  placement="left"
+                  speaker={
+                    <Tooltip>
+                      <Translate>Clear all ICD 10 codes</Translate>
+                    </Tooltip>
+                  }
+                >
+                  <Button
+                    appearance="primary"
                     color="red"
                     onClick={clearTextarea}
                     disabled={!!props?.disabled || !currentTextValue.trim()}
@@ -503,8 +582,13 @@ const Icd10Search: React.FC<Props> = ({
             <div className="tip">
               <CheckIcon className="tip-icon" />
               <span>
-                <strong><Translate>Tip:</Translate></strong>{' '}
-                <Translate>Click any search result above to automatically add it here. You can also type or edit manually. Each indication appears on a new line.</Translate>
+                <strong>
+                  <Translate>Tip:</Translate>
+                </strong>{' '}
+                <Translate>
+                  Click any search result above to automatically add it here. You can also type or
+                  edit manually. Each indication appears on a new line.
+                </Translate>
               </span>
             </div>
           </Col>
