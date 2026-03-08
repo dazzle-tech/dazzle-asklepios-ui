@@ -28,7 +28,7 @@ import { dvmService } from '@/services/dvmService';
 import { encounterService } from '@/services/encounterService';
 import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
-
+import { referralRequestService } from './services/medicalsheetsEncounter/referralRequestService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { activeIngredientSynonymsService } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
 import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
@@ -148,7 +148,6 @@ import { patientEncounterService } from './services/encounters/patientEncounterS
 import { patientPaymentsService } from './services/encounters/patientPaymentsService';
 import { consultationService } from './services/consultation/consultationService';
 import { portalService } from './services/portalService';
-import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
 import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';

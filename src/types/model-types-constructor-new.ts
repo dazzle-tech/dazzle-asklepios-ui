@@ -949,17 +949,6 @@ export const newPriceListItem: modelTypes.PriceListItem = {
 };
 
 // ------------------- Referral Request -------------------
-export const newReferralRequest: modelTypes.ReferralRequest = {
-  id: null,
-  patientId: null,
-  encounterId: null,
-  referralType: 'INTERNAL',
-  facilityId: null,
-  departmentId: null,
-  referralReason: '',
-  priority: null,
-  isActive: true
-};
 
 // ------------------- Billing Invoice -------------------
 export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
@@ -2244,4 +2233,31 @@ export const newAdditionalMeasurements: modelTypes.AdditionalMeasurements = {
   createdDate: null,
   lastModifiedDate: null
 };
- 
+ // ------------------- Referral Request -------------------
+export const newReferralRequest: modelTypes.ReferralRequest = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: null,
+
+  referralType: 'INTERNAL',
+
+  fromFacilityId: 0,
+  toFacilityId: 0,
+
+  fromDepartmentId: 0,
+  toDepartmentId: 0,
+
+  referralReason: '',
+
+  priority: null,
+
+  status: 'REQUESTED',
+
+  rejectReason: null,
+  rejectedDate: null,
+  rejectedBy: null,
+
+  acceptedDate: null,
+  acceptedBy: null
+};

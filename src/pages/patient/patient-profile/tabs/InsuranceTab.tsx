@@ -53,13 +53,19 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
 
   const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
 
-  const patientInsuranceResponse = useGetInsurancesByPatientQuery({
-    patientId: localPatient.id,
+const patientId = localPatient?.id;
+
+const patientInsuranceResponse = useGetInsurancesByPatientQuery(
+  {
+    patientId,
     page: 0,
     size: 100,
     sort: 'id,desc'
-  });
-
+  },
+  {
+    skip: !patientId
+  }
+);
   const { data: payorListResponse, isFetching: payorFetching } = useGetAllPayorsQuery({
     page: 0,
     size: 1000,
