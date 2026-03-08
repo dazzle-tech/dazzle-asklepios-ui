@@ -20,6 +20,8 @@ import { formatEnumString } from '@/utils';
 import { skipToken } from '@reduxjs/toolkit/query';
 import PatientQuickAppointment from '../../patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
 
+import { useNavigate } from 'react-router-dom';
+
 type Props = {
   localPatient: any;
   departmentType?: string;
@@ -27,6 +29,7 @@ type Props = {
 
 const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentType }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
@@ -55,6 +58,7 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
   );
 
   const encountersRaw = data?.data || [];
+
   const encounters = useMemo(() => {
     if (!departmentType) return encountersRaw;
 
@@ -136,7 +140,26 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
       render: (row: any) => (
         <a
           className="visit-history__encounter-link"
+          style={{ cursor: 'pointer', color: '#1677ff', fontWeight: 500 }}
           onClick={() => {
+
+            const dept = departmentsMap[row.departmentId];
+
+            const isEmergency =
+              dept?.type?.toUpperCase() === 'EMERGENCY' ||
+              dept?.name?.toUpperCase() === 'EMERGENCY';
+
+            if (isEmergency) {
+              navigate('/view-triage', {
+                state: {
+                  patient: localPatient,
+                  encounter: row
+                }
+              });
+              return;
+            }
+
+            // normal encounter
             setSelectedVisit(row);
             setQuickInitialStep(0);
             setQuickAppointmentModel(true);

@@ -4,8 +4,8 @@ import MyTab from "@/components/MyTab";
 import Translate from "@/components/Translate";
 import { formatDateWithoutSeconds, formatEnumString } from "@/utils";
 
-import { useFindByEncounterNotCancelledQuery } from "@/services/consultation/consultationService";
-import { useGetTelephonicConsultationOrdersListQuery } from "@/services/encounterService";
+import { useFindConsultationByPatientQuery } from "@/services/consultation/consultationService";
+import { useFindByPatientQuery } from "@/services/patients/telephonicConsultationService";
 import { useGetAllPractitionersQuery } from "@/services/setup/practitioner/PractitionerService";
 
 import { initialListRequest } from "@/types/types";
@@ -15,44 +15,22 @@ const ClinicalConsultationsTables = ({ patient, encounter }) => {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
 
-  const encounterId = String(encounter?.id ?? encounter?.key ?? "");
-
   // ───────── NORMAL CONSULTATION ─────────
-
   const { data: consultationData, isLoading: consultationLoading } =
-    useFindByEncounterNotCancelledQuery(
-      { encounterId, page, size },
-      { skip: !encounterId }
+    useFindConsultationByPatientQuery(
+      { patientId: patient?.id, page, size },
+      { skip: !patient?.id }
     );
 
   const consultations = consultationData?.data ?? [];
   const consultationTotal = consultationData?.totalCount ?? 0;
 
   // ───────── TELEPHONIC ─────────
-
-  const telephonicRequest = {
-    ...initialListRequest,
-    pageSize: size,
-    pageNumber: page + 1,
-    filters: [
-      {
-        fieldName: "patient_id",
-        operator: "match",
-        value: patient?.id
-      },
-      {
-        fieldName: "encounter_key",
-        operator: "match",
-        value: encounter?.key
-      }
-    ]
-  };
-
   const { data: telephonicResponse, isLoading: telephonicLoading } =
-    useGetTelephonicConsultationOrdersListQuery(telephonicRequest);
+    useFindByPatientQuery({ patientId: patient?.id, page, size });
 
-  const telephonicRows = telephonicResponse?.object ?? [];
-  const telephonicTotal = telephonicResponse?.extraNumeric ?? 0;
+  const telephonicRows = telephonicResponse?.data ?? [];
+  const telephonicTotal = telephonicResponse?.totalCount ?? 0;
 
   // ───────── PRACTITIONERS (FOR TELEPHONIC) ─────────
 

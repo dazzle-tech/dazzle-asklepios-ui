@@ -3,27 +3,27 @@ import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { formatDateWithoutSeconds, formatEnumString } from "@/utils";
 
-import { useFindProcdureByEncounterQuery } from "@/services/patients/patientProcedureService";
+import { useFindProcduresByPatientQuery } from "@/services/patients/patientProcedureService";
 import { useGetProceduresByIdsQuery } from "@/services/setup/procedure/procedureService";
 import { useGetIcdDiagnosesByIdsQuery } from "@/services/setup/icdTreeService";
 
 import { useNavigate } from "react-router-dom";
 
-const ProceduresTable = ({ patient, encounter }) => {
-
+const ProceduresTable = ({ patient}) => {
+ console.log("ProceduresTable ==> ", { patient});
   const navigate = useNavigate();
 
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
 
-  const { data, isLoading } = useFindProcdureByEncounterQuery(
+  const { data, isLoading } = useFindProcduresByPatientQuery(
     {
-      encounterId: encounter?.id || encounter?.key,
+      patientId: patient?.id,
       page,
       size,
       includeCancelled: true
     },
-    { skip: !encounter?.id && !encounter?.key }
+    { skip: !patient?.id }
   );
 
   const procedures = data?.data ?? [];
