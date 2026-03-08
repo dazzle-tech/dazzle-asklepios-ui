@@ -14,7 +14,6 @@ import {
 } from '@/services/patients/socialHistoryService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-
 import './style.less';
 
 type SocialHistory = {

@@ -1,375 +1,352 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import Translate from '@/components/Translate';
-import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileArrowDown, faEye } from '@fortawesome/free-solid-svg-icons';
+import React, { useEffect, useMemo, useState } from "react";
+import Translate from "@/components/Translate";
+import MyTable from "@/components/MyTable";
+import MyButton from "@/components/MyButton/MyButton";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFileArrowDown, faEye } from "@fortawesome/free-solid-svg-icons";
 
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from "@/hooks";
+import { notify } from "@/utils/uiReducerActions";
 import {
   formatDateWithoutSeconds,
   formatEnumString,
-  conjureValueBasedOnKeyFromList,
-} from '@/utils';
+  conjureValueBasedOnKeyFromList
+} from "@/utils";
 
 import {
   useGetPatientAttachmentsQuery,
-  useGetDownloadUrlMutation as useGetPatientDownloadUrlMutation,
-} from '@/services/patients/attachmentService';
+  useGetDownloadUrlMutation as useGetPatientDownloadUrlMutation
+} from "@/services/patients/attachmentService";
 
 import {
   useGetDownloadUrlMutation as useGetEncounterDownloadUrlMutation,
-  useGetEncounterAttachmentsByEncounterIdsQuery,
-} from '@/services/encounters/attachmentsService';
+  useGetEncounterAttachmentsByEncounterIdsQuery
+} from "@/services/encounters/attachmentsService";
 
-import { useGetEncountersQuery } from '@/services/encounterService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { initialListRequest } from '@/types/types';
-import { PatientAttachment as PatientAttachmentType } from '@/types/model-types-new';
-import { PreviewModal } from '@/components/AttachmentModals';
+import { useGetEncountersQuery } from "@/services/encounterService";
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+
+import { initialListRequest } from "@/types/types";
+import { PreviewModal } from "@/components/AttachmentModals";
 
 const AttachmentsTable = ({ localPatient }) => {
   const dispatch = useAppDispatch();
 
-  const [selectedAttachment, setSelectedAttachment] =
-    useState<PatientAttachmentType | null>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
 
-  // Preview modal state
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [previewFileName, setPreviewFileName] = useState<string>('');
-  const [previewFileType, setPreviewFileType] = useState<string>('');
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewFileName, setPreviewFileName] = useState("");
+  const [previewFileType, setPreviewFileType] = useState("");
 
-  // Pagination
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
 
-  const patientId = localPatient?.id || localPatient?.key;
-  const hasPatient = Boolean(patientId);
+const patientId = Number(localPatient?.id ?? localPatient?.key);
 
-  // API hooks
+const hasPatient = Number.isFinite(patientId);
+
+
   const [getPatientDownloadUrl] = useGetPatientDownloadUrlMutation();
   const [getEncounterDownloadUrl] = useGetEncounterDownloadUrlMutation();
 
-  // LOV
   const { data: attachmentsLovQueryResponse } =
-    useGetLovValuesByCodeQuery('ATTACH_TYPE');
+    useGetLovValuesByCodeQuery("ATTACH_TYPE");
+
   const attachmentTypesLov = attachmentsLovQueryResponse?.object ?? [];
 
-  // Encounters for patient
+  // ---------------- PATIENT ENCOUNTERS ----------------
+
   const { data: encountersResponse, isLoading: loadingEncounters } =
-    useGetEncountersQuery(
+   useGetEncountersQuery(
       {
         ...initialListRequest,
         pageSize: 1000,
         filters: [
           {
-            fieldName: 'patient_key',
-            operator: 'match',
-            value: patientId,
-          },
-        ],
+            fieldName: "patient_key",
+            operator: "match",
+            value: patientId
+          }
+        ]
       },
       { skip: !hasPatient }
     );
 
-  const patientEncounters = encountersResponse?.object || [];
+  const patientEncounters = encountersResponse?.object ?? [];
+
   const encounterIds = patientEncounters
-    .map((enc) => enc.id || enc.key)
+    .map(enc => enc.id || enc.key)
     .filter(Boolean);
 
-  // Patient attachments
+  // ---------------- PATIENT ATTACHMENTS ----------------
+
   const {
     data: patientAttachmentsResponse,
-    refetch: attachmentRefetch,
-    isLoading: loadingPatientAttachments,
-  } = useGetPatientAttachmentsQuery(
+    refetch: patientAttachmentsRefetch,
+    isLoading: loadingPatientAttachments
+    } = useGetPatientAttachmentsQuery(
     { patientId },
     {
       skip: !hasPatient,
-      refetchOnMountOrArgChange: true,
+      refetchOnMountOrArgChange: true
     }
   );
 
-  // Encounter attachments
+  const patientAttachments = patientAttachmentsResponse?.data ?? [];
+
+  // ---------------- ENCOUNTER ATTACHMENTS ----------------
+
   const {
     data: encounterAttachmentsResponse,
     refetch: encounterAttachmentsRefetch,
-    isLoading: loadingEncounterAttachments,
+    isLoading: loadingEncounterAttachments
   } = useGetEncounterAttachmentsByEncounterIdsQuery(
     { encounterIds },
     {
       skip: encounterIds.length === 0,
-      refetchOnMountOrArgChange: true,
+      refetchOnMountOrArgChange: true
     }
   );
 
-  const patientAttachments = patientAttachmentsResponse?.data || [];
-  const encounterAttachments = encounterAttachmentsResponse || [];
+  const encounterAttachments = encounterAttachmentsResponse ?? [];
 
-  // Combine attachments
+  // ---------------- MERGE DATA ----------------
+
   const combinedAttachments = useMemo(() => {
     return [
-      ...patientAttachments.map((att) => ({
+      ...patientAttachments.map(att => ({
         ...att,
-        attachmentType: 'patient' as const,
-        encounterInfo: null,
+        attachmentType: "patient"
       })),
-      ...encounterAttachments.map((att) => {
-        const encounter = patientEncounters.find(
-          (enc) => (enc.id || enc.key) === att.encounterId
-        );
-        return {
-          ...att,
-          attachmentType: 'encounter' as const,
-          encounterInfo: encounter,
-        };
-      }),
+
+      ...encounterAttachments.map(att => ({
+        ...att,
+        attachmentType: "encounter"
+      }))
     ];
-  }, [patientAttachments, encounterAttachments, patientEncounters]);
+  }, [patientAttachments, encounterAttachments]);
 
   const totalCount = combinedAttachments.length;
-  const loading =
-    loadingPatientAttachments || loadingEncounters || loadingEncounterAttachments;
 
-  // Safe manual refetch when patient changes (guards prevent the error)
+  const loading =
+    loadingPatientAttachments ||
+    loadingEncounterAttachments ||
+    loadingEncounters;
+
+  // ---------------- REFETCH WHEN PATIENT CHANGES ----------------
+
   useEffect(() => {
     if (!hasPatient) return;
 
-    attachmentRefetch();
+    patientAttachmentsRefetch();
 
-    if (encounterIds.length > 0) {
+    if (encounterIds.length) {
       encounterAttachmentsRefetch();
     }
 
     setPage(0);
     setSelectedAttachment(null);
-  }, [hasPatient, patientId, encounterIds.length]);
+  }, [patientId]);
 
-  const isSelected = (rowData) =>
-    rowData && selectedAttachment && selectedAttachment.id === rowData.id
-      ? 'selected-row'
-      : '';
+  const isSelected = row =>
+    row && selectedAttachment && row.id === selectedAttachment.id
+      ? "selected-row"
+      : "";
 
-  // Preview
-  const handlePreviewSelectedAttachment = async (attachment: any) => {
+  // ---------------- PREVIEW ----------------
+
+  const handlePreview = async attachment => {
     try {
-      const downloadTicket =
-        attachment.attachmentType === 'patient'
+      const ticket =
+        attachment.attachmentType === "patient"
           ? await getPatientDownloadUrl(attachment.id).unwrap()
           : await getEncounterDownloadUrl(attachment.id).unwrap();
 
-      setPreviewUrl(downloadTicket.url);
+      setPreviewUrl(ticket.url);
       setPreviewFileName(attachment.filename);
       setPreviewFileType(attachment.mimeType);
       setPreviewModalOpen(true);
     } catch {
-      dispatch(notify({ msg: 'Failed to get preview URL', sev: 'error' }));
+      dispatch(notify({ msg: "Preview failed", sev: "error" }));
     }
   };
 
   const handleClosePreview = () => {
     setPreviewModalOpen(false);
-    setPreviewUrl('');
-    setPreviewFileName('');
-    setPreviewFileType('');
+    setPreviewUrl("");
+    setPreviewFileName("");
+    setPreviewFileType("");
   };
 
-  // Download
-  const handleDownloadSelectedAttachment = async (attachment: any) => {
+  // ---------------- DOWNLOAD ----------------
+
+  const handleDownload = async attachment => {
     try {
-      const downloadTicket =
-        attachment.attachmentType === 'patient'
+      const ticket =
+        attachment.attachmentType === "patient"
           ? await getPatientDownloadUrl(attachment.id).unwrap()
           : await getEncounterDownloadUrl(attachment.id).unwrap();
 
-      const link = document.createElement('a');
-      link.href = downloadTicket.url;
+      const link = document.createElement("a");
+      link.href = ticket.url;
       link.download = attachment.filename;
-      link.target = '_blank';
+      link.target = "_blank";
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      dispatch(notify({ msg: 'Download started', sev: 'success' }));
+      dispatch(notify({ msg: "Download started", sev: "success" }));
     } catch {
-      dispatch(notify({ msg: 'Failed to get download URL', sev: 'error' }));
+      dispatch(notify({ msg: "Download failed", sev: "error" }));
     }
   };
 
-  // Pagination handlers
-  const handlePageChange = (_: unknown, newPage: number) => setPage(newPage);
-
-  const handleRowsPerPageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setPageSize(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  // ---------------- COLUMNS ----------------
 
   const columns = [
     {
-      key: 'attachmentType',
+      key: "category",
       title: <Translate>Category</Translate>,
       flexGrow: 2,
-      render: (rowData: any) => (
+      render: row => (
         <span
           style={{
-            padding: '4px 8px',
-            borderRadius: '4px',
+            padding: "4px 8px",
+            borderRadius: "4px",
             backgroundColor:
-              rowData.attachmentType === 'patient' ? '#e3f2fd' : '#fff3e0',
-            color:
-              rowData.attachmentType === 'patient' ? '#1976d2' : '#f57c00',
+              row.attachmentType === "patient" ? "#e3f2fd" : "#fff3e0",
+            color: row.attachmentType === "patient" ? "#1976d2" : "#f57c00",
             fontWeight: 500,
-            fontSize: '12px',
+            fontSize: "12px"
           }}
         >
-          {rowData.attachmentType === 'patient' ? 'Patient' : 'Encounter'}
+          {row.attachmentType === "patient" ? "Patient" : "Encounter"}
         </span>
-      ),
-      fullText: true,
+      )
     },
+
     {
-      key: 'filename',
+      key: "filename",
       title: <Translate>Attachment Name</Translate>,
-      flexGrow: 4,
-      dataKey: 'filename',
-      fullText: true,
+      dataKey: "filename",
+      flexGrow: 4
     },
+
     {
-      key: 'mimeType',
+      key: "mimeType",
       title: <Translate>File Type</Translate>,
-      flexGrow: 3,
-      dataKey: 'mimeType',
-      fullText: true,
+      dataKey: "mimeType",
+      flexGrow: 2
     },
+
     {
-      key: 'details',
-      title: <Translate>Details</Translate>,
-      flexGrow: 3,
-      dataKey: 'details',
-      fullText: true,
-    },
-    {
-      key: 'type',
+      key: "type",
       title: <Translate>Type</Translate>,
-      flexGrow: 4,
-      render: (rowData: any) =>
-        rowData.type
+      flexGrow: 3,
+      render: row =>
+        row.type
           ? conjureValueBasedOnKeyFromList(
               attachmentTypesLov,
-              rowData.type,
-              'lovDisplayVale'
+              row.type,
+              "lovDisplayVale"
             )
-          : rowData.type,
-      fullText: true,
+          : "-"
     },
+
     {
-      key: 'source',
+      key: "source",
       title: <Translate>Source</Translate>,
-      flexGrow: 3,
-      render: (row: any) => formatEnumString(row.source),
-      fullText: true,
+      flexGrow: 2,
+      render: row => formatEnumString(row.source)
     },
+
     {
-      key: 'encounter',
-      title: <Translate>Encounter</Translate>,
-      flexGrow: 3,
-      render: (rowData: any) => {
-        if (rowData.attachmentType === 'encounter' && rowData.encounterId) {
+      key: "visit",
+      title: <Translate>Visit</Translate>,
+      flexGrow: 2,
+      render: row => {
+        if (row.attachmentType === "encounter" && row.encounterId) {
           const encounter = patientEncounters.find(
-            (enc) => Number(enc.key) === Number(rowData.encounterId)
+            enc => Number(enc.id || enc.key) === Number(row.encounterId)
           );
-          return encounter ? encounter.visitId : rowData.encounterId;
+
+          return encounter?.visitId ?? row.encounterId;
         }
-        return '-';
-      },
-      fullText: true,
+
+        return "-";
+      }
     },
+
     {
-      key: 'preview',
+      key: "preview",
       title: <Translate>Preview</Translate>,
       flexGrow: 2,
-      render: (attachment: any) => (
+      render: row => (
         <MyButton
           appearance="link"
-          onClick={() => handlePreviewSelectedAttachment(attachment)}
           prefixIcon={() => <FontAwesomeIcon icon={faEye} />}
+          onClick={() => handlePreview(row)}
         >
           Preview
         </MyButton>
-      ),
-      fullText: true,
+      )
     },
+
     {
-      key: 'download',
+      key: "download",
       title: <Translate>Download</Translate>,
       flexGrow: 2,
-      render: (attachment: any) => (
+      render: row => (
         <MyButton
           appearance="link"
-          onClick={() => handleDownloadSelectedAttachment(attachment)}
           prefixIcon={() => <FontAwesomeIcon icon={faFileArrowDown} />}
+          onClick={() => handleDownload(row)}
         >
           Download
         </MyButton>
-      ),
-      fullText: true,
+      )
     },
+
     {
-      key: 'createdDate',
-      title: <Translate>Created By/At</Translate>,
-      fullText: true,
+      key: "created",
+      title: <Translate>Created By / At</Translate>,
       flexGrow: 3,
-      render: (row: any) =>
+      render: row =>
         row?.createdDate ? (
           <>
-            {row?.createdBy}
+            {row.createdBy}
             <br />
             <span className="date-table-style">
               {formatDateWithoutSeconds(row.createdDate)}
             </span>
           </>
         ) : (
-          ' '
-        ),
-    },
-    {
-      key: 'lastModifiedDate',
-      title: <Translate>Updated By/At</Translate>,
-      fullText: true,
-      flexGrow: 3,
-      render: (row: any) =>
-        row?.lastModifiedDate ? (
-          <>
-            {row?.lastModifiedBy}
-            <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(row.lastModifiedDate)}
-            </span>
-          </>
-        ) : (
-          ' '
-        ),
-    },
+          "-"
+        )
+    }
   ];
+
+  // ---------------- RENDER ----------------
 
   return (
     <div className="tab-main-container">
       <MyTable
-        height={200}
+        height={350}
         loading={loading}
         data={combinedAttachments}
         columns={columns}
-        onRowClick={(rowData) => setSelectedAttachment(rowData)}
+        onRowClick={row => setSelectedAttachment(row)}
         rowClassName={isSelected}
         page={page}
         rowsPerPage={pageSize}
         totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
+        onPageChange={(_, p) => setPage(p)}
+        onRowsPerPageChange={e => {
+          setPageSize(parseInt(e.target.value, 10));
+          setPage(0);
+        }}
       />
 
       <PreviewModal

@@ -4,7 +4,7 @@ import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useLazyGetActiveAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetActiveAppointablePractitionerQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetActiveAppointablePractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetActiveAppointableProceduresQuery } from '@/services/setup/procedure/procedureService';
 import React, { useEffect, useRef, useState } from 'react';
 import { GrScheduleNew } from "react-icons/gr";
@@ -99,7 +99,7 @@ const AddEditResources = ({
     { skip: resource.resourceType !== 'MEDICAL_TEST' || !open }
   );
   
-  const { data: practitionersData, isFetching: isLoadingPractitioners } = useGetActiveAppointablePractitionerQuery(
+  const { data: practitionersData, isFetching: isLoadingPractitioners } = useGetActiveAppointablePractitionersQuery(
     { page: 0, size: 1000, sort: 'id,asc' },
     { skip: resource.resourceType !== 'PRACTITIONER' || !open }
   );

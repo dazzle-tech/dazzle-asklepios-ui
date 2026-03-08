@@ -131,49 +131,47 @@ const totalCount = usersResponse?.length ?? 0;
 
  
   // Handle Save User
-  const handleSave = async () => {
-    
-    try {
-      if (user.id !== undefined) {
+const handleSave = async () => {
+  try {
+    if (user.id !== undefined) {
+      const response = await updateUser({ ...user }).unwrap();
+      dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
+      setUser({ ...response });
+      refetch();
+    } else {
+      const response = await saveUser({ ...user }).unwrap();
+      dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
+      refetch();
+    }
 
-    const  Response= await updateUser({ ...user } ).unwrap();
-        dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
-        setUser({...Response})
-        refetch();
-      } else {
-    
+    refetchFacility();
+    setCanProceed(true);
+  } catch (error) {
+    console.error("❌ Error saving user:", error);
 
-      const Response=await saveUser({ ...user}).unwrap();
-        dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
-        refetch();
-      }
-    
-      refetchFacility();
-      setCanProceed(true);
-      // setPopupOpen(false);
+    let backendMessage = "Failed to save user";
 
-    } 
-      catch (error) {
-        console.error("❌ Error saving user:", error);
+    const apiError = error?.data;
+    const message = apiError?.message?.toLowerCase();
 
-        let backendMessage = "Failed to save user";
+    if (message === "error.emailexists") {
+      backendMessage = "This email is already in use";
+    } else if (apiError?.fieldErrors?.length > 0) {
+      backendMessage = apiError.fieldErrors[0].message;
+    } else if (apiError?.detail) {
+      backendMessage = apiError.detail;
+    } else if (apiError?.message) {
+      backendMessage = apiError.message;
+    }
 
-        const message = error?.data?.message?.toLowerCase();
-
-        if (message === "error.emailexists") {
-          backendMessage = "This email is already in use";
-        }
-
-        dispatch(
-          notify({
-            msg: backendMessage,
-            sev: "error",
-          })
-        );
-
-        return;
-      }
-  };
+    dispatch(
+      notify({
+        msg: backendMessage,
+        sev: "error",
+      })
+    );
+  }
+};
 
   // Handle click on Add New button
   const handleAddNew = () => {

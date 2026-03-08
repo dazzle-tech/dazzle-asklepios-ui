@@ -86,7 +86,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   }
 
   // Handle specific business/database constraint errors
-  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
+  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.error  ;
 
   const humanMsg =
     (errorKey && keyMap[errorKey]) ||

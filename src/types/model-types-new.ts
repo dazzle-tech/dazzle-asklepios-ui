@@ -1432,17 +1432,7 @@ export interface BillingItem {
  *  Referrals / Discharge
  * ========================= */
 
-export interface ReferralRequest {
-  id: number | null;
-  patientId: number;
-  encounterId: number | null;
-  referralType: string;
-  facilityId: number | null;
-  departmentId: number;
-  referralReason: string;
-  priority: string;
-  isActive: boolean;
-}
+
 
 export interface DischargePlanning {
   id?: number;
@@ -3493,6 +3483,16 @@ export interface AdditionalMeasurements {
   createdDate?: Date | string | null;
   lastModifiedDate?: Date | string | null;
 }
+export interface  SampleLabelVM  {
+  orderTestId: number;
+  patientName: string;
+  facilityName: string;
+  mrn: string;
+  testName: string;
+  sampleDateTime: string; 
+  sampleQuantity: number;
+  sampleUnit: string;
+};
  
 export interface PatientRelation {
   patientId: number;
@@ -3511,4 +3511,62 @@ export interface RelationsMatrix {
   secondPatientGender: string | null;
   firstRelationCode: string;
   secondRelationCode: string;
+}
+export interface PatientAdministrativeWarningsResponseVM {
+  id: number;
+  patientId: number;
+  warningTypeLkey: string;
+  warningTypeDisplay?: string;
+  description?: string;
+  isValid: boolean;
+
+  createdAt?: string;
+  createdBy?: string;
+
+  dateResolved?: string;
+  resolvedBy?: string;
+
+  resolutionUndoDate?: string;
+  resolvedUndoBy?: string;
+}
+
+export interface PatientAdministrativeWarningsCreateDTO {
+  patientId: number;
+  warningType: string;
+  description?: string;
+}
+
+export interface PatientAdministrativeWarningsResolveDTO {
+  id: number;
+}
+
+export interface PatientAdministrativeWarningsUndoResolveDTO {
+  id: number;
+}
+export interface ReferralRequest {
+  id: number | undefined;
+
+  patientId: number;
+  encounterId: number | null;
+
+  referralType: string;
+
+  fromFacilityId: number;
+  toFacilityId: number;
+
+  fromDepartmentId: number;
+  toDepartmentId: number;
+
+  referralReason: string;
+
+  priority: string | null;
+
+  status?: string;
+
+  rejectReason?: string | null;
+  rejectedDate?: string | null;
+  rejectedBy?: string | null;
+
+  acceptedDate?: string | null;
+  acceptedBy?: string | null;
 }

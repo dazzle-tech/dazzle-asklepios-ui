@@ -103,8 +103,9 @@ const DetailsModal = ({
   const genericMedicationData: any[] = Array.isArray(genericMedicationListResponse)
     ? genericMedicationListResponse
     : (genericMedicationListResponse as any)?.data ?? [];
-  const { data: Brand } = useGetBrandMedicationByIdQuery(prescriptionMedication?.genericMedicationsId, {
-    skip: !prescriptionMedication?.genericMedicationsId,
+  const medIdForBrand = prescriptionMedication?.medicationsId ?? prescriptionMedication?.genericMedicationsId;
+  const { data: Brand } = useGetBrandMedicationByIdQuery(medIdForBrand, {
+    skip: !medIdForBrand,
   });
   const [instr, setInstruc] = useState(null);
   const [editDuration, setEditDuration] = useState(false);
@@ -157,8 +158,10 @@ const DetailsModal = ({
 
 
   useEffect(() => {
-    if (prescriptionMedication.key != null && Brand) {
-
+    // Check if we have a medication to edit (either by key or id)
+    const hasMedication = prescriptionMedication?.key != null || prescriptionMedication?.id != null;
+    
+    if (hasMedication && Brand) {
       setSelectedGeneric(Brand);
       setSelectedOption(prescriptionMedication?.instructionsType);
       setInstruc(prescriptionMedication.administrationInstructions);
@@ -168,19 +171,35 @@ const DetailsModal = ({
       setindicationsDescription(prescriptionMedication.indicationIcd ?? "");
 
       if (prescriptionMedication?.instructionsType === 'CUSTOM_INSTRUCTIONS') {
+        // Try to find custom instructions by key or id
+        const medicationKey = prescriptionMedication.key ?? prescriptionMedication.id;
         const instruc = customeInstructions?.object?.find(
-          item => item.prescriptionMedicationsKey === prescriptionMedication.key
+          item => String(item.prescriptionMedicationsKey) === String(medicationKey) ||
+                  String(item.prescriptionMedicationsKey) === String(prescriptionMedication.id)
         );
 
-        setCustomeinst({
-          dose: instruc?.dose,
-          unit: instruc?.unitLkey,
-          frequency: instruc?.frequencyLkey,
-          roa: instruc?.roaLkey
-        });
+        if (instruc) {
+          setCustomeinst({
+            dose: instruc?.dose,
+            unit: instruc?.unitLkey,
+            frequency: instruc?.frequencyLkey,
+            roa: instruc?.roaLkey
+          });
+        } else {
+          // Fallback: use values directly from prescriptionMedication if available
+          setCustomeinst({
+            dose: prescriptionMedication?.dose ?? null,
+            unit: prescriptionMedication?.doesUnit ?? null,
+            frequency: prescriptionMedication?.frequency ?? null,
+            roa: prescriptionMedication?.rout ?? null
+          });
+        }
       }
+    } else if (hasMedication && !Brand && medIdForBrand) {
+      // If we have medication ID but Brand hasn't loaded yet, wait for it
+      // This handles the case where Brand query is still loading
     }
-  }, [prescriptionMedication, Brand, customeInstructions]);
+  }, [prescriptionMedication, Brand, customeInstructions, medIdForBrand]);
 
   useEffect(() => {
     if (searchKeywordicd.trim() !== '') {
@@ -374,10 +393,13 @@ const DetailsModal = ({
     };
 
     try {
-      if (prescriptionMedication?.id) {
+      // Check if we're updating an existing medication (has id or key)
+      const medicationId = prescriptionMedication?.id ?? prescriptionMedication?.key;
+      if (medicationId) {
         await updatePrescriptionMedication({
-          id: Number(prescriptionMedication.id),
+          id: Number(medicationId),
           body: {
+            medicationsId: createPayload.medicationsId,
             instructionsType: createPayload.instructionsType,
             instructions: createPayload.instructions,
             dose: createPayload.dose,
@@ -399,9 +421,10 @@ const DetailsModal = ({
             refillUnit: createPayload.refillUnit,
             notes: createPayload.notes,
             extraDocumentation: createPayload.extraDocumentation,
+            administrationInstructions: createPayload.administrationInstructions,
             lastModifiedBy: patient?.key ? String(patient.key) : 'system'
           }
-      }).unwrap();
+        }).unwrap();
       } else {
        await savePrescriptionMedication(createPayload as any).unwrap();
        
@@ -465,10 +488,11 @@ const DetailsModal = ({
 
   useEffect(() => {
     if (!open) return;
-    if (!prescriptionMedication?.key) {
+    // Only clear if we're adding new medication (no key and no id)
+    if (!prescriptionMedication?.key && !prescriptionMedication?.id) {
       handleCleare();
     }
-  }, [open, prescriptionMedication?.key]);
+  }, [open, prescriptionMedication?.key, prescriptionMedication?.id]);
 
   // Handle click outside medication search dropdown
   useEffect(() => {
@@ -784,28 +808,31 @@ const DetailsModal = ({
                 content={
                   <Form>
                     <div className="prescription-indication-blocks">
-
-                      <div className="indication-row">
-
-                        {/* ICD-10 */}
-                        <div className="indication-field">
-                        
-                            <Icd10DiagnosisSearch
-              diagnosisId={(prescriptionMedication.indicationIcd as any) ?? null}
-              setDiagnosisId={(id: number | null) => setPrescriptionMedications(prev => ({ ...prev, indicationIcd: id }))}
-              label="ICD-10"
-              disabled={preKey == null}
-            />
-                          <span style={{ color: 'red' }}>*</span>
+                      {/* ICD-10 Section - Full Width at Top */}
+                      <div className="indication-icd-section">
+                        <div className="indication-icd-label-wrapper">
+                          <Text className="indication-icd-label">
+                            ICD-10
+                            <span className="required-asterisk">*</span>
+                          </Text>
                         </div>
+                        <Icd10DiagnosisSearch
+                          diagnosisId={(prescriptionMedication.indicationIcd as any) ?? null}
+                          setDiagnosisId={(id: number | null) => setPrescriptionMedications(prev => ({ ...prev, indicationIcd: id }))}
+                          label=""
+                          disabled={preKey == null}
+                        />
+                      </div>
 
+                      {/* Other Fields Section - Two Columns Below */}
+                      <div className="indication-other-fields-row">
                         {/* Indication Use */}
                         <div className="indication-field">
                           <MyInput
-                            width="17vw"
+                             width="20vw"
                             fieldType="select"
-                            showLabel={false}
-                            placeholder="Indication Use"
+                            showLabel={true}
+                            placeholder="Select Indication Use"
                             fieldLabel="Indication Use"
                             selectData={indicationLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
@@ -814,20 +841,29 @@ const DetailsModal = ({
                             record={prescriptionMedication}
                             setRecord={setPrescriptionMedications}
                             searchable={false}
+                            disabled={preKey == null}
                           />
-                          <Input as="textarea" rows={3} className="indication-textarea-indication-use" />
+                          {/* Manual Indication - Free Text Field (under Indication Use) */}
+                          <Input
+                            as="textarea"
+                            rows={4}
+                            value={prescriptionMedication?.indicationManually || ''}
+                            onChange={(value) => {
+                              setPrescriptionMedications(prev => ({
+                                ...prev,
+                                indicationManually: value
+                              }));
+                            }}
+                            placeholder="Indication"
+                            disabled={preKey == null}
+                            className="indication-manual-textarea"
+                          />
                         </div>
 
-                        {/* Manual Indication */}
-                        <div className='indication-field-notes-manual-handle'>
-                          <div>
-                          </div>
-
-
-                        </div>
-                        <div className='adminstration-instructions-position'>
+                        {/* Administration Instructions */}
+                        <div className="indication-field indication-field-admin">
                           <MyInput
-                            width="17vw"
+                            width="20vw"
                             fieldType="select"
                             fieldLabel="Administration Instructions"
                             selectData={administrationInstructionsLovQueryResponse?.object ?? []}
@@ -837,10 +873,26 @@ const DetailsModal = ({
                             record={{ administrationInstructions: instr }}
                             setRecord={(obj: any) => setInstruc(obj?.administrationInstructions ?? null)}
                             searchable={true}
+                            disabled={preKey == null}
+                          />
+                          <Input
+                            as="textarea"
+                            rows={4}
+                            readOnly
+                            value={
+                              instr
+                                ? conjureValueBasedOnKeyFromList(
+                                    administrationInstructionsLovQueryResponse?.object ?? [],
+                                    instr,
+                                    'lovDisplayVale'
+                                  ) || ''
+                                : ''
+                            }
+                            className="indication-display-field"
+                            placeholder="No selection"
                           />
                         </div>
                       </div>
-
                     </div>
                   </Form>
                 }
@@ -861,7 +913,7 @@ const DetailsModal = ({
               
                     <div className="prescription-refills-blocks">
                       <MyInput
-                        disabled={preKey != null ? false : true}
+                        disabled={preKey == null}
                         width={140}
                         fieldType="number"
                         fieldLabel="Number of Refills"
@@ -871,7 +923,7 @@ const DetailsModal = ({
                       />
 
                       <MyInput
-                        disabled={preKey != null ? false : true}
+                        disabled={preKey == null}
                         width={180}
                         fieldType="number"
                         fieldLabel="Refill Interval Value"
@@ -881,7 +933,7 @@ const DetailsModal = ({
                       />
 
                       <MyInput
-                        disabled={preKey != null ? false : true}
+                        disabled={preKey == null}
                         width={180}
                         fieldType="select"
                         fieldLabel="Refill Interval Unit"
@@ -903,7 +955,7 @@ const DetailsModal = ({
                 content={
                   <Form>
                     <MyInput
-                      disabled={drugKey != null ? editing : true}
+                      disabled={preKey == null}
                       height={20}
                       fieldType="textarea"
                       fieldName="notes"
@@ -913,7 +965,7 @@ const DetailsModal = ({
                     />
 
                     <MyInput
-                      disabled={drugKey != null ? editing : true}
+                      disabled={preKey == null}
                       height={20}
                       fieldType="textarea"
                       fieldName="extraDocumentation"

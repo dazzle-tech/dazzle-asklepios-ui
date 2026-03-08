@@ -355,13 +355,13 @@ useEffect(() => {
       to: '/'
     });
 
-    // Always show Availability Templates (bypass permissions)
-    navsTemp.push({
-      eventKey: 'nav:availability-templates',
-      icon: <Icon as={icons.FaCalendarDays} />,
-      title: 'Availability Templates',
-      to: '/availability-template'
-    });
+    // // Always show Availability Templates (bypass permissions)
+    // navsTemp.push({
+    //   eventKey: 'nav:availability-templates',
+    //   icon: <Icon as={icons.FaCalendarDays} />,
+    //   title: 'Availability Templates',
+    //   to: '/availability-template'
+    // });
 
     const lookups = buildPermissionLookup(authSlice?.menu as BackendMenuItem[]);
 
@@ -405,14 +405,14 @@ useEffect(() => {
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
-       <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
+       {/* <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
         <img
           style={{ height: '40px', width: '110px' }}
           src={Logo}
 
         />
        
-      </div>
+      </div> */}
 
    
       <div

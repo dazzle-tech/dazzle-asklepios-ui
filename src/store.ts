@@ -28,7 +28,7 @@ import { dvmService } from '@/services/dvmService';
 import { encounterService } from '@/services/encounterService';
 import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
-
+import { referralRequestService } from './services/medicalsheetsEncounter/referralRequestService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { activeIngredientSynonymsService } from '@/services/setup/activeIngredients/activeIngredientSynonymsService';
 import { activeIngredientContraindicationService } from '@/services/setup/activeIngredients/activeIngredientContraindicationService';
@@ -148,7 +148,6 @@ import { patientEncounterService } from './services/encounters/patientEncounterS
 import { patientPaymentsService } from './services/encounters/patientPaymentsService';
 import { consultationService } from './services/consultation/consultationService';
 import { portalService } from './services/portalService';
-import { referralRequestService } from '@/services/encounters/referralRequestService';
 import { PayorService } from './services/setup/payer/PayorService';
 import { PayorPlanService } from '@/services/setup/payer/PayorPlanService';
 import { priceListAttributesService } from '@/services/billing/PriceListAttributesService';
@@ -201,6 +200,8 @@ import { patientPrescriptionMedicationService } from './services/patients/Prescr
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
+import {patientAdministrativeWarningsService} from './services/patient/patientAdministrativeWarningsService';
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -427,7 +428,7 @@ export const store = configureStore({
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
 
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
-    [patientWarningsService.reducerPath]: patientAllergiesService.reducer,
+    [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
     //AI Services
     // AI Services
@@ -489,6 +490,7 @@ export const store = configureStore({
     [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
     [NextOfKinService.reducerPath]: NextOfKinService.reducer,
     [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
+    [patientAdministrativeWarningsService.reducerPath]: patientAdministrativeWarningsService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -720,6 +722,7 @@ export const store = configureStore({
     patientServicesAndProductsService.middleware,
     NextOfKinService.middleware,
     RelationsMatrixService.middleware,
+    patientAdministrativeWarningsService.middleware
   ]) as any)
 });
 

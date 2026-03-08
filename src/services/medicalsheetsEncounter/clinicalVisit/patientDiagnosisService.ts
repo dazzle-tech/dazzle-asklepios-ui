@@ -63,6 +63,16 @@ export const patientDiagnosisService = createApi({
         'PatientDiagnosis',
       ],
     }),
+
+    existsPatientDiagnosisByEncounterId: builder.query<
+      boolean,
+      { encounterId: Id }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/patient-diagnosis/exists/${encounterId}`,
+        method: 'GET',
+      }),
+    }),
   }),
 });
 
@@ -73,5 +83,7 @@ export const {
   useLazyGetLatestPatientDiagnosisQuery,
   useGetPatientDiagnosesByPatientIdQuery,
   useLazyGetPatientDiagnosesByPatientIdQuery,
+  useExistsPatientDiagnosisByEncounterIdQuery,
+  useLazyExistsPatientDiagnosisByEncounterIdQuery
 } = patientDiagnosisService;
 

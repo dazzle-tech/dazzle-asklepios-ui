@@ -39,6 +39,7 @@ import ExternalLabAction from './ExternalLabAction';
 import SampleModal from './SampleModal';
 import './styles.less';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
+import PrintSampleLabelAction from './PrintSampleLabelAction';
 
 type Props = {
   order: any;
@@ -741,11 +742,19 @@ const Tests = forwardRef<any, Props>(
           );
         }
       },
+
+      {
+        key: 'print',
+        title: <Translate>PRINT</Translate>,
+        width: 60,
+        align: 'center',
+        render: (rowData: any) => <PrintSampleLabelAction rowData={rowData} />
+      },
       {
         key: 'acceptedatby',
         dataKey: '',
         title: <Translate>ACCEPTED AT/BY</Translate>,
-    
+
         expandable: true,
         render: (rowData: any) => {
           return (
