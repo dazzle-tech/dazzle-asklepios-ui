@@ -15,7 +15,7 @@ const CancellationModal = ({
     title,
     fieldName = "",
     statusField = "statusLkey",
-    statusKey = "3196709905099521",
+    statusKey = "CANCELLED",
     withReason = true,
     required = false,
 }) => {

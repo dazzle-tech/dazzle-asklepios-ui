@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Tooltip, Form, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -24,11 +24,10 @@ import { notify } from '@/utils/uiReducerActions';
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
-import type { Practitioner } from '@/types/model-types-new';
+import type { Practitioner, Department } from '@/types/model-types-new';
 import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import { formatEnumString } from '@/utils';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
-import type { Department } from '@/types/model-types-new';
 
 import './styles.less';
 
@@ -42,10 +41,10 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
 
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
   const [quickInitialStep, setQuickInitialStep] = useState<number>(0);
-  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
-    {}
-  );
+
+  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>({});
   const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
+
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
   const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
 
@@ -58,12 +57,25 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     },
     {
       refetchOnMountOrArgChange: true,
+      skip: !localPatient?.id
       refetchOnFocus: true, 
       pollingInterval: 0
     }
   );
 
-  const encounters = data?.data ?? [];
+  const encounters = useMemo(() => data?.data ?? [], [data?.data]);
+
+  const practitionerIds = useMemo(
+    () =>
+      Array.from(new Set(encounters.map((e: any) => e.practitionerId).filter((id: any) => id != null))),
+    [encounters]
+  );
+
+  const departmentIds = useMemo(
+    () =>
+      Array.from(new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))),
+    [encounters]
+  );
 
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
@@ -106,40 +118,78 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
   };
 
   useEffect(() => {
+    let active = true;
+
     const loadPractitioners = async () => {
-      if (!encounters.length) {
+      if (!practitionerIds.length) {
         setPractitionersMap({});
         return;
       }
-      const uniqueIds = Array.from(
-        new Set(encounters.map(e => e.practitionerId).filter(id => id != null))
-      );
-      if (!uniqueIds.length) return;
+
       try {
-        const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
-        setPractitionersMap(Object.fromEntries(practitioners.map(p => [p.id, p])));
-      } catch {}
+        const practitioners = await getPractitionersBulk(practitionerIds).unwrap();
+        if (!active) return;
+
+        const nextMap = Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p]));
+        setPractitionersMap(prev => {
+          const prevKeys = Object.keys(prev);
+          const nextKeys = Object.keys(nextMap);
+          if (
+            prevKeys.length === nextKeys.length &&
+            prevKeys.every(key => prev[key] === nextMap[key])
+          ) {
+            return prev;
+          }
+          return nextMap;
+        });
+      } catch {
+        if (active) setPractitionersMap({});
+      }
     };
+
     loadPractitioners();
-  }, [encounters]);
+
+    return () => {
+      active = false;
+    };
+  }, [practitionerIds, getPractitionersBulk]);
 
   useEffect(() => {
+    let active = true;
+
     const loadDepartments = async () => {
-      if (!encounters.length) {
+      if (!departmentIds.length) {
         setDepartmentsMap({});
         return;
       }
-      const uniqueIds = Array.from(
-        new Set(encounters.map(e => e.departmentId).filter(id => id != null))
-      );
-      if (!uniqueIds.length) return;
+
       try {
-        const departments = await getDepartmentsBulk(uniqueIds).unwrap();
-        setDepartmentsMap(Object.fromEntries(departments.map(d => [d.id, d])));
-      } catch {}
+        const departments = await getDepartmentsBulk(departmentIds).unwrap();
+        if (!active) return;
+
+        const nextMap = Object.fromEntries(departments.map((d: Department) => [d.id, d]));
+        setDepartmentsMap(prev => {
+          const prevKeys = Object.keys(prev);
+          const nextKeys = Object.keys(nextMap);
+          if (
+            prevKeys.length === nextKeys.length &&
+            prevKeys.every(key => prev[key] === nextMap[key])
+          ) {
+            return prev;
+          }
+          return nextMap;
+        });
+      } catch {
+        if (active) setDepartmentsMap({});
+      }
     };
+
     loadDepartments();
-  }, [encounters, getDepartmentsBulk]);
+
+    return () => {
+      active = false;
+    };
+  }, [departmentIds, getDepartmentsBulk]);
 
   const columns = [
     {
