@@ -427,7 +427,7 @@ export const store = configureStore({
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
 
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
-    [patientWarningsService.reducerPath]: patientAllergiesService.reducer,
+    [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
     //AI Services
     // AI Services
