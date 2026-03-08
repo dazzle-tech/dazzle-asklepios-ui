@@ -12,7 +12,7 @@ import PreObservation from './PreObservation/PreObservation';
 import Procedures from './Procedures/Procedures';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ChooseDashboardScreen from './ChooseDashboardSections';
-// import { ActionContext } from './ActionContext';
+import { ActionContext } from './ActionContext';
 import Last24HMedications from './Last24-hMedications';
 import IntakeOutputs from './IntakeOutputs';
 import ChiefComplainSummary from '../nursing-reports-summary/ChiefComplainSummary';
@@ -25,7 +25,7 @@ import { useGetUserDashboardComponentsQuery } from '@/services/encounterService'
 const PatientSummary = () => {
   const location = useLocation();
   const { patient, encounter } = location.state || {};
-  // const { setAction } = useContext(ActionContext);
+  const { setAction } = useContext(ActionContext);
   const [openChooseScreen, setOpenChooseScreen] = useState<boolean>(false);
   const user = JSON.parse(localStorage.getItem('user'));
   const userDashboardComponents = useGetUserDashboardComponentsQuery(user?.id);
@@ -112,10 +112,11 @@ const PatientSummary = () => {
     }
   }, [userDashboardComponents?.data]);
 
-  // useEffect(() => {
-  //   setAction(() => () => setOpenChooseScreen(true));
-  //   return () => setAction(() => () => {});
-  // }, [setAction]);
+  useEffect(() => {
+    setAction(() => () => setOpenChooseScreen(true));
+    return () => setAction(() => () => {});
+  }, [setAction]);
+
   useEffect(() => {
     const arr = userDashboardComponents?.data?.object ?? [];
     const newArr = arr.map(item => item.component_key);
