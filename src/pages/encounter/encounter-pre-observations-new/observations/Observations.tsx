@@ -52,6 +52,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={isEncounterStatusClosed || readOnly}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
+                  encounter={localEncounter  }
                 />
               </Col>
             </Row>
@@ -62,6 +63,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={false}
                   patientId={Number(localPatient.id)}
                   encounterId={Number(localEncounter.id)}
+                  encounter={localEncounter  }
                 />
               </Col>
             </Row>
@@ -74,6 +76,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={isEncounterStatusClosed || readOnly}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
+                  encounter={localEncounter  }
                 />
               </Col>
             </Row>
@@ -84,6 +87,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={isEncounterStatusClosed || readOnly}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
+                  encounter={localEncounter  }
                 />
               </Col>
             </Row>
@@ -94,6 +98,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={isEncounterStatusClosed || readOnly}
                   patient={localPatient as any}
                   encounterId={Number((localEncounter as any)?.id)}
+                  encounter={localEncounter  }
                 />
               </Col>
             </Row>
