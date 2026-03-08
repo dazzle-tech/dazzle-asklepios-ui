@@ -3553,3 +3553,30 @@ export interface PatientAdministrativeWarningsResolveDTO {
 export interface PatientAdministrativeWarningsUndoResolveDTO {
   id: number;
 }
+export interface ReferralRequest {
+  id: number | undefined;
+
+  patientId: number;
+  encounterId: number | null;
+
+  referralType: string;
+
+  fromFacilityId: number;
+  toFacilityId: number;
+
+  fromDepartmentId: number;
+  toDepartmentId: number;
+
+  referralReason: string;
+
+  priority: string | null;
+
+  status?: string;
+
+  rejectReason?: string | null;
+  rejectedDate?: string | null;
+  rejectedBy?: string | null;
+
+  acceptedDate?: string | null;
+  acceptedBy?: string | null;
+}

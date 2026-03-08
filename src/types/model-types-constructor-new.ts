@@ -2368,3 +2368,30 @@ export const newPatientAdministrativeWarningResolveDTO: modelTypes.PatientAdmini
 export const newPatientAdministrativeWarningUndoResolveDTO: modelTypes.PatientAdministrativeWarningsUndoResolveDTO = {
   id: undefined
 };
+export const newReferralRequest: modelTypes.ReferralRequest = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: null,
+
+  referralType: 'INTERNAL',
+
+  fromFacilityId: 0,
+  toFacilityId: 0,
+
+  fromDepartmentId: 0,
+  toDepartmentId: 0,
+
+  referralReason: '',
+
+  priority: null,
+
+  status: 'REQUESTED',
+
+  rejectReason: null,
+  rejectedDate: null,
+  rejectedBy: null,
+
+  acceptedDate: null,
+  acceptedBy: null
+};

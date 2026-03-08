@@ -3,7 +3,12 @@ import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { useAddPatientMutation, useGetDuplicationCandidatesMutation, useLazyGetPatientsByMedicalRecordNumberQuery, useUpdatePatientMutation } from '@/services/patient/patientService';
+import {
+  useAddPatientMutation,
+  useGetDuplicationCandidatesMutation,
+  useLazyGetPatientsByMedicalRecordNumberQuery,
+  useUpdatePatientMutation
+} from '@/services/patient/patientService';
 import { newApEncounter } from '@/types/model-types-constructor';
 import { newPatient } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
@@ -24,10 +29,9 @@ import ProfileSidebar from './ProfileSidebar-new';
 import ProfileTabs from './ProfileTabs-new';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
+import IncomingReferralRequestsByFacility from './IncomingReferralRequestsByFacility';
 
 const { getHeight } = DOMHelper;
-
-
 
 /* ========================================================= */
 /* =============== Helper Functions ======================== */
@@ -89,10 +93,9 @@ const PatientProfile = () => {
   const [localVisit] = useState({ ...newApEncounter, discharge: false });
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
-
+  const [openReferralRequestModal, setOpenReferralRequestModal] = useState(false);
 
   const [checkDuplication] = useGetDuplicationCandidatesMutation();
-
 
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
 
@@ -103,10 +106,7 @@ const PatientProfile = () => {
   const location = useLocation();
   const propsData = location.state;
 
-  // Create new patient
   const [addPatient, addResult] = useAddPatientMutation();
-
-  // Update existing patient
   const [updatePatient, updateResult] = useUpdatePatientMutation();
 
   const [refetchData, setRefetchData] = useState(false);
@@ -142,7 +142,7 @@ const PatientProfile = () => {
 
   const handleSave = async () => {
     try {
-      // UPDATE flow (keep same logic + success messaging)
+      // UPDATE flow
       if (localPatient?.id) {
         const updated = await updatePatient({
           id: localPatient.id,
@@ -164,7 +164,7 @@ const PatientProfile = () => {
         return;
       }
 
-      // CREATE flow: duplication check (keep logic from HEAD)
+      // CREATE flow: duplication check
       const duplicationResponse = await checkDuplication({
         dto: {
           ruleId: selectedFacility?.ruleId,
@@ -207,7 +207,6 @@ const PatientProfile = () => {
         }, 500);
       }
     } catch (err: any) {
-      // keep the richer field mapping from the other branch
       const msg = toHumanBackendError(err, {
         firstName: 'First Name',
         lastName: 'Last Name',
@@ -258,19 +257,16 @@ const PatientProfile = () => {
       setLocalPatient(addResult.data);
       dispatch(setPatient(addResult.data));
     }
-  }, [addResult]);
+  }, [addResult, dispatch]);
 
   useEffect(() => {
     if (updateResult?.status === 'fulfilled') {
       setLocalPatient(updateResult.data);
       dispatch(setPatient(updateResult.data));
     }
-  }, [updateResult]);
+  }, [updateResult, dispatch]);
 
-
-
-  const [getPatientsByMedicalRecordNumber] =
-    useLazyGetPatientsByMedicalRecordNumberQuery();
+  const [getPatientsByMedicalRecordNumber] = useLazyGetPatientsByMedicalRecordNumberQuery();
 
   const handleSelectExistingPatient = async (patient: any) => {
     try {
@@ -289,15 +285,10 @@ const PatientProfile = () => {
       setLocalPatient(fullPatient);
       dispatch(setPatient(fullPatient));
       setOpenPatientsDuplicateModal(false);
-
     } catch (err) {
       dispatch(notify({ msg: 'Failed to load patient', sev: 'error' }));
     }
   };
-
-
-
-
 
   /* ========================================================= */
   /* ========================= RENDER ========================= */
@@ -324,6 +315,7 @@ const PatientProfile = () => {
             setOpenBedsideRegistrations={setOpenBedsideRegistrations}
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
             setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
+            setOpenReferralRequestModal={setOpenReferralRequestModal}
           />
 
           <div className="container-of-tabs-reg">
@@ -403,6 +395,11 @@ const PatientProfile = () => {
       />
 
       <BulkRegistration open={openBulkRegistrationModal} setOpen={setOpenBulkRegistrationModal} />
+
+      <IncomingReferralRequestsByFacility
+        open={openReferralRequestModal}
+        setOpen={setOpenReferralRequestModal}
+      />
 
       <PatientDuplicate
         open={openPatientsDuplicateModal}
