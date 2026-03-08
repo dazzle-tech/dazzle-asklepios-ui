@@ -67,9 +67,16 @@ const [checkDiagnosisExists, { isFetching: isCheckingPatientDiagnosis }] =
     (propsData?.patient as any)?.patientId ??
     null;
 
-  const { data: fetchedPatient } = useGetPatientByIdQuery(patientIdToFetch, {
-    skip: patientIdToFetch == null
-  });
+  const shouldFetchPatient =
+    patientIdToFetch != null && String(patientIdToFetch).trim() !== '' && String(patientIdToFetch) !== 'undefined';
+
+  // `useGetPatientByIdQuery` expects: { id }
+  const { data: fetchedPatient } = useGetPatientByIdQuery(
+    { id: patientIdToFetch as any },
+    {
+      skip: !shouldFetchPatient,
+    }
+  );
 
   const patientToSend = fetchedPatient ?? propsData?.patient;
 

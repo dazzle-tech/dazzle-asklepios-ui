@@ -201,6 +201,7 @@ import { patientPrescriptionMedicationService } from './services/patients/Prescr
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -427,7 +428,7 @@ export const store = configureStore({
     [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
 
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
-    [patientWarningsService.reducerPath]: patientAllergiesService.reducer,
+    [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
     //AI Services
     // AI Services
