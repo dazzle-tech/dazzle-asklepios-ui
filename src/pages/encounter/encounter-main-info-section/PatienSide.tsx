@@ -13,7 +13,7 @@ import {
   useGetLatestBodyMeasurementsByEncounterIdQuery,
   useLazyGetLatestBodyMeasurementsByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
-import { useGetPatientDiagnosesByPatientIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import { useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import {
   useGetPrimaryDocumentByPatientQuery,
@@ -39,12 +39,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaWeight } from 'react-icons/fa';
 import { IoMdClose } from 'react-icons/io';
 import { useDispatch, useSelector } from 'react-redux';
-import { Avatar, Button, Divider, Panel, Text, Tooltip, Whisper } from 'rsuite';
+import { Avatar, Divider, Panel, Text, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
 
 const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
+  const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
+  const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
   const dispatch = useDispatch();
 
   const refetchPatientSide = useSelector(
@@ -112,6 +114,8 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
 
   const [triggerGetLatestBodyMeasurements] = useLazyGetLatestBodyMeasurementsByEncounterIdQuery();
 
+  const [triggerGetPrimaryDiagnosis] = useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery();
+
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
@@ -120,67 +124,15 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     { skip: !patient?.id }
   );
 
-  const patientIdNumber: number | null = patient?.id ? Number(patient.id) : null;
-
-  const [diagnosisPagination, setDiagnosisPagination] = useState({
-    page: 0,
-    size: 5,
-    sort: 'createdDate,desc'
-  });
-
-  const [diagnosisItems, setDiagnosisItems] = useState<any[]>([]);
-  const [hasMoreDiagnoses, setHasMoreDiagnoses] = useState(false);
-
-  const {
-    data: patientDiagnosesResp,
-    isFetching: isFetchingDiagnoses,
-    refetch: refetchDiagnoses
-  } = useGetPatientDiagnosesByPatientIdQuery(
-    {
-      patientId: patientIdNumber as any,
-      page: diagnosisPagination.page,
-      size: diagnosisPagination.size,
-      sort: diagnosisPagination.sort
-    } as any,
-    { skip: !patientIdNumber }
-  );
-
-  const currentDiagnosisPage = useMemo(
-    () => (Array.isArray(patientDiagnosesResp) ? patientDiagnosesResp : []),
-    [patientDiagnosesResp]
-  );
-
-  useEffect(() => {
-    if (!patientIdNumber) {
-      setDiagnosisItems([]);
-      setHasMoreDiagnoses(false);
-      return;
-    }
-
-    if (diagnosisPagination.page === 0) {
-      setDiagnosisItems(currentDiagnosisPage);
-    } else if (currentDiagnosisPage.length > 0) {
-      setDiagnosisItems(prev => {
-        const merged = [...prev, ...currentDiagnosisPage];
-        const unique = merged.filter(
-          (item, index, arr) => index === arr.findIndex(x => x?.id === item?.id)
-        );
-        return unique;
-      });
-    }
-
-    setHasMoreDiagnoses(currentDiagnosisPage.length === diagnosisPagination.size);
-  }, [currentDiagnosisPage, diagnosisPagination.page, diagnosisPagination.size, patientIdNumber]);
+  const encounterIdNumber: number | null = encounter?.id ? Number(encounter.id) : null;
 
   const [fetchIcdByIds] = useLazyGetIcdDiagnosesByIdsQuery();
   const [icdMap, setIcdMap] = useState<Record<number, any>>({});
 
   const diagnosisIds = useMemo(() => {
-    const ids = (diagnosisItems ?? [])
-      .map((r: any) => Number(r?.diagnosisId))
-      .filter((v: any) => Number.isFinite(v) && v > 0);
-    return Array.from(new Set(ids));
-  }, [diagnosisItems]);
+    const id = Number(primaryDiagnosis?.diagnosisId);
+    return Number.isFinite(id) && id > 0 ? [id] : [];
+  }, [primaryDiagnosis]);
 
   useEffect(() => {
     let cancelled = false;
@@ -226,20 +178,46 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     }
   }, [fetchPatientImageResponse]);
 
+  const loadPrimaryDiagnosis = async (encounterId: number | null) => {
+    if (!encounterId) {
+      setPrimaryDiagnosis(null);
+      setPrimaryDiagnosisError(null);
+      return;
+    }
+
+    try {
+      const resp = await triggerGetPrimaryDiagnosis({
+        encounterId,
+        timestamp: Date.now()
+      }).unwrap();
+      setPrimaryDiagnosis(resp ?? null);
+      setPrimaryDiagnosisError(null);
+    } catch (error: any) {
+      if (error?.status === 404) {
+        setPrimaryDiagnosis(null);
+        setPrimaryDiagnosisError(error);
+        return;
+      }
+
+      setPrimaryDiagnosis(null);
+      setPrimaryDiagnosisError(error);
+    }
+  };
+
+  useEffect(() => {
+    loadPrimaryDiagnosis(encounterIdNumber);
+  }, [encounterIdNumber]);
+
   useEffect(() => {
     if (refetchList) {
       if (patient?.id) {
         triggerGetPrimaryDocument(patient?.id);
-        setDiagnosisPagination(prev => ({ ...prev, page: 0 }));
       }
 
       if (encounter?.id) {
         triggerGetLatestVitalSigns({ encounterId: encounter?.id });
         triggerGetLatestBodyMeasurements({ encounterId: encounter?.id });
-      }
-
-      if (patientIdNumber) {
-        refetchDiagnoses();
+        loadPrimaryDiagnosis(Number(encounter.id));
       }
     }
   }, [
@@ -247,9 +225,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     triggerGetPrimaryDocument,
     triggerGetLatestVitalSigns,
     triggerGetLatestBodyMeasurements,
-    refetchDiagnoses,
     patient?.id,
-    patientIdNumber,
     encounter?.id
   ]);
 
@@ -261,16 +237,12 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     if (refetchPatientSide) {
       if (patient?.id) {
         refetchPrimaryDocument();
-        setDiagnosisPagination(prev => ({ ...prev, page: 0 }));
       }
 
       if (encounter?.id) {
         refetchLatestVitalSigns();
         refetchLatestBodyMeasurements();
-      }
-
-      if (patientIdNumber) {
-        refetchDiagnoses();
+        loadPrimaryDiagnosis(Number(encounter.id));
       }
 
       dispatch(resetRefetchPatientSide());
@@ -280,9 +252,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
     refetchLatestBodyMeasurements,
-    refetchDiagnoses,
     patient?.id,
-    patientIdNumber,
     encounter?.id,
     dispatch
   ]);
@@ -311,9 +281,8 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
           patient?.id ? refetchPrimaryDocument() : Promise.resolve(),
           encounter?.id ? refetchLatestVitalSigns() : Promise.resolve(),
           encounter?.id ? refetchLatestBodyMeasurements() : Promise.resolve(),
-          patientIdNumber ? refetchDiagnoses() : Promise.resolve()
+          encounter?.id ? loadPrimaryDiagnosis(Number(encounter.id)) : Promise.resolve()
         ]);
-        setDiagnosisPagination(prev => ({ ...prev, page: 0 }));
       } catch (e) {
         console.error('Error while refetching side data:', e);
       } finally {
@@ -328,9 +297,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
     refetchLatestBodyMeasurements,
-    refetchDiagnoses,
     patient?.id,
-    patientIdNumber,
     encounter?.id,
     dispatch
   ]);
@@ -377,24 +344,16 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     const code = icd?.icdCode ?? '';
     const desc = icd?.icdShortDescription || icd?.icdFullDescription || '';
     const type = row?.type ? formatEnumString(row.type) : '';
-    const flags = [
-      row?.major ? 'Major' : null,
-      row?.suspected ? 'Suspected' : null
-    ].filter(Boolean).join(' • ');
+    const flags = [row?.major ? 'Major' : null, row?.suspected ? 'Suspected' : null]
+      .filter(Boolean)
+      .join(' • ');
 
     return (
       <div className="diagnosis-badge-text">
         <span>{code ? `${code} - ${desc}` : desc || 'Diagnosis'}</span>
-        {(type || flags) && (
-          <small>{[type, flags].filter(Boolean).join(' • ')}</small>
-        )}
+        {(type || flags) && <small>{[type, flags].filter(Boolean).join(' • ')}</small>}
       </div>
     );
-  };
-
-  const loadMoreDiagnoses = () => {
-    if (isFetchingDiagnoses || !hasMoreDiagnoses) return;
-    setDiagnosisPagination(prev => ({ ...prev, page: prev.page + 1 }));
   };
 
   const temperature = toNumber(latestVitalSigns?.temperature);
@@ -418,6 +377,8 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
     : textOr(patient?.documentTypeLvalue?.lovDisplayVale, '');
 
   const documentNumberText = textOr(primaryDocument?.number, textOr(patient?.documentNo, ''));
+
+  const primaryDiagnosisNotFound = primaryDiagnosisError?.status === 404;
 
   return (
     <Panel className="patient-panel">
@@ -583,7 +544,11 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
             <Text className="info-label">Blood Pressure</Text>
             <Text className="info-value">
               {bloodPressureSystolic != null && bloodPressureDiastolic != null
-                ? `${fmt(bloodPressureSystolic, 0, '')}/${fmt(bloodPressureDiastolic, 0, '')} mmHg`
+                ? `${fmt(bloodPressureSystolic, 0, '')}/${fmt(
+                    bloodPressureDiastolic,
+                    0,
+                    ''
+                  )} mmHg`
                 : ''}
             </Text>
           </div>
@@ -601,59 +566,36 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
       <br />
 
       <div className="my-container">
-        {diagnosisItems.map((diagnosis, index) => {
-          const colors = getDiagnosisColors(diagnosis);
-
-          return (
-            <Whisper
-              key={`diagnosis-whisper-${diagnosis.id || index}`}
-              placement="top"
-              speaker={
-                <Tooltip>
-                  <Translate>Diagnosis</Translate>
-                </Tooltip>
-              }
-            >
-              <span>
-                <MyBadgeStatus
-                  key={`diagnosis-${diagnosis.id || index}`}
-                  backgroundColor={colors.bg}
-                  color={colors.text}
-                  contant={
-                    <div className="diagnosis-badge-content">
-                      <FontAwesomeIcon icon={faStethoscope} className="diagnosis-badge-icon" />
-                      {renderDiagnosisText(diagnosis)}
-                    </div>
-                  }
-                />
-              </span>
-            </Whisper>
-          );
-        })}
-      </div>
-
-      {hasMoreDiagnoses && (
-        <div className="load-more-wrapper">
-          <button
-            className="load-more-btn"
-            onClick={loadMoreDiagnoses}
-            disabled={isFetchingDiagnoses}
+        {primaryDiagnosis && (
+          <Whisper
+            key={`diagnosis-whisper-${primaryDiagnosis.id}`}
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Primary Diagnosis</Translate>
+              </Tooltip>
+            }
           >
-            {isFetchingDiagnoses ? (
-              <span className="load-more-spinner" />
-            ) : (
-              <span className="load-more-chevrons">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </span>
-            )}
-          </button>
-        </div>
-      )}
+            <span>
+              <MyBadgeStatus
+                key={`diagnosis-${primaryDiagnosis.id}`}
+                backgroundColor={getDiagnosisColors(primaryDiagnosis).bg}
+                color={getDiagnosisColors(primaryDiagnosis).text}
+                contant={
+                  <div className="diagnosis-badge-content">
+                    <FontAwesomeIcon icon={faStethoscope} className="diagnosis-badge-icon" />
+                    {renderDiagnosisText(primaryDiagnosis)}
+                  </div>
+                }
+              />
+            </span>
+          </Whisper>
+        )}
+
+        {!primaryDiagnosis && primaryDiagnosisNotFound && (
+          <Text className="info-value">No primary diagnosis for this encounter.</Text>
+        )}
+      </div>
 
       <Divider className="divider-style" />
 
@@ -685,7 +627,9 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
           <div className="info-section">
             <div className="info-column">
               <Text className="info-label">Priority</Text>
-              <Text className="info-value">{textOr(formatEnumString(encounter?.priority), '')}</Text>
+              <Text className="info-value">
+                {textOr(formatEnumString(encounter?.priority), '')}
+              </Text>
             </div>
           </div>
 

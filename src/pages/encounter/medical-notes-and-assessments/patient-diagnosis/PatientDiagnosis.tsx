@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch/Icd10DiagnosisSearch';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
@@ -13,7 +16,8 @@ import { notify } from '@/utils/uiReducerActions';
 import {
   useCreatePatientDiagnosisMutation,
   useGetLatestPatientDiagnosisQuery,
-  useGetPatientDiagnosesByPatientIdQuery
+  useGetPatientDiagnosesByPatientIdQuery,
+  useHardDeletePatientDiagnosisMutation
 } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 
 import { useEnumOptions } from '@/services/enumsApi';
@@ -28,6 +32,7 @@ type PatientDiagnosisProps = {
   disabled?: boolean;
   title?: React.ReactNode;
   width?: string;
+  onDiagnosisSaved?: () => void;
 };
 
 const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
@@ -35,7 +40,8 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
   encounter,
   disabled = false,
   title = 'Patient Diagnosis',
-  width = '100%'
+  width = '100%',
+  onDiagnosisSaved
 }) => {
   const dispatch = useAppDispatch();
 
@@ -55,6 +61,8 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
   );
 
   const [createPatientDiagnosis, { isLoading: isSaving }] = useCreatePatientDiagnosisMutation();
+  const [hardDeletePatientDiagnosis, { isLoading: isDeleting }] =
+    useHardDeletePatientDiagnosisMutation();
 
   const [diagnosis, setDiagnosis] = useState<Partial<PatientDiagnosisType>>({
     diagnosisId: null,
@@ -62,6 +70,10 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     suspected: false,
     major: false
   });
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedDiagnosisToDelete, setSelectedDiagnosisToDelete] =
+    useState<PatientDiagnosisType | null>(null);
 
   useEffect(() => {
     setDiagnosis({
@@ -93,6 +105,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
       'fk.patient': 'Invalid patient_id (patient does not exist).',
       'fk.diagnosis': 'Invalid diagnosis_id (diagnosis does not exist).',
       duplicate: 'This diagnosis already exists for the same patient and encounter with the same attributes.',
+      'primary.already.exists': 'Only one PRIMARY diagnosis is allowed per encounter.',
       'required.fields': 'Required fields are missing.',
       'db.constraint': 'Database constraint violated while saving patient diagnosis.',
       'http.500': 'Internal server error.'
@@ -146,14 +159,32 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     { skip: !patientIdNumber }
   );
 
-  // ✅ FIX: backend returns array not Page
-  const tableData = useMemo(
-    () => (Array.isArray(patientDiagnosesResp) ? patientDiagnosesResp : []),
-    [patientDiagnosesResp]
-  );
+  const tableData = useMemo(() => {
+    if (Array.isArray(patientDiagnosesResp)) return patientDiagnosesResp;
+    if (Array.isArray((patientDiagnosesResp as any)?.data)) {
+      return (patientDiagnosesResp as any).data;
+    }
+    if (Array.isArray((patientDiagnosesResp as any)?.content)) {
+      return (patientDiagnosesResp as any).content;
+    }
+    if (Array.isArray((patientDiagnosesResp as any)?.items)) {
+      return (patientDiagnosesResp as any).items;
+    }
+    return [];
+  }, [patientDiagnosesResp]);
 
-  // ✅ FIX: totalCount from array length (or later from header if you implement it)
-  const totalCount = tableData.length;
+  const totalCount = useMemo(() => {
+    if (typeof (patientDiagnosesResp as any)?.totalElements === 'number') {
+      return (patientDiagnosesResp as any).totalElements;
+    }
+    if (typeof (patientDiagnosesResp as any)?.totalCount === 'number') {
+      return (patientDiagnosesResp as any).totalCount;
+    }
+    if (typeof (patientDiagnosesResp as any)?.count === 'number') {
+      return (patientDiagnosesResp as any).count;
+    }
+    return tableData.length;
+  }, [patientDiagnosesResp, tableData]);
 
   const [fetchIcdByIds] = useLazyGetIcdDiagnosesByIdsQuery();
   const [icdMap, setIcdMap] = useState<Record<number, any>>({});
@@ -162,6 +193,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     const ids = (tableData ?? [])
       .map((r: any) => Number(r?.diagnosisId))
       .filter((v: any) => Number.isFinite(v) && v > 0);
+
     return Array.from(new Set(ids));
   }, [tableData]);
 
@@ -187,15 +219,43 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
           return next;
         });
       } catch {
-        // ignore
+        //
       }
     };
 
     load();
+
     return () => {
       cancelled = true;
     };
   }, [pageDiagnosisIds, fetchIcdByIds, icdMap]);
+
+  const handleOpenDeleteModal = (row: PatientDiagnosisType) => {
+    setSelectedDiagnosisToDelete(row);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmHardDelete = async () => {
+    if (!selectedDiagnosisToDelete?.id) {
+      dispatch(notify({ msg: 'Diagnosis id is required.', sev: 'warning' }));
+      return;
+    }
+
+    try {
+      await hardDeletePatientDiagnosis({ id: selectedDiagnosisToDelete.id }).unwrap();
+
+      dispatch(notify({ msg: 'Diagnosis deleted successfully', sev: 'success' }));
+      setDeleteModalOpen(false);
+      setSelectedDiagnosisToDelete(null);
+
+      await refetchLatest();
+      await refetchTable();
+
+      onDiagnosisSaved?.();
+    } catch (error: any) {
+      showApiError(error);
+    }
+  };
 
   const tableColumns = useMemo(
     () => [
@@ -236,9 +296,29 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
         title: <Translate>Major</Translate>,
         flexGrow: 2,
         render: (row: any) => (row?.major ? 'Yes' : 'No')
+      },
+      {
+        key: 'actions',
+        title: <Translate>Actions</Translate>,
+        flexGrow: 1,
+        render: (row: any) => (
+          <button
+            type="button"
+            className="pd-delete-btn"
+            onClick={() => handleOpenDeleteModal(row)}
+            disabled={disabled || isDeleting}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              cursor: disabled || isDeleting ? 'not-allowed' : 'pointer'
+            }}
+          >
+            <FontAwesomeIcon icon={faTrash} />
+          </button>
+        )
       }
     ],
-    [icdMap]
+    [icdMap, disabled, isDeleting]
   );
 
   const handlePageChange = (_: unknown, newPage: number) => {
@@ -257,28 +337,46 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
       return;
     }
+
     if (!payload.encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
       return;
     }
+
     if (!payload.diagnosisId) {
       dispatch(notify({ msg: 'Diagnosis is required.', sev: 'warning' }));
       return;
     }
+
     if (!payload.type) {
       dispatch(notify({ msg: 'Type is required.', sev: 'warning' }));
       return;
     }
 
     try {
-      await createPatientDiagnosis(payload as any).unwrap();
+      const createResponse = await createPatientDiagnosis(payload as any).unwrap();
+
+      setDiagnosis(previousDiagnosis => ({
+        ...previousDiagnosis,
+        ...createResponse,
+        patientId: patientIdNumber,
+        encounterId: encounterIdNumber,
+        id: undefined
+      }));
+
       dispatch(notify({ msg: 'Diagnosis saved successfully', sev: 'success' }));
-      refetchLatest();
-      refetchTable();
-      clearForm();
+
+      await refetchLatest();
+      await refetchTable();
+
+      onDiagnosisSaved?.();
     } catch (error: any) {
       showApiError(error);
     }
+  };
+
+  const handleClear = () => {
+    clearForm();
   };
 
   return (
@@ -286,14 +384,16 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
       <div className="pd-grid">
         <div className="pd-card">
           <div className="pd-card-title">
-            <Translate>Add Diagnosis</Translate>
+            <Translate>{title}</Translate>
           </div>
 
           <Form fluid>
             <Icd10DiagnosisSearch
               diagnosisId={(diagnosis.diagnosisId as any) ?? null}
-              setDiagnosisId={(id: number | null) => setDiagnosis(prev => ({ ...prev, diagnosisId: id }))}
-              label="Diagnosis"
+              setDiagnosisId={(id: number | null) =>
+                setDiagnosis(prev => ({ ...prev, diagnosisId: id }))
+              }
+              label=""
               disabled={disabled}
             />
 
@@ -341,7 +441,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
                 Save
               </MyButton>
 
-              <MyButton onClick={clearForm} disabled={disabled || savingBusy}>
+              <MyButton onClick={handleClear} disabled={disabled || savingBusy}>
                 Clear
               </MyButton>
             </div>
@@ -365,6 +465,16 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
           />
         </div>
       </div>
+
+      <DeletionConfirmationModal
+        open={deleteModalOpen}
+        setOpen={setDeleteModalOpen}
+        itemToDelete="diagnosis"
+        actionType="delete"
+        confirmationQuestion="Are you sure you want to permanently delete this diagnosis?"
+        actionButtonLabel={isDeleting ? 'Deleting...' : 'Delete'}
+        actionButtonFunction={handleConfirmHardDelete}
+      />
     </div>
   );
 };

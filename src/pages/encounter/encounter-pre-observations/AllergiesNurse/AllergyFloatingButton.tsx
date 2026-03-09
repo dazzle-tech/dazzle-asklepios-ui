@@ -1,66 +1,74 @@
 import React, { useState } from 'react';
-import { useGetAllergiesQuery } from '@/services/observationService';
-import { useGetAllergensQuery } from '@/services/setupService';
+
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHandDots } from '@fortawesome/free-solid-svg-icons';
 import { initialListRequest } from '@/types/types';
+import { useGetPatientAllergiesByPatientIdQuery } from '@/services/encounters/patientAllergiesService';
+import { useGetAllergensQuery } from '@/services/setup/allergensService';
+import { PatientAllergiesResponseVM } from '@/types/model-types-new';
+import { formatEnumString } from '@/utils';
+import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import './styles.less';
 
 import Draggable from 'react-draggable';
 import { FaTimes } from 'react-icons/fa'; // أيقونة X
 
-const AllergyFloatingButton = ({ patientKey }: { patientKey: string }) => {
+const AllergyFloatingButton = ({ patient }: { patient: any }) => {
   const [visible, setVisible] = useState(true);
   const [wasDragged, setWasDragged] = useState(false);
 
-  const listRequest = {
-    ...initialListRequest,
-    filters: [
+  const {
+      data: allergiesListResponse,
+      refetch: fetchallerges,
+      isLoading
+    } = useGetPatientAllergiesByPatientIdQuery(
       {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patientKey
+        patientId: patient?.id,
       },
       {
-        fieldName: 'status_lkey',
-        operator: 'notMatch',
-        value: '3196709905099521'
+        skip: !patient?.id
       }
-    ]
-  };
+    );
+     const activeAllergies = allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
 
-  const { data: allergiesListResponse, isLoading } = useGetAllergiesQuery(listRequest);
-  const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
+   const { data: allergensListResponse } = useGetAllergensQuery({});
+     const { data: medicationClassesListResponse } = useGetAllMedicationCategoriesClassesQuery({});
 
-  const tableColumns = [
-    {
-      key: 'allergyTypeLvalue',
-      dataKey: 'allergyTypeLvalue',
-      title: <Translate>Allergy Type</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => rowData.allergyTypeLvalue?.lovDisplayVale
-    },
-    {
-      key: 'allergenKey',
-      dataKey: 'allergenKey',
-      title: <Translate>Allergen</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        if (!allergensListToGetName?.object) return 'Loading...';
-        const found = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
-        return found?.allergenName || 'No Name';
-      }
-    },
-    {
-      key: 'severityLvalue',
-      dataKey: 'severityLvalue',
-      title: <Translate>Severity</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
-    }
-  ];
+ const tableColumns: any[] = [
+      {
+        key: 'allergenType',
+        title: <Translate>Allergy Type</Translate>,
+        render: (rowData: PatientAllergiesResponseVM) => <p>{formatEnumString(rowData.allergenType)}</p>
+      },
+      {
+        key: 'allergen',
+        title: <Translate>Allergen</Translate>,
+        render: (rowData: PatientAllergiesResponseVM) => {
+          if (rowData?.allergenId && allergensListResponse?.data) {
+            const allergen = allergensListResponse.data.find(
+              (item: any) => item.id === rowData.allergenId
+            );
+            return <p>{allergen?.name ?? '-'}</p>;
+          }
+  
+          else if (rowData?.medicationClassId && medicationClassesListResponse) {
+            const medicationClass = medicationClassesListResponse.find(
+              (item: any) => item.id === rowData.medicationClassId
+            );
+            return <p>{medicationClass?.name ?? '-'}</p>;
+          }
+  
+          return <p>-</p>;
+        }
+      },
+      {
+        key: 'severity',
+        title: <Translate>Severity</Translate>,
+        render: rowData => <p>{formatEnumString(rowData?.severity)}</p>,
+      },
+    ].filter(Boolean);
 
   return (
     <>
@@ -74,7 +82,7 @@ const AllergyFloatingButton = ({ patientKey }: { patientKey: string }) => {
             <div className="table-scroll-wrapper">
               <MyTable
                 columns={tableColumns}
-                data={allergiesListResponse?.object || []}
+                data={activeAllergies || []}
                 loading={isLoading}
                 hidePagination
                 compact
