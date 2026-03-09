@@ -11,8 +11,38 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStethoscope, faVial, faPills } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
 import { useSelector } from 'react-redux';
+import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
+import MedicalReport from '@/reportCharts/MedicalReport';
 
 const Dashboard = () => {
+   const report = (
+    <MedicalReport
+      organizationName="Health Organization"
+      patientName="Batool test Testing Sbaih"
+      mrn={1055}
+      dob="2002-03-26"
+      age="23y 10m 22d"
+      visitId={257}
+      visitDate="2026-02-17"
+      visitType="Urgent Visit"
+      priority=""
+      origin=""
+      reason=""
+      generatedAt="24/02/2026 19:24:55"
+      sections={[
+        { title: "Patient Observations & Complaints", value: "" },
+        { title: "Vital Signs", value: "Temperature: 37.2°C, BP: 120/80, Pulse: 78 bpm" },
+        { title: "Body Measurements", value: "Weight: 68 kg, Height: 170 cm" },
+        { title: "Pain Assessment", value: "Pain score: 2/10" },
+        { title: "Additional Measurements (Infant / Neonate)", value: "" },
+        { title: "Additional Measurements (GER)", value: "" },
+        { title: "Allergies", value: "No known drug allergies." },
+        { title: "Medical Warnings", value: "" },
+        { title: "Vaccinations", value: "Influenza vaccine up to date." },
+        { title: "Nurse Services & Products", value: "" },
+      ]}
+    />
+  );
   const dispatch = useAppDispatch();
   const mode = useSelector((state: any) => state.ui.mode);
 
@@ -169,6 +199,21 @@ const Dashboard = () => {
               showPercentage
             />
           </Panel>
+        <div style={{ padding: 24, fontFamily: "Arial, sans-serif" }}>
+      <h2>Medical PDF Demo</h2>
+
+      <div style={{ marginBottom: 16 }}>
+        <PDFDownloadLink document={report} fileName="medical-report.pdf">
+          {({ loading }) => (loading ? "Generating PDF..." : "Download PDF")}
+        </PDFDownloadLink>
+      </div>
+
+      <div style={{ border: "1px solid #ddd", height: "80vh" }}>
+        <PDFViewer width="100%" height="100%">
+          {report}
+        </PDFViewer>
+      </div>
+    </div>
         </FlexboxGrid.Item>
 
       </FlexboxGrid>
