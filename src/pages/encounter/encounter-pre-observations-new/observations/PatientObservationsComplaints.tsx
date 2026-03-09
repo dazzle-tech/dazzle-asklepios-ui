@@ -8,7 +8,10 @@ import { Form } from 'rsuite';
 
 import './styles.less';
 
-import type { PatientEncounter, PatientObservationsComplaints as PatientObservationsComplaintsModel } from '@/types/model-types-new';
+import type {
+  PatientEncounter,
+  PatientObservationsComplaints as PatientObservationsComplaintsModel
+} from '@/types/model-types-new';
 import { newPatientObservationsComplaints } from '@/types/model-types-constructor-new';
 
 import {
@@ -62,7 +65,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
   useEffect(() => {
     if (!latestByEncounter) return;
 
-    setRecord((prev) => ({
+    setRecord(prev => ({
       ...prev,
       ...latestByEncounter,
       id: undefined,
@@ -194,15 +197,14 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     }
 
     try {
-      const created = await createPatientObservationsComplaints(
-        createPayload as any
-      ).unwrap();
+      const created = await createPatientObservationsComplaints(createPayload as any).unwrap();
       if (encounter && !encounter.isObserved) {
         const updated = await updateEncounter({
           id: encounterId,
           body: {
             id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
+            patientId:
+              encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
             encounterNumber: encounter?.encounterNumber ?? null,
             facilityId: encounter?.facilityId ?? null,
             departmentId: encounter?.departmentId ?? null,
@@ -227,7 +229,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
         console.log('Encounter updated to observed:', updated);
       }
 
-      setRecord((prev) => ({
+      setRecord(prev => ({
         ...prev,
         ...created,
         patientId,
@@ -303,13 +305,13 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
             <MultiSelectAppender
               label="Patient Conditions"
-              options={(patientConditions as any) ?? []}
+              options={patientConditions ?? []}
               optionLabel="label"
               optionValue="value"
-              object={(record as any).patientConditions ?? ''}
+              object={record.patientConditions ?? ''}
               setObject={(value: string) =>
-                setRecord((prev) => ({
-                  ...(prev as any),
+                setRecord(prev => ({
+                  ...prev,
                   patientConditions: value
                 }))
               }
