@@ -1,16 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Drawer } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import './styles.less';
 import PatientVisitHistoryTable from './PatientVisitHistoryTable';
 
-const PatientVisitHistory = ({
-  visitHistoryModel,
-  localPatient,
-  setVisitHistoryModel,
-  quickAppointmentModel,
-  setQuickAppointmentModel
-}) => {
+const PatientVisitHistory = ({ visitHistoryModel, localPatient, setVisitHistoryModel }) => {
   return (
     <div className="drawer-container">
       <Drawer
