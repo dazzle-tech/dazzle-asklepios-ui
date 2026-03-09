@@ -35,6 +35,8 @@ import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper }
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
+import { useLazyGetPatientLabelQuery } from '@/services/patient/patientService';
+import { printPatientLabel } from '@/utils/printPatientLabel';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -87,6 +89,27 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { patientId: patientId! },
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
+
+  const [triggerPatientLabel, { isFetching }] = useLazyGetPatientLabelQuery();
+
+  const handlePrintPatientLabel = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      const res = await triggerPatientLabel({
+        patientId: localPatient.id
+      }).unwrap();
+
+      await printPatientLabel(res);
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: err?.data?.message || 'Print failed',
+          sev: 'error'
+        })
+      );
+    }
+  };
 
   const contentOfMoreIconMenu = (
     <Popover full>
@@ -193,7 +216,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <Translate>Print Information</Translate>
           </div>
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => setOpenPrintMenu(false)}>
+        <Dropdown.Item
+          disabled={!localPatient?.id}
+          onClick={async () => {
+            setOpenPrintMenu(false);
+            await handlePrintPatientLabel();
+          }}
+        >
           <div className="container-of-icon-and-key1">
             <Translate>Print Patient Label</Translate>
           </div>
@@ -374,12 +403,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     }
                   >
                     <div className="status-icon">
-                      {localPatient.isCompletedPatient && (
-                        <Icon color="green" as={VscUnverified} />
-                      )}
-                      {!localPatient.isCompletedPatient && (
-                        <Icon color="red" as={VscVerified} />
-                      )}
+                      {localPatient.isCompletedPatient && <Icon color="green" as={VscUnverified} />}
+                      {!localPatient.isCompletedPatient && <Icon color="red" as={VscVerified} />}
                     </div>
                   </Whisper>
                 )}

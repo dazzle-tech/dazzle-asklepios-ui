@@ -229,9 +229,17 @@ export const newPatientService = createApi({
       query: body => ({
         url: '/api/patient/bulk/basic-info',
         method: 'POST',
-        body,
-      }),
+        body
+      })
     }),
+
+    getPatientLabel: builder.query<modelTypes.PatientLabelVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/patient/label/${patientId}`,
+        method: 'GET'
+      }),
+      providesTags: ['Patient']
+    })
   })
 });
 
@@ -275,5 +283,6 @@ export const {
   useGetDuplicationCandidatesMutation,
 
   // bulk basic info
-  useGetBulkPatientBasicInfoMutation
+  useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientLabelQuery
 } = newPatientService;

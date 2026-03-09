@@ -1,13 +1,11 @@
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
-import type { SampleLabelVM } from '@/types/model-types-new'; 
+import type { SampleLabelVM } from '@/types/model-types-new';
 
 export async function printSampleLabel(vm: SampleLabelVM) {
   const today = new Date().toLocaleDateString('en-GB');
-  const sampleDate = vm.sampleDateTime
-    ? new Date(vm.sampleDateTime).toLocaleString('en-GB')
-    : '';
+  const sampleDate = vm.sampleDateTime ? new Date(vm.sampleDateTime).toLocaleString('en-GB') : '';
 
   const qrValue = `MRN:${vm.mrn};NAME:${vm.patientName};TEST:${vm.testName};SAMPLE_DT:${sampleDate};QTY:${vm.sampleQuantity}${vm.sampleUnit}`;
   const qrData = await QRCode.toDataURL(qrValue);
@@ -33,8 +31,8 @@ export async function printSampleLabel(vm: SampleLabelVM) {
   doc.text(`DATE ${today}`, 55, 10);
 
   doc.setFont('helvetica', 'normal');
-doc.setFontSize(9);
-doc.text(vm.facilityName, 55, 15);
+  doc.setFontSize(9);
+  doc.text(vm.facilityName, 55, 15);
   doc.addImage(qrData, 'PNG', 92, 4, 12, 12);
 
   doc.setFont('helvetica', 'normal');
