@@ -259,7 +259,16 @@ export const patientEncounterService = createApi({
         method: 'GET'
       }),
       providesTags: ['PatientEncounter']
-    })
+    }),
+
+    getPreviousClosedEncounter:builder.query<PatientEncounter,{ encounterId: Id }>({
+      query: ({encounterId}) => ({
+        url: `/api/patient/encounter/${encounterId}/previous-encounter-completed`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
   })
 });
 
@@ -287,5 +296,6 @@ export const {
   useLazyGetEncounterByIdQuery,
   useGetEncountersByPatientQuery,
   useLazyGetEncountersByPatientQuery,
-  useGetEncountersByAppointmentQuery
+  useGetEncountersByAppointmentQuery,
+  useGetPreviousClosedEncounterQuery
 } = patientEncounterService;
