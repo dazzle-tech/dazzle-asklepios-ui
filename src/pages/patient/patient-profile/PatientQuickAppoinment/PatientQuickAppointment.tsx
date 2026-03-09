@@ -24,6 +24,7 @@ import {
   useCreateEncounterMutation,
   useUpdateEncounterMutation
 } from '@/services/encounters/patientEncounterService';
+import { useAcceptReferralRequestMutation } from '@/services/medicalsheetsEncounter/referralRequestService';
 import * as modelTypes from '@/types/model-types-new';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
@@ -123,6 +124,8 @@ const PatientQuickAppointment = ({
   localPatient,
   setQuickAppointmentModel,
   localVisit,
+  localReferral,
+  openedFromReferral = false,
   isDisabeld = false,
   onEncounterSaved,
   initialStep = 0
@@ -132,6 +135,8 @@ const PatientQuickAppointment = ({
   const [localEncounter, setLocalEncounter] = useState<PatientEncounter>({
     ...newPatientEncounter,
     patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
+    facilityId: Number(localReferral?.toFacilityId ?? 0),
+    departmentId: Number(localReferral?.toDepartmentId ?? 0),
     encounterDate: new Date()
   });
 
@@ -147,11 +152,13 @@ const PatientQuickAppointment = ({
   const isLockedAfterPayment = Boolean(isPaymentSaved);
 
   const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode);
-
   const paymentReadOnly = Boolean(isViewMode || isLockedAfterPayment);
 
   const [createEncounter] = useCreateEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
+  const [acceptReferralRequest] = useAcceptReferralRequestMutation();
+
+  const didAcceptReferralRef = useRef(false);
 
   const [paymentDraft, setPaymentDraft] = useState<modelTypes.PatientPayments & any>({
     ...newPatientPayments,
@@ -187,6 +194,23 @@ const PatientQuickAppointment = ({
       if (!Number.isNaN(d.getTime())) setLocalEncounter(prev => ({ ...prev, encounterDate: d }));
     }
   }, [localEncounter?.encounterDate]);
+
+  useEffect(() => {
+    if (!openedFromReferral || !localReferral) return;
+
+    setLocalEncounter(prev => ({
+      ...prev,
+      patientId: Number(localPatient?.id ?? localPatient?.key ?? prev.patientId ?? 0),
+      facilityId: Number(localReferral?.toFacilityId ?? prev.facilityId ?? 0),
+      departmentId: Number(localReferral?.toDepartmentId ?? prev.departmentId ?? 0)
+    }));
+  }, [openedFromReferral, localReferral, localPatient?.id, localPatient?.key]);
+
+  useEffect(() => {
+    if (!quickAppointmentModel) {
+      didAcceptReferralRef.current = false;
+    }
+  }, [quickAppointmentModel]);
 
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
@@ -231,6 +255,16 @@ const PatientQuickAppointment = ({
 
       setLocalEncounter(prev => ({ ...prev, ...normalizedSaved }));
       setIsEncounterSaved(true);
+
+      if (
+        openedFromReferral &&
+        localReferral?.id &&
+        !didAcceptReferralRef.current
+      ) {
+        await acceptReferralRequest({ id: localReferral.id }).unwrap();
+        didAcceptReferralRef.current = true;
+      }
+
       dispatch(notify({ msg: 'Encounter Saved Successfully', sev: 'success' }));
 
       if (onEncounterSaved) await onEncounterSaved();
@@ -244,6 +278,8 @@ const PatientQuickAppointment = ({
     setLocalEncounter({
       ...newPatientEncounter,
       patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
+      facilityId: Number(localReferral?.toFacilityId ?? 0),
+      departmentId: Number(localReferral?.toDepartmentId ?? 0),
       encounterDate: new Date()
     });
     setValidationResult({});
@@ -303,6 +339,8 @@ const PatientQuickAppointment = ({
             setLocalEncounter={setLocalEncounter}
             isReadOnly={encounterReadOnly}
             localPatient={localPatient}
+            localReferral={localReferral}
+            openedFromReferral={openedFromReferral}
           />
         );
       case 1:
@@ -318,6 +356,7 @@ const PatientQuickAppointment = ({
             setPayment={setPaymentDraft}
             patientInsurance={patientInsuranceDraft}
             setPatientInsurance={setPatientInsuranceDraft}
+            onPaymentSaved={onEncounterSaved} 
           />
         );
       default:

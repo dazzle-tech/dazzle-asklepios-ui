@@ -25,15 +25,15 @@ import {
   useGetLovValuesByCodeAndParentQuery
 } from '@/services/setupService';
 
-import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
 import { useAddPatientMutation, useUpdatePatientMutation } from '@/services/patient/patientService';
+import { useCreateEncounterMutation } from '@/services/encounters/patientEncounterService';
 
-import { newPatient, newPatientDocument } from '@/types/model-types-constructor-new';
-import { Patient } from '@/types/model-types-new';
+import { newPatient, newPatientDocument, newPatientEncounter } from '@/types/model-types-constructor-new';
+import { Patient, PatientEncounter } from '@/types/model-types-new';
 
-import { newApEncounter, newApPatientInsurance } from '@/types/model-types-constructor';
+import { newApPatientInsurance } from '@/types/model-types-constructor';
 import { ApPatientInsurance } from '@/types/model-types';
 
 import './styles.less';
@@ -232,7 +232,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const pageCode = useSelector(state => state.div?.pageCode);
+  const pageCode = useSelector((state: any) => state.div?.pageCode);
 
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
   const [secondaryDocument, setSecondaryDocument] = useState(newPatientDocument);
@@ -241,20 +241,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
   });
   const [openNextDocument, setOpenNextDocument] = useState(false);
 
-  const [localEncounter, setLocalEncounter] = useState({
-    ...newApEncounter,
-    visitTypeLkey: '2041082245699228',
-    patientId: localPatient.id,
-    plannedStartDate: new Date(),
-    patientAge: calculateAgeFormat(localPatient.dateOfBirth),
-    discharge: false
-  });
-
   const [addPatient] = useAddPatientMutation();
   const [updatePatient] = useUpdatePatientMutation();
   const [addPatientDocument] = useAddPatientDocumentMutation();
   const [addNoDocument] = useAddNoDocumentMutation();
-  const [saveEncounter] = useCompleteEncounterRegistrationMutation();
+  const [createEncounter] = useCreateEncounterMutation();
 
   const { data: countryLov } = useGetLovValuesByCodeQuery('CNTRY');
   const patientDocumentEnum = useEnumOptions('DocumentType');
@@ -263,7 +254,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const { data: cityLov } = useGetLovValuesByCodeAndParentQuery({
     code: 'CITY',
-    parentValueKey: localPatient.country
+    parentValueKey: (localPatient as any).country
   });
 
   const { data: insuranceProviderLov } = useGetLovValuesByCodeQuery('INS_PROVIDER');
@@ -300,7 +291,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
       setDocCountryCache(prev => [...prev, ...mapped]);
     }
 
-    setDocHasMoreCountries(docCountriesData.last === false);
+    // countryService returns a PagedResult with Link headers parsed into `links`
+    setDocHasMoreCountries(!!docCountriesData.links?.next);
     setDocPaginationLoading(false);
   }, [docCountriesData, docCountryPage, countryLov]);
 
@@ -362,14 +354,35 @@ const CreateNewPatient = ({ open, setOpen }) => {
       setLocalPatient(saved);
 
       if (pageCode === 'ER_Triage') {
-        await saveEncounter({
-          ...localEncounter,
-          patientId: saved.id,
-          encounterStatusLkey: '8890456518264959',
-          patientAge: calculateAgeFormat(saved.dateOfBirth),
-          resourceTypeLkey: '6743167799449277',
-          resourceKey: '7101086042442391'
-        });
+        const selectedDepartment = JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
+        const departmentId = Number(selectedDepartment?.departmentId ?? 0);
+        const facilityId = Number(selectedDepartment?.facilityId ?? 0);
+
+        if (!departmentId || !facilityId) {
+          dispatch(
+            notify({
+              msg: 'Missing logged-in department. Please select a department then try again.',
+              sev: 'error'
+            })
+          );
+          return;
+        }
+
+        const encounterBody: PatientEncounter = {
+          ...newPatientEncounter,
+          id: 0,
+          patientId: Number(saved.id ?? 0),
+          facilityId,
+          departmentId,
+          encounterType: 'EMERGENCY',
+          encounterReason: 'URGENT_VISIT',
+          status: 'WAITING_TRIAGE',
+          encounterDate: new Date(),
+          paymentDate: new Date().toISOString(),
+          amount: 0
+        };
+
+        await createEncounter({ body: encounterBody }).unwrap();
 
         dispatch(setRefetchEncounter(true));
       }
@@ -580,15 +593,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 hasMore={docHasMoreCountries}
                 onFetchMore={loadMoreDocCountries}
                 loading={docPaginationLoading}
-                open={docCountryOpen}
-                onOpen={() => setDocCountryOpen(true)}
-                onClose={() => setDocCountryOpen(false)}
                 onSelectItem={(item: any) => {
                   setSecondaryDocument(prev => ({
                     ...prev,
                     countryId: item.id
                   }));
-                  setDocCountryOpen(false);
                 }}
                 record={secondaryDocument}
               />

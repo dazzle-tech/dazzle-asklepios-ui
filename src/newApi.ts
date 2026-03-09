@@ -32,7 +32,7 @@ export const onQueryStarted = async (body: any, { dispatch, queryFulfilled }: an
     const { data } = await queryFulfilled;
 
     // If API response contains a message, notify the user
-    if (data._responseMsg) {
+    if (data && data._responseMsg) {
       dispatch(notify(data._responseMsg));
     }
   } catch (err: any) {

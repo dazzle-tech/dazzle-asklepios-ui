@@ -27,6 +27,7 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 
 export const patientPrescriptionMedicationService = createApi({
   reducerPath: 'patientPrescriptionMedicationApi',
@@ -106,6 +107,25 @@ export const patientPrescriptionMedicationService = createApi({
         'PatientPrescriptionMedication',
       ],
     }),
+
+    getAllChronicRaw: builder.query<
+          PagedResult<PatientPrescriptionMedication>,
+          { patientId: number } & PagedParams
+        >({
+          query: ({ patientId, page, size, sort = 'id,asc' }) => ({
+            url: `/api/patient/patient-prescription-medications/${patientId}/chronic-medications/raw`,
+            params: { page, size, sort },
+          }),
+          transformResponse: (response: PatientPrescriptionMedication[], meta): PagedResult<PatientPrescriptionMedication> => {
+            const headers = meta?.response?.headers;
+            return {
+              data: response,
+              totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+              links: parseLinkHeader(headers?.get('Link')),
+            };
+          },
+          providesTags: ['PatientPrescriptionMedication'],
+        }),
   }),
 });
 
@@ -116,4 +136,5 @@ export const {
   useCreatePatientPrescriptionMedicationMutation,
   useUpdatePatientPrescriptionMedicationMutation,
   useDeletePatientPrescriptionMedicationMutation,
+  useGetAllChronicRawQuery
 } = patientPrescriptionMedicationService;

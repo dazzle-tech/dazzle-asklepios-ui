@@ -8,7 +8,10 @@ import { newPatientEncounter } from '@/types/model-types-constructor-new';
 
 import { useEnumOptions } from '@/services/enumsApi';
 
-import { useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery } from '@/services/security/departmentService';
+import {
+  useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
+  useLazyGetDepartmentByIdQuery
+} from '@/services/security/departmentService';
 
 import { useLazyGetPractitionersByDepartmentQuery } from '@/services/setup/practitioner/PractitionerDepartmentService';
 
@@ -26,15 +29,19 @@ const RegistrationEncounter = ({
   localEncounter,
   setLocalEncounter,
   isReadOnly,
-  localPatient
+  localPatient,
+  localReferral,
+  openedFromReferral = false
 }: {
   localEncounter: PatientEncounter;
   setLocalEncounter: (updater: any) => void;
   isReadOnly: boolean;
   localPatient: any;
+  localReferral?: any;
+  openedFromReferral?: boolean;
 }) => {
   const authSlice = useSelector((state: any) => state.auth);
-
+console.log("localReferral in RegistrationEncounter: ", localReferral); 
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
@@ -59,19 +66,23 @@ const RegistrationEncounter = ({
     setLocalEncounter((prevEncounter: PatientEncounter) => ({
       ...prevEncounter,
       patientId: prevEncounter.patientId || patientId,
-      facilityId: prevEncounter.facilityId || Number(selectedFacilityId ?? 0)
+      facilityId:
+        prevEncounter.facilityId ||
+        Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0)
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [patientId, selectedFacilityId]);
+  }, [patientId, selectedFacilityId, localReferral?.toFacilityId]);
 
   const [triggerCountToday, { data: todayCount, isFetching: isTodayCountFetching }] =
     useLazyCountTodayEncountersByFacilityQuery();
 
   useEffect(() => {
-    if (!selectedFacilityId) return;
-    triggerCountToday({ facilityId: Number(selectedFacilityId) });
+    const facilityToUse = Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0);
+    if (!facilityToUse) return;
+
+    triggerCountToday({ facilityId: facilityToUse });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFacilityId]);
+  }, [selectedFacilityId, localReferral?.toFacilityId]);
 
   const [deptPage, setDeptPage] = useState(0);
   const deptSize = 20;
@@ -80,12 +91,76 @@ const RegistrationEncounter = ({
   const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
     useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
 
+  const [triggerGetDepartmentById, { data: referralDepartment }] = useLazyGetDepartmentByIdQuery();
+
+  const didApplyReferralPrefillRef = useRef(false);
+useEffect(() => {
+  if (!openedFromReferral) return;
+
+  const referralDepartmentId = Number(localReferral?.toDepartmentId ?? 0);
+  if (!referralDepartmentId) return;
+
+  triggerGetDepartmentById(referralDepartmentId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [openedFromReferral, localReferral?.toDepartmentId]);
+
+  useEffect(() => {
+    if (!openedFromReferral) return;
+    if (!referralDepartment) return;
+
+    const encounterTypeFromDepartment =
+      referralDepartment?.encounterType ??
+      null;
+
+    setAllDepartments(prevDepartments => {
+      const exists = prevDepartments.some(
+        (department: any) => Number(department?.id) === Number(referralDepartment?.id)
+      );
+      if (exists) return prevDepartments;
+      return [referralDepartment, ...prevDepartments];
+    });
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => ({
+      ...prevEncounter,
+      facilityId:
+        prevEncounter.facilityId ||
+        Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0),
+      encounterType: prevEncounter.encounterType || encounterTypeFromDepartment || undefined
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openedFromReferral, referralDepartment, localReferral?.toFacilityId, selectedFacilityId]);
+console.log("department fetched by ID: ", referralDepartment);
+  useEffect(() => {
+    if (!openedFromReferral) return;
+    if (!referralDepartment?.id) return;
+    if (didApplyReferralPrefillRef.current) return;
+    if (!localEncounter?.encounterType) return;
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => ({
+      ...prevEncounter,
+      facilityId:
+        prevEncounter.facilityId ||
+        Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0),
+      departmentId: Number(prevEncounter.departmentId || referralDepartment.id),
+      practitionerId: prevEncounter.practitionerId ?? null
+    }));
+
+    didApplyReferralPrefillRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    openedFromReferral,
+    referralDepartment?.id,
+    localEncounter?.encounterType,
+    localReferral?.toFacilityId,
+    selectedFacilityId
+  ]);
+
   const prevKeysRef = useRef<{ facilityId?: number; encounterType?: string }>({});
 
   useEffect(() => {
-    if (!selectedFacilityId || !localEncounter?.encounterType) return;
+    const facilityIdNum = Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0);
+    if (!facilityIdNum || !localEncounter?.encounterType) return;
 
-    const facilityIdNum = Number(selectedFacilityId);
     const previousKeys = prevKeysRef.current;
 
     const facilityChanged =
@@ -106,7 +181,10 @@ const RegistrationEncounter = ({
       setLocalEncounter((prevEncounter: PatientEncounter) => ({
         ...prevEncounter,
         facilityId: facilityIdNum,
-        departmentId: 0,
+        departmentId:
+          openedFromReferral && Number(localReferral?.toDepartmentId ?? 0)
+            ? Number(localReferral.toDepartmentId)
+            : 0,
         practitionerId: null,
         followUpEncounterId: null
       }));
@@ -125,21 +203,28 @@ const RegistrationEncounter = ({
       sort: 'id,asc'
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFacilityId, localEncounter?.encounterType]);
+  }, [
+    selectedFacilityId,
+    localReferral?.toFacilityId,
+    localReferral?.toDepartmentId,
+    localEncounter?.encounterType,
+    openedFromReferral
+  ]);
 
   useEffect(() => {
-    if (!selectedFacilityId || !localEncounter?.encounterType) return;
+    const facilityIdNum = Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0);
+    if (!facilityIdNum || !localEncounter?.encounterType) return;
     if (deptPage === 0) return;
 
     triggerDepartments({
-      facilityId: Number(selectedFacilityId),
+      facilityId: facilityIdNum,
       encounterType: localEncounter.encounterType,
       page: deptPage,
       size: deptSize,
       sort: 'id,asc'
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deptPage]);
+  }, [deptPage, selectedFacilityId, localReferral?.toFacilityId, localEncounter?.encounterType]);
 
   useEffect(() => {
     const rows = deptList?.data ?? [];
@@ -209,7 +294,7 @@ const RegistrationEncounter = ({
       sort: 'id,asc'
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [practPage]);
+  }, [practPage, localEncounter?.departmentId]);
 
   const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
 
@@ -285,7 +370,7 @@ const RegistrationEncounter = ({
       sort: 'id,desc'
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prevPage]);
+  }, [prevPage, localEncounter?.encounterReason, patientId, localEncounter?.departmentId]);
 
   useEffect(() => {
     const rows = prevList?.data ?? [];
@@ -368,7 +453,11 @@ const RegistrationEncounter = ({
         record={localEncounter}
         setRecord={setLocalEncounter}
         searchable
-        disabled={isReadOnly || !selectedFacilityId || !localEncounter?.encounterType}
+        disabled={
+          isReadOnly ||
+          !Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0) ||
+          !localEncounter?.encounterType
+        }
         loading={isDepartmentsFetching}
         hasMore={deptHasMore}
         onFetchMore={() => {
@@ -385,7 +474,7 @@ const RegistrationEncounter = ({
         fieldType="selectPagination"
         fieldLabel="Practitioner"
         fieldName="practitionerId"
-        selectData={practitionersData}
+        selectData={allPractitioners}
         selectDataLabel={['firstName', 'lastName']}
         selectDataValue="id"
         record={localEncounter}

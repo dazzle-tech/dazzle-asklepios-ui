@@ -159,13 +159,14 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }) => {
     [results]
   );
 
-  const { data: orderTestsResponse } =
-    useFilterDiagnosticOrderTestsQuery(
-      orderTestIds.length
-        ? { orderTestIdIn: orderTestIds, page: 0, size: 100 }
-        : skipToken
-    );
-
+ const {
+     data: orderTestsResponse,
+     isFetching: isOrderTestsFetching
+   } = useFilterDiagnosticOrderTestsQuery(
+     orderTestIds.length
+       ? { orderTestIdIn: orderTestIds, page: 0, size: 100 }
+       : skipToken
+   );
   const orderTests = orderTestsResponse?.data ?? [];
 
   const orderTestMap = useMemo(
@@ -174,8 +175,12 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }) => {
   );
 
 
-  const { data: allTestsResponse } =
-    useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
+  
+    const {
+      data: allTestsResponse,
+      isFetching: isAllTestsFetching
+    } = useGetAllDiagnosticTestsQuery({ page: 0, size: 10000 });
+  
 
   const allTests = allTestsResponse?.data ?? [];
 
@@ -287,8 +292,8 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }) => {
           data={normalizedResults}
           loading={
             isFetching ||
-            !orderTestsResponse ||
-            !allTestsResponse
+            isOrderTestsFetching ||
+            isAllTestsFetching
           }
           page={pageIndex}
           rowsPerPage={rowsPerPage}

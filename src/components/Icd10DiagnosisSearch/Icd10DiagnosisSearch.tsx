@@ -37,18 +37,20 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
   const [accum, setAccum] = useState<Record<string, ICDDiagnosisDTO>>({});
   const [isAppending, setIsAppending] = useState(false);
 
-  // --- selected diagnosis full record ---
-  const [display, setDisplay] = useState({ code: "", full: "" });
+  // --- selected diagnosis record (code + default description) ---
+  const [display, setDisplay] = useState({ code: "", desc: "" });
 
-  const [searchDiagnoses, { isFetching: isSearching }] = useLazySearchIcdDiagnosesQuery();
-  const [getById, { isFetching: isByIdLoading }] = useLazyGetIcdDiagnosisByIdQuery();
+  const [searchDiagnoses, { isFetching: isSearching }] =
+    useLazySearchIcdDiagnosesQuery();
+  const [getById, { isFetching: isByIdLoading }] =
+    useLazyGetIcdDiagnosisByIdQuery();
 
   const lastKeywordRef = useRef<string>("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleClear = () => {
     setDiagnosisId(null);
-    setDisplay({ code: "", full: "" });
+    setDisplay({ code: "", desc: "" });
 
     setKeyword("");
     setOpen(false);
@@ -163,7 +165,7 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
   // if diagnosisId comes from parent -> fetch by id + show loading until loaded
   useEffect(() => {
     if (!diagnosisId) {
-      setDisplay({ code: "", full: "" });
+      setDisplay({ code: "", desc: "" });
       return;
     }
 
@@ -173,13 +175,15 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
       try {
         const dx = await getById({ id: diagnosisId, timestamp: Date.now() }).unwrap();
         if (cancelled) return;
+
         setDisplay({
           code: dx?.icdCode ?? "",
-          full: dx?.icdFullDescription ?? "",
+          // "default description" -> short if available, else full
+          desc: dx?.icdShortDescription ?? dx?.icdFullDescription ?? "",
         });
       } catch {
         if (cancelled) return;
-        setDisplay({ code: "", full: "" });
+        setDisplay({ code: "", desc: "" });
       }
     })();
 
@@ -264,7 +268,11 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
 
                           setDisplay({
                             code: item.icdCode ?? "",
-                            full: item.icdFullDescription ?? "",
+                            // "default description" -> short if available, else full
+                            desc:
+                              item.icdShortDescription ??
+                              item.icdFullDescription ??
+                              "",
                           });
 
                           // close dropdown when done
@@ -274,7 +282,9 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
                       >
                         <span className="icd10-search__code">{item.icdCode}</span>
                         <span className="icd10-search__desc">
-                          {item.icdShortDescription ?? item.icdFullDescription ?? ""}
+                          {item.icdShortDescription ??
+                            item.icdFullDescription ??
+                            ""}
                         </span>
                       </Dropdown.Item>
                     ))}
@@ -313,7 +323,7 @@ const Icd10DiagnosisSearch: React.FC<Props> = ({
               isByIdLoading
                 ? "Loading..."
                 : display.code
-                ? `${display.code}${display.full ? " - " + display.full : ""}`
+                ? `${display.code}${display.desc ? " - " + display.desc : ""}`
                 : ""
             }
             className="icd10-search__selected"

@@ -90,7 +90,7 @@ export const bodyMeasurementsService = createApi({
 
     getBodyMeasurementsBetweenDatesByPatientId: builder.query<
       SpringPage<BodyMeasurementsResponseVM>,
-      { patientId: Id; from: string; to: string; page?: number; size?: number; sort?: string }
+      { patientId: Id; from?: string; to?: string; page?: number; size?: number; sort?: string }
     >({
       query: ({ patientId, from, to, page, size, sort }) => ({
         url: `/api/patient/body-measurements/patient/${encodeURIComponent(String(patientId))}`,

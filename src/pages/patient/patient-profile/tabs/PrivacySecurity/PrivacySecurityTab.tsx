@@ -187,8 +187,8 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           />
 
           {/* ======== SAVE HIPAA BUTTON ======== */}
+          <div className='privacy-security-tab-save-button'>
           <MyButton
-            className="ml-3"
             appearance="primary"
             loading={creating || updating}
             prefixIcon={() => <CheckRound />}
@@ -196,6 +196,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           >
             Save HIPAA
           </MyButton>
+          </div>
         </div>
       </Form>
     </div>
