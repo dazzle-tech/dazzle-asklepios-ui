@@ -36,7 +36,10 @@ import Section from '@/components/Section';
 import FullViewTable from './FullViewTable';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 
-
+import {
+  useFilterDiagnosticOrdersQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
+import { order } from '@mui/system';
 type Props = {
   patient: any;
 };
@@ -72,31 +75,65 @@ const renderMarker = (marker?: string) => {
 
 const RecentTestResults = forwardRef<any, Props>(({ patient }) => {
 
-
+ 
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
 
   const [openNotesModal, setOpenNotesModal] = useState(false);
   const [open, setOpen] = useState<boolean>(false);
+  const patientId = patient?.id;
+console.log('Patient ID in RecentTestResults:', patientId);
+ const ordersQueryParams = useMemo(() => {
+    if (!patientId) return skipToken;
+
+    return {
+      patientId,
+      page: 0,
+      size: 1000,
+      sort: 'id,desc'
+    };
+  }, [patientId]);
+
+  const {
+    data: ordersResponse,
+    isFetching: isOrdersFetching
+  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+console.log('Orders response in RecentTestResults:', ordersResponse);
+  const orders = ordersResponse?.data ?? [];
+    const orderIds = useMemo(
+      () => orders.map((o: any) => o.id).filter(Boolean),
+      [orders]
+    );
+   console.log('Order IDs in RecentTestResults:', orderIds);
 
   const queryParams = useMemo(() => {
-    const patientId = patient?.id ?? patient?.key;
-    if (!patientId) return null;
-
-    const params: any = {
+      if (!patientId) return skipToken;
+  
+      if (isOrdersFetching) return skipToken;
+  
+      if (!orderIds.length) return skipToken;
+  
+      const params: any = {
+        orderIdIn: orderIds,
+        page: pageIndex,
+        size: rowsPerPage,
+        processingStatus: 'RESULT_APPROVED',
+        sort: 'reviewDate,desc',
+        reviewed: true
+      };
+  
+ 
+      return params;
+    }, [
       patientId,
-      page: pageIndex,
-      size: rowsPerPage,
-      processingStatus: 'RESULT_APPROVED',
-      sort: 'reviewDate,desc'
-    };
+      orderIds,
+      pageIndex,
+      rowsPerPage,
 
-    params.reviewed = true;
-
-
-    return params;
-  }, [patient, pageIndex, rowsPerPage]);
+      isOrdersFetching
+    ]);
+  
   const { data: response, isFetching } =
     useFilterDiagnosticOrderTestResultsQuery(
       queryParams ?? skipToken

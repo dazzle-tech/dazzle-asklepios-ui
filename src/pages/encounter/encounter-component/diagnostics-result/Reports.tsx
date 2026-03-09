@@ -8,13 +8,13 @@ import { useAppDispatch } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import {
-  useLazyGetDiagnosticOrderByIdQuery
+  useLazyGetDiagnosticOrderByIdQuery,
+  useFilterDiagnosticOrdersQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
   useLazyGetDiagnosticOrderTestByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import {
-  useCreateReportCommentMutation,
   useGetReportCommentsByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import {
@@ -27,10 +27,10 @@ import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { MdAttachFile } from 'react-icons/md';
 import { Form, HStack, Tooltip, Whisper } from 'rsuite';
-
 
 const startOfDay = (d: Date) => {
   const x = new Date(d);
@@ -46,8 +46,8 @@ const endOfDay = (d: Date) => {
 
 const Reports = ({ patient }) => {
   const dispatch = useAppDispatch();
-
   const today = new Date();
+  const patientId = patient?.id;
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -56,46 +56,85 @@ const Reports = ({ patient }) => {
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
   const [testsMap, setTestsMap] = useState<Record<string, any>>({});
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [selectedReportForAttachments, setSelectedReportForAttachments] =
+    useState<any>(null);
 
   const [orderDate, setOrderDate] = useState({
     fromDate: today,
     toDate: today
   });
 
-  const queryParams: any = {
-    processingStatus: 'RESULT_APPROVED',
-    reviewed: true,
-    ...(orderDate.fromDate
-      ? { approvedDateFrom: startOfDay(orderDate.fromDate).toISOString() }
-      : {}),
-    ...(orderDate.toDate
-      ? { approvedDateTo: endOfDay(orderDate.toDate).toISOString() }
-      : {})
-  };
-
   const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
   const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
-  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const [selectedReportForAttachments, setSelectedReportForAttachments] = useState<any>(null);
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
 
-  const { data, isFetching, refetch } =
-    useFilterRadiologyReportsQuery({
-      page,
-      size: rowsPerPage,
-      sort: 'id,desc',
-      params: queryParams
-    });
+  // 1) جيب orders الخاصة بالمريض
+  const ordersQueryParams = useMemo(() => {
+    if (!patientId) return skipToken;
+
+    return {
+      patientId,
+      page: 0,
+      size: 1000,
+      sort: 'id,desc'
+    };
+  }, [patientId]);
+
+  const {
+    data: ordersResponse,
+    isFetching: isOrdersFetching
+  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+
+  const orders = ordersResponse?.data ?? [];
+
+  const orderIds = useMemo(
+    () => orders.map((o: any) => o.id).filter(Boolean),
+    [orders]
+  );
+
+  // 2) ابني params التقارير باستخدام orderIdIn بدل patientId
+  const queryParams = useMemo(() => {
+    if (!patientId) return null;
+    if (isOrdersFetching) return null;
+    if (!orderIds.length) return null;
+
+    return {
+      processingStatus: 'RESULT_APPROVED',
+      reviewed: true,
+      orderIdIn: orderIds,
+      ...(orderDate.fromDate
+        ? { approvedDateFrom: startOfDay(orderDate.fromDate).toISOString() }
+        : {}),
+      ...(orderDate.toDate
+        ? { approvedDateTo: endOfDay(orderDate.toDate).toISOString() }
+        : {})
+    };
+  }, [patientId, isOrdersFetching, orderIds, orderDate]);
+
+  const {
+    data,
+    isFetching,
+    refetch
+  } = useFilterRadiologyReportsQuery(
+    queryParams
+      ? {
+          page,
+          size: rowsPerPage,
+          sort: 'id,desc',
+          params: queryParams
+        }
+      : skipToken
+  );
 
   const reports = Array.isArray(data?.data) ? data.data : [];
   const totalCount = data?.totalCount ?? 0;
-
 
   const orderTestIds = useMemo(() => {
     if (!Array.isArray(reports)) return [];
 
     return reports
-      .map(r => r.orderTestId)
+      .map((r) => r.orderTestId)
       .filter(Boolean)
       .map(String)
       .filter((id, i, arr) => arr.indexOf(id) === i);
@@ -109,10 +148,9 @@ const Reports = ({ patient }) => {
       .filter((id, i, arr) => arr.indexOf(id) === i);
   }, [orderTestsMap]);
 
-
   const isDataLoaded =
-    orderTestIds.every(id => orderTestsMap[id]) &&
-    testIds.every(id => testsMap[id]);
+    orderTestIds.every((id) => orderTestsMap[id]) &&
+    testIds.every((id) => testsMap[id]);
 
   const {
     data: comments,
@@ -123,8 +161,7 @@ const Reports = ({ patient }) => {
       : undefined
   );
 
-
-  const reportColumns:ColumnConfig[] = [
+  const reportColumns: ColumnConfig[] = [
     {
       key: 'orderId',
       title: <Translate>ORDER ID</Translate>,
@@ -174,7 +211,6 @@ const Reports = ({ patient }) => {
       width: 100,
       align: 'center',
       render: (row: any) => {
-
         const hasComment = !!row?.hasNote;
         return (
           <Whisper speaker={<Tooltip>Comments</Tooltip>}>
@@ -198,8 +234,7 @@ const Reports = ({ patient }) => {
     {
       key: 'status',
       title: <Translate>REPORT STATUS</Translate>,
-      render: (rowData: any) =>
-        formatEnumString(rowData.processingStatus)
+      render: (rowData: any) => formatEnumString(rowData.processingStatus)
     },
     {
       key: 'attachment',
@@ -216,10 +251,12 @@ const Reports = ({ patient }) => {
               const order = await fetchOrderById(ot.orderId).unwrap();
 
               if (!order?.encounterId) {
-                dispatch(notify({
-                  msg: 'Encounter not found',
-                  sev: 'warning'
-                }));
+                dispatch(
+                  notify({
+                    msg: 'Encounter not found',
+                    sev: 'warning'
+                  })
+                );
                 return;
               }
 
@@ -230,10 +267,12 @@ const Reports = ({ patient }) => {
 
               setAttachmentsModalOpen(true);
             } catch {
-              dispatch(notify({
-                msg: 'Failed to load encounter',
-                sev: 'error'
-              }));
+              dispatch(
+                notify({
+                  msg: 'Failed to load encounter',
+                  sev: 'error'
+                })
+              );
             }
           }}
         />
@@ -255,7 +294,6 @@ const Reports = ({ patient }) => {
       )
     }
   ];
-
 
   const filters = (
     <Form layout="inline" fluid>
@@ -285,42 +323,49 @@ const Reports = ({ patient }) => {
     setSelectedReport(null);
   };
 
-
   useEffect(() => {
-    orderTestIds.forEach(id => {
+    orderTestIds.forEach((id) => {
       if (orderTestsMap[id]) return;
 
       fetchOrderTestById(Number(id))
         .unwrap()
-        .then(res => {
+        .then((res) => {
           if (!res) return;
-          setOrderTestsMap(prev => ({
+          setOrderTestsMap((prev) => ({
             ...prev,
             [id]: res
           }));
         })
-        .catch(() => { });
+        .catch(() => {});
     });
   }, [orderTestIds]);
 
   useEffect(() => {
-    testIds.forEach(id => {
+    testIds.forEach((id) => {
       if (testsMap[id]) return;
 
       fetchDiagnosticTestById(id)
         .unwrap()
-        .then(res => {
+        .then((res) => {
           const test = res?.data;
           if (!test) return;
 
-          setTestsMap(prev => ({
+          setTestsMap((prev) => ({
             ...prev,
             [id]: test
           }));
         })
-        .catch(() => { });
+        .catch(() => {});
     });
   }, [testIds]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [patientId, orderDate]);
+
+  if (!patientId) {
+    return null;
+  }
 
   return (
     <>
@@ -328,12 +373,12 @@ const Reports = ({ patient }) => {
         filters={filters}
         columns={reportColumns}
         data={reports}
-        loading={isFetching || !isDataLoaded}
+        loading={isOrdersFetching || isFetching || (!!reports.length && !isDataLoaded)}
         page={page}
         rowsPerPage={rowsPerPage}
         totalCount={totalCount}
         onPageChange={(_, p) => setPage(p)}
-        onRowsPerPageChange={e => {
+        onRowsPerPageChange={(e) => {
           setRowsPerPage(+e.target.value);
           setPage(0);
         }}
@@ -361,8 +406,6 @@ const Reports = ({ patient }) => {
         />
       )}
 
-
-
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
@@ -376,12 +419,11 @@ const Reports = ({ patient }) => {
               source="RADIOLOGIST_WORKLIST_ATTACHMENT"
               sourceId={Number(selectedReportForAttachments.reportId)}
               refetchAttachmentList={false}
-              setRefetchAttachmentList={() => { }}
+              setRefetchAttachmentList={() => {}}
             />
           )
         }
       />
-
     </>
   );
 };
