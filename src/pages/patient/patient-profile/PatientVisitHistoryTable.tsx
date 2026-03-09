@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Tooltip, Form, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -24,10 +24,11 @@ import { notify } from '@/utils/uiReducerActions';
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
-import type { Practitioner, Department } from '@/types/model-types-new';
+import type { Practitioner } from '@/types/model-types-new';
 import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import { formatEnumString } from '@/utils';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import type { Department } from '@/types/model-types-new';
 
 import './styles.less';
 
@@ -41,8 +42,9 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
 
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
   const [quickInitialStep, setQuickInitialStep] = useState<number>(0);
-
-  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>({});
+  const [practitionersMap, setPractitionersMap] = useState<Record<number | string, Practitioner>>(
+    {}
+  );
   const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
@@ -57,25 +59,12 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     },
     {
       refetchOnMountOrArgChange: true,
-      skip: !localPatient?.id,
-      refetchOnFocus: true, 
+      refetchOnFocus: true,
       pollingInterval: 0
     }
   );
 
-  const encounters = useMemo(() => data?.data ?? [], [data?.data]);
-
-  const practitionerIds = useMemo(
-    () =>
-      Array.from(new Set(encounters.map((e: any) => e.practitionerId).filter((id: any) => id != null))),
-    [encounters]
-  );
-
-  const departmentIds = useMemo(
-    () =>
-      Array.from(new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))),
-    [encounters]
-  );
+  const encounters = data?.data ?? [];
 
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
@@ -118,78 +107,50 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
   };
 
   useEffect(() => {
-    let active = true;
-
     const loadPractitioners = async () => {
-      if (!practitionerIds.length) {
+      if (!encounters.length) {
         setPractitionersMap({});
         return;
       }
-
+      const uniqueIds = Array.from(
+        new Set(encounters.map((e: any) => e.practitionerId).filter((id: any) => id != null))
+      );
+      if (!uniqueIds.length) return;
       try {
-        const practitioners = await getPractitionersBulk(practitionerIds).unwrap();
-        if (!active) return;
-
-        const nextMap = Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p]));
-        setPractitionersMap(prev => {
-          const prevKeys = Object.keys(prev);
-          const nextKeys = Object.keys(nextMap);
-          if (
-            prevKeys.length === nextKeys.length &&
-            prevKeys.every(key => prev[key] === nextMap[key])
-          ) {
-            return prev;
-          }
-          return nextMap;
-        });
-      } catch {
-        if (active) setPractitionersMap({});
-      }
+        const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
+        setPractitionersMap(Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p])));
+      } catch {}
     };
-
     loadPractitioners();
-
-    return () => {
-      active = false;
-    };
-  }, [practitionerIds, getPractitionersBulk]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [encounters]);
 
   useEffect(() => {
-    let active = true;
-
     const loadDepartments = async () => {
-      if (!departmentIds.length) {
+      if (!encounters.length) {
         setDepartmentsMap({});
         return;
       }
-
+      const uniqueIds = Array.from(
+        new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))
+      );
+      if (!uniqueIds.length) return;
       try {
-        const departments = await getDepartmentsBulk(departmentIds).unwrap();
-        if (!active) return;
-
-        const nextMap = Object.fromEntries(departments.map((d: Department) => [d.id, d]));
-        setDepartmentsMap(prev => {
-          const prevKeys = Object.keys(prev);
-          const nextKeys = Object.keys(nextMap);
-          if (
-            prevKeys.length === nextKeys.length &&
-            prevKeys.every(key => prev[key] === nextMap[key])
-          ) {
-            return prev;
-          }
-          return nextMap;
-        });
-      } catch {
-        if (active) setDepartmentsMap({});
-      }
+        const departments = await getDepartmentsBulk(uniqueIds).unwrap();
+        setDepartmentsMap(Object.fromEntries(departments.map((d: Department) => [d.id, d])));
+      } catch {}
     };
-
     loadDepartments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [encounters]);
 
-    return () => {
-      active = false;
-    };
-  }, [departmentIds, getDepartmentsBulk]);
+  const handleCloseQuickAppointment = useCallback(
+    (val: boolean) => {
+      setQuickAppointmentModel(val);
+      if (!val) refetch();
+    },
+    [refetch]
+  );
 
   const columns = [
     {
@@ -245,7 +206,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         const isOngoing = row.status === 'ONGOING';
         const isNew = row.status === 'NEW';
         const isPendingPayment = row.status === 'PENDING_PAYMENT';
-        const isClinicVisit = row.visitType === 'CLINIC';
+
+        const isOutpatient = departmentsMap[row.departmentId]?.departmentType === 'OUTPATIENT_CLINIC';
 
         return (
           <Form className="visit-history__actions-form">
@@ -270,7 +232,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
               </Whisper>
             )}
 
-            {isOngoing && isClinicVisit && (
+            {isOngoing && isOutpatient && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Complete</Tooltip>}
@@ -284,8 +246,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
               </Whisper>
             )}
 
-            {/* DISCHARGE فقط لغير CLINIC */}
-            {isOngoing && !isClinicVisit && (
+            {isOngoing && !isOutpatient && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Discharge</Tooltip>}
@@ -342,10 +303,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       {quickAppointmentModel && (
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
-          setQuickAppointmentModel={val => {
-            setQuickAppointmentModel(val);
-            if (!val) refetch();
-          }}
+          setQuickAppointmentModel={handleCloseQuickAppointment}
           localPatient={localPatient}
           localVisit={selectedVisit}
           isDisabeld={quickInitialStep === 0}
