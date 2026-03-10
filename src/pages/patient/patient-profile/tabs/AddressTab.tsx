@@ -98,7 +98,9 @@ const toHumanAddressError = (
   }
 
   const rawKey = data?.errorKey ?? data?.properties?.message ?? '';
-  const errorKey = String(rawKey).replace(/^error\./, '').trim();
+  const errorKey = String(rawKey)
+    .replace(/^error\./, '')
+    .trim();
 
   if (errorKey === 'payload.required') return 'Address payload is required.' + traceId;
   if (errorKey === 'notfound') return (detail || 'Address not found.') + traceId;
@@ -352,8 +354,7 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
   const [createAddress] = useCreateAddressMutation();
   const [updateAddress] = useUpdateAddressMutation();
 
-  const isLocationValid =
-    !!address.countryId && !!address.districtId && !!address.communityId && !!address.areaId;
+  const isLocationValid = !!address.countryId && !!address.districtId && !!address.communityId;
 
   const handleSave = async () => {
     if (!patientId) return;
@@ -585,7 +586,6 @@ const AddressTab: React.FC<AddressTabProps> = ({ localPatient }) => {
 
               <MyInput
                 column
-                required
                 fieldLabel="Area"
                 fieldType="selectPagination"
                 fieldName="areaId"
