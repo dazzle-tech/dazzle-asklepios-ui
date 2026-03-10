@@ -66,17 +66,25 @@ export const PatientRelationService = createApi({
       providesTags: ['PatientRelation']
     }),
 
-    // GET /api/patient/patient-relations/relatives?patientId=&relationType=&categoryType=
+    // GET /api/patient/patient-relations/relatives?patientId=&categoryType=
     getRelativePatientsByCategory: builder.query<
-      Patient[],
-      { patientId: number; categoryType: string; timestamp?: number }
+      PagedResult<Patient>,
+      { patientId: number; categoryType: string; page?: number; size?: number; sort?: string; timestamp?: number }
     >({
-      query: ({ patientId, categoryType }) => ({
-        url: "/api/patient/patient-relations/relatives",
-        method: "GET",
-        params: { patientId, categoryType },
+      query: ({ patientId, categoryType, page = 0, size = 20, sort = 'id,asc' }) => ({
+        url: '/api/patient/patient-relations/relatives',
+        method: 'GET',
+        params: { patientId, categoryType, page, size, sort }
       }),
-      providesTags: ["PatientRelation"],
+      transformResponse: (response: Patient[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['PatientRelation']
     }),
 
     // DELETE /api/patient/patient-relations/{id}

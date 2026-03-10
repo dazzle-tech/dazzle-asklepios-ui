@@ -50,6 +50,20 @@ export const patientDiagnosisService = createApi({
       ],
     }),
 
+    getPrimaryByEncounterId: builder.query<
+      modelTypes.PatientDiagnosis,
+      { encounterId: Id; timestamp?: number }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/patient-diagnoses/by-encounter/${encounterId}/primary`,
+        params: { encounterId },
+      }),
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientDiagnosis', id: `primary-${encounterId}` },
+        'PatientDiagnosis',
+      ],
+    }),
+
     getPatientDiagnosesByPatientId: builder.query<
       modelTypes.PatientDiagnosis[],
       { patientId: Id; page?: number; size?: number; sort?: string; timestamp?: number }
@@ -124,6 +138,7 @@ export const {
 
   useHardDeletePatientDiagnosisMutation,
     useExistsPatientDiagnosisByEncounterIdQuery,
-  useLazyExistsPatientDiagnosisByEncounterIdQuery
+  useLazyExistsPatientDiagnosisByEncounterIdQuery,
+  useGetPrimaryByEncounterIdQuery
 
 } = patientDiagnosisService;

@@ -35,7 +35,6 @@ const { getHeight } = DOMHelper;
 
 /* ========================================================= */
 /* =============== Helper Functions ======================== */
-/* ========================================================= */
 
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
@@ -50,9 +49,8 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
       ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
       : '';
 
-  /* ========================================================= */
   /* =============== 1) Bean Validation Errors =============== */
-  /* ========================================================= */
+
   if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
     const lines = fieldErrors.map((e: any) => {
       const label = fieldLabels[e.field] || e.field;
@@ -142,7 +140,7 @@ const PatientProfile = () => {
 
   const handleSave = async () => {
     try {
-      // UPDATE flow
+      // UPDATE flow (keep same logic + success messaging)
       if (localPatient?.id) {
         const updated = await updatePatient({
           id: localPatient.id,
