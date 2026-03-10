@@ -21,8 +21,8 @@ import DiagnosticsOrderNew from '../../encounter-component/diagnostics-order-new
 import BedsideProceduresRequests from '../../encounter-component/bedside-procedures-requests';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import Observations from '../../encounter-pre-observations-new/observations/Observations';
-import Allergies from '../../encounter-pre-observations/AllergiesNurse';
-import Warning from '../../encounter-pre-observations/warning';
+import Allergies from '../../encounter-pre-observations-new/AllergiesNurse';
+import Warning from '../../encounter-pre-observations-new/warning';
 import PatientHistory from '../../encounter-component/patient-history';
 import PreviousMeasurements from '../../encounter-pre-observations-new/previous-measurements';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/PatientAttachment';

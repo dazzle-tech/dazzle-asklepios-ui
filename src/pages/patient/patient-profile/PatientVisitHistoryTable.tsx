@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Tooltip, Form, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -50,21 +50,24 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
   const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
 
+  const patientId = localPatient?.id;
+
   const { data, isFetching, refetch } = useGetEncountersByPatientQuery(
     {
-      patientId: localPatient?.id,
+      patientId,
       page: 0,
       size: 50,
       sort: 'createdDate,desc'
     },
     {
+      skip: !patientId,
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
       pollingInterval: 0
     }
   );
 
-  const encounters = data?.data ?? [];
+  const encounters = useMemo(() => data?.data ?? [], [data?.data]);
 
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
@@ -109,40 +112,70 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
   useEffect(() => {
     const loadPractitioners = async () => {
       if (!encounters.length) {
-        setPractitionersMap({});
+        setPractitionersMap(prev => {
+          if (Object.keys(prev).length === 0) return prev;
+          return {};
+        });
         return;
       }
+
       const uniqueIds = Array.from(
         new Set(encounters.map((e: any) => e.practitionerId).filter((id: any) => id != null))
       );
-      if (!uniqueIds.length) return;
+
+      if (!uniqueIds.length) {
+        setPractitionersMap(prev => {
+          if (Object.keys(prev).length === 0) return prev;
+          return {};
+        });
+        return;
+      }
+
       try {
         const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
-        setPractitionersMap(Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p])));
-      } catch {}
+        const nextMap = Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p]));
+        setPractitionersMap(nextMap);
+      } catch {
+        setPractitionersMap(prev => prev);
+      }
     };
+
     loadPractitioners();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [encounters]);
+  }, [encounters, getPractitionersBulk]);
 
   useEffect(() => {
     const loadDepartments = async () => {
       if (!encounters.length) {
-        setDepartmentsMap({});
+        setDepartmentsMap(prev => {
+          if (Object.keys(prev).length === 0) return prev;
+          return {};
+        });
         return;
       }
+
       const uniqueIds = Array.from(
         new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))
       );
-      if (!uniqueIds.length) return;
+
+      if (!uniqueIds.length) {
+        setDepartmentsMap(prev => {
+          if (Object.keys(prev).length === 0) return prev;
+          return {};
+        });
+        return;
+      }
+
       try {
         const departments = await getDepartmentsBulk(uniqueIds).unwrap();
-        setDepartmentsMap(Object.fromEntries(departments.map((d: Department) => [d.id, d])));
-      } catch {}
+        const nextMap = Object.fromEntries(departments.map((d: Department) => [d.id, d]));
+        setDepartmentsMap(nextMap);
+      } catch {
+        setDepartmentsMap(prev => prev);
+      }
     };
+
     loadDepartments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [encounters]);
+  }, [encounters, getDepartmentsBulk]);
 
   const handleCloseQuickAppointment = useCallback(
     (val: boolean) => {
@@ -207,7 +240,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         const isNew = row.status === 'NEW';
         const isPendingPayment = row.status === 'PENDING_PAYMENT';
 
-        const isOutpatient = departmentsMap[row.departmentId]?.departmentType === 'OUTPATIENT_CLINIC';
+        const isOutpatient =
+          departmentsMap[row.departmentId]?.departmentType === 'OUTPATIENT_CLINIC';
 
         return (
           <Form className="visit-history__actions-form">
