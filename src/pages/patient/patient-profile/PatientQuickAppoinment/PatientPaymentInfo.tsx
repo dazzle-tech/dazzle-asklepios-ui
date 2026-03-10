@@ -1,8 +1,4 @@
 // PatientPaymentInfo.tsx
-// Added: debt field (read-only) + ledger summary RTK call and display
-// NOTE: You need to have added the RTK endpoint/hook: useGetPatientLedgerSummaryQuery
-// and the type: modelTypes.PatientLedgerSummaryDTO
-
 import React, {
   forwardRef,
   useEffect,
@@ -31,7 +27,8 @@ import {
   useCreatePaymentMutation,
   useUpdatePaymentMutation,
   useGetPatientBalanceQuery,
-  useGetPatientLedgerSummaryQuery
+  useGetPatientLedgerSummaryQuery,
+  useGetPaymentByEncounterQuery
 } from '@/services/encounters/patientPaymentsService';
 
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
@@ -48,9 +45,6 @@ import { useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceSer
 
 import './style.less';
 
-// -----------------------------------------------------------------------------
-// Currency conversion (free API)
-// -----------------------------------------------------------------------------
 async function convertCurrencyFree(amount: number, from: string, to: string): Promise<number> {
   if (!amount || amount <= 0) return 0;
   if (!from || !to) return 0;
@@ -77,9 +71,6 @@ async function convertCurrencyFree(amount: number, from: string, to: string): Pr
   return Number.isFinite(numericRate) ? amount * numericRate : 0;
 }
 
-// -----------------------------------------------------------------------------
-// Types
-// -----------------------------------------------------------------------------
 type UiPaymentServiceRow = modelTypes.PatientPaymentServices & {
   serviceType?: string;
   serviceName?: string;
@@ -93,9 +84,6 @@ export type PatientPaymentInfoHandle = {
   validate: () => boolean;
 };
 
-// -----------------------------------------------------------------------------
-// Errors
-// -----------------------------------------------------------------------------
 const PAYMENT_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Payment data is required.',
   'patient.invalid': 'Invalid patient id.',
@@ -184,9 +172,6 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'error' }));
 };
 
-// -----------------------------------------------------------------------------
-// Date helpers
-// -----------------------------------------------------------------------------
 const toDateOnlyOrNull = (value: any) => {
   if (!value) return null;
   const dateObj = value instanceof Date ? value : new Date(value);
@@ -204,7 +189,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       payment,
       setPayment,
       patientInsurance,
-      setPatientInsurance
+      setPatientInsurance,
+      onPaymentSaved
     }: any,
     ref
   ) => {
@@ -236,6 +222,68 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
 
     const isLocked = Boolean(isReadOnly || lockAfterConfirm);
 
+    // ─────────────────────────────────────────────────────────────────────
+    // Auto-fill: load existing payment when opening a completed encounter
+    // ─────────────────────────────────────────────────────────────────────
+    const encounterId = localEncounter?.id;
+
+    const { data: existingPaymentDetails } = useGetPaymentByEncounterQuery(
+      { encounterId: encounterId! },
+      { skip: !encounterId }
+    );
+
+    // Ref prevents re-applying saved data on every re-render after first load
+    const existingPaymentAppliedRef = useRef(false);
+
+    // Reset the ref whenever we switch to a different encounter
+    useEffect(() => {
+      existingPaymentAppliedRef.current = false;
+    }, [encounterId]);
+
+    useEffect(() => {
+      if (!existingPaymentDetails) return;
+      if (existingPaymentAppliedRef.current) return;
+      if (lockAfterConfirm) return;
+
+      const savedPayment: any = existingPaymentDetails?.payment;
+      if (!savedPayment || !savedPayment.id) return;
+      if (!savedPayment?.id) return;
+
+      existingPaymentAppliedRef.current = true;
+
+      setPayment((prev: any) => ({
+        ...prev,
+        id: savedPayment.id,
+        paymentTypes: savedPayment.paymentTypes,
+        paymentMethods: savedPayment.paymentMethods,
+        amount: savedPayment.amount,
+        currency: savedPayment.currency,
+        amountInFacilityCurrency: savedPayment.amountInFacilityCurrency,
+        exchangeRate: savedPayment.exchangeRate,
+        dueAmount: savedPayment.dueAmount,
+        remaining: savedPayment.remaining,
+        refunds: savedPayment.refunds,
+        paidFromAmount: savedPayment.paidFromAmount,
+        paidFromBalance: savedPayment.paidFromBalance,
+        addToFreeBalance: savedPayment.addToFreeBalance,
+        useBalanceToSettleDebts: savedPayment.useBalanceToSettleDebts,
+        planId: savedPayment.planId,
+        cardNumber: savedPayment.cardNumber,
+        cardHolderName: savedPayment.cardHolderName,
+        cardValidUntil: savedPayment.cardValidUntil,
+        chequeNumber: savedPayment.chequeNumber,
+        chequeBankName: savedPayment.chequeBankName,
+        chequeDueDate: savedPayment.chequeDueDate,
+        transferNumber: savedPayment.transferNumber,
+        transferBankName: savedPayment.transferBankName,
+        transferDate: savedPayment.transferDate
+      }));
+
+      applySavedServicesToTable(existingPaymentDetails);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [existingPaymentDetails, lockAfterConfirm]);
+    // ─────────────────────────────────────────────────────────────────────
+
     useEffect(() => {
       if (!facilityDefaultCurrency) return;
       setPayment((prev: any) => ({
@@ -243,13 +291,18 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         patientId: localPatient?.id ?? localPatient?.key ?? prev.patientId ?? 0,
         encounterId: localEncounter?.id ?? prev.encounterId ?? 0,
         facilityDefaultCurrency: facilityDefaultCurrency,
-
         currency:
           prev.currency && String(prev.currency).trim() !== ''
             ? prev.currency
             : facilityDefaultCurrency
       }));
-    }, [localPatient?.id, localPatient?.key, localEncounter?.id, facilityDefaultCurrency, setPayment]);
+    }, [
+      localPatient?.id,
+      localPatient?.key,
+      localEncounter?.id,
+      facilityDefaultCurrency,
+      setPayment
+    ]);
 
     const effectivePatientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
 
@@ -346,7 +399,8 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         const policyNumber = String(insuranceItem?.policyNumber ?? '');
         const groupNumber = String(insuranceItem?.groupNumber ?? '');
 
-        const searchableText = `${payorName} ${planName} ${policyNumber} ${groupNumber}`.toLowerCase();
+        const searchableText =
+          `${payorName} ${planName} ${policyNumber} ${groupNumber}`.toLowerCase();
         return searchableText.includes(keyword);
       });
     }, [patientInsurancesList, insuranceSearchKeyword, payorsList, plansByPayorId]);
@@ -708,6 +762,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
     const [updatePayment, { isLoading: updating }] = useUpdatePaymentMutation();
 
     const handleClear = () => {
+      // Reset the ref so saved data can be re-applied if needed after a clear
+      existingPaymentAppliedRef.current = false;
+
       setPayment((previousPayment: any) => ({
         ...newPatientPayments,
         patientId: previousPayment.patientId,
@@ -726,25 +783,33 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       setValidationResult({});
     };
 
-    const applySavedServicesToTable = (details: modelTypes.PatientPaymentDetails | any) => {
-      const savedServices = details?.services ?? [];
+    const applySavedServicesToTable = (details: any) => {
+      const savedServices = details?.services ?? details?.payment?.services ?? [];
+
       if (!Array.isArray(savedServices)) return;
 
       const exemptedMap = new Map<number, boolean>();
-      savedServices.forEach((savedService: any) => {
-        const serviceId = Number(savedService?.serviceId ?? 0);
+
+      savedServices.forEach((service: any) => {
+        const serviceId = Number(service?.serviceId ?? 0);
         if (!serviceId) return;
-        exemptedMap.set(serviceId, Boolean(savedService?.isExempted));
+
+        exemptedMap.set(serviceId, Boolean(service?.isExempted));
       });
 
       savedExemptedByServiceIdRef.current = exemptedMap;
 
-      setServicesRows(previousRows =>
-        (previousRows ?? []).map(serviceRow => {
-          const serviceId = Number((serviceRow as any)?.serviceId ?? 0);
-          if (!serviceId) return serviceRow;
-          if (!exemptedMap.has(serviceId)) return serviceRow;
-          return { ...serviceRow, isExempted: Boolean(exemptedMap.get(serviceId)) };
+      setServicesRows(prev =>
+        (prev ?? []).map(row => {
+          const serviceId = Number((row as any)?.serviceId ?? 0);
+
+          if (!serviceId) return row;
+          if (!exemptedMap.has(serviceId)) return row;
+
+          return {
+            ...row,
+            isExempted: Boolean(exemptedMap.get(serviceId))
+          };
         })
       );
     };
@@ -861,6 +926,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       try {
         await handleConfirm();
         setLockAfterConfirm(true);
+
+        if (onPaymentSaved) await onPaymentSaved();
+
         return true;
       } catch (error: any) {
         setValidationResult(error?.data ?? error);

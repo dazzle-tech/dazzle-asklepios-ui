@@ -47,6 +47,13 @@ export const newPatientService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ['Patient'],
   endpoints: builder => ({
+    getPatientById: builder.query<modelTypes.Patient, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/${id}`
+      }),
+      providesTags: (_res, _err, { id }) => [{ type: 'Patient' as const, id }]
+    }),
+
     getPatients: builder.query<PagedResult<modelTypes.Patient>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/patient/patients',
@@ -225,16 +232,11 @@ export const newPatientService = createApi({
         body,
       }),
     }),
-    getPatientById: builder.query<modelTypes.Patient, { id: Id }>({
-  query: ({ id }) => ({
-    url: `/api/patient/${id}`
-  }),
-  providesTags: (_res, _err, { id }) => [{ type: 'Patient' as const, id }]
-}),
   })
 });
 
 export const {
+  useGetPatientByIdQuery,
   // list
   useGetPatientsQuery,
   useLazyGetPatientsQuery,
@@ -267,7 +269,6 @@ export const {
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
   useLazyGetUnknownPatientsQuery,
-  useGetPatientByIdQuery,
   useLazyGetPatientByIdQuery,
 
   // duplicaton

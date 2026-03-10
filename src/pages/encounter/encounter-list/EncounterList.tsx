@@ -182,7 +182,6 @@ const EncounterList = () => {
     ...newApEncounter,
     discharge: false
   });
-  console.log('Initial encounter state:', encounter);
 const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
 const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
 // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
@@ -225,10 +224,10 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
 
   const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
-  const [encounterReasonIn, setEncounterReasonIn] = useState<string[]>([]);
-  const [priorityIn, setPriorityIn] = useState<string[]>([]);
-  const [withPrescription, setWithPrescription] = useState<boolean | undefined>(undefined);
-  const [hasOrders, setHasOrders] = useState<boolean | undefined>(undefined);
+  const [encounterReasons, setEncounterReasons] = useState<string[]>([]);
+  const [priorities, setPriorities] = useState<string[]>([]);
+  const [hasPrescription, setHasPrescription] = useState<boolean | undefined>(undefined);
+  const [hasOrder, setHasOrder] = useState<boolean | undefined>(undefined);
   const [isObserved, setIsObserved] = useState<boolean | undefined>(undefined);
 
   const [patientSearchDraft, setPatientSearchDraft] = useState<any>({
@@ -256,24 +255,24 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     const chiefComplaint =
       String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
     const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
-    const normalizedEncounterReasonIn = uniqueNonEmpty(encounterReasonIn);
-    const normalizedPriorityIn =
-      uniqueNonEmpty(priorityIn) ??
+    const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
+    const normalizedPriorities =
+      uniqueNonEmpty(priorities) ??
       uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
     const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
 
     return {
-      departmentId: String(departmentId),
+      departmentId:departmentId,
       fromDate,
       toDate,
       statusIn: normalizedStatusIn,
       patientName,
       mrn,
-      encounterReasonIn: normalizedEncounterReasonIn,
+      encounterReasons: normalizedEncounterReasons,
       chiefComplaint,
-      priorityIn: normalizedPriorityIn,
-      withPrescription,
-      hasOrders,
+      priorities: normalizedPriorities,
+      hasPrescription,
+      hasOrder,
       isObserved,
       page,
       size: pageSize,
@@ -285,16 +284,16 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     dateFilter.fromDate,
     dateFilter.toDate,
     departmentId,
-    encounterReasonIn,
-    hasOrders,
+    encounterReasons,
+    hasOrder,
     isObserved,
     page,
     pageSize,
-    priorityIn,
+    priorities,
     record,
     statusIn,
     todayStr,
-    withPrescription,
+    hasPrescription,
     patientSearchApplied,
     searchTick
   ]);
@@ -524,10 +523,10 @@ const handleGoToVisit = async (encounterData: any) => {
     setRecord({});
     setDateFilter({ fromDate: now, toDate: now });
     setStatusIn(DEFAULT_STATUS);
-    setEncounterReasonIn([]);
-    setPriorityIn([]);
-    setWithPrescription(undefined);
-    setHasOrders(undefined);
+    setEncounterReasons([]);
+    setPriorities([]);
+    setHasPrescription(undefined);
+    setHasOrder(undefined);
     setIsObserved(undefined);
     const clearedSearch = { searchByField: 'fullName', patientName: '' };
     setPatientSearchDraft(clearedSearch);
@@ -804,16 +803,16 @@ const handleGoToVisit = async (encounterData: any) => {
           <div className="advanced-filters">
             <Form key={JSON.stringify(record)} fluid className="dissss">
               <MyInput
-                fieldName="encounterReasonIn"
+                fieldName="encounterReasons"
                 fieldType="checkPicker"
                 selectData={EncounterReasonEnum}
                 selectDataLabel="label"
                 selectDataValue="value"
                 fieldLabel="Encounter Reason"
-                record={{ encounterReasonIn }}
+                record={{ encounterReasons }}
                 setRecord={(v: any) => {
-                  const raw = Array.isArray(v) ? v : v?.encounterReasonIn;
-                  setEncounterReasonIn(Array.isArray(raw) ? raw.map(String).filter(Boolean) : []);
+                  const raw = Array.isArray(v) ? v : v?.encounterReasons;
+                  setEncounterReasons(Array.isArray(raw) ? raw.map(String).filter(Boolean) : []);
                   setPage(0);
                 }}
                 searchable
@@ -834,22 +833,22 @@ const handleGoToVisit = async (encounterData: any) => {
 
               <MyInput
                 width={130}
-                fieldName="withPrescription"
+                fieldName="hasPrescription"
                 fieldType="checkbox"
-                record={{ withPrescription: !!withPrescription }}
+                record={{ hasPrescription: !!hasPrescription }}
                 setRecord={(v: any) => {
-                  setWithPrescription(!!v?.withPrescription);
+                  setHasPrescription(!!v?.hasPrescription);
                   setPage(0);
                 }}
-                label="With Prescription"
+                label="Has Prescription"
               />
               <MyInput
                 width={110}
-                fieldName="hasOrders"
+                fieldName="hasOrder"
                 fieldType="checkbox"
-                record={{ hasOrders: !!hasOrders }}
+                record={{ hasOrder: !!hasOrder }}
                 setRecord={(v: any) => {
-                  setHasOrders(!!v?.hasOrders);
+                  setHasOrder(!!v?.hasOrder);
                   setPage(0);
                 }}
                 label="Has Orders"
@@ -868,11 +867,11 @@ const handleGoToVisit = async (encounterData: any) => {
 
               <MyInput
                 width={200}
-                fieldName="priorityIn"
+                fieldName="priorities"
                 fieldType="checkPicker"
-                record={{ priorityIn }}
+                record={{ priorities }}
                 setRecord={(v: any) => {
-                  setPriorityIn(Array.isArray(v?.priorityIn) ? v.priorityIn : []);
+                  setPriorities(Array.isArray(v?.priorities) ? v.priorities : []);
                   setPage(0);
                 }}
                 selectData={EncounterPriorityEnum}
@@ -993,9 +992,9 @@ const handleGoToVisit = async (encounterData: any) => {
           open={openNurseAssessment}
           setOpen={setOpenNurseAssessment}
           actionButtonFunction={async () => {
-            if (encounter?.patientObject) {
-              await handleGoToPreVisitObservations(encounter, encounter.patientObject);
-            }
+        
+              await handleGoToPreVisitObservations(encounter);
+            
           }}
           actionType="confirm"
           confirmationQuestion="Do you want to start Nurse Assessment?"

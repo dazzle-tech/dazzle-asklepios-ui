@@ -10,8 +10,8 @@ import Translate from '@/components/Translate';
 import SectionContainer from '@/components/SectionsoContainer';
 import type { ChiefComplain } from '@/types/model-types-new';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import { setEncounter as setEncounterRedux } from '@/reducers/patientSlice';
+import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import {
   useCreateChiefComplainMutation,
   useGetLatestTriageChiefComplainByEncounterQuery,
@@ -46,7 +46,7 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [createChiefComplain] = useCreateChiefComplainMutation();
   const [updateChiefComplain] = useUpdateChiefComplainMutation();
-  const [saveEncounterChanges] = useSaveEncounterChangesMutation();
+  const [updateEncounter] = useUpdateEncounterMutation();
   const {
     data: latestChiefComplain,
     isFetching: isFetchingLatest
@@ -127,9 +127,60 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
       // Also persist the same "chief complaint" text onto the ENCOUNTER (used by ER list/table and other screens).
       if (encounter) {
         try {
-          const updatedEncounter = await saveEncounterChanges({
-            ...encounter,
-            chiefComplaint: updated?.chiefComplaint ?? payload?.chiefComplaint ?? null
+          const buildEncounterUpdateBody = (row: any, patch: Partial<any>) => {
+            // Build the exact shape required by PatientEncounterUpdateDTO.
+            // IMPORTANT: do not default required enums to empty strings (causes 400).
+            const body: any = {
+              id: row?.id ?? row?.key,
+              patientId: row?.patientId ?? row?.patient?.id ?? row?.patientObject?.id,
+              encounterNumber: row?.encounterNumber ?? null,
+              facilityId: row?.facilityId,
+              departmentId: row?.departmentId,
+              practitionerId: row?.practitionerId ?? null,
+              encounterType: row?.encounterType,
+              encounterReason: row?.encounterReason,
+              followUpEncounterId: row?.followUpEncounterId ?? null,
+              priorityLevel: row?.priorityLevel,
+              originType: row?.originType ?? null,
+              originName: row?.originName ?? null,
+              notes: row?.notes ?? null,
+              departmentDailySequenceNumber: row?.departmentDailySequenceNumber ?? null,
+              encounterDate: row?.encounterDate ?? null,
+              status: row?.status ?? row?.encounterStatus,
+              chiefComplaint: row?.chiefComplaint ?? null,
+              hasPrescription: row?.hasPrescription ?? false,
+              hasOrder: row?.hasOrder ?? false,
+              isObserved: row?.isObserved ?? false
+            };
+
+            Object.assign(body, patch ?? {});
+
+            const missing: string[] = [];
+            if (body.id == null) missing.push('id');
+            if (body.patientId == null) missing.push('patientId');
+            if (body.facilityId == null) missing.push('facilityId');
+            if (body.departmentId == null) missing.push('departmentId');
+            if (body.encounterType == null) missing.push('encounterType');
+            if (body.encounterReason == null) missing.push('encounterReason');
+            if (body.priorityLevel == null) missing.push('priorityLevel');
+            if (body.status == null) missing.push('status');
+            if (body.hasPrescription == null) missing.push('hasPrescription');
+            if (body.hasOrder == null) missing.push('hasOrder');
+            if (body.isObserved == null) missing.push('isObserved');
+
+            if (missing.length) {
+              throw new Error(`Cannot update encounter: missing required fields: ${missing.join(', ')}`);
+            }
+
+            return body;
+          };
+
+          const encounterIdForUpdate = encounter?.id ?? encounter?.key ?? encounterId;
+          const updatedEncounter = await updateEncounter({
+            id: encounterIdForUpdate as any,
+            body: buildEncounterUpdateBody(encounter, {
+              chiefComplaint: updated?.chiefComplaint ?? payload?.chiefComplaint ?? null
+            })
           }).unwrap();
           // Keep redux encounter in sync if it exists in store (harmless otherwise).
           dispatch(setEncounterRedux(updatedEncounter));
@@ -154,10 +205,10 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
   // Effects
   useEffect(() => {
     // TODO update status to be a enum value
-    if (encounter?.encounterStatusLkey === '91109811181900' || encounter?.discharge) {
+    if (String(encounter?.status ?? encounter?.encounterStatus ?? '').toUpperCase() === 'CLOSED' || encounter?.discharge) {
       setIsEncounterStatusClosed(true);
     }
-  }, [encounter?.encounterStatusLkey]);
+  }, [encounter?.status, encounter?.encounterStatus, encounter?.discharge]);
   useEffect(() => {
     if (isEncounterStatusClosed) {
       setIsDisabledField(true);
@@ -279,6 +330,7 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
             record={chiefComplain}
             setRecord={setChiefComplain}
             disabled={isDisabledField || readOnly}
+            required
           />
           {!readOnly && (
             <MyButton

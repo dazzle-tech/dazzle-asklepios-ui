@@ -20,7 +20,6 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-  // Handle fieldErrors array
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
     const normalizeMsg = (msg: string) => {
       const m = (msg || '').toLowerCase();
@@ -37,13 +36,12 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
   }
 
-  // Handle constraint violations in message string
   const messageProp: string = data?.message || '';
   if (
     messageProp.includes('ConstraintViolationImpl') ||
@@ -51,7 +49,6 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   ) {
     const violations: string[] = [];
 
-    // Extract all constraint violations using regex
     const violationPattern = /propertyPath=(\w+).*?interpolatedMessage='([^']+)'/g;
     let match;
 
@@ -78,15 +75,14 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${violations.join('\n')}` + suffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
     }
   }
 
-  // Handle specific business/database constraint errors
-  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
+  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.error;
 
   const humanMsg =
     (errorKey && keyMap[errorKey]) ||
@@ -95,12 +91,13 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     data?.message ||
     'Unexpected error';
 
-  dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+  dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
 };
 
 const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Patient problem payload is required.',
   'source.required': 'Source of information is required when problem is not reported by patient.',
+  'type.required': 'Type is required.',
   'patient.invalid': 'Invalid patient reference.',
   'patient.notfound': 'Patient not found.',
   'db.constraint': 'Database constraint violation.',
@@ -109,8 +106,6 @@ const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
   'duplicate.entry': 'A patient problem with these values already exists.',
   notfound: 'Patient problem not found.'
 };
-
-/* DEFAULT MODEL */
 
 const emptyPatientProblem = {
   id: undefined,
@@ -128,18 +123,12 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<any>(emptyPatientProblem);
 
-  /* ENUMS & LOV */
-
   const statusOptions = useEnumOptions('EncounterVaccinationStatus');
   const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
   const { data: sourceLov } = useGetLovValuesByCodeQuery('RELATION');
 
-  /* MUTATIONS */
-
   const [addPatientProblem] = useAddPatientProblemMutation();
   const [updatePatientProblem] = useUpdatePatientProblemMutation();
-
-  /* LOAD */
 
   useEffect(() => {
     if (initialData) {
@@ -149,7 +138,6 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
     }
   }, [initialData, open, patient?.id]);
 
-  /* SAVE */
   const handleSave = async () => {
     const payload = {
       id: formData.id,
@@ -177,8 +165,6 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
     }
   };
-
-  /* CONTENT */
 
   const content = (
     <Form fluid layout="inline" className="fields-container">
@@ -230,6 +216,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         record={formData}
         setRecord={setFormData}
         searchable={false}
+        required
       />
 
       <MyInput
@@ -268,8 +255,6 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       />
     </Form>
   );
-
-  /* MODAL */
 
   return (
     <MyModal

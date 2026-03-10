@@ -71,14 +71,15 @@ export const patientEncounterService = createApi({
         departmentId: Id;
         fromDate?: string;
         toDate?: string;
+        statuses?: string | string[];
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
-        encounterReasonIn?: string[];
+        encounterReasons?: string[];
         chiefComplaint?: string;
-        priorityIn?: string[];
-        withPrescription?: boolean;
-        hasOrders?: boolean;
+        priorities?: string[];
+        hasPrescription?: boolean;
+        hasOrder?: boolean;
         isObserved?: boolean;
       } & PagedParams
     >({
@@ -86,39 +87,45 @@ export const patientEncounterService = createApi({
         departmentId,
         fromDate,
         toDate,
+        statuses,
         statusIn,
         patientName,
         mrn,
-        encounterReasonIn,
+        encounterReasons,
         chiefComplaint,
-        priorityIn,
-        withPrescription,
-        hasOrders,
+        priorities,
+        hasPrescription,
+        hasOrder,
         isObserved,
         page,
         size,
         sort = 'id,desc'
-      }) => ({
-        url: `/api/patient/encounter`,
-        method: 'GET',
-        params: {
-          departmentId,
-          fromDate,
-          toDate,
-          statusIn,
-          patientName,
-          mrn,
-          encounterReasonIn,
-          chiefComplaint,
-          priorityIn,
-          withPrescription,
-          hasOrders,
-          isObserved,
-          page,
-          size,
-          sort
-        }
-      }),
+      }) => {
+        const src = statuses ?? statusIn;
+        const statusesCsv = Array.isArray(src) ? src.join(',') : src;
+
+        return {
+          url: `/api/patient/encounter`,
+          method: 'GET',
+          params: {
+            departmentId,
+            fromDate,
+            toDate,
+            statuses: statusesCsv,
+            patientName,
+            mrn,
+            encounterReasons,
+            chiefComplaint,
+            priorities,
+            hasPrescription,
+            hasOrder,
+            isObserved,
+            page,
+            size,
+            sort
+          }
+        };
+      },
       transformResponse: (response: any, meta) => {
         const rows = Array.isArray(response) ? response : response?.content ?? [];
         return mapPaged(rows, meta);
@@ -244,7 +251,24 @@ export const patientEncounterService = createApi({
         res
           ? [...res.data.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
           : ['PatientEncounter']
-    })
+    }),
+
+    getEncountersByAppointment:builder.query<string,{ appointmentId: Id }>({
+      query: ({ appointmentId}) => ({
+        url: `/api/patient/encounter/appointment/${appointmentId}`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    getPreviousClosedEncounter:builder.query<PatientEncounter,{ encounterId: Id }>({
+      query: ({encounterId}) => ({
+        url: `/api/patient/encounter/${encounterId}/previous-encounter-completed`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
   })
 });
 
@@ -271,5 +295,7 @@ export const {
   useGetEncounterByIdQuery,
   useLazyGetEncounterByIdQuery,
   useGetEncountersByPatientQuery,
-  useLazyGetEncountersByPatientQuery
+  useLazyGetEncountersByPatientQuery,
+  useGetEncountersByAppointmentQuery,
+  useGetPreviousClosedEncounterQuery
 } = patientEncounterService;

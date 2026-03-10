@@ -11,7 +11,7 @@ import {
   newApEncounter,
   newApPatient
 } from '@/types/model-types-constructor';
-import { newDiagnosticOrder } from '@/types/model-types-constructor-new';
+import { newDiagnosticOrder, newPatient } from '@/types/model-types-constructor-new';
 import {
   DiagnosticOrderTestStatus
 } from '@/types/model-types-new';
@@ -70,7 +70,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [test, setTest] = useState<any>({ ...newDiagnosticOrder });
   const [visibleRadTests, setVisibleRadTests] = useState<any[]>([]);
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
-  const [patient, setPatient] = useState({ ...newApPatient });
+  const [patient, setPatient] = useState({ ...newPatient });
   const [encounter] = useState({ ...newApEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const today = new Date();
@@ -219,7 +219,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
 
   useEffect(() => {
     if (!order?.patientId) {
-      setPatient({ ...newApPatient });
+      setPatient({ ...newPatient });
       return;
     }
 
@@ -229,21 +229,14 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
         if (res?.length > 0) {
           const raw = res[0];
 
-          setPatient({
-            key: order.patientId,
-            fullName: `${raw.firstName ?? ''} ${raw.lastName ?? ''}`,
-            patientMrn: raw.medicalRecordNumber,
-            dob: raw.dateOfBirth,
-            genderLvalue: {
-              lovDisplayVale: raw.sexAtBirth
-            }
-          });
-        } else {
-          setPatient({ ...newApPatient });
+          setPatient(raw);
+
+} else {
+          setPatient({ ...newPatient });
         }
       })
       .catch(() => {
-        setPatient({ ...newApPatient });
+        setPatient({ ...newPatient });
       });
 
   }, [order?.patientId]);

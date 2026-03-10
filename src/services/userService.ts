@@ -215,6 +215,7 @@ import { BaseQuery, onQueryStarted } from '../newApi';
   });
 
   export const {
+    useGetActiveAdminsQuery,
     useGetUserQuery,
     useGetUsersBasicQuery,
     useAddUserMutation,

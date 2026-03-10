@@ -948,18 +948,6 @@ export const newPriceListItem: modelTypes.PriceListItem = {
   isActive: true
 };
 
-// ------------------- Referral Request -------------------
-export const newReferralRequest: modelTypes.ReferralRequest = {
-  id: null,
-  patientId: null,
-  encounterId: null,
-  referralType: 'INTERNAL',
-  facilityId: null,
-  departmentId: null,
-  referralReason: '',
-  priority: null,
-  isActive: true
-};
 
 // ------------------- Billing Invoice -------------------
 export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
@@ -1406,7 +1394,7 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
   departmentId: 0,
 
   practitionerId: null,
-
+  appointmentId: null,
   encounterType: '',
   encounterReason: '',
 
@@ -1955,6 +1943,80 @@ export const newPatientHIPAA: modelTypes.PatientHIPAA = {
   privacyAuthorizationDate: null
 };
 
+
+export const newGeneralAssessment: modelTypes.GeneralAssessment = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+
+  positionStatus: '',
+  bodyMovements: '',
+  levelOfConsciousness: '',
+  facialExpression: '',
+  speech: '',
+  moodBehavior: '',
+
+  memoryRemote: false,
+  memoryRecent: false,
+  signsOfAgitation: false,
+  signsOfDepression: false,
+  signsOfSuicidalIdeation: false,
+  signsOfSubstanceUse: false,
+  isTriage: false
+};
+
+// Backward-compat alias (in case any new-backend screens used the old name)
+export const newApGeneralAssessment = newGeneralAssessment;
+
+export const newChiefComplain: modelTypes.ChiefComplain = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+
+  chiefComplaint: '',
+  provocation: '',
+  palliation: '',
+  quality: '',
+  region: '',
+  severity: '',
+  onsetDateTime: null,
+  caseUnderstanding: '',
+  patientCondition: null,
+  isTriage: false
+};
+
+export const newEmergencyTriage: modelTypes.EmergencyTriage = {
+  id: undefined,
+  patientId: null,
+  encounterId: null,
+
+  emergencyLevel: null,
+
+  rightEyeLightResponse: false,
+  rightEyePupilSize: '',
+
+  leftEyeLightResponse: false,
+  leftEyePupilSize: '',
+
+  hpiAdditionalNotes: '',
+
+  lifeSaving: null,
+  unresponsive: null,
+  highRisk: null,
+
+  avpuScale: null,
+  painScore: null,
+
+  labsRequired: null,
+  imagingRequired: null,
+  ivFluidsRequired: null,
+  medicationRequired: null,
+  ecgRequired: null,
+  consultationRequired: null,
+
+  destination: null
+};
+
 export const newPatientServiceAndProduct: modelTypes.PatientServiceAndProduct = {
   id: undefined,
   patientId: undefined,
@@ -2245,3 +2307,79 @@ export const newAdditionalMeasurements: modelTypes.AdditionalMeasurements = {
   lastModifiedDate: null
 };
  
+export const newPatientRelation:modelTypes.PatientRelation= {
+  id: undefined,
+  patientId: undefined,
+  relatedPatientId: undefined,
+  relationType: '',
+  createdBy: '',
+  createdDate: null,
+  lastModifiedBy: '',
+  lastModifiedDate: null
+}
+
+/**
+ * relations_matrix response
+ */
+export const newRelationsMatrix:modelTypes.RelationsMatrix= {
+  id: undefined,
+  firstPatientGender: '',
+  secondPatientGender: '',
+  firstRelationCode: '',
+  secondRelationCode: ''
+}
+export const newPatientAdministrativeWarning: modelTypes.PatientAdministrativeWarningsResponseVM = {
+  id: undefined,
+  patientId: undefined,
+  warningTypeLkey: undefined,
+  warningTypeDisplay: undefined,
+  description: '',
+  isValid: true,
+  createdAt: undefined,
+  createdBy: undefined,
+  dateResolved: undefined,
+  resolvedBy: undefined,
+  resolutionUndoDate: undefined,
+  resolvedUndoBy: undefined
+};
+
+export const newPatientAdministrativeWarningCreateDTO: modelTypes.PatientAdministrativeWarningsCreateDTO = {
+  patientId: undefined,
+  warningType: undefined,
+  description: ''
+};
+
+export const newPatientAdministrativeWarningResolveDTO: modelTypes.PatientAdministrativeWarningsResolveDTO = {
+  id: undefined
+};
+
+export const newPatientAdministrativeWarningUndoResolveDTO: modelTypes.PatientAdministrativeWarningsUndoResolveDTO = {
+  id: undefined
+};
+export const newReferralRequest: modelTypes.ReferralRequest = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: null,
+
+  referralType: 'INTERNAL',
+
+  fromFacilityId: 0,
+  toFacilityId: 0,
+
+  fromDepartmentId: 0,
+  toDepartmentId: 0,
+
+  referralReason: '',
+
+  priority: null,
+
+  status: 'REQUESTED',
+
+  rejectReason: null,
+  rejectedDate: null,
+  rejectedBy: null,
+
+  acceptedDate: null,
+  acceptedBy: null
+};

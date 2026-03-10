@@ -61,7 +61,7 @@ const LaboratoryResultComparison: React.FC<Props> = ({
         : lastDayOfMonth.toISOString();
     //add new patient edits
     const { data, isLoading } = useGetPatientResultsHistoryQuery({
-        patientId: patient?.key,
+        patientId: patient?.id,
         from: fromInstant,
         to: toInstant,
         profileTestId: profileTestId ?? undefined

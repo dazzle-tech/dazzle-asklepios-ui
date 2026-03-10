@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
 import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
@@ -117,6 +117,10 @@ const InsuranceModal = ({
   const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
   const [planPage, setPlanPage] = useState(0);
 
+  // Policy Holder pagination state
+  const [relativePage, setRelativePage] = useState(0);
+  const [allRelatives, setAllRelatives] = useState<any[]>([]);
+
   const {
     data: payorResponse,
     isLoading: payorLoading,
@@ -142,10 +146,19 @@ const InsuranceModal = ({
     { skip: !patientInsurance?.payorId }
   );
 
-  const { data: relatives, isLoading: relativesLoading } = useGetRelativePatientsByCategoryQuery({
-    patientId: patientKey?.id,
-    categoryType: 'ADULT'
-  });
+  const {
+    data: relativesResponse,
+    isLoading: relativesLoading,
+    isFetching: relativesFetching
+  } = useGetRelativePatientsByCategoryQuery(
+    {
+      patientId: patientKey?.id,
+      categoryType: 'ADULT',
+      page: relativePage,
+      size: 5
+    },
+    { skip: !patientKey?.id || !open }
+  );
 
   useEffect(() => {
     setPayorPage(0);
@@ -165,8 +178,37 @@ const InsuranceModal = ({
     setPrevPayorId(currentPayorId);
   }, [patientInsurance?.payorId, prevPayorId]);
 
+  useEffect(() => {
+    if (!open) {
+      setRelativePage(0);
+      setAllRelatives([]);
+      return;
+    }
+
+    if (relativePage === 0) {
+      setAllRelatives(relativesResponse?.data ?? relativesResponse ?? []);
+      return;
+    }
+
+    const incomingRows = relativesResponse?.data ?? relativesResponse ?? [];
+
+    setAllRelatives(prev => {
+      const seenIds = new Set(prev.map(item => Number(item.id)));
+      const merged = [...prev];
+
+      incomingRows.forEach(item => {
+        if (!seenIds.has(Number(item.id))) {
+          merged.push(item);
+        }
+      });
+
+      return merged;
+    });
+  }, [relativesResponse, relativePage, open]);
+
   const hasMorePayors = payorResponse?.links?.next != null;
   const hasMorePlans = plansResponse?.links?.next != null;
+  const hasMoreRelatives = relativesResponse?.links?.next != null;
 
   const handleLoadMorePayors = () => {
     if (hasMorePayors && !payorFetching) setPayorPage(currentPage => currentPage + 1);
@@ -174,6 +216,12 @@ const InsuranceModal = ({
 
   const handleLoadMorePlans = () => {
     if (hasMorePlans && !plansFetching) setPlanPage(currentPage => currentPage + 1);
+  };
+
+  const handleLoadMoreRelatives = () => {
+    if (hasMoreRelatives && !relativesFetching) {
+      setRelativePage(currentPage => currentPage + 1);
+    }
   };
 
   const handleSave = async () => {
@@ -204,6 +252,8 @@ const InsuranceModal = ({
     setPayorPage(0);
     setPayorSearchKeyword('');
     setPlanPage(0);
+    setRelativePage(0);
+    setAllRelatives([]);
     onClose();
   };
 
@@ -232,6 +282,9 @@ const InsuranceModal = ({
         setPayorSearchKeyword('');
         setPlanPage(0);
       }
+
+      setRelativePage(0);
+      setAllRelatives([]);
     }
   }, [open, editing]);
 
@@ -243,10 +296,14 @@ const InsuranceModal = ({
         setPayorPage(0);
         setPayorSearchKeyword('');
         setPlanPage(0);
+        setRelativePage(0);
+        setAllRelatives([]);
       }, 300);
       return () => clearTimeout(resetTimer);
     }
   }, [open]);
+
+  const relativeOptions = useMemo(() => allRelatives ?? [], [allRelatives]);
 
   const renderLeftContent = () => (
     <div className="insurance-modal__left-content">
@@ -349,16 +406,19 @@ const InsuranceModal = ({
         <MyInput
           column
           fieldLabel="Policy Holder"
-          fieldType="select"
+          fieldType="selectPagination"
           fieldName="policyHolderId"
-          selectData={relatives ?? []}
+          selectData={relativeOptions}
           selectDataLabel={['firstName', 'lastName']}
           selectDataValue="id"
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
-          loading={relativesLoading}
-          searchable={false}
+          loading={relativesLoading || relativesFetching}
+          searchable={true}
+          hasMore={hasMoreRelatives}
+          onFetchMore={handleLoadMoreRelatives}
+          placeholder="Select Policy Holder..."
         />
         <MyInput
           column

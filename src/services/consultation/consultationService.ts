@@ -122,6 +122,24 @@ export const consultationService = createApi({
         method: 'GET'
       }),
       providesTags: ['Consultation']
+    }),
+
+    // 🔥 THIS WAS MISSING
+    findConsultationByPatient: builder.query<
+      PagedResult<Consultation>,
+      { patientId: string; page?: number; size?: number }
+    >({
+      query: ({ patientId, page = 0, size = 20 }) => ({
+        url: `/api/patient/consultation/by-patient/${patientId}`,
+        params: { page, size }
+      }),
+
+      transformResponse: (response: Consultation[], meta): PagedResult<Consultation> => {
+        const totalCount = Number(meta?.response?.headers.get('X-Total-Count')) || 0;
+        return { data: response ?? [], totalCount };
+      },
+
+      providesTags: ['Consultation']
     })
   })
 });
@@ -137,5 +155,6 @@ export const {
   useFindByEncounterWithDateRangeNotCancelledQuery,
 
   useGetDepartmentIdsByEncounterQuery,
-  useGetPractitionerIdsByEncounterQuery
+  useGetPractitionerIdsByEncounterQuery,
+  useFindConsultationByPatientQuery
 } = consultationService;

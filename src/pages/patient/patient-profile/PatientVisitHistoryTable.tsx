@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Tooltip, Form, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -32,7 +32,6 @@ import type { Department } from '@/types/model-types-new';
 
 import './styles.less';
 
-
 const PatientVisitHistoryTable = ({ localPatient }: any) => {
   const dispatch = useDispatch();
   const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
@@ -47,6 +46,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     {}
   );
   const [departmentsMap, setDepartmentsMap] = useState<Record<number | string, Department>>({});
+
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
   const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
 
@@ -58,7 +58,9 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       sort: 'createdDate,desc'
     },
     {
-      refetchOnMountOrArgChange: true
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+      pollingInterval: 0
     }
   );
 
@@ -74,7 +76,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       await cancelEncounter({ id: selectedVisit.id }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       setOpenCancelModal(false);
-      refetch(); 
+      refetch();
     } catch {
       dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
     }
@@ -84,7 +86,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     try {
       await completeEncounter({ id: row.id }).unwrap();
       dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
-      refetch(); 
+      refetch();
     } catch {
       dispatch(notify({ msg: 'Error completing encounter', sev: 'error' }));
     }
@@ -94,7 +96,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     try {
       await dischargeEncounter({ id: row.id }).unwrap();
       dispatch(notify({ msg: 'Discharged Successfully', sev: 'success' }));
-      refetch(); 
+      refetch();
     } catch {
       dispatch(notify({ msg: 'Error discharging encounter', sev: 'error' }));
     }
@@ -111,15 +113,16 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         return;
       }
       const uniqueIds = Array.from(
-        new Set(encounters.map(e => e.practitionerId).filter(id => id != null))
+        new Set(encounters.map((e: any) => e.practitionerId).filter((id: any) => id != null))
       );
       if (!uniqueIds.length) return;
       try {
         const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
-        setPractitionersMap(Object.fromEntries(practitioners.map(p => [p.id, p])));
+        setPractitionersMap(Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p])));
       } catch {}
     };
     loadPractitioners();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [encounters]);
 
   useEffect(() => {
@@ -129,16 +132,25 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         return;
       }
       const uniqueIds = Array.from(
-        new Set(encounters.map(e => e.departmentId).filter(id => id != null))
+        new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))
       );
       if (!uniqueIds.length) return;
       try {
         const departments = await getDepartmentsBulk(uniqueIds).unwrap();
-        setDepartmentsMap(Object.fromEntries(departments.map(d => [d.id, d])));
+        setDepartmentsMap(Object.fromEntries(departments.map((d: Department) => [d.id, d])));
       } catch {}
     };
     loadDepartments();
-  }, [encounters, getDepartmentsBulk]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [encounters]);
+
+  const handleCloseQuickAppointment = useCallback(
+    (val: boolean) => {
+      setQuickAppointmentModel(val);
+      if (!val) refetch();
+    },
+    [refetch]
+  );
 
   const columns = [
     {
@@ -195,6 +207,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         const isNew = row.status === 'NEW';
         const isPendingPayment = row.status === 'PENDING_PAYMENT';
 
+        const isOutpatient = departmentsMap[row.departmentId]?.departmentType === 'OUTPATIENT_CLINIC';
+
         return (
           <Form className="visit-history__actions-form">
             {isNew && (
@@ -217,7 +231,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </span>
               </Whisper>
             )}
-            {isOngoing && (
+
+            {isOngoing && isOutpatient && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Complete</Tooltip>}
@@ -230,7 +245,8 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </span>
               </Whisper>
             )}
-            {isOngoing && (
+
+            {isOngoing && !isOutpatient && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Discharge</Tooltip>}
@@ -243,6 +259,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
                 </span>
               </Whisper>
             )}
+
             {isPendingPayment && (
               <Whisper
                 placement="top"
@@ -286,7 +303,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
       {quickAppointmentModel && (
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
-          setQuickAppointmentModel={setQuickAppointmentModel}
+          setQuickAppointmentModel={handleCloseQuickAppointment}
           localPatient={localPatient}
           localVisit={selectedVisit}
           isDisabeld={quickInitialStep === 0}

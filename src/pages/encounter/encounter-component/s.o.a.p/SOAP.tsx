@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useOutletContext } from 'react-router-dom';
 import clsx from 'clsx';
 import { Form } from 'rsuite';
 
@@ -19,18 +19,23 @@ import { notify, showSystemLoader, hideSystemLoader } from '@/utils/uiReducerAct
 
 import {
   useGetEncounterByIdQuery,
-  useUpdateEncounterMutation,
+  useUpdateEncounterMutation
 } from '@/services/encounters/patientEncounterService';
+
+import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 
 import type { PatientEncounter } from '@/types/model-types-new';
 
-const SOAP = (props) => {
+const SOAP = props => {
   const dispatch = useAppDispatch();
   const location = useLocation();
 
-  const patient = props.patient || location.state?.patient;
-  const encounterFromNav = props.encounter || location.state?.encounter;
-  const edit = props.edit ?? location.state?.edit ?? false;
+  const outletContext = useOutletContext<any>();
+
+  const patient = props.patient || location.state?.patient || outletContext?.patient;
+  const encounterFromNav = props.encounter || location.state?.encounter || outletContext?.encounter;
+  const edit = props.edit ?? location.state?.edit ?? outletContext?.edit ?? false;
+  const onDiagnosisSaved = props.onDiagnosisSaved || outletContext?.onDiagnosisSaved;
 
   const encounterId = encounterFromNav?.id || location.state?.encounter?.id;
 
@@ -41,54 +46,49 @@ const SOAP = (props) => {
     {
       skip: !encounterId,
       refetchOnMountOrArgChange: true,
-      refetchOnFocus: true,
+      refetchOnFocus: true
     }
   );
 
+  const { data: nurseComplaints } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
+    { encounterId },
+    { skip: !encounterId }
+  );
+
   useEffect(() => {
-    if (encounterFromServer) setLocalEncounter(encounterFromServer);
-  }, [encounterFromServer]);
+    if (encounterFromServer) {
+      setLocalEncounter({
+        ...encounterFromServer,
+        chiefComplaint: encounterFromServer.chiefComplaint || nurseComplaints?.reasonOfVisit || ''
+      });
+    }
+  }, [encounterFromServer, nurseComplaints]);
 
   const [updateEncounter] = useUpdateEncounterMutation();
 
   const toEncounterPayload = (encounter: any): PatientEncounter => ({
     id: Number(encounter?.id),
-
-    patientId: Number(encounter?.patientId ?? encounter?.patient?.id), 
-
+    patientId: Number(encounter?.patientId ?? encounter?.patient?.id),
     encounterNumber: encounter?.encounterNumber ?? null,
-
     facilityId: Number(encounter?.facilityId),
     departmentId: Number(encounter?.departmentId),
-
     practitionerId: encounter?.practitionerId ?? null,
-
-    paymentDate: encounter?.paymentDate, 
+    paymentDate: encounter?.paymentDate,
     amount: encounter?.amount,
-
     encounterType: encounter?.encounterType,
     encounterReason: encounter?.encounterReason,
-
     followUpEncounterId: encounter?.followUpEncounterId ?? encounter?.followUpEncounter?.id ?? null,
-
     priorityLevel: encounter?.priorityLevel,
-
     originType: encounter?.originType ?? null,
     originName: encounter?.originName ?? null,
-
     notes: encounter?.notes ?? null,
-
     departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-
     encounterDate: encounter?.encounterDate ?? null,
-
     status: encounter?.status,
-
     chiefComplaint: encounter?.chiefComplaint ?? null,
-
     hasPrescription: Boolean(encounter?.hasPrescription),
     hasOrder: Boolean(encounter?.hasOrder),
-    isObserved: Boolean(encounter?.isObserved),
+    isObserved: Boolean(encounter?.isObserved)
   });
 
   const saveChanges = async () => {
@@ -106,7 +106,7 @@ const SOAP = (props) => {
         dispatch(
           notify({
             msg: 'Missing required fields: patientId / facilityId / departmentId',
-            sev: 'error',
+            sev: 'error'
           })
         );
         return;
@@ -116,7 +116,7 @@ const SOAP = (props) => {
         dispatch(
           notify({
             msg: 'Follow-up encounter is required when reason is FOLLOW_UP',
-            sev: 'error',
+            sev: 'error'
           })
         );
         return;
@@ -124,7 +124,7 @@ const SOAP = (props) => {
 
       const updatedEncounter = await updateEncounter({
         id: idToUpdate,
-        body: payload, 
+        body: payload
       }).unwrap();
 
       setLocalEncounter(updatedEncounter);
@@ -166,7 +166,13 @@ const SOAP = (props) => {
 
           <SectionContainer
             title="Patient Diagnosis"
-            content={<PatientDiagnosis patient={patient} encounter={localEncounter} />}
+            content={
+              <PatientDiagnosis
+                patient={patient}
+                encounter={localEncounter}
+                onDiagnosisSaved={onDiagnosisSaved}
+              />
+            }
           />
 
           <div className="last-section-clinical-visit">
@@ -187,12 +193,12 @@ const SOAP = (props) => {
             </div>
           </div>
         </div>
-      ),
+      )
     },
     {
       title: 'Physical Examination & Findings',
-      content: <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} />,
-    },
+      content: <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} />
+    }
   ];
 
   useEffect(() => {

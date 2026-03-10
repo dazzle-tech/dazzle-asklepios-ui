@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import '../../styles.less'
-import { useSaveEncounterChangesMutation } from '@/services/encounterService';
+import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 import { useUpdateEmergencyTriageDestinationMutation } from '@/services/encounters/er-triage/emergencyTriageService';
@@ -19,13 +19,59 @@ type DestinationEnum = 'ER_WAITING_LIST' | 'REFER_TO_SPECIALIST' | 'SENT_TO_HOME
 const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
     const dispatch = useAppDispatch();
     const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...newApEncounter });
-    const [saveEncounterChanges] = useSaveEncounterChangesMutation();
+    const [updateEncounter] = useUpdateEncounterMutation();
     const [updateDestination] = useUpdateEmergencyTriageDestinationMutation();
     const [showModal, setShowModal] = useState(false);
     const [emergencyTriage, setEmergencyTriage] = useState<any>({});
 
-    const COMPLETE_TRIAGE_STATUS_KEY = '91109811181900';
-    const SENT_TO_ER_STATUS_KEY = '6742317684600328';
+    const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
+    const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
+
+    const buildEncounterUpdateBody = (row: any, patch: any) => {
+      const body: any = {
+        id: row?.id ?? row?.key,
+        patientId: row?.patientId ?? row?.patient?.id ?? row?.patientObject?.id,
+        encounterNumber: row?.encounterNumber ?? null,
+        facilityId: row?.facilityId,
+        departmentId: row?.departmentId,
+        practitionerId: row?.practitionerId ?? null,
+        encounterType: row?.encounterType,
+        encounterReason: row?.encounterReason,
+        followUpEncounterId: row?.followUpEncounterId ?? null,
+        priorityLevel: row?.priorityLevel,
+        originType: row?.originType ?? null,
+        originName: row?.originName ?? null,
+        notes: row?.notes ?? null,
+        departmentDailySequenceNumber: row?.departmentDailySequenceNumber ?? null,
+        encounterDate: row?.encounterDate ?? null,
+        status: row?.status,
+        chiefComplaint: row?.chiefComplaint ?? null,
+        hasPrescription: row?.hasPrescription ?? false,
+        hasOrder: row?.hasOrder ?? false,
+        isObserved: row?.isObserved ?? false
+      };
+
+      Object.assign(body, patch ?? {});
+
+      const missing: string[] = [];
+      if (body.id == null) missing.push('id');
+      if (body.patientId == null) missing.push('patientId');
+      if (body.facilityId == null) missing.push('facilityId');
+      if (body.departmentId == null) missing.push('departmentId');
+      if (body.encounterType == null) missing.push('encounterType');
+      if (body.encounterReason == null) missing.push('encounterReason');
+      if (body.priorityLevel == null) missing.push('priorityLevel');
+      if (body.status == null) missing.push('status');
+      if (body.hasPrescription == null) missing.push('hasPrescription');
+      if (body.hasOrder == null) missing.push('hasOrder');
+      if (body.isObserved == null) missing.push('isObserved');
+
+      if (missing.length) {
+        throw new Error(`Cannot update encounter: missing required fields: ${missing.join(', ')}`);
+      }
+
+      return body;
+    };
 
     const handleTransfer = async (destination: DestinationEnum) => {
       if (!localEncounter) {
@@ -33,18 +79,26 @@ const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
         return;
       }
 
-      // 1) Update encounter status ONLY
+      // 1) Update encounter status ONLY (PatientEncounter.status codes)
       const nextStatus =
-        destination === 'ER_WAITING_LIST' ? SENT_TO_ER_STATUS_KEY : COMPLETE_TRIAGE_STATUS_KEY;
+        destination === 'ER_WAITING_LIST' ? SENT_TO_ER_STATUS_CODE : COMPLETE_TRIAGE_STATUS_CODE;
 
       try {
-        await saveEncounterChanges({
-          ...localEncounter,
-          encounterStatusLkey: nextStatus
+        const id = (localEncounter as any)?.id ?? (localEncounter as any)?.key ?? null;
+        if (!id) throw new Error('Missing encounter id');
+
+        await updateEncounter({
+          id,
+          body: buildEncounterUpdateBody(localEncounter as any, { id, status: nextStatus })
         }).unwrap();
       } catch (e: any) {
-        console.error('Error updating encounter status', e);
-        dispatch(notify({ msg: 'Failed to update encounter status', sev: 'error' }));
+        console.error('Error updating encounter status', e, { localEncounter });
+        dispatch(
+          notify({
+            msg: e?.message || 'Failed to update encounter status (missing required encounter fields?)',
+            sev: 'error'
+          })
+        );
         return;
       }
 

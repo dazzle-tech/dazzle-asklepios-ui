@@ -50,6 +50,20 @@ export const patientDiagnosisService = createApi({
       ],
     }),
 
+    getPrimaryByEncounterId: builder.query<
+      modelTypes.PatientDiagnosis,
+      { encounterId: Id; timestamp?: number }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/patient-diagnoses/by-encounter/${encounterId}/primary`,
+        params: { encounterId },
+      }),
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientDiagnosis', id: `primary-${encounterId}` },
+        'PatientDiagnosis',
+      ],
+    }),
+
     getPatientDiagnosesByPatientId: builder.query<
       modelTypes.PatientDiagnosis[],
       { patientId: Id; page?: number; size?: number; sort?: string; timestamp?: number }
@@ -63,6 +77,48 @@ export const patientDiagnosisService = createApi({
         'PatientDiagnosis',
       ],
     }),
+    getPatientDiagnosesByEncounterId: builder.query<
+  modelTypes.PatientDiagnosis[],
+  { encounterId: Id; timestamp?: number }
+>({
+  query: ({ encounterId }) => ({
+    url: `/api/patient/patient-diagnoses/by-encounter/${encounterId}`,
+  }),
+  providesTags: (_res, _err, { encounterId }) => [
+    { type: 'PatientDiagnosis', id: `encounter-${encounterId}` },
+    'PatientDiagnosis',
+  ],
+}),
+
+getPrimaryPatientDiagnosisByEncounterId: builder.query<
+  modelTypes.PatientDiagnosis,
+  { encounterId: Id; timestamp?: number }
+>({
+  query: ({ encounterId }) => ({
+    url: `/api/patient/patient-diagnoses/by-encounter/${encounterId}/primary`,
+  }),
+  providesTags: (_res, _err, { encounterId }) => [
+    { type: 'PatientDiagnosis', id: `primary-${encounterId}` },
+    'PatientDiagnosis',
+  ],
+}),
+    existsPatientDiagnosisByEncounterId: builder.query<
+      boolean,
+      { encounterId: Id }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/patient-diagnosis/exists/${encounterId}`,
+        method: 'GET',
+      }),
+    }),
+
+hardDeletePatientDiagnosis: builder.mutation<void, { id: Id }>({
+  query: ({ id }) => ({
+    url: `/api/patient/patient-diagnoses/${id}/hard`,
+    method: 'DELETE',
+  }),
+  invalidatesTags: ['PatientDiagnosis'],
+}),
   }),
 });
 
@@ -73,5 +129,16 @@ export const {
   useLazyGetLatestPatientDiagnosisQuery,
   useGetPatientDiagnosesByPatientIdQuery,
   useLazyGetPatientDiagnosesByPatientIdQuery,
-} = patientDiagnosisService;
 
+  useGetPatientDiagnosesByEncounterIdQuery,
+  useLazyGetPatientDiagnosesByEncounterIdQuery,
+
+  useGetPrimaryPatientDiagnosisByEncounterIdQuery,
+  useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery,
+
+  useHardDeletePatientDiagnosisMutation,
+    useExistsPatientDiagnosisByEncounterIdQuery,
+  useLazyExistsPatientDiagnosisByEncounterIdQuery,
+  useGetPrimaryByEncounterIdQuery
+
+} = patientDiagnosisService;
