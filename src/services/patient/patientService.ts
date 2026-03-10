@@ -2,6 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import * as modelTypes from '@/types/model-types-new';
+import { PatientInformationReportVM } from '@/types/model-types-new';
 
 type Id = number | string;
 
@@ -227,7 +228,7 @@ export const newPatientService = createApi({
 
     getBulkPatientBasicInfo: builder.mutation<PatientBasicInformationResponseVM[], number[]>({
       query: body => ({
-        url: '/api/analytics/bulk/basic-info',
+        url: '/api/patient/bulk/basic-info',
         method: 'POST',
         body
       })
@@ -236,6 +237,13 @@ export const newPatientService = createApi({
     getPatientLabel: builder.query<modelTypes.PatientLabelVM, { patientId: number }>({
       query: ({ patientId }) => ({
         url: `/api/analytics/label/${patientId}`,
+        method: 'GET'
+      })
+    }),
+
+    getPatientInformationReport: builder.query<PatientInformationReportVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/information-report`,
         method: 'GET'
       })
     })
@@ -268,5 +276,6 @@ export const {
   useLazyGetPatientByIdQuery,
   useGetDuplicationCandidatesMutation,
   useGetBulkPatientBasicInfoMutation,
-  useLazyGetPatientLabelQuery
+  useLazyGetPatientLabelQuery,
+useLazyGetPatientInformationReportQuery
 } = newPatientService;
