@@ -68,10 +68,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw)
@@ -168,23 +168,23 @@ const EncounterList = () => {
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
 
- useEffect(() => {
-  dispatch(setPageCode('P_Encounters'));
-  dispatch(setDivContent('Patients Visit List'));
+  useEffect(() => {
+    dispatch(setPageCode('P_Encounters'));
+    dispatch(setDivContent('Patients Visit List'));
 
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  };
-}, [dispatch]);
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(' '));
+    };
+  }, [dispatch]);
 
   const [encounter, setLocalEncounter] = useState<any>({
     ...newApEncounter,
     discharge: false
   });
-const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
-const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
-// getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
+  const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
+  const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
+  // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
@@ -224,9 +224,9 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
 
   const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
-  const [encounterReasons, setEncounterReasons] = useState<string[]>([]);
-  const [priorities, setPriorities] = useState<string[]>([]);
-  const [hasPrescription, setHasPrescription] = useState<boolean | undefined>(undefined);
+  const [encounterReasonIn, setEncounterReasonIn] = useState<string[]>([]);
+  const [priorityIn, setPriorityIn] = useState<string[]>([]);
+  const [withPrescription, setWithPrescription] = useState<boolean | undefined>(undefined);
   const [hasOrder, setHasOrder] = useState<boolean | undefined>(undefined);
   const [isObserved, setIsObserved] = useState<boolean | undefined>(undefined);
 
@@ -255,14 +255,14 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     const chiefComplaint =
       String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
     const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
-    const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
+    const normalizedEncounterReasons = uniqueNonEmpty(encounterReasonIn);
     const normalizedPriorities =
-      uniqueNonEmpty(priorities) ??
+      uniqueNonEmpty(priorityIn) ??
       uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
     const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
 
     return {
-      departmentId:departmentId,
+      departmentId: departmentId,
       fromDate,
       toDate,
       statusIn: normalizedStatusIn,
@@ -270,8 +270,8 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
       mrn,
       encounterReasons: normalizedEncounterReasons,
       chiefComplaint,
-      priorities: normalizedPriorities,
-      hasPrescription,
+      priorityIn: normalizedPriorities,
+      withPrescription,
       hasOrder,
       isObserved,
       page,
@@ -284,16 +284,16 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     dateFilter.fromDate,
     dateFilter.toDate,
     departmentId,
-    encounterReasons,
+    encounterReasonIn,
     hasOrder,
     isObserved,
     page,
     pageSize,
-    priorities,
+    priorityIn,
     record,
     statusIn,
     todayStr,
-    hasPrescription,
+    withPrescription,
     patientSearchApplied,
     searchTick
   ]);
@@ -338,19 +338,19 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     return Array.from(new Set(ids));
   }, [tableData]);
   useEffect(() => {
-  const pid =
-  
-    encounter?.patient?.id ;
+    const pid =
 
-  if (pid) triggerGetPatientById({ id: pid });
-}, [encounter?.patient?.id]);
+      encounter?.patient?.id;
+
+    if (pid) triggerGetPatientById({ id: pid });
+  }, [encounter?.patient?.id]);
 
   useEffect(() => {
     if (patientIdsForBulk.length === 0) return;
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
@@ -429,66 +429,66 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     }
   };
   const fetchPatientForEncounter = async (enc: any) => {
-  const pid =
-    enc?.patient?.id ??
-    null;
+    const pid =
+      enc?.patient?.id ??
+      null;
 
-  if (!pid) return null;
+    if (!pid) return null;
 
-  try {
-    const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
-    return fullPatient;
-  } catch (e) {
-    handleCrudError(e, dispatch, { 'patient.notfound': 'Patient not found.' });
-    return null;
-  }
-};
-const handleGoToVisit = async (encounterData: any) => {
-  const isStarted = await startEncounterSafe(encounterData);
-  if (!isStarted) return;
-
-  dispatch(showSystemLoader());
-  const fullPatient = await fetchPatientForEncounter(encounterData);
-  dispatch(hideSystemLoader());
-
-  if (!fullPatient) {
-    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
-    return;
-  }
-
-  dispatch(setEncounter(encounterData));
-  dispatch(setPatient(fullPatient));
-
-  
-  const privatePatientPath = '/user-access-patient-private';
-  const encounterPath = '/encounter';
-  const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
-
-  navigate(targetPath, {
-    state: {
-      info: 'toEncounter',
-      fromPage: 'EncounterList',
-      patient: fullPatient,
-      encounter: encounterData
+    try {
+      const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
+      return fullPatient;
+    } catch (e) {
+      handleCrudError(e, dispatch, { 'patient.notfound': 'Patient not found.' });
+      return null;
     }
-  });
+  };
+  const handleGoToVisit = async (encounterData: any) => {
+    const isStarted = await startEncounterSafe(encounterData);
+    if (!isStarted) return;
 
-  sessionStorage.setItem('encounterPageSource', 'EncounterList');
-};
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+
+    const privatePatientPath = '/user-access-patient-private';
+    const encounterPath = '/encounter';
+    const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
+
+    navigate(targetPath, {
+      state: {
+        info: 'toEncounter',
+        fromPage: 'EncounterList',
+        patient: fullPatient,
+        encounter: encounterData
+      }
+    });
+
+    sessionStorage.setItem('encounterPageSource', 'EncounterList');
+  };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
-      dispatch(showSystemLoader());
-  const fullPatient = await fetchPatientForEncounter(encounterData);
-  dispatch(hideSystemLoader());
-      if (!fullPatient) {
-    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
-    return;
-  }
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
 
-  dispatch(setEncounter(encounterData));
-  dispatch(setPatient(fullPatient));
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
     const targetPath = fullPatient?.isPrivatePatient
       ? '/user-access-patient-private'
       : '/nurse-station';
@@ -497,7 +497,7 @@ const handleGoToVisit = async (encounterData: any) => {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,
         encounter: encounterData,
-        edit: encounterData?.status ?.toUpperCase() === 'CLOSED'
+        edit: encounterData?.status?.toUpperCase() === 'CLOSED'
       }
     });
   };
@@ -523,9 +523,9 @@ const handleGoToVisit = async (encounterData: any) => {
     setRecord({});
     setDateFilter({ fromDate: now, toDate: now });
     setStatusIn(DEFAULT_STATUS);
-    setEncounterReasons([]);
-    setPriorities([]);
-    setHasPrescription(undefined);
+    setEncounterReasonIn([]);
+    setPriorityIn([]);
+    setWithPrescription(undefined);
     setHasOrder(undefined);
     setIsObserved(undefined);
     const clearedSearch = { searchByField: 'fullName', patientName: '' };
@@ -809,10 +809,10 @@ const handleGoToVisit = async (encounterData: any) => {
                 selectDataLabel="label"
                 selectDataValue="value"
                 fieldLabel="Encounter Reason"
-                record={{ encounterReasons }}
+                record={{encounterReasonIn}}
                 setRecord={(v: any) => {
                   const raw = Array.isArray(v) ? v : v?.encounterReasons;
-                  setEncounterReasons(Array.isArray(raw) ? raw.map(String).filter(Boolean) : []);
+                  setEncounterReasonIn(Array.isArray(raw) ? raw.map(String).filter(Boolean) : []);
                   setPage(0);
                 }}
                 searchable
@@ -835,9 +835,9 @@ const handleGoToVisit = async (encounterData: any) => {
                 width={130}
                 fieldName="hasPrescription"
                 fieldType="checkbox"
-                record={{ hasPrescription: !!hasPrescription }}
+                record={{ hasPrescription: !!withPrescription }}
                 setRecord={(v: any) => {
-                  setHasPrescription(!!v?.hasPrescription);
+                  setWithPrescription(!!v?.hasPrescription);
                   setPage(0);
                 }}
                 label="Has Prescription"
@@ -846,10 +846,11 @@ const handleGoToVisit = async (encounterData: any) => {
                 width={110}
                 fieldName="hasOrder"
                 fieldType="checkbox"
-                record={{ hasOrder: !!hasOrder }}
+                record={{ hasOrder: hasOrder === true }}
                 setRecord={(v: any) => {
-                  setHasOrder(!!v?.hasOrder);
+                  setHasOrder(v?.hasOrder ? true : undefined);
                   setPage(0);
+                  refetchEncounters();
                 }}
                 label="Has Orders"
               />
@@ -869,9 +870,9 @@ const handleGoToVisit = async (encounterData: any) => {
                 width={200}
                 fieldName="priorities"
                 fieldType="checkPicker"
-                record={{ priorities }}
+                record={{ priorities: priorityIn }}
                 setRecord={(v: any) => {
-                  setPriorities(Array.isArray(v?.priorities) ? v.priorities : []);
+                  setPriorityIn(Array.isArray(v?.priorities) ? v.priorities : []);
                   setPage(0);
                 }}
                 selectData={EncounterPriorityEnum}
@@ -992,9 +993,9 @@ const handleGoToVisit = async (encounterData: any) => {
           open={openNurseAssessment}
           setOpen={setOpenNurseAssessment}
           actionButtonFunction={async () => {
-        
-              await handleGoToPreVisitObservations(encounter);
-            
+
+            await handleGoToPreVisitObservations(encounter);
+
           }}
           actionType="confirm"
           confirmationQuestion="Do you want to start Nurse Assessment?"

@@ -49,15 +49,15 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
   const { data, isFetching, refetch } = useGetEncountersByPatientQuery(
     localPatient?.id
       ? {
-          patientId: localPatient.id,
-          page: 0,
-          size: 50,
-          sort: 'createdDate,desc'
-        }
+        patientId: localPatient.id,
+        page: 0,
+        size: 50,
+        sort: 'createdDate,desc'
+      }
       : skipToken
   );
 
-  const encountersRaw = data?.data || [];
+  const encountersRaw = useMemo(() => data?.data ?? [], [data?.data]);
 
   const encounters = useMemo(() => {
     if (!departmentType) return encountersRaw;
@@ -105,11 +105,11 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
       try {
         const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
         setPractitionersMap(Object.fromEntries(practitioners.map(p => [p.id, p])));
-      } catch {}
+      } catch { }
     };
 
     loadPractitioners();
-  }, [data]);
+  }, [encountersRaw]);
 
   useEffect(() => {
     const loadDepartments = async () => {
@@ -127,11 +127,12 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
       try {
         const departments = await getDepartmentsBulk(uniqueIds).unwrap();
         setDepartmentsMap(Object.fromEntries(departments.map(d => [d.id, d])));
-      } catch {}
+      } catch { }
     };
 
     loadDepartments();
-  }, [data]);
+  }, [encountersRaw]);
+
 
   const columns = [
     {
