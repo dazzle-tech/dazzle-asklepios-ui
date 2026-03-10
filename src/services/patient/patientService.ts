@@ -227,21 +227,25 @@ export const newPatientService = createApi({
 
     getBulkPatientBasicInfo: builder.mutation<PatientBasicInformationResponseVM[], number[]>({
       query: body => ({
-        url: '/api/patient/bulk/basic-info',
+        url: '/api/analytics/bulk/basic-info',
         method: 'POST',
-        body,
-      }),
+        body
+      })
     }),
+
+    getPatientLabel: builder.query<modelTypes.PatientLabelVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/label/${patientId}`,
+        method: 'GET'
+      })
+    })
   })
 });
 
 export const {
   useGetPatientByIdQuery,
-  // list
   useGetPatientsQuery,
   useLazyGetPatientsQuery,
-
-  // filters
   useGetPatientsByMedicalRecordNumberQuery,
   useLazyGetPatientsByMedicalRecordNumberQuery,
   useGetPatientsByArchivingNumberQuery,
@@ -252,28 +256,17 @@ export const {
   useLazyGetPatientsByDateOfBirthQuery,
   useGetPatientsByFullNameQuery,
   useLazyGetPatientsByFullNameQuery,
-
-  // document number
   useGetPatientsByDocumentNumberQuery,
   useLazyGetPatientsByDocumentNumberQuery,
-
-  // any document number
   useGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsByAnyDocumentNumberQuery,
-
-  // mutations
   useAddPatientMutation,
   useUpdatePatientMutation,
-
-  // unknown patients
   useAddUnknownPatientMutation,
   useGetUnknownPatientsQuery,
   useLazyGetUnknownPatientsQuery,
   useLazyGetPatientByIdQuery,
-
-  // duplicaton
   useGetDuplicationCandidatesMutation,
-
-  // bulk basic info
-  useGetBulkPatientBasicInfoMutation
+  useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientLabelQuery
 } = newPatientService;

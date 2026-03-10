@@ -3570,3 +3570,44 @@ export interface ReferralRequest {
   acceptedDate?: string | null;
   acceptedBy?: string | null;
 }
+
+export type PatientInformationReportVM = {
+  patientId: number
+  fullName: string
+  mrn: string
+  dateOfBirth: string
+  age: number
+  gender: string
+  photoUrl?: string
+
+  documentType?: string
+  documentNumber?: string
+
+  mobileNumber?: string
+  secondaryPhone?: string
+  email?: string
+  address?: string
+  city?: string
+  state?: string
+  country?: string
+
+  emergencyName?: string
+  emergencyRelationship?: string
+  emergencyPhone?: string
+
+  registrationDate?: string
+  insuranceProvider?: string
+  policyNumber?: string
+
+  preferredHealthProfessional?: string
+}
+
+export type PatientLabelVM = {
+  patientId: number
+  patientFullName: string
+  mrn: string
+  dateOfBirth: string
+  age: number
+  gender: string
+  registrationDate: string
+}
