@@ -75,11 +75,11 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
-        encounterReasonIn?: string[];
+        encounterReasons?: string[];
         chiefComplaint?: string;
-        priorityIn?: string[];
-        withPrescription?: boolean;
-        hasOrders?: boolean;
+        priorities?: string[];
+        hasPrescription?: boolean;
+        hasOrder?: boolean;
         isObserved?: boolean;
       } & PagedParams
     >({
@@ -91,11 +91,11 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
-        encounterReasonIn,
+        encounterReasons,
         chiefComplaint,
-        priorityIn,
-        withPrescription,
-        hasOrders,
+        priorities,
+        hasPrescription,
+        hasOrder,
         isObserved,
         page,
         size,
@@ -114,11 +114,11 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
-            encounterReasonIn,
+            encounterReasons,
             chiefComplaint,
-            priorityIn,
-            withPrescription,
-            hasOrders,
+            priorities,
+            hasPrescription,
+            hasOrder,
             isObserved,
             page,
             size,
