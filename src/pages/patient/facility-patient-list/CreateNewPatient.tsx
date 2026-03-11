@@ -1070,17 +1070,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               setRecord={setLocalPatient}
               width={200}
             />
-            <MyInput
-              width={200}
-              column
-              fieldType="checkbox"
-              fieldName="isPrivatePatient"
-              fieldLabel="Private Patient"
-              record={localPatient}
-              setRecord={setLocalPatient}
-            />
-
-            {pageCode === 'ER_Triage' && (
+             {pageCode === 'ER_Triage' && (
               <>
                 <MyInput
                   column
@@ -1131,6 +1121,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 />
               </>
             )}
+            <MyInput
+              width={200}
+              column
+              fieldType="checkbox"
+              fieldName="isPrivatePatient"
+              fieldLabel="Private Patient"
+              record={localPatient}
+              setRecord={setLocalPatient}
+            />
+
+           
           </Form>
         );
 
