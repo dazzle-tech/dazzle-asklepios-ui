@@ -91,14 +91,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
           : { ...newPatient }
   );
 
-
-  console.log("EMR localPatient:", localPatient);
-  console.log("EMR patient.id:", localPatient?.id);
-  console.log("EMR patient.key:", (localPatient as any)?.key);
-
   const [refetchData, setRefetchData] = useState(false);
-
-  console.log("ListRequest patient_id filter:", localPatient?.id);
 
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
 
@@ -152,7 +145,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     }
   }, [activeSectionCard]);
 
-  console.log("EMR localPatient", localPatient)
   return (
     <div className={`emr-container ${inModal ? 'emr-in-modal' : ''}`}>
       <div className="emr-content">
