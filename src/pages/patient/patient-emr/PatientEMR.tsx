@@ -107,6 +107,25 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     }
   }, [localPatient, encounter, dispatch]);
 
+  useEffect(() => {
+    if (patient || enc) {
+      if (patient) setLocalPatient(patient);
+      if (enc) setLocalEncounter(enc);
+      return;
+    }
+
+    const stateData = location.state as any;
+    if (stateData?.patient) {
+      setLocalPatient(stateData.patient);
+    } else if (stateData?.fromPage === 'clinicalVisit' && stateData?.localPatient) {
+      setLocalPatient(stateData.localPatient);
+    }
+
+    if (stateData?.encounter) {
+      setLocalEncounter(stateData.encounter);
+    }
+  }, [patient, enc, location.state]);
+
 
   const goToVisit = async (rowData: any) => {
     setLocalEncounter(rowData);
