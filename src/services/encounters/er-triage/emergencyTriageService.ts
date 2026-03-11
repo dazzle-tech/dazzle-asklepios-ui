@@ -69,10 +69,10 @@ export const emergencyTriageService = createApi({
       })
     }),
     getEmergencyTriageBulkByEncounterIds: builder.query<EmergencyTriage[], EncounterId[]>({
-      query: ids => ({
+      query: encounterIds => ({
         url: '/api/patient/emergency-triage/bulk-byEncounter',
         method: 'GET',
-        params: { ids }
+        params: { encounterIds }
       })
     }),
   })

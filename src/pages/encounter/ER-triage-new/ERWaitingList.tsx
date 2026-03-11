@@ -99,6 +99,7 @@ const ERWaitingList = () => {
   const [showCancelled, setShowCancelled] = useState(false);
   const [cancelEncounter] = useCancelEncounterMutation();
   const [triageBulkList, setTriageBulkList] = useState<any[]>([]);
+  console.log('Triage Bulk List:', triageBulkList);
   const [getEmergencyTriageBulkByEncounterIds] = useLazyGetEmergencyTriageBulkByEncounterIdsQuery();
   const [triggerGetPatientById] = useLazyGetPatientByIdQuery();
 
@@ -217,7 +218,7 @@ const ERWaitingList = () => {
     useGetBulkPatientBasicInfoMutation();
   const encounterIdsForBulk = useMemo(() => {
     const ids = (encountersPaged?.data ?? [])
-      .map((row: any) => row?.id ?? row?.key)
+      .map((row: any) => row?.id )
       .filter((v: any) => v !== null && v !== undefined)
       .map((v: any) => Number(v));
 
@@ -254,17 +255,21 @@ const ERWaitingList = () => {
     return map;
   }, [patientsBasicInfo]);
   const triageMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<number, any>();
 
     (triageBulkList ?? []).forEach((triage: any) => {
       const encounterId = triage?.encounterId ?? triage?.encounter?.id;
       if (!encounterId) return;
 
-      map.set(String(encounterId), triage);
+      map.set(encounterId, triage);
     });
 
     return map;
   }, [triageBulkList]);
+  for (const [key] of triageMap) {
+  console.log(key, typeof key);
+}
+
   const normalizedTableData = useMemo(() => {
     return (tableData as any[]).map(row => {
       const patientId = row?.patient?.id ?? row?.patientId ?? row?.patientObject?.id ?? null;
@@ -310,8 +315,9 @@ const ERWaitingList = () => {
         ) ||
         row?.patientObject?.genderLvalue?.lovDisplayVale ||
         '';
-      const encounterId = row?.id ?? row?.key;
-      const emergencyTriageFromMap = encounterId != null ? triageMap.get(String(encounterId)) : null;
+      const encounterId = row?.id ;
+      const emergencyTriageFromMap = encounterId != null ? triageMap.get(encounterId) : null;
+
 
       return {
         ...row,
@@ -330,8 +336,7 @@ const ERWaitingList = () => {
         patientAge: row?.patientAge ?? (dob ? calculateAgeFormat(dob) : null)
       };
     });
-  }, [tableData, patientMap]);
-
+  }, [tableData, patientMap,triageMap]);
   const handleCancelEncounter = async () => {
     try {
       await cancelEncounter({ id: encounter?.id ?? encounter?.key }).unwrap();
@@ -765,7 +770,6 @@ const ERWaitingList = () => {
       setTriageBulkList([]);
       return;
     }
-
     getEmergencyTriageBulkByEncounterIds(encounterIdsForBulk)
       .unwrap()
       .then(response => {
