@@ -40,6 +40,7 @@ import { FaWeight } from 'react-icons/fa';
 import { IoMdClose } from 'react-icons/io';
 import { useDispatch, useSelector } from 'react-redux';
 import { Avatar, Divider, Panel, Text, Tooltip, Whisper } from 'rsuite';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
 
 const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
@@ -679,7 +680,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
         </>
       )}
 
-      <div className="my-container">
+      <div className="container-of-allergies-and-warnings">
         {activeAllergies.map((allergy, index) => (
           <Whisper
             key={`allergy-whisper-${allergy.id || index}`}
@@ -723,7 +724,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
                 color={getAllergySeverityColors(warning.severity || '').text}
                 contant={
                   <div className="diagnosis-badge-content">
-                    <FontAwesomeIcon icon={faHandDots} className="diagnosis-badge-icon" />
+                    <FontAwesomeIcon icon={faTriangleExclamation} className="diagnosis-badge-icon" />
                     {warning.warning}
                   </div>
                 }

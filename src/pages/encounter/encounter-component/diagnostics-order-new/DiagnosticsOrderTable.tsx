@@ -8,7 +8,7 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import PatientPrevTests from './PatientPrevTests';
 import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
-
+import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 type Props = {
@@ -85,6 +85,19 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     return '';
   };
 
+  const { data: departmentsResponse } = useGetDepartmentsQuery({
+    page: 0,
+    size: 100,
+    sort: 'id,asc'
+  });
+
+  const departments = departmentsResponse?.data ?? [];
+
+
+  const getDepartmentName = (id?: number) =>
+  departments.find(d => d.id === id)?.name ?? id;
+
+
   const tableColumns: any[] = [
     {
       key: 'check',
@@ -102,6 +115,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       render: (rowData: any) => {
         const rowId = Number(rowData.id);
         const isDisabled = rowData.status !== 'NEW';
+        console.log(rowData, "Row Data");
         return (
           <Checkbox
             checked={selectedRows.includes(rowId)}
@@ -147,7 +161,10 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       title: <Translate>RECEIVED LAB</Translate>,
       fullText: true,
       flexGrow: 1,
-      render: (rowData: any) => rowData.receivedDepartmentId ?? rowData.receivedLabId ?? ''
+      render: (rowData: any) => {
+        const deptId = rowData.receivedDepartmentId ?? rowData.receivedLabId;
+        return getDepartmentName(deptId);
+      }
     },
     {
       key: 'reason',
