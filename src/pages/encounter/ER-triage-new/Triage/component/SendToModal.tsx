@@ -25,7 +25,7 @@ const SendToModal = ({ open, setOpen, encounter, triage, refetch = null }) => {
     const [emergencyTriage, setEmergencyTriage] = useState<any>({});
 
     const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
-    const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
+    const SENT_TO_ER_STATUS_CODE = 'WAITING_LIST';
 
     const buildEncounterUpdateBody = (row: any, patch: any) => {
       const body: any = {

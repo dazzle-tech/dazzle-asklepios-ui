@@ -13,6 +13,7 @@ import PlusIcon from '@rsuite/icons/Plus';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
+import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
 import {
   useGetCustomeInstructionsQuery
 } from '@/services/encounterService';
@@ -78,6 +79,7 @@ const DetailsModal = ({
   const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
   const [searchKeywordicd, setSearchKeywordicd] = useState('');
   const [inst, setInst] = useState(null);
+  const [adminInstructions, setAdminInstructions] = useState({ administrationInstructions: [] });
   const [selectedOption, setSelectedOption] = useState(null);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
   const instructionTypeOptions = useEnumOptions('PrescriptionInstructionsType');
@@ -165,6 +167,27 @@ const DetailsModal = ({
       setSelectedGeneric(Brand);
       setSelectedOption(prescriptionMedication?.instructionsType);
       setInstruc(prescriptionMedication.administrationInstructions);
+      
+      // Handle indicationUseLkey - ensure it's set for the select dropdown
+      if ((prescriptionMedication?.indicationUseLkey != null || prescriptionMedication?.indicationUse != null) && indicationLovQueryResponse?.object) {
+        const indicationValue =  prescriptionMedication?.indicationUse;
+        const sampleLovKey = indicationLovQueryResponse?.object?.[0]?.key;
+        
+        // Convert to match LOV key type if needed
+        let finalValue = indicationValue;
+        if (typeof sampleLovKey === 'string' && typeof indicationValue !== 'string') {
+          finalValue = String(indicationValue);
+        } else if (typeof sampleLovKey === 'number' && typeof indicationValue === 'string') {
+          const numValue = Number(indicationValue);
+          finalValue = !isNaN(numValue) ? numValue : indicationValue;
+        }
+        
+        setPrescriptionMedications(prev => ({
+          ...prev,
+          indicationUseLkey: finalValue
+        }));
+      }
+      
       setTags(prescriptionMedication?.parametersToMonitor?.split(',') ?? []);
 
       // FIX: reload ICD saved from backend
@@ -199,7 +222,53 @@ const DetailsModal = ({
       // If we have medication ID but Brand hasn't loaded yet, wait for it
       // This handles the case where Brand query is still loading
     }
-  }, [prescriptionMedication, Brand, customeInstructions, medIdForBrand]);
+  }, [prescriptionMedication, Brand, customeInstructions, medIdForBrand, indicationLovQueryResponse]);
+
+  // Separate useEffect to handle Administration Instructions when LOV data is loaded
+  useEffect(() => {
+    const hasMedication = prescriptionMedication?.key != null || prescriptionMedication?.id != null;
+    if (!hasMedication || !administrationInstructionsLovQueryResponse?.object) {
+      return;
+    }
+
+    // Handle administrationInstructions - convert to array for checkPicker
+    // Need to ensure keys match LOV key type (strings like '2412378840775947')
+    const adminInstr = prescriptionMedication.administrationInstructions;
+    const sampleLovKey = administrationInstructionsLovQueryResponse.object[0]?.key;
+    const keysAreStrings = typeof sampleLovKey === 'string';
+    
+    if (typeof adminInstr === 'string' && adminInstr) {
+      const arr = adminInstr.split(',').map(v => {
+        const trimmed = v.trim();
+        if (!trimmed) return null;
+        
+        // Convert to match LOV key type
+        if (keysAreStrings) {
+          return trimmed; // Keep as string
+        } else {
+          const num = Number(trimmed);
+          return !isNaN(num) ? num : trimmed;
+        }
+      }).filter(v => v !== null && v !== '');
+      
+      setAdminInstructions({ administrationInstructions: arr });
+    } else if (Array.isArray(adminInstr)) {
+      const arr = adminInstr.map(v => {
+        if (keysAreStrings && typeof v !== 'string') {
+          return String(v);
+        } else if (!keysAreStrings && typeof v === 'string') {
+          const num = Number(v);
+          return !isNaN(num) ? num : v;
+        }
+        return v;
+      }).filter(v => v !== null && v !== '');
+    
+      
+      setAdminInstructions({ administrationInstructions: arr });
+    } else if (adminInstr == null || adminInstr === '') {
+      setAdminInstructions({ administrationInstructions: [] });
+    }
+  }, [prescriptionMedication?.administrationInstructions, administrationInstructionsLovQueryResponse, prescriptionMedication?.key, prescriptionMedication?.id]);
 
   useEffect(() => {
     if (searchKeywordicd.trim() !== '') {
@@ -331,7 +400,12 @@ const DetailsModal = ({
     }
 
     const tagcompine = joinValuesFromArray(tags);
-    const administrationInstructionValue = Array.isArray(instr) ? instr[0] : instr;
+    // Handle administrationInstructions - convert array to comma-separated string
+    let administrationInstructionValue = null;
+    if (adminInstructions?.administrationInstructions?.length) {
+      const joined = adminInstructions.administrationInstructions.join(',');
+      administrationInstructionValue = joined;
+    }
     const selectedMedicationId = selectedGeneric?.id ?? prescriptionMedication?.medicationsId;
 
     if (!selectedMedicationId) {
@@ -520,6 +594,7 @@ const DetailsModal = ({
     setSelectedGeneric(null);
     setSelectedOption(null);
     setInstruc(null);
+    setAdminInstructions({ administrationInstructions: [] });
     setCustomeinst({ dose: null, unit: null, frequency: null, roa: null });
     setTags([]);
     setSearchKeyword('');
@@ -864,15 +939,14 @@ const DetailsModal = ({
                         <div className="indication-field indication-field-admin">
                           <MyInput
                             width="20vw"
-                            fieldType="select"
+                            fieldType="checkPicker"
                             fieldLabel="Administration Instructions"
                             selectData={administrationInstructionsLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
                             fieldName="administrationInstructions"
-                            record={{ administrationInstructions: instr }}
-                            setRecord={(obj: any) => setInstruc(obj?.administrationInstructions ?? null)}
-                            searchable={true}
+                            record={adminInstructions}
+                            setRecord={setAdminInstructions}
                             disabled={preKey == null}
                           />
                           <Input
@@ -880,12 +954,17 @@ const DetailsModal = ({
                             rows={4}
                             readOnly
                             value={
-                              instr
-                                ? conjureValueBasedOnKeyFromList(
-                                    administrationInstructionsLovQueryResponse?.object ?? [],
-                                    instr,
-                                    'lovDisplayVale'
-                                  ) || ''
+                              adminInstructions?.administrationInstructions?.length
+                                ? adminInstructions.administrationInstructions
+                                    .map(key => {
+                                      return conjureValueBasedOnKeyFromList(
+                                        administrationInstructionsLovQueryResponse?.object ?? [],
+                                        key,
+                                        'lovDisplayVale'
+                                      ) || String(key);
+                                    })
+                                    .filter(Boolean)
+                                    .join('\n')
                                 : ''
                             }
                             className="indication-display-field"
@@ -956,7 +1035,7 @@ const DetailsModal = ({
                   <Form>
                     <MyInput
                       disabled={preKey == null}
-                      height={20}
+                      height={100}
                       fieldType="textarea"
                       fieldName="notes"
                       record={prescriptionMedication}
@@ -966,7 +1045,7 @@ const DetailsModal = ({
 
                     <MyInput
                       disabled={preKey == null}
-                      height={20}
+                      height={100}
                       fieldType="textarea"
                       fieldName="extraDocumentation"
                       record={prescriptionMedication}

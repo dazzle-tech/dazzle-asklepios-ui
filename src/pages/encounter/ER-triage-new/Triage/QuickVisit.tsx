@@ -92,7 +92,7 @@ const QuickVisit = () => {
                             <div className="left-buttons-container">
                                 <BackButton
                                     onClick={() => {
-                                        if (localEncounter?.resourceTypeLkey == "EMERGENCY") {
+                                        if (localEncounter?.encounterType == "EMERGENCY") {
                                             navigate(-1)
                                         } else {
                                             navigate('/encounter-list');
@@ -103,11 +103,11 @@ const QuickVisit = () => {
                                     {/* TODO update status to be a LOV value */}
                                     {!localEncounter.discharge && String((localEncounter as any)?.status ?? (localEncounter as any)?.encounterStatus ?? '').toUpperCase() !== "CLOSED" && (<MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                                        onClick={()=>localEncounter?.resourceTypeLkey == "EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
+                                        onClick={()=>localEncounter?.encounterType == "EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
 
                                         appearance="ghost"
                                     >
-                                        <Translate>{localEncounter?.resourceTypeLkey == "EMERGENCY" ? "Discharge" : "Complete Visit"}</Translate>
+                                        <Translate>{localEncounter?.encounterType == "EMERGENCY" ? "Discharge" : "Complete Visit"}</Translate>
                                     </MyButton>)}
                                     <Divider vertical />
                                     <MyButton

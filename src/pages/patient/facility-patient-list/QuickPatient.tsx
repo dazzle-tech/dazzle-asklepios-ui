@@ -19,6 +19,8 @@ import {
 } from '@/services/patient/patientService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useCreateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery } from '@/services/security/departmentService';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
@@ -69,6 +71,72 @@ const [isUnknown, setIsUnknown] = useState(false);
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
   const genderEnum = useEnumOptions('Gender');
 
+  // Encounter type and department state for ER Triage
+  const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+  const [deptPage, setDeptPage] = useState(0);
+  const deptSize = 20;
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
+
+  const EncounterTypeEnum = useEnumOptions('EncounterType');
+
+  const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
+    useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
+
+  // Get selected facility from auth or selectedDepartment
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number>(0);
+
+  useEffect(() => {
+    try {
+      const selectedDepartment = JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
+      setSelectedFacilityId(Number(selectedDepartment?.facilityId ?? 0));
+    } catch {
+      setSelectedFacilityId(0);
+    }
+  }, [open]);
+
+  // Fetch departments when encounter type is EMERGENCY and facility is available (only for ER_Triage)
+  useEffect(() => {
+    if (pageCode !== 'ER_Triage') {
+      setAllDepartments([]);
+      return;
+    }
+
+    if (!selectedFacilityId || encounterType !== 'EMERGENCY') {
+      setAllDepartments([]);
+      return;
+    }
+
+    if (deptPage === 0) {
+      setAllDepartments([]);
+    }
+
+    triggerDepartments({
+      facilityId: selectedFacilityId,
+      encounterType: 'EMERGENCY',
+      page: deptPage,
+      size: deptSize,
+      sort: 'id,asc'
+    });
+  }, [pageCode, selectedFacilityId, encounterType, deptPage, triggerDepartments]);
+
+  // Accumulate department results
+  useEffect(() => {
+    const rows = deptList?.data ?? [];
+    if (!rows.length) return;
+
+    setAllDepartments(previousDepartments => {
+      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
+      const merged = [...previousDepartments];
+      rows.forEach((department: any) => {
+        if (!seenIds.has(Number(department.id))) merged.push(department);
+      });
+      return merged;
+    });
+  }, [deptList]);
+
+  const deptHasMore = Boolean(deptList?.links?.next);
+
   const handleSave = async () => {
     try {
       let savedPatient: Patient;
@@ -103,15 +171,13 @@ const [isUnknown, setIsUnknown] = useState(false);
       }
 
       if (pageCode === 'ER_Triage') {
-
-        const selectedDepartment = JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
-        const departmentId = Number(selectedDepartment?.departmentId ?? 0);
-        const facilityId = Number(selectedDepartment?.facilityId ?? 0);
+        const facilityId = selectedFacilityId;
+        const departmentId = selectedDepartmentId;
 
         if (!departmentId || !facilityId) {
           dispatch(
             notify({
-              msg: 'Missing logged-in department. Please select a department then try again.',
+              msg: 'Please select a department before saving.',
               sev: 'error'
             })
           );
@@ -169,12 +235,20 @@ const [isUnknown, setIsUnknown] = useState(false);
   const handleClearModal = () => {
     setIsUnknown(false);
     setLocalPatient({ ...newPatient });
+    setEncounterType('EMERGENCY');
+    setSelectedDepartmentId(null);
+    setDeptPage(0);
+    setAllDepartments([]);
   };
 
   useEffect(() => {
     if (!open) {
       setLocalPatient({ ...newPatient });
-         }
+      setEncounterType('EMERGENCY');
+      setSelectedDepartmentId(null);
+      setDeptPage(0);
+      setAllDepartments([]);
+    }
   }, [open]);
 
  const quickPatientContent = (
@@ -264,6 +338,58 @@ const [isUnknown, setIsUnknown] = useState(false);
     <div style={{ gridColumn: '1 / -1', marginTop: 8 }}>
       Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
     </div>
+
+    {pageCode === 'ER_Triage' && (
+      <>
+        <MyInput
+          column
+          width={200}
+          required
+          fieldLabel="Encounter Type"
+          fieldType="select"
+          fieldName="encounterType"
+          selectData={EncounterTypeEnum ?? []}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={{ encounterType }}
+          setRecord={(record: any) => {
+            if (record.encounterType) {
+              setEncounterType(record.encounterType);
+            }
+          }}
+          disabled={true}
+          searchable={false}
+        />
+
+        <MyInput
+          width={200}
+          required
+          column
+          fieldType="selectPagination"
+          fieldLabel="Department"
+          fieldName="departmentId"
+          selectData={allDepartments}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={{ departmentId: selectedDepartmentId }}
+          setRecord={(record: any) => {
+            if (record.departmentId !== undefined) {
+              setSelectedDepartmentId(record.departmentId);
+            }
+          }}
+          searchable
+          disabled={!selectedFacilityId || encounterType !== 'EMERGENCY'}
+          loading={isDepartmentsFetching}
+          hasMore={deptHasMore}
+          onFetchMore={() => {
+            if (deptList?.links?.next) {
+              const { page } = extractPaginationFromLink(deptList.links.next);
+              setDeptPage(page);
+            }
+          }}
+        />
+      </>
+    )}
   </Form>
 );
 

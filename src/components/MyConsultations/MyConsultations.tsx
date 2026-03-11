@@ -206,6 +206,13 @@ const MyConsultations = () => {
   const consultationResponse = searchResult.data;
   const consultationsLoading = searchResult.isFetching || searchResult.isLoading;
 
+  // Debug: print consultations list whenever it arrives/changes from API
+  useEffect(() => {
+    const list = consultationResponse?.data ?? [];
+    // eslint-disable-next-line no-console
+    console.log('[MyConsultations] consultations from API:', list);
+  }, [consultationResponse]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const refetchConsultations = useCallback(() => {
     if (lastSearchParamsRef.current) {
@@ -238,34 +245,44 @@ const MyConsultations = () => {
     return allConsultations.slice(start, start + pageSize);
   }, [allConsultations, page, pageSize]);
 
-  // ── Use only consultation.patientId (per review comment) ──
-  const patientIdsForBulk = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          visibleConsultations
-            .map((consultation: any) => consultation.patientId)
-            .filter(Boolean)
-            .map((id: any) => Number(id))
-            .filter((id: number) => !Number.isNaN(id))
-        )
-      ),
-    [visibleConsultations]
-  );
+  const patientIdsForBulk = useMemo(() => {
+    const extractPatientId = (consultation: any) => {
+      const v =
+        consultation?.patientId ??
+        consultation?.patientKey ??
+        consultation?.patient?.id ??
+        consultation?.patient?.patientId ??
+        consultation?.patient?.key ??
+        null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const ids = visibleConsultations.map(extractPatientId).filter((v): v is number => v != null);
+    return Array.from(new Set(ids));
+  }, [visibleConsultations]);
 
   const patientMap = useMemo(() => {
     const map = new Map<string, any>();
     const ids = patientBulkIdsRef.current;
-    (patientsBasicInfo ?? []).forEach((patient: any, idx: number) => {
+    const rows = Array.isArray(patientsBasicInfo)
+      ? patientsBasicInfo
+      : ((patientsBasicInfo as any)?.object ?? []);
+
+    (rows ?? []).forEach((patient: any, idx: number) => {
       const id = patient?.id ?? ids[idx];
       if (id == null) return;
+      const fullName =
+        String(patient?.fullName ?? patient?.patientFullName ?? '').trim() ||
+        `${String(patient?.firstName ?? '').trim()} ${String(patient?.lastName ?? '').trim()}`.trim();
       map.set(String(id), {
         id,
+        fullName,
         firstName: patient?.firstName,
         lastName: patient?.lastName,
         dateOfBirth: patient?.dateOfBirth,
         sexAtBirth: patient?.sexAtBirth,
-        medicalRecordNumber: patient?.medicalRecordNumber
+        medicalRecordNumber: patient?.medicalRecordNumber ?? patient?.patientMrn
       });
     });
     return map;
@@ -499,7 +516,7 @@ const MyConsultations = () => {
     try {
       await rejectConsultation({
         id: Number(selectedRow.id),
-        body: { reason, rejectedBy: Number(loggedInUser.id) }
+        body: { reason }
       }).unwrap();
 
       dispatch(notify({ msg: 'Consultation rejected successfully', sev: 'success' }));
@@ -596,16 +613,30 @@ const MyConsultations = () => {
       await submitConsultationResponse({
         id: Number(selectedConsultation.id),
         body: {
-          responseText: String(responseForm?.responseText ?? ''),
-          responseBy: Number(loggedInUser.id)
+          responseText: String(responseForm?.responseText ?? '')
         }
       }).unwrap();
 
       dispatch(notify({ msg: 'Response saved successfully', sev: 'success' }));
       refetchConsultations();
       handleCloseResponseModal();
-    } catch {
-      dispatch(notify({ msg: 'Failed to save response', sev: 'error' }));
+    } catch (err: any) {
+      // Try to show the backend's real failure reason (RTK Query error shapes vary).
+      const data =
+        err?.data ??
+        err?.error?.data ??
+        err?.originalStatus?.data ??
+        null;
+
+      const msg =
+        data?.message ??
+        data?.detail ??
+        data?.title ??
+        err?.error ??
+        err?.message ??
+        'Failed to save response';
+
+      dispatch(notify({ msg: String(msg), sev: 'error' }));
     }
   }, [
     dispatch,
@@ -661,11 +692,24 @@ const MyConsultations = () => {
         title: <Translate>Patient Name</Translate>,
         flexGrow: 4,
         render: row => {
-          const patientKey = row.patientId;
+          const patientKey =
+            row?.patientId ??
+            row?.patientKey ??
+            row?.patient?.id ??
+            row?.patient?.patientId ??
+            row?.patient?.key ??
+            null;
+          const patientKeyNum = patientKey != null ? Number(patientKey) : Number.NaN;
           const patient: any = patientKey != null ? patientMap.get(String(patientKey)) : null;
-          const patientName = `${String(patient?.firstName ?? '').trim()} ${String(
-            patient?.lastName ?? ''
-          ).trim()}`.trim();
+          const nameFromRowPatient =
+            String(row?.patient?.fullName ?? '').trim() ||
+            `${String(row?.patient?.firstName ?? '').trim()} ${String(row?.patient?.lastName ?? '').trim()}`.trim();
+
+          const patientName =
+            String(patient?.fullName ?? '').trim() ||
+            `${String(patient?.firstName ?? '').trim()} ${String(patient?.lastName ?? '').trim()}`.trim() ||
+            String(row?.patientFullName ?? row?.patientName ?? '').trim() ||
+            nameFromRowPatient;
           const patientMedicalRecordNumber = patient?.medicalRecordNumber;
           const patientGender = formatEnumString(patient?.sexAtBirth) || '';
           const patientDob = patient?.dateOfBirth ?? patient?.dob;
@@ -697,7 +741,9 @@ const MyConsultations = () => {
                 </Tooltip>
               }
             >
-              <span className="clickable-cell">{patientName}</span>
+              <span className="clickable-cell">
+                {patientName || (Number.isFinite(patientKeyNum) ? String(patientKeyNum) : '-') }
+              </span>
             </Whisper>
           );
         }
@@ -708,7 +754,7 @@ const MyConsultations = () => {
         flexGrow: 1,
         render: row => (
           <MyBadgeStatus
-            contant={row?.consultationLevel}
+            contant={formatEnumString(row?.consultationLevel)}
             color={getPriorityColor(row?.consultationLevel)}
           />
         )
@@ -778,8 +824,12 @@ const MyConsultations = () => {
         flexGrow: 2,
         render: row => {
           const status = String(row.status ?? '').toUpperCase();
-          const statusDisplay = status ? status.replace(/_/g, ' ') : '';
-          return <MyBadgeStatus contant={statusDisplay} color={getStatusColor(status)} />;
+          return (
+            <MyBadgeStatus
+              contant={formatEnumString(status)}
+              color={getStatusColor(status)}
+            />
+          );
         }
       },
       {
