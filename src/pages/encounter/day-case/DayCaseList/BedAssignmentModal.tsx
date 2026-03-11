@@ -63,13 +63,12 @@ const BedAssignmentModal = ({
   const { data: fetchBedsListQueryResponce } = useGetBedListQuery(bedListRequest, {
     skip: !object?.roomKey
   });
-
   const handleSave = async () => {
     try {
       await saveDayCase({
         ...object,
         encounterKey: encounter?.id,
-        patientKey: encounter?.patientId,
+        patientKey: encounter?.patientObject?.id,
         departmentKey: departmentKey
       }).unwrap();
 
@@ -104,7 +103,6 @@ const BedAssignmentModal = ({
       setOpen(false);
       setObject({ ...newApEncounterAssignToBed });
     } catch (error) {
-      console.error('Error while assigning bed / updating encounter:', error);
       dispatch(notify({ msg: 'Error while assigning bed', sev: 'error' }));
     }
   };
