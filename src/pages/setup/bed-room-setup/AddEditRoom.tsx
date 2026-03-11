@@ -369,6 +369,7 @@ const AddEditRoom = ({
   const content = (
     <Form fluid layout="inline">
       {/* Facility */}
+      
       <MyInput
         width={'13vw'}
         column

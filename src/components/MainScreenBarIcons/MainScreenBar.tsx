@@ -600,7 +600,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="MedCare Incident Portal">
+            <Tooltip title="MedCare Incident Portal" className='hidden'>
               <IconButton
                 size="small"
                 onClick={() => {

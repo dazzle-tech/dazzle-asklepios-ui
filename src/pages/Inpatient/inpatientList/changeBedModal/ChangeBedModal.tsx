@@ -6,29 +6,35 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
-import { newApBedTransactions, newApEncounter } from '@/types/model-types-constructor';
+import { newApBedTransactions } from '@/types/model-types-constructor';
+import { PatientEncounter } from '@/types/model-types-new';
+import { newPatientEncounter } from '@/types/model-types-constructor-new';
 import { useSaveBedTransactionMutation } from '@/services/encounterService';
 import { useGetRoomListQuery } from '@/services/setupService';
 import { Form } from 'rsuite';
 import { ApBedTransactions } from '@/types/model-types';
 import { useGetBedListQuery } from '@/services/setupService';
+import { useSelector } from 'react-redux';
+import { create } from 'lodash';
 
 const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList }) => {
-    const [encounter, setEncounter] = useState<any>({ ...newApEncounter });
+    console.log('local encounter in change bed modal', localEncounter);
+    const [encounter, setEncounter] = useState<PatientEncounter>({ ...newPatientEncounter });
     const [newLocation, setNewLocation] = useState<ApBedTransactions>({ ...newApBedTransactions });
-    // State for managing the request to fetch department-related data (e.g., rooms)
+  const authSlice = useSelector((state: any) => state.auth);
+  
+console.log('authSlice in change bed modal', authSlice);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
                 fieldName: 'department_key',
                 operator: 'match',
-                value: encounter?.resourceKey
-
+                value: encounter?.departmentId ?? ''
             }],
         pageSize: 100,
     });
-    // State for managing the request to fetch available beds in a specific room
+
     const [bedListRequest, setBedListRequest] = useState<ListRequest>({
         ...initialListRequest,
         pageSize: 100,
@@ -45,48 +51,59 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
             }
         ]
     });
+
     const dispatch = useAppDispatch();
     const [saveBedTransaction, saveBedTransactionMutation] = useSaveBedTransactionMutation();
-    // Fetch Bed list response
+
     const { data: fetchBedsListQueryResponce } = useGetBedListQuery(bedListRequest, { skip: !newLocation?.toRoomKey });
-    // Fetch Room list response
+
     const { data: roomListResponseLoading } = useGetRoomListQuery(listRequest, {
-        skip: !encounter?.resourceKey
+        skip: !encounter?.departmentId
     });
-    // handle Save To Change Bed Function
     const handleSave = async () => {
         try {
-            const saveAdmit = await saveBedTransaction({
+            console.log("PAyload for bed transaction", {
                 ...newLocation,
-                encounterKey: encounter.key,
-                patientKey: encounter?.patientKey,
+                encounterKey: encounter.id,
+                patientKey: encounter?.patient?.id,
                 fromRoomKey: encounter?.apRoom?.key,
                 fromBedKey: encounter?.apBed?.key,
-                departmentKey: encounter?.resourceKey
+                departmentKey: encounter?.departmentId,
+                createdBy: authSlice?.user?.login
+            });
+            await saveBedTransaction({
+                ...newLocation,
+                encounterKey: encounter.id,
+                patientKey: encounter?.patient?.id,
+                fromRoomKey: encounter?.apRoom?.key,
+                fromBedKey: encounter?.apBed?.key,
+                departmentKey: encounter?.departmentId,
+                createdBy: authSlice?.user?.login
             }).unwrap();
+
             dispatch(notify({ msg: 'Change Bed Successfully', sev: 'success' }));
-            setOpen(false);
+
+            await refetchInpatientList?.();
+
             setNewLocation({ ...newApBedTransactions });
-            refetchInpatientList();
+            setOpen(false);
         } catch (error) {
         }
     };
 
-    // use Effect
     useEffect(() => {
         setEncounter({ ...localEncounter });
     }, [localEncounter]);
+
     useEffect(() => {
         setListRequest((prev) => {
             let updatedFilters = [...(prev.filters || [])];
             updatedFilters = updatedFilters.filter(f => f.fieldName !== 'department_key');
-            if (encounter?.resourceKey
-            ) {
+            if (encounter?.departmentId) {
                 updatedFilters.push({
                     fieldName: 'department_key',
                     operator: 'match',
-                    value: encounter?.resourceKey
-
+                    value: encounter?.departmentId
                 });
             }
 
@@ -95,8 +112,8 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
                 filters: updatedFilters,
             };
         });
-    }, [encounter?.resourceKey
-    ]);
+    }, [encounter?.departmentId]);
+
     useEffect(() => {
         setBedListRequest((prev) => {
             let updatedFilters = [...(prev.filters || [])];
@@ -116,7 +133,6 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
         });
     }, [newLocation?.toRoomKey]);
 
-    // modal content
     const modalContent = (
         <Form fluid layout="inline" className='fields-container'>
             <MyInput
@@ -149,16 +165,20 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
             />
         </Form>
     );
-    return (<MyModal
-        open={open}
-        setOpen={setOpen}
-        title="Change Bed"
-        steps={[{ title: "Change Bed", icon: <FontAwesomeIcon icon={faBed} /> }]}
-        size="25vw"
-        bodyheight='350px'
-        actionButtonFunction={handleSave}
-        content={modalContent}
-        actionButtonLabel='Move'
-    />);
+
+    return (
+        <MyModal
+            open={open}
+            setOpen={setOpen}
+            title="Change Bed"
+            steps={[{ title: "Change Bed", icon: <FontAwesomeIcon icon={faBed} /> }]}
+            size="25vw"
+            bodyheight='350px'
+            actionButtonFunction={handleSave}
+            content={modalContent}
+            actionButtonLabel='Move'
+        />
+    );
 }
+
 export default ChangeBedModal;

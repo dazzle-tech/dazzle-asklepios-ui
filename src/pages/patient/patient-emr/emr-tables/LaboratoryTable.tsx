@@ -8,6 +8,7 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 
 import {
+  useFilterDiagnosticOrdersQuery,
   useLazyGetDiagnosticOrderByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderService';
 
@@ -57,20 +58,44 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
     () => new Map(profilesResponse?.data?.map(p => [p.id, p]) ?? []),
     [profilesResponse]
   );
+  const ordersQueryParams = useMemo(() => {
+    if (!patient?.id) return skipToken;
 
-const {
-  data: resultsResponse,
-  isFetching
-} = useFilterDiagnosticOrderTestResultsQuery(
-  patient?.id
-    ? {
-        page,
-        size,
-        sort: 'id,desc',
-        processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
-      }
-    : skipToken
-);
+    return {
+      patientId: patient.id,
+      page: 0,
+      size: 1000,
+      sort: 'id,desc'
+    };
+  }, [patient?.id]);
+
+  const {
+    data: ordersResponse,
+    isFetching: isOrdersFetching
+  } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+
+  const orders = ordersResponse?.data ?? [];
+
+  const orderIds = useMemo(
+    () => orders.map((o: any) => o.id).filter(Boolean),
+    [orders]
+  );
+  const queryParams = useMemo(() => {
+    if (!orderIds.length) return skipToken;
+
+    return {
+      page,
+      size,
+      sort: 'id,desc',
+      processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
+      orderIdIn: orderIds
+    };
+  }, [orderIds, page, size]);
+
+  const { data: resultsResponse, isFetching } =
+    useFilterDiagnosticOrderTestResultsQuery(queryParams);
+
+
 
   const results = resultsResponse?.data ?? [];
   const totalCount = resultsResponse?.totalCount ?? 0;

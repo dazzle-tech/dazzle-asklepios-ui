@@ -55,7 +55,13 @@ type ParentResponse<T> = {
   object: T;
   msg?: string;
 };
-
+export type EncounterLocationResponse = {
+  encounterId: string;
+  bedKey: string | null;
+  bedName: string | null;
+  roomKey: string | null;
+  roomName: string | null;
+};
 export type PatientSummaryResponse = {
   age: any;
   gender: string;
@@ -1216,6 +1222,19 @@ export const encounterService = createApi({
         };
       }
     }),
+getEncounterLocations: builder.query<EncounterLocationResponse[], string[]>({
+  query: (encounterIds: string[]) => ({
+    url: `/encounter/encounter-locations`,
+    method: 'GET',
+    params: {
+      encounterIds
+    }
+  }),
+  transformResponse: (response: ParentResponse<EncounterLocationResponse[]>) => {
+    return response?.object ?? [];
+  },
+  keepUnusedDataFor: 0
+}),
     getMiniSummary: builder.query({
       query: ({ patientKey, encounterKey, lang = 'en' }) => ({
         url: `/encounter/mini-summary`,
@@ -1350,5 +1369,6 @@ export const {
   useDeleteUserDashboardComponentsMutation,
   useGetClinicalSummaryQuery,
   useGetPatientSummaryQuery,
-  useGetMiniSummaryQuery
+  useGetMiniSummaryQuery,
+  useGetEncounterLocationsQuery,
 } = encounterService;

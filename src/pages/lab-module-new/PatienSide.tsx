@@ -1,16 +1,13 @@
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import {
-  useGetAllergiesQuery,
   useGetObservationSummariesQuery,
-  useGetWarningsQuery
 } from '@/services/observationService';
-import { useGetAllergensQuery } from '@/services/setupService';
+import { useGetAllergensQuery } from '@/services/setup/allergensService';
 import { ApAttachment } from '@/types/model-types';
 import { initialListRequest } from '@/types/types';
 import { calculateAgeFormat, formatEnumString } from '@/utils';
 import {
-  faExclamationTriangle,
   faHandDots,
   faIdCard,
   faUser
@@ -18,12 +15,15 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaWeight } from 'react-icons/fa';
-import { GiMedicalThermometer } from 'react-icons/gi';
-import { Avatar, Divider, Panel, Text } from 'rsuite';
+import { Avatar, Divider, Panel, Text, Tooltip, Whisper } from 'rsuite';
 import AllergiesModal from '../encounter/encounter-screen/AllergiesModal';
 import WarningiesModal from '../encounter/encounter-screen/WarningiesModal';
 import './styles.less';
-
+import { useGetPatientAllergiesByPatientIdQuery } from '@/services/encounters/patientAllergiesService';
+import { useGetPatientWarningsByPatientIdQuery } from '@/services/encounters/patientWarningsService';
+import Translate from '@/components/Translate';
+import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 //add new patient edits
 
 const PatientSide = ({ patient, encounter }) => {
@@ -47,35 +47,32 @@ const PatientSide = ({ patient, encounter }) => {
   });
 
   // New queries for allergies and warnings
-  const { data: allergiesResponse, isLoading: allergiesLoading } = useGetAllergiesQuery(
-    {
-      ...initialListRequest,
-      pageSize: 5,
-      sortBy: 'createdAt',
-      sortType: 'desc',
-      filters: [
-        { fieldName: 'patient_key', operator: 'match', value: patient?.id },
-        { fieldName: 'status_lkey', operator: 'notMatch', value: '3196709905099521' } // Exclude cancelled
-      ]
-    },
-    { skip: !patient?.id }
-  );
+   const { data: allergiesListResponse } = useGetPatientAllergiesByPatientIdQuery(
+      {
+        patientId: patient?.id,
+        showCancelled: false
+      },
+      {
+        skip: !patient?.id
+      }
+    );
 
-  const { data: warningsResponse, isLoading: warningsLoading } = useGetWarningsQuery(
-    {
-      ...initialListRequest,
-      pageSize: 5,
-      sortBy: 'createdAt',
-      sortType: 'desc',
-      filters: [
-        { fieldName: 'patient_key', operator: 'match', value: patient?.id },
-        { fieldName: 'status_lkey', operator: 'notMatch', value: '3196709905099521' } // Exclude cancelled
-      ]
-    },
-    { skip: !patient?.id }
-  );
+  const {
+      data: warningsListResponse,
+      refetch: refetchWarnings
+    } = useGetPatientWarningsByPatientIdQuery(
+      {
+        patientId: patient?.id,
+        showCancelled: false
+      },
+      {
+        skip: !patient?.id
+      }
+    );
 
-  const { data: allergensListToGetName } = useGetAllergensQuery({ ...initialListRequest });
+    const { data: allergensListResponse } = useGetAllergensQuery({});
+      const { data: medicationClassesListResponse } = useGetAllMedicationCategoriesClassesQuery({});
+
 
   const [bodyMeasurements, setBodyMeasurements] = useState<{
     height: number | string | null;
@@ -106,33 +103,35 @@ const PatientSide = ({ patient, encounter }) => {
   const textOr = (v: any, fallback = '') => (v == null || v === '' ? fallback : v);
 
   // Helper function to get allergen name
-  const getAllergenName = (allergenKey: string) => {
-    if (!allergensListToGetName?.object) return 'Loading...';
-    const found = allergensListToGetName.object.find(item => item.key === allergenKey);
-    return found?.allergenName || 'Unknown';
+  const getAllergenName = (allergenId: number, medicationClassId: number) => {
+    if (allergenId && allergensListResponse?.data) {
+      const allergen = allergensListResponse.data.find((item: any) => item.id === allergenId);
+      return <p>{allergen?.name ?? '-'}</p>;
+    } else if (medicationClassId && medicationClassesListResponse) {
+      const medicationClass = medicationClassesListResponse.find(
+        (item: any) => item.id === medicationClassId
+      );
+      return <p>{medicationClass?.name ?? '-'}</p>;
+    }
+
+    return <p>-</p>;
   };
 
   // Helper function to get allergy severity background + text color
   const getAllergySeverityColors = (severity: string) => {
-    const lowerSeverity = severity?.toLowerCase()?.trim();
-
-    if (lowerSeverity === 'mild' || lowerSeverity === 'minor' || lowerSeverity?.includes('mild')) {
+    if (severity === 'MILD_MINOR') {
       return { bg: 'var(--light-green)', text: 'var(--primary-green)' };
-    } else if (lowerSeverity === 'moderate' || lowerSeverity?.includes('moderate')) {
+    } else if (severity === 'MODERATE') {
       return { bg: 'var(--light-orange)', text: 'var(--primary-orange)' };
     } else {
-      // severe, high, critical or default
       return { bg: 'var(--light-red)', text: 'var(--primary-red)' };
     }
   };
 
-  // Get active allergies for the alert banner
   const activeAllergies =
-    allergiesResponse?.object?.filter(allergy => allergy.statusLkey === '9766169155908512') || [];
-
-  // Get active warnings for the alert banner
+    allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
   const activeWarnings =
-    warningsResponse?.object?.filter(warning => warning.statusLkey === '9766169155908512') || [];
+    warningsListResponse?.data?.filter(warning => warning.status === 'ACTIVE') || [];
 
   useEffect(() => {
     setBodyMeasurements({
@@ -165,7 +164,7 @@ const PatientSide = ({ patient, encounter }) => {
 
   const bmi =
     w != null && h != null && h > 0
-      ? w / Math.pow(h / 100, 2) 
+      ? w / Math.pow(h / 100, 2)
       : null;
 
   const bsa = w != null && h != null ? Math.sqrt((w * h) / 3600) : null;
@@ -283,36 +282,57 @@ const PatientSide = ({ patient, encounter }) => {
       </div>
       <Divider className="divider-thin" />
       {/* ==== Allergy & Warning Banners ==== */}
-      <div className="my-container">
+      <div className="container-of-allergies-and-warnings">
         {activeAllergies.map((allergy, index) => (
-          <MyBadgeStatus
-            key={`allergy-${allergy.key || index}`}
-            backgroundColor={
-              getAllergySeverityColors(allergy.severityLvalue?.lovDisplayVale || '').bg
+          <Whisper
+            key={`allergy-whisper-${allergy.id || index}`}
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Allergy</Translate>
+              </Tooltip>
             }
-            color={getAllergySeverityColors(allergy.severityLvalue?.lovDisplayVale || '').text}
-            contant={
-              <>
-                <FontAwesomeIcon icon={faHandDots} className="margin-right-size" />
-                {getAllergenName(allergy.allergenKey)}
-              </>
-            }
-          />
+          >
+            <span>
+              <MyBadgeStatus
+                key={`allergy-${allergy.id || index}`}
+                backgroundColor={getAllergySeverityColors(allergy.severity || '').bg}
+                color={getAllergySeverityColors(allergy.severity || '').text}
+                contant={
+                  <div className="diagnosis-badge-content">
+                    <FontAwesomeIcon icon={faHandDots} className="diagnosis-badge-icon" />
+                    {getAllergenName(allergy?.allergenId, allergy?.medicationClassId)}
+                  </div>
+                }
+              />
+            </span>
+          </Whisper>
         ))}
+
         {activeWarnings.map((warning, index) => (
-          <MyBadgeStatus
-            key={`warning-${warning.key || index}`}
-            backgroundColor={
-              getAllergySeverityColors(warning.severityLvalue?.lovDisplayVale || '').bg
+          <Whisper
+            key={`warning-whisper-${warning.id || index}`}
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Warning</Translate>
+              </Tooltip>
             }
-            color={getAllergySeverityColors(warning.severityLvalue?.lovDisplayVale || '').text}
-            contant={
-              <>
-                <FontAwesomeIcon icon={faExclamationTriangle} className="margin-right-size" />
-                {warning.warning}
-              </>
-            }
-          />
+          >
+            <span>
+              <MyBadgeStatus
+                key={`warning-${warning.id || index}`}
+                backgroundColor={getAllergySeverityColors(warning.severity || '').bg}
+                color={getAllergySeverityColors(warning.severity || '').text}
+                contant={
+                  <div className="diagnosis-badge-content">
+                    <FontAwesomeIcon icon={faTriangleExclamation} className="diagnosis-badge-icon" />
+                    {warning.warning}
+                  </div>
+                }
+              />
+            </span>
+          </Whisper>
         ))}
       </div>
       <WarningiesModal open={openWarningModal} setOpen={setOpenWarningModal} patient={patient} />

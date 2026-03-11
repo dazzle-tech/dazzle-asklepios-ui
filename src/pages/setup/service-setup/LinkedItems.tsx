@@ -23,6 +23,7 @@ import {
 } from '@/services/setup/serviceService';
 import type { ServiceItem, ServiceItemCreate, ServiceItemUpdate } from '@/types/model-types-new';
 import { newServiceItem } from '@/types/model-types-constructor-new';
+import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 
 type Props = {
   open: boolean;
@@ -70,6 +71,26 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
     { skip: !open || !serviceId || !facilityId }
   );
 
+
+  const { data: departmentsPage } = useGetDepartmentsQuery(
+    { facilityId: Number(facilityId) },
+    { skip: !facilityId }
+  );
+
+  const departments = departmentsPage?.data ?? [];
+
+  const departmentsMap = useMemo(() => {
+
+    const map: Record<number, string> = {};
+
+    departments.forEach((d: any) => {
+      map[d.id] = d.name;
+    });
+
+    return map;
+
+  }, [departments]);
+
   // get sources based on type and facility
   const [triggerFetchSources, { isFetching: isLoadingSources }] =
     useLazyGetServiceItemSourcesByFacilityQuery();
@@ -85,12 +106,28 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
 
   // get table data
   const tableData = useMemo(() => {
+
     const rows = itemsPage?.data ?? [];
-    return rows.map((row: any) => ({
-      ...row,
-      name: sourceNameById.get(Number(row.sourceId)) ?? row.sourceId,
-    }));
-  }, [itemsPage, sourceNameById]);
+
+    return rows.map((row: any) => {
+
+      let name = row.sourceId;
+
+      if (row.type === "DEPARTMENTS") {
+        name = departmentsMap[row.sourceId] ?? row.sourceId;
+      } else {
+        name = sourceNameById.get(Number(row.sourceId)) ?? row.sourceId;
+      }
+
+      return {
+        ...row,
+        name
+      };
+
+    });
+
+  }, [itemsPage, sourceNameById, departmentsMap]);
+
   // Table columns
   const tableColumns: ColumnConfig[] = [
     { key: 'type', title: <Translate>Type</Translate> },

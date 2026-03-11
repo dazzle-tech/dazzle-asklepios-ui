@@ -170,8 +170,8 @@ const MyConsultations = () => {
     const selectedDepartmentIds = Array.isArray(record?.departmentId)
       ? record.departmentId
       : record?.departmentId
-      ? [record.departmentId]
-      : [];
+        ? [record.departmentId]
+        : [];
 
     const fromDateValue = record.requestDateFrom || todayString;
     const toDateValue = record.requestDateTo || todayString;
@@ -206,13 +206,6 @@ const MyConsultations = () => {
   const consultationResponse = searchResult.data;
   const consultationsLoading = searchResult.isFetching || searchResult.isLoading;
 
-  // Debug: print consultations list whenever it arrives/changes from API
-  useEffect(() => {
-    const list = consultationResponse?.data ?? [];
-    // eslint-disable-next-line no-console
-    console.log('[MyConsultations] consultations from API:', list);
-  }, [consultationResponse]);
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const refetchConsultations = useCallback(() => {
     if (lastSearchParamsRef.current) {
@@ -245,44 +238,34 @@ const MyConsultations = () => {
     return allConsultations.slice(start, start + pageSize);
   }, [allConsultations, page, pageSize]);
 
-  const patientIdsForBulk = useMemo(() => {
-    const extractPatientId = (consultation: any) => {
-      const v =
-        consultation?.patientId ??
-        consultation?.patientKey ??
-        consultation?.patient?.id ??
-        consultation?.patient?.patientId ??
-        consultation?.patient?.key ??
-        null;
-      const n = Number(v);
-      return Number.isFinite(n) ? n : null;
-    };
-
-    const ids = visibleConsultations.map(extractPatientId).filter((v): v is number => v != null);
-    return Array.from(new Set(ids));
-  }, [visibleConsultations]);
+  // ── Use only consultation.patientId (per review comment) ──
+  const patientIdsForBulk = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          visibleConsultations
+            .map((consultation: any) => consultation.patient?.id)
+            .filter(Boolean)
+            .map((id: any) => Number(id))
+            .filter((id: number) => !Number.isNaN(id))
+        )
+      ),
+    [visibleConsultations]
+  );
 
   const patientMap = useMemo(() => {
     const map = new Map<string, any>();
     const ids = patientBulkIdsRef.current;
-    const rows = Array.isArray(patientsBasicInfo)
-      ? patientsBasicInfo
-      : ((patientsBasicInfo as any)?.object ?? []);
-
-    (rows ?? []).forEach((patient: any, idx: number) => {
+    (patientsBasicInfo ?? []).forEach((patient: any, idx: number) => {
       const id = patient?.id ?? ids[idx];
       if (id == null) return;
-      const fullName =
-        String(patient?.fullName ?? patient?.patientFullName ?? '').trim() ||
-        `${String(patient?.firstName ?? '').trim()} ${String(patient?.lastName ?? '').trim()}`.trim();
       map.set(String(id), {
         id,
-        fullName,
         firstName: patient?.firstName,
         lastName: patient?.lastName,
         dateOfBirth: patient?.dateOfBirth,
         sexAtBirth: patient?.sexAtBirth,
-        medicalRecordNumber: patient?.medicalRecordNumber ?? patient?.patientMrn
+        medicalRecordNumber: patient?.medicalRecordNumber
       });
     });
     return map;
@@ -416,7 +399,7 @@ const MyConsultations = () => {
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   useEffect(() => {
@@ -424,7 +407,7 @@ const MyConsultations = () => {
     getDepartmentsBulk(departmentIdsForBulk)
       .unwrap()
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      .catch(() => {});
+      .catch(() => { });
   }, [departmentIdsForBulk, getDepartmentsBulk]);
 
   useEffect(() => {
@@ -432,7 +415,7 @@ const MyConsultations = () => {
     usersBulkIdsRef.current = userIdsForBulk;
     getUsersBasicNamesBulk(userIdsForBulk)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [userIdsForBulk, getUsersBasicNamesBulk]);
 
   useEffect(() => {
@@ -516,7 +499,7 @@ const MyConsultations = () => {
     try {
       await rejectConsultation({
         id: Number(selectedRow.id),
-        body: { reason }
+        body: { reason, rejectedBy: Number(loggedInUser.id) }
       }).unwrap();
 
       dispatch(notify({ msg: 'Consultation rejected successfully', sev: 'success' }));
@@ -613,30 +596,16 @@ const MyConsultations = () => {
       await submitConsultationResponse({
         id: Number(selectedConsultation.id),
         body: {
-          responseText: String(responseForm?.responseText ?? '')
+          responseText: String(responseForm?.responseText ?? ''),
+          responseBy: Number(loggedInUser.id)
         }
       }).unwrap();
 
       dispatch(notify({ msg: 'Response saved successfully', sev: 'success' }));
       refetchConsultations();
       handleCloseResponseModal();
-    } catch (err: any) {
-      // Try to show the backend's real failure reason (RTK Query error shapes vary).
-      const data =
-        err?.data ??
-        err?.error?.data ??
-        err?.originalStatus?.data ??
-        null;
-
-      const msg =
-        data?.message ??
-        data?.detail ??
-        data?.title ??
-        err?.error ??
-        err?.message ??
-        'Failed to save response';
-
-      dispatch(notify({ msg: String(msg), sev: 'error' }));
+    } catch {
+      dispatch(notify({ msg: 'Failed to save response', sev: 'error' }));
     }
   }, [
     dispatch,
@@ -676,6 +645,7 @@ const MyConsultations = () => {
         width: 50,
         render: row => {
           const isReady = String(row.status ?? '').toUpperCase() === 'READY';
+
           return (
             <Checkbox
               checked={selectedRows.some(
@@ -692,29 +662,20 @@ const MyConsultations = () => {
         title: <Translate>Patient Name</Translate>,
         flexGrow: 4,
         render: row => {
-          const patientKey =
-            row?.patientId ??
-            row?.patientKey ??
-            row?.patient?.id ??
-            row?.patient?.patientId ??
-            row?.patient?.key ??
-            null;
-          const patientKeyNum = patientKey != null ? Number(patientKey) : Number.NaN;
-          const patient: any = patientKey != null ? patientMap.get(String(patientKey)) : null;
-          const nameFromRowPatient =
-            String(row?.patient?.fullName ?? '').trim() ||
-            `${String(row?.patient?.firstName ?? '').trim()} ${String(row?.patient?.lastName ?? '').trim()}`.trim();
+          const patientKey = row.patient?.id;
 
-          const patientName =
-            String(patient?.fullName ?? '').trim() ||
-            `${String(patient?.firstName ?? '').trim()} ${String(patient?.lastName ?? '').trim()}`.trim() ||
-            String(row?.patientFullName ?? row?.patientName ?? '').trim() ||
-            nameFromRowPatient;
+          const patient: any =
+            patientKey != null
+              ? patientMap.get(String(patientKey)) ?? row.patient
+              : null;
+          const patientName = `${String(patient?.firstName ?? '').trim()} ${String(
+            patient?.lastName ?? ''
+          ).trim()}`.trim();
           const patientMedicalRecordNumber = patient?.medicalRecordNumber;
           const patientGender = formatEnumString(patient?.sexAtBirth) || '';
           const patientDob = patient?.dateOfBirth ?? patient?.dob;
           const patientAge = patientDob ? calculateAgeFormat(patientDob) : '';
-
+          console.log("ROW DATA", row);
           return (
             <Whisper
               trigger="hover"
@@ -741,9 +702,7 @@ const MyConsultations = () => {
                 </Tooltip>
               }
             >
-              <span className="clickable-cell">
-                {patientName || (Number.isFinite(patientKeyNum) ? String(patientKeyNum) : '-') }
-              </span>
+              <span className="clickable-cell">{patientName}</span>
             </Whisper>
           );
         }
@@ -754,7 +713,7 @@ const MyConsultations = () => {
         flexGrow: 1,
         render: row => (
           <MyBadgeStatus
-            contant={formatEnumString(row?.consultationLevel)}
+            contant={row?.consultationLevel}
             color={getPriorityColor(row?.consultationLevel)}
           />
         )
@@ -824,12 +783,8 @@ const MyConsultations = () => {
         flexGrow: 2,
         render: row => {
           const status = String(row.status ?? '').toUpperCase();
-          return (
-            <MyBadgeStatus
-              contant={formatEnumString(status)}
-              color={getStatusColor(status)}
-            />
-          );
+          const statusDisplay = status ? status.replace(/_/g, ' ') : '';
+          return <MyBadgeStatus contant={statusDisplay} color={getStatusColor(status)} />;
         }
       },
       {
@@ -923,24 +878,34 @@ const MyConsultations = () => {
                     radius="6px"
                     backgroundColor="violet"
                     onClick={() => {
-                      const patientKey = row.patientId;
-                      const encounterKey = row.encounterId ?? row.visitKey;
+
+                      const patientKey = row.patient?.id;
+                      const encounterKey = row.encounter?.id;
+
                       const patientFromMap =
                         patientKey != null ? patientMap.get(String(patientKey)) : null;
-                      const patient = patientFromMap ?? row.patient;
 
-                      if (patient) dispatch(setPatient(patient));
-                      setEmrPatient(patient ?? null);
+                      const patient = patientFromMap ?? row.patient ?? null;
+
+                      if (patient) {
+                        setEmrPatient(patient);
+                        dispatch(setPatient(patient));
+                      }
 
                       if (patientKey != null) {
                         emrPatientKeyRef.current = String(patientKey);
                       }
+
                       if (!patient && patientKey != null) {
                         fetchPatientById(String(patientKey));
                       }
+
                       if (encounterKey != null) {
                         setEmrEncounterKey(String(encounterKey));
+                        setEmrEncounter(row.encounter);      // ⭐ الحل
+                        dispatch(setEncounter(row.encounter));
                       }
+
                       setOpenEMRModal(true);
                     }}
                   >
