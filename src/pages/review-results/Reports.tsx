@@ -14,6 +14,7 @@ import {
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
+    useCreateReportCommentMutation,
     useGetReportCommentsByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import {
@@ -43,7 +44,41 @@ const endOfDay = (d: Date) => {
     return x;
 };
 
-const ReviewReport = ({ user, setEncounter,setPatient }) => {
+const notifyFromApiError = (dispatch: any, e: any, fallbackMsg = 'Operation failed') => {
+    const status =
+        e?.status ||
+        e?.originalStatus ||
+        e?.data?.status;
+
+    const message =
+        e?.data?.message ||
+        e?.data?.detail ||
+        e?.error ||
+        fallbackMsg;
+
+    if (
+        status === 400 ||
+        status === 409 ||
+        status === 422
+    ) {
+        dispatch(
+            notify({
+                msg: message,
+                sev: 'warning'
+            })
+        );
+        return;
+    }
+
+    dispatch(
+        notify({
+            msg: message,
+            sev: 'error'
+        })
+    );
+};
+
+const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const dispatch = useAppDispatch();
     const today = new Date();
     const [page, setPage] = useState(0);
@@ -72,9 +107,14 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
     //add new patient edits
     const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
+    const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
 
-const isSelected = (row: any) =>
-  selectedReportId === row.id ? 'selected-row' : '';
+    const [
+        createComment, { isLoading: isSendingComment }] = useCreateReportCommentMutation();
+
+
+    const isSelected = (row: any) =>
+        selectedReportId === row.id ? 'selected-row' : '';
 
     const queryParams: any = {
         processingStatus: 'RESULT_APPROVED',
@@ -157,9 +197,7 @@ const isSelected = (row: any) =>
         data: comments,
         refetch: refetchComments
     } = useGetReportCommentsByReportIdQuery(
-        openComments && selectedReport?.id
-            ? selectedReport.id
-            : skipToken
+        selectedReport?.id ?? skipToken
     );
 
 
@@ -169,6 +207,36 @@ const isSelected = (row: any) =>
         setSelectedReport(null);
     };
 
+    const handleSendComment = async (value: string) => {
+    if (!selectedReport?.id) {
+        dispatch(notify({ msg: 'Select a report first', sev: 'warning' }));
+        return;
+    }
+
+    try {
+        await createComment({
+        reportId: selectedReport.id,
+        orderTestId: selectedReport.orderTestId,
+        note: value
+        }).unwrap();
+
+        dispatch(
+        notify({ msg: 'Comment added successfully', sev: 'success' })
+        );
+
+        // 🔥 هذا السطر الناقص
+        setLocalHasCommentIds(prev =>
+        prev.includes(selectedReport.id)
+            ? prev
+            : [...prev, selectedReport.id]
+        );
+
+        refetchComments();
+
+    } catch (e: any) {
+        notifyFromApiError(dispatch, e, 'Failed to add comment');
+    }
+    };
 
     useEffect(() => {
         if (!patientIds.length) return;
@@ -209,7 +277,7 @@ const isSelected = (row: any) =>
 
                     return patient
                         ? (patient.fullName ||
-                        `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim())
+                            `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim())
                         : '—';
                 }
             },
@@ -247,7 +315,9 @@ const isSelected = (row: any) =>
                 align: 'center',
                 render: (row: any) => {
 
-                    const hasComment = !!row?.hasNote;
+                    const hasComment =
+                        !!row?.hasNote || localHasCommentIds.includes(row.id);
+
                     return (
                         <Whisper speaker={<Tooltip>Comments</Tooltip>}>
                             <span style={{ cursor: 'pointer' }}>
@@ -488,9 +558,7 @@ const isSelected = (row: any) =>
                 title="Comments"
                 list={comments ?? []}
                 fieldShowName="note"
-                handleSendMessage={() => {
-                    refetchComments();
-                }}
+                handleSendMessage={handleSendComment}
             />
 
             {openReportModal && selectedReport && (
