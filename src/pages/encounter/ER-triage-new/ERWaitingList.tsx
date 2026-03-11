@@ -797,7 +797,7 @@ const ERWaitingList = () => {
         open={openBedAssigmentModal}
         setOpen={setOpenBedAssigment}
         encounter={encounter}
-        departmentKey={encounter?.departmentKey ?? String(departmentId)}
+        departmentKey={String(encounter?.departmentId)?? String(departmentId)}
       />
 
       <MyTable

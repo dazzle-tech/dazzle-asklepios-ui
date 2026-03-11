@@ -49,7 +49,7 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
   const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
   const [primaryDiagnosisError, setPrimaryDiagnosisError] = useState<any>(null);
   const dispatch = useDispatch();
-
+console.log('patient in patient side', patient);
   const refetchPatientSide = useSelector(
     (state: RootState) => state.refetchPatientSide.refetchPatientSide
   );
@@ -393,27 +393,43 @@ const PatientSide = ({ patient, encounter, refetchList = null, ...props }) => {
         </div>
       )}
 
-      <div className="div-avatar">
-        <Avatar
-          circle
-          bordered
-          onClick={() => handleImageClick()}
-          src={
-            patientImage && patientImage.fileContent
-              ? `data:${patientImage.contentType};base64,${patientImage.fileContent}`
-              : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
-          }
-          alt={patient?.fullName}
-        />
-        <div>
-          <div className="patient-info">
-            <Text className="patient-name">
-              {textOr(patient?.firstName + ' ' + patient?.lastName, 'Patient Name')}
-            </Text>
-          </div>
-          <div className="info-label"># {textOr(patient?.medicalRecordNumber, 'MRN')}</div>
-        </div>
-      </div>
+  <div className="div-avatar">
+  <Avatar
+    circle
+    bordered
+    onClick={() => handleImageClick()}
+    src={
+      patientImage && patientImage.fileContent
+        ? `data:${patientImage.contentType};base64,${patientImage.fileContent}`
+        : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+    }
+    alt={patient?.fullName}
+  />
+
+  <div>
+    <div className="patient-info">
+      <Text className="patient-name">
+        {textOr(patient?.fullName ? patient?.fullName : patient?.firstName + ' ' + patient?.lastName)}
+      </Text>
+    </div>
+
+    <div className="info-label">
+      # {textOr(patient?.medicalRecordNumber, 'MRN')}
+    </div>
+
+    <div className="patient-extra-info">
+      <span className="info-label">
+        DOB: {textOr(patient?.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : '-')}
+      </span>
+    </div>
+    
+    <div className="patient-extra-info">
+      <span className="info-label">
+        Gender: {textOr((patient?.sexAtBirth ? formatEnumString(patient?.sexAtBirth) : '-'), '')}
+      </span>
+    </div>
+  </div>
+</div>
 
       <Text className="main-info-patient-side">
         <FontAwesomeIcon icon={faIdCard} className="icon-color" />{' '}
