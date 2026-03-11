@@ -165,7 +165,7 @@ const PatientSide = ({ patient, encounter }) => {
 
   const bmi =
     w != null && h != null && h > 0
-      ? w / Math.pow(h / 100, 2) 
+      ? w / Math.pow(h / 100, 2)
       : null;
 
   const bsa = w != null && h != null ? Math.sqrt((w * h) / 3600) : null;

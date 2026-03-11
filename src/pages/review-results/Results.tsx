@@ -37,6 +37,8 @@ import React, {
 import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import { useDispatch } from 'react-redux';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
 
 const renderMarker = (Marker?: string) => {
@@ -102,6 +104,8 @@ const resolveLovDisplayValue = (
 };
 
 
+
+
 const Result = forwardRef<any, any>(
   ({ loading, setTest, refetchAllLabData, setPatient }, ref) => {
     const today = new Date();
@@ -112,6 +116,8 @@ const Result = forwardRef<any, any>(
       fromDate: today,
       toDate: today
     });
+
+    const dispatch = useDispatch();
     const [orderIdIn, setOrderIdIn] = useState<number[] | null>(null);
     const [orderDate, setOrderDate] = useState({ fromDate: null, toDate: null });
     const [showReview, setShowReview] = useState(false);
@@ -219,6 +225,18 @@ const Result = forwardRef<any, any>(
       sort: 'id,desc',
       ...filterParams
     });
+
+ useEffect(() => {
+  dispatch(setPageCode('review-results'));
+  dispatch(setDivContent('Review Results'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(' '));
+  };
+}, [dispatch]);
+
+
 
     const patientIds = useMemo(() => {
       return Object.values(ordersMap)
@@ -409,12 +427,37 @@ const Result = forwardRef<any, any>(
           )
         },
         {
+          key: 'resultValue',
+          title: <Translate>RESULT VALUE</Translate>,
+          render: (row: any) => {
+
+            const profile = row._profile;
+
+            const value =
+              row.resultValueNumber ??
+              row.resultValueText ??
+              '';
+
+            if (isLovProfile(profile)) {
+              return resolveLovDisplayValue(
+                profile,
+                value,
+                lovDefinitions,
+                allLovValues
+              );
+            }
+
+            const unit = resolveUnitDisplay(row);
+
+            return `${value ?? ''}${unit ? ` ${unit}` : ''}`;
+          }
+        },
+        {
           key: 'normalRange',
           title: <Translate>NORMAL RANGE</Translate>,
           render: (row: any) => {
             console.log("ROWWWWWWW", row);
             const profile = row._profile;
-
             const hasViewRange =
               row.viewNormalRange &&
               row.viewNormalRange.trim() !== '';
