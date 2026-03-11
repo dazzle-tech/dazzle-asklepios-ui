@@ -871,6 +871,16 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getEncounterAssignToBed: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/encounter-assign-to-bed-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+      keepUnusedDataFor: 0
+    }),
     saveAssignToBed: builder.mutation({
       query: (encounterAssignToBed: ApEncounterAssignToBed) => ({
         url: `/encounter/save-assign-to-bed`,
@@ -1318,6 +1328,8 @@ export const {
   useSaveNurseNotesMutation,
   useSaveNewPositionMutation,
   useGetRepositioningListQuery,
+  useGetEncounterAssignToBedQuery,
+  useLazyGetEncounterAssignToBedQuery,
   useSaveAssignToBedMutation,
   useSavePreOperationMedicationsMutation,
   useGetPreOperationMedicationsListQuery,
