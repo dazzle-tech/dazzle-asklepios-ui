@@ -193,7 +193,17 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             return createdEncounterResult;
         } catch (error: any) {
             // Extract error message from API response
-            const errorMessage = error?.data?.message || error?.message || 'An error occurred while creating the encounter';
+            const rawMessage =
+              error?.data?.message ||
+              error?.data?.errorKey ||
+              error?.message ||
+              'An error occurred while creating the encounter';
+
+            // Friendly mapping for backend error keys (like the screenshot)
+            const errorMessage =
+              String(rawMessage).trim() === 'error.patient.department.date.duplicate'
+                ? 'This patient already has an appointment in this department for the selected date.'
+                : String(rawMessage);
             
             // Always show error message to user
             dispatch(notify({ msg: errorMessage, sev: 'warning' }));
@@ -308,7 +318,17 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             // Don't close the modal - keep it open so user can add payment
         } catch (error: any) {
             // Extract error message from API response
-            const errorMessage = error?.data?.message || error?.message || 'An error occurred while confirming the appointment';
+            const rawMessage =
+              error?.data?.message ||
+              error?.data?.errorKey ||
+              error?.message ||
+              'An error occurred while confirming the appointment';
+
+            // Friendly mapping for backend error keys (like the screenshot)
+            const errorMessage =
+              String(rawMessage).trim() === 'error.patient.department.date.duplicate'
+                ? 'This patient already has an appointment in this department for the selected date.'
+                : String(rawMessage);
             
             // Always show error message to user
             dispatch(notify({ msg: errorMessage, sev: 'warning' }));

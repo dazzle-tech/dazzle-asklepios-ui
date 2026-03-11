@@ -1,8 +1,8 @@
 import Translate from '@/components/Translate';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Panel, FlexboxGrid, Col } from 'rsuite';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import DynamicBarChart from '@/components/Charts/DynamicBarChart/DynamicBarChart';
 import DynamicPieChart from '@/components/Charts/DynamicPieChart/DynamicPieChart';
 import { TitleWithIcon } from '@/components/Charts/DynamicTableChart/TitleWithIcon';
@@ -11,13 +11,101 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStethoscope, faVial, faPills } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
 import { useSelector } from 'react-redux';
+import {
+  useFilterEncountersQuery,
+} from '@/services/encounters/patientEncounterService';
+import { formatEnumString } from '@/utils';
+import { useGetDepartmentsQuery } from '@/services/security/departmentService';
+import { useEnumOptions } from '@/services/enumsApi';
+import DetailsCard from '@/components/DetailsCard';
 
 const Dashboard = () => {
   const dispatch = useAppDispatch();
   const mode = useSelector((state: any) => state.ui.mode);
+  const authSlice = useAppSelector(state => state.auth);
+  const selectedDepartment = authSlice?.selectedDepartment;
+  const departmentId = selectedDepartment?.departmentId;
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
+
+  // Calculate date range for last 10 days
+  const today = new Date();
+  const tenDaysAgo = new Date();
+  tenDaysAgo.setDate(today.getDate() - 10);
+  const fromDate = tenDaysAgo.toISOString().split('T')[0];
+  const toDate = today.toISOString().split('T')[0];
+
+  // Get all departments and filter for Outpatient departments only
+  const { data: departmentsData } = useGetDepartmentsQuery({
+    page: 0,
+    size: 10000,
+    sort: 'id,asc'
+  });
+
+  const departments = departmentsData?.data || [];
+  
+  // Filter for Outpatient departments only
+  const outpatientDepartments = useMemo(() => {
+    return departments.filter((dept: any) => {
+      const deptName = (dept?.name || '').toLowerCase();
+      const deptType = (dept?.departmentType || '').toLowerCase();
+      return (
+        deptName.includes('outpatient') ||
+        deptType.includes('outpatient') ||
+        deptName.includes('opd') ||
+        deptType.includes('opd')
+      );
+    });
+  }, [departments]);
+
+  // Fetch encounters for the selected department
+  // Note: If you want to show data from all departments, you may need to modify this
+  const { data: encountersData, isLoading: isLoadingEncounters } = useFilterEncountersQuery(
+    {
+      departmentId: departmentId || 0,
+      fromDate,
+      toDate,
+      page: 0,
+      size: 10000 // Get a large number to aggregate all encounters
+    },
+    {
+      skip: !departmentId
+    }
+  );
+
+  // Get all possible encounter reasons from enum
+  const allEncounterReasons = useEnumOptions('EncounterReason');
+
+  // Aggregate encounters by encounterReason
+  const topVisitReasons = useMemo(() => {
+    // Get all possible reason values
+    const allReasonValues = allEncounterReasons.map((option: any) => 
+      typeof option === 'string' ? option : option.value
+    );
+
+    // Count encounters by reason
+    const reasonCounts: Record<string, number> = {};
+    if (encountersData?.data && encountersData.data.length > 0) {
+      encountersData.data.forEach((encounter: any) => {
+        const reason = encounter.encounterReason;
+        if (reason) {
+          reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+        }
+      });
+    }
+
+    // Create chart data with ALL reasons, showing 0 for reasons without data
+    // This ensures all reasons appear on X-axis with consistent column widths
+    const chartData = allReasonValues.map((reason: string) => ({
+      label: formatEnumString(reason),
+      value: reasonCounts[reason] || 0, // Use 0 if no data for this reason
+      reason: reason // Keep original enum value
+    }));
+
+
+    return chartData;
+  }, [encountersData, allEncounterReasons]);
 
   useEffect(() => {
     dispatch(setPageCode('Dashboard'));
@@ -29,7 +117,30 @@ const Dashboard = () => {
     };
   }, [dispatch]);
 
-  const tableAlignments = isRTL ? ['right', 'left'] : ['left', 'right'];
+  // Get patient distribution by Outpatient departments with static default values
+  const patientDistributionByDepartment = useMemo(() => {
+    // Static default values
+    const staticValues = [13, 5, 9, 12, 6, 6];
+    
+    if (outpatientDepartments.length === 0) {
+      // If no outpatient departments found, show a default entry
+      return [
+        { label: 'Outpatient Department', value: staticValues[0] }
+      ];
+    }
+
+    // Map static values to outpatient departments
+    return outpatientDepartments
+      .slice(0, staticValues.length) // Limit to available static values
+      .map((dept: any, index: number) => ({
+        label: dept?.name || 'Outpatient Department',
+        value: staticValues[index] || staticValues[0]
+      }));
+  }, [outpatientDepartments]);
+
+  const tableAlignments: ('left' | 'right' | 'center')[] = isRTL 
+    ? (['right', 'left'] as ('left' | 'right' | 'center')[])
+    : (['left', 'right'] as ('left' | 'right' | 'center')[]);
 
   return (
     <Panel
@@ -38,27 +149,50 @@ const Dashboard = () => {
     >
       <FlexboxGrid>
 
-        {/* Bar Chart */}
+        {/* Bar Chart - Top Visit Reasons */}
         <FlexboxGrid.Item as={Col} colspan={24} lg={12} md={12} sm={24}>
           <Panel
             bordered
-            header={<Translate>Weekly Patient Flow</Translate>}
+            header={<Translate>Top Visit Reasons</Translate>}
             className="margin-bottom-10"
           >
-            <DynamicBarChart
-              selectable
-              multiColumns
-              colors={['#3498db', '#2ecc71', '#e74c3c']}
-              chartData={[
-                { label: 'Mon', Admissions: 45, Discharges: 38, Emergency: 66 },
-                { label: 'Tue', Admissions: 52, Discharges: 41, Emergency: 73 },
-                { label: 'Wed', Admissions: 48, Discharges: 45, Emergency: 69 },
-                { label: 'Thu', Admissions: 61, Discharges: 39, Emergency: 82 },
-                { label: 'Fri', Admissions: 55, Discharges: 43, Emergency: 76 },
-                { label: 'Sat', Admissions: 42, Discharges: 47, Emergency: 59 },
-                { label: 'Sun', Admissions: 38, Discharges: 35, Emergency: 52 }
-              ]}
-            />
+            {isLoadingEncounters ? (
+              <div style={{ padding: '20px', textAlign: 'center' }}>
+                <Translate>Loading...</Translate>
+              </div>
+            ) : topVisitReasons.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center' }}>
+                <Translate>No data available</Translate>
+              </div>
+            ) : (
+              <DynamicBarChart
+                selectable
+                multiColumns={false}
+                colors={[
+                  '#3498db', // Blue
+                  '#2ecc71', // Green
+                  '#e74c3c', // Red
+                  '#f39c12', // Orange
+                  '#9b59b6', // Purple
+                  '#1abc9c', // Turquoise
+                  '#e67e22', // Dark Orange
+                  '#34495e', // Dark Blue
+                  '#16a085', // Dark Turquoise
+                  '#c0392b', // Dark Red
+                  '#d35400', // Dark Orange
+                  '#8e44ad', // Dark Purple
+                  '#27ae60', // Dark Green
+                  '#2980b9', // Medium Blue
+                  '#f1c40f', // Yellow
+                  '#e91e63', // Pink
+                  '#00bcd4', // Cyan
+                  '#ff9800', // Deep Orange
+                  '#4caf50', // Light Green
+                  '#2196f3'  // Light Blue
+                ]}
+                chartData={topVisitReasons}
+              />
+            )}
           </Panel>
         </FlexboxGrid.Item>
 
@@ -74,14 +208,7 @@ const Dashboard = () => {
               width={350}
               height={347}
               colors={['#2264E5', '#93C6FA', '#FF6384', '#FFCE56', '#4BC0C0', '#663399']}
-              chartData={[
-                { label: 'ICU', value: 13 },
-                { label: 'Surgery', value: 5 },
-                { label: 'Cardiology', value: 9 },
-                { label: 'Pediatrics', value: 12 },
-                { label: 'Others', value: 6 },
-                { label: 'Emergency', value: 6 }
-              ]}
+              chartData={patientDistributionByDepartment}
             />
           </Panel>
         </FlexboxGrid.Item>

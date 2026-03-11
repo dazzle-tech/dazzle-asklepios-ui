@@ -30,6 +30,7 @@ const ERStartTriage = (props: ERTriageProps) => {
       dispatch(setDivContent(' '));
     };
   }, [dispatch]);
+  console.log("encounter--->", encounterData);
   return (
     <div className="er-main-container">
       <div className="left-box">

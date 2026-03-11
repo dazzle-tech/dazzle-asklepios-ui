@@ -118,19 +118,19 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
         </Dropdown.Item>
 
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faThumbsUp} />
             <Translate>Approvals</Translate>
           </div>
-        </Dropdown.Item>
+        </Dropdown.Item> */}
 
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faCalendarDay} />
             <Translate>Appointments</Translate>
           </div>
-        </Dropdown.Item>
+        </Dropdown.Item> */}
 
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
@@ -175,12 +175,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </div>
         </Dropdown.Item>
 
-        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon icon={faBars} />
             <Translate>Encounter Transactions</Translate>
           </div>
-        </Dropdown.Item>
+        </Dropdown.Item> */}
       </Dropdown.Menu>
     </Popover>
   );

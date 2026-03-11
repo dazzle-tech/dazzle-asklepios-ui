@@ -114,23 +114,49 @@ const PrescriptionPreview = ({ orderMedication }) => {
     return "";
   };
 
-  // Get administration instructions display
+  // Get administration instructions display - handle multiple values
   const getAdministrationInstructionsDisplay = () => {
     if (!record?.administrationInstructions) return "";
-    // Handle both array and single value, and both key and direct value
-    let adminInstr = Array.isArray(record.administrationInstructions) 
-      ? record.administrationInstructions[0] 
-      : record.administrationInstructions;
     
-    // If it's a number/string, try to find in LOV
-    if (adminInstr != null) {
-      const display = conjureValueBasedOnKeyFromList(
-        administrationInstructionsLovQueryResponse?.object ?? [],
-        adminInstr,
-        'lovDisplayVale'
-      );
-      if (display) return display;
+    // Handle array of values
+    if (Array.isArray(record.administrationInstructions)) {
+      return record.administrationInstructions
+        .map(key => {
+          const display = conjureValueBasedOnKeyFromList(
+            administrationInstructionsLovQueryResponse?.object ?? [],
+            key,
+            'lovDisplayVale'
+          );
+          return display || String(key);
+        })
+        .filter(Boolean)
+        .join('\n');
     }
+    
+    // Handle comma-separated string
+    if (typeof record.administrationInstructions === 'string') {
+      const keys = record.administrationInstructions.split(',').map(s => s.trim()).filter(Boolean);
+      return keys
+        .map(key => {
+          const display = conjureValueBasedOnKeyFromList(
+            administrationInstructionsLovQueryResponse?.object ?? [],
+            key,
+            'lovDisplayVale'
+          );
+          return display || key;
+        })
+        .filter(Boolean)
+        .join('\n');
+    }
+    
+    // Handle single value
+    const display = conjureValueBasedOnKeyFromList(
+      administrationInstructionsLovQueryResponse?.object ?? [],
+      record.administrationInstructions,
+      'lovDisplayVale'
+    );
+    
+    if (display) return display;
     
     // Fallback: try administrationInstructionsLvalue if it exists
     if (record?.administrationInstructionsLvalue?.lovDisplayVale) {

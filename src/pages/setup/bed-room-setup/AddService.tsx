@@ -14,7 +14,7 @@ import { MdDelete } from 'react-icons/md';
 import ChildModal from '@/components/ChildModal';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { MdModeEdit } from 'react-icons/md';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -27,32 +27,31 @@ import { FaUndo } from 'react-icons/fa';
 import { ApFacility } from '@/types/model-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBellConcierge } from '@fortawesome/free-solid-svg-icons';
-import { useGetServicesQuery } from '@/services/setupService';
 import { ApRoom } from '@/types/model-types';
 import { newApRoom } from '@/types/model-types-constructor';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { Service } from '@/types/model-types-new';
+import { newService } from '@/types/model-types-constructor-new';
+import { useEnumCapitalized } from '@/services/enumsApi';
+import {
+  useLazyGetServiceByIdQuery,
+  useLazyGetServicesBulkByIdsQuery,
+  useGetServicesQuery
+} from '@/services/setup/serviceService';
 const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
   const dispatch = useAppDispatch();
+  const authSlice = useAppSelector(state => state.auth);
   const [room, setRoom] = useState<ApRoom>({ ...newApRoom });
-  const [service, setService] = useState<any>({ service: newApService });
-  const [selectedService, setSelectedService] = useState<ApService>({ ...newApService })
+  const [selectedService, setSelectedService] = useState<Service>({ ...newService });
   const [roomService, setRoomService] = useState<ApRoomServices>({ ...newApRoomServices });
+  console.log('🚀 ~ file: AddService.tsx:64 ~ AddService ~ roomService:', roomService)
   const [hasBedSpecific, setHasBedSpecific] = useState({ bedSpecific: false });
   const [openChildModal, setOpenChildModal] = useState(false);
   const [facility, setFacility] = useState<ApFacility>({ ...newApFacility });
   const [departments, setDepartments] = useState<ApDepartment>({ ...newApDepartment });
   const [openConfirmDeleteServiceModal, setOpenConfirmDeleteServiceModal] = useState<boolean>(false);
   const [stateOfDeleteServiceModal, setStateOfDeleteServiceModal] = useState<string>('delete');
-  const [serviceListRequest, setServiceListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-    ]
-  });
+  const [servicesByIdsList, setServicesByIdsList] = useState<Service[]>([]);
   const [roomBedsListRequest, setRoomBedsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -63,6 +62,10 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
       },
     ]
   });
+  const servicesMap = servicesByIdsList.reduce<Record<string, Service>>((acc, item) => {
+    acc[String(item.id)] = item;
+    return acc;
+  }, {});
   const [roomServicesListRequest, setRoomServicesListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -74,24 +77,35 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
     ]
   });
   // Fetch service list response
-  const { data: serviceListResponse } = useGetServicesQuery(serviceListRequest);
+  const page = 0;
+  const size = 100;
+  const sort = 'id,asc';
+
+  const { data: serviceListResponse } = useGetServicesQuery({
+    facilityId: authSlice?.tenant?.selectedFacility?.id,
+    page,
+    size,
+    sort,
+  });
+  const currencyOptions = useEnumCapitalized('Currency');
+
   // Fetch Bed list response
   const { data: fetchBedsListQueryResponce } = useGetBedListQuery(roomBedsListRequest, { skip: !room?.key });
   // Fetch Room Service list response
   const { data: fetchServicesListQueryResponce, isFetching: fetchingServicesList, refetch: refetchServices } = useGetRoomServicesListQuery(roomServicesListRequest, { skip: !room?.key });
 
-  const servicesArray = serviceListResponse?.object?.map(service => ({
-    key: service.key,
+  const servicesArray = serviceListResponse?.data?.map(service => ({
+    key: service.id,
     name: service.name,
     object: service
   })) || [];
-  // Fetch LOV data for various fields
-  const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
+
   // save Service Mutation
   const [saveServices] = useSaveRoomServicesMutation();
   //Deactivate & Activate Room service Mutation
   const [deactiveActiveRoomService] = useDeactiveActivRoomServicesMutation();
-
+  const [getServiceById] = useLazyGetServiceByIdQuery();
+  const [getServicesBulkByIds] = useLazyGetServicesBulkByIdsQuery();
   // class name for selected row in Services table
   const isSelectedBed = rowData => {
     if (rowData && roomService && roomService.key === rowData.key) {
@@ -143,7 +157,7 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
       key: 'name',
       title: <Translate>Service Name</Translate>,
       flexGrow: 3,
-      render: rowData => rowData?.apService?.name
+      render: rowData => servicesMap[String(rowData?.serviceKey)]?.name ?? '-'
     },
     {
       key: 'price',
@@ -152,11 +166,9 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
     },
     {
       key: 'currencyLkey',
-      title: <Translate>Type</Translate>,
+      title: <Translate>Currency</Translate>,
       flexGrow: 3,
-      render: rowData => rowData.currencyLvalue
-        ? rowData.currencyLvalue.lovDisplayVale
-        : rowData.currencyLkey
+      render: rowData => rowData.currencyLkey
     },
     {
       key: 'bedKey',
@@ -190,7 +202,7 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
   };
   // handle save Room Service Function
   const handleSave = () => {
-    if (!selectedService?.key) {
+    if (!selectedService?.id) {
       dispatch(notify('Please select a service before saving'));
       return;
     }
@@ -198,17 +210,15 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
     saveServices({
       ...roomService,
       roomKey: room?.key,
-      serviceKey: selectedService?.key,
       isValid: true,
       price: selectedService?.price,
-      currencyLkey: selectedService?.currencyLkey
+      currencyLkey: selectedService?.currency
     })
       .unwrap()
       .then(() => {
         refetchServices();
         setRoomService({ ...newApRoomServices, currencyLkey: null, bedKey: undefined });
-        setSelectedService({ ...newApService, currencyLkey: null });
-        setService({ service: { ...newApService, currencyLkey: null } });
+        setSelectedService({ ...newService, currency: null, price: null });
         setHasBedSpecific({ bedSpecific: false });
         if (roomService.key) {
           dispatch(notify('Room service updated successfully'));
@@ -257,8 +267,7 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
                 color="var(--deep-blue)"
                 onClick={() => {
                   setRoomService({ ...newApRoomServices, currencyLkey: null, bedKey: undefined });
-                  setSelectedService({ ...newApService, currencyLkey: null });
-                  setService({ service: { ...newApService, currencyLkey: null } });
+                  setSelectedService({ ...newService, currency: null, price: null });
                   setHasBedSpecific({ bedSpecific: false });
                   setOpenChildModal(true);
                 }}
@@ -273,11 +282,25 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
               loading={fetchingServicesList}
               columns={tableServicesColumns}
               rowClassName={isSelectedBed}
-              onRowClick={rowData => {
+              onRowClick={async rowData => {
                 setRoomService(rowData);
-                setService({ service: rowData?.apService });
-                setSelectedService(rowData?.apService);
                 setHasBedSpecific({ bedSpecific: rowData?.bedKey ? true : false });
+
+                try {
+                  const serviceId = rowData?.serviceKey;
+
+                  if (!serviceId) {
+                    setSelectedService({ ...newService });
+                    return;
+                  }
+
+                  const serviceResponse = await getServiceById(serviceId).unwrap();
+
+                  setSelectedService(serviceResponse);
+                } catch (error) {
+                  setSelectedService({ ...newService });
+                  dispatch(notify('Failed to load service details'));
+                }
               }}
               sortColumn={roomServicesListRequest.sortBy}
               sortType={roomServicesListRequest.sortType}
@@ -305,13 +328,13 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
               width={350}
               fieldLabel="Service Name"
               fieldType="select"
-              fieldName="service"
+              fieldName="serviceKey"
               selectData={servicesArray ?? []}
               selectDataLabel="name"
-              selectDataValue="object"
-              record={service}
-              setRecord={setService}
-              placeholder={service?.service?.name ? service?.service?.name : "Select Service"}
+              selectDataValue="key"
+              record={{ ...roomService,serviceKey:Number(roomService?.serviceKey) ?? null }}
+              setRecord={setRoomService}
+              // placeholder={selectedService?.name ? selectedService.name : "Select Service"}
             />
             <div className='container-of-multi-fields-form'>
               <MyInput
@@ -324,11 +347,11 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
               />
               <MyInput
                 width={175}
-                fieldName="currencyLkey"
+                fieldName="currency"
                 fieldType="select"
-                selectData={currencyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectData={currencyOptions ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={selectedService}
                 setRecord={setSelectedService}
                 disabled
@@ -380,9 +403,7 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
     setDepartments(roomObj?.department);
     setFacility(roomObj?.facility);
   }, [roomObj]);
-  useEffect(() => {
-    setSelectedService(service?.service);
-  }, [service]);
+
   useEffect(() => {
     if (room?.key) {
       setRoomBedsListRequest(prev => ({
@@ -413,6 +434,30 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
       }));
     }
   }, [room?.key]);
+  useEffect(() => {
+    const roomServices = fetchServicesListQueryResponce?.object ?? [];
+
+    const mappedIds = roomServices
+      .map(item => item?.serviceKey)
+      .filter((id): id is number | string => id !== null && id !== undefined);
+
+    const serviceIds: (number | string)[] = Array.from(new Set(mappedIds));
+
+    if (!serviceIds.length) {
+      setServicesByIdsList([]);
+      return;
+    }
+
+    getServicesBulkByIds(serviceIds)
+      .unwrap()
+      .then(response => {
+        setServicesByIdsList(response ?? []);
+      })
+      .catch(() => {
+        setServicesByIdsList([]);
+        dispatch(notify('Failed to load services names'));
+      });
+  }, [fetchServicesListQueryResponce, getServicesBulkByIds, dispatch]);
   return (<>
     <ChildModal
       open={open}
