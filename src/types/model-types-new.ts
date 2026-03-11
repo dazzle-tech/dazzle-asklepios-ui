@@ -1175,7 +1175,7 @@ export interface UserStickyNotesResponseVM {
   createdDate: Date;
   lastModifiedBy: string;
   lastModifiedDate: Date;
-  patientId: string;
+  patientId: number | null;
 }
 
 export interface UserStickyNotesCreateVM {
@@ -1184,7 +1184,7 @@ export interface UserStickyNotesCreateVM {
   priority: string;
   priorityOrder: number;
   color: string;
-  patientId: string;
+  patientId: number | null;
 }
 
 export interface PriceListItem {
