@@ -10,7 +10,8 @@ import {
   faCommentMedical,
   faBedPulse,
   faRectangleXmark,
-  faUserDoctor
+  faUserDoctor,
+  faSliders
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
@@ -44,7 +45,8 @@ import {
   useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
 import { useAppSelector } from '@/hooks';
-
+import { useLazyGetEmergencyTriageBulkByEncounterIdsQuery } from '@/services/encounters/er-triage/emergencyTriageService';
+import { newPatientEncounter } from '@/types/model-types-constructor-new';
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
   if (typeof d === 'string') return d;
@@ -61,10 +63,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw) {
@@ -89,14 +91,15 @@ const ERWaitingList = () => {
   const [open, setOpen] = useState(false);
   const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
   const [openEMRModal, setOpenEMRModal] = useState(false);
-
   const [encounter, setLocalEncounter] = useState<any>({
-    ...newApEncounter,
+    ...newPatientEncounter,
     discharge: false
   });
   const [localPatient, setLocalPatient] = useState<any>(null);
-
+  const [showCancelled, setShowCancelled] = useState(false);
   const [cancelEncounter] = useCancelEncounterMutation();
+  const [triageBulkList, setTriageBulkList] = useState<any[]>([]);
+  const [getEmergencyTriageBulkByEncounterIds] = useLazyGetEmergencyTriageBulkByEncounterIdsQuery();
   const [triggerGetPatientById] = useLazyGetPatientByIdQuery();
 
   useEffect(() => {
@@ -111,7 +114,6 @@ const ERWaitingList = () => {
 
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
   const EncounterReasonEnum = useEnumOptions('EncounterReason');
-  const EncounterStatusEnum = useEnumOptions('EncounterStatus');
 
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => formatDate(today), [today]);
@@ -122,7 +124,7 @@ const ERWaitingList = () => {
 
   const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
 
-  const DEFAULT_STATUS = useMemo(() => ['WAITING_TRIAGE', 'NEW', 'ONGOING'], []);
+  const DEFAULT_STATUS = useMemo(() => ['WAITING_LIST'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
   const [encounterReasons, setEncounterReasons] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<string[]>([]);
@@ -207,13 +209,20 @@ const ERWaitingList = () => {
     refetch: refetchEncounters
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
 
-  const tableData = encountersPaged?.data ?? encountersPaged?.object ?? [];
-  const totalCount = encountersPaged?.totalCount ?? encountersPaged?.extraNumeric ?? 0;
+  const tableData = encountersPaged?.data ?? [];
+  const totalCount = encountersPaged?.totalCount ?? 0;
 
   const patientBulkIdsRef = useRef<string[]>([]);
   const [getBulkPatientBasicInfo, { data: patientsBasicInfo, isLoading: patientsBulkLoading }] =
     useGetBulkPatientBasicInfoMutation();
+  const encounterIdsForBulk = useMemo(() => {
+    const ids = (encountersPaged?.data ?? [])
+      .map((row: any) => row?.id ?? row?.key)
+      .filter((v: any) => v !== null && v !== undefined)
+      .map((v: any) => Number(v));
 
+    return Array.from(new Set(ids));
+  }, [encountersPaged?.data]);
   const patientIdsForBulk = useMemo(() => {
     const ids = (tableData as any[])
       .map(row => row?.patient?.id ?? row?.patientId ?? row?.patientObject?.id)
@@ -229,7 +238,7 @@ const ERWaitingList = () => {
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
@@ -244,7 +253,18 @@ const ERWaitingList = () => {
 
     return map;
   }, [patientsBasicInfo]);
+  const triageMap = useMemo(() => {
+    const map = new Map<string, any>();
 
+    (triageBulkList ?? []).forEach((triage: any) => {
+      const encounterId = triage?.encounterId ?? triage?.encounter?.id;
+      if (!encounterId) return;
+
+      map.set(String(encounterId), triage);
+    });
+
+    return map;
+  }, [triageBulkList]);
   const normalizedTableData = useMemo(() => {
     return (tableData as any[]).map(row => {
       const patientId = row?.patient?.id ?? row?.patientId ?? row?.patientObject?.id ?? null;
@@ -255,9 +275,9 @@ const ERWaitingList = () => {
       ).trim();
       const secondName = String(
         patientFromMap?.secondName ??
-          row?.patient?.secondName ??
-          row?.patientObject?.secondName ??
-          ''
+        row?.patient?.secondName ??
+        row?.patientObject?.secondName ??
+        ''
       ).trim();
       const thirdName = String(
         patientFromMap?.thirdName ?? row?.patient?.thirdName ?? row?.patientObject?.thirdName ?? ''
@@ -290,10 +310,13 @@ const ERWaitingList = () => {
         ) ||
         row?.patientObject?.genderLvalue?.lovDisplayVale ||
         '';
+      const encounterId = row?.id ?? row?.key;
+      const emergencyTriageFromMap = encounterId != null ? triageMap.get(String(encounterId)) : null;
 
       return {
         ...row,
-        key: row?.id ?? row?.key,
+        key: encounterId,
+        emergencyTriage: emergencyTriageFromMap ?? row?.emergencyTriage ?? null,
 
         patientObject: {
           id: patientId,
@@ -427,14 +450,7 @@ const ERWaitingList = () => {
       key: 'emergencyLevelLkey',
       title: <Translate>ER Level</Translate>,
       render: (rowData: any) =>
-        rowData?.emergencyLevelLkey ? (
-          <MyBadgeStatus
-            color={rowData?.emergencyLevelLvalue?.valueColor}
-            contant={rowData?.emergencyLevelLvalue?.lovDisplayVale}
-          />
-        ) : (
-          ''
-        )
+        rowData?.emergencyTriage?.emergencyLevel ?? ""
     },
     {
       key: 'chiefComplaint',
@@ -452,10 +468,10 @@ const ERWaitingList = () => {
       render: (row: any) =>
         row?.emergencyTriage ? (
           <>
-            {row?.emergencyTriage?.createdByUser?.fullName}
+            {row?.emergencyTriage?.createdBy}
             <br />
             <span className="date-table-style">
-              {formatDateWithoutSeconds(row?.emergencyTriage?.createdAt)}
+              {row?.emergencyTriage?.createdDate}
             </span>
           </>
         ) : (
@@ -617,19 +633,27 @@ const ERWaitingList = () => {
 
         <MyInput
           column
-          width={260}
-          fieldType="checkPicker"
-          fieldLabel="Encounter Status"
-          fieldName="statusIn"
-          selectData={EncounterStatusEnum}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={{ statusIn }}
+          width={150}
+          fieldType="check"
+          fieldLabel="Show Cancelled"
+          fieldName="showCancelled"
+          showLabel={false}
+          record={{ showCancelled }}
           setRecord={(v: any) => {
-            setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
+            const isChecked = !!v?.showCancelled;
+
+            setShowCancelled(isChecked);
+
+            if (isChecked) {
+              setStatusIn(prev => Array.from(new Set([...(prev ?? []), 'CANCELLED'])));
+            } else {
+              setStatusIn(prev => (prev ?? []).filter(status => status !== 'CANCELLED'));
+            }
+
             setPage(0);
           }}
         />
+
       </Form>
 
       <AdvancedSearchFilters
@@ -637,7 +661,7 @@ const ERWaitingList = () => {
         clearOnClick={handleClearFilters}
         content={
           <div className="advanced-filters">
-            <Form fluid>
+            <Form key={JSON.stringify(record)} fluid className="dissss">
               <MyInput
                 fieldName="encounterReasons"
                 fieldType="checkPicker"
@@ -736,6 +760,21 @@ const ERWaitingList = () => {
       dispatch(hideSystemLoader());
     };
   }, [dispatch, tableLoading]);
+  useEffect(() => {
+    if (!encounterIdsForBulk.length) {
+      setTriageBulkList([]);
+      return;
+    }
+
+    getEmergencyTriageBulkByEncounterIds(encounterIdsForBulk)
+      .unwrap()
+      .then(response => {
+        setTriageBulkList(response ?? []);
+      })
+      .catch(() => {
+        setTriageBulkList([]);
+      });
+  }, [encounterIdsForBulk, getEmergencyTriageBulkByEncounterIds]);
 
   if (!departmentId) {
     return (

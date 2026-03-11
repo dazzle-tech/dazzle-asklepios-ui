@@ -67,7 +67,14 @@ export const emergencyTriageService = createApi({
         url: `/api/patient/emergency-triage/${id}`,
         method: 'DELETE'
       })
-    })
+    }),
+    getEmergencyTriageBulkByEncounterIds: builder.query<EmergencyTriage[], EncounterId[]>({
+      query: ids => ({
+        url: '/api/patient/emergency-triage/bulk-byEncounter',
+        method: 'GET',
+        params: { ids }
+      })
+    }),
   })
 });
 
@@ -77,6 +84,8 @@ export const {
   useUpdateEmergencyTriageEyeAssessmentMutation,
   useUpdateEmergencyTriageLevelAssessmentMutation,
   useUpdateEmergencyTriageDestinationMutation,
-  useHardDeleteEmergencyTriageMutation
+  useHardDeleteEmergencyTriageMutation,
+  useGetEmergencyTriageBulkByEncounterIdsQuery,
+  useLazyGetEmergencyTriageBulkByEncounterIdsQuery,
 } = emergencyTriageService;
 
