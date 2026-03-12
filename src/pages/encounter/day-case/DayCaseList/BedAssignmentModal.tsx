@@ -69,7 +69,7 @@ const BedAssignmentModal = ({
         ...object,
         encounterKey: encounter?.id,
         patientKey: encounter?.patientObject?.id,
-        departmentKey: departmentKey
+        departmentKey: encounter?.departmentId
       }).unwrap();
 
       await updateEncounter({
