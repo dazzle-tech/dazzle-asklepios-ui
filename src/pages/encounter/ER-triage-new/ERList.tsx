@@ -44,6 +44,7 @@ import {
   useGetBulkPatientBasicInfoMutation,
   useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
+import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import { useAppSelector } from '@/hooks';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
@@ -64,10 +65,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-    appliedSearch?.searchText ??
-    appliedSearch?.text ??
-    appliedSearch?.value ??
-    ''
+      appliedSearch?.searchText ??
+      appliedSearch?.text ??
+      appliedSearch?.value ??
+      ''
   ).trim();
 
   if (!raw) {
@@ -186,10 +187,11 @@ const ERList = () => {
     ...newPatientEncounter,
     discharge: false
   });
-  console.log('local encounter in ER list', encounter);
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
 
   const [triggerGetPatientById] = useLazyGetPatientByIdQuery();
+  const [triggerGetDepartmentById, { data: departmentData, isFetching: isDepartmentFetching }] =
+    useLazyGetDepartmentByIdQuery();
 
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
@@ -249,6 +251,15 @@ const ERList = () => {
   const [searchTick, setSearchTick] = useState(0);
   const [record, setRecord] = useState<any>({});
 
+  useEffect(() => {
+    if (!departmentId) return;
+triggerGetDepartmentById(Number(departmentId)).catch(() => {});
+  }, [departmentId, triggerGetDepartmentById]);
+
+  const isEmergencyDepartment = useMemo(() => {
+    return String(departmentData?.encounterType ?? '').toUpperCase() === 'EMERGENCY';
+  }, [departmentData]);
+
   const handlePatientSearchClick = useCallback(() => {
     setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
     setPage(0);
@@ -256,7 +267,7 @@ const ERList = () => {
   }, [patientSearchDraft]);
 
   const filterParams = useMemo(() => {
-    if (!departmentId) return null;
+    if (!departmentId || !isEmergencyDepartment) return null;
 
     const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
     const toDate = toISODate(dateFilter.toDate) ?? todayStr;
@@ -265,8 +276,7 @@ const ERList = () => {
     const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
     const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
     const normalizedPriorities =
-      uniqueNonEmpty(priorities) ??
-      uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
+      uniqueNonEmpty(priorities) ?? uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
     const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
 
     return {
@@ -303,7 +313,8 @@ const ERList = () => {
     todayStr,
     hasPrescription,
     patientSearchApplied,
-    searchTick
+    searchTick,
+    isEmergencyDepartment
   ]);
 
   const {
@@ -311,7 +322,9 @@ const ERList = () => {
     isFetching: isEncountersFetching,
     isLoading: isEncountersLoading,
     refetch: refetchEncounters
-  } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
+  } = useFilterEncountersQuery(filterParams as any, {
+    skip: !filterParams
+  });
 
   const tableData = encountersPaged?.data ?? [];
   const totalCount = encountersPaged?.totalCount ?? 0;
@@ -329,12 +342,12 @@ const ERList = () => {
   }, [tableData]);
 
   useEffect(() => {
-    if (patientIdsForBulk.length === 0) return;
+    if (!isEmergencyDepartment || patientIdsForBulk.length === 0) return;
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => { });
-  }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+      .catch(() => {});
+  }, [patientIdsForBulk, getBulkPatientBasicInfo, isEmergencyDepartment]);
 
   const patientMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -401,7 +414,7 @@ const ERList = () => {
     isFetching: isLocationsFetching,
     refetch: refetchEncounterLocations
   } = useGetEncounterLocationsQuery(encounterIdsForLocations, {
-    skip: encounterIdsForLocations.length === 0
+    skip: !isEmergencyDepartment || encounterIdsForLocations.length === 0
   });
 
   const locationMap = useMemo(() => {
@@ -424,18 +437,18 @@ const ERList = () => {
         apRoom:
           location?.roomKey || location?.roomName
             ? {
-              ...(row?.apRoom ?? {}),
-              key: location?.roomKey ?? row?.apRoom?.key ?? row?.room?.key ?? null,
-              name: location?.roomName ?? row?.apRoom?.name ?? row?.room?.name ?? null
-            }
+                ...(row?.apRoom ?? {}),
+                key: location?.roomKey ?? row?.apRoom?.key ?? row?.room?.key ?? null,
+                name: location?.roomName ?? row?.apRoom?.name ?? row?.room?.name ?? null
+              }
             : row?.apRoom,
         apBed:
           location?.bedKey || location?.bedName
             ? {
-              ...(row?.apBed ?? {}),
-              key: location?.bedKey ?? row?.apBed?.key ?? row?.bed?.key ?? null,
-              name: location?.bedName ?? row?.apBed?.name ?? row?.bed?.name ?? null
-            }
+                ...(row?.apBed ?? {}),
+                key: location?.bedKey ?? row?.apBed?.key ?? row?.bed?.key ?? null,
+                name: location?.bedName ?? row?.apBed?.name ?? row?.bed?.name ?? null
+              }
             : row?.apBed
       };
     });
@@ -536,6 +549,7 @@ const ERList = () => {
     setPageSize(parseInt(event.target.value, 10));
     setPage(0);
   }, []);
+
   const prevChangeBedOpenRef = useRef(false);
 
   useEffect(() => {
@@ -544,6 +558,7 @@ const ERList = () => {
     }
     prevChangeBedOpenRef.current = openChangeBedModal;
   }, [openChangeBedModal, refetchEncounters]);
+
   const handleClearFilters = () => {
     const now = new Date();
     setRecord({});
@@ -560,6 +575,7 @@ const ERList = () => {
     setPage(0);
     setSearchTick(prev => prev + 1);
   };
+
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -857,7 +873,7 @@ const ERList = () => {
                 fieldType="checkbox"
                 record={{ hasPrescription: !!hasPrescription }}
                 setRecord={(v: any) => {
-                  setHasPrescription(!!v?.hasPrescription);
+                  setHasPrescription(v?.hasPrescription ? true : undefined);
                   setPage(0);
                 }}
                 label="Has Prescription"
@@ -869,7 +885,7 @@ const ERList = () => {
                 fieldType="checkbox"
                 record={{ hasOrder: !!hasOrder }}
                 setRecord={(v: any) => {
-                  setHasOrder(!!v?.hasOrder);
+                  setHasOrder(v?.hasOrder ? true : undefined);
                   setPage(0);
                 }}
                 label="Has Orders"
@@ -881,7 +897,7 @@ const ERList = () => {
                 fieldType="checkbox"
                 record={{ isObserved: !!isObserved }}
                 setRecord={(v: any) => {
-                  setIsObserved(!!v?.isObserved);
+                  setIsObserved(v?.isObserved ? true : undefined);
                   setPage(0);
                 }}
                 label="Is Observed"
@@ -911,6 +927,7 @@ const ERList = () => {
   );
 
   const tableLoading =
+    isDepartmentFetching ||
     isEncountersLoading ||
     isEncountersFetching ||
     patientsBulkLoading ||
@@ -920,6 +937,7 @@ const ERList = () => {
   useEffect(() => {
     if (tableLoading) dispatch(showSystemLoader());
     else dispatch(hideSystemLoader());
+
     return () => {
       dispatch(hideSystemLoader());
     };
@@ -935,12 +953,22 @@ const ERList = () => {
     );
   }
 
+  if (!isDepartmentFetching && departmentData && !isEmergencyDepartment) {
+    return (
+      <Panel>
+        <div className="encounter-list__no-department">
+          <p>This department is not an emergency department, so no ER encounters are available.</p>
+        </div>
+      </Panel>
+    );
+  }
+
   return (
     <Panel>
       <div className="inpatient-list-btns">
         <MyButton
           onClick={() => setOpenBedManagementModal(true)}
-          disabled={!departmentId}
+          disabled={!departmentId || !isEmergencyDepartment}
           prefixIcon={() => <FontAwesomeIcon icon={faBedPulse} />}
         >
           Bed Management
