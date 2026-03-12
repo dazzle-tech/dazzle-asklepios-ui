@@ -135,63 +135,118 @@ const Facilities = () => {
       }
     </div>
   );
+
+
+  const validateFacility = () => {
+    const missingFields = [];
+
+    if (!facility?.name?.trim()) missingFields.push('Name');
+    if (!facility?.type) missingFields.push('Facility Type');
+    if (!facility?.defaultCurrency) missingFields.push('Default Currency');
+
+    if (missingFields.length) {
+      return `${missingFields.join(', ')} ${missingFields.length > 1 ? 'are' : 'is'} required`;
+    }
+
+    return null;
+  };
+
   // Handle click on Save Facility button
-  const handleSave = async () => {
-    setLoad(true);
-    let errMsg = "";
+const handleSave = async () => {
+  setLoad(true);
 
-    // Validate Facility Name
-    if (!createFacility.name || !createFacility.name.trim()) {
-      errMsg += "Field Facility Name is required";
-    }
+  const missingFields = [];
 
-    // Validate Facility Type
-    if (!createFacility.type) {
-      if (errMsg) {
-        errMsg += ", Field Facility type is required";
-      } else {
-        errMsg += "Field Facility type is required";
-      }
-    }
+  if (!createFacility.name?.trim()) missingFields.push('Facility Name');
+  if (!createFacility.type) missingFields.push('Facility Type');
+  if (!createFacility.defaultCurrency) missingFields.push('Default Currency');
 
-    // Validate Default Currency
-    if (!createFacility.defaultCurrency) {
-      if (errMsg) {
-        errMsg += ", Field Default Currency is required";
-      } else {
-        errMsg += "Field Default Currency is required";
-      }
-    }
-
-    if (!errMsg) {
-      setPopupOpen(false);
-      await saveFacility({ ...createFacility })
-        .unwrap()
-        .then(() => {
-          dispatch(notify({ msg: 'The Facility has been saved successfully', sev: 'success' }));
-          refetchFacility();
-        })
-        .catch(() => {
-          dispatch(notify({ msg: 'Failed to save this Facility', sev: 'error' }));
-        });
-    } else {
-      dispatch(notify({ msg: errMsg, sev: 'error' }));
-    }
+  if (missingFields.length) {
+    dispatch(
+      notify({
+        msg: `• ${missingFields.join(', ')} ${
+          missingFields.length > 1 ? 'are' : 'is'
+        } required`,
+        sev: 'error'
+      })
+    );
 
     setLoad(false);
-  };
+    return;
+  }
+
+  try {
+    setPopupOpen(false);
+
+    await saveFacility({ ...createFacility }).unwrap();
+
+    dispatch(
+      notify({
+        msg: 'The Facility has been saved successfully',
+        sev: 'success'
+      })
+    );
+
+    refetchFacility();
+  } catch {
+    dispatch(
+      notify({
+        msg: 'Failed to save this Facility',
+        sev: 'error'
+      })
+    );
+  }
+
+  setLoad(false);
+};
 
     // Handle click on Update Facility button
   const handleUpdate = async () => {
-    setPopupOpen(false);
     setLoad(true);
-   await updateFacility({ ...facility }).unwrap().then(() => {
-    dispatch(notify({ msg: 'The Facility has been updated successfully', sev: 'success' }));
-    refetchFacility();
-   }).catch(() => {
-    dispatch(notify({ msg: 'Failed to update this Facility', sev: 'error' }));
-   });
-   setLoad(false);
+
+    const missingFields = [];
+
+    if (!facility.name?.trim()) missingFields.push('Facility Name');
+    if (!facility.type) missingFields.push('Facility Type');
+    if (!facility.defaultCurrency) missingFields.push('Default Currency');
+
+    if (missingFields.length) {
+      dispatch(
+        notify({
+          msg: `• ${missingFields.join(', ')} ${
+            missingFields.length > 1 ? 'are' : 'is'
+          } required`,
+          sev: 'error'
+        })
+      );
+
+      setLoad(false);
+      return;
+    }
+
+    try {
+      setPopupOpen(false);
+
+      await updateFacility({ ...facility }).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Facility has been updated successfully',
+          sev: 'success'
+        })
+      );
+
+      refetchFacility();
+    } catch {
+      dispatch(
+        notify({
+          msg: 'Failed to update Facility',
+          sev: 'error'
+        })
+      );
+    }
+
+    setLoad(false);
   };
 
   // Handle remove Facility
