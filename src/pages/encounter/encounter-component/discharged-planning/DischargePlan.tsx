@@ -2,7 +2,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import React, { useEffect, useState } from 'react';
 import { Col, Form, Row, Text, Message, useToaster } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import Icd10Search from '@/pages/medical-component/Icd10Search';
+import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGenerateDischargePdfMutation } from '@/services/setup/dischargeService';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
@@ -60,7 +60,7 @@ const DischargePlanning = () => {
   const patient = state.patient;
   const encounter = state.encounter;
 
-const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
+  const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
 
   // Local
   const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -73,15 +73,14 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
   const {
     data: existingData,
     isFetching: loadingExisting
-  } = useGetDischargePlanningByEncounterQuery(Number(encounter.key));
+  } = useGetDischargePlanningByEncounterQuery(encounter?.id);
 
   // ------------------ STATE ------------------
   const [object, setObject] = useState({
     ...newDischargePlanning,
-    patientId: Number(patient.key),
-    encounterId: Number(encounter.key)
+    patientId: patient?.id,
+    encounterId: encounter?.id
   });
-
   // tags
   const [medicalEquipmentTags, setMedicalEquipmentTags] = useState<string[]>([]);
   const [topicsCoveredTags, setTopicsCoveredTags] = useState<string[]>([]);
@@ -226,7 +225,7 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
 
 
   const handleSave = async () => {
-        const requiredFields = [
+    const requiredFields = [
       { field: "expectedDischargeDate", label: "Expected discharge date" },
       { field: "readinessStatus", label: "Readiness status" },
       { field: "diagnosisCode", label: "Diagnosis" }
@@ -257,8 +256,8 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         ...object,
         medicalEquipment: medicalEquipmentTags.join(", "),
         topicsCovered: topicsCoveredTags.join(", "),
-        patientId: Number(patient.key),
-        encounterId: Number(encounter.key),
+        patientId: patient?.id,
+        encounterId: encounter?.id,
       };
 
 
@@ -596,10 +595,11 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
                       <Col md={24}>
                         <div className="container-ofiicd10-search-discharge-planning">
                           <Icd10Search
-                          
                             object={object}
                             setOpject={setObject}
                             fieldName="diagnosisCode"
+                            label="Diagnosis"
+                            mode="singleICD10"
                           />
                         </div>
                       </Col>
@@ -915,25 +915,25 @@ const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
         </MyButton>
       </div>
 
-        <MyModal
-          open={prescriptionModalOpen}
-          setOpen={setPrescriptionModalOpen}
-          title="Prescription"
-          size="70vw"
-          hideBack={true}
-          steps={[{ title: 'Prescription', icon: <FontAwesomeIcon icon={faPills} /> }]}
+      <MyModal
+        open={prescriptionModalOpen}
+        setOpen={setPrescriptionModalOpen}
+        title="Prescription"
+        size="70vw"
+        hideBack={true}
+        steps={[{ title: 'Prescription', icon: <FontAwesomeIcon icon={faPills} /> }]}
 
-          content={
-            <PrescriptionNew
-              patient={patient}
-              encounter={encounter}
-              closeModal={() => setPrescriptionModalOpen(false)}
-            />
-          }
+        content={
+          <PrescriptionNew
+            patient={patient}
+            encounter={encounter}
+            closeModal={() => setPrescriptionModalOpen(false)}
+          />
+        }
 
-          actionButtonLabel="Save"
-          hideActionBtn={true}
-        />
+        actionButtonLabel="Save"
+        hideActionBtn={true}
+      />
 
 
 
