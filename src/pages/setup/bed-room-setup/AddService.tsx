@@ -44,7 +44,6 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
   const [room, setRoom] = useState<ApRoom>({ ...newApRoom });
   const [selectedService, setSelectedService] = useState<Service>({ ...newService });
   const [roomService, setRoomService] = useState<ApRoomServices>({ ...newApRoomServices });
-  console.log('🚀 ~ file: AddService.tsx:64 ~ AddService ~ roomService:', roomService)
   const [hasBedSpecific, setHasBedSpecific] = useState({ bedSpecific: false });
   const [openChildModal, setOpenChildModal] = useState(false);
   const [facility, setFacility] = useState<ApFacility>({ ...newApFacility });
@@ -203,6 +202,7 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
   // handle save Room Service Function
   const handleSave = () => {
     if (!selectedService?.id) {
+
       dispatch(notify('Please select a service before saving'));
       return;
     }
@@ -221,13 +221,13 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
         setSelectedService({ ...newService, currency: null, price: null });
         setHasBedSpecific({ bedSpecific: false });
         if (roomService.key) {
-          dispatch(notify('Room service updated successfully'));
+          dispatch(notify({msg:'Room service updated successfully',sev:'success'}));
         } else {
-          dispatch(notify('Room service added successfully'));
+          dispatch(notify({msg:'Room service added successfully',sev:'success'}));
         }
       })
       .catch(() => {
-        dispatch(notify('Failed to save room service'));
+        dispatch(notify({msg:'Failed to save room service',sev:'error'}));
       });
   };
 
@@ -288,7 +288,6 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
 
                 try {
                   const serviceId = rowData?.serviceKey;
-
                   if (!serviceId) {
                     setSelectedService({ ...newService });
                     return;
@@ -403,6 +402,20 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
     setDepartments(roomObj?.department);
     setFacility(roomObj?.facility);
   }, [roomObj]);
+  useEffect(() => {
+    if (roomService?.serviceKey) {
+      const selectedServiceFromList = servicesArray.find(service => service.key === roomService.serviceKey);
+      if (selectedServiceFromList) {
+        setSelectedService(selectedServiceFromList.object);
+      }
+        else {
+        setSelectedService({ ...newService, currency: null, price: null });
+      }
+    } else {
+      setSelectedService({ ...newService, currency: null, price: null });
+    }
+
+  },[roomService.serviceKey]);
 
   useEffect(() => {
     if (room?.key) {

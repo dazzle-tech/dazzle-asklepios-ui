@@ -19,6 +19,7 @@ const DiagnosisAndFindings = ({ encounter, patient }) => {
     skip: !encounterId
   });
 
+
   const { data: bodySystemLov } = useGetLovValuesByCodeQuery('BODY_SYS');
   const { data: bodySystemDetailLov } = useGetLovValuesByCodeQuery('BODY_SYS_DETAIL');
 
@@ -65,6 +66,7 @@ const DiagnosisAndFindings = ({ encounter, patient }) => {
     const lines =
       reviewOfSystemsData
         ?.map((item: any, index: number) => {
+
           const bodySystemText =
             bodySystemLov?.object?.find((i: any) => i.key === item.bodySystem)?.lovDisplayVale ??
             '';

@@ -215,8 +215,6 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         const isOutpatient = departmentType === 'OUTPATIENT_CLINIC'; // ✅ صح
         const isEmergency = departmentType === 'EMERGENCY' || departmentType === 'EMERGENCY_ROOM';
 
-        console.log('departmentType for row', row.id, ':', departmentType);
-
         return (
           <Form className="visit-history__actions-form">
             {isNew && (

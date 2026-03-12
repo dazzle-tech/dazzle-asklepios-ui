@@ -1046,10 +1046,11 @@ const ERTriage = () => {
       title: <Translate>PATIENT NAME </Translate>,
       fullText: true,
       render: (rowData: any) => {
+        console.log("patientObject", rowData?.patientObject);
         const tooltipSpeaker = (
           <Tooltip>
             <div>MRN : {rowData?.patientObject?.medicalRecordNumber}</div>
-            <div>Age : {rowData?.patientAge}</div>
+            <div>Age : {rowData?.patientObject?.dateOfBirth?calculateAgeFormat(rowData?.patientObject?.dateOfBirth) :''}</div>
             <div>
               Gender :{' '}
               {rowData?.patientObject?.sexAtBirth || ''}
@@ -1064,12 +1065,12 @@ const ERTriage = () => {
               {rowData?.patientObject?.privatePatient ? (
                 <Badge color="blue" content="Private">
                   <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.fullName}
+                    {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
                   </p>
                 </Badge>
               ) : (
                 <>
-                  <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
+                  <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}</p>
                 </>
               )}
             </div>
