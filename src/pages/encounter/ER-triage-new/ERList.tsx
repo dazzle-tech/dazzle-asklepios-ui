@@ -957,7 +957,7 @@ triggerGetDepartmentById(Number(departmentId)).catch(() => {});
     return (
       <Panel>
         <div className="encounter-list__no-department">
-          <p>This department is not an emergency department, so no ER encounters are available.</p>
+          <p>User Current Department should be Emergency to View This Screen, so no ER encounters are available.</p>
         </div>
       </Panel>
     );
