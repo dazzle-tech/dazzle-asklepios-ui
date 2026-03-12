@@ -208,7 +208,6 @@ const ERList = () => {
 
   const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
     exclude: [
-      'CANCELLED',
       'IN_OPERATION',
       'CONFIRM_RETURN',
       'TEMP_DC',
