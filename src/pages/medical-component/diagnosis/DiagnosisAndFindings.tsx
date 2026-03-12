@@ -19,7 +19,7 @@ const DiagnosisAndFindings = ({ encounter, patient }) => {
     skip: !encounterId
   });
 
-  // ✅ نفس الكودات المستخدمة في ReviewOfSystems.tsx بالضبط
+
   const { data: bodySystemLov } = useGetLovValuesByCodeQuery('BODY_SYS');
   const { data: bodySystemDetailLov } = useGetLovValuesByCodeQuery('BODY_SYS_DETAIL');
 
@@ -66,12 +66,11 @@ const DiagnosisAndFindings = ({ encounter, patient }) => {
     const lines =
       reviewOfSystemsData
         ?.map((item: any, index: number) => {
-          // ✅ نفس منطق Summary: system?.object?.find(i => i.key === item.bodySystem)
+
           const bodySystemText =
             bodySystemLov?.object?.find((i: any) => i.key === item.bodySystem)?.lovDisplayVale ??
             '';
 
-          // ✅ نفس منطق Summary: bodySystemsDetailLovQueryResponse?.object.find(i => i.key === item.systemDetail)
           const systemDetailText =
             bodySystemDetailLov?.object?.find((i: any) => i.key === item.systemDetail)
               ?.lovDisplayVale ?? '';

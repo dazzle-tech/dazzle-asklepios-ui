@@ -106,24 +106,26 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
     await refetch();
   };
 
-  useEffect(() => {
-    const loadPractitioners = async () => {
-      if (!encounters.length) {
-        setPractitionersMap({});
-        return;
-      }
-      const uniqueIds = Array.from(
+  const practitionerIds = React.useMemo(
+    () =>
+      Array.from(
         new Set(encounters.map((e: any) => e.practitionerId).filter((id: any) => id != null))
-      );
-      if (!uniqueIds.length) return;
+      ),
+    [encounters]
+  );
+
+  useEffect(() => {
+    if (!practitionerIds.length) return;
+
+    const load = async () => {
       try {
-        const practitioners = await getPractitionersBulk(uniqueIds).unwrap();
+        const practitioners = await getPractitionersBulk(practitionerIds).unwrap();
         setPractitionersMap(Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p])));
       } catch {}
     };
-    loadPractitioners();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [encounters]);
+
+    load();
+  }, [practitionerIds]);
 
   useEffect(() => {
     const loadDepartments = async () => {
@@ -213,9 +215,6 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         const isOutpatient = departmentType === 'OUTPATIENT_CLINIC'; // ✅ صح
         const isEmergency = departmentType === 'EMERGENCY' || departmentType === 'EMERGENCY_ROOM';
 
-        console.log('departmentType for row', row.id, ':', departmentType);
-        console.log('encounter:', JSON.stringify(encounters, null, 2));
-
         return (
           <Form className="visit-history__actions-form">
             {isNew && (
@@ -299,10 +298,9 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
   return (
     <div ref={tooltipContainerRef} className="visit-history__wrapper">
       <MyTable
-        key={JSON.stringify(Object.keys(departmentsMap))} // ✅ أضف هاد
         data={encounters}
         columns={columns}
-        loading={isFetching}
+        loading={isFetching && encounters.length === 0}
         height={580}
       />
 
