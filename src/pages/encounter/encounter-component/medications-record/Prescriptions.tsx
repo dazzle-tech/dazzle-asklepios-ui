@@ -9,7 +9,7 @@ import PrescriptionDetails from "./PrescriptionDetails";
 const Prescriptions = ({ patient }) => {
     const [prescription, setPrescription] = useState<PatientPrescription | null>(null);
 
-    const patientId = patient?.id ? Number(patient.id) : patient?.key ? Number(patient.key) : undefined;
+    const patientId = patient?.id ;
 
     const [pageIndex, setPageIndex] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
