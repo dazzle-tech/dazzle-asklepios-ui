@@ -51,30 +51,30 @@ export const patientPrescriptionService = createApi({
     }),
 
     // GET /api/patient/patient-prescriptions
-    getPatientPrescription: builder.query<
-      PagedResult<PatientPrescription>,
-      PatientPrescriptionListParams
-    >({
-      query: ({ page, size, sort = 'id,asc' }) => ({
-        url: `/api/patient/patient-prescriptions`,
-        params: { page, size, sort },
-      }),
+   getPatientPrescription: builder.query<
+  PagedResult<PatientPrescription>,
+  PatientPrescriptionListParams
+>({
+  query: (params) => ({
+    url: `/api/patient/patient-prescriptions`,
+    params,
+  }),
 
-      transformResponse: (
-        response: PatientPrescription[],
-        meta
-      ): PagedResult<PatientPrescription> => {
-        const headers = meta?.response?.headers;
+  transformResponse: (
+    response: PatientPrescription[],
+    meta
+  ): PagedResult<PatientPrescription> => {
+    const headers = meta?.response?.headers;
 
-        return {
-          data: response,
-          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
-        };
-      },
+    return {
+      data: response,
+      totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+      links: parseLinkHeader(headers?.get('Link')),
+    };
+  },
 
-      providesTags: () => ['PatientPrescription'],
-    }),
+  providesTags: () => ['PatientPrescription'],
+}),
 
 
     // GET /api/patient/patient-prescriptions/{id}
