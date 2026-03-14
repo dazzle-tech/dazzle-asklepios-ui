@@ -12,6 +12,7 @@ import {
 import {
     useLazyGetDiagnosticOrderTestByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
     useCreateReportCommentMutation,
@@ -104,14 +105,13 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const [showReviewed, setShowReviewed] = useState(false);
     const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
     const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
-    //add new patient edits
     const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
+    const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
     const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
 
     const [
         createComment, { isLoading: isSendingComment }] = useCreateReportCommentMutation();
-
 
     const isSelected = (row: any) =>
         selectedReportId === row.id ? 'selected-row' : '';
@@ -126,6 +126,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             ? { approvedDateTo: endOfDay(approvalDate.toDate).toISOString() }
             : {})
     };
+
     if (orderDate.fromDate || orderDate.toDate) {
         if (orderIdIn && orderIdIn.length > 0) {
             queryParams.orderIdIn = orderIdIn;
@@ -141,7 +142,6 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             sort: 'id,desc',
             params: queryParams
         });
-
 
     const reports = data?.data ?? [];
     const totalCount = data?.totalCount ?? 0;
@@ -182,7 +182,6 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         [orderTestsMap]
     );
 
-    //add new patient edits
     const patientIds = useMemo(
         () =>
             Object.values(ordersMap)
@@ -200,42 +199,39 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         selectedReport?.id ?? skipToken
     );
 
-
-
     const closeModal = () => {
         setOpenReportModal(false);
         setSelectedReport(null);
     };
 
     const handleSendComment = async (value: string) => {
-    if (!selectedReport?.id) {
-        dispatch(notify({ msg: 'Select a report first', sev: 'warning' }));
-        return;
-    }
+        if (!selectedReport?.id) {
+            dispatch(notify({ msg: 'Select a report first', sev: 'warning' }));
+            return;
+        }
 
-    try {
-        await createComment({
-        reportId: selectedReport.id,
-        orderTestId: selectedReport.orderTestId,
-        note: value
-        }).unwrap();
+        try {
+            await createComment({
+                reportId: selectedReport.id,
+                orderTestId: selectedReport.orderTestId,
+                note: value
+            }).unwrap();
 
-        dispatch(
-        notify({ msg: 'Comment added successfully', sev: 'success' })
-        );
+            dispatch(
+                notify({ msg: 'Comment added successfully', sev: 'success' })
+            );
 
-        // 🔥 هذا السطر الناقص
-        setLocalHasCommentIds(prev =>
-        prev.includes(selectedReport.id)
-            ? prev
-            : [...prev, selectedReport.id]
-        );
+            setLocalHasCommentIds(prev =>
+                prev.includes(selectedReport.id)
+                    ? prev
+                    : [...prev, selectedReport.id]
+            );
 
-        refetchComments();
+            refetchComments();
 
-    } catch (e: any) {
-        notifyFromApiError(dispatch, e, 'Failed to add comment');
-    }
+        } catch (e: any) {
+            notifyFromApiError(dispatch, e, 'Failed to add comment');
+        }
     };
 
     useEffect(() => {
@@ -314,7 +310,6 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 width: 100,
                 align: 'center',
                 render: (row: any) => {
-
                     const hasComment =
                         !!row?.hasNote || localHasCommentIds.includes(row.id);
 
@@ -362,7 +357,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 }
             }
         ],
-        [orderTestsMap, ordersMap, patientsMap, testsMap]
+        [orderTestsMap, ordersMap, patientsMap, testsMap, localHasCommentIds]
     );
 
     const resetFilters = () => {
@@ -383,8 +378,6 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const filters = (
         <Form fluid>
             <div className="report-review-results-filters-main-container">
-
-                {/* ✅ Approval Date */}
                 <MyInput
                     fieldType="date"
                     fieldLabel="Approval From Date"
@@ -401,7 +394,6 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                     setRecord={setApprovalDate}
                 />
 
-                {/* ✅ Order Date */}
                 <MyInput
                     fieldType="date"
                     fieldLabel="Order From Date"
@@ -436,8 +428,6 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         </Form>
     );
 
-
-
     useEffect(() => {
         orderTestIds.forEach(id => {
             if (orderTestsMap[id]) return;
@@ -466,7 +456,6 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                 }).catch(() => { });
         });
     }, [testIds]);
-
 
     useEffect(() => {
         Object.values(orderTestsMap).forEach((ot: any) => {
@@ -512,11 +501,9 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
             .catch(() => setOrderIdIn([]));
     }, [orderDate]);
 
-
     useEffect(() => {
         setPage(0);
     }, [approvalDate, orderDate, showReviewed]);
-
 
     return (
         <>
@@ -534,8 +521,8 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                     setRowsPerPage(+e.target.value);
                     setPage(0);
                 }}
-                onRowClick={(row: any) => {
-                    setSelectedReportId(row.id); // 🔥 مهم للتحديد
+                onRowClick={async (row: any) => {
+                    setSelectedReportId(row.id);
 
                     const ot = orderTestsMap[String(row.orderTestId)];
                     if (!ot) return;
@@ -548,7 +535,19 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
 
                     setPatient(rawPatient);
 
-                    setEncounter(order);
+                    const encounterId = order?.encounterId;
+                    if (!encounterId) {
+                        setEncounter(null);
+                        return;
+                    }
+
+                    try {
+                        const encounter = await fetchEncounterById({ id: encounterId }).unwrap();
+                        setEncounter(encounter);
+                    } catch (err) {
+                        console.error('Failed to fetch encounter', err);
+                        setEncounter(null);
+                    }
                 }}
             />
 
@@ -571,9 +570,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                     disableEdit
                     disableDefaultTemplate
                 />
-
             )}
-
         </>
     );
 };
