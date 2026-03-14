@@ -52,7 +52,7 @@ const PatientSide = ({
   encounter,
   refetchList = null,
   setPatient,
-  balance=0,
+  balance=undefined,
   showDocumentInfo = true,
   showPatientInfo = true,
   showMeasurements = true,
