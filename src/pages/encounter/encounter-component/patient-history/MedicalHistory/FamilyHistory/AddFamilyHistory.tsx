@@ -160,7 +160,7 @@ const AddFamilyHistory = ({ open, setOpen, initialData, patient }) => {
     }
 
     if (errorMsg) {
-      dispatch(notify({ msg: errorMsg, sev: 'error' }));
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       return;
     }
 
