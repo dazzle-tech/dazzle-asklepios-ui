@@ -10,8 +10,8 @@ import {
   useLazyGetLatestVitalSignsByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 import {
-  useGetLatestBodyMeasurementsByEncounterIdQuery,
-  useLazyGetLatestBodyMeasurementsByEncounterIdQuery
+  useGetLatestBodyMeasurementsByPatientIdQuery,
+  useLazyGetLatestBodyMeasurementsByPatientIdQuery
 } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 import { useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
@@ -52,7 +52,7 @@ const PatientSide = ({
   encounter,
   refetchList = null,
   setPatient,
-  balance=undefined,
+  balance = undefined,
   showDocumentInfo = true,
   showPatientInfo = true,
   showMeasurements = true,
@@ -136,13 +136,13 @@ const PatientSide = ({
   const {
     data: latestBodyMeasurements,
     refetch: refetchLatestBodyMeasurements
-  } = useGetLatestBodyMeasurementsByEncounterIdQuery(
-    { encounterId: encounter?.id },
+  } = useGetLatestBodyMeasurementsByPatientIdQuery(
+    { patientId: patient?.id },
     {
-      skip: !encounter?.id
+      skip: !patient?.id
     }
   );
-  const [triggerGetLatestBodyMeasurements] = useLazyGetLatestBodyMeasurementsByEncounterIdQuery();
+  const [triggerGetLatestBodyMeasurements] = useLazyGetLatestBodyMeasurementsByPatientIdQuery();
   const [triggerGetPrimaryDiagnosis] = useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery();
   const {
     data: latestPatientObservationsComplaints,
@@ -263,11 +263,12 @@ const PatientSide = ({
     if (refetchList) {
       if (patient?.id) {
         triggerGetPrimaryDocument(patient?.id);
+        triggerGetLatestBodyMeasurements({ patientId: patient?.id });
+
       }
 
       if (encounter?.id) {
         triggerGetLatestVitalSigns({ encounterId: encounter?.id });
-        triggerGetLatestBodyMeasurements({ encounterId: encounter?.id });
         triggerGetLatestPatientObservationsComplaints({ encounterId: encounter?.id });
         loadPrimaryDiagnosis(Number(encounter.id));
       }
@@ -458,7 +459,7 @@ const PatientSide = ({
               {textOr(
                 patient?.fullName
                   ? patient?.fullName
-                  : `${patient?.firstName ?? ''} ${patient?.secondName?? ''} ${patient?.thirdName?? ''} ${patient?.lastName ?? ''}`.trim(),
+                  : `${patient?.firstName ?? ''} ${patient?.secondName ?? ''} ${patient?.thirdName ?? ''} ${patient?.lastName ?? ''}`.trim(),
                 'Patient Name'
               )}
             </Text>
