@@ -81,61 +81,66 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
             }).unwrap();
 
             // After successful discharge, handle bed status update
-            try {
-                // Get encounter assign to bed record using the service query
-                const encounterAssignToBedListRequest: ListRequest = {
-                    ...initialListRequest,
-                    filters: [
-                        {
-                            fieldName: 'encounter_key',
-                            operator: 'match',
-                            value: String(encounterId)
-                        }
-                    ],
-                    pageSize: 1
-                };
+            // try {
+            //     // Get encounter assign to bed record using the service query
+            //     const encounterAssignToBedListRequest: ListRequest = {
+            //         ...initialListRequest,
+            //         filters: [
+            //             {
+            //                 fieldName: 'encounter_key',
+            //                 operator: 'match',
+            //                 value: String(encounterId)
+            //             }
+            //         ],
+            //         pageSize: 1
+            //     };
                 
-                const encounterAssignToBedResponse = await getEncounterAssignToBed(encounterAssignToBedListRequest).unwrap();
-                const encounterAssignToBed = Array.isArray(encounterAssignToBedResponse) 
-                    ? encounterAssignToBedResponse[0] 
-                    : encounterAssignToBedResponse;
+            //     const encounterAssignToBedResponse = await getEncounterAssignToBed(encounterAssignToBedListRequest).unwrap();
+            //     const encounterAssignToBed = Array.isArray(encounterAssignToBedResponse) 
+            //         ? encounterAssignToBedResponse[0] 
+            //         : encounterAssignToBedResponse;
                 
-                if (encounterAssignToBed?.bedKey) {
-                    // Get the bed details using getBedList from setupService
-                    const bedListRequest: ListRequest = {
-                        ...initialListRequest,
-                        filters: [
-                            {
-                                fieldName: 'key',
-                                operator: 'match',
-                                value: encounterAssignToBed.bedKey
-                            }
-                        ],
-                        pageSize: 1
-                    };
+            //     if (encounterAssignToBed?.bedKey) {
+            //         // Get the bed details using getBedList from setupService
+            //         const bedListRequest: ListRequest = {
+            //             ...initialListRequest,
+            //             filters: [
+            //                 {
+            //                     fieldName: 'key',
+            //                     operator: 'match',
+            //                     value: encounterAssignToBed.bedKey
+            //                 }
+            //             ],
+            //             pageSize: 1
+            //         };
                     
-                    // Use the lazy query hook to get the bed
-                    const bedQueryResult = await getBedList(bedListRequest).unwrap();
+            //         // Use the lazy query hook to get the bed
+            //         const bedQueryResult = await getBedList(bedListRequest).unwrap();
                     
-                    // Get the bed from the response
-                    const bedResponse = bedQueryResult?.object;
-                    const bed = Array.isArray(bedResponse) ? bedResponse[0] : bedResponse;
+            //         // Get the bed from the response
+            //         const bedResponse = bedQueryResult?.object;
+            //         const bed = Array.isArray(bedResponse) ? bedResponse[0] : bedResponse;
                     
-                    if (bed) {
-                        // Update bed status to 5258572711068224
-                        await saveBed({
-                            ...bed,
-                            statusLkey: '5258572711068224',
-                            isValid: bed.isValid !== undefined ? bed.isValid : true
-                        } as ApBed).unwrap();
-                    }
-                }
-            } catch (bedError) {
-                // Log bed update error but don't fail the discharge
-                console.error("Error updating bed status:", bedError);
-                // Optionally notify user about bed status update failure
-                // dispatch(notify({ msg: 'Encounter discharged but bed status update failed', sev: 'warning' }));
-            }
+            //         if (bed) {
+            //             // Update bed status to 5258572711068224
+            //             await saveBed({
+            //                 ...bed,
+            //                 statusLkey: '5258572711068224',
+            //                 isValid: bed.isValid !== undefined ? bed.isValid : true
+            //             } as ApBed).unwrap();
+            //         }
+            //     }
+            // } catch (bedError: any) {
+            //     // Check if error is 404 (no bed assignment found) - this is expected and should be silently ignored
+            //     const isNotFoundError = bedError?.status === 404 || bedError?.data?.status === 404;
+                
+            //     if (!isNotFoundError) {
+            //         // Only handle non-404 errors (unexpected failures)
+            //         // Optionally notify user about bed status update failure for unexpected errors
+            //         // dispatch(notify({ msg: 'Encounter discharged but bed status update failed', sev: 'warning' }));
+            //     }
+            //     // For 404 errors, silently continue - encounter doesn't have a bed assignment, which is fine
+            // }
             
             dispatch(notify({ msg: ' Encounter Discharge Successfully', sev: 'success' }));
             setOpen(false);
@@ -144,7 +149,6 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
             }
         }
         catch (error: any) {
-            console.error("Encounter discharge error:", error);
             // Extract error message from the error object
             const errorMessage = error?.data?.message || error?.data?.detail || error?.message || 'An error occurred while discharging the encounter';
             dispatch(notify({ msg: errorMessage, sev: 'error' }));
