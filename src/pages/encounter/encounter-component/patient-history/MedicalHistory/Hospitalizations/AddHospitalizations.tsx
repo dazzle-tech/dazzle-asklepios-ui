@@ -141,9 +141,13 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       errorMsg = errorMsg
         ? `${errorMsg}, Date of admission can’t be empty`
         : 'Date of admission can’t be empty';
+    if (!formData.admissionType)
+      errorMsg = errorMsg
+        ? `${errorMsg}, Admission Type can’t be empty`
+        : 'Admission Type can’t be empty';
 
     if (errorMsg) {
-      dispatch(notify({ msg: errorMsg, sev: 'error' }));
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       return;
     }
 
@@ -204,6 +208,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         fieldName="admissionType"
         record={formData}
         setRecord={setFormData}
+        required
       />
 
       <MyInput
