@@ -18,7 +18,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import ChatModal from '@/components/ChatModal/ChatModal';
 import MyModal from '@/components/MyModal/MyModal';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import PatientSide from '@/pages/lab-module-new/PatienSide';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import { useLocation } from 'react-router-dom';
 import DispenseModal from './DispenseModal';
 import Icd10Search from '@/pages/medical-component/Icd10Search';
