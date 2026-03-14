@@ -1164,6 +1164,11 @@ const ScheduleScreen = () => {
 
                 <MyButton
                   onClick={() => {
+                    // Clear all appointment-related state when opening new appointment modal
+                    setViewAppointmentData(null);
+                    setSelectedEvent(null);
+                    setShowAppointmentOnly(false);
+                    setSelectedSlot(null);
                     setModalOpen(true);
                   }}
                   prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
@@ -1228,13 +1233,11 @@ const ScheduleScreen = () => {
                     resourceName: currentResource.resourceName,
                     facilityKey: currentResource.facilityKey
                   };
-
                   setSelectedSlot(enhancedSlotInfo);
                   setModalOpen(true);
                   return;
                 }
               }
-
               setSelectedSlot(slotInfo);
               setModalOpen(true);
             }}
@@ -1279,7 +1282,11 @@ const ScheduleScreen = () => {
         from={'Schedule'}
         isOpen={modalOpen && !followUpModalOpen}
         onClose={() => {
-          setModalOpen(false), setShowAppointmentOnly(false), setViewAppointmentData(null);
+          setModalOpen(false);
+          setShowAppointmentOnly(false);
+          setViewAppointmentData(null);
+          setSelectedEvent(null);
+          setSelectedSlot(null);
         }}
         appointmentData={viewAppointmentData || selectedEvent?.appointmentData}
         resourceType={selectedResourceType}

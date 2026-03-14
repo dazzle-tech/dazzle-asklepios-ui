@@ -31,7 +31,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-
+import { useGetAllRadiologiesQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
 
 const startOfDay = (d: Date) => {
   const x = new Date(d);
@@ -95,6 +95,18 @@ const resolveCategoryLabel = (key?: any) =>
         () => orders.map((o: any) => o.id).filter(Boolean),
         [orders]
       );
+
+
+    const { data: allRadiologiesResponse } = useGetAllRadiologiesQuery({
+      page: 0,
+      size: 10000,
+      sort: 'testId,asc'
+    });
+
+    const radiologyByTestIdMap = useMemo(() => {
+      const list = allRadiologiesResponse?.data ?? [];
+      return new Map(list.map((r: any) => [r.testId, r]));
+    }, [allRadiologiesResponse]);
 
 
     const queryParams = useMemo(() => {
@@ -312,9 +324,8 @@ const resolveCategoryLabel = (key?: any) =>
       render: (row: any) => {
 
         const ot = orderTestsMap[String(row.orderTestId)];
-        const test = testsMap[String(ot?.testId)];
-
-        return resolveCategoryLabel(test?.category);
+        const radiology = radiologyByTestIdMap.get(ot?.testId);
+        return resolveCategoryLabel(radiology?.category);
 
       }
     },

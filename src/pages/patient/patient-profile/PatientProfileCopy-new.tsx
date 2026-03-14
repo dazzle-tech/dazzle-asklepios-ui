@@ -121,6 +121,9 @@ const PatientProfile = () => {
 
   const [patientList, setPatientList] = useState([]);
 
+  // ✅ NEW: trigger to force PatientVisitHistoryTable to refetch
+  const [encounterRefetchTrigger, setEncounterRefetchTrigger] = useState(0);
+
   const divContent = 'Patient Registration';
 
   const searchRef = useRef<(() => void) | null>(null);
@@ -288,6 +291,18 @@ const PatientProfile = () => {
     }
   };
 
+  // ✅ NEW: callback passed to PatientQuickAppointment so the table refetches after save
+  const handleEncounterSaved = () => {
+    setEncounterRefetchTrigger(prev => prev + 1);
+  };
+
+  // ✅ NEW: when the modal closes (from ProfileHeader's quick appointment),
+  //         also bump the trigger so the table always stays fresh
+  const handleQuickAppointmentClose = (val: boolean) => {
+    setQuickAppointmentModel(val);
+    if (!val) setEncounterRefetchTrigger(prev => prev + 1);
+  };
+
   /* ========================================================= */
   /* ========================= RENDER ========================= */
   /* ========================================================= */
@@ -334,10 +349,12 @@ const PatientProfile = () => {
               <SectionContainer
                 title={<Translate>Visit history</Translate>}
                 content={
+                  // ✅ pass encounterRefetchTrigger so the table knows when to refetch
                   <PatientVisitHistoryTable
                     quickAppointmentModel={quickAppointmentModel}
                     setQuickAppointmentModel={setQuickAppointmentModel}
                     localPatient={localPatient}
+                    encounterRefetchTrigger={encounterRefetchTrigger}
                   />
                 }
               />
@@ -366,8 +383,11 @@ const PatientProfile = () => {
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
           localPatient={localPatient}
-          setQuickAppointmentModel={setQuickAppointmentModel}
+          // ✅ use the wrapper so closing also triggers a refetch
+          setQuickAppointmentModel={handleQuickAppointmentClose}
           localVisit={localVisit}
+          // ✅ also trigger immediately when encounter is saved (before modal closes)
+          onEncounterSaved={handleEncounterSaved}
         />
       )}
 

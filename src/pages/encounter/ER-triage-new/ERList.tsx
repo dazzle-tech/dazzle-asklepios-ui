@@ -230,7 +230,13 @@ const ERList = () => {
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => formatDate(today), [today]);
 
-  const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
+  const lastWeek = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d;
+  }, []);
+
+  const [dateFilter, setDateFilter] = useState({ fromDate: lastWeek, toDate: today });
 
   const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
@@ -253,7 +259,7 @@ const ERList = () => {
 
   useEffect(() => {
     if (!departmentId) return;
-triggerGetDepartmentById(Number(departmentId)).catch(() => {});
+    triggerGetDepartmentById(Number(departmentId)).catch(() => {});
   }, [departmentId, triggerGetDepartmentById]);
 
   const isEmergencyDepartment = useMemo(() => {
@@ -561,8 +567,10 @@ triggerGetDepartmentById(Number(departmentId)).catch(() => {});
 
   const handleClearFilters = () => {
     const now = new Date();
+    const lastWeekDate = new Date(now);
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
     setRecord({});
-    setDateFilter({ fromDate: now, toDate: now });
+    setDateFilter({ fromDate: lastWeekDate, toDate: now });
     setStatusIn(DEFAULT_STATUS);
     setEncounterReasons([]);
     setPriorities([]);

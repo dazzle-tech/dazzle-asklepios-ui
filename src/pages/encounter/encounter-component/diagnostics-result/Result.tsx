@@ -137,7 +137,6 @@ const ReviewedResults = forwardRef<any, Props>(({ patient }, ref) => {
 
     if (isOrdersFetching) return skipToken;
 
-    // إذا المريض ما عنده orders، برضو لا تبعت query النتائج
     if (!orderIds.length) return skipToken;
 
     const params: any = {
