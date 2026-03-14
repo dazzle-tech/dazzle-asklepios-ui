@@ -32,7 +32,8 @@ import type { Department } from '@/types/model-types-new';
 
 import './styles.less';
 
-const PatientVisitHistoryTable = ({ localPatient }: any) => {
+// ✅ Added encounterRefetchTrigger to props
+const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any) => {
   const dispatch = useDispatch();
   const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
   const getTooltipContainer = () => tooltipContainerRef.current || document.body;
@@ -69,6 +70,13 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
   const [dischargeEncounter] = useDischargeEncounterMutation();
+
+  // ✅ NEW: whenever the parent bumps encounterRefetchTrigger, refetch the table
+  useEffect(() => {
+    if (encounterRefetchTrigger > 0) {
+      refetch();
+    }
+  }, [encounterRefetchTrigger]);
 
   const handleCancel = async () => {
     if (!selectedVisit) return;
@@ -212,7 +220,7 @@ const PatientVisitHistoryTable = ({ localPatient }: any) => {
         const isPendingPayment = row.status === 'PENDING_PAYMENT';
 
         const departmentType = departmentsMap[row.departmentId]?.type;
-        const isOutpatient = departmentType === 'OUTPATIENT_CLINIC'; // ✅ صح
+        const isOutpatient = departmentType === 'OUTPATIENT_CLINIC';
         const isEmergency = departmentType === 'EMERGENCY' || departmentType === 'EMERGENCY_ROOM';
 
         return (
