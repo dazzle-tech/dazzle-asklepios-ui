@@ -128,11 +128,17 @@ const ERWaitingList = () => {
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => formatDate(today), [today]);
 
+  const lastWeek = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d;
+  }, []);
+
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const DEFAULT_SORT = 'id,desc';
 
-  const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
+  const [dateFilter, setDateFilter] = useState({ fromDate: lastWeek, toDate: today });
 
   const DEFAULT_STATUS = useMemo(() => ['WAITING_LIST'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
@@ -410,8 +416,10 @@ const ERWaitingList = () => {
 
   const handleClearFilters = () => {
     const now = new Date();
+    const lastWeekDate = new Date(now);
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
     setRecord({});
-    setDateFilter({ fromDate: now, toDate: now });
+    setDateFilter({ fromDate: lastWeekDate, toDate: now });
     setStatusIn(DEFAULT_STATUS);
     setEncounterReasons([]);
     setPriorities([]);
@@ -419,7 +427,6 @@ const ERWaitingList = () => {
     setHasOrder(undefined);
     setIsObserved(undefined);
     setShowCancelled(false);
-
     const clearedSearch = { searchByField: 'fullName', patientName: '' };
     setPatientSearchDraft(clearedSearch);
     setPatientSearchApplied(clearedSearch);
@@ -815,7 +822,7 @@ const ERWaitingList = () => {
         open={openBedAssigmentModal}
         setOpen={setOpenBedAssigment}
         encounter={encounter}
-        departmentKey={String(encounter?.departmentId)?? String(departmentId)}
+        departmentKey={String(encounter?.departmentId) ?? String(departmentId)}
       />
 
       <MyTable

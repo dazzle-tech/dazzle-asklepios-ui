@@ -266,7 +266,7 @@ const AddExtraDetails = ({
       refetch();
       handleClear();
     } catch (err) {
-      dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'error' }));
+      dispatch(notify({ msg: toHumanPatientDocumentError(err), sev: 'warning' }));
     }
   };
 
