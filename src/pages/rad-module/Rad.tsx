@@ -7,11 +7,8 @@ import {
   useFilterDiagnosticOrderTestsQuery,
   useUpdateDiagnosticOrderTestMutation
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
-import {
-  newApEncounter,
-  newApPatient
-} from '@/types/model-types-constructor';
-import { newDiagnosticOrder, newPatient } from '@/types/model-types-constructor-new';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
+import { newDiagnosticOrder, newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import {
   DiagnosticOrderTestStatus
 } from '@/types/model-types-new';
@@ -29,7 +26,7 @@ import React, {
   useState
 } from 'react';
 import { Col, Form, Row, Tabs } from 'rsuite';
-import PatientSide from '../lab-module-new/PatienSide';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import Orders from './Orders';
 import Tests from './Tests';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
@@ -71,7 +68,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [visibleRadTests, setVisibleRadTests] = useState<any[]>([]);
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   const [patient, setPatient] = useState({ ...newPatient });
-  const [encounter] = useState({ ...newApEncounter });
+  const [encounter,setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const today = new Date();
   const [dateFilter, setDateFilter] = useState({
@@ -90,6 +87,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
     createdDateFrom: startOfDay(dateFilter.fromDate).toISOString(),
     createdDateTo: endOfDay(dateFilter.toDate).toISOString()
   });
+  const [getEncounterById] = useLazyGetEncounterByIdQuery();
 
   useEffect(() => {
     setVisibleRadTests(todayRadTestsResponse?.data ?? []);
@@ -240,6 +238,21 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
       });
 
   }, [order?.patientId]);
+    useEffect(() => {
+    if (!order?.encounterId) {
+      setEncounter({ ...newPatientEncounter });
+      return;
+    }
+  
+    getEncounterById({ id: order.encounterId })
+      .unwrap()
+      .then((res: any) => {
+        setEncounter(res ?? { ...newPatientEncounter });
+      })
+      .catch(() => {
+        setEncounter({ ...newPatientEncounter });
+      });
+  }, [order?.encounterId]);
 
   return (
     <>
@@ -334,7 +347,15 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
         </div>
 
         <div className="right-boxs">
-          <PatientSide patient={patient} encounter={encounter} />
+          
+              <PatientSide
+                patient={patient}
+                setPatient={setPatient}
+                encounter={encounter}
+                showDiagnosis={false}
+                showVisitDetails={false}
+                showBalance={false}
+              />
         </div>
       </div>
 

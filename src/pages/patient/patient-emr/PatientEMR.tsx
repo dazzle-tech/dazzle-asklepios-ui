@@ -3,7 +3,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import PatientHistory from '@/pages/encounter/encounter-component/patient-history';
-import PatientSide from '@/pages/lab-module-new/PatienSide';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { newApEncounter } from '@/types/model-types-constructor';
@@ -53,6 +53,7 @@ import RadiologyTable from './emr-tables/RadiologyTable';
 import VaccinationTable from './emr-tables/VaccinationTable';
 import VisitHistoryTable from './emr-tables/VisitHistoryTable';
 import './styles.less';
+import { set } from 'lodash';
 
 const { getHeight } = DOMHelper;
 
@@ -73,9 +74,8 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
-
   const propsData = patient || enc ? undefined : (location.state as any);
-
+  console.log('PatientEMR propsData', propsData?.patient, propsData?.encounter);
   const [encounter, setLocalEncounter] = useState<any>(
     enc ?? propsData?.encounter ?? { ...newApEncounter, discharge: false }
   );
@@ -127,26 +127,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   }, [patient, enc, location.state]);
 
 
-  const goToVisit = async (rowData: any) => {
-    setLocalEncounter(rowData);
-    dispatch(setEncounter(rowData));
-    dispatch(setPatient(rowData['patientObject']));
-
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = rowData.patientObject?.privatePatient ? privatePatientPath : encounterPath;
-
-    const stateData = {
-      info: 'toEncounter',
-      fromPage: inModal ? 'PatientEMRModal' : 'PatientEMR',
-      patient: rowData.patientObject,
-      encounter: rowData
-    };
-
-    sessionStorage.setItem('encounterPageSource', inModal ? 'PatientEMRModal' : 'PatientEMR');
-
-    navigate(targetPath, { state: stateData });
-  };
 
   useEffect(() => {
     return () => {
@@ -752,7 +732,15 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
       <div className="emr-right">
         <div className="patient-side-main-container-handle">
-          <PatientSide patient={localPatient} encounter={encounter} />
+          
+              <PatientSide
+                patient={patient}
+                setPatient={setPatient}
+                encounter={encounter}
+                showDiagnosis={false}
+                showVisitDetails={false}
+                showBalance={false}
+              />
         </div>
         {!hideProfileSidebar && (
           <div className="profile-sidebar-main-container-handle">

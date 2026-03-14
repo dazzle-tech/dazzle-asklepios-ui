@@ -122,6 +122,7 @@ const MyConsultations = () => {
   const [openResponseModal, setOpenResponseModal] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<any>(null);
   const [responseForm, setResponseForm] = useState({ responseText: '' });
+  const [isResponseReadOnly, setIsResponseReadOnly] = useState(false);
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [rejectForm, setRejectForm] = useState({ reason: '' });
   const [openEMRModal, setOpenEMRModal] = useState(false);
@@ -360,6 +361,7 @@ const MyConsultations = () => {
     if (openResponseModal) return;
     setSelectedConsultation(null);
     setResponseForm({ responseText: '' });
+    setIsResponseReadOnly(false);
   }, [openResponseModal]);
 
   useEffect(() => {
@@ -569,8 +571,9 @@ const MyConsultations = () => {
     }
   }, [dispatch, refetchConsultations, selectedRows, submitConsultations]);
 
-  const handleOpenResponseModal = useCallback((consultation: any) => {
+  const handleOpenResponseModal = useCallback((consultation: any, readOnly = false) => {
     setSelectedConsultation(consultation);
+    setIsResponseReadOnly(readOnly);
     setResponseForm({ responseText: consultation?.responseText ?? '' });
     setOpenResponseModal(true);
   }, []);
@@ -579,6 +582,7 @@ const MyConsultations = () => {
     setOpenResponseModal(false);
     setSelectedConsultation(null);
     setResponseForm({ responseText: '' });
+    setIsResponseReadOnly(false);
   }, []);
 
   const handleSaveResponse = useCallback(async () => {
@@ -675,7 +679,6 @@ const MyConsultations = () => {
           const patientGender = formatEnumString(patient?.sexAtBirth) || '';
           const patientDob = patient?.dateOfBirth ?? patient?.dob;
           const patientAge = patientDob ? calculateAgeFormat(patientDob) : '';
-          console.log("ROW DATA", row);
           return (
             <Whisper
               trigger="hover"
@@ -867,7 +870,10 @@ const MyConsultations = () => {
           const disableActions = ['SUBMITTED', 'READY'].includes(status);
           const disableConfirm = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
           const disableReject = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
-          const disableResponse = status !== 'CONFIRMED';
+          const canOpenResponse = ['READY', 'CONFIRMED', 'SUBMITTED'].includes(status);
+          const disableResponse = !canOpenResponse;
+          const responseReadOnly = status === 'SUBMITTED';
+          const responseTooltipLabel = responseReadOnly ? 'View Response' : 'Add Response';
 
           return (
             <div className="actions-cell">
@@ -946,14 +952,18 @@ const MyConsultations = () => {
                   </MyButton>
                 </div>
               </Whisper>
-              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Response</Tooltip>}>
+              <Whisper
+                trigger="hover"
+                placement="top"
+                speaker={<Tooltip>{responseTooltipLabel}</Tooltip>}
+              >
                 <div>
                   <MyButton
                     size="small"
                     radius="6px"
                     backgroundColor="light-blue"
                     disabled={disableResponse}
-                    onClick={() => handleOpenResponseModal(row)}
+                    onClick={() => handleOpenResponseModal(row, responseReadOnly)}
                   >
                     <FontAwesomeIcon icon={faFilePen} color="white" />
                   </MyButton>
@@ -1124,9 +1134,9 @@ const MyConsultations = () => {
         title="Consultation Response"
         size="30vw"
         bodyheight="20vh"
-        actionButtonLabel="Save"
-        actionButtonFunction={handleSaveResponse}
-        isDisabledActionBtn={!String(responseForm?.responseText ?? '').trim()}
+        actionButtonLabel={isResponseReadOnly ? 'Close' : 'Save'}
+        actionButtonFunction={isResponseReadOnly ? handleCloseResponseModal : handleSaveResponse}
+        isDisabledActionBtn={!isResponseReadOnly && !String(responseForm?.responseText ?? '').trim()}
         handleCancelFunction={handleCloseResponseModal}
         content={
           <Form fluid>
@@ -1138,6 +1148,7 @@ const MyConsultations = () => {
               width="100%"
               record={responseForm}
               setRecord={setResponseForm}
+              disabled={isResponseReadOnly}
             />
           </Form>
         }

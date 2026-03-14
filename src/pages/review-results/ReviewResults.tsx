@@ -2,16 +2,16 @@ import MyTab from '@/components/MyTab';
 import { useAppSelector } from '@/hooks';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import React from 'react';
-import PatientSide from '../lab-module-new/PatienSide';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import FavoriteTests from './FavoriteTests';
 import ReviewReport from './Reports';
 import Results from './Results';
+import { newPatientEncounter } from '@/types/model-types-constructor-new';
 
 const ReviewResults = () => {
   const [patient, setPatient] = React.useState({ ...newApPatient });
   const [encounter, setEncounter] = React.useState<any>({
-    ...newApEncounter,
-    discharge: false
+    ...newPatientEncounter,
   });
 
   const authSlice = useAppSelector(state => state.auth);
@@ -54,7 +54,15 @@ const ReviewResults = () => {
         <MyTab data={tabData} />
       </div>
       <div className="right-box">
-        <PatientSide patient={patient} encounter={encounter} />
+        
+              <PatientSide
+                patient={patient}
+                setPatient={setPatient}
+                encounter={encounter}
+                showDiagnosis={false}
+                showVisitDetails={false}
+                showBalance={false}
+              />
       </div>
     </div>
   );
