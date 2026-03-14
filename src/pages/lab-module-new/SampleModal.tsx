@@ -218,15 +218,15 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
 
 
 
-              <MyInput fieldLabel="Actual Sample Quantity" fieldName="quantity" fieldType="number" record={sample} setRecord={setSample} width={"14vw"} />
+              <MyInput fieldLabel="Actual Sample Quantity" fieldName="quantity" fieldType="number" record={sample} setRecord={setSample} width={"14vw"} required />
 
 
               <MyInput fieldName="unitLkey" fieldType="select" selectData={valueUnitLov?.object ?? []}
-                selectDataLabel="lovDisplayVale" selectDataValue="key" record={sample} setRecord={setSample} width={"14vw"} />
+                selectDataLabel="lovDisplayVale" selectDataValue="key" record={sample} setRecord={setSample} width={"14vw"} required />
 
 
               <MyInput fieldName="dateTime" fieldType="datetime" fieldLabel="Sample Collected"
-                record={selectedSampleDate} setRecord={setSelectedSampleDate} width={"14vw"} />
+                record={selectedSampleDate} setRecord={setSelectedSampleDate} width={"14vw"}  required/>
             </div>
 
           </Form>

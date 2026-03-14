@@ -53,6 +53,7 @@ import RadiologyTable from './emr-tables/RadiologyTable';
 import VaccinationTable from './emr-tables/VaccinationTable';
 import VisitHistoryTable from './emr-tables/VisitHistoryTable';
 import './styles.less';
+import { set } from 'lodash';
 
 const { getHeight } = DOMHelper;
 
@@ -73,9 +74,8 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
-
   const propsData = patient || enc ? undefined : (location.state as any);
-
+  console.log('PatientEMR propsData', propsData?.patient, propsData?.encounter);
   const [encounter, setLocalEncounter] = useState<any>(
     enc ?? propsData?.encounter ?? { ...newApEncounter, discharge: false }
   );
@@ -128,6 +128,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
 
  
+
   useEffect(() => {
     return () => {
       if (!inModal) {
@@ -732,7 +733,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
       <div className="emr-right">
         <div className="patient-side-main-container-handle">
-          {/* <PatientSide patient={localPatient} encounter={encounter} /> */}
            <PatientSide
                           patient={localPatient}
                           setPatient={setLocalPatient}

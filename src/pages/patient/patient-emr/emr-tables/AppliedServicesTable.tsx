@@ -27,7 +27,13 @@ const AppliedServicesTable = ({ patient }) => {
     () => ({
       ...initialListRequest,
       filters: patient?.id
-        ? [{ fieldName: 'patient_id', operator: 'match', value: patient.id }]
+        ? [
+            {
+              fieldName: 'patient_key',
+              operator: 'match',
+              value: patient.id,
+            },
+          ]
         : [],
       pageSize: 100,
       pageNumber: 1,
@@ -97,7 +103,9 @@ const AppliedServicesTable = ({ patient }) => {
         }
 
         if (rowData?.categoryLkey === SERVICE_CATEGORY_LKEY) {
-          const service = services.find((s) => String(s.id) === String(rowData?.serviceId));
+          const service = services.find(
+            (s) => String(s.id) === String(rowData?.serviceId)
+          );
           return <span>{service?.name ?? rowData?.name}</span>;
         }
 
@@ -109,14 +117,18 @@ const AppliedServicesTable = ({ patient }) => {
       title: 'Type',
       render: (rowData) => {
         if (rowData?.categoryLkey === SERVICE_CATEGORY_LKEY) {
-          const service = services.find((s) => String(s.id) === String(rowData?.serviceId));
+          const service = services.find(
+            (s) => String(s.id) === String(rowData?.serviceId)
+          );
           return service?.category ?? '';
         }
 
         if (rowData?.categoryLkey === PRODUCT_CATEGORY_LKEY) {
           const product = getProductById(rowData?.warehouseProductId);
           if (!product) return rowData?.type ?? '';
+
           if (product?.type === 'MEDICATION') return 'Medication';
+
           return product?.type;
         }
 
@@ -133,7 +145,9 @@ const AppliedServicesTable = ({ patient }) => {
   const sortedData = [...tableData].sort((a, b) => {
     const aValue = a?.[sortColumn];
     const bValue = b?.[sortColumn];
+
     if (aValue === bValue) return 0;
+
     return sortType === 'asc'
       ? aValue > bValue
         ? 1

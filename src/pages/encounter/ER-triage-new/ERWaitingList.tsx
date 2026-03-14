@@ -1,6 +1,5 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
-import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,18 +9,12 @@ import {
   faCommentMedical,
   faBedPulse,
   faRectangleXmark,
-  faUserDoctor,
-  faSliders
+  faUserDoctor
 } from '@fortawesome/free-solid-svg-icons';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
 import 'react-tabs/style/react-tabs.css';
-import {
-  calculateAgeFormat,
-  formatDate,
-  formatDateWithoutSeconds,
-  formatEnumString
-} from '@/utils';
+import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -44,9 +37,11 @@ import {
   useGetBulkPatientBasicInfoMutation,
   useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
-import { useAppSelector } from '@/hooks';
 import { useLazyGetEmergencyTriageBulkByEncounterIdsQuery } from '@/services/encounters/er-triage/emergencyTriageService';
+import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { useAppSelector } from '@/hooks';
 import { newPatientEncounter } from '@/types/model-types-constructor-new';
+
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
   if (typeof d === 'string') return d;
@@ -63,10 +58,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-    appliedSearch?.searchText ??
-    appliedSearch?.text ??
-    appliedSearch?.value ??
-    ''
+      appliedSearch?.searchText ??
+      appliedSearch?.text ??
+      appliedSearch?.value ??
+      ''
   ).trim();
 
   if (!raw) {
@@ -99,9 +94,11 @@ const ERWaitingList = () => {
   const [showCancelled, setShowCancelled] = useState(false);
   const [cancelEncounter] = useCancelEncounterMutation();
   const [triageBulkList, setTriageBulkList] = useState<any[]>([]);
-  console.log('Triage Bulk List:', triageBulkList);
+
   const [getEmergencyTriageBulkByEncounterIds] = useLazyGetEmergencyTriageBulkByEncounterIdsQuery();
   const [triggerGetPatientById] = useLazyGetPatientByIdQuery();
+  const [triggerGetDepartmentById, { data: departmentData, isFetching: isDepartmentFetching }] =
+    useLazyGetDepartmentByIdQuery();
 
   useEffect(() => {
     dispatch(setPageCode('ER_Waiting_List'));
@@ -113,17 +110,35 @@ const ERWaitingList = () => {
     };
   }, [dispatch]);
 
+  useEffect(() => {
+    if (!departmentId) return;
+
+    triggerGetDepartmentById(Number(departmentId))
+      .unwrap()
+      .catch(() => {});
+  }, [departmentId, triggerGetDepartmentById]);
+
+  const isEmergencyDepartment = useMemo(() => {
+    return String(departmentData?.encounterType ?? '').toUpperCase() === 'EMERGENCY';
+  }, [departmentData]);
+
   const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
   const EncounterReasonEnum = useEnumOptions('EncounterReason');
 
   const today = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => formatDate(today), [today]);
 
+  const lastWeek = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d;
+  }, []);
+
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const DEFAULT_SORT = 'id,desc';
 
-  const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
+  const [dateFilter, setDateFilter] = useState({ fromDate: lastWeek, toDate: today });
 
   const DEFAULT_STATUS = useMemo(() => ['WAITING_LIST'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
@@ -151,7 +166,7 @@ const ERWaitingList = () => {
   }, [patientSearchDraft]);
 
   const filterParams = useMemo(() => {
-    if (!departmentId) return null;
+    if (!departmentId || !isEmergencyDepartment) return null;
 
     const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
     const toDate = toISODate(dateFilter.toDate) ?? todayStr;
@@ -186,6 +201,7 @@ const ERWaitingList = () => {
     };
   }, [
     departmentId,
+    isEmergencyDepartment,
     dateFilter.fromDate,
     dateFilter.toDate,
     todayStr,
@@ -216,14 +232,16 @@ const ERWaitingList = () => {
   const patientBulkIdsRef = useRef<string[]>([]);
   const [getBulkPatientBasicInfo, { data: patientsBasicInfo, isLoading: patientsBulkLoading }] =
     useGetBulkPatientBasicInfoMutation();
+
   const encounterIdsForBulk = useMemo(() => {
     const ids = (encountersPaged?.data ?? [])
-      .map((row: any) => row?.id )
+      .map((row: any) => row?.id)
       .filter((v: any) => v !== null && v !== undefined)
       .map((v: any) => Number(v));
 
     return Array.from(new Set(ids));
   }, [encountersPaged?.data]);
+
   const patientIdsForBulk = useMemo(() => {
     const ids = (tableData as any[])
       .map(row => row?.patient?.id ?? row?.patientId ?? row?.patientObject?.id)
@@ -234,13 +252,13 @@ const ERWaitingList = () => {
   }, [tableData]);
 
   useEffect(() => {
-    if (patientIdsForBulk.length === 0) return;
+    if (!isEmergencyDepartment || patientIdsForBulk.length === 0) return;
 
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => { });
-  }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+      .catch(() => {});
+  }, [patientIdsForBulk, getBulkPatientBasicInfo, isEmergencyDepartment]);
 
   const patientMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -254,6 +272,7 @@ const ERWaitingList = () => {
 
     return map;
   }, [patientsBasicInfo]);
+
   const triageMap = useMemo(() => {
     const map = new Map<number, any>();
 
@@ -261,14 +280,11 @@ const ERWaitingList = () => {
       const encounterId = triage?.encounterId ?? triage?.encounter?.id;
       if (!encounterId) return;
 
-      map.set(encounterId, triage);
+      map.set(Number(encounterId), triage);
     });
 
     return map;
   }, [triageBulkList]);
-  for (const [key] of triageMap) {
-  console.log(key, typeof key);
-}
 
   const normalizedTableData = useMemo(() => {
     return (tableData as any[]).map(row => {
@@ -280,9 +296,9 @@ const ERWaitingList = () => {
       ).trim();
       const secondName = String(
         patientFromMap?.secondName ??
-        row?.patient?.secondName ??
-        row?.patientObject?.secondName ??
-        ''
+          row?.patient?.secondName ??
+          row?.patientObject?.secondName ??
+          ''
       ).trim();
       const thirdName = String(
         patientFromMap?.thirdName ?? row?.patient?.thirdName ?? row?.patientObject?.thirdName ?? ''
@@ -315,15 +331,14 @@ const ERWaitingList = () => {
         ) ||
         row?.patientObject?.genderLvalue?.lovDisplayVale ||
         '';
-      const encounterId = row?.id ;
-      const emergencyTriageFromMap = encounterId != null ? triageMap.get(encounterId) : null;
 
+      const encounterId = row?.id;
+      const emergencyTriageFromMap = encounterId != null ? triageMap.get(Number(encounterId)) : null;
 
       return {
         ...row,
         key: encounterId,
         emergencyTriage: emergencyTriageFromMap ?? row?.emergencyTriage ?? null,
-
         patientObject: {
           id: patientId,
           fullName,
@@ -332,11 +347,11 @@ const ERWaitingList = () => {
           dateOfBirth: dob,
           sexAtBirth
         },
-
         patientAge: row?.patientAge ?? (dob ? calculateAgeFormat(dob) : null)
       };
     });
-  }, [tableData, patientMap,triageMap]);
+  }, [tableData, patientMap, triageMap]);
+
   const handleCancelEncounter = async () => {
     try {
       await cancelEncounter({ id: encounter?.id ?? encounter?.key }).unwrap();
@@ -401,15 +416,17 @@ const ERWaitingList = () => {
 
   const handleClearFilters = () => {
     const now = new Date();
+    const lastWeekDate = new Date(now);
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
     setRecord({});
-    setDateFilter({ fromDate: now, toDate: now });
+    setDateFilter({ fromDate: lastWeekDate, toDate: now });
     setStatusIn(DEFAULT_STATUS);
     setEncounterReasons([]);
     setPriorities([]);
     setHasPrescription(undefined);
     setHasOrder(undefined);
     setIsObserved(undefined);
-
+    setShowCancelled(false);
     const clearedSearch = { searchByField: 'fullName', patientName: '' };
     setPatientSearchDraft(clearedSearch);
     setPatientSearchApplied(clearedSearch);
@@ -426,8 +443,7 @@ const ERWaitingList = () => {
     {
       key: 'queueNumber',
       title: <Translate>Encounter Number</Translate>,
-      render: (rowData: any) =>
-        rowData?.encounterNumber
+      render: (rowData: any) => rowData?.encounterNumber
     },
     {
       key: 'patientFullName',
@@ -454,8 +470,7 @@ const ERWaitingList = () => {
     {
       key: 'emergencyLevelLkey',
       title: <Translate>ER Level</Translate>,
-      render: (rowData: any) =>
-        rowData?.emergencyTriage?.emergencyLevel ?? ""
+      render: (rowData: any) => rowData?.emergencyTriage?.emergencyLevel ?? ''
     },
     {
       key: 'chiefComplaint',
@@ -475,9 +490,7 @@ const ERWaitingList = () => {
           <>
             {row?.emergencyTriage?.createdBy}
             <br />
-            <span className="date-table-style">
-              {row?.emergencyTriage?.createdDate}
-            </span>
+            <span className="date-table-style">{row?.emergencyTriage?.createdDate}</span>
           </>
         ) : (
           ' '
@@ -658,7 +671,6 @@ const ERWaitingList = () => {
             setPage(0);
           }}
         />
-
       </Form>
 
       <AdvancedSearchFilters
@@ -755,7 +767,8 @@ const ERWaitingList = () => {
     </>
   );
 
-  const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
+  const tableLoading =
+    isDepartmentFetching || isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
   useEffect(() => {
     if (tableLoading) dispatch(showSystemLoader());
@@ -765,11 +778,13 @@ const ERWaitingList = () => {
       dispatch(hideSystemLoader());
     };
   }, [dispatch, tableLoading]);
+
   useEffect(() => {
-    if (!encounterIdsForBulk.length) {
+    if (!isEmergencyDepartment || !encounterIdsForBulk.length) {
       setTriageBulkList([]);
       return;
     }
+
     getEmergencyTriageBulkByEncounterIds(encounterIdsForBulk)
       .unwrap()
       .then(response => {
@@ -778,13 +793,23 @@ const ERWaitingList = () => {
       .catch(() => {
         setTriageBulkList([]);
       });
-  }, [encounterIdsForBulk, getEmergencyTriageBulkByEncounterIds]);
+  }, [encounterIdsForBulk, getEmergencyTriageBulkByEncounterIds, isEmergencyDepartment]);
 
   if (!departmentId) {
     return (
       <Panel>
         <div className="encounter-list__no-department">
           <p>Please select a department to view encounters.</p>
+        </div>
+      </Panel>
+    );
+  }
+
+  if (!isDepartmentFetching && departmentData && !isEmergencyDepartment) {
+    return (
+      <Panel>
+        <div className="encounter-list__no-department">
+          <p>This department is not an emergency department, so no ER waiting list is available.</p>
         </div>
       </Panel>
     );
@@ -797,7 +822,7 @@ const ERWaitingList = () => {
         open={openBedAssigmentModal}
         setOpen={setOpenBedAssigment}
         encounter={encounter}
-        departmentKey={String(encounter?.departmentId)?? String(departmentId)}
+        departmentKey={String(encounter?.departmentId) ?? String(departmentId)}
       />
 
       <MyTable

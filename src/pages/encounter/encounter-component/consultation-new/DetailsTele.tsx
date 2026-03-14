@@ -420,7 +420,7 @@ const DetailsTele = ({
             </div>
           </Form>
         }
-        leftContent={<></>}
+        leftContent={<Diagnosis patient={patient} encounter={encounter} />}
       />
 
       <AttachmentUploadModal
