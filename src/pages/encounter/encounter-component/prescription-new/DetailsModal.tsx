@@ -413,7 +413,51 @@ const DetailsModal = ({
       return;
     }
 
-    const createPayload = {
+    // ======================
+    // Required fields validation (per business rules)
+    // - Duration must be set unless Chronic is true
+    // - Indication must be present (ICD or manual)
+    // ======================
+    const isChronic = Boolean(prescriptionMedication?.chronicMedication);
+    const durationRaw = (prescriptionMedication as any)?.duration;
+    const durationNum = durationRaw === '' || durationRaw === null || durationRaw === undefined ? NaN : Number(durationRaw);
+    const hasDuration =
+      (!Number.isNaN(durationNum) && durationNum > 0) ||
+      (durationRaw !== null &&
+        durationRaw !== undefined &&
+        String(durationRaw).trim() !== '' &&
+        String(durationRaw).trim() !== '0');
+
+    if (!isChronic && !hasDuration) {
+      dispatch(notify({ msg: 'Set Duration for the medication', sev: 'warning' }));
+      return;
+    }
+
+    const indicationIcd = (prescriptionMedication as any)?.indicationIcd;
+    const indicationManual = String((prescriptionMedication as any)?.indicationManually ?? '').trim();
+    const hasIndication = (indicationIcd !== null && indicationIcd !== undefined && String(indicationIcd).trim() !== '') || indicationManual.length > 0;
+
+    if (!hasIndication) {
+      dispatch(notify({ msg: 'Indication Is missing', sev: 'warning' }));
+      return;
+    }
+
+    // Indication Use is required
+    const indicationUseValue =
+      (prescriptionMedication as any)?.indicationUse ??
+      (prescriptionMedication as any)?.indicationUseLkey ??
+      null;
+    const hasIndicationUse =
+      indicationUseValue !== null &&
+      indicationUseValue !== undefined &&
+      String(indicationUseValue).trim() !== '';
+
+    if (!hasIndicationUse) {
+      dispatch(notify({ msg: 'Please fill Indication Use', sev: 'warning' }));
+      return;
+    }
+
+    const createPayload: any = {
       prescriptionHeaderId: preKey,
       medicationsId: selectedMedicationId,
       instructionsType: String(selectedOption ?? prescriptionMedication?.instructionsType ?? ''),
@@ -497,8 +541,8 @@ const DetailsModal = ({
             extraDocumentation: createPayload.extraDocumentation,
             administrationInstructions: createPayload.administrationInstructions,
             lastModifiedBy: patient?.key ? String(patient.key) : 'system'
-          }
-        }).unwrap();
+          } as any
+        } as any).unwrap();
       } else {
        await savePrescriptionMedication(createPayload as any).unwrap();
        
@@ -916,6 +960,7 @@ const DetailsModal = ({
                             record={prescriptionMedication}
                             setRecord={setPrescriptionMedications}
                             searchable={false}
+                            required
                             disabled={preKey == null}
                           />
                           {/* Manual Indication - Free Text Field (under Indication Use) */}
