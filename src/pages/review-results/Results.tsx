@@ -432,7 +432,7 @@ const Result = forwardRef<any, any>(
           render: (row: any) => {
             const profile = row._profile;
             const hasViewRange =
-              row.viewNormalRange && row.viewNormalRange.trim() !== '';
+              row.normalRangeValue && row.normalRangeValue.trim() !== '';
 
             const hasMinMaxRange =
               row.minValue !== null &&
@@ -444,14 +444,14 @@ const Result = forwardRef<any, any>(
               if (isLovProfile(profile)) {
                 return resolveLovDisplayValue(
                   profile,
-                  String(row.viewNormalRange),
+                  String(row.normalRangeValue),
                   lovDefinitions,
                   allLovValues
                 );
               }
 
               const unit = resolveUnitDisplay(row);
-              return `${row.viewNormalRange}${unit ? ` ${unit}` : ''}`;
+              return `${row.normalRangeValue}${unit ? ` ${unit}` : ''}`;
             }
 
             if (hasMinMaxRange) {
