@@ -127,6 +127,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   }, [patient, enc, location.state]);
 
 
+ 
 
   useEffect(() => {
     return () => {
@@ -732,15 +733,15 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
       <div className="emr-right">
         <div className="patient-side-main-container-handle">
-          
-              <PatientSide
-                patient={patient}
-                setPatient={setPatient}
-                encounter={encounter}
-                showDiagnosis={false}
-                showVisitDetails={false}
-                showBalance={false}
-              />
+           <PatientSide
+                          patient={localPatient}
+                          setPatient={setLocalPatient}
+                          encounter={encounter}
+                          showDiagnosis={false}
+                          showVisitDetails={false}
+                          showBalance={false}
+                          showMeasurements={false}
+                        />
         </div>
         {!hideProfileSidebar && (
           <div className="profile-sidebar-main-container-handle">
