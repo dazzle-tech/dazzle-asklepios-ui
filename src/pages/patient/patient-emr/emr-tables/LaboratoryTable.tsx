@@ -28,6 +28,12 @@ import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
+import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+
+import { useGetAllLaboratoriesQuery } 
+from '@/services/setup/diagnosticTest/laboratoryService';
+
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 interface Props {
   patient: any;
@@ -95,10 +101,42 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
   const { data: resultsResponse, isFetching } =
     useFilterDiagnosticOrderTestResultsQuery(queryParams);
 
-
-
   const results = resultsResponse?.data ?? [];
   const totalCount = resultsResponse?.totalCount ?? 0;
+
+
+const { data: labsResponse } = useGetAllLaboratoriesQuery({
+  page: 0,
+  size: 10000
+});
+
+const labs = labsResponse?.data ?? [];
+
+
+const labByTestIdMap = useMemo(
+  () => new Map(labs.map(lab => [lab.testId, lab])),
+  [labs]
+);
+
+
+const { data: labCatLovQueryResponse } =
+  useGetLovValuesByCodeQuery('LAB_CATEGORIES');
+
+  const resolveCategoryLabel = (key?: any) =>
+  labCatLovQueryResponse?.object?.find(
+    c => String(c.key) === String(key)
+  )?.lovDisplayVale ?? key ?? '-';
+
+    const { data: allTestsResponse } = useGetAllDiagnosticTestsQuery({
+      page: 0,
+      size: 10000
+    });
+
+    const testsMap = useMemo(
+      () => new Map(allTestsResponse?.data?.map(t => [t.id, t]) ?? []),
+      [allTestsResponse]
+    );
+
 
   useEffect(() => {
 
@@ -183,27 +221,35 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
 
   }, [patientIds]);
 
+
   const normalizedResults = useMemo(() => {
 
-    return results.map(r => {
+  return results.map(r => {
 
-      const orderTest = orderTestsMap[String(r.orderTestId)];
-      const order = ordersMap[String(orderTest?.orderId)];
-      const patient = patientsMap[String(order?.patientId)];
-      const profile = profilesMap.get(r.profileTestId);
+    const orderTest = orderTestsMap[String(r.orderTestId)];
+    const order = ordersMap[String(orderTest?.orderId)];
+    const patient = patientsMap[String(order?.patientId)];
+    const profile = profilesMap.get(r.profileTestId);
 
-      return {
-        ...r,
-        _patientName: patient
-          ? `${patient.firstName} ${patient.lastName}`
-          : '-',
-        _profile: profile,
-        _visitId: order?.encounterId
-      };
+    const test = testsMap.get(Number(orderTest?.testId));
+    const lab = labByTestIdMap.get(Number(orderTest?.testId));
 
-    });
+    return {
+      ...r,
+      _patientName: patient
+        ? `${patient.firstName} ${patient.lastName}`
+        : '-',
+      _profile: profile,
+      _test: test,
+      _lab: lab,
+      _visitId: order?.encounterId
+    };
 
-  }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap]);
+  });
+
+}, [results, orderTestsMap, ordersMap, patientsMap, profilesMap, testsMap, labByTestIdMap]);
+
+
 
   const columns: ColumnConfig[] = [
 
@@ -247,8 +293,8 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
       title: <Translate>CATEGORY</Translate>,
       width: 150,
       render: (row: any) =>
-        row._profile?.category ?? '-'
-    },
+        resolveCategoryLabel(row._lab?.category)
+    } ,
 
     {
       key: 'testName',
