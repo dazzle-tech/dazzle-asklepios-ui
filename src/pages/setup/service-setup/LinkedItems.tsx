@@ -23,7 +23,8 @@ import {
 } from '@/services/setup/serviceService';
 import type { ServiceItem, ServiceItemCreate, ServiceItemUpdate } from '@/types/model-types-new';
 import { newServiceItem } from '@/types/model-types-constructor-new';
-import { useGetDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
+import { formatEnumString } from '@/utils';
 
 type Props = {
   open: boolean;
@@ -43,6 +44,7 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
   const [openConfirmDeleteService, setOpenConfirmDeleteService] = useState(false);
   const [stateOfDeleteService, setStateOfDeleteService] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [rowToToggle, setRowToToggle] = useState<any | null>(null);
+  const [departmentsMap, setDepartmentsMap] = useState<Record<number, string>>({});
   const [formItem, setFormItem] = useState<ServiceItem>({
     ...newServiceItem,
     serviceId: Number(serviceId) || undefined,
@@ -52,7 +54,7 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
   const [addServiceItem, { isLoading: isAdding }] = useAddServiceItemMutation();
   const [updateServiceItem, { isLoading: isUpdating }] = useUpdateServiceItemMutation();
   const [toggleServiceItemIsActive, { isLoading: isToggling }] = useToggleServiceItemIsActiveMutation();
-
+  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
   // get enum options for ServiceItemsType
   const serviceItemsTypeOptions = useEnumOptions('ServiceItemsType');
 
@@ -71,25 +73,19 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
     { skip: !open || !serviceId || !facilityId }
   );
 
+  const departmentIds = useMemo(() => {
 
-  const { data: departmentsPage } = useGetDepartmentsQuery(
-    { facilityId: Number(facilityId) },
-    { skip: !facilityId }
-  );
+    const rows = itemsPage?.data ?? [];
 
-  const departments = departmentsPage?.data ?? [];
+    const ids = rows
+      .filter((r: any) => r.type === 'DEPARTMENTS')
+      .map((r: any) => r.sourceId)
+      .filter(Boolean);
 
-  const departmentsMap = useMemo(() => {
+    return Array.from(new Set(ids));
 
-    const map: Record<number, string> = {};
+  }, [itemsPage]);
 
-    departments.forEach((d: any) => {
-      map[d.id] = d.name;
-    });
-
-    return map;
-
-  }, [departments]);
 
   // get sources based on type and facility
   const [triggerFetchSources, { isFetching: isLoadingSources }] =
@@ -130,11 +126,13 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
 
   // Table columns
   const tableColumns: ColumnConfig[] = [
-    { key: 'type', title: <Translate>Type</Translate> },
-    { key: 'name', title: <Translate>Name</Translate>, align: 'center' },
+    { key: 'type', title: 'Type', render: (row: any) => {
+      return formatEnumString(row.type) }},
+
+    { key: 'name', title: 'Name', align: 'center' },
     {
       key: 'isActive',
-      title: <Translate>Status</Translate>,
+      title: 'Status',
       width: 100,
       align: 'center',
       render: (row: any) => (
@@ -429,6 +427,28 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
     }));
   }, [formItem.type]);
 
+  useEffect(() => {
+
+    if (!departmentIds.length) return;
+
+    getDepartmentsBulk(departmentIds)
+      .unwrap()
+      .then(res => {
+
+        const map: Record<number, string> = {};
+
+        res.forEach((d: any) => {
+          map[d.id] = d.name;
+        });
+
+        setDepartmentsMap(map);
+
+      })
+      .catch(() => {
+        setDepartmentsMap({});
+      });
+
+  }, [departmentIds, getDepartmentsBulk]);
 
   return (
     <>

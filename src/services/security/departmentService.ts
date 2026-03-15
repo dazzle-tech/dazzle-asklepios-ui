@@ -280,5 +280,5 @@ export const {
   useLazyGetActiveAppointableDepartmentByTypeQuery,
   useGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
   useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
-  useGetDepartmentsBulkMutation
+  useGetDepartmentsBulkMutation,
 } = departmentService;
