@@ -731,6 +731,7 @@ const Tests = forwardRef<any, Props>(
               </Whisper>
 
               <ExternalLabAction
+                key={`${rowData.id}-${order?.id}`}
                 rowData={rowData}
                 onSuccess={async () => {
                   await refetchAllLabData();
