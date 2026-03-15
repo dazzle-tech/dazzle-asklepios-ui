@@ -72,8 +72,11 @@ const TelephonicConsultation = props => {
   const isLoading = activeQuery.isLoading;
 
   const refetch = () => {
-    notCancelledQuery.refetch();
-    allQuery.refetch();
+    if (!showCancelled) {
+      notCancelledQuery.refetch();
+    } else {
+      allQuery.refetch();
+    }
   };
 
   const { data: practitionerResponse } = useGetAllPractitionersQuery({
@@ -342,12 +345,8 @@ const TelephonicConsultation = props => {
         patient={currentPatient}
         encounter={currentEncounter}
         consultationOrders={consultationFormData}
-        // setConsultationOrder={setConsultationFormData}
         open={isDetailsModalOpen}
-        setOpen={(value: boolean) => {
-          setIsDetailsModalOpen(value);
-          if (!value) refetch();
-        }}
+        setOpen={setIsDetailsModalOpen}
         editing={false}
         edit={isEditMode}
         refetchCon={refetch}

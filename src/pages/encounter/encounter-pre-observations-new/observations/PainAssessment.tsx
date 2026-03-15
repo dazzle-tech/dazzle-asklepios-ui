@@ -145,7 +145,6 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     };
   }, [record, patientId, encounterId]);
 
-  // Error helpers
   const normalizeFieldErrorMessage = (message: string) => {
     const messageLower = (message || '').toLowerCase();
     if (messageLower.includes('must not be null')) return 'is required';
@@ -186,7 +185,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}` + traceSuffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -209,7 +208,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       data?.message ||
       'Unexpected error';
 
-    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'error' }));
+    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'warning' }));
   };
 
   // Actions

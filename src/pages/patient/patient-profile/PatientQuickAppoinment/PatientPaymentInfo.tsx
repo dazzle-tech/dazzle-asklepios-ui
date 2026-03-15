@@ -151,7 +151,7 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${errorLines.join('\n')}` + traceSuffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -169,7 +169,7 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
     responseData?.message ||
     'Unexpected error';
 
-  dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'error' }));
+  dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
 };
 
 const toDateOnlyOrNull = (value: any) => {
@@ -911,7 +911,7 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
         dispatch(
           notify({
             msg: `Please fix the following fields:\n${errorLines.join('\n')}`,
-            sev: 'error'
+            sev: 'warning'
           })
         );
         return false;
