@@ -104,8 +104,6 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
     };
   }, [bodyMeasurements, patientId, encounterId]);
 
-  // === Error helpers ===
-
   const normalizeFieldErrorMessage = (message: string) => {
     const messageLower = (message || '').toLowerCase();
     if (messageLower.includes('must not be null')) return 'is required';
@@ -145,7 +143,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}` + traceSuffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -170,7 +168,7 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       data?.message ||
       'Unexpected error';
 
-    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'error' }));
+    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'warning' }));
   };
 
   const handleSaveBodyMeasurements = async () => {
