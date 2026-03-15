@@ -133,7 +133,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}` + traceSuffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -156,7 +156,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       data?.message ||
       'Unexpected error';
 
-    dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'error' }));
+    dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'warning' }));
   };
   const buildEncounterUpdateBody = (row: any) => {
     const body: any = {

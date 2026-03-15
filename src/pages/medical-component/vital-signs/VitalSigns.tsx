@@ -177,7 +177,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}` + traceSuffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -202,7 +202,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       data?.message ||
       'Unexpected error';
 
-    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'error' }));
+    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'warning' }));
   };
 
   const handleSaveVitalSigns = async () => {

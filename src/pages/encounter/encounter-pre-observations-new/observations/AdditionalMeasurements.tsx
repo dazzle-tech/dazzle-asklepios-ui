@@ -73,7 +73,6 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
         setAgeGroupValue({ ageGroup: res?.ageGroup ?? '' });
       })
       .catch(err => {
-        console.error('Age group API error:', err);
         setAgeGroupValue({ ageGroup: '' });
       });
   }, [(patient as any)?.id, (patient as any)?.dateOfBirth]);
@@ -186,9 +185,6 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
     };
   }, [isGeriatric, apiAgeGroup, record, patientId, encounterId]);
 
-  // =========================
-  // Errors
-  // =========================
   const normalizeFieldErrorMessage = (message: string) => {
     const m = (message || '').toLowerCase();
     if (m.includes('must not be null')) return 'is required';
@@ -238,7 +234,7 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}` + traceSuffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -264,7 +260,7 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
       data?.message ||
       'Unexpected error';
 
-    dispatch(notify({ msg: human + traceSuffix, sev: 'error' }));
+    dispatch(notify({ msg: human + traceSuffix, sev: 'warning' }));
   };
 
   const handleSave = async () => {
