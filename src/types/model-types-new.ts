@@ -1637,12 +1637,13 @@ export interface PatientEncounter {
              
 }
 
-export interface PatientBasicInformationResponseVM {
-  id: number;
-  fullName: string;
-  medicalRecordNumber?: string;
-  primaryMobileNumber?: string;
-}
+export type PatientBasicInformationResponseVM = {
+  firstName: string;
+  lastName: string;
+  medicalRecordNumber: string;
+  dateOfBirth: string;
+  sexAtBirth: string;
+};
 
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
@@ -1815,12 +1816,6 @@ export interface PatientEncounter {
   lastModifiedDate?: string | null;
 }
 
-export interface PatientBasicInformationResponseVM {
-  id: number;
-  fullName: string;
-  medicalRecordNumber?: string;
-  primaryMobileNumber?: string;
-}
 
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
@@ -2025,12 +2020,6 @@ export interface BillingInvoiceCreateVM {
   encounterDate?: Date | null;
 }
 
-export interface PatientBasicInformationResponseVM {
-  id: number;
-  fullName: string;
-  medicalRecordNumber?: string;
-  primaryMobileNumber?: string;
-}
 
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
@@ -3514,20 +3503,16 @@ export interface RelationsMatrix {
 }
 export interface PatientAdministrativeWarningsResponseVM {
   id: number;
-  patientId: number;
-  warningTypeLkey: string;
-  warningTypeDisplay?: string;
-  description?: string;
-  isValid: boolean;
-
-  createdAt?: string;
-  createdBy?: string;
-
-  dateResolved?: string;
-  resolvedBy?: string;
-
-  resolutionUndoDate?: string;
-  resolvedUndoBy?: string;
+  patient?: PatientBasicInformationResponseVM | null;
+  warningType: string;
+  description?: string | null;
+  resolved?: boolean | null;
+  resolvedBy?: string | null;
+  resolvedDate?: string | null;
+  undoResolvedBy?: string | null;
+  undoResolvedDate?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
 }
 
 export interface PatientAdministrativeWarningsCreateDTO {
