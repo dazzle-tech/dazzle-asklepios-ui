@@ -1304,13 +1304,13 @@ const ERTriage = () => {
               </div>
             </Whisper>
 
-            {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST'].includes(
+            {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST','PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
             ) && (
                 <Whisper
                   trigger="hover"
                   placement="top"
-                  speaker={isPendingPayment ? tooltipBlockedByPayment : tooltipCancel}
+                  speaker={tooltipCancel}
                 >
                   <div>
                     <MyButton
@@ -1319,7 +1319,6 @@ const ERTriage = () => {
                         setLocalEncounter(rowData);
                         setOpen(true);
                       }}
-                      disabled={isPendingPayment}
                     >
                       <FontAwesomeIcon icon={faRectangleXmark} />
                     </MyButton>
