@@ -33,7 +33,6 @@ const AdvancedSearchFilters = ({
         )}
 
         {extraActions}
-
         {searchFilter && (
           <MyButton
             prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
