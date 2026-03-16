@@ -49,6 +49,18 @@ export const vaccineService = createApi({
       providesTags: (_res, _err, { id }) => [{ type: 'Vaccine', id }, 'Vaccine'],
     }),
 
+    getVaccinesByIds: builder.query<modelTypes.Vaccine[], { ids: Id[] }>({
+      query: ({ ids }) => ({
+        url: `/api/setup/vaccine/by-ids`,
+        params: { ids }
+      }),
+      transformResponse: (res: any) => res ?? [],
+      providesTags: (res) =>
+        res && Array.isArray(res)
+          ? [...res.map((v: any) => ({ type: 'Vaccine' as const, id: v.id })), 'Vaccine']
+          : ['Vaccine']
+    }),
+
     getVaccinesByName: builder.query<PagedResult<modelTypes.Vaccine>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/vaccine/by-name/${encodeURIComponent(name)}`,
@@ -80,7 +92,7 @@ export const vaccineService = createApi({
       query: body => ({
         url: '/api/setup/vaccine',
         method: 'POST',
-        body, 
+        body,
       }),
       invalidatesTags: ['Vaccine'],
     }),
@@ -116,6 +128,7 @@ export const {
   useGetVaccinesQuery,
   useLazyGetVaccinesQuery,
   useGetVaccineByIdQuery,
+  useLazyGetVaccineByIdQuery,
   useGetVaccinesByNameQuery,
   useLazyGetVaccinesByNameQuery,
   useGetVaccinesByTypeQuery,
@@ -126,4 +139,6 @@ export const {
   useUpdateVaccineMutation,
   useToggleVaccineActiveMutation,
   useDeleteVaccineMutation,
+  useGetVaccinesByIdsQuery,
+  useLazyGetVaccinesByIdsQuery
 } = vaccineService;

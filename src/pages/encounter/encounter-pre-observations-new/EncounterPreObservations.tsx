@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Divider, Drawer, Form, List, Panel } from 'rsuite';
+import { Col, Divider, Drawer, Form, List, Panel, Row } from 'rsuite';
 
 import BackButton from '@/components/BackButton/BackButton';
 import MyButton from '@/components/MyButton/MyButton';
@@ -18,7 +18,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
 import { MedicalSheets } from '@/config/modules-config';
-import { useCompleteEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
 import './styles.less';
@@ -44,8 +44,7 @@ const NurseStation = () => {
   const [generateNurseReport] = useGenerateNurseSummaryReportMutation();
 
   // Nurse sheets
-  const departmentKeyToUse = localEncounter?.departmentKey || '5001';
-  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(departmentKeyToUse);
+  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(localEncounter?.departmentId);
 
   const allowedSheetCodes = useMemo(
     () => new Set((nurseSheets ?? []).map((s: any) => s.medicalSheet)),
@@ -84,11 +83,21 @@ const NurseStation = () => {
       navigate('/encounter-list');
       return;
     }
-    setEdit(propsData?.edit || localEncounter?.encounterStatusLvalue?.valueCode === 'CLOSED');
+    setEdit(propsData?.edit || localEncounter?.status === 'CLOSED');
   }, [propsData, localEncounter]);
-
+  
   // Complete encounter
-  const [completeEncounter] = useCompleteEncounterMutation();
+  const [completeEncounter,completeEncounterMutation] = useCompleteEncounterMutation();
+   useEffect(() => {
+      if (
+        localEncounter?.encounterType == 'INPATIENT' &&
+        completeEncounterMutation.status === 'fulfilled'
+      ) {
+        navigate('/inpatient-encounters-list');
+      } else if (completeEncounterMutation.status === 'fulfilled') {
+        navigate('/encounter-list');
+      }
+    }, [completeEncounterMutation]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -129,7 +138,7 @@ const NurseStation = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `nurse-summary-${localEncounter.key}.pdf`;
+      link.download = `nurse-summary-${localEncounter.id}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -192,7 +201,7 @@ const NurseStation = () => {
                 Generate Report
               </MyButton>
 
-              {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
+              {/* {propsData?.encounter?.editable && !propsData?.encounter?.discharge && ( */}
                 <MyButton
                   disabled={edit}
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -201,7 +210,7 @@ const NurseStation = () => {
                 >
                   <Translate>Complete Visit</Translate>
                 </MyButton>
-              )}
+              {/* )} */}
             </div>
           </div>
 
@@ -212,21 +221,39 @@ const NurseStation = () => {
             open={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
             placement="left"
+            style={{ zIndex: 999999999999 }}
             className={`drawer-style ${mode === 'light' ? 'light' : 'dark'}`}
           >
-            <Drawer.Header>
+            <Drawer.Header className="header-drawer">
               <Drawer.Title>Nurse Station Sheets</Drawer.Title>
             </Drawer.Header>
 
-            <Drawer.Body>
-              <List hover>
+            <Drawer.Body className="drawer-body">
+              <Form fluid>
+                <Row>
+                  <Col md={24}>
+                    <MyInput
+                      width="100%"
+                      placeholder="Search screens..."
+                      fieldName={'term'}
+                      record={searchTerm}
+                      setRecord={setSearchTerm}
+                      showLabel={false}
+                      rightAddon={<FaSearch style={{ color: 'var(--primary-gray)' }} />}
+                    />
+                  </Col>
+                </Row>
+              </Form>
+              <List hover className="drawer-list-style">
                 <List.Item
+                 className="drawer-item return-button"
                   onClick={() => {
                     navigate('/nurse-station', { state: location.state });
                     setIsDrawerOpen(false);
                   }}
                 >
-                  <FontAwesomeIcon icon={faClockRotateLeft} /> Dashboard
+                  <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
+                  <Translate>Dashboard</Translate>
                 </List.Item>
 
                 {visibleSheets.map(({ code, name, icon, path }) => {
@@ -234,7 +261,19 @@ const NurseStation = () => {
                   const fullPath = `/nurse-station/${clean}`;
 
                   return (
-                    <List.Item key={code}>
+                    <List.Item key={code}
+                      className="drawer-item"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        navigate(fullPath, {
+                          state: {
+                            patient: propsData.patient,
+                            encounter: propsData.encounter,
+                            edit
+                          }
+                        });
+                      }}
+                    >
                       <Link
                         to={fullPath}
                         state={{
@@ -242,8 +281,12 @@ const NurseStation = () => {
                           encounter: propsData.encounter,
                           edit
                         }}
+                        className="inherit-link"
                       >
-                        {icon} {name}
+                        {icon}
+                        <span className="margin-left-10">
+                          <Translate>{name}</Translate>
+                        </span>
                       </Link>
                     </List.Item>
                   );

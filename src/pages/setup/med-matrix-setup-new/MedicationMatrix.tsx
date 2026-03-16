@@ -27,6 +27,7 @@ import {
   useDeleteMedicationCategoryMutation,
   useGetAllMedicationCategoriesQuery
 } from '@/services/setup/medication-categories/MedicationCategoriesService';
+import { useGetActiveIngredientsByDrugClassQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
 
 const MedicationMatrix = () => {
   const dispatch = useAppDispatch();
@@ -67,7 +68,13 @@ const MedicationMatrix = () => {
     skip: !selectedCategories?.id,
   }
 );
-  const { data: categoriesList, refetch: refetchCat } = useGetAllMedicationCategoriesQuery(searchTermForCategory?.value || undefined);
+  const { data: categoriesList, refetch: refetchCat } = useGetAllMedicationCategoriesQuery(searchTermForCategory?.value || undefined);4
+
+   const { data: classAIList, refetch: refetchClassAI } = useGetActiveIngredientsByDrugClassQuery(
+    {
+      drugClassIds: selectedClass?.id ? [selectedClass?.id] : [],
+    }
+  );
 
   const [removeCat] = useDeleteMedicationCategoryMutation({});
   const [removeClass] = useDeleteMedicationCategoryClassMutation({});
@@ -166,20 +173,9 @@ const MedicationMatrix = () => {
 
   const activeIngColumns: ColumnConfig[] = [
     {
-      key: 'class',
+      key: 'name',
       align: 'center',
       title: 'Active Ingredient',
-      render: () => {
-        return rowData => (
-          <span>
-            {conjureValueBasedOnKeyFromList(
-              activeIngredientListResponseData?.object ?? [],
-              rowData.active_ingredient_key,
-              'name'
-            )}
-          </span>
-        );
-      }
     }
   ];
 
@@ -198,6 +194,7 @@ const MedicationMatrix = () => {
           data={categoriesList ?? []}
           onRowClick={rowData => {
             setSelectedCategories(rowData);
+            setSelectedClass({ ...newMedicationCategoryClass });
           }}
           rowClassName={isSelected}
           sortColumn={listRequest.sortBy}
@@ -336,7 +333,7 @@ const MedicationMatrix = () => {
       <Col md={8}>
         <MyTable
           columns={activeIngColumns}
-          data={[]}
+          data={classAIList?.data ?? []}
           tableButtons={
             <div className="container-of-add-new-button">
               <MyButton

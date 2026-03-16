@@ -1,226 +1,200 @@
-import React, { useState, useEffect } from 'react';
 import PlusIcon from '@rsuite/icons/Plus';
+import React, { useState } from 'react';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
-import '../styles.less';
 import MyTable from '@/components/MyTable';
-import { MdModeEdit, MdDelete } from 'react-icons/md';
-import AddHospitalizations from './AddHospitalizations';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useGetPatientHospitalizationQuery, useRemovePatientHospitalizationMutation } from '@/services/patientService';
-import { initialListRequest } from '@/types/types';
-import { formatDateWithoutSeconds, conjureValueBasedOnKeyFromList } from '@/utils';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import AddHospitalizations from './AddHospitalizations';
+
+import {
+  useDeleteHospitalizationMutation,
+  useGetHospitalizationsQuery
+} from '@/services/patients/hospitalizationsService';
+
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
-const Hospitalizations = ({ patient, encounter, edit ,
-  toShowData=false
-}) => {
+import '../styles.less';
+
+const Hospitalizations = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
+
+  /*  STATE  */
+
   const [open, setOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
 
-  // DELETE modal states
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState(null);
-  const [selectedProblem, setSelectedProblem] = useState(null);
+  const [rowToDelete, setRowToDelete] = useState<any>(null);
 
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(15);
 
-  const [listRequestHospitalizations, setListRequestHospitalizations] = useState({
-    ...initialListRequest,
-    pageSize: 20,
-    filters: [
-      { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-      { fieldName: 'patient_key', operator: 'match', value: patient?.key }
-    ]
-  });
+  /*  API  */
 
-  // Update filters when patient key becomes available
-  useEffect(() => {
-    if (patient?.key) {
-      setListRequestHospitalizations(prev => ({
-        ...prev,
-        filters: [
-          { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-          { fieldName: 'patient_key', operator: 'match', value: patient.key }
-        ]
-      }));
-    }
-  }, [patient?.key]);
+  const patientId = Number(patient?.id);
+  const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
 
-  const { data: hospitalizationsData, isLoading } = useGetPatientHospitalizationQuery(listRequestHospitalizations);
+  const { data, isFetching } = useGetHospitalizationsQuery(
+    {
+      patientId,
+      page,
+      size,
+      sort: 'id,desc'
+    },
+    { skip: !isValidPatientId }
+  );
 
-  const { data: admissionTypeLov } = useGetLovValuesByCodeQuery('ADMISSION_TYPE');
+  const [deleteHospitalization] = useDeleteHospitalizationMutation();
 
-  const [removeHospitalization] = useRemovePatientHospitalizationMutation();
+  /*  ACTIONS  */
 
-  // CONFIRMED DELETE ACTION
-  const confirmDelete = () => {
-    if (!rowToDelete?.key) return;
-
-    removeHospitalization({
-      key: rowToDelete.key,
-      patientKey: patient?.key
-    })
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
-        setListRequestHospitalizations(prev => ({
-          ...prev,
-          timestamp: new Date().getTime(),
-          filters: [
-            { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-            { fieldName: 'patient_key', operator: 'match', value: patient?.key }
-          ]
-        }));
-      })
-      .catch(() => {
-        dispatch(notify({ msg: "Delete failed", sev: "error" }));
-      })
-      .finally(() => {
-        setOpenDeleteModal(false);
-        setRowToDelete(null);
-      });
-  };
-
-
-  const handleEdit = (row) => {
+  const handleEdit = (row: any) => {
     setSelectedRow(row);
     setOpen(true);
   };
 
-  const columns = [
-    { key: 'facility', title: 'FACILITY', flexGrow: 3, dataKey: 'facility' },
-    { key: 'reason', title: 'REASON', flexGrow: 3, dataKey: 'reason' },
+  const handleDelete = async () => {
+    if (!rowToDelete?.id) return;
 
+    try {
+      await deleteHospitalization({ id: rowToDelete.id }).unwrap();
+      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
+      setOpenDeleteModal(false);
+      setRowToDelete(null);
+    } catch {
+      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
+    }
+  };
+
+  /*  TABLE  */
+
+  const columns = [
     {
-      key: 'admissionTypeLkey',
+      key: 'facility',
+      title: 'FACILITY',
+      flexGrow: 3,
+      dataKey: 'facility'
+    },
+    {
+      key: 'reason',
+      title: 'REASON',
+      flexGrow: 3,
+      dataKey: 'reason'
+    },
+    {
+      key: 'admissionType',
       title: 'ADMISSION TYPE',
       flexGrow: 3,
-      render: row =>
-        conjureValueBasedOnKeyFromList(
-          admissionTypeLov?.object ?? [],
-          row.admissionTypeLkey,
-          'lovDisplayVale'
-        )
+      dataKey: 'admissionType'
     },
-
     {
       key: 'dateOfAdmission',
       title: 'DATE OF ADMISSION',
       flexGrow: 3,
-      render: row =>
-        row?.dateOfAdmission ? formatDateWithoutSeconds(row.dateOfAdmission) : ''
+      render: (row: any) =>
+        row?.dateOfAdmission ? new Date(row.dateOfAdmission).toLocaleDateString() : ''
     },
-
-    { key: 'lengthOfStay', title: 'LENGTH OF STAY', flexGrow: 2, dataKey: 'lengthOfStay' },
-
-    { key: 'outcomes', title: 'OUTCOMES', flexGrow: 3, dataKey: 'outcomes' },
-
+    {
+      key: 'lengthOfStayDays',
+      title: 'LENGTH OF STAY (DAYS)',
+      flexGrow: 2,
+      dataKey: 'lengthOfStayDays'
+    },
+    {
+      key: 'outcomes',
+      title: 'OUTCOMES',
+      flexGrow: 3,
+      dataKey: 'outcomes'
+    },
     {
       key: 'medicalInterventionsPerformed',
       title: 'MEDICAL INTERVENTIONS PERFORMED',
-      flexGrow: 3,
+      flexGrow: 4,
       dataKey: 'medicalInterventionsPerformed'
     },
-
-  ...(!toShowData ? [{
-      key: 'actions',
-      title: '',
-      flexGrow: 2,
-      render: (row) => (
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-
-          <MdModeEdit
-            size={24}
-            fill="var(--primary-gray)"
-            style={{ cursor: 'pointer' }}
-            onClick={() => handleEdit(row)}
-          />
-
-          <MdDelete
-            size={24}
-            fill="var(--primary-pink)"
-            style={{ cursor: 'pointer' }}
-            onClick={() => {
-              setRowToDelete(row);
-              setOpenDeleteModal(true);
-            }}
-          />
-        </div>
-      ),
-    }] : [])
+    ...(!toShowData
+      ? [
+          {
+            key: 'actions',
+            title: '',
+            flexGrow: 1,
+            render: (row: any) => (
+              <div style={{ display: 'flex', gap: 12 }}>
+                <MdModeEdit
+                  size={22}
+                  fill="var(--primary-gray)"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => handleEdit(row)}
+                />
+                <MdDelete
+                  size={22}
+                  fill="var(--primary-pink)"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setRowToDelete(row);
+                    setOpenDeleteModal(true);
+                  }}
+                />
+              </div>
+            )
+          }
+        ]
+      : [])
   ];
 
+  /*  PAGINATION  */
 
-
-
-  const isSelected = row => {
-    if (row && selectedProblem && row.key === selectedProblem.key) return 'selected-row';
-    return '';
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPage(newPage);
   };
 
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSize(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
-    const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequestHospitalizations({ ...listRequestHospitalizations, pageNumber: newPage + 1 });
-    };
-
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequestHospitalizations({
-        ...listRequestHospitalizations,
-        pageSize: parseInt(event.target.value, 10),
-        pageNumber: 1
-    });
-    };
-
-
-  const pageIndex = listRequestHospitalizations.pageNumber - 1;
-  const rowsPerPage = listRequestHospitalizations.pageSize;
-  const totalCount = hospitalizationsData?.extraNumeric ?? 0;
-
+  /*  RENDER  */
 
   return (
     <div className="medical-container-div">
       <SectionContainer
-        title={
-          <>
-            Hospitalizations
-          </>
-        }
-        button={<>
-        {!toShowData&&  <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+        title="Hospitalizations"
+        action={
+          !toShowData && (
+            <MyButton
+              disabled={edit}
+              prefixIcon={() => <PlusIcon />}
+              onClick={() => {
+                setSelectedRow(null);
+                setOpen(true);
+              }}
+            >
               Add
-        </MyButton>}
-        </>}
+            </MyButton>
+          )
+        }
         content={
           <>
             <MyTable
               height={450}
-              data={hospitalizationsData?.object || []}
-              loading={isLoading}
+              data={data?.data ?? []}
+              loading={isFetching}
               columns={columns}
-              page={pageIndex}
-              rowsPerPage={rowsPerPage}
-              totalCount={totalCount}
+              page={page}
+              rowsPerPage={size}
+              totalCount={data?.totalCount ?? 0}
               onPageChange={handlePageChange}
               onRowsPerPageChange={handleRowsPerPageChange}
-              rowClassName={isSelected}
             />
 
             <AddHospitalizations
               open={open}
               setOpen={() => {
-                setSelectedRow(null);
                 setOpen(false);
-                setListRequestHospitalizations({
-                  ...listRequestHospitalizations,
-                  timestamp: new Date().getTime(),
-                  filters: [
-                    { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-                    { fieldName: 'patient_key', operator: 'match', value: patient?.key }
-                  ]
-                });
+                setSelectedRow(null);
               }}
               initialData={selectedRow}
               patient={patient}
@@ -231,7 +205,7 @@ const Hospitalizations = ({ patient, encounter, edit ,
               setOpen={setOpenDeleteModal}
               itemToDelete="Hospitalization"
               actionType="delete"
-              actionButtonFunction={confirmDelete}
+              actionButtonFunction={handleDelete}
             />
           </>
         }

@@ -1,12 +1,12 @@
+import MyInput from '@/components/MyInput';
 import React from 'react';
 import { Form } from 'rsuite';
-import MyInput from '@/components/MyInput';
 
 const BasicInfo = ({
   validationResult,
   localPatient,
   setLocalPatient,
-  genderLovQueryResponse,
+  genderEnum,
   ageFormatType,
   ageGroupValue,
   patientClassLovQueryResponse
@@ -20,9 +20,10 @@ const BasicInfo = ({
         fieldName="firstName"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
-        // required
+        width={170}
         vr={validationResult}
         column
         fieldName="secondName"
@@ -35,6 +36,7 @@ const BasicInfo = ({
         fieldName="thirdName"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         required
@@ -43,6 +45,7 @@ const BasicInfo = ({
         fieldName="lastName"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         required
@@ -50,13 +53,14 @@ const BasicInfo = ({
         column
         fieldLabel="Gender"
         fieldType="select"
-        fieldName="genderLkey"
-        selectData={genderLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        fieldName="sexAtBirth"
+        selectData={genderEnum ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        width={170}
       />
       <MyInput
         required
@@ -64,9 +68,10 @@ const BasicInfo = ({
         column
         fieldType="date"
         fieldLabel="DOB"
-        fieldName="dob"
+        fieldName="dateOfBirth"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -75,7 +80,8 @@ const BasicInfo = ({
         fieldType="text"
         disabled
         fieldName="ageFormat"
-        record={localPatient?.dob ? ageFormatType : null}
+        record={localPatient?.dateOfBirth ? ageFormatType : null}
+        width={170}
       />
       <MyInput
         vr={validationResult}
@@ -84,20 +90,23 @@ const BasicInfo = ({
         fieldType="text"
         fieldName="ageGroup"
         disabled
-        record={localPatient?.dob ? ageGroupValue : null}
+        record={localPatient?.dateOfBirth ? ageGroupValue : null}
+        isEnum
+        width={170}
       />
       <MyInput
         vr={validationResult}
         column
         fieldLabel="Patient Class"
         fieldType="select"
-        fieldName="patientClassLkey"
+        fieldName="patientClasses"
         selectData={patientClassLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
         searchable={false}
+        width={170}
       />
       {localPatient?.incompletePatient ? (
         <MyInput
@@ -105,10 +114,11 @@ const BasicInfo = ({
           column
           fieldLabel="Unknown Patient"
           fieldType="checkbox"
-          fieldName="unknownPatient"
+          fieldName="isUnknown"
           record={localPatient}
           setRecord={setLocalPatient}
           disabled
+          width={170}
         />
       ) : null}
       <MyInput
@@ -116,15 +126,17 @@ const BasicInfo = ({
         column
         fieldLabel="Private Patient"
         fieldType="checkbox"
-        fieldName="privatePatient"
+        fieldName="isPrivatePatient"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
+        width={170}
         column
         fieldLabel="First Name (Sec. Lang)"
-        fieldName="firstNameOtherLang"
+        fieldName="firstNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
       />
@@ -132,25 +144,28 @@ const BasicInfo = ({
         vr={validationResult}
         column
         fieldLabel="Second Name (Sec. Lang)"
-        fieldName="secondNameOtherLang"
+        fieldName="secondNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
         column
         fieldLabel="Third Name (Sec. Lang)"
-        fieldName="thirdNameOtherLang"
+        fieldName="thirdNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
       <MyInput
         vr={validationResult}
         column
         fieldLabel="Last Name (Sec. Lang)"
-        fieldName="lastNameOtherLang"
+        fieldName="lastNameSecondaryLang"
         record={localPatient}
         setRecord={setLocalPatient}
+        width={170}
       />
     </Form>
   );

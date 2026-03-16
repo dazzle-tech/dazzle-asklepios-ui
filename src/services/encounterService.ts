@@ -15,7 +15,6 @@ import {
   ApDoctorRound,
   ApNurseNotes,
   ApRepositioning,
-  ApDayCaseEncounters,
   ApPreOperationAdministeredMedications,
   ApEmergencyTriage,
   ApEncounterAssignToBed,
@@ -56,7 +55,13 @@ type ParentResponse<T> = {
   object: T;
   msg?: string;
 };
-
+export type EncounterLocationResponse = {
+  encounterId: string;
+  bedKey: string | null;
+  bedName: string | null;
+  roomKey: string | null;
+  roomName: string | null;
+};
 export type PatientSummaryResponse = {
   age: any;
   gender: string;
@@ -344,7 +349,15 @@ export const encounterService = createApi({
       keepUnusedDataFor: 5
     }),
     getConsultationOrdersByDepartment: builder.query({
-      query: ({ listRequest, department_key, preferred_consultant_key }: { listRequest: ListRequest, department_key: string, preferred_consultant_key?: string }) => {
+      query: ({
+        listRequest,
+        department_key,
+        preferred_consultant_key
+      }: {
+        listRequest: ListRequest;
+        department_key: string;
+        preferred_consultant_key?: string;
+      }) => {
         const params = new URLSearchParams(fromListRequestToQueryParams(listRequest));
         params.append('department_key', department_key);
         if (preferred_consultant_key) {
@@ -864,6 +877,16 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getEncounterAssignToBed: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/encounter-assign-to-bed-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+      keepUnusedDataFor: 0
+    }),
     saveAssignToBed: builder.mutation({
       query: (encounterAssignToBed: ApEncounterAssignToBed) => ({
         url: `/encounter/save-assign-to-bed`,
@@ -1124,7 +1147,6 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-
     getNurseServiceProductList: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/nurse-service-product-list?${fromListRequestToQueryParams(listRequest)}`
@@ -1185,7 +1207,7 @@ export const encounterService = createApi({
       { patientKey: string; encounterKey: string; lang?: string; medications?: string[] }
     >({
       query: ({ patientKey, encounterKey, lang, medications }) => ({
-        url: `/encounter/summary`, 
+        url: `/encounter/summary`,
         method: 'GET',
         params: {
           patientKey,
@@ -1210,6 +1232,19 @@ export const encounterService = createApi({
         };
       }
     }),
+getEncounterLocations: builder.query<EncounterLocationResponse[], string[]>({
+  query: (encounterIds: string[]) => ({
+    url: `/encounter/encounter-locations`,
+    method: 'GET',
+    params: {
+      encounterIds
+    }
+  }),
+  transformResponse: (response: ParentResponse<EncounterLocationResponse[]>) => {
+    return response?.object ?? [];
+  },
+  keepUnusedDataFor: 0
+}),
     getMiniSummary: builder.query({
       query: ({ patientKey, encounterKey, lang = 'en' }) => ({
         url: `/encounter/mini-summary`,
@@ -1223,7 +1258,7 @@ export const encounterService = createApi({
       transformResponse: (response: any) => {
         return response?.object;
       }
-    }),
+    })
   })
 });
 
@@ -1312,6 +1347,8 @@ export const {
   useSaveNurseNotesMutation,
   useSaveNewPositionMutation,
   useGetRepositioningListQuery,
+  useGetEncounterAssignToBedQuery,
+  useLazyGetEncounterAssignToBedQuery,
   useSaveAssignToBedMutation,
   useSavePreOperationMedicationsMutation,
   useGetPreOperationMedicationsListQuery,
@@ -1345,4 +1382,5 @@ export const {
   useGetClinicalSummaryQuery,
   useGetPatientSummaryQuery,
   useGetMiniSummaryQuery,
+  useGetEncounterLocationsQuery,
 } = encounterService;

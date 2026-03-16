@@ -35,6 +35,7 @@ import AddEditUser from './AddEditUser';
 import ResetPassword from './ResetPassword';
 
 import './styles.less';
+import { formatEnumString } from '@/utils';
 
 const Users = () => {
   const dispatch = useAppDispatch();
@@ -294,52 +295,18 @@ const totalCount = usersResponse?.length ?? 0;
         return rowData?.admin ? 'True' : 'False';
       }
     },
-    // {
-    //   key: 'jobRoleLvalue',
-    //   title: <Translate>job Role</Translate>,
-    //   flexGrow: 4,
-    //   render: rowData => {
-    //     return (
-    //       <p>
-    //         {rowData.jobRoleLvalue ? rowData.jobRoleLvalue.lovDisplayVale : rowData.jobRoleLkey}
-    //       </p>
-    //     );
-    //   }
-    // },
-    // {
-    //   key: 'organizationKey',
-    //   title: <Translate>Facility</Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => (
-    //     <span>
-    //       {conjureValueBasedOnKeyFromList(
-    //         facilityListResponse?.object ?? [],
-    //         rowData.accessRoleKey,
-    //         'facilityName'
-    //       )}
-    //     </span>
-    //   )
-    // },
-    // {
-    //   key: 'accessRoleKey',
-    //   title: <Translate>Access Role</Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => (
-    //     <span>
-    //       {conjureValueBasedOnKeyFromList(
-    //         accessRoleListResponse?.object ?? [],
-    //         rowData.accessRoleKey,
-    //         'name'
-    //       )}
-    //     </span>
-    //   )
-    // },
-    // {
-    //   key: 'isValid',
-    //   title: <Translate>Is Valid</Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => (rowData.isValid ? 'Active' : 'InActive')
-    // },
+    {
+      key: 'jobRoleLvalue',
+      title: <Translate>job Role</Translate>,
+      flexGrow: 4,
+      render: rowData => {
+        return (
+          <p>
+            {formatEnumString(rowData.jobRole)}
+          </p>
+        );
+      }
+    },
     {
       key: 'icons',
       title: <Translate></Translate>,

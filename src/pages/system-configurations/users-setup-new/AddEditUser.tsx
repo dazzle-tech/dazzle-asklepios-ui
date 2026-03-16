@@ -10,10 +10,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import AccessRole from './tabs/AccessRole';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
-const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProceed, setCanProceed}) => {
+const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProceed, setCanProceed }) => {
 
 
-  const jobRoles=useEnumOptions("JobRole");
+  const jobRoles = useEnumOptions("JobRole");
 
   const genders = [
     {
@@ -50,7 +50,9 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
-              <MyInput fieldName="login" required record={user} setRecord={setUser} width={'13vw'} />
+              <MyInput
+                disabled={!!user?.id}
+                fieldName="login" required record={user} setRecord={setUser} width={'13vw'} />
               <MyInput
                 width={'13vw'}
                 fieldLabel="Job Role"
@@ -61,6 +63,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
                 selectDataValue="value"
                 record={user}
                 setRecord={setUser}
+                required
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
@@ -115,7 +118,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={user?.key ? 'Edit User' : 'New User'}
+      title={user?.id ? 'Edit User' : 'New User'}
       position="right"
       content={conjureFormContent}
       actionButtonLabel={user?.id ? 'Save' : 'Create'}

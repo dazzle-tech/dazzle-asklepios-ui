@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import { useAppDispatch } from '@/hooks';
-import SampleModal from '@/pages/lab-module/SampleModal';
+import SampleModal from '@/pages/lab-module-new/SampleModal';
 import {
   useGetDiagnosticOrderTestQuery,
   useSaveDiagnosticOrderTestMutation

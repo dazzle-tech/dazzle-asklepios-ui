@@ -1,22 +1,21 @@
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { setEncounter } from '@/reducers/patientSlice';
-import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import * as icons from '@rsuite/icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
-import { Checkbox, Divider, Grid, Input, Pagination, Panel } from 'rsuite';
+import { Checkbox, Grid, Input, Panel } from 'rsuite';
 
 import MyButton from '@/components/MyButton/MyButton';
 import MyCard from '@/components/MyCard';
-import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
+import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import {
-  useGetEncounterReviewOfSystemsQuery,
-  useRemoveReviewOfSystemMutation,
-  useSaveEncounterChangesMutation,
-  useSaveReviewOfSystemMutation
-} from '@/services/encounterService';
+  useCreateReviewOfSystemMutation,
+  useDeleteReviewOfSystemByIdMutation,
+  useGetReviewOfSystemByEncounterQuery,
+  useUpdateReviewOfSystemMutation
+} from '@/services/medicalsheetsEncounter/ReviewOfSystemService'; // ✅ new service
 import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
@@ -25,47 +24,53 @@ import { newApLovValues } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
 import Summary from './Summery';
-const ReviewOfSystems = ({edit, patient, encounter, ...props }) => {
+
+const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
+  const dispatch = useAppDispatch();
 
   const [openModel, setOpenModel] = useState(false);
-  const dispatch = useAppDispatch();
   const [selectedSystem, setSelectedSystem] = useState({ ...newApLovValues });
 
-  const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
   const [localEncounter, setLocalEncounter] = useState({ ...encounter });
+  const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
+
   const { data: bodySystemsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_SYS');
   const { data: bodySystemsDetailLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'BODY_SYS_DETAIL',
     parentValueKey: selectedSystem.key
   });
-  
-  const encounterReviewOfSystemsResponse = useGetEncounterReviewOfSystemsQuery(
-    encounter.key
-  );
 
-  const { data: encounterReviewOfSystemsSummaryResponse, refetch } = useGetEncounterReviewOfSystemsQuery(encounter.key);
+  // ✅ New API: get all by encounter
+  const {
+    data: rosList,
+    refetch: refetchRos,
+    isLoading: rosLoading
+  } = useGetReviewOfSystemByEncounterQuery(encounter.id, { skip: !encounter?.id });
 
-  const [saveReviewOfSystem, saveReviewOfSystemMutation] = useSaveReviewOfSystemMutation();
-  const [removeReviewOfSystem, removeReviewOfSystemMutation] = useRemoveReviewOfSystemMutation();
-  const [mainData, setMainData] = useState({});
+  const [createRos] = useCreateReviewOfSystemMutation();
+  const [updateRos] = useUpdateReviewOfSystemMutation();
+  const [deleteRos] = useDeleteReviewOfSystemByIdMutation();
+
+  // mainData map: key = systemDetail (detailId), value = ros record
+  const [mainData, setMainData] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    refetch();
-  }, [saveReviewOfSystemMutation])
-  useEffect(() => {
+    if (rosList) {
+      const _map: Record<string, any> = {};
+      rosList.forEach((r: any) => {
+        _map[String(r.systemDetail)] = r;
+      });
+      setMainData(_map);
+    }
+  }, [rosList]);
 
-  }, [encounterReviewOfSystemsSummaryResponse, encounter.key])
-  const closeModel = () => {
-    setOpenModel(false);
-  }
   const saveChanges = async () => {
     try {
       await saveEncounterChanges(localEncounter).unwrap();
-
-      dispatch(notify({msg:'Findings Saved Successfully',sev:'success'}));
+      dispatch(notify({ msg: 'Findings Saved Successfully', sev: 'success' }));
     } catch (error) {
-      console.error("Encounter save failed:", error);
-      dispatch(notify({msg:'Findings Saved fill',sev:'success'}));
+      console.error('Encounter save failed:', error);
+      dispatch(notify({ msg: 'Findings Save Failed', sev: 'error' }));
     }
   };
 
@@ -76,175 +81,166 @@ const ReviewOfSystems = ({edit, patient, encounter, ...props }) => {
     }
   }, [saveEncounterChangesMutation]);
 
+  const totalCount = bodySystemsDetailLovQueryResponse?.object?.length ?? 0;
+  const paginatedData = bodySystemsDetailLovQueryResponse?.object ?? [];
 
-  useEffect(() => {
-    if (encounterReviewOfSystemsResponse.isSuccess) {
-      buildMainData(encounterReviewOfSystemsResponse.data?.object ?? []);
-    }
-  }, [encounterReviewOfSystemsResponse]);
-
-  useEffect(() => {
-    if (saveReviewOfSystemMutation.isSuccess) {
-      buildMainData(saveReviewOfSystemMutation.data);
-    }
-  }, [saveReviewOfSystemMutation]);
-
-  useEffect(() => {
-    if (removeReviewOfSystemMutation.isSuccess) {
-      buildMainData(removeReviewOfSystemMutation.data);
-    }
-  }, [removeReviewOfSystemMutation]);
-
-  const buildMainData = data => {
-    const _map = {};
- 
-    if (data) {
-      data.map(record => {
-        _map[record.systemDetailLkey] = record;
-      });
-      setMainData(_map);
-    }
-  };
-
-  const isSelected = rowData => {
-    if (rowData && rowData.key === selectedSystem.key) {
-      return 'selected-row';
-    } else return '';
-  };
-    const tableColumns = [
+  const tableColumns = useMemo(
+    () => [
       {
-        key: ' ',
+        key: 'check',
         title: <Translate>#</Translate>,
         flexGrow: 1,
-        render: rowData => (
-          <Checkbox
-          disabled={edit}
-            onChange={(value, checked) => {
-              
-              if (checked) {
-                saveReviewOfSystem({
-                  key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
-                  encounterKey: encounter.key,
-                  bodySystemDetailKey: rowData.key,
-                  systemLkey: String(selectedSystem.key),
-                  notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
-                }).unwrap();
-                dispatch(notify({msg:'Findings Saved Successfully' ,sev:"success"}));
-                refetch();
+        render: (rowData: any) => {
+          const detailId = String(rowData.key);
+          const existing = mainData[detailId]; // { id, bodySystem, systemDetail, note, ... }
+          return (
+            <Checkbox
+              disabled={edit || !selectedSystem?.key}
+              checked={!!existing}
+              onChange={async (_value, checked) => {
+                try {
+                  if (checked) {
+                    // ✅ Create (upsert behavior from backend) - store keys
+                    const saved = await createRos({
+                      patientId: patient.id, // ✅ adjust if your patient id field is patient.id not key
+                      encounterId: encounter.id,
+                      bodySystem: String(selectedSystem.key),
+                      systemDetail: detailId,
+                      note: existing?.note ?? ''
+                    }).unwrap();
 
-              } else {
-                removeReviewOfSystem({
-                  key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
-                  encounterKey: encounter.key,
-                  bodySystemDetailKey: rowData.key,
-                  notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
-                }).unwrap();
-                dispatch(notify({msg:'Findings Deleted Successfully',sev:"success"}));
-                refetch();
-              }
-            }}
-            checked={mainData[rowData.key] ? true : false}
-          />
-        )
+                    setMainData(prev => ({ ...prev, [detailId]: saved }));
+                    dispatch(notify({ msg: 'Findings Saved Successfully', sev: 'success' }));
+                  } else {
+                    // ✅ Delete by id
+                    if (existing?.id) {
+                      await deleteRos(existing.id).unwrap();
+                    }
+                    setMainData(prev => {
+                      const clone = { ...prev };
+                      delete clone[detailId];
+                      return clone;
+                    });
+                    dispatch(notify({ msg: 'Findings Deleted Successfully', sev: 'success' }));
+                  }
+
+                  refetchRos();
+                } catch (e) {
+                  console.error(e);
+                  dispatch(notify({ msg: 'Action Failed', sev: 'error' }));
+                }
+              }}
+            />
+          );
+        }
       },
       {
         key: 'detail',
         title: <Translate>Detail</Translate>,
         flexGrow: 2,
-       dataKey:"lovDisplayVale"
+        dataKey: 'lovDisplayVale'
       },
       {
         key: 'note',
         title: <Translate>Notes</Translate>,
         flexGrow: 4,
-        render:rowData => (
-          <Input
-            disabled={(!mainData[rowData.key]) ||(edit)}
-            value={mainData[rowData.key] ? mainData[rowData.key].notes : ''}
-            onChange={e => {
-              setMainData({
-                ...mainData,
-                [rowData.key]: {
-                  ...mainData[rowData.key],
-                  notes: e
+        render: (rowData: any) => {
+          const detailId = String(rowData.key);
+          const existing = mainData[detailId];
+
+          return (
+            <Input
+              disabled={!existing || edit}
+              value={existing?.note ?? ''}
+              placeholder="Insert Notes"
+              onChange={val => {
+                setMainData(prev => ({
+                  ...prev,
+                  [detailId]: { ...(prev[detailId] ?? {}), note: val }
+                }));
+              }}
+              onBlur={async () => {
+                try {
+                  const current = mainData[detailId];
+                  if (!current?.id) return;
+
+                  const updated = await updateRos({
+                    id: current.id,
+                    patientId: current.patientId ?? patient.key,
+                    encounterId: current.encounterId ?? encounter.key,
+                    bodySystem: current.bodySystem ?? String(selectedSystem.key),
+                    systemDetail: current.systemDetail ?? detailId,
+                    note: current.note ?? ''
+                  }).unwrap();
+
+                  setMainData(prev => ({ ...prev, [detailId]: updated }));
+                } catch (e) {
+                  console.error(e);
+                  dispatch(notify({ msg: 'Note Save Failed', sev: 'error' }));
                 }
-              });
-            }}
-            placeholder="Insert Notes"
-            onBlur={() => {
-              saveReviewOfSystem({
-                key: mainData[rowData.key].key,
-                encounterKey: encounter.key,
-                bodySystemDetailKey: rowData.key,
-                notes: mainData[rowData.key].notes
-              }).unwrap();
-            }}
-          />
-        )
-      }
-    ];
-      const [pageIndex, setPageIndex] = useState(0);
-        const [rowsPerPage, setRowsPerPage] = useState(5);
-    
-        const handlePageChange = (_: unknown, newPage: number) => {
-            setPageIndex(newPage);
+              }}
+            />
+          );
         }
-        const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-            setRowsPerPage(parseInt(event.target.value, 10));
-            setPageIndex(0);
-    
-        };
-        const totalCount = bodySystemsDetailLovQueryResponse?.object?.length ?? 0;
-        const paginatedData = bodySystemsDetailLovQueryResponse?.object?.slice(
-            pageIndex * rowsPerPage,
-            pageIndex * rowsPerPage + rowsPerPage
-        );
-      
+      }
+    ],
+    [
+      mainData,
+      edit,
+      selectedSystem?.key,
+      patient?.key,
+      encounter?.key,
+      createRos,
+      deleteRos,
+      updateRos,
+      refetchRos
+    ]
+  );
+
   return (
     <>
       <Panel>
         <Grid fluid>
-       
-          <div className='top-div'>
-           <div style={{ ...((props?.noTitle) && { display: "none" })}}>
-           <Translate>Physical Examination & Findings</Translate>
-           </div>
-            <div className='bt-right'
-            >
-               <MyButton
-                  onClick={() => setOpenModel(true)}
-                 
-                 prefixIcon={()=><icons.List  />}>Findings</MyButton>
+          <div className="top-div">
+            <div style={{ ...(props?.noTitle && { display: 'none' }) }}>
+              <Translate>Physical Examination & Findings</Translate>
             </div>
 
+            <div className="bt-right">
+              <MyButton onClick={() => setOpenModel(true)} prefixIcon={() => <icons.List />}>
+                Findings
+              </MyButton>
+            </div>
           </div>
-            <div className='details-style'>
-              <div className='system-style'>
-                {bodySystemsLovQueryResponse?.object.map((item, index) => (
 
-                  <MyCard
-                    showArrow={true}
-                    leftArrow={false}
-                    arrowClick={() => setSelectedSystem(item)}
-                    footerContant={item.lovDisplayVale}
-                  ></MyCard>
-
-                ))}</div>
-           <div className='system-details'>
-            <MyTable
-            data={paginatedData ?? []}
-            columns={tableColumns}
-              page={pageIndex}
-            rowsPerPage={rowsPerPage}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            ></MyTable>
-
-              </div>
+          <div className="details-style">
+            <div className="system-style">
+              {bodySystemsLovQueryResponse?.object?.map((item: any) => (
+                <MyCard
+                  key={item.key}
+                  showArrow={true}
+                  leftArrow={false}
+                  arrowClick={() => setSelectedSystem(item)}
+                  footerContant={item.lovDisplayVale}
+                />
+              ))}
             </div>
+
+            <div className="system-details">
+              <MyTable data={paginatedData} columns={tableColumns} loading={rosLoading} />
+            </div>
+          </div>
         </Grid>
-  <Summary  open={openModel} setOpen={setOpenModel} list={encounterReviewOfSystemsSummaryResponse?.object} encounter={localEncounter} setEncounter={setLocalEncounter} saveEncounter={saveChanges}/>
+
+        <Summary
+          open={openModel}
+          setOpen={setOpenModel}
+          list={rosList}
+          encounter={localEncounter}
+          setEncounter={setLocalEncounter}
+          saveEncounter={saveChanges}
+          system={bodySystemsLovQueryResponse}
+        />
       </Panel>
     </>
   );

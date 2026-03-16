@@ -15,7 +15,6 @@ const RegistrationWizard = () => {
   const dispatch = useAppDispatch();
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
 
-
   // Effects
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -38,7 +37,7 @@ const RegistrationWizard = () => {
 
   return (
     <Panel>
-      <div className='patient-facility-btns'>
+      <div className="patient-facility-btns">
         <MyButton
           onClick={() => setOpen(true)}
           radius="15px"
@@ -57,7 +56,6 @@ const RegistrationWizard = () => {
       </div>
       <CreateNewPatient open={open} setOpen={setOpen} />
       <QuickPatient open={quickPatientModalOpen} setOpen={setQuickPatientModalOpen} />
-
     </Panel>
   );
 };

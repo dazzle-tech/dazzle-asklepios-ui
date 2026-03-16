@@ -10,7 +10,7 @@ import MyInput from '@/components/MyInput';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
-import PatientSide from '@/pages/lab-module/PatienSide';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds } from '@/utils';

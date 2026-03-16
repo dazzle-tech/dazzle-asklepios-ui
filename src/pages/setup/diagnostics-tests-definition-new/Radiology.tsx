@@ -17,9 +17,6 @@ const Radiology = ({ diagnosticsTest, diagnosticTestRadiology, setDiagnosticTest
 
   const{data:radiologiData}=useGetRadiologyByTestIdQuery(diagnosticsTest?.id!,{ skip: !diagnosticsTest?.id });
 
-
-
-
   useEffect(() => {
     if (diagnosticsTest) {
       setDiagnosticTestRadiology(prevState => ({

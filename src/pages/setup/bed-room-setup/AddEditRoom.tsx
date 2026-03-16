@@ -54,7 +54,7 @@ const AddEditRoom = ({
   });
 
   const { data: roomTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ROOM_TYPES');
-  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const genders =useEnumOptions('Gender')
   const [department, setDepartment] = useState<Department>({ ...newDepartment });
   const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
   const [saveRoom] = useSaveRoomMutation();
@@ -369,6 +369,7 @@ const AddEditRoom = ({
   const content = (
     <Form fluid layout="inline">
       {/* Facility */}
+      
       <MyInput
         width={'13vw'}
         column
@@ -513,9 +514,9 @@ const AddEditRoom = ({
         fieldLabel="Gender"
         fieldType="select"
         fieldName="genderLkey"
-        selectData={genderLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        selectData={genders ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={room}
         setRecord={setRoom}
         disabled={!isGenderSpecific?.genderSpecific}

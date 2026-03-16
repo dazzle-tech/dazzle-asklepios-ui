@@ -43,6 +43,28 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const dispatch = useAppDispatch();
   const facilityId = facility?.id;
 
+  const extractApiErrorMessage = (err: any) => {
+    const status = err?.status ?? err?.originalStatus ?? err?.error?.status;
+    const data = err?.data ?? err?.error?.data;
+
+    let detail = '';
+    if (typeof data === 'string') detail = data;
+    else if (data && typeof data === 'object') {
+      detail =
+        (data as any)?.message ||
+        (data as any)?.detail ||
+        (data as any)?.title ||
+        JSON.stringify(data);
+    }
+
+    const fallback = err?.error || err?.message || 'Request failed';
+    const core = detail || fallback;
+    return status != null ? `(${status}) ${core}` : core;
+  };
+
+  const stripUndefined = (obj: any) =>
+    Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
+
   // State
   const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] = useState(false);
   const [stateOfDeleteDepartmentModal, setStateOfDeleteDepartmentModal] = useState('delete');
@@ -139,19 +161,6 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     });
   }, [department?.departmentCode]);
 
-  useEffect(() => {
-    if (addDepartmentMutation.data) {
-      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
-      refetchDepartments();
-    }
-  }, [addDepartmentMutation.data, refetchDepartments]);
-
-  useEffect(() => {
-    if (updateDepartmentMutation.data) {
-      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
-      refetchDepartments();
-    }
-  }, [updateDepartmentMutation.data, refetchDepartments]);
 
   // Handlers
   const handleNew = () => {
@@ -185,9 +194,30 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     if (!validateRequiredFields()) {
       return;
     }
+
+    if (!facilityId) {
+      dispatch(notify({ msg: 'Facility is required to add a department', sev: 'warning' }));
+      return;
+    }
+
     setOpenForm(false);
     setLoad(true);
-    addDepartment({ ...department, facilityId: facilityId! })
+    // Backend expects a CREATE payload (no id / no server-managed audit fields)
+    const payload = stripUndefined({
+      facilityId: Number(facilityId),
+      name: (department?.name ?? '').trim(),
+      departmentType: department?.departmentType,
+      departmentCode: department?.departmentCode,
+      appointable: Boolean(department?.appointable),
+      encounterType: department?.encounterType || undefined,
+      phoneNumber: department?.phoneNumber || undefined,
+      email: department?.email || undefined,
+      isActive: department?.isActive ?? true,
+      hasMedicalSheets: Boolean(department?.hasMedicalSheets),
+      hasNurseMedicalSheets: Boolean(department?.hasNurseMedicalSheets),
+    });
+
+    addDepartment(payload)
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department added successfully', sev: 'success' }));
@@ -195,8 +225,10 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
         setNextDepartmentCode(newCode);
         refetchDepartments();
       })
-      .catch(() => {
-        dispatch(notify({ msg: 'Failed to add department', sev: 'error' }));
+      .catch((err: any) => {
+        const msg = extractApiErrorMessage(err);
+        console.error('addDepartment failed:', { payload, err });
+        dispatch(notify({ msg, sev: 'error' }));
       })
       .finally(() => setLoad(false));
   };

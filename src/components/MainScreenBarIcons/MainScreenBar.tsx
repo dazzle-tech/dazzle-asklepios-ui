@@ -204,10 +204,10 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const contentOfMoreIconMenu = (
     <Popover full>
       <Dropdown.Menu>
-         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faFileLines} />
-             Customize Form
+            Customize Form
           </div>
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
@@ -330,9 +330,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 active={uiSlice?.lang === lang?.langKey}
                 onClick={() => {
                   dispatch(setLang(lang?.langKey));
-                  const selectedObject = langData.find(
-                    item => item?.langKey === lang?.langKey
-                  );
+                  const selectedObject = langData.find(item => item?.langKey === lang?.langKey);
                   localStorage.setItem('direction', selectedObject?.direction);
                   localStorage.setItem('language', selectedObject?.langKey);
                 }}
@@ -372,9 +370,8 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
       localStorage.clear();
 
-      dispatch({ type: 'auth/logout' }); 
+      dispatch({ type: 'auth/logout' });
 
-      
       navigate('/login', { replace: true });
     };
 
@@ -424,12 +421,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         {(selectedDepartment?.facilityName ||
           authSlice?.tenant?.selectedFacility?.name ||
           authSlice?.tenant?.selectedFacility?.facilityName) && (
-            <span style={{ fontSize: '12px', color: '#6c757d' }}>
-              {selectedDepartment?.facilityName ??
-                authSlice?.tenant?.selectedFacility?.name ??
-                authSlice?.tenant?.selectedFacility?.facilityName}
-            </span>
-          )}
+          <span style={{ fontSize: '12px', color: '#6c757d' }}>
+            {selectedDepartment?.facilityName ??
+              authSlice?.tenant?.selectedFacility?.name ??
+              authSlice?.tenant?.selectedFacility?.facilityName}
+          </span>
+        )}
       </div>
       <Divider style={{ margin: 0 }} />
       {isLoadingDepartments ? (
@@ -443,7 +440,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               defaultDepartmentEntity?.id != null
                 ? defaultDepartmentEntity.id === dept.id
                 : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                defaultDepartmentEntity?.facilityId === dept.facilityId;
+                  defaultDepartmentEntity?.facilityId === dept.facilityId;
             const isActive =
               selectedDepartment?.departmentId === dept.departmentId &&
               selectedDepartment?.facilityId === dept.facilityId;
@@ -528,17 +525,20 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   return (
     <>
-      <div className={`main-screen-bar-icons-main-container-header ${mode}`} style={{ flexDirection: direction === "LTR" ? "row" : "row-reverse" }}>
+      <div
+        className={`main-screen-bar-icons-main-container-header ${mode}`}
+        style={{ flexDirection: direction === 'LTR' ? 'row' : 'row-reverse' }}
+      >
         {width >= 930 ? (
           <>
-           <Tooltip title="Customize Form">
+            <Tooltip title="Customize Form">
               <IconButton size="small">
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faFileLines}
-                     onClick={() => {
-                  navigate('/form-template-use');
-                }}
+                  onClick={() => {
+                    navigate('/form-template-use');
+                  }}
                 />
               </IconButton>
             </Tooltip>
@@ -566,19 +566,22 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Tooltip> */}
-            <Tooltip title="My Consultations">
-              <IconButton
-                size="small"
-                onClick={() => {
-                  navigate('/my-consultations');
-                }}
-              >
-                <FontAwesomeIcon
-                  className="header-screen-bar-icon-size-handle"
-                  icon={faUserDoctor}
-                />
-              </IconButton>
-            </Tooltip>
+            {authSlice.user?.admin && authSlice.user?.jobRole === 'PHYSICIAN' && (
+              <Tooltip title="My Consultations">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    navigate('/my-consultations');
+                  }}
+                >
+                  <FontAwesomeIcon
+                    className="header-screen-bar-icon-size-handle"
+                    icon={faUserDoctor}
+                  />
+                </IconButton>
+              </Tooltip>
+            )}
+
             <Tooltip title="Announcements">
               <IconButton size="small">
                 <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBullhorn} />
@@ -597,7 +600,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="MedCare Incident Portal">
+            <Tooltip title="MedCare Incident Portal" className='hidden'>
               <IconButton
                 size="small"
                 onClick={() => {

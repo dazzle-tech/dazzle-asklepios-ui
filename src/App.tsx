@@ -91,12 +91,12 @@ import VaccinationTab from './pages/encounter/encounter-pre-observations-new/vac
 import Warning from './pages/encounter/encounter-pre-observations-new/warning';
 import EncounterRegistration from './pages/encounter/encounter-registration';
 import Encounter from './pages/encounter/encounter-screen';
-import ERDashboards from './pages/encounter/ER-triage/Er-dashboard/ERDashboard';
-import ERStartTriage from './pages/encounter/ER-triage/ERStartTriage';
-import ERTabsDepartmentAndWaitingList from './pages/encounter/ER-triage/ERTabsDepartmentAndWaitingList';
-import ERTriage from './pages/encounter/ER-triage/ERTriage';
-import QuickVisit from './pages/encounter/ER-triage/QuickVisit';
-import ViewTriage from './pages/encounter/ER-triage/ViewTriage';
+import ERDashboardsNew from './pages/encounter/ER-triage-new/Er-dashboard/ERDashboard';
+import ERStartTriageNew from './pages/encounter/ER-triage-new/Triage/ERStartTriage';
+import ERTabsDepartmentAndWaitingListNew from './pages/encounter/ER-triage-new/ERTabsDepartmentAndWaitingList';
+import ERTriageNew from './pages/encounter/ER-triage-new/Triage/ERTriage';
+import QuickVisitNew from './pages/encounter/ER-triage-new/Triage/QuickVisit';
+import ViewTriageNew from './pages/encounter/ER-triage-new/Triage/ViewTriage';
 import TeleconsultationScreen from './pages/encounter/tele-consultation-screen';
 import StartTeleConsultation from './pages/encounter/tele-consultation-screen/start-tele-consultation';
 import DepartmentStock from './pages/Inpatient/departmentStock/DepartmentStock';
@@ -106,7 +106,7 @@ import InventoryTransactionNew from './pages/inventory-transaction/inventory-tra
 import InventoryTransferNew from './pages/inventory-transaction/inventory-transfer-new';
 import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
-import Lab from './pages/lab-module';
+import Lab from './pages/lab-module-new';
 import ListOfRequisition from './pages/list-of-requisition';
 import GenericMedications from './pages/medications/generic-medications-new';
 import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup-new/ActiveIngredientsSetup';
@@ -139,6 +139,7 @@ import Questionnaire from './pages/questionnaire-setup/Questionnaire';
 import Rad from './pages/rad-module/RadiologyMain';
 import Recovery from './pages/recovery';
 import ResetPassword from './pages/reset-password/ResetPassword';
+import CreatePassword from './pages/create-password/CreatePassword';
 import ReviewResults from './pages/review-results/ReviewResults';
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
 import AccessRoles from './pages/setup/access-roles';
@@ -151,7 +152,6 @@ import CPTSetup from './pages/setup/cpt-setup';
 import DentalActions from './pages/setup/dental-actions-new';
 import Departments from './pages/setup/departments-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition-new';
-import Diagnostic from './pages/setup/diagnostics-tests-definition';
 import DVM from './pages/setup/dvm-setup';
 import Facilities from './pages/system-configurations/facilities-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
@@ -176,7 +176,6 @@ import Shifts from './pages/setup/shift-setup';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 import SurgicalKitsSetup from './pages/setup/surgical-kits-setup';
 import UOMGroup from './pages/setup/uom-group-new';
-import Users from './pages/setup/users-setup';
 import UsersNew from './pages/system-configurations/users-setup-new';
 import Vaccine from './pages/setup/vaccine-setup';
 import VisitDurationSetup from './pages/setup/visit-duration-setup';
@@ -217,7 +216,7 @@ import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseS
 import AvailabilityTemplatePage from './pages/setup/availability_template';
 import "survey-core/survey-core.min.css";
 import "survey-creator-core/survey-creator-core.min.css";
-import Logo from './images/eWaveLogocopy.svg';
+import Logo from './images/Logo_BLUE_New.svg';
 
 type BackendMenuItem = { screen?: string | null };
 
@@ -357,13 +356,13 @@ useEffect(() => {
       to: '/'
     });
 
-    // Always show Availability Templates (bypass permissions)
-    navsTemp.push({
-      eventKey: 'nav:availability-templates',
-      icon: <Icon as={icons.FaCalendarDays} />,
-      title: 'Availability Templates',
-      to: '/availability-template'
-    });
+    // // Always show Availability Templates (bypass permissions)
+    // navsTemp.push({
+    //   eventKey: 'nav:availability-templates',
+    //   icon: <Icon as={icons.FaCalendarDays} />,
+    //   title: 'Availability Templates',
+    //   to: '/availability-template'
+    // });
 
     const lookups = buildPermissionLookup(authSlice?.menu as BackendMenuItem[]);
 
@@ -407,14 +406,14 @@ useEffect(() => {
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
-       <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
+       {/* <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
         <img
           style={{ height: '40px', width: '110px' }}
           src={Logo}
 
         />
        
-      </div>
+      </div> */}
 
    
       <div
@@ -475,7 +474,8 @@ useEffect(() => {
               <Route index element={<Dashboard />} />
               <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="my-consultations" element={<MyConsultations />} />
-              <Route path="patient-profile-old" element={<PatientProfile />} />              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
+              <Route path="patient-profile-old" element={<PatientProfile />} />
+              <Route path="patient-quick-appointment" element={<PatientQuickAppointment {...({} as any)} />} />
               <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
@@ -489,14 +489,13 @@ useEffect(() => {
               <Route path="patient-old/patient-emr" element={<PatientEMRLegacy />} />
               <Route path="patient-old/patient-list" element={<PatientListLegacy />} />
               <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
-              <Route path="ER-start-triage" element={<ERStartTriage />} />
-              <Route path="ER-triage" element={<ERTriage />} />
-              <Route path="ER-dashboard" element={<ERDashboards />} />
-              <Route path="ER-department" element={<ERTabsDepartmentAndWaitingList />} />
-              <Route path="view-triage" element={<ViewTriage />} />
-              <Route path="quick-visit" element={<QuickVisit />} />
+              <Route path="ER-start-triage" element={<ERStartTriageNew />} />
+              <Route path="ER-triage" element={<ERTriageNew />} />
+              <Route path="ER-dashboard" element={<ERDashboardsNew />} />
+              <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
+              <Route path="view-triage" element={<ViewTriageNew />} />
+              <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
-              <Route path="ER-triage" element={<ERTriage />} />
               <Route path="country-setup" element={<CountrySetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
@@ -519,6 +518,7 @@ useEffect(() => {
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
                 <Route path="observations" element={<Observations />} />
+                <Route path="previous-measurements" element={<PreviousMeasurements />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
@@ -526,13 +526,13 @@ useEffect(() => {
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
-                <Route path="psychological-exam" element={<PsychologicalExam />} />
-                <Route path="vaccination" element={<VaccinationTab />} />
+                <Route path="psychological-exam" element={<PsychologicalExam {...({} as any)} />} />
+                <Route path="vaccination" element={<VaccinationTab {...({} as any)} />} />
                 <Route path="prescription" element={<PrescriptionNew />} />
                 <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
                 <Route path="consultation" element={<ConsultationNew />} />
                 <Route path="procedures" element={<ProcedureNew />} />
-                <Route path="patient-history" element={<PatientHistory />} />
+                <Route path="patient-history" element={<PatientHistory {...({} as any)} />} />
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
@@ -553,7 +553,7 @@ useEffect(() => {
                 <Route path="blood-order" element={<BloodOrder />} />
                 <Route path="intake-output-balance" element={<IntakeOutputBalance />} />
                 <Route path="referral-request" element={<ReferralRequest />} />
-                <Route path="iv-fluid-order" element={<IVFluidOrder />} />
+                <Route path="iv-fluid-order" element={<IVFluidOrder {...({} as any)} />} />
                 <Route path="morse-fall-scale" element={<MorseFallScale />} />
                 <Route path="stratify-scale" element={<StratifyScale />} />
                 <Route path="hendrich-fall-risk" element={<HendrichFallRisk />} />
@@ -586,7 +586,7 @@ useEffect(() => {
                   element={<PressureUlcerRiskAssessment />}
                 />
                     <Route path="previous-measurements" element={<PreviousMeasurements />} />
-                 <Route path="service-and-products" element={<ServiceAndProductsNew />} />
+                 <Route path="service-and-products" element={<ServiceAndProductsNew {...({} as any)} />} />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />
@@ -602,13 +602,13 @@ useEffect(() => {
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
-                <Route path="psychological-exam" element={<PsychologicalExam />} />
-                <Route path="vaccination" element={<VaccinationTab />} />
+                <Route path="psychological-exam" element={<PsychologicalExam {...({} as any)} />} />
+                <Route path="vaccination" element={<VaccinationTab {...({} as any)} />} />
                 <Route path="prescription" element={<PrescriptionNew />} />
                 <Route path="diagnostics-order" element={<DiagnosticsOrderNew />} />
                 <Route path="consultation" element={<ConsultationNew />} />
                 <Route path="procedures" element={<ProcedureNew />} />
-                <Route path="patient-history" element={<PatientHistory />} />
+                <Route path="patient-history" element={<PatientHistory {...({} as any)} />} />
                 <Route path="medications-record" element={<MedicationsRecord />} />
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
@@ -628,7 +628,7 @@ useEffect(() => {
                 <Route path="blood-order" element={<BloodOrder />} />
                 <Route path="intake-output-balance" element={<IntakeOutputBalance />} />
                 <Route path="referral-request" element={<ReferralRequest />} />
-                <Route path="iv-fluid-order" element={<IVFluidOrder />} />
+                <Route path="iv-fluid-order" element={<IVFluidOrder {...({} as any)} />} />
                 <Route path="morse-fall-scale" element={<MorseFallScale />} />
                 <Route path="stratify-scale" element={<StratifyScale />} />
                 <Route path="hendrich-fall-risk" element={<HendrichFallRisk />} />
@@ -660,7 +660,6 @@ useEffect(() => {
               <Route path="questionnaire-setup" element={<Questionnaire />} />
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
-              <Route path="users" element={<Users />} />
               <Route path="users-new" element={<UsersNew />} />
               <Route path="uom-group" element={<UOMGroup />} />
               <Route path="med-matrix-setup" element={<MedicationMatrix />} />
@@ -671,7 +670,6 @@ useEffect(() => {
               <Route path="departments" element={<NewDepartments />} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
-              <Route path="diagnostics-test-old" element={<Diagnostic />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
@@ -742,6 +740,7 @@ useEffect(() => {
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="create-password" element={<CreatePassword />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>

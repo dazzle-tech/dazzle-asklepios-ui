@@ -90,7 +90,7 @@ const QuickVisit = ({ }) => {
                             <div className="left-buttons-container">
                                 <BackButton
                                     onClick={() => {
-                                        if (localEncounter?.resourceTypeLkey == "EMERGENCY") {
+                                        if (localEncounter?.encounterType == "EMERGENCY") {
                                             navigate(-1)
                                         } else {
                                             navigate('/encounter-list');
@@ -99,13 +99,13 @@ const QuickVisit = ({ }) => {
                                 />
                                 <div className="left-buttons-contant">
                                     {/* TODO update status to be a LOV value */}
-                                    {!localEncounter.discharge && localEncounter.encounterStatusLkey !== "91109811181900" && (<MyButton
+                                    {!localEncounter.discharge && localEncounter.status !== "CLOSED" && (<MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                                        onClick={()=>localEncounter?.resourceTypeLkey == "EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
+                                        onClick={()=>localEncounter?.encounterType == "EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
 
                                         appearance="ghost"
                                     >
-                                        <Translate>{localEncounter?.resourceTypeLkey == "EMERGENCY" ? "Discharge" : "Complete Visit"}</Translate>
+                                        <Translate>{localEncounter?.encounterType == "EMERGENCY" ? "Discharge" : "Complete Visit"}</Translate>
                                     </MyButton>)}
                                     <Divider vertical />
                                     <MyButton

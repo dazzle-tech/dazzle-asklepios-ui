@@ -13,8 +13,6 @@ import { useLazyGetFormEntriesByTemplateQuery } from '@/services/setup/formEntri
 import UseTemplateModal from './UseTemplateModal';
 import EntryPreviewModal from './EntryPreviewModal';
 import EditEntryModal from './EditEntryModal';
-
-// ✅ icons like system
 import { MdPrint } from 'react-icons/md';
 import { FaEye } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
@@ -140,6 +138,24 @@ const FormTemplatesUseScreen = () => {
     }
   ];
 
+    const formatDateTime = (date?: string) => {
+      if (!date) return '';
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return date;
+
+      return d.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    };
+
+
+
+
   // ENTRIES TABLE columns (✅ 3 icons: View + Edit + Print)
   const entriesColumns = [
     { key: 'title', title: <Translate>Title</Translate>, flexGrow: 6 },
@@ -152,8 +168,10 @@ const FormTemplatesUseScreen = () => {
       <>
         {row.createdBy}
         <br />
-        <span className="date-table-style">{row.createdDate}</span>
-      </>
+        <span className="date-table-style">
+          {formatDateTime(row.createdDate)}
+        </span>
+          </>
     )
   },
     {

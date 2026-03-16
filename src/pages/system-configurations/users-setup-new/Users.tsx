@@ -17,14 +17,9 @@ import MyTab from '@/components/MyTab';
 import { Box } from '@mui/material';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAddUserMutation, useGetUserQuery, useUpdateUserMutation } from '@/services/userService';
-import { newApFacility } from '@/types/model-types-constructor';
+import { useAddUserMutation, useGetUsersBasicQuery, useUpdateUserMutation } from '@/services/userService';
 import { newApUser } from '@/types/model-types-constructor-new';
 import { ApUser } from '@/types/model-types-new';
-import {
-  addFilterToListRequest,
-  fromCamelCaseToDBName,
-} from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import ReactDOMServer from 'react-dom/server';
 import AddEditUser from './AddEditUser';
@@ -41,21 +36,41 @@ const Users = () => {
     // isValid: true
   });
 
-  const [record, setRecord] = useState({ filter: '', value: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [canProceed, setCanProceed] = useState(false);
   const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
-  const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
+  const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
   const [popupOpen, setPopupOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    name: '',
+    email: '',
+    login: '',
+  });
 
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   // Save user
   const [saveUser, saveUserMutation] = useAddUserMutation();
   // Fetch users list response
+  const [pageIndex, setPageIndex] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
 
-   const { data: users, isLoading  ,refetch} = useGetUserQuery();
-   const [updateUser] = useUpdateUserMutation();
- 
+
+
+  const {
+    data: usersResponse,
+    isLoading,
+    refetch,
+  } = useGetUsersBasicQuery({
+    page: pageIndex,
+    size: rowsPerPage,
+    sort: 'id,asc',
+    name: filters.name,
+    email: filters.email,
+    login: filters.login,
+  });
+
+
+  const [updateUser] = useUpdateUserMutation();
+
   // Fetch Facilities list response
   const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
     ...initialListRequest,
@@ -64,24 +79,22 @@ const Users = () => {
   // Deactivate/Activate user
   const [deactivateActivateUser] = useDeactivateUserMutation();
 
-   // Pagination values
-  const [pageIndex, setPageIndex] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(15);
+  // Pagination values
 
-    const handlePageChange = (_: unknown, newPage: number) => {
-        setPageIndex(newPage);
-    }
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPageIndex(0);
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPageIndex(newPage);
+  }
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPageIndex(0);
 
-    };
-    const totalCount = users?.length ?? 0;
-    const paginatedData = users?.slice(
-        pageIndex * rowsPerPage,
-        pageIndex * rowsPerPage + rowsPerPage
-    );
-    // Available fields for filtering
+  };
+
+  const users = usersResponse ?? [];
+  const totalCount = usersResponse?.length ?? 0;
+
+
+  // Available fields for filtering
   const filterFields = [
     { label: 'Full Name', value: 'fullName' },
     { label: 'User Name', value: 'login' },
@@ -103,11 +116,11 @@ const Users = () => {
   };
 
   // Effects
-   useEffect(() => {
-        const handleResize = () => setWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -116,96 +129,54 @@ const Users = () => {
     };
   }, [location.pathname, dispatch]);
 
-  useEffect(() => {
-    if (saveUserMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveUserMutation.data]);
 
-  useEffect(() => {
-    if (record['filter']) {
-      handleFilterChange(record['filter'], record['value']);
-    } else {
-      setListRequest({
-        ...initialListRequest,
-        filters: [
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          }
-        ],
-        pageSize: listRequest.pageSize,
-        pageNumber: 1
-      });
-    }
-  }, [record]);
-
- 
   // Handle Save User
   const handleSave = async () => {
-    
     try {
       if (user.id !== undefined) {
-
-    const  Response= await updateUser({ ...user } ).unwrap();
+        const response = await updateUser({ ...user }).unwrap();
         dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
-        setUser({...Response})
+        setUser({ ...response });
         refetch();
       } else {
-    
-
-      const Response=await saveUser({ ...user}).unwrap();
+        const response = await saveUser({ ...user }).unwrap();
         dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
         refetch();
       }
-    
+
       refetchFacility();
       setCanProceed(true);
-      // setPopupOpen(false);
+    } catch (error) {
+      console.error("❌ Error saving user:", error);
 
-    } 
-      catch (error) {
-        console.error("❌ Error saving user:", error);
+      let backendMessage = "Failed to save user";
 
-        let backendMessage = "Failed to save user";
+      const apiError = error?.data;
+      const message = apiError?.message?.toLowerCase();
 
-        const message = error?.data?.message?.toLowerCase();
-
-        if (message === "error.emailexists") {
-          backendMessage = "This email is already in use";
-        }
-
-        dispatch(
-          notify({
-            msg: backendMessage,
-            sev: "error",
-          })
-        );
-
-        return;
+      if (message === "error.emailexists") {
+        backendMessage = "This email is already in use";
+      } else if (apiError?.fieldErrors?.length > 0) {
+        backendMessage = apiError.fieldErrors[0].message;
+      } else if (apiError?.detail) {
+        backendMessage = apiError.detail;
+      } else if (apiError?.message) {
+        backendMessage = apiError.message;
       }
-  };
 
-  // Filter table
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'containsIgnoreCase',
-          value,
-          listRequest
-        )
+      dispatch(
+        notify({
+          msg: backendMessage,
+          sev: "warning",
+        })
       );
-    } else {
-      setListRequest({ ...listRequest, filters: [] });
     }
   };
+
   // Handle click on Add New button
   const handleAddNew = () => {
     setUser({ ...newApUser });
-    
+
     setPopupOpen(true);
   };
   // Handle Deactivate/Activate
@@ -225,7 +196,7 @@ const Users = () => {
       dispatch(notify({ msg: 'Failed to ' + process + ' this User', sev: 'error' }));
     }
   };
- 
+
   //icons column (Edit, Privilege, Licenses & Certifications, Reset Password, Departments Active/Deactivate)
   const iconsForActions = (rowData: ApUser) => (
     <div className="container-of-icons">
@@ -307,7 +278,7 @@ const Users = () => {
               </Tooltip>
             }
           >
-            <p>{rowData?.firstName}  {rowData?.lastName}</p> 
+            <p>{rowData?.firstName}  {rowData?.lastName}</p>
           </Whisper>
         );
       }
@@ -389,37 +360,36 @@ const Users = () => {
     }
   ];
   // Filter form rendered above the table
-  const filters = () => (
-    <Form layout="inline" fluid>
-      <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
-        fieldType="select"
-        record={record}
-        setRecord={updatedRecord => {
-          setRecord({
-            ...record,
-            filter: updatedRecord.filter,
-            value: ''
-          });
-        }}
-        showLabel={false}
-        placeholder="Select Filter"
-        searchable={false}
-      />
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={record}
-        setRecord={setRecord}
-        showLabel={false}
-        placeholder="Search"
-      />
+  const tableFilters = (
+    <Form fluid>
+      <div className='users-table-main-filter-container'>
+        <MyInput
+          fieldName="name"
+          fieldLabel='Name'
+          fieldType="text"
+          record={filters}
+          setRecord={setFilters}
+        />
+
+        <MyInput
+          fieldName="email"
+          fieldType="text"
+          fieldLabel='Email'
+          record={filters}
+          setRecord={setFilters}
+        />
+
+        <MyInput
+          fieldName="login"
+          fieldType="text"
+          fieldLabel='Username'
+          record={filters}
+          setRecord={setFilters}
+        />
+      </div>
     </Form>
   );
-  
+
   useEffect(() => {
     if (popupOpen && user?.id) {
       setCanProceed(true);
@@ -470,23 +440,16 @@ const Users = () => {
         <Panel>
 
           <MyTable
-            data={paginatedData ?? []}
+            data={users}
             columns={tableColumns}
             rowClassName={isSelected}
-            onRowClick={rowData => {
-              setUser(rowData);
-            }}
-            sortColumn={listRequest.sortBy}
-            sortType={listRequest.sortType}
-            onSortChange={(sortBy, sortType) => {
-              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-            }}
+            onRowClick={rowData => setUser(rowData)}
             page={pageIndex}
             rowsPerPage={rowsPerPage}
             totalCount={totalCount}
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
-            filters={filters()}
+            filters={tableFilters}
             loading={isLoading}
             tableButtons={
               <div className="container-of-add-new-button">
@@ -501,6 +464,8 @@ const Users = () => {
               </div>
             }
           />
+
+
           <AddEditUser
             open={popupOpen}
             setOpen={setPopupOpen}

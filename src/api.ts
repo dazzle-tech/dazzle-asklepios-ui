@@ -52,20 +52,27 @@ export const onQueryStarted = async (body, { dispatch, queryFulfilled }) => {
   try {
     const { data } = await queryFulfilled;
 
-    if (data._responseMsg) {
+    if (data?._responseMsg) {
       dispatch(notify(data._responseMsg));
     }
-  } catch (err) {
+ } catch (err: any) {
+  const status = err?.error?.originalStatus ?? err?.error?.status; // <-- مهم
+  const data = err?.error?.data;
 
-   
+  const msg =
+    typeof data === 'string'
+      ? data
+      : data?.message || data?.msg || 'Request failed';
 
-    if (err?.error?.status == 422) {
-      dispatch(notify({ msg: err.error?.data?.message || 'Unprocessable Entity', sev: 'error' }));
-
-    }else {
-      dispatch(notify({ msg: err.error?.data?.msg || 'Internal Server Error', sev: 'error' }));
-
-    }
-
+  if (status === 409) {
+    dispatch(notify({ msg: msg || 'Conflict Error', sev: 'warning' }));
+    return;
   }
-};
+
+  if (status === 422) {
+    dispatch(notify({ msg: msg || 'Unprocessable Entity', sev: 'error' }));
+    return;
+  }
+
+  dispatch(notify({ msg: msg || 'Internal Server Error', sev: 'error' }));
+}};

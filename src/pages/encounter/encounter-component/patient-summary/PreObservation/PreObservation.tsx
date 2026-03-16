@@ -1,78 +1,74 @@
 import React, { useState } from 'react';
 import FullViewTable from './FullViewTable';
 import MyTable from '@/components/MyTable';
-import { Divider, Text } from 'rsuite';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetObservationSummariesQuery } from '@/services/observationService';
 import Translate from '@/components/Translate';
 import Section from '@/components/Section';
+import { useGetVitalSignsBetweenDatesByPatientIdQuery } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
+import { formatDate } from '@/utils';
 const PreObservation = ({ patient }) => {
   const [open, setOpen] = useState(false);
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.key
+  const patientId = Number(patient?.id);
+  const {
+    data: vitalPage,
+    isLoading: vitalLoading,
+    isFetching: vitalFetching,
+  } = useGetVitalSignsBetweenDatesByPatientIdQuery(
+    patientId
+      ? {
+        patientId,
       }
-    ]
-  });
-  const { data: getObservationSummaries } = useGetObservationSummariesQuery({
-    ...listRequest
-  });
+      : (undefined as any),
+    { skip: !patientId }
+  );
+  console.log("vitalPage: ", vitalPage);
 
+  const formatDateTime = (d: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${formatDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
   const columns = [
     {
-      key: 'visitKey',
-      title: <Translate>Visit Date</Translate>,
-      render: (rowData: any) => {
-        return rowData?.encounter?.plannedStartDate || '';
-      }
+      key: 'createdAt',
+      title: 'CREATED AT',
+      render: (row: any) => {
+        const v = row?.createdAt ?? row?.createdDate;
+        return v ? formatDateTime(new Date(v)) : '';
+      },
     },
-    {
-      key: 'latestheight',
-      title: <Translate>Height</Translate>,
-      render: (rowData: any) => {
-        return rowData?.latestheight ? `${rowData.latestheight}cm` : '';
-      }
-    },
-    {
-      key: 'latestweight',
-      title: <Translate>Weight</Translate>,
-      render: (rowData: any) => {
-        return rowData?.latestweight ? `${rowData.latestweight}kg` : '';
-      }
-    },
-    {
-      key: 'latestbp',
-      title: <Translate>BP</Translate>,
-      render: (rowData: any) => {
-        const systolic = rowData?.latestbpSystolic;
-        const diastolic = rowData?.latestbpDiastolic;
 
-        return systolic && diastolic ? `${systolic}/${diastolic} mmHg` : '';
+    {
+      key: 'bloodPressure',
+      title: <Translate>BP(mmHg)</Translate>,
+      render: (rowData: any) => {
+        const systolic = rowData?.bloodPressureSystolic;
+        const diastolic = rowData?.bloodPressureDiastolic;
+
+        return systolic && diastolic ? `${systolic}/${diastolic}` : '';
       }
     },
     {
-      key: 'latesttemperature',
-      title: <Translate>Temp</Translate>,
+      key: 'temperature',
+      title: <Translate>Temp(°C)</Translate>,
       render: (rowData: any) => {
-        return rowData?.latesttemperature ? `${rowData.latesttemperature}°C` : '';
+        return rowData?.temperature ? `${rowData.temperature}` : '';
       }
+    },
+    {
+      key: 'pulseRate',
+      title: <Translate>Heart Rate(bpm)</Translate>,
     }
   ];
 
   return (
     <Section
-    isContainOnlyTable
+      isContainOnlyTable
       title="Patient Observation"
       content={
-        <MyTable data={getObservationSummaries?.object ?? []} columns={columns} height={250} />
+        <MyTable data={vitalPage ?? []} columns={columns} height={250} />
       }
       rightLink="Full view"
       setOpen={setOpen}
-      openedContent={<FullViewTable open={open} setOpen={setOpen} list={getObservationSummaries?.object}/>}
+      openedContent={<FullViewTable open={open} setOpen={setOpen} vitalSignsList={vitalPage || []} formatDateTime={formatDateTime} patient={patient} vitalLoading={vitalLoading} vitalFetching={vitalFetching} />}
     />
   );
 };

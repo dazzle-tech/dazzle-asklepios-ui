@@ -82,13 +82,18 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
       const labels = singleData.map(d => d.label);
       const values = singleData.map(d => d.value);
 
+      // Use different colors for each bar if colors array is provided
+      const backgroundColors = colors && colors.length > 0
+        ? values.map((_, index) => colors[index % colors.length])
+        : color;
+
       setData({
         labels,
         datasets: [
           {
             label: title || 'Values',
             data: values,
-            backgroundColor: color,
+            backgroundColor: backgroundColors,
             borderColor: mode === 'dark' ? '#565656ff' : '#fff',
             borderWidth: 1,
             borderRadius: 4,

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import Details from '../../encounter-component/procedure/Details';
+import Details from '../../encounter-component/procedure-new/Details';
 import { newApProcedure } from '@/types/model-types-constructor';
 
-const TeleScreenProcedures = ({ open = false, onClose }) => {
+const TeleScreenProcedures = ({ open = false, onClose, patient, encounter}) => {
   const [openDetailsModal, setOpenDetailsModal] = useState(open);
-  const [procedure, setProcedure] = useState(newApProcedure);
-
-  const dummyPatient = { key: '123', name: 'John Doe' };
-  const dummyEncounter = { key: '456', editable: true };
+  // const [procedure, setProcedure] = useState(newApProcedure);
+   const [procedure, setProcedure] = useState<any>({
+      ...newApProcedure,
+      encounterKey: encounter?.key,
+      patientKey: patient?.key,
+      currentDepartment: true
+    });
 
   useEffect(() => {
     setOpenDetailsModal(open);
@@ -16,8 +19,8 @@ const TeleScreenProcedures = ({ open = false, onClose }) => {
   return (
     <div>
       <Details
-        patient={dummyPatient}
-        encounter={dummyEncounter}
+        patient={patient}
+        encounter={encounter}
         edit={false}
         procedure={procedure}
         setProcedure={setProcedure}

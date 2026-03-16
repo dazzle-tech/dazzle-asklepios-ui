@@ -6,56 +6,63 @@ import { useGetWarningsQuery } from '@/services/observationService';
 import { initialListRequest } from '@/types/types';
 import Translate from '@/components/Translate';
 import Section from '@/components/Section';
+import { useGetPatientWarningsByPatientIdQuery } from '@/services/encounters/patientWarningsService';
+import { PatientWarnings } from '@/types/model-types-new';
+import { conjureValueBasedOnKeyFromListOfValues, formatEnumString } from '@/utils';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 const MedicalWarnings = ({ patient }) => {
-  // Define filters to retrieve warnings for a specific patient with a certain status
-  const filters = [
-    {
-      fieldName: 'patient_key',
-      operator: 'match',
-      value: patient?.key // Filter warnings by the selected patient key
-    },
-    {
-      fieldName: 'status_lkey',
-      operator: 'Match', // Filter warnings by a specific status key
-      value: '9766169155908512'
-    }
-  ];
 
-  // Fetch warnings based on the defined filters
-  const { data: warningsListResponse, isLoading: isLoading } = useGetWarningsQuery({
-    ...initialListRequest,
-    filters
-  });
+ const {
+     data: warningsListResponse,
+     refetch: refetchWarnings,
+     isLoading
+   } = useGetPatientWarningsByPatientIdQuery(
+     {
+       patientId: patient?.id,
+       showCancelled: false,
+     },
+     {
+       skip: !patient?.id
+     }
+   );
+ const activeWarnings = warningsListResponse?.data?.filter(warning => warning.status === 'ACTIVE') || [];
+ const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
 
-  // Table Columns
-  const warningsColumns = [
-    {
-      key: 'warningType',
-      title: 'Warning Type',
-      render: (rowData: any) => rowData.warningTypeLvalue?.lovDisplayVale || ''
-    },
-    {
-      key: 'warning',
-      title: 'Warning',
-      render: (rowData: any) => rowData.warning || ''
-    },
-    ,
-    {
-      key: 'severityLvalue',
-      dataKey: 'severityLvalue',
-      title: <Translate>Severity</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
-    }
-  ];
+ // table column
+   const tableColumns: any[] = [
+     {
+       key: 'warningType',
+       title: <Translate>Warning Type</Translate>,
+       render: (rowData: PatientWarnings) => (
+         <p>
+           {conjureValueBasedOnKeyFromListOfValues(
+             warningTypeLovQueryResponse?.object ?? [],
+             rowData.warningType,
+             'lovDisplayVale'
+           )}
+         </p>
+       )
+     },
+     {
+       key: 'warning',
+       title: <Translate>Warning</Translate>
+     },
+     {
+       key: 'severity',
+       title: <Translate>Severity</Translate>,
+       render: (rowData: PatientWarnings) => <p>{formatEnumString(rowData.severity)}</p>
+     },   
+   
+   ].filter(Boolean);
+  
   return (
     <Section
       isContainOnlyTable
       title="Medical Warnings"
       content={
         <MyTable
-          data={warningsListResponse?.object || []}
-          columns={warningsColumns}
+          data={activeWarnings}
+          columns={tableColumns}
           height={250}
           loading={isLoading}
           onRowClick={rowData => {}}

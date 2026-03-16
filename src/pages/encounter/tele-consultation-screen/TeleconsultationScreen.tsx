@@ -189,7 +189,6 @@ const TeleconsultationRequests = () => {
         }
       });
     } catch (err) {
-      console.error('Error while starting teleconsultation:', err);
       dispatch(
         notify({
           sev: 'error',
@@ -214,7 +213,6 @@ const TeleconsultationRequests = () => {
         refetch();
       })
       .catch(err => {
-        console.error('Save failed:', err);
         dispatch(notify({ sev: 'error', msg: 'Failed to reject request' }));
       })
       .finally(() => {
@@ -390,8 +388,8 @@ const TeleconsultationRequests = () => {
                     }).unwrap();
                     navigate('/start-tele-consultation', {
                       state: {
-                        patient: patient,
-                        encounter: encounter,
+                        patient: rowData?.patient,
+                        encounterId: rowData?.encounterId,
                         fromPage: 'teleconsultation-requests',
                         consultaition: rowData,
                         notelist: fetchedProgressNotes ?? []
@@ -485,7 +483,7 @@ const TeleconsultationRequests = () => {
   return (
     <Panel>
       <DragDropTable
-        data={orders?.object ?? []}
+         data={paginatedData ?? []}
         columns={columns}
         loading={ordersLod}
         filters={filterstable}

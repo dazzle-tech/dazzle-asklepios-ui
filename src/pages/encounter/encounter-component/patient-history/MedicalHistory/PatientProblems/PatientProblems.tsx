@@ -1,211 +1,246 @@
-import React, { useState } from 'react';
-import PlusIcon from '@rsuite/icons/Plus';
-import MyButton from '@/components/MyButton/MyButton';
-import '../styles.less';
-import MyTable from '@/components/MyTable';
-import { MdModeEdit, MdDelete } from 'react-icons/md';
-import AddPatientProblem from './AddPatientProblem';
-import SectionContainer from '@/components/SectionsoContainer';
-import { useGetPatientProblemsQuery, useRemovePatientProblemMutation } from '@/services/patientService';
-import { initialListRequest } from '@/types/types';
-import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds } from '@/utils';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
+import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
+import {
+  useDeletePatientProblemMutation,
+  useGetPatientProblemsQuery
+} from '@/services/patients/patientProblemService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
+import PlusIcon from '@rsuite/icons/Plus';
+import React, { useMemo, useState } from 'react';
+import { MdDelete, MdModeEdit } from 'react-icons/md';
+import AddPatientProblem from './AddPatientProblem';
 
-const PatientProblems = ({ patient, encounter, edit,
-  toShowData=false
- }) => {
-
+const PatientProblems = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
 
+  const { data: diagnosisTypeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
+
+  const { data: sourceLov } = useGetLovValuesByCodeQuery('RELATION');
+
   const [open, setOpen] = useState(false);
-  const [selectedProblem, setSelectedProblem] = useState(null);
+  const [selectedProblem, setSelectedProblem] = useState<any>(null);
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState(null);
+  const [rowToDelete, setRowToDelete] = useState<any>(null);
 
-  const [listRequestPatientProblems, setListRequestPatientProblems] = useState({
-    ...initialListRequest,
-    pageSize: 15,
-    filters: [
-      { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-    ],
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,desc'
   });
 
-  const { data: patientProblemsData, isLoading } = useGetPatientProblemsQuery(listRequestPatientProblems);
+  /* QUERY */
 
-  const isSelected = row => {
-    if (row && selectedProblem && row.key === selectedProblem.key) return 'selected-row';
-    return '';
+  const patientId = Number(patient?.id);
+  const isValidPatientId = Number.isFinite(patientId) && patientId > 0;
+
+  const {
+    data: pageData,
+    isFetching,
+    refetch
+  } = useGetPatientProblemsQuery(
+    {
+      patientId,
+      page: pagination.page,
+      size: pagination.size,
+      sort: pagination.sort
+    },
+    {
+      skip: !isValidPatientId
+    }
+  );
+
+  console.log('PatientProblems pageData:', pageData);
+  /* DELETE */
+  console.log('Patient Obj ==>', patient);
+  const [deletePatientProblem] = useDeletePatientProblemMutation();
+
+  const handleDelete = async () => {
+    if (!rowToDelete?.id) return;
+
+    try {
+      await deletePatientProblem({ id: rowToDelete.id }).unwrap();
+      dispatch(notify({ msg: 'Patient problem deleted successfully', sev: 'success' }));
+      setOpenDeleteModal(false);
+      setRowToDelete(null);
+    } catch (err: any) {
+      const data = err?.data;
+      const traceId = data?.traceId || data?.requestId;
+      dispatch(
+        notify({
+          msg: `Failed to delete patient problem${traceId ? `\nTrace ID: ${traceId}` : ''}`,
+          sev: 'error'
+        })
+      );
+    }
   };
 
-const handlePageChange = (_: unknown, newPage: number) => {
-  setListRequestPatientProblems({ ...listRequestPatientProblems, pageNumber: newPage + 1 });
-};
+  /* HELPERS */
 
-const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  setListRequestPatientProblems({
-    ...listRequestPatientProblems,
-    pageSize: parseInt(event.target.value, 10),
-    pageNumber: 1
-  });
-};
+  const isSelected = (row: any) =>
+    selectedProblem && row.id === selectedProblem.id ? 'selected-row' : '';
 
-
-  const handleEdit = row => {
+  const handleEdit = (row: any) => {
     setSelectedProblem(row);
     setOpen(true);
   };
 
-  // LOVs
-  const { data: statusLov } = useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
-  const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
-  const { data: sourceLov } = useGetLovValuesByCodeQuery('RELATION');
-
-  // DELETE MUTATION
-  const [removeProblem] = useRemovePatientProblemMutation();
-
-  const handleDelete = (row) => {
-    if (!row?.key) return;
-
-    removeProblem({ key: row.key })
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: "Deleted successfully", sev: "success" }));
-
-        setListRequestPatientProblems({
-          ...listRequestPatientProblems,
-          timestamp: new Date().getTime(),
-        });
-      })
-      .catch(() => {
-        dispatch(notify({ msg: "Delete failed", sev: "error" }));
-      });
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  const columns = [
-    { key: 'condition', title: 'CONDITION', flexGrow: 4, dataKey: 'condition' },
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPagination(prev => ({
+      ...prev,
+      size: parseInt(event.target.value, 10),
+      page: 0
+    }));
+  };
 
+  /* TABLE */
+
+  const columns = [
+    {
+      key: 'condition',
+      title: 'CONDITION',
+      flexGrow: 4,
+      dataKey: 'condition',
+      render: row => <p>{formatEnumString(row?.condition)}</p>
+    },
     {
       key: 'dateOfDiagnosis',
       title: 'DATE OF DIAGNOSIS',
       flexGrow: 4,
-      dataKey: 'dateOfDiagnosis',
-      render: row =>
-        row?.dateOfDiagnosis ? formatDateWithoutSeconds(row.dateOfDiagnosis) : ' ',
+      render: (row: any) =>
+        row?.dateOfDiagnosis ? new Date(row.dateOfDiagnosis).toLocaleDateString() : ''
     },
-
     {
-      key: 'typeLkey',
+      key: 'type',
       title: 'TYPE',
       flexGrow: 3,
-      render: row =>
-        conjureValueBasedOnKeyFromList(typeLov?.object ?? [], row.typeLkey, 'lovDisplayVale'),
+      render: (row: any) => {
+        const value = conjureValueBasedOnKeyFromList(
+          diagnosisTypeLov?.object ?? [],
+          row?.type,
+          'lovDisplayVale'
+        );
+        return value ?? row?.type ?? '';
+      }
     },
 
     {
       key: 'dateOfResolution',
       title: 'DATE OF RESOLUTION',
       flexGrow: 4,
-      render: row =>
-        row?.dateOfResolution ? formatDateWithoutSeconds(row.dateOfResolution) : ' ',
+      render: (row: any) =>
+        row?.dateOfResolution ? new Date(row.dateOfResolution).toLocaleDateString() : ''
     },
-
     {
-      key: 'sourceOfInformationLkey',
+      key: 'sourceOfInformation',
       title: 'SOURCE OF INFORMATION',
       flexGrow: 4,
-      render: row =>
-        conjureValueBasedOnKeyFromList(sourceLov?.object ?? [], row.sourceOfInformationLkey, 'lovDisplayVale'),
+      render: (row: any) => {
+        if (row?.byPatient === true) {
+          return 'Patient';
+        }
+
+        const value = conjureValueBasedOnKeyFromList(
+          sourceLov?.object ?? [],
+          row?.sourceOfInformation,
+          'lovDisplayVale'
+        );
+
+        return value ?? row?.sourceOfInformation ?? '';
+      }
     },
 
     {
-      key: 'statusLkey',
+      key: 'status',
       title: 'STATUS',
       flexGrow: 3,
-      render: row =>
-        conjureValueBasedOnKeyFromList(statusLov?.object ?? [], row.statusLkey, 'lovDisplayVale'),
+      render: (row: any) => <p>{formatEnumString(row?.status)}</p>
     },
-
-    // ACTIONS COLUMN
-   ...(!toShowData ? [{
-      key: 'actions',
-      title: '',
-      flexGrow: 2,
-      render: row => (
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          {/* EDIT */}
-          <MdModeEdit
-            size={24}
-            fill="var(--primary-gray)"
-            style={{ cursor: 'pointer' }}
-            onClick={() => handleEdit(row)}
-          />
-
-          {/* DELETE */}
-          <MdDelete
-            size={24}
-            fill="var(--primary-pink)"
-            style={{ cursor: 'pointer' }}
-            onClick={() => {
-              setRowToDelete(row);
-              setOpenDeleteModal(true);
-            }}
-          />
-        </div>
-      )
-    }] : [])
+    ...(!toShowData
+      ? [
+          {
+            key: 'actions',
+            title: '',
+            flexGrow: 2,
+            render: (row: any) => (
+              <div style={{ display: 'flex', gap: 12 }}>
+                <MdModeEdit
+                  size={22}
+                  fill="var(--primary-gray)"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => handleEdit(row)}
+                />
+                <MdDelete
+                  size={22}
+                  fill="var(--primary-pink)"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setRowToDelete(row);
+                    setOpenDeleteModal(true);
+                  }}
+                />
+              </div>
+            )
+          }
+        ]
+      : [])
   ];
 
-  const pageIndex = listRequestPatientProblems.pageNumber - 1;
-  const rowsPerPage = listRequestPatientProblems.pageSize;
-  const totalCount = patientProblemsData?.extraNumeric ?? 0;
+  const tableData = useMemo(() => pageData?.data ?? [], [pageData?.data]);
+  const totalCount = pageData?.totalCount ?? 0;
+
+  /* RENDER */
+
   return (
     <div className="medical-container-div">
       <SectionContainer
-        button={<>
-        { !toShowData&& <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>
+        title={<>Patient&apos;s Problems</>}
+        action={
+          !toShowData && (
+            <MyButton
+              disabled={edit}
+              prefixIcon={() => <PlusIcon />}
+              onClick={() => {
+                setSelectedProblem(null);
+                setOpen(true);
+              }}
+            >
               Add
-            </MyButton>}
-            </>}
-        title={
-          <>
-            Patient's Problems
-          </>
+            </MyButton>
+          )
         }
         content={
           <>
             <MyTable
               height={450}
-              data={patientProblemsData?.object ?? []}
-              loading={isLoading}
+              data={tableData}
+              loading={isFetching}
               columns={columns}
               rowClassName={isSelected}
-              page={pageIndex}
-              rowsPerPage={rowsPerPage}
+              page={pagination.page}
+              rowsPerPage={pagination.size}
               totalCount={totalCount}
               onPageChange={handlePageChange}
               onRowsPerPageChange={handleRowsPerPageChange}
-              
             />
-
-
-
-
-
 
             <AddPatientProblem
               open={open}
-              setOpen={() => {
-                setSelectedProblem(null);
-                setOpen(false);
-                setListRequestPatientProblems({ ...listRequestPatientProblems, timestamp: new Date().getTime() });
-              }}
               initialData={selectedProblem}
               patient={patient}
+              setOpen={() => {
+                setOpen(false);
+                setSelectedProblem(null);
+              }}
             />
 
             <DeletionConfirmationModal
@@ -213,13 +248,7 @@ const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => 
               setOpen={setOpenDeleteModal}
               itemToDelete="Patient Problem"
               actionType="delete"
-              actionButtonFunction={() => {
-                if (rowToDelete) {
-                  handleDelete(rowToDelete);
-                  setOpenDeleteModal(false);
-                  setRowToDelete(null);
-                }
-              }}
+              actionButtonFunction={handleDelete}
             />
           </>
         }

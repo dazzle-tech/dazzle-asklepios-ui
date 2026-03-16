@@ -312,7 +312,6 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	facilityKey:undefined,
 	resourceTypeLkey:undefined,
 	resourceKey:undefined,
-	departmentKey:undefined,
 	visitTypeLkey:undefined,
 	durationLkey:undefined,
 	appointmentStart:'',
@@ -342,6 +341,7 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	noShowReasonLkey:undefined,
 	noShowReasonValue:'',
 	noShowOtherReason:'',
+	departmentKey:undefined,
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -557,6 +557,8 @@ export const newApConsultationOrder:modelTypes.ApConsultationOrder = {
 	facilityKey:undefined,
 	departmentKey:undefined,
 	priorityLkey:undefined,
+	approvalNumber: '',
+	extraDocumentation: '',
 } 
 
 export const newApCpt:modelTypes.ApCpt = { 
@@ -3755,7 +3757,7 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 
 export const newApProcedure:modelTypes.ApProcedure = { 
 	key:undefined,
-	procedureNameKey:undefined,
+	procedureNameId:0,
 	procedureId:'',
 	procedureLevelLkey:undefined,
 	categoryKey:undefined,
@@ -4779,3 +4781,5 @@ export const newApWarehouseUser:modelTypes.ApWarehouseUser = {
 	deletedAt:undefined,
 	isvalid:undefined,
 } 
+
+

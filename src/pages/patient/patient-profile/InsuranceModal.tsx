@@ -1,20 +1,94 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
-import './styles.less';
 import { useAppDispatch } from '@/hooks';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-
 import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
-import { ApPatientInsurance } from '@/types/model-types';
-import { faShieldHeart } from '@fortawesome/free-solid-svg-icons';
-import { useSavePatientInsuranceMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
-import { newApPatientInsurance } from '@/types/model-types-constructor';
-import MyModal from '@/components/MyModal/MyModal';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import AdvancedModal from '@/components/AdvancedModal/AdvancedModal';
 import { formatEnumString } from '@/utils';
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+import InsuranceBenefitsCard from './InsuranceBenefitsCard';
+import './styles.less';
+import PlanCoverageItemsSection from './PlanCoverageItemsSection';
+import { PatientInsurance } from '@/types/model-types-new';
+import { newPatientInsurance } from '@/types/model-types-constructor-new';
+
+import {
+  useAddPatientInsuranceMutation,
+  useUpdatePatientInsuranceMutation
+} from '@/services/patients/patientInsurancesService';
+import { useGetRelativePatientsByCategoryQuery } from '@/services/patients/PatientRelationService';
+
+const INSURANCE_ERROR_MAP: Record<string, string> = {
+  'payload.required': 'Insurance data is required.',
+  'patient.required': 'Patient is required.',
+  'patient.payor.duplicate': 'This patient already has an insurance for the selected payor.',
+  'primary.exists': 'This patient already has a primary insurance.',
+  'db.constraint': 'Database constraint violation while saving insurance.',
+  notfound: 'Insurance record not found.'
+};
+
+const INSURANCE_FIELD_LABELS: Record<string, string> = {
+  payorId: 'Payor',
+  planId: 'Plan',
+  policyNumber: 'Policy Number',
+  groupNumber: 'Group Number',
+  expirationDate: 'Expiration Date',
+  policyHolderId: 'Policy Holder',
+  isPrimary: 'Primary Insurance'
+};
+
+const normalizeFieldErrorMessage = (message: string): string => {
+  const lowerMessage = (message || '').toLowerCase();
+  if (lowerMessage.includes('must not be null')) return 'is required';
+  if (lowerMessage.includes('must not be blank')) return 'must not be blank';
+  if (lowerMessage.includes('size')) return 'length is out of range';
+  if (lowerMessage.includes('greater')) return 'value is too small';
+  if (lowerMessage.includes('less')) return 'value is too large';
+  return message || 'invalid value';
+};
+
+const getFieldLabel = (field: string): string => INSURANCE_FIELD_LABELS[field] ?? field;
+
+const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, string>) => {
+  const responseData = error?.data ?? {};
+  const traceId = responseData?.traceId || responseData?.requestId || responseData?.correlationId;
+  const traceSuffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  if (Array.isArray(responseData?.fieldErrors) && responseData.fieldErrors.length > 0) {
+    const errorLines = responseData.fieldErrors.map(
+      (fieldError: any) =>
+        `• ${getFieldLabel(fieldError.field)}: ${normalizeFieldErrorMessage(fieldError.message)}`
+    );
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${errorLines.join('\n')}` + traceSuffix,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  const messageProp: string = responseData?.message || '';
+  const errorKey = messageProp.startsWith('error.')
+    ? messageProp.substring(6)
+    : responseData?.errorKey;
+
+  const humanReadableMessage =
+    (errorKey && keyMap[errorKey]) ||
+    responseData?.detail ||
+    responseData?.title ||
+    responseData?.message ||
+    'Unexpected error';
+
+  dispatch(
+    notify({
+      msg: humanReadableMessage + traceSuffix,
+      sev: 'warning'
+    })
+  );
+};
 
 const InsuranceModal = ({
   open,
@@ -25,106 +99,235 @@ const InsuranceModal = ({
   editing,
   insuranceBrowsing,
   relations,
-  hideSaveBtn = false,
+  hideSaveBtn = false
 }) => {
-  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({
-    ...newApPatientInsurance,
-  });
-  const [savePatientInsurance] = useSavePatientInsuranceMutation();
-  const [relationsList, setRelationsList] = useState<any[]>();
   const dispatch = useAppDispatch();
 
-  // لتفادي مسح الـ plan عند أول تحميل edit
-  const [prevPayorId, setPrevPayorId] = useState<number | undefined>(undefined);
+  const [patientInsurance, setPatientInsurance] = useState<PatientInsurance>({
+    ...newPatientInsurance
+  });
 
-  // Payor pagination state
+  const [addPatientInsurance] = useAddPatientInsuranceMutation();
+  const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
+
+  const [relationsList, setRelationsList] = useState<any[]>();
+  const [prevPayorId, setPrevPayorId] = useState<number | undefined>();
+
   const [payorPage, setPayorPage] = useState(0);
   const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
-
-  // Payor Plans state
   const [planPage, setPlanPage] = useState(0);
 
-  // Fetch Payors with pagination
+  // Policy Holder pagination state
+  const [relativePage, setRelativePage] = useState(0);
+  const [allRelatives, setAllRelatives] = useState<any[]>([]);
+
   const {
     data: payorResponse,
     isLoading: payorLoading,
-    isFetching: payorFetching,
+    isFetching: payorFetching
   } = useGetAllPayorsQuery({
     page: payorPage,
     size: 20,
     sort: 'name,asc',
-    ...(payorSearchKeyword && { name: payorSearchKeyword }),
+    ...(payorSearchKeyword && { name: payorSearchKeyword })
   });
 
-  // Fetch Payor Plans based on selected Payor
   const {
     data: plansResponse,
     isLoading: plansLoading,
-    isFetching: plansFetching,
+    isFetching: plansFetching
   } = useGetPlansByPayorQuery(
     {
-      payorId: Number(patientInsurance?.insuranceProviderLkey) || 0,
+      payorId: Number(patientInsurance?.payorId) || 0,
       page: planPage,
       size: 20,
-      sort: 'name,asc',
+      sort: 'name,asc'
     },
-    {
-      skip: !patientInsurance?.insuranceProviderLkey,
-    }
+    { skip: !patientInsurance?.payorId }
   );
 
+  const {
+    data: relativesResponse,
+    isLoading: relativesLoading,
+    isFetching: relativesFetching
+  } = useGetRelativePatientsByCategoryQuery(
+    {
+      patientId: patientKey?.id,
+      categoryType: 'ADULT',
+      page: relativePage,
+      size: 5
+    },
+    { skip: !patientKey?.id || !open }
+  );
 
-
-  // Reset payors when search keyword changes
   useEffect(() => {
     setPayorPage(0);
   }, [payorSearchKeyword]);
 
-  // عند تغيير الـ Payor:
   useEffect(() => {
-    const currentPayorId = patientInsurance?.insuranceProviderLkey
-      ? Number(patientInsurance.insuranceProviderLkey)
-      : undefined;
+    const currentPayorId = patientInsurance?.payorId ? Number(patientInsurance.payorId) : undefined;
 
     if (currentPayorId === prevPayorId) return;
 
-    // reset plans list
     setPlanPage(0);
 
-    // لو فيه payor سابق نمسح الـ plan
     if (prevPayorId !== undefined) {
-      setPatientInsurance(prev => ({
-        ...prev,
-        insurancePlanTypeLkey: undefined,
-      }));
+      setPatientInsurance(prevInsurance => ({ ...prevInsurance, planId: null }));
     }
 
     setPrevPayorId(currentPayorId);
-  }, [patientInsurance?.insuranceProviderLkey, prevPayorId]);
+  }, [patientInsurance?.payorId, prevPayorId]);
+
+  useEffect(() => {
+    if (!open) {
+      setRelativePage(0);
+      setAllRelatives([]);
+      return;
+    }
+
+    if (relativePage === 0) {
+      setAllRelatives(relativesResponse?.data ?? relativesResponse ?? []);
+      return;
+    }
+
+    const incomingRows = relativesResponse?.data ?? relativesResponse ?? [];
+
+    setAllRelatives(prev => {
+      const seenIds = new Set(prev.map(item => Number(item.id)));
+      const merged = [...prev];
+
+      incomingRows.forEach(item => {
+        if (!seenIds.has(Number(item.id))) {
+          merged.push(item);
+        }
+      });
+
+      return merged;
+    });
+  }, [relativesResponse, relativePage, open]);
 
   const hasMorePayors = payorResponse?.links?.next != null;
   const hasMorePlans = plansResponse?.links?.next != null;
+  const hasMoreRelatives = relativesResponse?.links?.next != null;
 
   const handleLoadMorePayors = () => {
-    if (hasMorePayors && !payorFetching) {
-      setPayorPage(prev => prev + 1);
-    }
+    if (hasMorePayors && !payorFetching) setPayorPage(currentPage => currentPage + 1);
   };
 
   const handleLoadMorePlans = () => {
-    if (hasMorePlans && !plansFetching) {
-      setPlanPage(prev => prev + 1);
+    if (hasMorePlans && !plansFetching) setPlanPage(currentPage => currentPage + 1);
+  };
+
+  const handleLoadMoreRelatives = () => {
+    if (hasMoreRelatives && !relativesFetching) {
+      setRelativePage(currentPage => currentPage + 1);
     }
   };
 
-  const renderContent = () => (
-    <div>
+  const handleSave = async () => {
+    const insuranceBody: PatientInsurance = {
+      ...patientInsurance,
+      patientId: patientKey.id
+    };
+
+    try {
+      if (insuranceBody.id) {
+        await updatePatientInsurance({ id: insuranceBody.id, ...insuranceBody }).unwrap();
+      } else {
+        await addPatientInsurance(insuranceBody).unwrap();
+      }
+
+      refetchInsurance();
+      handleClearModal();
+
+      dispatch(notify({ msg: 'Insurance Saved Successfully', sev: 'success' }));
+    } catch (error: any) {
+      handleCrudError(error, dispatch, INSURANCE_ERROR_MAP);
+    }
+  };
+
+  const handleClearModal = () => {
+    setPatientInsurance({ ...newPatientInsurance });
+    setPrevPayorId(undefined);
+    setPayorPage(0);
+    setPayorSearchKeyword('');
+    setPlanPage(0);
+    setRelativePage(0);
+    setAllRelatives([]);
+    onClose();
+  };
+
+  useEffect(() => {
+    const namesAndIds =
+      relations?.map(relation => ({
+        name: `${relation.relativePatientObject.firstName} ${relation.relativePatientObject.lastName}`,
+        id: relation.id
+      })) || [];
+    setRelationsList(namesAndIds);
+  }, [relations]);
+
+  useEffect(() => {
+    if (open) {
+      if (editing && editing.id) {
+        setPatientInsurance({
+          ...editing,
+          payorId: Number(editing.payorId),
+          planId: editing.planId ? Number(editing.planId) : null
+        });
+        setPrevPayorId(Number(editing.payorId));
+      } else {
+        setPatientInsurance({ ...newPatientInsurance });
+        setPrevPayorId(undefined);
+        setPayorPage(0);
+        setPayorSearchKeyword('');
+        setPlanPage(0);
+      }
+
+      setRelativePage(0);
+      setAllRelatives([]);
+    }
+  }, [open, editing]);
+
+  useEffect(() => {
+    if (!open) {
+      const resetTimer = setTimeout(() => {
+        setPatientInsurance({ ...newPatientInsurance });
+        setPrevPayorId(undefined);
+        setPayorPage(0);
+        setPayorSearchKeyword('');
+        setPlanPage(0);
+        setRelativePage(0);
+        setAllRelatives([]);
+      }, 300);
+      return () => clearTimeout(resetTimer);
+    }
+  }, [open]);
+
+  const relativeOptions = useMemo(() => allRelatives ?? [], [allRelatives]);
+
+  const renderLeftContent = () => (
+    <div className="insurance-modal__left-content">
+      <InsuranceBenefitsCard
+        data={{
+          remainingBenefits: patientInsurance.remainingBenefits,
+          remailingDeductibles: patientInsurance.remailingDeductibles,
+          deductiblesValue: patientInsurance.deductiblesValue,
+          coInsuranceValue: patientInsurance.coInsuranceValue,
+          coPaymentValue: patientInsurance.coPaymentValue
+        }}
+      />
+    </div>
+  );
+
+  const renderRightContent = () => (
+    <div className="insurance-modal__right-content">
       <Form layout="inline" fluid>
         <MyInput
           column
+          required
           fieldLabel="Payor"
           fieldType="selectPagination"
-          fieldName="insuranceProviderLkey"
+          fieldName="payorId"
           selectData={payorResponse?.data ?? []}
           selectDataLabel="name"
           selectDataValue="id"
@@ -141,14 +344,49 @@ const InsuranceModal = ({
         />
         <MyInput
           column
-          fieldLabel="Insurance Policy Number"
-          fieldName="insurancePolicyNumber"
+          required
+          fieldLabel="Plan"
+          fieldType="selectPagination"
+          fieldName="planId"
+          selectData={plansResponse?.data ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing || !patientInsurance?.payorId}
+          searchable={true}
+          loading={plansLoading || plansFetching}
+          hasMore={hasMorePlans}
+          onFetchMore={handleLoadMorePlans}
+          placeholder={!patientInsurance?.payorId ? 'Select Payor first...' : 'Select Plan...'}
+          renderMenuItem={(label, item) => {
+            if (item?.isLoadMore) {
+              return <div className="insurance-modal__plan-load-more">Load more...</div>;
+            }
+            return (
+              <div>
+                <div className="insurance-modal__plan-name">{item.name}</div>
+                <div className="insurance-modal__plan-details">
+                  {formatEnumString(item.planType)} • {formatEnumString(item.coverageType)} • $
+                  {item.amount}
+                </div>
+              </div>
+            );
+          }}
+        />
+        <MyInput
+          column
+          required
+          fieldType="number"
+          fieldLabel="Policy Number"
+          fieldName="policyNumber"
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
         />
         <MyInput
           column
+          fieldType="number"
           fieldLabel="Group Number"
           fieldName="groupNumber"
           record={patientInsurance}
@@ -157,66 +395,7 @@ const InsuranceModal = ({
         />
         <MyInput
           column
-          fieldLabel="Plan"
-          fieldType="selectPagination"
-          fieldName="insurancePlanTypeLkey"
-          selectData={plansResponse?.data ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={
-            insuranceBrowsing || !patientInsurance?.insuranceProviderLkey
-          }
-          searchable={true}
-          loading={plansLoading || plansFetching}
-          hasMore={hasMorePlans}
-          onFetchMore={handleLoadMorePlans}
-          placeholder={
-            !patientInsurance?.insuranceProviderLkey
-              ? 'Select Payor first...'
-              : 'Select Plan...'
-          }
-          renderMenuItem={(label, item) => {
-            if (item?.isLoadMore) {
-              return (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Load more...
-                </div>
-              );
-            }
-            return (
-              <div>
-                <div style={{ fontWeight: 500 }}>{item.name}</div>
-                <div
-                  style={{
-                    fontSize: '12px',
-                    color: 'var(--primary-gray)',
-                  }}
-                >
-                  {formatEnumString(item.planType)} •{' '}
-                  {formatEnumString(item.coverageType)} • ${item.amount}
-                </div>
-              </div>
-            );
-          }}
-        />
-        <MyInput
-          column
-          fieldLabel="Authorization Numbers"
-          fieldName="authorizationNumbers"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing}
-        />
-        <MyInput
-          column
+          required
           fieldType="date"
           fieldLabel="Expiration Date"
           fieldName="expirationDate"
@@ -226,212 +405,55 @@ const InsuranceModal = ({
         />
         <MyInput
           column
-          fieldLabel="Remaining Benefits"
-          fieldName="remainingBenefits"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing}
-        />
-
-        <MyInput
-          column
-          fieldLabel="Remailing Deductibles"
-          fieldName="remailingDeductibles"
-          record={patientInsurance}
-          setRecord={setPatientInsurance}
-          disabled={insuranceBrowsing}
-        />
-        <MyInput
-          column
           fieldLabel="Policy Holder"
-          fieldType="select"
-          fieldName="policyHolder"
-          selectData={relationsList}
-          selectDataLabel="name"
+          fieldType="selectPagination"
+          fieldName="policyHolderId"
+          selectData={relativeOptions}
+          selectDataLabel={['firstName', 'lastName']}
           selectDataValue="id"
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
-          searchable={false}
+          loading={relativesLoading || relativesFetching}
+          searchable={true}
+          hasMore={hasMoreRelatives}
+          onFetchMore={handleLoadMoreRelatives}
+          placeholder="Select Policy Holder..."
         />
         <MyInput
           column
           fieldLabel="Primary Insurance"
-          fieldName="primaryInsurance"
+          fieldName="isPrimary"
           record={patientInsurance}
           setRecord={setPatientInsurance}
           fieldType="checkbox"
           disabled={insuranceBrowsing}
         />
       </Form>
-      <div className="clickedInputs">
-        <Form layout="inline" fluid>
-          <MyInput
-            column
-            fieldLabel="Co Payment"
-            fieldName="coPayment"
-            record={patientInsurance}
-            setRecord={setPatientInsurance}
-            fieldType="checkbox"
-            disabled={insuranceBrowsing}
-          />
-          <div
-            className={`input-container ${patientInsurance?.coPayment ? 'show' : 'hide'
-              }`}
-          >
-            <MyInput
-              column
-              fieldLabel="Co Payment Value"
-              fieldName="coPaymentValue"
-              record={patientInsurance}
-              setRecord={setPatientInsurance}
-              disabled={insuranceBrowsing}
-            />
-          </div>
-        </Form>
-        <Form layout="inline" fluid>
-          <MyInput
-            column
-            fieldLabel="Co Insurance"
-            fieldName="coInsurance"
-            record={patientInsurance}
-            setRecord={setPatientInsurance}
-            fieldType="checkbox"
-            disabled={insuranceBrowsing}
-          />
-          <div
-            className={`input-container ${patientInsurance?.coInsurance ? 'show' : 'hide'
-              }`}
-          >
-            <MyInput
-              column
-              fieldLabel="Co Insurance Value"
-              fieldName="coInsuranceValue"
-              record={patientInsurance}
-              setRecord={setPatientInsurance}
-              disabled={insuranceBrowsing}
-            />
-          </div>
-        </Form>
-        <Form layout="inline" fluid>
-          <MyInput
-            column
-            fieldLabel="Deductibles"
-            fieldName="deductibles"
-            record={patientInsurance}
-            setRecord={setPatientInsurance}
-            fieldType="checkbox"
-            disabled={insuranceBrowsing}
-          />
-          <div
-            className={`input-container ${patientInsurance?.deductibles ? 'show' : 'hide'
-              }`}
-          >
-            <MyInput
-              column
-              fieldLabel="Deductibles Value"
-              fieldName="deductiblesValue"
-              record={patientInsurance}
-              setRecord={setPatientInsurance}
-              disabled={insuranceBrowsing}
-            />
-          </div>
-        </Form>
+      <div className="insurance-modal__coverage-section">
+        {patientInsurance?.planId && <PlanCoverageItemsSection planId={patientInsurance.planId} />}
       </div>
     </div>
   );
 
-  const handleSave = async () => {
-    savePatientInsurance({
-      ...patientInsurance,
-      patientKey: patientKey.key,
-    })
-      .unwrap()
-      .then(() => {
-        refetchInsurance();
-        handleClearModal();
-        dispatch(
-          notify({ msg: 'Insurance Saved Successfully', sev: 'success' })
-        );
-      })
-      .catch(() => {
-        setPatientInsurance({
-          ...patientInsurance,
-          primaryInsurance: false,
-        });
-      });
-  };
-
-  const handleClearModal = () => {
-    setPatientInsurance({ ...newApPatientInsurance });
-    setPrevPayorId(undefined);
-    setPayorPage(0);
-    setPayorSearchKeyword('');
-    setPlanPage(0);
-    onClose();
-  };
-
-  useEffect(() => {
-    const namesAndIds =
-      relations?.map(relation => {
-        const relativePatient = relation.relativePatientObject;
-        return {
-          name: `${relativePatient.firstName} ${relativePatient.lastName}`,
-          id: relation.key,
-        };
-      }) || [];
-    setRelationsList(namesAndIds);
-  }, [relations]);
-
-  useEffect(() => {
-    if (open === false) {
-      handleClearModal();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (editing) {
-      const payorId = editing.insuranceProviderLkey
-        ? Number(editing.insuranceProviderLkey)
-        : undefined;
-      const planId = editing.insurancePlanTypeLkey
-        ? Number(editing.insurancePlanTypeLkey)
-        : undefined;
-
-      setPatientInsurance({
-        ...editing,
-        insuranceProviderLkey: payorId,
-        insurancePlanTypeLkey: planId,
-      });
-
-      setPrevPayorId(payorId);
-
-    } else {
-      // حالة الإضافة: بدون كاستينج، نرجع newApPatientInsurance
-      setPatientInsurance({ ...newApPatientInsurance });
-      setPrevPayorId(undefined);
-    }
-  }, [editing]);
-
-
-
   return (
-    <MyModal
+    <AdvancedModal
       open={open}
       setOpen={setOpen}
-      title="Patient Insurance"
-      bodyheight="70vh"
-      content={renderContent}
-      size="lg"
-      steps={[
-        {
-          title: 'Insurance',
-          icon: <FontAwesomeIcon icon={faShieldHeart} />,
-        },
-      ]}
+      leftTitle="Benefits Overview"
+      rightTitle="Patient Insurance"
+      subRightTitle={editing?.id ? 'Edit Insurance Information' : 'Add New Insurance'}
+      leftContent={renderLeftContent()}
+      rightContent={renderRightContent()}
       actionButtonLabel="Save"
-      actionButtonFunction={handleSave}
-      hideActionBtn={hideSaveBtn}
+      actionButtonFunction={hideSaveBtn ? null : handleSave}
+      hideCancel={false}
+      height="80vh"
+      size="80vw"
+      leftWidth="25%"
+      rightWidth="75%"
+      isDisabledActionBtn={hideSaveBtn}
+      isLeftClosed={false}
     />
   );
 };

@@ -24,8 +24,8 @@ const PatientHistorySummary: React.FC<Props> = ({
   button = null,
   lang = 'en'
 }) => {
-  const patientKey = patient?.key ?? patient?.patientKey;
-  const encounterKey = encounter?.key ?? encounter?.encounterKey;
+  const patientKey = patient?.id;
+  const encounterKey = encounter?.id;
 
   // UI loading state (covers: fetch patientSummary + building payload + calling AI + waiting AI result)
   const [isUiLoading, setIsUiLoading] = useState(false);
@@ -100,14 +100,13 @@ const PatientHistorySummary: React.FC<Props> = ({
 
   // 4) Manage UI loading: start as soon as modal has keys and until AI response arrives
   useEffect(() => {
-   
     if (!patientKey || !encounterKey) {
       setIsUiLoading(false);
       return;
     }
 
-   
-    const waitingPatientSummary = isPatientSummaryFetching || isPatientSummaryLoading || !patientSummary;
+    const waitingPatientSummary =
+      isPatientSummaryFetching || isPatientSummaryLoading || !patientSummary;
     const waitingAiResult = isAiLoading || (aiPayload != null && !aiData && !isAiErr);
 
     setIsUiLoading(waitingPatientSummary || waitingAiResult);
@@ -128,7 +127,8 @@ const PatientHistorySummary: React.FC<Props> = ({
     if (!aiPayload || !patientKey || !encounterKey) return;
 
     // guard: pydantic requires non-empty gender
-    if (!aiPayload.patient_data.Gender || String(aiPayload.patient_data.Gender).trim() === '') return;
+    if (!aiPayload.patient_data.Gender || String(aiPayload.patient_data.Gender).trim() === '')
+      return;
 
     const callKey = `${patientKey}:${encounterKey}`;
     if (lastCallKeyRef.current === callKey) return;

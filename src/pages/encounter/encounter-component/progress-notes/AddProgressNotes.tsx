@@ -1,185 +1,182 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
-import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import MyModal from '@/components/MyModal/MyModal';
-import { faFileLines } from '@fortawesome/free-solid-svg-icons';
-import './styles.less';
-import { ApProgressNotes, ApUser } from '@/types/model-types';
-import { newApProgressNotes, newApUser } from '@/types/model-types-constructor';
-import { useSaveProgressNotesMutation } from '@/services/encounterService';
-import { useAppSelector, useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-const AddProgressNotes = ({ open, setOpen, patient, encounter, progressNotesObj, refetch, edit }) => {
-  const [progressNotes, setProgressNotes] = useState<ApProgressNotes>({ ...newApProgressNotes });
-  const [saveProgressNotes] = useSaveProgressNotesMutation();
-  const authSlice = useAppSelector(state => state.auth);
-  const [isEncounterProgressNotesStatusClose, setIsEncounterProgressNotesStatusClose] = useState(false);
-  const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
-  const [isDisabledField, setIsDisabledField] = useState(false);
-  const [createdBy, setCreatedBy] = useState<ApUser>({ ...newApUser });
+import { faBroom, faFileLines } from '@fortawesome/free-solid-svg-icons';
 
+import MyModal from '@/components/MyModal/MyModal';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+
+import { useCreateMutation, useUpdateMutation } from '@/services/patients/progressNoteService';
+
+import { ProgressNote } from '@/types/model-types-new';
+import { newProgressNote } from '@/types/model-types-constructor-new';
+
+import './styles.less';
+
+const PROGRESS_NOTE_FIELD_LABELS: Record<string, string> = {
+  patientId: 'Patient',
+  encounterId: 'Encounter',
+  noteText: 'Progress Note'
+};
+
+const PROGRESS_NOTE_ERROR_MAP: Record<string, string> = {
+  'patient.notfound': 'Patient not found.',
+  'encounter.notfound': 'Encounter not found.',
+  'already.cancelled': 'Progress note already cancelled.',
+  'already.cancelled.update': 'Cancelled progress note cannot be updated.',
+  'db.constraint': 'Database constraint violation.'
+};
+
+const handleCrudError = (err: any, dispatch: any) => {
+  const data = err?.data ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map((fe: any) => {
+      const label = PROGRESS_NOTE_FIELD_LABELS[fe.field] || fe.field;
+
+      let normalized = fe.message;
+      const msg = (fe.message || '').toLowerCase();
+
+      if (msg.includes('must not be null')) normalized = 'is required';
+      else if (msg.includes('must not be blank')) normalized = 'must not be blank';
+
+      return `• ${label}: ${normalized}`;
+    });
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  const errorKey =
+    data?.errorKey ||
+    (typeof data?.message === 'string' && data.message.startsWith('error.')
+      ? data.message.replace('error.', '')
+      : undefined);
+
+  if (errorKey && PROGRESS_NOTE_ERROR_MAP[errorKey]) {
+    dispatch(
+      notify({
+        msg: PROGRESS_NOTE_ERROR_MAP[errorKey] + suffix,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  dispatch(
+    notify({
+      msg: (data?.detail || data?.title || 'Unexpected error occurred') + suffix,
+      sev: 'warning'
+    })
+  );
+};
+
+const AddProgressNotes = ({ open, setOpen, progressNote, patient, encounter, edit, refetch }) => {
   const dispatch = useAppDispatch();
 
+  const [formData, setFormData] = useState<ProgressNote>({ ...newProgressNote });
 
-  const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
-  // Handle Save Progress Notes
+  const [createNote] = useCreateMutation();
+  const [updateNote] = useUpdateMutation();
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (progressNote?.id) {
+      setFormData({ ...progressNote });
+    } else {
+      setFormData({
+        ...newProgressNote,
+        patientId: patient?.id,
+        encounterId: encounter?.id
+      });
+    }
+  }, [open, progressNote, patient?.id, encounter?.id]);
+
+  const handleClear = () => {
+    setFormData({
+      ...newProgressNote,
+      patientId: patient?.id,
+      encounterId: encounter?.id
+    });
+  };
+
   const handleSave = async () => {
     try {
-      //  TODO convert key to code
-      if (progressNotes.key === undefined) {
-        await saveProgressNotes({
-          ...progressNotes,
-          patientKey: patient.key,
-          encounterKey: encounter.key,
-          statusLkey: "9766169155908512",
-          jobRoleLkey: authSlice.user.jobRoleLkey,
-          createdBy: authSlice.user.key
+      if (formData.id) {
+        await updateNote({
+          id: formData.id!,
+          noteText: formData.noteText
         }).unwrap();
 
-        dispatch(notify({ msg: 'Progress Notes Added Successfully', sev: 'success' }));
-        //TODO convert key to code
-        setProgressNotes({ ...newApProgressNotes, statusLkey: "9766169155908512" });
-        setOpen(false);
+        dispatch(notify({ msg: 'Progress Note updated successfully', sev: 'success' }));
       } else {
-        await saveProgressNotes({
-          ...progressNotes,
-          patientKey: patient.key,
-          encounterKey: encounter.key,
-          jobRoleLkey: authSlice.user.jobRoleLkey,
-          updatedBy: authSlice.user.key
+        await createNote({
+          patientId: formData.patientId,
+          encounterId: formData.encounterId,
+          noteText: formData.noteText
         }).unwrap();
-        dispatch(notify({ msg: 'Progress Notes Updated Successfully', sev: 'success' }));
-        setOpen(false);
-        handleClearField();
+
+        dispatch(notify({ msg: 'Progress Note added successfully', sev: 'success' }));
       }
-      await refetch();
-      handleClearField();
-    } catch (error) {
-      console.error("Error saving Progress Notes:", error);
-      dispatch(notify({ msg: 'Failed to Save Progress Notes', sev: 'error' }));
+
+      refetch?.();
+      setOpen(false);
+      handleClear();
+    } catch (err: any) {
+      handleCrudError(err, dispatch);
     }
   };
-
-  // Handle Clear Fields
-  const handleClearField = () => {
-    setProgressNotes({ ...newApProgressNotes });
-  };
-
-  // Effects
-  useEffect(() => {
-    if (!open) {
-      handleClearField();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    // TODO update status to be a LOV value
-    if (progressNotes?.statusLkey === '3196709905099521') {
-      setIsEncounterProgressNotesStatusClose(true);
-    } else {
-      setIsEncounterProgressNotesStatusClose(false);
-    }
-  }, [progressNotes?.statusLkey]);
-  useEffect(() => {
-    // TODO update status to be a LOV value
-    if (encounter?.encounterStatusLkey === '91109811181900' || encounter?.discharge) {
-      setIsEncounterStatusClosed(true);
-    }
-  }, [encounter?.encounterStatusLkey]);
-  useEffect(() => {
-    if (isEncounterStatusClosed || isEncounterProgressNotesStatusClose) {
-      setIsDisabledField(true);
-    } else {
-      setIsDisabledField(false);
-    }
-  }, [isEncounterStatusClosed, isEncounterProgressNotesStatusClose]);
-  useEffect(() => {
-    setProgressNotes({ ...progressNotesObj });
-    setCreatedBy(progressNotesObj?.createdByUser)
-  }, [progressNotesObj]);
-  // Modal Content
-  const content = (
-    <Form fluid layout="inline" disabled={edit} >
-      <MyInput
-        column
-        width={400}
-        fieldLabel="Progress Notes"
-        fieldType="textarea"
-        fieldName="progressNotes"
-        record={progressNotes}
-        setRecord={setProgressNotes}
-        required
-        height={200}
-      />
-      {progressNotes?.key && (
-        <div className="additional-fields-container">
-          <div className="fields-row">
-            <MyInput
-              column
-              width={200}
-              fieldLabel="Job Role"
-              fieldType="select"
-              fieldName="jobRoleLkey"
-              selectData={jobRoleLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={progressNotes}
-              setRecord={setProgressNotes}
-              disabled={true}
-              searchable={false}
-            />
-            <MyInput
-              column
-              width={200}
-              fieldLabel="Created By"
-              fieldType="text"
-              fieldName="fullName"
-              record={createdBy}
-              setRecord={setCreatedBy}
-              disabled={true}
-            />
-          </div>
-          {/* Second row - Created At on its own */}
-          <MyInput
-            column
-            width={200}
-            fieldLabel="Created At"
-            fieldType="datetime"
-            fieldName="createdAt"
-            record={progressNotes}
-            setRecord={setProgressNotes}
-            disabled={true}
-          />
-        </div>
-      )}
-    </Form>
-  );
 
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Add/Edit Progress Notes"
-      actionButtonFunction={handleSave}
-      position="right"
-      isDisabledActionBtn={!edit ? isDisabledField : true}
+      title="Progress Notes"
       size="32vw"
+      position="right"
+      actionButtonFunction={handleSave}
+      isDisabledActionBtn={edit || !formData.noteText}
       steps={[
         {
           title: 'Progress Notes',
           icon: <FontAwesomeIcon icon={faFileLines} />,
           footer: (
-            <MyButton appearance="ghost" onClick={handleClearField}>
-              Clear
+            <MyButton appearance="ghost" disabled={edit} onClick={handleClear}>
+              <FontAwesomeIcon icon={faBroom} /> Clear
             </MyButton>
           )
         }
       ]}
-      content={content}
-    ></MyModal>
+      content={
+        <Form fluid>
+          <MyInput
+            column
+            width={400}
+            height={200}
+            fieldLabel="Progress Notes"
+            fieldType="textarea"
+            fieldName="noteText"
+            record={formData}
+            setRecord={setFormData}
+            required
+            disabled={edit}
+            allowEnterNewLine
+          />
+        </Form>
+      }
+    />
   );
 };
 

@@ -1,5 +1,5 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
@@ -20,6 +20,7 @@ const ChooseDashboardSections = ({
 }) => {
   const [saveComponent] = useAddUserDashboardComponentsMutation();
   const [deleteComponent] = useDeleteUserDashboardComponentsMutation();
+  const [selectedAll, setSelectedAll] = useState({all: false});
   // Handle save when choose sections
   const handleSave = () => {
     setColumns(prev => {
@@ -56,6 +57,14 @@ const ChooseDashboardSections = ({
         return (
           <div className="choose-sections-dashboard">
             <Form layout="vertical" fluid>
+              <MyInput
+                fieldType="check"
+                fieldName="all"
+                fieldLabel="Select All"
+                record={selectedAll}
+                setRecord={setSelectedAll}
+                showLabel={false}
+              />
               <MyInput
                 fieldType="check"
                 fieldName="c1"
@@ -96,14 +105,14 @@ const ChooseDashboardSections = ({
                 record={displays}
                 setRecord={setDisplays}
               />
-              <MyInput
+              {/* <MyInput
                 fieldType="check"
                 fieldName="c6"
                 fieldLabel="Functional Assessment"
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
-              />
+              /> */}
               <MyInput
                 fieldType="check"
                 fieldName="c7"
@@ -120,23 +129,23 @@ const ChooseDashboardSections = ({
                 record={displays}
                 setRecord={setDisplays}
               />
-              <MyInput
+              {/* <MyInput
                 fieldType="check"
                 fieldName="c9"
                 fieldLabel="Pain Assessment"
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
-              />
+              /> */}
 
-              <MyInput
+              {/* <MyInput
                 fieldType="check"
                 fieldName="c10"
                 fieldLabel="General Assessment"
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
-              />
+              /> */}
               <MyInput
                 fieldType="check"
                 fieldName="c11"
@@ -153,7 +162,7 @@ const ChooseDashboardSections = ({
                 record={displays}
                 setRecord={setDisplays}
               />
-              <MyInput
+              {/* <MyInput
                 fieldType="check"
                 fieldName="c13"
                 fieldLabel="Last 24-h Medications"
@@ -176,12 +185,19 @@ const ChooseDashboardSections = ({
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
-              />
+              /> */}
             </Form>
           </div>
         );
     }
   };
+  useEffect(() => {
+    if(selectedAll['all'])
+     setDisplays({...displays, c1: true, c2: true, c3: true, c4: true, c5: true, c7: true, c8: true, c11: true, c12: true});
+    else
+     setDisplays({...displays, c1: false, c2: false, c3: false, c4: false, c5: false, c7: false, c8: false, c11: false, c12: false});
+
+  },[selectedAll]);
   return (
     <MyModal
       open={open}
