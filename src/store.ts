@@ -450,7 +450,7 @@ export const store = configureStore({
       PayorPlanService.middleware,
       DischargePlanningService.middleware,
       priceListAttributesService.middleware,
-      systemConfigurationService.middleware
+      systemConfigurationService.middleware,
       prescriptionPService.middleware,
       radiologyReportApi.middleware,
       clinicalSummaryService.middleware,
