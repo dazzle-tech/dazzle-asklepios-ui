@@ -3570,3 +3570,34 @@ export interface ReferralRequest {
   acceptedDate?: string | null;
   acceptedBy?: string | null;
 }
+export interface ConfigurationCreateVM {
+  facilityId?: number;
+  key: string,
+  value: string,
+  valueType: string,
+  referenceType: string,
+  description: string,
+  isActive?: boolean
+}
+
+export interface ConfigurationUpdateVM {
+  id: number,
+  facilityId?: number;
+  key: string,
+  value: string,
+  valueType: string,
+  referenceType: string,
+  description: string,
+  isActive?: boolean
+}
+
+export interface Configuration {
+  id: number,
+  facility?: Facility;
+  key: string,
+  value: string,
+  valueType: string,
+  referenceType: string,
+  description: string,
+  isActive?: boolean
+}

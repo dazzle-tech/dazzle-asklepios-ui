@@ -2384,3 +2384,34 @@ export const newReferralRequest: modelTypes.ReferralRequest = {
   acceptedDate: null,
   acceptedBy: null
 };
+export const newConfigurationCreateVM: modelTypes.ConfigurationCreateVM = {
+  facilityId: undefined,
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: true
+}
+
+export const newConfigurationUpdateVM: modelTypes.ConfigurationUpdateVM = {
+  id: undefined,
+  facilityId: undefined,
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: undefined
+}
+
+  export const newConfiguration: modelTypes.Configuration = {
+  id: undefined,
+  facility: undefined,
+  key: '',
+  value: '',
+  valueType: '',
+  referenceType: '',
+  description: '',
+  isActive: undefined
+}
