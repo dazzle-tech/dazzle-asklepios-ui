@@ -485,9 +485,25 @@ input[disabled] {
 .dark .rs-input-group.rs-input-group-inside input.rs-input ~ .rs-input-group-btn,
 .rs-input-group.rs-input-group-inside .rs-auto-complete ~ .rs-input-group-addon,
 .rs-input-group.rs-input-group-inside .rs-form-control-wrapper ~ .rs-input-group-addon,
-.rs-input-group.rs-input-group-inside .rs-form-control-wrapper ~ .rs-input-group-btn {
+.rs-input-group.rs-input-group-inside .rs-form-control-wrapper ~ .rs-input-group-btn:not(.password-toggle-button) {
   background-color: var(--gray-dark) !important;
 }
+
+// Override for password toggle button to be transparent
+.rs-input-group.rs-input-group-inside .rs-form-control-wrapper ~ .rs-input-group-btn.password-toggle-button,
+.rs-input-group .rs-input-group-btn.password-toggle-button,
+.password-toggle-button {
+  background-color: transparent !important;
+  background: transparent !important;
+  
+  &:hover,
+  &:focus,
+  &:active {
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+}
+
 // .dark svg:not(:root) {
 //   color: var(--white) !important;
 // }

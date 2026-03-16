@@ -15,7 +15,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useEnumOptions } from '@/services/enumsApi';
-import { conjureValueBasedOnIDFromList, formatEnumString } from '@/utils';
+import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList, conjureValueBasedOnKeyFromListOfValues, formatEnumString } from '@/utils';
 import {
   useGetProceduresQuery,
   useToggleProcedureIsActiveMutation,
@@ -30,6 +30,7 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import AddEditProcedure from './AddEditProcedure';
 import LinkProcedureCoding from './LinkProcedureCoding';
 import LinkProcedurePriceList from './LinkProcedurePriceList';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 const ProcedureSetup: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -78,7 +79,8 @@ const ProcedureSetup: React.FC = () => {
   });
 
   // Enum options for category
-  const procedureCategoryOptions = useEnumOptions('ProcedureCategoryType');
+  
+  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
 
   // Main list and facilities
   const { data: proceduresPage, isFetching, refetch } = useGetProceduresQuery({
@@ -119,7 +121,9 @@ const ProcedureSetup: React.FC = () => {
       dispatch(setDivContent(''));
     };
   }, [dispatch]);
-
+   useEffect(() => {
+     console.log('recordOfFilter changed', recordOfFilter);
+   }, [recordOfFilter]);
   // Resize listener for modal width
   useEffect(() => {
     const handleResize = () => {
@@ -171,7 +175,7 @@ const ProcedureSetup: React.FC = () => {
 
     if (fieldName === 'categoryType') {
       return await fetchByCategory({
-        categoryType: String(value).toUpperCase(),
+        categoryType: value,
         ...common,
       }).unwrap();
     } else if (fieldName === 'code') {
@@ -211,8 +215,8 @@ const ProcedureSetup: React.FC = () => {
     try {
       const resp =
         (await runFilterQuery(fieldName, value, page, size)) as
-          | { data: any[]; totalCount: number; links?: any }
-          | undefined;
+        | { data: any[]; totalCount: number; links?: any }
+        | undefined;
 
       setFilteredData(resp?.data ?? []);
       setFilteredTotal(resp?.totalCount ?? 0);
@@ -390,7 +394,7 @@ const ProcedureSetup: React.FC = () => {
       title: <Translate>Category</Translate>,
       flexGrow: 3,
       render: (row: any) =>
-        row?.categoryType ? formatEnumString(row?.categoryType) : '',
+        row?.categoryType ? conjureValueBasedOnKeyFromList(CategoryLovQueryResponse?.object ?? [], row?.categoryType, 'lovDisplayVale') : '',
     },
     {
       key: 'isAppointable',
@@ -513,13 +517,14 @@ const ProcedureSetup: React.FC = () => {
       />
       {recordOfFilter.filter === 'categoryType' ? (
         <MyInput
-          width={220}
-          fieldName="value"
-          fieldLabel=""
+           showLabel={false}
+          width="100%"
           fieldType="select"
-          selectData={procedureCategoryOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
+          fieldLabel="Category Type"
+          selectData={CategoryLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          fieldName="value"
           record={recordOfFilter}
           setRecord={setRecordOfFilter}
         />

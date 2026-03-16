@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import MyInput from '../MyInput';
-import { Form } from 'rsuite';
 import './styles.less';
 import { FaSearch } from 'react-icons/fa';
 
@@ -17,18 +16,75 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
   onSearchClick,
   searchMarginTop = '0.9vw'
 }) => {
-  useEffect(() => {
-    if (record?.searchByField === undefined) {
-      setRecord({ ...record, searchByField: 'fullName' });
-    }
-  }, []);
+  const commit = useCallback(
+    (patch: any) => {
+      setRecord((prev: any) => ({
+        ...(prev ?? {}),
+        ...(record ?? {}),
+        ...(patch ?? {})
+      }));
+    },
+    [setRecord, record]
+  );
 
-  const handleSearchEnter = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      onSearchClick?.();
+  useEffect(() => {
+    if (record?.searchByField === undefined || record?.searchByField === null || record?.searchByField === '') {
+      commit({ searchByField: 'fullName' });
     }
-  };
+  }, [record?.searchByField, commit]);
+
+  const searchOptions = useMemo(
+    () => [
+      { label: 'Full Name', value: 'fullName' },
+      { label: 'MRN', value: 'patientMrn' }
+    ],
+    []
+  );
+
+  const searchByField = String(record?.searchByField ?? 'fullName');
+  const patientName = record?.patientName ?? '';
+
+  const handleSelectChange = useCallback(
+    (upd: any) => {
+      const next =
+        upd?.searchByField ??
+        upd?.value ??
+        upd?.searchText ??
+        searchByField ??
+        'fullName';
+
+      commit({ searchByField: next });
+    },
+    [commit, searchByField]
+  );
+
+  const handleTextChange = useCallback(
+    (upd: any) => {
+      const next =
+        upd?.patientName ??
+        upd?.value ??
+        upd?.text ??
+        '';
+
+      commit({ patientName: next });
+    },
+    [commit]
+  );
+
+  const applySearch = useCallback(() => {
+    onSearchClick?.();
+  }, [onSearchClick]);
+
+  const handleSearchEnter = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        applySearch();
+      }
+    },
+    [applySearch]
+  );
 
   return (
     <div className="search-patient-criteria-handle-position-row">
@@ -39,16 +95,9 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
           fieldType="select"
           fieldName="searchByField"
           showLabel={false}
-          record={record}
-          setRecord={setRecord}
-          selectData={[
-            { label: 'MRN', value: 'patientMrn' },
-            { label: 'Document Number', value: 'documentNo' },
-            { label: 'Full Name', value: 'fullName' },
-            { label: 'Archiving Number', value: 'archivingNumber' },
-            { label: 'Primary Phone Number', value: 'mobileNumber' },
-            { label: 'Date of Birth', value: 'dob' }
-          ]}
+          record={{ searchByField }}
+          setRecord={handleSelectChange}
+          selectData={searchOptions}
           selectDataLabel="label"
           selectDataValue="value"
         />
@@ -59,13 +108,13 @@ const SearchPatientCriteria: React.FC<SearchPatientCriteriaProps> = ({
           width="100%"
           column
           fieldLabel="Search Patients"
-          fieldType={record?.searchByField === 'dob' ? 'date' : 'text'}
+          fieldType={searchByField === 'dob' ? 'date' : 'text'}
           fieldName="patientName"
           placeholder="Search Patients"
           showLabel={false}
-          rightAddon={<FaSearch className="icons-style-2" onClick={onSearchClick} />}
-          record={record}
-          setRecord={setRecord}
+          rightAddon={<FaSearch className="icons-style-2" onClick={applySearch} />}
+          record={{ patientName, searchByField }}
+          setRecord={handleTextChange}
         />
       </div>
     </div>

@@ -13,152 +13,205 @@ import {
   LinearScale,
   PointElement,
   Tooltip,
-  Legend
+  Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
-import { useGetObservationSummariesQuery } from '@/services/observationService';
-import { ApPatientObservationSummary } from '@/types/model-types';
-import { addFilterToListRequest, formatDate } from '@/utils';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { formatDate } from '@/utils';
+
+// BODY APIs
+import {
+  useGetBodyMeasurementsBetweenDatesByPatientIdQuery,
+  useLazyGetWeightListByPatientBetweenDatesQuery,
+  useLazyGetHeightListByPatientBetweenDatesQuery,
+  type BodyMeasurementsResponseVM,
+  type WeightResponseVM,
+  type HeightResponseVM,
+} from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
+
+// VITAL APIs
+import {
+  useGetVitalSignsBetweenDatesByPatientIdQuery,
+  useLazyGetTemperatureListByPatientBetweenDatesQuery,
+  useLazyGetPulseRateListByPatientBetweenDatesQuery,
+  useLazyGetRespiratoryRateListByPatientBetweenDatesQuery,
+  useLazyGetOxygenSaturationListByPatientBetweenDatesQuery,
+  useLazyGetBloodPressureListByPatientBetweenDatesQuery,
+  type VitalSignsResponseVM,
+  type TemperatureResponseVM,
+  type PulseRateResponseVM,
+  type RespiratoryRateResponseVM,
+  type OxygenSaturationResponseVM,
+  type BloodPressureResponseVM,
+} from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
 interface PreviousMeasurementsProps {
-  patient?: {
-    key?: string;
-  };
+  patient?: { id?: number };
 }
+
+type BodyMetricKey = 'weight' | 'height';
+type VitalMetricKey =
+  | 'temperature'
+  | 'pulseRate'
+  | 'respiratoryRate'
+  | 'oxygenSaturation'
+  | 'bloodPressure';
+
+type SelectedMetric =
+  | { source: 'body'; key: BodyMetricKey }
+  | { source: 'vital'; key: VitalMetricKey };
+
+// -------- date helpers (IMPORTANT: include entire day) --------
+const startOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+const endOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+};
+
+
+const toInstantIso = (date: Date) => date.toISOString();
+
+//  date+time formatter (uses your existing formatDate and adds time)
+const formatDateTime = (d: Date) => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${formatDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: patientProp }) => {
   const location = useLocation();
   const patientFromLocation = (location.state as any)?.patient;
-
   const patient = patientProp ?? patientFromLocation;
 
-  // ---------- date filter: default = last 1 month ----------
-  const [dateFilter, setDateFilter] = useState(() => {
-    const toDate = new Date();
-    const fromDate = new Date();
-    fromDate.setMonth(toDate.getMonth() - 1);
-    return { fromDate, toDate };
-  });
+  const patientId = Number(patient?.id);
 
-  // ---------- ListRequest (same pattern as EncounterList) ----------
-  const [listRequest, setListRequest] = useState<ListRequest>(() => {
-    const toDate = new Date();
-    const fromDate = new Date();
-    fromDate.setMonth(toDate.getMonth() - 1);
-    const formattedFrom = formatDate(fromDate);
-    const formattedTo = formatDate(toDate);
+  const [dateFilter, setDateFilter] = useState(() => {
+    const now = new Date();
+    const from = new Date(now);
+    from.setMonth(now.getMonth() - 1);
 
     return {
-      ...initialListRequest,
-      ignore: true,
-      pageNumber: 1,
-      pageSize: 5,
-      filters: [
-        {
-          fieldName: 'patient_key', // DB column
-          operator: 'match',
-          value: patient?.key
-        },
-        {
-          fieldName: 'last_date',
-          operator: 'between',
-          value: `${formattedFrom}_${formattedTo}`
-        }
-      ]
+      fromDate: startOfDay(from),
+      toDate: endOfDay(now),
     };
   });
 
-  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  const fromIso = useMemo(() => toInstantIso(startOfDay(dateFilter.fromDate)), [dateFilter.fromDate]);
+
+  const toIso = useMemo(() => toInstantIso(endOfDay(dateFilter.toDate)), [dateFilter.toDate]);
+
+  // ------------------ BODY TABLE (Page) ------------------
+  const [bodyTableReq, setBodyTableReq] = useState({
+    page: 0,
+    size: 5,
+    sort: 'createdDate,desc',
+  });
 
   const {
-    data: observationListResponse,
-    isLoading,
-    isFetching
-  } = useGetObservationSummariesQuery(listRequest, {
-    skip: !patient?.key
+    data: bodyPage,
+    isLoading: bodyLoading,
+    isFetching: bodyFetching,
+  } = useGetBodyMeasurementsBetweenDatesByPatientIdQuery(
+    patientId
+      ? {
+          patientId,
+          from: fromIso,
+          to: toIso,
+          page: bodyTableReq.page,
+          size: bodyTableReq.size,
+          sort: bodyTableReq.sort,
+        }
+      : (undefined as any),
+    { skip: !patientId }
+  );
+
+// BODY
+const bodyRows: BodyMeasurementsResponseVM[] =
+  Array.isArray(bodyPage) ? bodyPage : bodyPage?.content ?? [];
+
+const bodyTotal =
+  Array.isArray(bodyPage) ? bodyPage.length : bodyPage?.totalElements ?? 0;
+
+  // ------------------ VITAL TABLE (Page) ------------------
+  const [vitalTableReq, setVitalTableReq] = useState({
+    page: 0,
+    size: 5,
+    sort: 'createdDate,desc',
   });
 
-  const dataRows: ApPatientObservationSummary[] = observationListResponse?.object ?? [];
-
-  // ---------- pagination ----------
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = observationListResponse?.extraNumeric ?? 0;
-
-  // ---------- metric selection for chart ----------
-  type MetricKey =
-    | 'latestweight'
-    | 'latestheight'
-    | 'latesttemperature'
-    | 'latestheartrate'
-    | 'latestoxygensaturation'
-    | 'bloodPressure'; // synthetic key for BP (systolic/diastolic)
-
-  const [selectedMetric, setSelectedMetric] = useState<MetricKey | null>(null);
-
-  // ---------- handlers ----------
-  const handleManualSearch = () => {
-    if (!patient?.key) return;
-
-    setManualSearchTriggered(true);
-
-    const formattedFromDate = dateFilter.fromDate ? formatDate(dateFilter.fromDate) : undefined;
-    const formattedToDate = dateFilter.toDate ? formatDate(dateFilter.toDate) : undefined;
-
-    let req: ListRequest = {
-      ...initialListRequest,
-      sortBy: listRequest.sortBy,
-      sortType: listRequest.sortType,
-      pageNumber: 1,
-      pageSize: listRequest.pageSize,
-      ignore: true,
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key
+  const {
+    data: vitalPage,
+    isLoading: vitalLoading,
+    isFetching: vitalFetching,
+  } = useGetVitalSignsBetweenDatesByPatientIdQuery(
+    patientId
+      ? {
+          patientId,
+          from: fromIso,
+          to: toIso,
+          page: vitalTableReq.page,
+          size: vitalTableReq.size,
+          sort: vitalTableReq.sort,
         }
-      ]
-    };
+      : (undefined as any),
+    { skip: !patientId }
+  );
 
-    if (formattedFromDate && formattedToDate) {
-      req = addFilterToListRequest(
-        'last_date',
-        'between',
-        `${formattedFromDate}_${formattedToDate}`,
-        req
-      );
-    } else if (formattedFromDate) {
-      req = addFilterToListRequest('last_date', 'gte', formattedFromDate, req);
-    } else if (formattedToDate) {
-      req = addFilterToListRequest('last_date', 'lte', formattedToDate, req);
+// VITAL
+const vitalRows: VitalSignsResponseVM[] =
+  Array.isArray(vitalPage) ? vitalPage : vitalPage?.content ?? [];
+
+const vitalTotal =
+  Array.isArray(vitalPage) ? vitalPage.length : vitalPage?.totalElements ?? 0;
+  // ------------------ Chart metric selection ------------------
+  const [selectedMetric, setSelectedMetric] = useState<SelectedMetric | null>(null);
+
+  const [triggerWeightList, weightListRes] = useLazyGetWeightListByPatientBetweenDatesQuery();
+  const [triggerHeightList, heightListRes] = useLazyGetHeightListByPatientBetweenDatesQuery();
+
+  const [triggerTempList, tempListRes] = useLazyGetTemperatureListByPatientBetweenDatesQuery();
+  const [triggerPulseList, pulseListRes] = useLazyGetPulseRateListByPatientBetweenDatesQuery();
+  const [triggerRespList, respListRes] = useLazyGetRespiratoryRateListByPatientBetweenDatesQuery();
+  const [triggerOxyList, oxyListRes] = useLazyGetOxygenSaturationListByPatientBetweenDatesQuery();
+  const [triggerBpList, bpListRes] = useLazyGetBloodPressureListByPatientBetweenDatesQuery();
+
+  useEffect(() => {
+    if (!patientId || !selectedMetric) return;
+
+    const args = { patientId, from: fromIso, to: toIso };
+
+    if (selectedMetric.source === 'body') {
+      if (selectedMetric.key === 'weight') triggerWeightList(args);
+      if (selectedMetric.key === 'height') triggerHeightList(args);
+    } else {
+      if (selectedMetric.key === 'temperature') triggerTempList(args);
+      if (selectedMetric.key === 'pulseRate') triggerPulseList(args);
+      if (selectedMetric.key === 'respiratoryRate') triggerRespList(args);
+      if (selectedMetric.key === 'oxygenSaturation') triggerOxyList(args);
+      if (selectedMetric.key === 'bloodPressure') triggerBpList(args);
     }
+  }, [
+    patientId,
+    selectedMetric,
+    fromIso,
+    toIso,
+    triggerWeightList,
+    triggerHeightList,
+    triggerTempList,
+    triggerPulseList,
+    triggerRespList,
+    triggerOxyList,
+    triggerBpList,
+  ]);
 
-    setListRequest(req);
-  };
-
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setManualSearchTriggered(true);
-    setListRequest(prev => ({
-      ...prev,
-      pageNumber: newPage + 1
-    }));
-  };
-
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newSize = parseInt(event.target.value, 10) || 5;
-    setManualSearchTriggered(true);
-    setListRequest(prev => ({
-      ...prev,
-      pageSize: newSize,
-      pageNumber: 1
-    }));
-  };
-
+  // ------------------ filters UI ------------------
   const filters = () => (
     <Form layout="inline" fluid>
       <MyInput
@@ -182,174 +235,294 @@ const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: pa
     </Form>
   );
 
-  const clickableHeader = (key: MetricKey, label: string) => (
+  const clickableHeader = (metric: SelectedMetric, label: string) => (
     <span
       className="link"
       style={{ cursor: 'pointer', color: '#007bff' }}
-      onClick={() => setSelectedMetric(key)}
+      onClick={() => setSelectedMetric(metric)}
     >
       {label}
     </span>
   );
 
-  // ---------- table columns ----------
-  const columns = [
+  // ------------------ BODY TABLE columns ------------------
+  const bodyColumns = [
     {
-      key: 'lastDate',
-      title: 'DATE',
-      render: (row: ApPatientObservationSummary) =>
-        row.lastDate ? formatDate(new Date(row.lastDate)) : ''
+      key: 'createdAt',
+      title: 'CREATED AT',
+      render: (row: any) => {
+        const v = row?.createdAt ?? row?.createdDate;
+        return v ? formatDateTime(new Date(v)) : '';
+      },
     },
     {
-      key: 'latestweight',
-      title: clickableHeader('latestweight', 'WEIGHT'),
-      dataKey: 'latestweight'
+      key: 'weight',
+      title: clickableHeader({ source: 'body', key: 'weight' }, 'WEIGHT (kg)'),
+      dataKey: 'weight',
     },
     {
-      key: 'latestheight',
-      title: clickableHeader('latestheight', 'HEIGHT'),
-      dataKey: 'latestheight'
+      key: 'height',
+      title: clickableHeader({ source: 'body', key: 'height' }, 'HEIGHT (cm)'),
+      dataKey: 'height',
     },
-    {
-      key: 'latesttemperature',
-      title: clickableHeader('latesttemperature', 'TEMPERATURE'),
-      dataKey: 'latesttemperature'
-    },
-    {
-      key: 'latestheartrate',
-      title: clickableHeader('latestheartrate', 'PULSE RATE'),
-      dataKey: 'latestheartrate'
-    },
-    {
-      key: 'latestbpSystolic',
-      dataKey: 'latestbpSystolic',
-      title: clickableHeader('bloodPressure', 'BLOOD PRESSURE'),
-      render: (row: ApPatientObservationSummary) => {
-        const { latestbpSystolic, latestbpDiastolic } = row;
-        if (latestbpSystolic == null || latestbpDiastolic == null) return '';
-        return `${latestbpSystolic}/${latestbpDiastolic}`;
-      }
-    },
-    {
-      key: 'latestoxygensaturation',
-      title: clickableHeader('latestoxygensaturation', 'OXYGEN SATURATION'),
-      dataKey: 'latestoxygensaturation'
-    }
   ];
 
-  // ---------- chart data ----------
+  // ------------------ VITAL TABLE columns ------------------
+  const vitalColumns = [
+    {
+      key: 'createdAt',
+      title: 'CREATED AT',
+      render: (row: any) => {
+        const v = row?.createdAt ?? row?.createdDate;
+        return v ? formatDateTime(new Date(v)) : '';
+      },
+    },
+    {
+      key: 'temperature',
+      title: clickableHeader({ source: 'vital', key: 'temperature' }, 'TEMPERATURE (C)'),
+      dataKey: 'temperature',
+    },
+    {
+      key: 'pulseRate',
+      title: clickableHeader({ source: 'vital', key: 'pulseRate' }, 'PULSE RATE (bpm)'),
+      dataKey: 'pulseRate',
+    },
+    {
+      key: 'respiratoryRate',
+      title: clickableHeader(
+        { source: 'vital', key: 'respiratoryRate' },
+        'RESPIRATORY RATE (bpm)'
+      ),
+      dataKey: 'respiratoryRate',
+    },
+    {
+      key: 'bloodPressure',
+      title: clickableHeader(
+        { source: 'vital', key: 'bloodPressure' },
+        'BLOOD PRESSURE (mmHg) (X\\Y)'
+      ),
+      render: (row: VitalSignsResponseVM) => {
+        if (row.bloodPressureSystolic == null || row.bloodPressureDiastolic == null) return '';
+        return `${row.bloodPressureSystolic}/${row.bloodPressureDiastolic}`;
+      },
+    },
+    {
+      key: 'oxygenSaturation',
+      title: clickableHeader({ source: 'vital', key: 'oxygenSaturation' }, 'OXYGEN SATURATION (%)'),
+      dataKey: 'oxygenSaturation',
+    },
+  ];
+
+  // ------------------ Chart data (x=createdAt, y=value) ------------------
   const chartData = useMemo(() => {
     if (!selectedMetric) return null;
 
-    const labels = dataRows.map(row =>
-      row.lastDate ? formatDate(new Date(row.lastDate)) : ''
-    );
+    const makeLabels = (arr: { createdAt: string }[]) =>
+      arr.map(x => formatDateTime(new Date(x.createdAt)));
 
-    if (selectedMetric === 'bloodPressure') {
-      return {
-        labels,
-        datasets: [
-          {
-            label: 'Systolic',
-            data: dataRows.map(row => row.latestbpSystolic ?? null),
-            borderColor: '#4e73df',
-            backgroundColor: 'rgba(78, 115, 223, 0.2)',
-            tension: 0.3,
-            fill: true
-          },
-          {
-            label: 'Diastolic',
-            data: dataRows.map(row => row.latestbpDiastolic ?? null),
-            borderColor: '#e74a3b',
-            backgroundColor: 'rgba(231, 74, 59, 0.2)',
-            tension: 0.3,
-            fill: true
-          }
-        ]
-      };
+    if (selectedMetric.source === 'body') {
+      if (selectedMetric.key === 'weight') {
+        const list = (weightListRes.data ?? []) as WeightResponseVM[];
+        return {
+          labels: makeLabels(list),
+          datasets: [
+            {
+              label: 'Weight (kg)',
+              data: list.map(x => x.weight ?? null),
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        };
+      }
+      if (selectedMetric.key === 'height') {
+        const list = (heightListRes.data ?? []) as HeightResponseVM[];
+        return {
+          labels: makeLabels(list),
+          datasets: [
+            {
+              label: 'Height (cm)',
+              data: list.map(x => x.height ?? null),
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        };
+      }
+    } else {
+      if (selectedMetric.key === 'temperature') {
+        const list = (tempListRes.data ?? []) as TemperatureResponseVM[];
+        return {
+          labels: makeLabels(list),
+          datasets: [
+            {
+              label: 'Temperature (C)',
+              data: list.map(x => x.temperature ?? null),
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        };
+      }
+
+      if (selectedMetric.key === 'pulseRate') {
+        const list = (pulseListRes.data ?? []) as PulseRateResponseVM[];
+        return {
+          labels: makeLabels(list),
+          datasets: [
+            {
+              label: 'Pulse Rate (bpm)',
+              data: list.map(x => x.pulseRate ?? null),
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        };
+      }
+
+      if (selectedMetric.key === 'respiratoryRate') {
+        const list = (respListRes.data ?? []) as RespiratoryRateResponseVM[];
+        return {
+          labels: makeLabels(list),
+          datasets: [
+            {
+              label: 'Respiratory Rate (bpm)',
+              data: list.map(x => x.respiratoryRate ?? null),
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        };
+      }
+
+      if (selectedMetric.key === 'oxygenSaturation') {
+        const list = (oxyListRes.data ?? []) as OxygenSaturationResponseVM[];
+        return {
+          labels: makeLabels(list),
+          datasets: [
+            {
+              label: 'Oxygen Saturation (%)',
+              data: list.map(x => x.oxygenSaturation ?? null),
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        };
+      }
+
+      if (selectedMetric.key === 'bloodPressure') {
+        const list = (bpListRes.data ?? []) as BloodPressureResponseVM[];
+        return {
+          labels: makeLabels(list),
+          datasets: [
+            {
+              label: 'Systolic (mmHg)',
+              data: list.map(x => x.systolic ?? null),
+              tension: 0.3,
+              fill: true,
+            },
+            {
+              label: 'Diastolic (mmHg)',
+              data: list.map(x => x.diastolic ?? null),
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        };
+      }
     }
 
-    const labelMap: Record<Exclude<MetricKey, 'bloodPressure'>, string> = {
-      latestweight: 'Weight',
-      latestheight: 'Height',
-      latesttemperature: 'Temperature',
-      latestheartrate: 'Pulse Rate',
-      latestoxygensaturation: 'Oxygen Saturation'
-    };
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: labelMap[selectedMetric as Exclude<MetricKey, 'bloodPressure'>],
-          data: dataRows.map(row => (row as any)[selectedMetric] ?? null),
-          borderColor: '#4e73df',
-          backgroundColor: 'rgba(78, 115, 223, 0.2)',
-          tension: 0.3,
-          fill: true
-        }
-      ]
-    };
-  }, [dataRows, selectedMetric]);
+    return null;
+  }, [
+    selectedMetric,
+    weightListRes.data,
+    heightListRes.data,
+    tempListRes.data,
+    pulseListRes.data,
+    respListRes.data,
+    oxyListRes.data,
+    bpListRes.data,
+  ]);
 
   const chartOptions = {
     responsive: true,
-    plugins: {
-      legend: { display: true }
-    },
+    plugins: { legend: { display: true } },
     scales: {
-      x: { title: { display: true, text: 'Date' } },
-      y: { title: { display: true, text: 'Value' } }
-    }
+      x: { title: { display: true, text: 'Created At' } },
+      y: { title: { display: true, text: 'Reading' } },
+    },
   };
 
-  // ---------- effects ----------
   useEffect(() => {
-    if (patient?.key) {
-      handleManualSearch();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFilter.fromDate, dateFilter.toDate, patient?.key]);
+    setBodyTableReq(prev => ({ ...prev, page: 0 }));
+    setVitalTableReq(prev => ({ ...prev, page: 0 }));
+  }, [fromIso, toIso]);
 
-  useEffect(() => {
-    if (!isFetching && manualSearchTriggered) {
-      setManualSearchTriggered(false);
-    }
-  }, [isFetching, manualSearchTriggered]);
 
+  // ------------------ render ------------------
   return (
-    <Panel header="Previous Measurements">
-      <MyTable
-        height={600}
-        filters={filters()}
-        data={dataRows}
-        columns={columns}
-        loading={isLoading || (manualSearchTriggered && isFetching)}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          setListRequest(prev => ({ ...prev, sortBy, sortType }));
-        }}
-      />
+    <Panel>
+      {filters()}
+
+      <div className="pm-grid margin-top-20">
+        <div className="pm-col">
+          <h4 className="font-size-14">Body Measurements</h4>
+          <MyTable
+            height={280}
+            data={bodyRows}
+            columns={bodyColumns}
+            loading={bodyLoading || bodyFetching}
+            page={bodyTableReq.page}
+            rowsPerPage={bodyTableReq.size}
+            totalCount={bodyTotal}
+            onPageChange={(_, newPage: number) =>
+              setBodyTableReq(prev => ({ ...prev, page: Math.max(0, newPage) }))
+            }
+            onRowsPerPageChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const newSize = parseInt(e.target.value, 10) || 5;
+              setBodyTableReq(prev => ({ ...prev, size: newSize, page: 0 }));
+            }}
+            sortColumn={undefined}
+            sortType={undefined}
+            onSortChange={() => {}}
+          />
+        </div>
+
+        <div className="pm-col">
+          <h4 className="font-size-14">Vital Signs</h4>
+          <MyTable
+            height={280}
+            data={vitalRows}
+            columns={vitalColumns}
+            loading={vitalLoading || vitalFetching}
+            page={vitalTableReq.page}
+            rowsPerPage={vitalTableReq.size}
+            totalCount={vitalTotal}
+            onPageChange={(_, newPage: number) =>
+              setVitalTableReq(prev => ({ ...prev, page: Math.max(0, newPage) }))
+            }
+            onRowsPerPageChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const newSize = parseInt(e.target.value, 10) || 5;
+              setVitalTableReq(prev => ({ ...prev, size: newSize, page: 0 }));
+            }}
+            sortColumn={undefined}
+            sortType={undefined}
+            onSortChange={() => {}}
+          />
+        </div>
+      </div>
 
       {selectedMetric && chartData && (
         <div className="margin-top-100">
           <h4 className="font-size-14">
-            {selectedMetric === 'bloodPressure'
+            {selectedMetric.source === 'vital' && selectedMetric.key === 'bloodPressure'
               ? 'Blood Pressure Trend'
-              : `${selectedMetric} Trend`}
+              : `${selectedMetric.source === 'body' ? 'Body' : 'Vital'} - ${selectedMetric.key} Trend`}
           </h4>
+
           <Line
-            data={chartData}
-            options={{
-              ...chartOptions,
-              maintainAspectRatio: false
-            }}
+            data={chartData as any}
+            options={{ ...chartOptions, maintainAspectRatio: false } as any}
             height={'300px'}
           />
         </div>

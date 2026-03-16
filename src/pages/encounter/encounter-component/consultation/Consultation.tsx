@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { Tabs } from 'rsuite';
+import MyTab from '@/components/MyTab';
+import React from 'react';
 import NormalConsultation from './NormalConsultation';
 import TelephonicConsultation from './TelephonicConsultation';
 import './styles.less';
-import MyTab from '@/components/MyTab';
 
 const Consultation = ({}) => {
 

@@ -35,6 +35,18 @@ export const potintialService = createApi({
       }),
     }),
 
+    getDuplicationCandidateById: builder.query({
+      query: (id: number) =>
+        `/api/setup/duplication-candidates/${id}`,
+    }),
+
+    deleteDuplicationCandidate: builder.mutation({
+      query: (id: number) => ({
+        url: `/api/setup/duplication-candidates/${id}`,
+        method: 'DELETE',
+      }),
+    }),
+
     reactivateDuplicationCandidate: builder.mutation({
       query: (id) => ({
         url: `/api/setup/duplication-candidates/reactivate/${id}`,
@@ -54,4 +66,6 @@ export const {
   useDeactivateDuplicationCandidateMutation,
   useReactivateDuplicationCandidateMutation,
   useGetAvailableForRoleQuery,
+  useGetDuplicationCandidateByIdQuery,
+  useDeleteDuplicationCandidateMutation,
 } = potintialService;

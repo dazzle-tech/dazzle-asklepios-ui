@@ -216,8 +216,7 @@ const LanguagesSetup: React.FC = () => {
         );
       } else {
         await addTranslation({
-          ...valueForm,
-          originalText: valueForm.translationKey
+          ...valueForm
         }).unwrap();
         dispatch(
           notify({

@@ -53,14 +53,31 @@
   }
 }
 
-
-.dark{
-.medical-container-div {
+.dark {
+  .medical-container-div {
     background-color: var(--dark-black) !important;
-    
-    .medical-header-div{
+
+    .medical-header-div {
       background-color: var(--dark-black) !important;
       border-radius: 8px !important;
     }
+  }
 }
+
+.social-history-preview {
+  margin-top: 12px;
+  padding: 16px;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.selected-row {
+  background-color: #eef5ff !important;
 }

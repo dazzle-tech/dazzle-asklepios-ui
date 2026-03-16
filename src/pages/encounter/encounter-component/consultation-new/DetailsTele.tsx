@@ -1,133 +1,278 @@
-import React, { useState } from "react";
-import Diagnosis from "../../../medical-component/diagnosis/DiagnosisAndFindings";
-import MyInput from "@/components/MyInput";
-import { useAppDispatch } from "@/hooks";
-import { notify } from "@/utils/uiReducerActions";
-import AdvancedModal from "@/components/AdvancedModal";
-import MyButton from "@/components/MyButton/MyButton";
-import { Form } from "rsuite";
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
+import clsx from 'clsx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBroom, faPaperclip } from '@fortawesome/free-solid-svg-icons';
+
+import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
+import MyInput from '@/components/MyInput';
+import AdvancedModal from '@/components/AdvancedModal';
+import MyButton from '@/components/MyButton/MyButton';
+import { AttachmentUploadModal } from '@/components/AttachmentModals';
+
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
 import {
-  useSaveTelephonicConsultationOrderMutation,
-} from "@/services/encounterService";
+  useCreateMutation,
+  useUpdateMutation
+} from '@/services/patients/telephonicConsultationService';
 
-import { newApTelephonicConsultation } from "@/types/model-types-constructor";
+import { newTelephonicConsultation, newPractitioner } from '@/types/model-types-constructor-new';
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBroom, faPaperclip } from "@fortawesome/free-solid-svg-icons";
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { Practitioner, TelephonicConsultations } from '@/types/model-types-new';
 
-import clsx from "clsx";
-import { AttachmentUploadModal } from "@/components/AttachmentModals";
-import { useGetAllPractitionersQuery } from "@/services/setup/practitioner/PractitionerService";
+import {
+  useLazyGetPractitionersByFacilityQuery,
+  useLazyGetPractitionerByIdQuery
+} from '@/services/setup/practitioner/PractitionerService';
+
+const TELEPHONIC_FIELD_LABELS: Record<string, string> = {
+  facilityId: 'Facility',
+  practitionerId: 'Physician',
+  dateOfCall: 'Date Of Call',
+  consultationContent: 'Consultation Content',
+  approvalNumber: 'Approval Number',
+  notes: 'Notes',
+  extraDocumentation: 'Extra Documentation',
+  patientId: 'Patient',
+  encounterId: 'Encounter'
+};
+
+const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
+  const data = err?.data ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map((fe: any) => {
+      const label = TELEPHONIC_FIELD_LABELS[fe.field] || fe.field;
+
+      const msg = (fe.message || '').toLowerCase();
+      let normalized = fe.message;
+
+      if (msg.includes('must not be null')) normalized = 'is required';
+      else if (msg.includes('must not be blank')) normalized = 'must not be blank';
+      else if (msg.includes('size must be')) normalized = 'length is out of range';
+
+      return `• ${label}: ${normalized}`;
+    });
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  const errorKey: string | undefined =
+    data?.errorKey ||
+    (typeof data?.message === 'string' && data.message.startsWith('error.')
+      ? data.message.replace('error.', '')
+      : undefined);
+
+  if (errorKey === 'fk.patient') {
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n• Facility: is required${suffix}`,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  if (errorKey && keyMap[errorKey]) {
+    dispatch(
+      notify({
+        msg: keyMap[errorKey] + suffix,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  const fallbackMsg = data?.detail || data?.title || data?.message || 'Unexpected error occurred';
+
+  dispatch(
+    notify({
+      msg: fallbackMsg + suffix,
+      sev: 'warning'
+    })
+  );
+};
+
+const TELEPHONIC_CONSULTATION_ERROR_MAP: Record<string, string> = {
+  'payload.required': 'Telephonic consultation payload is required.',
+  'id.required': 'Telephonic consultation id is required.',
+  'id.mismatch': 'Path id does not match payload id.',
+
+  'patient.required': 'Patient is required.',
+  'patient.invalid': 'Invalid patient reference.',
+  'patient.notfound': 'Patient not found.',
+  'fk.patient': 'Patient information is missing or invalid.',
+
+  'encounter.required': 'Encounter is required.',
+  'encounter.invalid': 'Invalid encounter reference.',
+  'fk.encounter': 'Encounter information is missing or invalid.',
+
+  'facility.notfound': 'Selected facility not found.',
+  'practitioners.notfound': 'No practitioners found for this facility.',
+  'facility.invalid': 'Invalid facility selection.',
+
+  notfound: 'Telephonic consultation not found.',
+  duplicate: 'Telephonic consultation already exists.',
+  'already.cancelled': 'Telephonic consultation already cancelled.',
+  'already.cancelled.update': 'Cancelled telephonic consultation cannot be updated.',
+
+  'db.constraint': 'Database constraint violation.'
+};
 
 const DetailsTele = ({
   patient,
   encounter,
   consultationOrders,
-  setConsultationOrder,
   open,
   setOpen,
   refetchCon,
   editing,
-  edit, // when the whole module is locked from parent
+  edit
 }) => {
   const dispatch = useAppDispatch();
 
-  const [saveTeleConsultation] =
-    useSaveTelephonicConsultationOrderMutation();
+  const [formData, setFormData] = useState({ ...newTelephonicConsultation });
+  const [practitioner, setPractitioner] = useState<Practitioner>({ ...newPractitioner });
 
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
 
-  // ===========================================================
-  // PRACTITIONERS -> ONLY PHYSICIANS
-  // ===========================================================
-  const { data: practitionerListResponse } = useGetAllPractitionersQuery({
-    page: 0,
-    size: 9999,
-    sort: "id,asc",
-  });
+  const [practitionerPage, setPractitionerPage] = useState(0);
+  const pageSize = 5;
+  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
 
-  const physicians =
-    practitionerListResponse?.data?.filter(
-      (p) => p.jobRole === "PHYSICIAN"
-    ) ?? [];
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
-  const physicianList =
-    physicians?.map((p) => ({
-      key: p.id,
-      value: p.id,
-      label: `${p.firstName} ${p.lastName}`,
-    })) ?? [];
+  const [createConsultation] = useCreateMutation();
+  const [updateConsultation] = useUpdateMutation();
 
-  // ===========================================================
-  // CLEAR FORM
-  // ===========================================================
+  const [triggerGetPractitionersByFacility, practitionersResult] =
+    useLazyGetPractitionersByFacilityQuery();
 
-const handleClear = () => {
-  setConsultationOrder({
-    ...newApTelephonicConsultation,
-    patientKey: patient?.key,
-    encounterKey: encounter?.key,
-    createdBy: "Admin",
-    isValid: true,
-  });
-};
+  const [triggerGetPractitionerById, { data: practitionerById, isSuccess: practitionerLoaded }] =
+    useLazyGetPractitionerByIdQuery();
 
+  useEffect(() => {
+    if (!open) return;
 
-
-
-  // ===========================================================
-  // SAVE
-  // ===========================================================
-  const handleSave = async () => {
-    try {
-const payload = {
-  ...consultationOrders,
-
-  patientKey:
-    patient?.key ||
-    patient?.id ||
-    consultationOrders.patientKey,
-
-  encounterKey:
-    encounter?.key ||
-    encounter?.id ||
-    consultationOrders.encounterKey,
-
-  createdBy: consultationOrders.createdBy || "Admin",
-  isValid: true,
-
-  physician: Number(consultationOrders.physician) || null,
-
-  dateOfCall: consultationOrders.dateOfCall
-    ? new Date(consultationOrders.dateOfCall).getTime()
-    : null,
-
-  consultationContent: consultationOrders.consultationContent ?? "",
-  approvalNumber: consultationOrders.approvalNumber ?? "",
-  notes: consultationOrders.notes ?? "",
-  extraDocumentation: consultationOrders.extraDocumentation ?? "",
-};
-
-
-      await saveTeleConsultation(payload).unwrap();
-
-      dispatch(notify({ msg: "Saved Successfully", sev: "success" }));
-
-      await refetchCon();
-      handleClear();
-      setOpen(false);
-    } catch (error) {
-      dispatch(notify("Save Failed"));
+    if (consultationOrders?.id) {
+      setFormData({
+        ...consultationOrders,
+        patientId: patient?.id,
+        encounterId: encounter?.id
+      });
+    } else {
+      setFormData({
+        ...newTelephonicConsultation,
+        patientId: patient?.id,
+        encounterId: encounter?.id
+      });
+      setPractitioner({ ...newPractitioner });
+      setAllPractitioners([]);
+      setPractitionerPage(0);
     }
+  }, [open, consultationOrders, patient?.id, encounter?.id]);
+
+  useEffect(() => {
+    if (!open || !consultationOrders?.practitionerId) return;
+    triggerGetPractitionerById(consultationOrders.practitionerId);
+  }, [open, consultationOrders?.practitionerId]);
+
+  useEffect(() => {
+    if (!open || !practitionerLoaded || !practitionerById) return;
+
+    setPractitioner({
+      ...newPractitioner,
+      facilityId: practitionerById.facilityId
+    });
+
+    setAllPractitioners([practitionerById]);
+    setPractitionerPage(0);
+
+    triggerGetPractitionersByFacility({
+      facilityId: practitionerById.facilityId,
+      page: 0,
+      size: pageSize,
+      sort: 'id,asc'
+    }).catch(err => {
+      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      practitionerId: practitionerById.id
+    }));
+  }, [open, practitionerLoaded, practitionerById]);
+
+  useEffect(() => {
+    if (!practitionersResult?.data?.data) return;
+
+    const newPractitioners = practitionersResult.data.data;
+
+    setAllPractitioners(prev => {
+      const existingIds = new Set(prev.map(p => p.id));
+      const unique = newPractitioners.filter(p => !existingIds.has(p.id));
+      return [...prev, ...unique];
+    });
+  }, [practitionersResult?.data?.data]);
+
+  /* ========================= ACTIONS ========================= */
+
+  const handleClear = () => {
+    setFormData({
+      ...newTelephonicConsultation,
+      patientId: patient.id,
+      encounterId: encounter?.id
+    });
+    setPractitioner({ ...newPractitioner });
+    setAllPractitioners([]);
+    setPractitionerPage(0);
   };
 
+  const handleSave = async () => {
+    try {
+      if ((formData as TelephonicConsultations).id) {
+        const payload = {
+          id: consultationOrders?.id,
+          practitionerId: formData.practitionerId,
+          dateOfCall: formData.dateOfCall,
+          consultationContent: formData.consultationContent,
+          approvalNumber: formData.approvalNumber,
+          notes: formData.notes,
+          extraDocumentation: formData.extraDocumentation
+        };
+        await updateConsultation(payload).unwrap();
+        dispatch(notify({ msg: 'Telephonic consultation updated successfully', sev: 'success' }));
+      } else {
+        const createPayload = {
+          ...formData,
+          patientId: patient?.id
+        };
+        await createConsultation(createPayload).unwrap();
+        dispatch(notify({ msg: 'Telephonic consultation created successfully', sev: 'success' }));
+      }
 
-  // ===========================================================
-  // ATTACHMENTS
-  // ===========================================================
+      setOpen(false);
+    } catch (err: any) {
+      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+      return;
+    }
+
+    refetchCon?.();
+  };
+
   const handleOpenAttachmentModal = () => {
-    if (!consultationOrders?.key) return;
+    if (!(formData as any)?.id) return;
     setShowAttachmentModal(true);
   };
 
@@ -142,97 +287,126 @@ const payload = {
         actionButtonFunction={handleSave}
         isDisabledActionBtn={edit}
         footerButtons={
-          <MyButton
-            disabled={edit}
-            prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-            // onClick={handleClear}
-          >
-            Clear
+          <MyButton disabled={edit} onClick={handleClear}>
+            <FontAwesomeIcon icon={faBroom} /> Clear
           </MyButton>
         }
         rightTitle="Telephonic Consultation"
         rightContent={
-          <Form
-            fluid
-            className={clsx("", {
-              "disabled-panel": edit,
-            })}
-          >
+          <Form fluid className={clsx({ 'disabled-panel': edit })}>
             <div className="main-details-consultion-page-container">
+              <MyInput
+                width="24vw"
+                column
+                fieldLabel="Facility"
+                fieldType="select"
+                fieldName="facilityId"
+                selectData={facilityListResponse ?? []}
+                selectDataLabel="name"
+                selectDataValue="id"
+                record={practitioner}
+                setRecord={(rec: Practitioner) => {
+                  setPractitioner(rec);
+                  setFormData(prev => ({ ...prev, practitionerId: null }));
+                  setAllPractitioners([]);
+                  setPractitionerPage(0);
 
-              {/* ============================= */}
-              {/*     TOP ROW FIELDS            */}
-              {/* ============================= */}
-              <div className="consultion-details-modal-handle-position">
+                  if (rec?.facilityId) {
+                    triggerGetPractitionersByFacility({
+                      facilityId: rec.facilityId,
+                      page: 0,
+                      size: pageSize,
+                      sort: 'id,asc'
+                    }).catch(err => {
+                      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+                    });
+                  }
+                }}
+                required
+              />
 
+              <div className="row-2-cols">
                 <MyInput
-                  width="12vw"
+                  width="11vw"
                   fieldLabel="Physician"
-                  fieldName="physician"
-                  fieldType="select"
-                  selectData={physicianList}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                  disabled={editing}
+                  fieldName="practitionerId"
+                  fieldType="selectPagination"
+                  selectData={allPractitioners}
+                  selectDataLabel={['firstName', 'lastName']}
+                  selectDataValue="id"
+                  record={formData}
+                  setRecord={setFormData}
+                  disabled={!practitioner?.facilityId}
+                  loading={practitionersResult?.isFetching}
+                  searchable
+                  hasMore={practitionersResult?.data?.totalCount > allPractitioners.length}
+                  onFetchMore={() => {
+                    const nextPage = practitionerPage + 1;
+                    setPractitionerPage(nextPage);
+
+                    triggerGetPractitionersByFacility({
+                      facilityId: practitioner.facilityId,
+                      page: nextPage,
+                      size: pageSize,
+                      sort: 'id,asc'
+                    }).catch(err => {
+                      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+                    });
+                  }}
+                  required
                 />
 
                 <MyInput
-                  width="12vw"
+                  width="11vw"
                   fieldName="dateOfCall"
                   fieldLabel="Date Of Call"
                   fieldType="datetime"
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                  disabled={editing}
+                  record={formData}
+                  setRecord={setFormData}
+                  required
                 />
+              </div>
 
-                <MyInput
-                  width="24vw"
-                  fieldName="consultationContent"
-                  fieldLabel="Consultation Content"
-                  fieldType="textarea"
-                  rows={6}
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                  disabled={editing}
-                />
+              <MyInput
+                width="24vw"
+                fieldName="consultationContent"
+                fieldLabel="Consultation Content"
+                fieldType="textarea"
+                rows={6}
+                record={formData}
+                setRecord={setFormData}
+                required
+              />
 
+              <div className="row-approval-attach">
                 <MyInput
                   width="12vw"
                   fieldName="approvalNumber"
-                  fieldType="text"
+                  fieldType="number"
                   fieldLabel="Approval Number"
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                  disabled={editing}
+                  record={formData}
+                  setRecord={setFormData}
                 />
 
                 <div className="attachment-button-consultation-position">
                   <MyButton
                     className="my-button-for-attachment-modal"
                     onClick={handleOpenAttachmentModal}
-                    disabled={!consultationOrders?.key}
+                    disabled={!(formData as any)?.id}
                   >
-                    <FontAwesomeIcon icon={faPaperclip} />
-                    Attachments
+                    <FontAwesomeIcon icon={faPaperclip} /> Attachments
                   </MyButton>
                 </div>
               </div>
 
-              {/* ============================= */}
-              {/*     TEXTAREA COLUMN          */}
-              {/* ============================= */}
-              <div className="text-area-positions-detail-consultion">
+              <div className="row-2-cols">
                 <MyInput
                   width="12vw"
                   fieldName="notes"
                   rows={6}
                   fieldType="textarea"
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                  disabled={editing}
+                  record={formData}
+                  setRecord={setFormData}
                 />
 
                 <MyInput
@@ -241,30 +415,23 @@ const payload = {
                   fieldLabel="Extra Documentation"
                   rows={6}
                   fieldType="textarea"
-                  record={consultationOrders}
-                  setRecord={setConsultationOrder}
-                  disabled={editing}
+                  record={formData}
+                  setRecord={setFormData}
                 />
               </div>
-
             </div>
           </Form>
         }
-        leftContent={
-          <Diagnosis patient={patient} encounter={encounter} />
-        }
-      ></AdvancedModal>
+        leftContent={<Diagnosis patient={patient} encounter={encounter} />}
+      />
 
-      {/* ========================= */}
-      {/* ATTACHMENT MODAL */}
-      {/* ========================= */}
       <AttachmentUploadModal
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
-        encounterId={encounter?.id || encounter?.key}
+        encounterId={encounter?.key}
         refetchData={() => {}}
         source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
-        sourceId={consultationOrders?.key ? Number(consultationOrders.key) : 0}
+        sourceId={(formData as any)?.id ?? 0}
       />
     </>
   );

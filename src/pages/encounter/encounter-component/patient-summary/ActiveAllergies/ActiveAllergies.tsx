@@ -1,71 +1,77 @@
 import React from 'react';
-import { Divider } from 'rsuite';
 import '../styles.less';
 import MyTable from '@/components/MyTable';
-import { useGetAllergensQuery } from '@/services/setupService';
-import { useGetAllergiesQuery } from '@/services/observationService';
-import { initialListRequest } from '@/types/types';
 import Translate from '@/components/Translate';
 import Section from '@/components/Section';
+import { useGetPatientAllergiesByPatientIdQuery } from '@/services/encounters/patientAllergiesService';
+import { useGetAllergensQuery } from '@/services/setup/allergensService';
+import { PatientAllergiesResponseVM } from '@/types/model-types-new';
+import { formatEnumString } from '@/utils';
+import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 const ActiveAllergies = ({ patient }) => {
   // Define filters to fetch allergies specific to a patient and with a certain status
-  const filters = [
-    {
-      fieldName: 'patient_key',
-      operator: 'match',
-      value: patient?.key // Match allergies for the selected patient
-    },
-    {
-      fieldName: 'status_lkey',
-      operator: 'Match', // Match allergies with the specified status key
-      value: '9766169155908512'
-    }
-  ];
-
-  // Fetch allergies based on the defined filters
-  const { data: allergiesListResponse, isLoading: isLoading } = useGetAllergiesQuery({
-    ...initialListRequest,
-    filters
-  });
-
-  // Fetch the list of all allergens (used to get allergen names)
-  const { data: allergensListToGetName } = useGetAllergensQuery({
-    ...initialListRequest
-  });
-
-  // Table Columns
-  const allergyColumns = [
-    {
-      key: 'allergyType',
-      title: 'ALLERGY TYPE',
-      render: (rowData: any) => rowData.allergyTypeLvalue?.lovDisplayVale || ''
-    },
-    {
-      key: 'allergen',
-      title: 'ALLERGENE',
-      render: (rowData: any) => {
-        const allergen = allergensListToGetName?.object?.find(
-          item => item.key === rowData.allergenKey
-        );
-        return allergen?.allergenName || '';
+  
+  const {
+      data: allergiesListResponse,
+      refetch: fetchallerges,
+      isLoading
+    } = useGetPatientAllergiesByPatientIdQuery(
+      {
+        patientId: patient?.id,
+      },
+      {
+        skip: !patient?.id
       }
-    },
-    {
-      key: 'severityLvalue',
-      dataKey: 'severityLvalue',
-      title: <Translate>Severity</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
-    }
-  ];
+    );
+     const activeAllergies = allergiesListResponse?.data?.filter(allergy => allergy.status === 'ACTIVE') || [];
+
+   const { data: allergensListResponse } = useGetAllergensQuery({});
+     const { data: medicationClassesListResponse } = useGetAllMedicationCategoriesClassesQuery({});
+
+   // table column
+    const tableColumns: any[] = [
+      {
+        key: 'allergenType',
+        title: <Translate>Allergy Type</Translate>,
+        render: (rowData: PatientAllergiesResponseVM) => <p>{formatEnumString(rowData.allergenType)}</p>
+      },
+      {
+        key: 'allergen',
+        title: <Translate>Allergen</Translate>,
+        render: (rowData: PatientAllergiesResponseVM) => {
+          if (rowData?.allergenId && allergensListResponse?.data) {
+            const allergen = allergensListResponse.data.find(
+              (item: any) => item.id === rowData.allergenId
+            );
+            return <p>{allergen?.name ?? '-'}</p>;
+          }
+  
+          else if (rowData?.medicationClassId && medicationClassesListResponse) {
+            const medicationClass = medicationClassesListResponse.find(
+              (item: any) => item.id === rowData.medicationClassId
+            );
+            return <p>{medicationClass?.name ?? '-'}</p>;
+          }
+  
+          return <p>-</p>;
+        }
+      },
+      {
+        key: 'severity',
+        title: <Translate>Severity</Translate>,
+        render: rowData => <p>{formatEnumString(rowData?.severity)}</p>,
+      },
+    ].filter(Boolean);
+
+  
   return (
     <Section
       isContainOnlyTable
       title="Active Allergies"
       content={
         <MyTable
-          data={allergiesListResponse?.object || []}
-          columns={allergyColumns}
+          data={activeAllergies}
+          columns={tableColumns}
           height={250}
           loading={isLoading}
           onRowClick={rowData => {}}

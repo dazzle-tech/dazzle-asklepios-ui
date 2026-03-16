@@ -1,13 +1,14 @@
 import EMRCard from '@/components/EMRCard';
+import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import PatientSide from '@/pages/lab-module/PatienSide';
+import PatientHistory from '@/pages/encounter/encounter-component/patient-history';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { useGetEncountersQuery } from '@/services/encounterService';
-import { ApPatient } from '@/types/model-types';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { newApEncounter } from '@/types/model-types-constructor';
+import { newPatient } from '@/types/model-types-constructor-new';
+import { Patient } from '@/types/model-types-new';
 import {
   faBarsProgress,
   faBed,
@@ -32,42 +33,35 @@ import {
   faXRay
 } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
-import ReactDOMServer from 'react-dom/server';
 import { useLocation, useNavigate } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
 import { DOMHelper } from 'rsuite';
-import ProfileSidebar from '../patient-profile/ProfileSidebar';
+import ProfileSidebar from '../patient-profile/ProfileSidebar-new';
 import AppliedServicesTable from './emr-tables/AppliedServicesTable';
 import AppointmentsTable from './emr-tables/AppointmentsTable';
 import AttachmentsTable from './emr-tables/AttachmentsTable';
-import ClinicalReportsTable from './emr-tables/ClinicalReportsTable';
-import ClinicVisitsTable from './emr-tables/ClinicVisitsTable';
+import ClinicalFormsTable from './emr-tables/ClinicalFormsTable';
 import ConsultationsTable from './emr-tables/ConsultationsTable';
 import CurrentMedicationsTable from './emr-tables/CurrentMedicationsTable';
-import DayCaseTable from './emr-tables/DayCaseTable';
 import DentalChartsTable from './emr-tables/DentalChartsTable';
-import EmergencyTable from './emr-tables/EmergencyTable';
-import InpatientTable from './emr-tables/InpatientTable';
 import LaboratoryTable from './emr-tables/LaboratoryTable';
 import LedgerAccountTable from './emr-tables/LedgerAccountTable';
 import NurseAssessmentsTable from './emr-tables/NurseAssessmentsTable';
 import OperationsTable from './emr-tables/OperationsTable';
-import PastMedicalHistoryTable from './emr-tables/PastMedicalHistoryTable';
-import PathologyTable from './emr-tables/PathologyTable';
 import ProceduresTable from './emr-tables/ProceduresTable';
 import RadiologyTable from './emr-tables/RadiologyTable';
 import VaccinationTable from './emr-tables/VaccinationTable';
+import VisitHistoryTable from './emr-tables/VisitHistoryTable';
 import './styles.less';
-import PatientHistory from '@/pages/encounter/encounter-component/patient-history';
-import SectionContainer from '@/components/SectionsoContainer';
+import { set } from 'lodash';
 
 const { getHeight } = DOMHelper;
 
 type PatientEMRProps = {
   inModal?: boolean;
-  patient?: ApPatient;
+  patient?: Patient;
   encounter?: any;
-  hideProfileSidebar?: boolean; // ✅ جديد
+  hideProfileSidebar?: boolean;
 };
 
 const PatientEMR: React.FC<PatientEMRProps> = ({
@@ -80,57 +74,29 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
-
   const propsData = patient || enc ? undefined : (location.state as any);
-
+  console.log('PatientEMR propsData', propsData?.patient, propsData?.encounter);
   const [encounter, setLocalEncounter] = useState<any>(
     enc ?? propsData?.encounter ?? { ...newApEncounter, discharge: false }
   );
+  const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
 
-  const [localPatient, setLocalPatient] = useState<ApPatient>(
+  const [localPatient, setLocalPatient] = useState<Patient>(
     patient
       ? patient
       : propsData?.patient
-      ? propsData.patient
-      : propsData?.fromPage === 'clinicalVisit'
-      ? propsData?.localPatient
-      : { ...newApPatient }
+        ? propsData.patient
+        : propsData?.fromPage === 'clinicalVisit'
+          ? propsData?.localPatient
+          : { ...newPatient }
   );
 
   const [refetchData, setRefetchData] = useState(false);
 
-  // Initialize Patient Encounters list request with default filters
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: localPatient?.key || undefined
-      }
-    ]
-  });
-
-  // Fetch patient Encounters List
-  const { data: encounterListResponse, isFetching } = useGetEncountersQuery(listRequest);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
 
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const [activeSectionCard, setActiveSectionCard] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!inModal) {
-      const divContent = 'Patients EMR';
-      dispatch(setPageCode('Patients_EMR'));
-      dispatch(setDivContent(divContent));
-    }
-    return () => {
-      if (!inModal) {
-        dispatch(setPageCode(''));
-        dispatch(setDivContent('  '));
-      }
-    };
-  }, [inModal, dispatch]);
 
   useEffect(() => {
     if (localPatient) {
@@ -141,116 +107,28 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     }
   }, [localPatient, encounter, dispatch]);
 
-  const columns = [
-    {
-      key: 'visitId',
-      flexGrow: 4,
-      align: 'center' as const,
-      title: <Translate>VISIT ID</Translate>,
-      render: (rowData: any) => (
-        <span
-          style={{ color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
-          onClick={() => {
-            goToVisit(rowData);
-          }}
-        >
-          {rowData.visitId}
-        </span>
-      )
-    },
-    {
-      key: 'plannedStartDate',
-      flexGrow: 4,
-      sortable: true,
-      title: <Translate>DATE</Translate>,
-      dataKey: 'plannedStartDate'
-    },
-    {
-      key: 'diagnosis',
-      flexGrow: 4,
-      fullText: true,
-      sortable: true,
-      title: <Translate>DIAGNOSIS</Translate>,
-      render: (rowData: any) => rowData.diagnosis
-    },
-    {
-      key: 'status',
-      flexGrow: 4,
-      fullText: true,
-      sortable: true,
-      title: <Translate>STATUS</Translate>,
-      render: (rowData: any) =>
-        rowData.encounterStatusLvalue
-          ? rowData.encounterStatusLvalue.lovDisplayVale
-          : rowData.encounterStatusLkey
-    }
-  ];
-
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = encounterListResponse?.extraNumeric ?? 0;
-
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    });
-  };
-
-  const isSelected = (rowData: any) => {
-    if (rowData && encounter && rowData.key === encounter.key) {
-      return 'selected-row';
-    } else return '';
-  };
-
-  const goToVisit = async (rowData: any) => {
-    setLocalEncounter(rowData);
-    dispatch(setEncounter(rowData));
-    dispatch(setPatient(rowData['patientObject']));
-
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = rowData.patientObject?.privatePatient ? privatePatientPath : encounterPath;
-
-    const stateData = {
-      info: 'toEncounter',
-      fromPage: inModal ? 'PatientEMRModal' : 'PatientEMR',
-      patient: rowData.patientObject,
-      encounter: rowData
-    };
-
-    sessionStorage.setItem('encounterPageSource', inModal ? 'PatientEMRModal' : 'PatientEMR');
-
-    navigate(targetPath, { state: stateData });
-  };
-
   useEffect(() => {
-    if (!localPatient) {
-      dispatch(setPatient({ ...newApPatient }));
-    } else {
-      const updatedFilters = [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull' as const,
-          value: undefined
-        },
-        {
-          fieldName: 'patient_key',
-          operator: 'match' as const,
-          value: localPatient?.key || undefined
-        }
-      ];
-      setListRequest(prevRequest => ({
-        ...prevRequest,
-        filters: updatedFilters
-      }));
+    if (patient || enc) {
+      if (patient) setLocalPatient(patient);
+      if (enc) setLocalEncounter(enc);
+      return;
     }
-  }, [localPatient, dispatch]);
+
+    const stateData = location.state as any;
+    if (stateData?.patient) {
+      setLocalPatient(stateData.patient);
+    } else if (stateData?.fromPage === 'clinicalVisit' && stateData?.localPatient) {
+      setLocalPatient(stateData.localPatient);
+    }
+
+    if (stateData?.encounter) {
+      setLocalEncounter(stateData.encounter);
+    }
+  }, [patient, enc, location.state]);
+
+
+ 
+
   useEffect(() => {
     return () => {
       if (!inModal) {
@@ -262,10 +140,10 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
 
   useEffect(() => {
-  if (activeSectionCard) {
-    setActiveCard(null);
-  }
-}, [activeSectionCard]);
+    if (activeSectionCard) {
+      setActiveCard(null);
+    }
+  }, [activeSectionCard]);
 
   return (
     <div className={`emr-container ${inModal ? 'emr-in-modal' : ''}`}>
@@ -375,15 +253,15 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
           </div>
 
           <div className="animation-emr-card-patient-emr">
-                  <EMRCard
-                    number={0}
-                    footerText="All"
-                    icon={faBarsProgress}
-                    backgroundColor="black"
-                    width={170}
-                    height={100}
-                    onClick={() => setActiveCard(activeCard === 'all' ? null : 'all')}
-                  />
+            <EMRCard
+              number={0}
+              footerText="All"
+              icon={faBarsProgress}
+              backgroundColor="black"
+              width={170}
+              height={100}
+              onClick={() => setActiveCard(activeCard === 'all' ? null : 'all')}
+            />
           </div>
 
         </div>
@@ -630,13 +508,13 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={4}
-                  footerText="Reports"
+                  footerText="Forms"
                   icon={faFileInvoice}
                   backgroundColor="var(--card-dark-pink)"
                   width={150}
                   height={100}
-                  onClick={() => setActiveCard(activeCard === 'reports' ? null : 'reports')}
-                  active={activeCard === 'reports'}
+                  onClick={() => setActiveCard(activeCard === 'forms' ? null : 'forms')}
+                  active={activeCard === 'forms'}
                 />
               </div>
 
@@ -724,12 +602,24 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
               <SectionContainer
                 title={<Translate>Clinic Visits</Translate>}
-                content={<ClinicVisitsTable patient={localPatient} />}
+                content={
+                  <VisitHistoryTable
+                    localPatient={localPatient}
+                    quickAppointmentModel={quickAppointmentModel}
+                    setQuickAppointmentModel={setQuickAppointmentModel}
+                    departmentType="OUTPATIENT_CLINIC"
+                  />
+                }
               />
 
               <SectionContainer
                 title={<Translate>Emergency Visits</Translate>}
-                content={<EmergencyTable patient={localPatient} />}
+                content={<VisitHistoryTable
+                  localPatient={localPatient}
+                  quickAppointmentModel={quickAppointmentModel}
+                  setQuickAppointmentModel={setQuickAppointmentModel}
+                  departmentType="EMERGENCY_ROOM"
+                />}
               />
 
               {/* ================= CLINICAL ================= */}
@@ -772,8 +662,8 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
               {/* ================= DOCUMENTATION ================= */}
               <SectionContainer
-                title={<Translate>Clinical Reports</Translate>}
-                content={<ClinicalReportsTable />}
+                title={<Translate>Clinical Forms</Translate>}
+                content={<ClinicalFormsTable />}
               />
 
               <SectionContainer
@@ -808,11 +698,21 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
         {/* Active Tables */}
         {activeCard === 'appointments' && <AppointmentsTable />}
 
-        {activeCard === 'clinicvisits' && <ClinicVisitsTable patient={localPatient} />}
+        {activeCard === 'clinicvisits' && (
+          <VisitHistoryTable
+            localPatient={localPatient}
+            departmentType="OUTPATIENT_CLINIC"
+          />
+        )}
         {/* {activeCard === 'inpatient' && <InpatientTable />} */}
         {/* {activeCard === 'daycase' && <DayCaseTable />} */}
-        {activeCard === 'emergency' && <EmergencyTable patient={localPatient} />}
-        {/* {activeCard === 'nurseassessments' && <NurseAssessmentsTable />} */}
+        {activeCard === 'emergency' && (
+          <VisitHistoryTable
+            localPatient={localPatient}
+            departmentType="EMERGENCY_ROOM"
+          />
+        )}
+        {activeCard === 'nurseassessments' && (<NurseAssessmentsTable patient={localPatient} />)}
         {activeCard === 'procedures' && <ProceduresTable patient={localPatient} />}
         {activeCard === 'operations' && <OperationsTable />}
         {activeCard === 'consultations' && <ConsultationsTable patient={localPatient} />}
@@ -821,7 +721,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
         {/* {activeCard === 'pathology' && <PathologyTable />} */}
         {activeCard === 'medications' && <CurrentMedicationsTable patient={localPatient} />}
         {activeCard === 'vaccines' && <VaccinationTable patient={localPatient} />}
-        {activeCard === 'reports' && <ClinicalReportsTable />}
+        {activeCard === 'forms' && <ClinicalFormsTable />}
         {activeCard === 'attachments' && <AttachmentsTable localPatient={localPatient} />}
         {activeCard === 'appliedservices' && <AppliedServicesTable patient={localPatient} />}
         {activeCard === 'dentalcharts' && <DentalChartsTable />}
@@ -833,7 +733,15 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
       <div className="emr-right">
         <div className="patient-side-main-container-handle">
-          <PatientSide patient={localPatient} encounter={encounter} />
+           <PatientSide
+                          patient={localPatient}
+                          setPatient={setLocalPatient}
+                          encounter={encounter}
+                          showDiagnosis={false}
+                          showVisitDetails={false}
+                          showBalance={false}
+                          showMeasurements={false}
+                        />
         </div>
         {!hideProfileSidebar && (
           <div className="profile-sidebar-main-container-handle">

@@ -4,21 +4,12 @@
   cursor: pointer;
 }
 
-.covg-conrainer {
-  .covg-content {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-
-    .covg-content-fields {
-      display: flex;
-      gap: 10px;
-    }
-
-    .covg-content-right-btn {
-      display: flex;
-    }
-  }
+.covg-content {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 1vw !important;
+  flex-wrap: wrap !important;
+  box-sizing: border-box !important;
 }
 
 .tab-main-container {
@@ -47,7 +38,7 @@
 .divider-line-vertical {
   height: 31px !important;
   font-size: 4px !important;
-  margin: 0px 15px 0px 15px !important
+  margin: 0px 15px 0px 15px !important;
 }
 
 .border-top {
@@ -91,30 +82,37 @@
 .patient-doc-secondary-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
 }
 
 .patient-list-loader {
-
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
-   .patient-list-loader-circle{
-       display: flex;
-       align-items: center;
-       justify-content: space-between;
-       .loader-circle{
-         margin-bottom: 8px;
-       }
-       .loader-text{
-         margin-bottom: 8px;
-         align-items: center;
-       }
-       .loader-rectangular{
-        border-radius: 2px;
-       }
-   }
-
+  .patient-list-loader-circle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    .loader-circle {
+      margin-bottom: 8px;
+    }
+    .loader-text {
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .loader-rectangular {
+      border-radius: 2px;
+    }
+  }
 }
+
+.flex-row-22 {
+  width: 100%;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+.privacy-security-tab-save-button{margin-top: 1.8vw;}

@@ -1,4 +1,3 @@
-// src/services/idParsingService.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 
@@ -19,7 +18,7 @@ export const idParsingService = createApi({
       },
       onQueryStarted,
       transformResponse: (response: any) => {
-        return response; // Spring returns raw JSON map
+        return response;
       }
     }),
 

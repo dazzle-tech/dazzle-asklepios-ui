@@ -2,13 +2,12 @@ import React, { useEffect } from 'react';
 import { Panel, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetProcedureListQuery
-} from '@/services/setupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import { initialListRequest } from '@/types/types';
+import { useLazyGetProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
+import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
+import { useEnumOptions } from '@/services/enumsApi';
 import './styles.less';
 
 interface PreviewProcedureProps {
@@ -17,25 +16,47 @@ interface PreviewProcedureProps {
 }
 
 const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose }) => {
+  // LOV Queries
   const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
-  const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const { data: procedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
+  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+  const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
   const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
-  const [getDepartmentsByFacility, { data: departmentListResponse }] = 
-    useLazyGetActiveDepartmentByFacilityListQuery();
-  const { data: procedureListResponse } = useGetProcedureListQuery(
-    { ...initialListRequest },
-    { skip: !procedure?.categoryKey }
-  );
 
-  // Load departments when facilityKey exists
+  // Enums
+  const ProcedureLevel = useEnumOptions('ProcedureLevel');
+  const Priority = useEnumOptions('Priority');
+
+  // Lazy Queries
+  const [getDepartmentsByFacility, { data: departmentListResponse }] =
+    useLazyGetActiveDepartmentByFacilityListQuery();
+  const [
+    getProcedureByFacility,
+    { data: procedureByFacility, isLoading: procedureByFacilityLoading }
+  ] = useLazyGetProceduresByFacilityQuery();
+
+  // Load departments when toFacilityId exists
   useEffect(() => {
-    if (procedure?.facilityKey) {
-      getDepartmentsByFacility({ facilityId: procedure.facilityKey });
+    if (procedure?.toFacilityId) {
+      getDepartmentsByFacility({ facilityId: procedure.toFacilityId });
     }
-  }, [procedure?.facilityKey, getDepartmentsByFacility]);
+  }, [procedure?.toFacilityId, getDepartmentsByFacility]);
+
+  // Load procedures by facility and category
+  useEffect(() => {
+    const facilityId = procedure?.toFacilityId;
+
+    if (facilityId && procedure?.categoryKey) {
+      getProcedureByFacility({
+        facilityId: facilityId,
+        category: procedure.categoryKey,
+        page: 0,
+        size: 20,
+        sort: 'name,asc'
+      });
+    }
+  }, [procedure?.toFacilityId, procedure?.categoryKey, getProcedureByFacility]);
 
   if (!procedure) return null;
 
@@ -55,184 +76,193 @@ const PreviewProcedure: React.FC<PreviewProcedureProps> = ({ procedure, onClose 
       }
     >
       <Form fluid>
-        <div className="main-details-procedure-page-container">
-          {/* Procedure Details */}
+        <div className='margin-bottom-10' >
           <SectionContainer
             title="Procedure Details"
             content={
-              <div className="procedure-preview-section">
+              <div className="procedure-details-row">
                 <MyInput
                   disabled
-                  width="12vw"
+                  width="100%"
+                  fieldLabel="Facility"
+                  fieldName="toFacilityId"
+                  fieldType="select"
+                  selectData={Array.isArray(facilityListResponse) ? facilityListResponse : []}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={procedure}
+                  setRecord={() => {}}
+                />
+
+                <MyInput
+                  disabled
+                  width="100%"
                   fieldType="select"
                   fieldLabel="Category Type"
-                  selectData={categoryLovQueryResponse?.object ?? []}
+                  selectData={CategoryLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
                   fieldName="categoryKey"
                   record={procedure}
                   setRecord={() => {}}
                 />
+
                 <MyInput
                   disabled
-                  width="12vw"
-                  fieldType="select"
+                  column
+                  width="100%"
                   fieldLabel="Procedure Name"
-                  selectData={procedureListResponse?.object ?? []}
-                  selectDataLabel="name"
-                  selectDataValue="key"
-                  fieldName="procedureNameKey"
-                  record={procedure}
-                  setRecord={() => {}}
-                />
-                <MyInput
-                  disabled
-                  width="12vw"
-                  fieldType="select"
-                  fieldLabel="Procedure Level"
-                  selectData={procedureLevelLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="procedureLevelLkey"
-                  record={procedure}
-                  setRecord={() => {}}
-                />
-                <MyInput
-                  disabled
-                  width="12vw"
-                  fieldType="select"
-                  fieldLabel="Priority"
-                  selectData={priorityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="priorityLkey"
-                  record={procedure}
-                  setRecord={() => {}}
-                />
-              </div>
-            }
-          />
-
-          {/* Indications & Anatomy */}
-          <SectionContainer
-            title="Indications & Anatomy"
-            content={
-              <div className="procedure-preview-section">
-                <MyInput
-                disabled
-                width="24vw"
-                fieldType="textarea"
-                fieldLabel="Indications Description"
-                fieldName="indications"
-                record={procedure}
-                setRecord={() => {}}
-                rows={4}
-                />
-
-                <MyInput
-                  disabled
-                  width="12vw"
-                  fieldType="select"
-                  fieldLabel="Body Part"
-                  selectData={bodypartLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="bodyPartLkey"
-                  record={procedure}
-                  setRecord={() => {}}
-                />
-                <MyInput
-                  disabled
-                  width="12vw"
-                  fieldType="select"
-                  fieldLabel="Side"
-                  selectData={sideLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="sideLkey"
-                  record={procedure}
-                  setRecord={() => {}}
-                />
-              </div>
-            }
-          />
-
-          {/* Department & Scheduling */}
-          <SectionContainer
-            title="Department & Scheduling"
-            content={
-              <div className="procedure-preview-section">
-                <MyInput
-                  disabled
-                  width="12vw"
-                  fieldType="select"
-                  fieldLabel="Facility"
-                  selectData={Array.isArray(facilityListResponse) ? facilityListResponse : []}
+                  fieldType="selectPagination"
+                  fieldName="procedureId"
+                  selectData={procedureByFacility?.data ?? []}
                   selectDataLabel="name"
                   selectDataValue="id"
-                  fieldName="facilityKey"
-                  record={{
-                    ...procedure,
-                    facilityKey: procedure?.facilityKey ? Number(procedure.facilityKey) : undefined
-                  }}
+                  record={procedure}
                   setRecord={() => {}}
+                  searchable={true}
+                  loading={procedureByFacilityLoading}
+                  hasMore={false}
+                  onFetchMore={() => {}}
+                  placeholder="Select Procedure..."
                 />
+
                 <MyInput
                   disabled
-                  width="12vw"
-                  fieldType="select"
+                  width="100%"
                   fieldLabel="Department"
+                  fieldName="toDepartmentId"
+                  fieldType="select"
                   selectData={Array.isArray(departmentListResponse) ? departmentListResponse : []}
                   selectDataLabel="name"
                   selectDataValue="id"
-                  fieldName="departmentKey"
-                  record={{
-                    ...procedure,
-                    departmentKey: procedure?.departmentKey ? Number(procedure.departmentKey) : undefined
-                  }}
-                  setRecord={() => {}}
-                />
-                <MyInput
-                  disabled
-                  width="12vw"
-                  fieldType="datetime"
-                  fieldLabel="Scheduled Date/Time"
-                  fieldName="scheduledDateTime"
                   record={procedure}
                   setRecord={() => {}}
                 />
-              </div>
-            }
-          />
 
-          {/* Notes & Documentation */}
-          <SectionContainer
-            title="Notes & Documentation"
-            content={
-              <div className="procedure-preview-section">
                 <MyInput
                   disabled
-                  width="24vw"
-                  fieldType="textarea"
-                  fieldLabel="Notes"
-                  fieldName="notes"
+                  width="100%"
+                  fieldType="select"
+                  fieldLabel="Procedure Level"
+                  selectData={ProcedureLevel ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  fieldName="procedureLevel"
                   record={procedure}
                   setRecord={() => {}}
-                  rows={4}
+                  searchable={false}
                 />
+
                 <MyInput
                   disabled
-                  width="24vw"
-                  fieldType="textarea"
-                  fieldLabel="Extra Documentation"
-                  fieldName="extraDocumentation"
+                  width="100%"
+                  fieldType="select"
+                  fieldLabel="Priority"
+                  selectData={Priority ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  fieldName="priority"
                   record={procedure}
                   setRecord={() => {}}
-                  rows={4}
+                  searchable={false}
                 />
               </div>
             }
           />
+        </div>
+
+        <div className="section-flex-procedures">
+          <div className="section-column-procedures">
+            <div className="fill-height-section">
+              <SectionContainer
+                title="Indications & Anatomy"
+                content={
+                  <>
+                    <div className="fill-height-content">
+                      <Icd10DiagnosisSearch
+                        diagnosisId={procedure.indicationId}
+                        setDiagnosisId={() => {}}
+                        label="Indication"
+                        disabled={true}
+                        pageSize={15}
+                      />
+
+                      <MyInput
+                        disabled
+                        width="100%"
+                        fieldType="select"
+                        fieldLabel="Body Part"
+                        selectData={bodypartLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="lovDisplayVale"
+                        fieldName="bodyPart"
+                        record={procedure}
+                        setRecord={() => {}}
+                      />
+
+                      <MyInput
+                        disabled
+                        width="100%"
+                        fieldType="select"
+                        fieldLabel="Side"
+                        selectData={sideLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="lovDisplayVale"
+                        fieldName="side"
+                        record={procedure}
+                        setRecord={() => {}}
+                        searchable={false}
+                      />
+                    </div>
+                  </>
+                }
+              />
+            </div>
+          </div>
+
+          <div className="section-column-procedures">
+            <SectionContainer
+              title="Scheduling"
+              content={
+                <MyInput
+                  disabled
+                  width="100%"
+                  fieldLabel="Scheduled Date Time"
+                  fieldName="scheduledDateTime"
+                  fieldType="datetime"
+                  record={procedure}
+                  setRecord={() => {}}
+                />
+              }
+            />
+
+            <SectionContainer
+              title="Notes & Documentation"
+              content={
+                <>
+                  <MyInput
+                    disabled
+                    width="100%"
+                    fieldLabel="Notes"
+                    fieldName="notes"
+                    fieldType="textarea"
+                    record={procedure}
+                    setRecord={() => {}}
+                  />
+
+                  <MyInput
+                    disabled
+                    width="100%"
+                    fieldLabel="Extra Documentation"
+                    fieldName="extraDocumentation"
+                    fieldType="textarea"
+                    record={procedure}
+                    setRecord={() => {}}
+                  />
+                </>
+              }
+            />
+          </div>
         </div>
       </Form>
     </Panel>

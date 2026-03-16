@@ -17,7 +17,7 @@ import Translate from '../Translate';
 import clsx from 'clsx';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
@@ -27,7 +27,7 @@ const Textarea = React.forwardRef((props, ref: any) => (
 ));
 
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
-  <DatePicker {...props} oneTap cleanable={false} block ref={ref} />
+  <DatePicker {...props} format="dd-MM-yyyy" editable cleanable={false} block ref={ref} />
 ));
 
 const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
@@ -50,6 +50,7 @@ type MyInputProps = {
   fieldName: string;
   fieldType?:
     | 'text'
+    | 'password'
     | 'textarea'
     | 'checkbox'
     | 'datetime'
@@ -113,6 +114,7 @@ type MyInputProps = {
   fieldLabel?: string;
   enterClick?: () => Promise<boolean | void> | boolean | void;
   isEnum?: boolean;
+  allowEnterNewLine?: boolean;
 };
 
 const MyInput = ({
@@ -145,11 +147,11 @@ const MyInput = ({
   const [isTimeOpen, setIsTimeOpen] = useState(false);
   const [isMultyPickerOpen, setIsMultyPickerOpen] = useState(false);
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
-      const target = event.target as HTMLElement;
 
       const menuClassList = [
         'rs-picker-popup',
@@ -157,16 +159,20 @@ const MyInput = ({
         'rs-picker-menu',
         'rs-virtual-list',
         'rs-virtual-list-scrollbar',
-        'rs-picker-tag-menu'
+        'rs-picker-tag-menu',
+        'rs-picker-date-menu',
+        'rs-calendar-panel',
+        'rs-calendar'
       ];
 
       if (path.some(el => menuClassList.some(cls => el?.classList?.contains?.(cls)))) {
         return;
       }
 
-      if (target.closest('.rs-picker-popup')) return;
-
-      if (target.closest('.rs-modal-body')) return;
+      const openPopup = document.querySelector('.rs-picker-popup');
+      if (openPopup && openPopup.contains(event.target as Node)) {
+        return;
+      }
 
       setIsSelectOpen(false);
       setIsDateOpen(false);
@@ -202,7 +208,13 @@ const MyInput = ({
     if (!setRecord || typeof setRecord !== 'function') return;
 
     if (fieldType === 'date') {
-      setRecord({ ...record, [fieldName]: value });
+      if (typeof value === 'string') {
+        setRecord({ ...record, [fieldName]: value || null });
+        return;
+      }
+
+      const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
+      setRecord({ ...record, [fieldName]: dateStr });
       return;
     }
 
@@ -221,9 +233,9 @@ const MyInput = ({
       return props.menuMaxHeight as number;
     }
     const itemsCount = dataList?.length ?? 0;
-    const estimatedItemHeight = 38; // approx item row height for rsuite pickers
-    const headerAllowance = 24; // search header/padding allowance
-    const capHeight = 240; // sensible default cap
+    const estimatedItemHeight = 38;
+    const headerAllowance = 24;
+    const capHeight = 240;
     return Math.min(capHeight, itemsCount * estimatedItemHeight + headerAllowance);
   };
 
@@ -255,6 +267,7 @@ const MyInput = ({
     recognition.start();
     recognitionRef.current = recognition;
   };
+
   // stop speech recognition
   const stopListening = () => {
     recognitionRef.current?.stop();
@@ -315,7 +328,14 @@ const MyInput = ({
               value={record[fieldName] ? record[fieldName] : ''}
               accepter={Textarea}
               onChange={handleValueChange}
-              onKeyDown={focusNextField}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  if (props.allowEnterNewLine) {
+                    return;
+                  }
+                  focusNextField(e);
+                }
+              }}
             />
             {!props.disabled && (
               <div
@@ -323,10 +343,6 @@ const MyInput = ({
                 onClick={changeRecordingState}
                 style={{ position: 'relative' }}
               >
-                <FontAwesomeIcon
-                  icon={faMicrophone}
-                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
                 {recording && <span className="pulse-ring"></span>}
               </div>
             )}
@@ -460,9 +476,15 @@ const MyInput = ({
                   }
                 : undefined
             }
+            disabledItemValues={
+              props.disabledItemValues
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
+                : []
+            }
           />
         );
       }
+
       case 'selectPagination': {
         const isArrayLabel = Array.isArray(props.selectDataLabel);
         const labelKeys = isArrayLabel
@@ -583,9 +605,15 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            disabledItemValues={
+              props.disabledItemValues
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
+                : []
+            }
           />
         );
       }
+
       case 'multyPicker':
         return (
           <Form.Control
@@ -611,6 +639,11 @@ const MyInput = ({
             open={isMultyPickerOpen}
             onOpen={() => setIsMultyPickerOpen(true)}
             onClose={() => setIsMultyPickerOpen(false)}
+            disabledItemValues={
+              props.disabledItemValues
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
+                : []
+            }
           />
         );
 
@@ -638,6 +671,11 @@ const MyInput = ({
             open={isCheckPickerOpen}
             onOpen={() => setIsCheckPickerOpen(true)}
             onClose={() => setIsCheckPickerOpen(false)}
+            disabledItemValues={
+              props.disabledItemValues
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
+                : []
+            }
           />
         );
 
@@ -653,11 +691,30 @@ const MyInput = ({
             }
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? dayjs(record[fieldName], 'YYYY-MM-DD').toDate() : null}
-            accepter={CustomDatePicker}
-            onChange={handleValueChange}
-            placeholder={props.placeholder}
-            onKeyDown={focusNextField}
+            accepter={DatePicker}
+            format="dd-MM-yyyy"
+            editable
+            cleanable={false}
+            oneTap
+            defaultValue={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
+            onChange={(value: Date | null) => {
+              const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
+              setRecord?.({ ...record, [fieldName]: dateStr });
+            }}
+            placeholder={props.placeholder ?? 'DD-MM-YYYY'}
+            onKeyDown={(e: any) => {
+              const input = e.target as HTMLInputElement;
+
+              if (e.ctrlKey && e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+                setTimeout(() => {
+                  input.setSelectionRange(0, 2);
+                }, 0);
+                return;
+              }
+
+              focusNextField(e);
+            }}
             open={isDateOpen}
             onOpen={() => setIsDateOpen(true)}
             onClose={() => setIsDateOpen(false)}
@@ -666,7 +723,6 @@ const MyInput = ({
             container={resolveContainer()}
           />
         );
-
       case 'number': {
         const numInputWidth = props?.width ?? 145;
         const addonWidth = 40;
@@ -703,7 +759,7 @@ const MyInput = ({
             }}
             disabled={props.disabled}
             name={fieldName}
-            max={props.max ? props.max : 1000000}
+            max={props.max}
             min={0}
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={InputNumber}
@@ -781,7 +837,48 @@ const MyInput = ({
         const displayValue =
           props.isEnum && typeof rawValue === 'string' ? formatEnumString(rawValue) : rawValue;
 
-        const inputControl = (
+        const isPassword = fieldType === 'password';
+
+        const inputControl = isPassword ? (
+          <InputGroup inside style={{ width: defaultInputWidth }}>
+            <Form.Control
+              style={{
+                width: '100%',
+                height: props?.height ?? 30
+              }}
+              disabled={props.disabled}
+              name={fieldName}
+              type={showPassword ? 'text' : 'password'}
+              value={displayValue}
+              onChange={handleValueChange}
+              placeholder={props.placeholder}
+              onKeyDown={async e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const result = await props.enterClick?.();
+                  if (result !== false) {
+                    focusNextField(e);
+                  }
+                }
+              }}
+            />
+            {!props.disabled && (
+              <InputGroup.Button
+                onClick={() => setShowPassword(!showPassword)}
+                className="password-toggle-button"
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  boxShadow: 'none',
+                  padding: '8px 12px',
+                  outline: 'none'
+                }}
+              >
+                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+              </InputGroup.Button>
+            )}
+          </InputGroup>
+        ) : (
           <div style={{ position: 'relative', display: 'inline-block', width: defaultInputWidth }}>
             <Form.Control
               style={{
@@ -805,18 +902,7 @@ const MyInput = ({
                 }
               }}
             />
-            {/* {!props.disabled && (
-              <div
-                className={`container-of-search-icon ${recording ? 'recording' : ''}`}
-                onClick={changeRecordingState}
-              >
-                <FontAwesomeIcon
-                  icon={faMicrophone}
-                  className={props.disabled ? 'disabled-icon' : 'active-icon'}
-                />
-                {recording && <span className="pulse-ring"></span>}
-              </div>
-            )} */}
+            {recording && <span className="pulse-ring"></span>}
           </div>
         );
 
@@ -843,29 +929,29 @@ const MyInput = ({
     }
   };
 
-  const conjureValidationMessages = () => {
-    if (!validationResult) return null;
-    const msgs = [];
-    let i = 0;
-    for (const vrs of validationResult) {
-      msgs.push(
-        <Form.HelpText
-          key={i++}
-          style={{
-            color:
-              vrs.validationType === 'REJECT'
-                ? 'red'
-                : vrs.validationType === 'WARN'
-                ? 'orange'
-                : 'grey'
-          }}
-        >
-          <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
-        </Form.HelpText>
-      );
-    }
-    return msgs;
-  };
+  // const conjureValidationMessages = () => {
+  //   if (!validationResult) return null;
+  //   const msgs = [];
+  //   let i = 0;
+  //   for (const vrs of validationResult) {
+  //     msgs.push(
+  //       <Form.HelpText
+  //         key={i++}
+  //         style={{
+  //           color:
+  //             vrs.validationType === 'REJECT'
+  //               ? 'red'
+  //               : vrs.validationType === 'WARN'
+  //                 ? 'orange'
+  //                 : 'grey'
+  //         }}
+  //       >
+  //         <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
+  //       </Form.HelpText>
+  //     );
+  //   }
+  //   return msgs;
+  // };
 
   return (
     <Form.Group
@@ -879,11 +965,11 @@ const MyInput = ({
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />
         )}
-        {props.required && <span className="required-field ">*</span>}
+        {props.required && <span className="required-field">*</span>}
       </Form.ControlLabel>
       {props.column && <div style={{ marginBottom: 5 }} />}
       {conjureFormControl()}
-      {validationResult && conjureValidationMessages()}
+      {/* {validationResult && conjureValidationMessages()} */}
     </Form.Group>
   );
 };

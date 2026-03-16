@@ -3,15 +3,15 @@ import { useLocation } from 'react-router-dom';
 import InpatientObservations from '../encounter-pre-observations/observations/InpatientObservations';
 import './style.less';
 
-const ContinuousObservations = () => {
+const ContinuousObservations = ({...props}) => {
   const location = useLocation();
   const propsData = location.state;
 
   return (
     <InpatientObservations
       editable={propsData.edit}
-      localPatient={propsData.patient}
-      localEncounter={propsData.encounter}
+      localPatient={props?.patient ? props?.patient : propsData.patient}
+      localEncounter={props?.encounter ? props?.encounter : propsData.encounter}
     />
   );
 };

@@ -416,19 +416,19 @@ const ERWaitingList = () => {
               />
               <MyInput
                 width={110}
-                fieldName="withPrescription"
+                fieldName="hasPrescription"
                 fieldType="checkbox"
                 record={record}
                 setRecord={setRecord}
-                label="With Prescription"
+                label="Has Prescription"
               />
               <MyInput
                 width={80}
-                fieldName="hasOrders"
+                fieldName="hasOrder"
                 fieldType="checkbox"
                 record={record}
                 setRecord={setRecord}
-                label="Has Orders"
+                label="Has Order"
               />
               <MyInput
                 width={80}
@@ -467,9 +467,7 @@ const ERWaitingList = () => {
         open={openBedAssigmentModal}
         setOpen={setOpenBedAssigment}
         encounter={encounter}
-        departmentKey={
-          encounter?.resourceTypeLkey === 'EMERGENCY' ? '5006' : encounter?.departmentKey
-        }
+        departmentKey={encounter?.departmentId}
       />
 
       <MyTable

@@ -1,13 +1,15 @@
-import MyModal from '@/components/MyModal/MyModal';
-import React, { useEffect, useState, useRef } from 'react';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import { useAppSelector } from '@/hooks';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useLazyGetActiveAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetActiveAppointablePractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetActiveAppointableProceduresQuery } from '@/services/setup/procedure/procedureService';
+import React, { useEffect, useRef, useState } from 'react';
+import { GrScheduleNew } from "react-icons/gr";
 import { Form } from 'rsuite';
 import './styles.less';
-import { GrScheduleNew } from "react-icons/gr";
-import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
-import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 
 type Resource = {
   id?: number;
@@ -34,30 +36,84 @@ const AddEditResources = ({
   handleAddNew: (resourceName?: string) => void;
   handleUpdate: (resourceName?: string) => void;
 }) => {
+      const authSlice = useAppSelector(state => state.auth);
+    
+       const selectedFacility = authSlice.selectedDepartment.facilityId;
+     
   const ResourceTypeEnum = useEnumOptions("ResourceType");
+  
+  const DEFAULT_RESOURCE_TYPE = 'CLINIC';
   const [resourceOptions, setResourceOptions] = useState<any[]>([]);
+
   const [resourceLabelField, setResourceLabelField] = useState<string>('id');
   const [isLoadingResources, setIsLoadingResources] = useState<boolean>(false);
   const prevResourceTypeRef = useRef<string>('');
 
+  // Set default resource type to CLINIC for new resources
+  useEffect(() => {
+    // Only set default for new resources (when resource.id is not set)
+    if (resource?.id) {
+      return;
+    }
+
+    // Skip if resourceType is already set to a valid value
+    if (resource?.resourceType && resource.resourceType !== null && resource.resourceType !== '') {
+      return;
+    }
+
+    // Set default to CLINIC when modal opens for new resource
+    if (open && Array.isArray(ResourceTypeEnum) && ResourceTypeEnum.length > 0) {
+      const normalize = (v: any) => String(v ?? '').trim().toLowerCase();
+
+      const match =
+        ResourceTypeEnum.find(
+          (x: any) =>
+            normalize(x?.label) === normalize(DEFAULT_RESOURCE_TYPE) ||
+            normalize(x?.value) === normalize(DEFAULT_RESOURCE_TYPE)
+        ) || null;
+
+      if (match?.value) {
+        setResource({
+          ...resource,
+          resourceType: match.value
+        });
+      } else {
+        // Fallback: use DEFAULT_RESOURCE_TYPE directly
+        setResource({
+          ...resource,
+          resourceType: DEFAULT_RESOURCE_TYPE
+        });
+      }
+    } else if (open) {
+      // Set default even if enum not loaded yet
+      setResource({
+        ...resource,
+        resourceType: DEFAULT_RESOURCE_TYPE
+      });
+    }
+  }, [ResourceTypeEnum, resource?.resourceType, resource?.id, open]);
+
   // Service hooks for fetching resources based on type
-  const { data: diagnosticTestsData, isFetching: isLoadingTests } = useGetAllDiagnosticTestsQuery(
+  const { data: diagnosticTestsData, isFetching: isLoadingTests } = useGetAllActiveAppointableDiagnosticTestsQuery(
     { page: 0, size: 1000, sort: 'id,asc' },
     { skip: resource.resourceType !== 'MEDICAL_TEST' || !open }
   );
   
-  const { data: practitionersData, isFetching: isLoadingPractitioners } = useGetAllPractitionersQuery(
+  const { data: practitionersData, isFetching: isLoadingPractitioners } = useGetActiveAppointablePractitionersQuery(
     { page: 0, size: 1000, sort: 'id,asc' },
     { skip: resource.resourceType !== 'PRACTITIONER' || !open }
   );
   
-  const { data: departmentsData, isFetching: isLoadingDepartments } = useGetDepartmentsQuery(
-    { page: 0, size: 1000, sort: 'id,asc' },
-    { skip: resource.resourceType !== 'CLINIC' || !open }
-  );
-
+  const {data:procedureData,isFetching:isLoadingProcedure}=useGetActiveAppointableProceduresQuery(
+      { page: 0, size: 1000, sort: 'id,asc' },
+    { skip: resource.resourceType !== 'PROCEDURE' || !open }
+  )
+    const [fetchDepartmentsByType, { data: departments ,isFetching:isLoadingDepartmentType}] = useLazyGetActiveAppointableDepartmentByTypeQuery();
+ 
   // Clear resourceKey when resourceType changes
   useEffect(() => {
+    
+
     if (!open) return;
     
     const resourceTypeChanged = prevResourceTypeRef.current !== (resource.resourceType || '');
@@ -71,70 +127,107 @@ const AddEditResources = ({
   }, [resource.resourceType, open]);
 
   // Handle resource data based on type - using new enum values
-  useEffect(() => {
-    if (!open) {
-      setResourceOptions([]);
-      setIsLoadingResources(false);
-      return;
-    }
+ const DEPT_TYPES = ["CLINIC", "EMERGENCY", "INPATIENT_ADMISSION", "DAY_CASE"];
 
-    if (!resource.resourceType) {
-      setResourceOptions([]);
-      setIsLoadingResources(false);
-      return;
-    }
+const TYPE_MAP: Record<string, string> = {
+  CLINIC: "OUTPATIENT_CLINIC",
+  EMERGENCY: "EMERGENCY_ROOM",
+  INPATIENT_ADMISSION: "INPATIENT_WARD",
+  DAY_CASE: "DAY_CASE",
+};
 
-    // Set loading state based on which resource type is selected
-    setIsLoadingResources(
-      (resource.resourceType === 'MEDICAL_TEST' && isLoadingTests) ||
-      (resource.resourceType === 'PRACTITIONER' && isLoadingPractitioners) ||
-      (resource.resourceType === 'CLINIC' && isLoadingDepartments)
-    );
+useEffect(() => {
+  if (!open) return;
 
-    // Handle MEDICAL_TEST
-    if (resource.resourceType === 'MEDICAL_TEST' && diagnosticTestsData) {
-      setResourceOptions(diagnosticTestsData.data || []);
-      setResourceLabelField('name');
-      setIsLoadingResources(false);
-      return;
-    }
+  const apiType = TYPE_MAP[resource.resourceType];
 
-    // Handle PRACTITIONER
-    if (resource.resourceType === 'PRACTITIONER' && practitionersData) {
-      const formattedPractitioners = (practitionersData.data || []).map((p: any) => ({
-        id: p.id,
-        name: `${p.firstName || ''} ${p.lastName || ''}`.trim() || `Practitioner ${p.id}`,
-        ...p,
-      }));
-      setResourceOptions(formattedPractitioners);
-      setResourceLabelField('name');
-      setIsLoadingResources(false);
-      return;
-    }
-
-    // Handle CLINIC (Department)
-    if (resource.resourceType === 'CLINIC' && departmentsData) {
-      setResourceOptions(departmentsData.data || []);
-      setResourceLabelField('name');
-      setIsLoadingResources(false);
-      return;
-    }
-
-    // For other resource types (INPATIENT_ADMISSION, DAY_CASE, EMERGENCY, OPERATION)
-    // Show empty options for now - can be extended later
+  if (apiType) {
+    fetchDepartmentsByType({
+      type: apiType,
+      facilityId: selectedFacility,
+      page: 0,
+      size: 100,
+    });
+  } else {
     setResourceOptions([]);
-    setResourceLabelField('id');
+  }
+}, [resource.resourceType, selectedFacility, open, fetchDepartmentsByType]);
+
+
+useEffect(() => {
+  if (!open) return;
+
+  const isDeptType = DEPT_TYPES.includes(resource.resourceType);
+
+  if (isDeptType) {
+    setResourceOptions(departments?.data || []);
+    setResourceLabelField("name");
+  }
+}, [departments, resource.resourceType, open]);
+
+ useEffect(() => {
+  if (!open) {
+    setResourceOptions([]);
     setIsLoadingResources(false);
-  }, [
-    resource.resourceType,
-    open,
-    diagnosticTestsData,
-    practitionersData,
-    departmentsData,
-    isLoadingTests,
-    isLoadingPractitioners,
-    isLoadingDepartments,
-  ]);
+    return;
+  }
+
+  if (!resource.resourceType) {
+    setResourceOptions([]);
+    setIsLoadingResources(false);
+    return;
+  }
+
+  const isDeptType = DEPT_TYPES.includes(resource.resourceType);
+
+  setIsLoadingResources(
+    (resource.resourceType === "MEDICAL_TEST" && isLoadingTests) ||
+    (resource.resourceType === "PRACTITIONER" && isLoadingPractitioners) ||
+    (resource.resourceType === "PROCEDURE" && isLoadingProcedure) ||
+    (isDeptType && isLoadingDepartmentType)
+  );
+
+  if (resource.resourceType === "MEDICAL_TEST" && diagnosticTestsData) {
+    setResourceOptions(diagnosticTestsData.data || []);
+    setResourceLabelField("name");
+    setIsLoadingResources(false);
+    return;
+  }
+  if (resource.resourceType === "PROCEDURE" && procedureData) {
+    setResourceOptions(procedureData.data || []);
+    setResourceLabelField("name");
+    setIsLoadingResources(false);
+    return;
+  }
+  if (resource.resourceType === "PRACTITIONER" && practitionersData) {
+    const formattedPractitioners = (practitionersData.data || []).map((p: any) => ({
+      id: p.id,
+      name: `${p.firstName || ""} ${p.lastName || ""}`.trim() || `Practitioner ${p.id}`,
+      ...p,
+    }));
+    setResourceOptions(formattedPractitioners);
+    setResourceLabelField("name");
+    setIsLoadingResources(false);
+    return;
+  }
+  
+  // أي نوع ثاني غير departments وغير اللي فوق
+  if (!isDeptType) {
+    setResourceOptions([]);
+    setResourceLabelField("id");
+    setIsLoadingResources(false);
+  }
+}, [
+  resource.resourceType,
+  open,
+  diagnosticTestsData,
+  practitionersData,
+  isLoadingTests,
+  isLoadingPractitioners,
+  isLoadingDepartmentType,
+  isLoadingProcedure
+]);
+
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -155,6 +248,7 @@ const AddEditResources = ({
               width={520}
               required
               searchable={false}
+              disabled
             />
             {(() => {
               // Static logic - easy to read and edit
@@ -175,7 +269,7 @@ const AddEditResources = ({
               }
 
               // Show dropdown if we have resource options (PRACTITIONER, MEDICAL_TEST, CLINIC)
-              if (resourceOptions.length > 0) {
+             
                 // Convert resourceKey appropriately for select matching
                 // For select, we need to match the value type with selectDataValue (which is "id")
                 const recordForSelect = {
@@ -211,22 +305,7 @@ const AddEditResources = ({
                     disabled={isLoadingResources}
                   />
                 );
-              } else {
-                // For resource types without predefined options, show text input
-                return (
-                  <MyInput
-                    fieldLabel="Resource Key"
-                    fieldName="resourceKey"
-                    fieldType="text"
-                    record={resource}
-                    setRecord={setResource}
-                    width={520}
-                    required
-                    placeholder="Enter Resource Key"
-                    disabled={isLoadingResources}
-                  />
-                );
-              }
+             
             })()}
             <MyInput
               fieldLabel="Allow Parallel"

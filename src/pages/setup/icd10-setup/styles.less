@@ -1,0 +1,150 @@
+
+.icd-root {
+  height: calc(100vh - 90px);
+}
+
+.icd-latin,
+.icd-code,
+.icd-right-code,
+.icd-link {
+  direction: ltr;
+  unicode-bidi: plaintext;
+}
+
+.icd-row,
+.icd-col {
+  height: 100%;
+  min-height: 0;
+}
+
+.icd-row {
+  display: flex;
+  gap: 12px;
+}
+
+.icd-panel {
+  height: 100%;
+  overflow: hidden;
+
+  .rs-panel-body {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+}
+
+/* LEFT */
+.icd-left-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e6e6e6;
+  background: #fafafa;
+  flex: 0 0 auto;
+}
+
+.icd-left-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.icd-left-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.icd-row-item {
+  display: flex;
+  gap: 10px;
+  padding: 7px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  align-items: flex-start;
+  user-select: none;
+
+  &:hover {
+    background: #f7f7f7;
+  }
+}
+
+.icd-row-item--selected {
+  background: #f6e8d8;
+}
+
+.icd-caret {
+  width: 14px;
+  min-width: 14px;
+  opacity: 0.8;
+}
+
+.icd-code {
+  font-weight: 900;
+  color: #1e51bf;
+  min-width: 80px;
+}
+
+.icd-name {
+  color: #111;
+  line-height: 18px;
+}
+
+.icd-pad {
+  padding: 10px;
+}
+
+.icd-muted {
+  opacity: 0.7;
+}
+
+/* RIGHT */
+.icd-right-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.icd-right-title {
+  color: #0b3ea9;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.icd-right-code {
+  font-weight: 800;
+}
+
+.icd-right-desc {
+  margin-top: 6px;
+  opacity: 0.85;
+}
+
+.icd-right-body {
+  height: 100%;
+  overflow: auto;
+  padding: 12px;
+}
+
+.icd-section-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.icd-link {
+  cursor: pointer;
+  font-weight: 800;
+  color: #1e51bf;
+}
+
+.icd-latin-digits {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  text-align: left;
+
+  /* kill Arabic localized glyph substitution (works in most cases) */
+  font-feature-settings: "locl" 0, "lnum" 1, "tnum" 1 !important;
+  font-variant-numeric: lining-nums tabular-nums !important;
+
+  /* strongest practical fix: use a font that doesn't substitute digits */
+  font-family: "Roboto Mono", "Consolas", "Courier New", Arial, "Segoe UI", sans-serif !important;
+}

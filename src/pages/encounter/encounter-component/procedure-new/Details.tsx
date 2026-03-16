@@ -2,31 +2,174 @@ import AdvancedModal from '@/components/AdvancedModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useSaveProceduresMutation } from '@/services/procedureService';
 import {
-  useGetIcdListQuery,
-  useGetLovValuesByCodeQuery,
-  useGetProcedureListQuery
-} from '@/services/setupService';
+  useCreateProcdureMutation,
+  useUpdateProcdureMutation
+} from '@/services/patients/patientProcedureService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import { newApProcedure } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import { faBroom, faPaperclip } from '@fortawesome/free-solid-svg-icons';
+import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CheckIcon from '@rsuite/icons/Check';
-import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
-import { Dropdown, Form } from 'rsuite';
-import PatientOrder from '../diagnostics-order';
+import { Form } from 'rsuite';
+import PatientOrder from '../diagnostics-order-new';
 import Diagnosis from '../../../medical-component/diagnosis/DiagnosisAndFindings';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
-
+import { useLazyGetProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
+import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
+
+const FIELD_ORDER = [
+  'procedureId',
+  'toFacilityId',
+  'toDepartmentId',
+  'procedureLevel',
+  'priority',
+  'scheduledDateTime',
+  'bodyPart',
+  'side',
+  'indicationId'
+];
+
+const REQUIRED_FIELDS = [
+  'procedureId',
+  'toFacilityId',
+  'procedureLevel',
+  'priority',
+  'scheduledDateTime',
+  'bodyPart'
+];
+
+const handleProcedureCrudError = (
+  err: any,
+  dispatch: any,
+  keyMap: Record<string, string>,
+  record: any // ✅ procedure object
+) => {
+  const data = err?.data ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  // ✅ Field labels for UI
+  const FIELD_LABELS: Record<string, string> = {
+    procedureId: 'procedure name',
+    toFacilityId: 'facility',
+    toDepartmentId: 'department',
+    procedureLevel: 'procedure level',
+    priority: 'priority',
+    scheduledDateTime: 'scheduled date time',
+    bodyPart: 'body part',
+    side: 'side',
+    indicationId: 'indication'
+  };
+
+  // ✅ Normalize backend messages
+  const normalizeMsg = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+
+    // Backend error codes
+    if (m.includes('required')) return 'is required';
+    if (m.includes('must not be null')) return 'is required';
+    if (m.includes('must not be blank')) return 'is required';
+    if (m.includes('cannot be null')) return 'is required';
+
+    return msg || 'invalid value';
+  };
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    // ✅ Copy errors array (avoid frozen redux object)
+    let errors = [...data.fieldErrors];
+
+    // ✅ Fields returned from backend
+    const backendFields = errors.map((e: any) => e.field);
+
+    // ======================================================
+    // ✅ Add missing required fields ONLY if value is empty
+    // ======================================================
+    REQUIRED_FIELDS.forEach(field => {
+      const value = record?.[field];
+
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        (typeof value === 'string' && value.trim() === '');
+
+      // ✅ Add only if empty AND backend did not already return it
+      if (isEmpty && !backendFields.includes(field)) {
+        errors.push({
+          field,
+          message: `${field}.required`
+        });
+      }
+    });
+
+    // ======================================================
+    // ✅ Remove duplicates (same field twice)
+    // ======================================================
+    const uniqueMap = new Map<string, any>();
+    errors.forEach(e => {
+      uniqueMap.set(e.field, e);
+    });
+
+    errors = Array.from(uniqueMap.values());
+
+    // ======================================================
+    // ✅ Sort errors according to form order
+    // ======================================================
+    const sortedErrors = [...errors].sort((a, b) => {
+      return FIELD_ORDER.indexOf(a.field) - FIELD_ORDER.indexOf(b.field);
+    });
+
+    // ======================================================
+    // ✅ Build final readable message
+    // ======================================================
+    const lines = sortedErrors.map((fe: any) => {
+      const rawField = String(fe.field ?? '');
+      const fieldLabel = FIELD_LABELS[rawField] ?? rawField;
+
+      // ✅ Use map if exists, else normalize
+      const cleanMsg = keyMap?.[fe.message] || normalizeMsg(fe.message);
+
+      return `• ${fieldLabel}: ${cleanMsg}`;
+    });
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
+        sev: 'warning'
+      })
+    );
+
+    return;
+  }
+
+  // ======================================================
+  // ✅ FALLBACK: Unknown error
+  // ======================================================
+  dispatch(
+    notify({
+      msg: data?.message || 'Unexpected error' + suffix,
+      sev: 'warning'
+    })
+  );
+};
+
+const PROCEDURE_ERROR_MAP: Record<string, string> = {
+  'procedureId.required': 'is required',
+  'toFacilityId.required': 'is required',
+  'procedureLevel.required': 'is required',
+  'priority.required': 'is required',
+  'scheduledDateTime.required': 'is required',
+  'bodyPart.required': 'is required'
+};
 
 const Details = ({
   patient,
@@ -38,160 +181,178 @@ const Details = ({
   setOpenDetailsModal,
   proRefetch
 }) => {
+  const authSlice = useAppSelector(state => state.auth);
   const [openOrderModel, setOpenOrderModel] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [procedurePage, setProcedurePage] = useState(0);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const dispatch = useAppDispatch();
-  const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
+
+  const [createProcedure] = useCreateProcdureMutation();
+  const [updateProcedure] = useUpdateProcdureMutation();
+
   const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
   const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
-  const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
-  const [getDepartmentsByFacility, { data: departmentListResponse }] = 
+  const ProcedureLevel = useEnumOptions('ProcedureLevel');
+  const Priority = useEnumOptions('Priority');
+
+  const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
-
-  const [listRequestPro, setListRequestPro] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'category_lkey',
-        operator: 'match',
-        value: procedure.categoryKey
-      }
-    ]
-  });
+  const [
+    getProcedureByFacility,
+    { data: procedureByFacility, isLoading: procedureByFacilityLoading }
+  ] = useLazyGetProceduresByFacilityQuery();
 
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
-  const { data: procedureQueryResponse, refetch: profetch } = useGetProcedureListQuery(
-    listRequestPro,
-    { skip: procedure.categoryKey == undefined }
-  );
-
-  const [indicationsDescription, setIndicationsDescription] = useState<string>('');
-  const [searchKeywordicd, setSearchKeywordicd] = useState('');
-
-  const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
-  });
-
-  const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
-
-  const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
-    ...item,
-    combinedLabel: `${item.icdCode} - ${item.description}`
-  }));
 
   useEffect(() => {
-    if (procedure.indications != null && procedure.indications !== '') {
-      const currentIcd = icdListResponseLoading?.object?.find(
-        item => item.key === procedure.indications
-      );
-      if (currentIcd) {
-        const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
-        setIndicationsDescription(newEntry);
-      }
+    if (procedure?.toFacilityId) {
+      getDepartmentsByFacility({ facilityId: procedure.toFacilityId });
     }
-  }, [procedure.indications, icdListResponseLoading]);
+  }, [procedure?.toFacilityId, getDepartmentsByFacility]);
 
   useEffect(() => {
-    if (searchKeywordicd.trim() !== '') {
-      setIcdListRequest({
-        ...initialListRequest,
-        filterLogic: 'or',
-        filters: [
-          {
-            fieldName: 'icd_code',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd
-          },
-          {
-            fieldName: 'description',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd
-          }
-        ]
+    const facilityId = procedure?.toFacilityId || authSlice?.selectedDepartment?.facilityId;
+
+    if (facilityId && procedure.categoryKey) {
+      getProcedureByFacility({
+        facilityId,
+        category: procedure.categoryKey,
+        page: procedurePage,
+        size: 20,
+        sort: 'name,asc'
       });
     }
-  }, [searchKeywordicd]);
-
-  useEffect(() => {
-    setListRequestPro(prev => ({
-      ...prev,
-      filters: [
-        ...(procedure?.categoryKey
-          ? [
-              {
-                fieldName: 'category_lkey',
-                operator: 'match',
-                value: procedure?.categoryKey
-              }
-            ]
-          : [])
-      ]
-    }));
-  }, [procedure?.categoryKey]);
-
-  // Load departments when facilityKey changes
-  useEffect(() => {
-    if (procedure?.facilityKey) {
-      getDepartmentsByFacility({ facilityId: procedure.facilityKey });
-    }
-  }, [procedure?.facilityKey, getDepartmentsByFacility]);
+  }, [
+    procedure?.toFacilityId,
+    authSlice?.selectedDepartment?.facilityId,
+    procedure.categoryKey,
+    procedurePage,
+    getProcedureByFacility
+  ]);
 
   useEffect(() => {
     if (procedure.currentDepartment) {
-      setProcedure({ ...procedure, departmentKey: null, faciltyLkey: null });
+      setProcedure({
+        ...procedure,
+        toDepartmentId: null,
+        toFacilityId: authSlice?.selectedDepartment?.facilityId
+      });
     }
   }, [procedure.currentDepartment]);
 
-  const handleOpenAttachmentModal = () => {
-    setShowAttachmentModal(true);
+  useEffect(() => {
+    setProcedurePage(0);
+  }, [procedure.categoryKey]);
+
+  useEffect(() => {
+    if (!procedure?.toFacilityId) {
+      setProcedure(prev => ({
+        ...prev,
+        toDepartmentId: null
+      }));
+    }
+  }, [procedure?.toFacilityId]);
+
+  const handleOpenAttachmentModal = () => setShowAttachmentModal(true);
+
+  const hasMoreProcedures = procedureByFacility?.links?.next != null;
+
+  const handleLoadMoreProcedures = () => {
+    if (hasMoreProcedures && !procedureByFacilityLoading) {
+      setProcedurePage(prev => prev + 1);
+    }
   };
 
   const handleClear = () => {
     setProcedure({
-      ...newApProcedure,
-      statusLkey: '3621653475992516',
-      indications: indicationsDescription,
-      bodyPartLkey: null,
-      sideLkey: null,
-      faciltyLkey: null,
-      priorityLkey: null,
-      procedureLevelLkey: null,
-      departmentKey: null,
+      indicationId: null,
+      bodyPart: '',
+      side: null,
+      toFacilityId: authSlice?.selectedDepartment?.facilityId,
+      priority: null,
+      procedureLevel: 'MINOR',
+      toDepartmentId: null,
       categoryKey: null,
-      procedureNameKey: null
+      procedureId: null,
+      encounterId: encounter?.id,
+      patientId: patient?.id,
+      currentDepartment: true,
+      notes: null,
+      extraDocumentation: null,
+      scheduledDateTime: null
     });
+    setProcedurePage(0);
   };
 
   const handleSave = async () => {
     try {
-      await saveProcedures({
-        ...procedure,
-        statusLkey: '3621653475992516',
-        indications: indicationsDescription,
-        encounterKey: encounter?.key,
-        patientKey: patient?.key,
+      const procedureData = {
+        procedureId: procedure.procedureId,
+        patientId: patient?.id,
+        encounterId: encounter?.id,
+
+        fromFacilityId: authSlice?.selectedDepartment?.facilityId,
+        toFacilityId: procedure.currentDepartment
+          ? authSlice?.selectedDepartment?.facilityId
+          : procedure.toFacilityId,
+        fromDepartmentId: authSlice?.selectedDepartment?.departmentId,
+        toDepartmentId: procedure.toDepartmentId,
+
+        indicationId: procedure.indicationId,
+
+        procedureLevel: procedure.procedureLevel,
+        priority: procedure.priority,
+
+        bodyPart: procedure.bodyPart || '',
+        side: procedure.side,
+
         scheduledDateTime: procedure.scheduledDateTime
-          ? new Date(procedure?.scheduledDateTime)?.getTime()
-          : null
-      }).unwrap();
+          ? new Date(procedure.scheduledDateTime).toISOString()
+          : null,
+
+        notes: procedure.notes,
+        extraDocumentation: procedure.extraDocumentation
+      };
+
+      if (procedure?.id) {
+        await updateProcedure({
+          id: procedure.id,
+
+          procedureId: procedure.procedureId,
+          indicationId: procedure.indicationId,
+
+          procedureLevel: procedure.procedureLevel,
+          priority: procedure.priority,
+
+          bodyPart: procedure.bodyPart,
+          side: procedure.side,
+
+          toFacilityId: procedure.currentDepartment
+            ? authSlice?.selectedDepartment?.facilityId
+            : procedure.toFacilityId,
+
+          toDepartmentId: procedure.toDepartmentId,
+
+          scheduledDateTime: procedure.scheduledDateTime
+            ? new Date(procedure.scheduledDateTime).toISOString()
+            : null,
+
+          notes: procedure.notes,
+          extraDocumentation: procedure.extraDocumentation
+        }).unwrap();
+      } else {
+        await createProcedure(procedureData).unwrap();
+      }
 
       proRefetch();
       setOpenDetailsModal(false);
       handleClear();
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
-      dispatch(notify({ msg: 'Save Failed', sev: 'error' }));
+      handleProcedureCrudError(error, dispatch, PROCEDURE_ERROR_MAP, procedure);
     }
   };
 
@@ -202,242 +363,217 @@ const Details = ({
         open={openDetailsModal}
         setOpen={setOpenDetailsModal}
         actionButtonFunction={handleSave}
-        isDisabledActionBtn={
-          edit ? true : procedure.key ? procedure?.statusLvalue?.valueCode !== 'PROC_REQ' : false
-        }
+        isDisabledActionBtn={edit ? true : procedure.id ? procedure?.status !== 'REQUESTED' : false}
         footerButtons={
           <div className="footer-buttons">
             <MyButton onClick={handleClear} prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>
               Clear
             </MyButton>
-            <MyButton
-              onClick={handleOpenAttachmentModal}
-              prefixIcon={() => <FontAwesomeIcon icon={faPaperclip} />}
-              disabled={!procedure?.key}
-            >
-              Attachments
-            </MyButton>
+
             <MyButton
               appearance="ghost"
-              onClick={() => {
-                setOpenOrderModel(true);
-              }}
+              onClick={() => setOpenOrderModel(true)}
               disabled={editing}
               prefixIcon={() => <CheckIcon />}
             >
               Order Related Tests
             </MyButton>
-            <MyButton appearance="ghost">Devices & Implants</MyButton>
           </div>
         }
         rightTitle="Procedure"
         rightContent={
           <div
             className={clsx({
-              'disabled-panel':
-                edit || (procedure?.key && procedure?.statusLvalue?.valueCode !== 'PROC_REQ')
+              'disabled-panel': edit || (procedure?.id && procedure?.status !== 'REQUESTED')
             })}
           >
             <Form fluid>
-              <div className="section-flex-procedures">
-                {/* ➡️ Left Column */}
-                <div className="section-column-procedures">
-                  {/* Procedure Details */}
-                  <SectionContainer
-                    title="Procedure Details"
-                    content={
-                      <>
+              <div className="margin-bottom-10">
+                <SectionContainer
+                  title="Procedure Details"
+                  content={
+                    <div className="procedure-details-row">
+                      <MyInput
+                        width="100%"
+                        fieldLabel="Facility"
+                        fieldName="toFacilityId"
+                        fieldType="select"
+                        selectData={Array.isArray(facilityListResponse) ? facilityListResponse : []}
+                        selectDataLabel="name"
+                        selectDataValue="id"
+                        record={procedure}
+                        setRecord={setProcedure}
+                        required
+                      />
+
+                      <MyInput
+                        disabled={editing}
+                        width="100%"
+                        fieldType="select"
+                        fieldLabel="Category Type"
+                        selectData={CategoryLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName="categoryKey"
+                        record={procedure}
+                        setRecord={updatedProcedure => {
+                          setProcedure({
+                            ...updatedProcedure,
+                            procedureId: null
+                          });
+                          setProcedurePage(0);
+                        }}
+                        required
+                      />
+
+                      {procedure?.categoryKey && (
                         <MyInput
-                          disabled={editing}
+                          column
                           width="100%"
-                          fieldType="select"
-                          fieldLabel="Category Type"
-                          selectData={CategoryLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="categoryKey"
-                          record={procedure}
-                          setRecord={setProcedure}
-                        />
-                        <MyInput
-                          disabled={editing}
-                          width="100%"
-                          fieldType="select"
                           fieldLabel="Procedure Name"
-                          selectData={procedureQueryResponse?.object ?? []}
+                          fieldType="selectPagination"
+                          fieldName="procedureId"
+                          selectData={procedureByFacility?.data ?? []}
                           selectDataLabel="name"
-                          selectDataValue="key"
-                          fieldName="procedureNameKey"
+                          selectDataValue="id"
                           record={procedure}
                           setRecord={setProcedure}
-                        />
-                        <MyInput
                           disabled={editing}
-                          width="100%"
-                          fieldType="select"
-                          fieldLabel="Procedure Level"
-                          selectData={ProcedureLevelLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="procedureLevelLkey"
-                          record={procedure}
-                          setRecord={setProcedure}
-                          searchable={false}
+                          searchable={true}
+                          loading={procedureByFacilityLoading}
+                          hasMore={hasMoreProcedures}
+                          onFetchMore={handleLoadMoreProcedures}
+                          placeholder="Select Procedure..."
+                          required
                         />
-                        <MyInput
-                          disabled={editing}
-                          width="100%"
-                          fieldType="select"
-                          fieldLabel="Priority"
-                          selectData={priorityLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="priorityLkey"
-                          record={procedure}
-                          setRecord={setProcedure}
-                          searchable={false}
-                        />
-                      </>
-                    }
-                  />
+                      )}
 
-                  {/* Indications & Anatomy */}
-                  <SectionContainer
-                    title="Indications & Anatomy"
-                    content={
-                      <>
-                        <div style={{ position: 'relative' }}>
-                          <MyInput
-                            width="100%"
-                            fieldType="text"
-                            placeholder="Search ICD-10"
-                            fieldLabel="Indication"
-                            fieldName="searchKeywordicd"
-                            record={{ searchKeywordicd }}
-                            setRecord={rec => setSearchKeywordicd(rec.searchKeywordicd)}
-                            rightAddon={<SearchIcon />}
-                          />
-
-                          {searchKeywordicd && (
-                            <div className="custom-dropdown-menu">
-                              {modifiedData?.map(mod => (
-                                <div
-                                  key={mod.key}
-                                  className="custom-dropdown-item"
-                                  onClick={() => {
-                                    setProcedure({
-                                      ...procedure,
-                                      indications: mod.key
-                                    });
-                                    setSearchKeywordicd('');
-                                  }}
-                                >
-                                  <span style={{ marginRight: '12px' }}>{mod.icdCode}</span>
-                                  <span>{mod.description}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
+                      {procedure?.categoryKey && (
                         <MyInput
                           width="100%"
-                          fieldType="textarea"
-                          disabled={true}
-                          fieldName="indicationsDescription"
-                          record={{
-                            indicationsDescription: indicationsDescription || procedure.indications
-                          }}
-                          setRecord={() => {}}
-                          rows={4}
+                          fieldLabel="Department"
+                          fieldName="toDepartmentId"
+                          fieldType="select"
+                          selectData={
+                            Array.isArray(departmentListResponse) ? departmentListResponse : []
+                          }
+                          selectDataLabel="name"
+                          selectDataValue="id"
+                          record={procedure}
+                          setRecord={setProcedure}
+                          disabled={!procedure?.toFacilityId}
+                          required
                         />
+                      )}
 
-                        <MyInput
-                          width="100%"
-                          fieldType="select"
-                          fieldLabel="Body Part"
-                          selectData={bodypartLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="bodyPartLkey"
-                          record={procedure}
-                          setRecord={setProcedure}
-                        />
-                        <MyInput
-                          width="100%"
-                          fieldType="select"
-                          fieldLabel="Side"
-                          selectData={sideLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="sideLkey"
-                          record={procedure}
-                          setRecord={setProcedure}
-                          searchable={false}
-                        />
-                      </>
-                    }
-                  />
+                      <MyInput
+                        disabled={editing}
+                        width="100%"
+                        fieldType="select"
+                        fieldLabel="Procedure Level"
+                        selectData={ProcedureLevel ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        fieldName="procedureLevel"
+                        record={procedure}
+                        setRecord={setProcedure}
+                        searchable={false}
+                        required
+                      />
+
+                      <MyInput
+                        disabled={editing}
+                        width="100%"
+                        fieldType="select"
+                        fieldLabel="Priority"
+                        selectData={Priority ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        fieldName="priority"
+                        record={procedure}
+                        setRecord={setProcedure}
+                        searchable={false}
+                        required
+                      />
+                    </div>
+                  }
+                />
+              </div>
+
+              <div className="section-flex-procedures">
+                <div className="section-column-procedures">
+                  <div className="fill-height-section">
+                    <SectionContainer
+                      title="Indications & Anatomy"
+                      content={
+                        <>
+                          <div className="fill-height-content">
+                            <Icd10DiagnosisSearch
+                              diagnosisId={procedure.indicationId}
+                              setDiagnosisId={id => {
+                                setProcedure({
+                                  ...procedure,
+                                  indicationId: id
+                                });
+                              }}
+                              label="Indication"
+                              disabled={
+                                editing ||
+                                edit ||
+                                (procedure?.id && procedure?.status !== 'REQUESTED')
+                              }
+                              pageSize={15}
+                            />
+
+                            <MyInput
+                              width="100%"
+                              fieldType="select"
+                              fieldLabel="Body Part"
+                              selectData={bodypartLovQueryResponse?.object ?? []}
+                              selectDataLabel="lovDisplayVale"
+                              selectDataValue="lovDisplayVale"
+                              fieldName="bodyPart"
+                              record={procedure}
+                              setRecord={setProcedure}
+                              required
+                            />
+
+                            <MyInput
+                              width="100%"
+                              fieldType="select"
+                              fieldLabel="Side"
+                              selectData={sideLovQueryResponse?.object ?? []}
+                              selectDataLabel="lovDisplayVale"
+                              selectDataValue="lovDisplayVale"
+                              fieldName="side"
+                              record={procedure}
+                              setRecord={setProcedure}
+                              searchable={false}
+                            />
+                          </div>
+                        </>
+                      }
+                    />
+                  </div>
                 </div>
 
-                {/* ➡️ Right Column */}
                 <div className="section-column-procedures">
-                  {/* Department & Scheduling */}
                   <SectionContainer
-                    title="Department & Scheduling"
+                    title="Scheduling"
                     content={
-                      <>
-                        <MyInput
-                          disabled={editing || procedure.currentDepartment}
-                          width="100%"
-                          fieldName="facilityKey"
-                          fieldType="select"
-                          selectData={Array.isArray(facilityListResponse) ? facilityListResponse : []}
-                          selectDataLabel="name"
-                          selectDataValue="id"
-                          record={{
-                            ...procedure,
-                            facilityKey: procedure?.facilityKey ? Number(procedure.facilityKey) : undefined
-                          }}
-                          setRecord={setProcedure}
-                        />
-                        <MyInput
-                          disabled={
-                            editing || procedure.currentDepartment || !procedure?.facilityKey
-                          }
-                          width="100%"
-                          fieldName="departmentKey"
-                          fieldType="select"
-                          selectData={Array.isArray(departmentListResponse) ? departmentListResponse : []}
-                          selectDataLabel="name"
-                          selectDataValue="id"
-                          record={{
-                            ...procedure,
-                            departmentKey: procedure?.departmentKey ? Number(procedure.departmentKey) : undefined
-                          }}
-                          setRecord={setProcedure}
-                        />
-                        <MyInput
-                          disabled={editing}
-                          width="100%"
-                          fieldType="checkbox"
-                          fieldName="currentDepartment"
-                          record={procedure}
-                          setRecord={setProcedure}
-                        />
-                        <MyInput
-                          width="100%"
-                          disabled={editing}
-                          fieldName="scheduledDateTime"
-                          fieldType="datetime"
-                          record={procedure}
-                          setRecord={setProcedure}
-                        />
-                      </>
+                      <MyInput
+                        width="100%"
+                        disabled={editing}
+                        fieldLabel="Scheduled Date Time"
+                        fieldName="scheduledDateTime"
+                        fieldType="datetime"
+                        record={procedure}
+                        setRecord={setProcedure}
+                        required
+                      />
                     }
                   />
 
-                  {/* Notes & Documentation */}
                   <SectionContainer
                     title="Notes & Documentation"
                     content={
@@ -445,14 +581,17 @@ const Details = ({
                         <MyInput
                           width="100%"
                           disabled={editing}
+                          fieldLabel="Notes"
                           fieldName="notes"
                           fieldType="textarea"
                           record={procedure}
                           setRecord={setProcedure}
                         />
+
                         <MyInput
                           width="100%"
                           disabled={editing}
+                          fieldLabel="Extra Documentation"
                           fieldName="extraDocumentation"
                           fieldType="textarea"
                           record={procedure}
@@ -472,7 +611,7 @@ const Details = ({
       <MyModal
         open={openOrderModel}
         setOpen={setOpenOrderModel}
-        size={'full'}
+        size="lg"
         title="Add Order"
         content={<PatientOrder edit={edit} patient={patient} encounter={encounter} />}
       />
@@ -480,10 +619,10 @@ const Details = ({
       <AttachmentUploadModal
         isOpen={showAttachmentModal}
         setIsOpen={setShowAttachmentModal}
-        encounterId={encounter?.id || encounter?.key}
+        encounterId={encounter?.id}
         refetchData={() => {}}
         source="PROCEDURE_REQUEST_ATTACHMENT"
-        sourceId={procedure?.key ? Number(procedure.key) : 0}
+        sourceId={procedure?.id ? Number(procedure.id) : 0}
       />
     </>
   );

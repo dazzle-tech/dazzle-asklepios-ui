@@ -1,256 +1,919 @@
-import React, { useState, useEffect } from 'react';
-import { Form} from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faClipboardCheck, faPrint, faSheetPlastic } from '@fortawesome/free-solid-svg-icons';
-import { Whisper, Tooltip } from 'rsuite';
+import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTable, { ColumnConfig } from '@/components/MyTable/MyTable';
-import { setPageCode, setDivContent } from '@/reducers/divSlice';
-import ReactDOMServer from 'react-dom/server';
+import { useAppSelector } from '@/hooks';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import {
+  useLazyGetDiagnosticOrderByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
+import {
+  useLazyGetDiagnosticOrderTestByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useGetDepartmentByFacilityQuery, useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import {
+  useCreateReportCommentMutation,
+  useGetReportCommentsByReportIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
+import {
+  useApproveRadiologyReportMutation,
+  useFilterRadiologyReportsQuery,
+  useSecondApproveRadiologyReportMutation
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
+import { useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import {
+  newDiagnosticOrderTestReportResponseVM
+} from '@/types/model-types-constructor-new';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
+import {
+  faCheckCircle,
+  faClipboardCheck,
+  faComment,
+  faEnvelope,
+  faFileLines,
+  faPrint,
+  faSheetPlastic
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { skipToken } from '@reduxjs/toolkit/query';
+import React, { useEffect, useMemo, useState } from 'react';
+import { MdAttachFile } from 'react-icons/md';
 import { useDispatch } from 'react-redux';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-
+import { Form, Tooltip, Whisper } from 'rsuite';
+import AddReportModal from './AddReportModal';
+import RadiologyImageLogModal from './RadiologyImageLogModal';
 import './style.less';
-// dummy data
-const data = [
-  {
-    id: 1,
-    imageName: 'CT Head',
-    patientName: 'Ahmad Yousef',
-    mrn: '123456',
-    report: 'Available',
-    status: 'Approved',
-    orderBy: 'Dr. Sami',
-    orderAt: '2025-09-01 09:30 AM'
-  }
-];
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 
-const RadiologyImageList = () => {
+type Props = {
+  refetchAllRadData: () => Promise<void>;
+};
+
+const notifyFromApiError = (dispatch: any, e: any, fallbackMsg = 'Operation failed') => {
+  const status =
+    e?.status ||
+    e?.originalStatus ||
+    e?.data?.status;
+
+  const message =
+    e?.data?.message ||
+    e?.data?.detail ||
+    e?.error ||
+    fallbackMsg;
+
+  if (
+    status === 400 ||
+    status === 409 ||
+    status === 422
+  ) {
+    dispatch(
+      notify({
+        msg: message,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  dispatch(
+    notify({
+      msg: message,
+      sev: 'error'
+    })
+  );
+};
+
+const startOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const endOfDay = (date: Date) => {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
+
+const RadiologyImageList = ({ refetchAllRadData }: Props) => {
   const dispatch = useDispatch();
 
-  const [record, setRecord] = useState<any>({});
-  const [tableData, setTableData] = useState(data);
-  const [sortColumn, setSortColumn] = useState('imageName');
-  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  const selectedFacility = useAppSelector(
+    state => state.auth?.tenant?.selectedFacility
+  );
+
+  const facilityIdForDepartments = selectedFacility?.id;
+
+  const today = new Date();
+
+  const [dateFilter, setDateFilter] = useState({
+    fromDate: today,
+    toDate: today
+  });
+
+  const [
+    secondApproveReport, { isLoading: secondApproving }
+  ] = useSecondApproveRadiologyReportMutation();
+
+  const [openLogsModal, setOpenLogsModal] = useState(false);
+  const [selectedReportForLogs, setSelectedReportForLogs] = useState<any>(null);
+  const [openReportEditor, setOpenReportEditor] = useState(false);
+  const [selectedReportRow, setSelectedReportRow] = useState<any>(null);
+  const [openComments, setOpenComments] = useState(false);
+  const [selectedReportForComments, setSelectedReportForComments] = useState<any>(null);
+  const [orderTestReport, setOrderTestReport] = useState<any>({ ...newDiagnosticOrderTestReportResponseVM });
+  const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
+  const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
+  const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
+  const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
+  const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
+  const [fetchOrderTestById] =
+    useLazyGetDiagnosticOrderTestByIdQuery();
+  const [fetchOrderById] =
+    useLazyGetDiagnosticOrderByIdQuery();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
+  const [filterRecord, setFilterRecord] = useState<any>({
+    searchCriteria: 'patientName',
+    value: ''
+  });
+
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const attachmentsLocked = attachmentsModalOpen;
+  const [selectedReportForAttachments, setSelectedReportForAttachments] = useState<any>(null);
+
+  const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
+  const [testsMap, setTestsMap] = useState<Record<string, any>>({});
+
+  const [departmentFilter, setDepartmentFilter] = useState<{
+    departmentIds?: number[];
+  }>({
+    departmentIds: []
+  });
+
+
+
+  const {
+    data: departmentsResponse,
+    isFetching: isDepartmentsFetching
+  } = useGetDepartmentByFacilityQuery(
+    facilityIdForDepartments
+      ? { facilityId: facilityIdForDepartments, page: 0, size: 100 }
+      : skipToken
+  );
+
+  const departmentOptions =
+    departmentsResponse?.data?.map(d => ({
+      label: d.name,
+      value: d.id
+    })) ?? [];
 
   useEffect(() => {
-    const divContent = (
-      "Radiology Image List"
-    );
     dispatch(setPageCode('Radiology_Image_List'));
-    dispatch(setDivContent(divContent));
+    dispatch(setDivContent('Radiology Image List'));
   }, [dispatch]);
 
-const FilterModel = (
-  <Form fluid className="table-header-content">
-    <MyInput
-      width="100%"
-      fieldLabel="Order Date From"
-      fieldType="date"
-      fieldName="key0"
-      record={record}
-      setRecord={setRecord}
-    />
+  const [approveRadiologyReport, { isLoading: approving }] =
+    useApproveRadiologyReportMutation();
 
-    <MyInput
-      width="100%"
-      fieldLabel="To"
-      fieldType="date"
-      fieldName="key1"
-      record={record}
-      setRecord={setRecord}
-    />
+  const searchCriteriaOptions = [
+    { label: 'Patient Name', value: 'patientName' },
+    { label: 'MRN', value: 'mrn' }
+  ];
 
-    <MyInput
-      width="180px"
-      fieldLabel="Image Test Name"
-      fieldName="imagetestname"
-      fieldType="checkPicker"
-      selectData={[
-        { key: 'hipultrasound', value: 'Hip ultrasound' },
-        { key: 'chestultrasound', value: 'Chest ultrasound' },
-        { key: 'Chestxray', value: 'Chest x-ray' }
-      ]}
-      selectDataLabel="value"
-      selectDataValue="key"
-      record={record}
-      setRecord={setRecord}
-    />
+  const shouldSearch =
+    Boolean(filterRecord.searchCriteria) &&
+    filterRecord.value.trim().length >= 3;
 
-    <MyInput
-      width="10vw"
-      fieldLabel="Patient Search"
-      fieldName="selectfilter"
-      fieldType="select"
-      selectData={[
-        { key: 'MRN', value: 'MRN' },
-        { key: 'Document Number', value: 'Document Number' },
-        { key: 'Full Name', value: 'Full Name' },
-        { key: 'Archiving Number', value: 'Archiving Number' },
-        { key: 'Primary Phone Number', value: 'Primary Phone Number' },
-        { key: 'Date of Birth', value: 'Date of Birth' }
-      ]}
-      selectDataLabel="value"
-      selectDataValue="key"
-      record={record}
-      setRecord={setRecord}
-    />
-
-    <MyInput
-      fieldLabel="Search by"
-      fieldName="searchCriteria"
-      fieldType="text"
-      placeholder="Search"
-      width="10vw"
-      record={record}
-      setRecord={setRecord}
-    />
-
-    <MyInput
-      width="180px"
-      fieldLabel="Requested Department"
-      fieldName="requestedDepartment"
-      fieldType="checkPicker"
-      selectData={[
-        { key: 'radiology', value: 'Radiology' },
-        { key: 'cardiology', value: 'Cardiology' }
-      ]}
-      selectDataLabel="value"
-      selectDataValue="key"
-      record={record}
-      setRecord={setRecord}
-    />
-
-    <MyInput
-      width="180px"
-      fieldLabel="Status"
-      fieldName="status"
-      fieldType="checkPicker"
-      selectData={[
-        { key: 'pending', value: 'Pending' },
-        { key: 'approved', value: 'Approved' }
-      ]}
-      selectDataLabel="value"
-      selectDataValue="key"
-      record={record}
-      setRecord={setRecord}
-    />
-  </Form>
-);
-
-
-  const columns: ColumnConfig[] = [
-    { key: 'imageName', title: 'Image Name', dataKey: 'imageName', width: 160 },
-    { key: 'patientName', title: 'Patient Name', dataKey: 'patientName', width: 180 },
-    { key: 'mrn', title: 'MRN', dataKey: 'mrn', width: 120 },
-{
-  key: 'report',
-  title: 'Report',
-  dataKey: 'report',
-  width: 60,
-  align: 'center',
-  render: (_row: any) => (
-      <Whisper placement="top" trigger="hover" speaker={<Tooltip>Report</Tooltip>}>
-    <FontAwesomeIcon icon={faSheetPlastic}className='icon-radiologist-worklist-size' />
-      </Whisper>
-  )
-},
-{
-  key: 'status',
-  title: 'Status',
-  dataKey: 'status',
-  width: 100,
-  render: (row: any) => (
-    <MyBadgeStatus
-      backgroundColor={
-        row.status === 'Approved'
-          ? 'var(--light-green)'
-          : row.status === 'Pending'
-          ? 'var(--light-gray)'
-          : 'var(--background-gray)'
+  const { data, isFetching, refetch } = useFilterRadiologyReportsQuery(
+    attachmentsLocked
+      ? skipToken
+      : {
+        page,
+        size: rowsPerPage,
+        sort: `${sortColumn},${sortType}`,
+        params: {
+          imageStatusIn: ['FINISHED'],
+          createdDateFrom: startOfDay(dateFilter.fromDate).toISOString(),
+          createdDateTo: endOfDay(dateFilter.toDate).toISOString(),
+          ...(departmentFilter.departmentIds?.length
+            ? { fromDepartmentIn: departmentFilter.departmentIds }
+            : {}),
+          ...(shouldSearch
+            ? { [filterRecord.searchCriteria]: filterRecord.value.trim() }
+            : {})
+        }
       }
-      color={
-        row.status === 'Approved'
-          ? 'var(--primary-green)'
-          : row.status === 'Pending'
-          ? 'var(--primary-gray)'
-          : 'var(--primary-gray)'
+  );
+
+
+  const totalCount = data?.totalCount ?? 0;
+  const [departmentsMap, setDepartmentsMap] = useState<Record<string, any>>({});
+  const [fetchDepartmentById] = useLazyGetDepartmentByIdQuery();
+
+  const {
+    data: commentsResponse,
+    isFetching: isCommentsFetching,
+    refetch: refetchComments
+  } = useGetReportCommentsByReportIdQuery(
+    selectedReportForComments?.id ?? skipToken
+  );
+
+  const [
+    createComment, { isLoading: isSendingComment }] = useCreateReportCommentMutation();
+
+  const handleSendComment = async (value: string) => {
+    if (!selectedReportForComments?.id) {
+      dispatch(
+        notify({ msg: 'Select a report first', sev: 'warning' })
+      );
+      return;
+    }
+
+    try {
+      await createComment({
+        reportId: selectedReportForComments.id,
+        orderTestId: selectedReportForComments.orderTestId,
+        note: value
+      }).unwrap();
+
+      dispatch(
+        notify({ msg: 'Comment added successfully', sev: 'success' })
+      );
+      setLocalHasCommentIds(prev =>
+        prev.includes(selectedReportForComments.id)
+          ? prev
+          : [...prev, selectedReportForComments.id]
+      );
+
+      refetchComments();
+    } catch (e: any) {
+      notifyFromApiError(dispatch, e, 'Failed to add comment');
+    }
+
+  };
+
+  const tableData = data?.data ?? [];
+
+
+
+  const departmentIds = useMemo(
+    () =>
+      Object.values(ordersMap)
+        .map((order: any) => order?.fromDepartmentId)
+        .filter(Boolean)
+        .map(String)
+        .filter((id, i, arr) => arr.indexOf(id) === i),
+    [ordersMap]
+  );
+
+
+
+
+
+  const orderTestIds = useMemo(
+    () =>
+      tableData
+        .map(r => r?.orderTestId)
+        .filter(Boolean)
+        .map(String)
+        .filter((id, i, arr) => arr.indexOf(id) === i),
+    [tableData]
+  );
+
+  const orderIds = useMemo(
+    () =>
+      Object.values(orderTestsMap)
+        .map((ot: any) => ot.orderId)
+        .filter(Boolean)
+        .map(String)
+        .filter((id, i, arr) => arr.indexOf(id) === i),
+    [orderTestsMap]
+  );
+  const patientIds = useMemo(
+    () =>
+      Object.values(ordersMap)
+        .map((o: any) => o.patientId)
+        .filter(Boolean)
+        .map(String)
+        .filter((id, i, arr) => arr.indexOf(id) === i),
+    [ordersMap]
+  );
+
+  useEffect(() => {
+    orderTestIds.forEach(id => {
+      if (orderTestsMap[id]) return;
+
+      fetchOrderTestById(Number(id))
+        .unwrap()
+        .then(ot => {
+          if (!ot) return;
+          setOrderTestsMap(prev => ({ ...prev, [id]: ot }));
+        })
+        .catch(() => { });
+    });
+  }, [orderTestIds, fetchOrderTestById, orderTestsMap]);
+
+  useEffect(() => {
+    orderIds.forEach(id => {
+      if (ordersMap[id]) return;
+
+      fetchOrderById(Number(id))
+        .unwrap()
+        .then(order => {
+          if (!order) return;
+          setOrdersMap(prev => ({ ...prev, [id]: order }));
+        })
+        .catch(() => { });
+    });
+  }, [orderIds, fetchOrderById, ordersMap]);
+
+  useEffect(() => {
+    if (!patientIds.length) return;
+
+    const numericIds = patientIds.map(id => Number(id));
+
+    getBulkPatientBasicInfo(numericIds)
+      .unwrap()
+      .then((res: any[]) => {
+        const map: Record<string, any> = {};
+
+        res.forEach((p: any, index: number) => {
+          const originalId = numericIds[index];
+          map[String(originalId)] = p;
+        });
+
+        setPatientsMap(map);
+      })
+      .catch(err => {
+        console.error("❌ Bulk patient error:", err);
+      });
+
+  }, [patientIds]);
+
+  const FilterModel = (
+    <Form fluid className="table-header-content">
+      <div className='filter-radiologist-worklist-main-container'>
+        <MyInput
+          fieldType="select"
+          fieldLabel="Search By"
+          fieldName="searchCriteria"
+          width="180px"
+          selectData={searchCriteriaOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          searchable={false}
+          record={filterRecord}
+          setRecord={setFilterRecord}
+        />
+
+        <MyInput
+          width="220px"
+          fieldLabel={
+            filterRecord.searchCriteria === 'mrn'
+              ? 'MRN'
+              : 'Patient Name'
+          }
+          fieldName="value"
+          placeholder={
+            filterRecord.searchCriteria === 'mrn'
+              ? 'Search by MRN'
+              : 'Search by name'
+          }
+          record={filterRecord}
+          setRecord={(rec) => {
+            setPage(0);
+            setFilterRecord(rec);
+          }}
+        />
+
+        <MyInput
+          width={160}
+          fieldType="date"
+          fieldLabel="From Date"
+          fieldName="fromDate"
+          record={dateFilter}
+          setRecord={(rec) => {
+            setPage(0);
+            setDateFilter(rec);
+          }}
+        />
+
+        <MyInput
+          width={160}
+          fieldType="date"
+          fieldLabel="To Date"
+          fieldName="toDate"
+          record={dateFilter}
+          setRecord={(rec) => {
+            setPage(0);
+            setDateFilter(rec);
+          }}
+        />
+
+        <MyInput
+          fieldType="checkPicker"
+          fieldLabel="Department"
+          fieldName="departmentIds"
+          width="260px"
+          loading={isDepartmentsFetching}
+          selectData={departmentOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          placeholder="Select Department(s)"
+          searchable
+          record={departmentFilter}
+          setRecord={(rec) => {
+            setPage(0);
+            setDepartmentFilter(rec);
+          }}
+        />
+
+
+      </div>
+    </Form>
+  );
+
+  const handleApprove = async (row: any) => {
+    if (!row?.id) return;
+
+    try {
+      await approveRadiologyReport(row.id).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Report Approved successfully',
+          sev: 'success'
+        })
+      );
+
+      await refetchAllRadData();
+      await refetch();
+    } catch (e: any) {
+      notifyFromApiError(dispatch, e, 'Approve Failed');
+    }
+
+  };
+
+  const handleSecondApprove = async (row: any) => {
+    if (!row?.id) return;
+
+    try {
+      await secondApproveReport(row.id).unwrap();
+
+      dispatch(
+        notify({
+          msg: 'Report Second Approved successfully',
+          sev: 'success'
+        })
+      );
+
+      await refetchAllRadData();
+      await refetch();
+    } catch (e: any) {
+      const backendMsg =
+        e?.data?.message || e?.data?.detail || '';
+      if (
+        backendMsg.includes('different user') ||
+        backendMsg.includes('Second approve must be performed')
+      ) {
+        dispatch(
+          notify({
+            msg: 'Second approval must be done by another radiologist',
+            sev: 'warning'
+          })
+        );
+        return;
       }
-      contant={row.status}
-    />
-  )
-},
-  {
+      notifyFromApiError(dispatch, e, 'Second Approve Failed');
+    }
+
+  };
+
+  const columns: ColumnConfig[] = useMemo(() => [
+    {
+      key: 'department',
+      title: 'Department',
+      width: 160,
+      render: row => {
+        const ot = orderTestsMap[String(row.orderTestId)];
+        const order = ordersMap[String(ot?.orderId)];
+        const department = departmentsMap[String(order?.fromDepartmentId)];
+
+        return department?.name ?? ' ';
+      }
+
+    },
+    {
+      key: 'patientName',
+      title: 'Patient Name',
+      width: 180,
+      render: row => {
+        const ot = orderTestsMap[String(row.orderTestId)];
+        const order = ordersMap[String(ot?.orderId)];
+        const patient = patientsMap[String(order?.patientId)];
+          return patient
+            ? (patient.fullName ||
+              `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim())
+            : ' ';
+                }
+    },
+    {
+      key: 'mrn',
+      title: 'MRN',
+      width: 120,
+      render: row => {
+        const ot = orderTestsMap[String(row.orderTestId)];
+        const order = ordersMap[String(ot?.orderId)];
+        const patient = patientsMap[String(order?.patientId)];
+
+        return (
+          patient?.medicalRecordNumber ??
+          ' '
+        );
+      }
+    },
+    {
+      key: 'testName',
+      title: 'Test Name',
+      width: 200,
+      render: row => {
+        const ot = orderTestsMap[String(row.orderTestId)];
+        const test = testsMap[ot?.testId];
+        return test?.name ?? ' ';
+      }
+    },
+    {
+      key: 'report',
+      title: 'Report',
+      width: 80,
+      align: 'center',
+      render: (row) => (
+        <Whisper speaker={<Tooltip>Add Report</Tooltip>}>
+          <span style={{ cursor: 'pointer' }}>
+            <FontAwesomeIcon
+              className='icon-radiologist-worklist-size'
+              icon={faSheetPlastic}
+              onClick={() => {
+                const ot = orderTestsMap[String(row.orderTestId)];
+
+                setSelectedReportRow(row);
+
+                setOrderTestReport({
+                  ...newDiagnosticOrderTestReportResponseVM,
+                  ...row,
+                  diagnosticTestId: ot?.diagnosticTestId
+                });
+
+                setOpenReportEditor(true);
+              }}
+
+            />
+          </span>
+        </Whisper>
+      )
+    },
+    {
+      key: 'attachments',
+      title: 'ATTACHMENTS',
+      width: 90,
+      align: 'center',
+      render: (row: any) => {
+        const ot = orderTestsMap[String(row.orderTestId)];
+
+        return (
+          <MdAttachFile
+            size={20}
+            fill={'var(--primary-gray)'}
+            style={{ cursor: 'pointer' }}
+            onClick={async () => {
+
+              try {
+
+                let orderTest = ot;
+                if (!orderTest) {
+                  orderTest = await fetchOrderTestById(row.orderTestId).unwrap();
+                  setOrderTestsMap(prev => ({
+                    ...prev,
+                    [row.orderTestId]: orderTest
+                  }));
+                }
+
+                if (!orderTest?.orderId) {
+                  dispatch(notify({ msg: 'Order not found', sev: 'warning' }));
+                  return;
+                }
+
+                let order = ordersMap[String(orderTest.orderId)];
+                if (!order) {
+                  order = await fetchOrderById(orderTest.orderId).unwrap();
+                  setOrdersMap(prev => ({
+                    ...prev,
+                    [orderTest.orderId]: order
+                  }));
+                }
+
+                if (!order?.encounterId) {
+                  dispatch(notify({ msg: 'Encounter not found', sev: 'warning' }));
+                  return;
+                }
+
+                setSelectedReportForAttachments({
+                  id: row.id,
+                  orderTestId: row.orderTestId,
+                  orderId: orderTest.orderId,
+                  encounterId: order.encounterId
+                });
+
+                setAttachmentsModalOpen(true);
+
+              } catch (e) {
+                notifyFromApiError(dispatch, e, 'Failed to load attachment data');
+              }
+            }}
+          />
+        );
+      }
+    },
+    {
+      key: 'comment',
+      title: 'COMMENTS',
+      width: 100,
+      align: 'center',
+      render: (row: any) => {
+
+        const hasComment = !!row?.hasNote || localHasCommentIds.includes(row.id);
+        return (
+          <Whisper speaker={<Tooltip>Comments</Tooltip>}>
+            <span style={{ cursor: 'pointer' }}>
+              <FontAwesomeIcon
+                className='icon-radiologist-worklist-size'
+                icon={faComment}
+                style={{
+                  color: hasComment ? '#1675e0' : '#999'
+                }}
+                onClick={() => {
+                  setSelectedReportForComments(row);
+                  setOpenComments(true);
+                }}
+              />
+            </span>
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      width: 120,
+      render: row => (
+        formatEnumString(row.processingStatus)
+      )
+    },
+    {
       key: 'orderByAt',
       title: 'Order By / At',
-      dataKey: 'orderBy',
       width: 200,
-      render: (row: any) => (
+      render: row => (
         <>
-          {row.orderBy}
+          {row.createdBy}
           <br />
-          <span className="date-table-style">{row.orderAt}</span>
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(row.createdDate)}
+          </span>
         </>
       )
     },
-{
-  key: 'icons',
-  title: '',
-  width: 120,
-  align: 'center',
-  render: (_rowData: any) => (
-    <div className="container-of-icons" style={{ display: 'flex', gap: 10, cursor: 'pointer' }}>
-      <Whisper placement="top" trigger="hover" speaker={<Tooltip>Send by Email</Tooltip>}>
-        <FontAwesomeIcon icon={faEnvelope} className='icon-radiologist-worklist-size'/>
-      </Whisper>
+    {
+      key: 'icons',
+      title: '',
+      width: 160,
+      align: 'center',
+      render: row => {
+        const canApprove =
+          row.processingStatus === 'RESULT_READY';
 
-      <Whisper placement="top" trigger="hover" speaker={<Tooltip>Second Approval</Tooltip>}>
-        <FontAwesomeIcon icon={faClipboardCheck} className='icon-radiologist-worklist-size'/>
-      </Whisper>
+        const canSecondApprove =
+          row.processingStatus === 'RESULT_APPROVED';
 
-      <Whisper placement="top" trigger="hover" speaker={<Tooltip>Print</Tooltip>}>
-        <FontAwesomeIcon icon={faPrint} className='icon-radiologist-worklist-size'/>
-      </Whisper>
-    </div>
-  )
-}
+        const isSecondApproved =
+          !!row.secondApprovedDate;
+
+        return (
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <Whisper speaker={<Tooltip>Approve</Tooltip>}>
+              <span>
+                <FontAwesomeIcon
+                  className='icon-radiologist-worklist-size'
+                  icon={faCheckCircle}
+                  style={{
+                    cursor: canApprove ? 'pointer' : 'not-allowed',
+                    opacity: canApprove ? 1 : 0.4,
+                    color: canApprove ? '#969fb0' : '#999'
+                  }}
+                  onClick={() => {
+                    if (!canApprove || approving) return;
+                    handleApprove(row);
+                  }}
+                />
+              </span>
+            </Whisper>
+            <Whisper speaker={<Tooltip>Send by Email</Tooltip>}>
+              <FontAwesomeIcon icon={faEnvelope} className='icon-radiologist-worklist-size' />
+            </Whisper>
+            <Whisper speaker={<Tooltip>Second Approval</Tooltip>}>
+              <span>
+                <FontAwesomeIcon
+                  icon={faClipboardCheck}
+                  className="icon-radiologist-worklist-size"
+                  style={{
+                    cursor:
+                      canSecondApprove && !isSecondApproved
+                        ? 'pointer'
+                        : 'not-allowed',
+
+                    opacity: isSecondApproved
+                      ? 1
+                      : canSecondApprove
+                        ? 1
+                        : 0.4,
+
+                    color: isSecondApproved
+                      ? '#1675e0'
+                      : canSecondApprove
+                        ? '#969fb0'
+                        : '#999'
+                  }}
+                  onClick={() => {
+                    if (!canSecondApprove || isSecondApproved || secondApproving)
+                      return;
+                    handleSecondApprove(row);
+                  }}
+                />
+              </span>
+            </Whisper>
+            <Whisper speaker={<Tooltip>Print</Tooltip>}>
+              <FontAwesomeIcon className='icon-radiologist-worklist-size' icon={faPrint} />
+            </Whisper>
+            <Whisper speaker={<Tooltip>Logs</Tooltip>}>
+              <span>
+                <FontAwesomeIcon
+                  icon={faFileLines}
+                  className="icon-radiologist-worklist-size"
+                  style={{ cursor: 'pointer', opacity: 0.8 }}
+                  onClick={() => {
+                    setSelectedReportForLogs(row);
+                    setOpenLogsModal(true);
+                  }}
+                />
+              </span>
+            </Whisper>
+          </div>
+        );
+      }
+    }
+  ], [orderTestsMap, ordersMap, patientsMap, localHasCommentIds]);
+
+  useEffect(() => {
+    departmentIds.forEach(id => {
+      if (departmentsMap[id]) return;
+
+      fetchDepartmentById(id)
+        .unwrap()
+        .then(dep => {
+          if (!dep) return;
+          setDepartmentsMap(prev => ({
+            ...prev,
+            [id]: dep
+          }));
+        })
+        .catch(() => { });
+    });
+  }, [departmentIds, fetchDepartmentById, departmentsMap]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [dateFilter.fromDate, dateFilter.toDate]);
+
+  const selectedOrderTest =
+    selectedReportRow
+      ? orderTestsMap[String(selectedReportRow.orderTestId)]
+      : undefined;
+
+  const selectedOrder =
+    selectedOrderTest
+      ? ordersMap[String(selectedOrderTest.orderId)]
+      : undefined;
 
 
-  ];
+  const selectedEncounter = useMemo(() => {
+    return selectedReportForAttachments?.encounterId
+      ? { id: Number(selectedReportForAttachments.encounterId) }
+      : undefined;
+  }, [selectedReportForAttachments]);
 
-  const sortedData = [...tableData].sort((a, b) => {
-    const aValue = a[sortColumn];
-    const bValue = b[sortColumn];
-    if (aValue === bValue) return 0;
-    return sortType === 'asc' ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
-  });
 
-  const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  useEffect(() => {
+    orderTestIds.forEach(id => {
+      const ot = orderTestsMap[id];
+      if (!ot?.testId || testsMap[ot.testId]) return;
 
-  return (
+      fetchDiagnosticTestById(ot.testId)
+        .unwrap()
+        .then(response => {
+          if (!response?.data) return;
+
+          setTestsMap(prev => ({
+            ...prev,
+            [ot.testId]: response.data
+          }));
+        })
+        .catch(() => { });
+    });
+  }, [orderTestsMap]);
+
+  return (<>
     <MyTable
-      data={paginatedData}
+      data={tableData}
       columns={columns}
-      loading={false}
+      loading={isFetching}
       filters={FilterModel}
+      page={page}
+      rowsPerPage={rowsPerPage}
+      totalCount={totalCount}
       sortColumn={sortColumn}
       sortType={sortType}
+      onRowClick={(rowData) => {
+        setSelectedReportRow(rowData);
+        setOrderTestReport({
+          ...newDiagnosticOrderTestReportResponseVM,
+          ...rowData
+        });
+      }}
       onSortChange={(col, type) => {
         setSortColumn(col);
         setSortType(type);
       }}
-      page={page}
-      rowsPerPage={rowsPerPage}
-      totalCount={tableData.length}
       onPageChange={(_, newPage) => setPage(newPage)}
       onRowsPerPageChange={e => {
-        setRowsPerPage(parseInt(e.target.value, 10));
+        setRowsPerPage(Number(e.target.value));
         setPage(0);
       }}
     />
-  );
+
+    {openReportEditor && (
+      <AddReportModal
+        open={openReportEditor}
+        setOpen={setOpenReportEditor}
+        report={orderTestReport}
+        orderTest={selectedOrderTest}
+        order={selectedOrder}
+        setReport={setOrderTestReport}
+        resultFetch={refetchAllRadData}
+        attachmentRefetch={refetchAllRadData}
+      />
+    )}
+
+
+    <ChatModal
+      open={openComments}
+      setOpen={setOpenComments}
+      title="Report Comments"
+      list={commentsResponse ?? []}
+      fieldShowName="note"
+      handleSendMessage={handleSendComment}
+    />
+
+    <RadiologyImageLogModal
+      open={openLogsModal}
+      setOpen={setOpenLogsModal}
+      report={selectedReportForLogs}
+    />
+
+    <MyModal
+      open={attachmentsModalOpen && !!selectedEncounter}
+      setOpen={setAttachmentsModalOpen}
+      title="Attachments - Report"
+      size="lg"
+      hideActionBtn
+      content={
+        selectedEncounter && (
+          <EncounterAttachment
+            localEncounter={selectedEncounter}
+            source="RADIOLOGIST_WORKLIST_ATTACHMENT"
+            sourceId={Number(selectedReportForAttachments?.id)}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => { }}
+          />
+        )
+      }
+    />
+
+  </>);
 };
 
 export default RadiologyImageList;

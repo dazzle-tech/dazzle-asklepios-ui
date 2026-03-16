@@ -1,3 +1,50 @@
+/* ====== existing styles (kept) ====== */
+.disabled-panel {
+  pointer-events: none;
+  opacity: 0.6;
+}
+.footer-buttons {
+  display: flex;
+  gap: 5px;
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+.section-flex-procedures {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.section-column-procedures {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ====== ✅ NEW: full-width first section fields side-by-side ====== */
+.procedure-details-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.procedure-details-row > * {
+  flex: 1 1 30%;
+  min-width: 250px;
+}
+
+/* optional: tighten in very small screens */
+@media (max-width: 768px) {
+  .procedure-details-row > * {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}
+
+/* ====== keep the rest as-is (your existing styles) ====== */
 .top-div {
   display: flex;
   gap: 10px;
@@ -23,17 +70,6 @@
   width: 100%;
 }
 
-.disabled-panel {
-  pointer-events: none;
-  opacity: 0.6;
-}
-.footer-buttons {
-  display: flex;
-  gap: 5px;
-  margin-right: 5px;
-  margin-left: 5px;
-}
-
 .rows-gap {
   margin-bottom: 15px !important;
 }
@@ -47,52 +83,23 @@
   background-color: #ffffff;
   border-radius: 8px;
   padding: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
-  .title-div {
-    display: flex;
-    justify-content: space-between;
-    height:auto;
-    margin: 0px 5px 0px 5px;
-    position: sticky;
-    // top: 0;
-    background-color: white; 
-    // z-index: 10; 
+
+.title-div {
+  display: flex;
+  justify-content: space-between;
+  height: auto;
+  margin: 0px 5px 0px 5px;
+  position: sticky;
+  background-color: white;
+}
+.d {
+  padding: 5px;
+  .rs-row {
+    margin-left: 0px;
+    margin-right: 0px;
   }
-  .d{
-     padding: 5px;
-    .rs-row {
-      margin-left: 0px;
-      margin-right: 0px;
-    }
-  }
-
-
-
-
-
-.section-flex-procedures {
-  display: flex;
-  gap: 12px;
-  align-items: stretch;
-}
-
-.section-column-procedures {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.container-form {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  align-self: stretch;
 }
 
 /* Dropdown menu style (custom) */
@@ -121,12 +128,41 @@
   background-color: #f5f5f5;
 }
 
-.procedure-preview-section{display: flex;
-flex-direction: row;
-gap: 1vw;}
+.procedure-preview-section {
+  display: flex;
+  flex-direction: row;
+  gap: 1vw;
+}
 
-.main-details-procedure-page-container{display: flex;
-flex-direction: column;
-gap: 1vw;}
+.main-details-procedure-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+}
 
-.preview-procedure{margin-top: 1vw;}
+.preview-procedure {
+  margin-top: 1vw;
+}
+
+/* ===== Stretch Indications & Anatomy to full column height ===== */
+.fill-height-section {
+  flex: 1;
+  display: flex;
+}
+
+.fill-height-section > .container-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.fill-height-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.margin-bottom-10 {
+  margin-bottom: 10px;
+}

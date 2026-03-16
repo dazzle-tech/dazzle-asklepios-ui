@@ -1,21 +1,21 @@
+import AttachmentUploadModal from '@/components/AttachmentUploadModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import { useAppDispatch } from '@/hooks';
+import { useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService";
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newApDiagnosticOrderTests } from '@/types/model-types-constructor';
+import { notify } from '@/utils/uiReducerActions';
+import { faFileLines, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ContentState, convertToRaw, EditorState } from 'draft-js';
 import draftToHtml from 'draftjs-to-html';
 import htmlToDraft from 'html-to-draftjs';
 import React, { useEffect, useState } from 'react';
 import { Editor } from 'react-draft-wysiwyg';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
-import { useGetAllReportTemplatesQuery } from "@/services/setup/report-template/reportTemplateService";
-import AttachmentUploadModal from '@/components/AttachmentUploadModal';
-import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
-import MyModal from '@/components/MyModal/MyModal';
-import { useAppDispatch } from '@/hooks';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsRadReport } from '@/types/model-types-constructor';
-import { notify } from '@/utils/uiReducerActions';
-import { faFileLines, faUpload } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Col, Form, Row } from 'rsuite'
+import { Col, Form, Row } from 'rsuite';
 
 
 const AddReportModal = ({
@@ -126,8 +126,8 @@ const AddReportModal = ({
       open={open}
       setOpen={setOpen}
       steps={[{ title: 'Report', icon: <FontAwesomeIcon icon={faFileLines} /> }]}
-      actionButtonFunction={disableEdit?()=>{}:handleSave}
-      isDisabledActionBtn={disableEdit?true:false}
+      actionButtonFunction={disableEdit ? () => { } : handleSave}
+      isDisabledActionBtn={disableEdit ? true : false}
       size="40vw"
       bodyheight="65vh"
       content={
@@ -157,27 +157,27 @@ const AddReportModal = ({
                 color="#969797ff"><FontAwesomeIcon icon={faUpload} /></MyButton>
             </Col>
           </Row>
-       { !disableEdit&& <Row className="mb-2">
+          {!disableEdit && <Row className="mb-2">
             <Col md={24}>
-            <Form fluid layout='inline'>
-              <MyInput
-                column
-                fieldName="selectReadyTemplate"
-                fieldLabel="Choose Ready Template"
-                fieldType="select"
-                selectData={templateOptions}
-                selectDataLabel="label"
-                selectDataValue="value"
-                width="12vw"
-                record={{ selectReadyTemplate: null }}
-                setRecord={(rec) => handleChooseTemplate(rec.selectReadyTemplate)}
-              />
+              <Form fluid layout='inline'>
+                <MyInput
+                  column
+                  fieldName="selectReadyTemplate"
+                  fieldLabel="Choose Ready Template"
+                  fieldType="select"
+                  selectData={templateOptions}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  width="12vw"
+                  record={{ selectReadyTemplate: null }}
+                  setRecord={(rec) => handleChooseTemplate(rec.selectReadyTemplate)}
+                />
               </Form>
             </Col>
           </Row>}
 
           <Row>
-          <div className="diagnostic-template-label">Add Report Manually</div>
+            {/* <div className="diagnostic-template-label">Add Report Manually</div> */}
             <Col md={24}>
               <Editor
                 toolbar={{
@@ -199,11 +199,11 @@ const AddReportModal = ({
                     previewImage: true
                   }
                 }}
-                editorStyle={{minHeight: '60vh', overflow: "auto", width: '100%', border: '1px solid var(--rs-border-primary)', padding: '8px'}}
+                editorStyle={{ minHeight: '60vh', overflow: "auto", width: '100%', border: '1px solid var(--rs-border-primary)', padding: '8px' }}
                 editorState={editorState}
                 onEditorStateChange={setEditorState}
                 placeholder="Write your report here..."
-                readOnly={isDisabled} 
+                readOnly={isDisabled}
               />
 
             </Col>
@@ -218,16 +218,8 @@ const AddReportModal = ({
             refecthData={attachmentRefetch}
             attachmentSource={report}
             attatchmentType="RADIOLOGY_REPORT"
+            //add new patient edits
             patientKey={report?.patientKey}
-            onSuccess={() => {
-              setTest(prevTest => ({
-                ...prevTest,
-                updatedAt: Date.now() 
-              }));
-              attachmentRefetch();
-              resultFetch();
-            }}
-
           />
         </>
       }

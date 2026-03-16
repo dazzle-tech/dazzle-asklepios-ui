@@ -74,6 +74,39 @@
     width: 100% !important;
 }
 
+.message-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: start;
+  margin-bottom: 12px;
+}
+
+.message-bubble {
+  background: #3f5efb;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 12px;
+  max-width: 70%;
+  font-size: 14px;
+}
+
+.message-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.message-user {
+  font-weight: 500;
+}
+
+.dot {
+  font-size: 10px;
+}
 
 // Keep this as the last style in the file to override styles when dark mode is active
 .send-message-box.dark {

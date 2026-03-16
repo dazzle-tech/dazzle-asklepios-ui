@@ -1,117 +1,190 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import MyTable from "@/components/MyTable";
+import MyTab from "@/components/MyTab";
 import Translate from "@/components/Translate";
-import { useGetConsultationOrdersQuery } from "@/services/encounterService";
-import { initialListRequest, ListRequest } from "@/types/types";
-import { formatDateWithoutSeconds } from "@/utils";
+import { formatDateWithoutSeconds, formatEnumString } from "@/utils";
 
+import { useFindConsultationByPatientQuery } from "@/services/consultation/consultationService";
+import { useFindByPatientQuery } from "@/services/patients/telephonicConsultationService";
+import { useGetAllPractitionersQuery } from "@/services/setup/practitioner/PractitionerService";
 
-const ConsultationsTable = ({ patient }) => {
- 
+import { initialListRequest } from "@/types/types";
 
-  
-  const [listRequest, setListRequest] = useState<ListRequest | null>({
-        ...initialListRequest,
-        pageNumber: 1,
-        pageSize: 15,
-        sortBy: "createdAt",
-        sortType: "desc",
-        filters: [
-          { fieldName: 'patient_key', operator: 'match', value: patient?.key },
-        ]
-});
-  
+const ClinicalConsultationsTables = ({ patient, encounter }) => {
 
-  const { data: consultationOrderListResponse, isLoading ,refetch:refConsult } =
-    useGetConsultationOrdersQuery(listRequest!, {
-      skip: !listRequest,
-    });
-    useEffect(()=>{
-      refConsult()
-    },[patient])
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
 
-  const tableColumns = useMemo(
-    () => [
-      {
-        key: "createdAt",
-        title: <Translate>CONSULTATION DATE</Translate>,
-        flexGrow: 1,
-        render: (row) =>
-          row.createdAt ? formatDateWithoutSeconds(row.createdAt) : "",
-      },
-      {
-        key: "consultantSpecialtyLkey",
-        title: <Translate>CONSULTANT SPECIALTY</Translate>,
-        flexGrow: 1,
-        render: (row) => row.consultantSpecialtyLvalue?.lovDisplayVale,
-      },
-      {
-        key: "statusLkey",
-        title: <Translate>STATUS</Translate>,
-        flexGrow: 1,
-        render: (row) => row.statusLvalue?.lovDisplayVale,
-      },
-      {
-        key: "resposeStatusLkey",
-        title: <Translate>RESPONSE STATUS</Translate>,
-        flexGrow: 1,
-        render: (row) => row.resposeStatusLvalue?.lovDisplayVale,
-      },
-    ],
-    []
-  );
-  
-const handlePageChange = (_ , newPage) => {
-  setListRequest(prev => ({
-    ...prev,
-    pageNumber: newPage + 1
-  }));
-};
+  // ───────── NORMAL CONSULTATION ─────────
+  const { data: consultationData, isLoading: consultationLoading } =
+    useFindConsultationByPatientQuery(
+      { patientId: patient?.id, page, size },
+      { skip: !patient?.id }
+    );
 
-const handleRowsPerPageChange = (e) => {
-  setListRequest(prev => ({
-    ...prev,
-    pageSize: Number(e.target.value),
-    pageNumber: 1
-  }));
-};
+  const consultations = consultationData?.data ?? [];
+  const consultationTotal = consultationData?.totalCount ?? 0;
 
-const handleSortChange = (sortBy, sortType) => {
-  setListRequest(prev => ({
-    ...prev,
-    sortBy,
-    sortType,
-    pageNumber: 1
-  }));
-};
+  // ───────── TELEPHONIC ─────────
+  const { data: telephonicResponse, isLoading: telephonicLoading } =
+    useFindByPatientQuery({ patientId: patient?.id, page, size });
 
+  const telephonicRows = telephonicResponse?.data ?? [];
+  const telephonicTotal = telephonicResponse?.totalCount ?? 0;
 
+  // ───────── PRACTITIONERS (FOR TELEPHONIC) ─────────
 
-useEffect(() => {
-  setListRequest(prev => ({
-    ...prev!,
-    filters: [
-      { fieldName: "patient_key", operator: "match", value: patient?.key }
-    ],
-    pageNumber: 1,
-  }));
-}, [patient?.key]);
+  const { data: practitionerResponse } = useGetAllPractitionersQuery({
+    page: 0,
+    size: 9999,
+    sort: "id,asc"
+  });
 
-  return (
+  const physicians =
+    practitionerResponse?.data?.filter(p => p.jobRole === "PHYSICIAN") ?? [];
+
+  // ───────── COLUMNS NORMAL CONSULTATION ─────────
+
+  const consultationColumns = useMemo(() => [
+    {
+      key: "consultationNumber",
+      title: <Translate>CONSULTATION NUMBER</Translate>,
+      flexGrow: 1
+    },
+    {
+      key: "destinationType",
+      title: <Translate>DESTINATION</Translate>,
+      flexGrow: 1,
+      render: row => formatEnumString(String(row.destinationType ?? ""))
+    },
+    {
+      key: "status",
+      title: <Translate>STATUS</Translate>,
+      flexGrow: 1,
+      render: row => formatEnumString(String(row.status ?? ""))
+    },
+    {
+      key: "question",
+      title: <Translate>QUESTION</Translate>,
+      flexGrow: 3,
+      render: row => row.consultationContent ?? "-"
+    },
+    {
+      key: "response",
+      title: <Translate>RESPONSE</Translate>,
+      flexGrow: 3,
+      render: row => row.responseText ?? "-"
+    },
+    {
+      key: "created",
+      title: <Translate>CREATED BY / AT</Translate>,
+      expandable: true,
+      render: row =>
+        row.createdDate ? (
+          <>
+            {row.createdBy}
+            <br />
+            <span style={{ fontSize: 11, color: "#777" }}>
+              {formatDateWithoutSeconds(row.createdDate)}
+            </span>
+          </>
+        ) : "-"
+    }
+  ], []);
+
+  // ───────── COLUMNS TELEPHONIC ─────────
+
+  const telephonicColumns = useMemo(() => [
+    {
+      key: "physician",
+      title: <Translate>PHYSICIAN</Translate>,
+      flexGrow: 2,
+      render: row => {
+        const physician = physicians.find(p => p.id === row.physician);
+        return physician
+          ? physician.firstName + " " + physician.lastName
+          : "-";
+      }
+    },
+    {
+      key: "dateOfCall",
+      title: <Translate>DATE OF CALL</Translate>,
+      flexGrow: 2,
+      render: row =>
+        row.dateOfCall
+          ? new Date(row.dateOfCall).toLocaleString()
+          : "-"
+    },
+    {
+      key: "consultationContent",
+      title: <Translate>CONSULTATION CONTENT</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: "created",
+      title: <Translate>CREATED BY / AT</Translate>,
+      expandable: true,
+      render: row =>
+        row?.createdAt ? (
+          <>
+            {row?.createdBy}
+            <br />
+            <span style={{ fontSize: 11, color: "#777" }}>
+              {formatDateWithoutSeconds(row.createdAt)}
+            </span>
+          </>
+        ) : "-"
+    }
+  ], [physicians]);
+
+  // ───────── TABLES ─────────
+
+  const consultationTable = (
     <MyTable
-      columns={tableColumns}
-      data={consultationOrderListResponse?.object ?? []}
-      loading={isLoading}
-      sortColumn={listRequest?.sortBy}
-      sortType={listRequest?.sortType}
-      onSortChange={handleSortChange}
-      page={(listRequest?.pageNumber ?? 1) - 1}
-      rowsPerPage={listRequest?.pageSize}
-      totalCount={consultationOrderListResponse?.extraNumeric ?? 0}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
+      columns={consultationColumns}
+      data={consultations}
+      loading={consultationLoading}
+      page={page}
+      rowsPerPage={size}
+      totalCount={consultationTotal}
+      onPageChange={(_, p) => setPage(p)}
+      onRowsPerPageChange={e => {
+        setSize(Number(e.target.value));
+        setPage(0);
+      }}
     />
   );
+
+  const telephonicTable = (
+    <MyTable
+      columns={telephonicColumns}
+      data={telephonicRows}
+      loading={telephonicLoading}
+      page={page}
+      rowsPerPage={size}
+      totalCount={telephonicTotal}
+      onPageChange={(_, p) => setPage(p)}
+      onRowsPerPageChange={e => {
+        setSize(Number(e.target.value));
+        setPage(0);
+      }}
+    />
+  );
+
+  // ───────── TABS ─────────
+
+  const tabData = [
+    {
+      title: "Consultation",
+      content: consultationTable
+    },
+    {
+      title: "Telephonic",
+      content: telephonicTable
+    }
+  ];
+
+  return <MyTab data={tabData} />;
 };
 
-export default ConsultationsTable;
+export default ClinicalConsultationsTables;

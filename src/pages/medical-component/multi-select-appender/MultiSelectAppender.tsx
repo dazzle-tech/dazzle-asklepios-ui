@@ -1,76 +1,112 @@
-import React, { useEffect, useState } from 'react';
-import { Col, Form, Input, Row } from 'rsuite';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Form, Tag, TagGroup, Input } from 'rsuite';
 import MyInput from '@/components/MyInput';
-
+import './styles.less';
 const MultiSelectAppender = ({
   label = 'Select',
   options = [],
-  optionLabel = 'label',
-  optionValue = 'value',
-
+  optionLabel,
+  optionValue,
   setObject,
-  object
+  object,
+  separator = ', ',
+  disabled = false
 }) => {
   const [selected, setSelected] = useState({ item: null });
-  const [list, setList] = useState([]);
-  useEffect(() => {
-    if (object && list.length === 0) {
-      const parsedList = object
-        .split(',')
-        .map(item => item.trim())
-        .filter(Boolean);
-      setList(parsedList);
+  const [values, setValues] = useState<string[]>([]);
+  const [text, setText] = useState('');
+
+  const normalizedOptions = useMemo(() => {
+    if (!Array.isArray(options)) return [];
+
+    if (options.length && typeof options[0] === 'string') {
+      return options.map(v => ({ value: v, label: v }));
     }
+
+    return options;
+  }, [options]);
+
+  const valueKey = optionValue || 'value';
+  const labelKey = optionLabel || 'label';
+
+  const parseCsv = (text: string) =>
+    (text || '')
+      .split(separator)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+  const joinCsv = (arr: string[]) => (arr || []).filter(Boolean).join(separator);
+
+  const findLabel = (val: string) => {
+    const opt = normalizedOptions.find((o: any) => String(o[valueKey]) === String(val));
+    return opt ? String(opt[labelKey]) : val;
+  };
+
+  useEffect(() => {
+    if (!object) return;
+    setValues(parseCsv(object));
   }, [object]);
 
   useEffect(() => {
-    setObject(joinValuesFromArray(list));
-  }, [list]);
+    setObject(joinCsv(values));
+  }, [values]);
 
   useEffect(() => {
-    if (selected?.item != null) {
-      const foundItem = options?.find(item => item.key === selected?.item);
+    if (!selected?.item) return;
 
-      const value = foundItem?.lovDisplayVale;
+    const raw = String(selected.item);
 
-      if (value) {
-        setList(prev => [...prev, foundItem?.lovDisplayVale]);
-      } else {
-        console.warn('⚠️ Could not find display value for key:', selected?.item);
-      }
-    }
+    setValues(prev => {
+      if (prev.includes(raw)) return prev;
+      return [...prev, raw];
+    });
+
+    setSelected({ item: null });
   }, [selected?.item]);
-  const joinValuesFromArray = values => {
-    return values?.filter(Boolean)?.join(', ');
+
+  const removeTag = (value: string) => {
+    setValues(prev => prev.filter(v => v !== value));
+  };
+
+  const handleKeyDown = (e: any) => {
+    if (e.key === 'Enter' && text.trim()) {
+      e.preventDefault();
+
+      const newValue = text.trim();
+
+      setValues(prev => {
+        if (prev.includes(newValue)) return prev;
+        return [...prev, newValue];
+      });
+
+      setText('');
+    }
   };
 
   return (
-    <Form fluid>
-      <Col md={24}>
-        <Row>
-          <MyInput
-            width="100%"
-            fieldType="select"
-            fieldLabel={label}
-            selectData={options}
-            selectDataLabel={optionLabel}
-            selectDataValue={optionValue}
-            fieldName="item"
-            record={selected}
-            setRecord={setSelected}
-          />
-        </Row>
-        <Row>
-          <Input
-            as="textarea"
-            onChange={e => setObject(e.target.value)}
-            value={object}
-            rows={3}
-            readOnly
-            style={{ width: '100%', marginTop: '6px' }}
-          />
-        </Row>
-      </Col>
+    <Form className="margin-bottom-00">
+      <MyInput
+        width="100%"
+        fieldType="select"
+        fieldLabel={label}
+        selectData={normalizedOptions}
+        selectDataLabel={labelKey}
+        selectDataValue={valueKey}
+        fieldName="item"
+        record={selected}
+        setRecord={setSelected}
+        disabled={disabled}
+      />
+
+      <div className="multi-select-tags-container">
+        <TagGroup>
+          {values.map(v => (
+            <Tag key={v} closable={!disabled} onClose={() => removeTag(v)}>
+              {findLabel(v)}
+            </Tag>
+          ))}
+        </TagGroup>
+      </div>
     </Form>
   );
 };

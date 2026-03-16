@@ -1,154 +1,140 @@
-import React from "react";
-import { useState, useEffect } from 'react';
-import { useSaveTeleConsultationProgressNotesMutation
-    , useGetTeleConsultationProgressNotesListQuery
- } from "@/services/encounterService";
-import DeleteIcon from '@mui/icons-material/Delete';
-import Translate from '@/components/Translate';
-import AddIcon from '@mui/icons-material/Add';
-import MyTable from '@/components/MyTable';
+// ProgressNotesSimple.tsx
+import React, { useEffect, useMemo, useState } from 'react';
+import { useAppDispatch } from '@/hooks';
+import PlusIcon from '@rsuite/icons/Plus';
 import MyButton from '@/components/MyButton/MyButton';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal/DeletionConfirmationModal';
-import { FaCheck } from 'react-icons/fa6';
-import { ApTeleConsultationProgressNote } from "@/types/model-types";
-import { newApTeleConsultationProgressNote } from "@/types/model-types-constructor";
-import { initialListRequest, initialListRequestId } from "@/types/types";
-import { filter } from "lodash";
-import { Box, IconButton, InputBase } from "@mui/material";
-import { Panel } from "rsuite";
-import { useSelector } from "react-redux";
-import { formatDateWithoutSeconds } from "@/utils";
-const ProgressNote = ({ consultaition ,list}) => {
-    const sliceauth = useSelector((state: any) => state.auth);
-    
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
- 
-  const [saveProgressNotes, saveProgressNotesMutation] = useSaveTeleConsultationProgressNotesMutation();
+import MyTable from '@/components/MyTable';
+import AddProgressNotes from '../../encounter-component/progress-notes/AddProgressNotes';
+import { useGetProgressNotesListQuery } from '@/services/encounterService';
+import { newApProgressNotes } from '@/types/model-types-constructor';
+import { ApProgressNotes } from '@/types/model-types';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { formatDateWithoutSeconds } from '@/utils';
+import { useLocation } from 'react-router-dom';
+
+const NURSE_ROLE_KEY = '157153858530600';
+const PHYSICIAN_ROLE_KEY = '157153854130600';
+interface ProgressNoteProps {
+  patient: any;
+  encounter: any;
+}
+
+const ProgressNote: React.FC<ProgressNoteProps> = ({ patient, encounter }) => {
 
 
-   
-  const [notesList, setNotesList] = useState<ApTeleConsultationProgressNote[]>(
-  list ?? []
-);
- 
+
+  const [openAddModal, setOpenAddModal] = useState(false);
+  const [progressNotes, setProgressNotes] = useState<ApProgressNotes>({ ...newApProgressNotes });
+
+  // Initialize list request
+  const [progressNotesListRequest, setProgressNotesListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+      { fieldName: 'patient_key', operator: 'match', value: patient?.key },
+      { fieldName: 'encounter_key', operator: 'match', value: encounter?.key }
+    ]
+  });
+
+  // Fetch list
+  const skipQuery = !patient || !encounter;
+  const { data: progressNotesResponse, refetch, isLoading } = useGetProgressNotesListQuery(
+    progressNotesListRequest,
+    { skip: skipQuery }
+  );
+  // Selected row highlight
+  const isSelected = (rowData: any) =>
+    rowData && progressNotes && progressNotes.key === rowData.key ? 'selected-row' : '';
+
+  const handleAddNewProgressNotes = () => {
+    setProgressNotes({ ...newApProgressNotes });
+    setOpenAddModal(true);
+  };
+
+  // Table columns
+  const columns = useMemo(
+    () => [
+      {
+        key: 'progressNotes',
+        title: 'Progress Notes',
+        dataKey: 'progressNotes',
+        render: (rowData: any) => <div className="progress-notes-text">{rowData?.progressNotes}</div>
+      },
+      {
+        key: 'jobRoleLkey',
+        title: 'JOB ROLE',
+        dataKey: 'jobRoleLkey',
+        render: (rowData: any) =>
+          rowData?.jobRoleLvalue ? rowData.jobRoleLvalue.lovDisplayVale : rowData.jobRoleLkey
+      },
+      {
+        key: 'createdAt',
+        title: 'CREATED AT/BY',
+        render: (row: any) =>
+          row?.createdAt ? (
+            <>
+              {row?.createdByUser?.fullName}
+              <br />
+              <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
+            </>
+          ) : (
+            ' '
+          )
+      }
+    ],
+    []
+  );
+
+  // Pagination values
+  const pageIndex = (progressNotesListRequest.pageNumber ?? 1) - 1;
+  const rowsPerPage = progressNotesListRequest.pageSize;
+  const totalCount = progressNotesResponse?.extraNumeric ?? 0;
+
   useEffect(() => {
-    if (list) {
-      setNotesList(list);
+    if (patient && encounter) {
+      setProgressNotesListRequest({
+        ...initialListRequest,
+        filters: [
+          { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
+          { fieldName: 'patient_key', operator: 'match', value: patient.key },
+          { fieldName: 'encounter_key', operator: 'match', value: encounter.key }
+        ]
+      });
     }
-  }, [list]);
-
-  const handleNoteChange = (value: string, index: number) => {
-    const updatedNotes = [...notesList];
-    updatedNotes[index] = { ...updatedNotes[index], note: value };
-    setNotesList(updatedNotes);
-  };
-
-  const handleAddNew = () => {
-    const newNote: ApTeleConsultationProgressNote = {
-      ...newApTeleConsultationProgressNote,
-      teleConsultationId: consultaition.id,
-      createdDate:  Date.now(),
-        createdBy: sliceauth.user?.login || 'Admin',
-      
-
-    };
-    setNotesList((prev) => [...prev, newNote]);
-  };
-
-  const handleSave = async () => {
-    try {
-      for (const note of notesList) {
-        await saveProgressNotes(note).unwrap();
-      }
-    
-    } catch (err) {
-      console.error("Failed to save notes", err);
-    }
-  };
-
-  const columns = [
-    {
-      key: "note",
-      title: <Translate>Progress Note</Translate>,
-      render: (row: any, index: number) => (
-        <InputBase
-          multiline
-          fullWidth
-          value={row.note}
-          onChange={(e) => handleNoteChange(e.target.value, index)}
-          sx={{ padding: 1, border: "1px solid #ccc", borderRadius: 1 }}
-        />
-      ),
-    },
-   {
-  key: "audit",
-  title: <Translate>Audit</Translate>,
-  render: (row: any) => {
-    const createdDate = row.createDate
-      ? new Date(row.createDate).toISOString().slice(0, 16).replace("T", " ")
-      : "";
-    return (
-      <Box sx={{ fontSize: "14px", color: "#555" }}>
-        {`Created @ ${formatDateWithoutSeconds(row.createdDate)} By ${row.createdBy || "Unknown"}`}
-      </Box>
-    );
-  },
-},
-
-    {
-      key: "actions",
-      title: <Translate>Delete</Translate>,
-      align: "center" as const,
-      render: (row: any, index: number) => (
-        <IconButton
-          size="small"
-          onClick={() => {
-            const updated = [...notesList];
-            updated.splice(index, 1);
-            setNotesList(updated);
-          }}
-        >
-          <DeleteIcon color="error" />
-        </IconButton>
-      ),
-    },
-  ];
-
+  }, [patient, encounter]);
   return (
-    <Panel
-      header={
-       
-       
-          <Box display="flex" gap={2} justifyContent={"flex-end"}>
-            <MyButton onClick={handleAddNew}>
-              <AddIcon /> Add New
-            </MyButton>
-            <MyButton
-              onClick={handleSave}
-              disabled={saveProgressNotesMutation.isLoading}
-            >
-              <FaCheck /> Save Notes
-            </MyButton>
-          </Box>
-     
-      }
-    >
-      <MyTable
-        data={notesList}
-        columns={columns}
-        height={400}
-        loading={saveProgressNotesMutation.isLoading}
+    <div>
+      <AddProgressNotes
+        open={openAddModal}
+        setOpen={setOpenAddModal}
+        progressNotesObj={progressNotes}
+        patient={patient}
+        encounter={encounter}
+        refetch={refetch}
+        edit={false}
       />
 
-      <DeletionConfirmationModal
-        open={confirmDeleteOpen}
-        setOpen={setConfirmDeleteOpen}
-        itemToDelete="note"
-        actionType="delete"
+      <div className="bt-div">
+        <div className="bt-right">
+          <MyButton onClick={handleAddNewProgressNotes} prefixIcon={() => <PlusIcon />}>
+            Add
+          </MyButton>
+        </div>
+      </div>
+
+      <MyTable
+        data={progressNotesResponse?.object ?? []}
+        columns={columns}
+        height={600}
+        loading={isLoading}
+        onRowClick={rowData => setProgressNotes({ ...rowData })}
+        rowClassName={isSelected}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
       />
-    </Panel>
+    </div>
   );
 };
 
 export default ProgressNote;
- 

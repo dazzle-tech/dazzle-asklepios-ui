@@ -40,7 +40,12 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
     const attachmentTypesLov = attachmentsLovQueryResponse?.object ?? [];
 
     // Fetch encounter attachments
-    const { data: attachmentsResponse, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetEncounterAttachmentsBySourceQuery(
+    const {
+        data: attachmentsResponse,
+        refetch: attachmentRefetch,
+        isLoading: loadAttachment,
+        isUninitialized: isEncounterAttachmentsUninitialized
+    } = useGetEncounterAttachmentsBySourceQuery(
         {
             encounterId: localEncounter?.id || localEncounter?.key,
             source: source,
@@ -69,7 +74,7 @@ const EncounterAttachment = ({ localEncounter, refetchAttachmentList, setRefetch
                 encounterId: localEncounter?.id || localEncounter?.key
             }).unwrap();
             
-            attachmentRefetch();
+            if (!isEncounterAttachmentsUninitialized) attachmentRefetch();
             dispatch(notify({ msg: 'Attachment Deleted Successfully', sev: 'success' }));
             handleClearAttachmentDelete();
         } catch (error) {

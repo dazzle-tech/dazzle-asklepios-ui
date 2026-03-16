@@ -1,30 +1,71 @@
-import React from "react";
-import { Tabs } from "rsuite";
-import ReviewReport from "./Reports";
-import Results from "./Results";
-import { newApEncounter, newApPatient } from "@/types/model-types-constructor";
-import PatientSide from "../lab-module/PatienSide";
-import { useAppSelector } from "@/hooks";
-import MyTab from "@/components/MyTab";
+import MyTab from '@/components/MyTab';
+import { useAppSelector } from '@/hooks';
+import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import React from 'react';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
+import FavoriteTests from './FavoriteTests';
+import ReviewReport from './Reports';
+import Results from './Results';
+import { newPatientEncounter } from '@/types/model-types-constructor-new';
 
-const ReviewResults=()=>{
-    const [patient, setPatient] = React.useState({...newApPatient});
-    const [encounter, setEncounter] = React.useState<any>({...newApEncounter,discharge:false});
-     const authSlice = useAppSelector(state => state.auth);
+const ReviewResults = () => {
+  const [patient, setPatient] = React.useState({ ...newApPatient });
+  const [encounter, setEncounter] = React.useState<any>({
+    ...newPatientEncounter,
+  });
 
-     const tabData = [
-       {title: "Results", content: <Results setEncounter={setEncounter} setPatient={setPatient} user={authSlice.user.key}/>},
-        {title: "Reports", content: <ReviewReport setEncounter={setEncounter} setPatient={setPatient}  user={authSlice.user.key}/>}
-     ];
-    return (
-        <div className="container">
-            <div className="left-box">
-                 <MyTab 
-                  data={tabData}
-                 />
-            </div>
-            <div className="right-box"><PatientSide patient={patient} encounter={encounter} /></div>
-        </div>
-    );
-}
+  const authSlice = useAppSelector(state => state.auth);
+
+  const userId: number | undefined =
+    authSlice.user?.id ?? authSlice.user?.key;
+
+  const tabData = [
+    {
+      title: 'Results',
+      content:
+        userId ? (
+          <Results
+            setEncounter={setEncounter}
+            setPatient={setPatient}
+            user={userId}
+          />
+        ) : null
+    },
+    {
+      title: 'Reports',
+      content:
+        userId ? (
+          <ReviewReport
+            setEncounter={setEncounter}
+            setPatient={setPatient}
+            user={userId}
+          />
+        ) : null
+    },
+    {
+      title: 'Favorites Tests',
+      content: userId ? <FavoriteTests user={userId} /> : null
+    }
+  ];
+
+  return (
+    <div className="container">
+      <div className="left-box">
+        <MyTab data={tabData} />
+      </div>
+      <div className="right-box">
+        
+              <PatientSide
+                patient={patient}
+                setPatient={setPatient}
+                encounter={encounter}
+                showDiagnosis={false}
+                showVisitDetails={false}
+                showBalance={false}
+              />
+      </div>
+    </div>
+  );
+};
+
 export default ReviewResults;
