@@ -201,7 +201,7 @@ import { patientServicesAndProductsService } from './services/encounters/patient
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
 import {patientAdministrativeWarningsService} from './services/patient/patientAdministrativeWarningsService';
-
+import {radiologyReportService} from './services/reports/radiologyReportService';
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -490,7 +490,8 @@ export const store = configureStore({
     [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
     [NextOfKinService.reducerPath]: NextOfKinService.reducer,
     [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
-    [patientAdministrativeWarningsService.reducerPath]: patientAdministrativeWarningsService.reducer
+    [patientAdministrativeWarningsService.reducerPath]: patientAdministrativeWarningsService.reducer,
+    [radiologyReportService.reducerPath]: radiologyReportService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -722,7 +723,8 @@ export const store = configureStore({
     patientServicesAndProductsService.middleware,
     NextOfKinService.middleware,
     RelationsMatrixService.middleware,
-    patientAdministrativeWarningsService.middleware
+    patientAdministrativeWarningsService.middleware,
+    radiologyReportService.middleware,
   ]) as any)
 });
 
