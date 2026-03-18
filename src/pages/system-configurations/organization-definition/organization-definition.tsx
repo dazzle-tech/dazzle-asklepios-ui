@@ -6,8 +6,7 @@ import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form } from 'rsuite';
-import clsx from 'clsx';
+import { Col, Form, Row } from 'rsuite';
 import { OrganizationDefinition as OrganizationDefinitionType } from '@/types/model-types-new';
 import { newOrganizationDefinition } from '@/types/model-types-constructor-new';
 import {
@@ -179,228 +178,244 @@ const OrganizationDefinition = () => {
   const isLoadingData = isLoading || isCreating || isUpdating;
 
   return (
-    <div className="organization-definition-container">
-      <Form fluid>
-        {/* Section 1: Information */}
-        <Section
-          title={<Translate>Information</Translate>}
-          content={
-            <>
-              <div className={clsx('organization-form-section', { 'two-columns': width > 600 })}>
-                <MyInput
-                  fieldLabel="Organization Name"
-                  fieldName="name"
-                  record={organization}
-                  setRecord={setOrganization}
-                  required
-                  width={width > 600 ? "48%" : "100%"}
-                  disabled={isLoadingData}
-                />
-                <MyInput
-                  fieldLabel="Organization Address"
-                  fieldName="address"
-                  record={organization}
-                  setRecord={setOrganization}
-                  width={width > 600 ? "48%" : "100%"}
-                  disabled={isLoadingData}
-                />
-              </div>
-              <MyInput
-                fieldLabel="Organization Description"
-                fieldName="description"
-                fieldType="textarea"
-                record={organization}
-                setRecord={setOrganization}
-                width="100%"
-                rows={3}
-                disabled={isLoadingData}
-              />
-            </>
-          }
-          setOpen={() => { }}
-          rightLink={null}
-          openedContent={null}
-          disabled={isLoadingData}
-        />
 
-        {/* Section 2: Contact */}
-        <Section
-          title={<Translate>Contact</Translate>}
-          content={
-            <>
-              <div className={clsx('organization-form-section', { 'two-columns': width > 600 })}>
-                <MyInput
-                  fieldLabel="Organization Contact Name"
-                  fieldName="contactName"
-                  record={organization}
-                  setRecord={setOrganization}
-                  width={width > 600 ? "48%" : "100%"}
-                  disabled={isLoadingData}
-                />
-                <MyInput
-                  fieldLabel="Contact Email"
-                  fieldName="contactEmail"
-                  fieldType="text"
-                  record={organization}
-                  setRecord={setOrganization}
-                  width={width > 600 ? "48%" : "100%"}
-                  disabled={isLoadingData}
-                />
-              </div>
-              <MyInput
-                fieldLabel="Contact Address"
-                fieldName="contactAddress"
-                fieldType="textarea"
-                record={organization}
-                setRecord={setOrganization}
-                width="100%"
-                rows={2}
-                disabled={isLoadingData}
-              />
-              <div className={clsx('organization-form-section', { 'two-columns': width > 600 })}>
-                <MyInput
-                  fieldLabel="Contact Mobile"
-                  fieldName="contactMobile"
-                  fieldType="text"
-                  record={organization}
-                  setRecord={setOrganization}
-                  width={width > 600 ? "48%" : "100%"}
-                  disabled={isLoadingData}
-                />
-                <MyInput
-                  fieldLabel="Contact Land Number"
-                  fieldName="contactLandNumber"
-                  fieldType="text"
-                  record={organization}
-                  setRecord={setOrganization}
-                  width={width > 600 ? "48%" : "100%"}
-                  disabled={isLoadingData}
-                />
-              </div>
-            </>
-          }
-          setOpen={() => { }}
-          rightLink={null}
-          openedContent={null}
-          disabled={isLoadingData}
-        />
-
-        {/* Tax Value */}
-        <Section
-          title={<Translate>Tax Information</Translate>}
-          content={
-            <div className="organization-form-section">
-              <MyInput
-                fieldLabel="Tax Value (%)"
-                fieldName="taxValue"
-                fieldType="number"
-                record={organization}
-                setRecord={setOrganization}
-                width={width > 600 ? "48%" : "100%"}
-                disabled={isLoadingData}
-                required
-              />
-            </div>
-          }
-          setOpen={() => { }}
-          rightLink={null}
-          openedContent={null}
-          disabled={isLoadingData}
-        />
-
-        <Section
-          title={<Translate>Appointment Configuration</Translate>}
-          content={
-            <div className="organization-form-section">
-
-              <MyInput
-                fieldName="defaultTimeZone"
-                fieldType="select"
-                selectData={timeZone ?? []}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={organization}
-                setRecord={setOrganization}
-                width={width > 600 ? "48%" : "100%"}
-                disabled={isLoadingData}
-                required
-              />
-              <MyInput
-                width="100%"
-                fieldName="defaultLanguageId"
-                fieldLabel='Default Language'
-                fieldType="select"
-                selectData={langData}
-                selectDataLabel="langName"
-                selectDataValue="id"
-                record={organization}
-                setRecord={setOrganization}
-                placeholder="Select Language"
-                searchable={false}
-              />
-            </div>
-          }
-          setOpen={() => { }}
-          rightLink={null}
-          openedContent={null}
-          disabled={isLoadingData}
-        />
-
-        <Section
-          title={<Translate>Working Days</Translate>}
-          content={
-            <div className="organization-form-section">
-              <div className="organization-working-days">
-                {DayOfWeek?.map(day => (
+    <Form fluid>
+      <div className='organization-sections-container'>
+        <div className='organization-section-Column'>
+          <Section
+            title={<Translate>Information</Translate>}
+            content={
+              <div className='organization-section'>
+                <Row>
+                  <Col md={12}>
+                    <MyInput
+                      fieldLabel="Organization Name"
+                      fieldName="name"
+                      record={organization}
+                      setRecord={setOrganization}
+                      required
+                      width={"100%"}
+                      disabled={isLoadingData}
+                    />
+                  </Col>
+                  <Col md={12}>
+                    <MyInput
+                      fieldLabel="Organization Address"
+                      fieldName="address"
+                      record={organization}
+                      setRecord={setOrganization}
+                      width={"100%"}
+                      disabled={isLoadingData}
+                    />
+                  </Col>
+                </Row>
+                <Row>
                   <MyInput
-                    key={day.value}
-                    fieldType="check"
-                    fieldName={day.value}
-                    label={day.label}
-                    record={workingDaysRecord}
-                    setRecord={setWorkingDaysRecord}
+                    fieldLabel="Organization Description"
+                    fieldName="description"
+                    fieldType="textarea"
+                    record={organization}
+                    setRecord={setOrganization}
+                    width="100%"
+                    rows={3}
                     disabled={isLoadingData}
                   />
-                ))}
+                </Row>
               </div>
-
-            </div>
-          }
-          setOpen={() => { }}
-          rightLink={null}
-          openedContent={null}
-          disabled={isLoadingData}
-        />
-
-        {/* Action Buttons */}
-        <div className="organization-modal-actions">
-          <MyButton
-            appearance="default"
-            onClick={() => setShowAdminsModal(true)}
-            title={<Translate>View Active Admins</Translate>}
+            }
+            setOpen={() => { }}
+            rightLink={null}
+            openedContent={null}
             disabled={isLoadingData}
-            style={{ marginRight: '10px' }}
-          >
-            <Translate>View Active Admins</Translate>
-          </MyButton>
-          <MyButton
-            appearance="primary"
-            onClick={handleSave}
-            title={<Translate>Save</Translate>}
+          />
+          <Section
+            title={<Translate>Contact</Translate>}
+            content={
+              <div className='organization-section'>
+                <Row>
+                  <Col md={12}>
+                    <MyInput
+                      fieldLabel="Organization Contact Name"
+                      fieldName="contactName"
+                      record={organization}
+                      setRecord={setOrganization}
+                      width={"100%"}
+                      disabled={isLoadingData}
+                    />
+                  </Col>
+                  <Col md={12}>
+                    <MyInput
+                      fieldLabel="Contact Email"
+                      fieldName="contactEmail"
+                      fieldType="text"
+                      record={organization}
+                      setRecord={setOrganization}
+                      width={"100%"}
+                      disabled={isLoadingData}
+                    />
+                  </Col>
+                </Row>
+                <Row>
+                  <MyInput
+                    fieldLabel="Contact Address"
+                    fieldName="contactAddress"
+                    fieldType="textarea"
+                    record={organization}
+                    setRecord={setOrganization}
+                    width="100%"
+                    rows={2}
+                    disabled={isLoadingData}
+                  />
+                </Row>
+                <Row>
+                  <Col md={12}>
+                    <MyInput
+                      fieldLabel="Contact Mobile"
+                      fieldName="contactMobile"
+                      fieldType="text"
+                      record={organization}
+                      setRecord={setOrganization}
+                      width={"100%"}
+                      disabled={isLoadingData}
+                    />
+                  </Col>
+                  <Col md={12}>
+                    <MyInput
+                      fieldLabel="Contact Land Number"
+                      fieldName="contactLandNumber"
+                      fieldType="text"
+                      record={organization}
+                      setRecord={setOrganization}
+                      width={"100%"}
+                      disabled={isLoadingData}
+                    />
+                  </Col>
+                </Row>
+              </div>
+            }
+            setOpen={() => { }}
+            rightLink={null}
+            openedContent={null}
             disabled={isLoadingData}
-          >
-            <Translate>Save</Translate>
-          </MyButton>
+          />
         </div>
-      </Form>
+        <div className='organization-section-Column'>
+          <Section
+            title={<Translate>Tax Information</Translate>}
+            content={
+              <div className='organization-section'>
+                <MyInput
+                  fieldLabel="Tax Value (%)"
+                  fieldName="taxValue"
+                  fieldType="number"
+                  record={organization}
+                  setRecord={setOrganization}
+                  width={width > 600 ? "48%" : "100%"}
+                  disabled={isLoadingData}
+                  required
+                />
+              </div>
+            }
+            setOpen={() => { }}
+            rightLink={null}
+            openedContent={null}
+            disabled={isLoadingData}
+          />
+          <Section
+            title={<Translate>Appointment Configuration</Translate>}
+            content={
+              <div className='organization-section'>
+                <Row>
+                  <Col md={12}>
+                    <MyInput
+                      fieldName="defaultTimeZone"
+                      fieldType="select"
+                      selectData={timeZone ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={organization}
+                      setRecord={setOrganization}
+                      width={"100%"}
+                      disabled={isLoadingData}
+                      required
+                    />
+                  </Col>
+                  <Col md={12}>
+                    <MyInput
+                      width="100%"
+                      fieldName="defaultLanguageId"
+                      fieldLabel='Default Language'
+                      fieldType="select"
+                      selectData={langData}
+                      selectDataLabel="langName"
+                      selectDataValue="id"
+                      record={organization}
+                      setRecord={setOrganization}
+                      placeholder="Select Language"
+                      searchable={false}
+                    />
+                  </Col>
+                </Row>
+              </div>
+            }
+            setOpen={() => { }}
+            rightLink={null}
+            openedContent={null}
+            disabled={isLoadingData}
+          />
+          <Section
+            title={<Translate>Working Days</Translate>}
+            content={
+              <div className='organization-section'>
+                <div className="organization-working-days">
+                  {DayOfWeek?.map(day => (
+                    <MyInput
+                      key={day.value}
+                      fieldType="check"
+                      fieldName={day.value}
+                      label={day.label}
+                      record={workingDaysRecord}
+                      setRecord={setWorkingDaysRecord}
+                      disabled={isLoadingData}
+                      showLabel={false}
+                    />
+                  ))}
+                </div>
 
-      {/* Active Admins Modal */}
+              </div>
+            }
+            setOpen={() => { }}
+            rightLink={null}
+            openedContent={null}
+            disabled={isLoadingData}
+          />
+        </div>
+      </div>
+      {/* Action Buttons */}
+      <div className="organization-modal-actions">
+        <MyButton
+          appearance="default"
+          onClick={() => setShowAdminsModal(true)}
+          title={<Translate>View Active Admins</Translate>}
+          disabled={isLoadingData}
+          style={{ marginRight: '10px' }}
+        >
+          <Translate>View Active Admins</Translate>
+        </MyButton>
+        <MyButton
+          appearance="primary"
+          onClick={handleSave}
+          title={<Translate>Save</Translate>}
+          disabled={isLoadingData}
+        >
+          <Translate>Save</Translate>
+        </MyButton>
+      </div>
       <ActiveAdminsModal
         open={showAdminsModal}
         onClose={() => setShowAdminsModal(false)}
       />
-
-    </div>
+    </Form>
   );
 };
 
