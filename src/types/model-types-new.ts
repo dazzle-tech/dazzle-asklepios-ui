@@ -2312,6 +2312,8 @@ export interface OrganizationDefinition {
   contactMobile?: string;
   contactLandNumber?: string;
   taxValue?: number;
+  defaultTimeZone?: string;
+  defaultLanguageId?: number;
 }
 
 export interface PatientAllergiesActiveIngredientResponse {

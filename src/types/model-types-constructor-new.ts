@@ -1505,7 +1505,9 @@ export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   contactEmail: '',
   contactMobile: '',
   contactLandNumber: '',
-  taxValue: undefined
+  taxValue: undefined,
+  defaultTimeZone: '',
+  defaultLanguageId: undefined,
 };
 
 export const newFormTemplate: modelTypes.FormTemplate = {
