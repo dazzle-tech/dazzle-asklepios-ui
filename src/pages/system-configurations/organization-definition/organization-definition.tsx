@@ -5,7 +5,7 @@ import Section from '@/components/Section/Section';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
 import { OrganizationDefinition as OrganizationDefinitionType } from '@/types/model-types-new';
@@ -33,12 +33,9 @@ const OrganizationDefinition = () => {
 
   const {
     data: langData,
-    isFetching: langsLoading,
-    refetch: refetchLangs
   } = useGetAllLanguagesQuery({});
   const timeZone = useEnumOptions('TimeZone');
   const DayOfWeek = useEnumOptions('DayOfWeek');
-
 
 
   // Effects
@@ -58,11 +55,47 @@ const OrganizationDefinition = () => {
   // Load existing organization if available
   useEffect(() => {
     if (organizations && organizations.length > 0) {
-      setOrganization(organizations[0]);
+      const nextOrg = organizations[0];
+      if (!organization.id || organization.id !== nextOrg.id) {
+        setOrganization(nextOrg);
+      }
     } else {
-      setOrganization({ ...newOrganizationDefinition });
+      if (organization.id) {
+        setOrganization({ ...newOrganizationDefinition });
+      }
     }
-  }, [organizations]);
+  }, [organizations, organization.id]);
+
+  const workingDaysRecord = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    if (!DayOfWeek || DayOfWeek.length === 0) return map;
+
+    DayOfWeek.forEach(day => {
+      map[day.value] = false;
+    });
+
+    (organization.workingDays ?? []).forEach(day => {
+      if (day?.dayOfWeek) {
+        map[day.dayOfWeek] = day.isWorking !== false;
+      }
+    });
+
+    return map;
+  }, [organization.workingDays, DayOfWeek]);
+
+  const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
+    if (!DayOfWeek || DayOfWeek.length === 0) return;
+
+    const nextWorkingDays = DayOfWeek.map(day => ({
+      dayOfWeek: day.value,
+      isWorking: !!nextRecord[day.value],
+    }));
+
+    setOrganization(prev => ({
+      ...prev,
+      workingDays: nextWorkingDays,
+    }));
+  };
 
   // Page header setup
   const divContent = 'Organization Definition';
@@ -71,26 +104,27 @@ const OrganizationDefinition = () => {
 
   // Handle save organization
   const handleSave = async () => {
+    const workingDaysPayload =
+      DayOfWeek && DayOfWeek.length > 0
+        ? DayOfWeek.map(day => ({
+          dayOfWeek: day.value,
+          isWorking: !!workingDaysRecord[day.value],
+        }))
+        : (organization.workingDays ?? []);
+
     // Validation
     let errorMsg = '';
     if (!organization.name) {
       errorMsg = 'Organization Name is required';
-      // return;
     }
     if (organization.taxValue === undefined || organization.taxValue === null) {
-      // dispatch(notify({ msg: 'Tax Value is required', sev: 'warning' }));
       errorMsg = errorMsg ? `${errorMsg}, Tax Value is required` : 'Tax Value is required';
-      // return;
     }
     if (!organization.defaultTimeZone) {
       errorMsg = errorMsg ? `${errorMsg}, Default Time Zone is required` : 'Default Time Zone is required';
-      // dispatch(notify({ msg: 'Default Time Zone is required', sev: 'warning' }));
-      // return;
     }
     if (!organization.defaultLanguageId) {
       errorMsg = errorMsg ? `${errorMsg}, Default Language is required` : 'Default Language is required';
-      // dispatch(notify({ msg: 'Default Language is required', sev: 'warning' }));
-      // return;
     }
     if (errorMsg) {
       dispatch(notify({ msg: errorMsg, sev: 'warning' }));
@@ -113,9 +147,8 @@ const OrganizationDefinition = () => {
           taxValue: organization.taxValue!,
           defaultTimeZone: organization.defaultTimeZone!,
           defaultLanguageId: organization.defaultLanguageId!,
-          workingDays: organization.workingDays ?? [],
+          workingDays: workingDaysPayload,
         };
-        console.log("organization to update: ", updatePayload);
         await updateOrganization(updatePayload).unwrap();
         dispatch(notify({ msg: 'Organization updated successfully', sev: 'success' }));
       } else {
@@ -131,13 +164,13 @@ const OrganizationDefinition = () => {
           contactLandNumber: organization.contactLandNumber || null,
           taxValue: organization.taxValue || null,
           defaultTimeZone: organization.defaultTimeZone,
-          defaultLanguageId: organization.defaultLanguageId
+          defaultLanguageId: organization.defaultLanguageId,
+          workingDays: workingDaysPayload,
         }).unwrap();
         dispatch(notify({ msg: 'Organization saved successfully', sev: 'success' }));
       }
       refetch();
     } catch (error: any) {
-      console.log("error: ", error);
       const errorMessage = error?.data?.message || error?.message || 'Failed to save organization';
       dispatch(notify({ msg: errorMessage, sev: 'error' }));
     }
@@ -300,7 +333,6 @@ const OrganizationDefinition = () => {
                 selectData={langData}
                 selectDataLabel="langName"
                 selectDataValue="id"
-                // defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
                 record={organization}
                 setRecord={setOrganization}
                 placeholder="Select Language"
@@ -318,7 +350,19 @@ const OrganizationDefinition = () => {
           title={<Translate>Working Days</Translate>}
           content={
             <div className="organization-form-section">
-             
+              <div className="organization-working-days">
+                {DayOfWeek?.map(day => (
+                  <MyInput
+                    key={day.value}
+                    fieldType="check"
+                    fieldName={day.value}
+                    label={day.label}
+                    record={workingDaysRecord}
+                    setRecord={setWorkingDaysRecord}
+                    disabled={isLoadingData}
+                  />
+                ))}
+              </div>
 
             </div>
           }
