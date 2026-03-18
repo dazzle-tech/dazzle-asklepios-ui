@@ -47,8 +47,7 @@ export async function printPatientInformationReport(vm: PatientInformationReport
   row('Mobile Number', vm.mobileNumber);
   row('Secondary Phone', vm.secondaryPhone);
   row('Email', vm.email);
-  row('Address', vm.address);
-  row('City / Country', `${vm.city ?? ''} ${vm.country ?? ''}`);
+  row('Location', vm.city);
 
   y += 6;
 
