@@ -262,11 +262,13 @@ const DetailsTele = ({
         dispatch(notify({ msg: 'Telephonic consultation created successfully', sev: 'success' }));
       }
 
-      refetchCon?.();
       setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+      return;
     }
+
+    refetchCon?.();
   };
 
   const handleOpenAttachmentModal = () => {
@@ -420,7 +422,7 @@ const DetailsTele = ({
             </div>
           </Form>
         }
-        leftContent={<></>}
+        leftContent={<Diagnosis patient={patient} encounter={encounter} />}
       />
 
       <AttachmentUploadModal

@@ -161,19 +161,6 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     });
   }, [department?.departmentCode]);
 
-  useEffect(() => {
-    if (addDepartmentMutation.data) {
-      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
-      refetchDepartments();
-    }
-  }, [addDepartmentMutation.data, refetchDepartments]);
-
-  useEffect(() => {
-    if (updateDepartmentMutation.data) {
-      setPaginationParams(prev => ({ ...prev, timestamp: Date.now() }));
-      refetchDepartments();
-    }
-  }, [updateDepartmentMutation.data, refetchDepartments]);
 
   // Handlers
   const handleNew = () => {

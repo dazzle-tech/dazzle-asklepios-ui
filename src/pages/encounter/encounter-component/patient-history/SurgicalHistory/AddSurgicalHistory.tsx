@@ -193,7 +193,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const handleSave = async () => {
     const errors = validateBeforeSave();
     if (errors.length) {
-      dispatch(notify({ msg: errors.join('\n'), sev: 'error' }));
+      dispatch(notify({ msg: errors.join('\n'), sev: 'warning' }));
       return;
     }
 

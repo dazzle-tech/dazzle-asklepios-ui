@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
@@ -20,20 +20,33 @@ type AddEditServiceProps = {
 const AddEditService: React.FC<AddEditServiceProps> = ({
   open,
   setOpen,
-  width,
   service,
   setService,
   handleSave
 }) => {
-  // enums
   const serviceCategoryOptions = useEnumOptions('ServiceCategory');
   const currencyOptions = useEnumCapitalized('Currency');
 
-  // facilities (same pattern used in AddEditDepartment)
-  const [facilityListRequest] = useState<ListRequest>({
-    ...initialListRequest
-  });
+  const [facilityListRequest] = useState<ListRequest>({ ...initialListRequest });
   const { data: facilityListResponse } = useGetAllFacilitiesQuery(facilityListRequest);
+
+  useEffect(() => {
+    if (!facilityListResponse || !service?.facilityId) return;
+
+    const selectedFacility = facilityListResponse.find(
+      (f: any) => Number(f.id) === Number(service.facilityId)
+    );
+
+    if (
+      selectedFacility?.defaultCurrency &&
+      selectedFacility.defaultCurrency !== service.currency
+    ) {
+      setService({
+        ...service,
+        currency: selectedFacility.defaultCurrency
+      });
+    }
+  }, [service?.facilityId, facilityListResponse]);
 
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -126,6 +139,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   selectDataValue="value"
                   record={service}
                   setRecord={setService}
+                  disabled
                 />
               </div>
               <div className="container-of-field-service" />

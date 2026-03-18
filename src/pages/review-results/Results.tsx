@@ -3,17 +3,22 @@ import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import { useLazyFilterDiagnosticOrdersQuery, useLazyGetDiagnosticOrderByIdQuery } from '@/services/diagnosic-order/diagnosticOrderService';
 import {
-  useGetNotesByResultIdQuery,
-} from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
+  useLazyFilterDiagnosticOrdersQuery,
+  useLazyGetDiagnosticOrderByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
+import { useGetNotesByResultIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestResultTechnicianNoteService';
 import { useLazyGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
 import {
   useFilterDiagnosticOrderTestResultsQuery,
-  useToggleReviewDiagnosticOrderTestResultMutation,
+  useToggleReviewDiagnosticOrderTestResultMutation
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
 import { useGetAllDiagnosticTestProfilesQuery } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
-import { useGetLovAllValuesQuery, useGetLovsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import {
+  useGetLovAllValuesQuery,
+  useGetLovsQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { initialListRequest, initialListRequestAllValues } from '@/types/types';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
@@ -23,7 +28,7 @@ import {
   faCircleExclamation,
   faComment,
   faStar,
-  faTriangleExclamation,
+  faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -37,7 +42,11 @@ import React, {
 import { Checkbox, Form, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
-
+import { useDispatch } from 'react-redux';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import { newApEncounter } from '@/types/model-types-constructor';
+import { newPatientEncounter } from '@/types/model-types-constructor-new';
 
 const renderMarker = (Marker?: string) => {
   switch (Marker) {
@@ -101,9 +110,8 @@ const resolveLovDisplayValue = (
   );
 };
 
-
 const Result = forwardRef<any, any>(
-  ({ loading, setTest, refetchAllLabData, setPatient }, ref) => {
+  ({ loading, setTest, refetchAllLabData, setPatient, setEncounter }, ref) => {
     const today = new Date();
     const [page, setPage] = useState(0);
     const [size, setSize] = useState(15);
@@ -112,6 +120,8 @@ const Result = forwardRef<any, any>(
       fromDate: today,
       toDate: today
     });
+
+    const dispatch = useDispatch();
     const [orderIdIn, setOrderIdIn] = useState<number[] | null>(null);
     const [orderDate, setOrderDate] = useState({ fromDate: null, toDate: null });
     const [showReview, setShowReview] = useState(false);
@@ -127,18 +137,21 @@ const Result = forwardRef<any, any>(
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
 
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
+    const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
 
     const [toggleReviewDiagnosticOrderTestResult] =
       useToggleReviewDiagnosticOrderTestResultMutation();
 
-    const { data: valueUnitLov } =
-      useGetLovValuesByCodeQuery('VALUE_UNIT');
+    const { data: valueUnitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
-    const { data: allLovValues } =
-      useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+    const { data: allLovValues } = useGetLovAllValuesQuery({
+      ...initialListRequestAllValues
+    });
 
-    const { data: lovDefinitions } =
-      useGetLovsQuery({ ...initialListRequest, pageSize: 1000 });
+    const { data: lovDefinitions } = useGetLovsQuery({
+      ...initialListRequest,
+      pageSize: 1000
+    });
 
     const normalizeDateRange = (from?: Date | null, to?: Date | null) => {
       if (from && to && from > to) {
@@ -163,17 +176,13 @@ const Result = forwardRef<any, any>(
       const params: any = {
         page,
         size,
-        processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
+        processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED
       };
 
       params.reviewed = showReview;
 
       if (showAbnormal) {
-        params.excludeMarkerIn = [
-          "NORMAL_MARKER",
-          "UNKNOWN"
-
-        ];
+        params.excludeMarkerIn = ['NORMAL_MARKER', 'UNKNOWN'];
       }
 
       const approval = normalizeDateRange(
@@ -189,7 +198,6 @@ const Result = forwardRef<any, any>(
         params.approvedDateTo = endOfDay(approval.to).toISOString();
       }
 
-
       if (orderDate.fromDate || orderDate.toDate) {
         if (orderIdIn && orderIdIn.length > 0) {
           params.orderIdIn = orderIdIn;
@@ -199,15 +207,7 @@ const Result = forwardRef<any, any>(
       }
 
       return params;
-    }, [
-      page,
-      size,
-      approvalDate,
-      showReview,
-      showAbnormal,
-      orderIdIn,
-      orderDate
-    ]);
+    }, [page, size, approvalDate, showReview, showAbnormal, orderIdIn, orderDate]);
 
     const {
       data: resultsResponse,
@@ -219,6 +219,16 @@ const Result = forwardRef<any, any>(
       sort: 'id,desc',
       ...filterParams
     });
+
+    useEffect(() => {
+      dispatch(setPageCode('review-results'));
+      dispatch(setDivContent('Review Results'));
+
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(' '));
+      };
+    }, [dispatch]);
 
     const patientIds = useMemo(() => {
       return Object.values(ordersMap)
@@ -233,47 +243,40 @@ const Result = forwardRef<any, any>(
     const results = resultsResponse?.data ?? [];
     const totalCount = resultsResponse?.totalCount ?? 0;
 
-    const { data: notesResponse, isFetching: isNotesFetching } =
-      useGetNotesByResultIdQuery(
-        openNotesModal && selectedResultId
-          ? selectedResultId
-          : skipToken
-      );
+    const { data: notesResponse } = useGetNotesByResultIdQuery(
+      openNotesModal && selectedResultId ? selectedResultId : skipToken
+    );
 
     useEffect(() => {
       if (!results.length) return;
 
-      results.forEach(r => {
-        // ========= ORDER =========
+      results.forEach((r) => {
         if (r.orderTestId && orderTestsMap[r.orderTestId]) {
           const orderId = orderTestsMap[r.orderTestId]?.orderId;
 
           if (orderId && !ordersMap[orderId]) {
             fetchOrderById(orderId)
               .unwrap()
-              .then(order => {
-                setOrdersMap(prev => ({
+              .then((order) => {
+                setOrdersMap((prev) => ({
                   ...prev,
                   [String(order.id)]: order
                 }));
               })
-              .catch(() => { });
+              .catch(() => {});
           }
         }
 
-
-        // ========= ORDER TEST =========
         if (r.orderTestId && !orderTestsMap[r.orderTestId]) {
           fetchOrderTestById(r.orderTestId)
             .unwrap()
-            .then(test => {
-              console.log('[ORDER TEST]', test.id);
-              setOrderTestsMap(prev => ({
+            .then((test) => {
+              setOrderTestsMap((prev) => ({
                 ...prev,
                 [String(test.id)]: test
               }));
             })
-            .catch(() => { });
+            .catch(() => {});
         }
       });
     }, [results]);
@@ -281,7 +284,7 @@ const Result = forwardRef<any, any>(
     useEffect(() => {
       if (!patientIds.length) return;
 
-      const numericIds = patientIds.map(id => Number(id));
+      const numericIds = patientIds.map((id) => Number(id));
 
       getBulkPatientBasicInfo(numericIds)
         .unwrap()
@@ -295,12 +298,10 @@ const Result = forwardRef<any, any>(
 
           setPatientsMap(map);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('❌ Bulk patient error:', err);
         });
-
     }, [patientIds]);
-
 
     useEffect(() => {
       Object.values(orderTestsMap).forEach((test: any) => {
@@ -309,31 +310,30 @@ const Result = forwardRef<any, any>(
         if (orderId && !ordersMap[orderId]) {
           fetchOrderById(orderId)
             .unwrap()
-            .then(order => {
-              setOrdersMap(prev => ({
+            .then((order) => {
+              setOrdersMap((prev) => ({
                 ...prev,
                 [String(order.id)]: order
               }));
             })
-            .catch(() => { });
+            .catch(() => {});
         }
       });
     }, [orderTestsMap]);
 
-
-    const { data: profilesResponse } =
-      useGetAllDiagnosticTestProfilesQuery({
-        page: 0,
-        size: 10000,
-        sort: 'id,asc'
-      });
+    const { data: profilesResponse } = useGetAllDiagnosticTestProfilesQuery({
+      page: 0,
+      size: 10000,
+      sort: 'id,asc'
+    });
 
     const profilesMap = useMemo(
-      () => new Map(profilesResponse?.data?.map(p => [p.id, p]) ?? []),
+      () => new Map(profilesResponse?.data?.map((p) => [p.id, p]) ?? []),
       [profilesResponse]
     );
+
     const normalizedResults = useMemo(() => {
-      return results.map(r => {
+      return results.map((r) => {
         const orderTest = orderTestsMap[String(r?.orderTestId)];
         const order = ordersMap[String(orderTest?.orderId)];
         const patient = patientsMap[String(order?.patientId)];
@@ -346,18 +346,18 @@ const Result = forwardRef<any, any>(
             : '—',
           _profile: profile,
           _testName: profile?.name ?? '-',
-          _approvedDate: r.approvedDate
+          _approvedDate: r.approvedDate,
+          encounterId: order?.encounterId
         };
       });
     }, [results, orderTestsMap, ordersMap, patientsMap, profilesMap]);
-
 
     const resolveUnitDisplay = (row: any) => {
       const profile = row._profile;
       if (!profile || isLovProfile(profile)) return null;
 
       const unit = valueUnitLov?.object?.find(
-        u => String(u.key) === String(profile.resultUnit)
+        (u) => String(u.key) === String(profile.resultUnit)
       )?.lovDisplayVale;
 
       return unit || null;
@@ -379,26 +379,22 @@ const Result = forwardRef<any, any>(
       setPage(0);
     };
 
-
     const columns: ColumnConfig[] = useMemo(
       () => [
         {
           key: 'patient',
           title: <Translate>PATIENT NAME</Translate>,
           render: (r: any) => r._patientName
-
         },
         {
           key: 'approvedAt',
           title: <Translate>RESULT DATE</Translate>,
-          render: (row: any) =>
-            formatDateWithoutSeconds(row.approvedDate)
+          render: (row: any) => formatDateWithoutSeconds(row.approvedDate)
         },
         {
           key: 'testName',
           title: <Translate>TEST NAME</Translate>,
           render: (row: any) => (
-
             <>
               {row._profile?.name ?? '-'}
               <br />
@@ -409,15 +405,34 @@ const Result = forwardRef<any, any>(
           )
         },
         {
+          key: 'resultValue',
+          title: <Translate>RESULT VALUE</Translate>,
+          render: (row: any) => {
+            const profile = row._profile;
+
+            const value = row.resultValueNumber ?? row.resultValueText ?? '';
+
+            if (isLovProfile(profile)) {
+              return resolveLovDisplayValue(
+                profile,
+                value,
+                lovDefinitions,
+                allLovValues
+              );
+            }
+
+            const unit = resolveUnitDisplay(row);
+
+            return `${value ?? ''}${unit ? ` ${unit}` : ''}`;
+          }
+        },
+        {
           key: 'normalRange',
           title: <Translate>NORMAL RANGE</Translate>,
           render: (row: any) => {
-            console.log("ROWWWWWWW", row);
             const profile = row._profile;
-
             const hasViewRange =
-              row.viewNormalRange &&
-              row.viewNormalRange.trim() !== '';
+              row.normalRangeValue && row.normalRangeValue.trim() !== '';
 
             const hasMinMaxRange =
               row.minValue !== null &&
@@ -425,22 +440,18 @@ const Result = forwardRef<any, any>(
               row.maxValue !== null &&
               row.maxValue !== undefined;
 
-            console.log('profile: ', row._profile);
-            console.log('viewNormalRange: ', row.viewNormalRange);
-
             if (hasViewRange) {
               if (isLovProfile(profile)) {
                 return resolveLovDisplayValue(
                   profile,
-                  String(row.viewNormalRange),
+                  String(row.normalRangeValue),
                   lovDefinitions,
                   allLovValues
                 );
               }
 
-
               const unit = resolveUnitDisplay(row);
-              return `${row.viewNormalRange}${unit ? ` ${unit}` : ''}`;
+              return `${row.normalRangeValue}${unit ? ` ${unit}` : ''}`;
             }
 
             if (hasMinMaxRange) {
@@ -465,7 +476,7 @@ const Result = forwardRef<any, any>(
           render: (row: any) => (
             <FontAwesomeIcon
               icon={faComment}
-              className='icon-radiologist-worklist-size'
+              className="icon-radiologist-worklist-size"
               style={{
                 cursor: 'pointer',
                 color: row.hasNote ? '#1675e0' : 'gray'
@@ -484,7 +495,6 @@ const Result = forwardRef<any, any>(
           align: 'center',
           render: (rowData: any) => {
             const isReviewed = !!rowData.reviewDate;
-            console.log('reviewDate', rowData.reviewDate);
 
             return (
               <Whisper placement="top" speaker={<Tooltip>Review</Tooltip>}>
@@ -502,7 +512,9 @@ const Result = forwardRef<any, any>(
                       setSelectedResultId(rowData.id);
 
                       try {
-                        await toggleReviewDiagnosticOrderTestResult(rowData.id).unwrap();
+                        await toggleReviewDiagnosticOrderTestResult(
+                          rowData.id
+                        ).unwrap();
                         await refetchAllLabData();
                         refetch();
                       } catch (e) {
@@ -519,15 +531,38 @@ const Result = forwardRef<any, any>(
       [patientsMap, normalizedResults]
     );
 
-
     const filters = () => (
       <Form fluid>
-        <div className='results-table-filters-review-results-main-container'>
-          <MyInput fieldType="date" fieldLabel="Approval From Date" fieldName="fromDate" record={approvalDate} setRecord={setApprovalDate} />
-          <MyInput fieldType="date" fieldLabel="Approval To Date" fieldName="toDate" record={approvalDate} setRecord={setApprovalDate} />
-          <MyInput fieldType="date" fieldLabel="Order From Date" fieldName="fromDate" record={orderDate} setRecord={setOrderDate} />
-          <MyInput fieldType="date" fieldLabel="Order To Date" fieldName="toDate" record={orderDate} setRecord={setOrderDate} />
-          <div className='results-table-filters-checkboxes-review-results-main-container'>
+        <div className="results-table-filters-review-results-main-container">
+          <MyInput
+            fieldType="date"
+            fieldLabel="Approval From Date"
+            fieldName="fromDate"
+            record={approvalDate}
+            setRecord={setApprovalDate}
+          />
+          <MyInput
+            fieldType="date"
+            fieldLabel="Approval To Date"
+            fieldName="toDate"
+            record={approvalDate}
+            setRecord={setApprovalDate}
+          />
+          <MyInput
+            fieldType="date"
+            fieldLabel="Order From Date"
+            fieldName="fromDate"
+            record={orderDate}
+            setRecord={setOrderDate}
+          />
+          <MyInput
+            fieldType="date"
+            fieldLabel="Order To Date"
+            fieldName="toDate"
+            record={orderDate}
+            setRecord={setOrderDate}
+          />
+          <div className="results-table-filters-checkboxes-review-results-main-container">
             <Checkbox
               checked={showReview}
               onChange={(_, checked) => setShowReview(checked)}
@@ -555,16 +590,6 @@ const Result = forwardRef<any, any>(
       selectedResultId === rowData.id ? 'selected-row' : '';
 
     useEffect(() => {
-      console.log('[RESULTS]', results.map(r => ({
-        id: r.id,
-        orderId: r.orderId,
-        orderTestId: r.orderTestId
-      })));
-    }, [results]);
-
-    console.log("results", results);
-
-    useEffect(() => {
       const today = new Date();
       setApprovalDate({
         fromDate: today,
@@ -584,20 +609,17 @@ const Result = forwardRef<any, any>(
         submittedDateFrom: fromDate
           ? startOfDay(fromDate).toISOString()
           : undefined,
-        submittedDateTo: toDate
-          ? endOfDay(toDate).toISOString()
-          : undefined,
+        submittedDateTo: toDate ? endOfDay(toDate).toISOString() : undefined,
         page: 0,
         size: 10000
       })
         .unwrap()
-        .then(res => {
+        .then((res) => {
           const ids = (res?.data ?? []).map((o: any) => o.id);
           setOrderIdIn(ids);
         })
         .catch(() => setOrderIdIn([]));
     }, [orderDate]);
-
 
     return (
       <Panel defaultExpanded>
@@ -611,11 +633,11 @@ const Result = forwardRef<any, any>(
           totalCount={totalCount}
           onPageChange={(_, newPage) => setPage(newPage)}
           rowClassName={isSelected}
-          onRowsPerPageChange={e => {
+          onRowsPerPageChange={(e) => {
             setSize(Number(e.target.value));
             setPage(0);
           }}
-          onRowClick={(row: any) => {
+          onRowClick={async (row: any) => {
             const orderTest = orderTestsMap[String(row.orderTestId)];
             const order = ordersMap[String(orderTest?.orderId)];
 
@@ -626,8 +648,23 @@ const Result = forwardRef<any, any>(
             if (!rawPatient) return;
 
             setSelectedResultId(row.id);
-             console.log("RAW PATIENT", rawPatient);
             setPatient(rawPatient);
+
+            const encounterId = order?.encounterId;
+            if (!encounterId) {
+              setEncounter({...newPatientEncounter});
+              return;
+            }
+            console.log("Order's encounterId", encounterId);
+
+            try {
+              const encounter = await fetchEncounterById({ id: encounterId }).unwrap();
+         
+              setEncounter?.(encounter);
+            } catch (err) {
+              console.error('Failed to fetch encounter', err);
+              setEncounter({...newPatientEncounter});
+            }
           }}
         />
 

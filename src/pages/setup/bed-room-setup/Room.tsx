@@ -14,6 +14,7 @@ import MyInput from '@/components/MyInput';
 import {
   addFilterToListRequest,
   conjureValueBasedOnIDFromList,
+  formatEnumString,
   fromCamelCaseToDBName
 } from '@/utils';
 import {
@@ -292,9 +293,7 @@ const Room = () => {
       title: <Translate>Gender Spacific</Translate>,
       flexGrow: 4,
       render: rowData =>
-        rowData?.genderLvalue
-          ? rowData.genderLvalue.lovDisplayVale
-          : rowData.genderLkey
+       formatEnumString( rowData?.genderLkey )
     },
     {
       key: 'isValid',

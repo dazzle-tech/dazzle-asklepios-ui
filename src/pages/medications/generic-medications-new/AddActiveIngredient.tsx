@@ -29,14 +29,8 @@ const AddActiveIngredient = ({ open, setOpen, brandMedication }) => {
     brandMedication?.id,
     { skip: !brandMedication?.id }
   );
-    const [paginationParams, setPaginationParams] = useState({
-      page: 0,
-      size: 5,
-      sort: "id,asc",
-      timestamp: Date.now(),
-    });
-  
-  const {data:activeIngredientList}=useGetActiveIngredientsQuery(paginationParams)
+    
+  const {data:activeIngredientList}=useGetActiveIngredientsQuery({})
   const { data: unitLov } = useGetLovValuesByCodeQuery("VALUE_UNIT");
 
   const [createActive] = useCreateActiveIngredientMutation();

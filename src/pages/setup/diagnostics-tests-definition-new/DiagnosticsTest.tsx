@@ -113,19 +113,24 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   };
 
 
-  const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
-    const errors: string[] = [];
+const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
+  const missingFields: string[] = [];
 
-    if (!test.type) errors.push('Test Type');
-    if (!test.name?.trim()) errors.push('Name');
-    if (!test.internalCode?.trim()) errors.push('Internal Code');
+  if (!test.type) missingFields.push('Test Type');
+  if (!test.name?.trim()) missingFields.push('Name');
+  if (!test.internalCode?.trim()) missingFields.push('Internal Code');
+  if (!test.price && test.price !== 0) missingFields.push('Price');
 
-    if (test.type === 'LABORATORY' && !test.defaultProfileResultType) {
-      errors.push('Result Type');
-    }
+  if (test.type === 'LABORATORY' && !test.defaultProfileResultType) {
+    missingFields.push('Result Type');
+  }
 
-    return errors;
-  };
+  if (missingFields.length) {
+    return [`${missingFields.join(', ')} ${missingFields.length > 1 ? 'are' : 'is'} required`];
+  }
+
+  return [];
+};
 
 
   const handleAddNewDiagnosticTest = async () => {

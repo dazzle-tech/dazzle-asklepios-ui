@@ -55,6 +55,8 @@ import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientSe
 
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
+import MyModal from '@/components/MyModal/MyModal';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = ['WAITING_TRIAGE', 'PENDING_PAYMENT', 'TRIAGE_STARTED'] as const;
 
@@ -110,7 +112,6 @@ const ERTriage = () => {
     if (!value && value !== 0) return null;
     if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
     if (typeof value === 'number') {
-      // heuristics: seconds vs millis
       const ms = value < 1e12 ? value * 1000 : value;
       const d = new Date(ms);
       return isNaN(d.getTime()) ? null : d;
@@ -162,8 +163,8 @@ const ERTriage = () => {
     const arrival = toDateSafe(arrivalCreatedAt);
     const latest = unwrapApiObject<any>(latestEmergencyTriage);
     const triageStart = toDateSafe(
-        latest?.createdDate ??
-        fallbackTriageCreatedAt
+      latest?.createdDate ??
+      fallbackTriageCreatedAt
     );
     if (!arrival || !triageStart) return <></>;
     return <>{formatDuration(triageStart.getTime() - arrival.getTime())}</>;
@@ -182,7 +183,6 @@ const ERTriage = () => {
     });
 
     const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    // Show completed time whenever triage has a completedDate (status may not reflect it yet).
     const v =
       latest?.completedDate ??
       completedDate ??
@@ -209,17 +209,17 @@ const ERTriage = () => {
 
     const latest = unwrapApiObject<any>(latestEmergencyTriage);
     const triageStart = toDateSafe(
-        latest?.createdDate ??
-        fallbackTriageCreatedAt
+      latest?.createdDate ??
+      fallbackTriageCreatedAt
     );
     const end = toDateSafe(
       latest?.completedDate ??
-        completedDate ??
-        completedAt ??
-        rowUpdatedAt ??
-        fallbackUpdatedAt ??
-        completedDate ??
-        null
+      completedDate ??
+      completedAt ??
+      rowUpdatedAt ??
+      fallbackUpdatedAt ??
+      completedDate ??
+      null
     );
     if (!triageStart || !end) return <></>;
     return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
@@ -278,12 +278,12 @@ const ERTriage = () => {
       console.error('Error while generating wristband pdf', e);
     }
   };
+
   const location = useLocation();
   const dispatch = useDispatch();
   const [cancelEncounter] = useCancelEncounterMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
-  // Start in "searched" mode so the list loads immediately on screen open (same as clicking Search).
   const [manualSearchTriggered, setManualSearchTriggered] = useState(true);
   const [openSendToModal, setOpenSendToModal] = useState(false);
   const [sendToEmergencyTriageNew, setSendToEmergencyTriageNew] = useState<any>(null);
@@ -293,6 +293,10 @@ const ERTriage = () => {
   }));
   const [createOrGetEmergencyTriage] = useCreateOrGetEmergencyTriageMutation();
   const navigate = useNavigate();
+  const [openEMRModal, setOpenEMRModal] = useState(false);
+  const [emrPatient, setEmrPatient] = useState<any>(null);
+  const [emrEncounter, setEmrEncounter] = useState<any>(null);
+
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
@@ -303,9 +307,15 @@ const ERTriage = () => {
 
   const departmentId = Number(selectedDepartment?.departmentId ?? selectedDepartment?.id ?? 0) || 0;
 
-  // State to manage the date filters for the manual search
+  // ✅ التعديل: fromDate = أسبوع قبل اليوم
+  const lastWeekDefault = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d;
+  }, []);
+
   const [dateFilter, setDateFilter] = useState({
-    fromDate: new Date(),
+    fromDate: lastWeekDefault,
     toDate: new Date()
   });
 
@@ -317,14 +327,12 @@ const ERTriage = () => {
   const [openCreatePatient, setOpenCreatePatient] = useState(false);
   const [openQuickPatient, setOpenQuickPatient] = useState(false);
 
-  // Payment modal (Add Payment action)
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentRow, setPaymentRow] = useState<any>(null);
   const [payment, setPayment] = useState<any>({ ...newPatientPayments });
   const [patientInsurance, setPatientInsurance] = useState<any>({ ...newPatientInsurance });
   const paymentInfoRef = useRef<PatientPaymentInfoHandle>(null);
 
-  // Keep refs to avoid "Search" reading stale state right after a picker change.
   const dateFilterRef = useRef(dateFilter);
   const encounterStatusRef = useRef(encounterStatus);
   const selectedPatientRef = useRef<any>(selectedPatient);
@@ -342,10 +350,8 @@ const ERTriage = () => {
     setSelectedPatient(next);
   };
 
-  // Create a JSX element to display as the page header content
   const divContent = 'ER Triage';
 
-  // IMPORTANT: don't dispatch during render (can cause infinite render loop / white screen).
   useEffect(() => {
     dispatch(setPageCode('ER_Triage'));
     dispatch(setDivContent(divContent));
@@ -370,14 +376,17 @@ const ERTriage = () => {
     const es = encounterStatusRef.current;
     const sp = selectedPatientRef.current;
 
-    // `MyInput` date fields can come back as strings; normalize to real Date before calling `formatDate`
     const fromDateObj = toDateSafe(df?.fromDate);
     const toDateObj = toDateSafe(df?.toDate);
     const fromDate = fromDateObj ? formatDate(fromDateObj) : undefined;
     const toDate = toDateObj ? formatDate(toDateObj) : undefined;
 
-    const patientName = sp?.fullName || sp?.patientFullName || sp?.name || undefined;
-    const mrn = sp?.patientMrn || sp?.medicalRecordNumber || undefined;
+    const patientName =
+      sp?.firstName || sp?.lastName
+        ? `${sp.firstName ?? ''} ${sp.lastName ?? ''}`.trim()
+        : undefined;
+
+    const mrn = sp?.medicalRecordNumber || undefined;
 
     const statuses = (es?.codes?.length ? es.codes : DEFAULT_ENCOUNTER_STATUS_CODES).map((v: any) =>
       String(v ?? '').toUpperCase()
@@ -423,7 +432,7 @@ const ERTriage = () => {
   const patientIdsForBulk = useMemo(() => {
     const rows = (encountersPaged?.data ?? []) as any[];
     const ids = rows
-      .map((row) =>  row?.patient?.id )
+      .map((row) => row?.patient?.id)
       .filter((v) => v !== null && v !== undefined && String(v).trim() !== '')
       .map((v) => String(v));
     return Array.from(new Set(ids));
@@ -433,7 +442,7 @@ const ERTriage = () => {
     if (patientIdsForBulk.length === 0) return;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientByIdMap = useMemo(() => {
@@ -461,21 +470,16 @@ const ERTriage = () => {
       const statusCode = String(encounterRow?.status ?? '').toUpperCase();
       const priorityCode = String(encounterRow?.priorityLevel ?? '').toUpperCase();
 
-      const patientId =
-        encounterRow?.patient?.id ??
-      
-        null;
+      const patientId = encounterRow?.patient?.id ?? null;
       const patientFromMap = patientId != null ? patientByIdMap.get(String(patientId)) : null;
 
-      // Prefer patient object returned within encounter row; fallback to bulk map if needed.
       const patientFromEncounter = encounterRow?.patient ?? null;
       const patientMerged = patientFromEncounter || patientFromMap || null;
 
       const fullName = patientMerged ? buildPatientFullName(patientMerged) : '-';
-      const patientMrn =
-        patientMerged?.medicalRecordNumber ??
-        patientMerged?.patientMrn ??
-        undefined;
+
+      const patientMrn = patientMerged?.medicalRecordNumber;
+
       const dateOfBirth =
         patientMerged?.dateOfBirth ??
         patientMerged?.dob ??
@@ -487,11 +491,11 @@ const ERTriage = () => {
         key: encounterRow?.id,
         patientId,
 
-        // Keep existing UI expectations
         patientObject: {
           id: patientId,
-          patientMrn,
-          fullName,
+          medicalRecordNumber: patientMrn,
+          firstName: patientMerged?.firstName ?? '',
+          lastName: patientMerged?.lastName ?? '',
           privatePatient: Boolean(patientMerged?.isPrivatePatient ?? false),
           dateOfBirth,
           sexAtBirth
@@ -504,7 +508,6 @@ const ERTriage = () => {
         encounterStatus: encounterRow?.status ?? statusCode,
 
         plannedStartDate: encounterRow?.encounterDate ?? null,
-        // Encounter "created at" is now `createdDate` (ISO string) on the encounter object
         createdAt: encounterRow?.createdDate ?? encounterRow?.createdAt ?? encounterRow?.created_at ?? null,
         updatedAt: null
       };
@@ -523,7 +526,7 @@ const ERTriage = () => {
   const emergencyLevelColorMap = useMemo(() => {
     const byValue: Record<string, string> = {
       RESUSCITATION: '#7f1d1d',
-      EMERGENT: '#dc2626', 
+      EMERGENT: '#dc2626',
       URGENT: '#f97316',
       LESS_URGENT: '#eab308',
       NON_URGENT: '#16a34a'
@@ -543,12 +546,10 @@ const ERTriage = () => {
   const priorityOrderMap = useMemo(() => {
     const rank = (value: string) => {
       const v = String(value ?? '').toUpperCase();
-      // Force urgent-like priorities to the top regardless of enum order
       if (v.includes('URGENT') || v.includes('CRITICAL') || v.includes('STAT') || v.includes('EMERG')) return 0;
       return null;
     };
     const m = new Map<string, number>();
-    // Put urgent-like priorities first, then the rest in enum order.
     encounterPriorityEnumOptions.forEach((opt, idx) => {
       if (opt?.value == null) return;
       const forced = rank(String(opt.value));
@@ -566,7 +567,6 @@ const ERTriage = () => {
   }, [encounterPriorityEnumOptions]);
 
   const priorityDotColor = useMemo(() => {
-    // Keep a simple, consistent palette (since enums don't come with colors).
     const palette = ['#16a34a', '#dc2626', '#f97316', '#eab308', '#7c3aed', '#0ea5e9'];
     const m = new Map<string, string>();
     encounterPriorityEnumOptions.forEach((v, idx) => {
@@ -609,8 +609,6 @@ const ERTriage = () => {
     });
   };
 
-  // Search is applied only when user clicks Search (see `handleSearchClick`).
-
   const handleCancelEncounter = async () => {
     try {
       const id = encounter?.id ?? encounter?.key;
@@ -627,8 +625,6 @@ const ERTriage = () => {
   };
 
   const buildEncounterUpdateBody = (row: any, patch: Partial<any>) => {
-    // Build the exact shape required by PatientEncounterUpdateDTO.
-    // IMPORTANT: do not default required enums to empty strings (causes 400).
     const body: any = {
       id: row?.id,
       patientId: row?.patientId ?? row?.patient?.id ?? row?.patientObject?.id,
@@ -678,7 +674,6 @@ const ERTriage = () => {
     String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() === 'PENDING_PAYMENT';
 
   const handleAddPayment = async (rowData: any): Promise<boolean> => {
-    // Open payment screen; status update happens only after payment is saved successfully.
     setPaymentRow(rowData);
     setPayment({ ...newPatientPayments });
     setPatientInsurance({ ...newPatientInsurance });
@@ -733,7 +728,6 @@ const ERTriage = () => {
                 e?.stopPropagation?.();
                 const ok = await handleUpdateEncounterPriority(rowData, String(p?.value ?? ''));
                 if (ok) {
-                  // Prevent immediate re-open when trigger includes hover and mouse stays on the button.
                   setLockHoverUntilLeave(true);
                   whisperRef.current?.close?.();
                 }
@@ -790,7 +784,6 @@ const ERTriage = () => {
       const patientId = toNumberOrNaN(patientData?.id ?? patientData?.patientId ?? patientData?.key);
 
       const statusUpper = String(encounterData?.status ?? encounterData?.encounterStatus ?? '').toUpperCase();
-      // If already started, just open the Start Triage screen (no updates, no triage creation).
       if (statusUpper === 'TRIAGE_STARTED') {
         const targetPath = '/ER-start-triage';
         sessionStorage.setItem('encounterPageSource', 'EncounterList');
@@ -820,7 +813,6 @@ const ERTriage = () => {
 
       const targetPath = '/ER-start-triage';
 
-      // Save source in sessionStorage before navigating
       sessionStorage.setItem('encounterPageSource', 'EncounterList');
 
       if (!emergencyTriageNew) {
@@ -852,7 +844,6 @@ const ERTriage = () => {
     }
   };
 
-
   useEffect(() => {
     const onResize = () => setWindowHeight(window.innerHeight);
     window.addEventListener('resize', onResize);
@@ -864,7 +855,6 @@ const ERTriage = () => {
       setManualSearchTriggered(false);
     }
   }, [isFetching, manualSearchTriggered]);
-
 
   useEffect(() => {
     if (isLoading || isFetching) {
@@ -897,7 +887,6 @@ const ERTriage = () => {
     }
   }, [refetch, refetchEncounter, dispatch]);
 
-  // Trigger the same behavior as clicking "Search" (load/reload list).
   const triggerSearch = useCallback(() => {
     setManualSearchTriggered(true);
     setPage(0);
@@ -910,7 +899,11 @@ const ERTriage = () => {
   };
 
   const handleClearClick = () => {
-    const nextDateFilter = { fromDate: new Date(), toDate: new Date() };
+    const now = new Date();
+    const lastWeekDate = new Date(now);
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+
+    const nextDateFilter = { fromDate: lastWeekDate, toDate: now };
     const nextEncounterStatus = { codes: [...DEFAULT_ENCOUNTER_STATUS_CODES] };
 
     setDateFilterSafe(nextDateFilter);
@@ -921,14 +914,12 @@ const ERTriage = () => {
     triggerSearch();
   };
 
-  // Auto-load the list when the screen opens (once departmentId is available).
   useEffect(() => {
     if (!departmentId) return;
     if (hasSearched) return;
     triggerSearch();
   }, [departmentId, hasSearched, triggerSearch]);
 
-  // Refresh list after closing "Create New Patient" / "Quick Patient" modals.
   const prevOpenCreatePatientRef = useRef(openCreatePatient);
   const prevOpenQuickPatientRef = useRef(openQuickPatient);
 
@@ -948,9 +939,7 @@ const ERTriage = () => {
     prevOpenQuickPatientRef.current = openQuickPatient;
   }, [openQuickPatient, triggerSearch]);
 
-  // table Columns
   const tableColumns = [
-    // Expandable details (only visible when row is expanded)
     {
       key: 'encounterCreatedAt',
       title: <Translate>Time Encounter Created</Translate>,
@@ -977,7 +966,7 @@ const ERTriage = () => {
           <WaitingTimeCell
             encounterId={encounterId}
             arrivalCreatedAt={rowData?.createdAt}
-              fallbackTriageCreatedAt={rowData?.emergencyTriage?.createdDate ?? rowData?.emergencyTriage?.createdAt ?? null}
+            fallbackTriageCreatedAt={rowData?.emergencyTriage?.createdDate ?? rowData?.emergencyTriage?.createdAt ?? null}
           />
         );
       }
@@ -1026,7 +1015,6 @@ const ERTriage = () => {
       dataKey: 'queueNumber',
       render: (_rowData: any, rowIndex?: number) => {
         const i = typeof rowIndex === 'number' ? rowIndex : 0;
-        // keep numbering consistent with server paging (0-based page)
         return page * pageSize + i + 1;
       }
     },
@@ -1037,8 +1025,8 @@ const ERTriage = () => {
       render: (rowData: any) => {
         const tooltipSpeaker = (
           <Tooltip>
-            <div>MRN : {rowData?.patientObject?.patientMrn}</div>
-            <div>Age : {rowData?.patientAge}</div>
+            <div>MRN : {rowData?.patientObject?.medicalRecordNumber}</div>
+            <div>Age : {rowData?.patientObject?.dateOfBirth ? calculateAgeFormat(rowData?.patientObject?.dateOfBirth) : ''}</div>
             <div>
               Gender :{' '}
               {rowData?.patientObject?.sexAtBirth || ''}
@@ -1053,12 +1041,12 @@ const ERTriage = () => {
               {rowData?.patientObject?.privatePatient ? (
                 <Badge color="blue" content="Private">
                   <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.fullName}
+                    {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
                   </p>
                 </Badge>
               ) : (
                 <>
-                  <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
+                  <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}</p>
                 </>
               )}
             </div>
@@ -1157,18 +1145,16 @@ const ERTriage = () => {
                   disabled={isPendingPayment}
                   onClick={() => {
                     const patientData = rowData?.patientObject;
+
                     if (patientData) {
                       dispatch(setPatient(patientData));
                     }
+
                     dispatch(setEncounter(rowData));
-                    navigate('/patient-EMR', {
-                      state: {
-                        patient: patientData,
-                        encounter: rowData,
-                        fromPage: 'ER_Triage',
-                        inModal: true
-                      }
-                    });
+
+                    setEmrPatient(patientData);
+                    setEmrEncounter(rowData);
+                    setOpenEMRModal(true);
                   }}
                 >
                   <FontAwesomeIcon icon={faFileLines} color="white" />
@@ -1176,7 +1162,6 @@ const ERTriage = () => {
               </div>
             </Whisper>
 
-            {/* Add Payment action should appear before Priority */}
             <Whisper
               trigger="hover"
               placement="top"
@@ -1200,11 +1185,10 @@ const ERTriage = () => {
               </div>
             </Whisper>
 
-            {/* Priority action should appear before Start */}
-            <EncounterPriorityAction rowData={rowData}  />
+            <EncounterPriorityAction rowData={rowData} />
 
             {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() === COMPLETE_TRIAGE_STATUS_CODE ||
-            String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() === SENT_TO_ER_STATUS_CODE ? (
+              String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() === SENT_TO_ER_STATUS_CODE ? (
               <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
                 <div>
                   <MyButton
@@ -1290,11 +1274,11 @@ const ERTriage = () => {
                     const encounterId = toNumberOrNaN(rowData?.id ?? rowData?.encounterId ?? rowData?.key);
                     const patientId = toNumberOrNaN(
                       patientData?.id ??
-                        patientData?.patientId ??
-                        patientData?.key ??
-                        rowData?.patientId ??
-                        rowData?.patientKey ??
-                        rowData?.patient_key
+                      patientData?.patientId ??
+                      patientData?.key ??
+                      rowData?.patientId ??
+                      rowData?.patientKey ??
+                      rowData?.patient_key
                     );
 
                     try {
@@ -1320,28 +1304,27 @@ const ERTriage = () => {
               </div>
             </Whisper>
 
-            {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST'].includes(
+            {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST','PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
             ) && (
-              <Whisper
-                trigger="hover"
-                placement="top"
-                speaker={isPendingPayment ? tooltipBlockedByPayment : tooltipCancel}
-              >
-                <div>
-                  <MyButton
-                    size="small"
-                    onClick={() => {
-                      setLocalEncounter(rowData);
-                      setOpen(true);
-                    }}
-                    disabled={isPendingPayment}
-                  >
-                    <FontAwesomeIcon icon={faRectangleXmark} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
+                <Whisper
+                  trigger="hover"
+                  placement="top"
+                  speaker={tooltipCancel}
+                >
+                  <div>
+                    <MyButton
+                      size="small"
+                      onClick={() => {
+                        setLocalEncounter(rowData);
+                        setOpen(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faRectangleXmark} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
           </Form>
         );
       },
@@ -1349,18 +1332,15 @@ const ERTriage = () => {
     }
   ];
 
-  // Pagination (0-based page index)
   const pageIndex = page;
   const rowsPerPage = pageSize;
   const totalCount = encountersPaged?.totalCount ?? 0;
 
-  // handler when the user clicks a new page number:
   const handlePageChange = (_: unknown, newPage: number) => {
     setManualSearchTriggered(true);
     setPage(newPage);
   };
 
-  // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setManualSearchTriggered(true);
     setPageSize(parseInt(event.target.value, 10));
@@ -1455,112 +1435,129 @@ const ERTriage = () => {
         </div>
       )}
 
-    <Panel>
-      <MyTable
-        filters={filters()}
-        height={600}
-        data={tableData}
-        columns={tableColumns}
-        rowClassName={isSelected}
-        loading={isLoading || (manualSearchTriggered && isFetching)}
-        onRowClick={rowData => {
-          setLocalEncounter(rowData);
-        }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
-      <SendToModal
-        open={openSendToModal}
-        setOpen={setOpenSendToModal}
-        encounter={encounter}
-        triage={sendToEmergencyTriageNew}
-        refetch={refetchEncounter}
-      />
-      <DeletionConfirmationModal
-        open={open}
-        setOpen={setOpen}
-        actionButtonFunction={handleCancelEncounter}
-        actionType="Deactivate"
-        confirmationQuestion="Do you want to cancel this Encounter ?"
-        actionButtonLabel="Cancel"
-        cancelButtonLabel="Close"
-      />
-      <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
-      <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
-    </Panel>
-
-    {/* Add Payment Modal */}
-    <Modal
-      size="80vw"
-      open={paymentModalOpen}
-      onClose={() => {
-        setPaymentModalOpen(false);
-        setPaymentRow(null);
-      }}
-    >
-      <Modal.Header>
-        <Modal.Title>Add Payment</Modal.Title>
-      </Modal.Header>
-      <Modal.Body style={{ maxHeight: '75vh', overflow: 'auto' }}>
-        <PatientPaymentInfo
-          ref={paymentInfoRef}
-          localPatient={paymentRow?.patientObject ?? null}
-          localEncounter={paymentRow ?? null}
-          isReadOnly={false}
-          showInternalButtons={false}
-          payment={payment}
-          setPayment={setPayment}
-          patientInsurance={patientInsurance}
-          setPatientInsurance={setPatientInsurance}
-        />
-      </Modal.Body>
-      <Modal.Footer>
-        <MyButton
-          appearance="ghost"
-          onClick={() => {
-            setPaymentModalOpen(false);
-            setPaymentRow(null);
+      <Panel>
+        <MyTable
+          filters={filters()}
+          height={600}
+          data={tableData}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          loading={isLoading || (manualSearchTriggered && isFetching)}
+          onRowClick={rowData => {
+            setLocalEncounter(rowData);
           }}
-        >
-          Close
-        </MyButton>
-        <MyButton
-          appearance="primary"
-          onClick={async () => {
-            const ok = await paymentInfoRef.current?.confirm?.();
-            if (!ok) return;
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
+        <SendToModal
+          open={openSendToModal}
+          setOpen={setOpenSendToModal}
+          encounter={encounter}
+          triage={sendToEmergencyTriageNew}
+          refetch={refetchEncounter}
+        />
+        <DeletionConfirmationModal
+          open={open}
+          setOpen={setOpen}
+          actionButtonFunction={handleCancelEncounter}
+          actionType="Deactivate"
+          confirmationQuestion="Do you want to cancel this Encounter ?"
+          actionButtonLabel="Cancel"
+          cancelButtonLabel="Close"
+        />
+        <CreateNewPatient open={openCreatePatient} setOpen={setOpenCreatePatient} />
+        <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
+      </Panel>
 
-            // If payment saved successfully from ER triage, move encounter to WAITING_TRIAGE
-            try {
-              const encounterId = paymentRow?.id ?? null;
-              if (encounterId) {
-                await updateEncounter({
-                  id: encounterId,
-                  body: buildEncounterUpdateBody(paymentRow, { status: 'WAITING_TRIAGE' })
-                }).unwrap();
-              }
-
-              dispatch(notify({ msg: 'Payment saved', sev: 'success' }));
-              refetchEncounter();
+      <Modal
+        size="80vw"
+        open={paymentModalOpen}
+        onClose={() => {
+          setPaymentModalOpen(false);
+          setPaymentRow(null);
+        }}
+      >
+        <Modal.Header>
+          <Modal.Title>Add Payment</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ maxHeight: '75vh', overflow: 'auto' }}>
+          <PatientPaymentInfo
+            ref={paymentInfoRef}
+            localPatient={paymentRow?.patientObject ?? null}
+            localEncounter={paymentRow ?? null}
+            isReadOnly={false}
+            showInternalButtons={false}
+            payment={payment}
+            setPayment={setPayment}
+            patientInsurance={patientInsurance}
+            setPatientInsurance={setPatientInsurance}
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <MyButton
+            appearance="ghost"
+            onClick={() => {
               setPaymentModalOpen(false);
               setPaymentRow(null);
-            } catch (e: any) {
-              dispatch(
-                notify({
-                  msg: e?.data?.message || e?.message || 'Payment saved, but failed to update encounter status',
-                  sev: 'error'
-                })
-              );
-            }
-          }}
-        >
-          Save
-        </MyButton>
-      </Modal.Footer>
-    </Modal>
+            }}
+          >
+            Close
+          </MyButton>
+          <MyButton
+            appearance="primary"
+            onClick={async () => {
+              const ok = await paymentInfoRef.current?.confirm?.();
+              if (!ok) return;
+
+              try {
+                const encounterId = paymentRow?.id ?? null;
+                if (encounterId) {
+                  await updateEncounter({
+                    id: encounterId,
+                    body: buildEncounterUpdateBody(paymentRow, { status: 'WAITING_TRIAGE' })
+                  }).unwrap();
+                }
+
+                dispatch(notify({ msg: 'Payment saved', sev: 'success' }));
+                refetchEncounter();
+                setPaymentModalOpen(false);
+                setPaymentRow(null);
+              } catch (e: any) {
+                dispatch(
+                  notify({
+                    msg: e?.data?.message || e?.message || 'Payment saved, but failed to update encounter status',
+                    sev: 'error'
+                  })
+                );
+              }
+            }}
+          >
+            Save
+          </MyButton>
+        </Modal.Footer>
+      </Modal>
+
+      <MyModal
+        open={openEMRModal}
+        setOpen={setOpenEMRModal}
+        title="Electronic Medical Record"
+        size="90vw"
+        content={
+          emrPatient && emrEncounter ? (
+            <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
+          ) : (
+            <div className="encounter-list__no-patient">
+              No patient selected.
+            </div>
+          )
+        }
+        actionButtonLabel="Close"
+        actionButtonFunction={() => setOpenEMRModal(false)}
+        cancelButtonLabel="Cancel"
+      />
     </>
   );
 };

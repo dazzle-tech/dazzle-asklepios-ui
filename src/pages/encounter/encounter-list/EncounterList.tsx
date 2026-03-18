@@ -392,6 +392,8 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
           id: patientId,
           fullName,
           medicalRecordNumber: mrn,
+          firstName,
+          lastName,
           dateOfBirth: dob,
           sexAtBirth,
           isPrivatePatient: isPrivate

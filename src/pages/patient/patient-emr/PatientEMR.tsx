@@ -3,7 +3,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import PatientHistory from '@/pages/encounter/encounter-component/patient-history';
-import PatientSide from '@/pages/lab-module-new/PatienSide';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { newApEncounter } from '@/types/model-types-constructor';
@@ -53,6 +53,7 @@ import RadiologyTable from './emr-tables/RadiologyTable';
 import VaccinationTable from './emr-tables/VaccinationTable';
 import VisitHistoryTable from './emr-tables/VisitHistoryTable';
 import './styles.less';
+import { set } from 'lodash';
 
 const { getHeight } = DOMHelper;
 
@@ -73,9 +74,8 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
-
   const propsData = patient || enc ? undefined : (location.state as any);
-
+  console.log('PatientEMR propsData', propsData?.patient, propsData?.encounter);
   const [encounter, setLocalEncounter] = useState<any>(
     enc ?? propsData?.encounter ?? { ...newApEncounter, discharge: false }
   );
@@ -91,14 +91,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
           : { ...newPatient }
   );
 
-
-  console.log("EMR localPatient:", localPatient);
-  console.log("EMR patient.id:", localPatient?.id);
-  console.log("EMR patient.key:", (localPatient as any)?.key);
-
   const [refetchData, setRefetchData] = useState(false);
-
-  console.log("ListRequest patient_id filter:", localPatient?.id);
 
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
 
@@ -114,27 +107,27 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     }
   }, [localPatient, encounter, dispatch]);
 
+  useEffect(() => {
+    if (patient || enc) {
+      if (patient) setLocalPatient(patient);
+      if (enc) setLocalEncounter(enc);
+      return;
+    }
 
-  const goToVisit = async (rowData: any) => {
-    setLocalEncounter(rowData);
-    dispatch(setEncounter(rowData));
-    dispatch(setPatient(rowData['patientObject']));
+    const stateData = location.state as any;
+    if (stateData?.patient) {
+      setLocalPatient(stateData.patient);
+    } else if (stateData?.fromPage === 'clinicalVisit' && stateData?.localPatient) {
+      setLocalPatient(stateData.localPatient);
+    }
 
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = rowData.patientObject?.privatePatient ? privatePatientPath : encounterPath;
+    if (stateData?.encounter) {
+      setLocalEncounter(stateData.encounter);
+    }
+  }, [patient, enc, location.state]);
 
-    const stateData = {
-      info: 'toEncounter',
-      fromPage: inModal ? 'PatientEMRModal' : 'PatientEMR',
-      patient: rowData.patientObject,
-      encounter: rowData
-    };
 
-    sessionStorage.setItem('encounterPageSource', inModal ? 'PatientEMRModal' : 'PatientEMR');
-
-    navigate(targetPath, { state: stateData });
-  };
+ 
 
   useEffect(() => {
     return () => {
@@ -152,7 +145,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     }
   }, [activeSectionCard]);
 
-  console.log("EMR localPatient", localPatient)
   return (
     <div className={`emr-container ${inModal ? 'emr-in-modal' : ''}`}>
       <div className="emr-content">
@@ -741,7 +733,15 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
       <div className="emr-right">
         <div className="patient-side-main-container-handle">
-          <PatientSide patient={localPatient} encounter={encounter} />
+           <PatientSide
+                          patient={localPatient}
+                          setPatient={setLocalPatient}
+                          encounter={encounter}
+                          showDiagnosis={false}
+                          showVisitDetails={false}
+                          showBalance={false}
+                          showMeasurements={false}
+                        />
         </div>
         {!hideProfileSidebar && (
           <div className="profile-sidebar-main-container-handle">

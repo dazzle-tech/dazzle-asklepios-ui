@@ -288,6 +288,14 @@ const AddResultModal = ({
 
   ];
 
+
+  useEffect(() => {
+    if (!open) {
+      setResults({});
+    }
+  }, [open]);
+
+
   return (
     <MyModal
       open={open}

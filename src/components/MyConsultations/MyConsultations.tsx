@@ -122,6 +122,7 @@ const MyConsultations = () => {
   const [openResponseModal, setOpenResponseModal] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<any>(null);
   const [responseForm, setResponseForm] = useState({ responseText: '' });
+  const [isResponseReadOnly, setIsResponseReadOnly] = useState(false);
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [rejectForm, setRejectForm] = useState({ reason: '' });
   const [openEMRModal, setOpenEMRModal] = useState(false);
@@ -170,8 +171,8 @@ const MyConsultations = () => {
     const selectedDepartmentIds = Array.isArray(record?.departmentId)
       ? record.departmentId
       : record?.departmentId
-      ? [record.departmentId]
-      : [];
+        ? [record.departmentId]
+        : [];
 
     const fromDateValue = record.requestDateFrom || todayString;
     const toDateValue = record.requestDateTo || todayString;
@@ -244,7 +245,7 @@ const MyConsultations = () => {
       Array.from(
         new Set(
           visibleConsultations
-            .map((consultation: any) => consultation.patientId)
+            .map((consultation: any) => consultation.patient?.id)
             .filter(Boolean)
             .map((id: any) => Number(id))
             .filter((id: number) => !Number.isNaN(id))
@@ -360,6 +361,7 @@ const MyConsultations = () => {
     if (openResponseModal) return;
     setSelectedConsultation(null);
     setResponseForm({ responseText: '' });
+    setIsResponseReadOnly(false);
   }, [openResponseModal]);
 
   useEffect(() => {
@@ -399,7 +401,7 @@ const MyConsultations = () => {
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   useEffect(() => {
@@ -407,7 +409,7 @@ const MyConsultations = () => {
     getDepartmentsBulk(departmentIdsForBulk)
       .unwrap()
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      .catch(() => {});
+      .catch(() => { });
   }, [departmentIdsForBulk, getDepartmentsBulk]);
 
   useEffect(() => {
@@ -415,7 +417,7 @@ const MyConsultations = () => {
     usersBulkIdsRef.current = userIdsForBulk;
     getUsersBasicNamesBulk(userIdsForBulk)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [userIdsForBulk, getUsersBasicNamesBulk]);
 
   useEffect(() => {
@@ -569,8 +571,9 @@ const MyConsultations = () => {
     }
   }, [dispatch, refetchConsultations, selectedRows, submitConsultations]);
 
-  const handleOpenResponseModal = useCallback((consultation: any) => {
+  const handleOpenResponseModal = useCallback((consultation: any, readOnly = false) => {
     setSelectedConsultation(consultation);
+    setIsResponseReadOnly(readOnly);
     setResponseForm({ responseText: consultation?.responseText ?? '' });
     setOpenResponseModal(true);
   }, []);
@@ -579,6 +582,7 @@ const MyConsultations = () => {
     setOpenResponseModal(false);
     setSelectedConsultation(null);
     setResponseForm({ responseText: '' });
+    setIsResponseReadOnly(false);
   }, []);
 
   const handleSaveResponse = useCallback(async () => {
@@ -645,6 +649,7 @@ const MyConsultations = () => {
         width: 50,
         render: row => {
           const isReady = String(row.status ?? '').toUpperCase() === 'READY';
+
           return (
             <Checkbox
               checked={selectedRows.some(
@@ -661,8 +666,12 @@ const MyConsultations = () => {
         title: <Translate>Patient Name</Translate>,
         flexGrow: 4,
         render: row => {
-          const patientKey = row.patientId;
-          const patient: any = patientKey != null ? patientMap.get(String(patientKey)) : null;
+          const patientKey = row.patient?.id;
+
+          const patient: any =
+            patientKey != null
+              ? patientMap.get(String(patientKey)) ?? row.patient
+              : null;
           const patientName = `${String(patient?.firstName ?? '').trim()} ${String(
             patient?.lastName ?? ''
           ).trim()}`.trim();
@@ -670,7 +679,6 @@ const MyConsultations = () => {
           const patientGender = formatEnumString(patient?.sexAtBirth) || '';
           const patientDob = patient?.dateOfBirth ?? patient?.dob;
           const patientAge = patientDob ? calculateAgeFormat(patientDob) : '';
-
           return (
             <Whisper
               trigger="hover"
@@ -862,7 +870,10 @@ const MyConsultations = () => {
           const disableActions = ['SUBMITTED', 'READY'].includes(status);
           const disableConfirm = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
           const disableReject = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
-          const disableResponse = status !== 'CONFIRMED';
+          const canOpenResponse = ['READY', 'CONFIRMED', 'SUBMITTED'].includes(status);
+          const disableResponse = !canOpenResponse;
+          const responseReadOnly = status === 'SUBMITTED';
+          const responseTooltipLabel = responseReadOnly ? 'View Response' : 'Add Response';
 
           return (
             <div className="actions-cell">
@@ -873,24 +884,34 @@ const MyConsultations = () => {
                     radius="6px"
                     backgroundColor="violet"
                     onClick={() => {
-                      const patientKey = row.patientId;
-                      const encounterKey = row.encounterId ?? row.visitKey;
+
+                      const patientKey = row.patient?.id;
+                      const encounterKey = row.encounter?.id;
+
                       const patientFromMap =
                         patientKey != null ? patientMap.get(String(patientKey)) : null;
-                      const patient = patientFromMap ?? row.patient;
 
-                      if (patient) dispatch(setPatient(patient));
-                      setEmrPatient(patient ?? null);
+                      const patient = patientFromMap ?? row.patient ?? null;
+
+                      if (patient) {
+                        setEmrPatient(patient);
+                        dispatch(setPatient(patient));
+                      }
 
                       if (patientKey != null) {
                         emrPatientKeyRef.current = String(patientKey);
                       }
+
                       if (!patient && patientKey != null) {
                         fetchPatientById(String(patientKey));
                       }
+
                       if (encounterKey != null) {
                         setEmrEncounterKey(String(encounterKey));
+                        setEmrEncounter(row.encounter);      // ⭐ الحل
+                        dispatch(setEncounter(row.encounter));
                       }
+
                       setOpenEMRModal(true);
                     }}
                   >
@@ -931,14 +952,18 @@ const MyConsultations = () => {
                   </MyButton>
                 </div>
               </Whisper>
-              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Response</Tooltip>}>
+              <Whisper
+                trigger="hover"
+                placement="top"
+                speaker={<Tooltip>{responseTooltipLabel}</Tooltip>}
+              >
                 <div>
                   <MyButton
                     size="small"
                     radius="6px"
                     backgroundColor="light-blue"
                     disabled={disableResponse}
-                    onClick={() => handleOpenResponseModal(row)}
+                    onClick={() => handleOpenResponseModal(row, responseReadOnly)}
                   >
                     <FontAwesomeIcon icon={faFilePen} color="white" />
                   </MyButton>
@@ -1109,9 +1134,9 @@ const MyConsultations = () => {
         title="Consultation Response"
         size="30vw"
         bodyheight="20vh"
-        actionButtonLabel="Save"
-        actionButtonFunction={handleSaveResponse}
-        isDisabledActionBtn={!String(responseForm?.responseText ?? '').trim()}
+        actionButtonLabel={isResponseReadOnly ? 'Close' : 'Save'}
+        actionButtonFunction={isResponseReadOnly ? handleCloseResponseModal : handleSaveResponse}
+        isDisabledActionBtn={!isResponseReadOnly && !String(responseForm?.responseText ?? '').trim()}
         handleCancelFunction={handleCloseResponseModal}
         content={
           <Form fluid>
@@ -1123,6 +1148,7 @@ const MyConsultations = () => {
               width="100%"
               record={responseForm}
               setRecord={setResponseForm}
+              disabled={isResponseReadOnly}
             />
           </Form>
         }

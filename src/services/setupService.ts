@@ -1601,6 +1601,7 @@ export const {
   useGetRoomListQuery,
   useDeactiveActivRoomMutation,
   useGetBedListQuery,
+  useLazyGetBedListQuery,
   useSaveBedMutation,
   useDeactiveActivBedMutation,
   useSaveRoomServicesMutation,

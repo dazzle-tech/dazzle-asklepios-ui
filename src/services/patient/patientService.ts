@@ -190,6 +190,20 @@ export const newPatientService = createApi({
           : ['Patient']
     }),
 
+    getPatientsByIds: builder.query<modelTypes.Patient[], { ids: Id[] }>({
+      query: ({ ids }) => ({
+        url: `/api/patient/by-ids`,
+        params: { ids }
+      }),
+      providesTags: result =>
+        result
+          ? [
+              ...result.map(p => ({ type: 'Patient' as const, id: p.id })),
+              { type: 'Patient', id: 'LIST' }
+            ]
+          : [{ type: 'Patient', id: 'LIST' }]
+    }),
+
     addUnknownPatient: builder.mutation<modelTypes.Patient, void>({
       query: () => ({
         url: '/api/patient/unknown',
@@ -252,6 +266,8 @@ export const newPatientService = createApi({
 
 export const {
   useGetPatientByIdQuery,
+  useGetPatientsByIdsQuery,
+  // list
   useGetPatientsQuery,
   useLazyGetPatientsQuery,
   useGetPatientsByMedicalRecordNumberQuery,
@@ -277,5 +293,5 @@ export const {
   useGetDuplicationCandidatesMutation,
   useGetBulkPatientBasicInfoMutation,
   useLazyGetPatientLabelQuery,
-useLazyGetPatientInformationReportQuery
+  useLazyGetPatientInformationReportQuery
 } = newPatientService;

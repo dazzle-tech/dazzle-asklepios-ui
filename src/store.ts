@@ -137,7 +137,7 @@ import { catalogDiagnosticTestService } from './services/setup/catalog/catalogTe
 import { PriceListService } from './services/billing/PriceListService';
 import { ReportTemplateService } from './services/setup/report-template/reportTemplateService';
 import { DiagnosticTestTemplateService } from './services/setup/report-template/DiagnosticTestTemplate';
-import { userStickyNotesService } from './services/setup/userStickyNotes/userStickyNotes';
+import { userStickyNotesService } from './services/userStickyNotes/userStickyNotes';
 import { BillingService } from './services/billing/BillingService';
 import { PriceListItemService } from './services/billing/PriceListItemService';
 import PatientRelationService from './services/patients/PatientRelationService';

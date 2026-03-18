@@ -13,7 +13,6 @@ import {
  
 } from '@/services/patient/patientService';
 
-import type { ApPatient } from '@/types/model-types';
 import { Box, Skeleton } from '@mui/material';
 import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
@@ -23,12 +22,13 @@ import { useSelector } from 'react-redux';
 import { Button, Form, Input, InputGroup, Nav, Panel, Sidebar, Sidenav, DatePicker } from 'rsuite';
 
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { Patient } from '@/types/model-types-new';
 
 interface ProfileSidebarProps {
   expand: boolean;
   setExpand: (value: boolean) => void;
   windowHeight: number;
-  setLocalPatient: (patient: ApPatient) => void;
+  setLocalPatient: (patient: Patient) => void;
   refetchData?: boolean;
   setRefetchData?: (value: boolean) => void;
   title?: React.ReactNode;

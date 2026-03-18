@@ -86,7 +86,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -103,7 +103,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
         data?.title ||
         data?.message ||
         'Unexpected error' + suffix,
-      sev: 'error'
+      sev: 'warning'
     })
   );
 };
@@ -207,7 +207,6 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           ? new Date(record.alcoholSinceWhen).toISOString()
           : null
     };
-    console.log('Payload to save ==> ', payload);
     try {
       if (record.id) {
         await updateSocialHistory(payload).unwrap();

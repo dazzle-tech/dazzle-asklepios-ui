@@ -12,8 +12,10 @@ import {
 import {
     useLazyGetDiagnosticOrderTestByIdQuery
 } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import {
+    useCreateReportCommentMutation,
     useGetReportCommentsByReportIdQuery
 } from '@/services/setup/diagnosticTest/diagnosticOrderTestReportCommentsService';
 import {
@@ -43,7 +45,41 @@ const endOfDay = (d: Date) => {
     return x;
 };
 
-const ReviewReport = ({ user, setEncounter,setPatient }) => {
+const notifyFromApiError = (dispatch: any, e: any, fallbackMsg = 'Operation failed') => {
+    const status =
+        e?.status ||
+        e?.originalStatus ||
+        e?.data?.status;
+
+    const message =
+        e?.data?.message ||
+        e?.data?.detail ||
+        e?.error ||
+        fallbackMsg;
+
+    if (
+        status === 400 ||
+        status === 409 ||
+        status === 422
+    ) {
+        dispatch(
+            notify({
+                msg: message,
+                sev: 'warning'
+            })
+        );
+        return;
+    }
+
+    dispatch(
+        notify({
+            msg: message,
+            sev: 'error'
+        })
+    );
+};
+
+const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const dispatch = useAppDispatch();
     const today = new Date();
     const [page, setPage] = useState(0);
@@ -69,12 +105,16 @@ const ReviewReport = ({ user, setEncounter,setPatient }) => {
     const [showReviewed, setShowReviewed] = useState(false);
     const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
     const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
-    //add new patient edits
     const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
+    const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
+    const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
 
-const isSelected = (row: any) =>
-  selectedReportId === row.id ? 'selected-row' : '';
+    const [
+        createComment, { isLoading: isSendingComment }] = useCreateReportCommentMutation();
+
+    const isSelected = (row: any) =>
+        selectedReportId === row.id ? 'selected-row' : '';
 
     const queryParams: any = {
         processingStatus: 'RESULT_APPROVED',
@@ -86,6 +126,7 @@ const isSelected = (row: any) =>
             ? { approvedDateTo: endOfDay(approvalDate.toDate).toISOString() }
             : {})
     };
+
     if (orderDate.fromDate || orderDate.toDate) {
         if (orderIdIn && orderIdIn.length > 0) {
             queryParams.orderIdIn = orderIdIn;
@@ -101,7 +142,6 @@ const isSelected = (row: any) =>
             sort: 'id,desc',
             params: queryParams
         });
-
 
     const reports = data?.data ?? [];
     const totalCount = data?.totalCount ?? 0;
@@ -142,7 +182,6 @@ const isSelected = (row: any) =>
         [orderTestsMap]
     );
 
-    //add new patient edits
     const patientIds = useMemo(
         () =>
             Object.values(ordersMap)
@@ -157,18 +196,43 @@ const isSelected = (row: any) =>
         data: comments,
         refetch: refetchComments
     } = useGetReportCommentsByReportIdQuery(
-        openComments && selectedReport?.id
-            ? selectedReport.id
-            : skipToken
+        selectedReport?.id ?? skipToken
     );
-
-
 
     const closeModal = () => {
         setOpenReportModal(false);
         setSelectedReport(null);
     };
 
+    const handleSendComment = async (value: string) => {
+        if (!selectedReport?.id) {
+            dispatch(notify({ msg: 'Select a report first', sev: 'warning' }));
+            return;
+        }
+
+        try {
+            await createComment({
+                reportId: selectedReport.id,
+                orderTestId: selectedReport.orderTestId,
+                note: value
+            }).unwrap();
+
+            dispatch(
+                notify({ msg: 'Comment added successfully', sev: 'success' })
+            );
+
+            setLocalHasCommentIds(prev =>
+                prev.includes(selectedReport.id)
+                    ? prev
+                    : [...prev, selectedReport.id]
+            );
+
+            refetchComments();
+
+        } catch (e: any) {
+            notifyFromApiError(dispatch, e, 'Failed to add comment');
+        }
+    };
 
     useEffect(() => {
         if (!patientIds.length) return;
@@ -209,7 +273,7 @@ const isSelected = (row: any) =>
 
                     return patient
                         ? (patient.fullName ||
-                        `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim())
+                            `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim())
                         : '—';
                 }
             },
@@ -246,8 +310,9 @@ const isSelected = (row: any) =>
                 width: 100,
                 align: 'center',
                 render: (row: any) => {
+                    const hasComment =
+                        !!row?.hasNote || localHasCommentIds.includes(row.id);
 
-                    const hasComment = !!row?.hasNote;
                     return (
                         <Whisper speaker={<Tooltip>Comments</Tooltip>}>
                             <span style={{ cursor: 'pointer' }}>
@@ -292,7 +357,7 @@ const isSelected = (row: any) =>
                 }
             }
         ],
-        [orderTestsMap, ordersMap, patientsMap, testsMap]
+        [orderTestsMap, ordersMap, patientsMap, testsMap, localHasCommentIds]
     );
 
     const resetFilters = () => {
@@ -313,8 +378,6 @@ const isSelected = (row: any) =>
     const filters = (
         <Form fluid>
             <div className="report-review-results-filters-main-container">
-
-                {/* ✅ Approval Date */}
                 <MyInput
                     fieldType="date"
                     fieldLabel="Approval From Date"
@@ -331,7 +394,6 @@ const isSelected = (row: any) =>
                     setRecord={setApprovalDate}
                 />
 
-                {/* ✅ Order Date */}
                 <MyInput
                     fieldType="date"
                     fieldLabel="Order From Date"
@@ -366,8 +428,6 @@ const isSelected = (row: any) =>
         </Form>
     );
 
-
-
     useEffect(() => {
         orderTestIds.forEach(id => {
             if (orderTestsMap[id]) return;
@@ -396,7 +456,6 @@ const isSelected = (row: any) =>
                 }).catch(() => { });
         });
     }, [testIds]);
-
 
     useEffect(() => {
         Object.values(orderTestsMap).forEach((ot: any) => {
@@ -442,11 +501,9 @@ const isSelected = (row: any) =>
             .catch(() => setOrderIdIn([]));
     }, [orderDate]);
 
-
     useEffect(() => {
         setPage(0);
     }, [approvalDate, orderDate, showReviewed]);
-
 
     return (
         <>
@@ -464,8 +521,8 @@ const isSelected = (row: any) =>
                     setRowsPerPage(+e.target.value);
                     setPage(0);
                 }}
-                onRowClick={(row: any) => {
-                    setSelectedReportId(row.id); // 🔥 مهم للتحديد
+                onRowClick={async (row: any) => {
+                    setSelectedReportId(row.id);
 
                     const ot = orderTestsMap[String(row.orderTestId)];
                     if (!ot) return;
@@ -478,7 +535,19 @@ const isSelected = (row: any) =>
 
                     setPatient(rawPatient);
 
-                    setEncounter(order);
+                    const encounterId = order?.encounterId;
+                    if (!encounterId) {
+                        setEncounter(null);
+                        return;
+                    }
+
+                    try {
+                        const encounter = await fetchEncounterById({ id: encounterId }).unwrap();
+                        setEncounter(encounter);
+                    } catch (err) {
+                        console.error('Failed to fetch encounter', err);
+                        setEncounter(null);
+                    }
                 }}
             />
 
@@ -488,9 +557,7 @@ const isSelected = (row: any) =>
                 title="Comments"
                 list={comments ?? []}
                 fieldShowName="note"
-                handleSendMessage={() => {
-                    refetchComments();
-                }}
+                handleSendMessage={handleSendComment}
             />
 
             {openReportModal && selectedReport && (
@@ -503,9 +570,7 @@ const isSelected = (row: any) =>
                     disableEdit
                     disableDefaultTemplate
                 />
-
             )}
-
         </>
     );
 };

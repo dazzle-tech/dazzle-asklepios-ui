@@ -695,21 +695,8 @@ const MyInput = ({
             format="dd-MM-yyyy"
             editable
             cleanable={false}
+            oneTap
             defaultValue={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
-            inputRef={(ref: HTMLInputElement) => {
-              if (!ref) return;
-
-              const handleFocus = () => {
-                setTimeout(() => {
-                  if (!ref.value) {
-                    ref.value = '__-__-____'.replace(/_/g, '');
-                    ref.setSelectionRange(0, 2);
-                  }
-                }, 0);
-              };
-
-              ref.addEventListener('focus', handleFocus);
-            }}
             onChange={(value: Date | null) => {
               const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
               setRecord?.({ ...record, [fieldName]: dateStr });
@@ -720,11 +707,9 @@ const MyInput = ({
 
               if (e.ctrlKey && e.key.toLowerCase() === 'a') {
                 e.preventDefault();
-
                 setTimeout(() => {
                   input.setSelectionRange(0, 2);
                 }, 0);
-
                 return;
               }
 
@@ -774,7 +759,7 @@ const MyInput = ({
             }}
             disabled={props.disabled}
             name={fieldName}
-            max={props.max ? props.max : 1000000}
+            max={props.max}
             min={0}
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={InputNumber}

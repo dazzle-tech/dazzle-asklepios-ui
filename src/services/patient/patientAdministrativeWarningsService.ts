@@ -51,6 +51,26 @@ export const patientAdministrativeWarningsService = createApi({
     }),
 
     // ============================
+    // 🔹 GET ALL BY TYPES
+    // ============================
+    getWarningsByTypes: builder.query<
+      modelTypes.PatientAdministrativeWarningsResponseVM[],
+      { types?: string[] }
+    >({
+      query: ({ types }) => ({
+        url: '/api/patient/patient-administrative-warnings',
+        method: 'GET',
+        params: { types }
+      }),
+      providesTags: (_res, _err, { types }) => [
+        {
+          type: 'PatientAdministrativeWarnings',
+          id: types && types.length ? `TYPES_${types.join(',')}` : 'ALL'
+        }
+      ]
+    }),
+
+    // ============================
     // 🔹 CREATE
     // ============================
     createPatientAdministrativeWarning: builder.mutation<
@@ -126,6 +146,9 @@ export const {
 
   useSearchWarningsByPatientIdQuery,
   useLazySearchWarningsByPatientIdQuery,
+
+  useGetWarningsByTypesQuery,
+  useLazyGetWarningsByTypesQuery,
 
   useCreatePatientAdministrativeWarningMutation,
   useResolvePatientAdministrativeWarningMutation,

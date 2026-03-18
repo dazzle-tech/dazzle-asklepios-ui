@@ -1,6 +1,6 @@
 import { faCreditCard, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import { Checkbox, HStack, Panel, Tooltip, Whisper } from 'rsuite';
 
@@ -8,7 +8,7 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import PatientPrevTests from './PatientPrevTests';
 import PreviewDiagnosticsOrder from './PreviewDiagnosticsOrder';
-
+import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 type Props = {
@@ -85,6 +85,29 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
     return '';
   };
 
+  const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
+
+  const departmentIds = React.useMemo(() => {
+  const ids = normalizedOrderTestList
+    .map(r => r.receivedDepartmentId ?? r.receivedLabId)
+    .filter(Boolean);
+
+  return Array.from(new Set(ids));
+}, [normalizedOrderTestList]);
+const [departmentsMap, setDepartmentsMap] = useState<Map<number, any>>(new Map());
+
+useEffect(() => {
+  if (!departmentIds.length) return;
+
+  getDepartmentsBulk(departmentIds)
+    .unwrap()
+    .then(res => {
+      const map = new Map(res.map((d: any) => [d.id, d]));
+      setDepartmentsMap(map);
+    });
+}, [departmentIds]);
+const getDepartmentName = (id?: number) =>
+  departmentsMap.get(id)?.name ?? id;
   const tableColumns: any[] = [
     {
       key: 'check',
@@ -102,6 +125,7 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       render: (rowData: any) => {
         const rowId = Number(rowData.id);
         const isDisabled = rowData.status !== 'NEW';
+        console.log(rowData, "Row Data");
         return (
           <Checkbox
             checked={selectedRows.includes(rowId)}
@@ -147,7 +171,10 @@ const DiagnosticsOrderTable: React.FC<Props> = props => {
       title: <Translate>RECEIVED LAB</Translate>,
       fullText: true,
       flexGrow: 1,
-      render: (rowData: any) => rowData.receivedDepartmentId ?? rowData.receivedLabId ?? ''
+      render: (rowData: any) => {
+        const deptId = rowData.receivedDepartmentId ?? rowData.receivedLabId;
+        return getDepartmentName(deptId);
+      }
     },
     {
       key: 'reason',

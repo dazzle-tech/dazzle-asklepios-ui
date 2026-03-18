@@ -25,6 +25,7 @@ import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeServic
 
 import type { PatientDiagnosis as PatientDiagnosisType } from '@/types/model-types-new';
 import './styles.less';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 
 type PatientDiagnosisProps = {
   patient: any;
@@ -261,7 +262,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
     () => [
       {
         key: 'diagnosisId',
-        title: <Translate>Diagnosis Code</Translate>,
+        title: <Translate>Code</Translate>,
         flexGrow: 2,
         render: (row: any) => {
           const id = Number(row?.diagnosisId);
@@ -283,7 +284,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
         key: 'type',
         title: <Translate>Type</Translate>,
         flexGrow: 2,
-        render: (row: any) => row?.type ?? ''
+        render: (row: any) => formatEnumString(row?.type ?? '')
       },
       {
         key: 'suspected',
@@ -296,6 +297,21 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
         title: <Translate>Major</Translate>,
         flexGrow: 2,
         render: (row: any) => (row?.major ? 'Yes' : 'No')
+      },
+      {
+        key: 'created',
+        title: <Translate>Created By / At</Translate>,
+        expandable: true,
+        flexGrow: 2,
+        render: row => (
+          <>
+            {row.createdBy}
+            <br />
+            <span className="date-table-style">
+              {row.createdDate ? formatDateWithoutSeconds(row.createdDate) : ''}
+            </span>
+          </>
+        )
       },
       {
         key: 'actions',

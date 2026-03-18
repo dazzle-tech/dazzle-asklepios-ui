@@ -460,23 +460,31 @@ const NormalConsultation = props => {
         key: 'action',
         title: <Translate>ACTIONS</Translate>,
         flexGrow: 1,
-        render: (rowData: Consultation) => (
-          <MdModeEdit
-            size={22}
-            fill="var(--primary-gray)"
-            onClick={() => {
-              if (rowData.toFacilityId) {
-                getDepartmentsByFacility({ facilityId: rowData.toFacilityId });
-              }
-              setConsultation(rowData);
-              setSelectedRow(rowData);
-              setEditing(String(rowData.status ?? '').toUpperCase() !== 'NEW');
-              setModalKey(prev => prev + 1);
-              setOpenDetailsModal(true);
-            }}
-            className="icon-button"
-          />
-        )
+        render: (rowData: Consultation) => {
+          const status = String(rowData.status ?? '').toUpperCase();
+          const editDisabled = edit || status === 'CONFIRMED';
+
+          return (
+            <MdModeEdit
+              size={22}
+              fill={editDisabled ? '#ccc' : 'var(--primary-gray)'}
+              title={editDisabled ? 'Edit not allowed for confirmed consultation' : 'Edit'}
+              onClick={() => {
+                if (editDisabled) return;
+                if (rowData.toFacilityId) {
+                  getDepartmentsByFacility({ facilityId: rowData.toFacilityId });
+                }
+                setConsultation(rowData);
+                setSelectedRow(rowData);
+                setEditing(status !== 'NEW');
+                setModalKey(prev => prev + 1);
+                setOpenDetailsModal(true);
+              }}
+              className={clsx('icon-button', { 'not-allowed-cell': editDisabled })}
+              style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
+            />
+          );
+        }
       }
     ],
     [
@@ -485,7 +493,8 @@ const NormalConsultation = props => {
       practitionersBulk,
       isFacilitiesDataLoading,
       isTargetsDataLoading,
-      getDepartmentsByFacility
+      getDepartmentsByFacility,
+      edit
     ]
   );
 
@@ -605,7 +614,6 @@ const NormalConsultation = props => {
         encounter={encounter}
         editing={editing}
         consultationOrders={consultation}
-        setConsultationOrder={setConsultation}
         open={openDetailsMdal}
         setOpen={setOpenDetailsModal}
         refetchCon={handleRefetchData}
