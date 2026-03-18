@@ -78,9 +78,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const { data: relationshipLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
+
   const [triggerPatientInformationReport] = useLazyGetPatientInformationReportQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
 
+  console.log('countryLovQueryResponse', countryLovQueryResponse);
   const {
     data: profilePictureTicket,
     refetch: refetchProfilePicture,
@@ -98,7 +102,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         patientId: localPatient.id
       }).unwrap();
 
-      await printPatientInformationReport(res);
+      await printPatientInformationReport(
+        res,
+        countryLovQueryResponse?.object || [],
+        relationshipLovQueryResponse?.object || []
+      );
     } catch (err: any) {
       dispatch(
         notify({

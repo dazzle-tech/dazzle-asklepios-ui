@@ -1,8 +1,19 @@
 import jsPDF from 'jspdf';
 import type { PatientInformationReportVM } from '@/types/model-types-new';
-
-export async function printPatientInformationReport(vm: PatientInformationReportVM) {
+import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList } from '.';
+export async function printPatientInformationReport(
+  vm: PatientInformationReportVM,
+  countryLov: any[],
+  relationshipLov: any[]
+) {
   const doc = new jsPDF();
+
+  const countryName = conjureValueBasedOnKeyFromList(countryLov, vm.country, 'lovDisplayVale');
+  const relationshipName = conjureValueBasedOnKeyFromList(
+    relationshipLov,
+    vm.emergencyRelationship,
+    'lovDisplayVale'
+  );
 
   doc.setFontSize(18);
   doc.text('Patient Information Report', 20, 20);
@@ -47,7 +58,10 @@ export async function printPatientInformationReport(vm: PatientInformationReport
   row('Mobile Number', vm.mobileNumber);
   row('Secondary Phone', vm.secondaryPhone);
   row('Email', vm.email);
-  row('Location', vm.city);
+  row('address', [countryName, vm.state, vm.city].filter(Boolean).join(' / '));
+  row('Country', countryName);
+  row('State', vm.state);
+  row('City', vm.city);
 
   y += 6;
 
@@ -57,7 +71,7 @@ export async function printPatientInformationReport(vm: PatientInformationReport
   doc.setFont(undefined, 'normal');
 
   row('Name', vm.emergencyName);
-  row('Relationship', vm.emergencyRelationship);
+  row('Relationship', relationshipName);
   row('Phone', vm.emergencyPhone);
 
   y += 6;
