@@ -1508,6 +1508,7 @@ export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   taxValue: undefined,
   defaultTimeZone: '',
   defaultLanguageId: undefined,
+  workingDays: [],
 };
 
 export const newFormTemplate: modelTypes.FormTemplate = {

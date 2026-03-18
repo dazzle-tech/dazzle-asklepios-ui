@@ -37,6 +37,9 @@ const OrganizationDefinition = () => {
     refetch: refetchLangs
   } = useGetAllLanguagesQuery({});
   const timeZone = useEnumOptions('TimeZone');
+  const DayOfWeek = useEnumOptions('DayOfWeek');
+
+
 
   // Effects
   useEffect(() => {
@@ -90,9 +93,9 @@ const OrganizationDefinition = () => {
       // return;
     }
     if (errorMsg) {
-          dispatch(notify({ msg: errorMsg, sev: 'warning' }));
-          return;
-        }
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+      return;
+    }
 
     try {
       if (organization.id) {
@@ -303,6 +306,20 @@ const OrganizationDefinition = () => {
                 placeholder="Select Language"
                 searchable={false}
               />
+            </div>
+          }
+          setOpen={() => { }}
+          rightLink={null}
+          openedContent={null}
+          disabled={isLoadingData}
+        />
+
+        <Section
+          title={<Translate>Working Days</Translate>}
+          content={
+            <div className="organization-form-section">
+             
+
             </div>
           }
           setOpen={() => { }}
