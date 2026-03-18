@@ -84,7 +84,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [triggerPatientInformationReport] = useLazyGetPatientInformationReportQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
 
-  console.log('countryLovQueryResponse', countryLovQueryResponse);
   const {
     data: profilePictureTicket,
     refetch: refetchProfilePicture,
