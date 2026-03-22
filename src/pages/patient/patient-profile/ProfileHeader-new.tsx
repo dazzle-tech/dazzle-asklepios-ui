@@ -1,48 +1,43 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAppSelector, useAppDispatch } from '@/hooks';
-import type { ApAttachment, ApPatient } from '@/types/model-types';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { calculateAgeFormat } from '@/utils';
-import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
-import AdministrativeWarningsModal from './AdministrativeWarning';
-import ScanDocumentModal from '@/pages/patient/patient-profile/ScanDocumentModal';
-import '@/patches/prototypeShield';
+import { useAppDispatch } from '@/hooks';
 import {
   useGetPatientProfilePictureQuery,
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetPatientSecondaryDocumentsQuery } from '@/services/patientService';
-import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Whisper, Tooltip } from 'rsuite';
-import { Icon } from '@rsuite/icons';
+import type { ApAttachment } from '@/types/model-types';
+import { Patient } from '@/types/model-types-new';
+import { calculateAgeFormat } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
 import {
+  faBars,
+  faBolt,
   faBroom,
-  faCheckDouble,
-  faEllipsisVertical,
-  faThumbsUp,
   faCalendarCheck,
   faCalendarDay,
+  faCheckDouble,
+  faEllipsisVertical,
   faHandHoldingDollar,
-  faTriangleExclamation,
   faPersonCircleQuestion,
-  faUsersLine,
-  faBars,
-  faPrint
+  faPrint,
+  faShareNodes,
+  faThumbsUp,
+  faTriangleExclamation,
+  faUsersLine
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Icon } from '@rsuite/icons';
+import React, { useCallback, useRef, useState } from 'react';
+import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
-import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
-import JsBarcode from 'jsbarcode';
-
-// IMPORTANT: hook from your RTK Query service file
-import { useGeneratePatientPdfMutation } from '@/services/patientReportService';
+import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
+import AdministrativeWarningsModal from './AdministrativeWarning';
+import ScanDocumentModal from './ScanDocumentModal';
+import QuickPatient from '../facility-patient-list/QuickPatient';
 
 interface ProfileHeaderProps {
-  localPatient: ApPatient;
+  localPatient: Patient;
   handleSave: () => void;
   handleClear: () => void;
   setVisitHistoryModel: (value: boolean) => void;
@@ -52,8 +47,8 @@ interface ProfileHeaderProps {
   setOpenBedsideRegistrations: (value: boolean) => void;
   setOpenRegistrationWarningsSummary: (value: boolean) => void;
   setOpenBulkRegistrationModal: (value: boolean) => void;
-  setOpenBViewPriceListModal: (value: boolean) => void;
-  setLocalPatient: React.Dispatch<React.SetStateAction<ApPatient>>;
+  setLocalPatient: (patient: Patient) => void;
+  setOpenReferralRequestModal: (value: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -67,24 +62,22 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setOpenBedsideRegistrations,
   setOpenRegistrationWarningsSummary,
   setOpenBulkRegistrationModal,
-  setOpenBViewPriceListModal,
-  setLocalPatient
+  setLocalPatient,
+  setOpenReferralRequestModal
 }) => {
-  const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const [patientImage, setPatientImage] = useState<ApAttachment | undefined>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
   const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
+  const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
 
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
-  const patientId = localPatient?.key ? Number(localPatient.key) : undefined;
+  const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
 
   const {
     data: profilePictureTicket,
@@ -95,295 +88,180 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
-  const [documenstListRequest, setDocumentsListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
-  });
+  const contentOfMoreIconMenu = (
+    <Popover full>
+      <Dropdown.Menu>
+        <Dropdown.Item
+          disabled={localPatient.id === undefined}
+          onClick={() => {
+            if (localPatient.id !== undefined) {
+              setOpenMoreMenu(false);
+              setVisitHistoryModel(true);
+            }
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faCalendarCheck} />
+            <Translate>Visit History</Translate>
+          </div>
+        </Dropdown.Item>
 
-  const { data: patientSecondaryDocumentsResponse, refetch: patientSecondaryDocuments } =
-    useGetPatientSecondaryDocumentsQuery(documenstListRequest, { skip: !localPatient.key });
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenReferralRequestModal(true);
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faShareNodes} />
+            <Translate>Referral Requests</Translate>
+          </div>
+        </Dropdown.Item>
 
-  useEffect(() => {
-    setDocumentsListRequest(prev => ({
-      ...prev,
-      pageNumber: 1,
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        ...(localPatient?.key
-          ? [
-              {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: String(localPatient.key)
-              }
-            ]
-          : [])
-      ]
-    }));
-  }, [localPatient?.key]);
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faThumbsUp} />
+            <Translate>Approvals</Translate>
+          </div>
+        </Dropdown.Item> */}
 
-  useEffect(() => {
-    if (localPatient?.key) patientSecondaryDocuments();
-  }, [localPatient?.key, patientSecondaryDocuments]);
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faCalendarDay} />
+            <Translate>Appointments</Translate>
+          </div>
+        </Dropdown.Item> */}
 
-  const [generatePatientPdf, { isLoading: isGeneratingPatientPdf }] =
-    useGeneratePatientPdfMutation();
+        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faHandHoldingDollar} />
+            <Translate>View Price List</Translate>
+          </div>
+        </Dropdown.Item>
 
-  const urlToBase64 = async (url: string): Promise<string> => {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(String(reader.result)); 
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenRegistrationWarningsSummary(true);
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+            <Translate>Warnings Summary</Translate>
+          </div>
+        </Dropdown.Item>
 
-  const handlePrintPatientLabel = async () => {
-    try {
-      const p = localPatient;
-      if (!p) return;
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenBedsideRegistrations(true);
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faPersonCircleQuestion} />
+            <Translate>Bedside Registration</Translate>
+          </div>
+        </Dropdown.Item>
 
-      const fullName = `${p.firstName || ''} ${p.lastName || ''}`.trim();
-      const mrn = p.patientMrn || '';
-      const dob = p.dob ? new Date(p.dob).toLocaleDateString('en-GB') : '';
-      const age = p.dob ? calculateAgeFormat(p.dob) : '';
-      const gender =
-        genderLovQueryResponse?.object?.find(g => g.key === p.genderLkey)?.lovDisplayVale || '';
+        <Dropdown.Item
+          onClick={() => {
+            setOpenMoreMenu(false);
+            setOpenBulkRegistrationModal(true);
+          }}
+        >
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faUsersLine} />
+            <Translate>Bulk Registration</Translate>
+          </div>
+        </Dropdown.Item>
 
-      const today = new Date().toLocaleDateString('en-GB');
+        {/* <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <FontAwesomeIcon icon={faBars} />
+            <Translate>Encounter Transactions</Translate>
+          </div>
+        </Dropdown.Item> */}
+      </Dropdown.Menu>
+    </Popover>
+  );
 
-      const qrData = await QRCode.toDataURL(`MRN:${mrn};NAME:${fullName}`);
-
-      const barcodeCanvas = document.createElement('canvas');
-      JsBarcode(barcodeCanvas, mrn, {
-        format: 'CODE128',
-        width: 1.8,
-        height: 30,
-        displayValue: false
-      });
-      const barcodeImg = barcodeCanvas.toDataURL('image/png');
-
-      const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: [50, 110]
-      });
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('Patient Name', 5, 10);
-      doc.text(`DATE ${today}`, 55, 10);
-      doc.addImage(qrData, 'PNG', 92, 4, 12, 12);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(12);
-      doc.text(fullName, 5, 17);
-
-      doc.setFont('helvetica', 'bold');
-      doc.text(`MRN # ${mrn}`, 5, 25);
-
-      doc.setFont('helvetica', 'normal');
-      doc.text(`DOB ${dob}`, 5, 32);
-      doc.text(`AGE ${age}`, 5, 38);
-      doc.text(`Gender ${gender}`, 5, 44);
-
-      doc.addImage(barcodeImg, 'PNG', 55, 30, 55, 15);
-
-      doc.save(`PatientLabel_${mrn}.pdf`);
-    } catch (error) {
-      console.error('Error printing label:', error);
-    }
-  };
-
-  const handlePrintInformation = async () => {
-    try {
-      if (!localPatient) return;
-
-      const secondaryDocumentsArray =
-        patientSecondaryDocumentsResponse &&
-        (patientSecondaryDocumentsResponse as any).object &&
-        Array.isArray((patientSecondaryDocumentsResponse as any).object)
-          ? (patientSecondaryDocumentsResponse as any).object
-          : [];
-
-      const secondaryDocuments = (secondaryDocumentsArray ?? []).map((d: any) => ({
-        documentNo: d?.documentNo,
-        documentType: d?.documentTypeLvalue?.lovDisplayVale || d?.documentType || '',
-        documentCountry: d?.documentCountryLvalue?.lovDisplayVale || d?.documentCountry || ''
-      }));
-
-      let profilePictureBase64: string | undefined = undefined;
-      let profilePictureUrl: string | undefined = undefined;
-
-      if (patientImageUrl) {
-        try {
-          profilePictureBase64 = await urlToBase64(patientImageUrl);
-        } catch {
-          profilePictureUrl = patientImageUrl;
-        }
-      }
-
-      const facilityName = authSlice?.tenant?.selectedFacility?.name;
-      const authenticatedUserName =
-        `${authSlice?.user?.firstName ?? ''} ${authSlice?.user?.lastName ?? ''}`.trim() || undefined;
-      const authenticatedUserEmail = authSlice?.user?.email;
-
-      const blob = await generatePatientPdf({
-        patient: localPatient,
-        facilityName,
-        authenticatedUserName,
-        authenticatedUserEmail,
-        profilePictureBase64,
-        profilePictureUrl,
-        secondaryDocuments
-      } as any).unwrap();
-
-      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-
-      link.href = url;
-      link.download = `Patient_${localPatient?.patientMrn || localPatient?.key || 'info'}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.message || 'Failed to generate patient PDF',
-          type: 'error'
-        })
-      );
-    }
-  };
-
-  useEffect(() => {
-    if (!localPatient) return;
-    if (!localPatient.key) return;
-
-    setLocalPatient(prev => {
-      if (JSON.stringify(prev) === JSON.stringify(localPatient)) return prev;
-      return { ...localPatient };
-    });
-  }, [localPatient, setLocalPatient]);
+  const contentOfPrintIconMenu = (
+    <Popover full>
+      <Dropdown.Menu>
+        <Dropdown.Item onClick={() => setOpenPrintMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <Translate>Print Information</Translate>
+          </div>
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => setOpenPrintMenu(false)}>
+          <div className="container-of-icon-and-key1">
+            <Translate>Print Patient Label</Translate>
+          </div>
+        </Dropdown.Item>
+      </Dropdown.Menu>
+    </Popover>
+  );
 
   const handleImageClick = () => {
-    if (localPatient.key && profileImageFileInputRef.current) {
-      profileImageFileInputRef.current.click();
-    }
+    if (localPatient.id) profileImageFileInputRef.current?.click();
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!localPatient || !patientId) return;
 
     const selectedFile = event.target.files?.[0];
-    if (!selectedFile) return;
+    if (selectedFile) {
+      try {
+        await uploadAttachments({
+          patientId,
+          file: selectedFile,
+          type: undefined,
+          details: 'Profile Picture',
+          source: 'PATIENT_PROFILE_PICTURE'
+        }).unwrap();
 
-    try {
-      await uploadAttachments({
-        patientId: patientId,
-        file: selectedFile,
-        type: undefined,
-        details: 'Profile Picture',
-        source: 'PATIENT_PROFILE_PICTURE'
-      }).unwrap();
-
-      refetchProfilePicture();
-      setRefetchAttachmentList(true);
-      dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
-    } catch (error) {
-      console.error('Failed to upload profile picture:', error);
-      dispatch(notify({ msg: 'Failed to Upload Profile Picture', sev: 'error' }));
+        // No manual refetch: calling refetch() while the query is skipped/uninitialized throws.
+        // We rely on RTK Query tag invalidation in `attachmentService` to refresh the picture.
+        setRefetchAttachmentList(true);
+        dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
+      } catch (error) {
+        console.error('Failed to upload profile picture:', error);
+        dispatch(notify({ msg: 'Failed to Upload Profile Picture', sev: 'error' }));
+      }
     }
-  };
-
-  const mapGenderToLkey = (value: any): string | undefined => {
-    if (!value) return undefined;
-    const g = String(value).trim().toLowerCase();
-
-    if (g === 'm' || g === 'male' || g === 'ذكر') return '1';
-    if (g === 'f' || g === 'female' || g === 'انثى' || g === 'أنثى') return '2';
-
-    if (g === '1' || g === '2') return g;
-
-    return undefined;
-  };
-
-  const capitalizeFirstLetter = (name: string): string => {
-    if (!name) return '';
-    const trimmed = name.trim().toLowerCase();
-    if (!trimmed) return '';
-    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-  };
-
-  const normalizeParsedData = (raw: any) => {
-    return {
-      firstName:
-        raw.firstName ||
-        raw['Given Names'] ||
-        raw['GIVEN_NAME'] ||
-        raw['First Name'] ||
-        raw['FIRST_NAME'] ||
-        '',
-
-      lastName:
-        raw.lastName ||
-        raw['Surname / Family Name'] ||
-        raw['Family Name'] ||
-        raw['FAMILY_NAME'] ||
-        raw['SURNAME'] ||
-        '',
-
-      documentNo:
-        raw.documentNo || raw['Document Number'] || raw['DOC_NO'] || raw['DOC_NUMBER'] || '',
-
-      nationality: raw.nationality || raw['Nationality'] || raw['NATIONALITY'] || '',
-
-      dateOfBirth: raw.dateOfBirth || raw['Date of Birth'] || raw['DOB'] || '',
-
-      gender: raw.gender || raw['Sex'] || raw['SEX'] || raw['Gender'] || '',
-
-      raw
-    };
-  };
-
-  const handleIdParsed = (parsedData: any) => {
-    const normalized = normalizeParsedData(parsedData);
-
-    const updatedPatient: Partial<ApPatient> = { ...localPatient };
-
-    if (normalized.firstName)
-      updatedPatient.firstName = capitalizeFirstLetter(normalized.firstName);
-
-    if (normalized.lastName) updatedPatient.lastName = capitalizeFirstLetter(normalized.lastName);
-
-    if (normalized.dateOfBirth) updatedPatient.dob = normalized.dateOfBirth;
-    if (normalized.documentNo) updatedPatient.documentNo = normalized.documentNo;
-    if (normalized.nationality) updatedPatient.nationalityLkey = normalized.nationality;
-
-    const mappedGender = mapGenderToLkey(normalized.gender);
-    if (mappedGender) updatedPatient.genderLkey = mappedGender;
-
-    setLocalPatient(updatedPatient as ApPatient);
-
-    dispatch(notify({ msg: 'Patient data auto-filled from ID document', sev: 'success' }));
   };
 
   const handleNewVisit = () => {
     setQuickAppointmentModel(true);
+  };
+
+  const handleScanDocumentClick = () => {
+    setOpenScanDocumentModal(true);
+  };
+
+  const handleIdParsed = (parsedData: any) => {
+    const updatedPatient: Partial<Patient> = {
+      ...localPatient
+    };
+
+    if (parsedData.firstName) updatedPatient.firstName = parsedData.firstName;
+    if (parsedData.lastName) updatedPatient.lastName = parsedData.lastName;
+    if (parsedData.secondName) updatedPatient.secondName = parsedData.secondName;
+    if (parsedData.thirdName) updatedPatient.thirdName = parsedData.thirdName;
+    if (parsedData.dateOfBirth) updatedPatient.dateOfBirth = parsedData.dateOfBirth;
+    if (parsedData.nationality) updatedPatient.nationality = parsedData.nationality;
+    if (parsedData.gender || parsedData.sexAtBirth) {
+      updatedPatient.sexAtBirth = parsedData.gender || parsedData.sexAtBirth;
+    }
+
+    setLocalPatient(updatedPatient as Patient);
+
+    dispatch(
+      notify({
+        msg: 'Patient data auto-filled from ID document',
+        sev: 'success'
+      })
+    );
   };
 
   const closeMenus = useCallback(() => {
@@ -391,7 +269,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setOpenPrintMenu(false);
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const patientWithUrl = localPatient as any;
 
     if (patientWithUrl?.profilePictureUrl) {
@@ -399,10 +277,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       setPatientImage({ url: patientWithUrl.profilePictureUrl } as any);
       return;
     }
-    if (profilePictureTicket && (profilePictureTicket as any).url && !isError) {
-      const url = (profilePictureTicket as any).url;
-      setPatientImageUrl(url);
-      setPatientImage({ url } as any);
+
+    if (profilePictureTicket && profilePictureTicket.url && !isError) {
+      setPatientImageUrl(profilePictureTicket.url);
+      setPatientImage({ url: profilePictureTicket.url } as any);
       return;
     }
 
@@ -423,6 +301,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 onChange={handleFileChange}
                 accept="image/*"
               />
+
               <Avatar
                 size="lg"
                 circle
@@ -433,59 +312,74 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     ? patientImageUrl
                     : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
                 }
-                alt={localPatient?.fullName}
+                alt={localPatient?.firstName}
                 className="avatar-image"
               />
+
               <div className="avatar-container">
                 <span className="patient-name">
                   {localPatient?.firstName} {localPatient?.lastName}
                 </span>
+
                 <div className="patient-info">
+                  {localPatient.id !== undefined && <FaUser />}
                   {
                     genderLovQueryResponse?.object?.find(
-                      item => item.key === localPatient.genderLkey
+                      item => item.key === localPatient.sexAtBirth
                     )?.lovDisplayVale
                   }
-                  {localPatient.key !== undefined && calculateAgeFormat(localPatient.dob) && ','}
-                  {localPatient.dob && `${calculateAgeFormat(localPatient.dob)} old`}{' '}
+                  {localPatient.id !== undefined &&
+                    calculateAgeFormat(localPatient.dateOfBirth) &&
+                    ','}
+                  {localPatient.dateOfBirth &&
+                    `${calculateAgeFormat(localPatient.dateOfBirth)} old`}{' '}
                 </div>
+
                 <span className="patient-mrn">
-                  {localPatient.key != undefined && `# `}
-                  {localPatient?.patientMrn}
+                  {localPatient.id !== undefined && `# `}
+                  {localPatient?.medicalRecordNumber}
                 </span>
               </div>
+
               <div className="status-icons-container">
-                {localPatient.key && (
+                {localPatient.id && (
                   <Whisper
                     placement="top"
-                    controlId="control-id-click-verified"
+                    controlId="control-id-click"
                     trigger="hover"
                     speaker={
                       <Tooltip>
-                        {localPatient.verified ? 'Verified Patient' : 'Unverified Patient'}
+                        {localPatient.isVerified ? 'Verified Patient' : 'Unverified Patient'}
                       </Tooltip>
                     }
                   >
                     <div className="status-icon">
-                      {!localPatient.verified && <Icon color="red" as={VscUnverified} />}
-                      {localPatient.verified && <Icon color="green" as={VscVerified} />}
+                      {!localPatient.isVerified && <Icon color="red" as={VscUnverified} />}
+                      {localPatient.isVerified && <Icon color="green" as={VscVerified} />}
                     </div>
                   </Whisper>
                 )}
-                {localPatient.key && (
+
+                {localPatient.id && (
                   <Whisper
                     placement="bottom"
-                    controlId="control-id-click-incomplete"
+                    controlId="control-id-click"
                     trigger="hover"
                     speaker={
                       <Tooltip>
-                        {localPatient.incompletePatient ? 'Incomplete Patient' : 'Complete Patient'}
+                        {localPatient.isCompletedPatient
+                          ? 'Completed Patient'
+                          : 'Incomplete Patient'}
                       </Tooltip>
                     }
                   >
                     <div className="status-icon">
-                      {localPatient.incompletePatient && <Icon color="red" as={VscUnverified} />}
-                      {!localPatient.incompletePatient && <Icon color="green" as={VscVerified} />}
+                      {localPatient.isCompletedPatient && (
+                        <Icon color="green" as={VscUnverified} />
+                      )}
+                      {!localPatient.isCompletedPatient && (
+                        <Icon color="red" as={VscVerified} />
+                      )}
                     </div>
                   </Whisper>
                 )}
@@ -494,26 +388,32 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
             <div className="button-group-left-align">
               <Form fluid layout="inline" className="registration-header-buttons-section">
-                <MyButton onClick={() => setOpenScanDocumentModal(true)}>
-                  <Translate>Scan Document</Translate>
-                </MyButton>
+                <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
 
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={handleSave}
                 >
-                  <Translate>Save</Translate>
+                  {localPatient?.id ? 'Edit' : 'Save'}
                 </MyButton>
 
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                   onClick={handleClear}
                 >
-                  <Translate>Clear</Translate>
+                  Clear
                 </MyButton>
 
-                <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
-                  <Translate>Quick Appointment</Translate>
+                <MyButton
+                  appearance="ghost"
+                  onClick={() => setQuickPatientModalOpen(true)}
+                  prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
+                >
+                  Quick Patient
+                </MyButton>
+
+                <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
+                  Quick Appointment
                 </MyButton>
 
                 <AdministrativeWarningsModal
@@ -521,149 +421,64 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   validationResult={validationResult}
                 />
 
-                {/* More Menu */}
                 <Whisper
-                  trigger="click"
                   open={openMoreMenu}
                   onClose={() => setOpenMoreMenu(false)}
                   placement="bottom"
-                  speaker={
-                    <Popover full>
-                      <Dropdown.Menu>
-                        <Dropdown.Item
-                          disabled={localPatient.key === undefined}
-                          onClick={() => {
-                            if (!(localPatient.key === undefined)) {
-                              setVisitHistoryModel(true);
-                            }
-                            setOpenMoreMenu(false);
-                          }}
-                        >
-                          <div className="container-of-icon-and-key1">
-                            <FontAwesomeIcon icon={faCalendarCheck} />
-                            <Translate>Visit History</Translate>
-                          </div>
-                        </Dropdown.Item>
-
-                        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-                          <div className="container-of-icon-and-key1">
-                            <FontAwesomeIcon icon={faThumbsUp} />
-                            <Translate>Approvals</Translate>
-                          </div>
-                        </Dropdown.Item>
-
-                        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-                          <div className="container-of-icon-and-key1">
-                            <FontAwesomeIcon icon={faCalendarDay} />
-                            <Translate>Appointments</Translate>
-                          </div>
-                        </Dropdown.Item>
-
-                        <Dropdown.Item
-                          onClick={() => {
-                            setOpenMoreMenu(false);
-                            setOpenBViewPriceListModal(true);
-                          }}
-                        >
-                          <div className="container-of-icon-and-key1">
-                            <FontAwesomeIcon icon={faHandHoldingDollar} />
-                            <Translate>View Price List</Translate>
-                          </div>
-                        </Dropdown.Item>
-
-                        <Dropdown.Item
-                          onClick={() => {
-                            setOpenRegistrationWarningsSummary(true);
-                            setOpenMoreMenu(false);
-                          }}
-                        >
-                          <div className="container-of-icon-and-key1">
-                            <FontAwesomeIcon icon={faTriangleExclamation} />
-                            <Translate>Warnings Summary</Translate>
-                          </div>
-                        </Dropdown.Item>
-
-                        <Dropdown.Item
-                          onClick={() => {
-                            setOpenBedsideRegistrations(true);
-                            setOpenMoreMenu(false);
-                          }}
-                        >
-                          <div className="container-of-icon-and-key1">
-                            <FontAwesomeIcon icon={faPersonCircleQuestion} />
-                            <Translate>Bedside Registration</Translate>
-                          </div>
-                        </Dropdown.Item>
-
-                        <Dropdown.Item
-                          onClick={() => {
-                            setOpenBulkRegistrationModal(true);
-                            setOpenMoreMenu(false);
-                          }}
-                        >
-                          <div className="container-of-icon-and-key1">
-                            <FontAwesomeIcon icon={faUsersLine} />
-                            <Translate>Bulk Registration</Translate>
-                          </div>
-                        </Dropdown.Item>
-
-                        <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
-                          <div className="container-of-icon-and-key1">
-                            <FontAwesomeIcon icon={faBars} />
-                            <Translate>Encounter Transactions</Translate>
-                          </div>
-                        </Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Popover>
-                  }
+                  speaker={contentOfMoreIconMenu}
                 >
                   <span>
-                    <MyButton size="small" onClick={() => setOpenMoreMenu(!openMoreMenu)}>
+                    <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
                       <FontAwesomeIcon icon={faEllipsisVertical} />
                     </MyButton>
                   </span>
                 </Whisper>
 
-                {/* Print menu */}
                 <Whisper
-                  trigger="click"
+                  open={openPrintMenu}
+                  onClose={() => setOpenPrintMenu(false)}
                   placement="bottom"
-                  speaker={
-                    <Popover full>
-                      <Dropdown.Menu>
-                        <Dropdown.Item onClick={handlePrintInformation}>
-                          <div className="container-of-icon-and-key1">
-                            <Translate>Print Information</Translate>
-                          </div>
-                        </Dropdown.Item>
-
-                        <Dropdown.Item onClick={handlePrintPatientLabel}>
-                          <div className="container-of-icon-and-key1">
-                            <Translate>Print Patient Label</Translate>
-                          </div>
-                        </Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Popover>
-                  }
+                  speaker={contentOfPrintIconMenu}
                 >
                   <span>
-                    <MyButton size="small" loading={isGeneratingPatientPdf}>
+                    <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
                       <FontAwesomeIcon icon={faPrint} />
                     </MyButton>
                   </span>
                 </Whisper>
+
+                {(openMoreMenu || openPrintMenu) && (
+                  <div
+                    onClick={closeMenus}
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      zIndex: 1
+                    }}
+                  />
+                )}
               </Form>
             </div>
           </Form>
         </Stack.Item>
       </Stack>
 
-      {/* Scan Document Modal */}
+      <QuickPatient
+        open={quickPatientModalOpen}
+        setOpen={setQuickPatientModalOpen}
+        setPatient={setLocalPatient}
+      />
+
       <ScanDocumentModal
         open={openScanDocumentModal}
         setOpen={setOpenScanDocumentModal}
         patientId={patientId}
-        onUploadSuccess={() => setRefetchAttachmentList(true)}
+        onUploadSuccess={() => {
+          setRefetchAttachmentList(true);
+        }}
         onIdParsed={handleIdParsed}
       />
     </>

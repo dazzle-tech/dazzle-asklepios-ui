@@ -3,181 +3,168 @@ import { useAppDispatch } from '@/hooks';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaBedPulse } from 'react-icons/fa6';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Loader } from 'rsuite';
 import './styles.less';
 import PreviewProcedure from './PreviewProcedure';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
-
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
-import { useSaveProceduresMutation, useGetProceduresQuery } from '@/services/procedureService';
-
-import { newApProcedure } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { formatDateWithoutSeconds } from '@/utils';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import BlockIcon from '@rsuite/icons/Block';
 import { useLocation } from 'react-router-dom';
 import Details from './Details';
 import Perform from './Perform';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { useGetProceduresQuery as useGetAllProceduresQuery } from '@/services/setup/procedure/procedureService';
+import {
+  useFindProcdureByEncounterQuery,
+  useCreateProcdureMutation,
+  useUpdateProcdureMutation,
+  useCancelProcdureMutation
+} from '@/services/patients/patientProcedureService';
+import { useLazyGetProcedureByIdQuery } from '@/services/setup/procedure/procedureService';
+import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { cond } from 'lodash';
+import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
+import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
+import './styles.less';
+
+const TableLoader = () => (
+  <div className="table-loader">
+    <Loader size="xs" />
+    <span className="table-loader-text">Loading...</span>
+  </div>
+);
+
 const Referrals = (props: any) => {
   const location = useLocation();
-
-  /** Container that wraps ONLY the table; we use it to detect inside/outside clicks */
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [showPreview, setShowPreview] = useState(false);
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
-  const { data: proceduresDefinitions } = useGetAllProceduresQuery({ page: 0, size: 10000, sort: 'id,asc' });
+
+  const { data: proceduresDefinitions } = useGetAllProceduresQuery({
+    page: 0,
+    size: 10000,
+    sort: 'id,asc'
+  });
 
   const dispatch = useAppDispatch();
-  const [showCanceled, setShowCanceled] = useState(true);
+  const [showCanceled, setShowCanceled] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [openPerformModal, setOpenPerformModal] = useState(false);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
-
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
 
-  /** Current procedure record */
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+
   const [procedure, setProcedure] = useState<any>({
-    ...newApProcedure,
-    encounterKey: encounter?.key,
-    patientKey: patient?.key,
+    encounterId: encounter?.id,
+    patientId: patient?.id,
     currentDepartment: true
   });
 
-  /** LOVs */
   const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
 
-  /** Highlight selected row in the table */
   const isSelected = (rowData: any) =>
-    rowData && procedure && rowData.key === procedure.key ? 'selected-row' : '';
+    rowData && procedure && rowData.id === procedure.id ? 'selected-row' : '';
 
-  /** Mutations/Queries */
-  const [saveProcedures] = useSaveProceduresMutation();
-
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      { fieldName: 'encounter_key', operator: 'match', value: encounter?.key },
-      {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '3621690096636149'
-      } // cancelled code
-    ]
-  });
+  const [createProcedure] = useCreateProcdureMutation();
+  const [updateProcedure] = useUpdateProcdureMutation();
+  const [cancelProcedure] = useCancelProcdureMutation();
+  const [getProcedureById] = useLazyGetProcedureByIdQuery();
+  const [getDepartmentsByFacility] = useLazyGetActiveDepartmentByFacilityListQuery();
 
   const {
-    data: procedures,
+    data: proceduresData,
     refetch: proRefetch,
     isLoading: procedureLoding
-  } = useGetProceduresQuery(listRequest);
+  } = useFindProcdureByEncounterQuery(
+    {
+      encounterId: encounter?.id || encounter?.key,
+      page,
+      size: pageSize,
+      includeCancelled: showCanceled
+    },
+    { skip: !encounter?.id && !encounter?.key }
+  );
 
-  /** Utility: is the event target within form-ish/editable elements? */
+  const procedures = proceduresData?.data ?? [];
+  const totalCount = proceduresData?.totalCount ?? 0;
+
   const isFormField = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
     return (
-      node.closest(
-        `
-      input, textarea, select, button, [contenteditable="true"],
-      .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-datepicker,
-      .rs-picker-toggle, .rs-calendar, .rs-dropdown, .rs-auto-complete,
-      .rs-input-group, .rs-select, .rs-slider
-    `
-      ) !== null
+      node.closest(`
+        input, textarea, select, button, [contenteditable="true"],
+        .rs-input, .rs-picker, .rs-checkbox, .rs-btn, .rs-datepicker,
+        .rs-picker-toggle, .rs-calendar, .rs-dropdown, .rs-auto-complete,
+        .rs-input-group, .rs-select, .rs-slider
+      `) !== null
     );
   };
 
-  /** Utility: ignore clicks inside modals/popups/menus */
   const isInsideModalOrPopup = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
     return (
-      node.closest(
-        `
-      .rs-modal, .rs-drawer, .rs-picker-select-menu, .rs-picker-popup,
-      .my-modal, .my-popup
-    `
-      ) !== null
+      node.closest(`
+        .rs-modal, .rs-drawer, .rs-picker-select-menu,
+        .rs-picker-popup, .my-modal, .my-popup
+      `) !== null
     );
   };
 
-  /** Utility: detect if target is on a real data row (support RSuite/MUI/custom) */
   const isTableDataRow = (node: EventTarget | null) => {
     if (!(node instanceof Element)) return false;
     return (
       node.closest('.rs-table-row, .MuiTableRow-root, [data-row="true"], [role="row"]') !== null &&
-      // exclude header rows if library marks them similarly
       node.closest('.rs-table-row-header, .MuiTableHead-root, [data-header="true"]') === null
     );
   };
 
-  /** Clear current selection and reset a fresh procedure */
   const handleClear = useCallback(() => {
     setProcedure({
-      ...newApProcedure,
-      encounterKey: encounter?.key,
-      patientKey: patient?.key,
+      encounterId: encounter?.id || encounter?.key,
+      patientId: patient?.id || patient?.key,
       currentDepartment: true,
-      statusLkey: '3621653475992516', // default active/in-progress
-      indications: '', // set empty; change to indicationsDescription if needed
-      bodyPartLkey: null,
-      sideLkey: null,
-      faciltyLkey: null,
-      priorityLkey: null,
-      procedureLevelLkey: null,
-      departmentKey: null,
+      indicationId: null,
+      bodyPart: '',
+      side: null,
+      toFacilityId: null,
+      priority: 'NORMAL',
+      procedureLevel: 'MINOR',
+      toDepartmentId: null,
       categoryKey: null,
-      procedureNameKey: null
+      procedureId: null,
+      notes: null,
+      extraDocumentation: null,
+      scheduledDateTime: null
     });
     setShowPreview(false);
     setEditing(false);
-  }, [encounter?.key, patient?.key]);
+  }, [encounter?.key, encounter?.id, patient?.key, patient?.id]);
 
-  /** Toggle cancelled filter */
-  useEffect(() => {
-    const updatedFilters = [
-      { fieldName: 'encounter_key', operator: 'match', value: encounter?.key },
-      {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '3621690096636149'
-      }
-    ];
-    setListRequest(prev => ({ ...prev, filters: updatedFilters }));
-  }, [showCanceled, encounter?.key]);
-
-  /**
-   * Global listeners:
-   * - Click outside table => clear
-   * - Click inside table BUT NOT on a data row => clear
-   * - Press ESC => clear
-   */
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as EventTarget | null;
-
-      // Ignore clicks on inputs/modals/menus
       if (isFormField(target) || isInsideModalOrPopup(target)) return;
 
       const insideTable = tableContainerRef.current?.contains(target as Node) ?? false;
       const onRow = isTableDataRow(target);
 
-      // If outside table => clear
       if (!insideTable) {
         handleClear();
         return;
       }
 
-      // If inside table but NOT on a data row => clear (header, empty area, pagination, etc.)
       if (insideTable && !onRow) {
         handleClear();
       }
@@ -187,7 +174,6 @@ const Referrals = (props: any) => {
       if (e.key === 'Escape') handleClear();
     };
 
-    // Use capture to run before inner handlers
     document.addEventListener('pointerdown', onPointerDown, true);
     document.addEventListener('keydown', onKeyDown);
 
@@ -197,23 +183,24 @@ const Referrals = (props: any) => {
     };
   }, [handleClear]);
 
-  /** Open "Perform" modal */
   const OpenPerformModel = () => setOpenPerformModal(true);
 
-  /** Save procedure */
   const handleSave = async () => {
     try {
-      await saveProcedures({
+      const procedureData = {
         ...procedure,
-        statusLkey: '3621653475992516',
         indications: indicationsDescription,
-        encounterKey: encounter?.key,
-        patientKey: patient?.key
-      })
-        .unwrap()
-        .then(() => {
-          proRefetch();
-        });
+        encounterId: encounter?.id || encounter?.key,
+        patientId: patient?.id || patient?.key
+      };
+
+      if (procedure?.id) {
+        await updateProcedure({ id: procedure.id, ...procedureData }).unwrap();
+      } else {
+        await createProcedure(procedureData).unwrap();
+      }
+
+      proRefetch();
       handleClear();
       dispatch(notify('Saved successfully'));
     } catch (error) {
@@ -221,36 +208,83 @@ const Referrals = (props: any) => {
     }
   };
 
-  /** Close cancellation modal */
   const CloseCancellationReasonModel = () => setOpenCancellationReasonModel(false);
 
-  /** Cancel (soft-delete) procedure */
   const handleCancle = async () => {
     try {
-      await saveProcedures({
-        ...procedure,
-        statusLkey: '3621690096636149', // cancelled
-        deletedAt: Date.now()
-      })
-        .unwrap()
-        .then(() => {
-          proRefetch();
-        });
+      if (!procedure?.id) {
+        dispatch(notify({ msg: 'No procedure selected', sev: 'warning' }));
+        return;
+      }
 
-      dispatch(notify({ msg: 'Procedure deleted successfully', sev: 'success' }));
+      await cancelProcedure({
+        id: procedure.id,
+        cancellationReason: procedure.cancellationReason || ''
+      }).unwrap();
+
+      proRefetch();
+      dispatch(notify({ msg: 'Procedure cancelled successfully', sev: 'success' }));
       CloseCancellationReasonModel();
+      handleClear();
     } catch (error) {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
+      dispatch(notify({ msg: 'Cancellation failed', sev: 'warning' }));
+      console.error('Cancel error:', error);
     }
   };
 
-  /** Add new procedure: clear then open details modal */
   const handelAddNew = () => {
     handleClear();
     setOpenDetailsModal(true);
   };
 
-  /** Table columns (memoized to avoid re-creating on each render) */
+  const procedureIds = useMemo(() => {
+    const ids = procedures.map(p => Number(p.procedureId)).filter(id => !isNaN(id));
+
+    return Array.from(new Set(ids));
+  }, [procedures]);
+
+  const indicationIds = useMemo(() => {
+    const ids: Array<number | string> = [];
+
+    procedures.forEach(p => {
+      if (!p.indicationId) return;
+
+      if (Array.isArray(p.indicationId)) {
+        ids.push(...p.indicationId);
+      } else {
+        ids.push(p.indicationId);
+      }
+    });
+
+    return Array.from(new Set(ids));
+  }, [procedures]);
+
+  const { data: proceduresByIds } = useGetProceduresByIdsQuery(procedureIds, {
+    skip: !procedureIds.length
+  });
+  const { data: icdDiagnoses } = useGetIcdDiagnosesByIdsQuery(
+    { ids: indicationIds },
+    { skip: !indicationIds.length }
+  );
+
+  const proceduresMap = useMemo(() => {
+    const map = new Map<number, any>();
+    (proceduresByIds ?? []).forEach(p => {
+      map.set(p.id, p);
+    });
+    return map;
+  }, [proceduresByIds]);
+
+  const icdMap = useMemo(() => {
+    const map = new Map<number | string, any>();
+
+    (icdDiagnoses ?? []).forEach(d => {
+      map.set(d.id ?? d.icdDiagnosisUid, d);
+    });
+
+    return map;
+  }, [icdDiagnoses]);
+
   const tableColumns = useMemo(
     () => [
       {
@@ -262,12 +296,16 @@ const Referrals = (props: any) => {
       },
       {
         key: 'procedureName',
-        dataKey: 'procedureName',
         title: <Translate>Procedure Name</Translate>,
-        flexGrow: 1
-       
+        flexGrow: 1,
+        render: (rowData: any) => {
+          if (!proceduresByIds && procedureIds.length > 0) {
+            return <TableLoader />;
+          }
 
-
+          const proc = proceduresMap.get(Number(rowData.procedureId));
+          return proc?.name ?? '';
+        }
       },
       {
         key: 'scheduledDateTime',
@@ -278,45 +316,66 @@ const Referrals = (props: any) => {
           rowData?.scheduledDateTime ? formatDateWithoutSeconds(rowData.scheduledDateTime) : ' '
       },
       {
-        key: 'categoryKey',
-        dataKey: 'categoryKey',
+        key: 'categoryType',
+        dataKey: 'categoryType',
         title: <Translate>CATEGORY</Translate>,
         flexGrow: 1,
         render: (rowData: any) => {
+          if (!proceduresByIds && procedureIds.length > 0) {
+            return <TableLoader />;
+          }
+
+          const proc = proceduresMap.get(Number(rowData.procedureId));
+
           const category = CategoryLovQueryResponse?.object?.find(
-            (item: any) => item.key === rowData?.categoryKey
+            (item: any) => item.key === proc?.categoryType
           );
-          return category?.lovDisplayVale || ' ';
+
+          return category?.lovDisplayVale || '';
         }
       },
       {
-        key: 'priorityLkey',
-        dataKey: 'priorityLkey',
+        key: 'priority',
+        dataKey: 'priority',
         title: <Translate>PRIORITY</Translate>,
         flexGrow: 1,
-        render: (rowData: any) =>
-          rowData?.priorityLvalue?.lovDisplayVale ?? rowData?.priorityLkey ?? ''
+        render: (rowData: any) => {
+          return formatEnumString(rowData?.priority);
+        }
       },
       {
-        key: 'procedureLevelLkey',
-        dataKey: 'procedureLevelLkey',
+        key: 'procedureLevel',
+        dataKey: 'procedureLevel',
         title: <Translate>LEVEL</Translate>,
         flexGrow: 1,
-        render: (rowData: any) =>
-          rowData?.procedureLevelLvalue?.lovDisplayVale ?? rowData?.procedureLevelLkey ?? ''
+        render: (rowData: any) => {
+          return formatEnumString(rowData?.procedureLevel);
+        }
       },
       {
-        key: 'indications',
-        dataKey: 'indications',
+        key: 'indicationId',
         title: <Translate>INDICATIONS</Translate>,
-        flexGrow: 1
-      },
-      {
-        key: 'statusLkey',
-        dataKey: 'statusLkey',
-        title: <Translate>STATUS</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => rowData?.statusLvalue?.lovDisplayVale ?? rowData?.statusLkey ?? ''
+        render: (rowData: any) => {
+          if (!rowData?.indicationId) return '';
+
+          if (!icdDiagnoses && indicationIds.length > 0) {
+            return <TableLoader />;
+          }
+
+          const ids = Array.isArray(rowData.indicationId)
+            ? rowData.indicationId
+            : [rowData.indicationId];
+
+          const names = ids
+            .map((id: any) => {
+              const diag = icdMap.get(Number(id));
+              return diag?.icdShortDescription || diag?.icdCode;
+            })
+            .filter(Boolean);
+
+          return names.join(', ');
+        }
       },
       {
         key: 'attachments',
@@ -327,48 +386,67 @@ const Referrals = (props: any) => {
           return (
             <MdAttachFile
               size={20}
-              fill={rowData?.key ? "var(--primary-gray)" : "#ccc"}
+              fill={rowData?.id ? 'var(--primary-gray)' : '#ccc'}
               onClick={() => {
-                if (rowData?.key) {
+                if (rowData?.id) {
                   setProcedure(rowData);
                   setAttachmentsModalOpen(true);
                 }
               }}
-              style={{ cursor: rowData?.key ? 'pointer' : 'not-allowed' }}
+              className={rowData?.id ? 'attachment-icon active' : 'attachment-icon disabled'}
             />
           );
         }
       },
-      //dont remove this comment 
-      //please dont remove this comment
-
-      // {
-      //   key: 'perform',
-      //   dataKey: '',
-      //   title: <Translate>PERFORM</Translate>,
-      //   flexGrow: 1,
-      //   render: (rowData: any) => {
-      //     const isDisabled = !rowData?.currentDepartment;
-      //     return (
-      //       <FaBedPulse
-      //         size={22}
-      //         fill={isDisabled ? '#ccc' : 'var(--primary-gray)'}
-      //         style={{ cursor: isDisabled ? 'not-allowed' : 'pointer' }}
-      //         onClick={!isDisabled ? OpenPerformModel : undefined}
-      //       />
-      //     );
-      //   }
-      // },
       {
         key: 'edit',
         dataKey: '',
         title: <Translate>EDIT</Translate>,
         flexGrow: 1,
-        render: () => (
+        render: (rowData: any) => (
           <MdModeEdit
             size={24}
             fill="var(--primary-gray)"
-            onClick={() => setOpenDetailsModal(true)}
+            className="edit-icon"
+            onClick={async e => {
+              e.stopPropagation();
+
+              if (!rowData?.procedureId) {
+                dispatch(notify({ msg: 'Procedure ID is missing', sev: 'warning' }));
+                return;
+              }
+
+              try {
+                const procedureRes = await getProcedureById({
+                  id: rowData.procedureId
+                }).unwrap();
+
+                const updatedProcedure = {
+                  ...rowData,
+                  procedureId: procedureRes.id,
+                  categoryKey:
+                    procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
+
+                  toDepartmentId:
+                    rowData.toDepartmentId ||
+                    procedureRes.toDepartmentId ||
+                    procedureRes.departmentId ||
+                    procedureRes.department?.id,
+
+                  procedureLevel:
+                    rowData.procedureLevel ||
+                    procedureRes.procedureLevel ||
+                    procedureRes.level ||
+                    procedureRes.procedureLevelKey
+                };
+
+                setProcedure(updatedProcedure);
+                setOpenDetailsModal(true);
+              } catch (error) {
+                console.error('GET PROCEDURE ERROR', error);
+                dispatch(notify({ msg: 'Failed to load procedure details', sev: 'warning' }));
+              }
+            }}
           />
         )
       },
@@ -381,7 +459,7 @@ const Referrals = (props: any) => {
             <span>{rowData?.createdBy ?? ''}</span>
             <br />
             <span className="date-table-style">
-              {rowData?.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}
+              {rowData?.createdDate ? formatDateWithoutSeconds(rowData.createdDate) : ''}
             </span>
           </>
         )
@@ -392,10 +470,10 @@ const Referrals = (props: any) => {
         expandable: true,
         render: (rowData: any) => (
           <>
-            <span>{rowData?.updatedBy ?? ''}</span>
+            <span>{rowData?.lastModifiedBy ?? ''}</span>
             <br />
             <span className="date-table-style">
-              {rowData?.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt) : ''}
+              {rowData?.lastModifiedDate ? formatDateWithoutSeconds(rowData.lastModifiedDate) : ''}
             </span>
           </>
         )
@@ -406,10 +484,10 @@ const Referrals = (props: any) => {
         expandable: true,
         render: (rowData: any) => (
           <>
-            <span>{rowData?.deletedBy ?? ''}</span>
+            <span>{rowData?.cancelledBy ?? ''}</span>
             <br />
             <span className="date-table-style">
-              {rowData?.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}
+              {rowData?.cancelledDate ? formatDateWithoutSeconds(rowData.cancelledDate) : ''}
             </span>
           </>
         )
@@ -422,45 +500,73 @@ const Referrals = (props: any) => {
         expandable: true
       }
     ],
-    [CategoryLovQueryResponse]
+    [
+      CategoryLovQueryResponse,
+      proceduresMap,
+      dispatch,
+      getProcedureById,
+      icdMap,
+      proceduresByIds,
+      icdDiagnoses,
+      procedureIds,
+      indicationIds
+    ]
   );
 
-  const pageIndex = (listRequest.pageNumber ?? 1) - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = procedures?.extraNumeric ?? 0;
-
-  /** Pagination handlers */
   const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest(prev => ({ ...prev, pageNumber: newPage + 1 }));
+    setPage(newPage);
   };
+
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setListRequest(prev => ({
-      ...prev,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    }));
+    setPageSize(parseInt(event.target.value, 10));
+    setPage(0);
   };
+
+  useEffect(() => {
+    if (openDetailsModal && procedure?.toFacilityId) {
+      getDepartmentsByFacility({ facilityId: procedure.toFacilityId });
+    }
+  }, [openDetailsModal, procedure?.toFacilityId, getDepartmentsByFacility]);
 
   return (
     <>
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
-          data={procedures?.object ?? []}
-          onRowClick={rowData => {
-            setProcedure(rowData);
-            setEditing(rowData?.statusLkey === '3621690096636149' ? true : false); // cancelled => editing disabled
-            setShowPreview(true);
+          data={procedures}
+          onRowClick={async rowData => {
+            try {
+              if (rowData?.procedureId) {
+                const procedureRes = await getProcedureById({
+                  id: rowData.procedureId
+                }).unwrap();
+
+                const updatedProcedure = {
+                  ...rowData,
+                  categoryKey:
+                    procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
+                  procedureId: procedureRes.id
+                };
+
+                setProcedure(updatedProcedure);
+                setEditing(rowData?.status === 'CANCELLED');
+                setShowPreview(true);
+              } else {
+                setProcedure(rowData);
+                setEditing(rowData?.status === 'CANCELLED');
+                setShowPreview(true);
+              }
+            } catch (error) {
+              console.error('Failed to load procedure details:', error);
+              setProcedure(rowData);
+              setEditing(rowData?.status === 'CANCELLED');
+              setShowPreview(true);
+            }
           }}
           loading={procedureLoding}
           rowClassName={isSelected}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortChange={(sortBy, sortType) =>
-            setListRequest(prev => ({ ...prev, sortBy, sortType }))
-          }
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
+          page={page}
+          rowsPerPage={pageSize}
           totalCount={totalCount}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
@@ -469,28 +575,21 @@ const Referrals = (props: any) => {
               <div className="bt-left-2">
                 <MyButton
                   onClick={() => setOpenCancellationReasonModel(true)}
-                  disabled={
-                    edit
-                      ? true
-                      : procedure?.key
-                        ? (procedure?.statusLvalue?.lovCode ?? '') === 'PROC_CANCL'
-                        : true
-                  }
+                  disabled={edit ? true : procedure?.id ? procedure?.status === 'CANCELLED' : true}
                   prefixIcon={() => <BlockIcon />}
                 >
                   Cancel
                 </MyButton>
                 <Checkbox
-                  checked={!showCanceled}
+                  checked={showCanceled}
                   onChange={() => {
                     setShowCanceled(!showCanceled);
-                    if (showCanceled === false) setEditing(true);
+                    if (!showCanceled) setEditing(true);
                   }}
                 >
                   Show Cancelled
                 </Checkbox>
               </div>
-
               <div className="bt-right-2">
                 <MyButton disabled={edit} onClick={handelAddNew}>
                   Add Procedure
@@ -545,6 +644,7 @@ const Referrals = (props: any) => {
         object={procedure}
         setObject={setProcedure}
         handleCancle={handleCancle}
+        required
       />
 
       <MyModal
@@ -557,9 +657,9 @@ const Referrals = (props: any) => {
           <EncounterAttachment
             localEncounter={encounter}
             source="PROCEDURE_REQUEST_ATTACHMENT"
-            sourceId={procedure?.key ? Number(procedure.key) : undefined}
+            sourceId={procedure?.id ? Number(procedure.id) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />

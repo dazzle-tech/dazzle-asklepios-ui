@@ -4,7 +4,7 @@ import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useLazyGetActiveAppointableDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetActiveAppointablePractitionerQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetActiveAppointablePractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useGetActiveAppointableProceduresQuery } from '@/services/setup/procedure/procedureService';
 import React, { useEffect, useRef, useState } from 'react';
 import { GrScheduleNew } from "react-icons/gr";
@@ -41,11 +41,57 @@ const AddEditResources = ({
        const selectedFacility = authSlice.selectedDepartment.facilityId;
      
   const ResourceTypeEnum = useEnumOptions("ResourceType");
+  
+  const DEFAULT_RESOURCE_TYPE = 'CLINIC';
   const [resourceOptions, setResourceOptions] = useState<any[]>([]);
 
   const [resourceLabelField, setResourceLabelField] = useState<string>('id');
   const [isLoadingResources, setIsLoadingResources] = useState<boolean>(false);
   const prevResourceTypeRef = useRef<string>('');
+
+  // Set default resource type to CLINIC for new resources
+  useEffect(() => {
+    // Only set default for new resources (when resource.id is not set)
+    if (resource?.id) {
+      return;
+    }
+
+    // Skip if resourceType is already set to a valid value
+    if (resource?.resourceType && resource.resourceType !== null && resource.resourceType !== '') {
+      return;
+    }
+
+    // Set default to CLINIC when modal opens for new resource
+    if (open && Array.isArray(ResourceTypeEnum) && ResourceTypeEnum.length > 0) {
+      const normalize = (v: any) => String(v ?? '').trim().toLowerCase();
+
+      const match =
+        ResourceTypeEnum.find(
+          (x: any) =>
+            normalize(x?.label) === normalize(DEFAULT_RESOURCE_TYPE) ||
+            normalize(x?.value) === normalize(DEFAULT_RESOURCE_TYPE)
+        ) || null;
+
+      if (match?.value) {
+        setResource({
+          ...resource,
+          resourceType: match.value
+        });
+      } else {
+        // Fallback: use DEFAULT_RESOURCE_TYPE directly
+        setResource({
+          ...resource,
+          resourceType: DEFAULT_RESOURCE_TYPE
+        });
+      }
+    } else if (open) {
+      // Set default even if enum not loaded yet
+      setResource({
+        ...resource,
+        resourceType: DEFAULT_RESOURCE_TYPE
+      });
+    }
+  }, [ResourceTypeEnum, resource?.resourceType, resource?.id, open]);
 
   // Service hooks for fetching resources based on type
   const { data: diagnosticTestsData, isFetching: isLoadingTests } = useGetAllActiveAppointableDiagnosticTestsQuery(
@@ -53,7 +99,7 @@ const AddEditResources = ({
     { skip: resource.resourceType !== 'MEDICAL_TEST' || !open }
   );
   
-  const { data: practitionersData, isFetching: isLoadingPractitioners } = useGetActiveAppointablePractitionerQuery(
+  const { data: practitionersData, isFetching: isLoadingPractitioners } = useGetActiveAppointablePractitionersQuery(
     { page: 0, size: 1000, sort: 'id,asc' },
     { skip: resource.resourceType !== 'PRACTITIONER' || !open }
   );
@@ -202,6 +248,7 @@ useEffect(() => {
               width={520}
               required
               searchable={false}
+              disabled
             />
             {(() => {
               // Static logic - easy to read and edit

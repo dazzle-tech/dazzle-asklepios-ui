@@ -16,7 +16,6 @@ export const diagnosticTestNormalRangeService = createApi({
   baseQuery: BaseQuery,
   tagTypes: ["DiagnosticTestNormalRange"],
   endpoints: (builder) => ({
-    // 🔹 Get all normal ranges (paginated)
     getAllDiagnosticTestNormalRanges: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = "id,asc" }) => ({
         url: "/api/setup/diagnostic-test-normal-ranges",
@@ -34,7 +33,6 @@ export const diagnosticTestNormalRangeService = createApi({
       providesTags: ["DiagnosticTestNormalRange"],
     }),
 
-    // 🔹 Get by testId (paginated)
     getDiagnosticTestNormalRangesByTestId: builder.query<PagedResult<any>, { testId: number; page: number; size: number }>({
       query: ({ testId, page, size }) => ({
         url: `/api/setup/diagnostic-test-normal-ranges/by-test/${testId}`,
@@ -51,7 +49,7 @@ export const diagnosticTestNormalRangeService = createApi({
       },
       providesTags: ["DiagnosticTestNormalRange"],
     }),
-     // 🔹 Get by testId (paginated)
+
     getDiagnosticTestNormalRangesByProfileTestId: builder.query<PagedResult<any>, { profileTestId: number; page: number; size: number }>({
       query: ({ profileTestId, page, size }) => ({
         url: `/api/setup/diagnostic-test-normal-ranges/by-profile-test/${profileTestId}`,
@@ -69,8 +67,6 @@ export const diagnosticTestNormalRangeService = createApi({
       providesTags: ["DiagnosticTestNormalRange"],
     }),
 
-
-    // 🔹 Get by ID
     getDiagnosticTestNormalRangeById: builder.query<any, number>({
       query: (id) => ({
         url: `/api/setup/diagnostic-test-normal-ranges/${id}`,
@@ -79,7 +75,6 @@ export const diagnosticTestNormalRangeService = createApi({
       providesTags: (result, error, id) => [{ type: "DiagnosticTestNormalRange", id }],
     }),
 
-    // 🔹 Create new
     createDiagnosticTestNormalRange: builder.mutation<any, any>({
       query: (body) => ({
         url: "/api/setup/diagnostic-test-normal-ranges",
@@ -89,7 +84,6 @@ export const diagnosticTestNormalRangeService = createApi({
       invalidatesTags: ["DiagnosticTestNormalRange"],
     }),
 
-    // 🔹 Update existing
     updateDiagnosticTestNormalRange: builder.mutation<any, { id: number; body: any }>({
       query: ({ id, body }) => ({
         url: `/api/setup/diagnostic-test-normal-ranges/${id}`,
@@ -102,7 +96,6 @@ export const diagnosticTestNormalRangeService = createApi({
       ],
     }),
 
-    // 🔹 Delete
     deleteDiagnosticTestNormalRange: builder.mutation<void, number>({
       query: (id) => ({
         url: `/api/setup/diagnostic-test-normal-ranges/${id}`,
@@ -110,7 +103,6 @@ export const diagnosticTestNormalRangeService = createApi({
       }),
       invalidatesTags: ["DiagnosticTestNormalRange"],
     }),
-    // 🔹 Get LOVs by normalRangeId
 
     getLovsByNormalRangeId: builder.query<string[], number>({
       query: (normalRangeId) => ({
@@ -126,6 +118,7 @@ export const {
   useGetAllDiagnosticTestNormalRangesQuery,
   useGetDiagnosticTestNormalRangesByTestIdQuery,
   useGetDiagnosticTestNormalRangesByProfileTestIdQuery,
+  useLazyGetDiagnosticTestNormalRangesByProfileTestIdQuery,
   useGetDiagnosticTestNormalRangeByIdQuery,
   useCreateDiagnosticTestNormalRangeMutation,
   useUpdateDiagnosticTestNormalRangeMutation,

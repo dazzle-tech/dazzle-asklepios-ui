@@ -25,7 +25,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import Section from '@/components/Section';
 import SectionContainer from '@/components/SectionsoContainer';
-import DiagnosticsOrder from '../diagnostics-order';
+import DiagnosticsOrder from '../diagnostics-order-new';
 import ActiveIngrediantList from './ActiveIngredient';
 import Substitues from './Substitutes';
 import PlusIcon from '@rsuite/icons/Plus';

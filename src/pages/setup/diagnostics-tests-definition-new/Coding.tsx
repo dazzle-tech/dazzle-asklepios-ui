@@ -1,40 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { Form } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import './styles.less';
+import React, { useEffect, useState } from 'react';
 import { FaNewspaper } from 'react-icons/fa6';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { Form } from 'rsuite';
+import './styles.less';
 
-import MyInput from '@/components/MyInput';
 import ChildModal from '@/components/ChildModal';
-import Translate from '@/components/Translate';
-import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import type { DiagnosticTest } from '@/types/model-types-new';
 import { notify } from '@/utils/uiReducerActions';
 
 
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 
 import {
-  useGetDiagnosticTestCodingsByTestQuery,
   useAddDiagnosticTestCodingMutation,
   useDeleteDiagnosticTestCodingMutation,
   useGetDiagnosticCodeOptionsByTypeQuery,
+  useGetDiagnosticTestCodingsByTestQuery,
 } from '@/services/setup/diagnosticTest/diagnosticTestCodingService';
 
+import { useEnumOptions } from '@/services/enumsApi';
 import type { DiagnosticTestCoding } from '@/types/model-types-new';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEnumOptions } from '@/services/enumsApi';
-import { formatEnumString } from '@/utils';
 
 type CodingProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
-  diagnosticsTest: { id: number } | null;
+  diagnosticsTest: DiagnosticTest | null;
 };
 
 const Coding: React.FC<CodingProps> = ({ open, setOpen, diagnosticsTest }) => {
@@ -50,9 +48,6 @@ const Coding: React.FC<CodingProps> = ({ open, setOpen, diagnosticsTest }) => {
   const [sortType, setSortType] = useState<'asc' | 'desc' | undefined>('asc');
 
 
-  const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
-
-
   const {
     data: codingPage,
     refetch: fetchCoding,
@@ -60,25 +55,25 @@ const Coding: React.FC<CodingProps> = ({ open, setOpen, diagnosticsTest }) => {
   } = useGetDiagnosticTestCodingsByTestQuery(
     diagnosticsTest?.id != null
       ? {
-          diagnosticTestId: diagnosticsTest.id,
-          page: 0,
-          size: 100,
-          sort: 'id,asc',
-        }
+        diagnosticTestId: diagnosticsTest.id,
+        page: 0,
+        size: 100,
+        sort: 'id,asc',
+      }
       : skipToken
   );
 
   const codingList: DiagnosticTestCoding[] = codingPage?.data ?? [];
 
-  
+
   const { data: codeOptionsPage } = useGetDiagnosticCodeOptionsByTypeQuery(
     diagnosticCoding.codeType
       ? {
-          type: String(diagnosticCoding.codeType),
-          page: 0,
-          size: 50,
-          sort: 'id,asc',
-        }
+        type: String(diagnosticCoding.codeType),
+        page: 0,
+        size: 50,
+        sort: 'id,asc',
+      }
       : skipToken
   );
 
@@ -134,12 +129,12 @@ const Coding: React.FC<CodingProps> = ({ open, setOpen, diagnosticsTest }) => {
   });
 
 
-const codingTypeMap = React.useMemo(() => {
-  return (codingType ?? []).reduce((acc: any, cur: any) => {
-    acc[cur.value] = cur.label;
-    return acc;
-  }, {});
-}, [codingType]);
+  const codingTypeMap = React.useMemo(() => {
+    return (codingType ?? []).reduce((acc: any, cur: any) => {
+      acc[cur.value] = cur.label;
+      return acc;
+    }, {});
+  }, [codingType]);
 
 
   const tableColumns = [
@@ -181,12 +176,12 @@ const codingTypeMap = React.useMemo(() => {
         codeId: diagnosticCoding.codeId,
       }).unwrap();
 
-      dispatch(notify({msg:'The Code was saved successfully',sev:"success"}));
+      dispatch(notify({ msg: 'The Code was saved successfully', sev: "success" }));
       fetchCoding();
       setDiagnosticCoding({});
       setOpenChild(false);
     } catch {
-    
+
     }
   };
 
@@ -205,7 +200,7 @@ const codingTypeMap = React.useMemo(() => {
     }
   };
 
-  
+
   const conjureFormContentOfMainModal = (stepNumber: number) => {
     switch (stepNumber) {
       case 0:
@@ -253,7 +248,7 @@ const codingTypeMap = React.useMemo(() => {
     }
   };
 
-  
+
   const conjureFormContentOfChildModal = () => {
     return (
       <Form fluid>

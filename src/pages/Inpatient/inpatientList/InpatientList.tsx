@@ -308,19 +308,19 @@ const InpatientList = () => {
               {/* Checkboxes*/}
               <MyInput
                 width={110}
-                fieldName="withPrescription"
+                fieldName="hasPrescription"
                 fieldType="checkbox"
                 record={record}
                 setRecord={setRecord}
-                label="With Prescription"
+                label="Has Prescription"
               />
               <MyInput
                 width={80}
-                fieldName="hasOrders"
+                fieldName="hasOrder"
                 fieldType="checkbox"
                 record={record}
                 setRecord={setRecord}
-                label="Has Orders"
+                label="Has Order"
               />
               <MyInput
                 width={80}

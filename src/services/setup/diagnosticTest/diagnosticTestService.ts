@@ -16,6 +16,16 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+type DiagnosticTest = {
+  id: string;
+  name: string;
+  type: string;
+  internalCode?: string;
+  price?: number;
+  currency?: string;
+  specialNotes?: string;
+};
+
 export const diagnosticTestService = createApi({
   reducerPath: "newDiagnosticTestApi",
   baseQuery: BaseQuery,
@@ -125,17 +135,17 @@ export const diagnosticTestService = createApi({
     }),
 
     // 🔹 Get single diagnostic test
-    getDiagnosticTestById: builder.query({
+    getDiagnosticTestById: builder.query<
+      { data: DiagnosticTest },
+      string
+    >({
       query: (id) => ({
         url: `/api/setup/diagnostic-test/${id}`,
         method: "GET",
       }),
-      transformResponse: (response: any[], meta) => {
-        const headers = meta?.response?.headers;
+      transformResponse: (response: DiagnosticTest) => {
         return {
           data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
         };
       },
       providesTags: (result, error, id) => [{ type: "DiagnosticTest", id }],
@@ -164,6 +174,19 @@ export const diagnosticTestService = createApi({
       ],
     }),
 
+    getDiagnosticTestsByIds: builder.query<any[], { ids: (number | string)[] }>({
+      query: ({ ids }) => ({
+        url: "/api/setup/diagnostic-test/by-ids",
+        method: "GET",
+        params: {
+          ids: ids.join(","),
+        },
+      }),
+      providesTags: ["DiagnosticTest"],
+    }),
+
+
+
     // 🔹 Toggle active status
     toggleDiagnosticTestActive: builder.mutation({
       query: (id) => ({
@@ -186,5 +209,7 @@ export const {
   useUpdateDiagnosticTestMutation,
   useToggleDiagnosticTestActiveMutation,
   useGetAllDiagnosticTestsByNameAndTypeQuery,
+  useLazyGetDiagnosticTestByIdQuery,
+  useGetDiagnosticTestsByIdsQuery,
   useGetAllActiveAppointableDiagnosticTestsQuery
 } = diagnosticTestService;

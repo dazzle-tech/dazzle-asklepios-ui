@@ -23,11 +23,12 @@ import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyInput from '@/components/MyInput';
 import { useGetAllMedicationCategoriesQuery } from '@/services/setup/medication-categories/MedicationCategoriesService';
-import { useGetAllMedicationCategoryClassesByCategoryQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
+import { useGetAllMedicationCategoriesClassesQuery, useGetAllMedicationCategoryClassesByCategoryQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
+import { ActiveIngredient } from '@/types/model-types-new';
 const ActiveIngredientsSetup = () => {
   const dispatch = useAppDispatch();
-  type ActiveIngredientRow = ApActiveIngredient & {
+  type ActiveIngredientRow = ActiveIngredient & {
     id?: number | string;
     isActive?: boolean | null;
   };
@@ -170,6 +171,10 @@ const ActiveIngredientsSetup = () => {
     isFetching: isFetchingByAtcCode
   } = useGetActiveIngredientsByAtcCodeQuery(atcQueryParams, { skip: !isAtcFilter });
 
+  const {
+    data: medClassList,
+  } = useGetAllMedicationCategoriesClassesQuery({});
+
   const [toggleActiveIngredient, toggleActiveIngredientMutation] =
     useToggleActiveIngredientIsActiveMutation();
 
@@ -254,7 +259,7 @@ const ActiveIngredientsSetup = () => {
 
   // class name for selected row
   const getRowIdentifier = (row?: ActiveIngredientRow | null) =>
-    row?.id ?? row?.key ?? null;
+    row?.id ?? row?.id ?? null;
 
   const isSelected = (rowData?: ActiveIngredientRow) => {
     if (!rowData) return '';
@@ -268,7 +273,7 @@ const ActiveIngredientsSetup = () => {
 
   // Icons column (Edit,Does Schedule, reactive/Deactivate)
   const iconsForActions = (rowData: ActiveIngredientRow) => {
-    const isRowActive = rowData?.isActive ?? rowData?.isValid;
+    const isRowActive = rowData?.isActive
     return (
     <div className="container-of-icons">
       <MdModeEdit
@@ -433,10 +438,14 @@ const ActiveIngredientsSetup = () => {
       title: <Translate>Active Ingredients Name</Translate>
     },
     {
-      key: 'drugClass',
+      key: 'drugClassId',
       title: <Translate>Medication Class</Translate>,
-      render: rowData =>
-        rowData.drugClassLvalue ? rowData.drugClassLvalue.lovDisplayVale : rowData.drugClassLkey
+      render: rowData => {
+                const medClass = medClassList?.find(
+                 item => item.id === rowData.drugClassId
+                );
+                return medClass ? medClass.name : rowData.drugClassId;
+      }
     },
     {
       key: 'atcCode',

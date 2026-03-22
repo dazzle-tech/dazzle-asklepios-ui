@@ -18,7 +18,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 
 import { MedicalSheets } from '@/config/modules-config';
-import { useCompleteEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
 import './styles.less';
@@ -44,8 +44,7 @@ const NurseStation = () => {
   const [generateNurseReport] = useGenerateNurseSummaryReportMutation();
 
   // Nurse sheets
-  const departmentKeyToUse = localEncounter?.departmentKey || '5001';
-  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(departmentKeyToUse);
+  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(localEncounter?.departmentId);
 
   const allowedSheetCodes = useMemo(
     () => new Set((nurseSheets ?? []).map((s: any) => s.medicalSheet)),
@@ -84,11 +83,21 @@ const NurseStation = () => {
       navigate('/encounter-list');
       return;
     }
-    setEdit(propsData?.edit || localEncounter?.encounterStatusLvalue?.valueCode === 'CLOSED');
+    setEdit(propsData?.edit || localEncounter?.status === 'CLOSED');
   }, [propsData, localEncounter]);
-
+  
   // Complete encounter
-  const [completeEncounter] = useCompleteEncounterMutation();
+  const [completeEncounter,completeEncounterMutation] = useCompleteEncounterMutation();
+   useEffect(() => {
+      if (
+        localEncounter?.encounterType == 'INPATIENT' &&
+        completeEncounterMutation.status === 'fulfilled'
+      ) {
+        navigate('/inpatient-encounters-list');
+      } else if (completeEncounterMutation.status === 'fulfilled') {
+        navigate('/encounter-list');
+      }
+    }, [completeEncounterMutation]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -129,7 +138,7 @@ const NurseStation = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `nurse-summary-${localEncounter.key}.pdf`;
+      link.download = `nurse-summary-${localEncounter.id}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -192,7 +201,7 @@ const NurseStation = () => {
                 Generate Report
               </MyButton>
 
-              {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
+              {/* {propsData?.encounter?.editable && !propsData?.encounter?.discharge && ( */}
                 <MyButton
                   disabled={edit}
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -201,7 +210,7 @@ const NurseStation = () => {
                 >
                   <Translate>Complete Visit</Translate>
                 </MyButton>
-              )}
+              {/* )} */}
             </div>
           </div>
 

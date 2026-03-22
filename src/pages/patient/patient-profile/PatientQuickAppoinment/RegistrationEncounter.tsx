@@ -1,471 +1,437 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MyInput from '@/components/MyInput';
-import { Form, Tag } from 'rsuite';
-import { initialListRequest, ListRequest } from '@/types/types';
-// import {
-//   useGetResourcesAvailabilityTimeQuery
-// } from '@/services/appointmentService';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetEncountersQuery } from '@/services/encounterService';
-import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
-import { useGetAppointableDepartmentsQuery, useGetAppointableDepartmentByTypeQuery, useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
-import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
-import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { Form } from 'rsuite';
 import { useSelector } from 'react-redux';
 
-const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, localPatient }) => {
-  const mode = useSelector((state: any) => state.ui.mode);
+import type { PatientEncounter } from '@/types/model-types-new';
+import { newPatientEncounter } from '@/types/model-types-constructor-new';
+
+import { useEnumOptions } from '@/services/enumsApi';
+
+import {
+  useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
+  useLazyGetDepartmentByIdQuery
+} from '@/services/security/departmentService';
+
+import { useLazyGetPractitionersByDepartmentQuery } from '@/services/setup/practitioner/PractitionerDepartmentService';
+
+import {
+  useLazyCountTodayEncountersByFacilityQuery,
+  useLazyGetPreviousEncountersSameDepartmentQuery
+} from '@/services/encounters/patientEncounterService';
+
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+
+import './style.less';
+
+const RegistrationEncounter = ({
+  localEncounter,
+  setLocalEncounter,
+  isReadOnly,
+  localPatient,
+  localReferral,
+  openedFromReferral = false
+}: {
+  localEncounter: PatientEncounter;
+  setLocalEncounter: (updater: any) => void;
+  isReadOnly: boolean;
+  localPatient: any;
+  localReferral?: any;
+  openedFromReferral?: boolean;
+}) => {
+  const authSlice = useSelector((state: any) => state.auth);
+console.log("localReferral in RegistrationEncounter: ", localReferral); 
+  const selectedFacilityId =
+    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
+
+  const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
+
   const [validationResult] = useState({});
-  // const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
-  const [newOrFollowup, setNewOrFollowup] = useState({ state: true });
-  const [visitHistoryListRequest, setVisitHistoryListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    sortBy: 'plannedStartDate',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: localPatient.key || undefined
-      },
-      {
-        fieldName: 'resource_type_lkey',
-        operator: 'match',
-        value: localEncounter.resourceTypeLkey || undefined
-      }
-    ],
-    pageSize: 15
+
+  const EncounterTypeEnum = useEnumOptions('EncounterType', {
+    exclude: ['DAYCASE', 'INPATIENT']
   });
-  // Fetch visit history list response
-  const { data: visiterHistoryResponse, isFetching } =
-    useGetEncountersQuery(visitHistoryListRequest);
+  const EncounterReasonEnum = useEnumOptions('EncounterReason');
+  const EncounterPriorityEnum = useEnumOptions('EncounterPriority');
 
-  // Fetch today's encounters to calculate sequence daily number
-  const todayDate = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-  const [todayEncountersListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'planned_start_date',
-        operator: 'match',
-        value: todayDate
-      }
-    ],
-    pageSize: 10000 // Get all encounters for today
-  });
-  const { data: todayEncountersResponse } = useGetEncountersQuery(todayEncountersListRequest);
-
-  // Fetch encounters for visit sequence number calculation (by resource type, resource, and facility for today)
-  const [visitSequenceListRequest, setVisitSequenceListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'planned_start_date',
-        operator: 'match',
-        value: todayDate
-      },
-      {
-        fieldName: 'resource_type_lkey',
-        operator: 'match',
-        value: localEncounter.resourceTypeLkey || undefined
-      },
-      {
-        fieldName: 'resource_key',
-        operator: 'match',
-        value: localEncounter.resourceKey || undefined
-      },
-      {
-        fieldName: 'facility_key',
-        operator: 'match',
-        value: localEncounter.facilityKey || undefined
-      }
-    ],
-    pageSize: 10000
-  });
-  const { data: visitSequenceEncountersResponse } = useGetEncountersQuery(visitSequenceListRequest, {
-    skip: !localEncounter.resourceTypeLkey || !localEncounter.resourceKey || !localEncounter.facilityKey
-  });
-
-  // customise item appears on the select visit list
-  const modifiedData = (visiterHistoryResponse?.object ?? []).map(item => ({
-    ...item,
-    combinedLabel: `${item.visitId} , ${item?.plannedStartDate ?? ''} , ${item?.plannedEndDate ?? ''
-      }`
-  }));
-
-  // Fetch LOV data for various fields
-  // const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
-
-  const ResourceTypeEnum = useEnumOptions("ResourceType");
-  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
-  const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
-  const { data: visitTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
 
-  // Initialize List Request Filters
-  const { data: departmentListResponse } = useGetAppointableDepartmentsQuery({
-    facilityId: localEncounter?.facilityKey,
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  }, {
-    skip: !localEncounter?.facilityKey
-  });
-  // const [resourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
-  // // Fetches the list of resource availability times.
-  // const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
-  //   ...resourcesAvailabilityTimeListRequest,
-  //   pageSize: 10000
-  // }, {
-  //   skip: !localEncounter?.resourceKey
-  // });
-  const { data: dayCaseDepartmentListResponse } = useGetAppointableDepartmentByTypeQuery({
-    type: 'DAY_CASE',
-    facilityId: localEncounter?.facilityKey,
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  }, {
-    skip: !localEncounter?.facilityKey
-  });
-  // Fetches the list of resource availability times.
-  // const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery({
-  //   ...resourcesAvailabilityTimeListRequest,
-  //   pageSize: 10000
-  // }, {
-  //   skip: !localEncounter?.resourceKey
-  // });
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
-  // Fetches the list of active resources based on the selected resource type from the new ResourceService
-  const { data: resourcesByTypeResponse } = useGetActiveResourcesByTypeQuery(
-    {
-      resourceType: localEncounter?.resourceTypeLkey,
+  useEffect(() => {
+    if (!localEncounter) {
+      setLocalEncounter({ ...newPatientEncounter });
+      return;
+    }
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => ({
+      ...prevEncounter,
+      patientId: prevEncounter.patientId || patientId,
+      facilityId:
+        prevEncounter.facilityId ||
+        Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0)
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patientId, selectedFacilityId, localReferral?.toFacilityId]);
+
+  const [triggerCountToday, { data: todayCount, isFetching: isTodayCountFetching }] =
+    useLazyCountTodayEncountersByFacilityQuery();
+
+  useEffect(() => {
+    const facilityToUse = Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0);
+    if (!facilityToUse) return;
+
+    triggerCountToday({ facilityId: facilityToUse });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFacilityId, localReferral?.toFacilityId]);
+
+  const [deptPage, setDeptPage] = useState(0);
+  const deptSize = 20;
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
+
+  const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
+    useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
+
+  const [triggerGetDepartmentById, { data: referralDepartment }] = useLazyGetDepartmentByIdQuery();
+
+  const didApplyReferralPrefillRef = useRef(false);
+useEffect(() => {
+  if (!openedFromReferral) return;
+
+  const referralDepartmentId = Number(localReferral?.toDepartmentId ?? 0);
+  if (!referralDepartmentId) return;
+
+  triggerGetDepartmentById(referralDepartmentId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [openedFromReferral, localReferral?.toDepartmentId]);
+
+  useEffect(() => {
+    if (!openedFromReferral) return;
+    if (!referralDepartment) return;
+
+    const encounterTypeFromDepartment =
+      referralDepartment?.encounterType ??
+      null;
+
+    setAllDepartments(prevDepartments => {
+      const exists = prevDepartments.some(
+        (department: any) => Number(department?.id) === Number(referralDepartment?.id)
+      );
+      if (exists) return prevDepartments;
+      return [referralDepartment, ...prevDepartments];
+    });
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => ({
+      ...prevEncounter,
+      facilityId:
+        prevEncounter.facilityId ||
+        Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0),
+      encounterType: prevEncounter.encounterType || encounterTypeFromDepartment || undefined
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openedFromReferral, referralDepartment, localReferral?.toFacilityId, selectedFacilityId]);
+console.log("department fetched by ID: ", referralDepartment);
+  useEffect(() => {
+    if (!openedFromReferral) return;
+    if (!referralDepartment?.id) return;
+    if (didApplyReferralPrefillRef.current) return;
+    if (!localEncounter?.encounterType) return;
+
+    setLocalEncounter((prevEncounter: PatientEncounter) => ({
+      ...prevEncounter,
+      facilityId:
+        prevEncounter.facilityId ||
+        Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0),
+      departmentId: Number(prevEncounter.departmentId || referralDepartment.id),
+      practitionerId: prevEncounter.practitionerId ?? null
+    }));
+
+    didApplyReferralPrefillRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    openedFromReferral,
+    referralDepartment?.id,
+    localEncounter?.encounterType,
+    localReferral?.toFacilityId,
+    selectedFacilityId
+  ]);
+
+  const prevKeysRef = useRef<{ facilityId?: number; encounterType?: string }>({});
+
+  useEffect(() => {
+    const facilityIdNum = Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0);
+    if (!facilityIdNum || !localEncounter?.encounterType) return;
+
+    const previousKeys = prevKeysRef.current;
+
+    const facilityChanged =
+      previousKeys.facilityId != null && previousKeys.facilityId !== facilityIdNum;
+    const typeChanged =
+      previousKeys.encounterType != null &&
+      previousKeys.encounterType !== localEncounter.encounterType;
+
+    prevKeysRef.current = {
+      facilityId: facilityIdNum,
+      encounterType: localEncounter.encounterType
+    };
+
+    if (facilityChanged || typeChanged) {
+      setDeptPage(0);
+      setAllDepartments([]);
+
+      setLocalEncounter((prevEncounter: PatientEncounter) => ({
+        ...prevEncounter,
+        facilityId: facilityIdNum,
+        departmentId:
+          openedFromReferral && Number(localReferral?.toDepartmentId ?? 0)
+            ? Number(localReferral.toDepartmentId)
+            : 0,
+        practitionerId: null,
+        followUpEncounterId: null
+      }));
+    } else {
+      setLocalEncounter((prevEncounter: PatientEncounter) => ({
+        ...prevEncounter,
+        facilityId: prevEncounter.facilityId || facilityIdNum
+      }));
+    }
+
+    triggerDepartments({
+      facilityId: facilityIdNum,
+      encounterType: localEncounter.encounterType,
       page: 0,
-      size: 100
-    },
-    {
-      skip: !localEncounter?.resourceTypeLkey
-    }
-  );
-
-  // Fetch all practitioners for lookup
-  const { data: practitionersResponse } = useGetAllPractitionersQuery({
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  });
-
-  // Fetch all departments for lookup
-  const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
-
-  // Fetch all diagnostic tests for lookup
-  const { data: diagnosticTestsResponse } = useGetAllDiagnosticTestsQuery({
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  });
-
-  // Create lookup maps
-  const practitionerMap = useMemo(() => {
-    if (!practitionersResponse?.data) return {};
-    const map = {};
-    practitionersResponse.data.forEach(practitioner => {
-      if (practitioner.key) map[practitioner.key] = practitioner;
-      if (practitioner.id) map[practitioner.id] = practitioner;
+      size: deptSize,
+      sort: 'id,asc'
     });
-    return map;
-  }, [practitionersResponse]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedFacilityId,
+    localReferral?.toFacilityId,
+    localReferral?.toDepartmentId,
+    localEncounter?.encounterType,
+    openedFromReferral
+  ]);
 
-  const departmentMap = useMemo(() => {
-    if (!allDepartments) return {};
-    const map = {};
-    allDepartments.forEach(dept => {
-      if (dept.key) map[dept.key] = dept;
-      if (dept.id) map[dept.id] = dept;
+  useEffect(() => {
+    const facilityIdNum = Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0);
+    if (!facilityIdNum || !localEncounter?.encounterType) return;
+    if (deptPage === 0) return;
+
+    triggerDepartments({
+      facilityId: facilityIdNum,
+      encounterType: localEncounter.encounterType,
+      page: deptPage,
+      size: deptSize,
+      sort: 'id,asc'
     });
-    return map;
-  }, [allDepartments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deptPage, selectedFacilityId, localReferral?.toFacilityId, localEncounter?.encounterType]);
 
-  const diagnosticTestMap = useMemo(() => {
-    if (!diagnosticTestsResponse?.data) return {};
-    const map = {};
-    diagnosticTestsResponse.data.forEach(test => {
-      if (test.key) map[test.key] = test;
-      if (test.id) map[test.id] = test;
-    });
-    return map;
-  }, [diagnosticTestsResponse]);
+  useEffect(() => {
+    const rows = deptList?.data ?? [];
+    if (!rows.length) return;
 
-  // Transform resources to add display names based on resource type
-  const transformedResources = useMemo(() => {
-    if (!resourcesByTypeResponse?.data) return [];
-    
-    return resourcesByTypeResponse.data.map(resource => {
-      let displayName = resource.resourceKey || '';
-      const resourceType = resource.resourceType;
-      const lookupKey = resource.resourceKey ;
-      // Based on resource type, look up the appropriate name
-      if (resourceType === 'PRACTITIONER') {
-        // For PRACTITIONER resources, look up in practitioner map
-        // Try multiple possible key fields - resourceKey is the reference to the practitioner ID
-       
-        const practitioner = lookupKey ? practitionerMap[lookupKey] : null;
-        
-        if (practitioner) {
-          displayName = practitioner.practitionerFullName || 
-                       `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim();
-        }
-      } 
-      else if (['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(resourceType)) {
-        // For department-based resources, look up in department map
-        // resourceKey contains the reference to the department ID
-       
-        const department = lookupKey ? departmentMap[lookupKey] : null;
-        
-        if (department) {
-          displayName = department.name ;
-        } 
-      }
-      else if (['MEDICAL_TEST'].includes(resourceType)) {
-        // For diagnostic test resources, look up in diagnostic test map
-        // resourceKey contains the reference to the diagnostic test ID
-        const diagnosticTest = lookupKey ? diagnosticTestMap[lookupKey] : null;
-        
-        if (diagnosticTest) {
-          displayName = diagnosticTest.name;
-        } 
-      }
-      
-      // Final fallback - only use if absolutely no display name found
-      if (!displayName) {
-        displayName = resource.resourceKey || 'Unknown Resource';
-      }
-      
-      return {
-        ...resource,
-        displayName
-      };
-    });
-  }, [resourcesByTypeResponse, practitionerMap, departmentMap, diagnosticTestMap]);
-
-  // Get active filter tags
-  const activeFilters = useMemo(() => {
-    const filters = [];
-    
-    if (localEncounter?.resourceTypeLkey) {
-      const resourceTypeLabel = ResourceTypeEnum?.find(rt => rt.value === localEncounter.resourceTypeLkey)?.label || localEncounter.resourceTypeLkey;
-      filters.push({
-        type: 'resourceType',
-        label: 'Resource Type',
-        value: resourceTypeLabel,
-        valueKey: localEncounter.resourceTypeLkey
+    setAllDepartments(previousDepartments => {
+      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
+      const merged = [...previousDepartments];
+      rows.forEach((department: any) => {
+        if (!seenIds.has(Number(department.id))) merged.push(department);
       });
-    }
-    
-    if (localEncounter?.resourceKey && resourcesByTypeResponse?.data) {
-      const selectedResource = resourcesByTypeResponse.data.find(r => r.id === localEncounter.resourceKey);
-      if (selectedResource) {
-        filters.push({
-          type: 'resource',
-          label: 'Resource',
-          value: selectedResource.resourceKey || localEncounter.resourceKey,
-          valueKey: localEncounter.resourceKey
-        });
-      }
-    }
-    
-    return filters;
-  }, [localEncounter?.resourceTypeLkey, localEncounter?.resourceKey, ResourceTypeEnum, resourcesByTypeResponse]);
-
-  // Handle removing filter
-  const handleRemoveFilter = (filterType: string) => {
-    if (filterType === 'resourceType') {
-      setLocalEncounter(prev => ({
-        ...prev,
-        resourceTypeLkey: null,
-        resourceKey: null // Also clear resource when resource type is removed
-      }));
-    } else if (filterType === 'resource') {
-      setLocalEncounter(prev => ({
-        ...prev,
-        resourceKey: null
-      }));
-    }
-  };
-
-  // Effects
-  useEffect(() => {
-    setVisitHistoryListRequest({
-      ...initialListRequest,
-      sortBy: 'plannedStartDate',
-      sortType: 'desc',
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: localPatient.key || undefined
-        },
-        {
-          fieldName: 'resource_type_lkey',
-          operator: 'match',
-          value: localEncounter.resourceTypeLkey || undefined
-        }
-      ]
+      return merged;
     });
-  }, [localPatient, localEncounter]);
+  }, [deptList]);
 
-  // useEffect(() => {
-  //   if (!localEncounter?.resourceKey || !resourceAvailabilityTimeListResponse) return;
-  //   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-  //   const filteredList = resourceAvailabilityTimeListResponse.object.filter(
-  //     item =>
-  //       item.resourceKey === localEncounter.resourceKey &&
-  //       item.departmentKey &&
-  //       item.dayLvalue?.lovDisplayVale === today //Day match
-  //   );
-  //   const departmentKeys = filteredList.map(item => item.departmentKey?.toString().trim());
-  //   const uniqueDepartmentKeys = Array.from(new Set(departmentKeys));
-  //   setUniqueDepartmentKeys(uniqueDepartmentKeys);
-  // }, [localEncounter, resourceAvailabilityTimeListResponse]);
+  const deptHasMore = Boolean(deptList?.links?.next);
 
-  // Calculate and set sequence daily number based on today's encounter count
+  const [practPage, setPractPage] = useState(0);
+  const practSize = 20;
+
+  const [
+    triggerPractitionersByDept,
+    { data: practitionersList, isFetching: isPractitionersFetching }
+  ] = useLazyGetPractitionersByDepartmentQuery();
+
+  const practitionersData = practitionersList?.data ?? [];
+  const practHasMore = Boolean(practitionersList?.links?.next);
+
+  const prevDeptRef = useRef<number | null>(null);
+
   useEffect(() => {
-    if (todayEncountersResponse?.object) {
-      const todayEncounterCount = todayEncountersResponse.object.length;
-      const nextSequenceNumber = todayEncounterCount + 1;
-      
-      // Only update if the value is different to avoid unnecessary re-renders
-      if (localEncounter.sequenceDailyNumber !== nextSequenceNumber) {
-        setLocalEncounter(prev => ({
-          ...prev,
-          sequenceDailyNumber: nextSequenceNumber
-        }));
-      }
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+    if (!departmentId) return;
+
+    const isFirstRun = prevDeptRef.current == null;
+    const hasDepartmentChanged = !isFirstRun && prevDeptRef.current !== departmentId;
+    prevDeptRef.current = departmentId;
+
+    setPractPage(0);
+
+    if (hasDepartmentChanged) {
+      setLocalEncounter((prevEncounter: PatientEncounter) => ({
+        ...prevEncounter,
+        practitionerId: null,
+        followUpEncounterId: null
+      }));
     }
-  }, [todayEncountersResponse]);
 
-  // Update visit sequence list request when resource type, resource, or facility changes
-  useEffect(() => {
-    setVisitSequenceListRequest({
-      ...initialListRequest,
-      filters: [
-        {
-          fieldName: 'planned_start_date',
-          operator: 'match',
-          value: todayDate
-        },
-        {
-          fieldName: 'resource_type_lkey',
-          operator: 'match',
-          value: localEncounter.resourceTypeLkey || undefined
-        },
-        {
-          fieldName: 'resource_key',
-          operator: 'match',
-          value: localEncounter.resourceKey || undefined
-        },
-        {
-          fieldName: 'facility_key',
-          operator: 'match',
-          value: localEncounter.facilityKey || undefined
-        },
-        {
-          fieldName: 'encounter_status_lkey',
-          operator: 'not_match',
-          value: '91098528988200' // Exclude cancelled encounters
-        }
-      ],
-      pageSize: 10000
+    triggerPractitionersByDept({
+      departmentId,
+      page: 0,
+      size: practSize,
+      sort: 'id,asc'
     });
-  }, [localEncounter.resourceTypeLkey, localEncounter.resourceKey, localEncounter.facilityKey, todayDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localEncounter?.departmentId]);
 
-  // Calculate and set visit sequence number based on resource type, resource, and facility for today
   useEffect(() => {
-    if (visitSequenceEncountersResponse?.object) {
-      const visitSequenceCount = visitSequenceEncountersResponse.object.length;
-      const nextVisitSequenceNumber = visitSequenceCount + 1;
-      
-      // Only update if the value is different to avoid unnecessary re-renders
-      if (localEncounter.visitSequenceNumber !== nextVisitSequenceNumber) {
-        setLocalEncounter(prev => ({
-          ...prev,
-          visitSequenceNumber: nextVisitSequenceNumber
-        }));
-      }
-    }
-  }, [visitSequenceEncountersResponse]);
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+    if (!departmentId) return;
+    if (practPage === 0) return;
+
+    triggerPractitionersByDept({
+      departmentId,
+      page: practPage,
+      size: practSize,
+      sort: 'id,asc'
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [practPage, localEncounter?.departmentId]);
+
+  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+
+  useEffect(() => {
+    const rows = practitionersData ?? [];
+    if (!rows.length) return;
+
+    setAllPractitioners(previousPractitioners => {
+      const seenIds = new Set(
+        previousPractitioners.map((practitioner: any) => Number(practitioner.id))
+      );
+      const merged = [...previousPractitioners];
+      rows.forEach((practitioner: any) => {
+        if (!seenIds.has(Number(practitioner.id))) merged.push(practitioner);
+      });
+      return merged;
+    });
+  }, [practitionersData]);
+
+  useEffect(() => {
+    const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+    if (!practitionerId) return;
+
+    setAllPractitioners(previousPractitioners => {
+      const alreadyExists = previousPractitioners.some(
+        (practitioner: any) => Number(practitioner?.id) === practitionerId
+      );
+      if (alreadyExists) return previousPractitioners;
+
+      const injectedPractitioner = {
+        id: practitionerId,
+        firstName: (localEncounter as any)?.practitionerFirstName ?? '',
+        lastName: (localEncounter as any)?.practitionerLastName ?? `#${practitionerId}`
+      };
+      return [injectedPractitioner, ...previousPractitioners];
+    });
+  }, [localEncounter?.practitionerId]);
+
+  const [prevPage, setPrevPage] = useState(0);
+  const prevSize = 15;
+  const [allPrevEncounters, setAllPrevEncounters] = useState<any[]>([]);
+
+  const [triggerPrevious, { data: prevList, isFetching: isPrevFetching }] =
+    useLazyGetPreviousEncountersSameDepartmentQuery();
+
+  useEffect(() => {
+    if (localEncounter?.encounterReason !== 'FOLLOW_UP') return;
+    if (!patientId || !localEncounter?.departmentId) return;
+
+    setPrevPage(0);
+    setAllPrevEncounters([]);
+
+    triggerPrevious({
+      patientId,
+      departmentId: localEncounter.departmentId,
+      page: 0,
+      size: prevSize,
+      sort: 'id,desc'
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localEncounter?.encounterReason, patientId, localEncounter?.departmentId]);
+
+  useEffect(() => {
+    if (localEncounter?.encounterReason !== 'FOLLOW_UP') return;
+    if (!patientId || !localEncounter?.departmentId) return;
+    if (prevPage === 0) return;
+
+    triggerPrevious({
+      patientId,
+      departmentId: localEncounter.departmentId,
+      page: prevPage,
+      size: prevSize,
+      sort: 'id,desc'
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prevPage, localEncounter?.encounterReason, patientId, localEncounter?.departmentId]);
+
+  useEffect(() => {
+    const rows = prevList?.data ?? [];
+    if (!rows.length) return;
+
+    setAllPrevEncounters(previousEncounters => {
+      const seenIds = new Set(previousEncounters.map((encounter: any) => encounter.id));
+      const merged = [...previousEncounters];
+      rows.forEach((encounter: any) => {
+        if (!seenIds.has(encounter.id)) merged.push(encounter);
+      });
+      return merged;
+    });
+  }, [prevList]);
+
+  useEffect(() => {
+    setLocalEncounter((prevEncounter: any) => {
+      const rawDate = prevEncounter?.encounterDate;
+      if (!rawDate) return prevEncounter;
+      if (rawDate instanceof Date) return prevEncounter;
+
+      const parsedDate = new Date(rawDate);
+      return Number.isNaN(parsedDate.getTime())
+        ? prevEncounter
+        : { ...prevEncounter, encounterDate: parsedDate };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const prevHasMore = Boolean(prevList?.links?.next);
+
+  const modifiedPrevEncounters = useMemo(() => {
+    return (allPrevEncounters ?? []).map((encounter: any) => ({
+      ...encounter,
+      combinedLabel: `${encounter.id} , ${encounter.encounterDate ?? ''} , ${
+        encounter.status ?? ''
+      }`
+    }));
+  }, [allPrevEncounters]);
 
   return (
     <Form fluid layout="inline" className="fields-container">
-      {/* Active Filters Tags */}
-      {/* {activeFilters.length > 0 && (
-        <div style={{ 
-          width: '100%', 
-          marginBottom: '16px',
-          display: 'flex',
-          gap: '10px',
-          flexWrap: 'wrap',
-          padding: '8px',
-          backgroundColor: mode === 'light' ? '#f8f9fa' : '#434343ff',
-          borderRadius: '12px',
-          border: '1px solid var(--rs-border-primary)'
-        }}>
-          {activeFilters.map((filter, index) => (
-            <Tag
-              key={`${filter.type}-${index}`}
-              closable
-              onClose={() => handleRemoveFilter(filter.type)}
-              style={{
-                padding: '6px 12px',
-                fontSize: '13px',
-                backgroundColor: mode === 'light' ? '#e9ecef' : '#5a5a5a',
-                color: mode === 'light' ? '#495057' : '#ffffff',
-                border: '1px solid var(--rs-border-primary)',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
-            >
-              <strong>{filter.label}:</strong> {filter.value}
-            </Tag>
-          ))}
-        </div>
-      )} */}
-
       <MyInput
         vr={validationResult}
         column
         disabled={true}
         fieldLabel="Date"
         fieldType="date"
-        fieldName="plannedStartDate"
+        fieldName="encounterDate"
         record={localEncounter}
         setRecord={setLocalEncounter}
       />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldLabel="Facility"
-        fieldType="select"
-        fieldName="facilityKey"
-        selectData={facilityListResponse ? facilityListResponse.map(fac => ({ facilityName: fac.name, key: fac.id })) : []}
-        selectDataLabel="facilityName"
-        selectDataValue="key"
-        record={localEncounter}
-        setRecord={setLocalEncounter}
-        disabled={isReadOnly}
-        searchable={false}
-        required
-      />
+
       <MyInput
         required
         vr={validationResult}
         column
-        fieldLabel="Resource Type"
+        fieldLabel="Encounter Type"
         fieldType="select"
-        fieldName="resourceTypeLkey"
-        selectData={ResourceTypeEnum ?? []}
+        fieldName="encounterType"
+        selectData={EncounterTypeEnum ?? []}
         selectDataLabel="label"
         selectDataValue="value"
         record={localEncounter}
@@ -475,102 +441,120 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
       />
 
       <MyInput
+        required
+        vr={validationResult}
         column
-        fieldLabel="Resources"
-        selectData={
-          localEncounter?.resourceTypeLkey
-            ? transformedResources
-            : []
-        }
-        fieldType="select"
-        selectDataLabel="displayName"
+        fieldType="selectPagination"
+        fieldLabel="Department"
+        fieldName="departmentId"
+        selectData={allDepartments}
+        selectDataLabel="name"
         selectDataValue="id"
-        fieldName="resourceKey"
         record={localEncounter}
         setRecord={setLocalEncounter}
-        disabled={!localEncounter?.resourceTypeLkey || isReadOnly}
-        required
-      />
-      {/* // TODO update status to be a LOV value */}
-      {localEncounter?.resourceTypeLkey == '2039534205961578' || localEncounter?.resourceTypeLkey == 'PRACTITIONER' ? (
-        <MyInput
-          vr={validationResult}
-          column
-          fieldType="select"
-          fieldName="departmentKey"
-          selectData={
-            departmentListResponse?.data ?? []
+        searchable
+        disabled={
+          isReadOnly ||
+          !Number(localReferral?.toFacilityId ?? selectedFacilityId ?? 0) ||
+          !localEncounter?.encounterType
+        }
+        loading={isDepartmentsFetching}
+        hasMore={deptHasMore}
+        onFetchMore={() => {
+          if (deptList?.links?.next) {
+            const { page } = extractPaginationFromLink(deptList.links.next);
+            setDeptPage(page);
           }
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={localEncounter}
-          setRecord={setLocalEncounter}
-          disabled={isReadOnly}
-          required
-        />
-      ) : null}
-      {localEncounter?.resourceTypeLkey == '2039548173192779' || localEncounter?.resourceTypeLkey == 'PROCEDURE' ? (
-        <MyInput
-          vr={validationResult}
-          column
-          fieldType="select"
-          fieldName="departmentKey"
-          selectData={dayCaseDepartmentListResponse?.data ?? []}
-          selectDataLabel="name"
-          selectDataValue="id"
-          record={localEncounter}
-          setRecord={setLocalEncounter}
-          disabled={isReadOnly}
-          required
-        />
-      ) : null}
+        }}
+      />
+
       <MyInput
         vr={validationResult}
         column
-        fieldType="select"
-        fieldLabel="Visit Type"
-        fieldName="visitTypeLkey"
-        selectData={visitTypeLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        fieldType="selectPagination"
+        fieldLabel="Practitioner"
+        fieldName="practitionerId"
+        selectData={allPractitioners}
+        selectDataLabel={['firstName', 'lastName']}
+        selectDataValue="id"
         record={localEncounter}
-        setRecord={() => { }} // No updates allowed
-        disabled={true}
-        searchable={false}
-        required
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly || !localEncounter?.departmentId}
+        loading={isPractitionersFetching}
+        searchable
+        hasMore={practHasMore}
+        onFetchMore={() => {
+          if (practitionersList?.links?.next) {
+            const { page } = extractPaginationFromLink(practitionersList.links.next);
+            setPractPage(page);
+          }
+        }}
       />
+
       <MyInput
         vr={validationResult}
         column
         fieldType="select"
         fieldLabel="Priority"
-        fieldName="encounterPriorityLkey"
-        selectData={encounterPriorityLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        fieldName="priorityLevel"
+        selectData={EncounterPriorityEnum ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={localEncounter}
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+        searchable={false}
+        required
+      />
+
+      <MyInput
+        required
+        vr={validationResult}
+        column
+        fieldType="select"
+        fieldLabel="Reason"
+        fieldName="encounterReason"
+        selectData={EncounterReasonEnum ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
         record={localEncounter}
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
         searchable={false}
       />
+
+      {localEncounter?.encounterReason === 'FOLLOW_UP' && (
+        <MyInput
+          column
+          fieldLabel="Previous Encounters"
+          fieldName="followUpEncounterId"
+          fieldType="selectPagination"
+          selectData={modifiedPrevEncounters}
+          selectDataLabel="combinedLabel"
+          selectDataValue="id"
+          record={localEncounter}
+          setRecord={setLocalEncounter}
+          menuMaxHeight={200}
+          loading={isPrevFetching}
+          searchable={false}
+          hasMore={prevHasMore}
+          disabled={isReadOnly}
+          required={localEncounter?.encounterReason === 'FOLLOW_UP'}
+          onFetchMore={() => {
+            if (prevList?.links?.next) {
+              const { page } = extractPaginationFromLink(prevList.links.next);
+              setPrevPage(page);
+            }
+          }}
+        />
+      )}
+
       <MyInput
         vr={validationResult}
         column
         fieldType="select"
-        fieldName="reasonLkey"
-        selectData={encounterReasonLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={localEncounter}
-        setRecord={setLocalEncounter}
-        disabled={isReadOnly}
-        searchable={false}
-      />
-      <MyInput
-        vr={validationResult}
-        column
-        fieldType="select"
-        fieldName="originLkey"
+        fieldLabel="Origin Type"
+        fieldName="originType"
         selectData={patOriginLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -579,85 +563,59 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly, 
         disabled={isReadOnly}
         searchable={false}
       />
+
       <MyInput
         vr={validationResult}
         column
-        fieldLabel="Source Name"
-        fieldName="sourceName"
+        fieldLabel="Origin Name"
+        fieldName="originName"
         record={localEncounter}
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
       />
 
-      {/* <MyInput
-        column
-        fieldLabel="Security Access Level"
-        fieldName="securityAccessLevel"
-        record={localEncounter}
-        setRecord={setLocalEncounter}
-      /> */}
-      <MyInput
-        column
-        fieldLabel=""
-        fieldName="state"
-        fieldType="checkbox"
-        checkedLabel="New Appointment"
-        unCheckedLabel="Follow-up"
-        record={newOrFollowup}
-        setRecord={setNewOrFollowup}
-      />
-      {!newOrFollowup['state'] && (
-        <MyInput
-          column
-          fieldLabel="Visits"
-          fieldName="visitId"
-          fieldType="select"
-          selectData={modifiedData}
-          selectDataLabel="combinedLabel"
-          selectDataValue="visitId"
-          record={localEncounter}
-          setRecord={setLocalEncounter}
-          menuMaxHeight={200}
-          loading={isFetching}
-          searchable={false}
-        />
-      )}
       <MyInput
         column
         fieldType="textarea"
-        fieldLabel="Note"
-        fieldName="encounterNotes"
+        fieldLabel="Notes"
+        fieldName="notes"
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
         record={localEncounter}
       />
-      <div style={{ width: '100%', marginTop: '1rem' }}>
-        <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Encounter Information</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+
+      <div className="encounter-info-wrapper">
+        <div className="encounter-info-title">Encounter Information</div>
+
+        <div className="encounter-info-fields">
           <MyInput
             vr={validationResult}
             column
             disabled={true}
-            fieldLabel="Visit ID"
-            fieldName="visitId"
+            fieldLabel="Encounter Number"
+            fieldName="encounterNumber"
             record={localEncounter}
             setRecord={setLocalEncounter}
           />
+
           <MyInput
+            vr={validationResult}
             column
-            fieldLabel="Sequence Daily Number"
-            fieldName="sequenceDailyNumber"
-            record={localEncounter}
-            setRecord={setLocalEncounter}
+            fieldLabel="Daily Sequence"
+            fieldName="dailySequence"
+            fieldType="number"
+            record={{ dailySequence: isTodayCountFetching ? '' : todayCount }}
             disabled
           />
+
           <MyInput
+            vr={validationResult}
             column
-            fieldLabel="Visit Sequence Number"
-            fieldName="visitSequenceNumber"
+            disabled={true}
+            fieldLabel="Sequence Number"
+            fieldName="departmentDailySequenceNumber"
             record={localEncounter}
             setRecord={setLocalEncounter}
-            disabled
           />
         </div>
       </div>

@@ -5,33 +5,47 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useCreateDiagnosticTestMutation, useGetAllDiagnosticTestsQuery, useLazyGetDiagnosticTestsByTypeQuery, useToggleDiagnosticTestActiveMutation, useUpdateDiagnosticTestMutation,useLazyGetDiagnosticTestsByNameQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { MdOutlineDescription } from "react-icons/md";
+import { useSetDiagnosticTestForRequestMutation } from '@/services/diagnosic-order/diagnosticTestRequestService';
+import { useEnumOptions } from '@/services/enumsApi';
+import {
+  useCreateDiagnosticTestMutation,
+  useGetAllDiagnosticTestsQuery,
+  useLazyGetDiagnosticTestsByNameQuery,
+  useLazyGetDiagnosticTestsByTypeQuery,
+  useToggleDiagnosticTestActiveMutation,
+  useUpdateDiagnosticTestMutation
+} from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { newDiagnosticTest } from '@/types/model-types-constructor-new';
 import { DiagnosticTest } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
-import { FaChartLine, FaUndo } from 'react-icons/fa';
+import { FaUndo } from 'react-icons/fa';
 import { FaNewspaper } from 'react-icons/fa6';
-import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { MdDelete, MdModeEdit, MdOutlineDescription } from 'react-icons/md';
 import { RiFileList2Fill } from 'react-icons/ri';
-import { Form, Panel, Row } from 'rsuite';
+import { Form, Panel } from 'rsuite';
 import AddEditDiagnosticTest from './AddEditDiagnosticTest';
 import Coding from './Coding';
-import NormalRangeSetupModal from './NormalRangeSetUpModal';
+import DefaultProfileIndicator from './DefaultProfileIndicator';
+import DiagnosticTestTemplate from './DiagnosticTestTemplate';
 import Profile from './Profile';
 import './styles.less';
-import { useEnumOptions } from '@/services/enumsApi';
-import { PaginationPerPage } from '@/utils/paginationPerPage';
-import DiagnosticTestTemplate from './DiagnosticTestTemplate';
-const DiagnosticsTest = () => {
+
+interface DiagnosticsTestProps {
+  testRequest?: {
+    id: number;
+    diagnosticTestId?: number;
+    type?: string;
+  };
+}
+
+const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
   const dispatch = useAppDispatch();
   const [diagnosticsTest, setDiagnosticsTest] = useState<DiagnosticTest>({
     ...newDiagnosticTest
   });
-  const [normalRangePopupOpen, setNormalRangePopupOpen] = useState(false);
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [openConfirmDiagnosticTest, setOpenConfirmDeleteDiagnosticTest] = useState<boolean>(false);
   const [stateOfDeleteDiagnosticTest, setStateOfDeleteDiagnosticTest] = useState<string>('delete');
@@ -48,136 +62,236 @@ const DiagnosticsTest = () => {
     sort: 'id,asc',
     timestamp: Date.now()
   });
+
   const [filterPagination, setFilterPagination] = useState({
     page: 0,
     size: 15,
     sort: 'id,asc'
   });
-  const [linksState, setLinksState] = useState<{
-    next?: string | null;
-    prev?: string | null;
-    first?: string | null;
-    last?: string | null;
-  }>({});
+
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
-  const { data: diagnodticsTestList, refetch: refetchDiagnostics, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
+  const {
+    data: diagnodticsTestList,
+    refetch: refetchDiagnostics,
+    isFetching
+  } = useGetAllDiagnosticTestsQuery(paginationParams);
+
   const testType = useEnumOptions('TestType');
-  // save Diagnostics Test
 
   const [addDiagnosticTest, addDiagnosticTestMutation] = useCreateDiagnosticTestMutation();
   const [updateDiagnosticTest, updateDiagnosticTestMutation] = useUpdateDiagnosticTestMutation();
-  const [toggleDiagnosticTestActive, togglePractitionerActiveMutation] = useToggleDiagnosticTestActiveMutation();
+  const [toggleDiagnosticTestActive, togglePractitionerActiveMutation] =
+    useToggleDiagnosticTestActiveMutation();
   const [diagnosticTestByTypes] = useLazyGetDiagnosticTestsByTypeQuery();
- const [diagnosticTestByName] = useLazyGetDiagnosticTestsByNameQuery();
+  const [diagnosticTestByName] = useLazyGetDiagnosticTestsByNameQuery();
+  const [setDiagnosticTestForRequest] =
+    useSetDiagnosticTestForRequestMutation();
+  const [openNormalRangesDirectly, setOpenNormalRangesDirectly] = useState(false);
+
+  const extractErrorMessage = (error: any): string => {
+    const data = error?.data;
+
+    const fieldErrors = data?.fieldErrors;
+    if (Array.isArray(fieldErrors) && fieldErrors.length) {
+      const msgs = fieldErrors
+        .map((fe: any) => fe?.message || fe?.defaultMessage)
+        .filter(Boolean);
+
+      if (msgs.length) return msgs.map(m => `• ${m}`).join('\n');
+    }
+
+    const detail = data?.detail || data?.message || error?.error || 'Unexpected server error';
+
+    const matches = [...String(detail).matchAll(/default message \[([^\]]+)\]/g)]
+      .map(m => m[1])
+      .filter(Boolean);
+
+    if (matches.length) return matches.map(m => `• ${m}`).join('\n');
+
+    return '• Validation error';
+  };
 
 
- const extractErrorMessage = (error: any): string => {
-  const detail =
-    error?.data?.detail ||
-    error?.data?.message ||
-    error?.error ||
-    "Unexpected server error";
+const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
+  const missingFields: string[] = [];
 
-  const match = detail.match(/interpolatedMessage='([^']+)'/);
-  if (match && match[1]) return match[1];
+  if (!test.type) missingFields.push('Test Type');
+  if (!test.name?.trim()) missingFields.push('Name');
+  if (!test.internalCode?.trim()) missingFields.push('Internal Code');
+  if (!test.price && test.price !== 0) missingFields.push('Price');
 
- 
-  return detail;
-};
-
-const handleAddNewDiagnosticTest = async () => {
-  try {
-    const payload = {
-      type: diagnosticsTest.type,
-      name: diagnosticsTest.name,
-      internalCode: diagnosticsTest.internalCode,
-      ageSpecific: diagnosticsTest.ageSpecific,
-      ageGroupList: diagnosticsTest.ageGroupList || [],
-      genderSpecific: diagnosticsTest.genderSpecific,
-      gender: diagnosticsTest.gender,
-      specialPopulation: diagnosticsTest.specialPopulation,
-      specialPopulationValues: diagnosticsTest.specialPopulationValues || [],
-      price: diagnosticsTest.price,
-      currency: diagnosticsTest.currency,
-      specialNotes: diagnosticsTest.specialNotes,
-      isActive: true,
-      isProfile: diagnosticsTest.isProfile ?? false,
-      appointable: diagnosticsTest.appointable ?? false,
-    };
-
-    const response = await addDiagnosticTest(payload).unwrap();
-    refetchDiagnostics();
-    setDiagnosticsTest({ ...response });
-
-    dispatch(
-      notify({
-        msg: "The Diagnostic Test was successfully added",
-        sev: "success",
-      })
-    );
-  } catch (error: any) {
-    console.error("Error adding Diagnostic Test:", error);
-    dispatch(
-      notify({
-        msg: extractErrorMessage(error),
-        sev: "error",
-      })
-    );
+  if (test.type === 'LABORATORY' && !test.defaultProfileResultType) {
+    missingFields.push('Result Type');
   }
-};
 
-const handleUpdateDiagnosticTest = async () => {
-  try {
-    const payload = {
-      id: diagnosticsTest.id,
-      type: diagnosticsTest.type,
-      name: diagnosticsTest.name,
-      internalCode: diagnosticsTest.internalCode,
-      ageSpecific: diagnosticsTest.ageSpecific,
-      ageGroupList: diagnosticsTest.ageGroupList,
-      genderSpecific: diagnosticsTest.genderSpecific,
-      gender: diagnosticsTest.gender,
-      specialPopulation: diagnosticsTest.specialPopulation,
-      specialPopulationValues: diagnosticsTest.specialPopulationValues,
-      price: diagnosticsTest.price,
-      currency: diagnosticsTest.currency,
-      specialNotes: diagnosticsTest.specialNotes,
-      isActive: diagnosticsTest.isActive,
-      isProfile: diagnosticsTest.isProfile,
-      appointable: diagnosticsTest.appointable,
-    };
-
-    const response = await updateDiagnosticTest(payload).unwrap();
-    refetchDiagnostics();
-    setDiagnosticsTest({ ...response });
-
-    dispatch(
-      notify({
-        msg: "The Diagnostic Test was successfully updated",
-        sev: "success",
-      })
-    );
-  } catch (error: any) {
-    console.error("Error updating Diagnostic Test:", error);
-    dispatch(
-      notify({
-        msg: extractErrorMessage(error),
-        sev: "error",
-      })
-    );
+  if (missingFields.length) {
+    return [`${missingFields.join(', ')} ${missingFields.length > 1 ? 'are' : 'is'} required`];
   }
+
+  return [];
 };
 
+
+  const handleAddNewDiagnosticTest = async () => {
+    try {
+      // Frontend validations (before calling API)
+      const errors: string[] = [];
+
+      if (!diagnosticsTest.name?.trim()) errors.push('Name is required');
+      if (!diagnosticsTest.internalCode?.trim()) errors.push('Internal Code is required');
+
+      if (diagnosticsTest.type === 'LABORATORY' && !diagnosticsTest.defaultProfileResultType) {
+        errors.push('Default Result Type is required for Laboratory tests');
+      }
+
+      if (errors.length) {
+        dispatch(
+          notify({
+            msg: errors.map(e => `• ${e}`).join('\n'),
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      const payload = {
+        type: diagnosticsTest.type,
+        name: diagnosticsTest.name?.trim(),
+        internalCode: diagnosticsTest.internalCode?.trim(),
+
+        ageSpecific: diagnosticsTest.ageSpecific,
+        ageGroupList: diagnosticsTest.ageGroupList || [],
+
+        genderSpecific: diagnosticsTest.genderSpecific,
+        gender: diagnosticsTest.gender,
+
+        specialPopulation: diagnosticsTest.specialPopulation,
+        specialPopulationValues: diagnosticsTest.specialPopulationValues || [],
+
+        price: diagnosticsTest.price,
+        currency: diagnosticsTest.currency,
+        specialNotes: diagnosticsTest.specialNotes,
+        isActive: true,
+        appointable: diagnosticsTest.appointable ?? false,
+
+        defaultProfileResultType:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultType : null,
+
+        defaultProfileResultUnit:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
+
+        listOfValueId: diagnosticsTest.listOfValueId ?? null
+      };
+
+      const response = await addDiagnosticTest(payload).unwrap();
+      if (testRequest?.id && response?.id) {
+        try {
+          await setDiagnosticTestForRequest({
+            id: testRequest.id,
+            diagnosticTestId: response.id
+          }).unwrap();
+        } catch (e) {
+          console.error('Failed to link test with request', e);
+        }
+      }
+
+      refetchDiagnostics();
+      setDiagnosticsTest(response);
+
+      dispatch(
+        notify({
+          msg: 'The Diagnostic Test was successfully added',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      console.error('Error adding Diagnostic Test:', error);
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
+    }
+  };
+
+
+  const handleUpdateDiagnosticTest = async () => {
+    try {
+      const errors = validateDiagnosticTest(diagnosticsTest);
+
+      if (errors.length > 0) {
+        dispatch(
+          notify({
+            msg: errors.map(e => `• ${e}`).join('\n'),
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      const payload = {
+        id: diagnosticsTest.id,
+        type: diagnosticsTest.type,
+        name: diagnosticsTest.name?.trim(),
+        internalCode: diagnosticsTest.internalCode?.trim(),
+
+        ageSpecific: diagnosticsTest.ageSpecific,
+        ageGroupList: diagnosticsTest.ageGroupList || [],
+
+        genderSpecific: diagnosticsTest.genderSpecific,
+        gender: diagnosticsTest.gender,
+
+        specialPopulation: diagnosticsTest.specialPopulation,
+        specialPopulationValues: diagnosticsTest.specialPopulationValues || [],
+
+        price: diagnosticsTest.price,
+        currency: diagnosticsTest.currency,
+        specialNotes: diagnosticsTest.specialNotes,
+
+        isActive: diagnosticsTest.isActive,
+        appointable: diagnosticsTest.appointable ?? false,
+
+        defaultProfileResultType:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultType : null,
+
+        defaultProfileResultUnit:
+          diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
+
+        listOfValueId: diagnosticsTest.listOfValueId ?? null
+      };
+
+      const response = await updateDiagnosticTest(payload).unwrap();
+
+      refetchDiagnostics();
+      setDiagnosticsTest({ ...response });
+
+      dispatch(
+        notify({
+          msg: 'The Diagnostic Test was successfully updated',
+          sev: 'success'
+        })
+      );
+    } catch (error: any) {
+      console.error('Error updating Diagnostic Test:', error);
+      dispatch(
+        notify({
+          msg: extractErrorMessage(error),
+          sev: 'error'
+        })
+      );
+    }
+  };
 
 
   const handleToggleActive = async (id: number) => {
     try {
       await toggleDiagnosticTestActive(id).unwrap();
-      dispatch(notify({ msg: "Status updated successfully", sev: "success" }));
+      dispatch(notify({ msg: 'Status updated successfully', sev: 'success' }));
       setPaginationParams({ ...paginationParams, timestamp: Date.now() });
     } catch {
-      dispatch(notify({ msg: "Failed to update status", sev: "error" }));
+      dispatch(notify({ msg: 'Failed to update status', sev: 'error' }));
     }
   };
 
@@ -186,13 +300,6 @@ const handleUpdateDiagnosticTest = async () => {
     setOpenConfirmDeleteDiagnosticTest(false);
   };
 
-  useEffect(() => {
-    if (diagnodticsTestList?.links) {
-      setLinksState(diagnodticsTestList.links);
-    } else {
-      setLinksState({});
-    }
-  }, [diagnodticsTestList?.links]);
 
   // Handle filter change
   const [isFiltered, setIsFiltered] = useState(false);
@@ -289,126 +396,144 @@ const handleUpdateDiagnosticTest = async () => {
   ];
 
   // Header page setUp
-  const divContent = (
-    "Diagnostics Tests Definition"
-  );
+  const divContent = 'Diagnostics Tests Definition';
   dispatch(setPageCode('Diagnostics_Tests'));
   dispatch(setDivContent(divContent));
-  // class name for selected row
+
   const isSelected = rowData => {
     if (rowData && diagnosticsTest && rowData.id === diagnosticsTest.id) {
       return 'selected-row';
     } else return '';
   };
 
-  // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
-const iconsForActions = (rowData: any) => (
-  <div className="container-of-icons">
-    {/* Edit */}
-    <MdModeEdit
-      className="icons-style"
-      title="Edit"
-      size={24}
-      fill="var(--primary-gray)"
-      onClick={() => {
-        setDiagnosticsTest(rowData);
-        setOpenAddEditDiagnosticTestPopup(true);
-      }}
-    />
+  const isRowDisabled = (rowData: DiagnosticTest) => {
+    if (!testRequest) return false;
+    if (diagnosticsTest?.id) {
+      return rowData.id !== diagnosticsTest.id;
+    }
 
-    {/* Activate / Deactivate */}
-    {rowData?.isActive ? (
-      <MdDelete
-        title="Deactivate"
-        size={24}
-        fill="var(--primary-pink)"
-        className="icons-style"
-        onClick={() => {
-          setDiagnosticsTest(rowData);
-          setOpenConfirmDeleteDiagnosticTest(true);
-          setStateOfDeleteDiagnosticTest("deactivate");
-        }}
-      />
-    ) : (
-      <FaUndo
-        title="Activate"
-        size={24}
-        fill="var(--primary-gray)"
-        className="icons-style"
-        onClick={() => {
-          setDiagnosticsTest(rowData);
-          setOpenConfirmDeleteDiagnosticTest(true);
-          setStateOfDeleteDiagnosticTest("reactivate");
-        }}
-      />
-    )}
+    return false;
+  };
 
-    {/* Code */}
-    <FaNewspaper
-      className="icons-style"
-      title="Code"
-      size={22}
-      fill="var(--primary-gray)"
-      onClick={() => {
-        setOpenCodingModal(true);
-      }}
-    />
-
-    {rowData?.type !== 'LABORATORY' && (
-      <MdOutlineDescription
-        className="icons-style"
-        title="Template"
-        size={22}
-        fill="var(--primary-gray)"
-        onClick={() => {
-          setDiagnosticsTest(rowData);
-          setOpenTemplateModal(true);
-        }}
-      />
-    )}
+  const iconsForActions = (rowData: any) => {
+    const disabled = isRowDisabled(rowData);
 
 
-    {/* Profile or Normal Range */}
-    {rowData?.type === "LABORATORY" &&
-      (rowData?.isProfile ? (
-        <RiFileList2Fill
+
+    return (
+      <div className="container-of-icons">
+        {/* Edit */}
+        <MdModeEdit
           className="icons-style"
-          title="Profile Setup"
-          size={21}
+          title="Edit"
+          size={24}
           fill="var(--primary-gray)"
           onClick={() => {
-            setOpenProfileModal(true);
+            if (disabled) return;
+            setDiagnosticsTest(rowData);
+            setOpenAddEditDiagnosticTestPopup(true);
           }}
         />
-      ) : (
-        <FaChartLine
+
+        {/* Activate / Deactivate */}
+        {rowData?.isActive ? (
+          <MdDelete
+            title="Deactivate"
+            size={24}
+            fill="var(--primary-pink)"
+            className="icons-style"
+            onClick={() => {
+              if (disabled) return;
+              setDiagnosticsTest(rowData);
+              setOpenConfirmDeleteDiagnosticTest(true);
+              setStateOfDeleteDiagnosticTest('deactivate');
+            }}
+          />
+        ) : (
+          <FaUndo
+            title="Activate"
+            size={24}
+            fill="var(--primary-gray)"
+            className="icons-style"
+            onClick={() => {
+              if (disabled) return;
+              setDiagnosticsTest(rowData);
+              setOpenConfirmDeleteDiagnosticTest(true);
+              setStateOfDeleteDiagnosticTest('reactivate');
+            }}
+          />
+        )}
+
+        {/* Code */}
+        <FaNewspaper
           className="icons-style"
-          title="Normal Range Setup"
-          size={21}
+          title="Code"
+          size={22}
           fill="var(--primary-gray)"
           onClick={() => {
-            setNormalRangePopupOpen(true);
+            if (disabled) return;
+            setOpenCodingModal(true);
           }}
         />
-      ))}
-  </div>
-);
 
+        {rowData?.type !== 'LABORATORY' && (
+          <MdOutlineDescription
+            className="icons-style"
+            title="Template"
+            size={22}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              if (disabled) return;
+              setDiagnosticsTest(rowData);
+              setOpenTemplateModal(true);
+            }}
+          />
+        )}
+
+        {/* Profile or Normal Range */}
+        {rowData?.type === 'LABORATORY' && (
+          <RiFileList2Fill
+            className="icons-style"
+            title="Profile Setup"
+            size={21}
+            fill="var(--primary-gray)"
+            onClick={() => {
+              if (disabled) return;
+              setOpenProfileModal(true);
+            }}
+          />
+        )}
+
+        {rowData?.type === 'LABORATORY' && (
+          <DefaultProfileIndicator
+            testId={rowData.id}
+            testType={rowData.type}
+            onClick={() => {
+              if (disabled) return;
+              setDiagnosticsTest(rowData);
+              setOpenNormalRangesDirectly(true);
+              setOpenProfileModal(true);
+            }}
+          />
+        )}
+
+
+      </div>
+    );
+  }
 
   //Table columns
   const tableColumns = [
     {
       key: 'type',
       title: <Translate>Type</Translate>,
-      render: (rowData) => <p>{formatEnumString(rowData?.type)}</p>,
+      render: rowData => <p>{formatEnumString(rowData?.type)}</p>
     },
-
 
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      render: (rowData) => <p>{rowData?.name}</p>,
-
+      render: rowData => <p>{rowData?.name}</p>
     },
     {
       key: 'internalCode',
@@ -416,18 +541,10 @@ const iconsForActions = (rowData: any) => (
     },
 
     {
-      key: 'profile',
-      title: <Translate>Is Profile</Translate>,
-      render: rowData => (rowData.isProfile ? 'Yes' : 'No')
-    },
-
-    {
-      key: "isActive",
+      key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 2,
-      render: (rowData: DiagnosticTest) => (
-        <p>{rowData?.isActive ? "Active" : "Inactive"}</p>
-      ),
+      render: (rowData: DiagnosticTest) => <p>{rowData?.isActive ? 'Active' : 'Inactive'}</p>
     },
     {
       key: 'icons',
@@ -514,47 +631,20 @@ const iconsForActions = (rowData: any) => (
   // handle click on add new button
   const handleNew = () => {
     setOpenAddEditDiagnosticTestPopup(true);
-    setDiagnosticsTest({ ...newDiagnosticTest });
+
+    setDiagnosticsTest({
+      ...newDiagnosticTest,
+      type: testRequest?.type ?? newDiagnosticTest.type
+    });
   };
-
-
 
   // Handle page change in navigation
-  const handlePageChange = (event: unknown, newPage: number) => {
-    if (isFiltered) {
-      const valueForFilter =
-        recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
-      handleFilterChange(recordOfFilter.filter, valueForFilter, newPage, filterPagination.size);
-      return;
-    }
-
-    PaginationPerPage.handlePageChange(
-      event,
-      newPage,
-      paginationParams,
-      linksState,
-      updated => {
-        if (!updated) {
-          setPaginationParams(prev => ({
-            ...prev,
-            page: newPage,
-            timestamp: Date.now()
-          }));
-          return;
-        }
-        const { page, size, timestamp } = updated;
-        setPaginationParams(prev => ({
-          ...prev,
-          page: page ?? prev.page,
-          size: size ?? prev.size,
-          timestamp: timestamp ?? Date.now()
-        }));
-      }
-    );
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPaginationParams(prev => ({
+      ...prev,
+      page: newPage
+    }));
   };
-
-
-
 
   // Effects
   // change the width variable when the size of window is changed
@@ -572,6 +662,21 @@ const iconsForActions = (rowData: any) => (
   }, [location.pathname, dispatch]);
   // update list when filter is changed
 
+  useEffect(() => {
+    if (!openProfileModal) {
+      setOpenNormalRangesDirectly(false);
+    }
+  }, [openProfileModal]);
+
+  useEffect(() => {
+    if (testRequest?.type) {
+
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        type: testRequest.type
+      }));
+    }
+  }, [testRequest?.type]);
 
   return (
     <Panel>
@@ -584,6 +689,7 @@ const iconsForActions = (rowData: any) => (
         rowClassName={isSelected}
         filters={filters()}
         onRowClick={rowData => {
+          if (isRowDisabled(rowData)) return;
           setDiagnosticsTest(rowData);
         }}
         sortColumn={sortColumn}
@@ -609,14 +715,18 @@ const iconsForActions = (rowData: any) => (
             }));
             const valueForFilter =
               recordOfFilter.filter === 'type' ? valueType.type : recordOfFilter.value;
-            handleFilterChange(recordOfFilter.filter, valueForFilter, 0, filterPagination.size, sortValue);
+            handleFilterChange(
+              recordOfFilter.filter,
+              valueForFilter,
+              0,
+              filterPagination.size,
+              sortValue
+            );
           }
         }}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
-
         onPageChange={handlePageChange}
-
         onRowsPerPageChange={event => {
           const newSize = Number(event.target.value);
           if (Number.isNaN(newSize) || newSize <= 0) {
@@ -640,33 +750,32 @@ const iconsForActions = (rowData: any) => (
             }));
           }
         }}
-        
-        tableButtons={<div className="container-of-add-new-button">
-        <MyButton
-          prefixIcon={() => <AddOutlineIcon />}
-          color="var(--deep-blue)"
-          onClick={handleNew}
-          width="109px"
-        >
-          Add New
-        </MyButton>
-      </div>}
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>
+        }
       />
       <AddEditDiagnosticTest
         open={openAddEditDiagnosticTestPopup}
         setOpen={setOpenAddEditDiagnosticTestPopup}
         diagnosticsTest={diagnosticsTest}
         setDiagnosticsTest={setDiagnosticsTest}
-        handleSave={
-          diagnosticsTest.id ? handleUpdateDiagnosticTest : handleAddNewDiagnosticTest
+        handleSave={() =>
+          diagnosticsTest.id
+            ? handleUpdateDiagnosticTest()
+            : handleAddNewDiagnosticTest()
         }
         width={width}
       />
-      <NormalRangeSetupModal
-        open={normalRangePopupOpen}
-        setOpen={setNormalRangePopupOpen}
-        diagnosticsTest={diagnosticsTest}
-      />
+
       <DeletionConfirmationModal
         open={openConfirmDiagnosticTest}
         setOpen={setOpenConfirmDeleteDiagnosticTest}
@@ -683,7 +792,9 @@ const iconsForActions = (rowData: any) => (
         open={openProfileModal}
         setOpen={setOpenProfileModal}
         diagnosticsTest={diagnosticsTest}
+        openNormalRanges={openNormalRangesDirectly}
       />
+
       {openTemplateModal && diagnosticsTest?.id && (
         <DiagnosticTestTemplate
           open={openTemplateModal}
@@ -692,8 +803,6 @@ const iconsForActions = (rowData: any) => (
           testName={diagnosticsTest.name}
         />
       )}
-
-
     </Panel>
   );
 };

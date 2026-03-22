@@ -25,57 +25,60 @@ export const departmentService = createApi({
     getDepartments: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc', timestamp }) => ({
         url: '/api/setup/department',
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: (_res) => ['Department'],
+      providesTags: _res => ['Department']
     }),
 
     // GET /api/setup/department/{id}
     getDepartmentById: builder.query<any, number | string>({
-      query: (id) => `/api/setup/department/${id}`,
-      providesTags: (_res, _err, id) => ['Department'],
+      query: id => `/api/setup/department/${id}`,
+      providesTags: (_res, _err, id) => ['Department']
     }),
 
     // GET /api/setup/department/by-facility/{facilityId}?page=&size=&sort=
-    getDepartmentByFacility: builder.query<PagedResult<any>, { facilityId: number | string } & PagedParams>({
+    getDepartmentByFacility: builder.query<
+      PagedResult<any>,
+      { facilityId: number | string } & PagedParams
+    >({
       query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/department/by-facility/${facilityId}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ['Department'],
+      providesTags: ['Department']
     }),
 
     // GET /api/setup/department/by-type/{type}?page=&size=&sort=
     getDepartmentByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
       query: ({ type, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/department/by-type/${type}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ['Department'],
+      providesTags: ['Department']
     }),
 
     // GET /api/setup/department/by-type-and-facility/{type}/{facilityId}?page=&size=&sort=
@@ -85,34 +88,37 @@ export const departmentService = createApi({
     >({
       query: ({ type, facilityId, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/department/by-type-and-facility/${type}/${facilityId}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ['Department'],
+      providesTags: ['Department']
     }),
 
     // GET /api/setup/department/appointable/{facilityId}?page=&size=&sort=
-    getAppointableDepartments: builder.query<PagedResult<any>, { facilityId: number | string } & PagedParams>({
+    getAppointableDepartments: builder.query<
+      PagedResult<any>,
+      { facilityId: number | string } & PagedParams
+    >({
       query: ({ facilityId, page, size, sort = 'id,asc', timestamp }) => ({
         url: `/api/setup/department/appointable/${facilityId}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ['Department'],
+      providesTags: ['Department']
     }),
 
     // GET /api/setup/department/appointable/by-type/{type}/{facilityId}?page=&size=&sort=
@@ -122,106 +128,134 @@ export const departmentService = createApi({
     >({
       query: ({ type, facilityId, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/department/appointable/by-type/${type}/${facilityId}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ['Department'],
+      providesTags: ['Department']
     }),
 
-     getActiveAppointableDepartmentByType: builder.query<
+    getActiveAppointableDepartmentByType: builder.query<
       PagedResult<any>,
       { type: string; facilityId: number | string } & PagedParams
     >({
       query: ({ type, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/department/appointable/active/by-type/${type}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ['Department'],
+      providesTags: ['Department']
     }),
+
     // GET /api/setup/department/by-name/{name}?page=&size=&sort=
     getDepartmentByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/department/by-name/${name}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: (response: any[], meta): PagedResult<any> => {
         const headers = meta?.response?.headers;
         return {
           data: response,
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-          links: parseLinkHeader(headers?.get('Link')),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ['Department'],
+      providesTags: ['Department']
     }),
 
     // POST /api/setup/department
     addDepartment: builder.mutation<any, any>({
-      query: (department) => ({
+      query: department => ({
         url: '/api/setup/department',
         method: 'POST',
-        body: department,
+        body: department
       }),
-      invalidatesTags: ['Department'],
+      invalidatesTags: ['Department']
     }),
 
     // PUT /api/setup/department/{id}
     updateDepartment: builder.mutation<any, any>({
-      query: (department) => ({
+      query: department => ({
         url: `/api/setup/department/${department.id}`,
         method: 'PUT',
-        body: department,
+        body: department
       }),
-      invalidatesTags: ['Department'],
+      invalidatesTags: ['Department']
     }),
 
     // PATCH /api/setup/department/{id}/toggle-active
     toggleDepartmentIsActive: builder.mutation<any, number>({
-      query: (id) => ({
+      query: id => ({
         url: `/api/setup/department/${id}/toggle-active`,
-        method: 'PATCH',
+        method: 'PATCH'
       }),
-      invalidatesTags: ['Department'],
+      invalidatesTags: ['Department']
     }),
 
     // GET /api/setup/department/facility/{facilityId}/active/list
     getActiveDepartmentByFacilityList: builder.query<any[], { facilityId: number | string }>({
-      query: ({ facilityId }) => `/api/setup/department/facility/${facilityId}/active/list`,
+      query: ({ facilityId }) => `/api/setup/department/facility/${facilityId}/active/list`
     }),
 
     // GET /api/setup/department/all
     getAllDepartmentsWithoutPagination: builder.query({
-      query: () => `/api/setup/department/all`,
+      query: () => `/api/setup/department/all`
     }),
 
     getDepartmentsByResourceType: builder.query<any[], { resourceType: string }>({
       query: ({ resourceType }) => ({
-        url: `/api/setup/department/by-resource-type/${resourceType}`,
+        url: `/api/setup/department/by-resource-type/${resourceType}`
       }),
-      providesTags: ['Department'],
+      providesTags: ['Department']
     }),
 
-  }),
+    getAppointableActiveDepartmentsByEncounterTypeAndFacility: builder.query<
+      PagedResult<any>,
+      { facilityId: number | string; encounterType: string } & PagedParams
+    >({
+      query: ({ facilityId, encounterType, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/department/appointable/active/by-encounter-type/${encounterType}/${facilityId}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Department']
+    }),
+
+    getDepartmentsBulk: builder.mutation({
+      query: (ids: number[]) => ({
+        url: '/api/setup/department/bulk',
+        method: 'POST',
+        body: ids
+      })
+    })
+  })
 });
 
 export const {
   useGetDepartmentsQuery,
   useGetDepartmentByIdQuery,
+  useLazyGetDepartmentByIdQuery,
   useGetDepartmentByFacilityQuery,
   useLazyGetDepartmentByFacilityQuery,
   useGetDepartmentByTypeQuery,
@@ -243,5 +277,8 @@ export const {
   useGetDepartmentsByResourceTypeQuery,
   useLazyGetDepartmentsByResourceTypeQuery,
   useGetActiveAppointableDepartmentByTypeQuery,
-  useLazyGetActiveAppointableDepartmentByTypeQuery
+  useLazyGetActiveAppointableDepartmentByTypeQuery,
+  useGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
+  useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
+  useGetDepartmentsBulkMutation,
 } = departmentService;

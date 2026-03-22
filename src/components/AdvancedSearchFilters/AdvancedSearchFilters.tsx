@@ -3,24 +3,35 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faMagnifyingGlass,
   faMagnifyingGlassPlus,
-  faBroom
+  faBroom,
 } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '../MyButton/MyButton';
 import './styles.less';
+
 const AdvancedSearchFilters = ({
   searchFilter = true,
+  extraActions = null,
   clearOnClick = () => {},
   searchOnClick = () => {},
-  content = null
+  content = null,
+  showAdvancedButton = true,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
     <>
       <div className="bt-right-group">
-        <MyButton appearance="ghost" onClick={() => setShowAdvanced(!showAdvanced)} prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}>
-          Advance
-        </MyButton>
+        {showAdvancedButton && (
+          <MyButton
+            appearance="ghost"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}
+          >
+            Advanced
+          </MyButton>
+        )}
+
+        {extraActions}
 
         {searchFilter && (
           <MyButton
@@ -31,10 +42,14 @@ const AdvancedSearchFilters = ({
           </MyButton>
         )}
 
-        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={clearOnClick}>
+        <MyButton
+          prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+          onClick={clearOnClick}
+        >
           Clear
         </MyButton>
       </div>
+
       {showAdvanced && content}
     </>
   );

@@ -116,6 +116,7 @@ const PatientSummary = () => {
     setAction(() => () => setOpenChooseScreen(true));
     return () => setAction(() => () => {});
   }, [setAction]);
+
   useEffect(() => {
     const arr = userDashboardComponents?.data?.object ?? [];
     const newArr = arr.map(item => item.component_key);

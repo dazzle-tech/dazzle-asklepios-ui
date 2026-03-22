@@ -1,0 +1,40 @@
+.expandable-text__content {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  line-height: 1.65;
+  color: #1f2937;
+  font-size: 15px;
+}
+
+.expandable-text__content.expanded {
+  -webkit-line-clamp: unset;
+}
+
+.expandable-text__button {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.2s ease;
+}
+
+.expandable-text__button:hover {
+  color: #1d4ed8;
+  gap: 6px;
+}
+
+.expandable-text__icon {
+  transition: transform 0.2s ease;
+  transform: rotate(0deg);
+}
+
+.expandable-text__icon.rotated {
+  transform: rotate(180deg);
+}

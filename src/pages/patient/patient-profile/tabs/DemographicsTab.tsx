@@ -1,21 +1,19 @@
-import React from 'react';
-import type { ApPatient } from '@/types/model-types';
-import { Col, Row, Stack, Text } from 'rsuite';
 import SectionContainer from '@/components/SectionsoContainer';
-import ContactTab from './ContactTab';
-import AddressTab from './AddressTab';
-import BasicInfo from './BasicInfo';
-import DocumentInfo from './DocumentInfo';
 import Translate from '@/components/Translate';
+import { Patient } from '@/types/model-types-new';
+import React from 'react';
+import { Col, Row, Stack } from 'rsuite';
+import BasicInfo from './BasicInfo';
+import ContactTab from './ContactTab';
+import './styles.less';
 
 interface DemographicsTabProps {
-  localPatient: ApPatient;
-  setLocalPatient: (patient: ApPatient) => void;
+  localPatient: Patient;
+  setLocalPatient: (patient: Patient) => void;
   validationResult: any;
-  genderLovQueryResponse: any;
-  docTypeLovQueryResponse: any;
+  genderEnum: any;
+  patientDocumentEnum: any;
   countryLovQueryResponse: any;
-  bloodGroupLovQueryResponse: any;
   patientClassLovQueryResponse: any;
   ageFormatType: { ageFormat: string };
   ageGroupValue: { ageGroup: string };
@@ -25,13 +23,12 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult,
-  genderLovQueryResponse,
-  docTypeLovQueryResponse,
-  countryLovQueryResponse,
+  genderEnum,
   patientClassLovQueryResponse,
   ageFormatType,
   ageGroupValue
 }) => {
+
 
   return (
     <Stack>
@@ -47,24 +44,10 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
                     validationResult={validationResult}
                     localPatient={localPatient}
                     setLocalPatient={setLocalPatient}
-                    genderLovQueryResponse={genderLovQueryResponse}
+                    genderEnum={genderEnum}
                     ageFormatType={ageFormatType}
                     ageGroupValue={ageGroupValue}
                     patientClassLovQueryResponse={patientClassLovQueryResponse}
-                  />
-                }
-              />
-            </Row>
-            <Row>
-              <SectionContainer
-                title={<Translate>Document</Translate>}
-                content={
-                  <DocumentInfo
-                    validationResult={validationResult}
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    docTypeLovQueryResponse={docTypeLovQueryResponse}
-                    countryLovQueryResponse={countryLovQueryResponse}
                   />
                 }
               />
@@ -76,18 +59,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
                 title={<Translate>Contact</Translate>}
                 content={
                   <ContactTab
-                    localPatient={localPatient}
-                    setLocalPatient={setLocalPatient}
-                    validationResult={validationResult}
-                  />
-                }
-              />
-            </Row>
-            <Row>
-              <SectionContainer
-                title={<Translate>Address</Translate>}
-                content={
-                  <AddressTab
                     localPatient={localPatient}
                     setLocalPatient={setLocalPatient}
                     validationResult={validationResult}

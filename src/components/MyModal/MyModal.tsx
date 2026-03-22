@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Steps, Divider, Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
@@ -23,14 +23,14 @@ const MyModal = ({
   hideActionBtn = false,
   isDisabledActionBtn = false,
   actionButtonLabel = 'Save',
-  actionButtonFunction = ()=>{},
+  actionButtonFunction = () => {},
   customClassName = '',
   cancelButtonLabel = 'Cancel',
-  handleCancelFunction=()=>{},
-  modalColor = 'var(--primary-blue)'
+  handleCancelFunction = () => {},
+  modalColor = 'var(--primary-blue)',
+  initialStep = 0
 }) => {
-
-  const [internalStep, setInternalStep] = useState(0);
+  const [internalStep, setInternalStep] = useState(initialStep);
   const activeStep = internalStep;
   const updateStep = setInternalStep;
   const mode = useSelector((state: any) => state.ui.mode);
@@ -51,12 +51,20 @@ const MyModal = ({
     setOpen(false);
   };
 
+  useEffect(() => {
+    if (open) {
+      setInternalStep(initialStep);
+    }
+  }, [initialStep, open]);
+
   return (
     <Modal
       open={open}
       onClose={handleCancel}
       size={size}
-      className={`${modalClass} ${customClassName} ${mode === 'light' ? 'modal-light' : 'modal-dark'}`}
+      className={`${modalClass} ${customClassName} ${
+        mode === 'light' ? 'modal-light' : 'modal-dark'
+      }`}
     >
       <Modal.Header>
         <Modal.Title>
@@ -66,19 +74,17 @@ const MyModal = ({
       </Modal.Header>
       <Divider className="divider-line" />
       <Modal.Body style={{ height: bodyheight }}>
-
-      <MyStepper
-        activeStep={activeStep}
-        stepsList={steps.map((step, index) => ({
-          key: index,
-          value:<Translate>{step.title}</Translate>,
-          description: step.description || '',
-          customIcon: step.icon ? step.icon : null,
-          isError: step.isError || false
-        }))}
-
-        modalColor={modalColor}
-      />
+        <MyStepper
+          activeStep={activeStep}
+          stepsList={steps.map((step, index) => ({
+            key: index,
+            value: <Translate>{step.title}</Translate>,
+            description: step.description || '',
+            customIcon: step.icon ? step.icon : null,
+            isError: step.isError || false
+          }))}
+          modalColor={modalColor}
+        />
 
         <br />
 
@@ -95,7 +101,13 @@ const MyModal = ({
       <Modal.Footer className="footer-modal">
         <Form className="footer-modal-content">
           {!hideCancel && (
-            <MyButton appearance={'subtle'} onClick={()=>{handleCancel();handleCancelFunction();}}>
+            <MyButton
+              appearance={'subtle'}
+              onClick={() => {
+                handleCancel();
+                handleCancelFunction();
+              }}
+            >
               {cancelButtonLabel}
             </MyButton>
           )}

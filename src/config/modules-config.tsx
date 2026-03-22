@@ -123,7 +123,7 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: 'Sliding Scale', code: 'SLIDING_SCALE', icon: <FontAwesomeIcon icon={faSyringe} className="icon" />, path: '/sliding-scale' },
   { name: "Previous Measurements", code: "PREVIOUS_MEASUREMENTS", icon: <FontAwesomeIcon icon={faRuler} className="icon" />, path: "/previous-measurements" },
   // { name: "Attachments", code: "ATTACHMENTS", icon: <FontAwesomeIcon icon={faPaperclip} className="icon" />, path: "/attachments" },
-  { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
+  // { name: "Service & Products", code: "SERVICE_AND_PRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: "/service-products" },
   { name: "Chief Complain", code: "CHIEF_COMPLAIN", icon: <FontAwesomeIcon icon={faStethoscope} className="icon" />, path: "/chief-complain" },
   { name: "Physical Examination", code: "PHYSICAL_EXAMINATION", icon: <FontAwesomeIcon icon={faHeartbeat} className="icon" />, path: "/physical-examination" },
   { name: "Pain Assessment", code: "PAIN_ASSESSMENT", icon: <FontAwesomeIcon icon={faThermometerHalf} className="icon" />, path: "/pain-assessment" },
@@ -159,7 +159,8 @@ export const MODULES: Module[] =
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
       ],
     },
-    {name: "System Setup",
+    {
+      name: "System Setup",
       description: "",
       icon: "FaWrench",
       viewOrder: 1,
@@ -203,8 +204,10 @@ export const MODULES: Module[] =
         { name: "Surgical Kits Setup", code: "SURGICAL_KITS_SETUP", description: "", icon: "FaCheckToSlot", viewOrder: 10, navPath: "surgical-kits-setup" },
         { name: "Test Report Template Setup", code: "TEST_REPORT_TEMPLATE_SETUP", description: "to link test radiology or pathology to specific template", icon: "FaList", viewOrder: 0, navPath: "report-result-template" },
         { name: "Country Setup", code: "COUNTRY_SETUP", description: "Manage countries", icon: "FaGlobe", viewOrder: 0, navPath: "country-setup" },
+        { name: "Products Setup", code: "PRODUCTS_SETUP", description: "setup for products that will be used in warehouse transactions", icon: "FaSitemap", viewOrder: 11, navPath: "inventory-management-product-setup" },
         { name: "Payor Setup", code: "PAYER", description: "test", icon: "FaGlobe", viewOrder: 21, navPath: "payor-setup" },
-        {name: "Price Lists",
+        {
+          name: "Price Lists",
           code: "PRICE_LISTS",
           description: "",
           icon: "FaMoneyBill",
@@ -213,7 +216,7 @@ export const MODULES: Module[] =
         },
       ],
     },
-    
+
     {
       name: "Coding Module",
       description: "Coding Module",
@@ -619,9 +622,9 @@ export const MODULES: Module[] =
           icon: "FaMobileRetro",
           viewOrder: 1,
           navPath: "billing-accounting",
-        
+
         },
-          {
+        {
           name: "Claims",
           code: "CLAIMS",
           description: "",

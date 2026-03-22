@@ -68,7 +68,7 @@ const ScheduleScreen = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
-  const FOLLOW_UP_VISIT_TYPE_LKEY = 2041067508470007;
+  const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
 
   const [saveAppointment] = useSaveAppointmentMutation();
 
@@ -108,7 +108,8 @@ const ScheduleScreen = () => {
     const s = `${label} ${key}`.toLowerCase();
     return s.includes('follow') && s.includes('up');
   };
-   const authSlice = useAppSelector(state => state.auth);
+
+  const authSlice = useAppSelector(state => state.auth);
   const ResourceTypeEnum = useEnumOptions('ResourceType');
 
   const DEFAULT_RESOURCE_TYPE = 'CLINIC';
@@ -137,24 +138,21 @@ const ScheduleScreen = () => {
     }
   }, [ResourceTypeEnum]);
 
-
   useEffect(() => {
-  if (selectedFacility?.id) return;
+    if (selectedFacility?.id) return;
 
-  const raw = localStorage.getItem('tenant');
-  if (!raw) return;
+    const raw = localStorage.getItem('tenant');
+    if (!raw) return;
 
-  try {
-    const tenant = JSON.parse(raw);
-    const f = tenant?.selectedFacility;
+    try {
+      const tenant = JSON.parse(raw);
+      const f = tenant?.selectedFacility;
 
-    if (f?.id) {
-      setSelectedFacility(f);
-    }
-  } catch (e) {}
-}, [selectedFacility?.id]);
-
-
+      if (f?.id) {
+        setSelectedFacility(f);
+      }
+    } catch (e) {}
+  }, [selectedFacility?.id]);
 
   const { data: resourcesWithAvailabilityResponse } =
     useGetResourcesWithAvailabilityQuery(listRequest);
@@ -166,7 +164,11 @@ const ScheduleScreen = () => {
     sort: 'id,asc'
   });
   const resourceNameById = useMemo(() => {
-    const list = (allResourcesResponse as any)?.data ?? (allResourcesResponse as any)?.object ?? allResourcesResponse ?? [];
+    const list =
+      (allResourcesResponse as any)?.data ??
+      (allResourcesResponse as any)?.object ??
+      allResourcesResponse ??
+      [];
     const arr = Array.isArray(list) ? list : [];
     const m = new Map<string, string>();
     arr.forEach((r: any) => {
@@ -183,7 +185,7 @@ const ScheduleScreen = () => {
     isLoading: isLoadingAppointments,
     isFetching: isFetchingAppointments
   } = useGetAppointmentsQuery({
-    resource_type:  null,
+    resource_type: null,
     facility_id: selectedFacility?.id || null,
     resources: selectedResources ? selectedResources.resourceKey : []
   });
@@ -207,7 +209,9 @@ const ScheduleScreen = () => {
           appointment?.patient?.fullName ||
           (appointment?.patient?.first_name && appointment?.patient?.last_name
             ? `${appointment.patient.first_name} ${appointment.patient.last_name}`.trim()
-            : appointment?.patient?.first_name || appointment?.patient?.last_name || 'Unknown Patient');
+            : appointment?.patient?.first_name ||
+              appointment?.patient?.last_name ||
+              'Unknown Patient');
 
         const resource = resourcesWithAvailabilityResponse.object.find(
           item => item.key === appointment.resourceKey
@@ -282,7 +286,9 @@ const ScheduleScreen = () => {
       const reasonKey = freshEvent?.appointmentData?.reasonLkey;
 
       const reasonLovList =
-        status === 'Canceled' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object;
+        status === 'Canceled'
+          ? cancelResonLovQueryResponse?.object
+          : noShowResonLovQueryResponse?.object;
 
       const matchedReason = reasonLovList?.find(r => r.key === reasonKey);
 
@@ -581,7 +587,9 @@ const ScheduleScreen = () => {
           const startDateParts = startDateStr.split('/');
           const endDateParts = endDateStr.split('/');
 
-          const startDate = new Date(`${startDateParts[2]}-${startDateParts[0]}-${startDateParts[1]}`);
+          const startDate = new Date(
+            `${startDateParts[2]}-${startDateParts[0]}-${startDateParts[1]}`
+          );
           const endDate = new Date(`${endDateParts[2]}-${endDateParts[0]}-${endDateParts[1]}`);
 
           const agendaAppointments = visibleAppointments.filter(appointment => {
@@ -645,7 +653,11 @@ const ScheduleScreen = () => {
 
           <button
             className="btn-scheduling"
-            style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }}
+            style={{
+              margin: '7px',
+              height: '35px',
+              color: mode === 'light' ? 'black' : 'var(--white)'
+            }}
             onClick={() => onNavigate('PREV')}
           >
             <ArrowLeftLineIcon />
@@ -682,14 +694,21 @@ const ScheduleScreen = () => {
           )}
           <button
             className="btn-scheduling"
-            style={{ margin: '7px', height: '35px', color: mode === 'light' ? 'black' : 'var(--white)' }}
+            style={{
+              margin: '7px',
+              height: '35px',
+              color: mode === 'light' ? 'black' : 'var(--white)'
+            }}
             onClick={() => onNavigate('NEXT')}
           >
             <ArrowRightLineIcon />
           </button>
         </div>
 
-        <ButtonGroup style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }} size="md">
+        <ButtonGroup
+          style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }}
+          size="md"
+        >
           <Button
             className="btn-scheduling"
             style={{ border: 'none', height: '35px' }}
@@ -810,7 +829,9 @@ const ScheduleScreen = () => {
             size="xs"
             circle
             src={
-              image ? `data:${content_type};base64,${image}` : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+              image
+                ? `data:${content_type};base64,${image}`
+                : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
             }
           />
         </div>
@@ -881,7 +902,8 @@ const ScheduleScreen = () => {
         currentResource?.availability?.some(period => {
           const startMinutes = period.startHour * 60 + (period.startMinute || 0);
           const endMinutes = period.endHour * 60 + (period.endMinute || 0);
-          const match = period.dayOfWeek === apiDay && currentMinutes >= startMinutes && currentMinutes < endMinutes;
+          const match =
+            period.dayOfWeek === apiDay && currentMinutes >= startMinutes && currentMinutes < endMinutes;
           return match;
         }) || false;
 
@@ -915,29 +937,30 @@ const ScheduleScreen = () => {
 
         const patientMrn = patient?.patient_mrn || '';
 
-          const resourceKey = a?.resourceKey ?? a?.resource_key ?? a?.resource?.key ?? null;
+        const resourceKey = a?.resourceKey ?? a?.resource_key ?? a?.resource?.key ?? null;
 
-      const resource =
-        resourceKey != null ? resourcesList.find((r: any) => String(r.key) === String(resourceKey)) : null;
+        const resource =
+          resourceKey != null
+            ? resourcesList.find((r: any) => String(r.key) === String(resourceKey))
+            : null;
 
-      const resourceNameFromService =
-        resourceKey != null ? resourceNameById.get(String(resourceKey)) : '';
-      const resourceName =
-        (resourceNameFromService && String(resourceNameFromService).trim()) ||
-        resource?.resourceName ||
-        resource?.name ||
-        a?.resourceName ||
-        a?.resource_name ||
-        '-';
+        const resourceNameFromService = resourceKey != null ? resourceNameById.get(String(resourceKey)) : '';
+        const resourceName =
+          (resourceNameFromService && String(resourceNameFromService).trim()) ||
+          resource?.resourceName ||
+          resource?.name ||
+          a?.resourceName ||
+          a?.resource_name ||
+          '-';
 
-      const resourceType =
-        resource?.resource_type ||
-        resource?.resourceType ||
-        a?.resourceType ||
-        a?.resource_type ||
-        a?.resourceTypeLkey ||
-        a?.resource_type_key ||
-        '-';
+        const resourceType =
+          resource?.resource_type ||
+          resource?.resourceType ||
+          a?.resourceType ||
+          a?.resource_type ||
+          a?.resourceTypeLkey ||
+          a?.resource_type_key ||
+          '-';
 
         return {
           id: a.key,
@@ -1029,6 +1052,7 @@ const ScheduleScreen = () => {
 
                   <Form fluid layout="inline">
                     <MyInput
+                      disabled
                       height={35}
                       width={'11.5vw'}
                       column
@@ -1045,6 +1069,7 @@ const ScheduleScreen = () => {
                   </Form>
                   <Form fluid layout="inline">
                     <MyInput
+                      disabled
                       height={35}
                       width={'11.5vw'}
                       vr={validationResult}
@@ -1139,6 +1164,11 @@ const ScheduleScreen = () => {
 
                 <MyButton
                   onClick={() => {
+                    // Clear all appointment-related state when opening new appointment modal
+                    setViewAppointmentData(null);
+                    setSelectedEvent(null);
+                    setShowAppointmentOnly(false);
+                    setSelectedSlot(null);
                     setModalOpen(true);
                   }}
                   prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
@@ -1171,7 +1201,9 @@ const ScheduleScreen = () => {
             timeslots={1}
             onSelectSlot={slotInfo => {
               if (slotInfo.resourceId) {
-                const currentResource = resourcesWithAvailabilityResponse?.object.find(r => r.key === slotInfo.resourceId);
+                const currentResource = resourcesWithAvailabilityResponse?.object.find(
+                  r => r.key === slotInfo.resourceId
+                );
 
                 if (currentResource && currentResource.availability) {
                   const jsDay = slotInfo.start.getDay();
@@ -1183,7 +1215,11 @@ const ScheduleScreen = () => {
                       const startMinutes = period.startHour * 60 + (period.startMinute || 0);
                       const endMinutes = period.endHour * 60 + (period.endMinute || 0);
 
-                      return period.dayOfWeek === apiDay && currentMinutes >= startMinutes && currentMinutes < endMinutes;
+                      return (
+                        period.dayOfWeek === apiDay &&
+                        currentMinutes >= startMinutes &&
+                        currentMinutes < endMinutes
+                      );
                     }) || false;
 
                   if (!isAvailable) {
@@ -1197,13 +1233,11 @@ const ScheduleScreen = () => {
                     resourceName: currentResource.resourceName,
                     facilityKey: currentResource.facilityKey
                   };
-
                   setSelectedSlot(enhancedSlotInfo);
                   setModalOpen(true);
                   return;
                 }
               }
-
               setSelectedSlot(slotInfo);
               setModalOpen(true);
             }}
@@ -1248,7 +1282,11 @@ const ScheduleScreen = () => {
         from={'Schedule'}
         isOpen={modalOpen && !followUpModalOpen}
         onClose={() => {
-          setModalOpen(false), setShowAppointmentOnly(false), setViewAppointmentData(null);
+          setModalOpen(false);
+          setShowAppointmentOnly(false);
+          setViewAppointmentData(null);
+          setSelectedEvent(null);
+          setSelectedSlot(null);
         }}
         appointmentData={viewAppointmentData || selectedEvent?.appointmentData}
         resourceType={selectedResourceType}
@@ -1292,6 +1330,12 @@ const ScheduleScreen = () => {
           setShowAppointmentOnly(false);
           setViewAppointmentData(null);
         }}
+        patient={
+          followUpDraftData?.patient ??
+          viewAppointmentData?.patient ??
+          selectedEvent?.appointmentData?.patient ??
+          null
+        }
         appointmentData={followUpDraftData || viewAppointmentData || selectedEvent?.appointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
@@ -1376,11 +1420,7 @@ const ScheduleScreen = () => {
           setModalOpen(false);
         }}
         content={
-          <ViewAppointmentRequests
-            data={requestsRows}
-            onApprove={handleApproveRequest}
-            onReject={handleRejectRequest}
-          />
+          <ViewAppointmentRequests data={requestsRows} onApprove={handleApproveRequest} onReject={handleRejectRequest} />
         }
       ></MyModal>
     </div>

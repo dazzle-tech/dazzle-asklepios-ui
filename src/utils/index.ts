@@ -16,64 +16,98 @@ export const fromCamelCaseToDBName = word => {
   return final;
 };
 
-export const fromListRequestToQueryParams = listRequest => {
-  let final = '';
-  final += `&pageNumber=${listRequest.pageNumber}`;
-  final += `&pageSize=${listRequest.pageSize}`;
-  final += `&sortBy=${fromCamelCaseToDBName(listRequest.sortBy)}`;
-  final += `&sortType=${listRequest.sortType}`;
-  final += `&filterLogic=${listRequest.filterLogic}`;
+export const fromListRequestToQueryParams = (listRequest: any) => {
+  const req = listRequest ?? {};
 
-  // construct a parsable filter query param from fitlers array
-  let filtersString = '';
-  listRequest.filters.map((filter, i) => {
-    filtersString += `${filter.fieldName},${filter.operator},${filter.value}`;
-    if (i + 1 < listRequest.filters.length) {
-      filtersString += '_fspr_';
-    }
+  // Default to legacy paging conventions used across this repo (see `initialListRequest`)
+  const pageNumber = req.pageNumber ?? 1;
+  const pageSize = req.pageSize ?? 15;
+  const sortBy = req.sortBy ?? 'key';
+  const sortType = req.sortType ?? 'asc';
+  const filterLogic = req.filterLogic ?? 'and';
+
+  let final = '';
+  final += `&pageNumber=${pageNumber}`;
+  final += `&pageSize=${pageSize}`;
+  final += `&sortBy=${fromCamelCaseToDBName(String(sortBy))}`;
+  final += `&sortType=${sortType}`;
+  final += `&filterLogic=${filterLogic}`;
+
+  const filters: any[] = Array.isArray(req.filters) ? req.filters : [];
+  const validFilters = filters.filter(f => {
+    if (!f) return false;
+    const fieldName = String(f.fieldName ?? '').trim();
+    const operator = String(f.operator ?? '').trim();
+    const value = f.value;
+    if (!fieldName || !operator) return false;
+    if (value == null) return false;
+    const valueStr = String(value).trim();
+    if (!valueStr || valueStr === 'undefined' || valueStr === 'null') return false;
+    return true;
   });
 
-  if (filtersString.length > 0) final += `&filters=${filtersString}`;
+  if (validFilters.length > 0) {
+    const filtersString = validFilters
+      .map(f => `${f.fieldName},${f.operator},${f.value}`)
+      .join('_fspr_');
+    final += `&filters=${filtersString}`;
+  }
 
-  if (listRequest.ignore) final += `&ignore=true`;
-  if (listRequest.skipDetails) final += `&skipDetails=true`;
+  if (req.ignore) final += `&ignore=true`;
+  if (req.skipDetails) final += `&skipDetails=true`;
   return final;
 };
-export const fromListRequestAllValueToQueryParams = listRequest => {
-  let final = '';
-  final += `&sortBy=${fromCamelCaseToDBName(listRequest.sortBy)}`;
-  final += `&sortType=${listRequest.sortType}`;
-  final += `&filterLogic=${listRequest.filterLogic}`;
+export const fromListRequestAllValueToQueryParams = (listRequest: any) => {
+  const req = listRequest ?? {};
 
-  // construct a parsable filter query param from fitlers array
-  let filtersString = '';
-  listRequest.filters.map((filter, i) => {
-    filtersString += `${filter.fieldName},${filter.operator},${filter.value}`;
-    if (i + 1 < listRequest.filters.length) {
-      filtersString += '_fspr_';
-    }
+  // Default to legacy sort conventions used across this repo (see `initialListRequestAllValues`)
+  const sortBy = req.sortBy ?? 'key';
+  const sortType = req.sortType ?? 'asc';
+  const filterLogic = req.filterLogic ?? 'and';
+
+  let final = '';
+  final += `&sortBy=${fromCamelCaseToDBName(String(sortBy))}`;
+  final += `&sortType=${sortType}`;
+  final += `&filterLogic=${filterLogic}`;
+
+  const filters: any[] = Array.isArray(req.filters) ? req.filters : [];
+  const validFilters = filters.filter(f => {
+    if (!f) return false;
+    const fieldName = String(f.fieldName ?? '').trim();
+    const operator = String(f.operator ?? '').trim();
+    const value = f.value;
+    if (!fieldName || !operator) return false;
+    if (value == null) return false;
+    const valueStr = String(value).trim();
+    if (!valueStr || valueStr === 'undefined' || valueStr === 'null') return false;
+    return true;
   });
 
-  if (filtersString.length > 0) final += `&filters=${filtersString}`;
+  if (validFilters.length > 0) {
+    const filtersString = validFilters
+      .map(f => `${f.fieldName},${f.operator},${f.value}`)
+      .join('_fspr_');
+    final += `&filters=${filtersString}`;
+  }
 
-  if (listRequest.ignore) final += `&ignore=true`;
-  if (listRequest.skipDetails) final += `&skipDetails=true`;
+  if (req.ignore) final += `&ignore=true`;
+  if (req.skipDetails) final += `&skipDetails=true`;
   return final;
-}
+};
 export const conjureValuesFromList = (
   list: any[],
   keysString: string,
   preferredField: string
 ): string => {
-  if (!keysString) return "";
+  if (!keysString) return '';
 
-  const keys = keysString?.split(",").map(k => k.trim());
+  const keys = keysString?.split(',').map(k => k.trim());
   const values = keys?.map(key => {
     const found = list?.find(record => record.key === key);
-    return found ? found[preferredField] : key; 
+    return found ? found[preferredField] : key;
   });
 
-  return values.join(", ");
+  return values.join(', ');
 };
 export const addFilterToListRequest = (
   fieldName: string,
@@ -113,8 +147,8 @@ export const camelCaseToLabel = (input: string): string => {
 
   // Capitalize the first letter and trim any leading spaces
   return (
-    (result.charAt(0).toUpperCase() + result.slice(1).replace('Lkey', '').replace(' Key', '')).trim()
-  );
+    result.charAt(0).toUpperCase() + result.slice(1).replace('Lkey', '').replace(' Key', '')
+  ).trim();
 };
 
 export const conjureValueBasedOnKeyFromList = (
@@ -144,7 +178,6 @@ export const conjureValueBasedOnIDFromList = (
   return record?.[preferredField] ?? currentKey;
 };
 
-
 export const conjureValueBasedOnKeyFromListOfValues = (
   list: [],
   currentKey: string,
@@ -152,7 +185,6 @@ export const conjureValueBasedOnKeyFromListOfValues = (
 ) => {
   let displayValue = currentKey;
   list.map(record => {
-
     if (record['key'] === currentKey) {
       displayValue = record[preferredField];
     }
@@ -167,7 +199,6 @@ export const conjureOrderBasedOnKeyFromListOfValues = (
 ) => {
   let displayValue = currentKey;
   list.map(record => {
-
     if (record['key'] === currentKey) {
       displayValue = record[preferredField];
     }
@@ -180,7 +211,7 @@ export const conjureValuesFromKeys = (
   keys: string[],
   preferredField: string
 ): string => {
-  if (!Array.isArray(keys) || keys.length === 0) return "";
+  if (!Array.isArray(keys) || keys.length === 0) return '';
 
   const values = keys
     .map(key => {
@@ -189,7 +220,7 @@ export const conjureValuesFromKeys = (
     })
     .filter(Boolean); // remove nulls
 
-  return values.join(", ");
+  return values.join(', ');
 };
 export const calculateAge = birthdate => {
   const birthDate = new Date(birthdate);
@@ -207,12 +238,12 @@ export const calculateAge = birthdate => {
     return yearsDiff;
   }
 };
-export const calculateAgeFormat=dateOfBirth=> {
+export const calculateAgeFormat = dateOfBirth => {
   const today = new Date();
   const dob = new Date(dateOfBirth);
 
   if (isNaN(dob.getTime())) {
-    return ''; 
+    return '';
   }
 
   let years = today.getFullYear() - dob.getFullYear();
@@ -225,10 +256,10 @@ export const calculateAgeFormat=dateOfBirth=> {
   }
   if (days < 0) {
     const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 0);
-    days += lastMonth.getDate(); 
+    days += lastMonth.getDate();
     months--;
   }
-  const totalDays = (years * 365) + (months * 30) + days; 
+  const totalDays = years * 365 + months * 30 + days;
 
   let ageString = '';
 
@@ -244,8 +275,8 @@ export const calculateAgeFormat=dateOfBirth=> {
     ageString += `${days}d`;
   }
 
-  return ageString.trim();  
-}
+  return ageString.trim();
+};
 export const convertStyleToObject = styleString => {
   const styleObject = {};
   styleString.split(';').forEach(item => {
@@ -275,24 +306,23 @@ export const getNumericTimestamp = (date, startOfDay = true) => {
   const d = new Date(date);
 
   if (startOfDay) {
-      d.setHours(0, 0, 0, 0);
+    d.setHours(0, 0, 0, 0);
   } else {
-      d.setHours(23, 59, 59, 999);
+    d.setHours(23, 59, 59, 999);
   }
-
 
   return d.getTime();
 };
 
 export function formatDateWithoutSeconds(dateString) {
   if (!dateString) return '';
-  return new Date(dateString).toLocaleString("en-GB", {
+  return new Date(dateString).toLocaleString('en-GB', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true 
+    hour12: true
   });
 }
 
@@ -300,11 +330,9 @@ export const formatEnumString = (input: string): string => {
   if (!input) return '';
 
   return input
-    .split('_')                          
-    .map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() 
-    )
-    .join(' ');                         
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 };
 
 export const formatControlledEnumLabel = (code?: string | null): string => {

@@ -21,15 +21,14 @@ import {
   useGetAllPayorsQuery,
   useCreatePayorMutation,
   useUpdatePayorMutation,
-  useTogglePayorActiveMutation} from '@/services/setup/payer/PayorService';
+  useTogglePayorActiveMutation
+} from '@/services/setup/payer/PayorService';
 import { formatDateWithoutSeconds } from '@/utils';
 import PayorModal from './PayorModal';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { useEnumOptions } from '@/services/enumsApi';
-import { FaRegListAlt } from "react-icons/fa";
+import { FaRegListAlt } from 'react-icons/fa';
 import PayorPlanModal from './PayorPlanModal';
-
-
 
 const PayorSetup = () => {
   const dispatch = useAppDispatch();
@@ -38,12 +37,14 @@ const PayorSetup = () => {
   const [openModal, setOpenModal] = useState(false);
 
   const [openConfirmTogglePayor, setOpenConfirmTogglePayor] = useState(false);
-  const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
+  const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
+    'deactivate'
+  );
 
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
-    sort: 'id,asc',
+    sort: 'id,asc'
   });
 
   const [sortColumn, setSortColumn] = useState<string>('id');
@@ -53,9 +54,7 @@ const PayorSetup = () => {
   const [selectedPayorForPlans, setSelectedPayorForPlans] = useState<any>(null);
   const [payorPlans, setPayorPlans] = useState([]);
 
-
-  const payorCategories = useEnumOptions('PayorCategory');  
-
+  const payorCategories = useEnumOptions('PayorCategory');
 
   const [searchFilters, setSearchFilters] = useState<{
     category: string | null;
@@ -64,7 +63,7 @@ const PayorSetup = () => {
   }>({
     category: null,
     name: '',
-    code: '',
+    code: ''
   });
 
   const [appliedFilters, setAppliedFilters] = useState<{
@@ -80,7 +79,7 @@ const PayorSetup = () => {
     sort: paginationParams.sort,
     ...(appliedFilters.category ? { category: appliedFilters.category } : {}),
     ...(appliedFilters.name ? { name: appliedFilters.name } : {}),
-    ...(appliedFilters.code ? { code: appliedFilters.code } : {}),
+    ...(appliedFilters.code ? { code: appliedFilters.code } : {})
   });
 
   const [createPayor] = useCreatePayorMutation();
@@ -109,7 +108,7 @@ const PayorSetup = () => {
   const handlePageChange = (_event: any, newPage: number) => {
     setPaginationParams(prev => ({
       ...prev,
-      page: newPage,
+      page: newPage
     }));
   };
 
@@ -118,7 +117,7 @@ const PayorSetup = () => {
     setPaginationParams(prev => ({
       ...prev,
       size: newSize,
-      page: 0,
+      page: 0
     }));
   };
 
@@ -130,7 +129,7 @@ const PayorSetup = () => {
     setPaginationParams(prev => ({
       ...prev,
       sort: sortValue,
-      page: 0,
+      page: 0
     }));
   };
 
@@ -141,11 +140,11 @@ const PayorSetup = () => {
 
   const handleSave = async () => {
     const errors: string[] = [];
-    if (!payor.code?.trim()) errors.push("Payor Code is required");
-    if (!payor.name?.trim()) errors.push("Payor Name is required");
-    if (!payor.category) errors.push("Category is required");
-    if (!payor.startDate) errors.push("Start Date is required");
-    if (!payor.phone?.trim()) errors.push("Phone is required");
+    if (!payor.code?.trim()) errors.push('Payor Code is required');
+    if (!payor.name?.trim()) errors.push('Payor Name is required');
+    if (!payor.category) errors.push('Category is required');
+    if (!payor.startDate) errors.push('Start Date is required');
+    if (!payor.phone?.trim()) errors.push('Phone is required');
     if (errors.length > 0) {
       dispatch(
         notify({
@@ -156,7 +155,7 @@ const PayorSetup = () => {
               ))}
             </>
           ),
-          sev: "warning",
+          sev: 'warning'
         })
       );
       return;
@@ -168,39 +167,32 @@ const PayorSetup = () => {
 
       if (payor.id) {
         await updatePayor(cleanPayor).unwrap();
-        dispatch(notify({ msg: "Payor updated successfully", sev: "success" }));
+        dispatch(notify({ msg: 'Payor updated successfully', sev: 'success' }));
       } else {
         await createPayor(cleanPayor).unwrap();
-        dispatch(notify({ msg: "Payor created successfully", sev: "success" }));
+        dispatch(notify({ msg: 'Payor created successfully', sev: 'success' }));
       }
 
       setOpenModal(false);
+    } catch (err: any) {
+      let serverMessage =
+        err?.data?.properties?.message ||
+        err?.data?.message ||
+        err?.data?.detail ||
+        'Failed to save payor';
 
-  } catch (err: any) {
-    console.error("Error saving payor:", err);
+      serverMessage = serverMessage.replace(/^error\./i, '');
 
-    let serverMessage =
-      err?.data?.properties?.message ||
-      err?.data?.message ||
-      err?.data?.detail ||
-      "Failed to save payor";
-
-    serverMessage = serverMessage.replace(/^error\./i, "");
-
-    dispatch(
-      notify({
-        msg: serverMessage,
-        sev: "error",
-      })
-    );
-  }
-    finally {
-          dispatch(hideSystemLoader());
-        }
-      };
-
-
-
+      dispatch(
+        notify({
+          msg: serverMessage,
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
 
   const handleTogglePayorActive = async () => {
     if (!payor?.id) return;
@@ -215,7 +207,7 @@ const PayorSetup = () => {
             toggleActionType === 'deactivate'
               ? 'Payor deactivated successfully'
               : 'Payor reactivated successfully',
-          sev: 'success',
+          sev: 'success'
         })
       );
 
@@ -225,7 +217,7 @@ const PayorSetup = () => {
       dispatch(
         notify({
           msg: 'Action failed, please try again',
-          sev: 'error',
+          sev: 'warning'
         })
       );
     } finally {
@@ -241,7 +233,7 @@ const PayorSetup = () => {
         title="Payor Plan"
         size={22}
         fill="var(--primary-gray)"
-        style={{ cursor: "pointer", marginLeft: "8px" }}
+        style={{ cursor: 'pointer', marginLeft: '8px' }}
         onClick={() => {
           setSelectedPayorForPlans(rowData);
           setPayorPlans([]);
@@ -249,7 +241,6 @@ const PayorSetup = () => {
           setOpenPayorPlanModal(true);
         }}
       />
-
 
       <MdModeEdit
         className="icons-style"
@@ -298,17 +289,17 @@ const PayorSetup = () => {
       render: (rowData: Payor) => {
         const found = payorCategories.find(c => c.value === rowData.category);
         return <span>{found?.label ?? rowData.category}</span>;
-      },
+      }
     },
     {
       key: 'name',
       title: <Translate>Payor Name</Translate>,
-      flexGrow: 3,
+      flexGrow: 3
     },
     {
       key: 'code',
       title: <Translate>Internal Code</Translate>,
-      flexGrow: 2,
+      flexGrow: 2
     },
     {
       key: 'startDate',
@@ -316,12 +307,10 @@ const PayorSetup = () => {
       flexGrow: 2,
       render: (rowData: Payor) =>
         rowData.startDate ? (
-          <span className="date-table-style">
-            {formatDateWithoutSeconds(rowData.startDate)}
-          </span>
+          <span className="date-table-style">{formatDateWithoutSeconds(rowData.startDate)}</span>
         ) : (
           ''
-        ),
+        )
     },
     {
       key: 'expiryDate',
@@ -329,73 +318,77 @@ const PayorSetup = () => {
       flexGrow: 2,
       render: (rowData: Payor) =>
         rowData.expiryDate ? (
-          <span className="date-table-style">
-            {formatDateWithoutSeconds(rowData.expiryDate)}
-          </span>
+          <span className="date-table-style">{formatDateWithoutSeconds(rowData.expiryDate)}</span>
         ) : (
           ''
-        ),
+        )
     },
     {
       key: 'actions',
       title: <Translate></Translate>,
       flexGrow: 2,
-      render: (rowData: Payor) => iconsForActions(rowData),
-    },
+      render: (rowData: Payor) => iconsForActions(rowData)
+    }
   ];
 
   const filters = () => (
     <Form layout="inline" fluid>
-        <MyInput
-          width="10vw"
-          fieldName="category"
-          fieldType="select"
-          selectData={payorCategories}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={searchFilters}
-          setRecord={updated => setSearchFilters(prev => ({
+      <MyInput
+        width="10vw"
+        fieldName="category"
+        fieldType="select"
+        selectData={payorCategories}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={searchFilters}
+        setRecord={updated =>
+          setSearchFilters(prev => ({
             ...prev,
             category: updated.category
-          }))}
-          showLabel={false}
-          placeholder="Category"
-          searchable={false}
-        />
+          }))
+        }
+        showLabel={false}
+        placeholder="Category"
+        searchable={false}
+      />
 
-        <MyInput
-          width="10vw"
-          fieldName="name"
-          fieldType="text"
-          record={searchFilters}
-          setRecord={updated => setSearchFilters(prev => ({
+      <MyInput
+        width="10vw"
+        fieldName="name"
+        fieldType="text"
+        record={searchFilters}
+        setRecord={updated =>
+          setSearchFilters(prev => ({
             ...prev,
             name: updated.name
-          }))}
-          showLabel={false}
-          placeholder="Payor Name"
-        />
+          }))
+        }
+        showLabel={false}
+        placeholder="Payor Name"
+      />
 
-        <MyInput
-          width="10vw"
-          fieldName="code"
-          fieldType="text"
-          record={searchFilters}
-          setRecord={updated => setSearchFilters(prev => ({
+      <MyInput
+        width="10vw"
+        fieldName="code"
+        fieldType="text"
+        record={searchFilters}
+        setRecord={updated =>
+          setSearchFilters(prev => ({
             ...prev,
             code: updated.code
-          }))}
-          showLabel={false}
-          placeholder="Code"
-        />
+          }))
+        }
+        showLabel={false}
+        placeholder="Code"
+      />
 
-      <AdvancedSearchFilters 
-      
-      clearOnClick={() => {
-        setSearchFilters({ category: null, name: '', code: '' });
-        setAppliedFilters({});
-        setPaginationParams(prev => ({ ...prev, page: 0 }));
-        }}/>
+      <AdvancedSearchFilters
+        clearOnClick={() => {
+          setSearchFilters({ category: null, name: '', code: '' });
+          setAppliedFilters({});
+          setPaginationParams(prev => ({ ...prev, page: 0 }));
+        }}
+      />
     </Form>
   );
 
@@ -403,23 +396,19 @@ const PayorSetup = () => {
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
 
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      setAppliedFilters({
+        category: searchFilters.category || undefined,
+        name: searchFilters.name?.trim() || undefined,
+        code: searchFilters.code?.trim() || undefined
+      });
 
+      setPaginationParams(prev => ({ ...prev, page: 0 }));
+    }, 100);
 
-
-useEffect(() => {
-  const delayDebounce = setTimeout(() => {
-    setAppliedFilters({
-      category: searchFilters.category || undefined,
-      name: searchFilters.name?.trim() || undefined,
-      code: searchFilters.code?.trim() || undefined,
-    });
-
-    setPaginationParams(prev => ({ ...prev, page: 0 }));
-  }, 100);
-
-  return () => clearTimeout(delayDebounce);
-}, [searchFilters]);
-
+    return () => clearTimeout(delayDebounce);
+  }, [searchFilters]);
 
   return (
     <Panel>
@@ -468,15 +457,11 @@ useEffect(() => {
         onSave={handleSave}
       />
 
-
       <PayorPlanModal
         open={openPayorPlanModal}
         setOpen={setOpenPayorPlanModal}
         payor={selectedPayorForPlans}
       />
-
-
-
     </Panel>
   );
 };

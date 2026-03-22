@@ -8,13 +8,14 @@ import MyTab from '@/components/MyTab';
 const DiagnosticsResult = props => {
   const location = useLocation();
   const authSlice = useAppSelector(state => state.auth);
+  //add new patient edits
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const tabData = [
-    { title: 'Results', content: <Result patient={patient} user={authSlice.user.key} /> },
+    { title: 'Results', content: <Result patient={patient} /> },
     {
       title: 'Reports',
-      content: <Reports patient={patient} user={authSlice.user.key} encounter={encounter} />
+      content: <Reports patient={patient}  />
     },
     {
       title: 'Laboratory Result Comparison',
