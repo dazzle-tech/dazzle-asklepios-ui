@@ -216,6 +216,7 @@ import AvailabilityTemplatePage from './pages/setup/availability_template';
 import "survey-core/survey-core.min.css";
 import "survey-creator-core/survey-creator-core.min.css";
 import Logo from './images/Logo_BLUE_New.svg';
+import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 
 type BackendMenuItem = { screen?: string | null };
 
@@ -498,6 +499,7 @@ useEffect(() => {
               <Route path="country-setup" element={<CountrySetup />} />
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
+              <Route path="organization-holidays" element={<OrganizationHolidays />} />
               <Route path="/patient-report" element={<StimulsoftReportViewer />} />
   <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>
