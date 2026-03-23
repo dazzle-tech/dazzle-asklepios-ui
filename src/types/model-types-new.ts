@@ -2301,6 +2301,15 @@ export interface OrganizationDefinition {
   contactMobile?: string;
   contactLandNumber?: string;
   taxValue?: number;
+  defaultTimeZone?: string;
+  defaultLanguageId?: number;
+  workingDays?: OrganizationWorkingDay[];
+}
+
+export interface OrganizationWorkingDay {
+  id?: number;
+  dayOfWeek?: string;
+  isWorking?: boolean;
 }
 
 export interface PatientAllergiesActiveIngredientResponse {
