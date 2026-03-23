@@ -157,6 +157,7 @@ export const MODULES: Module[] =
         { name: "Data validation Management", code: "DATA_VALIDATION_MANAGEMENT", description: "", icon: "FaDatabase", viewOrder: 8, navPath: "data-validation-management" },
         { name: "User", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 9, navPath: "users-new" },
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
+        { name: "Organization Holidays", code: "ORGANIZATION_HOLIDAY", description: "", icon: "FaBuilding", viewOrder: 11, navPath: "organization-holidays" },
       ],
     },
     {

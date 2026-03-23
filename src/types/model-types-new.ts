@@ -2312,6 +2312,58 @@ export interface OrganizationWorkingDay {
   isWorking?: boolean;
 }
 
+export type HolidayType = 'PUBLIC_HOLIDAY' | 'FORMAL_VACATION' | 'CLOSURE';
+
+export interface OrganizationHolidayResponseVM {
+  id: number;
+  organizationDefinitionId: number;
+  name: string;
+  holidayType: HolidayType;
+  startDate: string; 
+  endDate: string; 
+  reason?: string | null;
+  isActive: boolean;
+  allFacilities: boolean;
+  facilityIds?: string | null;
+  recurring: boolean;
+}
+
+export interface OrganizationHolidayCreateDTO {
+  organizationDefinitionId: number;
+  name: string;
+  holidayType: HolidayType;
+  startDate: string; 
+  endDate: string; 
+  reason?: string | null;
+  isActive: boolean;
+  allFacilities: boolean;
+  facilityIds?: string | null;
+  recurring: boolean;
+}
+
+export interface OrganizationHolidayUpdateDTO {
+  id: number;
+  name?: string | null;
+  holidayType?: HolidayType | null;
+  startDate?: string | null; 
+  endDate?: string | null; 
+  reason?: string | null;
+  isActive?: boolean | null;
+  allFacilities?: boolean | null;
+  facilityIds?: string | null;
+  recurring?: boolean | null;
+}
+
+export interface OrganizationHolidaySearchParams {
+  name?: string;
+  holidayType?: HolidayType;
+  startDate?: string; 
+  endDate?: string; 
+  recurring?: boolean;
+  allFacilities?: boolean;
+  facilityId?: number;
+}
+
 export interface PatientAllergiesActiveIngredientResponse {
   id?: number;
   activeIngredientId?: number;

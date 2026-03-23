@@ -1512,6 +1512,46 @@ export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   workingDays: [],
 };
 
+export const newOrganizationHolidayResponseVM: modelTypes.OrganizationHolidayResponseVM = {
+  id: undefined,
+  organizationDefinitionId: 0,
+  name: '',
+  holidayType: undefined,
+  startDate: '',
+  endDate: '',
+  reason: '',
+  isActive: true,
+  allFacilities: true,
+  facilityIds: '',
+  recurring: false
+};
+
+export const newOrganizationHolidayCreateDTO: modelTypes.OrganizationHolidayCreateDTO = {
+  organizationDefinitionId: 0,
+  name: '',
+  holidayType: undefined,
+  startDate: '',
+  endDate: '',
+  reason: '',
+  isActive: true,
+  allFacilities: true,
+  facilityIds: '',
+  recurring: false
+};
+
+export const newOrganizationHolidayUpdateDTO: modelTypes.OrganizationHolidayUpdateDTO = {
+  id: 0,
+  name: '',
+  holidayType: undefined,
+  startDate: '',
+  endDate: '',
+  reason: '',
+  isActive: true,
+  allFacilities: true,
+  facilityIds: '',
+  recurring: false
+};
+
 export const newFormTemplate: modelTypes.FormTemplate = {
   id: undefined,
   name: null,
