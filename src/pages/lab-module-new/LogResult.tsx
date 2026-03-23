@@ -70,8 +70,15 @@ const LogResult = ({ open, setOpen, result }: Props) => {
     }
   ];
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
+
+  <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -87,6 +94,7 @@ const LogResult = ({ open, setOpen, result }: Props) => {
         />
       }
     />
+  </div>
   );
 };
 

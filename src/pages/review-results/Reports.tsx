@@ -505,8 +505,16 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
         setPage(0);
     }, [approvalDate, orderDate, showReviewed]);
 
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
-        <>
+        <div dir={dir}>
             <MyTable
                 filters={filters}
                 columns={columns}
@@ -571,7 +579,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                     disableDefaultTemplate
                 />
             )}
-        </>
+            </div>
     );
 };
 

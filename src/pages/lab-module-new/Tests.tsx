@@ -900,7 +900,15 @@ const Tests = forwardRef<any, Props>(
     }, [order?.id]);
 
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
+    <div dir={dir}>
       <Panel ref={ref} defaultExpanded>
 
         <div style={{ minHeight: 600 }}>
@@ -1009,6 +1017,7 @@ const Tests = forwardRef<any, Props>(
         />
 
       </Panel>
+    </div>
     );
   }
 );

@@ -7,24 +7,34 @@ import RequestedTest from './requested-tests/RequestedTest';
 const RadiologyMain = () => {
   const radRef = useRef<any>(null);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   const tabData = [
     {
       title: 'Imaging Radiology',
-      content: <Rad ref={radRef} />
+      content:  <div dir={dir}>
+                  <Rad ref={radRef} />
+                </div>
     },
     {
       title: 'Radiologist Worklist',
-      content: (
-        <RadiologistWorklist
-          refetchAllRadData={() =>
-            radRef.current?.refetchAllRadData?.()
-          }
-        />
-      )
+      content: <div dir={dir}>
+                <RadiologistWorklist
+                  refetchAllRadData={() =>
+                    radRef.current?.refetchAllRadData?.()
+                  }
+                />
+               </div>
     },
     {
       title: 'Requested Tests',
-      content: <RequestedTest requestType="RADIOLOGY" />
+      content: <div dir={dir}><RequestedTest requestType="RADIOLOGY" /></div>
+      
     },
   ];
 
