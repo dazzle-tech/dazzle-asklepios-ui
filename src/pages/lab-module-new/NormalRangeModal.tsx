@@ -84,8 +84,15 @@ const NormalRangeModal = ({ open, setOpen, ranges }: Props) => {
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
+  <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -94,12 +101,15 @@ const NormalRangeModal = ({ open, setOpen, ranges }: Props) => {
       size="40vw"
       bodyheight='auto'
       content={
+      <div dir={dir}>
         <MyTable
           columns={columns}
           data={ranges ?? []}
           height={400}
-        />}
+        />
+      </div>}
     />
+  </div>
   );
 };
 

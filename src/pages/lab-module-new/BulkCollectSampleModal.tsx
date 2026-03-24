@@ -127,9 +127,15 @@ const [record, setRecord] = useState({
       }
     }, [open]);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
+  <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -140,6 +146,7 @@ const [record, setRecord] = useState({
         { title: "Sample", icon: <FontAwesomeIcon icon={faVialCircleCheck} /> }
       ]}
       content={
+      <div dir={dir}>
         <Form fluid layout="inline">
               <MyInput
                 fieldLabel="Actual Sample Quantity"
@@ -174,8 +181,10 @@ const [record, setRecord] = useState({
                 width={"14vw"}
               />
         </Form>
+      </div>
       }
     />
+  </div>
   );
 };
 

@@ -41,7 +41,15 @@ const PatientArrivalModal = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -141,6 +149,7 @@ const PatientArrivalModal = ({
         </Form>
       }
     />
+  </div>
   );
 };
 

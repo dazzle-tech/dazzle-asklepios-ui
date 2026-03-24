@@ -799,7 +799,15 @@ const Result = forwardRef<any, Props>(
       setSelectedResultIds(prev => prev.filter(id => currentIds.includes(id)));
     }, [normalizedResults]);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
+    <div dir={dir}>
       <Panel
         defaultExpanded
         header={
@@ -928,6 +936,7 @@ const Result = forwardRef<any, Props>(
           )}
         />
       </Panel>
+    </div>
     );
   }
 );

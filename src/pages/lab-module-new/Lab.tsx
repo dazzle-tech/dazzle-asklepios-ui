@@ -252,6 +252,13 @@ const Lab = () => {
 
   }, [order?.patientId]);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   const tabData = [
     {
       title: 'Laboratory',
@@ -292,6 +299,7 @@ const Lab = () => {
             />
           </div>
 
+  <div dir={dir}>
           <div className="container">
             <div className="left-boxs">
               <Row>
@@ -386,6 +394,7 @@ const Lab = () => {
               />
             </div>
           </div>
+  </div>
         </>
       </>)
     },

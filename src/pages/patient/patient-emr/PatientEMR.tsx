@@ -145,7 +145,15 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     }
   }, [activeSectionCard]);
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+    
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className={`emr-container ${inModal ? 'emr-in-modal' : ''}`}>
       <div className="emr-content">
         <div className="emr-main-row-handle">
@@ -757,6 +765,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
         )}
       </div>
     </div>
+  </div>
   );
 };
 

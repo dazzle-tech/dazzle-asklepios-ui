@@ -411,7 +411,13 @@ console.log("department fetched by ID: ", referralDepartment);
     }));
   }, [allPrevEncounters]);
 
-  return (
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  return (<div dir={dir}>
     <Form fluid layout="inline" className="fields-container">
       <MyInput
         vr={validationResult}
@@ -620,6 +626,7 @@ console.log("department fetched by ID: ", referralDepartment);
         </div>
       </div>
     </Form>
+  </div>
   );
 };
 

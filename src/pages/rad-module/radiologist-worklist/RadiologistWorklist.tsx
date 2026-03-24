@@ -836,7 +836,15 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
     });
   }, [orderTestsMap]);
 
-  return (<>
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (
+  <div dir={dir}>
     <MyTable
       data={tableData}
       columns={columns}
@@ -902,6 +910,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
       hideActionBtn
       content={
         selectedEncounter && (
+        <div dir={dir}>
           <EncounterAttachment
             localEncounter={selectedEncounter}
             source="RADIOLOGIST_WORKLIST_ATTACHMENT"
@@ -909,11 +918,12 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
             refetchAttachmentList={false}
             setRefetchAttachmentList={() => { }}
           />
+        </div>
         )
       }
     />
 
-  </>);
+  </div>);
 };
 
 export default RadiologyImageList;

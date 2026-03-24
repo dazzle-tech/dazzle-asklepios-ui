@@ -341,6 +341,14 @@ const SpecificCoverageModal: React.FC<Props> = ({ open, setOpen, insurance }) =>
     </div>
   );
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
   return (
     <MyModal
       open={open}
@@ -349,7 +357,7 @@ const SpecificCoverageModal: React.FC<Props> = ({ open, setOpen, insurance }) =>
       position="center"
       title="Insurance Coverages"
       content={
-        <>
+        <div dir={dir}>
           <MyTable
             data={response?.data ?? []}
             loading={isFetching}
@@ -372,7 +380,7 @@ const SpecificCoverageModal: React.FC<Props> = ({ open, setOpen, insurance }) =>
             actionType="delete"
             actionButtonFunction={confirmDeleteHandler}
           />
-        </>
+        </div>
       }
     />
   );

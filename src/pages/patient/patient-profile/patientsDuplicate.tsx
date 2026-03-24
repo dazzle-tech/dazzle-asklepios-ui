@@ -40,6 +40,13 @@ const PatientDuplicate = ({
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -48,14 +55,14 @@ const PatientDuplicate = ({
       actionButtonLabel="Ignore and Proceed"
       cancelButtonLabel="Cancel Registration"
       actionButtonFunction={handleSave}
-      content={
+      content={<div dir={dir}>
         <MyTable
           loading={false}
           data={list ?? []}
           columns={columns}
           onRowClick={(rowData) => handleSelect(rowData)}
         />
-      }
+      </div>}
     />
   );
 };

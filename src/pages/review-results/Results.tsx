@@ -620,8 +620,15 @@ const Result = forwardRef<any, any>(
         })
         .catch(() => setOrderIdIn([]));
     }, [orderDate]);
+    
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
+    <div dir={dir}>
       <Panel defaultExpanded>
         <MyTable
           filters={filters()}
@@ -678,6 +685,7 @@ const Result = forwardRef<any, any>(
           disabled
         />
       </Panel>
+    </div>
     );
   }
 );

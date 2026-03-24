@@ -77,7 +77,16 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
       ? allTests
       : allTests.filter(t => t.type === typeFilter);
 
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className="favorite-tests">
 
       <HStack spacing={10} style={{ marginBottom: 20 }}>
@@ -181,6 +190,7 @@ const FavoriteTests: React.FC<FavoriteTestsProps> = ({ user }) => {
       )}
 
     </div>
+  </div>
   );
 };
 
