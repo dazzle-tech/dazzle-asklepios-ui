@@ -59,13 +59,14 @@ const RadiologyImageLogModal = ({ open, setOpen, report }: Props) => {
       title="Image Status Logs"
       size="40vw"
       position="right"
-      content={
+      content={<div dir={dir}>
         <MyTable
           height={400}
           loading={isFetching}
           data={data ?? []}
           columns={columns}
         />
+        </div>
       }
     />
   </div>

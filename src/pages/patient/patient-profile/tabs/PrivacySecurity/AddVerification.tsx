@@ -32,6 +32,13 @@ const AddVerification = ({ localPatient, setLocalPatient, validationResult, open
     }
   }, [verifyOtpMutation]);
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
     open={open}
@@ -47,7 +54,7 @@ const AddVerification = ({ localPatient, setLocalPatient, validationResult, open
       }
     steps={[{ title: "Patient Verification", icon:<FontAwesomeIcon icon={ faShieldAlt }/>,footer :<MyButton onClick={() => sendOtp(localPatient.key).unwrap()} appearance="subtle"> Send Code</MyButton>}]}
     size="xs"
-    content={       
+    content={   <div dir={dir}> 
      <Form layout='inline' fluid className='add-verification'>
         <MyInput
           column
@@ -66,7 +73,7 @@ const AddVerification = ({ localPatient, setLocalPatient, validationResult, open
           record={verificationRequest}
           setRecord={setVerificationRequest}
         />
-      </Form>}
+      </Form></div>}
 />
   );
 };

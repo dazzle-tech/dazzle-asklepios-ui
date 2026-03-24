@@ -144,6 +144,7 @@ const handleSave = async () => {
       actionButtonLabel='Save'
       position="center"
       content={
+      <div dir={dir}>
         <Form fluid>
 
           {isLovProfile(profile) ? (
@@ -170,6 +171,7 @@ const handleSave = async () => {
           )}
 
         </Form>
+      </div>
       }
     />
     </div>

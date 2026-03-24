@@ -141,8 +141,15 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   console.log('dateOfBirth in ProfileTabs-new:', localPatient?.dateOfBirth);
   console.log('patientAgeGroupResponse in ProfileTabs-new:', patientAgeGroupResponse);
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <Panel
         header={
           <h5 className="title">
@@ -152,7 +159,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       >
         <MyTab data={tabData} />
       </Panel>
-    </>
+    </div>
   );
 };
 

@@ -288,8 +288,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
 
+
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <Stack>
         <Stack.Item grow={1}>
           <Form layout="inline" fluid className="profile-header">
@@ -481,7 +489,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         }}
         onIdParsed={handleIdParsed}
       />
-    </>
+    </div>
   );
 };
 

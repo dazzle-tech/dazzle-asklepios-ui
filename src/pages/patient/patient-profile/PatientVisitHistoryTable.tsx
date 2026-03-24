@@ -303,7 +303,15 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div ref={tooltipContainerRef} className="visit-history__wrapper">
       <MyTable
         data={encounters}
@@ -333,6 +341,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
         />
       )}
     </div>
+  </div>
   );
 };
 

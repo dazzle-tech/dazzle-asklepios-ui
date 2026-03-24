@@ -593,8 +593,15 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
         };
     }, [dispatch, tableLoading, open]);
 
+
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
-        <>
+        <div dir={dir}>
             <Drawer open={open} onClose={() => setOpen(false)} size="full">
                 <Drawer.Header>
                     <Drawer.Title>Referral Requests</Drawer.Title>
@@ -660,7 +667,7 @@ const IncomingReferralRequestsByFacility: React.FC<IncomingReferralRequestsByFac
                     onEncounterSaved={handleEncounterSaved}
                 />
             )}
-        </>
+        </div>
     );
 };
 
