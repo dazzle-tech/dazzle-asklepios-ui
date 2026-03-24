@@ -3616,3 +3616,191 @@ export interface ReferralRequest {
   acceptedDate?: string | null;
   acceptedBy?: string | null;
 }
+
+export type PatientInformationReportVM = {
+  patientId: number
+  fullName: string
+  mrn: string
+  dateOfBirth: string
+  age: number
+  gender: string
+  photoUrl?: string
+
+  documentType?: string
+  documentNumber?: string
+
+  mobileNumber?: string
+  secondaryPhone?: string
+  email?: string
+  address?: string
+  city?: string
+  state?: string
+  country?: string
+
+  emergencyName?: string
+  emergencyRelationship?: string
+  emergencyPhone?: string
+
+  registrationDate?: string
+  insuranceProvider?: string
+  policyNumber?: string
+
+  preferredHealthProfessional?: string
+}
+
+export type PatientLabelVM = {
+  patientId: number
+  patientFullName: string
+  mrn: string
+  dateOfBirth: string
+  age: number
+  gender: string
+  registrationDate: string
+}
+
+export type PatientWristbandVM = {
+  fullName: string
+  medicalRecordNumber: string
+  dateOfBirth: string
+  gender: string
+
+  barcode: string
+  qrCode: string
+
+  allergyAlert?: string
+  bloodGroup?: string
+
+  admissionDateTime?: string
+  facilityName?: string
+}
+
+export interface NurseSummaryPatientInfoVM {
+  patientId: number;
+  fullName: string;
+  medicalRecordNumber: string;
+  dateOfBirth: string | null;
+  age: number | null;
+  gender: string | null;
+}
+
+export interface NurseSummaryEncounterInfoVM {
+  encounterId: number;
+  encounterNumber: string | null;
+  encounterDate: string | null;
+  encounterType: string | null;
+  encounterReason: string | null;
+  priority: string | null;
+  status: string | null;
+  chiefComplaint: string | null;
+  facilityName: number | null;
+  departmentName: number | null;
+  createdDate: string | null;
+}
+
+export interface NurseSummaryObservationVM {
+  reasonOfVisit: string | null;
+  functionalStatus: string | null;
+  patientConditions: string | null;
+  cognitiveCheck: string | null;
+}
+
+export interface NurseSummaryVitalSignsVM {
+  bloodPressureSystolic: number | null;
+  bloodPressureDiastolic: number | null;
+  measurementSite: string | null;
+  heartRate: number | null;
+  temperature: number | null;
+  oxygenSaturation: number | null;
+  respiratoryRate: number | null;
+  notes: string | null;
+}
+
+export interface NurseSummaryBodyMeasurementsVM {
+  weight: number | null;
+  height: number | null;
+  headCircumference: number | null;
+}
+
+export interface NurseSummaryAdditionalMeasurementsVM {
+  ageGroup: string | null;
+  hearingTest: string | null;
+  dehydration: boolean | null;
+  nasalFlaring: boolean | null;
+  responseToLight: boolean | null;
+  pupilResponse: boolean | null;
+  abilityToFollowTarget: boolean | null;
+  colorTesting: boolean | null;
+  fallRisk: boolean | null;
+  visionProblemsAffectingFunction: boolean | null;
+  hearingProblemsAffectingFunction: boolean | null;
+  details: string | null;
+  actionToTake: string | null;
+}
+
+export interface NurseSummaryAllergyVM {
+  id: number;
+  allergenType: string | null;
+  allergenId: number | null;
+  severity: string | null;
+  criticality: string | null;
+  certainty: string | null;
+  treatmentStrategy: string | null;
+  onset: string | null;
+  onsetDate: string | null;
+  typeOfPropensity: string | null;
+  byPatient: boolean | null;
+  sourceOfInformation: string | null;
+  allergicReactions: string | null;
+  note: string | null;
+  status: string | null;
+}
+
+export interface NurseSummaryWarningVM {
+  id: number;
+  warningType: string | null;
+  warning: string | null;
+  severity: string | null;
+  onsetDate: string | null;
+  byPatient: boolean | null;
+  sourceOfInformation: string | null;
+  note: string | null;
+  actionTaken: string | null;
+  status: string | null;
+}
+
+export interface NurseSummaryVaccinationVM {
+  id: number;
+  vaccineId: number | null;
+  vaccineBrandId: number | null;
+  vaccineDoseId: number | null;
+  vaccineLotNumber: string | null;
+  dateAdministered: string | null;
+  status: string | null;
+  administeredLocation: string | null;
+  administrationReactions: string | null;
+  isExternalFacility: boolean | null;
+  externalFacilityName: string | null;
+  notes: string | null;
+}
+
+export interface NurseSummaryServiceProductVM {
+  id: number;
+  category: string | null;
+  serviceId: number | null;
+  productId: number | null;
+  quantity: number | null;
+}
+
+export interface NurseSummaryReportVM {
+  patientInfo: NurseSummaryPatientInfoVM | null;
+  encounterInfo: NurseSummaryEncounterInfoVM | null;
+  observation: NurseSummaryObservationVM | null;
+  vitalSigns: NurseSummaryVitalSignsVM | null;
+  bodyMeasurements: NurseSummaryBodyMeasurementsVM | null;
+  additionalMeasurements: NurseSummaryAdditionalMeasurementsVM | null;
+  allergies: NurseSummaryAllergyVM[];
+  warnings: NurseSummaryWarningVM[];
+  vaccinations: NurseSummaryVaccinationVM[];
+  servicesAndProducts: NurseSummaryServiceProductVM[];
+  generatedAt: string | null;
+}
