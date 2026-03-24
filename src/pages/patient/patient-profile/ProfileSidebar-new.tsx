@@ -157,6 +157,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
     setSearchKeyword('');
   }, [selectedCriterion]);
 
+
   return (
     <div
       className={clsx(`profile-sidebar-container ${mode === 'light' ? 'light' : 'dark'}`, {

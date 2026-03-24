@@ -306,8 +306,15 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
     </Form>
   );
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyButton
         appearance="ghost"
         disabled={!localPatient.id}
@@ -325,7 +332,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         title="Administrative Warnings"
         mainContent={mainContent}
         childTitle="Add New"
-        childContent={childContent}
+        childContent={<div dir={dir}>{childContent}</div>}
         childStep={[
           {
             title: 'Administrative Warning',
@@ -345,7 +352,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         actionType="delete"
         actionButtonFunction={handleDelete}
       />
-    </>
+    </div>
   );
 };
 

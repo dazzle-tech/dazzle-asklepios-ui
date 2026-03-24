@@ -146,6 +146,7 @@ const [record, setRecord] = useState({
         { title: "Sample", icon: <FontAwesomeIcon icon={faVialCircleCheck} /> }
       ]}
       content={
+      <div dir={dir}>
         <Form fluid layout="inline">
               <MyInput
                 fieldLabel="Actual Sample Quantity"
@@ -180,6 +181,7 @@ const [record, setRecord] = useState({
                 width={"14vw"}
               />
         </Form>
+      </div>
       }
     />
   </div>

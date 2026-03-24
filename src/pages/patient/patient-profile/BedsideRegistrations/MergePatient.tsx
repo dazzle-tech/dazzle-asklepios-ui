@@ -32,13 +32,21 @@ const MergePatient = ({ open, setOpen, patient }) => {
         );
     }
   };
-  return (
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Merge Patient"
       position="center"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent}</div>}
       hideActionBtn
       steps={[{ title: 'Merge Patient', icon: <GrScheduleNew /> }]}
       size="md"
@@ -47,6 +55,7 @@ const MergePatient = ({ open, setOpen, patient }) => {
         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faCodeMerge} />}>Merge</MyButton>
       }
     />
+    </div>
   );
 };
 export default MergePatient;

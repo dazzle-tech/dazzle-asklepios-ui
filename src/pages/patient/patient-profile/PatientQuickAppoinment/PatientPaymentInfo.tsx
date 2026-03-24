@@ -957,8 +957,16 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [servicesRows.length, rowsPerPage]);
 
+
+  // Direction handling for RTL/LTR
+      const direction = localStorage.getItem('direction') || 'LTR';
+      const isRTL = direction === 'RTL';
+
+      const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
-      <Form fluid layout="inline" className="fields-container">
+      <Form fluid layout="inline" className="fields-container" dir={dir}>
         <MyInput
           vr={validationResult}
           column
