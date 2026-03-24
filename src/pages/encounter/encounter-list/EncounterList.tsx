@@ -915,9 +915,12 @@ const handleGoToVisit = async (encounterData: any) => {
     );
   }
 
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
   return (
-    <>
-      <div className="count-div-on-top-of-page-visit-list">
+<>
+     <div className="count-div-on-top-of-page-visit-list">
         <DetailsCard
           title="Total Patients"
           number={totalPatientsCount ?? 0}
@@ -951,7 +954,7 @@ const handleGoToVisit = async (encounterData: any) => {
           width="15vw"
         />
       </div>
-
+  <div dir={isRTL ? 'rtl' : 'ltr'}>
       <Panel>
         <MyTable
           filters={filters()}
@@ -1042,7 +1045,8 @@ const handleGoToVisit = async (encounterData: any) => {
           cancelButtonLabel="Cancel"
         />
       </Panel>
-    </>
+    </div>
+  </>
   );
 };
 

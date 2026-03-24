@@ -54,7 +54,6 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
     { patientId: localPatient.id! },
     { skip: !localPatient.id }
   );
-  console.log("warnings: ", warnings);
 
   const { data: searchedWarnings } = useSearchWarningsByPatientIdQuery(
     { patientId: localPatient.id!, searchText },

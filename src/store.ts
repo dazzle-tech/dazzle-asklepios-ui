@@ -201,6 +201,7 @@ import { patientServicesAndProductsService } from './services/encounters/patient
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
 import {patientAdministrativeWarningsService} from './services/patient/patientAdministrativeWarningsService';
+import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 
 export const store = configureStore({
   reducer: {
@@ -301,6 +302,7 @@ export const store = configureStore({
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
     [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
+    [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
@@ -722,7 +724,8 @@ export const store = configureStore({
     patientServicesAndProductsService.middleware,
     NextOfKinService.middleware,
     RelationsMatrixService.middleware,
-    patientAdministrativeWarningsService.middleware
+    patientAdministrativeWarningsService.middleware,
+    organizationHolidaysService.middleware
   ]) as any)
 });
 

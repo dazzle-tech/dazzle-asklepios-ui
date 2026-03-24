@@ -1637,12 +1637,13 @@ export interface PatientEncounter {
              
 }
 
-export interface PatientBasicInformationResponseVM {
-  id: number;
-  fullName: string;
-  medicalRecordNumber?: string;
-  primaryMobileNumber?: string;
-}
+export type PatientBasicInformationResponseVM = {
+  firstName: string;
+  lastName: string;
+  medicalRecordNumber: string;
+  dateOfBirth: string;
+  sexAtBirth: string;
+};
 
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
@@ -1815,12 +1816,6 @@ export interface PatientEncounter {
   lastModifiedDate?: string | null;
 }
 
-export interface PatientBasicInformationResponseVM {
-  id: number;
-  fullName: string;
-  medicalRecordNumber?: string;
-  primaryMobileNumber?: string;
-}
 
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
@@ -2025,12 +2020,6 @@ export interface BillingInvoiceCreateVM {
   encounterDate?: Date | null;
 }
 
-export interface PatientBasicInformationResponseVM {
-  id: number;
-  fullName: string;
-  medicalRecordNumber?: string;
-  primaryMobileNumber?: string;
-}
 
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
@@ -2312,6 +2301,67 @@ export interface OrganizationDefinition {
   contactMobile?: string;
   contactLandNumber?: string;
   taxValue?: number;
+  defaultTimeZone?: string;
+  defaultLanguageId?: number;
+  workingDays?: OrganizationWorkingDay[];
+}
+
+export interface OrganizationWorkingDay {
+  id?: number;
+  dayOfWeek?: string;
+  isWorking?: boolean;
+}
+
+export type HolidayType = 'PUBLIC_HOLIDAY' | 'FORMAL_VACATION' | 'CLOSURE';
+
+export interface OrganizationHolidayResponseVM {
+  id: number;
+  organizationDefinitionId: number;
+  name: string;
+  holidayType: HolidayType;
+  startDate: string; 
+  endDate: string; 
+  reason?: string | null;
+  isActive: boolean;
+  allFacilities: boolean;
+  facilityIds?: string | null;
+  recurring: boolean;
+}
+
+export interface OrganizationHolidayCreateDTO {
+  organizationDefinitionId: number;
+  name: string;
+  holidayType: HolidayType;
+  startDate: string; 
+  endDate: string; 
+  reason?: string | null;
+  isActive: boolean;
+  allFacilities: boolean;
+  facilityIds?: string | null;
+  recurring: boolean;
+}
+
+export interface OrganizationHolidayUpdateDTO {
+  id: number;
+  name?: string | null;
+  holidayType?: HolidayType | null;
+  startDate?: string | null; 
+  endDate?: string | null; 
+  reason?: string | null;
+  isActive?: boolean | null;
+  allFacilities?: boolean | null;
+  facilityIds?: string | null;
+  recurring?: boolean | null;
+}
+
+export interface OrganizationHolidaySearchParams {
+  name?: string;
+  holidayType?: HolidayType;
+  startDate?: string; 
+  endDate?: string; 
+  recurring?: boolean;
+  allFacilities?: boolean;
+  facilityId?: number;
 }
 
 export interface PatientAllergiesActiveIngredientResponse {
@@ -3514,20 +3564,16 @@ export interface RelationsMatrix {
 }
 export interface PatientAdministrativeWarningsResponseVM {
   id: number;
-  patientId: number;
-  warningTypeLkey: string;
-  warningTypeDisplay?: string;
-  description?: string;
-  isValid: boolean;
-
-  createdAt?: string;
-  createdBy?: string;
-
-  dateResolved?: string;
-  resolvedBy?: string;
-
-  resolutionUndoDate?: string;
-  resolvedUndoBy?: string;
+  patient?: PatientBasicInformationResponseVM | null;
+  warningType: string;
+  description?: string | null;
+  resolved?: boolean | null;
+  resolvedBy?: string | null;
+  resolvedDate?: string | null;
+  undoResolvedBy?: string | null;
+  undoResolvedDate?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
 }
 
 export interface PatientAdministrativeWarningsCreateDTO {

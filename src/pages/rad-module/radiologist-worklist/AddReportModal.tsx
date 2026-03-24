@@ -233,11 +233,15 @@ const AddReportModal = ({
     defaultApplied
   ]);
 
-  console.log("orderTest", orderTest);
-  console.log("order", order);
-  console.log("order", order?.encounterId);
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
+  <div dir={dir}>
     <MyModal
       title="Add Report"
       open={open}
@@ -311,6 +315,7 @@ const AddReportModal = ({
         </>
       }
     />
+  </div>
   );
 };
 

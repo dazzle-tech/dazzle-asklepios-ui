@@ -1418,10 +1418,11 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
 };
 
 export const newPatientBasicInformationResponseVM: modelTypes.PatientBasicInformationResponseVM = {
-  id: 0,
-  fullName: '',
+  firstName: '',
+  lastName: '',
   medicalRecordNumber: null,
-  primaryMobileNumber: null
+  dateOfBirth: '',
+  sexAtBirth: '',
 };
 
 export const newPatientPayments: modelTypes.PatientPayments = {
@@ -1505,7 +1506,50 @@ export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   contactEmail: '',
   contactMobile: '',
   contactLandNumber: '',
-  taxValue: undefined
+  taxValue: undefined,
+  defaultTimeZone: '',
+  defaultLanguageId: undefined,
+  workingDays: [],
+};
+
+export const newOrganizationHolidayResponseVM: modelTypes.OrganizationHolidayResponseVM = {
+  id: undefined,
+  organizationDefinitionId: 0,
+  name: '',
+  holidayType: undefined,
+  startDate: '',
+  endDate: '',
+  reason: '',
+  isActive: true,
+  allFacilities: true,
+  facilityIds: '',
+  recurring: false
+};
+
+export const newOrganizationHolidayCreateDTO: modelTypes.OrganizationHolidayCreateDTO = {
+  organizationDefinitionId: 0,
+  name: '',
+  holidayType: undefined,
+  startDate: '',
+  endDate: '',
+  reason: '',
+  isActive: true,
+  allFacilities: true,
+  facilityIds: '',
+  recurring: false
+};
+
+export const newOrganizationHolidayUpdateDTO: modelTypes.OrganizationHolidayUpdateDTO = {
+  id: 0,
+  name: '',
+  holidayType: undefined,
+  startDate: '',
+  endDate: '',
+  reason: '',
+  isActive: true,
+  allFacilities: true,
+  facilityIds: '',
+  recurring: false
 };
 
 export const newFormTemplate: modelTypes.FormTemplate = {
@@ -2328,17 +2372,16 @@ export const newRelationsMatrix: modelTypes.RelationsMatrix = {
 };
 export const newPatientAdministrativeWarning: modelTypes.PatientAdministrativeWarningsResponseVM = {
   id: undefined,
-  patientId: undefined,
-  warningTypeLkey: undefined,
-  warningTypeDisplay: undefined,
+  patient: null,
+  warningType: '',
   description: '',
-  isValid: true,
-  createdAt: undefined,
-  createdBy: undefined,
-  dateResolved: undefined,
-  resolvedBy: undefined,
-  resolutionUndoDate: undefined,
-  resolvedUndoBy: undefined
+  resolved: false,
+  resolvedBy: null,
+  resolvedDate: null,
+  undoResolvedBy: null,
+  undoResolvedDate: null,
+  createdBy: null,
+  createdDate: null
 };
 
 export const newPatientAdministrativeWarningCreateDTO: modelTypes.PatientAdministrativeWarningsCreateDTO =

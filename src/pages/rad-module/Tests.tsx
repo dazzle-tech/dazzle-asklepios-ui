@@ -962,8 +962,14 @@ const Tests = forwardRef<any, Props>(
       }
     }, [orderTests, refetchAllRadData]);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
+    <div dir={dir}>
       <Panel ref={ref} defaultExpanded>
 
 
@@ -1031,6 +1037,7 @@ const Tests = forwardRef<any, Props>(
 
 
       </Panel>
+    </div>
     );
   }
 );
