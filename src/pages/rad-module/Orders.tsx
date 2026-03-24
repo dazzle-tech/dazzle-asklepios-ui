@@ -240,7 +240,16 @@ const Orders = forwardRef<any, OrdersProps>(
       }
     ];
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
+
+    <div dir={dir}>
       <MyTable
         data={ordersList}
         columns={tableColumns}
@@ -257,6 +266,7 @@ const Orders = forwardRef<any, OrdersProps>(
         sortType={sortType}
         onSortChange={handleSortChange}
       />
+    </div>
     );
   }
 );

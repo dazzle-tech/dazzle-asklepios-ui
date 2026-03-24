@@ -254,6 +254,14 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
       });
   }, [order?.encounterId]);
 
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
 
@@ -287,7 +295,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
           width="20vw"
         />
       </div>
-
+    <div dir={dir}>
       <div className="container">
         <div className="left-boxs">
           <Row>
@@ -358,7 +366,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
               />
         </div>
       </div>
-
+    </div>
     </>
   );
 

@@ -87,8 +87,16 @@ const FilmAndReagentsTableModal: React.FC<FilmAndReagentsTableModalProps> = ({ o
     }
   ];
 
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <>
+    <div dir={dir}>
       <MyModal
         open={open}
         setOpen={setOpen}
@@ -148,6 +156,7 @@ const FilmAndReagentsTableModal: React.FC<FilmAndReagentsTableModalProps> = ({ o
           </div>
         )}
       />
+    </div>
     </>
   );
 };

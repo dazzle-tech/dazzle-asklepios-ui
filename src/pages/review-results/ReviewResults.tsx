@@ -48,7 +48,14 @@ const ReviewResults = () => {
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
+  <div dir={dir}>
     <div className="container">
       <div className="left-box">
         <MyTab data={tabData} />
@@ -65,6 +72,7 @@ const ReviewResults = () => {
               />
       </div>
     </div>
+  </div>  
   );
 };
 
