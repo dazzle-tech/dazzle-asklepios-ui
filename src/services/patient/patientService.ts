@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
 import * as modelTypes from '@/types/model-types-new';
-import { PatientInformationReportVM } from '@/types/model-types-new';
+import { PatientInformationReportVM, PatientWristbandVM } from '@/types/model-types-new';
 
 type Id = number | string;
 
@@ -260,6 +260,13 @@ export const newPatientService = createApi({
         url: `/api/analytics/${patientId}/information-report`,
         method: 'GET'
       })
+    }),
+
+    getPatientWristband: builder.query<PatientWristbandVM, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/wristband`,
+        method: 'GET'
+      })
     })
   })
 });
@@ -293,5 +300,6 @@ export const {
   useGetDuplicationCandidatesMutation,
   useGetBulkPatientBasicInfoMutation,
   useLazyGetPatientLabelQuery,
-  useLazyGetPatientInformationReportQuery
+  useLazyGetPatientInformationReportQuery,
+  useLazyGetPatientWristbandQuery
 } = newPatientService;
