@@ -58,6 +58,14 @@ export interface Department {
   isActive: boolean;
   hasMedicalSheets: boolean;
   hasNurseMedicalSheets: boolean;
+  parallelCapacityValue: number,
+  defaultDurationMinutes?: number,
+  defaultBufferBeforeMinutes: number,
+  defaultBufferAfterMinutes: number,
+  parallelCapacityEnabled: boolean,
+  requirePractitioner: boolean,
+  requireBilling: boolean,
+  requirePreAssessment: boolean
 }
 export interface Facility {
   id?: string;

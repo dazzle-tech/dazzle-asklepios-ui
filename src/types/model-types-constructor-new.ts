@@ -49,7 +49,15 @@ export const newDepartment: modelTypes.Department = {
   encounterType: '',
   isActive: true,
   hasMedicalSheets: false,
-  hasNurseMedicalSheets: false
+  hasNurseMedicalSheets: false,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
+  parallelCapacityEnabled: false,
+  requirePractitioner: false,
+  requireBilling: false,
+  requirePreAssessment: false
 };
 // ------------------- Facility -------------------
 export const newFacility: modelTypes.Facility = {

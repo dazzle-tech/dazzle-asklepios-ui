@@ -217,10 +217,11 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
         listOfValueId: diagnosticsTest.listOfValueId ?? null,
 
-        parallelCapacityValue: 1,
-        defaultDurationMinutes: undefined,
-        defaultBufferBeforeMinutes: 0,
-        defaultBufferAfterMinutes: 0,
+         parallelCapacityValue: diagnosticsTest?.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: diagnosticsTest?.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: diagnosticsTest?.defaultBufferAfterMinutes ?? 0,
+        
       };
 
       const response = await addDiagnosticTest(payload).unwrap();
@@ -334,10 +335,10 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
         listOfValueId: diagnosticsTest.listOfValueId ?? null,
 
-        parallelCapacityValue: 1,
-        defaultDurationMinutes: undefined,
-        defaultBufferBeforeMinutes: 0,
-        defaultBufferAfterMinutes: 0,
+       parallelCapacityValue: diagnosticsTest.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: diagnosticsTest.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: diagnosticsTest.defaultBufferAfterMinutes ?? 0,
       };
 
       const response = await updateDiagnosticTest(payload).unwrap();
