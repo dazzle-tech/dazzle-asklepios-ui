@@ -174,17 +174,32 @@ export async function printNurseSummaryReport(
 
   currentY = (doc as any).lastAutoTable.finalY + 6;
 
+  const rawWeight = Number(data?.bodyMeasurements?.weight);
+  const rawHeight = Number(data?.bodyMeasurements?.height);
+
+  const bmi =
+    Number.isFinite(rawWeight) && Number.isFinite(rawHeight) && rawHeight > 0
+      ? (rawWeight / Math.pow(rawHeight / 100, 2)).toFixed(2)
+      : '-';
+
+  const bsa =
+    Number.isFinite(rawWeight) && Number.isFinite(rawHeight) && rawHeight > 0
+      ? Math.sqrt((rawWeight * rawHeight) / 3600).toFixed(2)
+      : '-';
+
   autoTable(doc, {
-    startY: currentY,
-    theme: 'grid',
-    head: [['Body Measurements', 'Value']],
-    body: [
-      ['Weight', safe(data?.bodyMeasurements?.weight)],
-      ['Height', safe(data?.bodyMeasurements?.height)],
-      ['Head Circumference', safe(data?.bodyMeasurements?.headCircumference)]
-    ],
-    styles: { fontSize: 9 }
-  });
+  startY: currentY,
+  theme: 'grid',
+  head: [['Body Measurements', 'Value']],
+  body: [
+    ['Weight (kg)', safe(data?.bodyMeasurements?.weight)],
+    ['Height (cm)', safe(data?.bodyMeasurements?.height)],
+    ['Head Circumference (cm)', safe(data?.bodyMeasurements?.headCircumference)],
+    ['BMI', bmi],
+    ['BSA', bsa]
+  ],
+  styles: { fontSize: 9 }
+});
 
   currentY = (doc as any).lastAutoTable.finalY + 6;
 
