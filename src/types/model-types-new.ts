@@ -249,6 +249,10 @@ export interface Practitioner {
   jobRole?: string | null;
   gender?: string | null;
   isActive?: boolean;
+  parallelCapacityValue: number,
+  defaultDurationMinutes: number,
+  defaultBufferBeforeMinutes: number,
+  defaultBufferAfterMinutes: number,
   createdBy?: string;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;

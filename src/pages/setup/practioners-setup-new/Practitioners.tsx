@@ -37,7 +37,7 @@ const Practitioners = () => {
   const [practitioner, setPractitioner] = useState<Practitioner>({
     ...newPractitioner,
   });
-  
+
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditPractitioner, setOpenAddEditPractitioner] =
     useState<boolean>(false);
@@ -197,6 +197,10 @@ const Practitioners = () => {
         jobRole: practitioner.jobRole,
         gender: practitioner.gender,
         isActive: practitioner.isActive,
+        parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: practitioner?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
       };
 
       const Response = await createPractitioner(payload).unwrap();
@@ -247,6 +251,10 @@ const Practitioners = () => {
         jobRole: practitioner.jobRole || null,
         gender: practitioner.gender || null,
         isActive: practitioner.isActive,
+         parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: practitioner?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
       };
 
       await updatePractitioner(payload).unwrap();
@@ -384,8 +392,8 @@ const Practitioners = () => {
       render: (rowData) => <p>{formatEnumString(rowData?.jobRole)}</p>,
     },
     {
-      key:"userId", title:<Translate>Linked to User</Translate>, flexGrow:3,
-      render:(rowData)=><p>{rowData?.userId?"Yes":"No"}</p>
+      key: "userId", title: <Translate>Linked to User</Translate>, flexGrow: 3,
+      render: (rowData) => <p>{rowData?.userId ? "Yes" : "No"}</p>
     },
     {
       key: "isActive",
