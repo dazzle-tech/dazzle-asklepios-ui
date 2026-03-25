@@ -398,8 +398,15 @@ const LOINCSetup: React.FC = () => {
 
   const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         data={tableData}
         columns={columns}
@@ -476,7 +483,7 @@ const LOINCSetup: React.FC = () => {
           </MyButton>
         }
       />
-    </>
+    </div>
   );
 };
 

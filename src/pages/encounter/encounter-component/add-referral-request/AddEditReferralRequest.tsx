@@ -262,18 +262,28 @@ const AddEditReferralRequest = ({
     </Form>
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={referral?.id ? 'Edit Referral Request' : 'New Referral Request'}
       position="right"
-      content={conjureFormContent}
+      content={    <div dir={dir}>
+        {conjureFormContent()}
+        </div>}
       actionButtonLabel={referral?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Referral Request Info', icon: <FaComment /> }]}
       size={width > 600 ? '36vw' : '70vw'}
     />
+    
   );
 };
 

@@ -30,6 +30,8 @@ import DepartmentsTab from './tabs/DepartmentsTab';
 import RolesTab from './tabs/RolesTab';
 import UsersTab from './tabs/UsersTab';
 import './styles.less';
+
+
 const Facilities = () => {
   const dispatch = useAppDispatch();
   const [facility, setFacility] = useState<Facility>({ ...newFacility });
@@ -359,8 +361,16 @@ const handleSave = async () => {
     }
   ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div>
         <Panel>
           <MyTable

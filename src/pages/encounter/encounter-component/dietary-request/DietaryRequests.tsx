@@ -644,8 +644,16 @@ useEffect(() => {
   return () => document.removeEventListener('mousedown', handleClickOutside);
 }, []);
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
     <div ref={tableRef}>
       <MyTable
         data={requests}
@@ -958,7 +966,7 @@ useEffect(() => {
         setOpen={setModalOpen}
         title="New Dietary Request"
         content={
-          <Form fluid className="fields-containers">
+          <Form fluid className="fields-containers" dir={dir}>
             {renderBasicFields()}
           </Form>
         }
@@ -972,7 +980,7 @@ useEffect(() => {
         attatchmentType={'APPOINTMENT_ATTACHMENT'}
         patientKey={localPatient?.key}
       />
-    </>
+    </div>
   );
 };
 

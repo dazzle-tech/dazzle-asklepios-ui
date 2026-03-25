@@ -114,7 +114,15 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
 
   if (!consultation) return null;
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <Panel
       bordered
       className="preview-consultation"
@@ -378,6 +386,7 @@ const PreviewConsultation: React.FC<PreviewConsultationProps> = ({
         </div>
       </Form>
     </Panel>
+    </div>
   );
 };
 

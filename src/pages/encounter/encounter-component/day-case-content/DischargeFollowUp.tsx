@@ -7,9 +7,14 @@ import MyInput from '@/components/MyInput';
 
 const DischargeFollowUp = () => {
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-        <Panel>
+        <Panel dir={dir}>
             <Form fluid layout='inline'>
                 <Row className='pre-operation-container'>
                     <Col md={24}>

@@ -149,6 +149,12 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
     </div>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -158,7 +164,7 @@ const CodesExcelCsvImportModal: React.FC<CodesExcelCsvImportModalProps> = ({
       position="right"
       hideActionBtn
       hideBack
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

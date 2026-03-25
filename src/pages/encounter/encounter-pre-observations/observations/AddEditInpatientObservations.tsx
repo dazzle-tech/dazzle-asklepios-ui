@@ -325,6 +325,14 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
         };
     }
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
     return (
         <MyModal
             open={open}
@@ -355,8 +363,12 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                 <MyButton appearance='ghost' onClick={handleClear}>Clear</MyButton> 
                 <MyButton onClick={()=>{handleSave();handleCancel();}}>Save</MyButton></>
             }]}
-            content={content}
-        ></MyModal>
+                content={(stepNumber) => (
+                <div dir={dir}>
+                    {content(stepNumber)}
+                </div>
+                )}
+        />
     );
 };
 export default AddEditInpatientObservations;

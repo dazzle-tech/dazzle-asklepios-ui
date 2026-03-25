@@ -51,7 +51,14 @@ const ViewRound = () => {
     setDoctorRound({ ...localDoctorRound });
   }, [localDoctorRound]);
 
-  return (
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
      <Row gutter={15} className="d cont">
       <Form fluid>
         <div className='back-btn-round'>
@@ -140,6 +147,7 @@ const ViewRound = () => {
        </Row>
     </Form>
     </Row>
+    </div>
   );
 };
 export default ViewRound;

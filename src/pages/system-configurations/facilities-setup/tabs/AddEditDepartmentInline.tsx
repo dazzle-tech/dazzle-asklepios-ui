@@ -29,6 +29,14 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
   onSave,
   onCancel,
 }) => {
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Form
       fluid
@@ -39,6 +47,7 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
         border: '1px solid #ddd',
         borderRadius: '4px',
       }}
+      dir={dir}
     >
       {/* First row – three fields, aligned like LicensesTab */}
       <MyInput

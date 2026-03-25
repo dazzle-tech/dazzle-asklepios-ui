@@ -2,8 +2,15 @@ import React from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 const ProgressNotes = ({ doctorRound, setDoctorRound, doctorRoundList, ...props }) => {
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Form>
+    <Form dir={dir}> 
       <MyInput
         width="100%"
         fieldLabel="Initial Note"

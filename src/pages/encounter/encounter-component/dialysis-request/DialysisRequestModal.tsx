@@ -67,9 +67,15 @@ const DialysisRequestModal = ({}) => {
         </Whisper>
       </div>
     );
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
-    <>
+    <div dir={dir}>
       <Form fluid>
         <div className="section-row-dialysis-request-modal">
           <SectionContainer
@@ -450,12 +456,12 @@ const DialysisRequestModal = ({}) => {
         title="Encounter Logs"
         size="30vw"
         position="right"
-        content={<RecallProtocolModal />}
+        content={<div dir={dir}><RecallProtocolModal /></div>}
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenRecallProtocolModal(false)}
         cancelButtonLabel="Cancel"
       />
-    </>
+    </div>
   );
 };
 

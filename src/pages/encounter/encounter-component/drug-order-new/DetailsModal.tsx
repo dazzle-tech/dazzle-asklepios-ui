@@ -463,8 +463,16 @@ const DetailsModal = ({
       );
     }
   };
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -492,17 +500,17 @@ const DetailsModal = ({
         }
         rightTitle="Medication Order Details"
         leftContent={
-          <>
+          <div dir={dir}>
             <div className="left-content-wrapper">
               <div className="left-content-active-ingrediant-list">
                 <ActiveIngrediantList selectedGeneric={selectedGeneric} />
               </div>
               <MedicalTestsTable />
             </div>
-          </>
+          </div>
         }
         footerButtons={
-          <div className="footer-buttons">
+          <div className="footer-buttons" dir={dir}>
             <MyButton
               appearance="ghost"
               onClick={() => {
@@ -516,6 +524,7 @@ const DetailsModal = ({
           </div>
         }
         rightContent={
+        <div dir={dir}>
           <Form fluid>
             <Row
               gutter={20}
@@ -1250,6 +1259,7 @@ const DetailsModal = ({
               </Col>
             </Row>
           </Form>
+        </div>
         }
       ></AdvancedModal>
       <Substitues
@@ -1274,7 +1284,7 @@ const DetailsModal = ({
         source="MEDICATION_ORDER_ATTACHMENT"
         sourceId={capturedSourceId}
       />
-    </>
+    </div>
   );
 };
 export default DetailsModal;

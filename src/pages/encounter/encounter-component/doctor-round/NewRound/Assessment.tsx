@@ -67,8 +67,16 @@ const Assessment = ({
     }
   }, [indicationsIcd.indications]);
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="assessment-container">
+    <div className="assessment-container" dir={dir}>
       <Form className="assessment-container" fluid>
         <Row>
           <Col md={8}>

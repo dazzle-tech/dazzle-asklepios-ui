@@ -157,8 +157,15 @@ const IVFluidAdministration = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div className="container-of-buttons-iv">
         <Form fluid>
           <MyInput

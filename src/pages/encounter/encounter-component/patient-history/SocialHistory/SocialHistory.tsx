@@ -208,8 +208,15 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
       : [])
   ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="medical-container-div">
+    <div className="medical-container-div" dir={dir}>
       <SectionContainer
         title="Social History"
         action={
@@ -227,7 +234,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
           )
         }
         content={
-          <>
+          <div dir={dir}>
             <MyTable
               height={450}
               data={data?.data ?? []}
@@ -513,7 +520,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
               actionType="delete"
               actionButtonFunction={handleDelete}
             />
-          </>
+          </div>
         }
       />
     </div>

@@ -5,8 +5,16 @@ import Hospitalizations from './Hospitalizations';
 // import BloodTransfusion from './BloodTransfusion/BloodTransfusion';
 // import PatientHistorySummary from './PatientHistorySummary/PatientHistorySummary';
 const MedicalHistory = ({ patient, encounter, edit, toShowData }) => {
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="medical-main-container">
+    <div className="medical-main-container" dir={dir}>
       {/* <PatientHistorySummary patient={patient} encounter={encounter} edit={edit} /> */}
       <PatientProblems
         patient={patient}

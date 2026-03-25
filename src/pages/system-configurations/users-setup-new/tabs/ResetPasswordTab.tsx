@@ -32,8 +32,15 @@ const ResetPasswordTab: React.FC<ResetPasswordTabProps> = ({ user, width }) => {
       });
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px' }} dir={dir}>
       <Form layout="inline" fluid>
         <MyInput
           disabled
