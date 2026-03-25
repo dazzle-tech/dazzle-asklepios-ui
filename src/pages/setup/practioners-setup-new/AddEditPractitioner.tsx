@@ -101,7 +101,6 @@ const AddEditPractitioner = ({
       );
     }
   }, [deptResponse]);
-  console.log("practitioner: ", practitioner);
   // Required fields validation
   const validateRequiredFields = () => {
     const fieldLabels = {
