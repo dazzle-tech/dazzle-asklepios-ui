@@ -219,7 +219,11 @@ export const newPractitioner: modelTypes.Practitioner = {
   dateOfBirth: undefined,
   jobRole: null,
   gender: null,
-  isActive: true
+  isActive: true,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Language Translation -------------------

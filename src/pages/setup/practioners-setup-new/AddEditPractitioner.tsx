@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserNurse } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
@@ -46,21 +46,21 @@ const AddEditPractitioner = ({
   // Facilities
   const { data: allFacilities = [] } = useGetAllFacilitiesQuery(null);
   const [deptPage, setDeptPage] = useState(0);
-  
-const {
-  data: deptResponse,
-  isFetching: loadingDepartments,
-  refetch: refetchDepartments,
-} = useGetAppointableDepartmentsQuery(
-  {
-    facilityId: practitioner?.facilityId,
-    page: deptPage,
-    size: 10,
-  },
-  {
-    skip: !practitioner?.facilityId,
-  }
-);
+
+  const {
+    data: deptResponse,
+    isFetching: loadingDepartments,
+    refetch: refetchDepartments,
+  } = useGetAppointableDepartmentsQuery(
+    {
+      facilityId: practitioner?.facilityId,
+      page: deptPage,
+      size: 10,
+    },
+    {
+      skip: !practitioner?.facilityId,
+    }
+  );
 
 
 
@@ -86,12 +86,12 @@ const {
   const specility = useEnumOptions('Specialty');
   const genders = useEnumOptions('Gender');
   const jobRoles = useEnumOptions('JobRole');
-  
+
 
   // Users
   const { data: userListResponse = [], isLoading } = useGetUserQuery();
 
-  
+
 
 
   useEffect(() => {
@@ -101,8 +101,7 @@ const {
       );
     }
   }, [deptResponse]);
-
-
+  console.log("practitioner: ", practitioner);
   // Required fields validation
   const validateRequiredFields = () => {
     const fieldLabels = {
@@ -110,16 +109,50 @@ const {
       lastName: 'Last Name',
       facilityId: 'Facility',
       specialty: 'Specialty',
-      jobRole: 'Job Role',
     };
 
     const missingFields = Object.keys(fieldLabels).filter((key) => !practitioner[key]);
-
+    let messages = [];
     if (missingFields.length > 0) {
-      const messages = missingFields.map(
+      messages = missingFields.map(
         (key) => `Field '${fieldLabels[key]}' is required`
       );
+    }
 
+    const isEmpty = (val) => val === null || val === undefined || val === '';
+    const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+    if (
+      practitioner?.parallelCapacityValue === null ||
+      practitioner?.parallelCapacityValue === undefined ||
+      practitioner?.parallelCapacityValue < 1
+    ) {
+      messages.push(
+        'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+      );
+    }
+    if (practitioner?.appointable) {
+      if (isEmpty(practitioner?.defaultDurationMinutes) || practitioner?.defaultDurationMinutes <= 0) {
+        messages.push('Field Default Duration Minutes is required and should be greater than 0')
+      }
+      if (isEmpty(practitioner?.defaultBufferBeforeMinutes) || practitioner?.defaultBufferBeforeMinutes < 0) {
+        messages.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+      }
+      if (isEmpty(practitioner?.defaultBufferAfterMinutes) || practitioner?.defaultBufferAfterMinutes < 0) {
+        messages.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+      }
+    }
+    else {
+      if (isNotEmpty(practitioner?.defaultDurationMinutes) && practitioner?.defaultDurationMinutes <= 0) {
+        messages.push('Field Default Duration Minutes should be greater than 0')
+      }
+      if (isNotEmpty(practitioner?.defaultBufferBeforeMinutes) && practitioner?.defaultBufferBeforeMinutes < 0) {
+        messages.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+      }
+      if (isNotEmpty(practitioner?.defaultBufferAfterMinutes) && practitioner?.defaultBufferAfterMinutes < 0) {
+        messages.push('Field Default Buffer After Minutes should be greater then or equal 0')
+      }
+    }
+    if (messages.length > 0) {
       dispatch(
         notify({
           msg: messages.join(', '),
@@ -153,24 +186,24 @@ const {
   ];
 
 
-const handleSearchUsers = () => {
-  const keyword = recordOfSearch.searchKeyword?.trim()?.toLowerCase() ?? '';
-  if (keyword.length < 2) {
-    dispatch(notify({ msg: 'Please type at least 2 characters', sev: 'warn' }));
-    return;
-  }
+  const handleSearchUsers = () => {
+    const keyword = recordOfSearch.searchKeyword?.trim()?.toLowerCase() ?? '';
+    if (keyword.length < 2) {
+      dispatch(notify({ msg: 'Please type at least 2 characters', sev: 'warn' }));
+      return;
+    }
 
-  const results = userListResponse.filter(
-    (user) =>
-      user.firstName?.toLowerCase().includes(keyword) ||
-      user.lastName?.toLowerCase().includes(keyword) ||
-      user.login?.toLowerCase().includes(keyword) ||
-      user.email?.toLowerCase().includes(keyword)
-  );
+    const results = userListResponse.filter(
+      (user) =>
+        user.firstName?.toLowerCase().includes(keyword) ||
+        user.lastName?.toLowerCase().includes(keyword) ||
+        user.login?.toLowerCase().includes(keyword) ||
+        user.email?.toLowerCase().includes(keyword)
+    );
 
-  setFilteredUsers(results);
-setSearchResultVisible(true);
-};
+    setFilteredUsers(results);
+    setSearchResultVisible(true);
+  };
 
 
   // Main modal content
@@ -180,219 +213,268 @@ setSearchResultVisible(true);
         return (
           <Form fluid>
             {/* User Search */}
-      <div className='first-case-modal-container-handle'>
-          <SectionContainer title="Facility"
-          content={<>
-          <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-                        <MyInput
-                          width={"100%"}
-                          column
-                          fieldLabel="Facility"
-                          fieldType="select"
-                          fieldName="facilityId"
-                          selectData={allFacilities ?? []}
-                          selectDataLabel="name"
-                          selectDataValue="id"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          required
-                        />
-                        <MyInput
-                          width={"100%"}
-                          column
-                          fieldLabel="Appointable"
-                          fieldType="checkbox"
-                          fieldName="appointable"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                        />
-          </div>
-          </>}/>
-
-          <SectionContainer title="Basic Information"
-            content={<>
-          <MyInput
-            fieldName="searchKeyword"
-            record={recordOfSearch}
-            setRecord={setRecordOfSearch}
-            showLabel
-            placeholder="Search Users to link"
-            column
-            width={245}
-            rightAddon={
-            <FontAwesomeIcon
-              icon={faSearch}
-              style={{ cursor: 'pointer' }}
-              onClick={handleSearchUsers}
-            />
-            }
-          />
-            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-              <MyInput
-                column
-                fieldName="firstName"
-                required
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={"100%"}
-              />
-              <MyInput
-                column
-                fieldName="lastName"
-                required
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={"100%"}
-              />
-            </div>
-
-            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-              <MyInput
-                width={"100%"}
-                fieldLabel="Gender"
-                fieldType="select"
-                fieldName="gender"
-                selectData={genders ?? []}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={practitioner}
-                setRecord={setPractitioner}
-                searchable={false}
-              />
-              <MyInput
-                column
-                fieldType="date"
-                fieldLabel="DOB"
-                fieldName="dateOfBirth"
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={"100%"}
-              />
-            </div>
-
-            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-              <MyInput
-                column
-                fieldName="email"
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={"100%"}
-              />
-              <MyInput
-                column
-                fieldName="phoneNumber"
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={"100%"}
-              />
-            </div>
-          </>}/>
-
-          <SectionContainer 
-            title="Specialty/Job Information"
-            content={
-              <>
-              <div className="container-of-two-fields-practitioner-new">
-                  <MyInput
-                    fieldLabel="Job Role"
-                    fieldType="select"
-                    fieldName="jobRole"
-                    selectData={jobRoles ?? []}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    record={practitioner}
-                    setRecord={setPractitioner}
-                    width={"100%"}
-                    required
-                    column
-                  />
-
-                  <MyInput
-                    fieldLabel="Educational Level"
-                    fieldType="select"
-                    fieldName="educationalLevel"
-                    selectData={eduLvlLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={practitioner}
-                    setRecord={setPractitioner}
-                    width={"100%"}
-                  />
-
-                  <MyInput
-                    width={"100%"}
-                    fieldLabel="Specialty"
-                    fieldType="select"
-                    fieldName="specialty"
-                    selectData={specility ?? []}
-                    selectDataLabel="label"
-                    selectDataValue="value"
-                    record={practitioner}
-                    setRecord={setPractitioner}
-                    required
-                  />
-
-                  {practitioner?.specialty === "SPECIALIST" && (
+            <div className='first-case-modal-container-handle'>
+              <SectionContainer title="Facility"
+                content={<>
+                  <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
                     <MyInput
-                      fieldLabel="Sub Specialty"
+                      width={"100%"}
+                      column
+                      fieldLabel="Facility"
                       fieldType="select"
-                      fieldName="subSpecialty"
-                      selectData={subSpecialityLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
+                      fieldName="facilityId"
+                      selectData={allFacilities ?? []}
+                      selectDataLabel="name"
+                      selectDataValue="id"
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                      required
+                    />
+                    <MyInput
+                      width={"100%"}
+                      column
+                      fieldLabel="Appointable"
+                      fieldType="checkbox"
+                      fieldName="appointable"
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                    />
+                  </div>
+                </>} />
+
+              <SectionContainer title="Basic Information"
+                content={<>
+                  <MyInput
+                    fieldName="searchKeyword"
+                    record={recordOfSearch}
+                    setRecord={setRecordOfSearch}
+                    showLabel
+                    placeholder="Search Users to link"
+                    column
+                    width={245}
+                    rightAddon={
+                      <FontAwesomeIcon
+                        icon={faSearch}
+                        style={{ cursor: 'pointer' }}
+                        onClick={handleSearchUsers}
+                      />
+                    }
+                  />
+                  <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                    <MyInput
+                      column
+                      fieldName="firstName"
+                      required
                       record={practitioner}
                       setRecord={setPractitioner}
                       width={"100%"}
                     />
-                  )}</div>
-              </>
-            }
-          />
+                    <MyInput
+                      column
+                      fieldName="lastName"
+                      required
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                      width={"100%"}
+                    />
+                  </div>
 
-          <SectionContainer title="Medical License Information"
-          content={<>             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-                      
-                                    <MyInput
-                                      column
-                                      fieldLabel="Default Medical License"
-                                      fieldName="defaultMedicalLicense"
-                                      record={practitioner}
-                                      setRecord={setPractitioner}
-                                      width={"100%"}
-                                    />
-                                    <MyInput
-                                      column
-                                      fieldType="date"
-                                      fieldLabel="Valid Until"
-                                      fieldName="defaultLicenseValidUntil"
-                                      record={practitioner}
-                                      setRecord={setPractitioner}
-                                      width={"100%"}
-                                    />
-                                  </div>
-                                  <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
-                      
-                                    <MyInput
-                                      column
-                                      fieldLabel="Secondary License"
-                                      fieldName="secondaryMedicalLicense"
-                                      record={practitioner}
-                                      setRecord={setPractitioner}
-                                      width={"100%"}
-                                    />
-                                    <MyInput
-                                      column
-                                      fieldType="date"
-                                      fieldLabel="Valid Until"
-                                      fieldName="secondaryLicenseValidUntil"
-                                      record={practitioner}
-                                      setRecord={setPractitioner}
-                                      width={"100%"}
-                                    />
-            </div></>}/>
+                  <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                    <MyInput
+                      width={"100%"}
+                      fieldLabel="Gender"
+                      fieldType="select"
+                      fieldName="gender"
+                      selectData={genders ?? []}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                      searchable={false}
+                    />
+                    <MyInput
+                      column
+                      fieldType="date"
+                      fieldLabel="DOB"
+                      fieldName="dateOfBirth"
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                      width={"100%"}
+                    />
+                  </div>
 
+                  <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+                    <MyInput
+                      column
+                      fieldName="email"
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                      width={"100%"}
+                    />
+                    <MyInput
+                      column
+                      fieldName="phoneNumber"
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                      width={"100%"}
+                    />
+                  </div>
+                </>} />
 
-        </div>
+              <SectionContainer
+                title="Specialty/Job Information"
+                content={
+                  <>
+                    <div className="container-of-two-fields-practitioner-new">
+                      <MyInput
+                        fieldLabel="Job Role"
+                        fieldType="select"
+                        fieldName="jobRole"
+                        selectData={jobRoles ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        record={practitioner}
+                        setRecord={setPractitioner}
+                        width={"100%"}
+                        required
+                        column
+                      />
+
+                      <MyInput
+                        fieldLabel="Educational Level"
+                        fieldType="select"
+                        fieldName="educationalLevel"
+                        selectData={eduLvlLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={practitioner}
+                        setRecord={setPractitioner}
+                        width={"100%"}
+                      />
+
+                      <MyInput
+                        width={"100%"}
+                        fieldLabel="Specialty"
+                        fieldType="select"
+                        fieldName="specialty"
+                        selectData={specility ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        record={practitioner}
+                        setRecord={setPractitioner}
+                        required
+                      />
+
+                      {practitioner?.specialty === "SPECIALIST" && (
+                        <MyInput
+                          fieldLabel="Sub Specialty"
+                          fieldType="select"
+                          fieldName="subSpecialty"
+                          selectData={subSpecialityLovQueryResponse?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          selectDataValue="key"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          width={"100%"}
+                        />
+                      )}</div>
+                  </>
+                }
+              />
+
+              <SectionContainer title="Medical License Information"
+                content={<>             <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+
+                  <MyInput
+                    column
+                    fieldLabel="Default Medical License"
+                    fieldName="defaultMedicalLicense"
+                    record={practitioner}
+                    setRecord={setPractitioner}
+                    width={"100%"}
+                  />
+                  <MyInput
+                    column
+                    fieldType="date"
+                    fieldLabel="Valid Until"
+                    fieldName="defaultLicenseValidUntil"
+                    record={practitioner}
+                    setRecord={setPractitioner}
+                    width={"100%"}
+                  />
+                </div>
+                  <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
+
+                    <MyInput
+                      column
+                      fieldLabel="Secondary License"
+                      fieldName="secondaryMedicalLicense"
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                      width={"100%"}
+                    />
+                    <MyInput
+                      column
+                      fieldType="date"
+                      fieldLabel="Valid Until"
+                      fieldName="secondaryLicenseValidUntil"
+                      record={practitioner}
+                      setRecord={setPractitioner}
+                      width={"100%"}
+                    />
+                  </div></>} />
+
+              <SectionContainer title="Scheduling Settings"
+                content={
+                  <>
+                    <Row>
+                      <Col md={12}>
+                        <MyInput
+                          fieldType="number"
+                          fieldName="parallelCapacityValue"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          width="100%"
+                          required
+                        />
+                      </Col>
+                      <Col md={12}>
+                        <MyInput
+                          fieldType="number"
+                          fieldName="defaultDurationMinutes"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          width="100%"
+                          required={practitioner.appointable}
+                        />
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col md={12}>
+                        <MyInput
+                          fieldType="number"
+                          fieldName="defaultBufferBeforeMinutes"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          width="100%"
+                          required={practitioner.appointable}
+                        />
+                      </Col>
+                      <Col md={12}>
+                        <MyInput
+                          fieldType="number"
+                          fieldName="defaultBufferAfterMinutes"
+                          record={practitioner}
+                          setRecord={setPractitioner}
+                          width="100%"
+                          required={practitioner.appointable}
+                        />
+                      </Col>
+                    </Row>
+                  </>
+                }
+              />
+            </div>
           </Form>
         );
 
@@ -404,7 +486,7 @@ setSearchResultVisible(true);
               fieldType="selectPagination"
               fieldLabel="Add Department"
               fieldName="selectedDepartment"
-              selectData={allDepartments ?? []} 
+              selectData={allDepartments ?? []}
               selectDataLabel="name"
               selectDataValue="id"
               record={localSelection}
@@ -412,7 +494,7 @@ setSearchResultVisible(true);
               searchable
               width={520}
               disabled={loadingDepartments}
-              hasMore={deptResponse?.links?.next?true:false} 
+              hasMore={deptResponse?.links?.next ? true : false}
               onFetchMore={() => {
                 if (deptResponse?.links?.next) {
                   const { page } = extractPaginationFromLink(deptResponse.links.next);
@@ -421,7 +503,7 @@ setSearchResultVisible(true);
               }}
             />
             <MyButton
-             
+
               disabled={!practitioner?.id || !localSelection.selectedDepartment}
               onClick={async () => {
                 if (!practitioner?.id) return;
@@ -528,7 +610,7 @@ setSearchResultVisible(true);
   return (
     <ChildModal
       actionButtonLabel={practitioner?.id ? 'Save' : 'Create'}
-      
+
       open={open}
       setOpen={setOpen}
       showChild={searchResultVisible}
@@ -539,7 +621,7 @@ setSearchResultVisible(true);
         {
           title: 'Practitioner Details',
           icon: <FontAwesomeIcon icon={faUserNurse} />,
-           disabledNext: !practitioner?.id,
+          disabledNext: !practitioner?.id,
           footer: <MyButton onClick={handleSaveOrUpdate}>Save</MyButton>
         },
         { title: 'Practitioner Departments', icon: <FontAwesomeIcon icon={faUserNurse} /> },
