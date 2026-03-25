@@ -363,16 +363,16 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       onClose();
     };
 
-    const handleLogout = () => {
-      dispatch(setUser(null));
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(''));
+    const handleLogout = async () => {
+      try {
+        await logout({}).unwrap();
+      } catch (e) {}
 
       localStorage.clear();
-
       dispatch({ type: 'auth/logout' });
 
-      navigate('/login', { replace: true });
+      // ✅ FIX
+      window.location.replace('/#/login');
     };
 
     useEffect(() => {
@@ -600,7 +600,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="MedCare Incident Portal" className='hidden'>
+            <Tooltip title="MedCare Incident Portal" className="hidden">
               <IconButton
                 size="small"
                 onClick={() => {
