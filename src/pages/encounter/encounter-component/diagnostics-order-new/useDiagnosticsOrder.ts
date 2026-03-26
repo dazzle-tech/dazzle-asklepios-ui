@@ -40,7 +40,6 @@ import type {
 } from '@/types/model-types-new';
 
 import { DiagnosticOrderTestStatus, DiagnosticStatus } from '@/types/model-types-new';
-import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetAgeGroupsQuery } from '@/services/setup/ageGroupService';
 import { formatEnumString } from '@/utils';
 
@@ -264,7 +263,6 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
   const [updateOrder] = useUpdateDiagnosticOrderMutation();
   const [createOrderTest] = useCreateDiagnosticOrderTestMutation();
   const [updateOrderTest] = useUpdateDiagnosticOrderTestMutation();
-  const [updateEncounter] = useUpdateEncounterMutation();
 
 
   // Modals state
@@ -655,35 +653,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
 
       await ordersRefetch();
       await orderTestRefetch();
-      if (encounter && !encounter.hasOrder) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: encounter?.hasPrescription ?? false,
-            hasOrder: true,
-            isObserved: encounter?.isObserved ?? false
-          }
-        }).unwrap();
-
-        console.log('Encounter updated to observed:', updated);
-      }
+     
       setOrders({ ...newDiagnosticOrder });
       handleClearDiagnostics();
     } catch (error) {
