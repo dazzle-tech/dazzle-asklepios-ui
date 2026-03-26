@@ -137,6 +137,15 @@ const AddNurseNotes = ({ open, setOpen, patient, encounter, nurseNotesObj, refet
             </Form>
         </div>
     )
+
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
         <MyModal
             open={open}
@@ -152,7 +161,7 @@ const AddNurseNotes = ({ open, setOpen, patient, encounter, nurseNotesObj, refet
                 icon: <FontAwesomeIcon icon={faNotesMedical} />,
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
-            content={content}
+            content={<div dir={dir}>{content}</div>}
         ></MyModal>
     );
 };

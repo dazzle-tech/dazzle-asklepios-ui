@@ -216,13 +216,25 @@ const AddEditFacility = ({
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={facility?.id ? 'Edit Facility' : 'New Facility'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContent(stepNumber)}
+        </div>
+      )}
       actionButtonLabel={facility?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size="38vw"

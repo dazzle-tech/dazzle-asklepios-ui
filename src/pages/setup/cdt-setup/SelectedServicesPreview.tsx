@@ -151,6 +151,13 @@ const SelectedServicesPreview: React.FC<Props> = ({ open, setOpen, cdtId }) => {
 
   const combinedLoading = isFetching || isLoading;
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -161,7 +168,7 @@ const SelectedServicesPreview: React.FC<Props> = ({ open, setOpen, cdtId }) => {
       bodyheight="70vh"
       hideActionBtn={true}
       content={
-        <>
+        <div dir={dir}>
           <Typography variant="body2" sx={{ mb: 1 }} color="text.secondary">
             <Translate>Total selected:</Translate> {totalCount}
           </Typography>
@@ -177,7 +184,7 @@ const SelectedServicesPreview: React.FC<Props> = ({ open, setOpen, cdtId }) => {
             onRowsPerPageChange={onRowsPerPageChange} 
             height={500}
           />
-        </>
+        </div>
       }
     />
   );

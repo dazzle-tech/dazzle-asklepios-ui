@@ -161,6 +161,14 @@ const Additives = ({ open, setOpen }) => {
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <ChildModal
       open={open}
@@ -168,11 +176,11 @@ const Additives = ({ open, setOpen }) => {
       showChild={openChildModal}
       setShowChild={setOpenChildModal}
       title="Additives"
-      mainContent={conjureFormMainContent}
+      mainContent={<div dir={dir}>{conjureFormMainContent()}</div>}
       actionChildButtonFunction=""
       hideActionBtn
       childTitle={additive?.key ? 'Edit Additive' : 'New Additive'}
-      childContent={conjureFormChildContent}
+      childContent={<div dir={dir}>{conjureFormChildContent()}</div>}
       mainSize="sm"
       mainStep={[{ title: 'Additives', icon: <FontAwesomeIcon icon={faSyringe} /> }]}
       childStep={[{ title: 'Additive Info', icon: <FontAwesomeIcon icon={faSyringe} /> }]}

@@ -22,6 +22,13 @@ const PatientHistorySummaryModal: React.FC<Props> = ({
     handleSave,
     medicationValidationPayload
 }) => {
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
         <MyModal
             open={open}
@@ -30,11 +37,11 @@ const PatientHistorySummaryModal: React.FC<Props> = ({
             size="70vw"
             bodyheight="75vh"
             actionButtonFunction={handleSave}
-            content={() => (
+            content={() => (<div dir={dir}>
                 <PatientHistorySummary
                     title="Medication Validation"
                     aiPayload={medicationValidationPayload}
-                />
+                /></div>
             )}
 
         />

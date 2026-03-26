@@ -27,7 +27,13 @@ const ModalContent: React.FC = () => {
     respiratoryRate: 0
   });
 
-  return (<>
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  return (<div dir={dir}>
     <SectionContainer
       title={
         <h5 className="h3-tele-consultation-screen-handle">
@@ -35,7 +41,8 @@ const ModalContent: React.FC = () => {
           ICU Vitals
         </h5>
       }
-      content={<><VitalSigns
+      content={<div dir={dir}>
+      <VitalSigns
         object={vital}
         setObject={setVital}
         disabled={false}
@@ -87,7 +94,7 @@ const ModalContent: React.FC = () => {
           </Form>
         </div>
 
-      </>} /></>)
+      </div>} /></div>)
 
 };
 

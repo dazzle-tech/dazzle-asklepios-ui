@@ -28,8 +28,14 @@ const OperationRequest = props => {
       skip: !encounter?.key || !patient?.key
     }
   );
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
+    <div dir={dir}>
     <Tabs defaultActiveKey="1" appearance="subtle">
       <Tabs.Tab eventKey="1" title=" Request">
         <div className="remove-over-flow-handle">
@@ -65,7 +71,7 @@ const OperationRequest = props => {
       <Tabs.Tab eventKey="4" title="  Devices\ Implants" disabled={!requestedOperation?.object}>
         4
       </Tabs.Tab>
-    </Tabs>
+    </Tabs></div>
   );
 };
 

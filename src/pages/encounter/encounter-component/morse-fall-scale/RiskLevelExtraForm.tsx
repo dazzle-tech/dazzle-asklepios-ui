@@ -159,13 +159,21 @@ const RiskLevelExtraForm = ({ open, setOpen, width, object, setObject, handleSav
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={object?.key ? 'Prevention Plan' : 'New Prevention Plan'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel="Save"
       hideActionBtn={object?.key ? true : false}
       actionButtonFunction={handleSave}

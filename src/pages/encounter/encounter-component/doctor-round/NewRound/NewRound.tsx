@@ -250,7 +250,15 @@ const NewRound = ({ patient, encounter, edit, setIsConfirmedRound }) => {
     }
   }, [doctorRoundList]);
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
+    <div dir={dir}>
     <Row gutter={15} className="d">
       <Form fluid>
         <Row>
@@ -327,6 +335,7 @@ const NewRound = ({ patient, encounter, edit, setIsConfirmedRound }) => {
         <Row className="bt-div">{saveAndComplete()}</Row>
       </Form>
     </Row>
+    </div>
   );
 };
 export default NewRound;

@@ -62,8 +62,15 @@ const AllergyFloatingButton = ({ patientKey }: { patientKey: string }) => {
     }
   ];
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
        {visible ? (
         <Draggable>
           <div className="allergy-floating-fab">
@@ -103,7 +110,7 @@ const AllergyFloatingButton = ({ patientKey }: { patientKey: string }) => {
           </div>
         </Draggable>
       )}
-    </>
+    </div>
   );
 };
 

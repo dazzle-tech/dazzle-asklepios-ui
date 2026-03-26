@@ -276,8 +276,15 @@ const DetailsTele = ({
     setShowAttachmentModal(true);
   };
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -433,7 +440,7 @@ const DetailsTele = ({
         source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
         sourceId={(formData as any)?.id ?? 0}
       />
-    </>
+    </div>
   );
 };
 

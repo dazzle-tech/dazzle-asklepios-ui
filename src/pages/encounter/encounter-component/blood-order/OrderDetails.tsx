@@ -7,8 +7,16 @@ const OrderDetails = ({ bloodorder, setBloodOrder }) => {
   const { data: productTypesLovQueryResponse } = useGetLovValuesByCodeQuery('BLOOD_PRODUCTS');
   // Fetch urgency Lov response
   const { data: urgencyLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Form fluid>
+    <Form fluid dir={dir}>
       <Row>
         <Col md={12}>
           <MyInput

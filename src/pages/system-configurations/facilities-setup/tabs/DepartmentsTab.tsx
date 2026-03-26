@@ -491,6 +491,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       );
     }
 
+
     return (
       <Form layout="inline" fluid style={{ display: 'flex', gap: '10px' }}>
         <MyInput
@@ -525,8 +526,15 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     );
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       {/* Inline Form for Add/Edit */}
       {openForm && (
         <AddEditDepartmentInline

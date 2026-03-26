@@ -246,8 +246,15 @@ const [painLevel, setPainLevel] = useState(0);
     }
   }, [patientObservationSummary]);
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div ref={ref} className={clsx('basuc-div', { 'disabled-panel': edit })}>
+    <div ref={ref} className={clsx('basuc-div', { 'disabled-panel': edit })} dir={dir}>
       <Form fluid>
         {!(location.pathname == '/nurse-station') && (
           <Row>

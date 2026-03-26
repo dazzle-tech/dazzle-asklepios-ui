@@ -1011,8 +1011,15 @@ const Prescription = (props: Props) => {
     }
   ];
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {uniqueBrandIds.map((id: string) => (
         <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
       ))}
@@ -1264,7 +1271,7 @@ const Prescription = (props: Props) => {
       />
 
       <AllergyFloatingButton patient={patient} />
-    </>
+    </div>
   );
 };
 

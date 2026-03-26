@@ -254,6 +254,11 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
   );
 
   /*  MODAL  */
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -264,7 +269,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

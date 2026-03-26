@@ -2,8 +2,16 @@ import React from 'react';
 import MyInput from '@/components/MyInput';
 import "./styles.less";
 const BloodCardQuestions = ({ bloodorder, setBloodOrder }) => {
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className='container-of-blood-card-questions'>
+    <div className='container-of-blood-card-questions' dir={dir}>
         <MyInput
           fieldName="scheduledTransfusion"
           fieldType="check"

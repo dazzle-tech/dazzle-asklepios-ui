@@ -254,8 +254,15 @@ const BloodOrder = () => {
     };
   }, []);
   
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <Form fluid layout="inline">
         <div className="container-of-header-fields-blood">
           <MyInput

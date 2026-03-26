@@ -674,8 +674,15 @@ const MAR = () => {
     };
   }, [location.pathname, dispatch]);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <br />
       <div className="container-of-icons-keys-mar1">
         {icons.map((item, index) => (

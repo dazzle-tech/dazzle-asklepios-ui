@@ -165,9 +165,14 @@ const PrescriptionPreview = ({ orderMedication }) => {
     
     return "";
   };
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div className="prescription-preview-container">
+    <div className="prescription-preview-container" dir={dir}>
       <SectionContainer
         title={<Text className="font-style">Prescription Details</Text>}
         content={
