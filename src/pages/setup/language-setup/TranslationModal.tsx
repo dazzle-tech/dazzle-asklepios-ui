@@ -19,6 +19,13 @@ export const TranslationModal: React.FC<TranslationModalProps> = ({
   setValueForm,
   onSave
 }) => {
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -27,7 +34,7 @@ export const TranslationModal: React.FC<TranslationModalProps> = ({
       size="24vw"
       bodyheight="52vh"
       content={
-        <Form fluid>
+        <Form fluid dir={dir}>
           <MyInput
             fieldLabel="Key"
             fieldName="translationKey"

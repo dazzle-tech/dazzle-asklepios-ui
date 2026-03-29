@@ -246,6 +246,13 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -257,7 +264,7 @@ const VisitDurationSetupModal: React.FC<VisitDurationSetupModalProps> = ({
       actionButtonLabel={isSaving ? 'Saving...' : 'Save'}
       actionButtonFunction={handleSave}
       content={
-        <Form fluid layout="vertical" className="visit-duration-modal-form">
+        <Form fluid layout="vertical" className="visit-duration-modal-form" dir={dir}>
           <div className="top-row">
             <MyInput
               width="13vw"

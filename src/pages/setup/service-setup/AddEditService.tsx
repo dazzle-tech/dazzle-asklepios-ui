@@ -151,13 +151,20 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
 
   const isEdit = !!(service?.id ?? service?.key);
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={isEdit ? 'Edit Service' : 'New Service'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       actionButtonLabel={isEdit ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Service Info', icon: <FaStar /> }]}

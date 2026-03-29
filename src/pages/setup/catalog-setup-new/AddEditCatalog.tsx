@@ -149,6 +149,13 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
         );
     }
   };
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       actionButtonLabel={diagnosticsTestCatalogHeader?.id ? 'Save' : 'Create'}
@@ -157,7 +164,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
       setOpen={setOpen}
       position="right"
       title={diagnosticsTestCatalogHeader?.id ? 'Edit Catalog' : 'New Catalog'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
       steps={[
         {
           title: 'Catalog Info',

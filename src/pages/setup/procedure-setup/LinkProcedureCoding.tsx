@@ -428,6 +428,14 @@ const LinkProcedureCoding: React.FC<Props> = ({ open, setOpen, procedureId }) =>
       </div>
     </Form>
   );
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
       <ChildModal
@@ -436,11 +444,11 @@ const LinkProcedureCoding: React.FC<Props> = ({ open, setOpen, procedureId }) =>
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
         title="Linked Codes"
-        mainContent={conjureFormMainContent}
+        mainContent={<div dir={dir}>{conjureFormMainContent()}</div>}
         actionChildButtonFunction={handleSave}
         hideActionBtn
         childTitle="Link New Code to Procedure"
-        childContent={conjureFormChildContent}
+        childContent={<div dir={dir}>{conjureFormChildContent()}</div>}
         mainSize="sm"
         actionButtonLabel="Link"
         mainStep={[{ title: 'Linked Codes', icon: <MdMedicalServices /> }]}

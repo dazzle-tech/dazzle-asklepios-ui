@@ -678,8 +678,15 @@ const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
     }
   }, [testRequest?.type]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         data={isFiltered ? filteredList : diagnodticsTestList?.data ?? []}

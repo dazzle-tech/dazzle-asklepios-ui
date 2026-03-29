@@ -283,6 +283,12 @@ const AddBed = ({ open, setOpen, room, setRoom, refetchRoom }) => {
     }
   }, [room?.key]);
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <>
       <ChildModal
@@ -291,11 +297,11 @@ const AddBed = ({ open, setOpen, room, setRoom, refetchRoom }) => {
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
         title="New Bed"
-        mainContent={conjureFormContentOfMainModal}
+        mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
         childStep={[{ title: 'Bed', icon: <FontAwesomeIcon icon={faBedPulse} /> }]}
         mainStep={[{ title: 'Beds', icon: <FontAwesomeIcon icon={faHospital} /> }]}
         childTitle={bed?.key ? 'Edit Bed Info' : 'Add Bed'}
-        childContent={conjureFormContentOfChildModal}
+        childContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfChildModal(stepNumber)}</div>)}
         mainSize="sm"
         actionChildButtonFunction={handleSave}
         hideActionBtn={true}

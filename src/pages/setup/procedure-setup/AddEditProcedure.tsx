@@ -323,13 +323,20 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
   const isEdit = !!procedure?.id;
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={isEdit ? 'Edit Procedure' : 'New Procedure'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       actionButtonLabel={isEdit ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       isDisabledActionBtn={isLoading}

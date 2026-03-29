@@ -596,6 +596,12 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
     }
   };
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
     <MyModal
@@ -613,7 +619,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
       setOpen={setOpen}
       position="right"
       title={diagnosticsTest?.id ? 'Edit Diagnostic Test' : 'New Diagnostic Test'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
       steps={[
         {
           title: 'Basic Info',

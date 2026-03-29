@@ -524,6 +524,13 @@ const AddEditRoom = ({
     </Form>
   );
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -543,7 +550,7 @@ const AddEditRoom = ({
           )
         }
       ]}
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

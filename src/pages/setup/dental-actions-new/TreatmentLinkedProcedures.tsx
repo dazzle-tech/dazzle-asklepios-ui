@@ -173,6 +173,13 @@ const TreatmentLinkedProcedures = ({
   // -----------------------------------------
   // 7) UI
   // -----------------------------------------
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -184,7 +191,7 @@ const TreatmentLinkedProcedures = ({
       actionButtonLabel="Close"
       actionButtonFunction={() => setOpen(false)}
       content={() => (
-        <Form fluid className="container-of-linked-procedures-dental">
+        <Form fluid className="container-of-linked-procedures-dental" dir={dir}>
           <Col>
 
             {/* CDT SELECT WITH SEARCH + PAGINATION */}
