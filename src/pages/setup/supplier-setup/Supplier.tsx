@@ -281,9 +281,14 @@ const SupplierSetup: React.FC = () => {
     };
   }, [dispatch, pathname]);
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <>
+    <div dir={dir}>
       <Panel className="main-supplier-setup-page-gaps">
 
 
@@ -368,7 +373,7 @@ const SupplierSetup: React.FC = () => {
           size="80vw"
         />
       </Panel>
-    </>
+    </div>
   );
 };
 

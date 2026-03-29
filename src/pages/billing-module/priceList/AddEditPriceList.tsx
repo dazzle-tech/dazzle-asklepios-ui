@@ -203,6 +203,13 @@ const AddEditPriceList = ({
     </Form>
   );
 
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       actionButtonLabel={priceList?.id ? "Save" : "Create"}
@@ -210,7 +217,7 @@ const AddEditPriceList = ({
       setOpen={setOpen}
       title={priceList?.id ? "Edit Price List" : "New Price List"}
       actionButtonFunction={handleSave}
-      content={() => conjureFormContent()}
+      content={() => <div dir={dir}>{conjureFormContent()}</div>}
       steps={[
         {
           title: "Price List Details",
