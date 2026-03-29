@@ -257,13 +257,20 @@ const Lov = () => {
     }
   ];
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Carousel
     className='container-of-lov'
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel>
+      <Panel dir={dir}>
         <MyTable
           height={450}
           data={lovListResponse?.object ?? []}

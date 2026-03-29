@@ -298,6 +298,13 @@ const AddEditBrandMedication = ({
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
       <MyModal
@@ -305,7 +312,7 @@ const AddEditBrandMedication = ({
         setOpen={setOpen}
         title={brandMedication?.id ? 'Edit Brand Medication' : 'New Brand Medication'}
         actionButtonFunction={handleSave}
-        content={conjureFormContent}
+        content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
         steps={[
           {
             title: 'Information',

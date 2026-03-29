@@ -652,6 +652,11 @@ const Profile = ({ open, setOpen, diagnosticsTest, openNormalRanges }) => {
   }, [open, openNormalRanges]);
 
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <ChildModal
@@ -664,15 +669,16 @@ const Profile = ({ open, setOpen, diagnosticsTest, openNormalRanges }) => {
       showSubChild={openSubChild}
       setShowSubChild={setOpenSubChild}
       title="Profiles"
-      mainContent={conjureFormContentOfMainModal}
+      mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
+
       mainStep={[{ title: 'Profile', icon: <FaChartLine /> }]}
       childStep={[{ title: 'Normal Range Info', icon: <FaChartLine /> }]}
       childTitle="Normal Ranges"
-      childContent={conjureFormContentOfChildModal}
+      childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
       hideActionChildBtn={true}
       actionSubChildButtonFunction={handleSaveNormalRange}
       subChildTitle="Add Normal Range"
-      subChildContent={conjureFormContentOfSecondChildModal}
+      subChildContent={<div dir={dir}>{conjureFormContentOfSecondChildModal()}</div>}
       mainSize="xs"
       childSize="sm"
     />

@@ -336,6 +336,11 @@ useEffect(() => {
       handleAddNew(resourceName);
     }
   };
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -343,7 +348,11 @@ useEffect(() => {
       setOpen={setOpen}
       title={resource?.id ? 'Edit Resource' : 'New Resource'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContent(stepNumber)}
+        </div>
+      )}
       actionButtonLabel={resource?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Resource Info', icon: <GrScheduleNew /> }]}

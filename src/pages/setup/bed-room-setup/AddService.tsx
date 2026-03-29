@@ -471,6 +471,13 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
         dispatch(notify('Failed to load services names'));
       });
   }, [fetchServicesListQueryResponce, getServicesBulkByIds, dispatch]);
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (<>
     <ChildModal
       open={open}
@@ -478,7 +485,7 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
       showChild={openChildModal}
       setShowChild={setOpenChildModal}
       title="New Service"
-      mainContent={conjureFormContentOfMainModal}
+      mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
       childStep={[
         {
           title: 'Service',
@@ -492,7 +499,7 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
         }
       ]}
       childTitle={roomService?.key ? "Edit Service Info" : "Add Service"}
-      childContent={conjureFormContentOfChildModal}
+      childContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfChildModal(stepNumber)}</div>)}
       mainSize="sm"
       actionChildButtonFunction={handleSave}
       hideActionBtn={true}

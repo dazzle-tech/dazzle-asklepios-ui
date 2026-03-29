@@ -37,11 +37,19 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
       </Row>
     );
   } else {
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
-      <div>
+      <div dir={dir}>
         <Section
           title="Drug-Drug Interactions"
-          content={<DrugDrugInteractions selectedActiveIngredients={activeIngredient} />}
+          content={<div dir={dir}><DrugDrugInteractions selectedActiveIngredients={activeIngredient} /></div>}
           setOpen={() => {}}
           rightLink=""
           openedContent=""
@@ -49,7 +57,7 @@ const DrugDrugAndFoodInteractions = ({ activeIngredient }) => {
         <br />
         <Section
           title="Drug-Food Interactions"
-          content={<DrugFoodInteractions activeIngredients={activeIngredient} />}
+          content={<div dir={dir}><DrugFoodInteractions activeIngredients={activeIngredient} /></div>}
           setOpen={() => {}}
           rightLink=""
           openedContent=""

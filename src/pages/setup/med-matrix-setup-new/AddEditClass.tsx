@@ -62,6 +62,13 @@ const AddEditClass = ({
     }
   };
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Form>
       <MyModal
@@ -70,7 +77,7 @@ const AddEditClass = ({
         title="New/Edit Medication Class"
         size="sm"
         bodyheight="65vh"
-        content={conjureFormContentOfModal}
+        content={<div dir={dir}>{conjureFormContentOfModal()}</div>}
         hideCancel={false}
         hideBack={true}
         steps={[{ title: '', icon: <FontAwesomeIcon icon={faPaperclip} /> }]}

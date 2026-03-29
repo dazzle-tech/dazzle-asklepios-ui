@@ -999,6 +999,13 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine }) => {
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
       <ChildModal
@@ -1009,13 +1016,13 @@ const DoesSchedule: React.FC<Props> = ({ open, setOpen, vaccine }) => {
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
         title="Dose Schedule"
-        mainContent={conjureFormContentOfMainModal}
+        mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
         mainStep={[
           { title: 'Doses', icon: <FaSyringe />, disabledNext: !vaccine?.id },
           { title: 'Interval Between Doses', icon: <MdOutlineAccessTime /> }
         ]}
         childTitle={childStep === 1 ? 'Add / Edit Interval' : 'Add / Edit Dose'}
-        childContent={conjureFormContentOfChildModal}
+        childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
         mainSize="sm"
         hideActionBtn={true}
       />

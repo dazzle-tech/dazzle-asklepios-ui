@@ -102,13 +102,20 @@ const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, w
     }
   };
 
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={agegroups?.key ? 'Edit Age Group' : 'New Age Group'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       actionButtonLabel={agegroups?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Age Group Info', icon: <FaBabyCarriage /> }]}

@@ -279,8 +279,14 @@ const LanguagesSetup: React.FC = () => {
     </Form>
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div className="padding-header-20">
+    <div className="padding-header-20" dir={dir}>
       <div className="flex-center-between">
         <h5>Languages</h5>
       </div>

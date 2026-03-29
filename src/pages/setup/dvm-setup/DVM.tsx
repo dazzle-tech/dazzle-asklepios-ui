@@ -411,8 +411,15 @@ const DVM = () => {
         {title: "Rule Combinations", content: <></>}
   ];
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <small className="metadata-selection-title">
         <Translate>Specify screen metadata to configure validation rules</Translate>
       </small>

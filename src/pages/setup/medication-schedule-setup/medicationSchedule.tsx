@@ -135,8 +135,16 @@ const MedicationSchedule = () => {
       dispatch(setDivContent(''));
     };
   }, [dispatch, pathname]);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <Panel className="main-supplier-setup-page-gaps">
 
       </Panel>
@@ -152,7 +160,7 @@ const MedicationSchedule = () => {
         title="Add Dose Info"
         position="right"
         content={
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} dir={dir}>
             <Form fluid>
               <MyInput
                 fieldName="frequencyHours"
@@ -189,7 +197,7 @@ const MedicationSchedule = () => {
         actionButtonFunction={handleDeleteConfirm}
         actionType={actionType}
       />
-    </>
+    </div>
   );
 };
 

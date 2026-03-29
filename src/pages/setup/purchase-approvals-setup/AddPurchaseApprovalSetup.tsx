@@ -73,6 +73,13 @@ const AddPurchaseApprovalSetup = ({
       </div>
     </Form>
   );
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -87,7 +94,7 @@ const AddPurchaseApprovalSetup = ({
       size="28vw"
       position="right"
       actionButtonLabel="Save"
-      content={ModalContent}
+      content={<div dir={dir}>{ModalContent}</div>}
     />
   );
 };

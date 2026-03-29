@@ -273,8 +273,15 @@ const LovValues = ({ lov, goBack, width }) => {
     }
   ];
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {lov && lov.key && (
         <Panel
           header={
@@ -335,7 +342,7 @@ const LovValues = ({ lov, goBack, width }) => {
           onClick={goBack}
         />
       )}
-    </>
+    </div>
   );
 };
 

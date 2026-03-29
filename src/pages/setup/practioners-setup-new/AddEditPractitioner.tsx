@@ -605,6 +605,11 @@ const AddEditPractitioner = ({
     </Form>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
@@ -616,7 +621,11 @@ const AddEditPractitioner = ({
       showChild={searchResultVisible}
       setShowChild={setSearchResultVisible}
       title={practitioner?.id ? 'Edit Practitioner' : 'New Practitioner'}
-      mainContent={conjureFormContentOfMainModal}
+      mainContent={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContentOfMainModal(stepNumber)}
+        </div>
+      )}
       mainStep={[
         {
           title: 'Practitioner Details',
@@ -627,7 +636,7 @@ const AddEditPractitioner = ({
         { title: 'Practitioner Departments', icon: <FontAwesomeIcon icon={faUserNurse} /> },
       ]}
       childTitle="User List - Search Results"
-      childContent={conjureFormContentOfChildModal}
+      childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
       mainSize={width > 1200 ? '40vw' : '75vw'}
       childSize="55vw"
     />
