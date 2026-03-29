@@ -137,7 +137,7 @@ const Profile = ({ open, setOpen, diagnosticsTest, openNormalRanges }) => {
   };
 
   const isSelectedDiagnosticTestNormalRange = rowData => {
-    if (rowData && diagnosticTestNormalRange && rowData.key === diagnosticTestNormalRange.id) {
+    if (rowData && diagnosticTestNormalRange && rowData.id === diagnosticTestNormalRange.id) {
       return 'selected-row';
     } else return '';
   };
@@ -563,6 +563,10 @@ const Profile = ({ open, setOpen, diagnosticsTest, openNormalRanges }) => {
             color="var(--deep-blue)"
             onClick={() => {
               setOpenSubChild(true);
+              setDiagnosticTestNormalRange({ ...newDiagnosticTestNormalRange, testId: diagnosticsTest.id,
+                    profileTestId: diagnosticsTestProfile?.id
+
+               });
             }}
             width="109px"
           >
