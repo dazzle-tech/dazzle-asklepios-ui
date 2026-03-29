@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useMemo } from "react";
 import { Form, Row, Col } from "rsuite";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
@@ -35,6 +35,9 @@ const AccessRole = ({ user }) => {
   // mutations
   const [addUserRole] = useAddUserRoleMutation();
   const [deleteUserRole] = useDeleteUserRoleMutation();
+
+  const [pageIndex, setPageIndex] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // save role for user
   const handleSave = async () => {
@@ -132,6 +135,25 @@ const AccessRole = ({ user }) => {
     },
   ];
 
+const handlePageChange = (_: unknown, newPage: number) => {
+  setPageIndex(newPage);
+};
+
+const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  setRowsPerPage(parseInt(event.target.value, 10));
+  setPageIndex(0);
+};
+
+const paginatedData = useMemo(() => {
+  const start = pageIndex * rowsPerPage;
+  const end = start + rowsPerPage;
+  return (userRoles ?? []).slice(start, end);
+}, [userRoles, pageIndex, rowsPerPage]);
+
+const totalCount = userRoles?.length ?? 0;
+
+
+
           // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -178,7 +200,15 @@ const AccessRole = ({ user }) => {
         </Row>
       </Form>
 
-      <MyTable data={userRoles} columns={columns} />
+      <MyTable
+        data={paginatedData}
+        columns={columns}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
     </>
   );
 };

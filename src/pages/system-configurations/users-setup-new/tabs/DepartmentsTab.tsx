@@ -54,6 +54,10 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
 
   const [saveDepartment] = useAddUserDepartmentMutation();
 
+  const [pageIndex, setPageIndex] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+
   useEffect(() => {
     if (userId) {
       getUserDepartmentsByUser(userId);
@@ -213,6 +217,24 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
     },
   ];
 
+
+    const handlePageChange = (_: unknown, newPage: number) => {
+      setPageIndex(newPage);
+    };
+
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setRowsPerPage(parseInt(event.target.value, 10));
+      setPageIndex(0);
+    };
+
+    const paginatedData = useMemo(() => {
+      const start = pageIndex * rowsPerPage;
+      const end = start + rowsPerPage;
+      return (userDepartmentsResponse ?? []).slice(start, end);
+    }, [userDepartmentsResponse, pageIndex, rowsPerPage]);
+
+    const totalCount = userDepartmentsResponse?.length ?? 0;
+
           // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -316,11 +338,16 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ user, width }) => {
           </MyButton>
         </div>
       )}
-      <MyTable
-        height={300}
-        data={userDepartmentsResponse ?? []}
-        columns={userDepartmentTableColumns}
-      />
+        <MyTable
+          height={300}
+          data={paginatedData}
+          columns={userDepartmentTableColumns}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
       <DeletionConfirmationModal
         open={openConfirmDeleteDepartmentModal}
         setOpen={setOpenConfirmDeleteDepartmentModal}
