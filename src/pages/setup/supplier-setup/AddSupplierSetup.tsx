@@ -340,6 +340,12 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
         );
     }
   };
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -355,7 +361,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
       size="37vw"
       position="right"
       actionButtonLabel="Save"
-      content={ModalContent}
+      content={(stepNumber) => <div dir={dir}>{ModalContent(stepNumber)}</div>}
     />
   );
 };
