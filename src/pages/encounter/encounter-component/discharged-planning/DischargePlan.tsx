@@ -488,8 +488,15 @@ const DischargePlanning = () => {
   };
 
   // ------------------ RENDER ------------------
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <Row gutter={15} className="d">
         <Form fluid>
           <Col md={12}>
@@ -937,7 +944,7 @@ const DischargePlanning = () => {
 
 
 
-    </>
+    </div>
   );
 };
 

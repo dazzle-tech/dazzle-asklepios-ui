@@ -132,9 +132,16 @@ const AccessRole = ({ user }) => {
     },
   ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
-      <Form fluid>
+      <Form fluid dir={dir}>
         <Row>
           <Col md={10} xs={10} xl={10}>
             <MyInput

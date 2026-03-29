@@ -41,6 +41,18 @@ const DoctorRound = () => {
     }
   ];
 
-  return <MyTab data={tabData} />;
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return <MyTab
+  data={tabData.map(tab => ({
+    ...tab,
+    content: <div dir={dir}>{tab.content}</div>
+  }))}
+/>;
 };
 export default DoctorRound;

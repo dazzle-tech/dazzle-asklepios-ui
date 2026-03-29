@@ -64,8 +64,16 @@ const Flacc = () => {
     </>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         data={showCanceled ? flaccData : flaccData.filter(r => !r.cancelledBy)}
         columns={flaccColumns}
@@ -80,7 +88,7 @@ const Flacc = () => {
         edit={false}
         refetch={null}
       />
-    </>
+    </div>
   );
 };
 

@@ -120,6 +120,14 @@ const GlasgowComaScaleModal = ({ open, setOpen, onSave }) => {
     setRecord(prev => ({ ...prev, aldreteScore: totalScore }));
   }, [record.eyeOpening, record.verbalResponse, record.motorResponse, eyeLov, verbalLov, motorLov]);
 
+
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -130,7 +138,7 @@ const GlasgowComaScaleModal = ({ open, setOpen, onSave }) => {
       position="right"
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
-      content={ModalContent}
+      content={<div dir={dir}>{ModalContent}</div>}
     />
   );
 };

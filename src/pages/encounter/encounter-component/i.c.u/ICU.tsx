@@ -52,8 +52,14 @@ const ICU: React.FC = () => {
   };
 
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-  return (<div className="icu-main-container">
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+    return (
+  <div className="icu-main-container" dir={dir}>
     <div className="icu-first-section-container">
       <SectionContainer
         title={

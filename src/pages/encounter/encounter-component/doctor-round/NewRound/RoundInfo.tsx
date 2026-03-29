@@ -28,8 +28,16 @@ const RoundInfo = ({ doctorRound, setDoctorRound, saveAndComplete, handleStartNe
   // Fetch shifts lov response
   const { data: shiftsLovQueryResponse } = useGetLovValuesByCodeQuery('SHIFTS');
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Form fluid layout="inline" className="container-of-round-info">
+    <Form fluid layout="inline" className="container-of-round-info" dir={dir}>
       <div>
         <Col xs={32}>
           <MyInput

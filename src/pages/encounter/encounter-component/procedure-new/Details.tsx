@@ -356,6 +356,13 @@ const Details = ({
     }
   };
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
       <AdvancedModal
@@ -365,7 +372,7 @@ const Details = ({
         actionButtonFunction={handleSave}
         isDisabledActionBtn={edit ? true : procedure.id ? procedure?.status !== 'REQUESTED' : false}
         footerButtons={
-          <div className="footer-buttons">
+          <div className="footer-buttons" dir={dir}>
             <MyButton onClick={handleClear} prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>
               Clear
             </MyButton>
@@ -382,7 +389,8 @@ const Details = ({
         }
         rightTitle="Procedure"
         rightContent={
-          <div
+          <div 
+          dir={dir}
             className={clsx({
               'disabled-panel': edit || (procedure?.id && procedure?.status !== 'REQUESTED')
             })}
@@ -605,7 +613,7 @@ const Details = ({
             </Form>
           </div>
         }
-        leftContent={<Diagnosis patient={patient} encounter={encounter} />}
+        leftContent={<div dir={dir}><Diagnosis patient={patient} encounter={encounter} /></div>}
       />
 
       <MyModal
@@ -613,7 +621,7 @@ const Details = ({
         setOpen={setOpenOrderModel}
         size="lg"
         title="Add Order"
-        content={<PatientOrder edit={edit} patient={patient} encounter={encounter} />}
+        content={<div dir={dir}><PatientOrder edit={edit} patient={patient} encounter={encounter} /></div>}
       />
 
       <AttachmentUploadModal

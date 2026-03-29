@@ -528,9 +528,16 @@ const Referrals = (props: any) => {
     }
   }, [openDetailsModal, procedure?.toFacilityId, getDepartmentsByFacility]);
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
-      <div ref={tableContainerRef}>
+    <div dir={dir}>
+      <div ref={tableContainerRef} >
         <MyTable
           columns={tableColumns}
           data={procedures}
@@ -612,7 +619,7 @@ const Referrals = (props: any) => {
         title="Perform Details"
         actionButtonFunction={handleSave}
         size="full"
-        content={
+        content={<div dir={dir}>
           <Perform
             proRefetch={proRefetch}
             encounter={encounter}
@@ -620,7 +627,7 @@ const Referrals = (props: any) => {
             procedure={procedure}
             setProcedure={setProcedure}
             edit={edit}
-          />
+          /></div>
         }
       />
 
@@ -653,17 +660,17 @@ const Referrals = (props: any) => {
         title={`Attachments - ${procedure?.procedureName || 'Procedure'}`}
         size="lg"
         hideActionBtn={true}
-        content={
+        content={<div dir={dir}>
           <EncounterAttachment
             localEncounter={encounter}
             source="PROCEDURE_REQUEST_ATTACHMENT"
             sourceId={procedure?.id ? Number(procedure.id) : undefined}
             refetchAttachmentList={false}
             setRefetchAttachmentList={() => {}}
-          />
+          /> </div>
         }
       />
-    </>
+    </div>
   );
 };
 

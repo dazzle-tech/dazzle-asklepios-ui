@@ -7,12 +7,19 @@ const ContinuousObservations = ({...props}) => {
   const location = useLocation();
   const propsData = location.state;
 
-  return (
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
     <InpatientObservations
       editable={propsData.edit}
       localPatient={props?.patient ? props?.patient : propsData.patient}
       localEncounter={props?.encounter ? props?.encounter : propsData.encounter}
-    />
+    /></div>
   );
 };
 

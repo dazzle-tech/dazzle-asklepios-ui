@@ -114,13 +114,24 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
     }
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={user?.id ? 'Edit User' : 'New User'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContent(stepNumber)}
+        </div>
+      )}
       actionButtonLabel={user?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size={width > 600 ? '38vw' : '25vw'}

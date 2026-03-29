@@ -224,6 +224,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     }
   };
 
+
+
   const content = (
     <Form fluid layout="inline" className="fields-container">
       <MyInput
@@ -317,6 +319,13 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     </Form>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -326,7 +335,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

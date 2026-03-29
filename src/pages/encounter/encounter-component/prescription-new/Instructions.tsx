@@ -122,8 +122,16 @@ useEffect(() => {
     return { ...prev, roa: roaOptions[0].value };
   });
 }, [selectedOption, roaOptions, setCustomeinst]);
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {/* -------- Custom Instruction -------- */}
       {selectedOption === OPTION_CUSTOM && (
         <Form fluid layout="inline">
@@ -231,7 +239,7 @@ useEffect(() => {
           />
         </Form>
       )}
-    </>
+    </div>
   );
 };
 

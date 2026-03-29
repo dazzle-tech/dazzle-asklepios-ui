@@ -667,9 +667,15 @@ const DetailsModal = ({
     )
   );
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -683,7 +689,7 @@ const DetailsModal = ({
         leftTitle={selectedGeneric ? selectedGeneric.name : 'Select Generic'}
         rightTitle="Medication Order Details"
         leftContent={
-          <>
+          <div dir={dir}>
             <ActiveIngrediantList selectedGeneric={selectedGeneric} />
             {!!preRequestedTestNames.length && (
               <div style={{ marginTop: 12 }}>
@@ -696,10 +702,10 @@ const DetailsModal = ({
                 />
               </div>
             )}
-          </>
+          </div>
         }
         footerButtons={
-          <div className="footer-buttons">
+          <div className="footer-buttons" dir={dir}>
             <MyButton
               appearance="ghost"
               onClick={() => {
@@ -719,7 +725,7 @@ const DetailsModal = ({
           </div>
         }
         rightContent={
-          <div className="prescription-container">
+          <div className="prescription-container" dir={dir}>
             <div className="prescription-top-row">
               <SectionContainer
                 title={<Text className="font-style">Prescription Details</Text>}
@@ -1122,10 +1128,10 @@ const DetailsModal = ({
         setOpen={setOpenOrderModel}
         size={'full'}
         title="Add Order"
-        content={<DiagnosticsOrder edit={edit} patient={patient} encounter={encounter} />}
-      ></MyModal>
+        content={<div dir={dir}><DiagnosticsOrder edit={edit} patient={patient} encounter={encounter} /></div>}
+      />
 
-    </>
+    </div>
   );
 };
 export default DetailsModal;

@@ -509,8 +509,15 @@ const CPTSetup: React.FC = () => {
 
   const [openCodesImportModal, setOpenCodesImportModal] = useState(false);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         data={tableData}
         columns={columns}
@@ -557,7 +564,7 @@ const CPTSetup: React.FC = () => {
         pagesCount={1}
         hideActionBtn={true}
         content={
-          <div>
+          <div dir={dir}>
             {conflicts && conflicts.length > 0 ? (
               <MyTable
                 data={pagedConflicts}
@@ -583,7 +590,7 @@ const CPTSetup: React.FC = () => {
           </MyButton>
         }
       />
-    </>
+    </div>
   );
 };
 

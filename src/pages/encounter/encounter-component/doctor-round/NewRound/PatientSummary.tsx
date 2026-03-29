@@ -5,8 +5,16 @@ import RecentTestResults from '../../patient-summary/RecentTestResults';
 import PatientChronicMedication from '../../patient-summary/PatientChronicMedication';
 import IntakeOutputs from '../../patient-summary/IntakeOutputs';
 const PatientSummary = ({ patient }) => {
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <Row gutter={18}>
         <Col xs={12}>
           <PreObservation patient={patient} />
