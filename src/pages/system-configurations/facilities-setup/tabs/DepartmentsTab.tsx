@@ -29,6 +29,8 @@ import { PaginationPerPage } from '@/utils/paginationPerPage';
 import ChooseScreen from '@/pages/setup/departments-setup/ChooseScreen';
 import ChooseScreenNurse from '@/pages/setup/departments-setup/ChooseScreenNurse';
 import AddEditDepartmentInline from './AddEditDepartmentInline';
+import { MdHomeRepairService } from "react-icons/md";
+import AddServiceToDepartment from './AddServiceToDepartment';
 
 interface DepartmentsTabProps {
   facility: Facility;
@@ -73,8 +75,10 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [openForm, setOpenForm] = useState(false);
   const [showScreen, setShowScreen] = useState({});
   const [showNurseScreen, setShowNurseScreen] = useState({});
+   const [showService, setShowService] = useState({});
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
   const [openScreensNursePopup, setOpenScreensNursePopup] = useState(false);
+  const [openAddServicePopup, setOpenAddServicePopup] = useState(false);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [nextDepartmentCode, setNextDepartmentCode] = useState<string>(generateFiveDigitCode());
   const [record, setRecord] = useState({ filter: '', value: '' });
@@ -446,6 +450,17 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
           }}
         />
       )}
+      <MdHomeRepairService
+        title="Services"
+        size={24}
+        fill="var(--primary-gray)"
+        className="icons-style"
+        onClick={() => {
+            setDepartment(rowData);
+            setOpenAddServicePopup(true);
+          }}
+      />
+
     </div>
   );
 
@@ -634,6 +649,14 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
         setShowScreen={setShowNurseScreen}
         department={department}
         width={width}
+      />
+      <AddServiceToDepartment
+        open={openAddServicePopup}
+        setOpen={setOpenAddServicePopup}
+        width={width}
+        department={department}
+        showScreen={showService}
+        setShowScreen={setShowService}
       />
       <DeletionConfirmationModal
         open={openConfirmDeleteDepartmentModal}
