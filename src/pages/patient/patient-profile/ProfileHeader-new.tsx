@@ -424,81 +424,58 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </div>
             </AvatarGroup>
 
-            <div className="button-group-left-align">
-              <Form fluid layout="inline" className="registration-header-buttons-section">
-                <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <AvatarGroup spacing={6}>
+              </AvatarGroup>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                justifyContent: 'flex-end'
+              }}
+            >
+              <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
 
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleSave}
-                >
-                  {localPatient?.id ? 'Edit' : 'Save'}
-                </MyButton>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                onClick={handleSave}
+              >
+                {localPatient?.id ? 'Edit' : 'Save'}
+              </MyButton>
 
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-                  onClick={handleClear}
-                >
-                  Clear
-                </MyButton>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                onClick={handleClear}
+              >
+                Clear
+              </MyButton>
 
-                <MyButton
-                  appearance="ghost"
-                  onClick={() => setQuickPatientModalOpen(true)}
-                  prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
-                >
-                  Quick Patient
-                </MyButton>
+              <MyButton
+                appearance="ghost"
+                onClick={() => setQuickPatientModalOpen(true)}
+                prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
+              >
+                Quick Patient
+              </MyButton>
 
-                <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                  Quick Appointment
-                </MyButton>
+              <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
+                Quick Appointment
+              </MyButton>
 
-                <AdministrativeWarningsModal
-                  localPatient={localPatient}
-                  validationResult={validationResult}
-                />
+              <AdministrativeWarningsModal
+                localPatient={localPatient}
+                validationResult={validationResult}
+              />
 
-                <Whisper
-                  open={openMoreMenu}
-                  onClose={() => setOpenMoreMenu(false)}
-                  placement="bottom"
-                  speaker={contentOfMoreIconMenu}
-                >
-                  <span>
-                    <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
-                      <FontAwesomeIcon icon={faEllipsisVertical} />
-                    </MyButton>
-                  </span>
-                </Whisper>
+              <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
+                <FontAwesomeIcon icon={faEllipsisVertical} />
+              </MyButton>
 
-                <Whisper
-                  open={openPrintMenu}
-                  onClose={() => setOpenPrintMenu(false)}
-                  placement="bottom"
-                  speaker={contentOfPrintIconMenu}
-                >
-                  <span>
-                    <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
-                      <FontAwesomeIcon icon={faPrint} />
-                    </MyButton>
-                  </span>
-                </Whisper>
-
-                {(openMoreMenu || openPrintMenu) && (
-                  <div
-                    onClick={closeMenus}
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      zIndex: 1
-                    }}
-                  />
-                )}
-              </Form>
+              <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
+                <FontAwesomeIcon icon={faPrint} />
+              </MyButton>
             </div>
           </Form>
         </Stack.Item>

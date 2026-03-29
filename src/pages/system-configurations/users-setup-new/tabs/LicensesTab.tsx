@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useMemo  } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetLicenseQuery, useRemoveUserMidicalLicenseMutation, useSaveUserMidicalLicenseMutation } from '@/services/setupService';
 import { ApUserMedicalLicense } from '@/types/model-types';
@@ -29,6 +29,9 @@ const LicensesTab: React.FC<LicensesTabProps> = ({ user }) => {
   const [openForm, setOpenForm] = useState<boolean>(false);
   const [openConfirmDeleteLicenseModal, setOpenConfirmDeleteLicenseModal] = useState<boolean>(false);
   const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>('delete');
+  const [pageIndex, setPageIndex] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
 
   const [licenseListRequest, setLicenseListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -166,6 +169,25 @@ const LicensesTab: React.FC<LicensesTabProps> = ({ user }) => {
     },
   ];
 
+  const licenses = licenseListResponse?.object ?? [];
+
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPageIndex(newPage);
+  };
+
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPageIndex(0);
+  };
+
+  const paginatedData = useMemo(() => {
+    const start = pageIndex * rowsPerPage;
+    const end = start + rowsPerPage;
+    return licenses.slice(start, end);
+  }, [licenses, pageIndex, rowsPerPage]);
+
+  const totalCount = licenses.length;
+
           // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -246,13 +268,15 @@ const LicensesTab: React.FC<LicensesTabProps> = ({ user }) => {
           </MyButton>
         </div>
       )}
-      <MyTable
-        height={300}
-        data={licenseListResponse?.object ?? []}
-        columns={licensesTableColumns}
-        rowClassName={isSelected}
-        onRowClick={rowData => setLicense(rowData)}
-      />
+        <MyTable
+          data={paginatedData}
+          columns={licensesTableColumns}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
       <DeletionConfirmationModal
         open={openConfirmDeleteLicenseModal}
         setOpen={setOpenConfirmDeleteLicenseModal}
