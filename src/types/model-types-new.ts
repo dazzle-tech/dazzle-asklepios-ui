@@ -72,6 +72,7 @@ export interface Facility {
   defaultCurrency: string;
   isActive?: boolean;
   ruleId?: number;
+  workingDays?: OrganizationWorkingDay[];
 }
 
 export interface CreateFacility {
@@ -85,6 +86,7 @@ export interface CreateFacility {
   type: string;
   defaultCurrency: string;
   isActive?: boolean;
+  workingDays?: OrganizationWorkingDay[];
 }
 
 export interface Role {
