@@ -3808,3 +3808,32 @@ export interface NurseSummaryReportVM {
   servicesAndProducts: NurseSummaryServiceProductVM[];
   generatedAt: string | null;
 }
+
+export type PolicyDefinition = {
+  id?: number;
+  facilityId?: number;
+  facility?: any;
+  code: string;
+  name: string;
+  description?: string | null;
+  isActive?: boolean;
+  // createdDate?: string;
+  // lastModifiedDate?: string;
+};
+
+export type PolicyDefinitionCreateDTO = {
+  facilityId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+};
+
+export type PolicyDefinitionUpdateDTO = {
+  id: number;
+  facilityId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+};

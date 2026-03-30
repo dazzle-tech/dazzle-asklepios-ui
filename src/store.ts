@@ -203,6 +203,7 @@ import { RelationsMatrixService } from './services/patients/RelationsMatrixServi
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
+import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
 
 export const store = configureStore({
   reducer: {
@@ -232,6 +233,8 @@ export const store = configureStore({
 
     // setup
     [setupService.reducerPath]: setupService.reducer,
+
+    [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
 
     // inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
@@ -731,7 +734,8 @@ export const store = configureStore({
         RelationsMatrixService.middleware,
         patientAdministrativeWarningsService.middleware,
         observationServiceNew.middleware,
-        organizationHolidaysService.middleware
+        organizationHolidaysService.middleware,
+        PolicyDefinitionService.middleware
       ]
     ) as any
 });
