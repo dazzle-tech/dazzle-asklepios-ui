@@ -31,8 +31,14 @@ const ERStartTriage = (props: ERTriageProps) => {
     };
   }, [dispatch]);
   console.log("encounter--->", encounterData);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="er-main-container">
+    <div className="er-main-container" dir={dir}>
       <div className="left-box">
        <StartTriage
           patient={patient}

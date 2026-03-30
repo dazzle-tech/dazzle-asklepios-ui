@@ -191,6 +191,11 @@ const BedAssignmentModal = ({
     </Form>
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -200,7 +205,7 @@ const BedAssignmentModal = ({
       size="38vw"
       bodyheight="60vh"
       actionButtonFunction={handleSave}
-      content={modalContent}
+      content={<div dir={dir}>{modalContent}</div>}
     />
   );
 };

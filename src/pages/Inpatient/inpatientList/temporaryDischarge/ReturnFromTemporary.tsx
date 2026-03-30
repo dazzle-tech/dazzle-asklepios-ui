@@ -183,6 +183,12 @@ const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientLi
         }));
     }
 }, [departmentKey]);
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
     return (
         <>
             <MyModal
@@ -195,7 +201,7 @@ const ReturnFromTemporary = ({ open, setOpen, localEncounter, refetchInpatientLi
                 size="33vw"
                 position='right'
                 actionButtonFunction={handleSave}
-                content={modalContent}
+                content={<div dir={dir}>{modalContent}</div>}
                 actionButtonLabel='Save'
             />
         </>);

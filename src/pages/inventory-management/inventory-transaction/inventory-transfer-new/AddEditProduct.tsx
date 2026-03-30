@@ -328,10 +328,14 @@ const AddEditProduct = ({ open, setOpen, transferProduct, setTransferProduct, tr
     }, [selectedWarehouseProduct?.key]);
 
   
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-        <Form fluid>
+        <Form fluid dir={dir}>
             <div className='container-of-two-fields'>
                 <div className='container-of-field' >
                     <MyInput

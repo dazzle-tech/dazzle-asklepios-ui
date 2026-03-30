@@ -8,6 +8,12 @@ import './Styles.less';
 
 const DetailCard = () => {
   //Mycard Content
+
+                        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <div className="card-grid">
       {sampleData.map(item => (
@@ -21,7 +27,7 @@ const DetailCard = () => {
             </>
           }
           contant={
-            <>
+            <div dir={dir}>
               Specs: {item.specs}
               <br />
               Quantity: {item.quantity}
@@ -34,7 +40,7 @@ const DetailCard = () => {
                 color={item.status === 'Available' ? 'var(--primary-green)' : 'var(--primary-gray)'}
                 contant={item.status}
               />
-            </div></>
+            </div></div>
           }
           footerContant={''}
           avatar={item.avatar}

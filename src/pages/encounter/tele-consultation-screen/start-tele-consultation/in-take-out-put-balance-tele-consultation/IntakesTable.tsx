@@ -20,11 +20,17 @@ const IntakesTable: React.FC<IntakesTableProps> = ({ data, totalIntake = 0 }) =>
 
   const isSelectedIntake = (rowData: any) => (rowData?.key === intake?.key ? 'selected-row' : '');
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <SectionContainer 
     title="Intakes"
     content={
-      <>
+      <div dir={dir}>
       <Form fluid layout="inline" className="container-of-header-intake">
         <MyInput
           fieldName="date"
@@ -56,7 +62,7 @@ const IntakesTable: React.FC<IntakesTableProps> = ({ data, totalIntake = 0 }) =>
       />
       <label>Total Intake: {totalIntake}</label>
       <AddEditIntake open={popupAddIntakeOpen} setOpen={setPopupAddIntakeOpen} width={window.innerWidth} />
-      </>
+      </div>
     }
     />
   );

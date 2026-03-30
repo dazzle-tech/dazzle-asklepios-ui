@@ -507,6 +507,12 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
       />
     </Form>
   );
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <>
       <AdvancedModal
@@ -514,8 +520,8 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
         setOpen={setOpen}
         leftTitle="Patient Information"
         rightTitle="Admit to Inpatient"
-        leftContent={leftModalContent}
-        rightContent={rightModalContent}
+        leftContent={<div dir={dir}>{leftModalContent}</div>}
+        rightContent={<div dir={dir}>{rightModalContent}</div>}
         actionButtonLabel="Admit"
         actionButtonFunction={handleSave}
         leftWidth="19%"

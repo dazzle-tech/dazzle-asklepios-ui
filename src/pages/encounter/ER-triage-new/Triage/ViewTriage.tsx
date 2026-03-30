@@ -113,8 +113,13 @@ const ViewTriage = () => {
     else navigate(-1);
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="er-main-container">
+    <div className="er-main-container" dir={dir}>
       <div className="left-box">
         <div className="bt-field-div">
           <BackButton onClick={handleGoBack} />

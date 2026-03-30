@@ -215,8 +215,13 @@ const Reconciliation: React.FC = () => {
     </>
   );
 
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="Tables-gap-betwen-columns">
+    <div className="Tables-gap-betwen-columns" dir={dir}>
       <MyTable
         data={paginatedData}
         columns={columns}

@@ -151,8 +151,14 @@ const StartTeleConsultation = () => {
   const displayName = sliceauth?.user?.firstName + ' ' + sliceauth?.user?.lastName;
   const email = sliceauth?.user?.email;
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="main-start-tele-consultation-container-handle">
+    <div className="main-start-tele-consultation-container-handle" dir={dir}>
       <div className="container">
         <div className="left-box">
           <Panel>

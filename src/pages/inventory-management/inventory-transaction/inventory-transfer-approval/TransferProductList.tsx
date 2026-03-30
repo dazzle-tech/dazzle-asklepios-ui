@@ -475,6 +475,12 @@ const TransferProductList = ({
 
   }
 
+
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       actionButtonLabel={'Save'}
@@ -483,7 +489,7 @@ const TransferProductList = ({
       setOpen={setOpen}
       position="right"
       title={'Approval Workflow'}
-      content={conjureFormContentOfMainModal}
+      content={<div dir={dir}>{conjureFormContentOfMainModal()}</div>}
       steps={[
         {
           title: 'Transfer Product',
