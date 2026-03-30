@@ -166,6 +166,11 @@ console.log('authSlice in change bed modal', authSlice);
         </Form>
     );
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
     return (
         <MyModal
             open={open}
@@ -175,7 +180,7 @@ console.log('authSlice in change bed modal', authSlice);
             size="25vw"
             bodyheight='350px'
             actionButtonFunction={handleSave}
-            content={modalContent}
+            content={<div dir={dir}>{modalContent}</div>}
             actionButtonLabel='Move'
         />
     );

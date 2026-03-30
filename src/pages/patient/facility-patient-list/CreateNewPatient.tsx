@@ -1636,6 +1636,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -1670,7 +1675,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
       ]}
       size="33vw"
       position="right"
-      content={conjureFormContent}
+      content={(step) => <div dir={dir}>{conjureFormContent(step)}</div>}
       actionButtonFunction={async () => {
         const saved = await handleSave();
         if (!saved) return;

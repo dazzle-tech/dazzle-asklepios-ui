@@ -120,8 +120,13 @@ const RequestedProceduresTable = () => {
     
     </>);
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div>
+    <div dir={dir}>
       <div className="tables-row-positioning">
         <div className="material-table-size-position">
           <MyTable

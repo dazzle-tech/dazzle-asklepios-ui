@@ -177,9 +177,16 @@ const OrganizationDefinition = () => {
 
   const isLoadingData = isLoading || isCreating || isUpdating;
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
 
-    <Form fluid>
+    <Form fluid dir={dir}>
       <div className='organization-sections-container'>
         <div className='organization-section-Column'>
           <Section

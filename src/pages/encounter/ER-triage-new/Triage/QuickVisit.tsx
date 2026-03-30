@@ -83,8 +83,14 @@ const QuickVisit = () => {
     const handleClearObsarvationClick = () => {
         obsRef.current?.handleClear();
     };
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
     return (
-        <>
+        <div dir={dir}>
             {propsData?.patient && propsData?.encounter && (
                 <div className="main-box ">
                     <div className="left-box">
@@ -190,7 +196,7 @@ const QuickVisit = () => {
                         encounter={propsData.encounter} />
                 </div>
             )}
-        </>
+        </div>
     );
 };
 

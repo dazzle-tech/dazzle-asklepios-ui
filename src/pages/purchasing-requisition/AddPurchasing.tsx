@@ -218,6 +218,11 @@ const AddPurchasing = ({ open, setOpen }) => {
     </>
   );
 
+                      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -233,7 +238,7 @@ const AddPurchasing = ({ open, setOpen }) => {
       size="35vw"
       position="right"
       actionButtonLabel="Create"
-      content={modelContent}
+      content={<div dir={dir}>{modelContent}</div>}
     />
   );
 };
