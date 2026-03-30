@@ -128,7 +128,21 @@ const Users = () => {
       dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
+   
+const formatErrorKey = (msg?: string) => {
+  if (!msg) return '';
 
+  const key = msg.split('.').pop() || msg;
+
+  return key
+    .replace(/exists/gi, ' already exists')
+    .replace(/user/gi, 'login name')
+    .replace(/email/gi, 'Email')
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^./, s => s.toUpperCase());
+};
 
   // Handle Save User
   const handleSave = async () => {
@@ -147,31 +161,31 @@ const Users = () => {
 
       refetchFacility();
       setCanProceed(true);
-    } catch (error) {
-      console.error("❌ Error saving user:", error);
+   } catch (error: any) {
+  console.error("❌ Error saving user:", error);
 
-      let backendMessage = "Failed to save user";
+  const apiError = error?.data;
+  const message = apiError?.message?.toLowerCase();
 
-      const apiError = error?.data;
-      const message = apiError?.message?.toLowerCase();
+  const knownErrors: Record<string, string> = {
+    "error.emailexists": "This email is already in use",
+    "error.userexists": "This username is already in use",
+  };
 
-      if (message === "error.emailexists") {
-        backendMessage = "This email is already in use";
-      } else if (apiError?.fieldErrors?.length > 0) {
-        backendMessage = apiError.fieldErrors[0].message;
-      } else if (apiError?.detail) {
-        backendMessage = apiError.detail;
-      } else if (apiError?.message) {
-        backendMessage = apiError.message;
-      }
+  const backendMessage =
+    (message && knownErrors[message]) ||
+    apiError?.fieldErrors?.[0]?.message ||
+    (message ? formatErrorKey(message) : '') ||
+    apiError?.detail ||
+    "Failed to save user";
 
-      dispatch(
-        notify({
-          msg: backendMessage,
-          sev: "warning",
-        })
-      );
-    }
+  dispatch(
+    notify({
+      msg: backendMessage,
+      sev: "warning",
+    })
+  );
+}
   };
 
   // Handle click on Add New button
