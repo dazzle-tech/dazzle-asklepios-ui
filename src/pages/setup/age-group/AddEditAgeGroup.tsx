@@ -34,7 +34,7 @@ const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, w
               selectDataValue="id"
               record={agegroups}
               setRecord={setAgeGroups}
-              disabled={agegroups?.facilityId}
+              disabled={agegroups?.id}
               required
             />
 
