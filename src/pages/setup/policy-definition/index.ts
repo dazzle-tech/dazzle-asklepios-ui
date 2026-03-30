@@ -1,2 +1,2 @@
-import PolicyDefinition from './PolicyDefinition';
-export default PolicyDefinition;
+import PolicyDefinitions from './PolicyDefinition';
+export default PolicyDefinitions;

@@ -70,6 +70,60 @@ export const PolicyDefinitionService = createApi({
       providesTags: ["PolicyDefinition"],
     }),
 
+    // List by facility (paginated)
+    getPolicyDefinitionsByFacility: builder.query<PagedResult<PolicyDefinition>, { facilityId: number } & PagedParams>({
+      query: ({ facilityId, page, size, sort = "id,desc" }) => ({
+        url: "/api/setup/policy-definition/by-facility",
+        method: "GET",
+        params: { facilityId, page, size, sort },
+      }),
+      transformResponse: (response: PolicyDefinition[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["PolicyDefinition"],
+    }),
+
+    // List by code (paginated)
+    getPolicyDefinitionsByCode: builder.query<PagedResult<PolicyDefinition>, { code: string } & PagedParams>({
+      query: ({ code, page, size, sort = "id,desc" }) => ({
+        url: "/api/setup/policy-definition/by-code",
+        method: "GET",
+        params: { code, page, size, sort },
+      }),
+      transformResponse: (response: PolicyDefinition[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["PolicyDefinition"],
+    }),
+
+    // List by name (paginated)
+    getPolicyDefinitionsByName: builder.query<PagedResult<PolicyDefinition>, { name: string } & PagedParams>({
+      query: ({ name, page, size, sort = "id,desc" }) => ({
+        url: "/api/setup/policy-definition/by-name",
+        method: "GET",
+        params: { name, page, size, sort },
+      }),
+      transformResponse: (response: PolicyDefinition[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+          links: parseLinkHeader(headers?.get("Link")),
+        };
+      },
+      providesTags: ["PolicyDefinition"],
+    }),
+
     // Get by id
     getPolicyDefinitionById: builder.query<PolicyDefinition, number>({
       query: (id) => ({
@@ -119,6 +173,12 @@ export const PolicyDefinitionService = createApi({
 export const {
   useGetAllPolicyDefinitionsQuery,
   useLazyGetAllPolicyDefinitionsQuery,
+  useGetPolicyDefinitionsByFacilityQuery,
+  useLazyGetPolicyDefinitionsByFacilityQuery,
+  useGetPolicyDefinitionsByCodeQuery,
+  useLazyGetPolicyDefinitionsByCodeQuery,
+  useGetPolicyDefinitionsByNameQuery,
+  useLazyGetPolicyDefinitionsByNameQuery,
   useGetPolicyDefinitionByIdQuery,
   useLazyGetPolicyDefinitionByIdQuery,
   useCreatePolicyDefinitionMutation,
