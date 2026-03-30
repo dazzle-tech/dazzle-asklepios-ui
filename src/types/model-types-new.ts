@@ -398,6 +398,8 @@ export interface Procedure {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   facilityId?: number;
+  currency?: string | null;
+  price?: number | null;
 }
 // DiagnosticTest matches the domain entity fields (incl. raw DB strings + transient lists)
 

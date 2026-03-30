@@ -41,7 +41,7 @@ const ProcedureSetup: React.FC = () => {
   const facilityId: number | undefined = selectedFacility?.id;
 
   // Selected procedure and UI state
-  const [procedure, setProcedure] = useState<Procedure>({ ...newProcedure, facilityId });
+  const [procedure, setProcedure] = useState<Procedure>({ ...newProcedure });
   const [popupOpen, setPopupOpen] = useState(false);
   const [openConfirmToggleActive, setOpenConfirmToggleActive] = useState(false);
   const [toggleAction, setToggleAction] = useState<'deactivate' | 'reactivate'>('deactivate');
@@ -432,25 +432,25 @@ const ProcedureSetup: React.FC = () => {
         />
       ),
     },
-    {
-      key: 'priceList',
-      title: <Translate>Price List</Translate>,
-      width: 110,
-      align: 'center' as const,
-      render: (row: any) => (
-        <MdAttachMoney
-          className="icons-style"
-          title="Link Prices"
-          size={22}
-          fill="var(--primary-gray)"
-          style={{ cursor: 'pointer' }}
-          onClick={() => {
-            setLinkPriceProcedureId(Number(row?.id));
-            setLinkPriceOpen(true);
-          }}
-        />
-      ),
-    },
+    // {
+    //   key: 'priceList',
+    //   title: <Translate>Price List</Translate>,
+    //   width: 110,
+    //   align: 'center' as const,
+    //   render: (row: any) => (
+    //     <MdAttachMoney
+    //       className="icons-style"
+    //       title="Link Prices"
+    //       size={22}
+    //       fill="var(--primary-gray)"
+    //       style={{ cursor: 'pointer' }}
+    //       onClick={() => {
+    //         setLinkPriceProcedureId(Number(row?.id));
+    //         setLinkPriceOpen(true);
+    //       }}
+    //     />
+    //   ),
+    // },
     {
       key: 'actions',
       title: <Translate></Translate>,

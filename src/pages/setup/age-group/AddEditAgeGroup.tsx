@@ -40,7 +40,7 @@ const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, w
 
             <MyInput
               width="100%"
-              disabled={agegroups?.id ? true : false}
+              disabled={agegroups.id ? true : false}
               fieldName="ageGroup"
               fieldType="select"
               selectData={ageGroupOptions ?? []}

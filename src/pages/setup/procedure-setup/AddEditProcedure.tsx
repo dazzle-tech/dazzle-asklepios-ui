@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { Form, Divider } from 'rsuite';
@@ -10,7 +10,7 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { initialListRequest, ListRequest } from '@/types/types';
 
 // Enum options for category
-import { useEnumOptions } from '@/services/enumsApi';
+import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 
 // ICD-10 search component (supports mode="icd10" | "indications")
 import Icd10Search from '@/components/ICD10SearchComponent/IcdSearchable';
@@ -62,10 +62,27 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
 
   // Category options
   const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+  const currencyOptions = useEnumCapitalized('Currency');
 
 
   const isLoading = isAdding || isUpdating || actionLoading;
+ useEffect(() => {
+    if (!facilityListResponse || !procedure?.facilityId) return;
 
+    const selectedFacility = facilityListResponse.find(
+      (f: any) => Number(f.id) === Number(procedure.facilityId)
+    );
+
+    if (
+      selectedFacility?.defaultCurrency &&
+      selectedFacility.defaultCurrency !== procedure.currency
+    ) {
+      setProcedure({
+        ...procedure,
+        currency: selectedFacility.defaultCurrency
+      });
+    }
+  }, [procedure?.facilityId, facilityListResponse]);
   const handleSave = async () => {
     setOpen(false);
     const isUpdate = !!procedure.id;
@@ -73,7 +90,7 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
     const payload: any = {
       ...procedure,
     };
-
+   console.log('Payload for saving procedure:', payload);
     try {
       if (!facilityId) {
         dispatch(notify({ msg: 'Please choose a facility before saving.', sev: 'error' }));
@@ -82,10 +99,11 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
       }
 
       if (isUpdate) {
-        await updateProcedure({ facilityId, id: procedure.id!, ...payload }).unwrap();
+        await updateProcedure({ facilityId: procedure.facilityId, id: procedure.id!, ...payload }).unwrap();
         dispatch(notify({ msg: 'Procedure updated successfully', sev: 'success' }));
       } else {
-        await addProcedure({ facilityId, ...payload }).unwrap();
+
+        await addProcedure({ facilityId: procedure.facilityId, ...payload }).unwrap();
         dispatch(notify({ msg: 'Procedure added successfully', sev: 'success' }));
       }
 
@@ -313,6 +331,34 @@ const AddEditProcedure: React.FC<AddEditProcedureProps> = ({
                   fieldName="recoveryNotes"
                   record={procedure}
                   setRecord={setProcedure}
+                />
+              </div>
+            </div>
+            <div className="container-of-two-fields-service">
+                <div className="container-of-field-service">
+                <MyInput
+                  required
+                  width="100%"
+                  fieldLabel="Price"
+                  fieldType="number"
+                  fieldName="price"
+                  record={procedure}
+                  setRecord={setProcedure}
+                />
+              </div>
+              <div className="container-of-field-service">
+               
+                <MyInput
+                  required
+                  width="100%"
+                  fieldName="currency"
+                  fieldType="select"
+                  selectData={currencyOptions ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                 record={procedure}
+                  setRecord={setProcedure}
+                  disabled
                 />
               </div>
             </div>
