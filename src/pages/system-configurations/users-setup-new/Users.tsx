@@ -51,7 +51,7 @@ const Users = () => {
   const [saveUser, saveUserMutation] = useAddUserMutation();
   // Fetch users list response
   const [pageIndex, setPageIndex] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
 
 
@@ -90,8 +90,8 @@ const Users = () => {
 
   };
 
-  const users = usersResponse ?? [];
-  const totalCount = usersResponse?.length ?? 0;
+  const users = usersResponse?.data ?? [];
+  const totalCount = usersResponse?.totalCount ?? 0;
 
 
   // Available fields for filtering
@@ -140,6 +140,7 @@ const Users = () => {
         refetch();
       } else {
         const response = await saveUser({ ...user }).unwrap();
+
         dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
         refetch();
       }
@@ -434,11 +435,11 @@ const Users = () => {
     </Box>
   );
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
