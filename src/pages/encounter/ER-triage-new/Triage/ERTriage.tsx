@@ -1415,9 +1415,13 @@ const ERTriage = () => {
       </>
     );
   };
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <>
+    <div dir={dir}>
       {patientSidebarOpen && (
         <div className="er-triage-patient-sidebar-overlay">
           <ProfileSidebarNew
@@ -1560,7 +1564,7 @@ const ERTriage = () => {
         actionButtonFunction={() => setOpenEMRModal(false)}
         cancelButtonLabel="Cancel"
       />
-    </>
+    </div>
   );
 };
 

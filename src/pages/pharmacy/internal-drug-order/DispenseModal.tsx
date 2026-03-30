@@ -224,6 +224,11 @@ const DispenseModal = ({ open, setOpen, dispenseData, handleDispenseChange }) =>
     }
   ];
 
+                  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -239,7 +244,7 @@ const DispenseModal = ({ open, setOpen, dispenseData, handleDispenseChange }) =>
         <SectionContainer
           title={<div className="title-div"></div>}
           content={
-            <div>
+            <div dir={dir}>
               <MyNestedTable
                 data={dispenseRows}
                 columns={dispenseColumns}

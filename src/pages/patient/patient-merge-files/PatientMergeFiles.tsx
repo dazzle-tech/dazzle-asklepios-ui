@@ -61,9 +61,15 @@ const PatientMergeFiles: React.FC = () => {
     };
   }, [dispatch, pathname]);
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
-      <Grid fluid>
+    <div dir={dir}>
+      <Grid fluid dir={dir}>
         <Row>
           <Col xs={5}>
             <ProfileSidebar
@@ -131,7 +137,7 @@ const PatientMergeFiles: React.FC = () => {
           </Col>
         </Row>
       </Grid>
-    </>
+    </div>
   );
 };
 

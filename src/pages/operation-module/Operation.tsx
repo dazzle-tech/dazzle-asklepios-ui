@@ -79,10 +79,23 @@ const Operation = () => {
     dispatch(setPageCode('Operation_Module'));
     dispatch(setDivContent(divContent));
   }, []);
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div className="container">
+    <div className="container" dir={dir}>
       <div className="left-box">
-        <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <MyTab
+        data={tabData.map(tab => ({
+          ...tab,
+          content: <div dir={dir}>{tab.content}</div>
+        }))}
+        className="tab-container"
+      />
       </div>
 
       <div className="right-box">

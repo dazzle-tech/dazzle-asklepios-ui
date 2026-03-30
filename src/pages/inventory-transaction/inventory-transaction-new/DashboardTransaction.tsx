@@ -641,9 +641,14 @@ function DashboardTransaction() {
   };
 
 
+                    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <Container style={{ height: "100vh" }}>
+    <Container style={{ height: "100vh" }} dir={dir}>
       <Sidebar
         collapsible
         className="profile-sidebar"

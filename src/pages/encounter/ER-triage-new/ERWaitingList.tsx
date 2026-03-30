@@ -815,8 +815,14 @@ const ERWaitingList = () => {
     );
   }
 
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <Panel>
+    <Panel dir={dir}>
       <BedAssignmentModal
         refetchEncounter={refetchEncounters}
         open={openBedAssigmentModal}
@@ -855,7 +861,7 @@ const ERWaitingList = () => {
         setOpen={setOpenEMRModal}
         title="Patient EMR"
         size="95vw"
-        content={<PatientEMRModal inModal={true} patient={localPatient} encounter={encounter} />}
+        content={<div dir={dir}><PatientEMRModal inModal={true} patient={localPatient} encounter={encounter} /></div>}
         cancelButtonLabel="Close"
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEMRModal(false)}

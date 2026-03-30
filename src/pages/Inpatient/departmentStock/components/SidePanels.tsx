@@ -101,8 +101,13 @@ const SidePanels: React.FC<SidePanelsProps> = ({
     }
   ];
 
+                        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="patient-side-internal-drug-order">
+    <div className="patient-side-internal-drug-order" dir={dir}>
       <div className="side-panel-tables">
         {/* Most Used Products table */}
         <Section
