@@ -3812,7 +3812,7 @@ export interface NurseSummaryReportVM {
 export type PolicyDefinition = {
   id?: number;
   facilityId?: number;
-  facility?: any;
+  facilityName?: string;
   code: string;
   name: string;
   description?: string | null;
@@ -3826,7 +3826,6 @@ export type PolicyDefinitionCreateDTO = {
   code: string;
   name: string;
   description?: string | null;
-  isActive: boolean;
 };
 
 export type PolicyDefinitionUpdateDTO = {
@@ -3835,5 +3834,4 @@ export type PolicyDefinitionUpdateDTO = {
   code: string;
   name: string;
   description?: string | null;
-  isActive: boolean;
 };

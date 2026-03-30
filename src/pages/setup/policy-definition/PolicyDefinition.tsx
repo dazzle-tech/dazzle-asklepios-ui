@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-// import './styles.less';
 import { Panel, Form } from 'rsuite';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
@@ -9,419 +8,365 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
-
-import { Payor, PolicyDefinition} from '@/types/model-types-new';
-import { newPayor, newPolicyDefinition } from '@/types/model-types-constructor-new';
-
+import { PolicyDefinition } from '@/types/model-types-new';
+import { newPolicyDefinition } from '@/types/model-types-constructor-new';
+import { PaginationPerPage } from '@/utils/paginationPerPage';
 import {
-    useGetAllPayorsQuery,
-    useCreatePayorMutation,
-    useUpdatePayorMutation,
-    useTogglePayorActiveMutation
-} from '@/services/setup/payer/PayorService';
-import { formatDateWithoutSeconds } from '@/utils';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { useEnumOptions } from '@/services/enumsApi';
-import { FaRegListAlt } from 'react-icons/fa';
-import { useGetAllPolicyDefinitionsQuery, useTogglePolicyDefinitionActiveMutation } from '@/services/setup/policyDefinition/policyDefinitionService';
+  useGetAllPolicyDefinitionsQuery,
+  useLazyGetPolicyDefinitionsByFacilityQuery,
+  useLazyGetPolicyDefinitionsByCodeQuery,
+  useLazyGetPolicyDefinitionsByNameQuery,
+  useTogglePolicyDefinitionActiveMutation
+} from '@/services/setup/policyDefinition/policyDefinitionService';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import AddEditPolicy from './AddEditPolicy';
 
 const PolicyDefinitions = () => {
-    const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
 
-    const [policy, setPolicy] = useState<PolicyDefinition>({ ...newPolicyDefinition });
-    const [openAddEditPolicyModal, setOpenAddEditPolicyModal] = useState(false);
+  const [policy, setPolicy] = useState<PolicyDefinition>({ ...newPolicyDefinition });
+  const [openAddEditPolicyModal, setOpenAddEditPolicyModal] = useState(false);
+  const [openConfirmTogglePolicy, setOpenConfirmTogglePolicy] = useState(false);
+  const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
+    'deactivate'
+  );
 
-    const [openConfirmTogglePolicy, setOpenConfirmTogglePolicy] = useState(false);
-    const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
-        'deactivate'
-    );
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
+  const [filterPagination, setFilterPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc'
+  });
+  const [sortColumn, setSortColumn] = useState<string>('id');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  const [link, setLink] = useState({});
 
-    const [paginationParams, setPaginationParams] = useState({
+  const [recordOfFilter, setRecordOfFilter] = useState<{ filter: string; value: any }>({
+    filter: '',
+    value: ''
+  });
+  const [isFiltered, setIsFiltered] = useState<boolean>(false);
+  const [filteredList, setFilteredList] = useState<PolicyDefinition[]>([]);
+  const [filteredTotal, setFilteredTotal] = useState<number>(0);
+
+  const { data: policyDefinitionListResponse, isFetching } =
+    useGetAllPolicyDefinitionsQuery(paginationParams);
+  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+
+  const [fetchByFacility] = useLazyGetPolicyDefinitionsByFacilityQuery();
+  const [fetchByCode] = useLazyGetPolicyDefinitionsByCodeQuery();
+  const [fetchByName] = useLazyGetPolicyDefinitionsByNameQuery();
+  const [togglePolicyActive] = useTogglePolicyDefinitionActiveMutation();
+
+  useEffect(() => {
+    dispatch(setPageCode('Policy_Definition'));
+    dispatch(setDivContent('Policy Definition'));
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    setLink(policyDefinitionListResponse?.links ?? {});
+  }, [policyDefinitionListResponse?.links]);
+
+  const isSelected = (rowData: PolicyDefinition) =>
+    rowData && policy && rowData.id === policy.id ? 'selected-row' : '';
+
+  const handlePageChange = (event: unknown, newPage: number) => {
+    if (isFiltered) {
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, newPage);
+    } else {
+      PaginationPerPage.handlePageChange(event, newPage, paginationParams, link, setPaginationParams);
+    }
+  };
+
+  const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSize = Number(e.target.value);
+    if (isFiltered) {
+      setFilterPagination(prev => ({ ...prev, size: newSize, page: 0 }));
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, newSize);
+    } else {
+      setPaginationParams(prev => ({
+        ...prev,
+        size: newSize,
         page: 0,
-        size: 15,
-        sort: 'id,asc'
-    });
+        timestamp: Date.now()
+      }));
+    }
+  };
 
-    const [sortColumn, setSortColumn] = useState<string>('id');
-    const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+  const handleSortChange = (column: string, type: 'asc' | 'desc') => {
+    setSortColumn(column);
+    setSortType(type);
+    const sortValue = `${column},${type}`;
 
+    if (isFiltered) {
+      setFilterPagination(prev => ({ ...prev, sort: sortValue, page: 0 }));
+      handleFilterChange(recordOfFilter.filter, recordOfFilter.value, 0, filterPagination.size);
+    } else {
+      setPaginationParams(prev => ({
+        ...prev,
+        sort: sortValue,
+        page: 0,
+        timestamp: Date.now()
+      }));
+    }
+  };
 
-    const payorCategories = useEnumOptions('PayorCategory');
+  const handleNew = () => {
+    setPolicy({ ...newPolicyDefinition });
+    setOpenAddEditPolicyModal(true);
+  };
 
-    const [searchFilters, setSearchFilters] = useState<{
-        category: string | null;
-        name: string;
-        code: string;
-    }>({
-        category: null,
-        name: '',
-        code: ''
-    });
+  const handleTogglePolicyActive = async () => {
+    if (!policy?.id) return;
+    try {
+      dispatch(showSystemLoader());
+      await togglePolicyActive(policy.id).unwrap();
 
-    const [appliedFilters, setAppliedFilters] = useState<{
-        category?: string | null;
-        name?: string;
-        code?: string;
-    }>({});
+      dispatch(
+        notify({
+          msg:
+            toggleActionType === 'deactivate'
+              ? 'Policy deactivated successfully'
+              : 'Policy reactivated successfully',
+          sev: 'success'
+        })
+      );
 
-    // RTK Query hooks
-    const { data: policyDefinitionListResponse, isFetching: isPayorFetching } = useGetAllPolicyDefinitionsQuery({
-        page: paginationParams.page,
-        size: paginationParams.size,
-        sort: paginationParams.sort,
-        // ...(appliedFilters.category ? { category: appliedFilters.category } : {}),
-        // ...(appliedFilters.name ? { name: appliedFilters.name } : {}),
-        // ...(appliedFilters.code ? { code: appliedFilters.code } : {})
-    });
-    console.log("policyDefinitionListResponse: ", policyDefinitionListResponse);
+      setOpenConfirmTogglePolicy(false);
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: 'Action failed, please try again',
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
 
-    const [createPayor] = useCreatePayorMutation();
-    const [updatePayor] = useUpdatePayorMutation();
-    const [togglePolicyActive] = useTogglePolicyDefinitionActiveMutation();
+  const iconsForActions = (rowData: PolicyDefinition) => (
+    <div className="container-of-icons">
+      <MdModeEdit
+        className="icons-style"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setPolicy(rowData);
+          setOpenAddEditPolicyModal(true);
+        }}
+      />
+      {rowData.isActive ? (
+        <MdDelete
+          className="icons-style"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setPolicy(rowData);
+            setToggleActionType('deactivate');
+            setOpenConfirmTogglePolicy(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-style"
+          title="Activate"
+          size={20}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setPolicy(rowData);
+            setToggleActionType('reactivate');
+            setOpenConfirmTogglePolicy(true);
+          }}
+        />
+      )}
+    </div>
+  );
 
-    // Header / Page Code
-    useEffect(() => {
-        dispatch(setPageCode('PAYOR'));
-        dispatch(setDivContent('Payor Setup'));
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent(''));
-        };
-    }, [dispatch]);
+  const tableColumns = [
+    {
+      key: 'facilityName',
+      title: <Translate>Facility</Translate>
+    },
+    {
+      key: 'name',
+      title: <Translate>Name</Translate>
+    },
+    {
+      key: 'code',
+      title: <Translate>Code</Translate>
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      render: (row: PolicyDefinition) => (row.isActive ? 'Active' : 'Inactive')
+    },
+    {
+      key: 'actions',
+      title: <Translate></Translate>,
+      render: (rowData: PolicyDefinition) => iconsForActions(rowData)
+    }
+  ];
 
-    // Row selection style
-    const isSelected = (rowData: Payor) => {
-        if (rowData && policy && rowData.id === policy.id) {
-            return 'selected-row';
+  const filterFields = [
+    { label: 'Facility', value: 'facilityId' },
+    { label: 'Code', value: 'code' },
+    { label: 'Name', value: 'name' }
+  ];
+
+  const handleFilterChange = async (field: string, value: any, page = 0, size?: number) => {
+    try {
+      if (!field || value === '' || value == null) {
+        setIsFiltered(false);
+        setFilteredList([]);
+        setFilteredTotal(0);
+        return;
+      }
+
+      const currentSize = size ?? filterPagination.size;
+      const params = {
+        page,
+        size: currentSize,
+        sort: filterPagination.sort
+      };
+
+      let response: any;
+      if (field === 'facilityId') {
+        response = await fetchByFacility({ facilityId: value, ...params }).unwrap();
+      } else if (field === 'code') {
+        response = await fetchByCode({ code: value, ...params }).unwrap();
+      } else if (field === 'name') {
+        response = await fetchByName({ name: value, ...params }).unwrap();
+      }
+
+      setFilteredList(response?.data ?? []);
+      setFilteredTotal(response?.totalCount ?? 0);
+      setIsFiltered(true);
+      setFilterPagination(prev => ({ ...prev, page, size: currentSize }));
+    } catch (error) {
+      dispatch(notify({ msg: 'Failed to filter policies', sev: 'error' }));
+      setIsFiltered(false);
+    }
+  };
+
+  const filters = () => (
+    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord =>
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          })
         }
-        return '';
-    };
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+      {recordOfFilter.filter === 'facilityId' ? (
+        <MyInput
+          fieldName="value"
+          fieldType="select"
+          selectData={facilityListResponse ?? []}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          menuMaxHeight={150}
+          showLabel={false}
+          searchable={false}
+        />
+      ) : (
+        <MyInput
+          fieldName="value"
+          fieldType="text"
+          record={recordOfFilter}
+          setRecord={setRecordOfFilter}
+          showLabel={false}
+          placeholder="Search"
+        />
+      )}
+      <MyButton
+        color="var(--deep-blue)"
+        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
+        width="80px"
+      >
+        Search
+      </MyButton>
+    </Form>
+  );
 
-    // Pagination handlers
-    const handlePageChange = (_event: any, newPage: number) => {
-        setPaginationParams(prev => ({
-            ...prev,
-            page: newPage
-        }));
-    };
+  const totalCount = policyDefinitionListResponse?.totalCount ?? 0;
+  const pageIndex = paginationParams.page;
+  const rowsPerPage = paginationParams.size;
 
-    const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newSize = Number(e.target.value);
-        setPaginationParams(prev => ({
-            ...prev,
-            size: newSize,
-            page: 0
-        }));
-    };
-
-    // Sort handler
-    const handleSortChange = (column: string, type: 'asc' | 'desc') => {
-        setSortColumn(column);
-        setSortType(type);
-        const sortValue = `${column},${type}`;
-        setPaginationParams(prev => ({
-            ...prev,
-            sort: sortValue,
-            page: 0
-        }));
-    };
-
-    const handleNew = () => {
-        setPolicy({ ...newPolicyDefinition });
-        setOpenAddEditPolicyModal(true);
-    };
-
-    const handleSave = async () => {
-        const errors: string[] = [];
-        if (!policy.code?.trim()) errors.push('Payor Code is required');
-        if (!policy.name?.trim()) errors.push('Payor Name is required');
-        if (!policy.category) errors.push('Category is required');
-        if (!policy.startDate) errors.push('Start Date is required');
-        if (!policy.phone?.trim()) errors.push('Phone is required');
-        if (errors.length > 0) {
-            dispatch(
-                notify({
-                    msg: (
-                        <>
-                            {errors.map((err, i) => (
-                                <div key={i}>• {err}</div>
-                            ))}
-                        </>
-                    ),
-                    sev: 'warning'
-                })
-            );
-            return;
+  return (
+    <Panel>
+      <MyTable
+        data={isFiltered ? filteredList : policyDefinitionListResponse?.data ?? []}
+        totalCount={isFiltered ? filteredTotal : totalCount}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        onRowClick={rowData => setPolicy(rowData)}
+        filters={filters()}
+        page={isFiltered ? filterPagination.page : pageIndex}
+        rowsPerPage={isFiltered ? filterPagination.size : rowsPerPage}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onSortChange={handleSortChange}
+        tableButtons={
+          <div className="container-of-add-new-button">
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          </div>
         }
-        try {
-            dispatch(showSystemLoader());
+      />
 
-            const { createdDate, lastModifiedDate, ...cleanPayor } = policy;
+      <DeletionConfirmationModal
+        open={openConfirmTogglePolicy}
+        setOpen={setOpenConfirmTogglePolicy}
+        itemToDelete="Policy"
+        actionButtonFunction={handleTogglePolicyActive}
+        actionType={toggleActionType}
+      />
 
-            if (policy.id) {
-                await updatePayor(cleanPayor).unwrap();
-                dispatch(notify({ msg: 'Payor updated successfully', sev: 'success' }));
-            } else {
-                await createPayor(cleanPayor).unwrap();
-                dispatch(notify({ msg: 'Payor created successfully', sev: 'success' }));
-            }
-
-            setOpenAddEditPolicyModal(false);
-        } catch (err: any) {
-            let serverMessage =
-                err?.data?.properties?.message ||
-                err?.data?.message ||
-                err?.data?.detail ||
-                'Failed to save payor';
-
-            serverMessage = serverMessage.replace(/^error\./i, '');
-
-            dispatch(
-                notify({
-                    msg: serverMessage,
-                    sev: 'warning'
-                })
-            );
-        } finally {
-            dispatch(hideSystemLoader());
-        }
-    };
-
-    const handleTogglePolicyActive = async () => {
-        if (!policy?.id) return;
-        try {
-            dispatch(showSystemLoader());
-
-            await togglePolicyActive(policy.id).unwrap();
-
-            dispatch(
-                notify({
-                    msg:
-                        toggleActionType === 'deactivate'
-                            ? 'Policy deactivated successfully'
-                            : 'Policy reactivated successfully',
-                    sev: 'success'
-                })
-            );
-
-            setOpenConfirmTogglePolicy(false);
-        } catch (error) {
-            console.error('Toggle Policy active failed:', error);
-            dispatch(
-                notify({
-                    msg: 'Action failed, please try again',
-                    sev: 'warning'
-                })
-            );
-        } finally {
-            dispatch(hideSystemLoader());
-        }
-    };
-
-    // Icons column
-    const iconsForActions = (rowData: Payor) => (
-        <div className="container-of-icons">
-            <MdModeEdit
-                className="icons-style"
-                title="Edit"
-                size={24}
-                fill="var(--primary-gray)"
-                onClick={() => {
-                    setPolicy(rowData);
-                    setOpenAddEditPolicyModal(true);
-                }}
-            />
-            {rowData.isActive ? (
-                <MdDelete
-                    className="icons-style"
-                    title="Deactivate"
-                    size={24}
-                    fill="var(--primary-pink)"
-                    onClick={() => {
-                        setPolicy(rowData);
-                        setToggleActionType('deactivate');
-                        setOpenConfirmTogglePolicy(true);
-                    }}
-                />
-            ) : (
-                <FaUndo
-                    className="icons-style"
-                    title="Activate"
-                    size={20}
-                    fill="var(--primary-gray)"
-                    onClick={() => {
-                        setPolicy(rowData);
-                        setToggleActionType('reactivate');
-                        setOpenConfirmTogglePolicy(true);
-                    }}
-                />
-            )}
-        </div>
-    );
-
-    // Table columns
-    const tableColumns = [
-        {
-            key: 'facilityName',
-            title: <Translate>Facility</Translate>,
-            //   render: (rowData: Payor) => {
-            //     const found = payorCategories.find(c => c.value === rowData.category);
-            //     return <span>{found?.label ?? rowData.category}</span>;
-            //   }
-        },
-        {
-            key: 'name',
-            title: <Translate>Name</Translate>,
-        },
-        {
-            key: 'code',
-            title: <Translate>Code</Translate>,
-        },
-        {
-            key: 'status',
-            title: 'Status',
-            render: (row: PolicyDefinition) => (row.isActive ? 'Active' : 'Inactive')
-        },
-
-        {
-            key: 'actions',
-            title: <Translate></Translate>,
-            render: (rowData: Payor) => iconsForActions(rowData)
-        }
-    ];
-
-    const filters = () => (
-        <Form layout="inline" fluid>
-            <MyInput
-                width="10vw"
-                fieldName="category"
-                fieldType="select"
-                selectData={payorCategories}
-                selectDataLabel="label"
-                selectDataValue="value"
-                record={searchFilters}
-                setRecord={updated =>
-                    setSearchFilters(prev => ({
-                        ...prev,
-                        category: updated.category
-                    }))
-                }
-                showLabel={false}
-                placeholder="Category"
-                searchable={false}
-            />
-
-            <MyInput
-                width="10vw"
-                fieldName="name"
-                fieldType="text"
-                record={searchFilters}
-                setRecord={updated =>
-                    setSearchFilters(prev => ({
-                        ...prev,
-                        name: updated.name
-                    }))
-                }
-                showLabel={false}
-                placeholder="Payor Name"
-            />
-
-            <MyInput
-                width="10vw"
-                fieldName="code"
-                fieldType="text"
-                record={searchFilters}
-                setRecord={updated =>
-                    setSearchFilters(prev => ({
-                        ...prev,
-                        code: updated.code
-                    }))
-                }
-                showLabel={false}
-                placeholder="Code"
-            />
-
-            <AdvancedSearchFilters
-                clearOnClick={() => {
-                    setSearchFilters({ category: null, name: '', code: '' });
-                    setAppliedFilters({});
-                    setPaginationParams(prev => ({ ...prev, page: 0 }));
-                }}
-            />
-        </Form>
-    );
-
-    const totalCount = policyDefinitionListResponse?.totalCount ?? 0;
-    const pageIndex = paginationParams.page;
-    const rowsPerPage = paginationParams.size;
-
-    useEffect(() => {
-        const delayDebounce = setTimeout(() => {
-            setAppliedFilters({
-                category: searchFilters.category || undefined,
-                name: searchFilters.name?.trim() || undefined,
-                code: searchFilters.code?.trim() || undefined
-            });
-
-            setPaginationParams(prev => ({ ...prev, page: 0 }));
-        }, 100);
-
-        return () => clearTimeout(delayDebounce);
-    }, [searchFilters]);
-
-    return (
-        <Panel>
-            <MyTable
-                data={policyDefinitionListResponse?.data ?? []}
-                totalCount={totalCount}
-                loading={isPayorFetching}
-                columns={tableColumns}
-                rowClassName={isSelected}
-                onRowClick={rowData => setPolicy(rowData)}
-                filters={filters()}
-                page={pageIndex}
-                rowsPerPage={rowsPerPage}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-                sortColumn={sortColumn}
-                sortType={sortType}
-                onSortChange={handleSortChange}
-                tableButtons={
-                    <div className="container-of-add-new-button">
-                        <MyButton
-                            prefixIcon={() => <AddOutlineIcon />}
-                            color="var(--deep-blue)"
-                            onClick={handleNew}
-                            width="109px"
-                        >
-                            Add New
-                        </MyButton>
-                    </div>
-                }
-            />
-
-            <DeletionConfirmationModal
-                open={openConfirmTogglePolicy}
-                setOpen={setOpenConfirmTogglePolicy}
-                itemToDelete="Policy"
-                actionButtonFunction={handleTogglePolicyActive}
-                actionType={toggleActionType}
-            />
-
-           <AddEditPolicy 
-            open={openAddEditPolicyModal}
-            setOpen={setOpenAddEditPolicyModal}
-            policy={policy}
-            setPolicy={setPolicy}
-            // width={wi}
-           />
-        </Panel>
-    );
+      <AddEditPolicy
+        open={openAddEditPolicyModal}
+        setOpen={setOpenAddEditPolicyModal}
+        policy={policy}
+        setPolicy={setPolicy}
+      />
+    </Panel>
+  );
 };
 
 export default PolicyDefinitions;

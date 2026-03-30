@@ -2435,7 +2435,7 @@ export const newReferralRequest: modelTypes.ReferralRequest = {
 export const newPolicyDefinition : modelTypes.PolicyDefinition = {
   id: undefined,
   facilityId: undefined,
-  facility: undefined,
+  facilityName: '',
   code: '',
   name: '',
   description: '',
@@ -2449,7 +2449,6 @@ export const newPolicyDefinitionCreateDTO : modelTypes.PolicyDefinitionCreateDTO
   code: '',
   name: '',
   description: '',
-  isActive: true,
 };
 
 export const newPolicyDefinitionUpdateDTO : modelTypes.PolicyDefinitionUpdateDTO = {
@@ -2458,5 +2457,4 @@ export const newPolicyDefinitionUpdateDTO : modelTypes.PolicyDefinitionUpdateDTO
   code: '',
   name: '',
   description: '',
-  isActive: true,
 };
