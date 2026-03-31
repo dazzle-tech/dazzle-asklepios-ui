@@ -364,14 +364,14 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     };
 
     const handleLogout = async () => {
+      console.log('token before logout:', localStorage.getItem('id_token'));
       try {
         await logout({}).unwrap();
       } catch (e) {}
 
-      localStorage.clear();
       dispatch({ type: 'auth/logout' });
+      localStorage.clear();
 
-      // ✅ FIX
       window.location.replace('/#/login');
     };
 
