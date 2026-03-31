@@ -3,7 +3,7 @@ import { Form } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
@@ -361,14 +361,14 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [deptPage, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
-
   const EncounterTypeEnum = useEnumOptions('EncounterType');
+  const authSlice = useAppSelector((s) => s.auth);
 
+  const selectedDepartment = authSlice.selectedDepartment;
   const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
     useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
 
-  const [selectedFacilityId, setSelectedFacilityId] = useState<number>(0);
-
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(null);
   // Insurance state
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>();
   const [payorPage, setPayorPage] = useState(0);
@@ -438,52 +438,101 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-  useEffect(() => {
+  const fetchDepartments = async (page = 0) => {
+    if (!selectedFacilityId || encounterType !== 'EMERGENCY') return;
+
     try {
-      const selectedDepartment = JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
-      setSelectedFacilityId(Number(selectedDepartment?.facilityId ?? 0));
-    } catch {
-      setSelectedFacilityId(0);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (pageCode !== 'ER_Triage') {
-      setAllDepartments([]);
-      return;
-    }
-
-    if (!selectedFacilityId || encounterType !== 'EMERGENCY') {
-      setAllDepartments([]);
-      return;
-    }
-
-    if (deptPage === 0) {
-      setAllDepartments([]);
-    }
-
-    triggerDepartments({
-      facilityId: selectedFacilityId,
-      encounterType: 'EMERGENCY',
-      page: deptPage,
-      size: deptSize,
-      sort: 'id,asc'
-    });
-  }, [pageCode, selectedFacilityId, encounterType, deptPage, triggerDepartments]);
-
-  useEffect(() => {
-    const rows = deptList?.data ?? [];
-    if (!rows.length) return;
-
-    setAllDepartments(previousDepartments => {
-      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
-      const merged = [...previousDepartments];
-      rows.forEach((department: any) => {
-        if (!seenIds.has(Number(department.id))) merged.push(department);
+      console.log('[TRACE] fetchDepartments:start', {
+        facilityId: selectedFacilityId,
+        encounterType: 'EMERGENCY',
+        page,
+        size: deptSize
       });
-      return merged;
+
+      const result = await triggerDepartments({
+        facilityId: selectedFacilityId,
+        encounterType: 'EMERGENCY',
+        page,
+        size: deptSize,
+        sort: 'id,asc'
+      }).unwrap();
+
+      const rows = result?.data ?? [];
+
+      console.log('[TRACE] fetchDepartments:success', {
+        page,
+        count: rows.length,
+        rows,
+        links: result?.links
+      });
+
+      setAllDepartments(prev => {
+        if (page === 0) {
+          return rows;
+        }
+
+        const seenIds = new Set(prev.map((d: any) => Number(d.id)));
+        const merged = [...prev];
+
+        rows.forEach((d: any) => {
+          if (!seenIds.has(Number(d.id))) {
+            merged.push(d);
+          }
+        });
+
+        return merged;
+      });
+    } catch (error) {
+      console.error('[TRACE] fetchDepartments:error', error);
+      if (page === 0) {
+        setAllDepartments([]);
+      }
+    }
+  };
+
+
+  useEffect(() => {
+    const facilityId = selectedDepartment?.facilityId;
+
+    setSelectedFacilityId(
+      typeof facilityId === 'number' && !Number.isNaN(facilityId) ? facilityId : null
+    );
+  }, [selectedDepartment?.facilityId]);
+  useEffect(() => {
+    if (!open) return;
+    if (pageCode !== 'ER_Triage') return;
+    if (!selectedFacilityId || encounterType !== 'EMERGENCY') return;
+
+    fetchDepartments(0);
+  }, [open, pageCode, selectedFacilityId, encounterType]);
+  useEffect(() => {
+    console.log('[TRACE] modal state', {
+      open,
+      pageCode,
+      selectedFacilityId,
+      encounterType,
+      deptPage,
+      selectedDepartmentId,
+      selectedDepartment
     });
-  }, [deptList]);
+  }, [open, pageCode, selectedFacilityId, encounterType, deptPage, selectedDepartmentId, selectedDepartment]);
+
+
+  useEffect(() => {
+    if (!open) return;
+
+    setDeptPage(0);
+    setSelectedDepartmentId(null);
+    setAllDepartments([]);
+  }, [open, selectedFacilityId]);
+
+
+
+
+  useEffect(() => {
+    console.log('[TRACE] modal open changed', { open });
+  }, [open]);
+  const [deptRequestNo, setDeptRequestNo] = useState(0);
 
   useEffect(() => {
     setPayorPage(0);
@@ -994,7 +1043,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
       case 0:
         return (
           <Form layout="inline">
-            <span className="custom-text">Basic Information</span>
+            <span className="custom-text">Basic Informationm</span>
 
             <MyInput
               width={200}
@@ -1116,6 +1165,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     if (deptList?.links?.next) {
                       const { page } = extractPaginationFromLink(deptList.links.next);
                       setDeptPage(page);
+                      fetchDepartments(page);
                     }
                   }}
                 />
