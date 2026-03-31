@@ -784,13 +784,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -821,13 +821,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -1070,7 +1070,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               setRecord={setLocalPatient}
               width={200}
             />
-             {pageCode === 'ER_Triage' && (
+            {pageCode === 'ER_Triage' && (
               <>
                 <MyInput
                   column
@@ -1131,7 +1131,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               setRecord={setLocalPatient}
             />
 
-           
+
           </Form>
         );
 
@@ -1197,7 +1197,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     ...newRecord,
                     number:
                       secondaryDocument.type === 'NO_DOC' ||
-                      secondaryDocument.type === 'NO_DOCUMENT'
+                        secondaryDocument.type === 'NO_DOCUMENT'
                         ? 'NO_DOCUMENT'
                         : newRecord.number
                   });
@@ -1636,11 +1636,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -1650,6 +1650,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
         {
           title: 'Basic Info',
           icon: <FontAwesomeIcon icon={faUser} />,
+          disabledNext: !localPatient?.id,
+
           footer: (
             <MyButton onClick={pageCode === 'ER_Triage' ? handleSavePatientAndQuick : handleSave}>
               {pageCode === 'ER_Triage' ? 'Save & Create Quick Appointment' : 'Save'}
