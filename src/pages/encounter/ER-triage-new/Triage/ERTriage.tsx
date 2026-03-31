@@ -267,7 +267,6 @@ const ERTriage = () => {
 
   const departmentId = Number(selectedDepartment?.departmentId ?? selectedDepartment?.id ?? 0) || 0;
 
-  // ✅ التعديل: fromDate = أسبوع قبل اليوم
   const lastWeekDefault = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
@@ -756,75 +755,67 @@ const ERTriage = () => {
     );
   };
 
-  const handleGoToVisit = async (encounterData: any, patientData: any) => {
-    try {
-      const encounterId = encounterData?.id;
-      const patientId = toNumberOrNaN(
-        patientData?.id ?? patientData?.patientId ?? patientData?.key
-      );
+const handleGoToVisit = async (encounterData: any, patientData: any) => {
+  try {
+    const encounterId = encounterData?.id;
+    const patientId = toNumberOrNaN(
+      patientData?.id ?? patientData?.patientId ?? patientData?.key
+    );
 
-      const statusUpper = String(
-        encounterData?.status ?? encounterData?.encounterStatus ?? ''
-      ).toUpperCase();
-      if (statusUpper === 'TRIAGE_STARTED') {
-        const targetPath = '/ER-start-triage';
-        sessionStorage.setItem('encounterPageSource', 'EncounterList');
-        navigate(targetPath, {
-          state: {
-            info: 'to_Start_Triage',
-            fromPage: 'ER_Triage',
-            patient: patientData,
-            encounter: encounterData,
-            emergencyTriageNew: null
-          }
-        });
-        return;
-      }
+    const statusUpper = String(
+      encounterData?.status ?? encounterData?.encounterStatus ?? ''
+    ).toUpperCase();
 
-      if (typeof encounterId === 'number' && !Number.isNaN(encounterId)) {
-        await updateEncounter({
-          id: encounterId,
-          body: buildEncounterUpdateBody(encounterData, { status: 'TRIAGE_STARTED' })
-        }).unwrap();
-      }
+    if (
+      statusUpper !== 'TRIAGE_STARTED' &&
+      typeof encounterId === 'number' &&
+      !Number.isNaN(encounterId)
+    ) {
+      await updateEncounter({
+        id: encounterId,
+        body: buildEncounterUpdateBody(encounterData, { status: 'TRIAGE_STARTED' })
+      }).unwrap();
+    }
 
-      const emergencyTriageNew =
-        typeof encounterId === 'number' && !Number.isNaN(encounterId) && !Number.isNaN(patientId)
-          ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
-          : null;
+    const emergencyTriageNew =
+      typeof encounterId === 'number' &&
+      !Number.isNaN(encounterId) &&
+      !Number.isNaN(patientId)
+        ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
+        : null;
 
-      const targetPath = '/ER-start-triage';
+    const targetPath = '/ER-start-triage';
 
-      sessionStorage.setItem('encounterPageSource', 'EncounterList');
+    sessionStorage.setItem('encounterPageSource', 'EncounterList');
 
-      if (!emergencyTriageNew) {
-        console.warn(
-          '[ER Triage] Could not create/get new emergency triage record: missing numeric patientId/encounterId',
-          { patientId, encounterId, patientData, encounterData }
-        );
-      }
-
-      navigate(targetPath, {
-        state: {
-          info: 'to_Start_Triage',
-          fromPage: 'ER_Triage',
-          patient: patientData,
-          encounter: encounterData,
-          emergencyTriageNew
-        }
-      });
-    } catch (error) {
-      console.error('Start triage error:', error, { encounterData, patientData });
-      dispatch(
-        notify({
-          msg:
-            (error as any)?.message ||
-            'Failed to start triage (missing required encounter fields?)',
-          sev: 'error'
-        })
+    if (!emergencyTriageNew) {
+      console.warn(
+        '[ER Triage] Could not create/get emergency triage record: missing numeric patientId/encounterId',
+        { patientId, encounterId, patientData, encounterData }
       );
     }
-  };
+
+    navigate(targetPath, {
+      state: {
+        info: 'to_Start_Triage',
+        fromPage: 'ER_Triage',
+        patient: patientData,
+        encounter: encounterData,
+        emergencyTriageNew
+      }
+    });
+  } catch (error) {
+    console.error('Start triage error:', error, { encounterData, patientData });
+    dispatch(
+      notify({
+        msg:
+          (error as any)?.message ||
+          'Failed to start triage (missing required encounter fields?)',
+        sev: 'error'
+      })
+    );
+  }
+};
 
   useEffect(() => {
     const onResize = () => setWindowHeight(window.innerHeight);
@@ -1415,9 +1406,13 @@ const ERTriage = () => {
       </>
     );
   };
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <>
+    <div dir={dir}>
       {patientSidebarOpen && (
         <div className="er-triage-patient-sidebar-overlay">
           <ProfileSidebarNew
@@ -1560,7 +1555,7 @@ const ERTriage = () => {
         actionButtonFunction={() => setOpenEMRModal(false)}
         cancelButtonLabel="Cancel"
       />
-    </>
+    </div>
   );
 };
 

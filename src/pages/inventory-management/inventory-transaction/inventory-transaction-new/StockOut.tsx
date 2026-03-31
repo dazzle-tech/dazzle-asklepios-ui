@@ -736,9 +736,14 @@ const StockOut = ({ transProduct, setTransProduct, transaction, setTransaction, 
         { quantity: 0, items: 0, queentitybase: 0 }
     );
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-        <Form fluid>
+        <Form fluid dir={dir}>
 
             <div className="table-buttons-right">
 

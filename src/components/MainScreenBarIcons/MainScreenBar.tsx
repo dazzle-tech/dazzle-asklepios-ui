@@ -705,7 +705,13 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}></span>
                   <span style={{ color: '#9E9E9E', fontSize: '12px' }}></span>
                 </div>
-                <ArrowDownLineIcon style={{ marginLeft: 8 }} />
+                  <ArrowDownLineIcon
+                    style={{
+                      marginInlineStart: 8,
+                      position: 'relative',
+                      zIndex: 10
+                    }}
+                  />
               </div>
             </Whisper>
           </>

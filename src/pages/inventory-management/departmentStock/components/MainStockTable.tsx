@@ -315,8 +315,12 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-  return (
+    const dir = isRTL ? 'rtl' : 'ltr';
+    return (<div dir={dir}>
     <MyTable
       data={data}
       columns={tableColumns}
@@ -331,6 +335,7 @@ const MainStockTable: React.FC<MainStockTableProps> = ({
           onRefillRequest={() => {}}/></>}
       filters={filters()}
     />
+    </div>
   );
 };
 

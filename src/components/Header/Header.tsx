@@ -142,10 +142,14 @@ const Header: React.FC<HeaderProps> = ({
         spacing={8}
         style={{
           flexDirection: 'row',
-          right: drawerOffset,
-          left: 'auto',
-          width: `calc(100% - ${drawerOffset}px)`,
-          transition: 'right 0.3s ease, width 0.3s ease'
+          alignItems: 'center',
+          justifyContent: 'space-between',
+
+          ...(direction === 'LTR'
+            ? { left: drawerOffset }
+            : { right: drawerOffset }),
+
+          width: `calc(100% - ${drawerOffset}px)`
         }}
       >
 

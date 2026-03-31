@@ -341,6 +341,11 @@ const AddItem = ({ open, setOpen }) => {
     </Form>
   );
 
+                      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <>
       <ChildModal
@@ -371,8 +376,8 @@ const AddItem = ({ open, setOpen }) => {
           }
         ]}
         childTitle="Add Item"
-        mainContent={content}
-        childContent={childModalContent}
+        mainContent={<div dir={dir}>{content}</div>}
+        childContent={<div dir={dir}>{childModalContent}</div>}
         hideActionChildBtn={true}
         mainSize="md"
         childSize="sm"

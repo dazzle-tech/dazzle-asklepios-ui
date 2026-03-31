@@ -310,7 +310,11 @@ const AddEditWarehouseProduct = ({ open, setOpen, warehouseProduct, setWarehouse
         }
     };
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
     return (
         <MyModal
             open={open}
@@ -318,7 +322,9 @@ const AddEditWarehouseProduct = ({ open, setOpen, warehouseProduct, setWarehouse
             title={warehouseProduct?.key ? 'Edit Warehouse Product' : 'New Warehouse Product'}
             position="right"
             size="xs"
-            content={conjureFormContent}
+            content={(stepNumber) => (
+                <div dir={dir}>{conjureFormContent(stepNumber)}</div>
+            )}
             actionButtonLabel={warehouseProduct?.key ? 'Save' : 'Create'}
             actionButtonFunction={handleSave}
             steps={[{ title: 'Warehouse Info', icon: <FaWarehouse /> }]}
