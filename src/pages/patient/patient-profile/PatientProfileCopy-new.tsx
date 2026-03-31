@@ -49,9 +49,18 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
       ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
       : '';
 
+  const dobError = fieldErrors.find((e: any) => e.field === 'dateOfBirth');
+  if (dobError) {
+    return dobError.message;
+  }
   /* =============== 1) Bean Validation Errors =============== */
 
   if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+    const dobError = fieldErrors.find((e: any) => e.field === 'dateOfBirth');
+    if (dobError) {
+      return 'Date of birth cannot be before 01-01-1900.';
+    }
+
     const lines = fieldErrors.map((e: any) => {
       const label = fieldLabels[e.field] || e.field;
       return `• ${label}: ${e.message}`;
@@ -121,7 +130,6 @@ const PatientProfile = () => {
 
   const [patientList, setPatientList] = useState([]);
 
-  // ✅ NEW: trigger to force PatientVisitHistoryTable to refetch
   const [encounterRefetchTrigger, setEncounterRefetchTrigger] = useState(0);
 
   const divContent = 'Patient Registration';
@@ -143,7 +151,6 @@ const PatientProfile = () => {
 
   const handleSave = async () => {
     try {
-      // UPDATE flow (keep same logic + success messaging)
       if (localPatient?.id) {
         const updated = await updatePatient({
           id: localPatient.id,
@@ -217,7 +224,7 @@ const PatientProfile = () => {
         nationality: 'Nationality'
       });
 
-      dispatch(notify({ msg, sev: 'error' }));
+      dispatch(notify({ msg, sev: 'warning' }));
     }
   };
 
@@ -287,7 +294,7 @@ const PatientProfile = () => {
       dispatch(setPatient(fullPatient));
       setOpenPatientsDuplicateModal(false);
     } catch (err) {
-      dispatch(notify({ msg: 'Failed to load patient', sev: 'error' }));
+      dispatch(notify({ msg: 'Failed to load patient', sev: 'warning' }));
     }
   };
 
@@ -307,17 +314,14 @@ const PatientProfile = () => {
   /* ========================= RENDER ========================= */
   /* ========================================================= */
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
-
       <div className="patient-profile-container">
         <Panel
           bordered
