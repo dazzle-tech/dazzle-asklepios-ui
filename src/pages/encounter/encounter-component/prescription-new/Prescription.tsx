@@ -632,7 +632,6 @@ const Prescription = (props: Props) => {
   const [updatePrescription] = useUpdatePatientPrescriptionMutation();
   const [updateMedicationStatus] = useUpdatePatientPrescriptionMedicationMutation();
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
-    const [updateEncounter] = useUpdateEncounterMutation();
 
   const handleSubmitPres = () => {
     if (!currentPrescription?.id) return;
@@ -689,35 +688,7 @@ const Prescription = (props: Props) => {
         lastModifiedBy: authSlice?.user?.login ?? 'system'
       }).unwrap();
       dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
-        if (encounter && !encounter.isObserved) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: true,
-            hasOrder: encounter?.hasOrder ?? false,
-            isObserved: encounter?.isObserved ?? false,
-          }
-        }).unwrap();
-
-        console.log('Encounter updated to observed:', updated);
-      }
+   
 
       setSubmitAssignModalOpen(false);
       setSummaryModalOpen(false);

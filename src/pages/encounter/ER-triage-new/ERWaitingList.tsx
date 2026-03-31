@@ -708,41 +708,7 @@ const ERWaitingList = () => {
                 fieldLabel="Chief Complain"
               />
 
-              <MyInput
-                width={130}
-                fieldName="hasPrescription"
-                fieldType="checkbox"
-                record={{ hasPrescription: !!hasPrescription }}
-                setRecord={(v: any) => {
-                  setHasPrescription(!!v?.hasPrescription);
-                  setPage(0);
-                }}
-                label="Has Prescription"
-              />
-
-              <MyInput
-                width={110}
-                fieldName="hasOrder"
-                fieldType="checkbox"
-                record={{ hasOrder: !!hasOrder }}
-                setRecord={(v: any) => {
-                  setHasOrder(!!v?.hasOrder);
-                  setPage(0);
-                }}
-                label="Has Orders"
-              />
-
-              <MyInput
-                width={110}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={{ isObserved: !!isObserved }}
-                setRecord={(v: any) => {
-                  setIsObserved(!!v?.isObserved);
-                  setPage(0);
-                }}
-                label="Is Observed"
-              />
+            
 
               <MyInput
                 width={200}
