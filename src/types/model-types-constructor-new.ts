@@ -268,7 +268,9 @@ export const newProcedure: modelTypes.Procedure = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined
+  facilityId: undefined,
+  currency: null,
+  price: null
 };
 
 // ------------------- Allergen -------------------
