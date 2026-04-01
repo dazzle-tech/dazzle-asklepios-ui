@@ -5,18 +5,23 @@ import { Whisper, Tooltip } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
-import { useLazyGetSampleLabelQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
-import { printSampleLabel } from '@/utils/printSampleLabel';
+import { useLazyGetSampleLabelPdfQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 
 export default function PrintSampleLabelAction({ rowData }: { rowData: any }) {
   const dispatch = useAppDispatch();
-  const [trigger, { isFetching }] = useLazyGetSampleLabelQuery();
+  const [trigger, { isFetching }] = useLazyGetSampleLabelPdfQuery();
 
   const onPrint = async (e: any) => {
     e.stopPropagation();
+
     try {
-      const res = await trigger({ orderTestId: rowData.id }).unwrap();
-      await printSampleLabel(res);
+      const blob = await trigger({ orderTestId: rowData.id }).unwrap();
+      const url = window.URL.createObjectURL(blob);
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+
+      // اختياري: تنظيف الذاكرة بعد شوي
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     } catch (err: any) {
       dispatch(
         notify({

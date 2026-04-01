@@ -141,9 +141,16 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
         url: `/api/patient/diagnostic-order-test-collected-samples/sample-label/${orderTestId}`,
         method: 'GET'
       }),
-       providesTags: ["DiagnosticOrderTestCollectedSample"],
+      providesTags: ["DiagnosticOrderTestCollectedSample"],
 
     }),
+    getSampleLabelPdf: builder.query<Blob, { orderTestId: number }>({
+      query: ({ orderTestId }) => ({
+        url: `/api/analytics/diagnostic-order-tests/${orderTestId}/sample-label/pdf`,
+        method: 'GET',
+        responseHandler: (response) => response.blob()
+      })
+    })
   }),
 });
 
@@ -156,5 +163,6 @@ export const {
   useCreateCollectedSampleMutation,
   useBulkCreateCollectedSampleSameMutation,
   useDeleteCollectedSampleMutation,
-  useLazyGetSampleLabelQuery
+  useLazyGetSampleLabelQuery,
+  useLazyGetSampleLabelPdfQuery
 } = diagnosticOrderTestCollectedSampleService;
