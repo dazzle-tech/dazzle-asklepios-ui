@@ -204,6 +204,7 @@ import { patientAdministrativeWarningsService } from './services/patient/patient
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
+import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 
 export const store = configureStore({
   reducer: {
@@ -435,6 +436,7 @@ export const store = configureStore({
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
+    [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
 
     //AI Services
     // AI Services
@@ -735,7 +737,8 @@ export const store = configureStore({
         patientAdministrativeWarningsService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
-        availabilityTemplateService.middleware
+        availabilityTemplateService.middleware,
+        availabilityGenerationBatchService.middleware
       ]
     ) as any
 });
