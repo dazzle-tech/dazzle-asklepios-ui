@@ -10,8 +10,11 @@ import {
   SurfaceCard,
   weekDays,
 } from "./shared";
+import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
 
-const PreviewSlotsSection: React.FC = () => {
+const PreviewSlotsSection: React.FC<{ dto?: AvailabilityGenerationBatchApplyDTO; setDto?: React.Dispatch<React.SetStateAction<AvailabilityGenerationBatchApplyDTO>>; }> = ({ dto, setDto }) => {
+  void dto;
+  void setDto;
   return (
     <div className="space-y-4">
       <SurfaceCard

@@ -6,19 +6,11 @@ import ApplyConfigurationSection from "./ApplyConfigurationSection";
 import PreviewSlotsSection from "./PreviewSlotsSection";
 import SlotDetailsSection from "./SlotDetailsSection";
 import { Form } from "rsuite";
-import type { ApplyTemplateSelectedTemplate } from "../ApplyTemplate";
+import type { AvailabilityTemplateResponseVM } from "@/types/model-types-new";
+import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
 
 type ApplyTemplateStepOneProps = {
-  selectedTemplate?: ApplyTemplateSelectedTemplate | null;
-};
-
-type ApplyTemplateFormState = {
-  templateId: number | null;
-  facilityId: number | null;
-  departmentId: number | null;
-  durationMinutes: number | null;
-  startDate: string | null;
-  endDate: string | null;
+  selectedTemplate?: AvailabilityTemplateResponseVM | null;
 };
 
 const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({ selectedTemplate }) => {
@@ -27,24 +19,22 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({ selectedTem
   const { data: facilityData } = useGetFacilityByIdQuery(facilityId as any, { skip: !facilityId });
   const { data: departmentData } = useGetDepartmentByIdQuery(departmentId as any, { skip: !departmentId });
 
-  const [formState, setFormState] = React.useState<ApplyTemplateFormState>({
-    templateId: selectedTemplate?.id ?? null,
-    facilityId: selectedTemplate?.facilityId ?? null,
-    departmentId: selectedTemplate?.departmentId ?? null,
-    durationMinutes: selectedTemplate?.durationMinutes ?? null,
-    startDate: null,
-    endDate: null,
-  });
+  const [formState, setFormState] = React.useState<AvailabilityGenerationBatchApplyDTO>({
+    templateId: selectedTemplate?.id ?? 0,
+    startDate: "",
+    endDate: "",
+    deferred: false,
+    deferredAt: null,
+    scope: "DEPARTMENT",
+    holidayHandlingMode: null,
+  } as AvailabilityGenerationBatchApplyDTO);
 
   React.useEffect(() => {
     setFormState((prev) => ({
       ...prev,
-      templateId: selectedTemplate?.id ?? null,
-      facilityId: selectedTemplate?.facilityId ?? null,
-      departmentId: selectedTemplate?.departmentId ?? null,
-      durationMinutes: selectedTemplate?.durationMinutes ?? null,
-      startDate: null,
-      endDate: null,
+      templateId: selectedTemplate?.id ?? 0,
+      startDate: "",
+      endDate: "",
     }));
   }, [selectedTemplate]);
 
@@ -109,8 +99,8 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({ selectedTem
             fieldName="facilityId"
             fieldLabel="Facility"
             fieldType="select"
-            record={formState}
-            setRecord={setFormState}
+            record={{ facilityId: selectedTemplate?.facilityId ?? null }}
+            setRecord={() => {}}
             selectData={facilityOptions}
             selectDataLabel="label"
             selectDataValue="id"
@@ -124,8 +114,8 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({ selectedTem
             fieldName="departmentId"
             fieldLabel="Department"
             fieldType="select"
-            record={formState}
-            setRecord={setFormState}
+            record={{ departmentId: selectedTemplate?.departmentId ?? null }}
+            setRecord={() => {}}
             selectData={departmentOptions}
             selectDataLabel="label"
             selectDataValue="id"
@@ -139,8 +129,8 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({ selectedTem
             fieldName="durationMinutes"
             fieldLabel="Duration (Minutes)"
             fieldType="number"
-            record={formState}
-            setRecord={setFormState}
+            record={{ durationMinutes: selectedTemplate?.durationMinutes ?? null }}
+            setRecord={() => {}}
             width="100%"
             disabled
           />
@@ -148,9 +138,9 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({ selectedTem
       </div>
 
       <div className="grid gap-4 bg-slate-50 p-4 xl:grid-cols-[1.05fr_1.25fr_0.95fr]">
-        <ApplyConfigurationSection />
-        <PreviewSlotsSection />
-        <SlotDetailsSection />
+        <ApplyConfigurationSection dto={formState} setDto={setFormState} />
+        <PreviewSlotsSection dto={formState} setDto={setFormState} />
+        <SlotDetailsSection dto={formState} setDto={setFormState} />
       </div>
     </>
   );

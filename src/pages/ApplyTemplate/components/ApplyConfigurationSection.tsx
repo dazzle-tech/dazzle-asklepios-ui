@@ -1,4 +1,6 @@
 import * as React from "react";
+import MyInput from "@/components/MyInput";
+import { Form } from "rsuite";
 import { Switch } from "@/components/ui/switch";
 import {
   Circle,
@@ -15,6 +17,9 @@ import {
   resources,
   SurfaceCard,
 } from "./shared";
+import { useEnumOptions } from "@/services/enumsApi";
+import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
+import { useGetAvailabilityTemplatesByParentTemplateIdQuery } from "@/services/appointment/availabilityTemplateService";
 
 const ActionChip = ({ label }: { label: string }) => (
   <button
@@ -28,78 +33,93 @@ const ActionChip = ({ label }: { label: string }) => (
   </button>
 );
 
-const ApplyConfigurationSection: React.FC = () => {
+type ApplyConfigurationSectionProps = {
+  dto: AvailabilityGenerationBatchApplyDTO;
+  setDto: React.Dispatch<React.SetStateAction<AvailabilityGenerationBatchApplyDTO>>;
+};
+
+const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ dto, setDto }) => {
+  const enumOptions = (useEnumOptions('AvailabilityGenerationScope') as any[]) ?? [];
+  const options = enumOptions.map((o: any) =>
+    typeof o === 'string' ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value }
+  );
+  const [checks, setChecks] = React.useState<Record<string, boolean>>(() =>
+    Object.fromEntries(options.map(opt => [String(opt.value), false]))
+  );
+
+  const isSpecificScope = String((dto as any)?.scope ?? '').toUpperCase() === 'SPECIFIC_RESOURCE';
+  const parentId = dto?.templateId ?? 0;
+  const { data: childTemplates = [], isFetching: isLoadingChildren } =
+    useGetAvailabilityTemplatesByParentTemplateIdQuery(
+      { parentTemplateId: parentId },
+      { skip: !isSpecificScope || !parentId }
+    );
+  const childOptions = (childTemplates as any[]).map(t => ({
+    id: t?.id,
+    label: t?.templateName ?? `Template #${t?.id}`
+  }));
+
   return (
     <SurfaceCard title="Apply Configuration" description="Configure pool, resources and policies" icon={Settings2}>
       <div className="space-y-5">
         <div>
           <p className="mb-3 text-sm font-semibold text-slate-700">Resource Scope</p>
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <label className="flex items-center gap-3 text-sm text-slate-700">
-              <Circle className="h-4 w-4 fill-blue-600 text-blue-600" />
-              <span className="font-medium">Department Pool</span>
-              <span className="text-xs text-slate-400">(All channels)</span>
-            </label>
-            <label className="flex items-center gap-3 text-sm text-slate-700">
-              <Circle className="h-4 w-4 text-slate-300" />
-              <span className="font-medium">Specific Channels</span>
-              <Pill className="bg-slate-200 text-slate-600">3 selected</Pill>
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-700">Additional Resources</p>
-            <ActionChip label="Add Resource" />
-          </div>
-          <div className="space-y-3">
-            {resources.map((resource) => {
-              const Icon = resource.icon;
-              return (
-                <div
-                  key={resource.title}
-                  className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-xl bg-indigo-50 p-2 text-indigo-600">
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-800">{resource.title}</div>
-                      <div className="text-xs text-slate-500">{resource.subtitle}</div>
-                    </div>
-                  </div>
-                  <Switch checked />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-700">Policies to Apply</p>
-            <ActionChip label="Add Policy" />
-          </div>
-          <div className="space-y-2">
-            {policies.map((policy) => (
-              <div
-                key={policy.label}
-                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-violet-50 p-2 text-violet-600">
-                    <ShieldCheck className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm font-medium text-slate-800">{policy.label}</span>
-                  <Pill className="bg-slate-100 text-slate-600">{policy.tag}</Pill>
-                </div>
-                <span className="text-slate-300">×</span>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <Form fluid>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {options.map(opt => {
+                  const key = String(opt.value);
+                  return (
+                    <MyInput
+                      key={key}
+                      fieldName={key}
+                      fieldLabel={opt.label}
+                      fieldType="check"
+                      record={checks}
+                      setRecord={(r: any) => {
+                        setChecks(prev => {
+                          const next: Record<string, boolean> = {};
+                          for (const o of options) next[String(o.value)] = false;
+                          next[key] = !!r[key];
+                          setDto(prev => ({
+                            ...prev,
+                            scope: next[key] ? (opt.value as string) : ('' as any),
+                           }));
+                          return next;
+                        });
+                      }}
+                      label={opt.label}
+                      width="100%"
+                    />
+                  );
+                })}
               </div>
-            ))}
+            </Form>
+            {isSpecificScope && (
+              <div className="mt-4 grid grid-cols-1 gap-3">
+                <Form fluid>
+                  <MyInput
+                    fieldName="childTemplateId"
+                    fieldLabel="Select Resource Template"
+                    fieldType="select"
+                    record={(dto as any)}
+                    setRecord={(updated: any) =>
+                      setDto(prev => ({ ...(prev as any), childTemplateId: updated.childTemplateId } as any))
+                    }
+                    selectData={childOptions}
+                    selectDataLabel="label"
+                    selectDataValue="id"
+                    width="100%"
+                    cleanable={false}
+                    searchable
+                    loading={isLoadingChildren}
+                  />
+                </Form>
+              </div>
+            )}
           </div>
         </div>
+
 
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">

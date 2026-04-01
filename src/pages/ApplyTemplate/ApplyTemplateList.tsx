@@ -12,28 +12,17 @@ import {
   useGetAvailabilityTemplatesByStatusQuery,
   useLazyGetAvailabilityTemplatesByTemplateNameQuery
 } from '@/services/appointment/availabilityTemplateService';
-// import type { AvailabilityGenerationBatch, AvailabilityTemplateResponseVM } from '@/types/model-types-new';
+import type { AvailabilityGenerationBatch, AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { CalendarDays } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Panel } from 'rsuite';
 import ApplyTemplate from './ApplyTemplate';
 
-type AvailabilityTemplateRow = {
-  id: number;
-  facilityId: number;
-  departmentId: number;
-  templateName: string;
-  templateType: string;
-  status: string;
-  durationMinutes?: number | null;
-  parallelCapacityValue?: number | null;
-};
-
 const ApplyTemplateList = () => {
   const dispatch = useAppDispatch();
   const [recordOfSearch, setRecordOfSearch] = useState({ templateName: '' });
-  const [selectedTemplate, setSelectedTemplate] = useState<AvailabilityTemplateRow | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<AvailabilityTemplateResponseVM | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
 
   const { data: templatesResponse = [], isFetching } = useGetAvailabilityTemplatesByStatusQuery({
@@ -136,7 +125,7 @@ const ApplyTemplateList = () => {
     []
   );
 
-  const generateAction = (rowData: AvailabilityTemplateRow) => (
+  const generateAction = (rowData: AvailabilityTemplateResponseVM) => (
     <div className="container-of-icons">
       <button
         type="button"
@@ -166,19 +155,19 @@ const ApplyTemplateList = () => {
       key: 'templateType',
       title: <Translate>Template Type</Translate>,
       flexGrow: 3,
-      render: (rowData: AvailabilityTemplateRow) => <p>{formatEnumString(rowData?.templateType)}</p>
+      render: (rowData: AvailabilityTemplateResponseVM) => <p>{formatEnumString(rowData?.templateType)}</p>
     },
     {
       key: 'durationMinutes',
       title: <Translate>Duration</Translate>,
       flexGrow: 2,
-      render: (rowData: AvailabilityTemplateRow) => <p>{rowData?.durationMinutes ?? '-'}</p>
+      render: (rowData: AvailabilityTemplateResponseVM) => <p>{rowData?.durationMinutes ?? '-'}</p>
     },
     {
       key: 'parallelCapacityValue',
       title: <Translate>Capacity</Translate>,
       flexGrow: 2,
-      render: (rowData: AvailabilityTemplateRow) => <p>{rowData?.parallelCapacityValue ?? '-'}</p>
+      render: (rowData: AvailabilityTemplateResponseVM) => <p>{rowData?.parallelCapacityValue ?? '-'}</p>
     },
     {
       key: 'facilityId',
@@ -211,7 +200,7 @@ const ApplyTemplateList = () => {
       key: 'actions',
       title: <Translate></Translate>,
       flexGrow: 2,
-      render: (rowData: AvailabilityTemplateRow) => generateAction(rowData)
+      render: (rowData: AvailabilityTemplateResponseVM) => generateAction(rowData)
     }
   ];
 
@@ -301,7 +290,7 @@ const ApplyTemplateList = () => {
             isFetching || ((recordOfSearch.templateName?.trim().length ?? 0) >= 3 && isSearchingByName)
           }
           columns={tableColumns}
-          onRowClick={(rowData: AvailabilityTemplateRow) => {
+          onRowClick={(rowData: AvailabilityTemplateResponseVM) => {
             setSelectedTemplate(rowData);
           }}
           filters={
