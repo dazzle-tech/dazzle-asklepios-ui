@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 import { FaStar } from 'react-icons/fa';
 import { useEnumOptions, useEnumCapitalized } from '@/services/enumsApi';
@@ -142,8 +142,62 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   disabled
                 />
               </div>
-              <div className="container-of-field-service" />
+              <div className="container-of-field-service">
+              <MyInput
+                width="100%"
+                fieldType="checkbox"
+                fieldName="appointable"
+                record={service}
+                setRecord={setService}
+              />
+              </div>
             </div>
+             <br />
+            <div className="container-of-two-fields-service">
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="parallelCapacityValue"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required
+                />
+               </div>
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultDurationMinutes"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required={service.appointable}
+                />
+               </div>
+            </div>
+             <br />
+             <div className="container-of-two-fields-service">
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultBufferBeforeMinutes"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required={service.appointable}
+                />
+               </div>
+              <div className="container-of-field-service">
+                <MyInput
+                  fieldType="number"
+                  fieldName="defaultBufferAfterMinutes"
+                  record={service}
+                  setRecord={setService}
+                  width="100%"
+                  required={service.appointable}
+                />
+               </div>
+             </div>
           </Form>
         );
     }
