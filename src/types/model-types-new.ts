@@ -3817,8 +3817,6 @@ export type PolicyDefinition = {
   name: string;
   description?: string | null;
   isActive?: boolean;
-  // createdDate?: string;
-  // lastModifiedDate?: string;
 };
 
 export type PolicyDefinitionCreateDTO = {

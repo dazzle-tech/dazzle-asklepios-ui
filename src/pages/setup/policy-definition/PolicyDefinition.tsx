@@ -57,7 +57,7 @@ const PolicyDefinitions = () => {
   const [filteredList, setFilteredList] = useState<PolicyDefinition[]>([]);
   const [filteredTotal, setFilteredTotal] = useState<number>(0);
 
-  const { data: policyDefinitionListResponse, isFetching } =
+  const { data: policyDefinitionListResponse, isFetching, refetch } =
     useGetAllPolicyDefinitionsQuery(paginationParams);
   const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
@@ -128,12 +128,22 @@ const PolicyDefinitions = () => {
     setOpenAddEditPolicyModal(true);
   };
 
+  const handleAfterSave = (_action: 'create' | 'update') => {
+    setIsFiltered(false);
+    setFilteredList([]);
+    setFilteredTotal(0);
+    setRecordOfFilter({ filter: '', value: '' });
+    setFilterPagination(prev => ({ ...prev, page: 0 }));
+    setPaginationParams(prev => ({ ...prev, page: 0, timestamp: Date.now() }));
+    refetch();
+  };
+
   const handleTogglePolicyActive = async () => {
     if (!policy?.id) return;
     try {
       dispatch(showSystemLoader());
       await togglePolicyActive(policy.id).unwrap();
-
+      setOpenConfirmTogglePolicy(false);
       dispatch(
         notify({
           msg:
@@ -144,7 +154,7 @@ const PolicyDefinitions = () => {
         })
       );
 
-      setOpenConfirmTogglePolicy(false);
+      
     } catch (error) {
       dispatch(
         notify({
@@ -364,6 +374,7 @@ const PolicyDefinitions = () => {
         setOpen={setOpenAddEditPolicyModal}
         policy={policy}
         setPolicy={setPolicy}
+        onSaved={handleAfterSave}
       />
     </Panel>
   );

@@ -19,7 +19,7 @@ import {
     newPolicyDefinitionUpdateDTO
 } from '@/types/model-types-constructor-new';
 
-const AddEditPolicy = ({ open, setOpen, policy, setPolicy }) => {
+const AddEditPolicy = ({ open, setOpen, policy, setPolicy, onSaved }) => {
     const dispatch = useAppDispatch();
     const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
 
@@ -49,27 +49,94 @@ const AddEditPolicy = ({ open, setOpen, policy, setPolicy }) => {
         }
     }, [policy]);
 
+    // extract the error message from the bad request that coming from the backend
+    const extractErrorMessage = (response: any): string => {
+        try {
+            const msg = response?.data?.message;
+            if (typeof msg === 'string') {
+                return msg.replace(/^error\./i, '');
+            }
+            return '';
+        } catch {
+            return '';
+        }
+    };
+
     const handleSave = () => {
         if (!policy?.id) {
+            let errorMsg = "";
+            if (!policyCreateDTO.facilityId) {
+                if (!errorMsg)
+                    errorMsg = errorMsg + "Facility is required"
+                else
+                    errorMsg = errorMsg + ", Facility is required"
+            }
+            if (!policyCreateDTO.name) {
+                if (!errorMsg)
+                    errorMsg = errorMsg + "Name is required"
+                else
+                    errorMsg = errorMsg + ", Name is required"
+            }
+            if (
+                !policyCreateDTO.code
+            ) {
+                if (!errorMsg)
+                    errorMsg = errorMsg + "Code is required";
+                else
+                    errorMsg = errorMsg + ", Code is required";
+            }
+            if (errorMsg) {
+                dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+                return;
+            }
             createPolicy(policyCreateDTO)
                 .unwrap()
                 .then(() => {
-                     setOpen(false);
+                    setOpen(false);
                     setPolicyCreateDTO({ ...newPolicyDefinitionCreateDTO });
                     dispatch(notify({ msg: 'Policy has been added successfully', sev: 'success' }));
+                    if (onSaved) onSaved('create');
                 })
-                .catch(() => {
-                    dispatch(notify({ msg: 'Failed to add this Policy', sev: 'error' }));
+                .catch((error) => {
+                    const errorMsg = extractErrorMessage(error) || 'Save Failed';
+                    dispatch(notify({ msg: errorMsg, sev: 'warning' }));
                 });
         } else {
+            let errorMsg = "";
+            if (!policyUpdateDTO.facilityId) {
+                if (!errorMsg)
+                    errorMsg = errorMsg + "Facility is required"
+                else
+                    errorMsg = errorMsg + ", Facility is required"
+            }
+            if (!policyUpdateDTO.name) {
+                if (!errorMsg)
+                    errorMsg = errorMsg + "Name is required"
+                else
+                    errorMsg = errorMsg + ", Name is required"
+            }
+            if (
+                !policyUpdateDTO.code
+            ) {
+                if (!errorMsg)
+                    errorMsg = errorMsg + "Code is required";
+                else
+                    errorMsg = errorMsg + ", Code is required";
+            }
+            if (errorMsg) {
+                dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+                return;
+            }
             updatePolicy(policyUpdateDTO)
                 .unwrap()
                 .then(() => {
-                     setOpen(false);
+                    setOpen(false);
                     dispatch(notify({ msg: 'Policy has been updated successfully', sev: 'success' }));
+                    if (onSaved) onSaved('update');
                 })
-                .catch(() => {
-                    dispatch(notify({ msg: 'Failed to update this Policy', sev: 'error' }));
+                .catch((error) => {
+                    const errorMsg = extractErrorMessage(error) || 'Save Failed';
+                    dispatch(notify({ msg: errorMsg, sev: 'warning' }));
                 });
         }
     };
@@ -91,24 +158,27 @@ const AddEditPolicy = ({ open, setOpen, policy, setPolicy }) => {
                             record={!policy?.id ? policyCreateDTO : policyUpdateDTO}
                             setRecord={!policy?.id ? setPolicyCreateDTO : setPolicyUpdateDTO}
                             searchable={false}
+                            required
                         />
                         <Row>
-                        <Col md={12}>
-                        <MyInput
-                            width="100%"
-                            fieldName="name"
-                            record={!policy?.id ? policyCreateDTO : policyUpdateDTO}
-                            setRecord={!policy?.id ? setPolicyCreateDTO : setPolicyUpdateDTO}
-                        />
-                        </Col>
-                        <Col md={12}>
-                        <MyInput
-                            width="100%"
-                            fieldName="code"
-                            record={!policy?.id ? policyCreateDTO : policyUpdateDTO}
-                            setRecord={!policy?.id ? setPolicyCreateDTO : setPolicyUpdateDTO}
-                        />
-                        </Col>
+                            <Col md={12}>
+                                <MyInput
+                                    width="100%"
+                                    fieldName="name"
+                                    record={!policy?.id ? policyCreateDTO : policyUpdateDTO}
+                                    setRecord={!policy?.id ? setPolicyCreateDTO : setPolicyUpdateDTO}
+                                    required
+                                />
+                            </Col>
+                            <Col md={12}>
+                                <MyInput
+                                    width="100%"
+                                    fieldName="code"
+                                    record={!policy?.id ? policyCreateDTO : policyUpdateDTO}
+                                    setRecord={!policy?.id ? setPolicyCreateDTO : setPolicyUpdateDTO}
+                                    required
+                                />
+                            </Col>
                         </Row>
                         <MyInput
                             width="100%"
@@ -117,18 +187,11 @@ const AddEditPolicy = ({ open, setOpen, policy, setPolicy }) => {
                             record={!policy?.id ? policyCreateDTO : policyUpdateDTO}
                             setRecord={!policy?.id ? setPolicyCreateDTO : setPolicyUpdateDTO}
                         />
-                        
+
                     </Form>
                 );
         }
     };
-    // Effects
-
-              // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
         <MyModal
@@ -138,7 +201,7 @@ const AddEditPolicy = ({ open, setOpen, policy, setPolicy }) => {
             setOpen={setOpen}
             position="right"
             title={policy?.id ? 'Edit Policy' : 'New Policy'}
-            content={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
+            content={conjureFormContentOfMainModal}
             steps={[
                 {
                     title: 'Basic Info',

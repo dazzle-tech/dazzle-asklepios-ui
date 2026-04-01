@@ -2440,8 +2440,6 @@ export const newPolicyDefinition : modelTypes.PolicyDefinition = {
   name: '',
   description: '',
   isActive: true,
-  // createdDate?: string;
-  // lastModifiedDate?: string;
 };
 
 export const newPolicyDefinitionCreateDTO : modelTypes.PolicyDefinitionCreateDTO = {
