@@ -1,37 +1,150 @@
 import * as React from "react";
-import { FakeSelect, filterFields } from "./shared";
+import MyInput from "@/components/MyInput";
+import { useGetFacilityByIdQuery } from "@/services/security/facilityService";
+import { useGetDepartmentByIdQuery } from "@/services/security/departmentService";
 import ApplyConfigurationSection from "./ApplyConfigurationSection";
 import PreviewSlotsSection from "./PreviewSlotsSection";
 import SlotDetailsSection from "./SlotDetailsSection";
+import { Form } from "rsuite";
+import type { ApplyTemplateSelectedTemplate } from "../ApplyTemplate";
 
-const ApplyTemplateStepOne: React.FC = () => {
+type ApplyTemplateStepOneProps = {
+  selectedTemplate?: ApplyTemplateSelectedTemplate | null;
+};
+
+type ApplyTemplateFormState = {
+  templateId: number | null;
+  facilityId: number | null;
+  departmentId: number | null;
+  durationMinutes: number | null;
+  startDate: string | null;
+  endDate: string | null;
+};
+
+const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({ selectedTemplate }) => {
+  const facilityId = selectedTemplate?.facilityId ?? null;
+  const departmentId = selectedTemplate?.departmentId ?? null;
+  const { data: facilityData } = useGetFacilityByIdQuery(facilityId as any, { skip: !facilityId });
+  const { data: departmentData } = useGetDepartmentByIdQuery(departmentId as any, { skip: !departmentId });
+
+  const [formState, setFormState] = React.useState<ApplyTemplateFormState>({
+    templateId: selectedTemplate?.id ?? null,
+    facilityId: selectedTemplate?.facilityId ?? null,
+    departmentId: selectedTemplate?.departmentId ?? null,
+    durationMinutes: selectedTemplate?.durationMinutes ?? null,
+    startDate: null,
+    endDate: null,
+  });
+
+  React.useEffect(() => {
+    setFormState((prev) => ({
+      ...prev,
+      templateId: selectedTemplate?.id ?? null,
+      facilityId: selectedTemplate?.facilityId ?? null,
+      departmentId: selectedTemplate?.departmentId ?? null,
+      durationMinutes: selectedTemplate?.durationMinutes ?? null,
+      startDate: null,
+      endDate: null,
+    }));
+  }, [selectedTemplate]);
+
+  const facilityName = React.useMemo(() => {
+    return (facilityData as any)?.name ?? "";
+  }, [facilityData]);
+
+  const departmentName = React.useMemo(() => {
+    return (departmentData as any)?.name ?? "";
+  }, [departmentData]);
+
+  const templateOptions = selectedTemplate
+    ? [{ id: selectedTemplate.id, label: selectedTemplate.templateName }]
+    : [];
+  const facilityOptions = selectedTemplate?.facilityId && facilityName
+    ? [{ id: selectedTemplate.facilityId, label: facilityName }]
+    : [];
+  const departmentOptions = selectedTemplate?.departmentId && departmentName
+    ? [{ id: selectedTemplate.departmentId, label: departmentName }]
+    : [];
+
   return (
     <>
       <div className="px-5">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.1fr_1.25fr_1fr_1fr_auto]">
-          {filterFields.map((field) => (
-            <FakeSelect
-              key={field.label}
-              icon={field.icon}
-              label={field.label}
-              value={field.value}
-            />
-          ))}
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-slate-500">Apply Mode</p>
-            <div className="grid h-11 grid-cols-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
-              <button
-                type="button"
-                className="rounded-lg bg-white text-sm font-semibold text-blue-600 shadow-sm"
-              >
-                Immediate
-              </button>
-              <button type="button" className="rounded-lg text-sm font-medium text-slate-500">
-                Deferred
-              </button>
-            </div>
-          </div>
-        </div>
+        <Form fluid className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <MyInput
+            fieldName="templateId"
+            fieldLabel="Template"
+            fieldType="select"
+            record={formState}
+            setRecord={setFormState}
+            selectData={templateOptions}
+            selectDataLabel="label"
+            selectDataValue="id"
+            cleanable={false}
+            searchable={false}
+            width="100%"
+            disabled
+          />
+
+          <MyInput
+            fieldName="startDate"
+            fieldLabel="Date Range Start"
+            fieldType="date"
+            record={formState}
+            setRecord={setFormState}
+            placeholder="DD-MM-YYYY"
+            width="100%"
+          />
+
+          <MyInput
+            fieldName="endDate"
+            fieldLabel="Date Range End"
+            fieldType="date"
+            record={formState}
+            setRecord={setFormState}
+            placeholder="DD-MM-YYYY"
+            width="100%"
+          />
+
+          <MyInput
+            fieldName="facilityId"
+            fieldLabel="Facility"
+            fieldType="select"
+            record={formState}
+            setRecord={setFormState}
+            selectData={facilityOptions}
+            selectDataLabel="label"
+            selectDataValue="id"
+            cleanable={false}
+            searchable={false}
+            width="100%"
+            disabled
+          />
+
+          <MyInput
+            fieldName="departmentId"
+            fieldLabel="Department"
+            fieldType="select"
+            record={formState}
+            setRecord={setFormState}
+            selectData={departmentOptions}
+            selectDataLabel="label"
+            selectDataValue="id"
+            cleanable={false}
+            searchable={false}
+            width="100%"
+            disabled
+          />
+
+          <MyInput
+            fieldName="durationMinutes"
+            fieldLabel="Duration (Minutes)"
+            fieldType="number"
+            record={formState}
+            setRecord={setFormState}
+            width="100%"
+            disabled
+          />
+        </Form>
       </div>
 
       <div className="grid gap-4 bg-slate-50 p-4 xl:grid-cols-[1.05fr_1.25fr_0.95fr]">

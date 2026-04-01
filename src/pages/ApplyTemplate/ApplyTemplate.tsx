@@ -1,7 +1,6 @@
 import * as React from "react";
 import MyModal from "@/components/MyModal/MyModal";
 import { useNavigate } from "react-router-dom";
-import type { AvailabilityTemplateResponseVM } from "@/types/model-types-new";
 import ApplyTemplateStepOne from "./components/ApplyTemplateStepOne";
 import ApplyTemplateStepTwo from "./components/ApplyTemplateStepTwo";
 
@@ -18,10 +17,18 @@ const stepItems = [
   },
 ];
 
+export type ApplyTemplateSelectedTemplate = {
+  id: number;
+  facilityId: number;
+  departmentId: number;
+  templateName: string;
+  durationMinutes?: number | null;
+};
+
 type ApplyTemplateProps = {
   open?: boolean;
   setOpen?: React.Dispatch<React.SetStateAction<boolean>> | ((open: boolean) => void);
-  selectedTemplate?: AvailabilityTemplateResponseVM | null;
+  selectedTemplate?: ApplyTemplateSelectedTemplate | null;
 };
 
 const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTemplate }) => {
@@ -46,7 +53,13 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
       position="center"
       size="full"
       bodyheight="calc(100vh - 220px)"
-      content={(stepNumber) => (stepNumber === 0 ? <ApplyTemplateStepOne /> : <ApplyTemplateStepTwo />)}
+      content={(stepNumber) =>
+        stepNumber === 0 ? (
+          <ApplyTemplateStepOne selectedTemplate={selectedTemplate} />
+        ) : (
+          <ApplyTemplateStepTwo />
+        )
+      }
       steps={stepItems}
       handleCancelFunction={handleClose}
       cancelButtonLabel="Close"

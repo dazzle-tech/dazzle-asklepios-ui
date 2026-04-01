@@ -5,17 +5,27 @@ import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetAvailabilityTemplatesByStatusQuery } from '@/services/appointment/availabilityTemplateService';
-import type { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { formatEnumString } from '@/utils';
 import { CalendarDays } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Panel } from 'rsuite';
 import ApplyTemplate from './ApplyTemplate';
 
+type AvailabilityTemplateRow = {
+  id: number;
+  facilityId: number;
+  departmentId: number;
+  templateName: string;
+  templateType: string;
+  status: string;
+  durationMinutes?: number | null;
+  parallelCapacityValue?: number | null;
+};
+
 const ApplyTemplateList = () => {
   const dispatch = useAppDispatch();
   const [recordOfSearch, setRecordOfSearch] = useState({ templateName: '' });
-  const [selectedTemplate, setSelectedTemplate] = useState<AvailabilityTemplateResponseVM | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<AvailabilityTemplateRow | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
 
   const { data: templatesResponse = [], isFetching } = useGetAvailabilityTemplatesByStatusQuery({
@@ -41,7 +51,7 @@ const ApplyTemplateList = () => {
     );
   }, [recordOfSearch.templateName, templatesResponse]);
 
-  const generateAction = (rowData: AvailabilityTemplateResponseVM) => (
+  const generateAction = (rowData: AvailabilityTemplateRow) => (
     <div className="container-of-icons">
       <button
         type="button"
@@ -71,31 +81,31 @@ const ApplyTemplateList = () => {
       key: 'templateType',
       title: <Translate>Template Type</Translate>,
       flexGrow: 3,
-      render: (rowData: AvailabilityTemplateResponseVM) => <p>{formatEnumString(rowData?.templateType)}</p>
+      render: (rowData: AvailabilityTemplateRow) => <p>{formatEnumString(rowData?.templateType)}</p>
     },
     {
       key: 'durationMinutes',
       title: <Translate>Duration</Translate>,
       flexGrow: 2,
-      render: (rowData: AvailabilityTemplateResponseVM) => <p>{rowData?.durationMinutes ?? '-'}</p>
+      render: (rowData: AvailabilityTemplateRow) => <p>{rowData?.durationMinutes ?? '-'}</p>
     },
     {
       key: 'parallelCapacityValue',
       title: <Translate>Capacity</Translate>,
       flexGrow: 2,
-      render: (rowData: AvailabilityTemplateResponseVM) => <p>{rowData?.parallelCapacityValue ?? '-'}</p>
+      render: (rowData: AvailabilityTemplateRow) => <p>{rowData?.parallelCapacityValue ?? '-'}</p>
     },
     {
       key: 'status',
       title: <Translate>Status</Translate>,
       flexGrow: 2,
-      render: (rowData: AvailabilityTemplateResponseVM) => <p>{formatEnumString(rowData?.status)}</p>
+      render: (rowData: AvailabilityTemplateRow) => <p>{formatEnumString(rowData?.status)}</p>
     },
     {
       key: 'actions',
       title: <Translate></Translate>,
       flexGrow: 2,
-      render: (rowData: AvailabilityTemplateResponseVM) => generateAction(rowData)
+      render: (rowData: AvailabilityTemplateRow) => generateAction(rowData)
     }
   ];
 
@@ -107,7 +117,7 @@ const ApplyTemplateList = () => {
           data={filteredTemplates}
           loading={isFetching}
           columns={tableColumns}
-          onRowClick={(rowData: AvailabilityTemplateResponseVM) => {
+          onRowClick={(rowData: AvailabilityTemplateRow) => {
             setSelectedTemplate(rowData);
             setPopupOpen(true);
           }}
