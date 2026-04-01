@@ -31,6 +31,7 @@ import { useGetDepartmentsBulkMutation } from '@/services/security/departmentSer
 import type { Department } from '@/types/model-types-new';
 
 import './styles.less';
+import { useLazyGetDiagnosisFlagsByEncounterIdsQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 
 // ✅ Added encounterRefetchTrigger to props
 const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any) => {
@@ -50,7 +51,8 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const [getPractitionersBulk] = useGetPractitionersBulkMutation();
   const [getDepartmentsBulk] = useGetDepartmentsBulkMutation();
-
+  const [fetchDiagnosisFlags, { data: diagnosisFlags }] =
+    useLazyGetDiagnosisFlagsByEncounterIdsQuery();
   const { data, isFetching, refetch } = useGetEncountersByPatientQuery(
     {
       patientId: localPatient?.id,
@@ -156,6 +158,19 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [encounters]);
 
+  useEffect(() => {
+    if (!encounters.length) return;
+
+    const ids = encounters.map((e: any) => e.id);
+
+    fetchDiagnosisFlags({ encounterIds: ids });
+  }, [encounters.length]);
+
+  const diagnosisMap = React.useMemo(() => {
+    return Object.fromEntries(
+      diagnosisFlags?.map(item => [item.encounterId, item.hasPrimaryDiagnoses]) || []
+    );
+  }, [diagnosisFlags]);
   const handleCloseQuickAppointment = useCallback(
     (val: boolean) => {
       setQuickAppointmentModel(val);
@@ -223,6 +238,8 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
         const isOutpatient = departmentType === 'OUTPATIENT_CLINIC';
         const isEmergency = departmentType === 'EMERGENCY' || departmentType === 'EMERGENCY_ROOM';
 
+        const hasDiagnosis = diagnosisMap[row.id] ?? false;
+
         return (
           <Form className="visit-history__actions-form">
             {isNew && (
@@ -247,7 +264,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
             )}
 
             {/* OUTPATIENT_CLINIC → Complete */}
-            {isOngoing && isOutpatient && (
+            {isOngoing && isOutpatient && hasDiagnosis && (
               <Whisper
                 placement="top"
                 speaker={<Tooltip>Complete</Tooltip>}
@@ -304,44 +321,43 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   ];
 
   // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-  <div dir={dir}>
-    <div ref={tooltipContainerRef} className="visit-history__wrapper">
-      <MyTable
-        data={encounters}
-        columns={columns}
-        loading={isFetching && encounters.length === 0}
-        height={580}
-      />
-
-      <DeletionConfirmationModal
-        open={openCancelModal}
-        setOpen={setOpenCancelModal}
-        actionButtonFunction={handleCancel}
-        confirmationQuestion="Cancel this encounter?"
-        actionButtonLabel="Cancel"
-        cancelButtonLabel="Close"
-      />
-
-      {quickAppointmentModel && (
-        <PatientQuickAppointment
-          quickAppointmentModel={quickAppointmentModel}
-          setQuickAppointmentModel={handleCloseQuickAppointment}
-          localPatient={localPatient}
-          localVisit={selectedVisit}
-          isDisabeld={quickInitialStep === 0}
-          initialStep={quickInitialStep}
-          onEncounterSaved={handleEncounterSaved}
+    <div dir={dir}>
+      <div ref={tooltipContainerRef} className="visit-history__wrapper">
+        <MyTable
+          data={encounters}
+          columns={columns}
+          loading={isFetching && encounters.length === 0}
+          height={580}
         />
-      )}
+
+        <DeletionConfirmationModal
+          open={openCancelModal}
+          setOpen={setOpenCancelModal}
+          actionButtonFunction={handleCancel}
+          confirmationQuestion="Cancel this encounter?"
+          actionButtonLabel="Cancel"
+          cancelButtonLabel="Close"
+        />
+
+        {quickAppointmentModel && (
+          <PatientQuickAppointment
+            quickAppointmentModel={quickAppointmentModel}
+            setQuickAppointmentModel={handleCloseQuickAppointment}
+            localPatient={localPatient}
+            localVisit={selectedVisit}
+            isDisabeld={quickInitialStep === 0}
+            initialStep={quickInitialStep}
+            onEncounterSaved={handleEncounterSaved}
+          />
+        )}
+      </div>
     </div>
-  </div>
   );
 };
 
