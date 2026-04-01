@@ -899,7 +899,7 @@ export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCr
   facilityId: 0,
   departmentId: 0,
   templateName: '',
-  templateType: '',
+  templateType: 'DEPARTMENT',
   resourceId: 0,
   templateColor: null,
   status: 'DRAFT',
