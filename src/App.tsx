@@ -142,7 +142,7 @@ import ResetPassword from './pages/reset-password/ResetPassword';
 import CreatePassword from './pages/create-password/CreatePassword';
 import ReviewResults from './pages/review-results/ReviewResults';
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
-import ApplyTemplate from './pages/ApplyTemplate/ApplyTemplate';
+import ApplyTemplateList from './pages/ApplyTemplate/ApplyTemplateList';
 import AccessRoles from './pages/setup/access-roles';
 import AgeGroupSetup from './pages/setup/age-group';
 import Allergens from './pages/setup/allergens-setup';
@@ -784,7 +784,7 @@ useEffect(() => {
               <Route path="error-department-type" element={<ErrorDepartmentTypePage />} />
               <Route path="playground" element={<Playground />} />
               <Route path="schedual-screen" element={<ScheduleScreen />} />
-              <Route path="apply-template" element={<ApplyTemplate />} />
+              <Route path="apply-template" element={<ApplyTemplateList />} />
               <Route path="patient-EMR" element={<PatientEMR />} />
               <Route path="lab-module" element={<Lab />} />
               <Route path="rad-module" element={<Rad />} />
