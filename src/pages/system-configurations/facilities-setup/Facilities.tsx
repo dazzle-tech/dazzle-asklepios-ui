@@ -30,8 +30,7 @@ import DepartmentsTab from './tabs/DepartmentsTab';
 import RolesTab from './tabs/RolesTab';
 import UsersTab from './tabs/UsersTab';
 import './styles.less';
-
-
+import { useEnumOptions } from '@/services/enumsApi';
 const Facilities = () => {
   const dispatch = useAppDispatch();
   const [facility, setFacility] = useState<Facility>({ ...newFacility });
@@ -63,6 +62,7 @@ const Facilities = () => {
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
   const totalCount = facilityListResponse?.extraNumeric ?? 0;
+  const DayOfWeek = useEnumOptions('DayOfWeek');
 
   // Effects
   useEffect(() => {
@@ -157,6 +157,36 @@ const Facilities = () => {
     return null;
   };
 
+  const buildWorkingDaysPayload = (workingDays: Facility['workingDays']) => {
+    if (!DayOfWeek || DayOfWeek.length === 0) return workingDays ?? [];
+
+    const map: Record<string, boolean> = {};
+    DayOfWeek.forEach(day => {
+      map[day.value] = false;
+    });
+
+    (workingDays ?? []).forEach(day => {
+      if (day?.dayOfWeek) {
+        map[day.dayOfWeek] = day.isWorking !== false;
+      }
+    });
+
+    return DayOfWeek.map(day => ({
+      dayOfWeek: day.value,
+      isWorking: !!map[day.value],
+    }));
+  };
+
+  // Extract readable backend message when available.
+  const extractErrorMessage = (response) => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') return msg.replace(/^error\./i, '');
+      return '';
+    } catch {
+      return '';
+    }
+  };
   // Handle click on Save Facility button
 const handleSave = async () => {
   setLoad(true);
@@ -166,6 +196,7 @@ const handleSave = async () => {
   if (!createFacility.name?.trim()) missingFields.push('Facility Name');
   if (!createFacility.type) missingFields.push('Facility Type');
   if (!createFacility.defaultCurrency) missingFields.push('Default Currency');
+  if (!createFacility.code) missingFields.push('Code');
 
   if (missingFields.length) {
     dispatch(
@@ -182,10 +213,9 @@ const handleSave = async () => {
   }
 
   try {
+    const workingDaysPayload = buildWorkingDaysPayload(createFacility.workingDays);
+    await saveFacility({ ...createFacility, workingDays: workingDaysPayload }).unwrap();
     setPopupOpen(false);
-
-    await saveFacility({ ...createFacility }).unwrap();
-
     dispatch(
       notify({
         msg: 'The Facility has been saved successfully',
@@ -194,13 +224,9 @@ const handleSave = async () => {
     );
 
     refetchFacility();
-  } catch {
-    dispatch(
-      notify({
-        msg: 'Failed to save this Facility',
-        sev: 'error'
-      })
-    );
+  } catch(error) {
+    const errorMsg = extractErrorMessage(error) || 'Failed to save this Facility';
+    dispatch(notify({ msg: errorMsg, sev: 'warning' }));
   }
 
   setLoad(false);
@@ -215,6 +241,7 @@ const handleSave = async () => {
     if (!facility.name?.trim()) missingFields.push('Facility Name');
     if (!facility.type) missingFields.push('Facility Type');
     if (!facility.defaultCurrency) missingFields.push('Default Currency');
+    if (!facility.code) missingFields.push('Code');
 
     if (missingFields.length) {
       dispatch(
@@ -230,26 +257,21 @@ const handleSave = async () => {
       return;
     }
 
-    try {
+  try {
+    const workingDaysPayload = buildWorkingDaysPayload(facility.workingDays);
+    await updateFacility({ ...facility, workingDays: workingDaysPayload }).unwrap();
       setPopupOpen(false);
-
-      await updateFacility({ ...facility }).unwrap();
-
-      dispatch(
-        notify({
-          msg: 'Facility has been updated successfully',
-          sev: 'success'
+    dispatch(
+      notify({
+        msg: 'Facility has been updated successfully',
+        sev: 'success'
         })
       );
 
       refetchFacility();
-    } catch {
-      dispatch(
-        notify({
-          msg: 'Failed to update Facility',
-          sev: 'error'
-        })
-      );
+    } catch(error) {
+     const errorMsg = extractErrorMessage(error) || 'Failed to updateu this Facility';
+    dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
 
     setLoad(false);

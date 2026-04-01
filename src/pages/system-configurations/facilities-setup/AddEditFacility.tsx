@@ -1,7 +1,7 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetLovValuesByCodeAndParentQuery } from '@/services/setupService';
 import { faLocationDot } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +9,8 @@ import clsx from 'clsx';
 import { faUser, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
+import Translate from '@/components/Translate';
+import Section from '@/components/Section';
 
 
 const AddEditFacility = ({
@@ -22,10 +24,10 @@ const AddEditFacility = ({
   handleSave
 }) => {
   const [validationResult] = useState({});
-  
+
 
   // Fetch  facilityTypeOptions list response
-  const facilityTypeOptions = useEnumOptions("FacilityType"); 
+  const facilityTypeOptions = useEnumOptions("FacilityType");
 
   const currencyOptions = useEnumCapitalized("Currency");
   // Fetch country Lov list response
@@ -37,6 +39,39 @@ const AddEditFacility = ({
     code: 'CITY',
     parentValueKey: address?.countryLkey
   });
+  const DayOfWeek = useEnumOptions('DayOfWeek');
+
+  const workingDaysRecord = useMemo(() => {
+      const map: Record<string, boolean> = {};
+      if (!DayOfWeek || DayOfWeek.length === 0) return map;
+  
+      DayOfWeek.forEach(day => {
+        map[day.value] = false;
+      });
+  
+      (facility.workingDays ?? []).forEach(day => {
+        if (day?.dayOfWeek) {
+          map[day.dayOfWeek] = day.isWorking !== false;
+        }
+      });
+  
+      return map;
+    }, [facility.workingDays, DayOfWeek]);
+  
+    const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
+      if (!DayOfWeek || DayOfWeek.length === 0) return;
+  
+      const nextWorkingDays = DayOfWeek.map(day => ({
+        dayOfWeek: day.value,
+        isWorking: !!nextRecord[day.value],
+      }));
+  
+      setFacility(prev => ({
+        ...prev,
+        workingDays: nextWorkingDays,
+      }));
+    };
+  const timeZone = useEnumOptions('TimeZone');
 
   // modal content
   const conjureFormContent = stepNumber => {
@@ -44,22 +79,28 @@ const AddEditFacility = ({
       case 0:
         return (
           <Form fluid >
-           <div
-              className={clsx('', {
-                'container-of-two-fields-facility': width > 600
-              })}
-            >
-            
-            <MyInput
-              fieldName="name"
+             <MyInput
+              fieldName="code"
               record={facility}
               setRecord={setFacility}
               width={"16vw"}
               required
             />
+          
+           <Row>
+            <Col md={12}>
+              <MyInput
+                fieldName="name"
+                record={facility}
+                setRecord={setFacility}
+                width="100%"
+                required
+              />
+              </Col>
+              <Col md={12}>
               <MyInput
                 required
-                width={"13vw"}
+                width="100%"
                 vr={validationResult}
                 fieldLabel="Facility Type"
                 fieldType="select"
@@ -71,16 +112,13 @@ const AddEditFacility = ({
                 record={facility}
                 setRecord={setFacility}
               />
-         
-            </div>
-            <div
-              className={clsx('', {
-                'container-of-two-fields-facility': width > 600
-              })}
-            >
-                   <MyInput
+              </Col>
+               </Row>
+            <Row>
+              <Col md={12}>
+              <MyInput
                 required
-                width={"13vw"}
+                width="100%"
                 vr={validationResult}
                 fieldLabel="Default Currency"
                 fieldType="select"
@@ -92,22 +130,53 @@ const AddEditFacility = ({
                 setRecord={setFacility}
                 searchable={false}
               />
+              </Col>
+              <Col md={12}>
               <MyInput
                 fieldName="registrationDate"
                 fieldType="date"
                 record={facility}
                 setRecord={setFacility}
-                width={"13vw"}
+                width="100%"
               />
-         
-            </div>
+              </Col>
+            </Row>
+            <Row>
+            <MyInput
+              fieldName="timeZone"
+              fieldType="select"
+              selectData={timeZone ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={facility}
+              setRecord={setFacility}
+              width={"100%"}
+            />
+            </Row>
+             <Row>
             <MyInput
               fieldName="facilityBriefDesc"
               fieldType="textarea"
               record={facility}
               setRecord={setFacility}
-              width={"26vw"}
+              width={"100%"}
             />
+              <Translate>Working Days</Translate>
+                <div className="facility-working-days">
+                  {DayOfWeek?.map(day => (
+                    <MyInput
+                      key={day.value}
+                      fieldType="check"
+                      fieldName={day.value}
+                      label={day.label}
+                      record={workingDaysRecord}
+                      setRecord={setWorkingDaysRecord}
+                      // disabled={isLoadingData}
+                      showLabel={false}
+                    />
+                  ))}
+                </div>            
+            </Row>
           </Form>
         );
       case 1:
@@ -238,10 +307,10 @@ const AddEditFacility = ({
       actionButtonLabel={facility?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size="38vw"
-        steps={[
-        { title: 'Basic Info', icon:<FontAwesomeIcon icon={ faUser }/>},
-        { title: 'Address', icon:<FontAwesomeIcon icon={ faLocationDot }/>},
-        { title: 'Contact', icon: <FontAwesomeIcon icon={faPhone }/>}
+      steps={[
+        { title: 'Basic Info', icon: <FontAwesomeIcon icon={faUser} /> },
+        { title: 'Address', icon: <FontAwesomeIcon icon={faLocationDot} /> },
+        { title: 'Contact', icon: <FontAwesomeIcon icon={faPhone} /> }
       ]}
     />
   );

@@ -49,7 +49,15 @@ export const newDepartment: modelTypes.Department = {
   encounterType: '',
   isActive: true,
   hasMedicalSheets: false,
-  hasNurseMedicalSheets: false
+  hasNurseMedicalSheets: false,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
+  parallelCapacityEnabled: false,
+  requirePractitioner: false,
+  requireBilling: false,
+  requirePreAssessment: false
 };
 // ------------------- Facility -------------------
 export const newFacility: modelTypes.Facility = {
@@ -175,12 +183,17 @@ export const newService: modelTypes.Service = {
   category: null,
   price: null,
   currency: null,
+  appointable: false,
   isActive: true,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined
+  facilityId: undefined,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Service Item -------------------
@@ -315,7 +328,12 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
 
   defaultProfileResultType: '',
   defaultProfileResultUnit: '',
-  listOfValueId: null
+  listOfValueId: null,
+
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO =
@@ -718,7 +736,11 @@ export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
   departmentId: 0,
   departmentName: null,
   facilityId: 0,
-  facilityName: null
+  facilityName: null,
+   parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Catalog Create VM -------------------
@@ -727,7 +749,11 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   description: null,
   type: '',
   departmentId: undefined,
-  facilityId: undefined
+  facilityId: undefined,
+   parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Catalog Update VM -------------------
@@ -736,7 +762,11 @@ export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   description: null,
   type: '',
   departmentId: undefined,
-  facilityId: undefined
+  facilityId: undefined,
+   parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Catalog Diagnostic Test -------------------
