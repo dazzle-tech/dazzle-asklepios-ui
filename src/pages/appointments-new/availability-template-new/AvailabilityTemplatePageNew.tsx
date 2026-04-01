@@ -13,7 +13,10 @@ import SlotCard from './SlotCard';
 import DateNavigator from './DateNavigator';
 import WarningMessage from './WarningMessage';
 import { useGetAvailabilityTemplatesQuery } from '@/services/appointment/availabilityTemplateService';
-
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetAllDepartmentsWithoutPaginationQuery, useGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
+import { FaUndo } from "react-icons/fa";
+import { useEnumOptions } from '@/services/enumsApi';
 
 const mockAvailabilityTemplates = [
   {
@@ -41,7 +44,7 @@ const mockAvailabilityTemplates = [
         allowedServices: ["Vaccination", "Follow-up"],
         color: "#6982F0",
         intervals: [
-          { id: "int-101", startTime: "09:00", endTime: "12:30", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03"},
+          { id: "int-101", startTime: "09:00", endTime: "12:30", slotDuration: "30 minutes", strategy: 'asDepartmentPool', startBreak: "02:02", endBreak: "03:03" },
         ],
         resources: []
       },
@@ -349,10 +352,22 @@ const AvailabilityTemplatePageNew = () => {
   const [templatesData, setTemplatesData] = useState(mockAvailabilityTemplates);
   const { data: templatesList } = useGetAvailabilityTemplatesQuery({});
   console.log("templatesList: ", templatesList);
-  const [record, setRecord] = useState<{ filter?: string; value?: string }>({});
+  const [recordOfFilter, setRecordOfFilter] = useState<{ filter?: string; value?: string }>({});
   const [openModal, setOpenModal] = useState(false);
   const [openTestModal, setOpenTestModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
+  const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
+  const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
+  const statusEnum = useEnumOptions('TemplateStatus');
+  const templateTypeEnum = useEnumOptions('TemplateType');
+  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+  const selectedFacility = tenant?.selectedFacility || null;
+  const { data: departmentforLoggedInFacility, isFetching: deptFetching } =
+    useGetDepartmentByFacilityQuery(
+      { facilityId: selectedFacility?.id },
+      { skip: !selectedFacility?.id }
+    );
+
   // Class name of selected row
   const isSelected = rowData => {
     if (rowData && selectedTemplate && rowData.id === selectedTemplate.id) {
@@ -362,43 +377,77 @@ const AvailabilityTemplatePageNew = () => {
 
   const columns = [
     {
-      key: 'id',
-      title: <Translate>Template ID</Translate>,
-      flexGrow: 2
+      key: 'templateName',
+      title: <Translate>Template Name</Translate>,
     },
     {
       key: 'departmentId',
       title: <Translate>Department ID</Translate>,
-      flexGrow: 3
+      render: (rowData) => {
+        // نجيب الاسم من allDepartments
+        const department = allDepartments?.find(d => d?.id === rowData?.departmentId);
+        return department ? department.name : 'Unknown';
+      },
     },
     {
-      key: 'description',
-      title: <Translate>Description</Translate>,
-      flexGrow: 4
+      key: 'facilityId',
+      title: <Translate>Facility ID</Translate>,
+      render: (rowData) => {
+        // نجيب الاسم من facilitiesResponse
+        const facility = facilitiesResponse?.find(f => f.id === rowData?.facilityId);
+        return facility ? facility.name : 'Unknown';
+      },
     },
     {
       key: 'status',
       title: <Translate>Status</Translate>,
-      
+
     },
     {
       key: 'actions',
       title: '',
       flexGrow: 2,
-      render: (row) => (
+      render: (rowData) => (
         <div className="container-of-icons">
           <MdModeEdit
-            size={22}
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
             className="icons-style"
             onClick={() => {
               // setSelectedTemplate(row);
               setOpenModal(true);
             }}
           />
-          <MdDelete
+          {/* <MdDelete
             size={22}
             className="icons-style"
+          /> */}
+          {/* {rowData?.isActive ? ( */}
+          <MdDelete
+            title="Deactivate"
+            size={24}
+            fill="var(--primary-pink)"
+            className="icons-style"
+          // onClick={() => {
+          //   setResource(rowData);
+          //   setStateOfDeleteModal("deactivate");
+          //   setOpenConfirmDeleteResourceModal(true);
+          // }}
           />
+          {/* ) : (
+                  <FaUndo
+                    title="Activate"
+                    size={24}
+                    fill="var(--primary-gray)"
+                    className="icons-style"
+                    // onClick={() => {
+                    //   setResource(rowData);
+                    //   setStateOfDeleteModal("reactivate");
+                    //   setOpenConfirmDeleteResourceModal(true);
+                    // }}
+                  />
+                )} */}
         </div>
       )
     }
@@ -410,25 +459,74 @@ const AvailabilityTemplatePageNew = () => {
         fieldType="select"
         fieldName="filter"
         selectData={[
-          { label: 'Template ID', value: 'id' },
-          { label: 'Department ID', value: 'departmentId' },
-          { label: 'Description', value: 'description' }
+          { label: 'Template Name', value: 'templateName' },
+          { label: 'Department', value: 'departmentId' },
+          { label: 'Status', value: 'status' },
+          { label: 'Template Type', value: 'templateType' },
         ]}
-        record={record}
-        setRecord={setRecord}
+        selectDataLabel='label'
+        selectDataValue='value'
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
         showLabel={false}
         placeholder="Filter By"
         searchable={false}
       />
 
+      {recordOfFilter.filter === "templateName" && (
+        <MyInput
+          fieldName="value"
+          record={recordOfFilter}
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+        />
+      )}
+      {recordOfFilter.filter === "departmentId" && (
+        <MyInput
+          fieldName="value"
+          record={recordOfFilter}
+          fieldType='select'
+          selectData={departmentforLoggedInFacility?.data ?? []}
+          selectDataLabel='name'
+          selectDataValue='id'
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+        />
+      )}
+      {recordOfFilter.filter === "status" && (
+        <MyInput
+          fieldName="value"
+          record={recordOfFilter}
+          fieldType='select'
+          selectData={statusEnum ?? []}
+          selectDataLabel='label'
+          selectDataValue='value'
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+        />
+      )}
+      {recordOfFilter.filter === "templateType" && (
+        <MyInput
+          fieldName="value"
+          record={recordOfFilter}
+          fieldType='select'
+          selectData={templateTypeEnum ?? []}
+          selectDataLabel='label'
+          selectDataValue='value'
+          setRecord={u => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+          showLabel={false}
+        />
+      )}
+      {!recordOfFilter.filter && (
       <MyInput
         fieldType="text"
         fieldName="value"
-        record={record}
-        setRecord={setRecord}
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
         showLabel={false}
         placeholder="Search"
       />
+      )}
     </Form>
   );
 
@@ -539,7 +637,7 @@ const AvailabilityTemplatePageNew = () => {
               status="New"
             />
             <WarningMessage
-             message='Warning war'
+              message='Warning war'
             />
           </>
         }
