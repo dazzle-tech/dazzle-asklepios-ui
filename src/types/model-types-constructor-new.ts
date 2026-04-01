@@ -889,6 +889,72 @@ export const newVisitDuration: modelTypes.VisitDuration = {
   lastModifiedDate: null
 };
 
+// ------------------- Availability Template -------------------
+export const newAvailabilityTemplateWorkingDay: modelTypes.AvailabilityTemplateWorkingDay = {
+  dayOfWeek: 0,
+  isWorking: false
+};
+
+export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCreateDTO = {
+  facilityId: 0,
+  departmentId: 0,
+  templateName: '',
+  templateType: '',
+  resourceId: 0,
+  templateColor: null,
+  status: 'DRAFT',
+  versionNo: 1,
+  copyFromTemplateId: null,
+  parentTemplateId: null,
+  durationMinutes: null,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
+  parallelCapacityValue: 1,
+  defaultServiceId: null,
+  numberOfResourcesExpected: null,
+  requirePractitioner: false,
+  defaultPractitionerId: null,
+  requireBilling: false,
+  requirePreAssessment: false,
+  allowPatientPortalBooking: false,
+  requireConfirmation: false,
+  financialDetails: null,
+  isActive: true,
+  workingDays: []
+};
+
+export const newAvailabilityTemplateUpdateDTO: modelTypes.AvailabilityTemplateUpdateDTO = {
+  id: 0,
+  ...newAvailabilityTemplateCreateDTO
+};
+
+export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateResponseVM = {
+  id: 0,
+  facilityId: 0,
+  departmentId: 0,
+  templateName: '',
+  templateType: '',
+  templateColor: null,
+  status: '',
+  versionNo: null,
+  copyFromTemplateId: null,
+  parentTemplateId: null,
+  durationMinutes: null,
+  defaultBufferBeforeMinutes: null,
+  defaultBufferAfterMinutes: null,
+  parallelCapacityValue: null,
+  defaultServiceId: null,
+  numberOfResourcesExpected: null,
+  requirePractitioner: null,
+  defaultPractitionerId: null,
+  requireBilling: null,
+  requirePreAssessment: null,
+  allowPatientPortalBooking: null,
+  requireConfirmation: null,
+  financialDetails: null,
+  workingDays: []
+};
+
 // ------------------- Price List -------------------
 export const newPriceList: modelTypes.PriceList = {
   id: undefined,

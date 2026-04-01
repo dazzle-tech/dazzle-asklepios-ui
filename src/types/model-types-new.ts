@@ -226,6 +226,74 @@ export interface VisitDuration {
 }
 
 /* =========================
+ *  Availability Templates
+ * ========================= */
+
+export interface AvailabilityTemplateWorkingDay {
+  dayOfWeek: number | string;
+  isWorking: boolean;
+}
+
+export interface AvailabilityTemplateResponseVM {
+  id: number;
+  facilityId: number;
+  departmentId: number;
+  templateName: string;
+  templateType: string;
+  templateColor?: string | null;
+  status: string;
+  versionNo?: number | null;
+  copyFromTemplateId?: number | null;
+  parentTemplateId?: number | null;
+  durationMinutes?: number | null;
+  defaultBufferBeforeMinutes?: number | null;
+  defaultBufferAfterMinutes?: number | null;
+  parallelCapacityValue?: number | null;
+  defaultServiceId?: number | null;
+  numberOfResourcesExpected?: number | null;
+  requirePractitioner?: boolean | null;
+  defaultPractitionerId?: number | null;
+  requireBilling?: boolean | null;
+  requirePreAssessment?: boolean | null;
+  allowPatientPortalBooking?: boolean | null;
+  requireConfirmation?: boolean | null;
+  financialDetails?: string | null;
+  workingDays?: AvailabilityTemplateWorkingDay[] | null;
+}
+
+export interface AvailabilityTemplateCreateDTO {
+  facilityId: number;
+  departmentId: number;
+  templateName: string;
+  templateType: string;
+  resourceId: number;
+  templateColor?: string | null;
+  status: string;
+  versionNo?: number | null;
+  copyFromTemplateId?: number | null;
+  parentTemplateId?: number | null;
+  durationMinutes?: number | null;
+  defaultBufferBeforeMinutes: number;
+  defaultBufferAfterMinutes: number;
+  parallelCapacityValue: number;
+  defaultServiceId?: number | null;
+  numberOfResourcesExpected?: number | null;
+  requirePractitioner: boolean;
+  defaultPractitionerId?: number | null;
+  requireBilling: boolean;
+  requirePreAssessment: boolean;
+  allowPatientPortalBooking: boolean;
+  requireConfirmation: boolean;
+  financialDetails?: string | null;
+  isActive: boolean;
+  workingDays?: AvailabilityTemplateWorkingDay[] | null;
+}
+
+export interface AvailabilityTemplateUpdateDTO extends AvailabilityTemplateCreateDTO {
+  id: number;
+}
+
+/* =========================
  *  Clinical Staff / Practitioner
  * ========================= */
 

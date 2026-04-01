@@ -12,6 +12,7 @@ import AvailabilityTemplateSummaryCard from './AvailabilityTemplateSummaryCard';
 import SlotCard from './SlotCard';
 import DateNavigator from './DateNavigator';
 import WarningMessage from './WarningMessage';
+import { useGetAvailabilityTemplatesQuery } from '@/services/appointment/availabilityTemplateService';
 
 
 const mockAvailabilityTemplates = [
@@ -346,6 +347,8 @@ const mockAvailabilityTemplates = [
 const AvailabilityTemplatePageNew = () => {
   // const [data, setData] = useState(mockAvailabilityTemplates);
   const [templatesData, setTemplatesData] = useState(mockAvailabilityTemplates);
+  const { data: templatesList } = useGetAvailabilityTemplatesQuery({});
+  console.log("templatesList: ", templatesList);
   const [record, setRecord] = useState<{ filter?: string; value?: string }>({});
   const [openModal, setOpenModal] = useState(false);
   const [openTestModal, setOpenTestModal] = useState(false);
@@ -374,11 +377,9 @@ const AvailabilityTemplatePageNew = () => {
       flexGrow: 4
     },
     {
-      key: 'is_valid',
+      key: 'status',
       title: <Translate>Status</Translate>,
-      flexGrow: 2,
-      render: (row) =>
-        row.is_valid ? 'Active' : 'Inactive'
+      
     },
     {
       key: 'actions',
@@ -436,7 +437,8 @@ const AvailabilityTemplatePageNew = () => {
 
       <MyTable
         columns={columns}
-        data={templatesData}
+        // data={templatesData}
+        data={templatesList ?? []}
         height={500}
         onRowClick={rowdata => setSelectedTemplate(rowdata)}
         filters={filters}

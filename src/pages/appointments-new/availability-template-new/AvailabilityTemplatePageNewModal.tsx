@@ -20,6 +20,7 @@ import AddExceptionModal from './AddExceptionModal';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useGetAllServicesQuery } from '@/services/setup/serviceService';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 const days = [
   'Sunday',
@@ -128,6 +129,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
 
   const { data: servicesList, isFetching, refetch } = useGetAllServicesQuery({});
   const { data: practitionerListResponse } = useGetAllPractitionersQuery({});
+  const templateTypeEnum = useEnumOptions('TemplateType');
   console.log("practitionerListResponse");
   console.log(practitionerListResponse);
 
@@ -230,7 +232,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
   return (
     <div className="availability-template-modal">
       <SectionContainer
-       title="Main Information"
+       title="Basic Information "
        content={
          <>
       
@@ -243,6 +245,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
             record={record}
             setRecord={setRecord}
             width="20vw"
+            required
           />
           <MyInput
             column
@@ -255,6 +258,7 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
             record={record}
             setRecord={setRecord}
             width="14vw"
+            required
           />
 
           <MyInput
@@ -268,48 +272,17 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
             record={record}
             setRecord={setRecord}
             menuMaxHeight={200}
+            required
           />
 
-          <MyButton appearance="ghost" color="#525252" prefixIcon={() => <VscNotebookTemplate />
+          {/* <MyButton appearance="ghost" color="#525252" prefixIcon={() => <VscNotebookTemplate />
           }>
             Copy from template
-          </MyButton>
+          </MyButton> */}
         </div>
 
         <div className="template-header2">
-          <MyInput
-            fieldName="effectiveFromDate"
-            fieldType="date"
-            fieldLabel="Effective From Date"
-            record={record}
-            setRecord={setRecord}
-            width="12vw"
-          />
-          <MyInput
-            fieldName="effectiveFromHour"
-            fieldType="time"
-            fieldLabel="Effective From Hour"
-            record={record}
-            setRecord={setRecord}
-            width="7vw"
-          />
-
-          <MyInput
-            fieldName="effectiveToDate"
-            fieldType="date"
-            fieldLabel="Effective To Date"
-            record={record}
-            setRecord={setRecord}
-            width="12vw"
-          />
-          <MyInput
-            fieldName="effectiveToHour"
-            fieldType="time"
-            fieldLabel="Effective To Hour"
-            record={record}
-            setRecord={setRecord}
-            width="7vw"
-          />
+          
           <MyInput
             fieldName="status"
             fieldType="select"
@@ -324,12 +297,12 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
             ]}
             selectDataLabel="label"
             selectDataValue="value"
+            readOnly
           />
 
           <MyInput
-            fieldName="step"
+            fieldName="duration"
             fieldType="number"
-            fieldLabel="Step"
             record={record}
             setRecord={setRecord}
             width="10vw"
@@ -337,13 +310,20 @@ const EditAvailabilityTemplateModalNew: React.FC<EditAvailabilityTemplateModalNe
           />
 
           <MyInput
-            fieldName="slotsBefore"
+            fieldName="versionNo"
             fieldType="number"
-            fieldLabel="Slots Before/After"
             record={record}
             setRecord={setRecord}
-            leftAddonwidth={"auto"}
-            rightAddon="min"
+            width="6vw"
+          />
+           <MyInput
+            fieldName="templateType"
+            record={record}
+            setRecord={setRecord}
+            fieldType='select'
+            selectData={templateTypeEnum ?? []}
+            selectDataLabel="label"
+            selectDataValue='value'
             width="6vw"
           />
         </div>

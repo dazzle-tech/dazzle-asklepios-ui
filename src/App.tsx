@@ -219,6 +219,7 @@ import Logo from './images/Logo_BLUE_New.svg';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
+import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
 
 type BackendMenuItem = { screen?: string | null };
 
@@ -818,6 +819,7 @@ useEffect(() => {
               <Route path="new" element={<FormTemplateBuilderPage />} />
               <Route path=":id" element={<FormTemplateBuilderPage />} />
               <Route path="availability-template" element={<AvailabilityTemplatePage />} />
+              <Route path="availability-templates-new" element={<AvailabilityTemplatePageNew />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />
