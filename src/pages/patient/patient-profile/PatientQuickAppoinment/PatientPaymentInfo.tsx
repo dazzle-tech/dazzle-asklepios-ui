@@ -93,7 +93,8 @@ const PAYMENT_ERROR_MAP: Record<string, string> = {
   'id.notfound': 'Payment record not found.',
   notfound: 'Payment record not found.',
   duplicate: 'Duplicate record.',
-  'db.constraint': 'Database constraint violation while saving payment.'
+  'db.constraint': 'Database constraint violation while saving payment.',
+  'no.services': 'No services to pay for'
 };
 
 const PAYMENT_FIELD_LABELS: Record<string, string> = {
@@ -957,13 +958,11 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [servicesRows.length, rowsPerPage]);
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-  // Direction handling for RTL/LTR
-      const direction = localStorage.getItem('direction') || 'LTR';
-      const isRTL = direction === 'RTL';
-
-      const dir = isRTL ? 'rtl' : 'ltr';
-
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
       <Form fluid layout="inline" className="fields-container" dir={dir}>

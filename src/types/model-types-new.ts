@@ -3878,3 +3878,8 @@ export interface NurseSummaryReportVM {
   servicesAndProducts: NurseSummaryServiceProductVM[];
   generatedAt: string | null;
 }
+
+export type PatientDiagnosisFlag = {
+  encounterId: number;
+  hasPrimaryDiagnoses: boolean;
+};
