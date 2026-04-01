@@ -73,7 +73,7 @@ export const newFacility: modelTypes.Facility = {
   defaultCurrency: '',
   isActive: true,
   ruleId: null,
-  workingDays: []
+  workingDays: [],
   timeZone: '',
 };
 
@@ -89,7 +89,7 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-  workingDays: []
+  workingDays: [],
   timeZone: '',
 };
 
