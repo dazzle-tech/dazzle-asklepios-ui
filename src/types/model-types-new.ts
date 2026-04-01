@@ -72,6 +72,7 @@ export interface Facility {
   defaultCurrency: string;
   isActive?: boolean;
   ruleId?: number;
+  timeZone?: string;
 }
 
 export interface CreateFacility {
@@ -85,6 +86,7 @@ export interface CreateFacility {
   type: string;
   defaultCurrency: string;
   isActive?: boolean;
+  timeZone?: string;
 }
 
 export interface Role {

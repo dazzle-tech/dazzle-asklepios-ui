@@ -64,7 +64,8 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-  ruleId: null
+  ruleId: null,
+  timeZone: '',
 };
 
 // ------------------- Create Facility -------------------
@@ -78,7 +79,8 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   addressId: '',
   type: '',
   defaultCurrency: '',
-  isActive: true
+  isActive: true,
+  timeZone: '',
 };
 
 // ------------------- Role -------------------
