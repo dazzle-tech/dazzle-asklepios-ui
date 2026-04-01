@@ -293,6 +293,43 @@ export interface AvailabilityTemplateUpdateDTO extends AvailabilityTemplateCreat
   id: number;
 }
 
+export interface AvailabilityGenerationBatchApplyDTO {
+  templateId: number;
+  startDate: string;
+  endDate: string;
+  deferred: boolean;
+  deferredAt?: string | null;
+  scope: string;
+  holidayHandlingMode?: string | null;
+}
+
+export interface ApplyAvailabilityTemplateResponseVM {
+  batchId?: number | null;
+  templateId?: number | null;
+  scope?: string | null;
+  applyStartDateTime?: string | null;
+  applyEndDateTime?: string | null;
+  totalSlots?: number | null;
+  dailyAvg?: number | null;
+  executionStatus?: string | null;
+  message?: string | null;
+  holidayHandlingMode?: string | null;
+}
+
+export interface AvailabilityGenerationBatch {
+  id: number;
+  templateId?: number | null;
+  holidayHandlingMode?: string | null;
+  scope?: string | null;
+  applyStartDateTime?: string | null;
+  applyEndDateTime?: string | null;
+  totalSlots?: number | null;
+  dailyAvg?: number | null;
+  executionStatus?: string | null;
+  createdDate?: string | null;
+  lastModifiedDate?: string | null;
+}
+
 /* =========================
  *  Clinical Staff / Practitioner
  * ========================= */

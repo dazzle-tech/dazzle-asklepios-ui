@@ -955,6 +955,43 @@ export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateR
   workingDays: []
 };
 
+export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGenerationBatchApplyDTO = {
+  templateId: 0,
+  startDate: '',
+  endDate: '',
+  deferred: false,
+  deferredAt: null,
+  scope: '',
+  holidayHandlingMode: null
+};
+
+export const newApplyAvailabilityTemplateResponseVM: modelTypes.ApplyAvailabilityTemplateResponseVM = {
+  batchId: null,
+  templateId: null,
+  scope: null,
+  applyStartDateTime: null,
+  applyEndDateTime: null,
+  totalSlots: null,
+  dailyAvg: null,
+  executionStatus: null,
+  message: null,
+  holidayHandlingMode: null
+};
+
+export const newAvailabilityGenerationBatch: modelTypes.AvailabilityGenerationBatch = {
+  id: 0,
+  templateId: null,
+  holidayHandlingMode: null,
+  scope: null,
+  applyStartDateTime: null,
+  applyEndDateTime: null,
+  totalSlots: null,
+  dailyAvg: null,
+  executionStatus: null,
+  createdDate: null,
+  lastModifiedDate: null
+};
+
 // ------------------- Price List -------------------
 export const newPriceList: modelTypes.PriceList = {
   id: undefined,
