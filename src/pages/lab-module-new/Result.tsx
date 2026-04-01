@@ -918,6 +918,8 @@ const Result = forwardRef<any, Props>(
               ? normalRangesMap[selectedResult.profileTestId] ?? []
               : []
           }
+          profileTestId={selectedResult?.profileTestId??null}
+          
         />
 
         <MyModal

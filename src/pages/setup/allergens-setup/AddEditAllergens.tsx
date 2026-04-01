@@ -44,13 +44,21 @@ const AddEditAllergens = ({ open, setOpen, width, allergens, setAllergens, handl
         );
     }
   };
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={allergens?.id ? 'Edit Allergens' : 'New Allergens'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       actionButtonLabel={allergens?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Allergens Info', icon: <MdSick /> }]}

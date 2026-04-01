@@ -82,9 +82,13 @@ const RefillModalComponent = () => {
   const startIndex = page * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const paginatedData = itemsData.slice(startIndex, endIndex);
+                      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="container-internal-drug-order">
+    <div className="container-internal-drug-order" dir={dir}>
       <div className="container-of-tables-int">
         <MainStockTableComponent
           data={paginatedData}

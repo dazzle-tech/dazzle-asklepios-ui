@@ -35,14 +35,22 @@ const DefaultProfileIndicator: React.FC<Props> = ({
     activeProfiles.length === 1;
   if (!isDefaultOnly) return null;
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Whisper placement="top" speaker={<Tooltip>Default Normal Range</Tooltip>}>
+    <Whisper placement="top" speaker={<Tooltip>Default Normal Range</Tooltip>} >
       <span
         onClick={e => {
           e.stopPropagation();
           onClick?.();
         }}
         style={{ cursor: 'pointer' }}
+        dir={dir}
       >
         <FaChartLine
           size={18}

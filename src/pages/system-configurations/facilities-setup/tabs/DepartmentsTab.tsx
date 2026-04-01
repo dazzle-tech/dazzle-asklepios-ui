@@ -29,6 +29,8 @@ import { PaginationPerPage } from '@/utils/paginationPerPage';
 import ChooseScreen from '@/pages/setup/departments-setup/ChooseScreen';
 import ChooseScreenNurse from '@/pages/setup/departments-setup/ChooseScreenNurse';
 import AddEditDepartmentInline from './AddEditDepartmentInline';
+import { MdHomeRepairService } from "react-icons/md";
+import AddServiceToDepartment from './AddServiceToDepartment';
 
 interface DepartmentsTabProps {
   facility: Facility;
@@ -73,8 +75,10 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [openForm, setOpenForm] = useState(false);
   const [showScreen, setShowScreen] = useState({});
   const [showNurseScreen, setShowNurseScreen] = useState({});
+   const [showService, setShowService] = useState({});
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
   const [openScreensNursePopup, setOpenScreensNursePopup] = useState(false);
+  const [openAddServicePopup, setOpenAddServicePopup] = useState(false);
   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
   const [nextDepartmentCode, setNextDepartmentCode] = useState<string>(generateFiveDigitCode());
   const [record, setRecord] = useState({ filter: '', value: '' });
@@ -172,17 +176,52 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
     if (!department?.name?.trim()) {
-      missingFields.push('Department Name');
+      missingFields.push('Department Name is required');
     }
     if (!department?.departmentType) {
-      missingFields.push('Department Type');
+      missingFields.push('Department Type is required');
     }
-    if (missingFields.length > 0) {
-      const lines = missingFields.map(field => `• ${field}: is required`);
+
+    const isEmpty = (val) => val === null || val === undefined || val === '';
+    const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+    if (
+      department?.parallelCapacityValue === null ||
+      department?.parallelCapacityValue === undefined ||
+      department?.parallelCapacityValue < 1
+    ) {
+      missingFields.push(
+        'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+      );
+    }
+    if (department?.appointable) {
+      if (isEmpty(department?.defaultDurationMinutes) || department?.defaultDurationMinutes <= 0) {
+        missingFields.push('Field Default Duration Minutes is required and should be greater than 0')
+      }
+      if (isEmpty(department?.defaultBufferBeforeMinutes) || department?.defaultBufferBeforeMinutes < 0) {
+        missingFields.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+      }
+      if (isEmpty(department?.defaultBufferAfterMinutes) || department?.defaultBufferAfterMinutes < 0) {
+        missingFields.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+      }
+    }
+    else {
+      if (isNotEmpty(department?.defaultDurationMinutes) && department?.defaultDurationMinutes <= 0) {
+        missingFields.push('Field Default Duration Minutes should be greater than 0')
+      }
+      if (isNotEmpty(department?.defaultBufferBeforeMinutes) && department?.defaultBufferBeforeMinutes < 0) {
+        missingFields.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+      }
+      if (isNotEmpty(department?.defaultBufferAfterMinutes) && department?.defaultBufferAfterMinutes < 0) {
+        missingFields.push('Field Default Buffer After Minutes should be greater then or equal 0')
+      }
+    }
+
+
+    if (missingFields.length) {
       dispatch(
         notify({
-          msg: `Please fix the following fields:\n${lines.join('\n')}`,
-          sev: 'warning',
+          msg: missingFields.map(e => `• ${e}`).join('\n'),
+          sev: 'warning'
         })
       );
       return false;
@@ -215,6 +254,14 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       isActive: department?.isActive ?? true,
       hasMedicalSheets: Boolean(department?.hasMedicalSheets),
       hasNurseMedicalSheets: Boolean(department?.hasNurseMedicalSheets),
+      parallelCapacityValue: department.parallelCapacityValue ?? 1,
+      defaultDurationMinutes: department?.defaultDurationMinutes,
+      defaultBufferBeforeMinutes: department?.defaultBufferBeforeMinutes ?? 0,
+      defaultBufferAfterMinutes: department?.defaultBufferAfterMinutes ?? 0,
+      parallelCapacityEnabled: department?.parallelCapacityEnabled,
+      requirePractitioner: department?.requirePractitioner,
+      requireBilling: department?.requireBilling,
+      requirePreAssessment: department?.requirePreAssessment
     });
 
     addDepartment(payload)
@@ -403,6 +450,17 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
           }}
         />
       )}
+      <MdHomeRepairService
+        title="Services"
+        size={24}
+        fill="var(--primary-gray)"
+        className="icons-style"
+        onClick={() => {
+            setDepartment(rowData);
+            setOpenAddServicePopup(true);
+          }}
+      />
+
     </div>
   );
 
@@ -563,7 +621,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
             width="150px"
             disabled={!facilityId}
           >
-           New Department
+            New Department
           </MyButton>
         </div>
       )}
@@ -599,6 +657,14 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
         setShowScreen={setShowNurseScreen}
         department={department}
         width={width}
+      />
+      <AddServiceToDepartment
+        open={openAddServicePopup}
+        setOpen={setOpenAddServicePopup}
+        width={width}
+        department={department}
+        showScreen={showService}
+        setShowScreen={setShowService}
       />
       <DeletionConfirmationModal
         open={openConfirmDeleteDepartmentModal}

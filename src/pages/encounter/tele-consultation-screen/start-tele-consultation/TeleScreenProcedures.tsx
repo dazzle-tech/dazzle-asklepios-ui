@@ -16,8 +16,14 @@ const TeleScreenProcedures = ({ open = false, onClose, patient, encounter}) => {
     setOpenDetailsModal(open);
   }, [open]);
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div>
+    <div dir={dir}>
       <Details
         patient={patient}
         encounter={encounter}

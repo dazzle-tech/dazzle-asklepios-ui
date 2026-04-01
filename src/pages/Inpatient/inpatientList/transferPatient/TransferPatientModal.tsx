@@ -344,6 +344,11 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
     }
   }, [isFetching, bedCountResponse, transferPatient?.toInpatientDepartmentKey]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <AdvancedModal
       open={open}
@@ -353,8 +358,8 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
       actionButtonFunction={handleSave}
       leftWidth="40%"
       rightWidth="60%"
-      rightContent={rightModalContent}
-      leftContent={modalContent}
+      rightContent={<div dir={dir}>{rightModalContent}</div>}
+      leftContent={<div dir={dir}>{modalContent}</div>}
       actionButtonLabel="Transfer"
     ></AdvancedModal>
   );

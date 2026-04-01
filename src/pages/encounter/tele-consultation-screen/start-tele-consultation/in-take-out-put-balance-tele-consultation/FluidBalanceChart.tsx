@@ -39,8 +39,14 @@ const FluidBalanceChart: React.FC<FluidBalanceChartProps> = ({ chartData, title 
     }
   };
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <Panel bordered style={{ height: 400 }} header={<Translate>Total Balance Change per Date</Translate>}>
+    <Panel bordered style={{ height: 400 }} header={<Translate>Total Balance Change per Date</Translate>} dir={dir}>
       <div style={{ height: '100%', width: '100%' }}>
         <Line data={data} options={options} />
       </div>

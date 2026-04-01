@@ -237,11 +237,15 @@ const Observations: React.FC<ObservationsStandaloneProps> = ({
       dispatch(notify({ msg: 'Error occurred while saving', sev: 'error' }));
     }
   };
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   // ---------- Render ----------
   return (
-    <div className={clsx('basuc-div', { 'disabled-panel': edit })}>
+    <div className={clsx('basuc-div', { 'disabled-panel': edit })} dir={dir}>
       <Form fluid>
         {/* Save / Clear buttons */}
         <Row className="action-row">

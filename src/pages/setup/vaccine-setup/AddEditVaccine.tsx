@@ -823,6 +823,13 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
     </Form>
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <ChildModal
       actionChildButtonFunction={handleSaveVaccineBrand}
@@ -832,7 +839,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
       showChild={openChildModal}
       setShowChild={setOpenChildModal}
       title={vaccine?.id ? 'Edit Vaccine' : 'New Vaccine'}
-      mainContent={conjureFormContentOfMainModal}
+      mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
       mainStep={[
         {
           title: 'Vaccine Details',
@@ -845,7 +852,8 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
       childTitle={
         vaccineBrand?.id ? 'Edit Brand Product of Vaccine' : 'New Brand Product of Vaccine'
       }
-      childContent={conjureFormContentOfChildModal()}
+      childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
+
       mainSize="sm"
     />
   );

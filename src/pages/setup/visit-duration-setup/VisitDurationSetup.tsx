@@ -451,8 +451,15 @@ const VisitDurationSetup: React.FC = () => {
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel className="main-visit-duration-page-gaps">
+    <Panel className="main-visit-duration-page-gaps" dir={dir}>
       <MyTable
         data={tableData}
         columns={columns}

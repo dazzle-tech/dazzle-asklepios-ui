@@ -119,7 +119,12 @@ const DetailTable = () => {
 
   const paginatedData = sortedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
-  return (
+                        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+  return (<div dir={dir}>
     <MyTable
       data={paginatedData}
       columns={columns}
@@ -138,7 +143,7 @@ const DetailTable = () => {
         setRowsPerPage(parseInt(e.target.value, 10));
         setPage(0);
       }}
-    />
+    />  </div>
   );
 };
 

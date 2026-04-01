@@ -9,9 +9,15 @@ const Authorizations = ({ accessRole, goBack, ...props }) => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const { data: accessRoleListResponse } = useGetAccessRolesQuery(listRequest);
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <Panel
+    dir={dir}
       header={
         <h3 className="title">
           <Translate> Authorizations for </Translate> <i>{accessRole?.name ?? ''}</i> 

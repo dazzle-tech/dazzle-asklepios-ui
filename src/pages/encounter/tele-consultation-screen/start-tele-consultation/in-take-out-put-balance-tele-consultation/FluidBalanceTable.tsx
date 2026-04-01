@@ -46,13 +46,18 @@ const FluidBalanceTable: React.FC<FluidBalanceTableProps> = ({ data, selected, s
     }
   ];
 
-  return (
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+  return (<div dir={dir}>
     <MyTable
       data={data}
       columns={columns}
       rowClassName={isSelected}
       onRowClick={(rowData) => setSelected(rowData)}
-    />
+    />    </div>
   );
 };
 

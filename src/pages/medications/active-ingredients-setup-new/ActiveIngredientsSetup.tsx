@@ -616,13 +616,20 @@ const ActiveIngredientsSetup = () => {
     }
   }, [carouselActiveIndex, activeIngredientRefetch]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel>
+      <Panel dir={dir}>
 
         <MyTable
           height={450}

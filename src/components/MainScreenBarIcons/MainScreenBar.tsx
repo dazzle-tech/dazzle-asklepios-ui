@@ -364,14 +364,14 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     };
 
     const handleLogout = async () => {
+      console.log('token before logout:', localStorage.getItem('id_token'));
       try {
         await logout({}).unwrap();
       } catch (e) {}
 
-      localStorage.clear();
       dispatch({ type: 'auth/logout' });
+      localStorage.clear();
 
-      // ✅ FIX
       window.location.replace('/#/login');
     };
 
@@ -705,7 +705,13 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}></span>
                   <span style={{ color: '#9E9E9E', fontSize: '12px' }}></span>
                 </div>
-                <ArrowDownLineIcon style={{ marginLeft: 8 }} />
+                  <ArrowDownLineIcon
+                    style={{
+                      marginInlineStart: 8,
+                      position: 'relative',
+                      zIndex: 10
+                    }}
+                  />
               </div>
             </Whisper>
           </>

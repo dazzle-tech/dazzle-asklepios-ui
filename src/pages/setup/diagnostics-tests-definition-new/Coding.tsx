@@ -284,6 +284,13 @@ const Coding: React.FC<CodingProps> = ({ open, setOpen, diagnosticsTest }) => {
     }
   }, [diagnosticsTest?.id]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <ChildModal
       actionChildButtonFunction={handleSaveCoding}
@@ -292,11 +299,11 @@ const Coding: React.FC<CodingProps> = ({ open, setOpen, diagnosticsTest }) => {
       showChild={openChild}
       setShowChild={setOpenChild}
       title="Code"
-      mainContent={conjureFormContentOfMainModal}
+      mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
       mainStep={[{ title: 'Code', icon: <FaNewspaper /> }]}
       childStep={[{ title: 'Code Info', icon: <FaNewspaper /> }]}
       childTitle="Add Code"
-      childContent={conjureFormContentOfChildModal}
+      childContent={<div dir={dir}>{conjureFormContentOfChildModal()}</div>}
       mainSize="sm"
     />
   );

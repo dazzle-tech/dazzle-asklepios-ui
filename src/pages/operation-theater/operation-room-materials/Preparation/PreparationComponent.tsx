@@ -201,8 +201,14 @@ const Preparation: React.FC = () => {
     </>
   );
 
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
+  <div dir={dir}>
     <div className="Tables-gap-betwen-columns">
       <MyTable
         data={paginatedData}
@@ -224,7 +230,12 @@ const Preparation: React.FC = () => {
           setPage(0);
         }}
       />
+      </div>
+        
+    <div>
       <MaterialTable />
+    </div>
+    
     </div>
   );
 };

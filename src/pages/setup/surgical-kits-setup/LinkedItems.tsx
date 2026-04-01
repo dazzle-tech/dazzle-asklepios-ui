@@ -126,6 +126,13 @@ const LinkedItems = ({ open, setOpen, surgicalKits }) => {
         );
     }
   };
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <ChildModal
       open={open}
@@ -133,11 +140,11 @@ const LinkedItems = ({ open, setOpen, surgicalKits }) => {
       showChild={openChildModal}
       setShowChild={setOpenChildModal}
       title="Add Items"
-      mainContent={conjureFormMainContent}
+      mainContent={(stepNumber) => <div dir={dir}>{conjureFormMainContent(stepNumber)}</div>}
       actionChildButtonFunction={null}
       hideActionBtn
       childTitle={'Add New Item to Surgical Kit'}
-      childContent={conjureFormChildContent}
+      childContent={(stepNumber) => <div dir={dir}>{conjureFormChildContent(stepNumber)}</div>}
       mainSize="sm"
       mainStep={[{ title: 'Items', icon: <MdMedicalServices /> }]}
       childStep={[{ title: 'Item', icon: <MdMedicalServices /> }]}

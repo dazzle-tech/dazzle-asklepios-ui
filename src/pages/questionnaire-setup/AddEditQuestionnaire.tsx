@@ -45,6 +45,13 @@ const AddEditQuestionnaire = ({ open, setOpen, questionnaire, setQuestionnaire, 
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  
   return (
     <MyModal
       actionButtonLabel={questionnaire?.key ? 'Save' : 'Create'}
@@ -52,7 +59,11 @@ const AddEditQuestionnaire = ({ open, setOpen, questionnaire, setQuestionnaire, 
       setOpen={setOpen}
       position="right"
       title={questionnaire?.key ? 'Edit Questionnaire' : 'New Questionnaire'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContentOfMainModal(stepNumber)}
+        </div>
+      )}
       steps={[
         {
           title: 'Basic Info',

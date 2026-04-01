@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 import { GrCatalog } from 'react-icons/gr';
 import MyModal from '@/components/MyModal/MyModal';
@@ -48,31 +48,84 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
         description: diagnosticsTestCatalogHeader?.description,
         type: diagnosticsTestCatalogHeader?.type,
         departmentId: diagnosticsTestCatalogHeader?.departmentId,
-        facilityId: diagnosticsTestCatalogHeader?.facilityId
+        facilityId: diagnosticsTestCatalogHeader?.facilityId,
+        parallelCapacityValue: diagnosticsTestCatalogHeader.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: diagnosticsTestCatalogHeader?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: diagnosticsTestCatalogHeader.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: diagnosticsTestCatalogHeader.defaultBufferAfterMinutes ?? 0,
       });
   }, [diagnosticsTestCatalogHeader]);
 
   // handle Save catalog
   const handleSave = () => {
-    setOpen(false);
+
+    let messages = [];
+        const obj = !diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM;
+        const isEmpty = (val) => val === null || val === undefined || val === '';
+        const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+        if (
+          obj?.parallelCapacityValue === null ||
+          obj?.parallelCapacityValue === undefined ||
+          obj?.parallelCapacityValue < 1
+        ) {
+          messages.push(
+            'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+          );
+        }
+        if (obj?.appointable) {
+          if (isEmpty(obj?.defaultDurationMinutes) || obj?.defaultDurationMinutes <= 0) {
+            messages.push('Field Default Duration Minutes is required and should be greater than 0')
+          }
+          if (isEmpty(obj?.defaultBufferBeforeMinutes) || obj?.defaultBufferBeforeMinutes < 0) {
+            messages.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+          }
+          if (isEmpty(obj?.defaultBufferAfterMinutes) || obj?.defaultBufferAfterMinutes < 0) {
+            messages.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+          }
+        }
+        else {
+          if (isNotEmpty(obj?.defaultDurationMinutes) && obj?.defaultDurationMinutes <= 0) {
+            messages.push('Field Default Duration Minutes should be greater than 0')
+          }
+          if (isNotEmpty(obj?.defaultBufferBeforeMinutes) && obj?.defaultBufferBeforeMinutes < 0) {
+            messages.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+          }
+          if (isNotEmpty(obj?.defaultBufferAfterMinutes) && obj?.defaultBufferAfterMinutes < 0) {
+            messages.push('Field Default Buffer After Minutes should be greater then or equal 0')
+          }
+        }
+        if (messages.length > 0) {
+          dispatch(
+            notify({
+              msg: messages.join(', '),
+              sev: 'warning',
+            })
+          );
+    
+          return ;
+        }
+    
+
     if (!diagnosticsTestCatalogHeader?.id) {
       addCatalog(catalogCreateVM)
         .unwrap()
         .then(() => {
+          setOpen(false);
           setCatalogCreateVM({ ...newCatalogCreateVM });
           dispatch(notify({ msg: 'The Catalog has been added successfully', sev: 'success' }));
         })
         .catch(() => {
-          dispatch(notify({ msg: 'Failed to add this Catalog', sev: 'error' }));
+          dispatch(notify({ msg: 'Failed to add this Catalog', sev: 'warning' }));
         });
     } else {
       updateCatalog({ id: diagnosticsTestCatalogHeader?.id, body: catalogUpdateVM })
         .unwrap()
         .then(() => {
+          setOpen(false);
           dispatch(notify({ msg: 'The Catalog has been updated successfully', sev: 'success' }));
         })
         .catch(() => {
-          dispatch(notify({ msg: 'Failed to update this Catalog', sev: 'error' }));
+          dispatch(notify({ msg: 'Failed to update this Catalog', sev: 'warning' }));
         });
     }
   };
@@ -83,6 +136,8 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
       case 0:
         return (
           <Form fluid>
+            <Row>
+              <Col md={12}>
             <MyInput
               width="100%"
               fieldName="type"
@@ -97,6 +152,23 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
               searchable={false}
               required
             />
+            </Col>
+             <Col md={12}>
+            <MyInput
+              width={"100%"}
+              column
+              fieldLabel="Appointable"
+              fieldType="checkbox"
+              fieldName="appointable"
+              record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+              setRecord={
+                !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+              }
+            />
+            </Col>
+            </Row>
+            <Row>
+               <Col md={12}>
             <MyInput
               placeholder="Select Facility"
               width="100%"
@@ -112,6 +184,8 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
               }
               searchable={false}
             />
+            </Col>
+             <Col md={12}>
             <MyInput
               width="100%"
               fieldName="departmentId"
@@ -125,6 +199,9 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
               }
               menuMaxHeight={200}
             />
+            </Col>
+            </Row>
+            <Row>
             <MyInput
               width="100%"
               fieldName="name"
@@ -135,7 +212,8 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
               }
               required
             />
-
+            </Row>
+            <Row>
             <MyInput
               width="100%"
               fieldName="description"
@@ -145,10 +223,71 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
               }
               required
             />
+            </Row>
+              <Row>
+                <Col md={12}>
+                  <MyInput
+                    fieldType="number"
+                    fieldName="parallelCapacityValue"
+                    record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                    setRecord={
+                      !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                    }
+                    width="100%"
+                    required
+                  />
+                </Col>
+                <Col md={12}>
+                  <MyInput
+                    fieldType="number"
+                    fieldName="defaultDurationMinutes"
+                    record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                    setRecord={
+                      !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                    }
+                    width="100%"
+                    required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
+                  />
+                </Col>
+              </Row>
+              <Row>
+                <Col md={12}>
+                  <MyInput
+                    fieldType="number"
+                    fieldName="defaultBufferBeforeMinutes"
+                    record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                    setRecord={
+                      !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                    }
+                    width="100%"
+                    required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
+                  />
+                </Col>
+                <Col md={12}>
+                  <MyInput
+                    fieldType="number"
+                    fieldName="defaultBufferAfterMinutes"
+                    record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                    setRecord={
+                      !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                    }
+                    width="100%"
+                    required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
+                  />
+                </Col>
+              </Row>
+
           </Form>
         );
     }
   };
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       actionButtonLabel={diagnosticsTestCatalogHeader?.id ? 'Save' : 'Create'}
@@ -157,7 +296,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
       setOpen={setOpen}
       position="right"
       title={diagnosticsTestCatalogHeader?.id ? 'Edit Catalog' : 'New Catalog'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
       steps={[
         {
           title: 'Catalog Info',

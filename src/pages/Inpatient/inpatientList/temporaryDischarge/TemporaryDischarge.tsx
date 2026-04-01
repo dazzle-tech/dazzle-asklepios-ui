@@ -135,8 +135,13 @@ const TemporaryDischarge = ({ open, setOpen, localEncounter, refetchInpatientLis
             setPatientTemporaryDischarge({ ...newApPatientTemporaryDischarge });
         }
     }, [open]);
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
     return (
-        <>
+        <div dir={dir}>
             <MyModal
                 open={open}
                 setOpen={setOpen}
@@ -147,7 +152,7 @@ const TemporaryDischarge = ({ open, setOpen, localEncounter, refetchInpatientLis
                 size="33vw"
                 position='right'
                 actionButtonFunction={handleSave}
-                content={modalContent}
+                content={<div dir={dir}>{modalContent}</div>}
                 actionButtonLabel='Discharge'
             />
             <AttachmentModal
@@ -157,6 +162,6 @@ const TemporaryDischarge = ({ open, setOpen, localEncounter, refetchInpatientLis
                 attatchmentType="PATIENT_PROFILE_ATTACHMENT"
                 patientKey={localPatient?.key}
             />
-        </>);
+        </div>);
 }
 export default TemporaryDischarge;

@@ -67,13 +67,19 @@ const AddEditRule = ({ open, setOpen, width, candidate, setCandidate, handleSave
     </Form>
   );
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={candidate?.id ? 'Edit Rule' : 'New Rule'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={candidate?.id ? 'Save' : 'Create'}
       actionButtonFunction={() => {
         setCandidate({ ...candidate, fields: fieldsState });

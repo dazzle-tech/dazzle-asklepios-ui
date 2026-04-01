@@ -174,8 +174,14 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
     return status.toLowerCase() === 'in cleaning';
   }).length;
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <>
+    <div dir={dir}>
       {/* Toggle view icons */}
       {/* <div className="icons-2">
         <FontAwesomeIcon
@@ -257,7 +263,7 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
           handleChangeToOutService={handleChangeToOutService}
         />
       )}
-    </>
+    </div>
   );
 };
 

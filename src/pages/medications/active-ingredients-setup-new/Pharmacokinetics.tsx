@@ -64,8 +64,15 @@ const Pharmacokinetics = ({ activeIngredients }) => {
     }
   }, [activeIngredients]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Form fluid>
+    <Form fluid dir={dir}>
       <Row>
         <div style={{ display: 'flex', gap: '5px', justifyContent: 'end', padding: '5px' }}>
           <MyButton

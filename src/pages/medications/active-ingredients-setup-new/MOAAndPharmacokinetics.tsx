@@ -13,13 +13,20 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   if (width > 860) {
     return (
       <Row>
         <Col md={14}>
           <Section
             title="Pharmacokinetics"
-            content={<Pharmacokinetics activeIngredients={activeIngredient} />}
+            content={<div dir={dir}><Pharmacokinetics activeIngredients={activeIngredient} /></div>}
             setOpen={() => {}}
             rightLink=""
             openedContent=""
@@ -28,7 +35,7 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
         <Col md={10}>
           <Section
             title="MOA"
-            content={<MOA activeIngredients={activeIngredient} />}
+            content={<div dir={dir}><MOA activeIngredients={activeIngredient} /></div>}
             setOpen={() => {}}
             rightLink=""
             openedContent=""
@@ -41,7 +48,7 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
       <div>
         <Section
           title="Pharmacokinetics"
-          content={<Pharmacokinetics activeIngredients={activeIngredient} />}
+          content={<div dir={dir}><Pharmacokinetics activeIngredients={activeIngredient} /></div>}
           setOpen={() => {}}
           rightLink=""
           openedContent=""
@@ -49,7 +56,7 @@ const MOAAndPharmacokinetics = ({ activeIngredient }) => {
         <br />
         <Section
           title="MOA"
-          content={<MOA activeIngredients={activeIngredient} />}
+          content={<div dir={dir}><MOA activeIngredients={activeIngredient} /></div>}
           setOpen={() => {}}
           rightLink=""
           openedContent=""

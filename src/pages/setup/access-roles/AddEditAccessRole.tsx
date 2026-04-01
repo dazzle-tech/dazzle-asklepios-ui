@@ -102,13 +102,20 @@ const AddEditAccessRole = ({
         );
     }
   };
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={accessRole?.key ? 'Edit AccessRole' : 'New AccessRole'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => <div dir={dir}>{conjureFormContent(stepNumber)}</div>}
       actionButtonLabel={accessRole?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Access Rule Rule info', icon: <FontAwesomeIcon icon={faKey} /> }]}

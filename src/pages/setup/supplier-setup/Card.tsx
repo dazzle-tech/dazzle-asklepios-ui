@@ -226,8 +226,15 @@ const Card: React.FC<CardProps> = ({ record, setRecord }) => {
       )
     }
   ];
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div className="modal-content">
+    <div className="modal-content" dir={dir}>
       {/* Vendor Type Selection */}
       <div className="vendor-type-selection">
         <div className="vendor-header">

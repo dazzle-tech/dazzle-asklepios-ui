@@ -81,8 +81,14 @@ const TotalQuantitiesTable = () => {
   </>);
 //Pagination
   const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+    
   return (
-    <div className="total-quantities-table-size">
+    <div className="total-quantities-table-size" dir={dir}>
       <MyTable
         data={paginatedData}
         columns={columns}
