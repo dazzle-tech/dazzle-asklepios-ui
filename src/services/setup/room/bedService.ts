@@ -13,6 +13,8 @@ type LinkMap = {
 };
 type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
+type BedStatus = 'EMPTY' | 'OCCUPIED' | 'IN_CLEANING' | 'OUT_OF_SERVICE';
+
 const mapPaged = (response: Bed[], meta: any): PagedResult<Bed> => {
   const headers = meta?.response?.headers;
   return {
@@ -79,21 +81,14 @@ export const bedService = createApi({
       invalidatesTags: ['Bed']
     }),
 
-    activateBed: builder.mutation<Bed, { id: Id }>({
-      query: ({ id }) => ({
-        url: `/api/setup/bed/${id}/activate`,
-        method: 'POST'
+    changeBedActivationStatus: builder.mutation<Bed, { id: Id; active: boolean }>({
+      query: ({ id, active }) => ({
+        url: `/api/setup/bed/${id}/activation-status/${active}`,
+        method: 'PUT'
       }),
       invalidatesTags: ['Bed']
     }),
 
-    deactivateBed: builder.mutation<Bed, { id: Id }>({
-      query: ({ id }) => ({
-        url: `/api/setup/bed/${id}/deactivate`,
-        method: 'POST'
-      }),
-      invalidatesTags: ['Bed']
-    }),
     occupyBed: builder.mutation<Bed, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/bed/${id}/occupy`,
@@ -101,6 +96,7 @@ export const bedService = createApi({
       }),
       invalidatesTags: ['Bed']
     }),
+
     markBedAsInCleaning: builder.mutation<Bed, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/bed/${id}/mark-in-cleaning`,
@@ -108,6 +104,7 @@ export const bedService = createApi({
       }),
       invalidatesTags: ['Bed']
     }),
+
     getBedsByIds: builder.mutation<Bed[], { ids: Id[] }>({
       query: ({ ids }) => ({
         url: '/api/setup/bed/by-ids',
@@ -116,6 +113,7 @@ export const bedService = createApi({
       }),
       invalidatesTags: ['Bed']
     }),
+
     getBedsByDepartmentId: builder.query<PagedResult<Bed>, { departmentId: Id } & PagedParams>({
       query: ({ departmentId, page, size, sort = 'id,asc', timestamp }) => ({
         url: `/api/setup/bed/search/by-department/${departmentId}`,
@@ -124,6 +122,7 @@ export const bedService = createApi({
       transformResponse: mapPaged,
       providesTags: ['Bed']
     }),
+
     markBedAsOutOfService: builder.mutation<Bed, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/bed/${id}/mark-out-of-service`,
@@ -131,6 +130,7 @@ export const bedService = createApi({
       }),
       invalidatesTags: ['Bed']
     }),
+
     markBedAsReady: builder.mutation<Bed, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/bed/${id}/mark-ready`,
@@ -138,6 +138,7 @@ export const bedService = createApi({
       }),
       invalidatesTags: ['Bed']
     }),
+
     countActiveBeds: builder.query<number, { departmentId: Id }>({
       query: ({ departmentId }) => ({
         url: `/api/setup/bed/count/active/${departmentId}`
@@ -145,33 +146,13 @@ export const bedService = createApi({
       providesTags: ['Bed']
     }),
 
-    countOccupiedBeds: builder.query<number, { departmentId: Id }>({
-      query: ({ departmentId }) => ({
-        url: `/api/setup/bed/count/occupied/${departmentId}`
+    countBedsByStatus: builder.query<number, { departmentId: Id; status: BedStatus }>({
+      query: ({ departmentId, status }) => ({
+        url: `/api/setup/bed/count/${status}/${departmentId}`
       }),
       providesTags: ['Bed']
     }),
 
-    countOutOfServiceBeds: builder.query<number, { departmentId: Id }>({
-      query: ({ departmentId }) => ({
-        url: `/api/setup/bed/count/out-of-service/${departmentId}`
-      }),
-      providesTags: ['Bed']
-    }),
-
-    countEmptyBeds: builder.query<number, { departmentId: Id }>({
-      query: ({ departmentId }) => ({
-        url: `/api/setup/bed/count/empty/${departmentId}`
-      }),
-      providesTags: ['Bed']
-    }),
-
-    countInCleaningBeds: builder.query<number, { departmentId: Id }>({
-      query: ({ departmentId }) => ({
-        url: `/api/setup/bed/count/in-cleaning/${departmentId}`
-      }),
-      providesTags: ['Bed']
-    }),
     getAllActiveBedsByRoomId: builder.query<PagedResult<Bed>, { roomId: Id } & PagedParams>({
       query: ({ roomId, page, size, sort = 'id,asc', timestamp }) => ({
         url: `/api/setup/bed/search/all-active/by-room/${roomId}`,
@@ -181,7 +162,6 @@ export const bedService = createApi({
       providesTags: ['Bed']
     }),
   }),
-
 });
 
 export const {
@@ -197,8 +177,7 @@ export const {
   useLazyGetBedByIdQuery,
   useAddBedMutation,
   useUpdateBedMutation,
-  useActivateBedMutation,
-  useDeactivateBedMutation,
+  useChangeBedActivationStatusMutation,
   useOccupyBedMutation,
   useMarkBedAsInCleaningMutation,
   useMarkBedAsOutOfServiceMutation,
@@ -207,12 +186,6 @@ export const {
   useGetBedsByDepartmentIdQuery,
   useCountActiveBedsQuery,
   useLazyCountActiveBedsQuery,
-  useCountOccupiedBedsQuery,
-  useLazyCountOccupiedBedsQuery,
-  useCountOutOfServiceBedsQuery,
-  useLazyCountOutOfServiceBedsQuery,
-  useCountEmptyBedsQuery,
-  useLazyCountEmptyBedsQuery,
-  useCountInCleaningBedsQuery,
-  useLazyCountInCleaningBedsQuery,
+  useCountBedsByStatusQuery,
+  useLazyCountBedsByStatusQuery,
 } = bedService;

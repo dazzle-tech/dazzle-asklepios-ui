@@ -29,8 +29,7 @@ import {
   useGetBedRoomServicesQuery,
   useAddBedRoomServiceMutation,
   useUpdateBedRoomServiceMutation,
-  useActivateBedRoomServiceMutation,
-  useDeactivateBedRoomServiceMutation
+  useChangeBedRoomServiceActivationStatusMutation
 } from '@/services/setup/room/bedRoomService';
 import { useGetActiveServicesByFacilityQuery } from '@/services/setup/serviceService';
 
@@ -84,6 +83,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     data?.error ||
     data?.properties?.message ||
     '';
+
   const rawMessage =
     data?.errorKey ||
     messageProp ||
@@ -148,6 +148,9 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
   const facilityId = room?.facility?.id ?? room?.facilityId ?? null;
   const roomId = room?.id ?? null;
 
+  const shouldLoadBeds =
+    !!roomId && !!openChildModal && !!hasBedSpecific?.bedSpecific;
+
   const {
     data: bedsResponse,
     isFetching: isBedsLoading
@@ -158,9 +161,11 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
       size: 20,
       sort: 'id,asc'
     },
-    { skip: !roomId }
+    {
+      skip: !shouldLoadBeds
+    }
   );
-  console.log('Beds Response:', bedsResponse);
+
   const {
     data: allRoomServicesResponse,
     isFetching: fetchingServicesList,
@@ -179,8 +184,8 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
 
   const [addBedRoomService, { isLoading: isAdding }] = useAddBedRoomServiceMutation();
   const [updateBedRoomService, { isLoading: isUpdating }] = useUpdateBedRoomServiceMutation();
-  const [activateBedRoomService] = useActivateBedRoomServiceMutation();
-  const [deactivateBedRoomService] = useDeactivateBedRoomServiceMutation();
+  const [changeBedRoomServiceActivationStatus] =
+    useChangeBedRoomServiceActivationStatusMutation();
 
   const { data: serviceListResponse } = useGetActiveServicesByFacilityQuery(
     {
@@ -235,57 +240,63 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
   }, [allRoomServicesResponse?.data]);
 
   useEffect(() => {
-    if (!bedsResponse) return;
+    if (!shouldLoadBeds) return;
 
-    const rows = bedsResponse.data ?? [];
-    const nextLink = bedsResponse.links?.next ?? null;
+    const rows = bedsResponse?.data ?? [];
+    const nextLink = bedsResponse?.links?.next ?? null;
 
     setBedHasMore(Boolean(nextLink));
     setBedNextLink(nextLink);
 
-    if (bedPage === 0) {
-      setAllActiveBeds(rows);
-    } else {
-      setAllActiveBeds(prev => {
-        const seenIds = new Set(prev.map(b => Number(b.id)));
-        const merged = [...prev];
-        rows.forEach((b: Bed) => {
-          if (!seenIds.has(Number(b.id))) {
-            merged.push(b);
-          }
-        });
-        return merged;
+    setAllActiveBeds(prev => {
+      if (bedPage === 0) {
+        return rows;
+      }
+
+      const seenIds = new Set(prev.map(b => Number(b.id)));
+      const merged = [...prev];
+
+      rows.forEach((b: Bed) => {
+        if (!seenIds.has(Number(b.id))) {
+          merged.push(b);
+        }
       });
-    }
-  }, [bedsResponse, bedPage]);
+
+      return merged;
+    });
+  }, [shouldLoadBeds, openChildModal, bedPage, bedsResponse?.data, bedsResponse?.links?.next]);
 
   const activeBedOptions = useMemo(() => {
     return allActiveBeds.map((bed: Bed) => ({
-      key: String(bed.id),
-      name: bed.name,
+      label: bed.name,
+      value: String(bed.id),
       object: bed
     }));
   }, [allActiveBeds]);
 
   const mergedBedOptions = useMemo(() => {
-    const map = new Map<number, { key: string; name: string; object: Bed }>();
+    const map = new Map<number, { label: string; value: string; object: Bed }>();
 
     activeBedOptions.forEach(item => {
-      map.set(Number(item.key), item);
+      map.set(Number(item.value), item);
     });
 
     if (roomService?.bed?.id) {
       map.set(Number(roomService.bed.id), {
-        key: String(roomService.bed.id),
-        name: roomService.bed.name,
+        label: roomService.bed.name,
+        value: String(roomService.bed.id),
         object: roomService.bed as Bed
       });
     }
 
-    if (roomService?.bedId !== null && roomService?.bedId !== undefined && roomService?.bed?.name) {
+    if (
+      roomService?.bedId !== null &&
+      roomService?.bedId !== undefined &&
+      roomService?.bed?.name
+    ) {
       map.set(Number(roomService.bedId), {
-        key: String(roomService.bedId),
-        name: roomService.bed.name,
+        label: roomService.bed.name,
+        value: String(roomService.bedId),
         object: roomService.bed as Bed
       });
     }
@@ -312,13 +323,13 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
   }, [open]);
 
   useEffect(() => {
-    if (room?.id) {
-      setBedPage(0);
-      setAllActiveBeds([]);
-      setBedHasMore(false);
-      setBedNextLink(null);
-      setBedFilterSession(prev => prev + 1);
-    }
+    if (!room?.id) return;
+
+    setBedPage(0);
+    setAllActiveBeds([]);
+    setBedHasMore(false);
+    setBedNextLink(null);
+    setBedFilterSession(prev => prev + 1);
   }, [room?.id]);
 
   useEffect(() => {
@@ -344,6 +355,19 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
       setSelectedService(selectedServiceFromList.object);
     }
   }, [roomService?.serviceId, mergedServicesArray, selectedService?.id]);
+
+  const handleChildModalClose = (val: boolean) => {
+    setOpenChildModal(val);
+
+    if (!val) {
+      setBedPage(0);
+      setAllActiveBeds([]);
+      setBedHasMore(false);
+      setBedNextLink(null);
+      setBedFilterSession(prev => prev + 1);
+      setHasBedSpecific({ bedSpecific: false });
+    }
+  };
 
   const validateBeforeSave = (payload: BedRoomService) => {
     if (!payload.roomId) {
@@ -371,7 +395,8 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
 
       if (payload.bedSpecific && item.bedSpecific) {
         return (
-          Number(item.bedId) === Number(payload.bedId) && Number(item.id) !== Number(payload.id)
+          Number(item.bedId) === Number(payload.bedId) &&
+          Number(item.id) !== Number(payload.id)
         );
       }
 
@@ -434,13 +459,21 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
     if (!roomService?.id) return;
 
     try {
-      if (roomService.isActive) {
-        await deactivateBedRoomService({ id: roomService.id }).unwrap();
-        dispatch(notify({ msg: 'Room service deactivated successfully', sev: 'success' }));
-      } else {
-        await activateBedRoomService({ id: roomService.id }).unwrap();
-        dispatch(notify({ msg: 'Room service activated successfully', sev: 'success' }));
-      }
+      const active = !roomService.isActive;
+
+      await changeBedRoomServiceActivationStatus({
+        id: roomService.id,
+        active
+      }).unwrap();
+
+      dispatch(
+        notify({
+          msg: active
+            ? 'Room service activated successfully'
+            : 'Room service deactivated successfully',
+          sev: 'success'
+        })
+      );
 
       await refetchServices();
       setRoomService({ ...newBedRoomServiceUpdateDTO });
@@ -580,7 +613,7 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
                 fieldLabel="Facility"
                 fieldName="name"
                 record={room?.facility ?? {}}
-                setRecord={() => { }}
+                setRecord={() => {}}
                 disabled
               />
 
@@ -589,7 +622,7 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
                 fieldLabel="Department"
                 fieldName="name"
                 record={room?.department ?? {}}
-                setRecord={() => { }}
+                setRecord={() => {}}
                 disabled
               />
 
@@ -703,11 +736,23 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
                       bedSpecific: false,
                       bed: null
                     }));
+                    setBedPage(0);
+                    setAllActiveBeds([]);
+                    setBedHasMore(false);
+                    setBedNextLink(null);
+                    setBedFilterSession(prev => prev + 1);
                   } else {
                     setRoomService(prev => ({
                       ...prev,
-                      bedSpecific: true
+                      bedId: null,
+                      bedSpecific: true,
+                      bed: null
                     }));
+                    setBedPage(0);
+                    setAllActiveBeds([]);
+                    setBedHasMore(false);
+                    setBedNextLink(null);
+                    setBedFilterSession(prev => prev + 1);
                   }
                 }}
               />
@@ -715,14 +760,14 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
               {hasBedSpecific?.bedSpecific && (
                 <MyInput
                   required
-                  key={`active-beds-${bedFilterSession}-${room?.id ?? 'none'}-${roomService?.bedId ?? 'none'}`}
+                  key={`active-beds-${bedFilterSession}-${room?.id ?? 'none'}-${roomService?.bedId ?? 'none'}-${openChildModal ? 'open' : 'closed'}`}
                   column
                   width={175}
                   fieldLabel="Bed Name"
                   fieldType="selectPagination"
                   selectData={mergedBedOptions}
-                  selectDataLabel="name"
-                  selectDataValue="key"
+                  selectDataLabel="label"
+                  selectDataValue="value"
                   fieldName="bedId"
                   record={{
                     ...roomService,
@@ -734,7 +779,7 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
                   setRecord={(updated: any) => {
                     const next = typeof updated === 'function' ? updated(roomService) : updated;
                     const selectedBed = mergedBedOptions.find(
-                      item => String(item.key) === String(next?.bedId ?? '')
+                      item => String(item.value) === String(next?.bedId ?? '')
                     );
 
                     setRoomService(prev => ({
@@ -744,7 +789,7 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
                       bed: selectedBed?.object ?? null
                     }));
                   }}
-                  searchable={false}
+                  searchable
                   disabled={!hasBedSpecific?.bedSpecific}
                   loading={isBedsLoading}
                   hasMore={bedHasMore}
@@ -771,10 +816,8 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
     }
   };
 
-
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
@@ -783,9 +826,11 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
         open={open}
         setOpen={setOpen}
         showChild={openChildModal}
-        setShowChild={setOpenChildModal}
+        setShowChild={handleChildModalClose}
         title="Services"
-        mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
+        mainContent={(stepNumber) => (
+          <div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>
+        )}
         childStep={[
           {
             title: 'Service',
@@ -799,7 +844,9 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
           }
         ]}
         childTitle={roomService?.id ? 'Edit Service Info' : 'Add Service'}
-        childContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfChildModal(stepNumber)}</div>)}
+        childContent={(stepNumber) => (
+          <div dir={dir}>{conjureFormContentOfChildModal(stepNumber)}</div>
+        )}
         mainSize="sm"
         actionChildButtonFunction={handleSave}
         hideActionBtn={false}

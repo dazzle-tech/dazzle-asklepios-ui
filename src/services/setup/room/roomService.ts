@@ -79,13 +79,14 @@ export const roomService = createApi({
       invalidatesTags: ['Room']
     }),
 
-    activateRoom: builder.mutation<Room, { id: Id }>({
-      query: ({ id }) => ({
-        url: `/api/setup/room/${id}/activate`,
-        method: 'POST'
+    changeRoomActivationStatus: builder.mutation<Room, { id: Id; active: boolean }>({
+      query: ({ id, active }) => ({
+        url: `/api/setup/room/${id}/activation-status/${active}`,
+        method: 'PUT'
       }),
       invalidatesTags: ['Room']
     }),
+
     getAvailableRoomsByDepartmentAndGender: builder.query<
       PagedResult<Room>,
       { departmentId: Id; gender: string } & PagedParams
@@ -97,13 +98,7 @@ export const roomService = createApi({
       transformResponse: mapPaged,
       providesTags: ['Room']
     }),
-    deactivateRoom: builder.mutation<Room, { id: Id }>({
-      query: ({ id }) => ({
-        url: `/api/setup/room/${id}/deactivate`,
-        method: 'POST'
-      }),
-      invalidatesTags: ['Room']
-    }),
+
     getRoomsByIds: builder.mutation<Room[], { ids: Id[] }>({
       query: ({ ids }) => ({
         url: '/api/setup/room/by-ids',
@@ -126,8 +121,7 @@ export const {
   useLazyGetRoomByIdQuery,
   useAddRoomMutation,
   useUpdateRoomMutation,
-  useActivateRoomMutation,
-  useDeactivateRoomMutation,
+  useChangeRoomActivationStatusMutation,
   useGetAvailableRoomsByDepartmentAndGenderQuery,
   useLazyGetAvailableRoomsByDepartmentAndGenderQuery,
   useGetRoomsByIdsMutation

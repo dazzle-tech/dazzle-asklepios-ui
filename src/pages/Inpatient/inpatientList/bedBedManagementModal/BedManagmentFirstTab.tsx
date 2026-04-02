@@ -5,10 +5,7 @@ import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import {
   useCountActiveBedsQuery,
-  useCountEmptyBedsQuery,
-  useCountInCleaningBedsQuery,
-  useCountOccupiedBedsQuery,
-  useCountOutOfServiceBedsQuery,
+  useCountBedsByStatusQuery,
   useGetBedsByDepartmentIdQuery,
   useMarkBedAsOutOfServiceMutation,
   useMarkBedAsReadyMutation
@@ -64,23 +61,23 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
     { skip: !departmentKey }
   );
 
-  const { data: occupiedBeds = 0 } = useCountOccupiedBedsQuery(
-    { departmentId: departmentKey },
+  const { data: occupiedBeds = 0 } = useCountBedsByStatusQuery(
+    { departmentId: departmentKey, status: 'OCCUPIED' },
     { skip: !departmentKey }
   );
 
-  const { data: availableBeds = 0 } = useCountEmptyBedsQuery(
-    { departmentId: departmentKey },
+  const { data: availableBeds = 0 } = useCountBedsByStatusQuery(
+    { departmentId: departmentKey, status: 'EMPTY' },
     { skip: !departmentKey }
   );
 
-  const { data: outOfServiceBeds = 0 } = useCountOutOfServiceBedsQuery(
-    { departmentId: departmentKey },
+  const { data: outOfServiceBeds = 0 } = useCountBedsByStatusQuery(
+    { departmentId: departmentKey, status: 'OUT_OF_SERVICE' },
     { skip: !departmentKey }
   );
 
-  const { data: inCleaning = 0 } = useCountInCleaningBedsQuery(
-    { departmentId: departmentKey },
+  const { data: inCleaning = 0 } = useCountBedsByStatusQuery(
+    { departmentId: departmentKey, status: 'IN_CLEANING' },
     { skip: !departmentKey }
   );
 
@@ -193,10 +190,11 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
       }
     }
   ];
+
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <div dir={dir}>
       <div className="statistics-container">
@@ -249,6 +247,7 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
           width={250}
         />
       </div>
+
       <MyTable
         height={400}
         data={bedsData}
@@ -271,7 +270,6 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
           }));
         }}
       />
-
     </div>
   );
 };

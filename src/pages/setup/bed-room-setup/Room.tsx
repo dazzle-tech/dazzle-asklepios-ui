@@ -29,8 +29,7 @@ import {
   useGetRoomsQuery,
   useGetRoomsByDepartmentIdQuery,
   useGetRoomsByNameQuery,
-  useActivateRoomMutation,
-  useDeactivateRoomMutation
+  useChangeRoomActivationStatusMutation
 } from '@/services/setup/room/roomService';
 import { formatEnumString } from '@/utils';
 
@@ -189,8 +188,7 @@ const RoomSection = () => {
     }
   );
 
-  const [activateRoom] = useActivateRoomMutation();
-  const [deactivateRoom] = useDeactivateRoomMutation();
+  const [changeRoomActivationStatus] = useChangeRoomActivationStatusMutation();
 
   useEffect(() => {
     if (!departmentsResp) return;
@@ -305,13 +303,16 @@ const RoomSection = () => {
     if (!room?.id) return;
 
     try {
-      if (room.isActive) {
-        await deactivateRoom({ id: room.id }).unwrap();
-        dispatch(notify({ msg: 'Room Deactivated Successfully', sev: 'success' }));
-      } else {
-        await activateRoom({ id: room.id }).unwrap();
-        dispatch(notify({ msg: 'Room Activated Successfully', sev: 'success' }));
-      }
+      const active = !room.isActive;
+
+      await changeRoomActivationStatus({ id: room.id, active }).unwrap();
+
+      dispatch(
+        notify({
+          msg: active ? 'Room Activated Successfully' : 'Room Deactivated Successfully',
+          sev: 'success'
+        })
+      );
 
       await refetchActiveList();
       setRoom({ ...newRoom });
@@ -596,8 +597,8 @@ const RoomSection = () => {
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <Panel dir={dir}>
       <MyTable

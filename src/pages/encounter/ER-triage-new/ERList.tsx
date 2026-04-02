@@ -76,10 +76,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw) {
@@ -271,10 +271,11 @@ const ERList = () => {
   });
   const [searchTick, setSearchTick] = useState(0);
   const [record, setRecord] = useState<any>({});
+  const [filterLoading, setFilterLoading] = useState(false);
 
   useEffect(() => {
     if (!departmentId) return;
-    triggerGetDepartmentById(Number(departmentId)).catch(() => {});
+    triggerGetDepartmentById(Number(departmentId)).catch(() => { });
   }, [departmentId, triggerGetDepartmentById]);
 
   const isEmergencyDepartment = useMemo(() => {
@@ -282,6 +283,7 @@ const ERList = () => {
   }, [departmentData]);
 
   const handlePatientSearchClick = useCallback(() => {
+    setFilterLoading(true);
     setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
     setPage(0);
     setSearchTick(prev => prev + 1);
@@ -347,6 +349,12 @@ const ERList = () => {
     skip: !filterParams
   });
 
+  useEffect(() => {
+    if (!isEncountersFetching) {
+      setFilterLoading(false);
+    }
+  }, [isEncountersFetching]);
+
   const dateRangeCountsSkip = !departmentId || !isEmergencyDepartment;
 
   const dateRangeCountParams = useMemo(
@@ -398,7 +406,7 @@ const ERList = () => {
 
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo, isEmergencyDepartment]);
 
   const patientMap = useMemo(() => {
@@ -495,12 +503,12 @@ const ERList = () => {
 
   useEffect(() => {
     if (!isEmergencyDepartment || roomIdsFromAssignments.length === 0) return;
-    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => {});
+    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => { });
   }, [isEmergencyDepartment, roomIdsFromAssignments, getRoomsByIds]);
 
   useEffect(() => {
     if (!isEmergencyDepartment || bedIdsFromAssignments.length === 0) return;
-    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => {});
+    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => { });
   }, [isEmergencyDepartment, bedIdsFromAssignments, getBedsByIds]);
 
   const roomsMap = useMemo(() => {
@@ -555,17 +563,17 @@ const ERList = () => {
         resolvedBed: bedFromApi,
         apRoom: roomFromApi?.name
           ? {
-              ...(row?.apRoom ?? {}),
-              key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
-              name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
-            }
+            ...(row?.apRoom ?? {}),
+            key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
+            name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
+          }
           : row?.apRoom,
         apBed: bedFromApi?.name
           ? {
-              ...(row?.apBed ?? {}),
-              key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
-              name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
-            }
+            ...(row?.apBed ?? {}),
+            key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
+            name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
+          }
           : row?.apBed
       };
     });
@@ -633,7 +641,8 @@ const ERList = () => {
       return true;
     } catch (err: any) {
       const errorMap: Record<string, string> = {
-        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.rule':
+          'Cancellation is not allowed for the current encounter status.',
         'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
       };
 
@@ -714,6 +723,7 @@ const ERList = () => {
     const lastWeekDate = new Date(now);
     lastWeekDate.setDate(lastWeekDate.getDate() - 7);
 
+    setFilterLoading(true);
     setRecord({});
     setDateFilter({ fromDate: lastWeekDate, toDate: now });
     setStatusIn(DEFAULT_STATUS);
@@ -783,6 +793,16 @@ const ERList = () => {
       key: 'location',
       title: 'LOCATION',
       render: (row: any) => {
+        const statusUpper = String(row?.status ?? '').toUpperCase();
+
+        if (statusUpper === 'DISCHARGED') {
+          return <span className="location-table-style">Discharged</span>;
+        }
+
+        if (statusUpper === 'CLOSED') {
+          return <span className="location-table-style">Closed</span>;
+        }
+
         const assignments = row?.activeAssignmentsForEncounter ?? [];
 
         const speaker = (
@@ -914,21 +934,25 @@ const ERList = () => {
               </div>
             </Whisper>
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="gray"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    setLocalPatient(row?.patientObject ?? { ...newPatient });
-                    setOpenChangeBedModal(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faBed} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {statusUpper != 'CLOSED' &&
+              statusUpper != 'DISCHARGED' &&
+              statusUpper != 'CANCELLED' && (
+                <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
+                  <div>
+                    <MyButton
+                      size="small"
+                      backgroundColor="gray"
+                      onClick={() => {
+                        setLocalEncounter(row);
+                        setLocalPatient(row?.patientObject ?? { ...newPatient });
+                        setOpenChangeBedModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faBed} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
 
             <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
               <div>
@@ -982,6 +1006,7 @@ const ERList = () => {
           fieldName="fromDate"
           record={dateFilter}
           setRecord={v => {
+            setFilterLoading(true);
             setDateFilter(v);
             setPage(0);
           }}
@@ -995,6 +1020,7 @@ const ERList = () => {
           fieldName="toDate"
           record={dateFilter}
           setRecord={v => {
+            setFilterLoading(true);
             setDateFilter(v);
             setPage(0);
           }}
@@ -1017,6 +1043,7 @@ const ERList = () => {
           selectDataValue="value"
           record={{ statusIn }}
           setRecord={(v: any) => {
+            setFilterLoading(true);
             setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
             setPage(0);
           }}
@@ -1038,6 +1065,7 @@ const ERList = () => {
                 fieldLabel="Encounter Reason"
                 record={{ encounterReasons }}
                 setRecord={(v: any) => {
+                  setFilterLoading(true);
                   const raw = Array.isArray(v) ? v : v?.encounterReasons;
                   setEncounterReasons(Array.isArray(raw) ? raw.map(String).filter(Boolean) : []);
                   setPage(0);
@@ -1052,6 +1080,7 @@ const ERList = () => {
                 fieldType="text"
                 record={record}
                 setRecord={v => {
+                  setFilterLoading(true);
                   setRecord(v);
                   setPage(0);
                 }}
@@ -1063,6 +1092,7 @@ const ERList = () => {
                 fieldType="checkPicker"
                 record={{ priorities }}
                 setRecord={(v: any) => {
+                  setFilterLoading(true);
                   setPriorities(Array.isArray(v?.priorities) ? v.priorities : []);
                   setPage(0);
                 }}
@@ -1081,6 +1111,7 @@ const ERList = () => {
   );
 
   const tableLoading =
+    filterLoading ||
     isDepartmentFetching ||
     isEncountersLoading ||
     isEncountersFetching ||
@@ -1113,11 +1144,10 @@ const ERList = () => {
     );
   }
 
-              // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <Panel dir={dir}>
       <div className="inpatient-list-btns">
@@ -1210,7 +1240,11 @@ const ERList = () => {
         setOpen={setOpenRefillModal}
         title="Refill"
         size="90vw"
-        content={<div dir={dir}><RefillModalComponent /></div>}
+        content={
+          <div dir={dir}>
+            <RefillModalComponent />
+          </div>
+        }
         hideActionBtn={true}
         cancelButtonLabel="Close"
       />
@@ -1230,7 +1264,11 @@ const ERList = () => {
         setOpen={setOpenPhysicianOrderSummaryModal}
         title="Task Management"
         size="90vw"
-        content={<div dir={dir}><PhysicianOrderSummaryModal /></div>}
+        content={
+          <div dir={dir}>
+            <PhysicianOrderSummaryModal />
+          </div>
+        }
         actionButtonLabel="Save"
         cancelButtonLabel="Close"
       />
@@ -1240,7 +1278,11 @@ const ERList = () => {
         setOpen={setOpenEncounterLogsModal}
         title="Encounter Logs"
         size="70vw"
-        content={<div dir={dir}><EncounterLogsTable /></div>}
+        content={
+          <div dir={dir}>
+            <EncounterLogsTable />
+          </div>
+        }
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEncounterLogsModal(false)}
         cancelButtonLabel="Cancel"

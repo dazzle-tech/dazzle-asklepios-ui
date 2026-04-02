@@ -2,10 +2,10 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
-import { Form, Panel, Tooltip, Whisper } from 'rsuite';
+import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
-import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { calculateAgeFormat, formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import MyTable from '@/components/MyTable';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import { useGetBedTransactionsByDepartmentAndDateRangeQuery } from '@/services/patients/emergency/encounterAssignToBedService';
@@ -14,6 +14,7 @@ import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
 
 const BedTransactionsSecondTab = ({ departmentKey }) => {
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  const [initialRefreshDone, setInitialRefreshDone] = useState(false);
 
   const patientBulkIdsRef = useRef<string[]>([]);
 
@@ -51,7 +52,8 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
   const {
     data: bedTransactionsResponse,
     isFetching,
-    isLoading
+    isLoading,
+    refetch
   } = useGetBedTransactionsByDepartmentAndDateRangeQuery(
     {
       departmentId: departmentKey,
@@ -84,7 +86,7 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
 
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => { });
+      .catch(() => {});
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const roomIdsForBulk = useMemo(() => {
@@ -105,12 +107,12 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
 
   useEffect(() => {
     if (roomIdsForBulk.length === 0) return;
-    getRoomsByIds({ ids: roomIdsForBulk }).catch(() => { });
+    getRoomsByIds({ ids: roomIdsForBulk }).catch(() => {});
   }, [roomIdsForBulk, getRoomsByIds]);
 
   useEffect(() => {
     if (bedIdsForBulk.length === 0) return;
-    getBedsByIds({ ids: bedIdsForBulk }).catch(() => { });
+    getBedsByIds({ ids: bedIdsForBulk }).catch(() => {});
   }, [bedIdsForBulk, getBedsByIds]);
 
   const patientMap = useMemo(() => {
@@ -149,18 +151,20 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
       const patientId = row?.patient?.id ?? null;
       const patient = patientId ? patientMap.get(String(patientId)) : null;
 
+      const firstName = String(patient?.firstName ?? row?.patient?.firstName ?? '').trim();
+      const secondName = String(patient?.secondName ?? row?.patient?.secondName ?? '').trim();
+      const thirdName = String(patient?.thirdName ?? row?.patient?.thirdName ?? '').trim();
+      const lastName = String(patient?.lastName ?? row?.patient?.lastName ?? '').trim();
+
       const fullName =
-        [
-          patient?.firstName,
-          patient?.secondName,
-          patient?.thirdName,
-          patient?.lastName
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .trim() ||
+        [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim() ||
         row?.patient?.fullName ||
         '-';
+
+      const dob = patient?.dateOfBirth ?? row?.patient?.dateOfBirth ?? null;
+      const sexAtBirth =
+        formatEnumString(patient?.sexAtBirth ?? row?.patient?.sexAtBirth) || '';
+      const isPrivate = patient?.isPrivatePatient ?? row?.patient?.isPrivatePatient ?? false;
 
       const fromRoom = row?.fromRoomId ? roomsMap.get(String(row.fromRoomId)) : null;
       const toRoom = row?.toRoomId ? roomsMap.get(String(row.toRoomId)) : null;
@@ -173,10 +177,12 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
           id: patientId,
           fullName,
           medicalRecordNumber:
-            patient?.medicalRecordNumber ??
-            row?.patient?.medicalRecordNumber ??
-            '-'
+            patient?.medicalRecordNumber ?? row?.patient?.medicalRecordNumber ?? '-',
+          dateOfBirth: dob,
+          sexAtBirth,
+          isPrivatePatient: isPrivate
         },
+        patientAge: dob ? calculateAgeFormat(dob) : null,
         resolvedFromRoom: fromRoom,
         resolvedToRoom: toRoom,
         resolvedFromBed: fromBed,
@@ -203,8 +209,29 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
   };
 
   useEffect(() => {
-    handleManualSearch();
+    const fromDate = dateFilter.fromDate ? new Date(dateFilter.fromDate) : null;
+    const toDate = dateFilter.toDate ? new Date(dateFilter.toDate) : null;
+
+    if (fromDate) fromDate.setHours(0, 0, 0, 0);
+    if (toDate) toDate.setHours(23, 59, 59, 999);
+
+    setSearchParams({
+      from: fromDate ? fromDate.toISOString() : '',
+      to: toDate ? toDate.toISOString() : ''
+    });
   }, []);
+
+  useEffect(() => {
+    if (
+      departmentKey &&
+      searchParams.from &&
+      searchParams.to &&
+      !initialRefreshDone
+    ) {
+      refetch();
+      setInitialRefreshDone(true);
+    }
+  }, [departmentKey, searchParams.from, searchParams.to, refetch, initialRefreshDone]);
 
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
@@ -218,8 +245,6 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
     patientsBulkLoading ||
     isRoomsByIdsLoading ||
     isBedsByIdsLoading;
-
-
 
   const tableColumns = [
     {
@@ -262,7 +287,8 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
     {
       key: 'transactionType',
       title: <Translate>TRANSACTION TYPE</Translate>,
-      render: (rowData: any) => rowData?.transactionType ? formatEnumString(rowData?.transactionType) : '-'
+      render: (rowData: any) =>
+        rowData?.transactionType ? formatEnumString(rowData?.transactionType) : '-'
     },
     {
       key: 'fromLocation',
@@ -316,9 +342,7 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
       key: 'transactionDate',
       title: <Translate>TRANSACTION DATE</Translate>,
       render: (rowData: any) =>
-        rowData?.transactionDate
-          ? formatDateWithoutSeconds(rowData?.transactionDate)
-          : '-'
+        rowData?.transactionDate ? formatDateWithoutSeconds(rowData?.transactionDate) : '-'
     },
     {
       key: 'createdAt',
@@ -349,7 +373,7 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
             </span>
           </>
         ) : null
-    },
+    }
   ];
 
   const handlePageChange = (_: unknown, newPage: number) => {
@@ -395,11 +419,9 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
     );
   };
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <Panel dir={dir}>
@@ -412,6 +434,7 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
         sortColumn={sortState.sortBy}
         sortType={sortState.sortType as any}
         onSortChange={(sortBy, sortType) => {
+          setManualSearchTriggered(true);
           setSortState({
             sortBy,
             sortType

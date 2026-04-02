@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
@@ -20,8 +20,7 @@ import {
   useGetBedsByRoomIdQuery,
   useAddBedMutation,
   useUpdateBedMutation,
-  useActivateBedMutation,
-  useDeactivateBedMutation
+  useChangeBedActivationStatusMutation
 } from '@/services/setup/room/bedService';
 
 import './styles.less';
@@ -126,8 +125,7 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
 
   const [addBed, { isLoading: isAdding }] = useAddBedMutation();
   const [updateBed, { isLoading: isUpdating }] = useUpdateBedMutation();
-  const [activateBed] = useActivateBedMutation();
-  const [deactivateBed] = useDeactivateBedMutation();
+  const [changeBedActivationStatus] = useChangeBedActivationStatusMutation();
 
   useEffect(() => {
     if (!open) {
@@ -206,13 +204,16 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
     if (!bed?.id) return;
 
     try {
-      if (bed.isActive) {
-        await deactivateBed({ id: bed.id }).unwrap();
-        dispatch(notify({ msg: 'Bed deactivated successfully', sev: 'success' }));
-      } else {
-        await activateBed({ id: bed.id }).unwrap();
-        dispatch(notify({ msg: 'Bed activated successfully', sev: 'success' }));
-      }
+      const active = !bed.isActive;
+
+      await changeBedActivationStatus({ id: bed.id, active }).unwrap();
+
+      dispatch(
+        notify({
+          msg: active ? 'Bed activated successfully' : 'Bed deactivated successfully',
+          sev: 'success'
+        })
+      );
 
       await refetch();
       await refetchRoom();
@@ -320,7 +321,7 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
                 fieldLabel="Facility"
                 fieldName="name"
                 record={room?.facility}
-                setRecord={() => { }}
+                setRecord={() => {}}
                 disabled
               />
 
@@ -329,7 +330,7 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
                 fieldLabel="Department"
                 fieldName="name"
                 record={room?.department}
-                setRecord={() => { }}
+                setRecord={() => {}}
                 disabled
               />
 
@@ -423,10 +424,11 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
         return null;
     }
   };
+
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <>
       <ChildModal
@@ -435,11 +437,11 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
         title="Beds"
-        mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
+        mainContent={(stepNumber) => <div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>}
         childStep={[{ title: 'Bed', icon: <FontAwesomeIcon icon={faBedPulse} /> }]}
         mainStep={[{ title: 'Beds', icon: <FontAwesomeIcon icon={faHospital} /> }]}
         childTitle={bed?.id ? 'Edit Bed Info' : 'Add Bed'}
-        childContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfChildModal(stepNumber)}</div>)}
+        childContent={(stepNumber) => <div dir={dir}>{conjureFormContentOfChildModal(stepNumber)}</div>}
         mainSize="sm"
         actionChildButtonFunction={handleSave}
         hideActionBtn={false}

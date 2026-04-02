@@ -67,18 +67,13 @@ export const bedRoomService = createApi({
       invalidatesTags: ['BedRoomService']
     }),
 
-    activateBedRoomService: builder.mutation<BedRoomService, { id: Id }>({
-      query: ({ id }) => ({
-        url: `/api/setup/bed-room-service/${id}/activate`,
-        method: 'POST'
-      }),
-      invalidatesTags: ['BedRoomService']
-    }),
-
-    deactivateBedRoomService: builder.mutation<BedRoomService, { id: Id }>({
-      query: ({ id }) => ({
-        url: `/api/setup/bed-room-service/${id}/deactivate`,
-        method: 'POST'
+    changeBedRoomServiceActivationStatus: builder.mutation<
+      BedRoomService,
+      { id: Id; active: boolean }
+    >({
+      query: ({ id, active }) => ({
+        url: `/api/setup/bed-room-service/${id}/activation-status/${active}`,
+        method: 'PUT'
       }),
       invalidatesTags: ['BedRoomService']
     })
@@ -92,6 +87,5 @@ export const {
   useLazyGetBedRoomServiceByIdQuery,
   useAddBedRoomServiceMutation,
   useUpdateBedRoomServiceMutation,
-  useActivateBedRoomServiceMutation,
-  useDeactivateBedRoomServiceMutation
+  useChangeBedRoomServiceActivationStatusMutation
 } = bedRoomService;
