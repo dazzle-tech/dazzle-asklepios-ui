@@ -158,6 +158,21 @@ export const availabilityTemplateService = createApi({
         await onQueryStarted(arg, api);
       },
       providesTags: ['AvailabilityTemplate']
+    }),
+
+    getAvailabilityTemplatesActiveByStatus: builder.query<
+      AvailabilityTemplateResponseVM[],
+      { status: string }
+    >({
+      query: ({ status }) => ({
+        url: '/api/patient/availability-templates/active/department/by-facility-and-status',
+        method: 'GET',
+        params: { status }
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AvailabilityTemplate']
     })
   })
 });
@@ -180,5 +195,6 @@ export const {
   useGetAvailabilityTemplatesByDepartmentIdQuery,
   useLazyGetAvailabilityTemplatesByDepartmentIdQuery,
   useGetAvailabilityTemplatesByStatusQuery,
-  useLazyGetAvailabilityTemplatesByStatusQuery
+  useLazyGetAvailabilityTemplatesByStatusQuery,
+  useGetAvailabilityTemplatesActiveByStatusQuery
 } = availabilityTemplateService;
