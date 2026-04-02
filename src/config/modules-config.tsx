@@ -150,13 +150,6 @@ export const MODULES: Module[] =
       screens: [
         { name: "Organization Definition", code: "ORGANIZATION_DEFINITION", description: "", icon: "FaBuilding", viewOrder: 0, navPath: "organization-definition" },
         // { name: "General Settings", code: "GENERAL_SETTINGS", description: "", icon: "FaGear", viewOrder: 1, navPath: "general-settings" },
-        { name: "Configurations", code: "CONFIGURATIONS", description: "", icon: "FaSliders", viewOrder: 2, navPath: "configurations" },
-        // { name: "Integration setup", code: "INTEGRATION_SETUP", description: "", icon: "FaPlug", viewOrder: 3, navPath: "integration-setup" },
-        { name: "Serial Setup", code: "SERIAL_SETUP", description: "", icon: "FaHashtag", viewOrder: 4, navPath: "serial-setup" },
-        { name: "Notification Management", code: "NOTIFICATION_MANAGEMENT", description: "", icon: "FaBell", viewOrder: 5, navPath: "notification-management" },
-        { name: "Email Management", code: "EMAIL_MANAGEMENT", description: "", icon: "FaEnvelope", viewOrder: 6, navPath: "email-management" },
-        { name: "Password Management", code: "PASSWORD_MANAGEMENT", description: "", icon: "FaLock", viewOrder: 7, navPath: "password-management" },
-        { name: "Data validation Management", code: "DATA_VALIDATION_MANAGEMENT", description: "", icon: "FaDatabase", viewOrder: 8, navPath: "data-validation-management" },
         { name: "User", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 9, navPath: "users-new" },
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
         { name: "Organization Holidays", code: "ORGANIZATION_HOLIDAY", description: "", icon: "FaBuilding", viewOrder: 11, navPath: "organization-holidays" },
