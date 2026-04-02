@@ -178,6 +178,13 @@ const LinkServices: React.FC<Props> = ({
     }
   }, [open, onPageChange, onRowsPerPageChange]);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -187,7 +194,7 @@ const LinkServices: React.FC<Props> = ({
       size="70vw"
       bodyheight="70vh"
       content={() => (
-        <Box display="flex" flexDirection="column" gap={1}>
+        <Box display="flex" flexDirection="column" gap={1} dir={dir}>
           <Typography variant="body2" color="text.secondary">
             <Translate>Selected services:</Translate> {selectedIds.length}
           </Typography>

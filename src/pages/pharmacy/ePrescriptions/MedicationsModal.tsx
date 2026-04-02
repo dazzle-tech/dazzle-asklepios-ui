@@ -182,8 +182,13 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
     }
   ];
 
+                    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <>
+    <div dir={dir}>
       <MyModal
         open={open}
         setOpen={setOpen}
@@ -195,7 +200,7 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
           }
         ]}
         content={
-          <div className="medications-modal">
+          <div className="medications-modal" dir={dir}>
             <div className="header-icon">
               <MyButton>
                 <FontAwesomeIcon icon={faCapsules} className="icon" />
@@ -517,7 +522,7 @@ const MedicationsModal = ({ open, setOpen, selectedPrescription }: any) => {
         hideActionBtn={true}
         size="80vw"
       />
-    </>
+    </div>
   );
 };
 

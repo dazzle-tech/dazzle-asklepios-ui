@@ -14,6 +14,7 @@ import MyInput from '@/components/MyInput';
 import {
   addFilterToListRequest,
   conjureValueBasedOnIDFromList,
+  formatEnumString,
   fromCamelCaseToDBName
 } from '@/utils';
 import {
@@ -292,9 +293,7 @@ const Room = () => {
       title: <Translate>Gender Spacific</Translate>,
       flexGrow: 4,
       render: rowData =>
-        rowData?.genderLvalue
-          ? rowData.genderLvalue.lovDisplayVale
-          : rowData.genderLkey
+       formatEnumString( rowData?.genderLkey )
     },
     {
       key: 'isValid',
@@ -336,8 +335,14 @@ const Room = () => {
     };
   }, [location.pathname, dispatch]);
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         data={roomListResponseLoading?.object ?? []}

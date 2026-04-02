@@ -4,7 +4,16 @@ import Flacc from './flacc/Flacc';
 import Neonatal from './neontes/Neonatal';
 
 const NeonatesPainAssessment = () => {
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <Tabs defaultActiveKey="flacc">
       <Tabs.Tab eventKey="flacc" title="FLACC Pain Scale">
         <Flacc />
@@ -13,6 +22,7 @@ const NeonatesPainAssessment = () => {
         <Neonatal />
       </Tabs.Tab>
     </Tabs>
+      </div>
   );
 };
 

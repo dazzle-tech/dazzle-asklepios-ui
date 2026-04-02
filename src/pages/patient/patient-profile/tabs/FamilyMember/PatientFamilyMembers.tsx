@@ -21,7 +21,6 @@ import {
 import { formatEnumString } from '@/utils';
 
 const PatientFamilyMembers = ({ localPatient }) => {
-    console.log('Rendering PatientFamilyMembers with localPatient:', localPatient);
   const dispatch = useAppDispatch();
 
   const [relationModalOpen, setRelationModalOpen] = useState(false);
@@ -59,9 +58,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
         title: <Translate>Relative Patient Name</Translate>,
         flexGrow: 4,
         render: (row: any) =>
-          row?.relativePatient?.firstName ??
-      
-          '',
+          row?.relativePatient?.firstName +" "+ row?.relativePatient?.secondName+" "+row?.relativePatient?.thirdName+" "+ row?.relativePatient?.lastName
       },
       {
         key: 'categoryType',
@@ -100,8 +97,15 @@ const PatientFamilyMembers = ({ localPatient }) => {
     setRelationModalOpen(true);
   };
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="tab-main-container">
+    <div className="tab-main-container" dir={dir}>
       <div className="tab-content-btns">
         <MyButton
           onClick={handleNewRelative}

@@ -58,6 +58,14 @@ export interface Department {
   isActive: boolean;
   hasMedicalSheets: boolean;
   hasNurseMedicalSheets: boolean;
+  parallelCapacityValue: number,
+  defaultDurationMinutes?: number,
+  defaultBufferBeforeMinutes: number,
+  defaultBufferAfterMinutes: number,
+  parallelCapacityEnabled: boolean,
+  requirePractitioner: boolean,
+  requireBilling: boolean,
+  requirePreAssessment: boolean
 }
 export interface Facility {
   id?: string;
@@ -72,6 +80,8 @@ export interface Facility {
   defaultCurrency: string;
   isActive?: boolean;
   ruleId?: number;
+  workingDays?: OrganizationWorkingDay[];
+  timeZone?: string;
 }
 
 export interface CreateFacility {
@@ -85,6 +95,8 @@ export interface CreateFacility {
   type: string;
   defaultCurrency: string;
   isActive?: boolean;
+  workingDays?: OrganizationWorkingDay[];
+  timeZone?: string;
 }
 
 export interface Role {
@@ -120,12 +132,17 @@ export interface Service {
   category?: string | null;
   price?: number | null;
   currency: string | null;
+  appointable?: boolean;
   isActive?: boolean;
   createdBy?: string | null;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   facilityId?: number;
+  parallelCapacityValue: number,
+  defaultDurationMinutes?: number,
+  defaultBufferBeforeMinutes: number,
+  defaultBufferAfterMinutes: number,
 }
 
 export interface ServiceItem {
@@ -168,10 +185,15 @@ export type CatalogResponseVM = {
   name: string;
   description?: string | null;
   type: string;
+  appointable?: boolean;
   departmentId: number;
   departmentName?: string | null;
   facilityId: number;
   facilityName: string | null;
+  parallelCapacityValue: number,
+  defaultDurationMinutes?: number,
+  defaultBufferBeforeMinutes: number,
+  defaultBufferAfterMinutes: number,
 };
 
 /* =========================
@@ -249,6 +271,10 @@ export interface Practitioner {
   jobRole?: string | null;
   gender?: string | null;
   isActive?: boolean;
+  parallelCapacityValue: number,
+  defaultDurationMinutes?: number,
+  defaultBufferBeforeMinutes: number,
+  defaultBufferAfterMinutes: number,
   createdBy?: string;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
@@ -394,6 +420,8 @@ export interface Procedure {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   facilityId?: number;
+  currency?: string | null;
+  price?: number | null;
 }
 // DiagnosticTest matches the domain entity fields (incl. raw DB strings + transient lists)
 
@@ -419,6 +447,11 @@ export interface DiagnosticTest {
   defaultProfileResultType?: string;
   defaultProfileResultUnit?: string;
   listOfValueId?: string | null;
+
+  parallelCapacityValue: number,
+  defaultDurationMinutes?: number,
+  defaultBufferBeforeMinutes: number,
+  defaultBufferAfterMinutes: number,
 }
 export interface DiagnosticOrderTestCollectedSampleDTO {
   orderId: number;
@@ -877,16 +910,26 @@ export type CatalogCreateVM = {
   name: string;
   description?: string | null;
   type: string;
+  appointable?: boolean;
   facilityId: number;
   departmentId: number;
+  parallelCapacityValue: number,
+  defaultDurationMinutes?: number,
+  defaultBufferBeforeMinutes: number,
+  defaultBufferAfterMinutes: number,
 };
 
 export type CatalogUpdateVM = {
   name?: string;
   description?: string | null;
   type?: string;
+  appointable?: boolean;
   departmentId?: number;
   facilityId: number;
+  parallelCapacityValue: number,
+  defaultDurationMinutes?: number,
+  defaultBufferBeforeMinutes: number,
+  defaultBufferAfterMinutes: number,
 };
 
 export type CatalogDiagnosticTest = {
@@ -1175,7 +1218,7 @@ export interface UserStickyNotesResponseVM {
   createdDate: Date;
   lastModifiedBy: string;
   lastModifiedDate: Date;
-  patientId: string;
+  patientId: number | null;
 }
 
 export interface UserStickyNotesCreateVM {
@@ -1184,7 +1227,7 @@ export interface UserStickyNotesCreateVM {
   priority: string;
   priorityOrder: number;
   color: string;
-  patientId: string;
+  patientId: number | null;
 }
 
 export interface PriceListItem {
@@ -1432,17 +1475,7 @@ export interface BillingItem {
  *  Referrals / Discharge
  * ========================= */
 
-export interface ReferralRequest {
-  id: number | null;
-  patientId: number;
-  encounterId: number | null;
-  referralType: string;
-  facilityId: number | null;
-  departmentId: number;
-  referralReason: string;
-  priority: string;
-  isActive: boolean;
-}
+
 
 export interface DischargePlanning {
   id?: number;
@@ -1647,12 +1680,13 @@ export interface PatientEncounter {
              
 }
 
-export interface PatientBasicInformationResponseVM {
-  id: number;
-  fullName: string;
-  medicalRecordNumber?: string;
-  primaryMobileNumber?: string;
-}
+export type PatientBasicInformationResponseVM = {
+  firstName: string;
+  lastName: string;
+  medicalRecordNumber: string;
+  dateOfBirth: string;
+  sexAtBirth: string;
+};
 
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
@@ -1825,12 +1859,6 @@ export interface PatientEncounter {
   lastModifiedDate?: string | null;
 }
 
-export interface PatientBasicInformationResponseVM {
-  id: number;
-  fullName: string;
-  medicalRecordNumber?: string;
-  primaryMobileNumber?: string;
-}
 
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
@@ -2035,12 +2063,6 @@ export interface BillingInvoiceCreateVM {
   encounterDate?: Date | null;
 }
 
-export interface PatientBasicInformationResponseVM {
-  id: number;
-  fullName: string;
-  medicalRecordNumber?: string;
-  primaryMobileNumber?: string;
-}
 
 export interface PatientDuplicationLookupDTO {
   firstName?: string | null;
@@ -2322,6 +2344,67 @@ export interface OrganizationDefinition {
   contactMobile?: string;
   contactLandNumber?: string;
   taxValue?: number;
+  defaultTimeZone?: string;
+  defaultLanguageId?: number;
+  workingDays?: OrganizationWorkingDay[];
+}
+
+export interface OrganizationWorkingDay {
+  id?: number;
+  dayOfWeek?: string;
+  isWorking?: boolean;
+}
+
+export type HolidayType = 'PUBLIC_HOLIDAY' | 'FORMAL_VACATION' | 'CLOSURE';
+
+export interface OrganizationHolidayResponseVM {
+  id: number;
+  organizationDefinitionId: number;
+  name: string;
+  holidayType: HolidayType;
+  startDate: string; 
+  endDate: string; 
+  reason?: string | null;
+  isActive: boolean;
+  allFacilities: boolean;
+  facilityIds?: string | null;
+  recurring: boolean;
+}
+
+export interface OrganizationHolidayCreateDTO {
+  organizationDefinitionId: number;
+  name: string;
+  holidayType: HolidayType;
+  startDate: string; 
+  endDate: string; 
+  reason?: string | null;
+  isActive: boolean;
+  allFacilities: boolean;
+  facilityIds?: string | null;
+  recurring: boolean;
+}
+
+export interface OrganizationHolidayUpdateDTO {
+  id: number;
+  name?: string | null;
+  holidayType?: HolidayType | null;
+  startDate?: string | null; 
+  endDate?: string | null; 
+  reason?: string | null;
+  isActive?: boolean | null;
+  allFacilities?: boolean | null;
+  facilityIds?: string | null;
+  recurring?: boolean | null;
+}
+
+export interface OrganizationHolidaySearchParams {
+  name?: string;
+  holidayType?: HolidayType;
+  startDate?: string; 
+  endDate?: string; 
+  recurring?: boolean;
+  allFacilities?: boolean;
+  facilityId?: number;
 }
 
 export interface PatientAllergiesActiveIngredientResponse {
@@ -3522,3 +3605,250 @@ export interface RelationsMatrix {
   firstRelationCode: string;
   secondRelationCode: string;
 }
+export interface PatientAdministrativeWarningsResponseVM {
+  id: number;
+  patient?: PatientBasicInformationResponseVM | null;
+  warningType: string;
+  description?: string | null;
+  resolved?: boolean | null;
+  resolvedBy?: string | null;
+  resolvedDate?: string | null;
+  undoResolvedBy?: string | null;
+  undoResolvedDate?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | null;
+}
+
+export interface PatientAdministrativeWarningsCreateDTO {
+  patientId: number;
+  warningType: string;
+  description?: string;
+}
+
+export interface PatientAdministrativeWarningsResolveDTO {
+  id: number;
+}
+
+export interface PatientAdministrativeWarningsUndoResolveDTO {
+  id: number;
+}
+export interface ReferralRequest {
+  id: number | undefined;
+
+  patientId: number;
+  encounterId: number | null;
+
+  referralType: string;
+
+  fromFacilityId: number;
+  toFacilityId: number;
+
+  fromDepartmentId: number;
+  toDepartmentId: number;
+
+  referralReason: string;
+
+  priority: string | null;
+
+  status?: string;
+
+  rejectReason?: string | null;
+  rejectedDate?: string | null;
+  rejectedBy?: string | null;
+
+  acceptedDate?: string | null;
+  acceptedBy?: string | null;
+}
+
+export type PatientInformationReportVM = {
+  patientId: number
+  fullName: string
+  mrn: string
+  dateOfBirth: string
+  age: number
+  gender: string
+  photoUrl?: string
+
+  documentType?: string
+  documentNumber?: string
+
+  mobileNumber?: string
+  secondaryPhone?: string
+  email?: string
+  address?: string
+  city?: string
+  state?: string
+  country?: string
+
+  emergencyName?: string
+  emergencyRelationship?: string
+  emergencyPhone?: string
+
+  registrationDate?: string
+  insuranceProvider?: string
+  policyNumber?: string
+
+  preferredHealthProfessional?: string
+}
+
+export type PatientLabelVM = {
+  patientId: number
+  patientFullName: string
+  mrn: string
+  dateOfBirth: string
+  age: number
+  gender: string
+  registrationDate: string
+}
+
+export type PatientWristbandVM = {
+  fullName: string
+  medicalRecordNumber: string
+  dateOfBirth: string
+  gender: string
+
+  barcode: string
+  qrCode: string
+
+  allergyAlert?: string
+  bloodGroup?: string
+
+  admissionDateTime?: string
+  facilityName?: string
+}
+
+export interface NurseSummaryPatientInfoVM {
+  patientId: number;
+  fullName: string;
+  medicalRecordNumber: string;
+  dateOfBirth: string | null;
+  age: number | null;
+  gender: string | null;
+}
+
+export interface NurseSummaryEncounterInfoVM {
+  encounterId: number;
+  encounterNumber: string | null;
+  encounterDate: string | null;
+  encounterType: string | null;
+  encounterReason: string | null;
+  priority: string | null;
+  status: string | null;
+  chiefComplaint: string | null;
+  facilityName: number | null;
+  departmentName: number | null;
+  createdDate: string | null;
+}
+
+export interface NurseSummaryObservationVM {
+  reasonOfVisit: string | null;
+  functionalStatus: string | null;
+  patientConditions: string | null;
+  cognitiveCheck: string | null;
+}
+
+export interface NurseSummaryVitalSignsVM {
+  bloodPressureSystolic: number | null;
+  bloodPressureDiastolic: number | null;
+  measurementSite: string | null;
+  heartRate: number | null;
+  temperature: number | null;
+  oxygenSaturation: number | null;
+  respiratoryRate: number | null;
+  notes: string | null;
+}
+
+export interface NurseSummaryBodyMeasurementsVM {
+  weight: number | null;
+  height: number | null;
+  headCircumference: number | null;
+}
+
+export interface NurseSummaryAdditionalMeasurementsVM {
+  ageGroup: string | null;
+  hearingTest: string | null;
+  dehydration: boolean | null;
+  nasalFlaring: boolean | null;
+  responseToLight: boolean | null;
+  pupilResponse: boolean | null;
+  abilityToFollowTarget: boolean | null;
+  colorTesting: boolean | null;
+  fallRisk: boolean | null;
+  visionProblemsAffectingFunction: boolean | null;
+  hearingProblemsAffectingFunction: boolean | null;
+  details: string | null;
+  actionToTake: string | null;
+}
+
+export interface NurseSummaryAllergyVM {
+  id: number;
+  allergenType: string | null;
+  allergenId: number | null;
+  severity: string | null;
+  criticality: string | null;
+  certainty: string | null;
+  treatmentStrategy: string | null;
+  onset: string | null;
+  onsetDate: string | null;
+  typeOfPropensity: string | null;
+  byPatient: boolean | null;
+  sourceOfInformation: string | null;
+  allergicReactions: string | null;
+  note: string | null;
+  status: string | null;
+}
+
+export interface NurseSummaryWarningVM {
+  id: number;
+  warningType: string | null;
+  warning: string | null;
+  severity: string | null;
+  onsetDate: string | null;
+  byPatient: boolean | null;
+  sourceOfInformation: string | null;
+  note: string | null;
+  actionTaken: string | null;
+  status: string | null;
+}
+
+export interface NurseSummaryVaccinationVM {
+  id: number;
+  vaccineId: number | null;
+  vaccineBrandId: number | null;
+  vaccineDoseId: number | null;
+  vaccineLotNumber: string | null;
+  dateAdministered: string | null;
+  status: string | null;
+  administeredLocation: string | null;
+  administrationReactions: string | null;
+  isExternalFacility: boolean | null;
+  externalFacilityName: string | null;
+  notes: string | null;
+}
+
+export interface NurseSummaryServiceProductVM {
+  id: number;
+  category: string | null;
+  serviceId: number | null;
+  productId: number | null;
+  quantity: number | null;
+}
+
+export interface NurseSummaryReportVM {
+  patientInfo: NurseSummaryPatientInfoVM | null;
+  encounterInfo: NurseSummaryEncounterInfoVM | null;
+  observation: NurseSummaryObservationVM | null;
+  vitalSigns: NurseSummaryVitalSignsVM | null;
+  bodyMeasurements: NurseSummaryBodyMeasurementsVM | null;
+  additionalMeasurements: NurseSummaryAdditionalMeasurementsVM | null;
+  allergies: NurseSummaryAllergyVM[];
+  warnings: NurseSummaryWarningVM[];
+  vaccinations: NurseSummaryVaccinationVM[];
+  servicesAndProducts: NurseSummaryServiceProductVM[];
+  generatedAt: string | null;
+}
+
+export type PatientDiagnosisFlag = {
+  encounterId: number;
+  hasPrimaryDiagnoses: boolean;
+};

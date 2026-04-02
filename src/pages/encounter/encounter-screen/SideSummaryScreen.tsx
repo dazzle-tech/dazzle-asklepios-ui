@@ -5,19 +5,14 @@ import { Panel, Sidebar, Sidenav, Nav } from 'rsuite';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ActiveAllergies from '../encounter-component/patient-summary/ActiveAllergies';
 import BodyDiagram from '../encounter-component/patient-summary/BodyDiagram';
-import IntakeOutputs from '../encounter-component/patient-summary/IntakeOutputs';
-import Last24HMedications from '../encounter-component/patient-summary/Last24-hMedications';
 import PreviuosVisitData from '../encounter-component/patient-summary/PreviuosVisitData';
 import PatientMajorProblemTable from '../encounter-component/patient-summary/PatientMajorProblem';
 import PatientChronicMedicationTable from '../encounter-component/patient-summary/PatientChronicMedication';
 import PreObservation from '../encounter-component/patient-summary/PreObservation/PreObservation';
-import FunctionalAssessmentSummary from '../encounter-component/nursing-reports-summary/FunctionalAssessmentSummary';
 import MedicalWarnings from '../encounter-component/patient-summary/MedicalWarnings';
-import PainAssessmentSummary from '../encounter-component/nursing-reports-summary/PainAssessmentSummary';
-import GeneralAssessmentSummary from '../encounter-component/nursing-reports-summary/GeneralAssessmentSummary';
 import Procedures from '../encounter-component/patient-summary/Procedures/Procedures';
 import RecentTestResults from '../encounter-component/patient-summary/RecentTestResults';
-import ChiefComplainSummary from '../encounter-component/nursing-reports-summary/ChiefComplainSummary';
+import { useGetUserDashboardComponentsQuery } from '@/services/encounterService';
 import './styles.less';
 
 
@@ -35,40 +30,30 @@ interface SideSummaryScreenProps {
 // Mapping component IDs to JSX elements
 const componentMap = (id: string, patient: any, encounter: any) => {
   switch (id) {
-    case 'ab1':
+    case 'c1':
       return <BodyDiagram patient={patient} />;
-    case 'ab2':
+    case 'c2':
       return <PreviuosVisitData patient={patient} encounter={encounter} />;
-    case 'ab3':
+    case 'c3':
       return <PatientMajorProblemTable patient={patient} />;
-    case 'ab4':
+    case 'c4':
       return <PatientChronicMedicationTable patient={patient} />;
-    case 'ab5':
+    case 'c5':
       return <PreObservation patient={patient} />;
-    case 'ab6':
-      return <FunctionalAssessmentSummary patient={patient} encounter={encounter} />;
-    case 'ab7':
+    case 'c7':
       return <ActiveAllergies patient={patient} />;
-    case 'ab8':
+    case 'c8':
       return <MedicalWarnings patient={patient} />;
-    case 'ab9':
-      return <PainAssessmentSummary patient={patient} encounter={encounter} />;
-    case 'ab10':
-      return <GeneralAssessmentSummary patient={patient} encounter={encounter} />;
-    case 'ab11':
+    case 'c11':
       return <Procedures patient={patient} />;
-    case 'ab12':
+    case 'c12':
       return <RecentTestResults patient={patient} />;
-    case 'ab13':
-      return <Last24HMedications patient={patient} />;
-    case 'ab14':
-      return <IntakeOutputs patient={patient} />;
-    case 'ab15':
-      return <ChiefComplainSummary patient={patient} encounter={encounter} />;
     default:
       return null;
   }
 };
+
+const defaultSectionIds = ['c1', 'c2', 'c3', 'c4', 'c5', 'c7', 'c8', 'c11', 'c12'];
 
 const SideSummaryScreen: React.FC<SideSummaryScreenProps> = ({
   expand,
@@ -80,25 +65,33 @@ const SideSummaryScreen: React.FC<SideSummaryScreenProps> = ({
   direction = 'left',
   showButton = true
 }) => {
-  const [columns, setColumns] = useState({
-    col1: [
-      'ab1',
-      'ab2',
-      'ab3',
-      'ab4',
-      'ab5',
-      'ab6',
-      'ab7',
-      'ab8',
-      'ab9',
-      'ab10',
-      'ab11',
-      'ab12',
-      'ab13',
-      'ab14',
-      'ab15'
-    ]
+  const user = JSON.parse(localStorage.getItem('user'));
+  const userDashboardComponents = useGetUserDashboardComponentsQuery(user?.id, {
+    skip: !user?.id
   });
+
+  const [columns, setColumns] = useState({
+    col1: defaultSectionIds
+  });
+
+  React.useEffect(() => {
+    const selectedKeys =
+      userDashboardComponents?.data?.object?.map(item => item.component_key) ?? [];
+
+    if (selectedKeys.length === 0) return;
+
+    setColumns(prev => {
+      const currentVisible = prev.col1.filter(id => selectedKeys.includes(id));
+      const missingVisible = defaultSectionIds.filter(
+        id => selectedKeys.includes(id) && !currentVisible.includes(id)
+      );
+
+      return {
+        ...prev,
+        col1: [...currentVisible, ...missingVisible]
+      };
+    });
+  }, [userDashboardComponents?.data]);
 
   const handleDragEnd = result => {
     const { source, destination } = result;

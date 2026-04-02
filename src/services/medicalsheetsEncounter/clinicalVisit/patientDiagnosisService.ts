@@ -16,9 +16,9 @@ export const patientDiagnosisService = createApi({
       query: data => ({
         url: `/api/patient/patient-diagnoses`,
         method: 'POST',
-        body: data,
+        body: data
       }),
-      invalidatesTags: ['PatientDiagnosis'],
+      invalidatesTags: ['PatientDiagnosis']
     }),
 
     updatePatientDiagnosis: builder.mutation<
@@ -28,12 +28,12 @@ export const patientDiagnosisService = createApi({
       query: ({ id, data }) => ({
         url: `/api/patient/patient-diagnoses/${id}`,
         method: 'PUT',
-        body: data,
+        body: data
       }),
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PatientDiagnosis', id },
-        'PatientDiagnosis',
-      ],
+        'PatientDiagnosis'
+      ]
     }),
 
     getLatestPatientDiagnosis: builder.query<
@@ -42,12 +42,26 @@ export const patientDiagnosisService = createApi({
     >({
       query: ({ encounterId }) => ({
         url: `/api/patient/patient-diagnoses/latest`,
-        params: { encounterId },
+        params: { encounterId }
       }),
       providesTags: (_res, _err, { encounterId }) => [
         { type: 'PatientDiagnosis', id: `latest-${encounterId}` },
-        'PatientDiagnosis',
-      ],
+        'PatientDiagnosis'
+      ]
+    }),
+
+    getPrimaryByEncounterId: builder.query<
+      modelTypes.PatientDiagnosis,
+      { encounterId: Id; timestamp?: number }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/patient-diagnoses/by-encounter/${encounterId}/primary`,
+        params: { encounterId }
+      }),
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientDiagnosis', id: `primary-${encounterId}` },
+        'PatientDiagnosis'
+      ]
     }),
 
     getPatientDiagnosesByPatientId: builder.query<
@@ -56,24 +70,66 @@ export const patientDiagnosisService = createApi({
     >({
       query: ({ patientId, page = 0, size = 20, sort = 'createdDate,desc' }) => ({
         url: `/api/patient/patient-diagnoses/patient/${patientId}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       providesTags: (_res, _err, { patientId }) => [
         { type: 'PatientDiagnosis', id: `patient-${patientId}` },
-        'PatientDiagnosis',
-      ],
+        'PatientDiagnosis'
+      ]
     }),
-
-    existsPatientDiagnosisByEncounterId: builder.query<
-      boolean,
-      { encounterId: Id }
+    getPatientDiagnosesByEncounterId: builder.query<
+      modelTypes.PatientDiagnosis[],
+      { encounterId: Id; timestamp?: number }
     >({
       query: ({ encounterId }) => ({
-        url: `/api/patient/patient-diagnosis/exists/${encounterId}`,
-        method: 'GET',
+        url: `/api/patient/patient-diagnoses/by-encounter/${encounterId}`
       }),
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientDiagnosis', id: `encounter-${encounterId}` },
+        'PatientDiagnosis'
+      ]
     }),
-  }),
+
+    getPrimaryPatientDiagnosisByEncounterId: builder.query<
+      modelTypes.PatientDiagnosis,
+      { encounterId: Id; timestamp?: number }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/patient-diagnoses/by-encounter/${encounterId}/primary`
+      }),
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientDiagnosis', id: `primary-${encounterId}` },
+        'PatientDiagnosis'
+      ]
+    }),
+    existsPatientDiagnosisByEncounterId: builder.query<boolean, { encounterId: Id }>({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/patient-diagnosis/exists/${encounterId}`,
+        method: 'GET'
+      })
+    }),
+
+    hardDeletePatientDiagnosis: builder.mutation<void, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/patient-diagnoses/${id}/hard`,
+        method: 'DELETE'
+      }),
+      invalidatesTags: ['PatientDiagnosis']
+    }),
+
+    getDiagnosisFlagsByEncounterIds: builder.query<
+      modelTypes.PatientDiagnosisFlag[],
+      { encounterIds: Id[] }
+    >({
+      query: ({ encounterIds }) => ({
+        url: `/api/patient/patient-diagnoses/flags/by-encounters`,
+        params: {
+          encounterIds
+        }
+      }),
+      providesTags: ['PatientDiagnosis']
+    })
+  })
 });
 
 export const {
@@ -83,7 +139,17 @@ export const {
   useLazyGetLatestPatientDiagnosisQuery,
   useGetPatientDiagnosesByPatientIdQuery,
   useLazyGetPatientDiagnosesByPatientIdQuery,
-  useExistsPatientDiagnosisByEncounterIdQuery,
-  useLazyExistsPatientDiagnosisByEncounterIdQuery
-} = patientDiagnosisService;
 
+  useGetPatientDiagnosesByEncounterIdQuery,
+  useLazyGetPatientDiagnosesByEncounterIdQuery,
+
+  useGetPrimaryPatientDiagnosisByEncounterIdQuery,
+  useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery,
+
+  useHardDeletePatientDiagnosisMutation,
+  useExistsPatientDiagnosisByEncounterIdQuery,
+  useLazyExistsPatientDiagnosisByEncounterIdQuery,
+  useGetDiagnosisFlagsByEncounterIdsQuery,
+  useLazyGetDiagnosisFlagsByEncounterIdsQuery,
+  useGetPrimaryByEncounterIdQuery
+} = patientDiagnosisService;

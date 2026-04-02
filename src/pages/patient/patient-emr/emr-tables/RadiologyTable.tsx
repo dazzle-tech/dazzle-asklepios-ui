@@ -1,344 +1,405 @@
-import React, { useEffect, useRef, useState } from 'react';
 import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
-import Translate from '@/components/Translate';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetDiagnosticOrderTestRadReportListQuery, useGetDiagnosticOrderTestReportNotesByReportIdQuery } from '@/services/radService';
-import { HStack } from 'rsuite';
+
+import {
+  useFilterRadiologyReportsQuery
+} from '@/services/setup/diagnosticTest/diagnosticOrderTestReportService';
+
+import {
+  useLazyGetDiagnosticOrderTestByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderTestService';
+
+import {
+  useFilterDiagnosticOrdersQuery,
+  useLazyGetDiagnosticOrderByIdQuery
+} from '@/services/diagnosic-order/diagnosticOrderService';
+
+import {
+  useLazyGetDiagnosticTestByIdQuery
+} from '@/services/setup/diagnosticTest/diagnosticTestService';
+
+import {
+  useGetBulkPatientBasicInfoMutation
+} from '@/services/patient/patientService';
+
+import React, { useEffect, useMemo, useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faComments, faFileLines } from '@fortawesome/free-solid-svg-icons';
-import AddReportModal from '@/pages/rad-module/AddReportModal';
-import ChatModal from '@/components/ChatModal';
-import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
-import { FaFileArrowDown } from 'react-icons/fa6';
-import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons';
+import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetAllRadiologiesQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
 
-const handleDownload = attachment => {
-  const byteCharacters = atob(attachment.fileContent);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-  const blob = new Blob([byteArray], { type: attachment.contentType });
-
-  // Create a temporary  element and trigger the download
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  a.download = attachment.fileName;
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
+const startOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
 };
 
+const endOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+};
 
+const RadiologyReportsTable = ({ patient, setEncounter, setPatient }) => {
 
-const RadiologyTable = ({ patient }) => {
+  const today = new Date();
+
+    const [page, setPage] = useState(0);
+  
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+ 
+  const [orderTestsMap, setOrderTestsMap] = useState<Record<string, any>>({});
+  const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
+  const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
+  const [testsMap, setTestsMap] = useState<Record<string, any>>({});
+  const [selectedReport, setSelectedReport] = useState<any>(null);
   const [openReportModal, setOpenReportModal] = useState(false);
-  const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
-  const [test, setTest] = useState(null);
-  const [report, setReport] = useState(null);
+  const [fetchOrderTestById] = useLazyGetDiagnosticOrderTestByIdQuery();
+  const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
+  const [fetchDiagnosticTestById] = useLazyGetDiagnosticTestByIdQuery();
+  const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
+   const ordersQueryParams = useMemo(() => {
+      if (!patient?.id) return skipToken;
+  
+      return {
+        patientId: patient.id,
+        page: 0,
+        size: 1000,
+        sort: 'id,desc'
+      };
+    }, [patient?.id]);
+  
+    const { data: radCategoriesLovQueryResponse } =
+  useGetLovValuesByCodeQuery('RAD_CATEGORIES');
+    
+const resolveCategoryLabel = (key?: any) =>
+  radCategoriesLovQueryResponse?.object?.find(
+    c => String(c.key) === String(key)
+  )?.lovDisplayVale ?? key;
 
-  const { data: messagesResultList, refetch: fecthResultNotes } =
-    useGetDiagnosticOrderTestReportNotesByReportIdQuery(report?.key || undefined, {
-      skip: report?.key == null
+
+      const {
+        data: ordersResponse,
+        isFetching: isOrdersFetching
+      } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
+    
+      const orders = ordersResponse?.data ?? [];
+    
+      const orderIds = useMemo(
+        () => orders.map((o: any) => o.id).filter(Boolean),
+        [orders]
+      );
+
+
+    const { data: allRadiologiesResponse } = useGetAllRadiologiesQuery({
+      page: 0,
+      size: 10000,
+      sort: 'testId,asc'
     });
 
-  //to set notes modal scroll in tha last massage
-  const endOfMessagesRef = useRef(null);
-  useEffect(() => {
-    if (endOfMessagesRef.current) {
-      endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messagesResultList]);
+    const radiologyByTestIdMap = useMemo(() => {
+      const list = allRadiologiesResponse?.data ?? [];
+      return new Map(list.map((r: any) => [r.testId, r]));
+    }, [allRadiologiesResponse]);
 
 
-  const [listPrevResultResponse, setListPrevResultResponse] = useState<ListRequest>({
-    ...initialListRequest,
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient?.key || undefined
-      }
-    ]
-  });
-  useEffect(() => {
-    setListPrevResultResponse(prev => ({
-      ...prev,
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patient?.key || undefined
+    const queryParams = useMemo(() => {
+
+      if (!patient?.id) return skipToken;
+      if (isOrdersFetching) return skipToken;
+      if (!orderIds.length) return skipToken;
+
+      return {
+        page,
+        size: rowsPerPage,
+        sort: 'id,desc',
+        params: {
+          processingStatus: DiagnosticOrderTestStatus.RESULT_APPROVED,
+          orderIdIn: orderIds
         }
-      ]
-    }));
-  }, [patient]);
-  const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
+      };
 
-      {
-        fieldName: 'attachment_type',
-        operator: 'match',
-        value: 'RADIOLOGY_REPORT'
-      }
-    ]
-  });
-  const { data: diagnosticTest } = useGetDiagnosticsTestListQuery({
-   ...initialListRequest,
-    pageSize: 1000
-  });
-  const { data: prevResultsList, refetch: prevResultFetch, isLoading } =
-    useGetDiagnosticOrderTestRadReportListQuery({ ...listPrevResultResponse });
-  const {
-    data: fetchPatintAttachmentsResponce,
-    refetch: attachmentRefetch,
-    isLoading: loadAttachment
-  } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
+    }, [patient?.id, isOrdersFetching, orderIds, page, rowsPerPage]);
 
-  const isSelected = rowData => {
-    if (rowData && report && rowData.key === report.key) {
-      return 'selected-row';
-    } else return '';
-  };
-  const reportColumns = [
+
+    const {
+      data,
+      isFetching
+    } = useFilterRadiologyReportsQuery(queryParams);
+      const reports = data?.data ?? [];
+      const totalCount = data?.totalCount ?? 0;
+
+      const orderTestIds = useMemo(
+        () =>
+          reports
+            .map(r => r.orderTestId)
+            .filter(Boolean)
+            .map(String)
+            .filter((id, i, arr) => arr.indexOf(id) === i),
+        [reports]
+      );
+
+  const testIds = useMemo(
+    () =>
+      Object.values(orderTestsMap)
+        .map((ot: any) => ot?.testId)
+        .filter(Boolean)
+        .map(String)
+        .filter((id, i, arr) => arr.indexOf(id) === i),
+    [orderTestsMap]
+  );
+
+  const patientIds = useMemo(
+    () =>
+      Object.values(ordersMap)
+        .map((o: any) => o?.patientId)
+        .filter(Boolean)
+        .map(String)
+        .filter((id, i, arr) => arr.indexOf(id) === i),
+    [ordersMap]
+  );
+
+  useEffect(() => {
+
+    orderTestIds.forEach(id => {
+
+      if (orderTestsMap[id]) return;
+
+      fetchOrderTestById(Number(id))
+        .unwrap()
+        .then(ot => {
+          if (!ot) return;
+
+          setOrderTestsMap(prev => ({
+            ...prev,
+            [id]: ot
+          }));
+        });
+
+    });
+
+  }, [orderTestIds]);
+
+  useEffect(() => {
+
+    testIds.forEach(id => {
+
+      if (testsMap[id]) return;
+
+      fetchDiagnosticTestById(Number(id))
+        .unwrap()
+        .then(res => {
+
+          const test = res?.data;
+          if (!test) return;
+
+          setTestsMap(prev => ({
+            ...prev,
+            [id]: test
+          }));
+
+        });
+
+    });
+
+  }, [testIds]);
+
+  useEffect(() => {
+
+    Object.values(orderTestsMap).forEach((ot: any) => {
+
+      const orderId = ot?.orderId;
+      if (!orderId) return;
+
+      if (ordersMap[orderId]) return;
+
+      fetchOrderById(Number(orderId))
+        .unwrap()
+        .then(order => {
+
+          if (!order) return;
+
+          setOrdersMap(prev => ({
+            ...prev,
+            [String(order.id)]: order
+          }));
+
+        });
+
+    });
+
+  }, [orderTestsMap]);
+
+  useEffect(() => {
+
+    if (!patientIds.length) return;
+
+    const numericIds = patientIds.map(id => Number(id));
+
+    getBulkPatientBasicInfo(numericIds)
+      .unwrap()
+      .then((res: any[]) => {
+
+        const map: Record<string, any> = {};
+
+        res.forEach((p: any, index: number) => {
+
+          const originalId = numericIds[index];
+          map[String(originalId)] = p;
+
+        });
+
+        setPatientsMap(map);
+
+      });
+
+  }, [patientIds]);
+
+  const columns: ColumnConfig[] = [
+
     {
-      key: 'testName',
-      dataKey: 'testName',
-      title: <Translate>TEST NAME</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        const test= diagnosticTest?.object?.find(item=> item?.key === rowData.medicalTestKey);
-        return test?.testName;
-      }
-    },
-    {
-      key: 'report',
-      dataKey: 'report',
-      title: <Translate>Report</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
+      key: 'visitId',
+      title: <Translate>VISIT ID</Translate>,
+      width: 120,
+      render: (row: any) => {
+
+        const ot = orderTestsMap[String(row.orderTestId)];
+        const order = ordersMap[String(ot?.orderId)];
+
         return (
-          <HStack spacing={10}>
-            <FontAwesomeIcon
-              icon={faFileLines}
-              style={{ fontSize: '1em' }}
-              onClick={() => {
-                setReport(rowData);
-                setOpenReportModal(true)
-              }}
-            />
-          </HStack>
+          <span
+            style={{
+              color: '#1675e0',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+
+              const patient = patientsMap[String(order?.patientId)];
+
+              if (patient) setPatient(patient);
+              if (order) setEncounter(order);
+
+            }}
+          >
+            {order?.encounterId ?? '-'}
+          </span>
         );
+
       }
     },
-    {
-      key: 'comment',
 
-      title: <Translate>COMMENTS</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => (
-        <HStack spacing={10}>
-          <FontAwesomeIcon
-            icon={faComments}
-            style={{ fontSize: '1em' }}
-            onClick={() => {
-              setReport(rowData);
-              setOpenNoteResultModal(true)
-            }}
-          />
-        </HStack>
+    {
+      key: 'created',
+      title: <Translate>CREATED BY / AT</Translate>,
+      render: (row: any) => (
+        <>
+          {row.createdBy ?? '-'}
+          <br />
+          <span style={{ fontSize: 11, color: '#777' }}>
+            {formatDateWithoutSeconds(row.createdDate)}
+          </span>
+        </>
       )
     },
+
     {
-      key: 'previousResult',
-      title: <Translate>PREVIOUS RESULT</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        const prev = prevResultsList?.object?.[1];
-
-        if (!prev) return prev?.reportValue;
-
-        return null;
-      }
+      key: 'resultDate',
+      title: <Translate>RESULT DATE</Translate>,
+      width: 150,
+      render: (row: any) =>
+        formatDateWithoutSeconds(row.approvedDate)
     },
-    {
-      key: 'preDate',
 
-      title: <Translate>PREVIOUS REPORT DATE</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return formatDateWithoutSeconds(prevResultsList?.object[0]?.createdAt);
-      }
-    },
     {
-      key: 'statusLkey',
-      dataKey: 'statusLkey',
-      title: <Translate>REPORT SATUTS</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData?.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData?.statusLkey;
-      }
-    },
-    {
-      key: 'patientArrived',
-      title: <Translate>ATTACHMENT</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        const matchingAttachments = fetchPatintAttachmentsResponce?.object?.filter(
-          item => item.referenceObjectKey === rowData.key
-        );
-        const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
+      key: 'category',
+      title: <Translate>CATEGORY</Translate>,
+      width: 150,
+      render: (row: any) => {
 
-        return (
-          <HStack spacing={2}>
-            {lastAttachment && (
-              <FaFileArrowDown
-                size={20}
-                fill="var(--primary-gray)"
-                onClick={() => handleDownload(lastAttachment)}
-                style={{ cursor: 'pointer' }}
-              />
-            )}
-          </HStack>
-        );
+        const ot = orderTestsMap[String(row.orderTestId)];
+        const radiology = radiologyByTestIdMap.get(ot?.testId);
+        return resolveCategoryLabel(radiology?.category);
+
       }
     },
 
-
     {
-      key: 'rejectedAt',
-      dataKey: 'rejectedAt',
-      title: <Translate>REJECTED AT/BY</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
+      key: 'testName',
+      title: <Translate>TEST NAME</Translate>,
+      render: (row: any) => {
+
+        const ot = orderTestsMap[String(row.orderTestId)];
+        const test = testsMap[String(ot?.testId)];
+
         return (
           <>
-            <span>{rowData.rejectedBy}</span>
+            {test?.name ?? '-'}
             <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(rowData.rejectedAt)}
+            <span style={{ fontSize: 10, color: '#666' }}>
+              {test?.testName ?? ''}
             </span>
           </>
         );
+
       }
     },
 
     {
-      key: 'approvedAt',
-      dataKey: 'approvedAt',
-      title: <Translate>Approved AT/BY</Translate>,
-      flexGrow: 1,
-      expandable: true,
-      render: (rowData: any) => {
-        return (
-          <>
-            <span>{rowData.approvedBy}</span>
-            <br />
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(rowData.approvedAt)}
-            </span>
-          </>
-        );
-      }
+      key: 'report',
+      title: <Translate>REPORT</Translate>,
+      render: (rowData: any) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+
+          <FontAwesomeIcon
+            icon={faFileLines}
+            style={{ cursor: 'pointer', color: '#a4a4a4' }}
+            onClick={() => {
+              setSelectedReport(rowData);
+              setOpenReportModal(true);
+            }}
+          />
+        </div>
+      )
     }
+
   ];
 
+  return (<>
+    <MyTable
+      columns={columns}
+      data={reports}
+      loading={isFetching}
+      page={page}
+      rowsPerPage={rowsPerPage}
+      totalCount={totalCount}
+      onPageChange={(_, p) => setPage(p)}
+      onRowsPerPageChange={(e) => {
+        setRowsPerPage(Number(e.target.value));
+        setPage(0);
+      }}
+      height={400}
+    />
 
-  const pageIndexReport = listPrevResultResponse.pageNumber - 1;
+  {openReportModal && selectedReport && (
+    <AddReportModal
+      key={selectedReport.id}
+      open={openReportModal}
+      setOpen={setOpenReportModal}
+      report={selectedReport}
+      setReport={setSelectedReport}
+      disableEdit
+      disableDefaultTemplate
+    />
+  )}
 
-  // how many rows per page:
-  const rowsPerPageReport = listPrevResultResponse.pageSize;
-
-  // total number of items in the backend:
-  const totalCountReport = prevResultsList?.extraNumeric ?? 0;
-
-  // handler when the user clicks a new page number:
-  const handlePageChangeReport = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
-    setListPrevResultResponse({ ...listPrevResultResponse, pageNumber: newPage + 1 });
-  };
-  const handleRowsPerPageChangeReport = (event: React.ChangeEvent<HTMLInputElement>) => {
-
-    setListPrevResultResponse({
-      ...listPrevResultResponse,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
-    });
-  };
-
-useEffect(() => {
-  setListPrevResultResponse(prev => ({
-    ...prev!,
-    filters: [
-      { fieldName: "patient_key", operator: "match", value: patient?.key }
-    ],
-    pageNumber: 1,
-  }));
-}, [patient?.key]);
-
-  
-  return (
-    <>
-      <MyTable
-        columns={reportColumns}
-        data={prevResultsList?.object ?? []}
-        onRowClick={rowData => {
-          setReport(rowData);
-        }}
-        rowClassName={isSelected}
-        loading={isLoading}
-        page={pageIndexReport}
-        rowsPerPage={rowsPerPageReport}
-        totalCount={totalCountReport}
-        onPageChange={handlePageChangeReport}
-        onRowsPerPageChange={handleRowsPerPageChangeReport}
-        sortColumn={listPrevResultResponse.sortBy}
-        sortType={listPrevResultResponse.sortType}
-        onSortChange={(sortBy, sortType) => {
-          setListPrevResultResponse({ ...listPrevResultResponse, sortBy, sortType });
-        }}
-      />
-      <ChatModal
-        open={openNoteResultModal}
-        setOpen={setOpenNoteResultModal}
-        disabled
-        handleSendMessage={() => { }}
-        title={'Comments'}
-        list={messagesResultList?.object}
-        fieldShowName={'notes'}
-      />
-
-
-      <AddReportModal
-        open={openReportModal}
-        setOpen={setOpenReportModal}
-        test={test}
-        setTest={setTest}
-        resultFetch={() => { }}
-        report={report}
-        setReport={setReport}
-        saveReport={() => { }}
-        saveTest={() => { }}
-        attachmentRefetch={() => { }}
-        disableEdit={true}
-      />
-    </>
-  );
+  </>);
 };
 
-export default RadiologyTable;
+export default RadiologyReportsTable;

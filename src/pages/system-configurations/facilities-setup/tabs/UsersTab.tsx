@@ -4,6 +4,7 @@ import Translate from '@/components/Translate';
 import { Facility } from '@/types/model-types-new';
 import { ApUser } from '@/types/model-types-new';
 import { useGetUsersByFacilityQuery } from '@/services/security/UserRoleService';
+import { formatEnumString } from '@/utils';
 
 interface UsersTabProps {
   facility: Facility;
@@ -57,12 +58,19 @@ const UsersTab: React.FC<UsersTabProps> = ({ facility }) => {
       key: 'jobRole',
       title: <Translate>Job Role</Translate>,
       flexGrow: 2,
-      dataKey: 'jobRole',
+      render: (rowData: ApUser) => <p>{rowData?.jobRole ? formatEnumString(rowData.jobRole) : ''}</p>,
     },
   ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <MyTable
         height={450}
         data={users ?? []}

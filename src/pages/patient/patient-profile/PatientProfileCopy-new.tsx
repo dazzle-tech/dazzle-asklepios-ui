@@ -3,7 +3,12 @@ import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { useAddPatientMutation, useGetDuplicationCandidatesMutation, useLazyGetPatientsByMedicalRecordNumberQuery, useUpdatePatientMutation } from '@/services/patient/patientService';
+import {
+  useAddPatientMutation,
+  useGetDuplicationCandidatesMutation,
+  useLazyGetPatientsByMedicalRecordNumberQuery,
+  useUpdatePatientMutation
+} from '@/services/patient/patientService';
 import { newApEncounter } from '@/types/model-types-constructor';
 import { newPatient } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
@@ -24,14 +29,12 @@ import ProfileSidebar from './ProfileSidebar-new';
 import ProfileTabs from './ProfileTabs-new';
 import RegistrationWarningsSummary from './RegistrationWarningsSummary';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
+import IncomingReferralRequestsByFacility from './IncomingReferralRequestsByFacility';
 
 const { getHeight } = DOMHelper;
 
-
-
 /* ========================================================= */
 /* =============== Helper Functions ======================== */
-/* ========================================================= */
 
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
@@ -46,10 +49,18 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
       ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
       : '';
 
-  /* ========================================================= */
+  const dobError = fieldErrors.find((e: any) => e.field === 'dateOfBirth');
+  if (dobError) {
+    return dobError.message;
+  }
   /* =============== 1) Bean Validation Errors =============== */
-  /* ========================================================= */
+
   if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+    const dobError = fieldErrors.find((e: any) => e.field === 'dateOfBirth');
+    if (dobError) {
+      return 'Date of birth cannot be before 01-01-1900.';
+    }
+
     const lines = fieldErrors.map((e: any) => {
       const label = fieldLabels[e.field] || e.field;
       return `• ${label}: ${e.message}`;
@@ -89,10 +100,9 @@ const PatientProfile = () => {
   const [localVisit] = useState({ ...newApEncounter, discharge: false });
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
-  
-  
-  const [checkDuplication] = useGetDuplicationCandidatesMutation();
+  const [openReferralRequestModal, setOpenReferralRequestModal] = useState(false);
 
+  const [checkDuplication] = useGetDuplicationCandidatesMutation();
 
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
 
@@ -103,10 +113,7 @@ const PatientProfile = () => {
   const location = useLocation();
   const propsData = location.state;
 
-  // Create new patient
   const [addPatient, addResult] = useAddPatientMutation();
-
-  // Update existing patient
   const [updatePatient, updateResult] = useUpdatePatientMutation();
 
   const [refetchData, setRefetchData] = useState(false);
@@ -123,107 +130,107 @@ const PatientProfile = () => {
 
   const [patientList, setPatientList] = useState([]);
 
-const divContent = 'Patient Registration';
+  const [encounterRefetchTrigger, setEncounterRefetchTrigger] = useState(0);
 
-const searchRef = useRef<(() => void) | null>(null);
+  const divContent = 'Patient Registration';
 
-const selectedFacilityId =
-  authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
+  const searchRef = useRef<(() => void) | null>(null);
 
-console.log('SELECTED FACILITY', selectedFacilityId);
+  const selectedFacilityId =
+    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-const { data: selectedFacility } = useGetFacilityByIdQuery(selectedFacilityId, {
-  skip: !selectedFacilityId
-});
+  console.log('SELECTED FACILITY', selectedFacilityId);
 
-/* ========================================================= */
-/* ======================= SAVE / UPDATE ==================== */
-/* ========================================================= */
+  const { data: selectedFacility } = useGetFacilityByIdQuery(selectedFacilityId, {
+    skip: !selectedFacilityId
+  });
 
-const handleSave = async () => {
-  try {
-    // UPDATE flow (keep same logic + success messaging)
-    if (localPatient?.id) {
-      const updated = await updatePatient({
-        id: localPatient.id,
-        data: { ...localPatient, isCompletedPatient: true, isUnknown: false }
+  /* ========================================================= */
+  /* ======================= SAVE / UPDATE ==================== */
+  /* ========================================================= */
+
+  const handleSave = async () => {
+    try {
+      if (localPatient?.id) {
+        const updated = await updatePatient({
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true, isUnknown: false }
+        }).unwrap();
+
+        setLocalPatient(updated);
+        dispatch(setPatient(updated));
+        setValidationResult(undefined);
+        setRefetchData(true);
+
+        dispatch(notify({ msg: 'Patient Updated Successfully', sev: 'success' }));
+
+        if (searchRef.current) {
+          setTimeout(() => {
+            searchRef.current?.();
+          }, 500);
+        }
+        return;
+      }
+
+      // CREATE flow: duplication check
+      const duplicationResponse = await checkDuplication({
+        dto: {
+          ruleId: selectedFacility?.ruleId,
+          dateOfBirth: localPatient?.dateOfBirth
+            ? new Date(localPatient.dateOfBirth).toISOString().split('T')[0]
+            : null,
+          gender: localPatient?.sexAtBirth,
+          firstName: localPatient?.firstName,
+          lastName: localPatient?.lastName,
+          documentNo: '',
+          mobileNumber: localPatient?.primaryMobileNumber
+        },
+        page: 0,
+        size: 20
       }).unwrap();
 
-      setLocalPatient(updated);
-      dispatch(setPatient(updated));
+      if (duplicationResponse?.length > 0) {
+        setPatientList(duplicationResponse);
+        setOpenPatientsDuplicateModal(true);
+        return;
+      }
+
+      // CREATE flow: save
+      const saved = await addPatient({
+        ...localPatient,
+        isCompletedPatient: true,
+        isUnknown: false
+      }).unwrap();
+
+      setLocalPatient(saved);
+      dispatch(setPatient(saved));
       setValidationResult(undefined);
       setRefetchData(true);
 
-      dispatch(notify({ msg: 'Patient Updated Successfully', sev: 'success' }));
+      dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
 
       if (searchRef.current) {
         setTimeout(() => {
           searchRef.current?.();
         }, 500);
       }
-      return;
+    } catch (err: any) {
+      const msg = toHumanBackendError(err, {
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        dateOfBirth: 'Date of Birth',
+        primaryMobileNumber: 'Primary Mobile Number',
+        sexAtBirth: 'Sex At Birth',
+        nationality: 'Nationality'
+      });
+
+      dispatch(notify({ msg, sev: 'warning' }));
     }
+  };
 
-    // CREATE flow: duplication check (keep logic from HEAD)
-    const duplicationResponse = await checkDuplication({
-      dto: {
-        ruleId: selectedFacility?.ruleId,
-        dateOfBirth: localPatient?.dateOfBirth
-          ? new Date(localPatient.dateOfBirth).toISOString().split('T')[0]
-          : null,
-        gender: localPatient?.sexAtBirth,
-        firstName: localPatient?.firstName,
-        lastName: localPatient?.lastName,
-        documentNo: '',
-        mobileNumber: localPatient?.primaryMobileNumber
-      },
-      page: 0,
-      size: 20
-    }).unwrap();
-
-    if (duplicationResponse?.length > 0) {
-      setPatientList(duplicationResponse);
-      setOpenPatientsDuplicateModal(true);
-      return;
-    }
-
-    // CREATE flow: save
-    const saved = await addPatient({
-      ...localPatient,
-      isCompletedPatient: true,
-      isUnknown: false
-    }).unwrap();
-
-    setLocalPatient(saved);
-    dispatch(setPatient(saved));
-    setValidationResult(undefined);
-    setRefetchData(true);
-
-    dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
-
-    if (searchRef.current) {
-      setTimeout(() => {
-        searchRef.current?.();
-      }, 500);
-    }
-  } catch (err: any) {
-    // keep the richer field mapping from the other branch
-    const msg = toHumanBackendError(err, {
-      firstName: 'First Name',
-      lastName: 'Last Name',
-      dateOfBirth: 'Date of Birth',
-      primaryMobileNumber: 'Primary Mobile Number',
-      sexAtBirth: 'Sex At Birth',
-      nationality: 'Nationality'
-    });
-
-    dispatch(notify({ msg, sev: 'error' }));
-  }
-};
-
-/* ========================================================= */
-/* ======================= CLEAR ============================ */
-/* ========================================================= */
+  /* ========================================================= */
+  /* ======================= CLEAR ============================ */
+  /* ========================================================= */
 
   const handleClear = () => {
     setLocalPatient({ ...newPatient });
@@ -258,19 +265,16 @@ const handleSave = async () => {
       setLocalPatient(addResult.data);
       dispatch(setPatient(addResult.data));
     }
-  }, [addResult]);
+  }, [addResult, dispatch]);
 
   useEffect(() => {
     if (updateResult?.status === 'fulfilled') {
       setLocalPatient(updateResult.data);
       dispatch(setPatient(updateResult.data));
     }
-  }, [updateResult]);
+  }, [updateResult, dispatch]);
 
-
-
-  const [getPatientsByMedicalRecordNumber] =
-    useLazyGetPatientsByMedicalRecordNumberQuery();
+  const [getPatientsByMedicalRecordNumber] = useLazyGetPatientsByMedicalRecordNumberQuery();
 
   const handleSelectExistingPatient = async (patient: any) => {
     try {
@@ -289,22 +293,35 @@ const handleSave = async () => {
       setLocalPatient(fullPatient);
       dispatch(setPatient(fullPatient));
       setOpenPatientsDuplicateModal(false);
-
     } catch (err) {
-      dispatch(notify({ msg: 'Failed to load patient', sev: 'error' }));
+      dispatch(notify({ msg: 'Failed to load patient', sev: 'warning' }));
     }
   };
 
+  // ✅ NEW: callback passed to PatientQuickAppointment so the table refetches after save
+  const handleEncounterSaved = () => {
+    setEncounterRefetchTrigger(prev => prev + 1);
+  };
 
-
-
+  // ✅ NEW: when the modal closes (from ProfileHeader's quick appointment),
+  //         also bump the trigger so the table always stays fresh
+  const handleQuickAppointmentClose = (val: boolean) => {
+    setQuickAppointmentModel(val);
+    if (!val) setEncounterRefetchTrigger(prev => prev + 1);
+  };
 
   /* ========================================================= */
   /* ========================= RENDER ========================= */
   /* ========================================================= */
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <div className="patient-profile-container">
         <Panel
           bordered
@@ -324,6 +341,7 @@ const handleSave = async () => {
             setOpenBedsideRegistrations={setOpenBedsideRegistrations}
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
             setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
+            setOpenReferralRequestModal={setOpenReferralRequestModal}
           />
 
           <div className="container-of-tabs-reg">
@@ -344,10 +362,12 @@ const handleSave = async () => {
               <SectionContainer
                 title={<Translate>Visit history</Translate>}
                 content={
+                  // ✅ pass encounterRefetchTrigger so the table knows when to refetch
                   <PatientVisitHistoryTable
                     quickAppointmentModel={quickAppointmentModel}
                     setQuickAppointmentModel={setQuickAppointmentModel}
                     localPatient={localPatient}
+                    encounterRefetchTrigger={encounterRefetchTrigger}
                   />
                 }
               />
@@ -376,8 +396,11 @@ const handleSave = async () => {
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
           localPatient={localPatient}
-          setQuickAppointmentModel={setQuickAppointmentModel}
+          // ✅ use the wrapper so closing also triggers a refetch
+          setQuickAppointmentModel={handleQuickAppointmentClose}
           localVisit={localVisit}
+          // ✅ also trigger immediately when encounter is saved (before modal closes)
+          onEncounterSaved={handleEncounterSaved}
         />
       )}
 
@@ -403,6 +426,11 @@ const handleSave = async () => {
       />
 
       <BulkRegistration open={openBulkRegistrationModal} setOpen={setOpenBulkRegistrationModal} />
+
+      <IncomingReferralRequestsByFacility
+        open={openReferralRequestModal}
+        setOpen={setOpenReferralRequestModal}
+      />
 
       <PatientDuplicate
         open={openPatientsDuplicateModal}
@@ -430,7 +458,7 @@ const handleSave = async () => {
             })
         }
       />
-    </>
+    </div>
   );
 };
 

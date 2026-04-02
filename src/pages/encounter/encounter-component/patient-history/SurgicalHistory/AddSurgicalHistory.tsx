@@ -193,7 +193,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
   const handleSave = async () => {
     const errors = validateBeforeSave();
     if (errors.length) {
-      dispatch(notify({ msg: errors.join('\n'), sev: 'error' }));
+      dispatch(notify({ msg: errors.join('\n'), sev: 'warning' }));
       return;
     }
 
@@ -223,6 +223,8 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       handleCrudError(err, dispatch, SURGICAL_HISTORY_ERROR_MAP);
     }
   };
+
+
 
   const content = (
     <Form fluid layout="inline" className="fields-container">
@@ -317,6 +319,13 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
     </Form>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -326,7 +335,7 @@ const AddSurgicalHistory = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

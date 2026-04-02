@@ -308,19 +308,19 @@ const InpatientList = () => {
               {/* Checkboxes*/}
               <MyInput
                 width={110}
-                fieldName="withPrescription"
+                fieldName="hasPrescription"
                 fieldType="checkbox"
                 record={record}
                 setRecord={setRecord}
-                label="With Prescription"
+                label="Has Prescription"
               />
               <MyInput
                 width={80}
-                fieldName="hasOrders"
+                fieldName="hasOrder"
                 fieldType="checkbox"
                 record={record}
                 setRecord={setRecord}
-                label="Has Orders"
+                label="Has Order"
               />
               <MyInput
                 width={80}
@@ -739,8 +739,14 @@ const InpatientList = () => {
     });
   };
 
+
+            // Direction handling for RTL/LTR
+      const direction = localStorage.getItem('direction') || 'LTR';
+      const isRTL = direction === 'RTL';
+
+      const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <Panel>
+    <Panel dir={dir}>
       <div className="inpatient-list-btns">
         <MyButton
           onClick={() => setOpenBedManagementModal(true)}
@@ -821,9 +827,9 @@ const InpatientList = () => {
         title="Refill"
         size="90vw"
         content={
-          <>
+          <div dir={dir}>
             <RefillModalComponent></RefillModalComponent>
-          </>
+          </div>
         }
         actionButtonLabel="Save"
         actionButtonFunction={() => {}}
@@ -837,7 +843,9 @@ const InpatientList = () => {
         size="55vw"
         content={
           <>
-            <DischargeTrackingModal />
+            <div dir={dir}>
+              <DischargeTrackingModal />
+            </div>
           </>
         }
         actionButtonLabel="Save"
@@ -852,7 +860,9 @@ const InpatientList = () => {
         size="90vw"
         content={
           <>
-            <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
+            <div dir={dir}>
+              <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
+            </div>
           </>
         }
         actionButtonLabel="Save"
@@ -865,7 +875,7 @@ const InpatientList = () => {
         setOpen={setOpenEncounterLogsModal}
         title="Encounter Logs"
         size="70vw"
-        content={<EncounterLogsTable />}
+        content={<div dir={dir}><EncounterLogsTable /></div>}
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEncounterLogsModal(false)}
         cancelButtonLabel="Cancel"

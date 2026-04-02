@@ -1,19 +1,17 @@
+import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { faCheckDouble, faUser } from '@fortawesome/free-solid-svg-icons';
-import clsx from 'clsx';
-import React, { useState } from 'react';
-import { Form } from 'rsuite';
-import MyButton from '@/components/MyButton/MyButton';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import AccessRole from './tabs/AccessRole';
-import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
-const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProceed, setCanProceed}) => {
+import { faCheckDouble, faUser } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import clsx from 'clsx';
+import React from 'react';
+import { Form } from 'rsuite';
+import './styles.less';
+const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProceed, setCanProceed }) => {
 
 
-  const jobRoles=useEnumOptions("JobRole");
+  const jobRoles = useEnumOptions("JobRole");
 
   const genders = [
     {
@@ -51,8 +49,8 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
               <MyInput
-              disabled={!!user?.id}
-               fieldName="login" required record={user} setRecord={setUser} width={'13vw'} />
+                disabled={!!user?.id}
+                fieldName="login" required record={user} setRecord={setUser} width={'13vw'} />
               <MyInput
                 width={'13vw'}
                 fieldLabel="Job Role"
@@ -63,6 +61,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
                 selectDataValue="value"
                 record={user}
                 setRecord={setUser}
+                required
               />
             </div>
             <div className={clsx('', { 'container-of-two-fields-users': width > 600 })}>
@@ -108,10 +107,15 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
           </Form>
         );
 
-      case 1:
-        return <AccessRole user={user} />;
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
     <MyModal
@@ -119,7 +123,11 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
       setOpen={setOpen}
       title={user?.id ? 'Edit User' : 'New User'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContent(stepNumber)}
+        </div>
+      )}
       actionButtonLabel={user?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size={width > 600 ? '38vw' : '25vw'}
@@ -129,21 +137,7 @@ const AddEditUser = ({ open, setOpen, width, user, setUser, handleSave, canProce
           icon: <FontAwesomeIcon icon={faUser} />,
           disabledNext: !canProceed,
           // disabledNext: !user.id,
-          footer: (
-            <>
-              <MyButton
-                disabled={false}
-                onClick={handleSave}
-                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-              >
-                Save
-              </MyButton>{' '}
-            </>
-          )
-        },
-        {
-          title: 'Roles',
-          icon: <FontAwesomeIcon icon={faUser} />
+         
         }
       ]}
     />

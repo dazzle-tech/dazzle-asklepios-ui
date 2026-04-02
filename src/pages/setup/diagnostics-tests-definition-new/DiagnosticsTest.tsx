@@ -114,17 +114,22 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
 
   const validateDiagnosticTest = (test: DiagnosticTest): string[] => {
-    const errors: string[] = [];
+    const missingFields: string[] = [];
 
-    if (!test.type) errors.push('Test Type');
-    if (!test.name?.trim()) errors.push('Name');
-    if (!test.internalCode?.trim()) errors.push('Internal Code');
+    if (!test.type) missingFields.push('Test Type');
+    if (!test.name?.trim()) missingFields.push('Name');
+    if (!test.internalCode?.trim()) missingFields.push('Internal Code');
+    if (!test.price && test.price !== 0) missingFields.push('Price');
 
     if (test.type === 'LABORATORY' && !test.defaultProfileResultType) {
-      errors.push('Result Type');
+      missingFields.push('Result Type');
     }
 
-    return errors;
+    if (missingFields.length) {
+      return [`${missingFields.join(', ')} ${missingFields.length > 1 ? 'are' : 'is'} required`];
+    }
+
+    return [];
   };
 
 
@@ -140,11 +145,45 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         errors.push('Default Result Type is required for Laboratory tests');
       }
 
+      const isEmpty = (val) => val === null || val === undefined || val === '';
+      const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+      if (
+        diagnosticsTest?.parallelCapacityValue === null ||
+        diagnosticsTest?.parallelCapacityValue === undefined ||
+        diagnosticsTest?.parallelCapacityValue < 1
+      ) {
+        errors.push(
+          'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+        );
+      }
+      if (diagnosticsTest?.appointable) {
+        if (isEmpty(diagnosticsTest?.defaultDurationMinutes) || diagnosticsTest?.defaultDurationMinutes <= 0) {
+          errors.push('Field Default Duration Minutes is required and should be greater than 0')
+        }
+        if (isEmpty(diagnosticsTest?.defaultBufferBeforeMinutes) || diagnosticsTest?.defaultBufferBeforeMinutes < 0) {
+          errors.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+        }
+        if (isEmpty(diagnosticsTest?.defaultBufferAfterMinutes) || diagnosticsTest?.defaultBufferAfterMinutes < 0) {
+          errors.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+        }
+      }
+      else {
+        if (isNotEmpty(diagnosticsTest?.defaultDurationMinutes) && diagnosticsTest?.defaultDurationMinutes <= 0) {
+          errors.push('Field Default Duration Minutes should be greater than 0')
+        }
+        if (isNotEmpty(diagnosticsTest?.defaultBufferBeforeMinutes) && diagnosticsTest?.defaultBufferBeforeMinutes < 0) {
+          errors.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+        }
+        if (isNotEmpty(diagnosticsTest?.defaultBufferAfterMinutes) && diagnosticsTest?.defaultBufferAfterMinutes < 0) {
+          errors.push('Field Default Buffer After Minutes should be greater then or equal 0')
+        }
+      }
+
       if (errors.length) {
         dispatch(
           notify({
             msg: errors.map(e => `• ${e}`).join('\n'),
-            sev: 'error'
+            sev: 'warning'
           })
         );
         return;
@@ -176,7 +215,13 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         defaultProfileResultUnit:
           diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
 
-        listOfValueId: diagnosticsTest.listOfValueId ?? null
+        listOfValueId: diagnosticsTest.listOfValueId ?? null,
+
+         parallelCapacityValue: diagnosticsTest?.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: diagnosticsTest?.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: diagnosticsTest?.defaultBufferAfterMinutes ?? 0,
+        
       };
 
       const response = await addDiagnosticTest(payload).unwrap();
@@ -216,6 +261,40 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     try {
       const errors = validateDiagnosticTest(diagnosticsTest);
 
+      const isEmpty = (val) => val === null || val === undefined || val === '';
+      const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+      if (
+        diagnosticsTest?.parallelCapacityValue === null ||
+        diagnosticsTest?.parallelCapacityValue === undefined ||
+        diagnosticsTest?.parallelCapacityValue < 1
+      ) {
+        errors.push(
+          'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+        );
+      }
+      if (diagnosticsTest?.appointable) {
+        if (isEmpty(diagnosticsTest?.defaultDurationMinutes) || diagnosticsTest?.defaultDurationMinutes <= 0) {
+          errors.push('Field Default Duration Minutes is required and should be greater than 0')
+        }
+        if (isEmpty(diagnosticsTest?.defaultBufferBeforeMinutes) || diagnosticsTest?.defaultBufferBeforeMinutes < 0) {
+          errors.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+        }
+        if (isEmpty(diagnosticsTest?.defaultBufferAfterMinutes) || diagnosticsTest?.defaultBufferAfterMinutes < 0) {
+          errors.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+        }
+      }
+      else {
+        if (isNotEmpty(diagnosticsTest?.defaultDurationMinutes) && diagnosticsTest?.defaultDurationMinutes <= 0) {
+          errors.push('Field Default Duration Minutes should be greater than 0')
+        }
+        if (isNotEmpty(diagnosticsTest?.defaultBufferBeforeMinutes) && diagnosticsTest?.defaultBufferBeforeMinutes < 0) {
+          errors.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+        }
+        if (isNotEmpty(diagnosticsTest?.defaultBufferAfterMinutes) && diagnosticsTest?.defaultBufferAfterMinutes < 0) {
+          errors.push('Field Default Buffer After Minutes should be greater then or equal 0')
+        }
+      }
+
       if (errors.length > 0) {
         dispatch(
           notify({
@@ -254,7 +333,12 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
         defaultProfileResultUnit:
           diagnosticsTest.type === 'LABORATORY' ? diagnosticsTest.defaultProfileResultUnit : null,
 
-        listOfValueId: diagnosticsTest.listOfValueId ?? null
+        listOfValueId: diagnosticsTest.listOfValueId ?? null,
+
+       parallelCapacityValue: diagnosticsTest.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: diagnosticsTest?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: diagnosticsTest.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: diagnosticsTest.defaultBufferAfterMinutes ?? 0,
       };
 
       const response = await updateDiagnosticTest(payload).unwrap();
@@ -673,8 +757,15 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     }
   }, [testRequest?.type]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         height={450}
         data={isFiltered ? filteredList : diagnodticsTestList?.data ?? []}

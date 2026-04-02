@@ -1,6 +1,6 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { Form, Panel } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
@@ -12,12 +12,18 @@ import { useGetBedTransactionsListQuery } from '@/services/encounterService';
 import { useDispatch } from 'react-redux';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 
 const BedTransactionsSecondTab = ({ departmentKey }) => {
   const dispatch = useDispatch();
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 
-  // State to manage the list request used for filtering and pagination
+  const patientBulkIdsRef = useRef<string[]>([]);
+  const [
+    getBulkPatientBasicInfo,
+    { data: patientsBasicInfo, isLoading: patientsBulkLoading }
+  ] = useGetBulkPatientBasicInfoMutation();
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -28,21 +34,81 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
       }
     ]
   });
-  // State to store the selected date range for filtering (fromDate and toDate default to today)
+
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: new Date()
   });
-  // Fetch bed transaction data from the backend using the current listRequest as filters
-  const {
-    data: bedTransactionsListResponse,
-    isFetching,
-    isLoading
-  } = useGetBedTransactionsListQuery(listRequest);
 
-  //Functions
+  const { data: bedTransactionsListResponse, isFetching, isLoading } =
+    useGetBedTransactionsListQuery(listRequest);
 
-  // This function handles manual date-based search for filtering records
+  const tableData = bedTransactionsListResponse?.object ?? [];
+
+const patientIdsForBulk = useMemo(() => {
+  const ids = tableData
+    .map((row: any) => row?.patientKey)
+    .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+    .map(v => String(v));
+
+  return Array.from(new Set(ids));
+}, [tableData]);
+
+  useEffect(() => {
+    if (patientIdsForBulk.length === 0) return;
+
+    patientBulkIdsRef.current = patientIdsForBulk;
+
+    getBulkPatientBasicInfo(patientIdsForBulk as any)
+      .unwrap()
+      .catch(() => {});
+  }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+
+  const patientMap = useMemo(() => {
+    const map = new Map<string, any>();
+    const ids = patientBulkIdsRef.current;
+
+    (patientsBasicInfo ?? []).forEach((patient: any, index: number) => {
+      const key = patient?.id ?? ids[index];
+      if (!key) return;
+      map.set(String(key), patient);
+    });
+
+    return map;
+  }, [patientsBasicInfo]);
+
+const enrichedTableData = useMemo(() => {
+  return tableData.map((row: any) => {
+    const patientId = row?.patientKey ?? null;
+    const patient = patientId ? patientMap.get(String(patientId)) : null;
+
+    const fullName =
+      [
+        patient?.firstName,
+        patient?.secondName,
+        patient?.thirdName,
+        patient?.lastName
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || '-';
+
+    return {
+      ...row,
+      patientObject: {
+        id: patientId,
+        fullName,
+        medicalRecordNumber: patient?.medicalRecordNumber ?? '-'
+      }
+    };
+  });
+}, [tableData, patientMap]);
+useEffect(() => {
+  console.log('bedTransactionsListResponse =>', bedTransactionsListResponse);
+  console.log('tableData first row =>', tableData?.[0]);
+  console.log('patientIdsForBulk =>', patientIdsForBulk);
+  console.log('patientsBasicInfo =>', patientsBasicInfo);
+}, [bedTransactionsListResponse, tableData, patientIdsForBulk, patientsBasicInfo]);
   const handleManualSearch = () => {
     setManualSearchTriggered(true);
 
@@ -83,86 +149,67 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
     }
   };
 
-  //useEffect
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
       setManualSearchTriggered(false);
     }
   }, [isFetching, manualSearchTriggered]);
+
   useEffect(() => {
-    // init list
     handleManualSearch();
   }, []);
+
   useEffect(() => {
-    if (isLoading || (manualSearchTriggered && isFetching)) {
+    if (isLoading || (manualSearchTriggered && isFetching) || patientsBulkLoading) {
       dispatch(showSystemLoader());
-    } else if (isFetching && isLoading) {
+    } else {
       dispatch(hideSystemLoader());
     }
+
     return () => {
       dispatch(hideSystemLoader());
     };
-  }, [isLoading, isFetching, dispatch]);
+  }, [isLoading, isFetching, manualSearchTriggered, patientsBulkLoading, dispatch]);
 
-  // table columns
   const tableColumns = [
     {
       key: 'queueNumber',
       title: <Translate>#</Translate>,
       dataKey: 'queueNumber',
-      render: rowData => rowData?.patient?.patientMrn
+      render: (rowData: any) => rowData?.patientObject?.medicalRecordNumber
     },
     {
       key: 'patientFullName',
       title: <Translate>PATIENT NAME</Translate>,
-      render: rowData => rowData?.patient?.fullName
+      render: (rowData: any) => rowData?.patientObject?.fullName
     },
     {
       key: 'fromBed',
       title: <Translate>FROM BED</Translate>,
-      render: rowData => rowData?.fromBed?.name
+      render: (rowData: any) => rowData?.fromBed?.name
     },
     {
       key: 'fromRoom',
       title: <Translate>ROOM</Translate>,
-      render: rowData => rowData.fromRoom?.name
+      render: (rowData: any) => rowData?.fromRoom?.name
     },
     {
       key: 'toBed',
       title: <Translate>TO BED</Translate>,
-      render: rowData => rowData?.toBed?.name
+      render: (rowData: any) => rowData?.toBed?.name
     },
     {
       key: 'toRoom',
       title: <Translate>ROOM</Translate>,
-      render: rowData => rowData.toRoom?.name
+      render: (rowData: any) => rowData?.toRoom?.name
     },
     {
-      key: 'admitSource',
-      title: <Translate>Admit Source</Translate>,
-      render: rowData =>
-        rowData?.admitOutpatientInpatient?.admitSourceLvalue
-          ? rowData?.admitOutpatientInpatient?.admitSourceLvalue?.lovDisplayVale
-          : rowData?.admitOutpatientInpatient?.admitSourceLkey
-    },
-    {
-      key: 'admissionDate',
-      title: <Translate>Admission Date</Translate>,
-      render: (rowData: any) => {
-        return (
-          <span className="date-table-style">
-            {formatDateWithoutSeconds(rowData?.admitOutpatientInpatient?.createdAt)}
-          </span>
-        );
-      }
-    },
-    {
-      key: '',
+      key: 'movedByAt',
       title: <Translate>Moved By\At</Translate>,
       render: (rowData: any) => {
         return (
           <>
-            <span>Current User</span>
+            <span>{rowData?.createdBy}</span>
             <br />
             <span className="date-table-style">{formatDateWithoutSeconds(rowData?.createdAt)}</span>
           </>
@@ -172,27 +219,20 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
   ];
 
   const pageIndex = listRequest.pageNumber - 1;
-
-  // how many rows per page:
   const rowsPerPage = listRequest.pageSize;
-
-  // total number of items in the backend:
   const totalCount = bedTransactionsListResponse?.extraNumeric ?? 0;
 
-  // handler when the user clicks a new page number:
   const handlePageChange = (_: unknown, newPage: number) => {
-    // MUI gives you a zero-based page, so add 1 for your API
     setManualSearchTriggered(true);
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
 
-  // handler when the user chooses a different rows-per-page:
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setManualSearchTriggered(true);
     setListRequest({
       ...listRequest,
       pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // reset to first page
+      pageNumber: 1
     });
   };
 
@@ -225,14 +265,21 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
       </Form>
     );
   };
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         filters={filters()}
         height={600}
-        data={bedTransactionsListResponse?.object ?? []}
+        data={enrichedTableData}
         columns={tableColumns}
-        loading={isLoading || (manualSearchTriggered && isFetching)}
+        loading={isLoading || (manualSearchTriggered && isFetching) || patientsBulkLoading}
         sortColumn={listRequest.sortBy}
         sortType={listRequest.sortType}
         onSortChange={(sortBy, sortType) => {

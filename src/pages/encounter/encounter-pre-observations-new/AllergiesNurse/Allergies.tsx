@@ -309,9 +309,15 @@ const Allergies = (props: AllergiesProps) => {
     });
   };
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
-    <div>
+    <div dir={dir}>
       <div className="bt-div-2">
         <div className="bt-left-2">
           <MyButton
@@ -384,11 +390,13 @@ const Allergies = (props: AllergiesProps) => {
           sortType={sortType}
           onSortChange={handleSortChange}
         />
+        {allerges?.id && (
         <AllergyDetailsSection
           allerges={allerges}
           setAllerges={setAllerges}
           edit={edit}
         />
+        )}
       </div>
       <CancellationModal
         open={openCancellationReasonModel}

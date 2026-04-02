@@ -681,8 +681,16 @@ const ProcedureModule: React.FC = () => {
     </>
   );
 
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         filters={filters()}
         columns={tableColumns}
@@ -710,7 +718,7 @@ const ProcedureModule: React.FC = () => {
         title="Perform Details"
         hideActionBtn
         size="full"
-        content={
+        content={<div dir={dir}>
           <Perform
             proRefetch={proRefetch}
             encounter={encounter}
@@ -719,6 +727,7 @@ const ProcedureModule: React.FC = () => {
             setProcedure={setProcedure}
             edit={false}
           />
+          </div>
         }
       />
 
@@ -729,7 +738,7 @@ const ProcedureModule: React.FC = () => {
         size="90vw"
         content={
           patient && encounter ? (
-            <PatientEMRModal inModal patient={patient} encounter={encounter} />
+            <div dir={dir}><PatientEMRModal inModal patient={patient} encounter={encounter} /></div>
           ) : (
             <div style={{ padding: 16 }}>No patient selected.</div>
           )
@@ -738,7 +747,8 @@ const ProcedureModule: React.FC = () => {
         actionButtonFunction={() => setOpenEMRModal(false)}
         cancelButtonLabel="Cancel"
       />
-    </>
+
+    </div>
   );
 };
 

@@ -22,7 +22,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import ReloadIcon from '@rsuite/icons/Reload';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
 import { Checkbox } from 'rsuite';
@@ -42,7 +42,6 @@ const NameCell = ({ login }: { login?: string | null }) => {
   const { data: fullName } = useGetUserFullNameByLoginQuery(login ?? '', {
     skip: !login
   });
-  console.log("fullName: ", fullName);
   return <span>{fullName || login || '-'}</span>;
 };
 
@@ -72,7 +71,7 @@ const Warning = (props: WarningProps) => {
     sort: 'id,asc',
     timestamp: Date.now()
   });
-
+  console.log("patientWWWW: ", patient);
   // Data fetching + mutations
   const {
     data: warningsListResponse,
@@ -88,6 +87,12 @@ const Warning = (props: WarningProps) => {
       skip: !patient?.id
     }
   );
+  useEffect(() => {
+  if (warningsListResponse) {
+    console.log("warningsListResponse updated: ", warningsListResponse);
+  }
+}, [warningsListResponse]);
+  console.log("warningsListResponse: ", warningsListResponse?.data);
   const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
   const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const [cancelPatientWarning] = useCancelPatientWarningMutation();
@@ -318,8 +323,16 @@ const Warning = (props: WarningProps) => {
     });
   };
 
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div className="bt-div-2">
         <div className="bt-left-2">
           {showTableButtons && (
@@ -399,11 +412,13 @@ const Warning = (props: WarningProps) => {
           sortType={sortType}
           onSortChange={handleSortChange}
         />
+        {warning?.id && (
         <WarningDetailsSection
           warning={warning}
           setWarning={setWarning}
           edit={edit}
         />
+        )}
       </div>
 
       <CancellationModal

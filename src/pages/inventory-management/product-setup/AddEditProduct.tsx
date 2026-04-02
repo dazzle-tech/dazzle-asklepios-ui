@@ -37,6 +37,19 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
   const [createProduct] = useCreateInventoryProductMutation();
   const [updateProduct] = useUpdateInventoryProductMutation();
 
+  // Helper function to convert baseUom to number (bigint)
+  // Backend expects Long (bigint), not string or null
+  const convertBaseUomToNumber = (value: any): number | null => {
+    if (value == null || value === '' || value === undefined) return null;
+    // Handle string "0" or number 0
+    if (value === '0' || value === 0) return 0;
+    // Convert to number
+    const num = Number(value);
+    // Return null if conversion resulted in NaN or non-finite number
+    if (isNaN(num) || !isFinite(num)) return null;
+    return num;
+  };
+
   const handleSave = async () => {
     try {
       const cleanProduct: any = { ...product };
@@ -48,13 +61,48 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
       delete cleanProduct.updatedAt;
       delete cleanProduct.updatedBy;
       delete cleanProduct.Id;
-
+      delete cleanProduct.currency;
+      
+      // Get baseUom from original product and convert to number
+      // Remove from cleanProduct to prevent string contamination
+      const baseUomValue = product?.baseUom;
+      delete cleanProduct.baseUom;
+      
+      // Convert baseUom to number (bigint) - backend expects Long, not String
+      const convertedBaseUom = convertBaseUomToNumber(baseUomValue);
+      
+      // Validate that baseUom is provided (backend requires it, even though @NotEmpty is wrong annotation)
+      if (convertedBaseUom == null || convertedBaseUom <= 0 || typeof convertedBaseUom !== 'number') {
+        dispatch(notify({ 
+          msg: "Base UOM is required. Please select a Base UOM unit.", 
+          sev: "warning" 
+        }));
+        return;
+      }
+      
+      // Final safety check: Ensure baseUom is definitely a number (not string, not null)
+      // This is critical because backend has invalid @NotEmpty annotation on Long
+      const finalBaseUom = typeof convertedBaseUom === 'number' && !isNaN(convertedBaseUom) 
+        ? convertedBaseUom 
+        : null;
+      
+      if (finalBaseUom == null || finalBaseUom <= 0) {
+        dispatch(notify({ 
+          msg: "Base UOM is required. Please select a Base UOM unit.", 
+          sev: "warning" 
+        }));
+        return;
+      }
+      
         const basePayload: InventoryProduct = {
           ...cleanProduct,
           id: cleanProduct?.id ?? undefined,
           name: cleanProduct?.name?.trim(),
           type: cleanProduct?.type || null,
-          baseUom: cleanProduct?.baseUom || null,
+          // baseUom must be a number (bigint/Long), not string or null
+          // Backend has @NotEmpty on Long which is invalid - this needs to be fixed on backend
+          // We ensure it's always a valid positive number
+          baseUom: finalBaseUom,
           dispenseUom: cleanProduct?.dispenseUom || null,
           inventoryType: cleanProduct?.inventoryType || null,
           isActive: cleanProduct?.isActive ?? true,
@@ -62,6 +110,20 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
           hazardousBiohazardousTag: cleanProduct?.hazardousBiohazardousTag || null,
           allergyRisk: cleanProduct?.allergyRisk ?? false,
         };
+
+      // 🔍 Debug: Show the payload being sent to backend
+      console.log("=== PAYLOAD BEING SENT TO BACKEND ===");
+      console.log("Full payload object:", basePayload);
+      console.log("--- baseUom Details ---");
+      console.log("baseUom value:", basePayload.baseUom);
+      console.log("baseUom type:", typeof basePayload.baseUom);
+      console.log("baseUom is number?", typeof basePayload.baseUom === 'number');
+      console.log("baseUom is null?", basePayload.baseUom === null);
+      console.log("baseUom is undefined?", basePayload.baseUom === undefined);
+      console.log("Original product.baseUom:", product?.baseUom);
+      console.log("Original product.baseUom type:", typeof product?.baseUom);
+      console.log("Converted baseUom:", convertedBaseUom);
+      console.log("================================");
 
       if (!cleanProduct.id) {
         // ➕ Create
@@ -76,13 +138,23 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
       setProduct({ ...newInventoryProduct });
     } 
     catch (err: any) {
-
       const errorKey = err?.data?.properties?.message;
       const backendTitle = err?.data?.title;
+      const errorDetail = err?.data?.detail || '';
+      
       let msg = backendTitle || "Failed to save product";
 
-      if (errorKey === "error.unique.name.type") msg = "❗ Product name already exists for this type!";
-      if (errorKey === "error.unique.code.type") msg = "❗ Product code already exists for this type!";
+      // Handle specific validation errors
+      if (errorKey === "error.unique.name.type") {
+        msg = "❗ Product name already exists for this type!";
+      } else if (errorKey === "error.unique.code.type") {
+        msg = "❗ Product code already exists for this type!";
+      } else if (errorDetail?.includes("NotEmpty") && errorDetail?.includes("baseUom")) {
+        // Backend validation error: @NotEmpty annotation is incorrectly used on Long type
+        msg = "❗ Backend Configuration Error: The backend has an invalid validation annotation on baseUom field. Please contact backend team to change @NotEmpty to @NotNull on the baseUom field in InventoryProductsCreateDTO.";
+        console.error("Backend Validation Error:", errorDetail);
+        console.error("This is a backend configuration issue. The @NotEmpty annotation cannot be used on Long (bigint) fields.");
+      }
 
       dispatch(
         notify({
@@ -159,6 +231,13 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
       </Row>
     </>
   );
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
     open={open}
@@ -166,7 +245,7 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
     title="Product Setup"
     size="lg"
     bodyheight="65vh"
-    content={content}
+    content={<div dir={dir}>{content()}</div>}
     hideBack={true}
     steps={[{ title: "Product Setup", icon: <FontAwesomeIcon icon={faDiceD6} /> }]}
     actionButtonLabel="Save"

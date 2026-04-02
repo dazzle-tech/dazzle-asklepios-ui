@@ -4,6 +4,22 @@ export { default as toThousands } from './toThousands';
 export { default as highlightValue } from './highlightValue';
 export { default as formatValue } from './formatValue';
 
+export const conjureValuesFromEnumList = (
+  list: any[],
+  valuesString: string,
+  preferredField: string
+): string => {
+  if (!valuesString) return '';
+
+  const keys = valuesString.split(',').map(k => k.trim());
+  const values = keys.map(key => {
+    const found = list?.find(record => record.value === key);
+    return found ? found[preferredField] : key;
+  });
+
+  return values.join(', ');
+};
+
 export const fromCamelCaseToDBName = word => {
   let final = '';
   for (const char of word) {
@@ -16,48 +32,82 @@ export const fromCamelCaseToDBName = word => {
   return final;
 };
 
-export const fromListRequestToQueryParams = listRequest => {
-  let final = '';
-  final += `&pageNumber=${listRequest.pageNumber}`;
-  final += `&pageSize=${listRequest.pageSize}`;
-  final += `&sortBy=${fromCamelCaseToDBName(listRequest.sortBy)}`;
-  final += `&sortType=${listRequest.sortType}`;
-  final += `&filterLogic=${listRequest.filterLogic}`;
+export const fromListRequestToQueryParams = (listRequest: any) => {
+  const req = listRequest ?? {};
 
-  // construct a parsable filter query param from fitlers array
-  let filtersString = '';
-  listRequest.filters.map((filter, i) => {
-    filtersString += `${filter.fieldName},${filter.operator},${filter.value}`;
-    if (i + 1 < listRequest.filters.length) {
-      filtersString += '_fspr_';
-    }
+  // Default to legacy paging conventions used across this repo (see `initialListRequest`)
+  const pageNumber = req.pageNumber ?? 1;
+  const pageSize = req.pageSize ?? 15;
+  const sortBy = req.sortBy ?? 'key';
+  const sortType = req.sortType ?? 'asc';
+  const filterLogic = req.filterLogic ?? 'and';
+
+  let final = '';
+  final += `&pageNumber=${pageNumber}`;
+  final += `&pageSize=${pageSize}`;
+  final += `&sortBy=${fromCamelCaseToDBName(String(sortBy))}`;
+  final += `&sortType=${sortType}`;
+  final += `&filterLogic=${filterLogic}`;
+
+  const filters: any[] = Array.isArray(req.filters) ? req.filters : [];
+  const validFilters = filters.filter(f => {
+    if (!f) return false;
+    const fieldName = String(f.fieldName ?? '').trim();
+    const operator = String(f.operator ?? '').trim();
+    const value = f.value;
+    if (!fieldName || !operator) return false;
+    if (value == null) return false;
+    const valueStr = String(value).trim();
+    if (!valueStr || valueStr === 'undefined' || valueStr === 'null') return false;
+    return true;
   });
 
-  if (filtersString.length > 0) final += `&filters=${filtersString}`;
+  if (validFilters.length > 0) {
+    const filtersString = validFilters
+      .map(f => `${f.fieldName},${f.operator},${f.value}`)
+      .join('_fspr_');
+    final += `&filters=${filtersString}`;
+  }
 
-  if (listRequest.ignore) final += `&ignore=true`;
-  if (listRequest.skipDetails) final += `&skipDetails=true`;
+  if (req.ignore) final += `&ignore=true`;
+  if (req.skipDetails) final += `&skipDetails=true`;
   return final;
 };
-export const fromListRequestAllValueToQueryParams = listRequest => {
-  let final = '';
-  final += `&sortBy=${fromCamelCaseToDBName(listRequest.sortBy)}`;
-  final += `&sortType=${listRequest.sortType}`;
-  final += `&filterLogic=${listRequest.filterLogic}`;
+export const fromListRequestAllValueToQueryParams = (listRequest: any) => {
+  const req = listRequest ?? {};
 
-  // construct a parsable filter query param from fitlers array
-  let filtersString = '';
-  listRequest.filters.map((filter, i) => {
-    filtersString += `${filter.fieldName},${filter.operator},${filter.value}`;
-    if (i + 1 < listRequest.filters.length) {
-      filtersString += '_fspr_';
-    }
+  // Default to legacy sort conventions used across this repo (see `initialListRequestAllValues`)
+  const sortBy = req.sortBy ?? 'key';
+  const sortType = req.sortType ?? 'asc';
+  const filterLogic = req.filterLogic ?? 'and';
+
+  let final = '';
+  final += `&sortBy=${fromCamelCaseToDBName(String(sortBy))}`;
+  final += `&sortType=${sortType}`;
+  final += `&filterLogic=${filterLogic}`;
+
+  const filters: any[] = Array.isArray(req.filters) ? req.filters : [];
+  const validFilters = filters.filter(f => {
+    if (!f) return false;
+    const fieldName = String(f.fieldName ?? '').trim();
+    const operator = String(f.operator ?? '').trim();
+    const value = f.value;
+    if (!fieldName || !operator) return false;
+    if (value == null) return false;
+    const valueStr = String(value).trim();
+    if (!valueStr || valueStr === 'undefined' || valueStr === 'null') return false;
+    return true;
   });
 
-  if (filtersString.length > 0) final += `&filters=${filtersString}`;
+  if (validFilters.length > 0) {
+    const filtersString = validFilters
+      .map(f => `${f.fieldName},${f.operator},${f.value}`)
+      .join('_fspr_');
+    final += `&filters=${filtersString}`;
+  }
 
-  if (listRequest.ignore) final += `&ignore=true`;
-  if (listRequest.skipDetails) final += `&skipDetails=true`;
+  if (req.ignore) final += `&ignore=true`;
+  if (req.skipDetails) final += `&skipDetails=true`;
   return final;
 };
 export const conjureValuesFromList = (

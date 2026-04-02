@@ -462,6 +462,13 @@ const AvailabilityTimeModal = ({
         );
     }
   };
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <ChildModal
       open={open}
@@ -469,11 +476,19 @@ const AvailabilityTimeModal = ({
       showChild={openChildModal}
       setShowChild={setOpenChildModal}
       title='Availability Time'
-      mainContent={conjureFormMainContent}
+      mainContent={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormMainContent(stepNumber)}
+        </div>
+      )}
       actionChildButtonFunction={handleSave}
       hideActionBtn
       childTitle={resource?.key ? 'Edit Availability Time' : 'New Availability Time'}
-      childContent={conjureFormChildContent}
+      childContent={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormChildContent(stepNumber)}
+        </div>
+      )}
       mainSize="sm"
       mainStep={[{ title: 'Availability Time', icon:<GrScheduleNew />}]}
       childStep={[{ title: 'Availability Time', icon:<GrScheduleNew />}]}

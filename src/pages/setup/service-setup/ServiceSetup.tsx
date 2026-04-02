@@ -185,7 +185,6 @@ const ServiceSetup: React.FC = () => {
 
   // ===== Save (add/update) — reads facilityId from modal object =====
   const handleSave = async () => {
-    setPopupOpen(false);
     const isUpdate = !!service.id;
 
     const resolvedFacilityIdRaw =
@@ -201,6 +200,65 @@ const ServiceSetup: React.FC = () => {
       return;
     }
 
+
+     const fieldLabels = {
+          name: 'Name',
+          code: 'Code',
+          category: 'Category',
+        };
+    
+        const missingFields = Object.keys(fieldLabels).filter((key) => !service[key]);
+        let messages = [];
+        if (missingFields.length > 0) {
+          messages = missingFields.map(
+            (key) => `Field '${fieldLabels[key]}' is required`
+          );
+        }
+    
+        const isEmpty = (val) => val === null || val === undefined || val === '';
+        const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+        if (
+          service?.parallelCapacityValue === null ||
+          service?.parallelCapacityValue === undefined ||
+          service?.parallelCapacityValue < 1
+        ) {
+          messages.push(
+            'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+          );
+        }
+        if (service?.appointable) {
+          if (isEmpty(service?.defaultDurationMinutes) || service?.defaultDurationMinutes <= 0) {
+            messages.push('Field Default Duration Minutes is required and should be greater than 0')
+          }
+          if (isEmpty(service?.defaultBufferBeforeMinutes) || service?.defaultBufferBeforeMinutes < 0) {
+            messages.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+          }
+          if (isEmpty(service?.defaultBufferAfterMinutes) || service?.defaultBufferAfterMinutes < 0) {
+            messages.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+          }
+        }
+        else {
+          if (isNotEmpty(service?.defaultDurationMinutes) && service?.defaultDurationMinutes <= 0) {
+            messages.push('Field Default Duration Minutes should be greater than 0')
+          }
+          if (isNotEmpty(service?.defaultBufferBeforeMinutes) && service?.defaultBufferBeforeMinutes < 0) {
+            messages.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+          }
+          if (isNotEmpty(service?.defaultBufferAfterMinutes) && service?.defaultBufferAfterMinutes < 0) {
+            messages.push('Field Default Buffer After Minutes should be greater then or equal 0')
+          }
+        }
+        if (messages.length > 0) {
+          dispatch(
+            notify({
+              msg: messages.join(', '),
+              sev: 'warning',
+            })
+          );
+    
+          return;
+        }
+
     const payloadBody: any = {
       ...service,
       facilityId: effectiveFacilityId,
@@ -208,6 +266,10 @@ const ServiceSetup: React.FC = () => {
         typeof (service as any).price === 'string'
           ? Number((service as any).price)
           : (service as any).price,
+      parallelCapacityValue: service.parallelCapacityValue ?? 1,
+      defaultDurationMinutes: service?.defaultDurationMinutes,
+      defaultBufferBeforeMinutes: service.defaultBufferBeforeMinutes ?? 0,
+      defaultBufferAfterMinutes: service.defaultBufferAfterMinutes ?? 0,
     };
 
     try {
@@ -216,16 +278,20 @@ const ServiceSetup: React.FC = () => {
         saved = await updateService({
           id: service.id!,
           facilityId: effectiveFacilityId,
+          parallelCapacityValue: service.parallelCapacityValue ?? 1,
+        defaultDurationMinutes: service?.defaultDurationMinutes,
+        defaultBufferBeforeMinutes: service.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: service.defaultBufferAfterMinutes ?? 0,
           ...payloadBody,
         }).unwrap();
-
+        setPopupOpen(false);
         dispatch(notify({ msg: 'Service updated successfully', sev: 'success' }));
       } else {
         saved = await addService({
           facilityId: effectiveFacilityId,
           ...payloadBody,
         }).unwrap();
-
+        setPopupOpen(false);
         dispatch(notify({ msg: 'Service added successfully', sev: 'success' }));
       }
 
@@ -682,9 +748,14 @@ const ServiceSetup: React.FC = () => {
     }
   }, [recordOfFilter.value]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         data={tableData}
         totalCount={totalCount}

@@ -1,109 +1,202 @@
-import MyModal from "@/components/MyModal/MyModal";
-import React, { useEffect } from "react";
-import MyInput from "@/components/MyInput";
-import { Form } from "rsuite";
-import "./styles.less";
-import { FaComment } from "react-icons/fa";
-import { useEnumOptions } from "@/services/enumsApi";
-import { useGetAllFacilitiesQuery } from "@/services/security/facilityService";
-import { useGetDepartmentByFacilityQuery } from "@/services/security/departmentService";
-import { useAppSelector } from "@/hooks";
-import { skipToken } from "@reduxjs/toolkit/query";
+import MyModal from '@/components/MyModal/MyModal';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import MyInput from '@/components/MyInput';
+import { Form } from 'rsuite';
+import './styles.less';
+import { FaComment } from 'react-icons/fa';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useAppSelector } from '@/hooks';
+import { useLazyGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
-const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, handleSave }) => {
-  // Enums
-  const referralTypeOptions = useEnumOptions("ReferralType");
-  const priorityOptions = useEnumOptions("ReferralPriority");
+const AddEditReferralRequest = ({
+  open,
+  setOpen,
+  width,
+  referral,
+  setReferral,
+  handleSave
+}) => {
+  const referralTypeOptions = useEnumOptions('ReferralType');
+  const priorityOptions = useEnumOptions('ReferralPriority');
 
-  const selectedFacility = useAppSelector(
-    (state) => state.auth?.tenant?.selectedFacility
-  );
+  const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
+  const selectedDepartment = useAppSelector(state => state.auth?.selectedDepartment);
 
-  // Facility list from RTK
   const { data: facilityResponse } = useGetAllFacilitiesQuery({});
 
-  // Map facilities for select
   const facilityOptions =
-    facilityResponse?.map((f) => ({
-      label: f.name ?? "",
-      value: f.id,
-    })) ?? [];
+    facilityResponse?.map(f => ({ label: f.name ?? '', value: f.id })) ?? [];
 
+  // ─── Departments ────────────────────────────────────────────────────────────
 
+  const deptSize = 20;
+  const [deptPage, setDeptPage] = useState(0);
+  const [allDepartments, setAllDepartments] = useState([]);
+  const [deptHasMore, setDeptHasMore] = useState(false);
+  const [deptNextLink, setDeptNextLink] = useState(null);
+  const [modalSession, setModalSession] = useState(0);
 
-  const facilityIdForDepartments = referral.referralType === "INTERNAL"
-    ? selectedFacility?.id
-    : referral.facilityId;  // EXTERNAL: depends on selected external facility
+  const [triggerDepartments, { isFetching: isDeptLoading }] =
+    useLazyGetAppointableDepartmentsQuery();
 
-  // Fetch departments dynamically
-  const {
-    data: departmentResponse,
-    isFetching: isDeptLoading,
-  } = useGetDepartmentByFacilityQuery(
-    facilityIdForDepartments
-      ? { facilityId: facilityIdForDepartments, page: 0, size: 100 }
-      : skipToken
+  const prevToFacilityId = useRef(undefined);
+
+  const resetDepartmentsState = useCallback(() => {
+    setDeptPage(0);
+    setAllDepartments([]);
+    setDeptHasMore(false);
+    setDeptNextLink(null);
+  }, []);
+
+  const loadDepartments = useCallback(
+    async ({ facilityId, page = 0, append = false }) => {
+      if (!facilityId) return;
+
+      try {
+        const response = await triggerDepartments({
+          facilityId,
+          page,
+          size: deptSize,
+          sort: 'id,asc'
+        }).unwrap();
+
+        const rows = response?.data ?? [];
+        const nextLink = response?.links?.next ?? null;
+
+        setDeptHasMore(Boolean(nextLink));
+        setDeptNextLink(nextLink);
+
+        if (append) {
+          setAllDepartments(prev => {
+            const seenIds = new Set(prev.map(d => Number(d.id)));
+            const merged = [...prev];
+
+            rows.forEach(d => {
+              if (!seenIds.has(Number(d.id))) {
+                merged.push(d);
+              }
+            });
+
+            return merged;
+          });
+        } else {
+          setAllDepartments(rows);
+        }
+      } catch (error) {
+        console.error('Failed to load departments:', error);
+        setAllDepartments([]);
+        setDeptHasMore(false);
+        setDeptNextLink(null);
+      }
+    },
+    [triggerDepartments]
   );
 
+  useEffect(() => {
+    if (!selectedFacility?.id || !open) return;
 
-  const departmentOptions =
-    departmentResponse?.data?.map((d) => ({
-      label: d.name,
-      value: d.id,
-    })) ?? [];
-
-
-useEffect(() => {
-  if (referral.referralType === "INTERNAL" && selectedFacility?.id) {
     setReferral(prev => ({
       ...prev,
-      facilityId: selectedFacility.id
+      fromFacilityId: Number(selectedFacility.id),
+      fromDepartmentId: selectedDepartment?.departmentId ?? null,
+      toFacilityId:
+        prev?.referralType === 'INTERNAL'
+          ? Number(selectedFacility.id)
+          : prev?.toFacilityId ?? null
     }));
-  }
-}, [referral.referralType, selectedFacility]);
+  }, [
+    open,
+    referral?.referralType,
+    selectedFacility?.id,
+    selectedDepartment?.departmentId,
+    setReferral
+  ]);
 
-useEffect(() => {
-  if (referral.referralType === "EXTERNAL") {
+  useEffect(() => {
+    if (open) {
+      setModalSession(prev => prev + 1);
+      return;
+    }
+
+    prevToFacilityId.current = undefined;
+    resetDepartmentsState();
+
     setReferral(prev => ({
       ...prev,
-      facilityId: null,
+      toDepartmentId: null
     }));
-  }
-}, [referral.referralType]);
+  }, [open, resetDepartmentsState, setReferral]);
 
+  useEffect(() => {
+    if (!open) return;
 
+    const currentToFacilityId = referral?.toFacilityId ?? null;
 
-  const conjureFormContent = () => {
-    return (
-      <Form fluid>
-        {/* Referral Type */}
-        <MyInput
-          width="100%"
-          fieldName="referralType"
-          fieldType="select"
-          selectData={referralTypeOptions ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={referral}
-          setRecord={setReferral}
-          required
-        />
+    if (prevToFacilityId.current === undefined) {
+      prevToFacilityId.current = currentToFacilityId;
+      return;
+    }
 
-      {referral.referralType === "INTERNAL" ? (
-        <div style={{ width: "100%" }}>
-          <label className="my-label">Facility</label>
+    if (prevToFacilityId.current === currentToFacilityId) return;
+
+    prevToFacilityId.current = currentToFacilityId;
+
+    resetDepartmentsState();
+
+    setReferral(prev => ({
+      ...prev,
+      toDepartmentId: null
+    }));
+  }, [open, referral?.toFacilityId, resetDepartmentsState, setReferral]);
+
+  useEffect(() => {
+    if (!open || !referral?.toFacilityId) return;
+
+    resetDepartmentsState();
+    loadDepartments({
+      facilityId: referral.toFacilityId,
+      page: 0,
+      append: false
+    });
+  }, [open, referral?.toFacilityId, resetDepartmentsState, loadDepartments]);
+
+  const toDepartmentOptions = allDepartments.map(d => ({
+    label: d.name ?? '',
+    value: d.id
+  }));
+
+  const conjureFormContent = () => (
+    <Form fluid>
+      <MyInput
+        width="100%"
+        fieldName="referralType"
+        fieldLabel="Referral Type"
+        fieldType="select"
+        selectData={referralTypeOptions ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={referral}
+        setRecord={setReferral}
+        required
+      />
+
+      {referral?.referralType === 'INTERNAL' ? (
+        <div style={{ width: '100%' }}>
+          <label className="my-label">To Facility</label>
           <input
             className="rs-input rs-input-disabled"
-            style={{ width: "100%" }}
-            value={selectedFacility?.name || ""}
+            style={{ width: '100%' }}
+            value={selectedFacility?.name || ''}
             disabled
           />
         </div>
       ) : (
         <MyInput
           width="100%"
-          fieldName="facilityId"
-          fieldLabel="External Facility"
+          fieldName="toFacilityId"
+          fieldLabel="To Facility"
           fieldType="select"
           selectData={facilityOptions}
           selectDataLabel="label"
@@ -114,61 +207,83 @@ useEffect(() => {
         />
       )}
 
+      <MyInput
+        key={`to-department-${modalSession}-${referral?.toFacilityId ?? 'none'}`}
+        width="100%"
+        fieldName="toDepartmentId"
+        fieldLabel="To Department"
+        fieldType="selectPagination"
+        selectData={toDepartmentOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={referral}
+        setRecord={setReferral}
+        loading={isDeptLoading}
+        searchable
+        disabled={!referral?.toFacilityId}
+        hasMore={deptHasMore}
+        onFetchMore={async () => {
+          if (!deptNextLink || !referral?.toFacilityId) return;
 
+          const { page } = extractPaginationFromLink(deptNextLink);
+          setDeptPage(page);
 
-          <MyInput
-            width="100%"
-            fieldName="departmentId"
-            fieldLabel="Department"
-            fieldType="select"
-            selectData={departmentOptions}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={referral}
-            setRecord={setReferral}
-            loading={isDeptLoading}
-            required
-          />
+          await loadDepartments({
+            facilityId: referral.toFacilityId,
+            page,
+            append: true
+          });
+        }}
+        required
+      />
 
-          <MyInput
-            width="100%"
-            fieldName="priority"
-            fieldType="select"
-            selectData={priorityOptions ?? []}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={referral}
-            setRecord={setReferral}
-            required
-          />
+      <MyInput
+        width="100%"
+        fieldName="priority"
+        fieldLabel="Priority"
+        fieldType="select"
+        selectData={priorityOptions ?? []}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={referral}
+        setRecord={setReferral}
+        required
+      />
 
+      <MyInput
+        width="100%"
+        fieldName="referralReason"
+        fieldLabel="Referral Reason"
+        fieldType="textarea"
+        record={referral}
+        setRecord={setReferral}
+        required
+      />
+    </Form>
+  );
 
-          <MyInput
-            width="100%"
-            fieldName="referralReason"
-            fieldLabel="Referral Reason"
-            fieldType="textarea"
-            record={referral}
-            setRecord={setReferral}
-            required
-          />
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-      </Form>
-    );
-  };
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={referral?.id ? "Edit Referral Request" : "New Referral Request"}
+      title={referral?.id ? 'Edit Referral Request' : 'New Referral Request'}
       position="right"
-      content={conjureFormContent}
-      actionButtonLabel={referral?.id ? "Save" : "Create"}
+      content={    <div dir={dir}>
+        {conjureFormContent()}
+        </div>}
+      actionButtonLabel={referral?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      steps={[{ title: "Referral Request Info", icon: <FaComment /> }]}
-      size={width > 600 ? "36vw" : "70vw"}
+      steps={[{ title: 'Referral Request Info', icon: <FaComment /> }]}
+      size={width > 600 ? '36vw' : '70vw'}
     />
+    
   );
 };
 

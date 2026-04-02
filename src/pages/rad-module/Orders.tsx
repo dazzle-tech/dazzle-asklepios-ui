@@ -2,14 +2,21 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppSelector } from '@/hooks';
 import { useFilterDiagnosticOrdersQuery } from '@/services/diagnosic-order/diagnosticOrderService';
+import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 import { formatEnumString } from '@/utils';
 import { faLandMineOn } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState
+} from 'react';
 import { Tooltip, Whisper } from 'rsuite';
+
 import './styles.less';
-import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
 
 type OrdersProps = {
   order: any;
@@ -25,18 +32,22 @@ const Orders = forwardRef<any, OrdersProps>(
   ({ order, setOrder, dateFilter, loading }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
-    const [sortColumn, setSortColumn] = useState("id");
-    const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+    const [sortColumn, setSortColumn] = useState('id');
+    const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
 
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
       size: 5,
-      sort: ['isUrgent,desc', 'submittedDate,desc'],
+      sort: ['isUrgent,desc', 'submittedDate,desc']
     });
 
+    const [fetchBulkPatients] = useGetBulkPatientBasicInfoMutation();
+    const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
 
     const fromDateParam = useMemo(() => {
       if (!dateFilter?.fromDate) return undefined;
+
       const d = new Date(dateFilter.fromDate);
       d.setHours(0, 0, 0, 0);
       return d.toISOString();
@@ -44,6 +55,7 @@ const Orders = forwardRef<any, OrdersProps>(
 
     const toDateParam = useMemo(() => {
       if (!dateFilter?.toDate) return undefined;
+
       const d = new Date(dateFilter.toDate);
       d.setHours(23, 59, 59, 999);
       return d.toISOString();
@@ -51,9 +63,7 @@ const Orders = forwardRef<any, OrdersProps>(
 
     const departmentId =
       selectedDepartment?.id ??
-      selectedDepartment?.departmentId ??
-      selectedDepartment?.key;
-
+      selectedDepartment?.departmentId;
 
     const {
       data: ordersResponse,
@@ -62,56 +72,38 @@ const Orders = forwardRef<any, OrdersProps>(
     } = useFilterDiagnosticOrdersQuery(
       departmentId
         ? {
-          page: paginationParams.page,
-          size: paginationParams.size,
-          sort: paginationParams.sort,
-          departmentId,
-          testType: "RADIOLOGY",
-          status: 'SUBMITTED',
-          submittedDateFrom: fromDateParam,
-          submittedDateTo: toDateParam
-        }
+            page: paginationParams.page,
+            size: paginationParams.size,
+            sort: paginationParams.sort,
+            departmentId,
+            testType: 'RADIOLOGY',
+            status: 'SUBMITTED',
+            submittedDateFrom: fromDateParam,
+            submittedDateTo: toDateParam
+          }
         : skipToken
     );
-
 
     useImperativeHandle(ref, () => ({
       refetchOrders
     }));
 
-
-
-
     const ordersList = ordersResponse?.data ?? [];
     const totalCount = ordersResponse?.totalCount ?? 0;
 
-    useEffect(() => {
-      if (!order?.id && ordersList.length > 0) {
-        setOrder(ordersList[0]);
-      }
+    const patientIds = useMemo(() => {
+      return ordersList
+        .map(o => o.patientId)
+        .filter(Boolean)
+        .map(id => String(id))
+        .filter((id, index, arr) => arr.indexOf(id) === index);
     }, [ordersList]);
 
-    const isSelected = rowData =>
-      rowData && order && rowData.id === order.id ? 'selected-row' : '';
-
-    const [fetchBulkPatients] = useGetBulkPatientBasicInfoMutation();
-
-
-    const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
-    console.log('Orders component rendered. Current patientsMap:', patientsMap);
-
-    const patientIds = useMemo(
-      () =>
-        ordersList
-          .map(o => o.patientId)
-          .filter(Boolean)
-          .map(String)
-          .filter((id, i, arr) => arr.indexOf(id) === i),
-      [ordersList]
-    );
-
     useEffect(() => {
-      if (!patientIds.length) return;
+      if (!patientIds.length) {
+        setPatientsMap({});
+        return;
+      }
 
       const numericIds = patientIds.map(id => Number(id));
 
@@ -120,37 +112,69 @@ const Orders = forwardRef<any, OrdersProps>(
         .then((res: any[]) => {
           const map: Record<string, any> = {};
 
-          res.forEach((p: any, index: number) => {
-            const originalId = numericIds[index];
-            map[String(originalId)] = p;
+          res.forEach((p: any) => {
+            if (p?.id != null) {
+              map[String(p.id)] = p;
+            }
           });
 
           setPatientsMap(map);
         })
         .catch(err => {
-          console.error("❌ Bulk patient error:", err);
+          console.error('Bulk patient error:', err);
         });
+    }, [patientIds, fetchBulkPatients]);
 
-    }, [patientIds]);
+    useEffect(() => {
+      if (!order?.id && ordersList.length > 0) {
+        setOrder(ordersList[0]);
+      }
+    }, [order?.id, ordersList, setOrder]);
+
+    const isSelected = (rowData: any) =>
+      rowData && order && rowData.id === order.id ? 'selected-row' : '';
+
+    const handlePageChange = (_: any, newPage: number) => {
+      setPaginationParams(prev => ({
+        ...prev,
+        page: newPage
+      }));
+    };
+
+    const handleRowsPerPageChange = (e: any) => {
+      const newSize = Number(e.target.value);
+
+      setPaginationParams(prev => ({
+        ...prev,
+        size: newSize,
+        page: 0
+      }));
+    };
+
+    const handleSortChange = (column: string, type: 'asc' | 'desc') => {
+      setSortColumn(column);
+      setSortType(type);
+
+      setPaginationParams(prev => ({
+        ...prev,
+        sort: ['isUrgent,desc', 'submittedDate,desc'],
+        page: 0
+      }));
+    };
 
     const tableColumns = [
       {
         key: 'orderNumber',
         title: <Translate>ORDER ID</Translate>,
         flexGrow: 1,
-        render: r => {
-          return r.orderNumber ?? ' ';
-        }
+        render: (r: any) => r.orderNumber ?? ' '
       },
       {
         key: 'date',
         title: <Translate>DATE, TIME</Translate>,
         flexGrow: 2,
-        render: r => {
-          const rawDate =
-            r.submittedDate ??
-            r.submittedAt ??
-            r.createdAt;
+        render: (r: any) => {
+          const rawDate = r.submittedDate ?? r.submittedAt ?? r.createdAt;
 
           if (!rawDate) return ' ';
 
@@ -181,15 +205,13 @@ const Orders = forwardRef<any, OrdersProps>(
         key: 'patient',
         title: <Translate>PATIENT</Translate>,
         flexGrow: 3,
-        render: r => {
+        render: (r: any) => {
           const patient = patientsMap[String(r.patientId)];
 
           return (
             <>
               <span>
-                {patient
-                  ? `${patient.firstName} ${patient.lastName}`
-                  : ' '}
+                {patient ? `${patient.firstName} ${patient.lastName}` : ' '}
               </span>
               <br />
               <span className="date-table-style">
@@ -203,15 +225,13 @@ const Orders = forwardRef<any, OrdersProps>(
         key: 'status',
         title: <Translate>STATUS</Translate>,
         flexGrow: 2,
-        render: r => {
-          return <>{formatEnumString(r.radStatus ?? r.status ?? ' ')}</>;
-        }
+        render: (r: any) => <>{formatEnumString(r.radStatus ?? r.status ?? ' ')}</>
       },
       {
         key: 'urgent',
         title: <Translate>MARKER</Translate>,
         flexGrow: 1,
-        render: r =>
+        render: (r: any) =>
           r.isUrgent ? (
             <Whisper placement="top" speaker={<Tooltip>Urgent</Tooltip>}>
               <FontAwesomeIcon icon={faLandMineOn} className="urgent-icon-style" />
@@ -220,50 +240,22 @@ const Orders = forwardRef<any, OrdersProps>(
       }
     ];
 
-    useEffect(() => {
-      if (!order?.id && ordersList.length > 0) {
-        setOrder(ordersList[0]);
-      }
-    }, [ordersList]);
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-    const handlePageChange = (_: any, newPage: number) => {
-      setPaginationParams(prev => ({
-        ...prev,
-        page: newPage,
-      }));
-    };
+    const dir = isRTL ? 'rtl' : 'ltr';
 
-    const handleRowsPerPageChange = (e: any) => {
-      const newSize = Number(e.target.value);
-      setPaginationParams(prev => ({
-        ...prev,
-        size: newSize,
-        page: 0,
-      }));
-    };
-
-    const handleSortChange = (column: string, type: "asc" | "desc") => {
-      setSortColumn(column);
-      setSortType(type);
-
-      setPaginationParams(prev => ({
-        ...prev,
-        sort: [
-          'isUrgent,desc',
-          'submittedDate,desc',
-        ],
-        page: 0,
-      }));
-
-    };
 
     return (
+
+    <div dir={dir}>
       <MyTable
         data={ordersList}
         columns={tableColumns}
         loading={loading || isFetching}
         height={200}
-        onRowClick={rowData => setOrder(rowData)}
+        onRowClick={(rowData: any) => setOrder(rowData)}
         rowClassName={isSelected}
         page={paginationParams.page}
         rowsPerPage={paginationParams.size}
@@ -274,7 +266,9 @@ const Orders = forwardRef<any, OrdersProps>(
         sortType={sortType}
         onSortChange={handleSortChange}
       />
+    </div>
     );
-  });
+  }
+);
 
 export default Orders;

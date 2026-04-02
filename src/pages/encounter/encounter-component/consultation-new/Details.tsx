@@ -359,25 +359,19 @@ const Details = ({
       if (formData.id) {
         const updatePayload: ConsultationUpdatePayload = {
           id: formData.id,
-
           destinationType: formData.destinationType,
           toFacilityId: formData.toFacilityId,
           toDepartmentId: formData.toDepartmentId,
-
           consultantSpeciality: formData.consultantSpeciality,
           practitionerId: formData.practitionerId,
-
           consultationMethod: formData.consultationMethod,
           consultationType: formData.consultationType,
           consultationLevel: formData.consultationLevel,
-
           consultationContent: formData.consultationContent,
-
           notes: formData.notes,
           extraDocument: formData.extraDocument,
           approvalNumber: formData.approvalNumber
         };
-
         await updateConsultation(updatePayload).unwrap();
         dispatch(notify({ msg: 'Consultation updated successfully', sev: 'success' }));
       } else {
@@ -394,7 +388,10 @@ const Details = ({
       handleClear();
     } catch (err) {
       handleCrudError(err, dispatch, CONSULTATION_ERROR_MAP);
+      return;
     }
+
+    refetchCon?.();
   };
 
   const handleOpenAttachmentModal = () => {
@@ -420,8 +417,16 @@ const Details = ({
     }
   };
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -806,7 +811,7 @@ const Details = ({
         source="CONSULTATION_ORDER_ATTACHMENT"
         sourceId={formData?.id ?? 0}
       />
-    </>
+    </div>
   );
 };
 

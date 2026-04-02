@@ -363,16 +363,16 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       onClose();
     };
 
-    const handleLogout = () => {
-      dispatch(setUser(null));
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(''));
-
-      localStorage.clear();
+    const handleLogout = async () => {
+      console.log('token before logout:', localStorage.getItem('id_token'));
+      try {
+        await logout({}).unwrap();
+      } catch (e) {}
 
       dispatch({ type: 'auth/logout' });
+      localStorage.clear();
 
-      navigate('/login', { replace: true });
+      window.location.replace('/#/login');
     };
 
     useEffect(() => {
@@ -600,7 +600,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="MedCare Incident Portal">
+            <Tooltip title="MedCare Incident Portal" className="hidden">
               <IconButton
                 size="small"
                 onClick={() => {
@@ -705,7 +705,13 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}></span>
                   <span style={{ color: '#9E9E9E', fontSize: '12px' }}></span>
                 </div>
-                <ArrowDownLineIcon style={{ marginLeft: 8 }} />
+                  <ArrowDownLineIcon
+                    style={{
+                      marginInlineStart: 8,
+                      position: 'relative',
+                      zIndex: 10
+                    }}
+                  />
               </div>
             </Whisper>
           </>

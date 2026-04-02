@@ -30,10 +30,21 @@ const ERTabsDepartmentAndWaitingList = () => {
     {title: "ER Department", content: <ERList />},
     {title: "ER Waiting List", content: <ERWaitingList />}
   ];
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
-      <MyTab 
-       data={tabData}
+    <Panel dir={dir}>
+      <MyTab
+        data={tabData.map(tab => ({
+          ...tab,
+          content: <div dir={dir}>{tab.content}</div>
+        }))}
+        className="tab-container"
       />
     </Panel>
   );

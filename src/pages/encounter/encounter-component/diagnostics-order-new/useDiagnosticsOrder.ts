@@ -40,6 +40,8 @@ import type {
 } from '@/types/model-types-new';
 
 import { DiagnosticOrderTestStatus, DiagnosticStatus } from '@/types/model-types-new';
+import { useGetAgeGroupsQuery } from '@/services/setup/ageGroupService';
+import { formatEnumString } from '@/utils';
 
 type UseDiagnosticsOrderArgs = {
   patient?: any;
@@ -69,8 +71,8 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedDepartment = authSlice.selectedDepartment;
-  const patientId = patient?.id ;
-  const encounterId = encounter?.id ;
+  const patientId = patient?.id;
+  const encounterId = encounter?.id;
 
   const tableContainerRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -154,8 +156,16 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     return toNumericId(match?.id ?? match?.departmentId ?? match?.key ?? match?.departmentKey);
   };
 
-  const { data: testsResponse, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
-  const testsList = testsResponse?.data ?? [];
+const { data: testsResponse, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
+const testsList = testsResponse?.data ?? [];
+
+const { data: ageGroupsResponse } = useGetAgeGroupsQuery({
+  page: 0,
+  size: 1000,
+  sort: 'id,asc'
+});
+
+const ageGroupsList = ageGroupsResponse?.data ?? [];
 
   // Transfer list state
   const [selectedTestsList, setSelectedTestsList] = useState<any[]>([]);
@@ -253,6 +263,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const [updateOrder] = useUpdateDiagnosticOrderMutation();
   const [createOrderTest] = useCreateDiagnosticOrderTestMutation();
   const [updateOrderTest] = useUpdateDiagnosticOrderTestMutation();
+
 
   // Modals state
   const [openDetailsModel, setOpenDetailsModel] = useState(false);
@@ -367,6 +378,136 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     }
   };
 
+
+  const convertToMonths = (value: number, unit?: string) => {
+    const normalizedUnit = String(unit || '').toUpperCase();
+
+    switch (normalizedUnit) {
+      case 'MINUTE':
+      case 'MINUTES':
+        return value / (60 * 24 * 30);
+
+      case 'HOUR':
+      case 'HOURS':
+        return value / (24 * 30);
+
+      case 'DAY':
+      case 'DAYS':
+        return value / 30;
+
+      case 'WEEK':
+      case 'WEEKS':
+        return value * 7 / 30;
+
+      case 'MONTH':
+      case 'MONTHS':
+        return value;
+
+      case 'YEAR':
+      case 'YEARS':
+        return value * 12;
+
+      default:
+        return value;
+    }
+  };
+
+  const getPatientAgeInMonths = (patient: any) => {
+    const rawDob = patient?.dateOfBirth || patient?.dob;
+    if (!rawDob) return null;
+
+    const dob = new Date(rawDob);
+    if (Number.isNaN(dob.getTime())) return null;
+
+    const now = new Date();
+    const diffMs = now.getTime() - dob.getTime();
+
+    return diffMs / (1000 * 60 * 60 * 24 * 30);
+  };
+
+  const getPatientAgeGroup = (patient: any) => {
+    const patientAgeInMonths = getPatientAgeInMonths(patient);
+    if (patientAgeInMonths === null) return '';
+    if (!ageGroupsList.length) return '';
+
+    const patientFacilityId =
+      patient?.facilityId ||
+      encounter?.facilityId ||
+      selectedDepartment?.facilityId;
+
+    const matchingAgeGroup = ageGroupsList.find((group: any) => {
+      if (
+        patientFacilityId &&
+        group?.facilityId &&
+        Number(group.facilityId) !== Number(patientFacilityId)
+      ) {
+        return false;
+      }
+
+      const fromAge = Number(group?.fromAge ?? 0);
+      const toAge = Number(group?.toAge ?? 0);
+
+      const fromAgeInMonths = convertToMonths(fromAge, group?.fromAgeUnit);
+      const toAgeInMonths = convertToMonths(toAge, group?.toAgeUnit);
+
+      return (
+        patientAgeInMonths >= fromAgeInMonths &&
+        patientAgeInMonths <= toAgeInMonths
+      );
+    });
+
+    return matchingAgeGroup?.ageGroup || '';
+  };
+
+  const validateTestForPatient = (test: any, patient: any) => {
+    const warnings: string[] = [];
+    const testName = test.name || 'Test';
+
+    // Gender
+    if (test.genderSpecific && test.gender) {
+      const testGender = String(test.gender).toUpperCase();
+      const patientGender = String(
+        patient?.gender || patient?.genderType || patient?.sexAtBirth || ''
+      ).toUpperCase();
+
+      if (patientGender && testGender !== patientGender) {
+      warnings.push(`${testName}: Only for ${formatEnumString(String(test.gender))}`);
+      }
+    }
+
+    // Age
+    if (test.ageSpecific && test.ageGroupList?.length) {
+      const patientAgeGroup = String(
+        patient?.ageGroup || getPatientAgeGroup(patient)
+      ).toUpperCase();
+
+      const matches = test.ageGroupList.some(
+        (age: any) => String(age).toUpperCase() === patientAgeGroup
+      );
+
+      if (patientAgeGroup && !matches) {
+        warnings.push(
+          `${testName}: Only for ${test.ageGroupList.map((age: any) => formatEnumString(String(age))).join(', ')} (Patient is ${formatEnumString(patientAgeGroup)})`
+        );
+      }
+    }
+
+    // Special Population
+    if (test.specialPopulation && test.specialPopulationValues?.length) {
+      const patientSpecialPopulation = patient?.specialPopulationValues ?? [];
+
+      const match = test.specialPopulationValues.some((val: any) =>
+        patientSpecialPopulation.includes(val)
+      );
+
+      if (!match) {
+        warnings.push(`${testName}: Special population mismatch`);
+      }
+    }
+
+    return warnings;
+  };
+
   const handleSaveTests = async () => {
     setOpenTestsModal(false);
 
@@ -385,25 +526,57 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
     try {
       const pickTestId = (t: any) =>
-        toNumericId(t?.testId ?? t?.id ?? t?.key ?? t?.test?.id ?? t?.diagnosticTest?.id);
+        toNumericId(t?.testId ?? t?.id ?? t?.key ?? t?.test?.id);
+
+      let warnings: string[] = [];
+      selectedTestsList.forEach(item => {
+        const realTest = testsList.find(
+          t => String(t.id) === String(item.id || item.testId)
+        );
+
+        if (!realTest) return;
+
+        const w = validateTestForPatient(realTest, patient);
+        warnings.push(...w);
+      });
+
+      if (warnings.length) {
+        const uniqueWarnings = Array.from(new Set(warnings));
+
+        dispatch(
+          notify({
+            msg:
+              '⚠ Validation Warnings:\n\n' +
+              uniqueWarnings.join('\n'),
+            sev: 'warning'
+          })
+        );
+      }
+
+      const validTests = selectedTestsList.filter(item =>
+        pickTestId(item)
+      );
 
       await Promise.all(
-        selectedTestsList
-          .map(item => {
-            const testId = pickTestId(item);
-            if (!testId) return null;
+        validTests.map(async item => {
+          const testId = pickTestId(item);
 
-            return createOrderTest({
+          try {
+            await createOrderTest({
               orderId: _orderId,
               testId,
-              orderType: item.type
+              orderType: item.type || 'LABORATORY'
             }).unwrap();
-          })
-          .filter(Boolean) as any
+          } catch (e) {
+            console.warn('❌ Failed test:', testId, e);
+          }
+        })
       );
 
       dispatch(notify({ msg: 'All Tests Saved Successfully', sev: 'success' }));
+
       await orderTestRefetch();
+
     } catch (error: any) {
       console.error('Save tests failed:', error);
       dispatch(notify({ msg: extractErrorMessage(error), sev: 'error' }));
@@ -477,9 +650,10 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
       dispatch(notify({ msg: 'Submitted Successfully', sev: 'success' }));
 
+
       await ordersRefetch();
       await orderTestRefetch();
-
+     
       setOrders({ ...newDiagnosticOrder });
       handleClearDiagnostics();
     } catch (error) {

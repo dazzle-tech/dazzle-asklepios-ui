@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import {BaseQuery } from '../../newApi';
+import { BaseQuery } from '../../newApi';
 
 export const facilityService = createApi({
   reducerPath: 'facilityApi',
@@ -9,52 +9,57 @@ export const facilityService = createApi({
       query: facility => ({
         url: '/api/setup/facility',
         method: 'POST',
-        body: facility,
-      }),
+        body: facility
+      })
     }),
     deleteFacility: builder.mutation({
-      query: (facilityId) => ({
+      query: facilityId => ({
         url: `/api/setup/facility/${facilityId}`,
-        method: 'DELETE',
-      }),
+        method: 'DELETE'
+      })
     }),
     updateFacility: builder.mutation({
-      query: (facility) => ({
+      query: facility => ({
         url: `/api/setup/facility/${facility.id}`,
         method: 'PUT',
-        body: facility,
-      }),
+        body: facility
+      })
     }),
 
     getAllFacilities: builder.query({
       query: () => ({
         url: '/api/setup/facility',
-        method: 'GET',
-      }),
+        method: 'GET'
+      })
     }),
 
     getFacilityById: builder.query({
-      query: (facilityId) => ({
+      query: facilityId => ({
         url: `/api/setup/facility/${facilityId}`,
-        method: 'GET',
-      }),
+        method: 'GET'
+      })
     }),
     getFacilityTypes: builder.query({
       query: () => ({
         url: '/api/setup/facility/facility-types',
-        method: 'GET',
-      }),
+        method: 'GET'
+      })
     }),
-  }),
 
-
+    getActiveFacilities: builder.query({
+      query: () => ({
+        url: '/api/setup/facility/active',
+        method: 'GET'
+      })
+    })
+  })
 });
 export const {
-    useAddFacilityMutation, 
-    useDeleteFacilityMutation,
-    useUpdateFacilityMutation,
-    useGetAllFacilitiesQuery,
-    useGetFacilityByIdQuery,
-    useGetFacilityTypesQuery
-
+  useAddFacilityMutation,
+  useDeleteFacilityMutation,
+  useUpdateFacilityMutation,
+  useGetAllFacilitiesQuery,
+  useGetFacilityByIdQuery,
+  useGetFacilityTypesQuery,
+  useGetActiveFacilitiesQuery
 } = facilityService;

@@ -141,9 +141,13 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       errorMsg = errorMsg
         ? `${errorMsg}, Date of admission can’t be empty`
         : 'Date of admission can’t be empty';
+    if (!formData.admissionType)
+      errorMsg = errorMsg
+        ? `${errorMsg}, Admission Type can’t be empty`
+        : 'Admission Type can’t be empty';
 
     if (errorMsg) {
-      dispatch(notify({ msg: errorMsg, sev: 'error' }));
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       return;
     }
 
@@ -204,6 +208,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         fieldName="admissionType"
         record={formData}
         setRecord={setFormData}
+        required
       />
 
       <MyInput
@@ -249,6 +254,11 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
   );
 
   /*  MODAL  */
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -259,7 +269,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

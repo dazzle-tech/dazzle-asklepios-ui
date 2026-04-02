@@ -8,17 +8,15 @@ import BodyMeasurements from './BodyMeasurements';
 import PatientObservationsComplaints from './PatientObservationsComplaints';
 import PainAssessment from './PainAssessment';
 import AdditionalMeasurements from './AdditionalMeasurements';
-import { Patient ,PatientEncounter } from '@/types/model-types-new';
+import { Patient, PatientEncounter } from '@/types/model-types-new';
 
-export type ObservationsRef = {
-};
+export type ObservationsRef = {};
 
 type ObservationsProps = {
   patient?: Patient;
   encounter?: PatientEncounter;
   edit?: boolean;
 };
-
 
 const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref) => {
   const location = useLocation();
@@ -52,6 +50,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={isEncounterStatusClosed || readOnly}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
+                  encounter={localEncounter}
                 />
               </Col>
             </Row>
@@ -62,6 +61,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={false}
                   patientId={Number(localPatient.id)}
                   encounterId={Number(localEncounter.id)}
+                  encounter={localEncounter}
                 />
               </Col>
             </Row>
@@ -74,6 +74,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={isEncounterStatusClosed || readOnly}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
+                  encounter={localEncounter}
                 />
               </Col>
             </Row>
@@ -84,6 +85,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={isEncounterStatusClosed || readOnly}
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
+                  encounter={localEncounter}
                 />
               </Col>
             </Row>
@@ -94,6 +96,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   disabled={isEncounterStatusClosed || readOnly}
                   patient={localPatient as any}
                   encounterId={Number((localEncounter as any)?.id)}
+                  encounter={localEncounter}
                 />
               </Col>
             </Row>

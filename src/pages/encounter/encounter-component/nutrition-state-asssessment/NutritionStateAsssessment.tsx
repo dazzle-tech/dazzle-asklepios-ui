@@ -57,7 +57,16 @@ const NutritionStateAsssessment = () => {
     setSampleData(prev => [newData, ...prev]);
     setModalOpen(false);
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <Row gutter={15} className="d nutrition-state">
       <Row
         style={{
@@ -135,6 +144,7 @@ const NutritionStateAsssessment = () => {
         onSave={handleSave}
       />
     </Row>
+    </div>
   );
 };
 export default NutritionStateAsssessment;

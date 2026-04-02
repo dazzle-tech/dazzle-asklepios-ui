@@ -22,8 +22,10 @@ import { useCompleteEncounterMutation } from '@/services/encounters/patientEncou
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
 import './styles.less';
-import { useGenerateNurseSummaryReportMutation } from '@/services/observationService';
-import { ApPatient } from '@/types/model-types';
+import { useLazyGetNurseSummaryReportQuery } from '@/services/observationServiceNew';
+import { printNurseSummaryReport } from '@/utils/printNurseSummaryReport';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 const NurseStation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -37,14 +39,42 @@ const NurseStation = () => {
     ...propsData?.encounter
   });
 
+  // === LOVs ===
+  const { data: bloodPressureMeasurementSiteLov } =
+    useGetLovValuesByCodeQuery('BP_MEASURMENT_SITE');
+  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+  console.log('encounterPriorityLovQueryResponse', encounterPriorityLovQueryResponse);
+  // === Enums ===
+  const patientConditions = useEnumOptions('Condition');
+  const encounterTypeOptions = useEnumOptions('EncounterType');
+  const EncounterReasonEnum = useEnumOptions('EncounterReason');
+  const ageGroupOptions = useEnumOptions('AgeGroupType');
+  const genderEnum = useEnumOptions('Gender');
+
+  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+    exclude: [
+      'DISCHARGED',
+      'IN_OPERATION',
+      'CONFIRM_RETURN',
+      'TEMP_DC',
+      'TRIAGE_STARTED',
+      'SENT_TO_ER',
+      'WAITING_TRIAGE',
+      'WAITING_LIST',
+      'PENDING_PAYMENT'
+    ]
+  });
+
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [edit, setEdit] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [generateNurseReport] = useGenerateNurseSummaryReportMutation();
+  const [triggerNurseSummaryReport] = useLazyGetNurseSummaryReportQuery();
 
   // Nurse sheets
-  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(localEncounter?.departmentId);
+  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(
+    localEncounter?.departmentId
+  );
 
   const allowedSheetCodes = useMemo(
     () => new Set((nurseSheets ?? []).map((s: any) => s.medicalSheet)),
@@ -85,19 +115,19 @@ const NurseStation = () => {
     }
     setEdit(propsData?.edit || localEncounter?.status === 'CLOSED');
   }, [propsData, localEncounter]);
-  
+
   // Complete encounter
-  const [completeEncounter,completeEncounterMutation] = useCompleteEncounterMutation();
-   useEffect(() => {
-      if (
-        localEncounter?.encounterType == 'INPATIENT' &&
-        completeEncounterMutation.status === 'fulfilled'
-      ) {
-        navigate('/inpatient-encounters-list');
-      } else if (completeEncounterMutation.status === 'fulfilled') {
-        navigate('/encounter-list');
-      }
-    }, [completeEncounterMutation]);
+  const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+  useEffect(() => {
+    if (
+      localEncounter?.encounterType == 'INPATIENT' &&
+      completeEncounterMutation.status === 'fulfilled'
+    ) {
+      navigate('/inpatient-encounters-list');
+    } else if (completeEncounterMutation.status === 'fulfilled') {
+      navigate('/encounter-list');
+    }
+  }, [completeEncounterMutation]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -130,23 +160,35 @@ const NurseStation = () => {
 
   const handleGenerateReport = async (): Promise<void> => {
     try {
-      const blob = await generateNurseReport({
-        patient: localEncounter?.patientObject as ApPatient,
-        encounter: localEncounter
-      }).unwrap();
+      const encounterId = localEncounter?.id ?? localEncounter?.key;
 
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `nurse-summary-${localEncounter.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
+      if (!encounterId) {
+        dispatch(
+          notify({
+            msg: 'Encounter id is missing',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      const res = await triggerNurseSummaryReport({ encounterId }).unwrap();
+
+      await printNurseSummaryReport(
+        res,
+        bloodPressureMeasurementSiteLov?.object || [],
+        patientConditions || [],
+        encounterPriorityLovQueryResponse?.object,
+        EncounterReasonEnum,
+        encounterTypeOptions,
+        ageGroupOptions,
+        EncounterStatusEnum,
+        genderEnum
+      );
+    } catch (error: any) {
       dispatch(
         notify({
-          msg: 'Error while generating report',
+          msg: error?.data?.message || 'Error while generating report',
           sev: 'error'
         })
       );
@@ -201,16 +243,14 @@ const NurseStation = () => {
                 Generate Report
               </MyButton>
 
-              {/* {propsData?.encounter?.editable && !propsData?.encounter?.discharge && ( */}
-                <MyButton
-                  disabled={edit}
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleCompleteEncounter}
-                  appearance="ghost"
-                >
-                  <Translate>Complete Visit</Translate>
-                </MyButton>
-              {/* )} */}
+              <MyButton
+                disabled={edit}
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                onClick={handleCompleteEncounter}
+                appearance="ghost"
+              >
+                <Translate>Complete Visit</Translate>
+              </MyButton>
             </div>
           </div>
 
@@ -246,7 +286,7 @@ const NurseStation = () => {
               </Form>
               <List hover className="drawer-list-style">
                 <List.Item
-                 className="drawer-item return-button"
+                  className="drawer-item return-button"
                   onClick={() => {
                     navigate('/nurse-station', { state: location.state });
                     setIsDrawerOpen(false);
@@ -261,7 +301,8 @@ const NurseStation = () => {
                   const fullPath = `/nurse-station/${clean}`;
 
                   return (
-                    <List.Item key={code}
+                    <List.Item
+                      key={code}
                       className="drawer-item"
                       onClick={() => {
                         setIsDrawerOpen(false);

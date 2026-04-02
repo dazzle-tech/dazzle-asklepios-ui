@@ -506,11 +506,11 @@ const DayCaseList = () => {
               />
               <MyInput
                 width={80}
-                fieldName="hasOrders"
+                fieldName="hasOrder"
                 fieldType="checkbox"
                 record={record}
                 setRecord={setRecord}
-                label="Has Orders"
+                label="Has Order"
               />
               <MyInput
                 width={80}
@@ -572,8 +572,14 @@ const DayCaseList = () => {
     dispatch(setDivContent(divContent));
   }, [dispatch]);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <div className="inpatient-list-btns">
         <MyButton
           onClick={() => setOpenBedManagementModal(true)}
@@ -660,7 +666,9 @@ const DayCaseList = () => {
         size="90vw"
         content={
           <>
-            <RefillModalComponent></RefillModalComponent>
+            <div dir={dir}>
+              <RefillModalComponent></RefillModalComponent>
+            </div>
           </>
         }
         actionButtonLabel="Save"
@@ -673,9 +681,9 @@ const DayCaseList = () => {
         title="Task Management"
         size="90vw"
         content={
-          <>
+          <div dir={dir}>
             <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
-          </>
+          </div>
         }
         actionButtonLabel="Save"
         cancelButtonLabel="Close"
@@ -686,7 +694,7 @@ const DayCaseList = () => {
         setOpen={setOpenEncounterLogsModal}
         title="Encounter Logs"
         size="70vw"
-        content={<EncounterLogsTable />}
+        content={<div dir={dir}><EncounterLogsTable /></div>}
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEncounterLogsModal(false)}
         cancelButtonLabel="Cancel"

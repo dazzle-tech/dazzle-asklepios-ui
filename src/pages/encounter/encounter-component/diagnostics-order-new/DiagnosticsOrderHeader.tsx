@@ -92,7 +92,15 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
 
   const orderId = orders?.id ?? orders?.key ?? null;
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className="main-container">
       <div className="enhanced-header">
         {/* Row 1 */}
@@ -232,7 +240,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
               Show Canceled
             </Checkbox>
 
-            <MyButton disabled={orders.id == null} onClick={() => setOpenTestsModal(true)}>
+            <MyButton disabled={isSubmitDisabled} onClick={() => setOpenTestsModal(true)}>
               <FontAwesomeIcon icon={faPlus} /> Add Test
             </MyButton>
 
@@ -251,6 +259,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
         </div>
       </Row>
     </div>
+  </div>
   );
 };
 

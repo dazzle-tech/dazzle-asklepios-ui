@@ -9,8 +9,20 @@ const OperationRoomMaterials = () => {
     {title: "Preparation", content: <Preparation />},
     {title: "Reconciliation", content: <Reconciliation></Reconciliation>},
   ];
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-      <MyTab data={data} />
+<MyTab
+  data={data.map(tab => ({
+    ...tab,
+    content: <div dir={dir}>{tab.content}</div>
+  }))}
+  className="tab-container"
+/>
   );
 };
 export default OperationRoomMaterials;

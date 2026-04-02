@@ -262,11 +262,13 @@ const DetailsTele = ({
         dispatch(notify({ msg: 'Telephonic consultation created successfully', sev: 'success' }));
       }
 
-      refetchCon?.();
       setOpen(false);
     } catch (err: any) {
       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+      return;
     }
+
+    refetchCon?.();
   };
 
   const handleOpenAttachmentModal = () => {
@@ -274,8 +276,15 @@ const DetailsTele = ({
     setShowAttachmentModal(true);
   };
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -420,7 +429,7 @@ const DetailsTele = ({
             </div>
           </Form>
         }
-        leftContent={<></>}
+        leftContent={<Diagnosis patient={patient} encounter={encounter} />}
       />
 
       <AttachmentUploadModal
@@ -431,7 +440,7 @@ const DetailsTele = ({
         source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
         sourceId={(formData as any)?.id ?? 0}
       />
-    </>
+    </div>
   );
 };
 

@@ -14,7 +14,6 @@ import {
 } from '@/services/patients/socialHistoryService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-
 import './style.less';
 
 type SocialHistory = {
@@ -87,7 +86,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
@@ -104,7 +103,7 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
         data?.title ||
         data?.message ||
         'Unexpected error' + suffix,
-      sev: 'error'
+      sev: 'warning'
     })
   );
 };
@@ -208,7 +207,6 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
           ? new Date(record.alcoholSinceWhen).toISOString()
           : null
     };
-    console.log('Payload to save ==> ', payload);
     try {
       if (record.id) {
         await updateSocialHistory(payload).unwrap();
@@ -459,6 +457,13 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     </div>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -471,7 +476,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="38vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

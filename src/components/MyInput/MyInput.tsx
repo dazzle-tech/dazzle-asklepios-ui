@@ -27,7 +27,7 @@ const Textarea = React.forwardRef((props, ref: any) => (
 ));
 
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
-  <DatePicker {...props} oneTap cleanable={false} block ref={ref} />
+  <DatePicker {...props} format="dd-MM-yyyy" editable cleanable={false} block ref={ref} />
 ));
 
 const CustomDateTimePicker = React.forwardRef((props: any, ref: any) => (
@@ -115,6 +115,10 @@ type MyInputProps = {
   enterClick?: () => Promise<boolean | void> | boolean | void;
   isEnum?: boolean;
   allowEnterNewLine?: boolean;
+  disablePastDates?: boolean;
+  disableFutureDates?: boolean;
+  showWarningIfBeforeYear1900?: boolean;
+  showWarningIfInPast?: boolean;
 };
 
 const MyInput = ({
@@ -208,6 +212,11 @@ const MyInput = ({
     if (!setRecord || typeof setRecord !== 'function') return;
 
     if (fieldType === 'date') {
+      if (typeof value === 'string') {
+        setRecord({ ...record, [fieldName]: value || null });
+        return;
+      }
+
       const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
       setRecord({ ...record, [fieldName]: dateStr });
       return;
@@ -461,9 +470,9 @@ const MyInput = ({
             renderValue={
               isArrayLabel
                 ? (value, item, selectedElement) => {
-                  if (!item) return selectedElement;
-                  return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                }
+                    if (!item) return selectedElement;
+                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                  }
                 : props.isEnum
                 ? (value, item, selectedElement) => {
                     const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
@@ -473,9 +482,7 @@ const MyInput = ({
             }
             disabledItemValues={
               props.disabledItemValues
-                ? (props?.selectData ?? []).map(
-                  item => item[props?.selectDataValue]
-                )
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
                 : []
             }
           />
@@ -507,12 +514,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                  {
-                    [valueKey]: '__load_more__',
-                    [labelKey]: 'Load more...',
-                    isLoadMore: true
-                  }
-                ]
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -604,9 +611,7 @@ const MyInput = ({
             container={resolveContainer()}
             disabledItemValues={
               props.disabledItemValues
-                ? (props?.selectData ?? []).map(
-                  item => item[props?.selectDataValue]
-                )
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
                 : []
             }
           />
@@ -640,9 +645,7 @@ const MyInput = ({
             onClose={() => setIsMultyPickerOpen(false)}
             disabledItemValues={
               props.disabledItemValues
-                ? (props?.selectData ?? []).map(
-                  item => item[props?.selectDataValue]
-                )
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
                 : []
             }
           />
@@ -674,12 +677,9 @@ const MyInput = ({
             onClose={() => setIsCheckPickerOpen(false)}
             disabledItemValues={
               props.disabledItemValues
-                ? (props?.selectData ?? []).map(
-                  item => item[props?.selectDataValue]
-                )
+                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
                 : []
             }
-
           />
         );
 
@@ -695,20 +695,60 @@ const MyInput = ({
             }
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? dayjs(record[fieldName]).toDate() : null}
-            accepter={CustomDatePicker}
-            onChange={handleValueChange}
-            placeholder={props.placeholder}
-            onKeyDown={focusNextField}
+            accepter={DatePicker}
+            format="dd-MM-yyyy"
+            editable
+            cleanable={false}
+            oneTap
+            defaultValue={record?.[fieldName] ? dayjs(record[fieldName]).toDate() : null}
+            onChange={(value: Date | null) => {
+              const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
+              setRecord?.({ ...record, [fieldName]: dateStr });
+            }}
+            onBlur={() => {
+              const value = record?.[fieldName];
+              const minDate = new Date(1900, 0, 1);
+              const today = new Date(new Date().setHours(0, 0, 0, 0));
+
+              if (props.showWarningIfBeforeYear1900 && value && new Date(value) < minDate) {
+                dispatch(notify({ msg: 'Date cannot be before 01-01-1900', sev: 'warning' }));
+                return;
+              }
+
+              if (props.showWarningIfInPast && value && new Date(value) < today) {
+                dispatch(notify({ msg: 'Date cannot be in the past', sev: 'warning' }));
+              }
+            }}
+            placeholder={props.placeholder ?? 'DD-MM-YYYY'}
+            onKeyDown={(e: any) => {
+              const input = e.target as HTMLInputElement;
+
+              if (e.ctrlKey && e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+                setTimeout(() => {
+                  input.setSelectionRange(0, 2);
+                }, 0);
+                return;
+              }
+
+              focusNextField(e);
+            }}
             open={isDateOpen}
             onOpen={() => setIsDateOpen(true)}
             onClose={() => setIsDateOpen(false)}
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            shouldDisableDate={(date: Date) => {
+              const today = new Date(new Date().setHours(0, 0, 0, 0));
+              const minDate = new Date(1900, 0, 1); // 1-1-1900
+              if (date < minDate) return true;
+              if (props.disablePastDates) return date < today;
+              if (props.disableFutureDates) return date > today;
+              return false;
+            }}
           />
         );
-
       case 'number': {
         const numInputWidth = props?.width ?? 145;
         const addonWidth = 40;
@@ -745,9 +785,9 @@ const MyInput = ({
             }}
             disabled={props.disabled}
             name={fieldName}
-            max={props.max ? props.max : 1000000}
+            max={props.max}
             min={0}
-            value={record[fieldName] ? record[fieldName] : ''}
+            value={record[fieldName] ?? ''}
             accepter={InputNumber}
             onChange={handleValueChange}
             placeholder={props.placeholder}
@@ -914,7 +954,6 @@ const MyInput = ({
       }
     }
   };
-
 
   // const conjureValidationMessages = () => {
   //   if (!validationResult) return null;

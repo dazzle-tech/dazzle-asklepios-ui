@@ -29,14 +29,8 @@ const AddActiveIngredient = ({ open, setOpen, brandMedication }) => {
     brandMedication?.id,
     { skip: !brandMedication?.id }
   );
-    const [paginationParams, setPaginationParams] = useState({
-      page: 0,
-      size: 5,
-      sort: "id,asc",
-      timestamp: Date.now(),
-    });
-  
-  const {data:activeIngredientList}=useGetActiveIngredientsQuery(paginationParams)
+    
+  const {data:activeIngredientList}=useGetActiveIngredientsQuery({})
   const { data: unitLov } = useGetLovValuesByCodeQuery("VALUE_UNIT");
 
   const [createActive] = useCreateActiveIngredientMutation();
@@ -123,6 +117,13 @@ const handleDelete = async (id) => {
     },
   ];
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       title={"Add Active Ingredient"}
@@ -130,7 +131,7 @@ const handleDelete = async (id) => {
       setOpen={setOpen}
       hideActionBtn={true}
       content={
-        <>
+        <div dir={dir}>
           <Form fluid>
 
             
@@ -197,7 +198,7 @@ const handleDelete = async (id) => {
               onRowClick={(rowData) => setBrandActive(rowData)}
             />
           </Form>
-        </>
+        </div>
       }
       size="70vh"
     />

@@ -224,8 +224,15 @@ const SpecialPopulation = ({ selectedActiveIngredients }) => {
   // ---------------------------
   // RENDER
   // ---------------------------
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <Form fluid>
         <div className="container-of-actions-header-active">
           <div className="container-of-fields-active">

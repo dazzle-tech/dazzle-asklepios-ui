@@ -255,8 +255,15 @@ const Screens = ({ module, goBack }) => {
     }
   ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {module && module.key && (
         <Panel
           header={
@@ -355,7 +362,7 @@ const Screens = ({ module, goBack }) => {
       {(!module || !module.key) && (
         <BackButton onClick={goBack} text=" No Valid Module Selected, Go Back" appearance="ghost" />
       )}
-    </>
+    </div>
   );
 };
 export default Screens;

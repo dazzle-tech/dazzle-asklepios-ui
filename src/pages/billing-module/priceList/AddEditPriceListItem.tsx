@@ -423,6 +423,13 @@ const AddEditPriceListItem = ({ open, setOpen, priceList }: Props) => {
     </Form>
   );
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <ChildModal
       open={open}
@@ -430,7 +437,7 @@ const AddEditPriceListItem = ({ open, setOpen, priceList }: Props) => {
       title="Price List Items"
       actionButtonLabel="Close"
       actionButtonFunction={() => setOpen(false)}
-      mainContent={conjureMainContent}
+      mainContent={<div dir={dir}>{conjureMainContent()}</div>}
       mainStep={[
         {
           title: "Items",
@@ -441,7 +448,7 @@ const AddEditPriceListItem = ({ open, setOpen, priceList }: Props) => {
       showChild={openChild}
       setShowChild={setOpenChild}
       childTitle={item?.id ? "Edit Item" : "Add Item"}
-      childContent={conjureChildContent}
+      childContent={<div dir={dir}>{conjureChildContent()}</div>}
       actionChildButtonFunction={handleSaveItem}
       mainSize="lg"
     />

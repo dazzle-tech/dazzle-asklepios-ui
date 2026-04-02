@@ -49,7 +49,15 @@ export const newDepartment: modelTypes.Department = {
   encounterType: '',
   isActive: true,
   hasMedicalSheets: false,
-  hasNurseMedicalSheets: false
+  hasNurseMedicalSheets: false,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
+  parallelCapacityEnabled: false,
+  requirePractitioner: false,
+  requireBilling: false,
+  requirePreAssessment: false
 };
 // ------------------- Facility -------------------
 export const newFacility: modelTypes.Facility = {
@@ -64,7 +72,9 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-  ruleId: null
+  ruleId: null,
+  workingDays: [],
+  timeZone: '',
 };
 
 // ------------------- Create Facility -------------------
@@ -78,7 +88,9 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   addressId: '',
   type: '',
   defaultCurrency: '',
-  isActive: true
+  isActive: true,
+  workingDays: [],
+  timeZone: '',
 };
 
 // ------------------- Role -------------------
@@ -170,13 +182,18 @@ export const newService: modelTypes.Service = {
   code: '',
   category: null,
   price: null,
-  currency: 'USD',
+  currency: null,
+  appointable: false,
   isActive: true,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined
+  facilityId: undefined,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Service Item -------------------
@@ -219,7 +236,11 @@ export const newPractitioner: modelTypes.Practitioner = {
   dateOfBirth: undefined,
   jobRole: null,
   gender: null,
-  isActive: true
+  isActive: true,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Language Translation -------------------
@@ -264,7 +285,9 @@ export const newProcedure: modelTypes.Procedure = {
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined
+  facilityId: undefined,
+  currency: null,
+  price: null
 };
 
 // ------------------- Allergen -------------------
@@ -305,7 +328,12 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
 
   defaultProfileResultType: '',
   defaultProfileResultUnit: '',
-  listOfValueId: null
+  listOfValueId: null,
+
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO =
@@ -708,7 +736,11 @@ export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
   departmentId: 0,
   departmentName: null,
   facilityId: 0,
-  facilityName: null
+  facilityName: null,
+   parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Catalog Create VM -------------------
@@ -717,7 +749,11 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   description: null,
   type: '',
   departmentId: undefined,
-  facilityId: undefined
+  facilityId: undefined,
+   parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Catalog Update VM -------------------
@@ -726,7 +762,11 @@ export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   description: null,
   type: '',
   departmentId: undefined,
-  facilityId: undefined
+  facilityId: undefined,
+   parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Catalog Diagnostic Test -------------------
@@ -925,7 +965,7 @@ export const newUserStickyNotesResponseVM: modelTypes.UserStickyNotesResponseVM 
   createdDate: null,
   lastModifiedBy: '',
   lastModifiedDate: null,
-  patientId: ''
+  patientId: undefined
 };
 
 export const newUserStickyNotesCreateVM: modelTypes.UserStickyNotesCreateVM = {
@@ -945,19 +985,6 @@ export const newPriceListItem: modelTypes.PriceListItem = {
   productId: null,
   price: 0,
   discountAllowed: false,
-  isActive: true
-};
-
-// ------------------- Referral Request -------------------
-export const newReferralRequest: modelTypes.ReferralRequest = {
-  id: null,
-  patientId: null,
-  encounterId: null,
-  referralType: 'INTERNAL',
-  facilityId: null,
-  departmentId: null,
-  referralReason: '',
-  priority: null,
   isActive: true
 };
 
@@ -1431,10 +1458,11 @@ export const newPatientEncounter: modelTypes.PatientEncounter = {
 };
 
 export const newPatientBasicInformationResponseVM: modelTypes.PatientBasicInformationResponseVM = {
-  id: 0,
-  fullName: '',
+  firstName: '',
+  lastName: '',
   medicalRecordNumber: null,
-  primaryMobileNumber: null
+  dateOfBirth: '',
+  sexAtBirth: '',
 };
 
 export const newPatientPayments: modelTypes.PatientPayments = {
@@ -1518,7 +1546,50 @@ export const newOrganizationDefinition: modelTypes.OrganizationDefinition = {
   contactEmail: '',
   contactMobile: '',
   contactLandNumber: '',
-  taxValue: undefined
+  taxValue: undefined,
+  defaultTimeZone: '',
+  defaultLanguageId: undefined,
+  workingDays: [],
+};
+
+export const newOrganizationHolidayResponseVM: modelTypes.OrganizationHolidayResponseVM = {
+  id: undefined,
+  organizationDefinitionId: 0,
+  name: '',
+  holidayType: undefined,
+  startDate: '',
+  endDate: '',
+  reason: '',
+  isActive: true,
+  allFacilities: true,
+  facilityIds: '',
+  recurring: false
+};
+
+export const newOrganizationHolidayCreateDTO: modelTypes.OrganizationHolidayCreateDTO = {
+  organizationDefinitionId: 0,
+  name: '',
+  holidayType: undefined,
+  startDate: '',
+  endDate: '',
+  reason: '',
+  isActive: true,
+  allFacilities: true,
+  facilityIds: '',
+  recurring: false
+};
+
+export const newOrganizationHolidayUpdateDTO: modelTypes.OrganizationHolidayUpdateDTO = {
+  id: 0,
+  name: '',
+  holidayType: undefined,
+  startDate: '',
+  endDate: '',
+  reason: '',
+  isActive: true,
+  allFacilities: true,
+  facilityIds: '',
+  recurring: false
 };
 
 export const newFormTemplate: modelTypes.FormTemplate = {
@@ -1955,7 +2026,6 @@ export const newPatientHIPAA: modelTypes.PatientHIPAA = {
   privacyAuthorizationDate: null
 };
 
-
 export const newGeneralAssessment: modelTypes.GeneralAssessment = {
   id: undefined,
   patientId: null,
@@ -2184,25 +2254,25 @@ export const newEncounterAssessment: modelTypes.EncounterAssessment = {
   userId: null,
   encounterId: null,
   assessment: '',
- 
+
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
- 
+
 export const newEncounterPlan: modelTypes.EncounterPlan = {
   id: undefined,
   patientId: null,
   encounterId: null,
   planInstructions: '',
- 
+
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
- 
+
 export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
   id: undefined,
   patientId: null,
@@ -2211,115 +2281,115 @@ export const newPatientDiagnosis: modelTypes.PatientDiagnosis = {
   type: null,
   suspected: false,
   major: false,
- 
+
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
-  lastModifiedDate: null,
+  lastModifiedDate: null
 };
 export const newVitalSigns: modelTypes.VitalSigns = {
   id: undefined,
- 
+
   patientId: 0,
   encounterId: 0,
- 
+
   bloodPressureSystolic: null,
   bloodPressureDiastolic: null,
   measurementSite: null,
- 
+
   heartRate: null,
   temperature: null,
   oxygenSaturation: null,
   respiratoryRate: null,
- 
+
   isTriage: false,
   isActive: true,
- 
+
   notes: null,
- 
-  createdDate: null,
-  lastModifiedDate: null,
-};
-export const newBodyMeasurements: modelTypes.BodyMeasurements = {
-  id: undefined,
- 
-  patientId: 0,
-  encounterId: 0,
- 
-  weight: null,
-  height: null,
-  headCircumference: null,
- 
-  isActive: true,
- 
+
   createdDate: null,
   lastModifiedDate: null
 };
- 
-export const newPatientObservationsComplaints: modelTypes.PatientObservationsComplaints = {
+export const newBodyMeasurements: modelTypes.BodyMeasurements = {
   id: undefined,
- 
+
   patientId: 0,
   encounterId: 0,
- 
+
+  weight: null,
+  height: null,
+  headCircumference: null,
+
+  isActive: true,
+
+  createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newPatientObservationsComplaints: modelTypes.PatientObservationsComplaints = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: 0,
+
   reasonOfVisit: null,
   latestFunctionalStatus: null,
   latestCognitiveCheck: null,
- 
+
   isActive: true,
   functionalStatus: null,
   cognitiveCheck: null,
   createdDate: null,
   lastModifiedDate: null
 };
- 
+
 export const newPainAssessment: modelTypes.PainAssessment = {
   id: undefined,
- 
+
   patientId: 0,
   encounterId: 0,
- 
+
   painDegree: null,
   painLevel: null,
   painDescription: null,
- 
+
   isActive: true,
- 
+
   createdDate: null,
   lastModifiedDate: null
 };
- 
+
 export const newAdditionalMeasurements: modelTypes.AdditionalMeasurements = {
   id: undefined,
- 
+
   patientId: 0,
   encounterId: 0,
- 
-  ageGroup: "",
- 
+
+  ageGroup: '',
+
   hearingTest: null,
- 
+
   dehydration: false,
   nasalFlaring: false,
   responseToLight: false,
   pupilResponse: false,
   abilityToFollowTarget: false,
   colorTesting: false,
- 
+
   fallRisk: false,
   visionProblemsAffectingFunction: false,
   hearingProblemsAffectingFunction: false,
- 
+
   details: null,
   actionToTake: null,
- 
+
   isActive: true,
- 
+
   createdDate: null,
   lastModifiedDate: null
 };
- 
-export const newPatientRelation:modelTypes.PatientRelation= {
+
+export const newPatientRelation: modelTypes.PatientRelation = {
   id: undefined,
   patientId: undefined,
   relatedPatientId: undefined,
@@ -2328,15 +2398,72 @@ export const newPatientRelation:modelTypes.PatientRelation= {
   createdDate: null,
   lastModifiedBy: '',
   lastModifiedDate: null
-}
+};
 
 /**
  * relations_matrix response
  */
-export const newRelationsMatrix:modelTypes.RelationsMatrix= {
+export const newRelationsMatrix: modelTypes.RelationsMatrix = {
   id: undefined,
   firstPatientGender: '',
   secondPatientGender: '',
   firstRelationCode: '',
   secondRelationCode: ''
-}
+};
+export const newPatientAdministrativeWarning: modelTypes.PatientAdministrativeWarningsResponseVM = {
+  id: undefined,
+  patient: null,
+  warningType: '',
+  description: '',
+  resolved: false,
+  resolvedBy: null,
+  resolvedDate: null,
+  undoResolvedBy: null,
+  undoResolvedDate: null,
+  createdBy: null,
+  createdDate: null
+};
+
+export const newPatientAdministrativeWarningCreateDTO: modelTypes.PatientAdministrativeWarningsCreateDTO =
+  {
+    patientId: undefined,
+    warningType: undefined,
+    description: ''
+  };
+
+export const newPatientAdministrativeWarningResolveDTO: modelTypes.PatientAdministrativeWarningsResolveDTO =
+  {
+    id: undefined
+  };
+
+export const newPatientAdministrativeWarningUndoResolveDTO: modelTypes.PatientAdministrativeWarningsUndoResolveDTO =
+  {
+    id: undefined
+  };
+export const newReferralRequest: modelTypes.ReferralRequest = {
+  id: undefined,
+
+  patientId: 0,
+  encounterId: null,
+
+  referralType: 'INTERNAL',
+
+  fromFacilityId: 0,
+  toFacilityId: 0,
+
+  fromDepartmentId: 0,
+  toDepartmentId: 0,
+
+  referralReason: '',
+
+  priority: null,
+
+  status: 'REQUESTED',
+
+  rejectReason: null,
+  rejectedDate: null,
+  rejectedBy: null,
+
+  acceptedDate: null,
+  acceptedBy: null
+};

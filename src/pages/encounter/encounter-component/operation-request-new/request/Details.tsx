@@ -94,6 +94,13 @@ const Details = ({
     }
   };
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
       <MyModal
@@ -117,7 +124,7 @@ const Details = ({
             {/* First Row: Facility, Department, Operation Date Time, Priority */}
             <SectionContainer
               title={<></>}
-              content={
+              content={<div dir={dir}>
                 <Row gutter={20} className="rows-gap">
                   <Col md={6}>
                     <MyInput
@@ -173,7 +180,7 @@ const Details = ({
                       showLabel={true}
                     />
                   </Col>
-                </Row>
+                </Row> </div>
               }
             ></SectionContainer>
             <div className="margin-top10">
@@ -347,7 +354,8 @@ const Details = ({
             </div>
           </Form>
         }
-      ></MyModal>
+      />
+      
       <AttachmentUploadModal
         isOpen={isAttachmentModalOpen}
         setIsOpen={setIsAttachmentModalOpen}

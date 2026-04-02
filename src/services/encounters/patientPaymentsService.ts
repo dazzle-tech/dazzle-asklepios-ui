@@ -66,10 +66,10 @@ export const patientPaymentsService = createApi({
     'PatientEncounter'
   ],
   endpoints: builder => ({
-    /**
-     * CREATE Patient Payment
-     */
-    createPayment: builder.mutation<modelTypes.PatientPaymentDetails, { body: modelTypes.PatientPaymentDTO }>({
+    createPayment: builder.mutation<
+      modelTypes.PatientPaymentDetails,
+      { body: modelTypes.PatientPaymentDTO }
+    >({
       query: ({ body }) => ({
         url: '/api/patient/payment',
         method: 'POST',
@@ -86,9 +86,6 @@ export const patientPaymentsService = createApi({
       ]
     }),
 
-    /**
-     * UPDATE Patient Payment
-     */
     updatePayment: builder.mutation<
       modelTypes.PatientPaymentDetails,
       { id: Id; body: modelTypes.PatientPaymentDTO }
@@ -123,6 +120,32 @@ export const patientPaymentsService = createApi({
       providesTags: (_res, _err, { id }) => [{ type: 'PatientPayment', id }, 'PatientPayment']
     }),
 
+    getPaymentByEncounter: builder.query<
+      modelTypes.PatientPaymentDetails | null,
+      { encounterId: number | string }
+    >({
+      query: ({ encounterId }) => ({
+        url: `/api/patient/encounter/${encounterId}/payment`,
+        method: 'GET'
+      }),
+      transformResponse: (response: any) => {
+        if (!response) return null;
+
+        return {
+          payment: response,
+          services: response.services ?? []
+        };
+      },
+      transformErrorResponse: (error: any) => {
+        if (error?.status === 204 || error?.status === 404) return null;
+        return error;
+      },
+      providesTags: (_res, _err, { encounterId }) => [
+        { type: 'PatientPayment', id: `encounter-${encounterId}` },
+        'PatientPayment'
+      ]
+    }),
+
     /**
      * GET patient balance
      * GET /api/patient/payment/patient/{patientId}/balance
@@ -136,7 +159,7 @@ export const patientPaymentsService = createApi({
     }),
 
     /**
-     * GET patient ledger summary (NEW)
+     * GET patient ledger summary
      * GET /api/patient/payment/patient/{patientId}/ledger-summary
      */
     getPatientLedgerSummary: builder.query<PatientLedgerSummary, { patientId: Id }>({
@@ -151,7 +174,10 @@ export const patientPaymentsService = createApi({
      * LIST payment services for a payment
      * GET /api/patient/payment/{paymentId}/services
      */
-    getPaymentServicesByPaymentId: builder.query<modelTypes.PatientPaymentServices[], { paymentId: Id }>({
+    getPaymentServicesByPaymentId: builder.query<
+      modelTypes.PatientPaymentServices[],
+      { paymentId: Id }
+    >({
       query: ({ paymentId }) => ({
         url: `/api/patient/payment/${paymentId}/services`,
         method: 'GET'
@@ -170,19 +196,24 @@ export const patientPaymentsService = createApi({
      * LIST payments by patient
      * GET /api/patient/payment/patient/{patientId}
      */
-    getPaymentsByPatient: builder.query<PagedResult<modelTypes.PatientPayments>, { patientId: Id } & PagedParams>({
+    getPaymentsByPatient: builder.query<
+      PagedResult<modelTypes.PatientPayments>,
+      { patientId: Id } & PagedParams
+    >({
       query: ({ patientId, page, size, sort = 'id,desc' }) => ({
         url: `/api/patient/payment/patient/${patientId}`,
         method: 'GET',
         params: { page, size, sort }
       }),
-      transformResponse: (response: any, meta: any) => {
-        const rows = Array.isArray(response) ? response : response?.content ?? [];
-        return mapPaged(rows, meta);
+      transformResponse: (response: any[], meta) => {
+        return mapPaged(response, meta);
       },
       providesTags: res =>
         res
-          ? [...res.data.map(p => ({ type: 'PatientPayment' as const, id: p.id })), 'PatientPayment']
+          ? [
+              ...res.data.map(p => ({ type: 'PatientPayment' as const, id: p.id })),
+              'PatientPayment'
+            ]
           : ['PatientPayment']
     })
   })
@@ -193,6 +224,8 @@ export const {
   useUpdatePaymentMutation,
   useGetPaymentByIdQuery,
   useLazyGetPaymentByIdQuery,
+  useGetPaymentByEncounterQuery,
+  useLazyGetPaymentByEncounterQuery,
   useGetPatientBalanceQuery,
   useLazyGetPatientBalanceQuery,
   useGetPatientLedgerSummaryQuery,

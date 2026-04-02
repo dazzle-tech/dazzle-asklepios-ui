@@ -293,19 +293,25 @@ const LinkProcedurePriceList: React.FC<Props> = ({ open, setOpen, procedureId })
     </Form>
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div>
       <ChildModal
         open={open}
         setOpen={setOpen}
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
         title="Procedure Prices"
-        mainContent={conjureFormMainContent}
+        mainContent={<div dir={dir}>{conjureFormMainContent()}</div>}
         actionChildButtonFunction={handleSave}
         hideActionBtn
         childTitle="Add Price"
-        childContent={conjureFormChildContent}
+        childContent={<div dir={dir}>{conjureFormChildContent()}</div>}
         mainSize="sm"
         actionButtonLabel="Save"
         mainStep={[{ title: 'Price List', icon: <MdMedicalServices /> }]}
@@ -319,7 +325,7 @@ const LinkProcedurePriceList: React.FC<Props> = ({ open, setOpen, procedureId })
         actionButtonFunction={handleDelete}
         actionType="delete"
       />
-    </>
+    </div>
   );
 };
 

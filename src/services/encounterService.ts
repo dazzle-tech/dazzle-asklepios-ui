@@ -55,7 +55,13 @@ type ParentResponse<T> = {
   object: T;
   msg?: string;
 };
-
+export type EncounterLocationResponse = {
+  encounterId: string;
+  bedKey: string | null;
+  bedName: string | null;
+  roomKey: string | null;
+  roomName: string | null;
+};
 export type PatientSummaryResponse = {
   age: any;
   gender: string;
@@ -871,6 +877,16 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getEncounterAssignToBed: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/encounter-assign-to-bed-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+      keepUnusedDataFor: 0
+    }),
     saveAssignToBed: builder.mutation({
       query: (encounterAssignToBed: ApEncounterAssignToBed) => ({
         url: `/encounter/save-assign-to-bed`,
@@ -1216,6 +1232,19 @@ export const encounterService = createApi({
         };
       }
     }),
+getEncounterLocations: builder.query<EncounterLocationResponse[], string[]>({
+  query: (encounterIds: string[]) => ({
+    url: `/encounter/encounter-locations`,
+    method: 'GET',
+    params: {
+      encounterIds
+    }
+  }),
+  transformResponse: (response: ParentResponse<EncounterLocationResponse[]>) => {
+    return response?.object ?? [];
+  },
+  keepUnusedDataFor: 0
+}),
     getMiniSummary: builder.query({
       query: ({ patientKey, encounterKey, lang = 'en' }) => ({
         url: `/encounter/mini-summary`,
@@ -1318,6 +1347,8 @@ export const {
   useSaveNurseNotesMutation,
   useSaveNewPositionMutation,
   useGetRepositioningListQuery,
+  useGetEncounterAssignToBedQuery,
+  useLazyGetEncounterAssignToBedQuery,
   useSaveAssignToBedMutation,
   useSavePreOperationMedicationsMutation,
   useGetPreOperationMedicationsListQuery,
@@ -1350,5 +1381,6 @@ export const {
   useDeleteUserDashboardComponentsMutation,
   useGetClinicalSummaryQuery,
   useGetPatientSummaryQuery,
-  useGetMiniSummaryQuery
+  useGetMiniSummaryQuery,
+  useGetEncounterLocationsQuery,
 } = encounterService;

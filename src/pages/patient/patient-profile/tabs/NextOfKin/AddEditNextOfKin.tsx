@@ -8,7 +8,6 @@ import MyModal from '@/components/MyModal/MyModal';
 import { GiRelationshipBounds } from 'react-icons/gi';
 import { useEnumOptions } from '@/services/enumsApi';
 
-// ✅ hooks من RTK Query service
 import {
   useAddNextOfKinMutation,
   useUpdateNextOfKinMutation
@@ -23,6 +22,28 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
   const [updateNextOfKin, { isLoading: isUpdating }] = useUpdateNextOfKinMutation();
 
   const isSaving = isCreating || isUpdating;
+  const getDigits = value => String(value ?? '').replace(/\D/g, '');
+  const validateNumberLengths = (nok) => {
+    const maxDigits = 10;
+    const fields = [
+      { key: 'mobileNumber', label: 'Mobile Number', required: true },
+      { key: 'telephone', label: 'Telephone' },
+      { key: 'internationalNumber', label: 'International Number' },
+      { key: 'landlineNumber', label: 'Landline Number' }
+    ];
+
+    const errors = [];
+    fields.forEach(f => {
+      const raw = nok?.[f.key];
+      const digits = getDigits(raw);
+      if (!digits && !f.required) return;
+      if (digits.length > maxDigits) {
+        errors.push(`${f.label} must be at most ${maxDigits} digits`);
+      }
+    });
+
+    return errors;
+  };
   const formatApiValidationError = err => {
     const data = err?.data ?? err;
     const fieldErrors = data?.fieldErrors ?? [];
@@ -55,6 +76,17 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
   const handleSave = async () => {
     if (!patientId) {
       dispatch(notify({ msg: 'Missing patientId', sev: 'error' }));
+      return;
+    }
+
+    const numberErrors = validateNumberLengths(nextOfKin);
+    if (numberErrors.length) {
+      dispatch(
+        notify({
+          msg: numberErrors.join('\n'),
+          sev: 'warning'
+        })
+      );
       return;
     }
 
@@ -111,29 +143,35 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
       <MyInput
         required
         column
-        fieldType="text"
+        fieldType="number"
         fieldName="mobileNumber"
         record={nextOfKin}
         setRecord={setNextOfKin}
       />
 
-      <MyInput column fieldType="text" fieldName="telephone" record={nextOfKin} setRecord={setNextOfKin} />
+      <MyInput column fieldType="number" fieldName="telephone" record={nextOfKin} setRecord={setNextOfKin} />
       <MyInput
         column
-        fieldType="text"
+        fieldType="number"
         fieldName="internationalNumber"
         record={nextOfKin}
         setRecord={setNextOfKin}
       />
       <MyInput
         column
-        fieldType="text"
+        fieldType="number"
         fieldName="landlineNumber"
         record={nextOfKin}
         setRecord={setNextOfKin}
       />
     </Form>
   );
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -144,7 +182,7 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
       bodyheight="65vh"
       actionButtonFunction={handleSave}
       size="35vw"
-      content={content}
+      content={<div dir={dir}>{content()}</div>}
       steps={[{ title: 'Next Of Kin', icon: <GiRelationshipBounds /> }]}
     />
   );

@@ -43,7 +43,14 @@ const ActiveIngredient = ({ selectedGeneric }) => {
     return <div style={{ padding: 12 }}>Failed to load active ingredients</div>;
   }
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
+    <div dir={dir}>
     <InfoCardList
       list={listForUI}
       fields={[
@@ -62,6 +69,7 @@ const ActiveIngredient = ({ selectedGeneric }) => {
         controlledDisplay: "Controlled",
       }}
     />
+    </div>
   );
 };
 

@@ -5,6 +5,12 @@ import { DownloadTicket, PatientAttachment, UploadPatientAttachmentParams, Uploa
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 type PagedResult<T> = { data: T[]; totalCount: number };
 
+// Backend VM for profile picture endpoint (matches `DownloadTicket` fields)
+type DownloadPatientAttachmentVM = {
+  url: string;
+  expiresInSeconds: number;
+};
+
 // Spring Boot Page response structure
 interface SpringPageResponse<T> {
   content: T[];
@@ -38,7 +44,9 @@ export const patientAttachmentService = createApi({
         };
       },
       invalidatesTags: (_res, _err, { patientId }) => [
-        { type: 'PatientAttachment', id: patientId }
+        { type: 'PatientAttachment', id: patientId },
+        // Also invalidate the profile-picture query cache (it uses a different tag id).
+        { type: 'PatientAttachment', id: `profile-${patientId}` }
       ],
     }),
 
@@ -58,13 +66,20 @@ export const patientAttachmentService = createApi({
     }),
 
     // GET /api/setup/patients/{patientId}/profile-picture
-    // Returns DownloadTicket directly with presigned URL
+    // Returns DownloadPatientAttachmentVM (presigned URL + expiry seconds)
     getPatientProfilePicture: builder.query<DownloadTicket, { patientId: number }>({
       query: ({ patientId }) => ({
         url: `/api/setup/patients/${patientId}/profile-picture`,
         method: 'GET',
       }),
-      transformResponse: (response: DownloadTicket) => response,
+      transformResponse: (response: DownloadPatientAttachmentVM | DownloadTicket | any): DownloadTicket => {
+        // Some endpoints in this codebase occasionally wrap payloads in `{ object: ... }`.
+        const raw = response?.object ?? response;
+        return {
+          url: String(raw?.url ?? ''),
+          expiresInSeconds: Number(raw?.expiresInSeconds ?? 0),
+        };
+      },
       providesTags: (_res, _err, { patientId }) => [
         { type: 'PatientAttachment', id: `profile-${patientId}` }
       ],
@@ -89,7 +104,8 @@ export const patientAttachmentService = createApi({
         },
       }),
       invalidatesTags: (_res, _err, { patientId }) => [
-        { type: 'PatientAttachment', id: patientId }
+        { type: 'PatientAttachment', id: patientId },
+        { type: 'PatientAttachment', id: `profile-${patientId}` }
       ],
     }),
 
@@ -100,7 +116,8 @@ export const patientAttachmentService = createApi({
         method: 'DELETE',
       }),
       invalidatesTags: (_res, _err, { patientId }) => [
-        { type: 'PatientAttachment', id: patientId }
+        { type: 'PatientAttachment', id: patientId },
+        { type: 'PatientAttachment', id: `profile-${patientId}` }
       ],
     }),
   }),

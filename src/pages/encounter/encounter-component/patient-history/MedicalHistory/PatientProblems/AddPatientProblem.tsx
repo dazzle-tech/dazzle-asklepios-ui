@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLungsVirus } from '@fortawesome/free-solid-svg-icons';
 
@@ -20,7 +20,6 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
   const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-  // Handle fieldErrors array
   if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
     const normalizeMsg = (msg: string) => {
       const m = (msg || '').toLowerCase();
@@ -37,13 +36,12 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     dispatch(
       notify({
         msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
-        sev: 'error'
+        sev: 'warning'
       })
     );
     return;
   }
 
-  // Handle constraint violations in message string
   const messageProp: string = data?.message || '';
   if (
     messageProp.includes('ConstraintViolationImpl') ||
@@ -51,7 +49,6 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
   ) {
     const violations: string[] = [];
 
-    // Extract all constraint violations using regex
     const violationPattern = /propertyPath=(\w+).*?interpolatedMessage='([^']+)'/g;
     let match;
 
@@ -78,15 +75,14 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${violations.join('\n')}` + suffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
     }
   }
 
-  // Handle specific business/database constraint errors
-  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
+  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.error;
 
   const humanMsg =
     (errorKey && keyMap[errorKey]) ||
@@ -95,12 +91,13 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
     data?.message ||
     'Unexpected error';
 
-  dispatch(notify({ msg: humanMsg + suffix, sev: 'error' }));
+  dispatch(notify({ msg: humanMsg + suffix, sev: 'warning' }));
 };
 
 const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Patient problem payload is required.',
   'source.required': 'Source of information is required when problem is not reported by patient.',
+  'type.required': 'Type is required.',
   'patient.invalid': 'Invalid patient reference.',
   'patient.notfound': 'Patient not found.',
   'db.constraint': 'Database constraint violation.',
@@ -109,8 +106,6 @@ const PATIENT_PROBLEM_ERROR_MAP: Record<string, string> = {
   'duplicate.entry': 'A patient problem with these values already exists.',
   notfound: 'Patient problem not found.'
 };
-
-/* DEFAULT MODEL */
 
 const emptyPatientProblem = {
   id: undefined,
@@ -128,18 +123,12 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<any>(emptyPatientProblem);
 
-  /* ENUMS & LOV */
-
   const statusOptions = useEnumOptions('EncounterVaccinationStatus');
   const { data: typeLov } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
   const { data: sourceLov } = useGetLovValuesByCodeQuery('RELATION');
 
-  /* MUTATIONS */
-
   const [addPatientProblem] = useAddPatientProblemMutation();
   const [updatePatientProblem] = useUpdatePatientProblemMutation();
-
-  /* LOAD */
 
   useEffect(() => {
     if (initialData) {
@@ -149,7 +138,6 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
     }
   }, [initialData, open, patient?.id]);
 
-  /* SAVE */
   const handleSave = async () => {
     const payload = {
       id: formData.id,
@@ -162,6 +150,34 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       byPatient: formData.byPatient,
       sourceOfInformation: formData.byPatient ? null : formData.sourceOfInformation
     };
+
+    let errorMsg = "";
+    if (!payload.condition) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Condition Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Condition Can`t be empty"
+    }
+    if (!payload.dateOfDiagnosis) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Date Of Diagnosis Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Date Of Diagnosis Can`t be empty"
+    }
+    if (!payload.status) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Status Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Status Can`t be empty"
+    }
+    if (!payload.type) {
+      if (!errorMsg)
+        errorMsg = errorMsg + "Type Can`t be empty"
+      else
+        errorMsg = errorMsg + ", Type Can`t be empty"
+    }
+    
+    if (!errorMsg) {
 
     try {
       if (formData.id) {
@@ -176,14 +192,19 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
     } catch (err: any) {
       handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
     }
+  }
+  else {
+      dispatch(notify({ msg: errorMsg, sev: "warning" }));
+    }
   };
 
-  /* CONTENT */
-
   const content = (
-    <Form fluid layout="inline" className="fields-container">
+    <Form fluid className="fields-container">
+      <Row>
+      <Row>
+        <Col md={12}>
       <MyInput
-        width={200}
+       width='100%'
         column
         fieldLabel="Condition"
         fieldName="condition"
@@ -191,9 +212,10 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         setRecord={setFormData}
         required
       />
-
+        </Col>
+        <Col md={12}>
       <MyInput
-        width={200}
+       width='100%'
         column
         fieldLabel="Date of diagnosis"
         fieldType="date"
@@ -202,9 +224,12 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         setRecord={setFormData}
         required
       />
-
+      </Col>
+        </Row>
+        <Row>
+          <Col md={12}>
       <MyInput
-        width={200}
+        width='100%'
         column
         fieldLabel="Status"
         fieldType="select"
@@ -217,9 +242,10 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         searchable={false}
         required
       />
-
+       </Col>
+       <Col md={12}>
       <MyInput
-        width={200}
+        width='100%'
         column
         fieldLabel="Type"
         fieldType="select"
@@ -230,10 +256,13 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         record={formData}
         setRecord={setFormData}
         searchable={false}
+        required
       />
-
+      </Col>
+      </Row>
+      <Row>
       <MyInput
-        width={200}
+        width='100%'
         column
         fieldLabel="Date of resolution"
         fieldType="date"
@@ -241,9 +270,11 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         record={formData}
         setRecord={setFormData}
       />
-
+      </Row>
+       <Row>
+        <Col md={12}>
       <MyInput
-        width={200}
+        width='100%'
         column
         fieldLabel="By Patient"
         fieldType="checkbox"
@@ -251,9 +282,10 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         record={formData}
         setRecord={setFormData}
       />
-
+      </Col>
+      <Col md={12}>
       <MyInput
-        width={200}
+        width='100%'
         column
         fieldLabel="Source of information"
         fieldType="select"
@@ -266,10 +298,16 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
         searchable={false}
         disabled={formData.byPatient === true}
       />
+      </Col>
+      </Row>
+      </Row>
     </Form>
   );
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-  /* MODAL */
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -285,7 +323,7 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

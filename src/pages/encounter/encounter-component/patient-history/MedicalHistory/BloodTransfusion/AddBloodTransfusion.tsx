@@ -89,6 +89,13 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
             />
         </Form>
     )
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
         <MyModal
             open={open}
@@ -98,7 +105,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
             actionButtonFunction={""}
             position='right'
             size='33vw'
-            content={content}
+            content={<div dir={dir}>{content}</div>}
         ></MyModal>
     );
 };

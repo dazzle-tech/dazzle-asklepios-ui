@@ -463,9 +463,15 @@ const Accounting: React.FC = () => {
     },
   ];
 
+                  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div className="container">
-      <div className="left-box">
+    <div className="container" dir={dir}>
+      <div className="left-box" style={{ width: '100%' }}>
         <SectionContainer
           title="Search Patient"
           content={contentOfSearchSection()}

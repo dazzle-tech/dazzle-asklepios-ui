@@ -297,8 +297,16 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
     [activeIngredient, isExisting]
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Panel
+    dir={dir}
       header={
         <h3 className="title">
           <Translate>New/Edit Active Ingredient</Translate>

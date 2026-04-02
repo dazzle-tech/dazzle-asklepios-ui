@@ -8,7 +8,10 @@ import { Form } from 'rsuite';
 
 import './styles.less';
 
-import type { PatientObservationsComplaints as PatientObservationsComplaintsModel } from '@/types/model-types-new';
+import type {
+  PatientEncounter,
+  PatientObservationsComplaints as PatientObservationsComplaintsModel
+} from '@/types/model-types-new';
 import { newPatientObservationsComplaints } from '@/types/model-types-constructor-new';
 
 import {
@@ -19,10 +22,10 @@ import {
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
-
 type PatientObservationsComplaintsProps = {
   patientId: number;
   encounterId: number;
+  encounter?: any;
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
@@ -31,6 +34,7 @@ type PatientObservationsComplaintsProps = {
 const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps> = ({
   patientId,
   encounterId,
+  encounter,
   disabled = false,
   width = '100%',
   title = 'Patient Observations & Complaints'
@@ -39,7 +43,6 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
   // Enums / LOVs
   const patientConditions = useEnumOptions('Condition');
-  console.log('patientConditions options:', patientConditions);
   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
 
   // === API ===
@@ -60,7 +63,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
   useEffect(() => {
     if (!latestByEncounter) return;
 
-    setRecord((prev) => ({
+    setRecord(prev => ({
       ...prev,
       ...latestByEncounter,
       id: undefined,
@@ -128,7 +131,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}` + traceSuffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -151,7 +154,33 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       data?.message ||
       'Unexpected error';
 
-    dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'error' }));
+    dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'warning' }));
+  };
+  const buildEncounterUpdateBody = (row: any) => {
+    const body: any = {
+      id: row?.id,
+      patientId: row?.patientId ?? row?.patient?.id ?? row?.patientObject?.id,
+      encounterNumber: row?.encounterNumber ?? null,
+      facilityId: row?.facilityId,
+      departmentId: row?.departmentId,
+      practitionerId: row?.practitionerId ?? null,
+      encounterType: row?.encounterType,
+      encounterReason: row?.encounterReason,
+      followUpEncounterId: row?.followUpEncounterId ?? null,
+      priorityLevel: row?.priorityLevel,
+      originType: row?.originType ?? null,
+      originName: row?.originName ?? null,
+      notes: row?.notes ?? null,
+      departmentDailySequenceNumber: row?.departmentDailySequenceNumber ?? null,
+      encounterDate: row?.encounterDate ?? null,
+      status: row?.status,
+      chiefComplaint: row?.chiefComplaint ?? null,
+      hasPrescription: row?.hasPrescription ?? false,
+      hasOrder: row?.hasOrder ?? false,
+      isObserved: true
+    };
+
+    return body;
   };
 
   const handleSave = async () => {
@@ -159,6 +188,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
       return;
     }
+
     if (!encounterId) {
       dispatch(notify({ msg: 'Encounter id is required.', sev: 'warning' }));
       return;
@@ -166,8 +196,9 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
     try {
       const created = await createPatientObservationsComplaints(createPayload as any).unwrap();
+      
 
-      setRecord((prev) => ({
+      setRecord(prev => ({
         ...prev,
         ...created,
         patientId,
@@ -243,13 +274,13 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
             <MultiSelectAppender
               label="Patient Conditions"
-              options={(patientConditions as any) ?? []}
+              options={patientConditions ?? []}
               optionLabel="label"
               optionValue="value"
-              object={(record as any).patientConditions ?? ''}
+              object={record.patientConditions ?? ''}
               setObject={(value: string) =>
-                setRecord((prev) => ({
-                  ...(prev as any),
+                setRecord(prev => ({
+                  ...prev,
                   patientConditions: value
                 }))
               }

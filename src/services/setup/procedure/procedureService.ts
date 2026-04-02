@@ -22,7 +22,7 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
 };
 
 export const procedureSetupService = createApi({
-  reducerPath: 'newProcedureApi',
+  reducerPath: 'procedureSetupService',
   baseQuery: BaseQuery,
   tagTypes: ['Procedure'],
   endpoints: builder => ({

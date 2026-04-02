@@ -98,18 +98,27 @@ const AddEditOutput = ({
         );
     }
   };
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Output"
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel='Create'
       actionButtonFunction=""
       steps={[{ title: 'Output', icon:<FontAwesomeIcon icon={faSquarePollHorizontal} />}]}
       size={width > 600 ? '36vw' : '25vw'}
-    />
+    /></div>
   );
 };
 export default AddEditOutput;

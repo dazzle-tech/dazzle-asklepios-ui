@@ -49,6 +49,7 @@ import './styles.less';
 
 import type { PatientPrescription, PatientPrescriptionMedication } from '@/types/model-types-new';
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
+import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 
 type Props = any;
 
@@ -166,7 +167,6 @@ const Prescription = (props: Props) => {
   } = useGetPatientPrescriptionQuery(
     {
       patientId,
-      encounterId,
       includeCanceled: showCanceled,
       page: 0,
       size: 500,
@@ -176,8 +176,53 @@ const Prescription = (props: Props) => {
   );
   const prescriptions = prescriptionsResponse?.data ?? [];
 
+  // Filter by patient ID (client-side filtering since service doesn't send patientId to backend)
+  // The service query doesn't pass patientId to backend, so we filter client-side
+  const patientPrescriptions = useMemo(() => {
+    // If no patientId, return empty array (don't show prescriptions for unknown patient)
+    if (!patientId) return [] as PatientPrescription[];
+    
+    // If no prescriptions, return empty array
+    if (!prescriptions.length) return [] as PatientPrescription[];
+    
+    const targetPatientId = Number(patientId);
+    
+    return (prescriptions as PatientPrescription[]).filter(p => {
+      // Try direct patientId field (most common case) - handle both number and string
+      const pPatientId = p.patientId;
+      if (pPatientId != null && pPatientId !== undefined) {
+        const pIdNum = typeof pPatientId === 'string' ? Number(pPatientId) : pPatientId;
+        if (!isNaN(pIdNum) && pIdNum === targetPatientId) return true;
+      }
+      
+      // Fallback: try patient object if it exists
+      const patientObj = (p as any).patient;
+      if (patientObj) {
+        if (patientObj.id != null) {
+          const objId = typeof patientObj.id === 'string' ? Number(patientObj.id) : patientObj.id;
+          if (!isNaN(objId) && objId === targetPatientId) return true;
+        }
+        if (patientObj.key != null) {
+          const objKey = typeof patientObj.key === 'string' ? Number(patientObj.key) : patientObj.key;
+          if (!isNaN(objKey) && objKey === targetPatientId) return true;
+        }
+      }
+      
+      // Additional fallback: if encounterId matches and we have encounterId, include it
+      // This is a safety measure in case patientId is not populated but encounterId is
+      if (encounterId != null && p.encounterId != null) {
+        const pEncounterId = typeof p.encounterId === 'string' ? Number(p.encounterId) : p.encounterId;
+        const targetEncounterId = Number(encounterId);
+        if (!isNaN(pEncounterId) && pEncounterId === targetEncounterId) return true;
+      }
+      
+      // If no patientId found on prescription, exclude it (safer than including all)
+      return false;
+    });
+  }, [prescriptions, patientId, encounterId]);
+
   // Default: hide canceled prescriptions, show all only when checkbox is enabled.
-  const filteredPrescriptions = (prescriptions as PatientPrescription[]).filter(p =>
+  const filteredPrescriptions = patientPrescriptions.filter(p =>
     showCanceled ? true : !isCanceledStatus(p.status)
   );
 
@@ -244,9 +289,10 @@ const Prescription = (props: Props) => {
       setCurrentPrescription(null);
       return;
     }
-    const selected = (prescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey);
+   const selected = (patientPrescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey) ||
+                     (prescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey);
     if (selected) setCurrentPrescription(selected);
-  }, [preKeyRecord.preKey, prescriptions]);
+  }, [preKeyRecord.preKey, patientPrescriptions, prescriptions]);
 
   // Auto-select first prescription if none selected
   useEffect(() => {
@@ -642,6 +688,7 @@ const Prescription = (props: Props) => {
         lastModifiedBy: authSlice?.user?.login ?? 'system'
       }).unwrap();
       dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
+   
 
       setSubmitAssignModalOpen(false);
       setSummaryModalOpen(false);
@@ -654,7 +701,7 @@ const Prescription = (props: Props) => {
           patientId,
           encounterId,
           fromFacilityId: authSlice?.tenant?.selectedFacility?.id ?? (null as any),
-          fromDepartmentId: encounter?.departmentKey ?? (null as any),
+          fromDepartmentId: encounter?.departmentId ?? (null as any),
           urgencyLevel: 'NORMAL'
         } as any).unwrap();
         setCurrentPrescription(nextDraft);
@@ -875,9 +922,15 @@ const Prescription = (props: Props) => {
               className={'font-aws'}
               onClick={() => {
                 if (edit) return;
-                setPatientPrescriptionMedicationObject(rowData);
-                  setOpenDetailsModal(true);
-                  setOpenToAdd(false);
+                // Ensure we have all necessary fields for editing
+                setPatientPrescriptionMedicationObject({
+                  ...rowData,
+                  // Ensure key and id are set for proper identification
+                  key: rowData.key ?? rowData.id,
+                  id: rowData.id ?? rowData.key
+                });
+                setOpenDetailsModal(true);
+                setOpenToAdd(false);
               }}
             />
           </div>
@@ -929,8 +982,15 @@ const Prescription = (props: Props) => {
     }
   ];
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {uniqueBrandIds.map((id: string) => (
         <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
       ))}
@@ -986,7 +1046,11 @@ const Prescription = (props: Props) => {
             onClick={handleNewPrescriptionAndAddMedication}
             prefixIcon={() => <PlusIcon />}
             loading={isLoadingPrescriptions || isLoadingCreateOrGet}
-            disabled={edit || String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'}
+            disabled={
+              edit || 
+              !currentPrescription?.id ||
+              String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
+            }
           >
             Add Medication
           </MyButton>
@@ -1177,8 +1241,8 @@ const Prescription = (props: Props) => {
         }
       />
 
-      <AllergyFloatingButton patientKey={patient?.key} />
-    </>
+      <AllergyFloatingButton patient={patient} />
+    </div>
   );
 };
 

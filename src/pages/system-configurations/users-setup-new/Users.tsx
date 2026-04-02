@@ -39,7 +39,7 @@ const Users = () => {
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [canProceed, setCanProceed] = useState(false);
   const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
-  const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
+  const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
   const [popupOpen, setPopupOpen] = useState(false);
   const [filters, setFilters] = useState({
     name: '',
@@ -51,7 +51,7 @@ const Users = () => {
   const [saveUser, saveUserMutation] = useAddUserMutation();
   // Fetch users list response
   const [pageIndex, setPageIndex] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
 
 
@@ -69,8 +69,8 @@ const Users = () => {
   });
 
 
-const [updateUser] = useUpdateUserMutation();
- 
+  const [updateUser] = useUpdateUserMutation();
+
   // Fetch Facilities list response
   const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
     ...initialListRequest,
@@ -79,22 +79,22 @@ const [updateUser] = useUpdateUserMutation();
   // Deactivate/Activate user
   const [deactivateActivateUser] = useDeactivateUserMutation();
 
-   // Pagination values
+  // Pagination values
 
-    const handlePageChange = (_: unknown, newPage: number) => {
-        setPageIndex(newPage);
-    }
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPageIndex(0);
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPageIndex(newPage);
+  }
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPageIndex(0);
 
-    };
+  };
 
-const users = usersResponse ?? [];
-const totalCount = usersResponse?.length ?? 0;
+  const users = usersResponse?.data ?? [];
+  const totalCount = usersResponse?.totalCount ?? 0;
 
 
-    // Available fields for filtering
+  // Available fields for filtering
   const filterFields = [
     { label: 'Full Name', value: 'fullName' },
     { label: 'User Name', value: 'login' },
@@ -116,11 +116,11 @@ const totalCount = usersResponse?.length ?? 0;
   };
 
   // Effects
-   useEffect(() => {
-        const handleResize = () => setWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -128,55 +128,70 @@ const totalCount = usersResponse?.length ?? 0;
       dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
+   
+const formatErrorKey = (msg?: string) => {
+  if (!msg) return '';
 
- 
-  // Handle Save User
-const handleSave = async () => {
-  try {
-    if (user.id !== undefined) {
-      const response = await updateUser({ ...user }).unwrap();
-      dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
-      setUser({ ...response });
-      refetch();
-    } else {
-      const response = await saveUser({ ...user }).unwrap();
-      dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
-      refetch();
-    }
+  const key = msg.split('.').pop() || msg;
 
-    refetchFacility();
-    setCanProceed(true);
-  } catch (error) {
-    console.error("❌ Error saving user:", error);
-
-    let backendMessage = "Failed to save user";
-
-    const apiError = error?.data;
-    const message = apiError?.message?.toLowerCase();
-
-    if (message === "error.emailexists") {
-      backendMessage = "This email is already in use";
-    } else if (apiError?.fieldErrors?.length > 0) {
-      backendMessage = apiError.fieldErrors[0].message;
-    } else if (apiError?.detail) {
-      backendMessage = apiError.detail;
-    } else if (apiError?.message) {
-      backendMessage = apiError.message;
-    }
-
-    dispatch(
-      notify({
-        msg: backendMessage,
-        sev: "error",
-      })
-    );
-  }
+  return key
+    .replace(/exists/gi, ' already exists')
+    .replace(/user/gi, 'login name')
+    .replace(/email/gi, 'Email')
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^./, s => s.toUpperCase());
 };
+
+  // Handle Save User
+  const handleSave = async () => {
+    try {
+      if (user.id !== undefined) {
+        const response = await updateUser({ ...user }).unwrap();
+        dispatch(notify({ msg: 'The User has been updated successfully', sev: 'success' }));
+        setUser({ ...response });
+        refetch();
+      } else {
+        const response = await saveUser({ ...user }).unwrap();
+
+        dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
+        refetch();
+      }
+
+      refetchFacility();
+      setCanProceed(true);
+   } catch (error: any) {
+  console.error("❌ Error saving user:", error);
+
+  const apiError = error?.data;
+  const message = apiError?.message?.toLowerCase();
+
+  const knownErrors: Record<string, string> = {
+    "error.emailexists": "This email is already in use",
+    "error.userexists": "This username is already in use",
+  };
+
+  const backendMessage =
+    (message && knownErrors[message]) ||
+    apiError?.fieldErrors?.[0]?.message ||
+    (message ? formatErrorKey(message) : '') ||
+    apiError?.detail ||
+    "Failed to save user";
+
+  dispatch(
+    notify({
+      msg: backendMessage,
+      sev: "warning",
+    })
+  );
+}
+  };
 
   // Handle click on Add New button
   const handleAddNew = () => {
     setUser({ ...newApUser });
-    
+
     setPopupOpen(true);
   };
   // Handle Deactivate/Activate
@@ -196,7 +211,7 @@ const handleSave = async () => {
       dispatch(notify({ msg: 'Failed to ' + process + ' this User', sev: 'error' }));
     }
   };
- 
+
   //icons column (Edit, Privilege, Licenses & Certifications, Reset Password, Departments Active/Deactivate)
   const iconsForActions = (rowData: ApUser) => (
     <div className="container-of-icons">
@@ -278,7 +293,7 @@ const handleSave = async () => {
               </Tooltip>
             }
           >
-            <p>{rowData?.firstName}  {rowData?.lastName}</p> 
+            <p>{rowData?.firstName}  {rowData?.lastName}</p>
           </Whisper>
         );
       }
@@ -361,35 +376,35 @@ const handleSave = async () => {
   ];
   // Filter form rendered above the table
   const tableFilters = (
-  <Form fluid>
-    <div className='users-table-main-filter-container'>
-      <MyInput
-        fieldName="name"
-        fieldLabel='Name'
-        fieldType="text"
-        record={filters}
-        setRecord={setFilters}
-      />
+    <Form fluid>
+      <div className='users-table-main-filter-container'>
+        <MyInput
+          fieldName="name"
+          fieldLabel='Name'
+          fieldType="text"
+          record={filters}
+          setRecord={setFilters}
+        />
 
-      <MyInput
-        fieldName="email"
-        fieldType="text"
-        fieldLabel='Email'
-        record={filters}
-        setRecord={setFilters}
-      />
+        <MyInput
+          fieldName="email"
+          fieldType="text"
+          fieldLabel='Email'
+          record={filters}
+          setRecord={setFilters}
+        />
 
-      <MyInput
-        fieldName="login"
-        fieldType="text"
-        fieldLabel='Username'
-        record={filters}
-        setRecord={setFilters}
-      />
-    </div>
-  </Form>
+        <MyInput
+          fieldName="login"
+          fieldType="text"
+          fieldLabel='Username'
+          record={filters}
+          setRecord={setFilters}
+        />
+      </div>
+    </Form>
   );
-  
+
   useEffect(() => {
     if (popupOpen && user?.id) {
       setCanProceed(true);
@@ -434,8 +449,15 @@ const handleSave = async () => {
     </Box>
   );
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div>
         <Panel>
 

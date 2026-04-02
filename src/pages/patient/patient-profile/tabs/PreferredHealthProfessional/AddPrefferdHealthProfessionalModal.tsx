@@ -20,7 +20,6 @@ import {
   useUpdatePatientPreferredHealthProfessionalMutation
 } from '@/services/patients/PatientPreferredHealthProfessional';
 
-
 const toHumanBackendError = (err: any): string => {
   const data = err?.data ?? {};
 
@@ -41,7 +40,6 @@ const toHumanBackendError = (err: any): string => {
 
   return detail || title || message || 'Failed to save Preferred Health Professional.' + traceId;
 };
-
 
 const AddPrefferdHealthProfessionalModal = ({
   open,
@@ -115,12 +113,12 @@ const AddPrefferdHealthProfessionalModal = ({
   const handleSave = async () => {
     try {
       if (!patient?.id) {
-        dispatch(notify({ msg: 'No patient selected', sev: 'error' }));
+        dispatch(notify({ msg: 'No patient selected', sev: 'warning' }));
         return;
       }
 
       if (!hpRecord.facilityId || !hpRecord.practitionerId) {
-        dispatch(notify({ msg: 'Facility and HP Name are required', sev: 'error' }));
+        dispatch(notify({ msg: 'HP Organization and HP Name are required', sev: 'warning' }));
         return;
       }
 
@@ -146,18 +144,10 @@ const AddPrefferdHealthProfessionalModal = ({
       setOpen(false);
       if (refetch) refetch();
     } catch (err: any) {
-      console.log('=== Preferred HP SAVE ERROR START ===');
-      console.log('raw error:', err);
-      console.log('status:', err?.status);
-      console.log('data:', err?.data);
-      console.log('data.message:', err?.data?.message);
-      console.log('data.errorKey:', err?.data?.errorKey);
-      console.log('=== Preferred HP SAVE ERROR END ===');
-
       dispatch(
         notify({
           msg: toHumanBackendError(err),
-          sev: 'error'
+          sev: 'warning'
         })
       );
     }
@@ -295,6 +285,14 @@ const AddPrefferdHealthProfessionalModal = ({
     }
   }, [open, editable, practitionerRecord]);
 
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -320,7 +318,7 @@ const AddPrefferdHealthProfessionalModal = ({
         }
       ]}
       size="35vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

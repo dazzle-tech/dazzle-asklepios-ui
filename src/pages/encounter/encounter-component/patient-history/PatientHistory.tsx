@@ -21,39 +21,56 @@ const PatientHistory = ({
   const tabData = [
     {
       title: 'Medical History',
-      content: (
+      content: (<div dir={dir}>
         <MedicalHistory
           patient={patient}
           encounter={encounter}
           edit={edit}
           toShowData={toShowData}
         />
+        </div>
       )
     },
     {
       title: 'Surgical History',
-      content: (
+      content: (<div dir={dir}>
         <SurgicalHistory
           patient={patient}
           encounter={encounter}
           edit={edit}
           toShowData={toShowData}
         />
+        </div>
       )
     },
     {
       title: 'Social History',
-      content: (
+      content: (<div dir={dir}>
         <SocialHistory
           patient={patient}
           encounter={encounter}
           edit={edit}
           toShowData={toShowData}
         />
+        </div>
       )
     }
   ];
 
-  return <MyTab data={tabData} />;
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+return (
+  <MyTab
+    data={tabData.map(tab => ({
+      ...tab,
+      content: <div dir={dir}>{tab.content}</div>
+    }))}
+  />
+);
 };
 export default PatientHistory;

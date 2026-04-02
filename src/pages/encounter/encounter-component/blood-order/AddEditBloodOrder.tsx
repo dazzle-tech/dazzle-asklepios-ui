@@ -56,13 +56,20 @@ const AddEditBloodOrder = ({ open, setOpen, bloodorder, setBloodOrder }) => {
         );
     }
   };
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={bloodorder?.key ? 'Edit Blood Order' : 'New Blood Order'}
       position="left"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={bloodorder?.key ? 'Save' : 'Create'}
       actionButtonFunction=""
       steps={[{ title: 'Blood Order Info', icon: <FontAwesomeIcon icon={faDroplet} /> }]}

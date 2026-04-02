@@ -125,13 +125,21 @@ const AddEditIntake = ({
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={ 'Intake'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={'Create'}
       actionButtonFunction=""
       steps={[{ title: 'Intake', icon:<FontAwesomeIcon icon={faSquarePollHorizontal} />}]}

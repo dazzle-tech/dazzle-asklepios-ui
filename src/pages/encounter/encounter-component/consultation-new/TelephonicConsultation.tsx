@@ -72,8 +72,11 @@ const TelephonicConsultation = props => {
   const isLoading = activeQuery.isLoading;
 
   const refetch = () => {
-    notCancelledQuery.refetch();
-    allQuery.refetch();
+    if (!showCancelled) {
+      notCancelledQuery.refetch();
+    } else {
+      allQuery.refetch();
+    }
   };
 
   const { data: practitionerResponse } = useGetAllPractitionersQuery({
@@ -317,8 +320,15 @@ const TelephonicConsultation = props => {
     </div>
   );
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div>
+    <div dir={dir}>
       <div ref={tableContainerRef}>
         <MyTable
           height={450}
@@ -342,12 +352,8 @@ const TelephonicConsultation = props => {
         patient={currentPatient}
         encounter={currentEncounter}
         consultationOrders={consultationFormData}
-        // setConsultationOrder={setConsultationFormData}
         open={isDetailsModalOpen}
-        setOpen={(value: boolean) => {
-          setIsDetailsModalOpen(value);
-          if (!value) refetch();
-        }}
+        setOpen={setIsDetailsModalOpen}
         editing={false}
         edit={isEditMode}
         refetchCon={refetch}

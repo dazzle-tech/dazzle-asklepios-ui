@@ -75,11 +75,11 @@ export const patientEncounterService = createApi({
         statusIn?: string[];
         patientName?: string;
         mrn?: string;
-        encounterReasonIn?: string[];
+        encounterReasons?: string[];
         chiefComplaint?: string;
-        priorityIn?: string[];
-        withPrescription?: boolean;
-        hasOrders?: boolean;
+        priorities?: string[];
+        hasPrescription?: boolean;
+        hasOrder?: boolean;
         isObserved?: boolean;
       } & PagedParams
     >({
@@ -91,11 +91,11 @@ export const patientEncounterService = createApi({
         statusIn,
         patientName,
         mrn,
-        encounterReasonIn,
+        encounterReasons,
         chiefComplaint,
-        priorityIn,
-        withPrescription,
-        hasOrders,
+        priorities,
+        hasPrescription,
+        hasOrder,
         isObserved,
         page,
         size,
@@ -114,11 +114,11 @@ export const patientEncounterService = createApi({
             statuses: statusesCsv,
             patientName,
             mrn,
-            encounterReasonIn,
+            encounterReasons,
             chiefComplaint,
-            priorityIn,
-            withPrescription,
-            hasOrders,
+            priorities,
+            hasPrescription,
+            hasOrder,
             isObserved,
             page,
             size,
@@ -259,7 +259,16 @@ export const patientEncounterService = createApi({
         method: 'GET'
       }),
       providesTags: ['PatientEncounter']
-    })
+    }),
+
+    getPreviousClosedEncounter:builder.query<PatientEncounter,{ encounterId: Id }>({
+      query: ({encounterId}) => ({
+        url: `/api/patient/encounter/${encounterId}/previous-encounter-completed`,
+        method: 'GET'
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
   })
 });
 
@@ -287,5 +296,6 @@ export const {
   useLazyGetEncounterByIdQuery,
   useGetEncountersByPatientQuery,
   useLazyGetEncountersByPatientQuery,
-  useGetEncountersByAppointmentQuery
+  useGetEncountersByAppointmentQuery,
+  useGetPreviousClosedEncounterQuery
 } = patientEncounterService;

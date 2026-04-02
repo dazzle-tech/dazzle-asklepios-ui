@@ -72,6 +72,8 @@ const BasicInfo = ({
         record={localPatient}
         setRecord={setLocalPatient}
         width={170}
+        disableFutureDates
+        showWarningIfBeforeYear1900
       />
       <MyInput
         vr={validationResult}

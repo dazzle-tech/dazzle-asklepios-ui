@@ -46,6 +46,7 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
       </Whisper>
     </div>
   );
+console.log("patientListResponse in bedside reg modal", patientListResponse);
 
   // Table columns
   const tableColumns = [
@@ -83,16 +84,25 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
       </>
     );
   };
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
+    <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Bedside Registrations"
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent}</div>}
       hideActionBtn
       steps={[{ title: 'Bedside Registrations', icon: <GrScheduleNew /> }]}
     />
+    </div>
   );
 };
 export default BedsideRegistrationsModal;

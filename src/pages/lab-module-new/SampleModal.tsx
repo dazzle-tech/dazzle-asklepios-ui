@@ -191,8 +191,14 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
     }
   }, [open]);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
+  <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -202,7 +208,8 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
       actionButtonFunction={handleSaveSample}
       steps={[{ title: "Sample", icon: <FontAwesomeIcon icon={faVialCircleCheck} /> }]}
       content={
-        <>
+        <div dir={dir}>
+          <div>
           <Form fluid>
             <div className="collect-sample-modal-inputs-main-container">
               <MyInput disabled fieldName="system" record={labView} width={"14vw"} />
@@ -218,15 +225,15 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
 
 
 
-              <MyInput fieldLabel="Actual Sample Quantity" fieldName="quantity" fieldType="number" record={sample} setRecord={setSample} width={"14vw"} />
+              <MyInput fieldLabel="Actual Sample Quantity" fieldName="quantity" fieldType="number" record={sample} setRecord={setSample} width={"14vw"} required />
 
 
               <MyInput fieldName="unitLkey" fieldType="select" selectData={valueUnitLov?.object ?? []}
-                selectDataLabel="lovDisplayVale" selectDataValue="key" record={sample} setRecord={setSample} width={"14vw"} />
+                selectDataLabel="lovDisplayVale" selectDataValue="key" record={sample} setRecord={setSample} width={"14vw"} required />
 
 
               <MyInput fieldName="dateTime" fieldType="datetime" fieldLabel="Sample Collected"
-                record={selectedSampleDate} setRecord={setSelectedSampleDate} width={"14vw"} />
+                record={selectedSampleDate} setRecord={setSelectedSampleDate} width={"14vw"}  required/>
             </div>
 
           </Form>
@@ -234,9 +241,11 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
           <Panel>
             <MyTable columns={tableColumns} data={samplesPage?.data ?? []} />
           </Panel>
-        </>
+          </div>
+        </div>
       }
     />
+  </div>
   );
 };
 

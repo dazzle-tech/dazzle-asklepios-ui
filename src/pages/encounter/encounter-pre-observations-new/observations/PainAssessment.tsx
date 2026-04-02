@@ -23,6 +23,7 @@ import './styles.less';
 type PainAssessmentProps = {
   patientId: number;
   encounterId: number;
+  encounter?: any;
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
@@ -31,6 +32,7 @@ type PainAssessmentProps = {
 const PainAssessment: React.FC<PainAssessmentProps> = ({
   patientId,
   encounterId,
+  encounter,
   disabled = false,
   width = '100%',
   title = 'Pain Assessment'
@@ -141,7 +143,6 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     };
   }, [record, patientId, encounterId]);
 
-  // Error helpers
   const normalizeFieldErrorMessage = (message: string) => {
     const messageLower = (message || '').toLowerCase();
     if (messageLower.includes('must not be null')) return 'is required';
@@ -182,7 +183,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       dispatch(
         notify({
           msg: `Please fix the following fields:\n${lines.join('\n')}` + traceSuffix,
-          sev: 'error'
+          sev: 'warning'
         })
       );
       return;
@@ -205,7 +206,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       data?.message ||
       'Unexpected error';
 
-    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'error' }));
+    dispatch(notify({ msg: humanMessage + traceSuffix, sev: 'warning' }));
   };
 
   // Actions
@@ -231,6 +232,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       }));
 
       dispatch(notify({ msg: 'Pain assessment saved successfully', sev: 'success' }));
+       
     } catch (err: any) {
       showApiError(err);
     }

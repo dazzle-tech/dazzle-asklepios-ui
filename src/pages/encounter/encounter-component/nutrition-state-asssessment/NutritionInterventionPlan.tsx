@@ -6,8 +6,16 @@ const NutritionInterventionPlan = ({ object, setObject }) => {
   // Fetch fluid intake types Lov Response
   const { data: fluidIntakeTypesLovQueryResponse } =
     useGetLovValuesByCodeQuery('FLUID_INTAKE_TYPES');
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <Row>
         <MyInput
           width="100%"

@@ -18,7 +18,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import ChatModal from '@/components/ChatModal/ChatModal';
 import MyModal from '@/components/MyModal/MyModal';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import PatientSide from '@/pages/lab-module-new/PatienSide';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import { useLocation } from 'react-router-dom';
 import DispenseModal from './DispenseModal';
 import Icd10Search from '@/pages/medical-component/Icd10Search';
@@ -640,8 +640,14 @@ const InternalDrugOrder = () => {
     };
   }, [dispatch]);
 
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div className="container-internal-drug-order">
+    <div className="container-internal-drug-order" dir={dir}>
       <div className="container-of-tables-int width-100">
         <MyNestedTable
           data={data}
@@ -686,12 +692,16 @@ const InternalDrugOrder = () => {
         position="center"
         content={
           <div>
-            <MyTab 
-             data={tabData}
-             activeTab={activeKey}
-             setActiveTab={setActiveKey}
-             appearance='tabs'
-            />
+            <MyTab
+                data={tabData.map(tab => ({
+                  ...tab,
+                  content: <div dir={dir}>{tab.content}</div>
+                }))}
+                activeTab={activeKey}
+                setActiveTab={setActiveKey}
+                appearance='tabs'
+                className="tab-container"
+              />
           </div>
         }
         steps={[{ title: 'Clinical Checks', icon: <FontAwesomeIcon icon={faUserCheck} /> }]}
@@ -712,7 +722,7 @@ const InternalDrugOrder = () => {
         hideActionBtn={true}
         steps={[{ title: 'Dispense', icon: <FontAwesomeIcon icon={faRightFromBracket} /> }]}
         content={
-          <div className="flex-20">
+          <div className="flex-20" dir={dir}>
             {/* Form */}
             <Form fluid className="flex-col-20">
               <div className="flex-20-15">

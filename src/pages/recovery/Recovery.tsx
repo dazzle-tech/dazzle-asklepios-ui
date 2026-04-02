@@ -514,8 +514,13 @@ const Recovery = () => {
     </>
   );
 
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className="container">
+    <div className="container" dir={dir}>
       <div className="left-box">
         <MyTable
           filters={filters()}

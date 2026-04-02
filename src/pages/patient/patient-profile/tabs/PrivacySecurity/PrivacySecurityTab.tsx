@@ -101,8 +101,15 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
     }
   };
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="tab-main-container">
+    <div className="tab-main-container" dir={dir}>
       <AddVerification
         open={verificationModalOpen}
         setOpen={setVerificationModalOpen}
@@ -187,8 +194,8 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           />
 
           {/* ======== SAVE HIPAA BUTTON ======== */}
+          <div className='privacy-security-tab-save-button'>
           <MyButton
-            className="ml-3"
             appearance="primary"
             loading={creating || updating}
             prefixIcon={() => <CheckRound />}
@@ -196,6 +203,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           >
             Save HIPAA
           </MyButton>
+          </div>
         </div>
       </Form>
     </div>

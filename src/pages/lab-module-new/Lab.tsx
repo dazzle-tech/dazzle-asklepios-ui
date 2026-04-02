@@ -18,8 +18,6 @@ import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientSe
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
-  newApEncounter,
-  newApPatient
 } from '@/types/model-types-constructor';
 import {
   faCircleCheck,
@@ -29,10 +27,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import RequestedTest from '../rad-module/requested-tests/RequestedTest';
 import Orders from './Orders';
-import PatientSide from './PatienSide';
+import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import Result from './Result';
 import Tests from './Tests';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
+import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
 
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
@@ -51,12 +50,12 @@ const Lab = () => {
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [patient, setPatient] = useState({ ...newPatient });
-  const [encounter] = useState({ ...newPatientEncounter });
+  const [encounter,setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const [visibleTests, setVisibleTests] = useState<any[]>([]);
 
-const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
-
+  const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
+  const [getEncounterById] = useLazyGetEncounterByIdQuery();
   const [activeKey, setActiveKey] = useState<'1' | '2'>('1');
 
 
@@ -163,7 +162,7 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
 
 
 
-    //add new patient edits
+  //add new patient edits
   useEffect(() => {
     if (!order?.patientId) {
       setPatient({ ...newPatient });
@@ -177,9 +176,9 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
           const raw = res[0];
 
           setPatient(raw);
-          console.log("RAW PATIENT", raw);
+     
 
-} else {
+        } else {
           setPatient({ ...newPatient });
         }
       })
@@ -188,6 +187,21 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
       });
 
   }, [order?.patientId]);
+  useEffect(() => {
+  if (!order?.encounterId) {
+    setEncounter({ ...newPatientEncounter });
+    return;
+  }
+
+  getEncounterById({ id: order.encounterId })
+    .unwrap()
+    .then((res: any) => {
+      setEncounter(res ?? { ...newPatientEncounter });
+    })
+    .catch(() => {
+      setEncounter({ ...newPatientEncounter });
+    });
+}, [order?.encounterId]);
 
   const newTestsCount = useMemo(
     () =>
@@ -238,6 +252,13 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
 
   }, [order?.patientId]);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   const tabData = [
     {
       title: 'Laboratory',
@@ -278,6 +299,7 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
             />
           </div>
 
+  <div dir={dir}>
           <div className="container">
             <div className="left-boxs">
               <Row>
@@ -353,7 +375,7 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
                     loading={globalLoading}
                     // fetchAllTests={fetchAllTests}
                     refetchAllLabData={refetchAllLabData}
-                    // fecthSample={fecthSample}
+                  // fecthSample={fecthSample}
                   />
                 </Tabs.Tab>
               </Tabs>
@@ -361,9 +383,18 @@ const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
             </div>
 
             <div className="right-boxs">
-              <PatientSide patient={patient} encounter={encounter} />
+
+              <PatientSide
+                patient={patient}
+                setPatient={setPatient}
+                encounter={encounter}
+                showDiagnosis={false}
+                showVisitDetails={false}
+                showBalance={false}
+              />
             </div>
           </div>
+  </div>
         </>
       </>)
     },

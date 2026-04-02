@@ -183,6 +183,89 @@ const Resources = () => {
   };
 
   // ──────────────────────────── CRUD HANDLERS ────────────────────────────
+  const getErrorText = (err: any) => {
+    if (!err) return '';
+
+    // RTK Query commonly provides: { status, data } where data can be string or object
+    const data = (err as any)?.data;
+
+    const parts: string[] = [];
+    if (typeof (err as any)?.error === 'string') parts.push((err as any).error);
+    if (typeof (err as any)?.message === 'string') parts.push((err as any).message);
+
+    if (typeof data === 'string') parts.push(data);
+    if (data && typeof data === 'object') {
+      if (typeof (data as any)?.detail === 'string') parts.push((data as any).detail);
+      if (typeof (data as any)?.message === 'string') parts.push((data as any).message);
+      if (typeof (data as any)?.error === 'string') parts.push((data as any).error);
+      try {
+        parts.push(JSON.stringify(data));
+      } catch {
+        // ignore stringify issues
+      }
+    }
+
+    // last resort
+    try {
+      parts.push(String(err));
+    } catch {
+      // ignore
+    }
+
+    return parts.filter(Boolean).join(' | ');
+  };
+
+  const normalizeResourceUniquenessError = (error: any, fallbackName?: string) => {
+    const text = getErrorText(error);
+    const lower = text.toLowerCase();
+
+    // Example backend:
+    // Key (resource_type, resource_key)=(CLINIC, 5001) already exists.
+    if (
+      lower.includes('duplicate key value violates unique constraint') ||
+      lower.includes('uk_resource_type_key')
+    ) {
+      const m = text.match(
+        /Key\s*\(resource_type,\s*resource_key\)\s*=\s*\(([^,]+),\s*([^)]+)\)\s*already exists/i
+      );
+      if (m) {
+        const type = String(m[1]).trim();
+        const key = String(m[2]).trim();
+
+        // Prefer showing display name instead of raw key (e.g. department/clinic name)
+        const allLoaded = [
+          ...((resourceListResponse?.data as Resource[]) ?? []),
+          ...((filteredList as Resource[]) ?? [])
+        ];
+        const existing = allLoaded.find(
+          r =>
+            String(r?.resourceType ?? '').toUpperCase() === String(type).toUpperCase() &&
+            String(r?.resourceKey ?? '') === key
+        );
+        const displayName =
+          String(existing?.resourceName ?? '').trim() ||
+          String(fallbackName ?? '').trim() ||
+          key;
+
+        const typeLabel =
+          resourceTypeEnum?.find((x: any) => String(x?.value) === String(type))?.label ??
+          formatEnumString(type);
+
+        return {
+          msg: `Duplicate resource: ${typeLabel} - ${displayName} already exists.`,
+          sev: 'warning'
+        };
+      }
+
+      return {
+        msg: 'Duplicate resource: a record with the same Resource Type and Resource already exists.',
+        sev: 'warning'
+      };
+    }
+
+    return null;
+  };
+
   const handleAddNew = async (resourceNameParam?: string) => {
     try {
       // Get resourceName from parameter (passed from AddEditResources) or from state or use resourceKey as fallback
@@ -205,6 +288,14 @@ const Resources = () => {
       setResource({ ...Response });
       setOpenAddEditResource(false);
     } catch (error) {
+      const normalized = normalizeResourceUniquenessError(
+        error,
+        resourceNameParam || resource.resourceName || resource.resourceKey
+      );
+      if (normalized) {
+        dispatch(notify(normalized));
+        return;
+      }
 
       if (error?.data?.fieldErrors?.length) {
         const messages = error.data.fieldErrors
@@ -241,6 +332,15 @@ const Resources = () => {
       setOpenAddEditResource(false);
     } catch (error) {
       console.error("Error updating resource:", error);
+
+      const normalized = normalizeResourceUniquenessError(
+        error,
+        resourceNameParam || resource.resourceName || resource.resourceKey
+      );
+      if (normalized) {
+        dispatch(notify(normalized));
+        return;
+      }
 
       if (error?.data?.fieldErrors?.length) {
         const messages = error.data.fieldErrors
@@ -454,9 +554,17 @@ const Resources = () => {
     </Form>
   );
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   // ──────────────────────────── RENDER ────────────────────────────
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         data={isFiltered ? filteredList : resourceListResponse?.data ?? []}
         totalCount={isFiltered ? filteredTotal : totalCount}
