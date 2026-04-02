@@ -115,7 +115,15 @@ const NextOfKin = ({ patient, isClick }) => {
     }
   };
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <div className="tab-main-container">
       <div className="tab-content-btns">
         <AddEditNextOfKin
@@ -152,6 +160,7 @@ const NextOfKin = ({ patient, isClick }) => {
         itemToDelete="Next Of Kin"
         actionButtonFunction={handleDeleteNextOfKin}
       />
+    </div>
     </div>
   );
 };

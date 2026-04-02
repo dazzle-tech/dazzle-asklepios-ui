@@ -608,8 +608,15 @@ const SlidingScale = () => {
     return true;
   });
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className={`order-details-container ${mode === 'light' ? 'light' : 'dark'}`}>
+    <div className={`order-details-container ${mode === 'light' ? 'light' : 'dark'}`} dir={dir}>
       <OrderDetailsSection
         orders={orders}
         orderColumns={orderColumns}

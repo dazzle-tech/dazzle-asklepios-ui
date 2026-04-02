@@ -111,6 +111,11 @@ const TeleScreenSelectTests = ({ open, setOpen, patient, encounter }) => {
     }
   };
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -118,7 +123,7 @@ const TeleScreenSelectTests = ({ open, setOpen, patient, encounter }) => {
       title="Select Tests"
       actionButtonFunction={handleSaveTests}
       size="50vw"
-      content={
+      content={<div dir={dir}>
         <TransferTestList
           open={open}
           leftItems={leftItems}
@@ -131,7 +136,7 @@ const TeleScreenSelectTests = ({ open, setOpen, patient, encounter }) => {
           searchType={searchType}
           setSearchType={setSearchType}
           isFetching={isFetching}
-        />
+        /> </div>
       }
     />
   );

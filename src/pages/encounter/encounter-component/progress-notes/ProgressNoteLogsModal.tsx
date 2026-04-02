@@ -53,6 +53,13 @@ const ProgressNoteLogsModal: React.FC<Props> = ({ open, setOpen, progressNoteId 
     []
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -62,7 +69,7 @@ const ProgressNoteLogsModal: React.FC<Props> = ({ open, setOpen, progressNoteId 
       title="Progress Note History"
       size="35vw"
       position="center"
-      content={<MyTable data={logs} columns={columns} height={400} loading={isLoading} />}
+      content={<div dir={dir}><MyTable data={logs} columns={columns} height={400} loading={isLoading} /></div>}
     />
   );
 };

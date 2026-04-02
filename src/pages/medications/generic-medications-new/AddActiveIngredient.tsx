@@ -117,6 +117,13 @@ const handleDelete = async (id) => {
     },
   ];
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       title={"Add Active Ingredient"}
@@ -124,7 +131,7 @@ const handleDelete = async (id) => {
       setOpen={setOpen}
       hideActionBtn={true}
       content={
-        <>
+        <div dir={dir}>
           <Form fluid>
 
             
@@ -191,7 +198,7 @@ const handleDelete = async (id) => {
               onRowClick={(rowData) => setBrandActive(rowData)}
             />
           </Form>
-        </>
+        </div>
       }
       size="70vh"
     />

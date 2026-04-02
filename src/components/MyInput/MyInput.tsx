@@ -116,6 +116,10 @@ type MyInputProps = {
   isEnum?: boolean;
   allowEnterNewLine?: boolean;
   showZero?: boolean;
+  disablePastDates?: boolean;
+  disableFutureDates?: boolean;
+  showWarningIfBeforeYear1900?: boolean;
+  showWarningIfInPast?: boolean;
 };
 
 const MyInput = ({
@@ -702,6 +706,20 @@ const MyInput = ({
               const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
               setRecord?.({ ...record, [fieldName]: dateStr });
             }}
+            onBlur={() => {
+              const value = record?.[fieldName];
+              const minDate = new Date(1900, 0, 1);
+              const today = new Date(new Date().setHours(0, 0, 0, 0));
+
+              if (props.showWarningIfBeforeYear1900 && value && new Date(value) < minDate) {
+                dispatch(notify({ msg: 'Date cannot be before 01-01-1900', sev: 'warning' }));
+                return;
+              }
+
+              if (props.showWarningIfInPast && value && new Date(value) < today) {
+                dispatch(notify({ msg: 'Date cannot be in the past', sev: 'warning' }));
+              }
+            }}
             placeholder={props.placeholder ?? 'DD-MM-YYYY'}
             onKeyDown={(e: any) => {
               const input = e.target as HTMLInputElement;
@@ -722,6 +740,14 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            shouldDisableDate={(date: Date) => {
+              const today = new Date(new Date().setHours(0, 0, 0, 0));
+              const minDate = new Date(1900, 0, 1); // 1-1-1900
+              if (date < minDate) return true;
+              if (props.disablePastDates) return date < today;
+              if (props.disableFutureDates) return date > today;
+              return false;
+            }}
           />
         );
       case 'number': {

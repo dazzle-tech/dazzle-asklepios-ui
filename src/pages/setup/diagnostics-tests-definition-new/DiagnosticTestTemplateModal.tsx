@@ -181,6 +181,12 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -197,7 +203,7 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
       size="50vw"
       bodyheight="38vw"
       content={
-        <Form fluid layout="inline">
+        <Form fluid layout="inline" dir={dir}>
           <MyInput
             column
             width="100%"

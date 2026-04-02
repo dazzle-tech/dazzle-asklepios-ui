@@ -436,6 +436,14 @@ const InsuranceModal = ({
     </div>
   );
 
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <AdvancedModal
       open={open}
@@ -443,8 +451,8 @@ const InsuranceModal = ({
       leftTitle="Benefits Overview"
       rightTitle="Patient Insurance"
       subRightTitle={editing?.id ? 'Edit Insurance Information' : 'Add New Insurance'}
-      leftContent={renderLeftContent()}
-      rightContent={renderRightContent()}
+      leftContent={<div dir={dir}>{renderLeftContent()}</div>}
+      rightContent={<div dir={dir}>{renderRightContent()}</div>}
       actionButtonLabel="Save"
       actionButtonFunction={hideSaveBtn ? null : handleSave}
       hideCancel={false}

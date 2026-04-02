@@ -143,8 +143,15 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
     setPage(0);
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="medical-container-div">
+    <div className="medical-container-div" dir={dir}>
       <SectionContainer
         title="Surgical History"
         action={

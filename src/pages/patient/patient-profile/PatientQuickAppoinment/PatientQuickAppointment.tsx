@@ -365,7 +365,14 @@ const PatientQuickAppointment = ({
     }
   };
 
-  return (
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
     <MyModal
       open={quickAppointmentModel}
       setOpen={setQuickAppointmentModel}
@@ -418,12 +425,13 @@ const PatientQuickAppointment = ({
           )
         }
       ]}
-      content={(step: number) => conjureFormContent(step)}
+      content={(step: number) => <div dir={dir}>{conjureFormContent(step)}</div>}
       size="55vw"
       bodyheight="65vh"
       hideActionBtn={true}
       initialStep={initialStep}
     />
+    </div>
   );
 };
 

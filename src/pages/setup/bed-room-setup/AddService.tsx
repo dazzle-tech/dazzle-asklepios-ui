@@ -771,6 +771,12 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
     }
   };
 
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <>
       <ChildModal
@@ -779,7 +785,7 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
         title="Services"
-        mainContent={conjureFormContentOfMainModal}
+        mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
         childStep={[
           {
             title: 'Service',
@@ -793,7 +799,7 @@ const AddService: React.FC<Props> = ({ open, setOpen, roomObj, setRoomObj }) => 
           }
         ]}
         childTitle={roomService?.id ? 'Edit Service Info' : 'Add Service'}
-        childContent={conjureFormContentOfChildModal}
+        childContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfChildModal(stepNumber)}</div>)}
         mainSize="sm"
         actionChildButtonFunction={handleSave}
         hideActionBtn={false}

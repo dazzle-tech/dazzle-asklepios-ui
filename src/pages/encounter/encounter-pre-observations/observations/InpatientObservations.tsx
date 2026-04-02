@@ -200,8 +200,15 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
         },
     ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
-        <div>
+        <div dir={dir}>
             <AddEditInpatientObservations open={openAddModal} setOpen={setOpenAddModal} patient={patient} encounter={encounter} observationsObject={patientObservationSummary} refetch={refetchObservations} edit={edit} />
             <div className='bt-div'>
                 <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { }} disabled={edit}>

@@ -313,6 +313,11 @@ const BedAssignmentModal: React.FC<Props> = ({
     </Form>
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -325,7 +330,7 @@ const BedAssignmentModal: React.FC<Props> = ({
       actionButtonLoading={
         isSavingAssignment || isOccupyingBed || isMovingEncounterStatus
       }
-      content={modalContent}
+      content={<div dir={dir}>{modalContent}</div>}
     />
   );
 };

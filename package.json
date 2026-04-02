@@ -80,6 +80,7 @@
     "immutable": "^3.8.2",
     "jsbarcode": "^3.12.1",
     "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.7",
     "lodash": "^4.17.21",
     "lovable-tagger": "^1.1.10",
     "lucide-react": "^0.544.0",

@@ -5,6 +5,22 @@ export { default as highlightValue } from './highlightValue';
 export { default as formatValue } from './formatValue';
 import { intervalToDuration } from 'date-fns';
 
+export const conjureValuesFromEnumList = (
+  list: any[],
+  valuesString: string,
+  preferredField: string
+): string => {
+  if (!valuesString) return '';
+
+  const keys = valuesString.split(',').map(k => k.trim());
+  const values = keys.map(key => {
+    const found = list?.find(record => record.value === key);
+    return found ? found[preferredField] : key;
+  });
+
+  return values.join(', ');
+};
+
 export const fromCamelCaseToDBName = word => {
   let final = '';
   for (const char of word) {

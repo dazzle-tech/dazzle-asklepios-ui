@@ -208,7 +208,8 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
       actionButtonFunction={handleSaveSample}
       steps={[{ title: "Sample", icon: <FontAwesomeIcon icon={faVialCircleCheck} /> }]}
       content={
-        <>
+        <div dir={dir}>
+          <div>
           <Form fluid>
             <div className="collect-sample-modal-inputs-main-container">
               <MyInput disabled fieldName="system" record={labView} width={"14vw"} />
@@ -240,7 +241,8 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
           <Panel>
             <MyTable columns={tableColumns} data={samplesPage?.data ?? []} />
           </Panel>
-        </>
+          </div>
+        </div>
       }
     />
   </div>

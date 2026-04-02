@@ -193,9 +193,12 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
       }
     }
   ];
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <>
+    <div dir={dir}>
       <div className="statistics-container">
         <DetailsCard
           title="Total Beds"
@@ -269,7 +272,7 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
         }}
       />
 
-    </>
+    </div>
   );
 };
 

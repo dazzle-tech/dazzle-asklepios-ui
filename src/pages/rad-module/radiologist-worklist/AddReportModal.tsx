@@ -254,7 +254,7 @@ const AddReportModal = ({
       size="40vw"
       bodyheight="65vh"
       content={
-        <>
+        <div dir={dir}>
         <div className='add-report-modal-radiologist-work-list'>
           <Form fluid>
                 <MyInput
@@ -312,7 +312,7 @@ const AddReportModal = ({
           </Row>
 
 
-        </>
+        </div>
       }
     />
   </div>

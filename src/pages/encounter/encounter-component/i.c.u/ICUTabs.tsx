@@ -19,8 +19,13 @@ import SafetyBundleICU from "./i.c.u-tabs/safetybundletab/SafetyBundleICU";
 const ICUTabs: React.FC = () => {
   const [activeKey, setActiveKey] = useState<string | number>('1');
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
-  return (<>
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  return (<div dir={dir}>
     <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
 
       <Tabs.Tab eventKey="1" title="Overview">
@@ -50,7 +55,7 @@ const ICUTabs: React.FC = () => {
       </Tabs.Tab>
     </Tabs>
 
-  </>);
+  </div>);
 };
 
 export default ICUTabs;

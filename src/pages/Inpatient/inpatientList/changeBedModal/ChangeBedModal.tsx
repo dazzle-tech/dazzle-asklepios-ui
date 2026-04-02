@@ -300,7 +300,7 @@ const ChangeBedModal: React.FC<Props> = ({
         searchable={false}
         loading={isFetchingRooms}
         hasMore={roomsResponse?.links?.next != null}
-        onFetchMore={async () => {}}
+        onFetchMore={async () => { }}
       />
 
       <MyInput
@@ -319,11 +319,14 @@ const ChangeBedModal: React.FC<Props> = ({
         disabled={!record.roomId}
         loading={isFetchingBeds}
         hasMore={bedsResponse?.links?.next != null}
-        onFetchMore={async () => {}}
+        onFetchMore={async () => { }}
       />
     </Form>
   );
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -340,7 +343,7 @@ const ChangeBedModal: React.FC<Props> = ({
         isOccupyingNewBed ||
         isMarkingOldBedInCleaning
       }
-      content={modalContent}
+      content={<div dir={dir}>{modalContent}</div>}
     />
   );
 };

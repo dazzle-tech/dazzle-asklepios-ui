@@ -54,8 +54,14 @@ const MOA = ({ activeIngredients }) => {
     }
   }, [activeIngredients]);
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Form className="container-active" fluid>
+    <Form className="container-active" fluid dir={dir}>
       <div className="container-of-actions-header-active">
         <Text>Mechanism Of Actions</Text>
         <div className="container-of-buttons-active">

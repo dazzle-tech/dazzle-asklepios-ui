@@ -208,7 +208,15 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
 
   const isSelected = row => (row?.id === patientHP?.id ? 'selected-row' : '');
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+    <div dir={dir}>
     <div className="tab-main-container">
       <AddPrefferdHealthProfessionalModal
         open={open}
@@ -256,6 +264,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
+    </div>
     </div>
   );
 };

@@ -171,8 +171,14 @@ const Synonyms = ({ activeIngredients }) => {
     return Number(rowId) === Number(record.id) ? "selected-row" : "";
   };
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Form fluid>
+    <Form fluid dir={dir}>
       <div className="container-of-actions-header-active">
         <div className="container-of-fields-active">
           <MyInput

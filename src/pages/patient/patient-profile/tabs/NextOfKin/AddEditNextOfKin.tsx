@@ -167,6 +167,12 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
     </Form>
   );
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -176,7 +182,7 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
       bodyheight="65vh"
       actionButtonFunction={handleSave}
       size="35vw"
-      content={content}
+      content={<div dir={dir}>{content()}</div>}
       steps={[{ title: 'Next Of Kin', icon: <GiRelationshipBounds /> }]}
     />
   );

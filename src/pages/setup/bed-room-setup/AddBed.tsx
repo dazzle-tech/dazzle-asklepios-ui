@@ -278,13 +278,13 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
       key: 'type',
       title: <Translate>Type</Translate>,
       flexGrow: 3,
-      render: (rowData: Bed) =><span>{formatEnumString(rowData.type)}</span>
+      render: (rowData: Bed) => <span>{formatEnumString(rowData.type)}</span>
     },
     {
       key: 'status',
       title: <Translate>Status</Translate>,
       flexGrow: 3,
-      render: (rowData: Bed) =><span>{formatEnumString(rowData.status)}</span>
+      render: (rowData: Bed) => <span>{formatEnumString(rowData.status)}</span>
     },
     {
       key: 'isActive',
@@ -319,8 +319,8 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
                 width={140}
                 fieldLabel="Facility"
                 fieldName="name"
-                record={room?.facility }
-                setRecord={() => {}}
+                record={room?.facility}
+                setRecord={() => { }}
                 disabled
               />
 
@@ -328,8 +328,8 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
                 width={140}
                 fieldLabel="Department"
                 fieldName="name"
-                record={room?.department }
-                setRecord={() => {}}
+                record={room?.department}
+                setRecord={() => { }}
                 disabled
               />
 
@@ -423,7 +423,10 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
         return null;
     }
   };
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <>
       <ChildModal
@@ -432,11 +435,11 @@ const AddBed: React.FC<Props> = ({ open, setOpen, room, setRoom, refetchRoom }) 
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
         title="Beds"
-        mainContent={conjureFormContentOfMainModal}
+        mainContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>)}
         childStep={[{ title: 'Bed', icon: <FontAwesomeIcon icon={faBedPulse} /> }]}
         mainStep={[{ title: 'Beds', icon: <FontAwesomeIcon icon={faHospital} /> }]}
         childTitle={bed?.id ? 'Edit Bed Info' : 'Add Bed'}
-        childContent={conjureFormContentOfChildModal}
+        childContent={(stepNumber) => (<div dir={dir}>{conjureFormContentOfChildModal(stepNumber)}</div>)}
         mainSize="sm"
         actionChildButtonFunction={handleSave}
         hideActionBtn={false}

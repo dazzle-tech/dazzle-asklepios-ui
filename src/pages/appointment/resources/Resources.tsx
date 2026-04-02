@@ -554,9 +554,17 @@ const Resources = () => {
     </Form>
   );
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   // ──────────────────────────── RENDER ────────────────────────────
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         data={isFiltered ? filteredList : resourceListResponse?.data ?? []}
         totalCount={isFiltered ? filteredTotal : totalCount}

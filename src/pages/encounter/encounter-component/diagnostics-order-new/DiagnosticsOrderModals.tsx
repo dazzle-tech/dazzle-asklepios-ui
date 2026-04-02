@@ -158,8 +158,16 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
     handleRecallFavoriteTest
   } = props;
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+        <div dir={dir}>
+
       <DetailsModal
         order={orders}
         test={test}
@@ -207,6 +215,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         actionButtonFunction={handleSaveTests}
         size="50vw"
         content={
+        <div dir={dir}>
           <TransferList
             open={openTestsModal}
             leftItems={leftItems}
@@ -219,6 +228,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
             setSearchType={setSearchType}
             isFetching={isFetching}
           />
+        </div>
         }
       />
 
@@ -249,7 +259,11 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         size="42vw"
         position="center"
         steps={[{ title: '', icon: <FontAwesomeIcon icon={faCreditCard} /> }]}
-        content={<TestCardModal orderTest={orderTest} test={test} />}
+        content={
+            <div dir={dir}>
+              <TestCardModal orderTest={orderTest} test={test} />
+            </div>
+          }
       />
 
       <BulkAssignDepartmentModal
@@ -272,7 +286,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
           Promise.all(tests.map((t: any) => handleRecallFavoriteTest(t)));
         }}
       />
-    </>
+    </div>
   );
 };
 

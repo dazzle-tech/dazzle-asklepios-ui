@@ -285,6 +285,14 @@ const AddPrefferdHealthProfessionalModal = ({
     }
   }, [open, editable, practitionerRecord]);
 
+
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -310,7 +318,7 @@ const AddPrefferdHealthProfessionalModal = ({
         }
       ]}
       size="35vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

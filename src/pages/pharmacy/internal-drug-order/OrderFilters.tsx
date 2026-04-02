@@ -4,8 +4,14 @@ import MyInput from '@/components/MyInput';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 
 const OrderFilters = ({ orderstatusLovQueryResponse }) => {
+
+                  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <>
+    <div dir={dir}>
       <Form layout="inline" fluid className="filter-fields-pharmacey">
         <MyInput
           column
@@ -65,7 +71,7 @@ const OrderFilters = ({ orderstatusLovQueryResponse }) => {
       </Form>
 
       <AdvancedSearchFilters searchFilter={true} />
-    </>
+    </div>
   );
 };
 

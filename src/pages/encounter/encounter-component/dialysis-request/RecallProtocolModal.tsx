@@ -93,7 +93,14 @@ const RecallProtocolModal = () => {
     return row.id === selectedRowId ? 'selected-row' : '';
   };
 
-  return (
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
     <MyTable
       data={paginatedData}
       columns={columns}
@@ -115,6 +122,8 @@ const RecallProtocolModal = () => {
         setPage(0);
       }}
     />
+
+    </div>
   );
 };
 

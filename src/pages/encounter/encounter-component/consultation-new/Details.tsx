@@ -417,8 +417,16 @@ const Details = ({
     }
   };
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -803,7 +811,7 @@ const Details = ({
         source="CONSULTATION_ORDER_ATTACHMENT"
         sourceId={formData?.id ?? 0}
       />
-    </>
+    </div>
   );
 };
 

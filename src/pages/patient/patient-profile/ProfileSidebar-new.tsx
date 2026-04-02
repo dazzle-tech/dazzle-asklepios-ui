@@ -4,13 +4,12 @@ import Translate from '@/components/Translate';
 import UserSearch from '@/images/svgs/UserSearch';
 
 import {
+  useLazyGetPatientsByAnyDocumentNumberQuery,
   useLazyGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByDateOfBirthQuery,
   useLazyGetPatientsByFullNameQuery,
   useLazyGetPatientsByMedicalRecordNumberQuery,
-  useLazyGetPatientsByPrimaryPhoneQuery,
-  useLazyGetPatientsByAnyDocumentNumberQuery,
- 
+  useLazyGetPatientsByPrimaryPhoneQuery
 } from '@/services/patient/patientService';
 
 import { Box, Skeleton } from '@mui/material';
@@ -19,11 +18,11 @@ import clsx from 'clsx';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
-import { Button, Form, Input, InputGroup, Nav, Panel, Sidebar, Sidenav, DatePicker } from 'rsuite';
+import { Button, Form, Input, InputGroup, Nav, Panel, Sidebar, Sidenav } from 'rsuite';
 
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { Patient } from '@/types/model-types-new';
-
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import './styles.less';
 interface ProfileSidebarProps {
   expand: boolean;
   setExpand: (value: boolean) => void;
@@ -51,8 +50,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const mode = useSelector((state: any) => state.ui.mode);
 
   const [selectedCriterion, setSelectedCriterion] = useState('fullName');
-  const [searchKeyword, setSearchKeyword] = useState('');
-
+  const [searchKeyword, setSearchKeyword] = useState<string | Date | null>(null);
   const [patients, setPatients] = useState<any[]>([]);
   const [links, setLinks] = useState<any>({});
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
@@ -106,7 +104,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         break;
 
       case 'dob':
-        params.date = searchKeyword;
+        if (typeof searchKeyword === 'string') {
+          params.date = searchKeyword;
+        }
         break;
 
       default:
@@ -118,21 +118,48 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   const search = useCallback(
     async (page = 0) => {
-      if (selectedCriterion !== 'dob' && searchKeyword.length < 3) return;
-      if (selectedCriterion === 'dob' && searchKeyword.length < 4) return;
-
+      if (selectedCriterion !== 'dob' && (!searchKeyword || String(searchKeyword).length < 3))
+        return;
+      if (selectedCriterion === 'dob' && !searchKeyword) return;
       setIsLoadingPatients(true);
+
+      if (selectedCriterion === 'dob' && typeof searchKeyword === 'string') {
+        try {
+          const resp = await fetchByDob({
+            date: searchKeyword,
+            page,
+            size: PAGE_SIZE,
+            sort: 'id,asc'
+          }).unwrap();
+
+          if (page === 0) setPatients(resp.data);
+          else setPatients(prev => [...prev, ...resp.data]);
+
+          setLinks(resp.links || {});
+        } catch (e) {
+          console.error('Search error:', e);
+        } finally {
+          setIsLoadingPatients(false);
+        }
+
+        return;
+      }
 
       const trigger = selectTrigger();
       const params = buildParams(page);
 
-      const resp = await trigger(params).unwrap();
-      console.log('Search response:', resp);
-      if (page === 0) setPatients(resp.data);
-      else setPatients(prev => [...prev, ...resp.data]);
+      try {
+        const resp = await trigger(params).unwrap();
 
-      setLinks(resp.links || {});
-      setIsLoadingPatients(false);
+        if (page === 0) setPatients(resp.data);
+        else setPatients(prev => [...prev, ...resp.data]);
+
+        setLinks(resp.links || {});
+      } catch (e) {
+        console.error('Search error:', e);
+      } finally {
+        setIsLoadingPatients(false);
+      }
     },
     [searchKeyword, selectedCriterion]
   );
@@ -146,7 +173,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
 
   useEffect(() => {
     if (refetchData) {
-      if (searchKeyword.length >= 3) search(0);
+      if (searchKeyword && String(searchKeyword).length >= 3) search(0);
       setRefetchData?.(false);
     }
   }, [refetchData]);
@@ -154,7 +181,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   useEffect(() => {
     setPatients([]);
     setLinks({});
-    setSearchKeyword('');
+    setSearchKeyword(null);
   }, [selectedCriterion]);
 
   return (
@@ -204,26 +231,21 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                       />
                     </Form>
 
-                    {/* التعديل فقط هنا */}
                     {selectedCriterion === 'dob' ? (
-                      <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-                        <DatePicker
-                          format="dd-MM-yyyy"
-                          placeholder="Select Date of Birth"
-                          style={{ flex: 1 }}
-                          oneTap
-                          value={searchKeyword ? new Date(searchKeyword) : null}
-                          onChange={val => {
-                            if (!val) {
-                              setSearchKeyword('');
-                              return;
-                            }
-                            const year = val.getFullYear();
-                            const month = String(val.getMonth() + 1).padStart(2, '0');
-                            const day = String(val.getDate()).padStart(2, '0');
-                            setSearchKeyword(`${year}-${month}-${day}`);
-                          }}
-                        />
+                      <Form style={{ display: 'flex', gap: 8, width: '100%' }}>
+                        <div className="width-problem" style={{ flex: 1 }}>
+                          <MyInput
+                            fieldType="date"
+                            fieldName="dob"
+                            showLabel={false}
+                            width={300}
+                            record={{ dob: searchKeyword }}
+                            setRecord={r => {
+                              console.log('DOB raw value:', r.dob, typeof r.dob);
+                              setSearchKeyword(r.dob || null);
+                            }}
+                          />
+                        </div>
                         <Button
                           appearance="primary"
                           onClick={() => search(0)}
@@ -231,7 +253,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         >
                           <SearchIcon />
                         </Button>
-                      </div>
+                      </Form>
                     ) : (
                       <InputGroup inside>
                         <Input

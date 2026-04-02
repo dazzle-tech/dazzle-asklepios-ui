@@ -910,6 +910,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
       hideActionBtn
       content={
         selectedEncounter && (
+        <div dir={dir}>
           <EncounterAttachment
             localEncounter={selectedEncounter}
             source="RADIOLOGIST_WORKLIST_ATTACHMENT"
@@ -917,6 +918,7 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
             refetchAttachmentList={false}
             setRefetchAttachmentList={() => { }}
           />
+        </div>
         )
       }
     />

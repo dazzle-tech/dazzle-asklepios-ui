@@ -842,40 +842,6 @@ const EncounterList = () => {
               />
 
               <MyInput
-                width={130}
-                fieldName="hasPrescription"
-                fieldType="checkbox"
-                record={{ hasPrescription: !!hasPrescription }}
-                setRecord={(v: any) => {
-                  setHasPrescription(!!v?.hasPrescription);
-                  setPage(0);
-                }}
-                label="Has Prescription"
-              />
-              <MyInput
-                width={110}
-                fieldName="hasOrder"
-                fieldType="checkbox"
-                record={{ hasOrder: !!hasOrder }}
-                setRecord={(v: any) => {
-                  setHasOrder(!!v?.hasOrder);
-                  setPage(0);
-                }}
-                label="Has Orders"
-              />
-              <MyInput
-                width={110}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={{ isObserved: !!isObserved }}
-                setRecord={(v: any) => {
-                  setIsObserved(!!v?.isObserved);
-                  setPage(0);
-                }}
-                label="Is Observed"
-              />
-
-              <MyInput
                 width={200}
                 fieldName="priorities"
                 fieldType="checkPicker"
@@ -962,25 +928,24 @@ const EncounterList = () => {
           width="15vw"
         />
       </div>
-      <div dir={isRTL ? 'rtl' : 'ltr'}>
-        <Panel>
-          <MyTable
-            filters={filters()}
-            height={600}
-            data={normalizedTableData}
-            columns={tableColumns}
-            rowClassName={(row: any) =>
-              row && encounter && row.key === encounter.key ? 'selected-row' : ''
-            }
-            loading={tableLoading}
-            onRowClick={(row: any) => setLocalEncounter(row)}
-            page={page}
-            rowsPerPage={pageSize}
-            totalCount={totalCount}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-          />
-
+  <div dir={isRTL ? 'rtl' : 'ltr'}>
+      <Panel>
+        <MyTable
+          filters={filters()}
+          height={600}
+          data={normalizedTableData}
+          columns={tableColumns}
+          rowClassName={(row: any) =>
+            row && encounter && row.id === encounter.id ? 'selected-row' : ''
+          }
+          loading={tableLoading}
+          onRowClick={(row: any) => setLocalEncounter(row)}
+          page={page}
+          rowsPerPage={pageSize}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
           <MyModal
             open={openRefillModal}
             setOpen={setOpenRefillModal}

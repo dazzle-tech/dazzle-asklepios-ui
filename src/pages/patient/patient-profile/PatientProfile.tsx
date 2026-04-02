@@ -1117,10 +1117,15 @@ const isSelectedRelation = rowData => {
   }, [localPatient.key]);
 
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-    <>
+    <div dir={dir}>
       <Panel
         header={
           <h3 className="title">
@@ -3491,7 +3496,7 @@ const isSelectedRelation = rowData => {
           </div>
         </Drawer.Body>
       </Drawer>
-    </>
+    </div>
   );
 };
 

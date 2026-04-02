@@ -1057,7 +1057,6 @@ const ERList = () => {
                 }}
                 fieldLabel="Chief Complain"
               />
-
               <MyInput
                 width={200}
                 fieldName="priorities"
@@ -1114,8 +1113,13 @@ const ERList = () => {
     );
   }
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <Panel>
+    <Panel dir={dir}>
       <div className="inpatient-list-btns">
         <MyButton
           onClick={() => setOpenBedManagementModal(true)}
@@ -1206,7 +1210,7 @@ const ERList = () => {
         setOpen={setOpenRefillModal}
         title="Refill"
         size="90vw"
-        content={<RefillModalComponent />}
+        content={<div dir={dir}><RefillModalComponent /></div>}
         hideActionBtn={true}
         cancelButtonLabel="Close"
       />
@@ -1226,7 +1230,7 @@ const ERList = () => {
         setOpen={setOpenPhysicianOrderSummaryModal}
         title="Task Management"
         size="90vw"
-        content={<PhysicianOrderSummaryModal />}
+        content={<div dir={dir}><PhysicianOrderSummaryModal /></div>}
         actionButtonLabel="Save"
         cancelButtonLabel="Close"
       />
@@ -1236,7 +1240,7 @@ const ERList = () => {
         setOpen={setOpenEncounterLogsModal}
         title="Encounter Logs"
         size="70vw"
-        content={<EncounterLogsTable />}
+        content={<div dir={dir}><EncounterLogsTable /></div>}
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEncounterLogsModal(false)}
         cancelButtonLabel="Cancel"
@@ -1249,7 +1253,9 @@ const ERList = () => {
         size="90vw"
         content={
           emrPatient && emrEncounter ? (
-            <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
+            <div dir={dir}>
+              <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
+            </div>
           ) : (
             <div className="encounter-list__no-patient">No patient selected.</div>
           )

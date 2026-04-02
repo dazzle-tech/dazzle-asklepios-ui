@@ -44,11 +44,18 @@ const AdversEffectsAndToxicity: React.FC<Props> = ({ activeIngredient }) => {
     );
   }
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <Section
         title="Adverse Effects"
-        content={<AdversEffects activeIngredients={activeIngredient} />}
+        content={<div dir={dir}><AdversEffects activeIngredients={activeIngredient} /></div>}
         setOpen={() => {}}
         rightLink=""
         openedContent={null}

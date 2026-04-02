@@ -74,8 +74,8 @@ const Users = () => {
   name: record.name
 });
 
-const users: ApUser[] = usersResponse ?? [];
-const totalCount = usersResponse?.length ?? 0;
+const users = usersResponse?.data ?? [];
+const totalCount = usersResponse?.totalCount ?? 0;
 
   const [saveUser] = useAddUserMutation();
   const [updateUser] = useUpdateUserMutation();

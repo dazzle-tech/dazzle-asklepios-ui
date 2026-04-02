@@ -158,8 +158,15 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
 
   /*  RENDER  */
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="medical-container-div">
+    <div className="medical-container-div" dir={dir}>
       <SectionContainer
         title="Hospitalizations"
         action={

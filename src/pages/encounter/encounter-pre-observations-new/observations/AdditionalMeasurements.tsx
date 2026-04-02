@@ -21,7 +21,6 @@ import {
 } from '@/services/medicalsheetsEncounter/observations/additionalMeasurementsService';
 
 import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupService';
-
 type AdditionalMeasurementsProps = {
   patient: Patient; 
   encounterId: number;

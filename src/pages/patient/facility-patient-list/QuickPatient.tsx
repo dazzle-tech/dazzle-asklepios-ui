@@ -392,7 +392,15 @@ const [isUnknown, setIsUnknown] = useState(false);
   </Form>
 );
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -403,12 +411,13 @@ const [isUnknown, setIsUnknown] = useState(false);
           icon: <FontAwesomeIcon icon={faBoltLightning} />
         }
       ]}
-      size="28vw"
+      size="30vw"
       position="right"
       actionButtonLabel="Create"
       actionButtonFunction={handleSave}
-      content={quickPatientContent}
+      content={<div dir={dir}>{quickPatientContent}</div>}
     />
+  </div>
   );
 };
 

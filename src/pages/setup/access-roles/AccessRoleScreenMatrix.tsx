@@ -153,8 +153,17 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack }) => {
       )
     }
   ];
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Panel
+    dir={dir}
       header={
         <p className="title-matrix">
           <Translate> Screen Access Matrix for </Translate> <i>{accessRole?.name ?? ''}</i>

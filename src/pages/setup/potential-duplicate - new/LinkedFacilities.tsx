@@ -71,13 +71,20 @@ const LinkedFacility = ({ open, setOpen, width, Candidate }) => {
         );
     }
   };
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={'Linked Facilities'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       hideActionBtn
       steps={[{ title: 'Linked Facilities', icon: <HiDocumentDuplicate /> }]}
       size={width > 600 ? '36vw' : '70vw'}

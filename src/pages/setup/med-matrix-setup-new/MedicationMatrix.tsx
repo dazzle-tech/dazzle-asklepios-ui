@@ -186,7 +186,15 @@ const MedicationMatrix = () => {
     };
   }, [location.pathname, dispatch]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <Row>
       <Col md={8}>
         <MyTable
@@ -368,6 +376,7 @@ const MedicationMatrix = () => {
         />
       </Col>
     </Row>
+  </div>
   );
 };
 export default MedicationMatrix;

@@ -239,8 +239,16 @@ const {
     );
 
     /* ===================== RENDER ===================== */
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+    
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
       <>
+      <div dir={dir}>
         <Checkbox
           checked={showCancelled}
           onChange={(_, checked) => setShowCancelled(checked)}
@@ -254,6 +262,7 @@ const {
           columns={tableColumns}
           filters={tableFilters}
         />
+      </div>
       </>
     );
   }

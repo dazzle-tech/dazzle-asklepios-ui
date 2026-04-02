@@ -63,13 +63,21 @@ const AddEditMdtNote = ({
         );
     }
   };
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={mdtNote?.key ? 'MDT Notes' : 'MDT Notes'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}> {conjureFormContent()} </div>}
       actionButtonLabel={mdtNote?.key ? 'Save' : 'Create'}
       actionButtonFunction=""
       steps={[{ title: 'MDT Notes', icon:<FontAwesomeIcon icon={faComment} />}]}

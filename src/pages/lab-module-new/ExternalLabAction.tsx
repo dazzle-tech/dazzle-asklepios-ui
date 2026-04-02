@@ -263,6 +263,7 @@
             isLoading || isAlreadyExternal
           }
           content={
+          <div dir={dir}>
             <Form fluid>
               <div className="external-lab-modal-inputs-handle">
                 <MyInput
@@ -293,6 +294,7 @@
                 />
               </div>
             </Form>
+          </div>
           }
         />
       </div>

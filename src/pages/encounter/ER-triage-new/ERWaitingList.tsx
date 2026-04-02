@@ -716,41 +716,7 @@ const ERWaitingList = () => {
                 fieldLabel="Chief Complain"
               />
 
-              <MyInput
-                width={130}
-                fieldName="hasPrescription"
-                fieldType="checkbox"
-                record={{ hasPrescription: !!hasPrescription }}
-                setRecord={(v: any) => {
-                  setHasPrescription(!!v?.hasPrescription);
-                  setPage(0);
-                }}
-                label="Has Prescription"
-              />
-
-              <MyInput
-                width={110}
-                fieldName="hasOrder"
-                fieldType="checkbox"
-                record={{ hasOrder: !!hasOrder }}
-                setRecord={(v: any) => {
-                  setHasOrder(!!v?.hasOrder);
-                  setPage(0);
-                }}
-                label="Has Orders"
-              />
-
-              <MyInput
-                width={110}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={{ isObserved: !!isObserved }}
-                setRecord={(v: any) => {
-                  setIsObserved(!!v?.isObserved);
-                  setPage(0);
-                }}
-                label="Is Observed"
-              />
+            
 
               <MyInput
                 width={200}
@@ -823,8 +789,14 @@ const ERWaitingList = () => {
     );
   }
 
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <Panel>
+    <Panel dir={dir}>
       <BedAssignmentModal
         refetchEncounter={refetchEncounters}
         open={openBedAssigmentModal}
@@ -863,7 +835,7 @@ const ERWaitingList = () => {
         setOpen={setOpenEMRModal}
         title="Patient EMR"
         size="95vw"
-        content={<PatientEMRModal inModal={true} patient={localPatient} encounter={encounter} />}
+        content={<div dir={dir}><PatientEMRModal inModal={true} patient={localPatient} encounter={encounter} /></div>}
         cancelButtonLabel="Close"
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEMRModal(false)}
