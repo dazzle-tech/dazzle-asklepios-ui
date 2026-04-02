@@ -1,53 +1,64 @@
-import MyInput from '@/components/MyInput';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import MyButton from '@/components/MyButton/MyButton';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faUserDoctor,
+  faBed,
+  faBedPulse,
   faFileWaveform,
   faRectangleXmark,
-  faBed,
-  faBedPulse
+  faUserDoctor
 } from '@fortawesome/free-solid-svg-icons';
-import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
-import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
-import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
-import 'react-tabs/style/react-tabs.css';
-import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
+
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
-import { useDispatch } from 'react-redux';
-import './styles.less';
-import { hideSystemLoader, showSystemLoader, notify } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
-import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
-import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
+import DetailsCard from '@/components/DetailsCard';
+
+import RefillModalComponent from '@/pages/Inpatient/departmentStock/refill-component';
+import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagementModal';
 import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
 import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
-import { useGetEncounterLocationsQuery } from '@/services/encounterService';
-import { useNavigate } from 'react-router-dom';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/physician-order-summary/physician-order-summary-component/PhysicianOrderSummaryComponent';
+import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
+
+import { useAppSelector } from '@/hooks';
+import { useEnumOptions } from '@/services/enumsApi';
 import {
+  useCancelEncounterMutation,
   useFilterEncountersQuery,
   useStartEncounterMutation,
-  useCancelEncounterMutation
+  useCountDepartmentTotalByDateRangeQuery,
+  useCountDepartmentWaitingListByDateRangeQuery,
+  useCountDepartmentTriageByDateRangeQuery,
+  useCountDepartmentDischargedByDateRangeQuery
 } from '@/services/encounters/patientEncounterService';
-
-import { useEnumOptions } from '@/services/enumsApi';
 import {
   useGetBulkPatientBasicInfoMutation,
   useLazyGetPatientByIdQuery
 } from '@/services/patient/patientService';
 import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
-import { useAppSelector } from '@/hooks';
+import { useGetActiveAssignmentsByEncounterIdsQuery } from '@/services/patients/emergency/encounterAssignToBedService';
+import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
+import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
+
+import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
+
+import './styles.less';
+import 'react-tabs/style/react-tabs.css';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -90,7 +101,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'patient.notfound': 'Patient not found.',
   'patient.hasOngoing.notAllowed':
     'Patient already has an ongoing encounter. Starting another one is not allowed.',
-  'cancel.notAllowed.rule': 'Cancel is allowed only when status is NEW and isObserved is false.',
+  'cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
   'followUpEncounter.required.byReason':
     'Follow-up encounter is required when reason is FOLLOW_UP (and must be empty otherwise).',
   'followUpEncounter.notfound': 'Follow-up encounter not found.',
@@ -99,6 +110,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'This patient already has an encounter for this department on this date.',
   'department.date.sequence.duplicate':
     'Department daily sequence number already exists for this date.',
+  'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
   'db.constraint': 'Database constraint violated while saving patient encounter.'
 };
 
@@ -112,10 +124,7 @@ const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
   followUpEncounterId: 'Follow Up Encounter',
   priorityLevel: 'Priority',
   status: 'Status',
-  chiefComplaint: 'Chief Complaint',
-  hasOrder: 'Has Orders',
-  hasPrescription: 'Has Prescription',
-  isObserved: 'Is Observed'
+  chiefComplaint: 'Chief Complaint'
 };
 
 const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, string>) => {
@@ -192,6 +201,12 @@ const ERList = () => {
   const [triggerGetPatientById] = useLazyGetPatientByIdQuery();
   const [triggerGetDepartmentById, { data: departmentData, isFetching: isDepartmentFetching }] =
     useLazyGetDepartmentByIdQuery();
+
+  const [getRoomsByIds, { data: roomsByIds = [], isLoading: isRoomsByIdsLoading }] =
+    useGetRoomsByIdsMutation();
+
+  const [getBedsByIds, { data: bedsByIds = [], isLoading: isBedsByIdsLoading }] =
+    useGetBedsByIdsMutation();
 
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
@@ -332,6 +347,36 @@ const ERList = () => {
     skip: !filterParams
   });
 
+  const dateRangeCountsSkip = !departmentId || !isEmergencyDepartment;
+
+  const dateRangeCountParams = useMemo(
+    () => ({
+      departmentId: String(departmentId ?? ''),
+      fromDate: toISODate(dateFilter.fromDate) ?? todayStr,
+      toDate: toISODate(dateFilter.toDate) ?? todayStr
+    }),
+    [departmentId, dateFilter.fromDate, dateFilter.toDate, todayStr]
+  );
+
+  const { data: totalErPatientsCount } = useCountDepartmentTotalByDateRangeQuery(
+    dateRangeCountParams,
+    { skip: dateRangeCountsSkip }
+  );
+
+  const { data: waitingListCount } = useCountDepartmentWaitingListByDateRangeQuery(
+    dateRangeCountParams,
+    { skip: dateRangeCountsSkip }
+  );
+
+  const { data: triageCount } = useCountDepartmentTriageByDateRangeQuery(dateRangeCountParams, {
+    skip: dateRangeCountsSkip
+  });
+
+  const { data: dischargedCount } = useCountDepartmentDischargedByDateRangeQuery(
+    dateRangeCountParams,
+    { skip: dateRangeCountsSkip }
+  );
+
   const tableData = encountersPaged?.data ?? [];
   const totalCount = encountersPaged?.totalCount ?? 0;
 
@@ -350,6 +395,7 @@ const ERList = () => {
   useEffect(() => {
     if (!isEmergencyDepartment || patientIdsForBulk.length === 0) return;
     patientBulkIdsRef.current = patientIdsForBulk;
+
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
       .catch(() => {});
@@ -358,11 +404,13 @@ const ERList = () => {
   const patientMap = useMemo(() => {
     const map = new Map<string, any>();
     const ids = patientBulkIdsRef.current;
+
     (patientsBasicInfo ?? []).forEach((patient: any, index: number) => {
       const key = patient?.id ?? ids[index];
       if (!key) return;
       map.set(String(key), patient);
     });
+
     return map;
   }, [patientsBasicInfo]);
 
@@ -408,70 +456,164 @@ const ERList = () => {
       new Set(
         (normalizedTableData ?? [])
           .map((row: any) => row?.id)
-          .filter(v => v !== null && v !== undefined)
-          .map(v => String(v))
+          .filter((value: any) => value !== null && value !== undefined)
       )
     );
   }, [normalizedTableData]);
 
   const {
-    data: encounterLocations = [],
-    isLoading: isLocationsLoading,
-    isFetching: isLocationsFetching,
-    refetch: refetchEncounterLocations
-  } = useGetEncounterLocationsQuery(encounterIdsForLocations, {
-    skip: !isEmergencyDepartment || encounterIdsForLocations.length === 0
-  });
+    data: activeAssignments = [],
+    isLoading: isAssignmentsLoading,
+    isFetching: isAssignmentsFetching,
+    refetch: refetchActiveAssignments
+  } = useGetActiveAssignmentsByEncounterIdsQuery(
+    { encounterIds: encounterIdsForLocations },
+    {
+      skip: !isEmergencyDepartment || encounterIdsForLocations.length === 0
+    }
+  );
 
-  const locationMap = useMemo(() => {
+  const roomIdsFromAssignments = useMemo(() => {
+    return Array.from(
+      new Set(
+        (activeAssignments ?? [])
+          .map((assignment: any) => assignment?.room?.id ?? assignment?.roomId ?? null)
+          .filter((value: any) => value !== null && value !== undefined)
+      )
+    );
+  }, [activeAssignments]);
+
+  const bedIdsFromAssignments = useMemo(() => {
+    return Array.from(
+      new Set(
+        (activeAssignments ?? [])
+          .map((assignment: any) => assignment?.bed?.id ?? assignment?.bedId ?? null)
+          .filter((value: any) => value !== null && value !== undefined)
+      )
+    );
+  }, [activeAssignments]);
+
+  useEffect(() => {
+    if (!isEmergencyDepartment || roomIdsFromAssignments.length === 0) return;
+    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => {});
+  }, [isEmergencyDepartment, roomIdsFromAssignments, getRoomsByIds]);
+
+  useEffect(() => {
+    if (!isEmergencyDepartment || bedIdsFromAssignments.length === 0) return;
+    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => {});
+  }, [isEmergencyDepartment, bedIdsFromAssignments, getBedsByIds]);
+
+  const roomsMap = useMemo(() => {
     const map = new Map<string, any>();
-    (encounterLocations ?? []).forEach((item: any) => {
-      const encounterId = item?.encounterId;
-      if (!encounterId) return;
-      map.set(String(encounterId), item);
+    (roomsByIds ?? []).forEach((room: any) => {
+      if (!room?.id) return;
+      map.set(String(room.id), room);
     });
     return map;
-  }, [encounterLocations]);
+  }, [roomsByIds]);
+
+  const bedsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (bedsByIds ?? []).forEach((bed: any) => {
+      if (!bed?.id) return;
+      map.set(String(bed.id), bed);
+    });
+    return map;
+  }, [bedsByIds]);
+
+  const activeAssignmentsMap = useMemo(() => {
+    const map = new Map<string, any[]>();
+
+    (activeAssignments ?? []).forEach((assignment: any) => {
+      const encounterId = assignment?.encounter?.id ?? assignment?.encounterId;
+      if (!encounterId) return;
+
+      const key = String(encounterId);
+      const currentList = map.get(key) ?? [];
+      currentList.push(assignment);
+      map.set(key, currentList);
+    });
+
+    return map;
+  }, [activeAssignments]);
 
   const enrichedTableData = useMemo(() => {
     return (normalizedTableData ?? []).map((row: any) => {
-      const location = locationMap.get(String(row?.id));
+      const activeAssignmentsForEncounter = activeAssignmentsMap.get(String(row?.id)) ?? [];
+
+      const firstAssignment = activeAssignmentsForEncounter[0] ?? null;
+      const roomId = firstAssignment?.room?.id ?? firstAssignment?.roomId ?? null;
+      const bedId = firstAssignment?.bed?.id ?? firstAssignment?.bedId ?? null;
+
+      const roomFromApi = roomId != null ? roomsMap.get(String(roomId)) : null;
+      const bedFromApi = bedId != null ? bedsMap.get(String(bedId)) : null;
 
       return {
         ...row,
-        encounterLocation: location ?? null,
-        apRoom:
-          location?.roomKey || location?.roomName
-            ? {
-                ...(row?.apRoom ?? {}),
-                key: location?.roomKey ?? row?.apRoom?.key ?? row?.room?.key ?? null,
-                name: location?.roomName ?? row?.apRoom?.name ?? row?.room?.name ?? null
-              }
-            : row?.apRoom,
-        apBed:
-          location?.bedKey || location?.bedName
-            ? {
-                ...(row?.apBed ?? {}),
-                key: location?.bedKey ?? row?.apBed?.key ?? row?.bed?.key ?? null,
-                name: location?.bedName ?? row?.apBed?.name ?? row?.bed?.name ?? null
-              }
-            : row?.apBed
+        activeAssignmentsForEncounter,
+        resolvedRoom: roomFromApi,
+        resolvedBed: bedFromApi,
+        apRoom: roomFromApi?.name
+          ? {
+              ...(row?.apRoom ?? {}),
+              key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
+              name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
+            }
+          : row?.apRoom,
+        apBed: bedFromApi?.name
+          ? {
+              ...(row?.apBed ?? {}),
+              key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
+              name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
+            }
+          : row?.apBed
       };
     });
-  }, [normalizedTableData, locationMap]);
+  }, [normalizedTableData, activeAssignmentsMap, roomsMap, bedsMap]);
 
   const handleRefreshAfterBedChange = useCallback(async () => {
     await refetchEncounters();
-    if (encounterIdsForLocations.length > 0) {
-      await refetchEncounterLocations();
+
+    const refreshedAssignmentsResult = await refetchActiveAssignments();
+    const refreshedAssignments = refreshedAssignmentsResult?.data ?? activeAssignments ?? [];
+
+    const refreshedRoomIds = Array.from(
+      new Set(
+        (refreshedAssignments as any[])
+          .map((assignment: any) => assignment?.room?.id ?? assignment?.roomId ?? null)
+          .filter((value: any) => value !== null && value !== undefined)
+      )
+    );
+
+    const refreshedBedIds = Array.from(
+      new Set(
+        (refreshedAssignments as any[])
+          .map((assignment: any) => assignment?.bed?.id ?? assignment?.bedId ?? null)
+          .filter((value: any) => value !== null && value !== undefined)
+      )
+    );
+
+    if (refreshedRoomIds.length > 0) {
+      await getRoomsByIds({ ids: refreshedRoomIds }).unwrap();
     }
-  }, [refetchEncounters, refetchEncounterLocations, encounterIdsForLocations.length]);
+
+    if (refreshedBedIds.length > 0) {
+      await getBedsByIds({ ids: refreshedBedIds }).unwrap();
+    }
+  }, [
+    refetchEncounters,
+    refetchActiveAssignments,
+    getRoomsByIds,
+    getBedsByIds,
+    activeAssignments
+  ]);
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
   const startEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
+
     try {
       await startEncounter({ id: encounterId }).unwrap();
       return true;
@@ -484,12 +626,21 @@ const ERList = () => {
   const cancelEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
+
     try {
       await cancelEncounter({ id: encounterId }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       return true;
-    } catch (error: any) {
-      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
       return false;
     }
   };
@@ -541,8 +692,10 @@ const ERList = () => {
 
   const handleCancelEncounter = async () => {
     if (!encounter) return;
+
     const isCancelled = await cancelEncounterSafe(encounter);
     if (!isCancelled) return;
+
     refetchEncounters();
     setOpen(false);
   };
@@ -556,19 +709,11 @@ const ERList = () => {
     setPage(0);
   }, []);
 
-  const prevChangeBedOpenRef = useRef(false);
-
-  useEffect(() => {
-    if (prevChangeBedOpenRef.current && !openChangeBedModal) {
-      refetchEncounters();
-    }
-    prevChangeBedOpenRef.current = openChangeBedModal;
-  }, [openChangeBedModal, refetchEncounters]);
-
   const handleClearFilters = () => {
     const now = new Date();
     const lastWeekDate = new Date(now);
     lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+
     setRecord({});
     setDateFilter({ fromDate: lastWeekDate, toDate: now });
     setStatusIn(DEFAULT_STATUS);
@@ -577,9 +722,11 @@ const ERList = () => {
     setHasPrescription(undefined);
     setHasOrder(undefined);
     setIsObserved(undefined);
+
     const clearedSearch = { searchByField: 'fullName', patientName: '' };
     setPatientSearchDraft(clearedSearch);
     setPatientSearchApplied(clearedSearch);
+
     setPage(0);
     setSearchTick(prev => prev + 1);
   };
@@ -602,6 +749,7 @@ const ERList = () => {
             <div>Gender: {row?.patientObject?.sexAtBirth ?? '-'}</div>
           </Tooltip>
         );
+
         return (
           <Whisper trigger="hover" placement="top" speaker={speaker}>
             <div className="encounter-list__patient-name-cell">
@@ -634,13 +782,55 @@ const ERList = () => {
     {
       key: 'location',
       title: 'LOCATION',
-      render: (row: any) => (
-        <span className="location-table-style">
-          {row?.encounterLocation?.roomName ?? row?.apRoom?.name ?? row?.room?.name ?? '-'}
-          <br />
-          {row?.encounterLocation?.bedName ?? row?.apBed?.name ?? row?.bed?.name ?? '-'}
-        </span>
-      )
+      render: (row: any) => {
+        const assignments = row?.activeAssignmentsForEncounter ?? [];
+
+        const speaker = (
+          <Tooltip>
+            {assignments.length > 0 ? (
+              assignments.map((assignment: any, index: number) => {
+                const roomId = assignment?.room?.id ?? assignment?.roomId ?? null;
+                const bedId = assignment?.bed?.id ?? assignment?.bedId ?? null;
+
+                const room = roomId != null ? roomsMap.get(String(roomId)) : null;
+                const bed = bedId != null ? bedsMap.get(String(bedId)) : null;
+
+                return (
+                  <div key={assignment?.id ?? index}>
+                    Room {assignments.length > 1 ? index + 1 : ''}:{' '}
+                    {room?.name ?? assignment?.room?.name ?? '-'}
+                    <br />
+                    Bed {assignments.length > 1 ? index + 1 : ''}:{' '}
+                    {bed?.name ?? assignment?.bed?.name ?? '-'}
+                    <br />
+                    Admission Reason {assignments.length > 1 ? index + 1 : ''}:{' '}
+                    {assignment?.admissionReason ?? '-'}
+                  </div>
+                );
+              })
+            ) : (
+              <div>Admission Reason: -</div>
+            )}
+          </Tooltip>
+        );
+
+        const firstAssignment = assignments[0] ?? null;
+        const firstRoomId = firstAssignment?.room?.id ?? firstAssignment?.roomId ?? null;
+        const firstBedId = firstAssignment?.bed?.id ?? firstAssignment?.bedId ?? null;
+
+        const firstRoom = firstRoomId != null ? roomsMap.get(String(firstRoomId)) : null;
+        const firstBed = firstBedId != null ? bedsMap.get(String(firstBedId)) : null;
+
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <span className="location-table-style">
+              {firstRoom?.name ?? row?.apRoom?.name ?? row?.room?.name ?? '-'}
+              <br />
+              {firstBed?.name ?? row?.apBed?.name ?? row?.bed?.name ?? '-'}
+            </span>
+          </Whisper>
+        );
+      }
     },
     {
       key: 'hasPrescription',
@@ -677,6 +867,7 @@ const ERList = () => {
       title: 'STATUS',
       render: (row: any) => {
         const statusUpper = String(row?.status ?? '').toUpperCase();
+
         const statusColorMap: Record<string, string> = {
           NEW: '#0d6efd',
           ONGOING: '#198754',
@@ -686,6 +877,7 @@ const ERList = () => {
           DISCHARGED: '#adb5bd',
           PENDING_PAYMENT: '#fd7e14'
         };
+
         return (
           <MyBadgeStatus
             color={statusColorMap[statusUpper] ?? '#969fb0'}
@@ -693,16 +885,6 @@ const ERList = () => {
           />
         );
       }
-    },
-    {
-      key: 'isObserved',
-      title: 'IS OBSERVED',
-      render: (row: any) =>
-        row?.isObserved ? (
-          <MyBadgeStatus contant="YES" color="#45b887" />
-        ) : (
-          <MyBadgeStatus contant="NO" color="#969fb0" />
-        )
     },
     {
       key: 'actions',
@@ -804,6 +986,7 @@ const ERList = () => {
             setPage(0);
           }}
         />
+
         <MyInput
           column
           width={180}
@@ -876,42 +1059,6 @@ const ERList = () => {
               />
 
               <MyInput
-                width={130}
-                fieldName="hasPrescription"
-                fieldType="checkbox"
-                record={{ hasPrescription: !!hasPrescription }}
-                setRecord={(v: any) => {
-                  setHasPrescription(v?.hasPrescription ? true : undefined);
-                  setPage(0);
-                }}
-                label="Has Prescription"
-              />
-
-              <MyInput
-                width={110}
-                fieldName="hasOrder"
-                fieldType="checkbox"
-                record={{ hasOrder: !!hasOrder }}
-                setRecord={(v: any) => {
-                  setHasOrder(v?.hasOrder ? true : undefined);
-                  setPage(0);
-                }}
-                label="Has Orders"
-              />
-
-              <MyInput
-                width={110}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={{ isObserved: !!isObserved }}
-                setRecord={(v: any) => {
-                  setIsObserved(v?.isObserved ? true : undefined);
-                  setPage(0);
-                }}
-                label="Is Observed"
-              />
-
-              <MyInput
                 width={200}
                 fieldName="priorities"
                 fieldType="checkPicker"
@@ -939,17 +1086,10 @@ const ERList = () => {
     isEncountersLoading ||
     isEncountersFetching ||
     patientsBulkLoading ||
-    isLocationsLoading ||
-    isLocationsFetching;
-
-  useEffect(() => {
-    if (tableLoading) dispatch(showSystemLoader());
-    else dispatch(hideSystemLoader());
-
-    return () => {
-      dispatch(hideSystemLoader());
-    };
-  }, [dispatch, tableLoading]);
+    isAssignmentsLoading ||
+    isAssignmentsFetching ||
+    isRoomsByIdsLoading ||
+    isBedsByIdsLoading;
 
   if (!departmentId) {
     return (
@@ -965,7 +1105,10 @@ const ERList = () => {
     return (
       <Panel>
         <div className="encounter-list__no-department">
-          <p>User Current Department should be Emergency to View This Screen, so no ER encounters are available.</p>
+          <p>
+            User Current Department should be Emergency to View This Screen, so no ER encounters are
+            available.
+          </p>
         </div>
       </Panel>
     );
@@ -981,6 +1124,41 @@ const ERList = () => {
         >
           Bed Management
         </MyButton>
+      </div>
+
+      <div className="count-div-on-top-of-page-visit-list">
+        <DetailsCard
+          title="Total ER Patient"
+          number={totalErPatientsCount ?? 0}
+          color="--primary-blue"
+          backgroundClassName="result-ready-section"
+          position="center"
+          width="15vw"
+        />
+        <DetailsCard
+          title="Patients in waiting list"
+          number={waitingListCount ?? 0}
+          color="--green-600"
+          backgroundClassName="sample-collected-section"
+          position="center"
+          width="15vw"
+        />
+        <DetailsCard
+          title="In Triage List"
+          number={triageCount ?? 0}
+          color="--primary-purple"
+          backgroundClassName="new-section"
+          position="center"
+          width="15vw"
+        />
+        <DetailsCard
+          title="Discharged"
+          number={dischargedCount ?? 0}
+          color="--primary-yellow"
+          backgroundClassName="total-test-section"
+          position="center"
+          width="15vw"
+        />
       </div>
 
       <MyTable

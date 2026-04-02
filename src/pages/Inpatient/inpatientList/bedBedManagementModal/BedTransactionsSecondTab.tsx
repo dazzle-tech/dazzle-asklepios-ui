@@ -2,37 +2,40 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
-import { Form, Panel } from 'rsuite';
+import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
-import { formatDateWithoutSeconds } from '@/utils';
-import { addFilterToListRequest } from '@/utils';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetBedTransactionsListQuery } from '@/services/encounterService';
-import { useDispatch } from 'react-redux';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
+import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import MyTable from '@/components/MyTable';
 import { useGetBulkPatientBasicInfoMutation } from '@/services/patient/patientService';
+import { useGetBedTransactionsByDepartmentAndDateRangeQuery } from '@/services/patients/emergency/encounterAssignToBedService';
+import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
+import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
 
 const BedTransactionsSecondTab = ({ departmentKey }) => {
-  const dispatch = useDispatch();
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 
   const patientBulkIdsRef = useRef<string[]>([]);
+
   const [
     getBulkPatientBasicInfo,
     { data: patientsBasicInfo, isLoading: patientsBulkLoading }
   ] = useGetBulkPatientBasicInfoMutation();
 
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'department_key',
-        operator: 'match',
-        value: departmentKey
-      }
-    ]
+  const [getRoomsByIds, { data: roomsByIds = [], isLoading: isRoomsByIdsLoading }] =
+    useGetRoomsByIdsMutation();
+
+  const [getBedsByIds, { data: bedsByIds = [], isLoading: isBedsByIdsLoading }] =
+    useGetBedsByIdsMutation();
+
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 15
+  });
+
+  const [sortState, setSortState] = useState({
+    sortBy: 'transactionDate',
+    sortType: 'desc'
   });
 
   const [dateFilter, setDateFilter] = useState({
@@ -40,19 +43,39 @@ const BedTransactionsSecondTab = ({ departmentKey }) => {
     toDate: new Date()
   });
 
-  const { data: bedTransactionsListResponse, isFetching, isLoading } =
-    useGetBedTransactionsListQuery(listRequest);
+  const [searchParams, setSearchParams] = useState({
+    from: '',
+    to: ''
+  });
 
-  const tableData = bedTransactionsListResponse?.object ?? [];
+  const {
+    data: bedTransactionsResponse,
+    isFetching,
+    isLoading
+  } = useGetBedTransactionsByDepartmentAndDateRangeQuery(
+    {
+      departmentId: departmentKey,
+      from: searchParams.from,
+      to: searchParams.to,
+      page: pagination.page,
+      size: pagination.size,
+      sort: `${sortState.sortBy},${sortState.sortType}`
+    },
+    {
+      skip: !departmentKey || !searchParams.from || !searchParams.to
+    }
+  );
 
-const patientIdsForBulk = useMemo(() => {
-  const ids = tableData
-    .map((row: any) => row?.patientKey)
-    .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
-    .map(v => String(v));
+  const tableData = bedTransactionsResponse?.data ?? [];
 
-  return Array.from(new Set(ids));
-}, [tableData]);
+  const patientIdsForBulk = useMemo(() => {
+    const ids = tableData
+      .map((row: any) => row?.patient?.id)
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+      .map(v => String(v));
+
+    return Array.from(new Set(ids));
+  }, [tableData]);
 
   useEffect(() => {
     if (patientIdsForBulk.length === 0) return;
@@ -61,8 +84,34 @@ const patientIdsForBulk = useMemo(() => {
 
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
+
+  const roomIdsForBulk = useMemo(() => {
+    const ids = tableData
+      .flatMap((row: any) => [row?.fromRoomId, row?.toRoomId])
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+
+    return Array.from(new Set(ids));
+  }, [tableData]);
+
+  const bedIdsForBulk = useMemo(() => {
+    const ids = tableData
+      .flatMap((row: any) => [row?.fromBedId, row?.toBedId])
+      .filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+
+    return Array.from(new Set(ids));
+  }, [tableData]);
+
+  useEffect(() => {
+    if (roomIdsForBulk.length === 0) return;
+    getRoomsByIds({ ids: roomIdsForBulk }).catch(() => { });
+  }, [roomIdsForBulk, getRoomsByIds]);
+
+  useEffect(() => {
+    if (bedIdsForBulk.length === 0) return;
+    getBedsByIds({ ids: bedIdsForBulk }).catch(() => { });
+  }, [bedIdsForBulk, getBedsByIds]);
 
   const patientMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -77,38 +126,65 @@ const patientIdsForBulk = useMemo(() => {
     return map;
   }, [patientsBasicInfo]);
 
-const enrichedTableData = useMemo(() => {
-  return tableData.map((row: any) => {
-    const patientId = row?.patientKey ?? null;
-    const patient = patientId ? patientMap.get(String(patientId)) : null;
+  const roomsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (roomsByIds ?? []).forEach((room: any) => {
+      if (!room?.id) return;
+      map.set(String(room.id), room);
+    });
+    return map;
+  }, [roomsByIds]);
 
-    const fullName =
-      [
-        patient?.firstName,
-        patient?.secondName,
-        patient?.thirdName,
-        patient?.lastName
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .trim() || '-';
+  const bedsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (bedsByIds ?? []).forEach((bed: any) => {
+      if (!bed?.id) return;
+      map.set(String(bed.id), bed);
+    });
+    return map;
+  }, [bedsByIds]);
 
-    return {
-      ...row,
-      patientObject: {
-        id: patientId,
-        fullName,
-        medicalRecordNumber: patient?.medicalRecordNumber ?? '-'
-      }
-    };
-  });
-}, [tableData, patientMap]);
-useEffect(() => {
-  console.log('bedTransactionsListResponse =>', bedTransactionsListResponse);
-  console.log('tableData first row =>', tableData?.[0]);
-  console.log('patientIdsForBulk =>', patientIdsForBulk);
-  console.log('patientsBasicInfo =>', patientsBasicInfo);
-}, [bedTransactionsListResponse, tableData, patientIdsForBulk, patientsBasicInfo]);
+  const enrichedTableData = useMemo(() => {
+    return tableData.map((row: any) => {
+      const patientId = row?.patient?.id ?? null;
+      const patient = patientId ? patientMap.get(String(patientId)) : null;
+
+      const fullName =
+        [
+          patient?.firstName,
+          patient?.secondName,
+          patient?.thirdName,
+          patient?.lastName
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
+        row?.patient?.fullName ||
+        '-';
+
+      const fromRoom = row?.fromRoomId ? roomsMap.get(String(row.fromRoomId)) : null;
+      const toRoom = row?.toRoomId ? roomsMap.get(String(row.toRoomId)) : null;
+      const fromBed = row?.fromBedId ? bedsMap.get(String(row.fromBedId)) : null;
+      const toBed = row?.toBedId ? bedsMap.get(String(row.toBedId)) : null;
+
+      return {
+        ...row,
+        patientObject: {
+          id: patientId,
+          fullName,
+          medicalRecordNumber:
+            patient?.medicalRecordNumber ??
+            row?.patient?.medicalRecordNumber ??
+            '-'
+        },
+        resolvedFromRoom: fromRoom,
+        resolvedToRoom: toRoom,
+        resolvedFromBed: fromBed,
+        resolvedToBed: toBed
+      };
+    });
+  }, [tableData, patientMap, roomsMap, bedsMap]);
+
   const handleManualSearch = () => {
     setManualSearchTriggered(true);
 
@@ -118,36 +194,17 @@ useEffect(() => {
     if (fromDate) fromDate.setHours(0, 0, 0, 0);
     if (toDate) toDate.setHours(23, 59, 59, 999);
 
-    if (fromDate && toDate) {
-      setListRequest(
-        addFilterToListRequest(
-          'created_at',
-          'between',
-          `${fromDate.getTime()}_${toDate.getTime()}`,
-          listRequest
-        )
-      );
-    } else if (fromDate) {
-      setListRequest(
-        addFilterToListRequest('created_at', 'gte', fromDate.getTime().toString(), listRequest)
-      );
-    } else if (toDate) {
-      setListRequest(
-        addFilterToListRequest('created_at', 'lte', toDate.getTime().toString(), listRequest)
-      );
-    } else {
-      setListRequest({
-        ...listRequest,
-        filters: [
-          {
-            fieldName: 'department_key',
-            operator: 'match',
-            value: departmentKey
-          }
-        ]
-      });
-    }
+    setPagination(prev => ({ ...prev, page: 0 }));
+
+    setSearchParams({
+      from: fromDate ? fromDate.toISOString() : '',
+      to: toDate ? toDate.toISOString() : ''
+    });
   };
+
+  useEffect(() => {
+    handleManualSearch();
+  }, []);
 
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
@@ -155,84 +212,156 @@ useEffect(() => {
     }
   }, [isFetching, manualSearchTriggered]);
 
-  useEffect(() => {
-    handleManualSearch();
-  }, []);
+  const tableLoading =
+    isLoading ||
+    (manualSearchTriggered && isFetching) ||
+    patientsBulkLoading ||
+    isRoomsByIdsLoading ||
+    isBedsByIdsLoading;
 
-  useEffect(() => {
-    if (isLoading || (manualSearchTriggered && isFetching) || patientsBulkLoading) {
-      dispatch(showSystemLoader());
-    } else {
-      dispatch(hideSystemLoader());
-    }
 
-    return () => {
-      dispatch(hideSystemLoader());
-    };
-  }, [isLoading, isFetching, manualSearchTriggered, patientsBulkLoading, dispatch]);
 
   const tableColumns = [
     {
-      key: 'queueNumber',
-      title: <Translate>#</Translate>,
-      dataKey: 'queueNumber',
-      render: (rowData: any) => rowData?.patientObject?.medicalRecordNumber
+      key: 'medicalRecordNumber',
+      title: <Translate>MRN</Translate>,
+      render: (rowData: any) => rowData?.patientObject?.medicalRecordNumber ?? '-'
     },
     {
       key: 'patientFullName',
-      title: <Translate>PATIENT NAME</Translate>,
-      render: (rowData: any) => rowData?.patientObject?.fullName
-    },
-    {
-      key: 'fromBed',
-      title: <Translate>FROM BED</Translate>,
-      render: (rowData: any) => rowData?.fromBed?.name
-    },
-    {
-      key: 'fromRoom',
-      title: <Translate>ROOM</Translate>,
-      render: (rowData: any) => rowData?.fromRoom?.name
-    },
-    {
-      key: 'toBed',
-      title: <Translate>TO BED</Translate>,
-      render: (rowData: any) => rowData?.toBed?.name
-    },
-    {
-      key: 'toRoom',
-      title: <Translate>ROOM</Translate>,
-      render: (rowData: any) => rowData?.toRoom?.name
-    },
-    {
-      key: 'movedByAt',
-      title: <Translate>Moved By\At</Translate>,
-      render: (rowData: any) => {
+      title: 'PATIENT NAME',
+      fullText: true,
+      render: (row: any) => {
+        const speaker = (
+          <Tooltip>
+            <div>MRN: {row?.patientObject?.medicalRecordNumber ?? '-'}</div>
+            <div>Age: {row?.patientAge ?? '-'}</div>
+            <div>Gender: {row?.patientObject?.sexAtBirth ?? '-'}</div>
+          </Tooltip>
+        );
+
         return (
-          <>
-            <span>{rowData?.createdBy}</span>
-            <br />
-            <span className="date-table-style">{formatDateWithoutSeconds(rowData?.createdAt)}</span>
-          </>
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <div className="encounter-list__patient-name-cell">
+              {row?.patientObject?.isPrivatePatient ? (
+                <Badge color="blue" content="Private">
+                  <p className="encounter-list__patient-name encounter-list__patient-name--clickable">
+                    {row?.patientObject?.fullName}
+                  </p>
+                </Badge>
+              ) : (
+                <p className="encounter-list__patient-name encounter-list__patient-name--clickable">
+                  {row?.patientObject?.fullName}
+                </p>
+              )}
+            </div>
+          </Whisper>
         );
       }
-    }
-  ];
+    },
+    {
+      key: 'transactionType',
+      title: <Translate>TRANSACTION TYPE</Translate>,
+      render: (rowData: any) => rowData?.transactionType ? formatEnumString(rowData?.transactionType) : '-'
+    },
+    {
+      key: 'fromLocation',
+      title: <Translate>FROM</Translate>,
+      render: (rowData: any) => {
+        const speaker = (
+          <Tooltip>
+            <div>Room: {rowData?.resolvedFromRoom?.name ?? '-'}</div>
+            <div>Bed: {rowData?.resolvedFromBed?.name ?? '-'}</div>
+            <div>Room ID: {rowData?.fromRoomId ?? '-'}</div>
+            <div>Bed ID: {rowData?.fromBedId ?? '-'}</div>
+          </Tooltip>
+        );
 
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = bedTransactionsListResponse?.extraNumeric ?? 0;
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <span className="location-table-style">
+              {rowData?.resolvedFromRoom?.name ?? '-'}
+              <br />
+              {rowData?.resolvedFromBed?.name ?? '-'}
+            </span>
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'toLocation',
+      title: <Translate>TO</Translate>,
+      render: (rowData: any) => {
+        const speaker = (
+          <Tooltip>
+            <div>Room: {rowData?.resolvedToRoom?.name ?? '-'}</div>
+            <div>Bed: {rowData?.resolvedToBed?.name ?? '-'}</div>
+            <div>Room ID: {rowData?.toRoomId ?? '-'}</div>
+            <div>Bed ID: {rowData?.toBedId ?? '-'}</div>
+          </Tooltip>
+        );
+
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <span className="location-table-style">
+              {rowData?.resolvedToRoom?.name ?? '-'}
+              <br />
+              {rowData?.resolvedToBed?.name ?? '-'}
+            </span>
+          </Whisper>
+        );
+      }
+    },
+    {
+      key: 'transactionDate',
+      title: <Translate>TRANSACTION DATE</Translate>,
+      render: (rowData: any) =>
+        rowData?.transactionDate
+          ? formatDateWithoutSeconds(rowData?.transactionDate)
+          : '-'
+    },
+    {
+      key: 'createdAt',
+      title: 'CREATED BY/AT',
+      expandable: true,
+      render: (row: any) =>
+        row?.createdDate ? (
+          <>
+            {row.createdBy}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
+          </>
+        ) : (
+          ' '
+        )
+    },
+    {
+      key: 'lastModified',
+      title: 'LAST MODIFIED AT / BY',
+      expandable: true,
+      render: (row: any) =>
+        row.lastModifiedDate ? (
+          <>
+            {row.lastModifiedBy}
+            <br />
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(row.lastModifiedDate)}
+            </span>
+          </>
+        ) : null
+    },
+  ];
 
   const handlePageChange = (_: unknown, newPage: number) => {
     setManualSearchTriggered(true);
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    setPagination(prev => ({ ...prev, page: newPage }));
   };
 
   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setManualSearchTriggered(true);
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
+    setPagination({
+      page: 0,
+      size: parseInt(event.target.value, 10)
     });
   };
 
@@ -273,15 +402,19 @@ useEffect(() => {
         height={600}
         data={enrichedTableData}
         columns={tableColumns}
-        loading={isLoading || (manualSearchTriggered && isFetching) || patientsBulkLoading}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
+        loading={tableLoading}
+        sortColumn={sortState.sortBy}
+        sortType={sortState.sortType as any}
         onSortChange={(sortBy, sortType) => {
-          setListRequest({ ...listRequest, sortBy, sortType });
+          setSortState({
+            sortBy,
+            sortType
+          });
+          setPagination(prev => ({ ...prev, page: 0 }));
         }}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
+        page={pagination.page}
+        rowsPerPage={pagination.size}
+        totalCount={bedTransactionsResponse?.totalCount ?? 0}
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />

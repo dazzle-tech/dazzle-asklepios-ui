@@ -21,7 +21,6 @@ import {
 } from '@/services/medicalsheetsEncounter/observations/additionalMeasurementsService';
 
 import { useLazyGetAgeGroupByBirthDateQuery } from '@/services/setup/ageGroupService';
-import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 
 type AdditionalMeasurementsProps = {
   patient: Patient; 
@@ -48,7 +47,6 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
   const lastProcessedDOB = useRef<string | null>(null);
 
   const [fetchAgeGroupByBirthDate] = useLazyGetAgeGroupByBirthDateQuery();
-    const [updateEncounter] = useUpdateEncounterMutation();
 
   useEffect(() => {
     const dob =
@@ -321,35 +319,6 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Additional measurements saved successfully', sev: 'success' }));
-        if (encounter && !encounter.isObserved) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: encounter?.hasPrescription ?? false,
-            hasOrder: encounter?.hasOrder ?? false,
-            isObserved: true
-          }
-        }).unwrap();
-
-        console.log('Encounter updated to observed:', updated);
-      }
     } catch (e: any) {
       showApiError(e);
     }

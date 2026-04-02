@@ -202,7 +202,10 @@ import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
 import {patientAdministrativeWarningsService} from './services/patient/patientAdministrativeWarningsService';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
-
+import { roomService } from './services/setup/room/roomService';
+import { bedService } from './services/setup/room/bedService';
+import { bedRoomService } from './services/setup/room/bedRoomService';
+import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -492,7 +495,13 @@ export const store = configureStore({
     [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
     [NextOfKinService.reducerPath]: NextOfKinService.reducer,
     [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
-    [patientAdministrativeWarningsService.reducerPath]: patientAdministrativeWarningsService.reducer
+    [patientAdministrativeWarningsService.reducerPath]: patientAdministrativeWarningsService.reducer,
+
+    // rooms
+    [roomService.reducerPath]: roomService.reducer,
+    [bedService.reducerPath]: bedService.reducer,
+    [bedRoomService.reducerPath]: bedRoomService.reducer,
+    [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -725,7 +734,11 @@ export const store = configureStore({
     NextOfKinService.middleware,
     RelationsMatrixService.middleware,
     patientAdministrativeWarningsService.middleware,
-    organizationHolidaysService.middleware
+    organizationHolidaysService.middleware,
+    roomService.middleware,
+    bedService.middleware,
+    bedRoomService.middleware,
+    encounterAssignToBedService.middleware,
   ]) as any)
 });
 

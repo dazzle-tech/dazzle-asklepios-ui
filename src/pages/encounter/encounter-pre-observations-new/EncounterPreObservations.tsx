@@ -85,19 +85,19 @@ const NurseStation = () => {
     }
     setEdit(propsData?.edit || localEncounter?.status === 'CLOSED');
   }, [propsData, localEncounter]);
-  
+
   // Complete encounter
-  const [completeEncounter,completeEncounterMutation] = useCompleteEncounterMutation();
-   useEffect(() => {
-      if (
-        localEncounter?.encounterType == 'INPATIENT' &&
-        completeEncounterMutation.status === 'fulfilled'
-      ) {
-        navigate('/inpatient-encounters-list');
-      } else if (completeEncounterMutation.status === 'fulfilled') {
-        navigate('/encounter-list');
-      }
-    }, [completeEncounterMutation]);
+  const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+  useEffect(() => {
+    if (
+      localEncounter?.encounterType == 'INPATIENT' &&
+      completeEncounterMutation.status === 'fulfilled'
+    ) {
+      navigate('/inpatient-encounters-list');
+    } else if (completeEncounterMutation.status === 'fulfilled') {
+      navigate('/encounter-list');
+    }
+  }, [completeEncounterMutation]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -112,13 +112,16 @@ const NurseStation = () => {
           sev: 'success'
         })
       );
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'An error occurred while completing the encounter',
-          sev: 'error'
-        })
-      );
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     } finally {
       dispatch(hideSystemLoader());
     }
@@ -202,14 +205,14 @@ const NurseStation = () => {
               </MyButton>
 
               {/* {propsData?.encounter?.editable && !propsData?.encounter?.discharge && ( */}
-                <MyButton
-                  disabled={edit}
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleCompleteEncounter}
-                  appearance="ghost"
-                >
-                  <Translate>Complete Visit</Translate>
-                </MyButton>
+              <MyButton
+                disabled={edit}
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                onClick={handleCompleteEncounter}
+                appearance="ghost"
+              >
+                <Translate>Complete Visit</Translate>
+              </MyButton>
               {/* )} */}
             </div>
           </div>
@@ -246,7 +249,7 @@ const NurseStation = () => {
               </Form>
               <List hover className="drawer-list-style">
                 <List.Item
-                 className="drawer-item return-button"
+                  className="drawer-item return-button"
                   onClick={() => {
                     navigate('/nurse-station', { state: location.state });
                     setIsDrawerOpen(false);

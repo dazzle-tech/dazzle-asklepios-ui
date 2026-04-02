@@ -148,6 +148,8 @@ const toHumanPatientDocumentError = (
     'type.required': 'Document type is required.',
     'primary.exists': 'This patient already has a primary document.',
     'unique.document': 'A document with the same number, type, and country already exists.',
+    'patient.emergency.notAllowed.withOngoing':
+      'Patient currently treated by another doctor',
     'db.constraint':
       'A document with this number already exists for this patient. Please use a different document number.',
     notfound: 'Patient document not found.'
@@ -784,13 +786,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -821,13 +823,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -1070,7 +1072,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               setRecord={setLocalPatient}
               width={200}
             />
-             {pageCode === 'ER_Triage' && (
+            {pageCode === 'ER_Triage' && (
               <>
                 <MyInput
                   column
@@ -1131,7 +1133,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               setRecord={setLocalPatient}
             />
 
-           
+
           </Form>
         );
 
@@ -1197,7 +1199,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     ...newRecord,
                     number:
                       secondaryDocument.type === 'NO_DOC' ||
-                      secondaryDocument.type === 'NO_DOCUMENT'
+                        secondaryDocument.type === 'NO_DOCUMENT'
                         ? 'NO_DOCUMENT'
                         : newRecord.number
                   });

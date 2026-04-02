@@ -44,13 +44,14 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'This patient already has an encounter in this department on the selected date.',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
+  'patient.emergency.notAllowed.withOngoing':
+    'Patient currently treated by another doctor',
   duplicate: 'Duplicate record.',
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
   'practitioner.invalid': 'Invalid practitioner id.',
   'db.constraint': 'Database constraint violation while saving encounter.'
 };
-
 const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
   patientId: 'Patient',
   facilityId: 'Facility',

@@ -7,8 +7,7 @@ import Translate from '@/components/Translate';
 import {
   useGetEncountersByPatientQuery,
   useCancelEncounterMutation,
-  useCompleteEncounterMutation,
-  useDischargeEncounterMutation
+  useCompleteEncounterMutation
 } from '@/services/encounters/patientEncounterService';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -29,10 +28,9 @@ import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppoin
 import { formatEnumString } from '@/utils';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
 import type { Department } from '@/types/model-types-new';
-
+import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
 import './styles.less';
 
-// ✅ Added encounterRefetchTrigger to props
 const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any) => {
   const dispatch = useDispatch();
   const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
@@ -40,6 +38,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [openCancelModal, setOpenCancelModal] = useState(false);
+  const [openDischargeModal, setOpenDischargeModal] = useState(false);
 
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
   const [quickInitialStep, setQuickInitialStep] = useState<number>(0);
@@ -69,7 +68,6 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
-  const [dischargeEncounter] = useDischargeEncounterMutation();
 
   // ✅ NEW: whenever the parent bumps encounterRefetchTrigger, refetch the table
   useEffect(() => {
@@ -85,8 +83,16 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       setOpenCancelModal(false);
       refetch();
-    } catch {
-      dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
@@ -95,21 +101,18 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       await completeEncounter({ id: row.id }).unwrap();
       dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       refetch();
-    } catch {
-      dispatch(notify({ msg: 'Error completing encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
-
-  const handleDischarge = async (row: any) => {
-    try {
-      await dischargeEncounter({ id: row.id }).unwrap();
-      dispatch(notify({ msg: 'Discharged Successfully', sev: 'success' }));
-      refetch();
-    } catch {
-      dispatch(notify({ msg: 'Error discharging encounter', sev: 'error' }));
-    }
-  };
-
   const handleEncounterSaved = async () => {
     await refetch();
   };
@@ -129,7 +132,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       try {
         const practitioners = await getPractitionersBulk(practitionerIds).unwrap();
         setPractitionersMap(Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p])));
-      } catch {}
+      } catch { }
     };
 
     load();
@@ -246,7 +249,6 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
               </Whisper>
             )}
 
-            {/* OUTPATIENT_CLINIC → Complete */}
             {isOngoing && isOutpatient && (
               <Whisper
                 placement="top"
@@ -261,7 +263,6 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
               </Whisper>
             )}
 
-            {/* EMERGENCY → Discharge */}
             {isOngoing && isEmergency && (
               <Whisper
                 placement="top"
@@ -269,7 +270,14 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                 container={getTooltipContainer}
               >
                 <span className="visit-history__tooltip-trigger">
-                  <MyButton appearance="subtle" size="small" onClick={() => handleDischarge(row)}>
+                  <MyButton
+                    appearance="subtle"
+                    size="small"
+                    onClick={() => {
+                      setSelectedVisit(row);
+                      setOpenDischargeModal(true);
+                    }}
+                  >
                     <FontAwesomeIcon icon={faPowerOff} />
                   </MyButton>
                 </span>
@@ -319,6 +327,12 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
         confirmationQuestion="Cancel this encounter?"
         actionButtonLabel="Cancel"
         cancelButtonLabel="Close"
+      />
+
+      <EncounterDischarge
+        open={openDischargeModal}
+        setOpen={setOpenDischargeModal}
+        encounter={selectedVisit}
       />
 
       {quickAppointmentModel && (

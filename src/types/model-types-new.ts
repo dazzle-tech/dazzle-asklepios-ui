@@ -3616,3 +3616,69 @@ export interface ReferralRequest {
   acceptedDate?: string | null;
   acceptedBy?: string | null;
 }
+export interface Room {
+  id?: number;
+  facilityId: number | null;
+  departmentType: string | null;
+  departmentId: number | null;
+  name: string;
+  type: string | null;
+  floor?: string | null;
+  isSpecificGender: boolean;
+  gender?: string | null;
+  isActive: boolean;
+  appointable?: boolean | null;
+  parallelCapacityValue: number | null;
+  defaultDurationMinutes?: number | null;
+  defaultBufferBeforeMinutes?: number | null;
+  defaultBufferAfterMinutes?: number | null;
+}
+
+export interface Bed {
+  id?: number;
+  roomId: number | null;
+  name: string;
+  locationDetails?: string | null;
+  type: string | null;
+  status: string | null;
+  isActive: boolean;
+}
+
+export interface BedRoomService {
+  id?: number;
+  roomId: number | null;
+  serviceId: number | null;
+  bedSpecific: boolean;
+  bedId?: number | null;
+  rule?: string | null;
+  isActive: boolean;
+}
+export interface EncounterAssignToBed {
+  id?: number;
+  encounter?: any | null;
+  patient?: any | null;
+  roomId: number | null;
+  bedId: number | null;
+  departmentId: number | null;
+  admissionReason?: string | null;
+  assignedAt?: string | null;
+  releasedAt?: string | null;
+  isActive: boolean;
+}
+export interface BedTransaction {
+  id?: number;
+  encounter?: any | null;
+  patient?: any | null;
+  fromRoomId?: number | null;
+  fromBedId?: number | null;
+  toRoomId?: number | null;
+  toBedId?: number | null;
+  departmentId: number | null;
+  transactionType: string | null;
+  transactionDate?: string | null;
+}
+export interface PatientEncounterDischarge {
+  encounterId: number | null;
+  dischargeType: string | null;
+  dischargeAt: string | null; 
+}
