@@ -11,7 +11,6 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import {
-  exceptions,
   Pill,
   policies,
   resources,
@@ -20,6 +19,8 @@ import {
 import { useEnumOptions } from "@/services/enumsApi";
 import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
 import { useGetAvailabilityTemplatesByParentTemplateIdQuery } from "@/services/appointment/availabilityTemplateService";
+import { useGetActiveHolidaysInRangeQuery } from "@/services/system-configurations/organizationHolidaysService";
+import { useAppSelector } from "@/hooks";
 
 const ActionChip = ({ label }: { label: string }) => (
   <button
@@ -39,7 +40,12 @@ type ApplyConfigurationSectionProps = {
 };
 
 const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ dto, setDto }) => {
+  const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
+  const facilityIdFromAuth =
+    selectedDepartment?.facilityId ?? selectedDepartment?.facility?.id ?? selectedDepartment?.facility?.facilityId ?? null;
+
   const enumOptions = (useEnumOptions('AvailabilityGenerationScope') as any[]) ?? [];
+  const holidayHandlingModeEnumOptions = (useEnumOptions('HolidayHandlingMode') as any[]) ?? [];
   const options = enumOptions.map((o: any) =>
     typeof o === 'string' ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value }
   );
@@ -58,6 +64,15 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
     id: t?.id,
     label: t?.templateName ?? `Template #${t?.id}`
   }));
+
+  const fromDate = (dto as any)?.startDate || "";
+  const toDate = (dto as any)?.endDate || "";
+  const shouldFetchHolidays = Boolean(facilityIdFromAuth) && Boolean(fromDate) && Boolean(toDate);
+  const { data: holidaysInRange = [], isFetching: isLoadingHolidays } =
+    useGetActiveHolidaysInRangeQuery(
+      { fromDate, toDate, facilityId: Number(facilityIdFromAuth) },
+      { skip: !shouldFetchHolidays }
+    );
 
   return (
     <SurfaceCard title="Apply Configuration" description="Configure pool, resources and policies" icon={Settings2}>
@@ -124,24 +139,70 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-slate-700">Exceptions</p>
-            <ActionChip label="Add Exception" />
           </div>
           <div className="space-y-2">
-            {exceptions.map((exception) => (
-              <div
-                key={exception.title}
-                className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3"
-              >
-                <div className="flex items-start gap-3">
-                  <TriangleAlert className="mt-0.5 h-4 w-4 text-amber-600" />
-                  <div>
-                    <div className="text-sm font-medium text-amber-900">{exception.title}</div>
-                    <div className="text-xs text-amber-700">{exception.subtitle}</div>
+            {isLoadingHolidays && shouldFetchHolidays && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                Loading holidays for selected range...
+              </div>
+            )}
+
+            {!isLoadingHolidays &&
+              shouldFetchHolidays &&
+              (holidaysInRange as any[])?.map((h: any) => (
+                <div key={`holiday-${h?.id}`} className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <TriangleAlert className="mt-0.5 h-4 w-4 text-amber-600" />
+                    <div>
+                      <div className="text-sm font-medium text-amber-900">{h?.name ?? "Holiday"}</div>
+                      <div className="text-xs text-amber-700">
+                        {h?.startDate} — {h?.endDate}
+                      </div>
+                    </div>
                   </div>
                 </div>
+              ))}
+
+            {!isLoadingHolidays && shouldFetchHolidays && (holidaysInRange as any[])?.length === 0 && (
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                No holidays in the selected range.
               </div>
-            ))}
+            )}
           </div>
+
+          {!isLoadingHolidays && shouldFetchHolidays && (holidaysInRange as any[])?.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="mb-3 text-sm font-semibold text-slate-700">Holiday Handling Mode</p>
+              <Form fluid>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {holidayHandlingModeEnumOptions.map((o: any) => {
+                    const opt =
+                      typeof o === 'string' ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value };
+                    const key = String(opt.value);
+                    const record: Record<string, boolean> = { [key]: String((dto as any)?.holidayHandlingMode ?? '') === key };
+                    return (
+                      <MyInput
+                        key={key}
+                        fieldName={key}
+                        fieldLabel={opt.label}
+                        fieldType="check"
+                        record={record}
+                        setRecord={(r: any) => {
+                          const checked = !!r[key];
+                          setDto(prev => ({
+                            ...prev,
+                            holidayHandlingMode: checked ? (opt.value as any) : (null as any),
+                          }));
+                        }}
+                        label={opt.label}
+                        width="100%"
+                      />
+                    );
+                  })}
+                </div>
+              </Form>
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
