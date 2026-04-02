@@ -142,9 +142,9 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
                 </div>
               ))}
 
-            {!isLoadingHolidays && shouldFetchHolidays && (holidaysInRange as any[])?.length === 0 && (
+            {!isLoadingHolidays && (!shouldFetchHolidays || (holidaysInRange as any[])?.length === 0) && (
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
-                No holidays in the selected range.
+                No Exceptions in the selected range.
               </div>
             )}
           </div>
