@@ -165,7 +165,7 @@ export const availabilityTemplateService = createApi({
       { status: string }
     >({
       query: ({ status }) => ({
-        url: '/api/patient/availability-templates/active/by-facility-and-status',
+        url: '/api/patient/availability-templates/active/department/by-facility-and-status',
         method: 'GET',
         params: { status }
       }),
