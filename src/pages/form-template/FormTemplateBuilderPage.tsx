@@ -244,7 +244,7 @@ const FormTemplateBuilderPage = () => {
           <div className={'form-template-grid'}>
             <MyInput
               width={width > 900 ? '18vw' : '100%'}
-              fieldLabel="Template Name"
+              fieldLabel={<Translate>Template Name</Translate>}
               fieldName="name"
               record={template}
               setRecord={setTemplate}

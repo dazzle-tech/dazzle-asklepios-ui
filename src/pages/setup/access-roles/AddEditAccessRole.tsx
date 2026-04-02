@@ -7,6 +7,7 @@ import { faKey } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
+import Translate from '@/components/Translate';
 const AddEditAccessRole = ({
   open,
   setOpen,
@@ -91,6 +92,7 @@ const AddEditAccessRole = ({
                 <div className='container-of-field-access-role'>
               <MyInput
                 fieldName="passwordExpiresAfterDays"
+                fieldLabel={<Translate>Password expires after days</Translate>}
                 record={accessRole}
                 disabled={!accessRole.passwordExpires}
                 setRecord={setAccessRole}

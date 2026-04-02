@@ -210,7 +210,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
         },
         {
             key: 'positionChangeSuccessful',
-            title: 'Position Change Successful?',
+            title: <span><Translate>Position Change Successful</Translate>?</span>,
             render: (rowData: any) =>
                 rowData?.positionChangeSuccessful
                     ? "YES"
@@ -218,7 +218,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
         },
         {
             key: 'expectedNextRepositioning',
-            title: 'Expected Next Repositioning ',
+            title: <Translate>Expected Next Repositioning</Translate>,
             render: (rowData: any) =>
                 <> {rowData?.expectedNextRepositioning}
                     {"  "}

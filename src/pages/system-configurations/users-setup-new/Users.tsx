@@ -397,7 +397,7 @@ const formatErrorKey = (msg?: string) => {
         <MyInput
           fieldName="login"
           fieldType="text"
-          fieldLabel='Username'
+          fieldLabel={<Translate>Username</Translate>}
           record={filters}
           setRecord={setFilters}
         />

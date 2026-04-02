@@ -23,8 +23,15 @@ const PregnancyFollowup = () => {
    {title: "Protocols", content: <Protocols />},
   ];
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       {/* Top buttons to trigger modals */}
       <div className="main-pregnancy-btn-right">
         <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpenStartModal(true)}>
@@ -37,9 +44,12 @@ const PregnancyFollowup = () => {
       </div>
 
       {/* Tabs section for different views */}
-      <MyTab 
-       data={tabData}
-      />
+        <MyTab
+          data={tabData.map(tab => ({
+            ...tab,
+            content: <div dir={dir}>{tab.content}</div>
+          }))}
+        />
 
       {/* Modal for starting pregnancy */}
       <StartNewPregnancyModal
@@ -54,7 +64,7 @@ const PregnancyFollowup = () => {
         setOpen={setOpenEndModal}
         onSave={data => {}}
       />
-    </>
+    </div>
   );
 };
 

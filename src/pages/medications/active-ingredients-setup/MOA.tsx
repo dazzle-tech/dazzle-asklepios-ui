@@ -9,6 +9,7 @@ import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import './styles.less';
+import Translate from '@/components/Translate';
 const MOA = ({ activeIngredients }) => {
   const dispatch = useAppDispatch();
   const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({
@@ -39,7 +40,7 @@ const MOA = ({ activeIngredients }) => {
   return (
     <Form className="container-active" fluid>
       <div className="container-of-actions-header-active">
-        <Text>Mechanism Of Actions</Text>
+        <Translate>Mechanism Of Actions</Translate>
         <div className="container-of-buttons-active">
           <MyButton
             prefixIcon={() => <MdSave />}

@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWaveSquare } from '@fortawesome/free-solid-svg-icons';
 import DetailsModal from "../../../drug-order/DetailsModal";
 import './style.less';
+import Translate from "@/components/Translate";
 
 const activeDrips = [
   { name: 'Norepinephrine', dose: '0.15 mcg/kg/min', status: 'stable', color: '#28a745' },
@@ -41,7 +42,10 @@ const ActiveDripsSection = () => {
                 icon={faWaveSquare}
                 className="title-icon-main-title"
               />
+
+              <Translate>
               Active Drips
+              </Translate>
             </span>
             <div className="add-button-for-cards-over-view">
               <MyButton

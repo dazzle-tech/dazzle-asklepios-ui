@@ -1000,7 +1000,7 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
     },
     {
       key: 'patientFullName',
-      title: <Translate>PATIENT NAME </Translate>,
+      title: <Translate>PATIENT NAME</Translate>,
       fullText: true,
       render: (rowData: any) => {
         const tooltipSpeaker = (

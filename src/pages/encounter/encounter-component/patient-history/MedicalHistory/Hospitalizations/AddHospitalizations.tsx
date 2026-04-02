@@ -13,6 +13,7 @@ import {
 import { newHospitalization } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import Translate from '@/components/Translate';
 
 /*  ERROR HANDLER  */
 
@@ -225,7 +226,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       <MyInput
         width={200}
         column
-        fieldLabel="Length of stay (days)"
+        fieldLabel={<Translate>Length of stay (days)</Translate>}
         fieldType="number"
         fieldName="lengthOfStayDays"
         record={formData}

@@ -356,22 +356,30 @@ const InpatientList = () => {
       <div className="companion-wrist-icons-position-handles">
         <MyButton onClick={() => setOpenRefillModal(true)}>
           <FontAwesomeIcon icon={faBoxOpen} />
+        <Translate>
           Refill Stock
+        </Translate>
         </MyButton>
         <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
           {' '}
           <FontAwesomeIcon icon={faListCheck} />
+        <Translate>
           Task Management
+        </Translate>
         </MyButton>
 
         <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
           <FontAwesomeIcon icon={faFile} />
+        <Translate>
           Encounter Logs
+        </Translate>
         </MyButton>
 
         <MyButton onClick={() => setOpenDischargeTracking(true)}>
           <FontAwesomeIcon icon={faRightFromBracket} />
+        <Translate>
           Discharge Tracking
+        </Translate>
         </MyButton>
       </div>
     </>
@@ -504,7 +512,7 @@ const InpatientList = () => {
     },
     {
       key: 'plannedStartDate',
-      title: <Translate>ADMISSION DATE</Translate>,
+      title: <Translate>Admission Date</Translate>,
       dataKey: 'plannedStartDate'
     },
     {
