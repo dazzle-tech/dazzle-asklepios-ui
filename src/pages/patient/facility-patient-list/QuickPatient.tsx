@@ -51,7 +51,6 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
   // NEW: backend message you got
   if (message === 'error.required.when.not.unknown')
     return 'Required fields are missing. Turn on "Unknown Patient" or fill First Name, Last Name, Gender and DOB.' + traceId;
-
   if (errorKey === 'db.constraint')
     return (detail || 'Database constraint violated while saving or updating patient.') + traceId;
 

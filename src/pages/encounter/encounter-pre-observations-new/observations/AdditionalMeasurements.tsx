@@ -318,7 +318,6 @@ const AdditionalMeasurements: React.FC<AdditionalMeasurementsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Additional measurements saved successfully', sev: 'success' }));
-      
     } catch (e: any) {
       showApiError(e);
     }

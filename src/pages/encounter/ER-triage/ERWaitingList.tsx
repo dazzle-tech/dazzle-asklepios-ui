@@ -414,30 +414,6 @@ const ERWaitingList = () => {
                 setRecord={setRecord}
                 fieldLabel="Chief Complain"
               />
-              <MyInput
-                width={110}
-                fieldName="hasPrescription"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Has Prescription"
-              />
-              <MyInput
-                width={80}
-                fieldName="hasOrder"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Has Order"
-              />
-              <MyInput
-                width={80}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Is Observed"
-              />
 
               <MyInput
                 width={150}

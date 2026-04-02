@@ -3,6 +3,7 @@ import { ListRequest } from '@/types/types';
 export { default as toThousands } from './toThousands';
 export { default as highlightValue } from './highlightValue';
 export { default as formatValue } from './formatValue';
+import { intervalToDuration } from 'date-fns';
 
 export const conjureValuesFromEnumList = (
   list: any[],
@@ -254,44 +255,20 @@ export const calculateAge = birthdate => {
     return yearsDiff;
   }
 };
-export const calculateAgeFormat = dateOfBirth => {
-  const today = new Date();
+export const calculateAgeFormat = (dateOfBirth) => {
   const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) return '';
 
-  if (isNaN(dob.getTime())) {
-    return '';
-  }
+  const duration = intervalToDuration({
+    start: dob,
+    end: new Date(),
+  });
 
-  let years = today.getFullYear() - dob.getFullYear();
-  let months = today.getMonth() - dob.getMonth();
-
-  let days = today.getDate() - dob.getDate();
-  if (months < 0 || (months === 0 && days < 0)) {
-    years--;
-    months += 12;
-  }
-  if (days < 0) {
-    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 0);
-    days += lastMonth.getDate();
-    months--;
-  }
-  const totalDays = years * 365 + months * 30 + days;
-
-  let ageString = '';
-
-  if (years > 0) {
-    ageString += `${years}y `;
-  }
-
-  if (months > 0) {
-    ageString += `${months}m `;
-  }
-
-  if (days > 0) {
-    ageString += `${days}d`;
-  }
-
-  return ageString.trim();
+  return [
+    duration.years ? `${duration.years}y` : '',
+    duration.months ? `${duration.months}m` : '',
+    duration.days ? `${duration.days}d` : '',
+  ].filter(Boolean).join(' ');
 };
 export const convertStyleToObject = styleString => {
   const styleObject = {};

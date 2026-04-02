@@ -27,7 +27,7 @@ import { notify } from '@/utils/uiReducerActions';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
 import EncounterDischarge from '../encounter-component/encounter-discharge/EncounterDischarge';
 import MyTab from '@/components/MyTab';
-const EncounterPreObservations = ({}) => {
+const EncounterPreObservations = ({ }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = location.state;
@@ -42,7 +42,7 @@ const EncounterPreObservations = ({}) => {
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   // Page header setup
   const divContent = (
-        "Nurse Station" 
+    "Nurse Station"
   );
   dispatch(setPageCode('Nurse_Station'));
   dispatch(setDivContent(divContent));
@@ -54,9 +54,16 @@ const EncounterPreObservations = ({}) => {
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
       setReadOnly(true);
-    } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
@@ -83,36 +90,46 @@ const EncounterPreObservations = ({}) => {
   };
 
   const tabData = [
-    {title: "Observations", content: <Observations
-                    edit={propsData.edit}
-                    ref={obsRef}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />},
-    {title: "Allergies", content:  <Allergies
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />},
-    {title: "Medical Warnings", content: <Warning
-                    edit={propsData.edit}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />},
-    {title: "Patient History", content: <PatientHistory />},
-    {title: "Previous Measurements", content: <PreviousMeasurements patient={propsData.patient} />},
-    {title: "Attachments", content: <PatientAttachment
-                    localPatient={propsData?.patient}
-                    setRefetchAttachmentList={setRefetchAttachmentList}
-                    refetchAttachmentList={refetchAttachmentList}
-                  />},
-    {title: "Vaccination", content: <VaccinationTab
-                    edit={propsData.edit}
-                    disabled={isEncounterStatusClosed || readOnly}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
-                  />},
-    {title: "Service & Products", content: <ServiceAndProductsTab edit={propsData.edit} />},
+    {
+      title: "Observations", content: <Observations
+        edit={propsData.edit}
+        ref={obsRef}
+        patient={propsData.patient}
+        encounter={propsData.encounter}
+      />
+    },
+    {
+      title: "Allergies", content: <Allergies
+        edit={propsData.edit}
+        patient={propsData.patient}
+        encounter={propsData.encounter}
+      />
+    },
+    {
+      title: "Medical Warnings", content: <Warning
+        edit={propsData.edit}
+        patient={propsData.patient}
+        encounter={propsData.encounter}
+      />
+    },
+    { title: "Patient History", content: <PatientHistory /> },
+    { title: "Previous Measurements", content: <PreviousMeasurements patient={propsData.patient} /> },
+    {
+      title: "Attachments", content: <PatientAttachment
+        localPatient={propsData?.patient}
+        setRefetchAttachmentList={setRefetchAttachmentList}
+        refetchAttachmentList={refetchAttachmentList}
+      />
+    },
+    {
+      title: "Vaccination", content: <VaccinationTab
+        edit={propsData.edit}
+        disabled={isEncounterStatusClosed || readOnly}
+        patient={propsData.patient}
+        encounter={propsData.encounter}
+      />
+    },
+    { title: "Service & Products", content: <ServiceAndProductsTab edit={propsData.edit} /> },
     // {title: "", content: },
     // {title: "", content: },
   ];
@@ -175,10 +192,10 @@ const EncounterPreObservations = ({}) => {
                   )}
                 </div>
               </div>
-              <MyTab 
-               data={tabData}
-               activeTab={activeKey}
-               setActiveTab={setActiveKey}
+              <MyTab
+                data={tabData}
+                activeTab={activeKey}
+                setActiveTab={setActiveKey}
               />
             </Panel>
           </div>

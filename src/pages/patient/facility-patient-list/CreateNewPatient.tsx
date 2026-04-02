@@ -148,6 +148,8 @@ const toHumanPatientDocumentError = (
     'type.required': 'Document type is required.',
     'primary.exists': 'This patient already has a primary document.',
     'unique.document': 'A document with the same number, type, and country already exists.',
+    'patient.emergency.notAllowed.withOngoing':
+      'Patient currently treated by another doctor',
     'db.constraint':
       'A document with this number already exists for this patient. Please use a different document number.',
     notfound: 'Patient document not found.'
