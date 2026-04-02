@@ -1,38 +1,16 @@
 import * as React from "react";
 import MyInput from "@/components/MyInput";
 import { Form } from "rsuite";
-import { Switch } from "@/components/ui/switch";
 import {
-  Circle,
-  Clock3,
-  Plus,
   Settings2,
-  ShieldCheck,
   TriangleAlert,
 } from "lucide-react";
-import {
-  Pill,
-  policies,
-  resources,
-  SurfaceCard,
-} from "./shared";
+import { SurfaceCard } from "./shared";
 import { useEnumOptions } from "@/services/enumsApi";
 import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
 import { useGetAvailabilityTemplatesByParentTemplateIdQuery } from "@/services/appointment/availabilityTemplateService";
 import { useGetActiveHolidaysInRangeQuery } from "@/services/system-configurations/organizationHolidaysService";
 import { useAppSelector } from "@/hooks";
-
-const ActionChip = ({ label }: { label: string }) => (
-  <button
-    type="button"
-    className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700"
-  >
-    <span className="inline-flex items-center gap-2">
-      <Plus className="h-4 w-4" />
-      {label}
-    </span>
-  </button>
-);
 
 type ApplyConfigurationSectionProps = {
   dto: AvailabilityGenerationBatchApplyDTO;
@@ -89,6 +67,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
                       key={key}
                       fieldName={key}
                       fieldLabel={opt.label}
+                      showLabel={false}
                       fieldType="check"
                       record={checks}
                       setRecord={(r: any) => {
@@ -185,6 +164,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
                         key={key}
                         fieldName={key}
                         fieldLabel={opt.label}
+                        showLabel={false}
                         fieldType="check"
                         record={record}
                         setRecord={(r: any) => {
@@ -205,21 +185,6 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-slate-700">Deferred Execution</p>
-              <p className="text-xs text-slate-500">Generate slots later instead of immediately</p>
-            </div>
-            <Switch />
-          </div>
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400">
-            Schedule for <span className="ml-2 inline-flex items-center gap-2">
-              <Clock3 className="h-4 w-4" />
-              02:00 AM, May 15
-            </span>
-          </div>
-        </div>
       </div>
     </SurfaceCard>
   );
