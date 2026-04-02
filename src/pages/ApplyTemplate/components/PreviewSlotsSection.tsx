@@ -1,18 +1,16 @@
 import * as React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { CalendarDays, ChevronDown, Search, TimerReset } from "lucide-react";
-import {
-  legendItems,
-  MiniStat,
-  slotRows,
-  slotToneClasses,
-  SurfaceCard,
-  weekDays,
-} from "./shared";
+import { CalendarDays, ChevronDown, Search } from "lucide-react";
+import { legendItems, slotRows, slotToneClasses, SurfaceCard, weekDays } from "./shared";
 import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
+import PreviewSummarySection from "./PreviewSummarySection";
 
-const PreviewSlotsSection: React.FC<{ dto?: AvailabilityGenerationBatchApplyDTO; setDto?: React.Dispatch<React.SetStateAction<AvailabilityGenerationBatchApplyDTO>>; }> = ({ dto, setDto }) => {
+const PreviewSlotsSection: React.FC<{
+  templateId?: number | null;
+  templateDurationMinutes?: number | null;
+  dto?: AvailabilityGenerationBatchApplyDTO;
+  setDto?: React.Dispatch<React.SetStateAction<AvailabilityGenerationBatchApplyDTO>>;
+}> = ({ templateId, templateDurationMinutes, dto, setDto }) => {
   void dto;
   void setDto;
   return (
@@ -81,20 +79,11 @@ const PreviewSlotsSection: React.FC<{ dto?: AvailabilityGenerationBatchApplyDTO;
         </div>
       </SurfaceCard>
 
-      <Card className="rounded-2xl border-sky-200 bg-sky-50 shadow-sm">
-        <CardHeader className="px-5 py-4">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-900">
-            <TimerReset className="h-4 w-4 text-sky-600" />
-            Preview Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 px-5 pb-5 sm:grid-cols-2 xl:grid-cols-4">
-          <MiniStat label="Slots/Day avg" value="34" />
-          <MiniStat label="Total Slots" value="255" />
-          <MiniStat label="Exceptions" value="2" />
-          <MiniStat label="Date Range" value="5 days" />
-        </CardContent>
-      </Card>
+      <PreviewSummarySection
+        templateId={templateId ?? null}
+        templateDurationMinutes={templateDurationMinutes ?? null}
+        dto={dto}
+      />
     </div>
   );
 };

@@ -7,10 +7,15 @@ import {
 } from "lucide-react";
 import { SurfaceCard } from "./shared";
 import { useEnumOptions } from "@/services/enumsApi";
-import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
+import type {
+  AvailabilityGenerationBatchApplyDTO,
+  AvailabilityTemplateIntervalResponseVM,
+} from "@/types/model-types-new";
 import { useGetAvailabilityTemplatesByParentTemplateIdQuery } from "@/services/appointment/availabilityTemplateService";
 import { useGetActiveHolidaysInRangeQuery } from "@/services/system-configurations/organizationHolidaysService";
+import { useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from "@/services/appointment/availabilityTemplate/availabilityTemplateInterval";
 import { useAppSelector } from "@/hooks";
+import { formatEnumString } from "@/utils";
 
 type ApplyConfigurationSectionProps = {
   dto: AvailabilityGenerationBatchApplyDTO;
@@ -24,12 +29,35 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
 
   const enumOptions = (useEnumOptions('AvailabilityGenerationScope') as any[]) ?? [];
   const holidayHandlingModeEnumOptions = (useEnumOptions('HolidayHandlingMode') as any[]) ?? [];
-  const options = enumOptions.map((o: any) =>
-    typeof o === 'string' ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value }
+  const options = React.useMemo(
+    () =>
+      enumOptions.map((o: any) =>
+        typeof o === 'string' ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value }
+      ),
+    [enumOptions]
   );
-  const [checks, setChecks] = React.useState<Record<string, boolean>>(() =>
-    Object.fromEntries(options.map(opt => [String(opt.value), false]))
-  );
+  const [checks, setChecks] = React.useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    const selectedScope = String((dto as any)?.scope ?? '').toUpperCase();
+    const nextChecks = Object.fromEntries(
+      options.map(opt => {
+        const value = String(opt.value).toUpperCase();
+        return [String(opt.value), value === selectedScope];
+      })
+    ) as Record<string, boolean>;
+    setChecks(prev => {
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(nextChecks);
+      if (
+        prevKeys.length === nextKeys.length &&
+        nextKeys.every(key => prev[key] === nextChecks[key])
+      ) {
+        return prev;
+      }
+      return nextChecks;
+    });
+  }, [dto?.scope, options]);
 
   const isSpecificScope = String((dto as any)?.scope ?? '').toUpperCase() === 'SPECIFIC_RESOURCE';
   const parentId = dto?.templateId ?? 0;
@@ -42,6 +70,59 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
     id: t?.id,
     label: t?.templateName ?? `Template #${t?.id}`
   }));
+  const selectedChildTemplateId = Number((dto as any)?.childTemplateId ?? 0);
+  const effectiveTemplateIdForIntervals =
+    isSpecificScope && selectedChildTemplateId > 0 ? selectedChildTemplateId : Number(dto?.templateId ?? 0);
+  const [intervalsByDay, setIntervalsByDay] = React.useState<Record<string, AvailabilityTemplateIntervalResponseVM[]>>({});
+  const [isLoadingIntervals, setIsLoadingIntervals] = React.useState(false);
+  const [loadIntervalsByTemplateAndDay] = useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery();
+  const dayOfWeekOptions = useEnumOptions('DayOfWeek') as any[] | undefined;
+  const daysToQuery = React.useMemo(() => {
+    const normalized = (dayOfWeekOptions ?? []).map((d: any) =>
+      typeof d === 'string' ? d : (d?.value ?? d?.label)
+    );
+    return normalized.length > 0
+      ? normalized.map((d: any) => String(d).toUpperCase())
+      : ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+  }, [dayOfWeekOptions]);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    const loadIntervals = async () => {
+      if (!effectiveTemplateIdForIntervals) {
+        if (mounted) setIntervalsByDay({});
+        return;
+      }
+
+      setIsLoadingIntervals(true);
+      const nextMap: Record<string, AvailabilityTemplateIntervalResponseVM[]> = {};
+
+      await Promise.all(
+        daysToQuery.map(async dayOfWeek => {
+          try {
+            const rows = await loadIntervalsByTemplateAndDay({
+              templateId: effectiveTemplateIdForIntervals,
+              dayOfWeek
+            }).unwrap();
+            nextMap[dayOfWeek] = rows ?? [];
+          } catch {
+            nextMap[dayOfWeek] = [];
+          }
+        })
+      );
+
+      if (mounted) {
+        setIntervalsByDay(nextMap);
+        setIsLoadingIntervals(false);
+      }
+    };
+
+    void loadIntervals();
+    return () => {
+      mounted = false;
+    };
+  }, [effectiveTemplateIdForIntervals, loadIntervalsByTemplateAndDay, daysToQuery.join('|')]);
 
   const fromDate = (dto as any)?.startDate || "";
   const toDate = (dto as any)?.endDate || "";
@@ -53,7 +134,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
     );
 
   return (
-    <SurfaceCard title="Apply Configuration" description="Configure pool, resources and policies" icon={Settings2}>
+    <SurfaceCard title="Apply Configuration" description="Configure scope, resources, intervals and exceptions" icon={Settings2}>
       <div className="space-y-5">
         <div>
           <p className="mb-3 text-sm font-semibold text-slate-700">Resource Scope</p>
@@ -78,6 +159,11 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
                           setDto(prev => ({
                             ...prev,
                             scope: next[key] ? (opt.value as string) : ('' as any),
+                            // Keep selected resource template only when SPECIFIC_RESOURCE is active.
+                            childTemplateId:
+                              next[key] && String(opt.value).toUpperCase() === 'SPECIFIC_RESOURCE'
+                                ? (prev as any)?.childTemplateId ?? null
+                                : null,
                            }));
                           return next;
                         });
@@ -107,6 +193,7 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
                     cleanable={false}
                     searchable
                     loading={isLoadingChildren}
+                    required
                   />
                 </Form>
               </div>
@@ -114,6 +201,67 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
           </div>
         </div>
 
+
+        <div>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-slate-700">
+              Intervals ({isSpecificScope && selectedChildTemplateId > 0 ? 'Resource Template' : 'Selected Template'})
+            </p>
+          </div>
+          <div className="space-y-2">
+            {isLoadingIntervals && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                Loading intervals...
+              </div>
+            )}
+
+            {!isLoadingIntervals && !effectiveTemplateIdForIntervals && (
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                Select a template to view intervals.
+              </div>
+            )}
+
+            {!isLoadingIntervals &&
+              effectiveTemplateIdForIntervals > 0 &&
+              daysToQuery.map(day => {
+                const rows = intervalsByDay[day] ?? [];
+                if (rows.length === 0) return null;
+                return (
+                  <div key={day} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                    <div className="mb-2 text-xs font-semibold text-slate-500">{day.replace('_', ' ')}</div>
+                    <div className="space-y-2">
+                      {rows.map((interval, idx) => (
+                        <div
+                          key={`${day}-${interval?.id ?? idx}`}
+                          className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+                        >
+                          <span className="font-medium text-slate-800">
+                            {interval?.startTime ?? '--:--'} - {interval?.endTime ?? '--:--'}
+                          </span>
+                          <span className="mx-2 text-slate-300">|</span>
+                          <span>
+                            Duration: {interval?.slotDurationMinutes ?? '-'} min
+                          </span>
+                          <span className="mx-2 text-slate-300">|</span>
+                          <span>
+                            Strategy: {interval?.slotStrategy ? formatEnumString(String(interval.slotStrategy)) : '-'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+            {!isLoadingIntervals &&
+              effectiveTemplateIdForIntervals > 0 &&
+              daysToQuery.every(day => (intervalsByDay[day] ?? []).length === 0) && (
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                  No intervals found for this template.
+                </div>
+              )}
+          </div>
+        </div>
 
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
