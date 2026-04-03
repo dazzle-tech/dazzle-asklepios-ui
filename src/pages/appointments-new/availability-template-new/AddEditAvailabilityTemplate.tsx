@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Tabs, Divider, Form, RadioGroup, Radio, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -22,6 +22,7 @@ import { useGetAllServicesQuery, useGetServicesByDepartmentQuery } from '@/servi
 import { useGetAllPractitionersQuery, useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
+import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 
 const days = [
   'Sunday',
@@ -123,6 +124,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     isLoading: isGettingFacilities,
     isFetching: isFetchingFacilities
   } = useGetActiveFacilitiesQuery({});
+  const { data: organizationDefinitions } = useGetAllOrganizationDefinitionsQuery({});
    const authSlice = useAppSelector((s) => s.auth);
   const selectedDepartment = authSlice.selectedDepartment;
    const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
@@ -160,11 +162,45 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   );
   const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
+  const DayOfWeek = useEnumOptions('DayOfWeek');
   console.log("practitionerListResponse");
   console.log(practitionerListResponse);
   const allServices = servicesList?.data ?? [];
   const departmentServiceIds = (servicesByDepartmentList?.data ?? []).map((s: any) => s.id);
-  // const selectedServiceIds = record?.allowedServiceIds ?? [];
+  const selectedServiceIds = record?.allowedServiceIds ?? [];
+  const workingDaysTouchedRef = useRef(false);
+  const isEditMode = !!template?.id;
+  const workingDaysRecord = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    if (!DayOfWeek || DayOfWeek.length === 0) return map;
+
+    DayOfWeek.forEach(day => {
+      map[day.value] = false;
+    });
+
+    (record.workingDays ?? []).forEach(day => {
+      if (day?.dayOfWeek !== undefined && day?.dayOfWeek !== null) {
+        map[day.dayOfWeek] = day.isWorking !== false;
+      }
+    });
+
+    return map;
+  }, [record.workingDays, DayOfWeek]);
+
+  const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
+    if (!DayOfWeek || DayOfWeek.length === 0) return;
+
+    const nextWorkingDays = DayOfWeek.map(day => ({
+      dayOfWeek: day.value,
+      isWorking: !!nextRecord[day.value],
+    }));
+
+    workingDaysTouchedRef.current = true;
+    setRecord(prev => ({
+      ...prev,
+      workingDays: nextWorkingDays,
+    }));
+  };
 
   const tabData = () => {
     let arr = [];
@@ -261,6 +297,56 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   useEffect(() => {
     setRecord({...template, facilityId: selectedFacility?.id});
   }, [template]);
+
+  useEffect(() => {
+    workingDaysTouchedRef.current = false;
+  }, [record?.facilityId]);
+
+  useEffect(() => {
+    if (isEditMode) return;
+    if (!DayOfWeek || DayOfWeek.length === 0) return;
+    if (!record?.facilityId) return;
+    if (workingDaysTouchedRef.current) return;
+
+    const facilities = facilityListResponse ?? [];
+    const selectedFacilityData = facilities.find(
+      (f: any) => String(f?.id) === String(record.facilityId)
+    );
+    const facilityWorkingDays =
+      selectedFacilityFullObject?.workingDays ??
+      selectedFacilityData?.workingDays ??
+      [];
+    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
+
+    const sourceWorkingDays =
+      facilityWorkingDays && facilityWorkingDays.length > 0
+        ? facilityWorkingDays
+        : organizationWorkingDays;
+
+    if (!sourceWorkingDays || sourceWorkingDays.length === 0) return;
+
+    const normalizedWorkingDays = DayOfWeek.map(day => {
+      const found = sourceWorkingDays.find(
+        (d: any) => String(d?.dayOfWeek) === String(day.value)
+      );
+      return {
+        dayOfWeek: day.value,
+        isWorking: found ? found.isWorking !== false : false,
+      };
+    });
+
+    setRecord(prev => ({
+      ...prev,
+      workingDays: normalizedWorkingDays,
+    }));
+  }, [
+    isEditMode,
+    record?.facilityId,
+    facilityListResponse,
+    selectedFacilityFullObject,
+    organizationDefinitions,
+    DayOfWeek,
+  ]);
 
   useEffect(() => {
     if (!servicesByDepartmentList?.data) return;
@@ -578,15 +664,15 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
               title="Days"
               content={
                 <Form fluid layout='inline'>
-                  {days.map((day) => (
+                  {DayOfWeek?.map(day => (
                     <MyInput
-                      key={day}
+                      key={day.value}
                       width="13vw"
-                      fieldName="showCompleted"
+                      fieldName={day.value}
                       fieldType="check"
-                      record=""
-                      setRecord={() => { }}
-                      fieldLabel={day}
+                      record={workingDaysRecord}
+                      setRecord={setWorkingDaysRecord}
+                      label={day.label}
                       showLabel={false}
                     />
                   ))}
