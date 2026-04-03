@@ -88,6 +88,17 @@ export const organizationHolidaysService = createApi({
       providesTags: ['OrganizationHoliday'],
     }),
 
+    getActiveHolidaysInRange: builder.query<
+      OrganizationHolidayResponseVM[],
+      { fromDate: string; toDate: string; facilityId: number }
+    >({
+      query: ({ fromDate, toDate, facilityId }) => ({
+        url: '/api/setup/organization-holiday/by-date-range',
+        params: { fromDate, toDate, facilityId }
+      }),
+      providesTags: ['OrganizationHoliday']
+    }),
+
   }),
 });
 
@@ -99,4 +110,5 @@ export const {
   useToggleOrganizationHolidayMutation,
   useSearchOrganizationHolidaysQuery,
   useGetActiveHolidaysDescQuery,
+  useGetActiveHolidaysInRangeQuery,
 } = organizationHolidaysService;

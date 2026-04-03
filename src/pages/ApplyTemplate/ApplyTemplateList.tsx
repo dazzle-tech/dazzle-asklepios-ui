@@ -9,7 +9,7 @@ import { useGetAvailabilityGenerationBatchesByTemplateQuery } from '@/services/a
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import {
-  useGetAvailabilityTemplatesByStatusQuery,
+  useGetAvailabilityTemplatesActiveByStatusQuery,
   useLazyGetAvailabilityTemplatesByTemplateNameQuery
 } from '@/services/appointment/availabilityTemplateService';
 import type { AvailabilityGenerationBatch, AvailabilityTemplateResponseVM } from '@/types/model-types-new';
@@ -25,7 +25,7 @@ const ApplyTemplateList = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<AvailabilityTemplateResponseVM | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
 
-  const { data: templatesResponse = [], isFetching } = useGetAvailabilityTemplatesByStatusQuery({
+  const { data: templatesResponse = [], isFetching } = useGetAvailabilityTemplatesActiveByStatusQuery({
     status: 'PUBLISHED'
   });
   const { data: facilitiesResponse = [] } = useGetAllFacilitiesQuery({});

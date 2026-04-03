@@ -1,144 +1,338 @@
 import * as React from "react";
-import { Switch } from "@/components/ui/switch";
+import MyInput from "@/components/MyInput";
+import { Form } from "rsuite";
 import {
-  Circle,
-  Clock3,
-  Plus,
   Settings2,
-  ShieldCheck,
   TriangleAlert,
 } from "lucide-react";
-import {
-  exceptions,
-  Pill,
-  policies,
-  resources,
-  SurfaceCard,
-} from "./shared";
+import { SurfaceCard } from "./shared";
+import { useEnumOptions } from "@/services/enumsApi";
+import type {
+  AvailabilityGenerationBatchApplyDTO,
+  AvailabilityTemplateIntervalResponseVM,
+} from "@/types/model-types-new";
+import { useGetAvailabilityTemplatesByParentTemplateIdQuery } from "@/services/appointment/availabilityTemplateService";
+import { useGetActiveHolidaysInRangeQuery } from "@/services/system-configurations/organizationHolidaysService";
+import { useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from "@/services/appointment/availabilityTemplate/availabilityTemplateInterval";
+import { useAppSelector } from "@/hooks";
+import { formatEnumString } from "@/utils";
 
-const ActionChip = ({ label }: { label: string }) => (
-  <button
-    type="button"
-    className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700"
-  >
-    <span className="inline-flex items-center gap-2">
-      <Plus className="h-4 w-4" />
-      {label}
-    </span>
-  </button>
-);
+type ApplyConfigurationSectionProps = {
+  dto: AvailabilityGenerationBatchApplyDTO;
+  setDto: React.Dispatch<React.SetStateAction<AvailabilityGenerationBatchApplyDTO>>;
+};
 
-const ApplyConfigurationSection: React.FC = () => {
+const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ dto, setDto }) => {
+  const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
+  const facilityIdFromAuth =
+    selectedDepartment?.facilityId ?? selectedDepartment?.facility?.id ?? selectedDepartment?.facility?.facilityId ?? null;
+
+  const enumOptions = (useEnumOptions('AvailabilityGenerationScope') as any[]) ?? [];
+  const holidayHandlingModeEnumOptions = (useEnumOptions('HolidayHandlingMode') as any[]) ?? [];
+  const options = React.useMemo(
+    () =>
+      enumOptions.map((o: any) =>
+        typeof o === 'string' ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value }
+      ),
+    [enumOptions]
+  );
+  const [checks, setChecks] = React.useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    const selectedScope = String((dto as any)?.scope ?? '').toUpperCase();
+    const nextChecks = Object.fromEntries(
+      options.map(opt => {
+        const value = String(opt.value).toUpperCase();
+        return [String(opt.value), value === selectedScope];
+      })
+    ) as Record<string, boolean>;
+    setChecks(prev => {
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(nextChecks);
+      if (
+        prevKeys.length === nextKeys.length &&
+        nextKeys.every(key => prev[key] === nextChecks[key])
+      ) {
+        return prev;
+      }
+      return nextChecks;
+    });
+  }, [dto?.scope, options]);
+
+  const isSpecificScope = String((dto as any)?.scope ?? '').toUpperCase() === 'SPECIFIC_RESOURCE';
+  const parentId = dto?.templateId ?? 0;
+  const { data: childTemplates = [], isFetching: isLoadingChildren } =
+    useGetAvailabilityTemplatesByParentTemplateIdQuery(
+      { parentTemplateId: parentId },
+      { skip: !isSpecificScope || !parentId }
+    );
+  const childOptions = (childTemplates as any[]).map(t => ({
+    id: t?.id,
+    label: t?.templateName ?? `Template #${t?.id}`
+  }));
+  const selectedChildTemplateId = Number((dto as any)?.childTemplateId ?? 0);
+  const effectiveTemplateIdForIntervals =
+    isSpecificScope && selectedChildTemplateId > 0 ? selectedChildTemplateId : Number(dto?.templateId ?? 0);
+  const [intervalsByDay, setIntervalsByDay] = React.useState<Record<string, AvailabilityTemplateIntervalResponseVM[]>>({});
+  const [isLoadingIntervals, setIsLoadingIntervals] = React.useState(false);
+  const [loadIntervalsByTemplateAndDay] = useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery();
+  const dayOfWeekOptions = useEnumOptions('DayOfWeek') as any[] | undefined;
+  const daysToQuery = React.useMemo(() => {
+    const normalized = (dayOfWeekOptions ?? []).map((d: any) =>
+      typeof d === 'string' ? d : (d?.value ?? d?.label)
+    );
+    return normalized.length > 0
+      ? normalized.map((d: any) => String(d).toUpperCase())
+      : ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+  }, [dayOfWeekOptions]);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    const loadIntervals = async () => {
+      if (!effectiveTemplateIdForIntervals) {
+        if (mounted) setIntervalsByDay({});
+        return;
+      }
+
+      setIsLoadingIntervals(true);
+      const nextMap: Record<string, AvailabilityTemplateIntervalResponseVM[]> = {};
+
+      await Promise.all(
+        daysToQuery.map(async dayOfWeek => {
+          try {
+            const rows = await loadIntervalsByTemplateAndDay({
+              templateId: effectiveTemplateIdForIntervals,
+              dayOfWeek
+            }).unwrap();
+            nextMap[dayOfWeek] = rows ?? [];
+          } catch {
+            nextMap[dayOfWeek] = [];
+          }
+        })
+      );
+
+      if (mounted) {
+        setIntervalsByDay(nextMap);
+        setIsLoadingIntervals(false);
+      }
+    };
+
+    void loadIntervals();
+    return () => {
+      mounted = false;
+    };
+  }, [effectiveTemplateIdForIntervals, loadIntervalsByTemplateAndDay, daysToQuery.join('|')]);
+
+  const fromDate = (dto as any)?.startDate || "";
+  const toDate = (dto as any)?.endDate || "";
+  const shouldFetchHolidays = Boolean(facilityIdFromAuth) && Boolean(fromDate) && Boolean(toDate);
+  const { data: holidaysInRange = [], isFetching: isLoadingHolidays } =
+    useGetActiveHolidaysInRangeQuery(
+      { fromDate, toDate, facilityId: Number(facilityIdFromAuth) },
+      { skip: !shouldFetchHolidays }
+    );
+
   return (
-    <SurfaceCard title="Apply Configuration" description="Configure pool, resources and policies" icon={Settings2}>
+    <SurfaceCard title="Apply Configuration" description="Configure scope, resources, intervals and exceptions" icon={Settings2}>
       <div className="space-y-5">
         <div>
           <p className="mb-3 text-sm font-semibold text-slate-700">Resource Scope</p>
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <label className="flex items-center gap-3 text-sm text-slate-700">
-              <Circle className="h-4 w-4 fill-blue-600 text-blue-600" />
-              <span className="font-medium">Department Pool</span>
-              <span className="text-xs text-slate-400">(All channels)</span>
-            </label>
-            <label className="flex items-center gap-3 text-sm text-slate-700">
-              <Circle className="h-4 w-4 text-slate-300" />
-              <span className="font-medium">Specific Channels</span>
-              <Pill className="bg-slate-200 text-slate-600">3 selected</Pill>
-            </label>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <Form fluid>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {options.map(opt => {
+                  const key = String(opt.value);
+                  return (
+                    <MyInput
+                      key={key}
+                      fieldName={key}
+                      fieldLabel={opt.label}
+                      showLabel={false}
+                      fieldType="check"
+                      record={checks}
+                      setRecord={(r: any) => {
+                        setChecks(prev => {
+                          const next: Record<string, boolean> = {};
+                          for (const o of options) next[String(o.value)] = false;
+                          next[key] = !!r[key];
+                          setDto(prev => ({
+                            ...prev,
+                            scope: next[key] ? (opt.value as string) : ('' as any),
+                            // Keep selected resource template only when SPECIFIC_RESOURCE is active.
+                            childTemplateId:
+                              next[key] && String(opt.value).toUpperCase() === 'SPECIFIC_RESOURCE'
+                                ? (prev as any)?.childTemplateId ?? null
+                                : null,
+                           }));
+                          return next;
+                        });
+                      }}
+                      label={opt.label}
+                      width="100%"
+                    />
+                  );
+                })}
+              </div>
+            </Form>
+            {isSpecificScope && (
+              <div className="mt-4 grid grid-cols-1 gap-3">
+                <Form fluid>
+                  <MyInput
+                    fieldName="childTemplateId"
+                    fieldLabel="Select Resource Template"
+                    fieldType="select"
+                    record={(dto as any)}
+                    setRecord={(updated: any) =>
+                      setDto(prev => ({ ...(prev as any), childTemplateId: updated.childTemplateId } as any))
+                    }
+                    selectData={childOptions}
+                    selectDataLabel="label"
+                    selectDataValue="id"
+                    width="100%"
+                    cleanable={false}
+                    searchable
+                    loading={isLoadingChildren}
+                    required
+                  />
+                </Form>
+              </div>
+            )}
           </div>
         </div>
 
-        <div>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-700">Additional Resources</p>
-            <ActionChip label="Add Resource" />
-          </div>
-          <div className="space-y-3">
-            {resources.map((resource) => {
-              const Icon = resource.icon;
-              return (
-                <div
-                  key={resource.title}
-                  className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-xl bg-indigo-50 p-2 text-indigo-600">
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-800">{resource.title}</div>
-                      <div className="text-xs text-slate-500">{resource.subtitle}</div>
-                    </div>
-                  </div>
-                  <Switch checked />
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-700">Policies to Apply</p>
-            <ActionChip label="Add Policy" />
+            <p className="text-sm font-semibold text-slate-700">
+              Intervals ({isSpecificScope && selectedChildTemplateId > 0 ? 'Resource Template' : 'Selected Template'})
+            </p>
           </div>
           <div className="space-y-2">
-            {policies.map((policy) => (
-              <div
-                key={policy.label}
-                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-violet-50 p-2 text-violet-600">
-                    <ShieldCheck className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm font-medium text-slate-800">{policy.label}</span>
-                  <Pill className="bg-slate-100 text-slate-600">{policy.tag}</Pill>
-                </div>
-                <span className="text-slate-300">×</span>
+            {isLoadingIntervals && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                Loading intervals...
               </div>
-            ))}
+            )}
+
+            {!isLoadingIntervals && !effectiveTemplateIdForIntervals && (
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                Select a template to view intervals.
+              </div>
+            )}
+
+            {!isLoadingIntervals &&
+              effectiveTemplateIdForIntervals > 0 &&
+              daysToQuery.map(day => {
+                const rows = intervalsByDay[day] ?? [];
+                if (rows.length === 0) return null;
+                return (
+                  <div key={day} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                    <div className="mb-2 text-xs font-semibold text-slate-500">{day.replace('_', ' ')}</div>
+                    <div className="space-y-2">
+                      {rows.map((interval, idx) => (
+                        <div
+                          key={`${day}-${interval?.id ?? idx}`}
+                          className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+                        >
+                          <span className="font-medium text-slate-800">
+                            {interval?.startTime ?? '--:--'} - {interval?.endTime ?? '--:--'}
+                          </span>
+                          <span className="mx-2 text-slate-300">|</span>
+                          <span>
+                            Duration: {interval?.slotDurationMinutes ?? '-'} min
+                          </span>
+                          <span className="mx-2 text-slate-300">|</span>
+                          <span>
+                            Strategy: {interval?.slotStrategy ? formatEnumString(String(interval.slotStrategy)) : '-'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+            {!isLoadingIntervals &&
+              effectiveTemplateIdForIntervals > 0 &&
+              daysToQuery.every(day => (intervalsByDay[day] ?? []).length === 0) && (
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                  No intervals found for this template.
+                </div>
+              )}
           </div>
         </div>
 
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-slate-700">Exceptions</p>
-            <ActionChip label="Add Exception" />
           </div>
           <div className="space-y-2">
-            {exceptions.map((exception) => (
-              <div
-                key={exception.title}
-                className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3"
-              >
-                <div className="flex items-start gap-3">
-                  <TriangleAlert className="mt-0.5 h-4 w-4 text-amber-600" />
-                  <div>
-                    <div className="text-sm font-medium text-amber-900">{exception.title}</div>
-                    <div className="text-xs text-amber-700">{exception.subtitle}</div>
+            {isLoadingHolidays && shouldFetchHolidays && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                Loading holidays for selected range...
+              </div>
+            )}
+
+            {!isLoadingHolidays &&
+              shouldFetchHolidays &&
+              (holidaysInRange as any[])?.map((h: any) => (
+                <div key={`holiday-${h?.id}`} className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <TriangleAlert className="mt-0.5 h-4 w-4 text-amber-600" />
+                    <div>
+                      <div className="text-sm font-medium text-amber-900">{h?.name ?? "Holiday"}</div>
+                      <div className="text-xs text-amber-700">
+                        {h?.startDate} — {h?.endDate}
+                      </div>
+                    </div>
                   </div>
                 </div>
+              ))}
+
+            {!isLoadingHolidays && (!shouldFetchHolidays || (holidaysInRange as any[])?.length === 0) && (
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                No Exceptions in the selected range.
               </div>
-            ))}
+            )}
           </div>
+
+          {!isLoadingHolidays && shouldFetchHolidays && (holidaysInRange as any[])?.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="mb-3 text-sm font-semibold text-slate-700">Holiday Handling Mode</p>
+              <Form fluid>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {holidayHandlingModeEnumOptions.map((o: any) => {
+                    const opt =
+                      typeof o === 'string' ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value };
+                    const key = String(opt.value);
+                    const record: Record<string, boolean> = { [key]: String((dto as any)?.holidayHandlingMode ?? '') === key };
+                    return (
+                      <MyInput
+                        key={key}
+                        fieldName={key}
+                        fieldLabel={opt.label}
+                        showLabel={false}
+                        fieldType="check"
+                        record={record}
+                        setRecord={(r: any) => {
+                          const checked = !!r[key];
+                          setDto(prev => ({
+                            ...prev,
+                            holidayHandlingMode: checked ? (opt.value as any) : (null as any),
+                          }));
+                        }}
+                        label={opt.label}
+                        width="100%"
+                      />
+                    );
+                  })}
+                </div>
+              </Form>
+            </div>
+          )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-slate-700">Deferred Execution</p>
-              <p className="text-xs text-slate-500">Generate slots later instead of immediately</p>
-            </div>
-            <Switch />
-          </div>
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400">
-            Schedule for <span className="ml-2 inline-flex items-center gap-2">
-              <Clock3 className="h-4 w-4" />
-              02:00 AM, May 15
-            </span>
-          </div>
-        </div>
       </div>
     </SurfaceCard>
   );

@@ -1,7 +1,7 @@
 import * as React from "react";
 import MyModal from "@/components/MyModal/MyModal";
 import { useNavigate } from "react-router-dom";
-import type { AvailabilityTemplateResponseVM } from "@/types/model-types-new";
+import type { AvailabilityGenerationBatchApplyDTO, AvailabilityTemplateResponseVM } from "@/types/model-types-new";
 import ApplyTemplateStepOne from "./components/ApplyTemplateStepOne";
 import ApplyTemplateStepTwo from "./components/ApplyTemplateStepTwo";
 
@@ -27,9 +27,32 @@ type ApplyTemplateProps = {
 const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTemplate }) => {
   const navigate = useNavigate();
   const [internalOpen, setInternalOpen] = React.useState(true);
+  const [isStepOneValid, setIsStepOneValid] = React.useState(true);
+  const [formState, setFormState] = React.useState<AvailabilityGenerationBatchApplyDTO>({
+    templateId: selectedTemplate?.id ?? 0,
+    startDate: "",
+    endDate: "",
+    deferred: false,
+    deferredAt: null,
+    scope: "DEPARTMENT",
+    holidayHandlingMode: null,
+  } as AvailabilityGenerationBatchApplyDTO);
   const isControlled = typeof open === "boolean" && typeof setOpen === "function";
   const modalOpen = isControlled ? open : internalOpen;
   const modalSetOpen = isControlled ? setOpen : setInternalOpen;
+
+  const modalSteps = React.useMemo(
+    () =>
+      stepItems.map((item, idx) =>
+        idx === 0
+          ? {
+              ...item,
+              disabledNext: !isStepOneValid,
+            }
+          : item
+      ),
+    [isStepOneValid]
+  );
 
   const handleClose = () => {
     modalSetOpen(false);
@@ -37,6 +60,18 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
       navigate(-1);
     }
   };
+
+  React.useEffect(() => {
+    setFormState(prev => ({
+      ...prev,
+      templateId: selectedTemplate?.id ?? 0,
+      startDate: "",
+      endDate: "",
+      childTemplateId: null as any,
+      scope: "DEPARTMENT",
+      holidayHandlingMode: null,
+    }));
+  }, [selectedTemplate?.id]);
 
   return (
     <MyModal
@@ -46,8 +81,19 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
       position="center"
       size="full"
       bodyheight="calc(100vh - 220px)"
-      content={(stepNumber) => (stepNumber === 0 ? <ApplyTemplateStepOne /> : <ApplyTemplateStepTwo />)}
-      steps={stepItems}
+      content={(stepNumber) =>
+        stepNumber === 0 ? (
+          <ApplyTemplateStepOne
+            selectedTemplate={selectedTemplate}
+            dto={formState}
+            setDto={setFormState}
+            onValidationChange={setIsStepOneValid}
+          />
+        ) : (
+          <ApplyTemplateStepTwo selectedTemplate={selectedTemplate} dto={formState} />
+        )
+      }
+      steps={modalSteps}
       handleCancelFunction={handleClose}
       cancelButtonLabel="Close"
       actionButtonLabel="Apply Template"

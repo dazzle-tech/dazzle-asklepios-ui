@@ -234,6 +234,47 @@ export interface AvailabilityTemplateWorkingDay {
   isWorking: boolean;
 }
 
+export interface AvailabilityTemplateAllowedServiceDTO {
+  serviceId: number;
+}
+
+export interface AvailabilityTemplateAllowedServiceResponseVM {
+  id?: number | null;
+  serviceId?: number | null;
+  intervalId?: number | null;
+}
+
+export interface AvailabilityTemplateIntervalResponseVM {
+  id?: number | null;
+  templateId?: number | null;
+  dayOfWeek?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  slotStrategy?: string | null;
+  slotDurationMinutes?: number | null;
+  allowedServices?: AvailabilityTemplateAllowedServiceResponseVM[] | null;
+}
+
+export interface AvailabilityTemplateIntervalCreateDTO {
+  templateId: number;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  slotStrategy: string;
+  slotDurationMinutes: number;
+  allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
+}
+
+export interface AvailabilityTemplateIntervalUpdateDTO {
+  id: number;
+  dayOfWeek?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  slotStrategy?: string | null;
+  slotDurationMinutes?: number | null;
+  allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
+}
+
 export interface AvailabilityTemplateResponseVM {
   id: number;
   facilityId: number;
@@ -259,6 +300,7 @@ export interface AvailabilityTemplateResponseVM {
   requireConfirmation?: boolean | null;
   financialDetails?: string | null;
   workingDays?: AvailabilityTemplateWorkingDay[] | null;
+  intervals?: any[] | null;
 }
 
 export interface AvailabilityTemplateCreateDTO {

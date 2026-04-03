@@ -8,8 +8,11 @@ import {
   UserRound,
 } from "lucide-react";
 import { FakeSelect, Pill, SurfaceCard } from "./shared";
+import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
 
-const SlotDetailsSection: React.FC = () => {
+const SlotDetailsSection: React.FC<{ dto?: AvailabilityGenerationBatchApplyDTO; setDto?: React.Dispatch<React.SetStateAction<AvailabilityGenerationBatchApplyDTO>>; }> = ({ dto, setDto }) => {
+  void dto;
+  void setDto;
   return (
     <SurfaceCard
       title="Slot Details"

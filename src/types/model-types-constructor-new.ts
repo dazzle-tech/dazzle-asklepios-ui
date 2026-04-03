@@ -895,6 +895,47 @@ export const newAvailabilityTemplateWorkingDay: modelTypes.AvailabilityTemplateW
   isWorking: false
 };
 
+export const newAvailabilityTemplateAllowedServiceDTO: modelTypes.AvailabilityTemplateAllowedServiceDTO = {
+  serviceId: 0
+};
+
+export const newAvailabilityTemplateAllowedServiceResponseVM: modelTypes.AvailabilityTemplateAllowedServiceResponseVM = {
+  id: null,
+  serviceId: null,
+  intervalId: null
+};
+
+export const newAvailabilityTemplateIntervalResponseVM: modelTypes.AvailabilityTemplateIntervalResponseVM = {
+  id: null,
+  templateId: null,
+  dayOfWeek: null,
+  startTime: null,
+  endTime: null,
+  slotStrategy: null,
+  slotDurationMinutes: null,
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateIntervalCreateDTO: modelTypes.AvailabilityTemplateIntervalCreateDTO = {
+  templateId: 0,
+  dayOfWeek: '',
+  startTime: '',
+  endTime: '',
+  slotStrategy: '',
+  slotDurationMinutes: 0,
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateIntervalUpdateDTO: modelTypes.AvailabilityTemplateIntervalUpdateDTO = {
+  id: 0,
+  dayOfWeek: null,
+  startTime: null,
+  endTime: null,
+  slotStrategy: null,
+  slotDurationMinutes: null,
+  allowedServices: []
+};
+
 export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCreateDTO = {
   facilityId: 0,
   departmentId: 0,

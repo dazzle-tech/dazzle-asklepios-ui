@@ -205,6 +205,7 @@ import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
+import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
 
 export const store = configureStore({
   reducer: {
@@ -437,6 +438,7 @@ export const store = configureStore({
 
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
     [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
+    [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
 
     //AI Services
     // AI Services
@@ -738,7 +740,8 @@ export const store = configureStore({
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
         availabilityTemplateService.middleware,
-        availabilityGenerationBatchService.middleware
+        availabilityGenerationBatchService.middleware,
+        availabilityTemplateIntervalService.middleware
       ]
     ) as any
 });
