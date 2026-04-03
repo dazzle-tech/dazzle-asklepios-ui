@@ -7,7 +7,7 @@ import './styles.less';
 import AvailabilityDayGrid from './AvailabilityDayGrid';
 import PreviewAvailabilityModal from './PreviewAvailabilityModal';
 import MyModal from '@/components/MyModal/MyModal';
-import { useGetActiveFacilitiesQuery, useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery, useGetAllFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { VscNotebookTemplate } from "react-icons/vsc";
 import { title } from 'process';
@@ -19,7 +19,7 @@ import AddRoomModal from './AddRoomModal';
 import AddExceptionModal from './AddExceptionModal';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useGetAllServicesQuery, useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
-import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAllPractitionersQuery, useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 
@@ -97,6 +97,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       name: '',
       facilityId: null,
       departmentId: null,
+      allowedServiceIds: [],
       effectiveFrom: null,
       effectiveTo: null,
       status: 'DRAFT',
@@ -126,6 +127,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const selectedDepartment = authSlice.selectedDepartment;
    const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
+  const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
+        skip: !selectedFacility?.id
+      });
+  console.log("selectedFacility: ", selectedFacility);
   const { data: departmentListResponse } = useGetActiveDepartmentByFacilityListQuery(
     {
       facilityId: record?.facilityId
@@ -136,8 +141,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   );
   
  
-  // const { data: servicesList, isFetching, refetch } = useGetAllServicesQuery({});
-  const { data: servicesList, isFetching, refetch } = useGetServicesByDepartmentQuery(
+  const { data: servicesList, isFetching, refetch } = useGetAllServicesQuery({});
+  const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
     {
       sourceId: selectedDepartment?.departmentId
     },
@@ -145,11 +150,21 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       skip: !selectedDepartment?.departmentId
     }
   );
-  const { data: practitionerListResponse } = useGetAllPractitionersQuery({});
+  const { data: practitionerListResponse } = useGetPractitionerByDepartmentQuery(
+     {
+      departmentId: record?.departmentId
+    },
+    {
+      skip: !record?.departmentId
+    }
+  );
   const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
   console.log("practitionerListResponse");
   console.log(practitionerListResponse);
+  const allServices = servicesList?.data ?? [];
+  const departmentServiceIds = (servicesByDepartmentList?.data ?? []).map((s: any) => s.id);
+  // const selectedServiceIds = record?.allowedServiceIds ?? [];
 
   const tabData = () => {
     let arr = [];
@@ -246,6 +261,24 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   useEffect(() => {
     setRecord({...template, facilityId: selectedFacility?.id});
   }, [template]);
+
+  useEffect(() => {
+    if (!servicesByDepartmentList?.data) return;
+    setRecord(prev => {
+      const prevIds = prev?.allowedServiceIds ?? [];
+      const nextIds =
+        prevIds.length > 0
+          ? Array.from(new Set([...prevIds, ...departmentServiceIds]))
+          : departmentServiceIds;
+      if (
+        prevIds.length === nextIds.length &&
+        prevIds.every((id: any) => nextIds.includes(id))
+      ) {
+        return prev;
+      }
+      return { ...prev, allowedServiceIds: nextIds };
+    });
+  }, [servicesByDepartmentList]);
 
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -398,7 +431,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                               width="100%"
                               fieldType="select"
                               fieldName="defaultService"
-                              selectData={servicesList?.data ?? []}
+                              selectData={servicesByDepartmentList?.data ?? []}
                               selectDataLabel="name"
                               selectDataValue="id"
                               record={record}
@@ -469,6 +502,56 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                 />
               </Col>
               </Row>
+
+            <Row>
+              <Col md={24}>
+                <SectionContainer
+                  title="Services Allowed"
+                  content={
+                    <Form fluid>
+                      <Row>
+                        {allServices.map((service: any) => {
+                          const fieldName = `service_${service.id}`;
+                          // const isChecked = selectedServiceIds.includes(service.id);
+                          const isChecked = servicesByDepartmentList?.data?.some(s => s.id === service.id);
+                          return (
+                            <Col md={8} key={service.id}>
+                              <MyInput
+                                width="100%"
+                                fieldType="check"
+                                fieldName={fieldName}
+                                record={{ [fieldName]: isChecked }}
+                                setRecord={(next: any) => {
+                                  const checked = Boolean(next[fieldName]);
+                                  setRecord(prev => {
+                                    const prevIds = prev?.allowedServiceIds ?? [];
+                                    if (checked) {
+                                      if (prevIds.includes(service.id)) return prev;
+                                      return {
+                                        ...prev,
+                                        allowedServiceIds: [...prevIds, service.id]
+                                      };
+                                    }
+                                    return {
+                                      ...prev,
+                                      allowedServiceIds: prevIds.filter(
+                                        (id: any) => id !== service.id
+                                      )
+                                    };
+                                  });
+                                }}
+                                showLabel={false}
+                                label={service.name}
+                              />
+                            </Col>
+                          );
+                        })}
+                      </Row>
+                    </Form>
+                  }
+                />
+              </Col>
+            </Row>
 
             {/* <Row>
               <Col md={12}>
