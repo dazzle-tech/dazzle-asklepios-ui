@@ -39,6 +39,12 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
     </div>
   );
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <SectionContainer
       title={
@@ -47,7 +53,7 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
           {buttons}
         </>
       }
-      content={
+      content={<div dir={dir}>
         <MyTable
           data={languages ?? []}
           columns={[
@@ -77,7 +83,7 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
             selectedLanguage?.id === rowData.id ? 'selected-row' : ''
           }
         />
-      }
+      </div>}
     />
   );
 };

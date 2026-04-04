@@ -18,7 +18,13 @@ const ModalContent: React.FC = () => {
     respiratoryRate: 0
   });
 
-  return (<> 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  return (<div dir={dir}>
       <SectionContainer
 title={
             <h5 className="h3-icu-screen-handle">
@@ -26,14 +32,14 @@ title={
               ICU Vitals
             </h5>
           }
-        content={<><VitalSigns
+        content={<div dir={dir}><VitalSigns
                       object={vital}
                       setObject={setVital}
                       disabled={true}
                       width="40vw"
                       showNoteField={false}
                     />
-</>}/></>)
+</div>}/></div>)
 
 };
 

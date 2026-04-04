@@ -139,6 +139,14 @@ const AddProgressNotes = ({ open, setOpen, progressNote, patient, encounter, edi
     }
   };
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -160,7 +168,7 @@ const AddProgressNotes = ({ open, setOpen, progressNote, patient, encounter, edi
         }
       ]}
       content={
-        <Form fluid>
+        <Form fluid dir={dir}>
           <MyInput
             column
             width={400}

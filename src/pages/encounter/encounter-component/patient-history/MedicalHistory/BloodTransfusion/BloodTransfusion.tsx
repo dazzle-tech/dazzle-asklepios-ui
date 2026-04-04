@@ -28,6 +28,14 @@ const BloodTransfusion = ({ patient, encounter, edit }) => {
       }
     }
   ];
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <div className="medical-container-div">
       <SectionContainer
@@ -40,10 +48,10 @@ const BloodTransfusion = ({ patient, encounter, edit }) => {
           </>
         }
         content={
-          <>
+          <div dir={dir}>
             <MyTable data={[]} columns={columns} height={800} loading={false} />
             <AddBloodTransfusion open={open} setOpen={setOpen} />
-          </>
+          </div>
         }
       />
     </div>

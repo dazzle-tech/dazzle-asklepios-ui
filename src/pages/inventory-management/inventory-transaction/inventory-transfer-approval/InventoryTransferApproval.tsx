@@ -341,8 +341,16 @@ const inventoryTransferApproval = () => {
       <AdvancedSearchFilters searchFilter={true} />
     </>
   );
+  
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         data={inventoryTransListResponse?.object ?? []}
         columns={columns}
@@ -357,7 +365,7 @@ const inventoryTransferApproval = () => {
         setTransfer={setTransfer}
         refetch={refetchTransProduct}
       />
-    </>
+    </div>
   );
 };
 

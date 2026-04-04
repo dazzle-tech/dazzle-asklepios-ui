@@ -450,6 +450,12 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
 
   }, [departmentIds, getDepartmentsBulk]);
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <>
       <ChildModal
@@ -458,11 +464,11 @@ const LinkedItems: React.FC<Props> = ({ open, setOpen, serviceId, facilityId }) 
         showChild={openChildModal}
         setShowChild={setOpenChildModal}
         title="Linked Items"
-        mainContent={conjureFormMainContent}
+        mainContent={<div dir={dir}>{conjureFormMainContent()}</div>}
         actionChildButtonFunction={handleSave}
         hideActionBtn
         childTitle={mode === 'create' ? 'Link New Item to Service' : 'Edit Linked Item'}
-        childContent={conjureFormChildContent}
+        childContent={<div dir={dir}>{conjureFormChildContent()}</div>}
         mainSize="sm"
         actionButtonLabel='Link'
         mainStep={[{ title: 'Linked Items', icon: <MdMedicalServices /> }]}

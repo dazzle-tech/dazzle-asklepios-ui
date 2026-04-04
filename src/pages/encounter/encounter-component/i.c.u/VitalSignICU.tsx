@@ -73,8 +73,15 @@ const VitalSignICU: React.FC = () => {
     setOpenGraphModal(true);
   };
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="vital-container">
+    <div className="vital-container" dir={dir}>
       {vitals.map((item) => (
         <DynamicCard
           key={item.id}

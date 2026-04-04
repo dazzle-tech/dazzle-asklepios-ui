@@ -170,6 +170,13 @@ const AddEditOrganizationHoliday = ({ open, setOpen, holiday, refetch, organizat
     }
   };
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       actionButtonLabel={holiday?.id ? 'Save' : 'Create'}
@@ -178,7 +185,7 @@ const AddEditOrganizationHoliday = ({ open, setOpen, holiday, refetch, organizat
       setOpen={setOpen}
       position="right"
       title={holiday?.id ? 'Edit Holiday' : 'New Holiday'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => <div dir={dir}>{conjureFormContentOfMainModal(stepNumber)}</div>}
       steps={[{ title: 'Holiday Info', icon: <MdHolidayVillage /> }]}
       size='sm'
     />

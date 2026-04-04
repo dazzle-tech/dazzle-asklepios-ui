@@ -126,8 +126,13 @@ const ERDashboardTableTwo = () => {
 
   const isSelectedRow = (row: any) => row.id === selectedRowId ? 'selected-row' : '';
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <div className='ER-dashboard-table-two'>
+    <div className='ER-dashboard-table-two' dir={dir}>
       <MyTable
         data={paginatedData}
         columns={columns}

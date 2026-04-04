@@ -20,11 +20,17 @@ const OutputsTable: React.FC<OutputsTableProps> = ({ data, totalOutput = 0 }) =>
 
   const isSelectedOutput = (rowData: any) => (rowData?.key === output?.key ? 'selected-row' : '');
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <SectionContainer 
     title="Outputs"
     content={
-      <>
+      <div dir={dir}>
        <Form fluid layout="inline" className="container-of-header-intake">
         <MyInput
           fieldName="date"
@@ -55,7 +61,7 @@ const OutputsTable: React.FC<OutputsTableProps> = ({ data, totalOutput = 0 }) =>
       />
       <label>Total Output: {totalOutput}</label>
       <AddEditOutput open={popupAddOutputOpen} setOpen={setPopupAddOutputOpen} width={window.innerWidth} />
-      </>
+      </div>
     }
     />
   );

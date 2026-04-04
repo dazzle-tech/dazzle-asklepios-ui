@@ -288,8 +288,15 @@ const WarehouseItemsSetup = () => {
               Add New
             </MyButton>
           </div></>);
+
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <Row className='container-of-add-new-button'>
         <Col xs={24}>
           <MyTable

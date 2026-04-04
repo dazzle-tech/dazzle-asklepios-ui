@@ -208,9 +208,21 @@ const SOAP = props => {
     return () => dispatch(hideSystemLoader());
   }, [isLoading, isFetching, dispatch]);
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <div className="patient-summary-container">
-      <MyTab data={tabData} />
+        <MyTab
+          data={tabData.map(tab => ({
+            ...tab,
+            content: <div dir={dir}>{tab.content}</div>
+          }))}
+        />
     </div>
   );
 };

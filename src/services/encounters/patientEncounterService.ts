@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi';
 import { parseLinkHeader } from '@/utils/paginationHelper';
-import { PatientEncounter } from '@/types/model-types-new';
+import { PatientEncounter, PatientEncounterDischarge } from '@/types/model-types-new';
 
 type Id = number | string;
 
@@ -195,10 +195,14 @@ export const patientEncounterService = createApi({
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
 
-    dischargeEncounter: builder.mutation<PatientEncounter, { id: Id }>({
-      query: ({ id }) => ({
+    dischargeEncounter: builder.mutation<
+      PatientEncounter,
+      { id: Id; body: PatientEncounterDischarge }
+    >({
+      query: ({ id, body }) => ({
         url: `/api/patient/encounter/${id}/discharge`,
-        method: 'POST'
+        method: 'POST',
+        body
       }),
       invalidatesTags: (_res, _err, { id }) => [{ type: 'PatientEncounter', id }, 'PatientEncounter']
     }),
@@ -253,22 +257,80 @@ export const patientEncounterService = createApi({
           : ['PatientEncounter']
     }),
 
-    getEncountersByAppointment:builder.query<string,{ appointmentId: Id }>({
-      query: ({ appointmentId}) => ({
+    getEncountersByAppointment: builder.query<string, { appointmentId: Id }>({
+      query: ({ appointmentId }) => ({
         url: `/api/patient/encounter/appointment/${appointmentId}`,
         method: 'GET'
       }),
       providesTags: ['PatientEncounter']
     }),
 
-    getPreviousClosedEncounter:builder.query<PatientEncounter,{ encounterId: Id }>({
-      query: ({encounterId}) => ({
+    getPreviousClosedEncounter: builder.query<PatientEncounter, { encounterId: Id }>({
+      query: ({ encounterId }) => ({
         url: `/api/patient/encounter/${encounterId}/previous-encounter-completed`,
         method: 'GET'
       }),
       providesTags: ['PatientEncounter']
     }),
+    moveWaitingListToNew: builder.mutation<PatientEncounter, { id: Id }>({
+      query: ({ id }) => ({
+        url: `/api/patient/encounter/${id}/move-to-new`,
+        method: 'POST'
+      }),
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'PatientEncounter', id },
+        'PatientEncounter'
+      ]
+    }),
+    // ✅ Date Range Counts
 
+    countDepartmentTotalByDateRange: builder.query<
+      number,
+      { departmentId: Id; fromDate: string; toDate: string }
+    >({
+      query: ({ departmentId, fromDate, toDate }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/date-range/total`,
+        method: 'GET',
+        params: { fromDate, toDate }
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    countDepartmentWaitingListByDateRange: builder.query<
+      number,
+      { departmentId: Id; fromDate: string; toDate: string }
+    >({
+      query: ({ departmentId, fromDate, toDate }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/date-range/waiting-list`,
+        method: 'GET',
+        params: { fromDate, toDate }
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    countDepartmentTriageByDateRange: builder.query<
+      number,
+      { departmentId: Id; fromDate: string; toDate: string }
+    >({
+      query: ({ departmentId, fromDate, toDate }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/date-range/triage`,
+        method: 'GET',
+        params: { fromDate, toDate }
+      }),
+      providesTags: ['PatientEncounter']
+    }),
+
+    countDepartmentDischargedByDateRange: builder.query<
+      number,
+      { departmentId: Id; fromDate: string; toDate: string }
+    >({
+      query: ({ departmentId, fromDate, toDate }) => ({
+        url: `/api/patient/encounter/department/${departmentId}/count/date-range/discharged`,
+        method: 'GET',
+        params: { fromDate, toDate }
+      }),
+      providesTags: ['PatientEncounter']
+    }),
   })
 });
 
@@ -297,5 +359,10 @@ export const {
   useGetEncountersByPatientQuery,
   useLazyGetEncountersByPatientQuery,
   useGetEncountersByAppointmentQuery,
-  useGetPreviousClosedEncounterQuery
+  useGetPreviousClosedEncounterQuery,
+  useMoveWaitingListToNewMutation,
+  useCountDepartmentTotalByDateRangeQuery,
+  useCountDepartmentWaitingListByDateRangeQuery,
+  useCountDepartmentTriageByDateRangeQuery,
+  useCountDepartmentDischargedByDateRangeQuery,
 } = patientEncounterService;

@@ -49,19 +49,19 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-    | 'text'
-    | 'password'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check';
+  | 'text'
+  | 'password'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -115,6 +115,11 @@ type MyInputProps = {
   enterClick?: () => Promise<boolean | void> | boolean | void;
   isEnum?: boolean;
   allowEnterNewLine?: boolean;
+  showZero?: boolean;
+  disablePastDates?: boolean;
+  disableFutureDates?: boolean;
+  showWarningIfBeforeYear1900?: boolean;
+  showWarningIfInPast?: boolean;
 };
 
 const MyInput = ({
@@ -438,8 +443,8 @@ const MyInput = ({
               (isArrayLabel
                 ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
                 : props.isEnum
-                ? (label: any) => formatEnumString(String(label))
-                : undefined)
+                  ? (label: any) => formatEnumString(String(label))
+                  : undefined)
             }
             searchBy={props.searchBy}
             container={resolveContainer()}
@@ -466,15 +471,15 @@ const MyInput = ({
             renderValue={
               isArrayLabel
                 ? (value, item, selectedElement) => {
-                    if (!item) return selectedElement;
-                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                  }
+                  if (!item) return selectedElement;
+                  return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                }
                 : props.isEnum
-                ? (value, item, selectedElement) => {
+                  ? (value, item, selectedElement) => {
                     const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
                     return <span>{formatEnumString(String(base))}</span>;
                   }
-                : undefined
+                  : undefined
             }
             disabledItemValues={
               props.disabledItemValues
@@ -510,12 +515,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                    {
-                      [valueKey]: '__load_more__',
-                      [labelKey]: 'Load more...',
-                      isLoadMore: true
-                    }
-                  ]
+                  {
+                    [valueKey]: '__load_more__',
+                    [labelKey]: 'Load more...',
+                    isLoadMore: true
+                  }
+                ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -701,6 +706,20 @@ const MyInput = ({
               const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
               setRecord?.({ ...record, [fieldName]: dateStr });
             }}
+            onBlur={() => {
+              const value = record?.[fieldName];
+              const minDate = new Date(1900, 0, 1);
+              const today = new Date(new Date().setHours(0, 0, 0, 0));
+
+              if (props.showWarningIfBeforeYear1900 && value && new Date(value) < minDate) {
+                dispatch(notify({ msg: 'Date cannot be before 01-01-1900', sev: 'warning' }));
+                return;
+              }
+
+              if (props.showWarningIfInPast && value && new Date(value) < today) {
+                dispatch(notify({ msg: 'Date cannot be in the past', sev: 'warning' }));
+              }
+            }}
             placeholder={props.placeholder ?? 'DD-MM-YYYY'}
             onKeyDown={(e: any) => {
               const input = e.target as HTMLInputElement;
@@ -721,6 +740,14 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            shouldDisableDate={(date: Date) => {
+              const today = new Date(new Date().setHours(0, 0, 0, 0));
+              const minDate = new Date(1900, 0, 1); // 1-1-1900
+              if (date < minDate) return true;
+              if (props.disablePastDates) return date < today;
+              if (props.disableFutureDates) return date > today;
+              return false;
+            }}
           />
         );
       case 'number': {
@@ -746,6 +773,15 @@ const MyInput = ({
             : 0) +
           (rightAddon ? 2 : 0);
 
+        const value =
+          record?.[fieldName] === 0
+            ? props.showZero
+              ? 0
+              : ''
+            : record?.[fieldName] !== null && record?.[fieldName] !== undefined
+              ? record[fieldName]
+              : '';
+
         const inputControl = (
           <Form.Control
             className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
@@ -761,7 +797,7 @@ const MyInput = ({
             name={fieldName}
             max={props.max}
             min={0}
-            value={record[fieldName] ? record[fieldName] : ''}
+            value={value}
             accepter={InputNumber}
             onChange={handleValueChange}
             placeholder={props.placeholder}
@@ -789,7 +825,9 @@ const MyInput = ({
                   {leftAddon}
                 </InputGroup.Addon>
               )}
+
               {inputControl}
+
               {rightAddon && (
                 <InputGroup.Addon
                   className="my-input-addon"

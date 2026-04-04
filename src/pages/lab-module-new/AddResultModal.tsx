@@ -313,7 +313,8 @@ const AddResultModal = ({
         { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
       ]}
       content={
-        <Form fluid>
+      <div dir={dir}>
+          <Form fluid>
           {acceptedTests.map(orderTest => {
             const profiles =
               (profilesByTestId[orderTest.testId] ?? []).filter(
@@ -344,6 +345,7 @@ const AddResultModal = ({
             );
           })}
         </Form>
+      </div>
       }
     />
   </div>

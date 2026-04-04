@@ -457,6 +457,13 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     </div>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -469,7 +476,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="38vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

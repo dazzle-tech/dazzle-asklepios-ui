@@ -118,6 +118,13 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
     }
   };
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -135,6 +142,7 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
       bodyheight="37vw"
       content={
         <Form fluid>
+          <div dir={dir}>
           <div className="test-name-my-input-handle">
             <MyInput
               width="100%"
@@ -180,6 +188,7 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
               editorClassName="custom-editor"
               placeholder="Write your report here..."
             />
+          </div>
           </div>
         </Form>
       }

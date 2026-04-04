@@ -33,6 +33,13 @@ const DiagnosticTestTemplate = ({ open, setOpen, testId, testName }) => {
     setModalOpen(true);
   }, [open, data]);
 
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <>
       {/* just a wrapper title modal (as you had) */}

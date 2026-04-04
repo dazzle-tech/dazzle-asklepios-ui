@@ -17,6 +17,11 @@ const BedManagementModal = ({ open, setOpen, departmentKey }) => {
   // modal content
   const modalContent = <MyTab data={tabData} className="tab-container" />;
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -26,7 +31,7 @@ const BedManagementModal = ({ open, setOpen, departmentKey }) => {
       size="95vw"
       bodyheight="85vh"
       actionButtonFunction={null}
-      content={modalContent}
+      content={<div dir={dir}>{modalContent}</div>}
       hideActionBtn={true}
     />
   );

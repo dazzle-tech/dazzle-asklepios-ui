@@ -44,13 +44,14 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'This patient already has an encounter in this department on the selected date.',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
+  'patient.emergency.notAllowed.withOngoing':
+    'Patient currently treated by another doctor',
   duplicate: 'Duplicate record.',
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
   'practitioner.invalid': 'Invalid practitioner id.',
   'db.constraint': 'Database constraint violation while saving encounter.'
 };
-
 const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
   patientId: 'Patient',
   facilityId: 'Facility',
@@ -364,7 +365,14 @@ const PatientQuickAppointment = ({
     }
   };
 
-  return (
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
     <MyModal
       open={quickAppointmentModel}
       setOpen={setQuickAppointmentModel}
@@ -417,12 +425,13 @@ const PatientQuickAppointment = ({
           )
         }
       ]}
-      content={(step: number) => conjureFormContent(step)}
+      content={(step: number) => <div dir={dir}>{conjureFormContent(step)}</div>}
       size="55vw"
       bodyheight="65vh"
       hideActionBtn={true}
       initialStep={initialStep}
     />
+    </div>
   );
 };
 

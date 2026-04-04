@@ -100,7 +100,7 @@ const ApproveRequestModal: React.FC<Props> = ({ open, setOpen, request, onConfir
         isApproved || !selectedId || setTestMutation.isLoading
       }
       content={
-        <>
+                <div dir={dir}>
           {isFetching ? (
             <Loader center content="Loading..." />
           ) : (
@@ -148,7 +148,7 @@ const ApproveRequestModal: React.FC<Props> = ({ open, setOpen, request, onConfir
               )}
             </div>
           )}
-        </>
+        </div>
       }
     />
   </div>

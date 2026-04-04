@@ -526,8 +526,16 @@ const NormalConsultation = props => {
 
   const pageIndex = page;
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}

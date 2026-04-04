@@ -480,8 +480,14 @@ const TeleconsultationRequests = () => {
   dispatch(setPageCode('tele_consultation_screen'));
   dispatch(setDivContent(divContent));
 
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <DragDropTable
          data={paginatedData ?? []}
         columns={columns}

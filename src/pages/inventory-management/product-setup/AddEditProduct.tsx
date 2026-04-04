@@ -231,6 +231,13 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
       </Row>
     </>
   );
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
     open={open}
@@ -238,7 +245,7 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
     title="Product Setup"
     size="lg"
     bodyheight="65vh"
-    content={content}
+    content={<div dir={dir}>{content()}</div>}
     hideBack={true}
     steps={[{ title: "Product Setup", icon: <FontAwesomeIcon icon={faDiceD6} /> }]}
     actionButtonLabel="Save"

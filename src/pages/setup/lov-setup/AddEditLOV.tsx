@@ -62,13 +62,21 @@ const AddEditLov = ({ open, setOpen, width, lov, setLov, handleSave, lovListResp
         );
     }
   };
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={lov?.key ? 'Edit LOV' : 'New LOV'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       actionButtonLabel={lov?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'LOV Info', icon: <IoIosListBox /> }]}

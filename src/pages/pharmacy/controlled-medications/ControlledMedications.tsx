@@ -271,8 +271,15 @@ const ControlledMedications = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+
+                    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div className="container-internal-drug-order">
+    <div className="container-internal-drug-order" dir={dir}>
       <div className="container-of-tables-int">
         <MyTable
           height={450}

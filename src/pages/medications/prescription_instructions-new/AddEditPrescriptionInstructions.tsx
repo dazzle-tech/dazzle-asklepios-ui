@@ -131,13 +131,20 @@ const AddEditPrescriptionInstructions = ({ open, setOpen, width, prescriptionIns
         );
     }
   };
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={prescriptionInstructions?.id ? 'Edit Prescription Instruction' : 'New Prescription Instruction'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
       actionButtonLabel={prescriptionInstructions?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Prescription Instruction Info', icon: <FaFilePrescription /> }]} 

@@ -297,7 +297,15 @@ const getDepartmentName = (id?: number) =>
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className="table-row-margins">
       <div ref={tableContainerRef}>
         <MyTable
@@ -322,6 +330,7 @@ const getDepartmentName = (id?: number) =>
           patient} />
       </Panel>
     </div>
+  </div>
   );
 };
 

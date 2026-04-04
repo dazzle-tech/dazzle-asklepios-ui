@@ -3,7 +3,7 @@ import { Form } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
@@ -148,6 +148,8 @@ const toHumanPatientDocumentError = (
     'type.required': 'Document type is required.',
     'primary.exists': 'This patient already has a primary document.',
     'unique.document': 'A document with the same number, type, and country already exists.',
+    'patient.emergency.notAllowed.withOngoing':
+      'Patient currently treated by another doctor',
     'db.constraint':
       'A document with this number already exists for this patient. Please use a different document number.',
     notfound: 'Patient document not found.'
@@ -361,14 +363,14 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [deptPage, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
-
   const EncounterTypeEnum = useEnumOptions('EncounterType');
+  const authSlice = useAppSelector((s) => s.auth);
 
+  const selectedDepartment = authSlice.selectedDepartment;
   const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
     useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
 
-  const [selectedFacilityId, setSelectedFacilityId] = useState<number>(0);
-
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(null);
   // Insurance state
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>();
   const [payorPage, setPayorPage] = useState(0);
@@ -438,52 +440,101 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-  useEffect(() => {
+  const fetchDepartments = async (page = 0) => {
+    if (!selectedFacilityId || encounterType !== 'EMERGENCY') return;
+
     try {
-      const selectedDepartment = JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
-      setSelectedFacilityId(Number(selectedDepartment?.facilityId ?? 0));
-    } catch {
-      setSelectedFacilityId(0);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (pageCode !== 'ER_Triage') {
-      setAllDepartments([]);
-      return;
-    }
-
-    if (!selectedFacilityId || encounterType !== 'EMERGENCY') {
-      setAllDepartments([]);
-      return;
-    }
-
-    if (deptPage === 0) {
-      setAllDepartments([]);
-    }
-
-    triggerDepartments({
-      facilityId: selectedFacilityId,
-      encounterType: 'EMERGENCY',
-      page: deptPage,
-      size: deptSize,
-      sort: 'id,asc'
-    });
-  }, [pageCode, selectedFacilityId, encounterType, deptPage, triggerDepartments]);
-
-  useEffect(() => {
-    const rows = deptList?.data ?? [];
-    if (!rows.length) return;
-
-    setAllDepartments(previousDepartments => {
-      const seenIds = new Set(previousDepartments.map((department: any) => Number(department.id)));
-      const merged = [...previousDepartments];
-      rows.forEach((department: any) => {
-        if (!seenIds.has(Number(department.id))) merged.push(department);
+      console.log('[TRACE] fetchDepartments:start', {
+        facilityId: selectedFacilityId,
+        encounterType: 'EMERGENCY',
+        page,
+        size: deptSize
       });
-      return merged;
+
+      const result = await triggerDepartments({
+        facilityId: selectedFacilityId,
+        encounterType: 'EMERGENCY',
+        page,
+        size: deptSize,
+        sort: 'id,asc'
+      }).unwrap();
+
+      const rows = result?.data ?? [];
+
+      console.log('[TRACE] fetchDepartments:success', {
+        page,
+        count: rows.length,
+        rows,
+        links: result?.links
+      });
+
+      setAllDepartments(prev => {
+        if (page === 0) {
+          return rows;
+        }
+
+        const seenIds = new Set(prev.map((d: any) => Number(d.id)));
+        const merged = [...prev];
+
+        rows.forEach((d: any) => {
+          if (!seenIds.has(Number(d.id))) {
+            merged.push(d);
+          }
+        });
+
+        return merged;
+      });
+    } catch (error) {
+      console.error('[TRACE] fetchDepartments:error', error);
+      if (page === 0) {
+        setAllDepartments([]);
+      }
+    }
+  };
+
+
+  useEffect(() => {
+    const facilityId = selectedDepartment?.facilityId;
+
+    setSelectedFacilityId(
+      typeof facilityId === 'number' && !Number.isNaN(facilityId) ? facilityId : null
+    );
+  }, [selectedDepartment?.facilityId]);
+  useEffect(() => {
+    if (!open) return;
+    if (pageCode !== 'ER_Triage') return;
+    if (!selectedFacilityId || encounterType !== 'EMERGENCY') return;
+
+    fetchDepartments(0);
+  }, [open, pageCode, selectedFacilityId, encounterType]);
+  useEffect(() => {
+    console.log('[TRACE] modal state', {
+      open,
+      pageCode,
+      selectedFacilityId,
+      encounterType,
+      deptPage,
+      selectedDepartmentId,
+      selectedDepartment
     });
-  }, [deptList]);
+  }, [open, pageCode, selectedFacilityId, encounterType, deptPage, selectedDepartmentId, selectedDepartment]);
+
+
+  useEffect(() => {
+    if (!open) return;
+
+    setDeptPage(0);
+    setSelectedDepartmentId(null);
+    setAllDepartments([]);
+  }, [open, selectedFacilityId]);
+
+
+
+
+  useEffect(() => {
+    console.log('[TRACE] modal open changed', { open });
+  }, [open]);
+  const [deptRequestNo, setDeptRequestNo] = useState(0);
 
   useEffect(() => {
     setPayorPage(0);
@@ -784,13 +835,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -821,13 +872,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -994,7 +1045,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
       case 0:
         return (
           <Form layout="inline">
-            <span className="custom-text">Basic Information</span>
+            <span className="custom-text">Basic Informationm</span>
 
             <MyInput
               width={200}
@@ -1070,7 +1121,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               setRecord={setLocalPatient}
               width={200}
             />
-             {pageCode === 'ER_Triage' && (
+            {pageCode === 'ER_Triage' && (
               <>
                 <MyInput
                   column
@@ -1116,6 +1167,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     if (deptList?.links?.next) {
                       const { page } = extractPaginationFromLink(deptList.links.next);
                       setDeptPage(page);
+                      fetchDepartments(page);
                     }
                   }}
                 />
@@ -1131,7 +1183,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               setRecord={setLocalPatient}
             />
 
-           
+
           </Form>
         );
 
@@ -1197,7 +1249,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     ...newRecord,
                     number:
                       secondaryDocument.type === 'NO_DOC' ||
-                      secondaryDocument.type === 'NO_DOCUMENT'
+                        secondaryDocument.type === 'NO_DOCUMENT'
                         ? 'NO_DOCUMENT'
                         : newRecord.number
                   });
@@ -1636,6 +1688,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}
@@ -1645,6 +1702,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
         {
           title: 'Basic Info',
           icon: <FontAwesomeIcon icon={faUser} />,
+          disabledNext: !localPatient?.id,
+
           footer: (
             <MyButton onClick={pageCode === 'ER_Triage' ? handleSavePatientAndQuick : handleSave}>
               {pageCode === 'ER_Triage' ? 'Save & Create Quick Appointment' : 'Save'}
@@ -1670,7 +1729,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
       ]}
       size="33vw"
       position="right"
-      content={conjureFormContent}
+      content={(step) => <div dir={dir}>{conjureFormContent(step)}</div>}
       actionButtonFunction={async () => {
         const saved = await handleSave();
         if (!saved) return;

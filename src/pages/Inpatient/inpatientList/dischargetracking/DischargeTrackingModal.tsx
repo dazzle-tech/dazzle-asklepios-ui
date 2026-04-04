@@ -121,8 +121,14 @@ const approvalStatusColumns = [
 
 // Main modal component
 const DischargeTrackingModal = ({ open, setOpen }) => {
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-<div className='discharge-tracking-modal-main-container'>
+<div className='discharge-tracking-modal-main-container'dir={dir}>
 <MyTable
   data={dischargeInfo}
   columns={dischargeColumns}

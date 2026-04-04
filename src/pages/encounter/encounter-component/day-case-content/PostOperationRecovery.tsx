@@ -26,8 +26,16 @@ const PostOperationRecovery = () => {
     const { data: circuLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_CIRCU');
     const { data: respirLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_RESPIR');
     const { data: activityLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_ACTIVITY');
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
-        <Panel>
+        <Panel dir={dir}>
             <Form fluid layout='inline'>
                 <Row className='pre-operation-container'>
                     <Col md={12}>

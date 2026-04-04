@@ -22,7 +22,6 @@ import {
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
-import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 type PatientObservationsComplaintsProps = {
   patientId: number;
   encounterId: number;
@@ -48,7 +47,6 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
   // === API ===
   const [createPatientObservationsComplaints] = useCreatePatientObservationsComplaintsMutation();
-  const [updateEncounter] = useUpdateEncounterMutation();
 
   const { data: latestByEncounter } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
     { encounterId },
@@ -158,32 +156,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
     dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'warning' }));
   };
-  const buildEncounterUpdateBody = (row: any) => {
-    const body: any = {
-      id: row?.id,
-      patientId: row?.patientId ?? row?.patient?.id ?? row?.patientObject?.id,
-      encounterNumber: row?.encounterNumber ?? null,
-      facilityId: row?.facilityId,
-      departmentId: row?.departmentId,
-      practitionerId: row?.practitionerId ?? null,
-      encounterType: row?.encounterType,
-      encounterReason: row?.encounterReason,
-      followUpEncounterId: row?.followUpEncounterId ?? null,
-      priorityLevel: row?.priorityLevel,
-      originType: row?.originType ?? null,
-      originName: row?.originName ?? null,
-      notes: row?.notes ?? null,
-      departmentDailySequenceNumber: row?.departmentDailySequenceNumber ?? null,
-      encounterDate: row?.encounterDate ?? null,
-      status: row?.status,
-      chiefComplaint: row?.chiefComplaint ?? null,
-      hasPrescription: row?.hasPrescription ?? false,
-      hasOrder: row?.hasOrder ?? false,
-      isObserved: true
-    };
 
-    return body;
-  };
 
   const handleSave = async () => {
     if (!patientId) {
@@ -198,37 +171,6 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
     try {
       const created = await createPatientObservationsComplaints(createPayload as any).unwrap();
-      if (encounter && !encounter.isObserved) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId:
-              encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: encounter?.hasPrescription ?? false,
-            hasOrder: encounter?.hasOrder ?? false,
-            isObserved: true
-          }
-        }).unwrap();
-
-        console.log('Encounter updated to observed:', updated);
-      }
-
       setRecord(prev => ({
         ...prev,
         ...created,

@@ -4,6 +4,7 @@ import WaitingList from './newAdmissions';
 import TransferPatientsList from './transferRequests';
 import TransferTransactions from './transferTrasactions';
 import MyTab from '@/components/MyTab';
+
 const InpatientWaitingLists = () => {
   const tabData = [
     { title: 'New Admissions', content: <WaitingList /> },
@@ -11,11 +12,21 @@ const InpatientWaitingLists = () => {
     { title: 'Transfer Transactions', content: <TransferTransactions /> }
   ];
 
-  return (
-    <MyTab
-     data={tabData}
-     className="tab-container"
-    />
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+  return (<div dir={dir}>
+            <MyTab
+              data={tabData.map(tab => ({
+                ...tab,
+                content: <div dir={dir}>{tab.content}</div>
+              }))}
+              className="tab-container"
+            />  
+          </div>       
   );
 };
+
 export default InpatientWaitingLists;

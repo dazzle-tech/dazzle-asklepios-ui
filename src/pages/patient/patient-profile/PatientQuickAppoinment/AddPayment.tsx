@@ -62,8 +62,15 @@ const AddPayment = ({ isReadOnly }) => {
         }
     ];
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
-        <div className='payment-method-container'>
+        <div className='payment-method-container' dir={dir}>
             <Form layout="inline" fluid className='fields-container'>
                 <MyInput
                     vr={validationResult}

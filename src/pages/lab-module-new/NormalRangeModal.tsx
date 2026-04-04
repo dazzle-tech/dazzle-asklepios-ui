@@ -4,19 +4,30 @@ import Translate from '@/components/Translate';
 import { useGetLovAllValuesQuery } from '@/services/setupService';
 import { initialListRequestAllValues } from '@/types/types';
 import { formatEnumString } from '@/utils';
-import React from 'react';
+import { useGetDiagnosticTestProfilesByIdsMutation } from '@/services/setup/diagnosticTest/diagnosticTestProfileService';
+import React, { useEffect } from 'react';
 
 type Props = {
   open: boolean;
   setOpen: (v: boolean) => void;
   ranges: any[];
+  profileTestId: number | null;
 };
 
-const NormalRangeModal = ({ open, setOpen, ranges }: Props) => {
+const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
 
+const [getProfilesByIds, { data: profileTests, isLoading }] =
+  useGetDiagnosticTestProfilesByIdsMutation();
+  useEffect(() => {
+  if (profileTestId) {
+    getProfilesByIds([profileTestId]);
+  }
+}, [profileTestId]);
+    const profileTest = profileTests?.[0];
+  console.log("Profile Test Details:", profileTest);
   // list of value new function
   const { data: allLovValues } =
-    useGetLovAllValuesQuery({ ...initialListRequestAllValues }); 
+    useGetLovAllValuesQuery({ ...initialListRequestAllValues });
 
   const resolveLovKeysDisplay = (lovKeys?: string[]) => {
     if (!Array.isArray(lovKeys) || !lovKeys.length) return ' ';
@@ -60,13 +71,29 @@ const NormalRangeModal = ({ open, setOpen, ranges }: Props) => {
       title: <Translate>RANGE</Translate>,
       flexGrow: 1,
       render: (r: any) => {
-        if (r.rangeFrom != null || r.rangeTo != null) {
-          return `${r.rangeFrom ?? ' '} - ${r.rangeTo ?? ' '}`;
+        if (profileTest?.resultType === 'NUMBER') {
+          switch (r.normalRangeType) {
+            case 'RANGE':
+              return `${r.rangeFrom ?? '-'} - ${r.rangeTo ?? '-'}`;
+
+            case 'LESS_THAN':
+              return `< ${r.rangeTo ?? '-'}`;
+
+            case 'MORE_THAN':
+              return `> ${r.rangeFrom ?? '-'}`;
+
+            default:
+              return '-';
+          }
         }
-        if (Array.isArray(r.lovKeys) && r.lovKeys.length) {
-          return resolveLovKeysDisplay(r.lovKeys);
+
+        if (profileTest?.resultType === 'LOV') {
+          return Array.isArray(r.lovKeys) && r.lovKeys.length
+            ? resolveLovKeysDisplay(r.lovKeys)
+            : '-';
         }
-        return ' ';
+
+        return '-';
       }
     },
     {
@@ -85,29 +112,31 @@ const NormalRangeModal = ({ open, setOpen, ranges }: Props) => {
   ];
 
   // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-  <div dir={dir}>
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Normal Ranges"
-      position='center'
-      size="40vw"
-      bodyheight='auto'
-      content={
-        <MyTable
-          columns={columns}
-          data={ranges ?? []}
-          height={400}
-        />}
-    />
-  </div>
+    <div dir={dir}>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        title="Normal Ranges"
+        position='center'
+        size="40vw"
+        bodyheight='auto'
+        content={
+          <div dir={dir}>
+            <MyTable
+              columns={columns}
+              data={ranges ?? []}
+              height={400}
+            />
+          </div>}
+      />
+    </div>
   );
 };
 

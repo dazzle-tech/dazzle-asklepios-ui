@@ -4,7 +4,15 @@ import Translate from '@/components/Translate';
 import React from 'react';
 import { Col, FlexboxGrid, Panel, Row } from 'rsuite';
 const AnthropometricData = (object, setObject) => {
-  return (
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+  return (<div dir={dir}>
     <Row gutter={120}>
       <Row>
       <FlexboxGrid>
@@ -93,6 +101,7 @@ const AnthropometricData = (object, setObject) => {
         </Col>
       </Row>
     </Row>
+    </div>
   );
 };
 export default AnthropometricData;

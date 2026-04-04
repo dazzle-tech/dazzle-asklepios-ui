@@ -324,6 +324,13 @@ const DetailsModal = ({
     if (openToAdd) handleClear();
   }, [openToAdd]);
 
+  
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -340,7 +347,7 @@ const DetailsModal = ({
           footer: <MyButton onClick={handleClear}>Clear</MyButton>
         }
       ]}
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
     />
   );
 };

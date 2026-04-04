@@ -86,12 +86,14 @@ const LogResult = ({ open, setOpen, result }: Props) => {
       size="40vw"
       position='right'
       content={
+      <div dir={dir}>
         <MyTable
           height={400}
           loading={isFetching}
           data={logs ?? []}
           columns={columns}
         />
+      </div>
       }
     />
   </div>

@@ -7,9 +7,14 @@ import { useEnumOptions } from '@/services/enumsApi';
 const InventoryAttributes = ({ product, setProduct , disabled }) => {
 
     const lotSerial = useEnumOptions("InventoryType");
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-        <>
+        <div dir={dir}>
             <Form fluid>
                 <div className="flex-row-product-set-up-page">
                 <MyInput
@@ -99,7 +104,7 @@ const InventoryAttributes = ({ product, setProduct , disabled }) => {
                 />
 
             </Form>
-        </>
+        </div>
     )
 };
 
