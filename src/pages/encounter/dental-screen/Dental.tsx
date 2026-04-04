@@ -13,6 +13,8 @@ const Dental = () => {
   const location = useLocation();
   const { patient, encounter } = location.state || {};
   const dispatch = useAppDispatch();
+  console.log("Dental component - patient:", patient);
+  console.log("Dental component - encounter:", encounter);
 
   const [originalChart, setOriginalChart] = useState({ ...newApDentalChart });
   const [currentChart, setCurrentChart] = useState({ ...newApDentalChart });
@@ -22,7 +24,7 @@ const Dental = () => {
   const [progressNotes, setProgressNotes] = useState([]);
   const [treatmentPlanTrigger, setTreatmentPlanTrigger] = useState(-1);
   // Fetch dental charts
-  const dentalChartsResponse = useGetDentalChartsByEncounterQuery(encounter?.key ?? '');
+  const dentalChartsResponse = useGetDentalChartsByEncounterQuery(encounter?.id ?? '');
 
   useEffect(() => {
     if (dentalChartsResponse && dentalChartsResponse.isSuccess) {
