@@ -348,7 +348,7 @@ export interface AvailabilityTemplateCreateDTO {
   requirePreAssessment: boolean;
   allowPatientPortalBooking: boolean;
   requireConfirmation: boolean;
-  financialDetails?: string | null;
+  financialDetails?: string;
   isActive: boolean;
   workingDays?: AvailabilityTemplateWorkingDay[] | null;
 

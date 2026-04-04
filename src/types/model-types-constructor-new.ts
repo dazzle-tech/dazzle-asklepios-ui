@@ -971,11 +971,11 @@ export const newAvailabilityTemplateIntervalUpdateDTO: modelTypes.AvailabilityTe
 };
 
 export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCreateDTO = {
-  facilityId: 0,
-  departmentId: 0,
+  facilityId: undefined,
+  departmentId: undefined,
   templateName: '',
   templateType: 'DEPARTMENT',
-  resourceId: 2,
+  resourceId: undefined,
   templateColor: "#6982F0",
   status: 'DRAFT',
   versionNo: 1,
@@ -993,7 +993,7 @@ export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCr
   requirePreAssessment: false,
   allowPatientPortalBooking: false,
   requireConfirmation: false,
-  financialDetails: 'CASH',  //مهي انحذفت
+  financialDetails: 'BOTH', 
   isActive: true,
   workingDays: [],
 };

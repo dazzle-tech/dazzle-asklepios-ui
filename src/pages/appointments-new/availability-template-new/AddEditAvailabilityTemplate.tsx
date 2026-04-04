@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Tabs, Divider, Form, RadioGroup, Radio, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -15,7 +15,7 @@ import MyTab from '@/components/MyTab';
 import { FaPlus } from "react-icons/fa";
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import AddRoomModal from './AddRoomModal';
+import AddRoomModal from './AddResourceModal';
 import AddExceptionModal from './AddExceptionModal';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useGetAllServicesQuery, useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
@@ -24,7 +24,9 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 import { newAvailabilityTemplateCreateDTO, newAvailabilityTemplateResponseVM } from '@/types/model-types-constructor-new';
-import { useCreateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
+import { useCreateAvailabilityTemplateMutation, useGetAvailabilityTemplatesByParentTemplateIdQuery } from '@/services/appointment/availabilityTemplateService';
+import { formatEnumString } from '@/utils';
+import AddResourceModal from './AddResourceModal';
 
 const days = [
   'Sunday',
@@ -100,6 +102,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const [openPreview, setOpenPreview] = useState(false);
   const [openAddChannelModal, setOpenAddChannelModal] = useState(false);
   const [openAddExceptionModal, setOpenAddExceptionModal] = useState<boolean>(false);
+  const [openAddResource, setOpenAddResource] = useState<boolean>(false);
   const [publishChannelId, setPublishChannelId] = useState<string | null>(null);
   const [channelsByDay, setChannelsByDay] = useState<ChannelsByDay>({});
   const {
@@ -124,7 +127,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }
   );
 
-
+  const daysEnum = useEnumOptions("DayOfWeek");
   const { data: servicesList, isFetching, refetch } = useGetAllServicesQuery({});
   const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
     {
@@ -181,31 +184,33 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       workingDays: nextWorkingDays,
     }));
   };
+const { data: templates, isLoading, isError } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
+// { parentTemplateId: record?.id }
+{
+      parentTemplateId:  record?.id
+    },
+    {
+      skip: ! record?.id
+    }
 
+);
+console.log("templatestemplates: ", templates)
   const tabData = () => {
     let arr = [];
     {
-      days.map((day, index) => (
-
+      daysEnum.map((day, index) => (
         arr.push({
-          title: day, content:
+          title: formatEnumString(day.value),
+          // disabled: !record?.workingDays?.find(d => d.dayOfWeek === day.value)?.isWorking ,
+          content:
             <>
               <AvailabilityDayGrid
-                step={120}
-                activeDay={activeDay}
-                setActiveDay={setActiveDay}
-                channels={channelsByDay[activeDay] ?? []}
-                availability={availability}
-                setAvailability={setAvailability}
-                onAddChannel={handleAddChannel}
-                onRemoveChannel={handleRemoveChannel}
-                // channelsDummyData={record?.channelsData?.[day] ?? []}
-                templatesData={templatesData}
-                setTemplatesData={setTemplatesData}
-                template={record}
-                day={day}
+               parentTemplate={record}
+               templates={templates}
+
               />
             </>
+
         })
       ))
     }
@@ -262,7 +267,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
 
     console.log("objectToAdd: ", { ...record, numberOfResourcesExpected: Number(record.numberOfResourcesExpected), durationMinutes: Number(record?.durationMinutes) });
-    create({ ...record, numberOfResourcesExpected: Number(record.numberOfResourcesExpected), durationMinutes: Number(record?.durationMinutes) }).unwrap();
+    create({ ...record, resourceId: record?.departmentId, numberOfResourcesExpected: Number(record.numberOfResourcesExpected), durationMinutes: Number(record?.durationMinutes) }).unwrap();
     // setRecord(newTemplate);
     dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     setOpen(false);
@@ -277,18 +282,70 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }
   }, [template]);
 
+  const appliedWorkingDaysFacilityIdRef = useRef<string | number | null>(null);
   useEffect(() => {
     workingDaysTouchedRef.current = false;
+    appliedWorkingDaysFacilityIdRef.current = null;
   }, [record?.facilityId]);
 
-  const initializedRef = useRef(false);
-  useEffect(() => {
-    // ✅ لا تعيد التشغيل إذا already initialized
-    if (initializedRef.current) return;
+  // useEffect(() => {
+  //   if (isEditMode) return;
+  //   if (workingDaysTouchedRef.current) return;
+  //   if (!DayOfWeek || DayOfWeek.length === 0) return;
+  //   if (!record?.facilityId) return;
+  //   if (appliedWorkingDaysFacilityIdRef.current === record.facilityId) return;
 
+  //   const facilities = facilityListResponse ?? [];
+  //   const selectedFacilityData = facilities.find(
+  //     (f: any) => String(f?.id) === String(record.facilityId)
+  //   );
+
+  //   const facilityWorkingDays =
+  //     selectedFacilityFullObject?.workingDays ??
+  //     selectedFacilityData?.workingDays ??
+  //     [];
+
+  //   const organizationWorkingDays =
+  //     organizationDefinitions?.[0]?.workingDays ?? [];
+
+  //   const sourceWorkingDays =
+  //     facilityWorkingDays?.length > 0
+  //       ? facilityWorkingDays
+  //       : organizationWorkingDays;
+
+  //   if (!sourceWorkingDays?.length) return;
+
+  //   const normalizedWorkingDays = DayOfWeek.map(day => {
+  //     const found = sourceWorkingDays.find(
+  //       (d: any) => String(d?.dayOfWeek) === String(day.value)
+  //     );
+  //     return {
+  //       dayOfWeek: day.value,
+  //       isWorking: found ? found.isWorking !== false : false,
+  //     };
+  //   });
+
+  //   // ðŸ”¥ Ø£Ù‡Ù… Ø³Ø·Ø±
+  //   appliedWorkingDaysFacilityIdRef.current = record.facilityId;
+
+  //   setRecord(prev => ({
+  //     ...prev,
+  //     workingDays: normalizedWorkingDays,
+  //   }));
+
+  // }, [
+  //   isEditMode,
+  //   record?.facilityId,
+  //   facilityListResponse,
+  //   selectedFacilityFullObject,
+  //   organizationDefinitions,
+  //   DayOfWeek,
+  // ]);
+  useEffect(() => {
     if (isEditMode) return;
     if (!DayOfWeek || DayOfWeek.length === 0) return;
     if (!record?.facilityId) return;
+    if (workingDaysTouchedRef.current) return;
 
     const facilities = facilityListResponse ?? [];
     const selectedFacilityData = facilities.find(
@@ -300,15 +357,14 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       selectedFacilityData?.workingDays ??
       [];
 
-    const organizationWorkingDays =
-      organizationDefinitions?.[0]?.workingDays ?? [];
+    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
 
     const sourceWorkingDays =
-      facilityWorkingDays?.length > 0
+      facilityWorkingDays && facilityWorkingDays.length > 0
         ? facilityWorkingDays
         : organizationWorkingDays;
 
-    if (!sourceWorkingDays?.length) return;
+    if (!sourceWorkingDays || sourceWorkingDays.length === 0) return;
 
     const normalizedWorkingDays = DayOfWeek.map(day => {
       const found = sourceWorkingDays.find(
@@ -320,14 +376,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       };
     });
 
-    // 🔥 أهم سطر
-    initializedRef.current = true;
-
     setRecord(prev => ({
       ...prev,
       workingDays: normalizedWorkingDays,
     }));
-
   }, [
     isEditMode,
     record?.facilityId,
@@ -651,7 +703,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                 >
                   <Translate>Add Exception</Translate>
                 </MyButton>
-
+                <MyButton onClick={() => setOpenAddResource(true)} prefixIcon={() => <FaPlus />} disabled={template?.id ? false : true}>Add Resource</MyButton>
 
               </div>
             </div>
@@ -666,6 +718,16 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
               channelsByDay={channelsByDay}
               availability={availability}
               slotsBeforeAfter={template.slotsBeforeAfter ?? 5}
+            />
+
+            <AddResourceModal
+              open={openAddResource}
+              setOpen={setOpenAddResource}
+              // record={record}
+              // setRecord={setRecord}
+              mainTemplate={record}
+              selectedDepartment={selectedDepartment}
+              selectedFacility={selectedFacility}
             />
 
             <AddExceptionModal
@@ -684,6 +746,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       open={open}
       setOpen={setOpen}
       actionButtonFunction={handleSaveMainInfo}
+      hideActionBtn={record?.id}
       title={
         template?.id
           ? <Translate>Edit Availability Template</Translate>
@@ -699,3 +762,4 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 };
 
 export default AddEditAvailabilityTemplate;
+

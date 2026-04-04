@@ -6,33 +6,13 @@ import MyModal from '@/components/MyModal/MyModal';
 import AddIntervalModal from './AddIntervalModal';
 import MyInput from '@/components/MyInput';
 import { Divider, Form } from 'rsuite';
-import AddRoomModal from './AddRoomModal';
+import AddRoomModal from './AddResourceModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { FaPlus } from "react-icons/fa";
 
-type Channel = {
-    id: string;
-    name: string;
-    color?: string;
-};
 
-type IntervalForm = {
-    start: string;
-    end: string;
-    applyAllChannels: boolean;
-    slotDuration: number;
-    startStep: number;
-    strategy: string;
-};
 
-type ChannelAvailability = {
-    channelId: string;
-    intervals: Interval[];
-};
 
-type AvailabilityByDay = {
-    [dayIndex: number]: ChannelAvailability[];
-};
 
 const generateDayTimes = (step: number) => {
     const times: { label: string; minutes: number }[] = [];
@@ -45,87 +25,50 @@ const generateDayTimes = (step: number) => {
 };
 
 const AvailabilityDayGrid = ({
-    step,
-    activeDay,
-    setActiveDay,
-    channels,
-    availability,
-    setAvailability,
-    onAddChannel,
-    onRemoveChannel,
-    // channelsDummyData,
-    templatesData,
-    setTemplatesData,
-    template,
-    day
+    templates,
+    parentTemplate
 }: {
-    step: number;
-    activeDay: number;
-    setActiveDay: (day: number) => void;
-    channels: Channel[];
-    availability: AvailabilityByDay;
-    setAvailability: React.Dispatch<React.SetStateAction<AvailabilityByDay>>;
-    onAddChannel: (data: { name: string; color?: string }) => void;
-    onRemoveChannel: (id: string) => void;
-    // channelsDummyData: any[],
-    templatesData: any[],
-    setTemplatesData: any,
-    template: any,
-    day: string
+
+      templates: any;
+    parentTemplate: any
+
+    // step: number;
+    // activeDay: number;
+    // setActiveDay: (day: number) => void;
+    // channels: Channel[];
+    // availability: AvailabilityByDay;
+    // setAvailability: React.Dispatch<React.SetStateAction<AvailabilityByDay>>;
+    // onAddChannel: (data: { name: string; color?: string }) => void;
+    // onRemoveChannel: (id: string) => void;
+    // // channelsDummyData: any[],
+    // templatesData: any[],
+    // setTemplatesData: any,
+    // template: any,
+    // day: string
 }) => {
 
     const [channelsDummyData, setChannelsDummyData] = useState([]);
-    useEffect(() => {
-        if (!template?.id) return;
-
-        const freshTemplate = templatesData.find(t => t.id === template.id);
-
-        setChannelsDummyData(
-            freshTemplate?.channelsData?.[day] ?? []
-        );
-    }, [templatesData, template?.id, day]);
-    const times = useMemo(() => generateDayTimes(step), [step]);
+    
+    const times = 
+    // useMemo(() =>
+         generateDayTimes(120)
+    // , [120]);
     const [openAddInterval, setOpenAddInterval] = useState(false);
-    const [activeChannel, setActiveChannel] = useState({
-        id: 0,
-        channelName: "",
-        type: "Practitioner",
-        capacity: 0,
-        allowedServices: [],
-        color: "",
-        intervals: [],
-        slotsBefore: 0
-    });
-    const [openAddRoom, setOpenAddRoom] = useState(false);
+    
     const [channelToAddInterval, setChannelToAddInterval] = useState({});
 
 
 
-    const [intervalForm, setIntervalForm] = useState<IntervalForm>({
-        start: '',
-        end: '',
-        applyAllChannels: false,
-        slotDuration: template.step,
-        startStep: step,
-        strategy: '',
-    });
 
-
-
-
-  
-
-
-
-
-
+// const mergedArray = (parentTemplate && templates) ? [parentTemplate, ...templates?.data] : parentTemplate ? [parentTemplate] : templates ? [templates?.data] : [];
+const mergedArray = [
+  ...(parentTemplate?.id ? [parentTemplate] : []),
+  ...(Array.isArray(templates) ? templates : [])
+];
 
 
     return (
         <>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: "2px" }}>
-                <MyButton onClick={() => setOpenAddRoom(true)} prefixIcon={() => <FaPlus />} disabled={template?.id ? false : true}>Add Room</MyButton>
-            </div>
             <div className="calendar-wrapper">
                 <div className="time-column">
                     <div className="time-header">Time</div>
@@ -139,15 +82,14 @@ const AvailabilityDayGrid = ({
                 <div className="channels-wrapper">
 
                     <div
-                        // className="channel-column add-channel-column"
-                        // onClick={() => setOpenAddChannel(true)}
+                      
                         style={{ display: "flex", padding: "5px" }}
                     >
 
                         <div style={{ display: "flex" }}>
-                            {channelsDummyData.map(t => (
+                            {mergedArray.map(t => (
                                 <>
-                                    <div key={t.id}
+                                    <div key={t?.id}
                                         style={{
                                             width: "320px",
                                             display: 'flex',
@@ -157,23 +99,23 @@ const AvailabilityDayGrid = ({
                                     // className="channel-cell add-channel-cell"
                                     ><>
                                             <AvailabilityTemplateSummaryCard
-                                                title={t.channelName}
-                                                type={t.type}
-                                                capacity={t.capacity}
-                                                departmentCapacity={t.departmentCapacity}
-                                                services={t.allowedServices}
-                                                backgroundColor={t.color}
+                                                title={t?.templateName}
+                                                type={t?.templateType}
+                                                capacity="1"
+                                                departmentCapacity={"test"}
+                                                services={["test", "test2"]}
+                                                backgroundColor={t?.templateColor}
                                             />
-                                            {t?.intervals?.map(interval => (
+                                            {/* {t?.intervals?.map(interval => (
                                                 <AvailabilityIntervalCard
                                                     start={interval.startTime}
                                                     end={interval.endTime}
                                                     slotLabel={interval.slotDuration}
                                                     backgroundColor={t.color}
                                                 />
-                                            ))}
+                                            ))} */}
 
-                                            <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t.color ?? "#6982F0"} onClick={() => { setChannelToAddInterval(t); setOpenAddInterval(true) }}>Add Interval</MyButton>
+                                            <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t?.templateColor ?? "#6982F0"} onClick={() => { setChannelToAddInterval(t); setOpenAddInterval(true) }}>Add Interval</MyButton>
                                         </>
                                     </div>
                                 </>
@@ -182,7 +124,7 @@ const AvailabilityDayGrid = ({
                         </div>
                     </div>
                 </div>
-                <AddIntervalModal
+                {/* <AddIntervalModal
                     step={step}
                     record={intervalForm}
                     setRecord={setIntervalForm}
@@ -193,18 +135,8 @@ const AvailabilityDayGrid = ({
                     templatesData={templatesData}
                     setTemplatesData={setTemplatesData}
                     channel={channelToAddInterval}
-                />
-                <AddRoomModal
-                    open={openAddRoom}
-                    setOpen={setOpenAddRoom}
-                    record={activeChannel}
-                    setRecord={setActiveChannel}
-                    templatesData={templatesData}
-                    setTemplatesData={setTemplatesData}
-                    template={template}
-                    day={day}
-
-                />
+                /> */}
+                
 
             </div>
         </>
