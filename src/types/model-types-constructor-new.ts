@@ -49,7 +49,15 @@ export const newDepartment: modelTypes.Department = {
   encounterType: '',
   isActive: true,
   hasMedicalSheets: false,
-  hasNurseMedicalSheets: false
+  hasNurseMedicalSheets: false,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
+  parallelCapacityEnabled: false,
+  requirePractitioner: false,
+  requireBilling: false,
+  requirePreAssessment: false
 };
 // ------------------- Facility -------------------
 export const newFacility: modelTypes.Facility = {
@@ -64,7 +72,9 @@ export const newFacility: modelTypes.Facility = {
   type: '',
   defaultCurrency: '',
   isActive: true,
-  ruleId: null
+  ruleId: null,
+  workingDays: [],
+  timeZone: '',
 };
 
 // ------------------- Create Facility -------------------
@@ -78,7 +88,9 @@ export const newCreateFacility: modelTypes.CreateFacility = {
   addressId: '',
   type: '',
   defaultCurrency: '',
-  isActive: true
+  isActive: true,
+  workingDays: [],
+  timeZone: '',
 };
 
 // ------------------- Role -------------------
@@ -171,12 +183,17 @@ export const newService: modelTypes.Service = {
   category: null,
   price: null,
   currency: null,
+  appointable: false,
   isActive: true,
   createdBy: '',
   createdDate: null,
   lastModifiedBy: null,
   lastModifiedDate: null,
-  facilityId: undefined
+  facilityId: undefined,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Service Item -------------------
@@ -311,7 +328,12 @@ export const newDiagnosticTest: modelTypes.DiagnosticTest = {
 
   defaultProfileResultType: '',
   defaultProfileResultUnit: '',
-  listOfValueId: null
+  listOfValueId: null,
+
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTestCollectedSampleDTO =
@@ -714,7 +736,11 @@ export const newCatalogResponseVM: modelTypes.CatalogResponseVM = {
   departmentId: 0,
   departmentName: null,
   facilityId: 0,
-  facilityName: null
+  facilityName: null,
+   parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Catalog Create VM -------------------
@@ -723,7 +749,11 @@ export const newCatalogCreateVM: modelTypes.CatalogCreateVM = {
   description: null,
   type: '',
   departmentId: undefined,
-  facilityId: undefined
+  facilityId: undefined,
+   parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Catalog Update VM -------------------
@@ -732,7 +762,11 @@ export const newCatalogUpdateVM: modelTypes.CatalogUpdateVM = {
   description: null,
   type: '',
   departmentId: undefined,
-  facilityId: undefined
+  facilityId: undefined,
+   parallelCapacityValue: 1,
+  defaultDurationMinutes: undefined,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
 };
 
 // ------------------- Catalog Diagnostic Test -------------------
@@ -2576,4 +2610,70 @@ export const newReferralRequest: modelTypes.ReferralRequest = {
 
   acceptedDate: null,
   acceptedBy: null
+};
+export const newRoom: modelTypes.Room = {
+  id: undefined,
+  facilityId: null,
+  departmentType: null,
+  departmentId: null,
+  name: '',
+  type: null,
+  floor: null,
+  isSpecificGender: false,
+  gender: null,
+  isActive: true,
+  appointable: false,
+  parallelCapacityValue: 1,
+  defaultDurationMinutes: 0,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0
+};
+
+export const newBed: modelTypes.Bed = {
+  id: undefined,
+  roomId: null,
+  name: '',
+  locationDetails: null,
+  type: null,
+  status: null,
+  isActive: true
+};
+
+export const newBedRoomServiceUpdateDTO: modelTypes.BedRoomService = {
+  id: undefined,
+  roomId: null,
+  serviceId: null,
+  bedSpecific: false,
+  bedId: null,
+  rule: null,
+  isActive: true
+};
+export const newEncounterAssignToBed: modelTypes.EncounterAssignToBed = {
+  id: undefined,
+  encounter: null,
+  patient: null,
+  roomId: null,
+  bedId: null,
+  departmentId: null,
+  admissionReason: null,
+  assignedAt: null,
+  releasedAt: null,
+  isActive: true,
+};
+export const newBedTransaction: modelTypes.BedTransaction = {
+  id: undefined,
+  encounter: null,
+  patient: null,
+  fromRoomId: null,
+  fromBedId: null,
+  toRoomId: null,
+  toBedId: null,
+  departmentId: null,
+  transactionType: null,
+  transactionDate: null
+};
+export const newPatientEncounterDischarge: modelTypes.PatientEncounterDischarge = {
+  encounterId: null,
+  dischargeType: null,
+  dischargeAt: null
 };

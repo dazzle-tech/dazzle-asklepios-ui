@@ -156,32 +156,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
     dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'warning' }));
   };
-  const buildEncounterUpdateBody = (row: any) => {
-    const body: any = {
-      id: row?.id,
-      patientId: row?.patientId ?? row?.patient?.id ?? row?.patientObject?.id,
-      encounterNumber: row?.encounterNumber ?? null,
-      facilityId: row?.facilityId,
-      departmentId: row?.departmentId,
-      practitionerId: row?.practitionerId ?? null,
-      encounterType: row?.encounterType,
-      encounterReason: row?.encounterReason,
-      followUpEncounterId: row?.followUpEncounterId ?? null,
-      priorityLevel: row?.priorityLevel,
-      originType: row?.originType ?? null,
-      originName: row?.originName ?? null,
-      notes: row?.notes ?? null,
-      departmentDailySequenceNumber: row?.departmentDailySequenceNumber ?? null,
-      encounterDate: row?.encounterDate ?? null,
-      status: row?.status,
-      chiefComplaint: row?.chiefComplaint ?? null,
-      hasPrescription: row?.hasPrescription ?? false,
-      hasOrder: row?.hasOrder ?? false,
-      isObserved: true
-    };
 
-    return body;
-  };
 
   const handleSave = async () => {
     if (!patientId) {
@@ -196,8 +171,6 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
     try {
       const created = await createPatientObservationsComplaints(createPayload as any).unwrap();
-      
-
       setRecord(prev => ({
         ...prev,
         ...created,

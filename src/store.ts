@@ -206,6 +206,12 @@ import { organizationHolidaysService } from './services/system-configurations/or
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import { departmentServicesService } from './services/departmentServicesService';
+import { roomService } from './services/setup/room/roomService';
+import { bedService } from './services/setup/room/bedService';
+import { bedRoomService } from './services/setup/room/bedRoomService';
+import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
+
 
 export const store = configureStore({
   reducer: {
@@ -314,6 +320,8 @@ export const store = configureStore({
 
     // medical sheets
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
+
+    [departmentServicesService.reducerPath]: departmentServicesService.reducer,
 
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
@@ -503,7 +511,13 @@ export const store = configureStore({
     [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
     [patientAdministrativeWarningsService.reducerPath]:
       patientAdministrativeWarningsService.reducer,
-    [observationServiceNew.reducerPath]: observationServiceNew.reducer
+    [observationServiceNew.reducerPath]: observationServiceNew.reducer,
+
+    // setup - room and bed management
+    [roomService.reducerPath]: roomService.reducer,
+    [bedService.reducerPath]: bedService.reducer,
+    [bedRoomService.reducerPath]: bedRoomService.reducer,
+    [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -741,7 +755,12 @@ export const store = configureStore({
         organizationHolidaysService.middleware,
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
-        availabilityTemplateIntervalService.middleware
+        availabilityTemplateIntervalService.middleware,
+        departmentServicesService.middleware,
+        roomService.middleware,
+        bedService.middleware,
+        bedRoomService.middleware,
+        encounterAssignToBedService.middleware,
       ]
     ) as any
 });

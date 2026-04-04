@@ -28,7 +28,7 @@ const WaitingList = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const divContent = (
-           "Inpatient Waiting List"
+        "Inpatient Waiting List"
     );
     dispatch(setPageCode('Waiting_Patient_Encounters'));
     dispatch(setDivContent(divContent));
@@ -80,9 +80,16 @@ const WaitingList = () => {
                 dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
                 setOpen(false);
             }
-        } catch (error) {
-            console.error("Encounter completion error:", error);
-            dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+        } catch (err: any) {
+            const errorMap: Record<string, string> = {
+                'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+                'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
+            };
+
+            const backendMessage = err?.data?.message;
+            const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+
+            dispatch(notify({ msg, sev: 'error' }));
         }
     };
     //useEffect
@@ -236,7 +243,7 @@ const WaitingList = () => {
         });
     };
 
-    const filters =(<><AdvancedSearchFilters searchFilter={true}/></>)
+    const filters = (<><AdvancedSearchFilters searchFilter={true} /></>)
 
         // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
