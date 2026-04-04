@@ -976,7 +976,7 @@ export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCr
   templateName: '',
   templateType: 'DEPARTMENT',
   resourceId: 2,
-  templateColor: null,
+  templateColor: "#6982F0",
   status: 'DRAFT',
   versionNo: 1,
   copyFromTemplateId: null,
@@ -993,9 +993,9 @@ export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCr
   requirePreAssessment: false,
   allowPatientPortalBooking: false,
   requireConfirmation: false,
-  financialDetails: null,
+  financialDetails: 'CASH',  //مهي انحذفت
   isActive: true,
-  workingDays: []
+  workingDays: [],
 };
 
 export const newAvailabilityTemplateUpdateDTO: modelTypes.AvailabilityTemplateUpdateDTO = {

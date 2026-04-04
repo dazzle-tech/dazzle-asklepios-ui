@@ -85,16 +85,7 @@ type AddEditAvailabilityTemplateProps = {
 };
 
 const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template, templatesData, setTemplatesData }) => {
-  const [activeChannel, setActiveChannel] = useState({
-    id: 0,
-    channelName: "",
-    type: "Practitioner",
-    capacity: 0,
-    allowedServices: [],
-    color: "",
-    intervals: [],
-    slotsBefore: 0
-  });
+ 
   const [record, setRecord] = useState<any>(
     // {
     //   name: '',

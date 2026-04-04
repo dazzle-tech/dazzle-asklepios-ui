@@ -351,6 +351,7 @@ export interface AvailabilityTemplateCreateDTO {
   financialDetails?: string | null;
   isActive: boolean;
   workingDays?: AvailabilityTemplateWorkingDay[] | null;
+
 }
 
 export interface AvailabilityTemplateUpdateDTO extends AvailabilityTemplateCreateDTO {
