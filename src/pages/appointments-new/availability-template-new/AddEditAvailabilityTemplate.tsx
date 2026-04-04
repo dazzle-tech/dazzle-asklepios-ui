@@ -23,6 +23,8 @@ import { useGetAllPractitionersQuery, useGetPractitionerByDepartmentQuery } from
 import { useEnumOptions } from '@/services/enumsApi';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
+import { newAvailabilityTemplateCreateDTO, newAvailabilityTemplateResponseVM } from '@/types/model-types-constructor-new';
+import { useCreateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
 
 const days = [
   'Sunday',
@@ -94,17 +96,18 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     slotsBefore: 0
   });
   const [record, setRecord] = useState<any>(
-    {
-      name: '',
-      facilityId: null,
-      departmentId: null,
-      allowedServiceIds: [],
-      effectiveFrom: null,
-      effectiveTo: null,
-      status: 'DRAFT',
-      step: 60,
-      slotsBefore: 5,
-    }
+    // {
+    //   name: '',
+    //   facilityId: null,
+    //   departmentId: null,
+    //   allowedServiceIds: [],
+    //   effectiveFrom: null,
+    //   effectiveTo: null,
+    //   status: 'DRAFT',
+    //   step: 60,
+    //   slotsBefore: 5,
+    // }
+    {...newAvailabilityTemplateResponseVM}
   );
 
   const dispatch = useAppDispatch();
@@ -132,7 +135,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
         skip: !selectedFacility?.id
       });
-  console.log("selectedFacility: ", selectedFacility);
   const { data: departmentListResponse } = useGetActiveDepartmentByFacilityListQuery(
     {
       facilityId: record?.facilityId
@@ -163,8 +165,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
   const DayOfWeek = useEnumOptions('DayOfWeek');
-  console.log("practitionerListResponse");
-  console.log(practitionerListResponse);
   const allServices = servicesList?.data ?? [];
   const departmentServiceIds = (servicesByDepartmentList?.data ?? []).map((s: any) => s.id);
   const selectedServiceIds = record?.allowedServiceIds ?? [];
@@ -178,14 +178,14 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       map[day.value] = false;
     });
 
-    (record.workingDays ?? []).forEach(day => {
+    (record?.workingDays ?? []).forEach(day => {
       if (day?.dayOfWeek !== undefined && day?.dayOfWeek !== null) {
         map[day.dayOfWeek] = day.isWorking !== false;
       }
     });
 
     return map;
-  }, [record.workingDays, DayOfWeek]);
+  }, [record?.workingDays, DayOfWeek]);
 
   const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
     if (!DayOfWeek || DayOfWeek.length === 0) return;
@@ -257,96 +257,162 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }));
   };
 
-  const handlePublish = () => {
-    const newId = (templatesData.length + 1).toString();
+  const [create] = useCreateAvailabilityTemplateMutation();
+  const handleSaveMainInfo = () => {
+    if (!record?.templateName?.trim()) {
+      dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
+      return;
+    }
+    if (!record?.facilityId) {
+      dispatch(notify({ msg: 'Facility is required', sev: 'warning' }));
+      return;
+    }
+    if (!record?.departmentId) {
+      dispatch(notify({ msg: 'Department is required', sev: 'warning' }));
+      return;
+    }
 
-    const newTemplate = { ...record, id: newId };
+    if (template?.id) {
+      
+      dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
+      setOpen(false);
+      return;
+    }
 
-
-    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-    daysOfWeek.forEach(day => {
-      newTemplate.channelsData[day] = [
-        {
-          id: 1,
-          channelName: 'General Clinic',
-          type: 'Department Pool',
-          capacity: '3 concurrent',
-          allowedServices: ['service1, service2'],
-          color: '#6982F0',
-          intervals: [
-            // { id: `int-${newId}-${day}`, startTime: "09:00", endTime: "12:00", slotDuration: "30 minutes" }
-          ]
-        }
-      ];
-    });
-
-    setTemplatesData(prev => [...prev, newTemplate]);
-    setRecord(newTemplate);
-
-    dispatch(
-      notify({
-        msg: 'Added Successfully',
-        sev: 'success',
-      })
-    );
+    // const newTemplate = {
+    //   ...record,
+    //   id: Date.now(),
+    //   channelsData: record?.channelsData ?? {
+    //     Sunday: [],
+    //     Monday: [],
+    //     Tuesday: [],
+    //     Wednesday: [],
+    //     Thursday: [],
+    //     Friday: [],
+    //     Saturday: []
+    //   }
+    // };
+    
+    console.log("objectToAdd: ", {...record, numberOfResourcesExpected: Number(record.numberOfResourcesExpected), durationMinutes: Number(record?.durationMinutes)});
+     create({...record, numberOfResourcesExpected: Number(record.numberOfResourcesExpected), durationMinutes: Number(record?.durationMinutes)}).unwrap();
+    // setRecord(newTemplate);
+    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    setOpen(false);
   };
-
 
   // Effects
   useEffect(() => {
+    if(template?.id){
     setRecord({...template, facilityId: selectedFacility?.id});
+    }else{
+       setRecord({...newAvailabilityTemplateCreateDTO, facilityId: selectedFacility?.id});
+    }
   }, [template]);
 
   useEffect(() => {
     workingDaysTouchedRef.current = false;
   }, [record?.facilityId]);
 
-  useEffect(() => {
-    if (isEditMode) return;
-    if (!DayOfWeek || DayOfWeek.length === 0) return;
-    if (!record?.facilityId) return;
-    if (workingDaysTouchedRef.current) return;
+  const initializedRef = useRef(false);
+ useEffect(() => {
+  // ✅ لا تعيد التشغيل إذا already initialized
+  if (initializedRef.current) return;
 
-    const facilities = facilityListResponse ?? [];
-    const selectedFacilityData = facilities.find(
-      (f: any) => String(f?.id) === String(record.facilityId)
+  if (isEditMode) return;
+  if (!DayOfWeek || DayOfWeek.length === 0) return;
+  if (!record?.facilityId) return;
+
+  const facilities = facilityListResponse ?? [];
+  const selectedFacilityData = facilities.find(
+    (f: any) => String(f?.id) === String(record.facilityId)
+  );
+
+  const facilityWorkingDays =
+    selectedFacilityFullObject?.workingDays ??
+    selectedFacilityData?.workingDays ??
+    [];
+
+  const organizationWorkingDays =
+    organizationDefinitions?.[0]?.workingDays ?? [];
+
+  const sourceWorkingDays =
+    facilityWorkingDays?.length > 0
+      ? facilityWorkingDays
+      : organizationWorkingDays;
+
+  if (!sourceWorkingDays?.length) return;
+
+  const normalizedWorkingDays = DayOfWeek.map(day => {
+    const found = sourceWorkingDays.find(
+      (d: any) => String(d?.dayOfWeek) === String(day.value)
     );
-    const facilityWorkingDays =
-      selectedFacilityFullObject?.workingDays ??
-      selectedFacilityData?.workingDays ??
-      [];
-    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
+    return {
+      dayOfWeek: day.value,
+      isWorking: found ? found.isWorking !== false : false,
+    };
+  });
 
-    const sourceWorkingDays =
-      facilityWorkingDays && facilityWorkingDays.length > 0
-        ? facilityWorkingDays
-        : organizationWorkingDays;
+  // 🔥 أهم سطر
+  initializedRef.current = true;
 
-    if (!sourceWorkingDays || sourceWorkingDays.length === 0) return;
+  setRecord(prev => ({
+    ...prev,
+    workingDays: normalizedWorkingDays,
+  }));
 
-    const normalizedWorkingDays = DayOfWeek.map(day => {
-      const found = sourceWorkingDays.find(
-        (d: any) => String(d?.dayOfWeek) === String(day.value)
-      );
-      return {
-        dayOfWeek: day.value,
-        isWorking: found ? found.isWorking !== false : false,
-      };
-    });
+}, [
+  isEditMode,
+  record?.facilityId,
+  facilityListResponse,
+  selectedFacilityFullObject,
+  organizationDefinitions,
+  DayOfWeek,
+]);
+  // useEffect(() => {
+  //   if (isEditMode) return;
+  //   if (!DayOfWeek || DayOfWeek.length === 0) return;
+  //   if (!record?.facilityId) return;
+  //   if (workingDaysTouchedRef.current) return;
 
-    setRecord(prev => ({
-      ...prev,
-      workingDays: normalizedWorkingDays,
-    }));
-  }, [
-    isEditMode,
-    record?.facilityId,
-    facilityListResponse,
-    selectedFacilityFullObject,
-    organizationDefinitions,
-    DayOfWeek,
-  ]);
+  //   const facilities = facilityListResponse ?? [];
+  //   const selectedFacilityData = facilities.find(
+  //     (f: any) => String(f?.id) === String(record.facilityId)
+  //   );
+  //   const facilityWorkingDays =
+  //     selectedFacilityFullObject?.workingDays ??
+  //     selectedFacilityData?.workingDays ??
+  //     [];
+  //   const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
+
+  //   const sourceWorkingDays =
+  //     facilityWorkingDays && facilityWorkingDays.length > 0
+  //       ? facilityWorkingDays
+  //       : organizationWorkingDays;
+
+  //   if (!sourceWorkingDays || sourceWorkingDays.length === 0) return;
+
+  //   const normalizedWorkingDays = DayOfWeek.map(day => {
+  //     const found = sourceWorkingDays.find(
+  //       (d: any) => String(d?.dayOfWeek) === String(day.value)
+  //     );
+  //     return {
+  //       dayOfWeek: day.value,
+  //       isWorking: found ? found.isWorking !== false : false,
+  //     };
+  //   });
+
+  //   setRecord(prev => ({
+  //     ...prev,
+  //     workingDays: normalizedWorkingDays,
+  //   }));
+  // }, [
+  //   isEditMode,
+  //   record?.facilityId,
+  //   facilityListResponse,
+  //   selectedFacilityFullObject,
+  //   organizationDefinitions,
+  //   DayOfWeek,
+  // ]);
 
   useEffect(() => {
     if (!servicesByDepartmentList?.data) return;
@@ -382,9 +448,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                     <Row>
                        <Col md={12}>
                       <MyInput
-                        fieldName="name"
+                        fieldName="templateName"
                         fieldType="text"
-                        fieldLabel="Template Name"
                         record={record}
                         setRecord={setRecord}
                         width="100%"
@@ -476,7 +541,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                       <Row>
                          <Col md={12}>
                       <MyInput
-                        fieldName="duration"
+                        fieldName="durationMinutes"
+                        fieldLabel='duration'
                         fieldType="number"
                         record={record}
                         setRecord={setRecord}
@@ -516,7 +582,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                             <MyInput
                               width="100%"
                               fieldType="select"
-                              fieldName="defaultService"
+                              fieldName="defaultServiceId"
                               selectData={servicesByDepartmentList?.data ?? []}
                               selectDataLabel="name"
                               selectDataValue="id"
@@ -528,7 +594,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                             <MyInput
                               width="100%"
                               fieldType="number"
-                              fieldName="numberOfResources"
+                              fieldLabel="NumberOfResources"
+                              fieldName="numberOfResourcesExpected"
                               record={record}
                               setRecord={setRecord}
                             />
@@ -730,14 +797,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                   <Translate>Add Exception</Translate>
                 </MyButton>
 
-                <MyButton
-                  appearance="primary"
-                  // onClick={() => setOpenPublishModal(true)}
-                  disabled={record?.id ? true : false}
-                  onClick={() => handlePublish()}
-                >
-                  Publish new version
-                </MyButton>
 
               </div>
             </div>
@@ -1079,6 +1138,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     <MyModal
       open={open}
       setOpen={setOpen}
+      actionButtonFunction={handleSaveMainInfo}
       title={
         template?.id
           ? <Translate>Edit Availability Template</Translate>
