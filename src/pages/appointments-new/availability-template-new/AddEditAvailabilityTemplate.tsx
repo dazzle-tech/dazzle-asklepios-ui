@@ -518,7 +518,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                               <MyInput
                                 width="100%"
                                 fieldType="select"
-                                fieldName="defaultPractitioner"
+                                fieldLabel='Default Practitioner'
+                                fieldName="defaultPractitionerId"
                                 selectData={practitionerListResponse?.data ?? []}
                                 selectDataLabel="firstName"
                                 selectDataValue="id"
@@ -531,7 +532,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                         <MyInput
                           width="100%"
                           fieldType="check"
-                          fieldName="requirePreAssesment"
+                          fieldName="requirePreAssessment"
                           record={record}
                           setRecord={setRecord}
                           showLabel={false}

@@ -113,10 +113,6 @@ const mergedArray = [
   ...(parentTemplate?.id ? [parentTemplate] : []),
   ...normalizedTemplates
 ];
-console.log("templates: ", templates);
-console.log("mergedArray: ", mergedArray);
-console.log("normalizedTemplates: ", normalizedTemplates);
-console.log("parentTemplate: ", parentTemplate);
 
 
     return (

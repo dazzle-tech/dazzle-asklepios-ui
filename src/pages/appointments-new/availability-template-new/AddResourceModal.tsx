@@ -9,7 +9,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import { FaPlus, FaTrash } from "react-icons/fa";
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { Department } from '@/types/model-types-new';
 import { useGetAppointableServicesByLoggedInFacilityQuery, useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
@@ -21,6 +21,7 @@ import { useAppDispatch } from '@/hooks';
 import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
 import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetAppointableCatalogsByLoggedInFacilityQuery } from '@/services/setup/catalog/catalogService';
+import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 
 
 
@@ -44,8 +45,14 @@ const AddResourceModal = ({
   const dispatch = useAppDispatch();
   const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
   useEffect(() => {
-    setRecord({ ...record, parentTemplateId: mainTemplate?.id, facilityId: selectedFacility?.id, departmentId: mainTemplate?.departmentId });
-  }, [mainTemplate, selectedFacility]);
+    if (!open) return;
+    setRecord({
+      ...newAvailabilityTemplateCreateDTO,
+      parentTemplateId: mainTemplate?.id,
+      facilityId: selectedFacility?.id,
+      departmentId: mainTemplate?.departmentId
+    });
+  }, [open, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
   const [currentColor, setCurrentColor] = useState(mainTemplate?.color || '#6982F0');
 
   const statusEnum = useEnumOptions('TemplateStatus');
@@ -53,7 +60,6 @@ const AddResourceModal = ({
   const filteredtemplateTypeEnum = templateTypeEnum?.filter(
     option => option.value !== "DEPARTMENT"
   );
-  const DayOfWeek = useEnumOptions('DayOfWeek');
   // encounterReasonEnum no longer used here; services list is derived from parent template
 
   const {
@@ -61,9 +67,12 @@ const AddResourceModal = ({
     isLoading: isGettingFacilities,
     isFetching: isFetchingFacilities
   } = useGetActiveFacilitiesQuery({});
+  const { data: organizationDefinitions } = useGetAllOrganizationDefinitionsQuery({});
+  const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
+    skip: !selectedFacility?.id
+  });
   
   const { data: practitionersAppointableByLoggedOnFacility } = useGetAppointablePractitionerByLoggedInFacilityQuery({});
-  console.log("practitionersAppointableByLoggedOnFacility: ", practitionersAppointableByLoggedOnFacility);
   const { data: diagnosticTestsAppointable} = useGetAllActiveAppointableDiagnosticTestsQuery({});
   const { data: catalogsAppointableByLoggedOnFacility } = useGetAppointableCatalogsByLoggedInFacilityQuery({});
   const { data: servicesAppointableByLoggedOnFacility } = useGetAppointableServicesByLoggedInFacilityQuery({});
@@ -90,9 +99,70 @@ const AddResourceModal = ({
     );
 
   const allowedServicesTouchedRef = useRef(false);
+  const dayOptions = useEnumOptions('DayOfWeek');
+  const dayOptionsKey = useMemo(
+    () => (dayOptions ?? []).map(d => `${d.value}:${d.label}`).join('|'),
+    [dayOptions]
+  );
+  const workingDaysTouchedRef = useRef(false);
   useEffect(() => {
     allowedServicesTouchedRef.current = false;
   }, [record?.departmentId]);
+
+  useEffect(() => {
+    workingDaysTouchedRef.current = false;
+  }, [record?.facilityId]);
+
+  useEffect(() => {
+    if (!open) return;
+    allowedServicesTouchedRef.current = false;
+    workingDaysTouchedRef.current = false;
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (parentTemplateAllowedServices.length === 0) return;
+    setRecord(prev => {
+      const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
+      if (prevAllowed.length > 0) return prev;
+      return {
+        ...prev,
+        allowedServices: parentTemplateAllowedServices,
+      };
+    });
+  }, [open, parentTemplateAllowedServices]);
+
+  const workingDaysRecord = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    if (!dayOptions || dayOptions.length === 0) return map;
+
+    dayOptions.forEach(day => {
+      map[day.value] = false;
+    });
+
+    (record?.workingDays ?? []).forEach(day => {
+      if (day?.dayOfWeek !== undefined && day?.dayOfWeek !== null) {
+        map[day.dayOfWeek] = day.isWorking !== false;
+      }
+    });
+
+    return map;
+  }, [record?.workingDays, dayOptionsKey]);
+
+  const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
+    if (!dayOptions || dayOptions.length === 0) return;
+
+    const nextWorkingDays = dayOptions.map(day => ({
+      dayOfWeek: day.value,
+      isWorking: !!nextRecord[day.value],
+    }));
+
+    workingDaysTouchedRef.current = true;
+    setRecord(prev => ({
+      ...prev,
+      workingDays: nextWorkingDays,
+    }));
+  };
 
   const normalizeAllowedServices = (input: any) => {
     if (!Array.isArray(input)) return [];
@@ -156,11 +226,71 @@ const AddResourceModal = ({
   }, [departmentServiceValuesKey, isEditMode, parentTemplateAllowedServices]);
 
   useEffect(() => {
+    if (!dayOptions || dayOptions.length === 0) return;
+    if (!record?.facilityId) return;
+    if (workingDaysTouchedRef.current) return;
+    const hasWorkingDays =
+      Array.isArray(record?.workingDays) && record.workingDays.length > 0;
+    if (hasWorkingDays) return;
+
+    const facilities = facilityListResponse ?? [];
+    const selectedFacilityData = facilities.find(
+      (f: any) => String(f?.id) === String(record.facilityId)
+    );
+
+    const facilityWorkingDays =
+      selectedFacilityFullObject?.workingDays ??
+      selectedFacilityData?.workingDays ??
+      [];
+
+    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
+
+    const sourceWorkingDays =
+      facilityWorkingDays && facilityWorkingDays.length > 0
+        ? facilityWorkingDays
+        : organizationWorkingDays;
+
+    if (!sourceWorkingDays || sourceWorkingDays.length === 0) return;
+
+    const normalizedWorkingDays = dayOptions.map(day => {
+      const found = sourceWorkingDays.find(
+        (d: any) => String(d?.dayOfWeek) === String(day.value)
+      );
+      return {
+        dayOfWeek: day.value,
+        isWorking: found ? found.isWorking !== false : false,
+      };
+    });
+
+    setRecord(prev => {
+      const prevDays = prev?.workingDays ?? [];
+      const same =
+        prevDays.length === normalizedWorkingDays.length &&
+        prevDays.every((d, i) =>
+          d.dayOfWeek === normalizedWorkingDays[i].dayOfWeek &&
+          d.isWorking === normalizedWorkingDays[i].isWorking
+        );
+      if (same) return prev;
+      return {
+        ...prev,
+        workingDays: normalizedWorkingDays,
+      };
+    });
+  }, [
+    record?.facilityId,
+    facilityListResponse,
+    selectedFacilityFullObject,
+    organizationDefinitions,
+    dayOptionsKey,
+    record?.workingDays,
+  ]);
+
+  useEffect(() => {
     setRecord({...record, resourceId: undefined});
   },[record?.templateType]);
-  useEffect(() => {
-    console.log("resource record: ", record);
-  },[record]);
+  // useEffect(() => {
+  //   console.log("resource record: ", record);
+  // },[record]);
   const conjureFormContent = () => (
     <Form fluid>
       <Row>
@@ -388,7 +518,8 @@ const AddResourceModal = ({
                         <MyInput
                           width="100%"
                           fieldType="select"
-                          fieldName="defaultPractitioner"
+                          fieldName="defaultPractitionerId"
+                          fieldLabel='Default Practitioner'
                           selectData={practitionerListResponse?.data ?? []}
                           selectDataLabel="firstName"
                           selectDataValue="id"
@@ -401,7 +532,7 @@ const AddResourceModal = ({
                   <MyInput
                     width="100%"
                     fieldType="check"
-                    fieldName="requirePreAssesment"
+                    fieldName="requirePreAssessment"
                     record={record}
                     setRecord={setRecord}
                     showLabel={false}
@@ -478,11 +609,11 @@ const AddResourceModal = ({
       </Row>
 
 
-      {/* <SectionContainer
+      <SectionContainer
         title="Days"
         content={
           <Form fluid layout='inline'>
-            {DayOfWeek?.map(day => (
+            {dayOptions?.map(day => (
               <MyInput
                 key={day.value}
                 width="13vw"
@@ -496,7 +627,7 @@ const AddResourceModal = ({
             ))}
           </Form>
         }
-      /> */}
+      />
     </Form>
   );
 
@@ -532,11 +663,16 @@ const AddResourceModal = ({
         ? record.allowedServices
         : []
     };
-    console.log("objectToAdd: ", payload);
-    create(payload).unwrap();
-    // setRecord(newTemplate);
-    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    console.log("objectToAdd(resource): ", payload);
+    create(payload).unwrap().then(() => {
+       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     setOpen(false);
+    }).catch((e) => {
+       dispatch(notify({ msg: 'Error', sev: 'warning' }));
+       console.log("error: ", e);
+    });
+    // setRecord(newTemplate);
+    
   };
   return (
     <MyModal
