@@ -2,8 +2,26 @@ import * as React from "react";
 import MyModal from "@/components/MyModal/MyModal";
 import { useNavigate } from "react-router-dom";
 import type { AvailabilityGenerationBatchApplyDTO, AvailabilityTemplateResponseVM } from "@/types/model-types-new";
+import { useApplyAvailabilityTemplateMutation } from "@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService";
 import ApplyTemplateStepOne from "./components/ApplyTemplateStepOne";
 import ApplyTemplateStepTwo from "./components/ApplyTemplateStepTwo";
+import { formatLocalDateTimeForApi } from "./applyTemplateDateUtils";
+
+function buildApplyAvailabilityPayload(dto: AvailabilityGenerationBatchApplyDTO): AvailabilityGenerationBatchApplyDTO {
+  const scope = String((dto as any)?.scope ?? "").trim().toUpperCase();
+  const childId = Number((dto as any)?.childTemplateId ?? 0);
+  const effectiveTemplateId =
+    scope === "SPECIFIC_RESOURCE" && childId > 0 ? childId : Number(dto.templateId ?? 0);
+  return {
+    templateId: effectiveTemplateId,
+    startDate: formatLocalDateTimeForApi(dto.startDate),
+    endDate: formatLocalDateTimeForApi(dto.endDate),
+    deferred: dto.deferred,
+    deferredAt: dto.deferredAt ?? null,
+    scope: dto.scope,
+    holidayHandlingMode: dto.holidayHandlingMode ?? null,
+  };
+}
 
 const stepItems = [
   {
@@ -26,6 +44,7 @@ type ApplyTemplateProps = {
 
 const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTemplate }) => {
   const navigate = useNavigate();
+  const [applyAvailabilityTemplate, { isLoading: isApplying }] = useApplyAvailabilityTemplateMutation();
   const [internalOpen, setInternalOpen] = React.useState(true);
   const [isStepOneValid, setIsStepOneValid] = React.useState(true);
   const [formState, setFormState] = React.useState<AvailabilityGenerationBatchApplyDTO>({
@@ -54,12 +73,18 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
     [isStepOneValid]
   );
 
-  const handleClose = () => {
+  const handleClose = React.useCallback(() => {
     modalSetOpen(false);
     if (!isControlled) {
       navigate(-1);
     }
-  };
+  }, [isControlled, modalSetOpen, navigate]);
+
+  const handleApplyTemplate = React.useCallback(async () => {
+    const payload = buildApplyAvailabilityPayload(formState);
+    await applyAvailabilityTemplate(payload).unwrap();
+    handleClose();
+  }, [applyAvailabilityTemplate, formState, handleClose]);
 
   React.useEffect(() => {
     setFormState(prev => ({
@@ -97,7 +122,8 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
       handleCancelFunction={handleClose}
       cancelButtonLabel="Close"
       actionButtonLabel="Apply Template"
-      actionButtonFunction={handleClose}
+      actionButtonFunction={handleApplyTemplate}
+      isDisabledActionBtn={isApplying}
       modalColor="var(--primary-blue)"
       customClassName="apply-template-modal"
     />
