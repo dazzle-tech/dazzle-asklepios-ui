@@ -78,7 +78,8 @@ const Billing = ({ data, patient, onCreateInvoice }: BillingProps) => {
     }
 
     // 🔹 يروح على Accounting → handleCreateInvoiceFromBilling
-    onCreateInvoice(selectedRows);
+    // ننتظر إنشاء الفاتورة والبنود قبل توليد الـ PDF
+    await onCreateInvoice(selectedRows);
 
     try {
       const selectedItems = data.filter(item => selectedRows.includes(item.id));
@@ -252,7 +253,7 @@ const Billing = ({ data, patient, onCreateInvoice }: BillingProps) => {
         data={data}
         columns={columns}
         onRowClick={(row) => {
-          setSelectedRows(row)
+          setCurrentRecord(row);
         }}
         loading={false}
         tableButtons={tableButtons}

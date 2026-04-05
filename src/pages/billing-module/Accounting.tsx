@@ -35,10 +35,15 @@ import {
 } from '@/types/model-types-new';
 
 import {
-  useCreateInvoiceMutation,
-  useCreateInvoiceItemMutation,
+  // old billing service (kept for other screens)
   useGetPatientAccountSummaryQuery,
 } from '@/services/billing/BillingService';
+import {
+  useCreatePatientInvoiceMutation,
+} from '@/services/patient/patientBillingInvoiceService';
+import {
+  useCreatePatientInvoiceItemMutation,
+} from '@/services/patient/patientBillingInvoiceItemService';
 
 // ---------- CONSTANTS ----------
 
@@ -66,8 +71,8 @@ const Accounting: React.FC = () => {
   const divContent = 'Accounting';
 
   // ---- RTK Billing mutations ----
-  const [createInvoice] = useCreateInvoiceMutation();
-  const [createInvoiceItem] = useCreateInvoiceItemMutation();
+  const [createPatientInvoice] = useCreatePatientInvoiceMutation();
+  const [createPatientInvoiceItem] = useCreatePatientInvoiceItemMutation();
 
   // ---- Patient account summary ----
   const {
@@ -83,18 +88,28 @@ const Accounting: React.FC = () => {
     outstanding: Number(accountSummary?.outstandingBalance ?? 0),
   };
 
+  const toNumericId = (val: unknown): number | null => {
+    const n = Number(val as any);
+    return Number.isFinite(n) ? n : null;
+  };
+  const patientNumericId =
+    toNumericId(patient?.id) ??
+    toNumericId((patient as any)?.patientId) ??
+    toNumericId(patient?.key) ??
+    null;
+
   const {
     data: patientServicesAndProductsResponse,
     refetch: refetchPatientServicesAndProductsByPatient,
   } = useGetPatientServicesAndProductsByPatientQuery(
     {
-      patientId: Number(patient?.id),
+      patientId: patientNumericId as number,
       page: 0,
       size: 500,
       sort: 'id,desc',
     },
     {
-      skip: !patient?.id,
+      skip: patientNumericId == null,
     }
   );
 
@@ -188,10 +203,24 @@ const Accounting: React.FC = () => {
   // ---------- إنشاء Invoice من الـ Billing + تحديث is_valid + تحديث Balance ----------
 
   const handleCreateInvoiceFromBilling = async (selectedIds: string[]) => {
-    if (!patient?.key || selectedIds.length === 0) return;
+    const hasPatient = patient?.id != null || patient?.key != null;
+    if (!hasPatient || selectedIds.length === 0) {
+      console.warn('[Accounting] Skip create invoice: missing patient or no selected rows', {
+        patient,
+        selectedCount: selectedIds.length,
+      });
+      return;
+    }
 
     const facilityId = authSlice?.tenant?.selectedFacility?.id;
     if (!facilityId) return;
+    if (patientNumericId == null || !Number.isFinite(Number(patientNumericId))) {
+      console.warn('[Accounting] Cannot create invoice: invalid patientNumericId', {
+        patient,
+        patientNumericId,
+      });
+      return;
+    }
 
     const itemsToInvoice = allBillingItems.filter(item =>
       selectedIds.includes(item.id)
@@ -209,41 +238,41 @@ const Accounting: React.FC = () => {
 
     try {
       // 1) إنشاء الفاتورة
-      const invoicePayload: BillingInvoiceCreateVM = {
-        facilityId,
-        patientKey: patient.key,
-        encounterKey: encounter?.key ?? null,
+      const invoicePayload = {
+        patientId: Number(patient?.id ?? patientNumericId),
+        facilityId: Number(facilityId),
+        status: 'PENDING',
         totalAmount,
         paidAmount: 0,
         balanceAmount: totalAmount,
         currency,
       };
 
-      const invoice = await createInvoice(invoicePayload).unwrap();
+      console.log('[Accounting] create invoice payload', invoicePayload);
+      const invoice = await createPatientInvoice(invoicePayload as any).unwrap();
+      console.log('[Accounting] created invoice response', invoice);
 
       // 2) إنشاء Invoice Items
-      const itemPayloads: BillingInvoiceItemCreateVM[] = itemsToInvoice.map(
-        item => ({
-          invoiceId: invoice.id,
-          nurseServiceProductKey: item.nurseServiceProductKey,
-          code: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          totalPrice:
-            item.totalPrice ?? item.price * (item.quantity || 1),
-          currency: item.currency,
-        })
+      const itemPayloads = itemsToInvoice.map(it => ({
+        invoiceId: Number(invoice.id),
+        nurseServiceProductId: Number(it.nurseServiceProductKey),
+        code: it.name,
+        quantity: Number(it.quantity),
+        unitPrice: Number(it.price),
+        totalPrice: Number(it.totalPrice ?? it.price * (it.quantity || 1)),
+        currency: it.currency,
+      }));
+
+      console.log('[Accounting] create invoice items payloads', itemPayloads);
+      await Promise.all(
+        itemPayloads.map(p => createPatientInvoiceItem(p as any).unwrap())
       );
+      console.log('[Accounting] created invoice items DONE');
 
-      await Promise.all(itemPayloads.map(p => createInvoiceItem(p).unwrap()));
-
-      // 4) نعمل refetch للـ list من patient services/products
       if (patient?.id) await refetchPatientServicesAndProductsByPatient();
 
-      // 5) نحدث الـ balance في كرت المريض
       await refetchAccountSummary();
 
-      // 6) ننظف الـ state المحلي برضه
       setAllBillingItems(prev =>
         prev.filter(item => !selectedIds.includes(item.id))
       );
@@ -266,15 +295,21 @@ const Accounting: React.FC = () => {
   }, [patient]);
 
   useEffect(() => {
-    if (!patient?.id) return;
+    if (patientNumericId == null) {
+      console.warn('[Accounting] Skip loading services/products: missing numeric patientId', {
+        patientRaw: patient,
+      });
+      return;
+    }
+    refetchPatientServicesAndProductsByPatient();
     console.log('[Accounting] Selected patient -> loading services/products', {
-      patientId: Number(patient.id),
+      patientId: patientNumericId,
       patientKey: patient?.key,
     });
-  }, [patient?.id, patient?.key]);
+  }, [patient?.id, patient?.key, patientNumericId]);
 
   useEffect(() => {
-    if (!patient?.key || !patientServicesAndProductsResponse?.data) {
+    if (!patientServicesAndProductsResponse?.data) {
       setAllBillingItems([]);
       setFilteredBilling([]);
       return;
@@ -349,7 +384,7 @@ const Accounting: React.FC = () => {
         currency: 'USD',
         discount: 0,
         priceList: 'Standard',
-        patientKey: String(patient.key),
+        patientKey: String(patientNumericId),
         quantity,
       };
     });
@@ -364,16 +399,9 @@ const Accounting: React.FC = () => {
   }, [patientServicesAndProductsResponse, patient, services, products, brands]);
 
   useEffect(() => {
-    if (!patient?.key) {
-      setFilteredBilling([]);
-      return;
-    }
-
-    const patientItems = allBillingItems.filter(
-      item => item.patientKey === patient.key
-    );
-    setFilteredBilling(patientItems);
-  }, [patient, allBillingItems]);
+    // Data already scoped by patient in the query; no extra filter needed.
+    setFilteredBilling(allBillingItems);
+  }, [allBillingItems]);
 
   // ---------- UI SECTIONS ----------
 

@@ -204,6 +204,8 @@ import { patientAdministrativeWarningsService } from './services/patient/patient
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { departmentServicesService } from './services/departmentServicesService';
+import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
+import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
 
 export const store = configureStore({
   reducer: {
@@ -405,6 +407,10 @@ export const store = configureStore({
     // billing / price list
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
+
+    // patient billing (new endpoints)
+    [patientBillingInvoiceService.reducerPath]: patientBillingInvoiceService.reducer,
+    [patientBillingInvoiceItemService.reducerPath]: patientBillingInvoiceItemService.reducer,
 
     // Templates
     // report templates
@@ -660,6 +666,8 @@ export const store = configureStore({
         BillingService.middleware,
         PriceListService.middleware,
         PriceListItemService.middleware,
+        patientBillingInvoiceService.middleware,
+        patientBillingInvoiceItemService.middleware,
 
         // report templates
         ReportTemplateService.middleware,

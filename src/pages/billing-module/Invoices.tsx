@@ -7,7 +7,7 @@ import MyTable from '@/components/MyTable';
 import PaymentModal from './PaymentModal';
 
 import { useAppSelector } from '@/hooks';
-import { useGetInvoicesQuery } from '@/services/billing/BillingService';
+import { useGetPatientInvoicesQuery } from '@/services/patient/patientBillingInvoiceService';
 import { BillingInvoiceResponseVM } from '@/types/model-types-new';
 
 type InvoicesProps = {
@@ -28,34 +28,42 @@ type InvoiceRow = {
 const Invoices: React.FC<InvoicesProps> = ({ patient }) => {
   const authSlice = useAppSelector(state => state.auth);
 
-  const { data, isLoading } = useGetInvoicesQuery(
+  const patientNumericId = Number(
+    (patient?.id != null ? patient.id : patient?.key) ?? NaN
+  );
+
+  const { data, isLoading } = useGetPatientInvoicesQuery(
     {
       page: 0,
       size: 50,
       sort: 'id,desc',
-      patientKey: patient?.key,
-      facilityId: authSlice?.tenant?.selectedFacility?.id,
+      patientId: patientNumericId,
     },
-    { skip: !patient?.key }
+    { skip: !Number.isFinite(patientNumericId) }
   );
 
-  const invoices: BillingInvoiceResponseVM[] = data?.data ?? [];
+  const invoices: any[] = data?.data ?? [];
 
-  const mapped: InvoiceRow[] = invoices.map(inv => ({
-    id: inv.id,
-    invoiceNumber: inv.invoiceNumber,
-    createdBy: inv.createdBy || 'systemadmin',
-    createdAt: inv.createdDate?.substring(0, 10) ?? '',
-    amount: Number(inv.totalAmount),
-    status:
-      inv.status === 'PENDING'
-        ? 'Pending'
-        : inv.status === 'PAID'
+  const mapped: InvoiceRow[] = invoices.map(inv => {
+    const statusRaw = String(inv.status ?? '').toUpperCase();
+    const status: InvoiceRow['status'] =
+      statusRaw === 'PAID'
         ? 'Paid'
-        : 'Partially',
-    method: 'N/A',
-    patientKey: inv.patientKey || '',
-  }));
+        : statusRaw === 'PENDING' || statusRaw === 'NEW'
+        ? 'Pending'
+        : 'Partially';
+    return {
+      id: Number(inv.id),
+      invoiceNumber: inv.invoiceNumber ?? `INV-${inv.id}`,
+      createdBy: inv.createdBy || 'systemadmin',
+      createdAt:
+        (inv.createdDate && String(inv.createdDate).substring(0, 10)) || '',
+      amount: Number(inv.totalAmount ?? 0),
+      status,
+      method: 'N/A',
+      patientKey: String(inv.patientKey ?? patient?.key ?? ''),
+    };
+  });
 
   const [openPayModal, setOpenPayModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRow | null>(
