@@ -92,19 +92,6 @@ const AvailabilityDayGrid = ({
     parentTemplate: any;
     day: string;
 
-    // step: number;
-    // activeDay: number;
-    // setActiveDay: (day: number) => void;
-    // channels: Channel[];
-    // availability: AvailabilityByDay;
-    // setAvailability: React.Dispatch<React.SetStateAction<AvailabilityByDay>>;
-    // onAddChannel: (data: { name: string; color?: string }) => void;
-    // onRemoveChannel: (id: string) => void;
-    // // channelsDummyData: any[],
-    // templatesData: any[],
-    // setTemplatesData: any,
-    // template: any,
-    // day: string
 }) => {
 
     const times = 
@@ -118,7 +105,6 @@ const AvailabilityDayGrid = ({
 
 
 
-// const mergedArray = (parentTemplate && templates) ? [parentTemplate, ...templates?.data] : parentTemplate ? [parentTemplate] : templates ? [templates?.data] : [];
 const mergedArray = [
   ...(parentTemplate?.id ? [parentTemplate] : []),
   ...(Array.isArray(templates) ? templates : [])
@@ -157,16 +143,8 @@ const mergedArray = [
                     </div>
                 </div>
                 <AddIntervalModal
-                    // step={step}
-                    // record={intervalForm}
-                    // setRecord={setIntervalForm}
                     open={openAddInterval}
                     setOpen={setOpenAddInterval}
-                    // day={day}
-                    // template={template}
-                    // templatesData={templatesData}
-                    // setTemplatesData={setTemplatesData}
-                    // channel={channelToAddInterval}
                     resource={resourceToAddInterval}
                     day={day}
                 />

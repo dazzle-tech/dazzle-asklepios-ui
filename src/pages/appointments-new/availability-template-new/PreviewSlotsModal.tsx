@@ -9,6 +9,7 @@ import AvailabilityTemplateSummaryCard from './AvailabilityTemplateSummaryCard';
 import AvailabilityIntervalCard from './AvailabilityIntervalCard';
 import SlotCard from './SlotCard';
 import { IoWarning } from "react-icons/io5";
+import { useEnumOptions } from '@/services/enumsApi';
 
 type Channel = {
     id: string;
@@ -47,9 +48,7 @@ type Props = {
     slotsBeforeAfter: number;
 };
 
-const days = [
-    'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
-];
+const daysEnum = useEnumOptions("DayOfWeek");
 
 const formatMinutes = (m: number) => {
     const h = Math.floor(m / 60).toString().padStart(2, '0');
@@ -68,7 +67,7 @@ const minutesToTime = (totalMinutes: number) => {
     return `${h}:${m}`;
 };
 
-const PreviewAvailabilityCalendar: React.FC<Props> = ({ open, onClose, templateName, step, channelsByDay, availability, slotsBeforeAfter }) => {
+const PreviewSlotsModal: React.FC<Props> = ({ open, onClose, templateName, step, channelsByDay, availability, slotsBeforeAfter }) => {
     const [activeDay, setActiveDay] = useState(0);
     const [currentDate, setCurrentDate] = useState(
         new Date('2026-01-06')
@@ -306,4 +305,4 @@ const PreviewAvailabilityCalendar: React.FC<Props> = ({ open, onClose, templateN
     );
 };
 
-export default PreviewAvailabilityCalendar;
+export default PreviewSlotsModal;
