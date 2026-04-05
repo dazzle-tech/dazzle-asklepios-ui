@@ -144,10 +144,7 @@ const selectedDepartmentEffective = useMemo(() => {
     const tenantFacility = authSlice?.tenant?.selectedFacility;
     return tenantFacility?.name ?? tenantFacility?.facilityName ?? undefined;
   };
-console.log('facilityKey', facilityKey);
-console.log('userId', userId);
-console.log('selectedDepartment', selectedDepartment);
-console.log('selectedDepartmentEffective', selectedDepartmentEffective);
+
   const resolveDepartmentName = (departmentId?: string | number | null) => {
     if (departmentId == null) return undefined;
     const resolved =

@@ -192,7 +192,6 @@ const PatientProfile = () => {
                 content={
                   <PatientVisitHistoryTable
                     quickAppointmentModel={quickAppointmentModel}
-                    setQuickAppointmentModel={setQuickAppointmentModel}
                     localPatient={localPatient}
                   />
                 }
