@@ -74,35 +74,18 @@ const MyTable: React.FC<MyTableProps> = ({
   onRowsPerPageChange
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
   const mode = useSelector((state: any) => state.ui.mode);
-
-
-      const direction = localStorage.getItem('direction') || 'LTR';
-      const isRTL = direction === 'RTL';
-
-      const centerColumns = [
-        'actions',
-        'status',
-        'hasOrder',
-        'hasPrescription',
-        'isObserved',
-        'encounterDate'
-      ];
-
-      const processedColumns = columns.map(col => ({
-        ...col,
-        align:
-          col.align ??
-          (centerColumns.includes(col.key)
-            ? 'center'
-            : isRTL
-            ? 'right'
-            : 'left')
-      }));
+  const processedColumns = columns.map(col => ({
+    ...col,
+    align: col.align ?? (isRTL ? 'right' : 'left')
+  }));
 
   const visibleColumns = processedColumns.filter(col => !col.expandable);
   const expandableColumns = processedColumns.filter(col => col.expandable);
-
 
   const handleExpandClick = (index: number) => {
     setExpandedRow(prev => (prev === index ? null : index));
@@ -156,45 +139,45 @@ const MyTable: React.FC<MyTableProps> = ({
                   }
 
                   return (
-<TableCell
-  key={col.key}
-  align={col.align}
-  sx={{
-    direction: col.key === 'actions' ? 'ltr' : isRTL ? 'rtl' : 'ltr',
-    width: col.width ? `${col.width}px` : 'auto',
-    minWidth: col.width ? `${col.width}px` : 'auto'
-  }}
-  onClick={isSortable ? () => onSortChange!(col.key, nextDirection) : undefined}
->
-  <Box
-    display="flex"
-    alignItems="center"
-    justifyContent={
-      col.align === 'center'
-        ? 'center'
-        : col.align === 'right'
-        ? 'flex-end'
-        : 'flex-start'
-    }
-    sx={{
-      gap: '4px',
-      flexDirection:
-        col.align === 'center'
-          ? 'row'
-          : isRTL
-          ? 'row-reverse'
-          : 'row'
-    }}
-  >
-    {typeof col.title === 'string' || typeof col.title === 'number' ? (
-      <Translate>{col.title}</Translate>
-    ) : (
-      col.title
-    )}
-
-    {sortIcon}
-  </Box>
-</TableCell>
+                    <TableCell
+                      key={col.key}
+                      align={col.align}
+                      sx={{
+                        whiteSpace: 'nowrap',
+                        cursor: isSortable ? 'pointer' : 'default',
+                        width: col.width ? `${col.width}px` : 'auto',
+                        minWidth: col.width ? `${col.width}px` : 'auto'
+                      }}
+                      onClick={isSortable ? () => onSortChange!(col.key, nextDirection) : undefined}
+                    >
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        justifyContent={
+                          col.align === 'center'
+                            ? 'center'
+                            : col.align === 'right'
+                              ? 'flex-end'
+                              : 'flex-start'
+                        }
+                        sx={{
+                          gap: '4px',
+                          flexDirection:
+                            col.align === 'center'
+                              ? 'row'
+                              : isRTL
+                                ? 'row-reverse'
+                                : 'row'
+                        }}
+                      >
+                        {typeof col.title === 'string' || typeof col.title === 'number' ? (
+                          <Translate>{col.title}</Translate>
+                        ) : (
+                          col.title
+                        )}
+                        {sortIcon}
+                      </Box>
+                    </TableCell>
                   );
                 })}
               </TableRow>
@@ -273,10 +256,10 @@ const MyTable: React.FC<MyTableProps> = ({
                                     {expandableColumns.map(col => (
                                       <TableCell
                                         key={col.key}
-                                        align={col.align || 'left'}
+                                        align={col.align}
                                         sx={{ fontWeight: 600, backgroundColor: '#f9f9f9' }}
                                       >
-                                       <Translate>{col.title}</Translate>
+                                        <Translate>{col.title}</Translate>
                                       </TableCell>
                                     ))}
                                   </TableRow>
@@ -284,7 +267,7 @@ const MyTable: React.FC<MyTableProps> = ({
                                 <TableBody>
                                   <TableRow>
                                     {expandableColumns.map(col => (
-                                      <TableCell key={col.key} align={col.align || 'left'}>
+                                      <TableCell key={col.key} align={col.align}>
                                         {col.render
                                           ? col.render(row, index)
                                           : row[col.dataKey || col.key]}
@@ -313,7 +296,7 @@ const MyTable: React.FC<MyTableProps> = ({
             onPageChange={onPageChange!}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={onRowsPerPageChange!}
-            rowsPerPageOptions={[5,10, 15,20, 30]}
+            rowsPerPageOptions={[5, 10, 15, 20, 30]}
           />
         )}
       </Box>
