@@ -442,17 +442,22 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 justifyContent: 'flex-end'
               }}
             >
-              <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
+              <MyButton onClick={handleScanDocumentClick}>
+                <Translate>Scan Document</Translate>
+              </MyButton>
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
               >
-                {localPatient?.id ? 'Edit' : 'Save'}
+                <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>
 
-              <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
-                Clear
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                onClick={handleClear}
+              >
+                <Translate>Clear</Translate>
               </MyButton>
 
               <MyButton
@@ -460,11 +465,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 onClick={() => setQuickPatientModalOpen(true)}
                 prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
               >
-                Quick Patient
+                <Translate>Quick Patient</Translate>
               </MyButton>
 
               <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                Quick Appointment
+                <Translate>Quick Appointment</Translate>
               </MyButton>
 
               <AdministrativeWarningsModal

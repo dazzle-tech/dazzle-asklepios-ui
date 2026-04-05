@@ -45,6 +45,7 @@ import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerAct
 import Prescription from '../prescription';
 import MyModal from '@/components/MyModal/MyModal';
 import PrescriptionNew from '@/pages/encounter/encounter-component/prescription-new';
+import Translate from '@/components/Translate';
 
 // Helper to join values
 const joinValuesFromArray = (values: any[]) => {
@@ -700,7 +701,7 @@ const DischargePlanning = () => {
                   <>
                     <Row>
                       <Col md={12}>
-                        <Text>Medications to Continue</Text>
+                        <Text><Translate>Medications to Continue</Translate></Text>
                       </Col>
                       <Col md={12}>
                         <MyButton
@@ -828,6 +829,7 @@ const DischargePlanning = () => {
                         <MyInput
                           width="100%"
                           fieldType="check"
+                          fieldLabel={<Translate>Material Leaflet</Translate>}
                           fieldName="materialLeaflet"
                           showLabel={false}
                           record={object}
@@ -839,6 +841,7 @@ const DischargePlanning = () => {
                         <MyInput
                           width="100%"
                           fieldType="check"
+                          fieldLabel={<Translate>Material Verbal</Translate>}
                           fieldName="materialVerbal"
                           showLabel={false}
                           record={object}
@@ -850,6 +853,7 @@ const DischargePlanning = () => {
                         <MyInput
                           width="100%"
                           fieldType="check"
+                          fieldLabel={<Translate>Material Video</Translate>}
                           fieldName="materialVideo"
                           showLabel={false}
                           record={object}
@@ -896,8 +900,8 @@ const DischargePlanning = () => {
           loading={isDataLoading}
           disabled={isDataLoading}
         >
-          <FaModx title="Generate Report" size={20} />
-          {isDataLoading ? 'Preparing...' : isGeneratingPdf ? 'Generating...' : 'Generate Report'}
+          <FaModx title='Generate Report' size={20} />
+          {isDataLoading ? <Translate>Preparing...</Translate> : isGeneratingPdf ? <Translate>Generating...</Translate> : <Translate>Generate Report</Translate>}
         </MyButton>
 
         <MyButton
@@ -906,7 +910,7 @@ const DischargePlanning = () => {
           disabled={isGeneratingPdf}
         >
           <FontAwesomeIcon icon={faPrint} />
-          {isGeneratingPdf ? 'Generating...' : 'Print Report'}
+          {isGeneratingPdf ? <Translate>Generating...</Translate> : <Translate>Print Report</Translate>}
         </MyButton>
 
         <MyButton

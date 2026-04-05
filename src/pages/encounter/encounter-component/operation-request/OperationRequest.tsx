@@ -7,6 +7,7 @@ import AnesthesiaCarePlan from './AnesthesiaCarePlan';
 import PreCheckList from './PreCheckList';
 import './styles.less';
 import MyTab from '@/components/MyTab';
+import Translate from '@/components/Translate';
 const OperationRequest = props => {
   const location = useLocation();
 
@@ -55,7 +56,7 @@ const OperationRequest = props => {
       disabled: !requestedOperation?.object
     },
     {
-      title: 'Pre-Op Checklist',
+      title: <Translate>Pre-Op Checklist</Translate>,
       content: (
         <div className="remove-over-flow-handle">
           <PreCheckList

@@ -2,6 +2,7 @@ import React from 'react';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Col, Row, Text } from 'rsuite';
+import Translate from '@/components/Translate';
 const NutritionInterventionPlan = ({ object, setObject }) => {
   // Fetch fluid intake types Lov Response
   const { data: fluidIntakeTypesLovQueryResponse } =
@@ -52,7 +53,7 @@ const NutritionInterventionPlan = ({ object, setObject }) => {
       </Row>
       <Row>
         <Row>
-          <Text className="title-nutrition-state">Nutrition Prescription:</Text>
+          <Text className="title-nutrition-state"><Translate>Nutrition Prescription</Translate></Text>
           <Col md={8}>
             <MyInput
               width="100%"

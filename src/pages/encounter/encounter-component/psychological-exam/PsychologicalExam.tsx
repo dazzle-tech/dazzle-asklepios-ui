@@ -326,10 +326,10 @@ const PsychologicalExam = ({ localPatient, localEncounter, editable }) => {
                     Cancel
                 </MyButton>
                 <Checkbox onChange={(value, checked) => { if (checked) { setPsychologicalExamStatus('3196709905099521'); } else { setPsychologicalExamStatus(''); } }}>
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => { if (checked) { setAllData(true); } else { setAllData(false); } }}>
-                    Show All
+                    <Translate>Show All</Translate>
                 </Checkbox>
                 <div className='bt-right'>
                     <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={handleAddNewPsychologicalExam}>Add </MyButton>
