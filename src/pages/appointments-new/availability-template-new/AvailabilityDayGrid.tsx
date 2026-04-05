@@ -1,14 +1,12 @@
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AvailabilityIntervalCard from './AvailabilityIntervalCard';
 import './styles.less';
 import AvailabilityTemplateSummaryCard from './AvailabilityTemplateSummaryCard';
-import MyModal from '@/components/MyModal/MyModal';
 import AddIntervalModal from './AddIntervalModal';
-import MyInput from '@/components/MyInput';
-import { Divider, Form } from 'rsuite';
-import AddRoomModal from './AddResourceModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { FaPlus } from "react-icons/fa";
+import { useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from '@/services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import type { AvailabilityTemplateIntervalResponseVM } from '@/types/model-types-new';
 
 
 
@@ -24,6 +22,66 @@ const generateDayTimes = (step: number) => {
     return times;
 };
 
+type TemplateColumnProps = {
+    template: any;
+    day: string;
+    onAddInterval: (template: any) => void;
+};
+
+// افصلها على ملف ثاني
+const TemplateColumn: React.FC<TemplateColumnProps> = ({ template, day, onAddInterval }) => {
+    const shouldFetch = Boolean(template?.id) && Boolean(day);
+    const { data: intervals = [], isFetching } = useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery(
+        { templateId: template?.id, dayOfWeek: day },
+        { skip: !shouldFetch }
+    );
+
+    const formatSlotLabel = (interval: AvailabilityTemplateIntervalResponseVM) => {
+        const minutes = interval?.slotDurationMinutes ?? template?.durationMinutes;
+        if (minutes == null) return '-';
+        return `${minutes} min`;
+    };
+
+    return (
+        <div
+            key={template?.id}
+            style={{
+                width: "320px",
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+            }}
+        >
+            <AvailabilityTemplateSummaryCard
+                template={template}
+            />
+
+            {isFetching ? (
+                <div style={{ padding: "8px 4px" }}>Loading...</div>
+            ) : (
+                intervals.map(interval => (
+                    <AvailabilityIntervalCard
+                        key={interval?.id ?? `${interval?.startTime}-${interval?.endTime}`}
+                        interval={interval}
+                        slotLabel={formatSlotLabel(interval)}
+                        backgroundColor={template?.templateColor ?? "#6982F0"}
+                    />
+                ))
+            )}
+
+            <MyButton
+                prefixIcon={() => <FaPlus />}
+                width="300px"
+                appearance='ghost'
+                color={template?.templateColor ?? "#6982F0"}
+                onClick={() => { onAddInterval(template); }}
+            >
+                Add Interval
+            </MyButton>
+        </div>
+    );
+};
+
 const AvailabilityDayGrid = ({
     templates,
     parentTemplate,
@@ -34,23 +92,8 @@ const AvailabilityDayGrid = ({
     parentTemplate: any;
     day: string;
 
-    // step: number;
-    // activeDay: number;
-    // setActiveDay: (day: number) => void;
-    // channels: Channel[];
-    // availability: AvailabilityByDay;
-    // setAvailability: React.Dispatch<React.SetStateAction<AvailabilityByDay>>;
-    // onAddChannel: (data: { name: string; color?: string }) => void;
-    // onRemoveChannel: (id: string) => void;
-    // // channelsDummyData: any[],
-    // templatesData: any[],
-    // setTemplatesData: any,
-    // template: any,
-    // day: string
 }) => {
 
-    const [channelsDummyData, setChannelsDummyData] = useState([]);
-    
     const times = 
     // useMemo(() =>
          generateDayTimes(120)
@@ -62,7 +105,6 @@ const AvailabilityDayGrid = ({
 
 
 
-// const mergedArray = (parentTemplate && templates) ? [parentTemplate, ...templates?.data] : parentTemplate ? [parentTemplate] : templates ? [templates?.data] : [];
 const mergedArray = [
   ...(parentTemplate?.id ? [parentTemplate] : []),
   ...(Array.isArray(templates) ? templates : [])
@@ -90,54 +132,19 @@ const mergedArray = [
 
                         <div style={{ display: "flex" }}>
                             {mergedArray.map(t => (
-                                <>
-                                    <div key={t?.id}
-                                        style={{
-                                            width: "320px",
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '8px'
-                                        }}
-                                    // className="channel-cell add-channel-cell"
-                                    ><>
-                                            <AvailabilityTemplateSummaryCard
-                                              template={t}
-                                                // title={t?.templateName}
-                                                // type={t?.templateType}
-                                                // capacity="1"
-                                                // departmentCapacity={"test"}
-                                                // services={["test", "test2"]}
-                                                // backgroundColor={t?.templateColor}
-                                            />
-                                            {/* {t?.intervals?.map(interval => (
-                                                <AvailabilityIntervalCard
-                                                    start={interval.startTime}
-                                                    end={interval.endTime}
-                                                    slotLabel={interval.slotDuration}
-                                                    backgroundColor={t.color}
-                                                />
-                                            ))} */}
-
-                                            <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t?.templateColor ?? "#6982F0"} onClick={() => { setResourceToAddInterval(t); setOpenAddInterval(true) }}>Add Interval</MyButton>
-                                        </>
-                                    </div>
-                                </>
-
+                                <TemplateColumn
+                                    key={t?.id}
+                                    template={t}
+                                    day={day}
+                                    onAddInterval={(template) => { setResourceToAddInterval(template); setOpenAddInterval(true); }}
+                                />
                             ))}
                         </div>
                     </div>
                 </div>
                 <AddIntervalModal
-                    // step={step}
-                    // record={intervalForm}
-                    // setRecord={setIntervalForm}
                     open={openAddInterval}
                     setOpen={setOpenAddInterval}
-                    // day={day}
-                    // template={template}
-                    // templatesData={templatesData}
-                    // setTemplatesData={setTemplatesData}
-                    // channel={channelToAddInterval}
                     resource={resourceToAddInterval}
                     day={day}
                 />

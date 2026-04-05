@@ -5,7 +5,6 @@ import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import './styles.less';
 import AvailabilityDayGrid from './AvailabilityDayGrid';
-import PreviewAvailabilityModal from './PreviewAvailabilityModal';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetActiveFacilitiesQuery, useGetAllFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
@@ -27,16 +26,8 @@ import { newAvailabilityTemplateCreateDTO, newAvailabilityTemplateResponseVM } f
 import { useCreateAvailabilityTemplateMutation, useGetAvailabilityTemplatesByParentTemplateIdQuery } from '@/services/appointment/availabilityTemplateService';
 import { formatEnumString } from '@/utils';
 import AddResourceModal from './AddResourceModal';
+import PreviewSlotsModal from './PreviewSlotsModal';
 
-const days = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday'
-];
 
 type Channel = {
   id: string;
@@ -99,7 +90,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
   const [availability, setAvailability] = useState<AvailabilityByDay>({});
   const [currentColor, setCurrentColor] = useState(record?.color || '#6982F0');
-  const [openPreview, setOpenPreview] = useState(false);
+  const [openPreviewSlotsModal, setOpenPreviewSlotsModal] = useState(false);
   const [openAddChannelModal, setOpenAddChannelModal] = useState(false);
   const [openAddExceptionModal, setOpenAddExceptionModal] = useState<boolean>(false);
   const [openAddResource, setOpenAddResource] = useState<boolean>(false);
@@ -705,7 +696,7 @@ console.log("templatestemplates: ", templates)
                 <MyButton
                   appearance="subtle"
                   disabled={record?.id ? false : true}
-                  onClick={() => setOpenPreview(true)}
+                  onClick={() => setOpenPreviewSlotsModal(true)}
                 >
                   <Translate>Preview slots</Translate>
                 </MyButton>
@@ -716,14 +707,14 @@ console.log("templatestemplates: ", templates)
 
 
 
-            <PreviewAvailabilityModal
-              open={openPreview}
-              onClose={() => setOpenPreview(false)}
-              templateName={record.name}
-              step={record.step}
-              channelsByDay={channelsByDay}
-              availability={availability}
+            <PreviewSlotsModal
+              open={openPreviewSlotsModal}
+              onClose={() => setOpenPreviewSlotsModal(false)}
+              templateName={record.templateName ?? record.name}
+              step={record.durationMinutes ?? record.step}
               slotsBeforeAfter={template.slotsBeforeAfter ?? 5}
+              parentTemplate={record}
+              templates={Array.isArray(templates) ? templates : (templates as any)?.data}
             />
 
             <AddResourceModal

@@ -748,9 +748,7 @@ const AvailabilityTemplatePageNew = () => {
               onSettingsClick={null}
             />
             <AvailabilityIntervalCard
-              start="9:00"
-              end="10:00"
-              slotLabel="Test"
+              interval={{ startTime: "9:00", endTime: "10:00", slotDuration: "Test" }}
               type='NORMAL'
 
             />
