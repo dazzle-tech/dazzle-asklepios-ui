@@ -138,7 +138,7 @@ const TreatmentLinkedProcedures = ({
       title: <Translate>CDT Code</Translate>,
       flexGrow: 3,
        render: (row) => {
-        return row?.cdtCode.code ?? '';
+        return row?.cdtCode?.code ?? '';
       },
     },
     {
@@ -146,7 +146,7 @@ const TreatmentLinkedProcedures = ({
       title: <Translate>Description</Translate>,
       flexGrow: 4,
       render: (row) => {
-        return row?.cdtCode.description ?? '';
+        return row?.cdtCode?.description ?? '';
       },
     },
     {

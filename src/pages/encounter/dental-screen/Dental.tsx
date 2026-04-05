@@ -13,8 +13,7 @@ const Dental = () => {
   const location = useLocation();
   const { patient, encounter } = location.state || {};
   const dispatch = useAppDispatch();
-  console.log("Dental component - patient:", patient);
-  console.log("Dental component - encounter:", encounter);
+
 
   const [originalChart, setOriginalChart] = useState({ ...newApDentalChart });
   const [currentChart, setCurrentChart] = useState({ ...newApDentalChart });
