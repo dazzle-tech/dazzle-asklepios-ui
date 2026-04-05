@@ -17,7 +17,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import AddRoomModal from './AddResourceModal';
 import AddExceptionModal from './AddExceptionModal';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useGetAllServicesQuery, useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+import { useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
 import { useGetAllPractitionersQuery, useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
@@ -27,44 +27,7 @@ import { useCreateAvailabilityTemplateMutation, useGetAvailabilityTemplatesByPar
 import { formatEnumString } from '@/utils';
 import AddResourceModal from './AddResourceModal';
 import PreviewSlotsModal from './PreviewSlotsModal';
-
-
-type Channel = {
-  id: string;
-  name: string;
-  color?: string;
-};
-
-
-type Interval = {
-  id: string;
-  start: number;
-  end: number;
-  type?: 'NORMAL' | 'BREAK' | 'POOL';
-  meta?: {
-    name: string;
-    capacity: number;
-    step: number;
-    slotsBefore: number;
-    color?: string;
-  };
-};
-
-
-type ChannelAvailability = {
-  channelId: string;
-  intervals: Interval[];
-};
-
-type AvailabilityByDay = {
-  [dayIndex: number]: ChannelAvailability[];
-};
-
-type ChannelsByDay = {
-  [dayIndex: number]: Channel[];
-};
-
-
+import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
 
 
 
@@ -84,18 +47,12 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   );
 
   const dispatch = useAppDispatch();
-  const [activeDay, setActiveDay] = useState(0);
-
-
-
-  const [availability, setAvailability] = useState<AvailabilityByDay>({});
+  
   const [currentColor, setCurrentColor] = useState(record?.color || '#6982F0');
   const [openPreviewSlotsModal, setOpenPreviewSlotsModal] = useState(false);
-  const [openAddChannelModal, setOpenAddChannelModal] = useState(false);
   const [openAddExceptionModal, setOpenAddExceptionModal] = useState<boolean>(false);
   const [openAddResource, setOpenAddResource] = useState<boolean>(false);
-  const [publishChannelId, setPublishChannelId] = useState<string | null>(null);
-  const [channelsByDay, setChannelsByDay] = useState<ChannelsByDay>({});
+  
   const {
     data: facilityListResponse,
     isLoading: isGettingFacilities,
@@ -118,8 +75,14 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }
   );
 
+  const { data: departmentServices = []} =
+      useGetDepartmentServicesQuery(
+        { departmentId: selectedDepartment?.departmentId },
+        { skip: !selectedDepartment?.departmentId }
+      );
+      console.log("departmentServices: ", departmentServices);
   const daysEnum = useEnumOptions("DayOfWeek");
-  const { data: servicesList, isFetching, refetch } = useGetAllServicesQuery({});
+  const encounterReasonEnum = useEnumOptions("EncounterReason");
   const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
     {
       sourceId: selectedDepartment?.departmentId
@@ -143,9 +106,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     () => (dayOptions ?? []).map(d => `${d.value}:${d.label}`).join('|'),
     [dayOptions]
   );
-  const allServices = servicesList?.data ?? [];
-  const departmentServiceIds = (servicesByDepartmentList?.data ?? []).map((s: any) => s.id);
-  const selectedServiceIds = record?.allowedServiceIds ?? [];
   const workingDaysTouchedRef = useRef(false);
   const isEditMode = !!template?.id;
   const workingDaysRecord = useMemo(() => {
@@ -179,17 +139,17 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       workingDays: nextWorkingDays,
     }));
   };
-const { data: templates, isLoading, isError } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
-// { parentTemplateId: record?.id }
-{
-      parentTemplateId:  record?.id
+  const { data: templates } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
+    // { parentTemplateId: record?.id }
+    {
+      parentTemplateId: record?.id
     },
     {
-      skip: ! record?.id
+      skip: !record?.id
     }
 
-);
-console.log("templatestemplates: ", templates)
+  );
+  console.log("templatestemplates: ", templates)
   const tabData = () => {
     let arr = [];
     {
@@ -200,9 +160,9 @@ console.log("templatestemplates: ", templates)
           content:
             <>
               <AvailabilityDayGrid
-               parentTemplate={record}
-               templates={templates}
-               day={day?.value}
+                parentTemplate={record}
+                templates={templates}
+                day={day?.value}
               />
             </>
 
@@ -211,31 +171,6 @@ console.log("templatestemplates: ", templates)
     }
     return arr;
   }
-
-
-  const handleAddChannel = ({ name, color }: { name: string; color?: string }) => {
-    const trimmedName = name?.trim();
-    if (!trimmedName) return;
-
-    setChannelsByDay(prev => ({
-      ...prev,
-      [activeDay]: [
-        ...(prev[activeDay] ?? []),
-        {
-          id: crypto.randomUUID(),
-          name: trimmedName,
-          color: color ?? '#4C7EF3'
-        }
-      ]
-    }));
-  };
-
-  const handleRemoveChannel = (channelId: string) => {
-    setChannelsByDay(prev => ({
-      ...prev,
-      [activeDay]: (prev[activeDay] ?? []).filter(c => c.id !== channelId)
-    }));
-  };
 
   const [create] = useCreateAvailabilityTemplateMutation();
   const handleSaveMainInfo = () => {
@@ -283,59 +218,6 @@ console.log("templatestemplates: ", templates)
     appliedWorkingDaysFacilityIdRef.current = null;
   }, [record?.facilityId]);
 
-  // useEffect(() => {
-  //   if (isEditMode) return;
-  //   if (workingDaysTouchedRef.current) return;
-  //   if (!DayOfWeek || DayOfWeek.length === 0) return;
-  //   if (!record?.facilityId) return;
-  //   if (appliedWorkingDaysFacilityIdRef.current === record.facilityId) return;
-
-  //   const facilities = facilityListResponse ?? [];
-  //   const selectedFacilityData = facilities.find(
-  //     (f: any) => String(f?.id) === String(record.facilityId)
-  //   );
-
-  //   const facilityWorkingDays =
-  //     selectedFacilityFullObject?.workingDays ??
-  //     selectedFacilityData?.workingDays ??
-  //     [];
-
-  //   const organizationWorkingDays =
-  //     organizationDefinitions?.[0]?.workingDays ?? [];
-
-  //   const sourceWorkingDays =
-  //     facilityWorkingDays?.length > 0
-  //       ? facilityWorkingDays
-  //       : organizationWorkingDays;
-
-  //   if (!sourceWorkingDays?.length) return;
-
-  //   const normalizedWorkingDays = DayOfWeek.map(day => {
-  //     const found = sourceWorkingDays.find(
-  //       (d: any) => String(d?.dayOfWeek) === String(day.value)
-  //     );
-  //     return {
-  //       dayOfWeek: day.value,
-  //       isWorking: found ? found.isWorking !== false : false,
-  //     };
-  //   });
-
-  //   // ðŸ”¥ Ø£Ù‡Ù… Ø³Ø·Ø±
-  //   appliedWorkingDaysFacilityIdRef.current = record.facilityId;
-
-  //   setRecord(prev => ({
-  //     ...prev,
-  //     workingDays: normalizedWorkingDays,
-  //   }));
-
-  // }, [
-  //   isEditMode,
-  //   record?.facilityId,
-  //   facilityListResponse,
-  //   selectedFacilityFullObject,
-  //   organizationDefinitions,
-  //   DayOfWeek,
-  // ]);
   useEffect(() => {
     if (isEditMode) return;
     if (!dayOptions || dayOptions.length === 0) return;
@@ -394,23 +276,6 @@ console.log("templatestemplates: ", templates)
     dayOptionsKey,
   ]);
 
-  useEffect(() => {
-    if (!servicesByDepartmentList?.data) return;
-    setRecord(prev => {
-      const prevIds = prev?.allowedServiceIds ?? [];
-      const nextIds =
-        prevIds.length > 0
-          ? Array.from(new Set([...prevIds, ...departmentServiceIds]))
-          : departmentServiceIds;
-      if (
-        prevIds.length === nextIds.length &&
-        prevIds.every((id: any) => nextIds.includes(id))
-      ) {
-        return prev;
-      }
-      return { ...prev, allowedServiceIds: nextIds };
-    });
-  }, [servicesByDepartmentList]);
 
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -613,7 +478,7 @@ console.log("templatestemplates: ", templates)
               </Col>
             </Row>
 
-            <Row>
+            {/* <Row>
               <Col md={24}>
                 <SectionContainer
                   title="Services Allowed"
@@ -661,8 +526,7 @@ console.log("templatestemplates: ", templates)
                   }
                 />
               </Col>
-            </Row>
-
+            </Row> */}
 
             <SectionContainer
               title="Days"
@@ -712,7 +576,6 @@ console.log("templatestemplates: ", templates)
               onClose={() => setOpenPreviewSlotsModal(false)}
               templateName={record.templateName ?? record.name}
               step={record.durationMinutes ?? record.step}
-              slotsBeforeAfter={template.slotsBeforeAfter ?? 5}
               parentTemplate={record}
               templates={Array.isArray(templates) ? templates : (templates as any)?.data}
             />

@@ -20,7 +20,7 @@ import { addFilterToListRequest, fromCamelCaseToDBName, formatEnumString } from 
 import { notify } from '@/utils/uiReducerActions';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import React, { useEffect, useState } from 'react';
-import { FaUndo } from 'react-icons/fa';
+import { FaUndo } from 'react-icons/fa';  
 import { MdDelete, MdModeEdit } from 'react-icons/md';
 import { Form, Panel } from 'rsuite';
 import MyTab from '@/components/MyTab';

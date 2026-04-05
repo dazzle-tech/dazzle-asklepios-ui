@@ -323,6 +323,7 @@ export interface AvailabilityTemplateResponseVM {
   financialDetails?: string | null;
   workingDays?: AvailabilityTemplateWorkingDay[] | null;
   intervals?: any[] | null;
+  allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
 }
 
 export interface AvailabilityTemplateCreateDTO {
@@ -351,6 +352,7 @@ export interface AvailabilityTemplateCreateDTO {
   financialDetails?: string;
   isActive: boolean;
   workingDays?: AvailabilityTemplateWorkingDay[] | null;
+  allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
 
 }
 

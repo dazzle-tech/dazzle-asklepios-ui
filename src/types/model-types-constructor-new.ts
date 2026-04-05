@@ -996,6 +996,7 @@ export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCr
   financialDetails: 'BOTH', 
   isActive: true,
   workingDays: [],
+  allowedServices: []
 };
 
 export const newAvailabilityTemplateUpdateDTO: modelTypes.AvailabilityTemplateUpdateDTO = {
@@ -1027,7 +1028,8 @@ export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateR
   allowPatientPortalBooking: null,
   requireConfirmation: null,
   financialDetails: null,
-  workingDays: []
+  workingDays: [],
+  allowedServices: []
 };
 
 export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGenerationBatchApplyDTO = {

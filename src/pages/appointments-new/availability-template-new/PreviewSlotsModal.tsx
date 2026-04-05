@@ -38,7 +38,6 @@ const PreviewSlotsModal: React.FC<Props> = ({
     onClose,
     templateName,
     step,
-    slotsBeforeAfter,
     parentTemplate,
     templates
 }) => {
