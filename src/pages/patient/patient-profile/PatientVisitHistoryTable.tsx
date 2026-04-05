@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Tooltip, Form, Whisper } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
@@ -23,14 +23,15 @@ import { notify } from '@/utils/uiReducerActions';
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useGetPractitionersBulkMutation } from '@/services/setup/practitioner/PractitionerService';
-import type { Practitioner } from '@/types/model-types-new';
+import type { Practitioner, Department } from '@/types/model-types-new';
 import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import { formatEnumString } from '@/utils';
 import { useGetDepartmentsBulkMutation } from '@/services/security/departmentService';
-import type { Department } from '@/types/model-types-new';
 import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-discharge';
 import { useLazyGetDiagnosisFlagsByEncounterIdsQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import './styles.less';
+
+const EMPTY_ENCOUNTERS: any[] = [];
 
 const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any) => {
   const dispatch = useDispatch();
@@ -61,18 +62,17 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
       sort: 'createdDate,desc'
     },
     {
+      skip: !localPatient?.id,
       refetchOnMountOrArgChange: true,
-      refetchOnFocus: true,
       pollingInterval: 0
     }
   );
 
-  const encounters = data?.data ?? [];
+  const encounters = data?.data ?? EMPTY_ENCOUNTERS;
 
   const [cancelEncounter] = useCancelEncounterMutation();
   const [completeEncounter] = useCompleteEncounterMutation();
 
-  // whenever the parent bumps encounterRefetchTrigger, refetch the table
   useEffect(() => {
     if (encounterRefetchTrigger > 0) {
       refetch();
@@ -81,6 +81,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
 
   const handleCancel = async () => {
     if (!selectedVisit) return;
+
     try {
       await cancelEncounter({ id: selectedVisit.id }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
@@ -121,7 +122,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     await refetch();
   };
 
-  const practitionerIds = React.useMemo(
+  const practitionerIds = useMemo(
     () =>
       Array.from(
         new Set(encounters.map((e: any) => e.practitionerId).filter((id: any) => id != null))
@@ -129,13 +130,39 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     [encounters]
   );
 
+  const departmentIds = useMemo(
+    () =>
+      Array.from(new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))),
+    [encounters]
+  );
+
+  const encounterIds = useMemo(
+    () => encounters.map((e: any) => e.id).filter((id: any) => id != null),
+    [encounters]
+  );
+
   useEffect(() => {
-    if (!practitionerIds.length) return;
+    if (!practitionerIds.length) {
+      setPractitionersMap(prev => (Object.keys(prev).length ? {} : prev));
+      return;
+    }
 
     const load = async () => {
       try {
         const practitioners = await getPractitionersBulk(practitionerIds).unwrap();
-        setPractitionersMap(Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p])));
+        const nextMap = Object.fromEntries(practitioners.map((p: Practitioner) => [p.id, p]));
+
+        setPractitionersMap(prev => {
+          const prevKeys = Object.keys(prev);
+          const nextKeys = Object.keys(nextMap);
+          if (
+            prevKeys.length === nextKeys.length &&
+            prevKeys.every(key => prev[key] === nextMap[key])
+          ) {
+            return prev;
+          }
+          return nextMap;
+        });
       } catch {}
     };
 
@@ -143,34 +170,41 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   }, [practitionerIds, getPractitionersBulk]);
 
   useEffect(() => {
+    if (!departmentIds.length) {
+      setDepartmentsMap(prev => (Object.keys(prev).length ? {} : prev));
+      return;
+    }
+
     const loadDepartments = async () => {
-      if (!encounters.length) {
-        setDepartmentsMap({});
-        return;
-      }
-      const uniqueIds = Array.from(
-        new Set(encounters.map((e: any) => e.departmentId).filter((id: any) => id != null))
-      );
-      if (!uniqueIds.length) return;
       try {
-        const departments = await getDepartmentsBulk(uniqueIds).unwrap();
-        setDepartmentsMap(Object.fromEntries(departments.map((d: Department) => [d.id, d])));
+        const departments = await getDepartmentsBulk(departmentIds).unwrap();
+        const nextMap = Object.fromEntries(departments.map((d: Department) => [d.id, d]));
+
+        setDepartmentsMap(prev => {
+          const prevKeys = Object.keys(prev);
+          const nextKeys = Object.keys(nextMap);
+          if (
+            prevKeys.length === nextKeys.length &&
+            prevKeys.every(key => prev[key] === nextMap[key])
+          ) {
+            return prev;
+          }
+          return nextMap;
+        });
       } catch (err) {
         console.error('getDepartmentsBulk error:', err);
       }
     };
+
     loadDepartments();
-  }, [encounters, getDepartmentsBulk]);
+  }, [departmentIds, getDepartmentsBulk]);
 
-  // diagnosis flags by encounter ids
   useEffect(() => {
-    if (!encounters.length) return;
+    if (!encounterIds.length) return;
+    fetchDiagnosisFlags({ encounterIds });
+  }, [encounterIds, fetchDiagnosisFlags]);
 
-    const ids = encounters.map((e: any) => e.id);
-    fetchDiagnosisFlags({ encounterIds: ids });
-  }, [encounters, fetchDiagnosisFlags]);
-
-  const diagnosisMap = React.useMemo(() => {
+  const diagnosisMap = useMemo(() => {
     return Object.fromEntries(
       diagnosisFlags?.map((item: any) => [item.encounterId, item.hasPrimaryDiagnoses]) || []
     );
@@ -184,151 +218,155 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
     [refetch]
   );
 
-  const columns = [
-    {
-      key: 'key',
-      title: <Translate>Key</Translate>,
-      render: (row: any) => (
-        <a
-          className="visit-history__encounter-link"
-          onClick={() => {
-            setSelectedVisit(row);
-            setQuickInitialStep(0);
-            setQuickAppointmentModel(true);
-          }}
-        >
-          {row.encounterNumber}
-        </a>
-      )
-    },
-    { key: 'encounterDate', title: <Translate>Date</Translate>, dataKey: 'encounterDate' },
-    {
-      key: 'department',
-      title: <Translate>Department</Translate>,
-      render: (row: any) => departmentsMap[row.departmentId]?.name ?? ''
-    },
-    {
-      key: 'practitioner',
-      title: <Translate>Practitioner</Translate>,
-      render: (row: any) => {
-        const p = practitionersMap[row.practitionerId];
-        if (!p) return '';
-        return `${p.firstName} ${p.lastName ?? ''}`.trim();
+  const columns = useMemo(
+    () => [
+      {
+        key: 'key',
+        title: <Translate>Key</Translate>,
+        render: (row: any) => (
+          <a
+            className="visit-history__encounter-link"
+            onClick={() => {
+              setSelectedVisit(row);
+              setQuickInitialStep(0);
+              setQuickAppointmentModel(true);
+            }}
+          >
+            {row.encounterNumber}
+          </a>
+        )
+      },
+      { key: 'encounterDate', title: <Translate>Date</Translate>, dataKey: 'encounterDate' },
+      {
+        key: 'department',
+        title: <Translate>Department</Translate>,
+        render: (row: any) => departmentsMap[row.departmentId]?.name ?? ''
+      },
+      {
+        key: 'practitioner',
+        title: <Translate>Practitioner</Translate>,
+        render: (row: any) => {
+          const p = practitionersMap[row.practitionerId];
+          if (!p) return '';
+          return `${p.firstName} ${p.lastName ?? ''}`.trim();
+        }
+      },
+      {
+        key: 'reason',
+        title: <Translate>Reason</Translate>,
+        render: (row: any) => formatEnumString(row.encounterReason)
+      },
+      {
+        key: 'priority',
+        title: <Translate>Priority</Translate>,
+        render: (row: any) => formatEnumString(row.priorityLevel)
+      },
+      {
+        key: 'status',
+        title: <Translate>Status</Translate>,
+        render: (row: any) => formatEnumString(row.status)
+      },
+      {
+        key: 'actions',
+        title: '',
+        render: (row: any) => {
+          const isOngoing = row.status === 'ONGOING';
+          const isNew = row.status === 'NEW';
+          const isPendingPayment = row.status === 'PENDING_PAYMENT';
+
+          const departmentType = departmentsMap[row.departmentId]?.type;
+          const isOutpatient = departmentType === 'OUTPATIENT_CLINIC';
+          const isEmergency =
+            departmentType === 'EMERGENCY' || departmentType === 'EMERGENCY_ROOM';
+
+          const hasDiagnosis = diagnosisMap[row.id] ?? false;
+
+          return (
+            <div className="visit-history__actions-form">
+              {isNew && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Cancel</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton
+                      appearance="subtle"
+                      size="small"
+                      onClick={() => {
+                        setSelectedVisit(row);
+                        setOpenCancelModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faRectangleXmark} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+
+              {isOngoing && isOutpatient && hasDiagnosis && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Complete</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)}>
+                      <FontAwesomeIcon icon={faCheckDouble} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+
+              {isOngoing && isEmergency && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Discharge</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton
+                      appearance="subtle"
+                      size="small"
+                      onClick={() => {
+                        setSelectedVisit(row);
+                        setOpenDischargeModal(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faPowerOff} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+
+              {isPendingPayment && (
+                <Whisper
+                  placement="top"
+                  speaker={<Tooltip>Pay</Tooltip>}
+                  container={getTooltipContainer}
+                >
+                  <span className="visit-history__tooltip-trigger">
+                    <MyButton
+                      appearance="subtle"
+                      size="small"
+                      onClick={() => {
+                        setSelectedVisit(row);
+                        setQuickInitialStep(1);
+                        setQuickAppointmentModel(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                    </MyButton>
+                  </span>
+                </Whisper>
+              )}
+            </div>
+          );
+        }
       }
-    },
-    {
-      key: 'reason',
-      title: <Translate>Reason</Translate>,
-      render: (row: any) => formatEnumString(row.encounterReason)
-    },
-    {
-      key: 'priority',
-      title: <Translate>Priority</Translate>,
-      render: (row: any) => formatEnumString(row.priorityLevel)
-    },
-    {
-      key: 'status',
-      title: <Translate>Status</Translate>,
-      render: (row: any) => formatEnumString(row.status)
-    },
-    {
-      key: 'actions',
-      title: '',
-      render: (row: any) => {
-        const isOngoing = row.status === 'ONGOING';
-        const isNew = row.status === 'NEW';
-        const isPendingPayment = row.status === 'PENDING_PAYMENT';
-
-        const departmentType = departmentsMap[row.departmentId]?.type;
-        const isOutpatient = departmentType === 'OUTPATIENT_CLINIC';
-        const isEmergency = departmentType === 'EMERGENCY' || departmentType === 'EMERGENCY_ROOM';
-
-        const hasDiagnosis = diagnosisMap[row.id] ?? false;
-
-        return (
-          <Form className="visit-history__actions-form">
-            {isNew && (
-              <Whisper
-                placement="top"
-                speaker={<Tooltip>Cancel</Tooltip>}
-                container={getTooltipContainer}
-              >
-                <span className="visit-history__tooltip-trigger">
-                  <MyButton
-                    appearance="subtle"
-                    size="small"
-                    onClick={() => {
-                      setSelectedVisit(row);
-                      setOpenCancelModal(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faRectangleXmark} />
-                  </MyButton>
-                </span>
-              </Whisper>
-            )}
-
-            {isOngoing && isOutpatient && hasDiagnosis && (
-              <Whisper
-                placement="top"
-                speaker={<Tooltip>Complete</Tooltip>}
-                container={getTooltipContainer}
-              >
-                <span className="visit-history__tooltip-trigger">
-                  <MyButton appearance="subtle" size="small" onClick={() => handleComplete(row)}>
-                    <FontAwesomeIcon icon={faCheckDouble} />
-                  </MyButton>
-                </span>
-              </Whisper>
-            )}
-
-            {isOngoing && isEmergency && (
-              <Whisper
-                placement="top"
-                speaker={<Tooltip>Discharge</Tooltip>}
-                container={getTooltipContainer}
-              >
-                <span className="visit-history__tooltip-trigger">
-                  <MyButton
-                    appearance="subtle"
-                    size="small"
-                    onClick={() => {
-                      setSelectedVisit(row);
-                      setOpenDischargeModal(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faPowerOff} />
-                  </MyButton>
-                </span>
-              </Whisper>
-            )}
-
-            {isPendingPayment && (
-              <Whisper
-                placement="top"
-                speaker={<Tooltip>Pay</Tooltip>}
-                container={getTooltipContainer}
-              >
-                <span className="visit-history__tooltip-trigger">
-                  <MyButton
-                    appearance="subtle"
-                    size="small"
-                    onClick={() => {
-                      setSelectedVisit(row);
-                      setQuickInitialStep(1);
-                      setQuickAppointmentModel(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faFileInvoiceDollar} />
-                  </MyButton>
-                </span>
-              </Whisper>
-            )}
-          </Form>
-        );
-      }
-    }
-  ];
+    ],
+    [departmentsMap, practitionersMap, diagnosisMap, handleComplete]
+  );
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
