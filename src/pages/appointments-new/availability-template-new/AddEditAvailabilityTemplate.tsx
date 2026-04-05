@@ -5,7 +5,6 @@ import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import './styles.less';
 import AvailabilityDayGrid from './AvailabilityDayGrid';
-import PreviewAvailabilityModal from './PreviewSlotsModal';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetActiveFacilitiesQuery, useGetAllFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
@@ -29,15 +28,6 @@ import { formatEnumString } from '@/utils';
 import AddResourceModal from './AddResourceModal';
 import PreviewSlotsModal from './PreviewSlotsModal';
 
-const days = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday'
-];
 
 type Channel = {
   id: string;
@@ -720,11 +710,11 @@ console.log("templatestemplates: ", templates)
             <PreviewSlotsModal
               open={openPreviewSlotsModal}
               onClose={() => setOpenPreviewSlotsModal(false)}
-              templateName={record.name}
-              step={record.step}
-              channelsByDay={channelsByDay}
-              availability={availability}
+              templateName={record.templateName ?? record.name}
+              step={record.durationMinutes ?? record.step}
               slotsBeforeAfter={template.slotsBeforeAfter ?? 5}
+              parentTemplate={record}
+              templates={Array.isArray(templates) ? templates : (templates as any)?.data}
             />
 
             <AddResourceModal
