@@ -257,13 +257,13 @@ export interface AvailabilityTemplateWorkingDay {
 }
 
 export interface AvailabilityTemplateAllowedServiceDTO {
-  serviceId: number;
+  id?: number | null;
+  service: string | null;
 }
 
 export interface AvailabilityTemplateAllowedServiceResponseVM {
   id?: number | null;
-  serviceId?: number | null;
-  intervalId?: number | null;
+  service?: string | null;
 }
 
 export interface AvailabilityTemplateIntervalResponseVM {
