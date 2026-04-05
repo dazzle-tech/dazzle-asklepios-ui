@@ -67,8 +67,16 @@ const DVM = () => {
   const divContent = (
     "Data Validation Manager"
   );
+
+  useEffect(() => {
   dispatch(setPageCode('Data_Validation'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -138,12 +146,7 @@ const DVM = () => {
     }
   }, [recordOfScreenMetaData['screenMetadataKey']]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+ 
 
   // Handle click on Add New button
   const handleNew = () => {
