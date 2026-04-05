@@ -88,6 +88,21 @@ const ApplicationSummarySection: React.FC<ApplicationSummarySectionProps> = ({
   const scopeConfigLine =
     scopeUpper === "DEPARTMENT" ? `${scopeLabel}` : scopeLabel;
 
+  const holidayMode = String((dto as any)?.holidayHandlingMode ?? "").toUpperCase();
+  const excludeHolidays = holidayMode === "EXCLUDE_HOLIDAYS";
+  const includeAsException = holidayMode === "INCLUDE_AS_EXCEPTION";
+
+  const holidaySummaryLine =
+    excludeHolidays || includeAsException
+      ? excludeHolidays
+        ? exceptionCount === 0
+          ? "No organization holidays in the selected range"
+          : `${exceptionCount} Exception${exceptionCount === 1 ? "" : "s"} configured`
+        : exceptionCount === 0
+          ? "No organization holidays in the selected range"
+          : `${exceptionCount} organization holiday${exceptionCount === 1 ? "" : "s"} included as exceptions`
+      : null;
+
   return (
     <SurfaceCard title="Application Summary" description="Final review before execution" icon={Wrench}>
       <div className="space-y-5">
@@ -119,10 +134,12 @@ const ApplicationSummarySection: React.FC<ApplicationSummarySectionProps> = ({
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               {scopeConfigLine}
             </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              {exceptionCount} Exception{exceptionCount === 1 ? "" : "s"} configured
-            </div>
+            {holidaySummaryLine != null ? (
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                {holidaySummaryLine}
+              </div>
+            ) : null}
           </div>
         </div>
 

@@ -56,6 +56,10 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
   const exceptionCount = React.useMemo(() => {
     return (holidays as any[])?.length ?? 0;
   }, [holidays]);
+  const excludeHolidays = React.useMemo(
+    () => String((dto as any)?.holidayHandlingMode ?? "").toUpperCase() === "EXCLUDE_HOLIDAYS",
+    [(dto as any)?.holidayHandlingMode]
+  );
   const slotStatusColorMap = React.useMemo(
     () =>
       new Map<string, string>([
@@ -154,7 +158,9 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
         const dayKey = DAYS[(d.getDay() + 6) % 7];
         const key = format(d, "yyyy-MM-dd");
         const isHoliday = holidaySet.has(key);
-        if (isHoliday) {
+        const excludeHolidays =
+          String((dto as any)?.holidayHandlingMode ?? "").toUpperCase() === "EXCLUDE_HOLIDAYS";
+        if (isHoliday && excludeHolidays) {
           rows.push({
             date: format(d, "EEE, MMM dd"),
             time: "—",
@@ -166,7 +172,7 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
             checked: false,
             alert: true,
           });
-          if (String((dto as any)?.holidayHandlingMode ?? "").toUpperCase() === "EXCLUDE_HOLIDAYS") continue;
+          continue;
         }
         for (const it of intervalsByDay[dayKey] ?? []) {
           const startMins = parseHHmm(it?.startTime as any);
@@ -205,6 +211,7 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
           generatedSlotsColumns={generatedSlotsColumns}
           totalSlotsToBeCreated={totalSlotsToBeCreated}
           exceptionCount={exceptionCount}
+          excludeHolidays={excludeHolidays}
         />
 
         <ApplicationSummarySection

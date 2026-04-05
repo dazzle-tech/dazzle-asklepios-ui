@@ -1,7 +1,9 @@
 import * as React from "react";
 import MyInput from "@/components/MyInput";
+import { useAppSelector } from "@/hooks";
 import { useGetFacilityByIdQuery } from "@/services/security/facilityService";
 import { useGetDepartmentByIdQuery } from "@/services/security/departmentService";
+import { useGetActiveHolidaysInRangeQuery } from "@/services/system-configurations/organizationHolidaysService";
 import ApplyConfigurationSection, {
   type EffectiveTemplateIntervalsStatus,
 } from "./ApplyConfigurationSection";
@@ -11,7 +13,7 @@ import { Form } from "rsuite";
 import { addMonths, isAfter, isBefore, startOfMinute } from "date-fns";
 import type { AvailabilityTemplateResponseVM } from "@/types/model-types-new";
 import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
-import { parseApplyTemplateDateTime } from "../applyTemplateDateUtils";
+import { formatLocalDateForApi, parseApplyTemplateDateTime } from "../applyTemplateDateUtils";
 
 type ApplyTemplateStepOneProps = {
   selectedTemplate?: AvailabilityTemplateResponseVM | null;
@@ -48,6 +50,12 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
 }) => {
   const facilityId = selectedTemplate?.facilityId ?? null;
   const departmentId = selectedTemplate?.departmentId ?? null;
+  const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
+  const facilityIdFromAuth =
+    selectedDepartment?.facilityId ??
+    selectedDepartment?.facility?.id ??
+    selectedDepartment?.facility?.facilityId ??
+    null;
   const { data: facilityData } = useGetFacilityByIdQuery(facilityId as any, { skip: !facilityId });
   const { data: departmentData } = useGetDepartmentByIdQuery(departmentId as any, { skip: !departmentId });
 
@@ -86,6 +94,40 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
     [formState.startDate, formState.endDate]
   );
 
+  const facilityIdForHolidays =
+    facilityId != null && Number(facilityId) > 0
+      ? Number(facilityId)
+      : Number(facilityIdFromAuth ?? 0);
+  const fromDate = formatLocalDateForApi(formState.startDate);
+  const toDate = formatLocalDateForApi(formState.endDate);
+  const shouldFetchHolidays =
+    facilityIdForHolidays > 0 && Boolean(fromDate) && Boolean(toDate) && dateRangeValidation.ok;
+  const {
+    data: holidaysInRange = [],
+    isFetching: isFetchingHolidays,
+    isError: isHolidaysQueryError,
+  } = useGetActiveHolidaysInRangeQuery(
+    { fromDate, toDate, facilityId: facilityIdForHolidays },
+    { skip: !shouldFetchHolidays }
+  );
+  const holidayHandlingModeSet = Boolean(
+    String((formState as any)?.holidayHandlingMode ?? "").trim()
+  );
+  /** When org holidays exist in range, user must pick Exclude vs Include-as-exception before continuing */
+  const holidayHandlingValidationOk = React.useMemo(() => {
+    if (!shouldFetchHolidays) return true;
+    if (isHolidaysQueryError) return true;
+    if (isFetchingHolidays) return false;
+    const count = (holidaysInRange as unknown[])?.length ?? 0;
+    return count === 0 || holidayHandlingModeSet;
+  }, [
+    shouldFetchHolidays,
+    isHolidaysQueryError,
+    isFetchingHolidays,
+    holidaysInRange,
+    holidayHandlingModeSet,
+  ]);
+
   const [templateIntervalsStatus, setTemplateIntervalsStatus] =
     React.useState<EffectiveTemplateIntervalsStatus>({
       effectiveTemplateId: 0,
@@ -121,15 +163,18 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
       !templateIntervalsStatus.isLoading &&
       templateIntervalsStatus.effectiveTemplateId > 0 &&
       templateIntervalsStatus.hasAnyInterval;
-    const isValid = scopeOk && dateRangeValidation.ok && intervalsApplyOk;
+    const isValid =
+      scopeOk && dateRangeValidation.ok && intervalsApplyOk && holidayHandlingValidationOk;
     onValidationChange?.(isValid);
   }, [
     formState?.scope,
     (formState as any)?.childTemplateId,
+    (formState as any)?.holidayHandlingMode,
     dateRangeValidation.ok,
     templateIntervalsStatus.isLoading,
     templateIntervalsStatus.effectiveTemplateId,
     templateIntervalsStatus.hasAnyInterval,
+    holidayHandlingValidationOk,
     onValidationChange,
   ]);
 

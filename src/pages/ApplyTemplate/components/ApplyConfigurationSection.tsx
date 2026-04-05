@@ -343,6 +343,15 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
           {!isLoadingHolidays && shouldFetchHolidays && (holidaysInRange as any[])?.length > 0 && (
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
               <p className="mb-3 text-sm font-semibold text-slate-700">Holiday Handling Mode</p>
+              {!String((dto as any)?.holidayHandlingMode ?? "").trim() && (
+                <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+                  <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <span>
+                    Organization holidays apply in this date range. Choose one of the options below before you can
+                    continue to the next step.
+                  </span>
+                </div>
+              )}
               <Form fluid>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {holidayHandlingModeEnumOptions.map((o: any) => {
