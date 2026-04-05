@@ -930,13 +930,13 @@ export const newAvailabilityTemplateWorkingDay: modelTypes.AvailabilityTemplateW
 };
 
 export const newAvailabilityTemplateAllowedServiceDTO: modelTypes.AvailabilityTemplateAllowedServiceDTO = {
-  serviceId: 0
+  id: null,
+  service: ''
 };
 
 export const newAvailabilityTemplateAllowedServiceResponseVM: modelTypes.AvailabilityTemplateAllowedServiceResponseVM = {
   id: null,
-  serviceId: null,
-  intervalId: null
+  service: null
 };
 
 export const newAvailabilityTemplateIntervalResponseVM: modelTypes.AvailabilityTemplateIntervalResponseVM = {
