@@ -1,9 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import {
-  ShieldCheck,
-} from "lucide-react";
 import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
 import {
   generatedSlots as generatedSlotsMock,
@@ -210,7 +207,12 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
           exceptionCount={exceptionCount}
         />
 
-        <ApplicationSummarySection />
+        <ApplicationSummarySection
+          selectedTemplate={selectedTemplate}
+          dto={dto}
+          totalSlotsToBeCreated={totalSlotsToBeCreated}
+          exceptionCount={exceptionCount}
+        />
       </div>
     </>
   );

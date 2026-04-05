@@ -92,18 +92,6 @@ const SlotDetailsSection: React.FC<{ dto?: AvailabilityGenerationBatchApplyDTO; 
             </p>
           </div>
         </div>
-
-        <div className="space-y-3">
-          <button type="button" className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white">
-            Book Test Appointment
-          </button>
-          <button type="button" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
-            Block This Slot
-          </button>
-          <button type="button" className="w-full text-center text-sm font-medium text-blue-600">
-            View Conflicts (0)
-          </button>
-        </div>
       </div>
     </SurfaceCard>
   );

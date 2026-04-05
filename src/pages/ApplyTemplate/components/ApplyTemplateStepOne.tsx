@@ -2,7 +2,9 @@ import * as React from "react";
 import MyInput from "@/components/MyInput";
 import { useGetFacilityByIdQuery } from "@/services/security/facilityService";
 import { useGetDepartmentByIdQuery } from "@/services/security/departmentService";
-import ApplyConfigurationSection from "./ApplyConfigurationSection";
+import ApplyConfigurationSection, {
+  type EffectiveTemplateIntervalsStatus,
+} from "./ApplyConfigurationSection";
 import PreviewSlotsSection from "./PreviewSlotsSection";
 import SlotDetailsSection from "./SlotDetailsSection";
 import { Form } from "rsuite";
@@ -83,20 +85,55 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
   const formState = dto ?? internalFormState;
   const setFormState = setDto ?? setInternalFormState;
 
+  // Only reset dates/scope when the *template id* changes. Step 1 unmounts on step 2, so this must not
+  // run on every remount with the same template — otherwise Back would wipe the parent's dto.
   React.useEffect(() => {
-    setFormState((prev) => ({
-      ...prev,
-      templateId: selectedTemplate?.id ?? 0,
-      startDate: "",
-      endDate: "",
-      scope: prev?.scope ? prev.scope : ("DEPARTMENT" as any),
-    }));
-  }, [selectedTemplate]);
+    const nextId = selectedTemplate?.id ?? 0;
+    setFormState((prev) => {
+      if (prev.templateId === nextId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        templateId: nextId,
+        startDate: "",
+        endDate: "",
+        scope: "DEPARTMENT" as any,
+        childTemplateId: null as any,
+        holidayHandlingMode: null,
+      } as AvailabilityGenerationBatchApplyDTO;
+    });
+  }, [selectedTemplate?.id, setFormState]);
 
   const dateRangeValidation = React.useMemo(
     () => validateDateRange(formState.startDate, formState.endDate),
     [formState.startDate, formState.endDate]
   );
+
+  const [templateIntervalsStatus, setTemplateIntervalsStatus] =
+    React.useState<EffectiveTemplateIntervalsStatus>({
+      effectiveTemplateId: 0,
+      isLoading: true,
+      hasAnyInterval: false,
+    });
+
+  const handleTemplateIntervalsStatus = React.useCallback((s: EffectiveTemplateIntervalsStatus) => {
+    setTemplateIntervalsStatus((prev) =>
+      prev.effectiveTemplateId === s.effectiveTemplateId &&
+        prev.isLoading === s.isLoading &&
+        prev.hasAnyInterval === s.hasAnyInterval
+        ? prev
+        : s
+    );
+  }, []);
+
+  React.useEffect(() => {
+    setTemplateIntervalsStatus({
+      effectiveTemplateId: 0,
+      isLoading: true,
+      hasAnyInterval: false,
+    });
+  }, [selectedTemplate?.id]);
 
   React.useEffect(() => {
     const scope = String((formState as any)?.scope ?? "").trim().toUpperCase();
@@ -104,12 +141,19 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
     const isSpecificResource = scope === "SPECIFIC_RESOURCE";
     const hasSelectedResourceTemplate = Number((formState as any)?.childTemplateId ?? 0) > 0;
     const scopeOk = isScopeSelected && (!isSpecificResource || hasSelectedResourceTemplate);
-    const isValid = scopeOk && dateRangeValidation.ok;
+    const intervalsApplyOk =
+      !templateIntervalsStatus.isLoading &&
+      templateIntervalsStatus.effectiveTemplateId > 0 &&
+      templateIntervalsStatus.hasAnyInterval;
+    const isValid = scopeOk && dateRangeValidation.ok && intervalsApplyOk;
     onValidationChange?.(isValid);
   }, [
     formState?.scope,
     (formState as any)?.childTemplateId,
     dateRangeValidation.ok,
+    templateIntervalsStatus.isLoading,
+    templateIntervalsStatus.effectiveTemplateId,
+    templateIntervalsStatus.hasAnyInterval,
     onValidationChange,
   ]);
 
@@ -179,7 +223,7 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
             fieldLabel="Facility"
             fieldType="select"
             record={{ facilityId: selectedTemplate?.facilityId ?? null }}
-            setRecord={() => {}}
+            setRecord={() => { }}
             selectData={facilityOptions}
             selectDataLabel="label"
             selectDataValue="id"
@@ -194,7 +238,7 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
             fieldLabel="Department"
             fieldType="select"
             record={{ departmentId: selectedTemplate?.departmentId ?? null }}
-            setRecord={() => {}}
+            setRecord={() => { }}
             selectData={departmentOptions}
             selectDataLabel="label"
             selectDataValue="id"
@@ -209,7 +253,7 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
             fieldLabel="Duration (Minutes)"
             fieldType="number"
             record={{ durationMinutes: selectedTemplate?.durationMinutes ?? null }}
-            setRecord={() => {}}
+            setRecord={() => { }}
             width="100%"
             disabled
           />
@@ -217,7 +261,12 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
       </div>
 
       <div className="grid gap-4 bg-slate-50 p-4 xl:grid-cols-[1.05fr_1.25fr_0.95fr]">
-        <ApplyConfigurationSection dto={formState} setDto={setFormState} />
+        <ApplyConfigurationSection
+          dto={formState}
+          setDto={setFormState}
+          onEffectiveTemplateIntervalsStatus={handleTemplateIntervalsStatus}
+          templateFacilityId={selectedTemplate?.facilityId ?? null}
+        />
         <PreviewSlotsSection
           templateId={selectedTemplate?.id}
           templateDurationMinutes={selectedTemplate?.durationMinutes ?? null}

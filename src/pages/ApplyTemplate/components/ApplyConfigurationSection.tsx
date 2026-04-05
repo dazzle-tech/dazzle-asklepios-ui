@@ -1,6 +1,7 @@
 import * as React from "react";
 import MyInput from "@/components/MyInput";
 import { Form } from "rsuite";
+import { format } from "date-fns";
 import {
   Settings2,
   TriangleAlert,
@@ -17,15 +18,58 @@ import { useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from "@/
 import { useAppSelector } from "@/hooks";
 import { formatEnumString } from "@/utils";
 
+export type EffectiveTemplateIntervalsStatus = {
+  effectiveTemplateId: number;
+  isLoading: boolean;
+  hasAnyInterval: boolean;
+};
+
+/** Parse MyInput datetime / ISO / Date the same way as ApplyTemplateStepOne. */
+function parseDtoDateTime(value: unknown): Date | null {
+  if (value == null || value === "") return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value === "string") {
+    const raw = value.trim();
+    const dmy = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+    if (dmy) {
+      const dd = Number(dmy[1]);
+      const mm = Number(dmy[2]);
+      const yyyy = Number(dmy[3]);
+      const hh = dmy[4] != null ? Number(dmy[4]) : 0;
+      const min = dmy[5] != null ? Number(dmy[5]) : 0;
+      if (![dd, mm, yyyy, hh, min].some(n => Number.isNaN(n))) {
+        const d = new Date(yyyy, mm - 1, dd, hh, min, 0, 0);
+        if (!Number.isNaN(d.getTime())) return d;
+      }
+    }
+    const d = new Date(raw);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
 type ApplyConfigurationSectionProps = {
   dto: AvailabilityGenerationBatchApplyDTO;
   setDto: React.Dispatch<React.SetStateAction<AvailabilityGenerationBatchApplyDTO>>;
+  /** Used by step one to disable Next until the apply template has at least one interval. */
+  onEffectiveTemplateIntervalsStatus?: (status: EffectiveTemplateIntervalsStatus) => void;
+  /** Prefer template facility for org holidays (API expects yyyy-MM-dd + facilityId). */
+  templateFacilityId?: number | null;
 };
 
-const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ dto, setDto }) => {
+const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
+  dto,
+  setDto,
+  onEffectiveTemplateIntervalsStatus,
+  templateFacilityId,
+}) => {
   const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
   const facilityIdFromAuth =
     selectedDepartment?.facilityId ?? selectedDepartment?.facility?.id ?? selectedDepartment?.facility?.facilityId ?? null;
+  const facilityIdForHolidays =
+    templateFacilityId != null && Number(templateFacilityId) > 0
+      ? Number(templateFacilityId)
+      : Number(facilityIdFromAuth ?? 0);
 
   const enumOptions = (useEnumOptions('AvailabilityGenerationScope') as any[]) ?? [];
   const holidayHandlingModeEnumOptions = (useEnumOptions('HolidayHandlingMode') as any[]) ?? [];
@@ -71,8 +115,10 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
     label: t?.templateName ?? `Template #${t?.id}`
   }));
   const selectedChildTemplateId = Number((dto as any)?.childTemplateId ?? 0);
-  const effectiveTemplateIdForIntervals =
-    isSpecificScope && selectedChildTemplateId > 0 ? selectedChildTemplateId : Number(dto?.templateId ?? 0);
+  /** Matches apply logic: parent template unless scope is specific resource (then child only). */
+  const effectiveTemplateIdForIntervals = isSpecificScope
+    ? selectedChildTemplateId
+    : Number(dto?.templateId ?? 0);
   const [intervalsByDay, setIntervalsByDay] = React.useState<Record<string, AvailabilityTemplateIntervalResponseVM[]>>({});
   const [isLoadingIntervals, setIsLoadingIntervals] = React.useState(false);
   const [loadIntervalsByTemplateAndDay] = useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery();
@@ -91,7 +137,10 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
 
     const loadIntervals = async () => {
       if (!effectiveTemplateIdForIntervals) {
-        if (mounted) setIntervalsByDay({});
+        if (mounted) {
+          setIntervalsByDay({});
+          setIsLoadingIntervals(false);
+        }
         return;
       }
 
@@ -124,12 +173,32 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({ d
     };
   }, [effectiveTemplateIdForIntervals, loadIntervalsByTemplateAndDay, daysToQuery.join('|')]);
 
-  const fromDate = (dto as any)?.startDate || "";
-  const toDate = (dto as any)?.endDate || "";
-  const shouldFetchHolidays = Boolean(facilityIdFromAuth) && Boolean(fromDate) && Boolean(toDate);
+  const hasAnyInterval = React.useMemo(
+    () => daysToQuery.some(day => (intervalsByDay[day] ?? []).length > 0),
+    [daysToQuery, intervalsByDay]
+  );
+
+  React.useEffect(() => {
+    onEffectiveTemplateIntervalsStatus?.({
+      effectiveTemplateId: effectiveTemplateIdForIntervals,
+      isLoading: isLoadingIntervals,
+      hasAnyInterval,
+    });
+  }, [
+    effectiveTemplateIdForIntervals,
+    isLoadingIntervals,
+    hasAnyInterval,
+    onEffectiveTemplateIntervalsStatus,
+  ]);
+
+  const startParsed = parseDtoDateTime((dto as any)?.startDate);
+  const endParsed = parseDtoDateTime((dto as any)?.endDate);
+  const fromDate = startParsed ? format(startParsed, "yyyy-MM-dd") : "";
+  const toDate = endParsed ? format(endParsed, "yyyy-MM-dd") : "";
+  const shouldFetchHolidays = facilityIdForHolidays > 0 && Boolean(fromDate) && Boolean(toDate);
   const { data: holidaysInRange = [], isFetching: isLoadingHolidays } =
     useGetActiveHolidaysInRangeQuery(
-      { fromDate, toDate, facilityId: Number(facilityIdFromAuth) },
+      { fromDate, toDate, facilityId: facilityIdForHolidays },
       { skip: !shouldFetchHolidays }
     );
 
