@@ -15,6 +15,7 @@ import MyInput from '@/components/MyInput';
 import CheckIcon from '@rsuite/icons/Check';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
+import Translate from '@/components/Translate';
 
 type Props = {
   // data
@@ -124,7 +125,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             </div>
 
             <div>
-              <div className="prescripton-word-style">Order</div>
+              <div className="prescripton-word-style"><Translate>Order</Translate></div>
               <div className="prescripton-number-style">{orders?.orderNumber ?? '_'}</div>
             </div>
           </div>
@@ -237,11 +238,11 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
         <div className="top-container">
           <div className="buttons-sect">
             <Checkbox checked={showCanceled} disabled={!orderId} onChange={() => setShowCanceled((p: boolean) => !p)}>
-              Show Canceled
+            <Translate>Show Canceled</Translate>
             </Checkbox>
 
             <MyButton disabled={isSubmitDisabled} onClick={() => setOpenTestsModal(true)}>
-              <FontAwesomeIcon icon={faPlus} /> Add Test
+              <FontAwesomeIcon icon={faPlus} /> <Translate>Add Test</Translate>
             </MyButton>
 
             <MyButton

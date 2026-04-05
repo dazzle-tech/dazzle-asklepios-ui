@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import * as errors from '@/images/errors';
 import { MODULES } from '@/config/modules-config';
 import './styles.less';
+
 const norm = (s?: string | null) => (s ?? '').toLowerCase().trim().replace(/^\/+/, '');
 
 const ErrorDepartmentTypePage = () => {
@@ -20,14 +21,16 @@ const ErrorDepartmentTypePage = () => {
     location.state?.message || 'Current Department type is not compatible with this module.';
   const allowedTypes = location.state?.allowedTypes || [];
 
-  const [getDepartmentById, { data: department, isLoading, isFetching }] =
-    useLazyGetDepartmentByIdQuery();
+  const [
+    getDepartmentById,
+    { data: department, isLoading, isFetching, isUninitialized },
+  ] = useLazyGetDepartmentByIdQuery();
 
   useEffect(() => {
-    if (selectedDepartment?.departmentId) {
+    if (selectedDepartment?.departmentId && isUninitialized) {
       getDepartmentById(selectedDepartment.departmentId);
     }
-  }, [selectedDepartment?.departmentId, getDepartmentById]);
+  }, [selectedDepartment?.departmentId, isUninitialized, getDepartmentById]);
 
   useEffect(() => {
     if (!fromPath) return;
@@ -52,6 +55,13 @@ const ErrorDepartmentTypePage = () => {
       navigate(fromPath, { replace: true });
     }
   }, [department?.departmentType, fromPath, navigate]);
+
+  const isChecking =
+    !!selectedDepartment?.departmentId && (isUninitialized || isLoading || isFetching);
+
+  if (isChecking) {
+    return null;
+  }
 
   return (
     <div className="error-page">
