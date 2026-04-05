@@ -105,10 +105,18 @@ const AvailabilityDayGrid = ({
 
 
 
+const normalizedTemplates = Array.isArray(templates)
+    ? templates
+    : (templates as any)?.data ?? [];
+
 const mergedArray = [
   ...(parentTemplate?.id ? [parentTemplate] : []),
-  ...(Array.isArray(templates) ? templates : [])
+  ...normalizedTemplates
 ];
+console.log("templates: ", templates);
+console.log("mergedArray: ", mergedArray);
+console.log("normalizedTemplates: ", normalizedTemplates);
+console.log("parentTemplate: ", parentTemplate);
 
 
     return (

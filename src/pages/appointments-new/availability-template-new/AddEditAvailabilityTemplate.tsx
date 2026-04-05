@@ -80,7 +80,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
         { departmentId: record?.departmentId },
         { skip: !record?.departmentId }
       );
-      console.log("departmentServices: ", departmentServices);
   const daysEnum = useEnumOptions("DayOfWeek");
   const encounterReasonEnum = useEnumOptions("EncounterReason");
   const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
@@ -140,7 +139,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       workingDays: nextWorkingDays,
     }));
   };
-  console.log("workingDaysRecord: ", workingDaysRecord);
   const { data: templates } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
     // { parentTemplateId: record?.id }
     {
@@ -151,7 +149,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }
 
   );
-  console.log("templatestemplates: ", templates)
   const tabData = () => {
     let arr = [];
     {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Form, Checkbox, CheckboxGroup, RadioGroup, Radio, Text, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import './AddResourceModal.less';
@@ -12,12 +12,15 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import { Department } from '@/types/model-types-new';
-import { useGetAllServicesQuery, useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
-import { useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAppointableServicesByLoggedInFacilityQuery, useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+import { useGetAppointablePractitionerByLoggedInFacilityQuery, useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import { newAvailabilityTemplateCreateDTO } from '@/types/model-types-constructor-new';
 import { useCreateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
+import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
+import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetAppointableCatalogsByLoggedInFacilityQuery } from '@/services/setup/catalog/catalogService';
 
 
 
@@ -38,30 +41,32 @@ const AddResourceModal = ({
   selectedDepartment: any
   selectedFacility: any;
 }) => {
-  // console.log(mainTemplate);
   const dispatch = useAppDispatch();
-  const [record, setRecord] = useState({...newAvailabilityTemplateCreateDTO});
+  const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
   useEffect(() => {
-  setRecord({...record, parentTemplateId: mainTemplate?.id, facilityId: selectedFacility?.id, departmentId: mainTemplate?.departmentId});
-  },[mainTemplate, selectedFacility]);
+    setRecord({ ...record, parentTemplateId: mainTemplate?.id, facilityId: selectedFacility?.id, departmentId: mainTemplate?.departmentId });
+  }, [mainTemplate, selectedFacility]);
   const [currentColor, setCurrentColor] = useState(mainTemplate?.color || '#6982F0');
 
   const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
+  const filteredtemplateTypeEnum = templateTypeEnum?.filter(
+    option => option.value !== "DEPARTMENT"
+  );
   const DayOfWeek = useEnumOptions('DayOfWeek');
+  // encounterReasonEnum no longer used here; services list is derived from parent template
+
   const {
     data: facilityListResponse,
     isLoading: isGettingFacilities,
     isFetching: isFetchingFacilities
   } = useGetActiveFacilitiesQuery({});
-  const { data: departmentListResponse } = useGetActiveDepartmentByFacilityListQuery(
-    {
-      facilityId: record?.facilityId
-    },
-    {
-      skip: !record?.facilityId
-    }
-  );
+  
+  const { data: practitionersAppointableByLoggedOnFacility } = useGetAppointablePractitionerByLoggedInFacilityQuery({});
+  console.log("practitionersAppointableByLoggedOnFacility: ", practitionersAppointableByLoggedOnFacility);
+  const { data: diagnosticTestsAppointable} = useGetAllActiveAppointableDiagnosticTestsQuery({});
+  const { data: catalogsAppointableByLoggedOnFacility } = useGetAppointableCatalogsByLoggedInFacilityQuery({});
+  const { data: servicesAppointableByLoggedOnFacility } = useGetAppointableServicesByLoggedInFacilityQuery({});
   const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
     {
       sourceId: selectedDepartment?.departmentId
@@ -71,16 +76,91 @@ const AddResourceModal = ({
     }
   );
   const { data: practitionerListResponse } = useGetPractitionerByDepartmentQuery(
-      {
-        departmentId: record?.departmentId
-      },
-      {
-        skip: !record?.departmentId
-      }
+    {
+      departmentId: record?.departmentId
+    },
+    {
+      skip: !record?.departmentId
+    }
+  );
+  const { data: departmentServices = [] } =
+    useGetDepartmentServicesQuery(
+      { departmentId: record?.departmentId },
+      { skip: !record?.departmentId }
     );
-    const { data: servicesList, isFetching, refetch } = useGetAllServicesQuery({});
-    const allServices = servicesList?.data ?? [];
 
+  const allowedServicesTouchedRef = useRef(false);
+  useEffect(() => {
+    allowedServicesTouchedRef.current = false;
+  }, [record?.departmentId]);
+
+  const normalizeAllowedServices = (input: any) => {
+    if (!Array.isArray(input)) return [];
+    return input
+      .map((s: any) => {
+        if (typeof s === 'string') return { id: null, service: s };
+        if (s && typeof s === 'object' && 'service' in s) {
+          return { id: s.id ?? null, service: s.service ?? null };
+        }
+        return null;
+      })
+      .filter(Boolean);
+  };
+
+  const parentTemplateAllowedServices = useMemo(
+    () => normalizeAllowedServices(mainTemplate?.allowedServices),
+    [mainTemplate?.allowedServices]
+  );
+
+  const isEditMode = Boolean(record?.id);
+
+  const departmentServiceValues = useMemo(() => {
+    if (!Array.isArray(departmentServices)) return [];
+    return departmentServices
+      .map((s: any) => s?.service)
+      .filter((v: any) => typeof v === 'string' && v.length > 0);
+  }, [departmentServices]);
+
+  const departmentServiceValuesKey = useMemo(
+    () => departmentServiceValues.join('|'),
+    [departmentServiceValues]
+  );
+
+  useEffect(() => {
+    if (allowedServicesTouchedRef.current) return;
+    if (!isEditMode) {
+      if (parentTemplateAllowedServices.length === 0) return;
+      setRecord(prev => {
+        const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
+        if (prevAllowed.length > 0) return prev;
+        return {
+          ...prev,
+          allowedServices: parentTemplateAllowedServices,
+        };
+      });
+      return;
+    }
+
+    if (!departmentServiceValues || departmentServiceValues.length === 0) return;
+    setRecord(prev => {
+      const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
+      if (prevAllowed.length > 0) return prev;
+      return {
+        ...prev,
+        allowedServices: departmentServiceValues.map((service: string) => ({
+          id: null,
+          service
+        })),
+      };
+    });
+  }, [departmentServiceValuesKey, isEditMode, parentTemplateAllowedServices]);
+
+  useEffect(() => {
+    setRecord({...record, resourceId: undefined});
+  },[record?.templateType]);
+  useEffect(() => {
+    console.log("resource record: ", record);
+  },[record]);
   const conjureFormContent = () => (
     <Form fluid>
       <Row>
@@ -120,27 +200,43 @@ const AddResourceModal = ({
                   </Row>
                   <Row>
                     <Col md={12}>
-                     
+
                       <MyInput
                         fieldName="templateType"
                         record={record}
                         setRecord={setRecord}
                         fieldType='select'
-                        selectData={templateTypeEnum ?? []}
+                        selectData={filteredtemplateTypeEnum ?? []}
                         selectDataLabel="label"
                         selectDataValue='value'
                         width="100%"
                       />
                     </Col>
-                    {/* {record.templateType === 'PRACTITIONER' ?
+                    {record.templateType === 'PRACTITIONER' ?
                     (
                     <Col md={12}>
                       <MyInput
                         width="100%"
-                        fieldName="departmentId"
-                        fieldLabel="Department"
+                        fieldName="resourceId"
+                        fieldLabel="Practitioner"
                         fieldType="select"
-                        selectData={departmentListResponse ?? []}
+                        selectData={practitionersAppointableByLoggedOnFacility?.data ?? []}
+                        selectDataLabel="firstName"
+                        selectDataValue="id"
+                        record={record}
+                        setRecord={setRecord}
+                        menuMaxHeight={200}
+                        required
+                      />
+                    </Col>
+                    ) : (record.templateType === 'SERVICE') ? (
+                       <Col md={12}>
+                      <MyInput
+                        width="100%"
+                        fieldName="resourceId"
+                        fieldLabel="Service"
+                        fieldType="select"
+                        selectData={servicesAppointableByLoggedOnFacility?.data ?? []}
                         selectDataLabel="name"
                         selectDataValue="id"
                         record={record}
@@ -149,15 +245,47 @@ const AddResourceModal = ({
                         required
                       />
                     </Col>
-                    ) : (record.templateType === 'PRACTITIONER') ? (
-
-                    )
-                  } */}
+                    ):(record.templateType === 'CATALOG') ? (
+                       <Col md={12}>
+                      <MyInput
+                        width="100%"
+                        fieldName="resourceId"
+                        fieldLabel="Catalog"
+                        fieldType="select"
+                        selectData={catalogsAppointableByLoggedOnFacility?.data ?? []}
+                        selectDataLabel="name"
+                        selectDataValue="id"
+                        record={record}
+                        setRecord={setRecord}
+                        menuMaxHeight={200}
+                        required
+                      />
+                    </Col>
+                    ):
+                    (record.templateType === 'DIAGNOSTIC_TEST') ? (
+                       <Col md={12}>
+                      <MyInput
+                        width="100%"
+                        fieldName="resourceId"
+                        fieldLabel="Diagnostic Test"
+                        fieldType="select"
+                        selectData={diagnosticTestsAppointable?.data ?? []}
+                        selectDataLabel="name"
+                        selectDataValue="id"
+                        record={record}
+                        setRecord={setRecord}
+                        menuMaxHeight={200}
+                        required
+                      />
+                    </Col>
+                    ):
+                    (<></>)
+                  }
                   </Row>
 
                   <Row>
                     <Col md={12}>
-                       <MyInput
+                      <MyInput
                         column
                         fieldLabel="Facility"
                         selectData={facilityListResponse ?? []}
@@ -292,12 +420,17 @@ const AddResourceModal = ({
             content={
               <Form fluid>
                 <Row>
-                  {allServices.map((service: any) => {
-                    const fieldName = `service_${service.id}`;
-                    // const isChecked = selectedServiceIds.includes(service.id);
-                    const isChecked = servicesByDepartmentList?.data?.some(s => s.id === service.id);
+                  {parentTemplateAllowedServices.map((service: any) => {
+                    const serviceValue = service?.service ?? '';
+                    const fieldName = `service_${serviceValue}`;
+                    const selectedServiceValues = Array.isArray(record?.allowedServices)
+                      ? record.allowedServices
+                          .map((s: any) => s?.service)
+                          .filter((v: any) => typeof v === 'string' && v.length > 0)
+                      : [];
+                    const isChecked = selectedServiceValues.includes(serviceValue);
                     return (
-                      <Col md={8} key={service.id}>
+                      <Col md={8} key={serviceValue}>
                         <MyInput
                           width="100%"
                           fieldType="check"
@@ -305,25 +438,34 @@ const AddResourceModal = ({
                           record={{ [fieldName]: isChecked }}
                           setRecord={(next: any) => {
                             const checked = Boolean(next[fieldName]);
+                            allowedServicesTouchedRef.current = true;
                             setRecord(prev => {
-                              const prevIds = prev?.allowedServiceIds ?? [];
+                              const prevAllowed = Array.isArray(prev?.allowedServices)
+                                ? prev.allowedServices
+                                : [];
+                              const prevValues = prevAllowed
+                                .map((s: any) => s?.service)
+                                .filter((v: any) => typeof v === 'string' && v.length > 0);
                               if (checked) {
-                                if (prevIds.includes(service.id)) return prev;
+                                if (prevValues.includes(serviceValue)) return prev;
                                 return {
                                   ...prev,
-                                  allowedServiceIds: [...prevIds, service.id]
+                                  allowedServices: [
+                                    ...prevAllowed,
+                                    { id: null, service: serviceValue }
+                                  ]
                                 };
                               }
                               return {
                                 ...prev,
-                                allowedServiceIds: prevIds.filter(
-                                  (id: any) => id !== service.id
-                                )
+                                allowedServices: prevAllowed.filter(
+                                  (s: any) => s?.service !== serviceValue
+                                ),
                               };
                             });
                           }}
                           showLabel={false}
-                          label={service.name}
+                          label={serviceValue}
                         />
                       </Col>
                     );
@@ -358,36 +500,44 @@ const AddResourceModal = ({
     </Form>
   );
 
-   const [create] = useCreateAvailabilityTemplateMutation();
-    const handleSaveMainInfo = () => {
-      if (!record?.templateName?.trim()) {
-        dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
-        return;
-      }
-      if (!record?.facilityId) {
-        dispatch(notify({ msg: 'Facility is required', sev: 'warning' }));
-        return;
-      }
-      if (!record?.departmentId) {
-        dispatch(notify({ msg: 'Department is required', sev: 'warning' }));
-        return;
-      }
-  
-      // if (template?.id) {
-  
-      //   dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
-      //   setOpen(false);
-      //   return;
-      // }
-  
-  
-  
-      console.log("objectToAdd: ", { ...record, numberOfResourcesExpected: Number(record.numberOfResourcesExpected), durationMinutes: Number(record?.durationMinutes) });
-      create({ ...record, resourceId: record?.departmentId, numberOfResourcesExpected: Number(record.numberOfResourcesExpected), durationMinutes: Number(record?.durationMinutes) }).unwrap();
-      // setRecord(newTemplate);
-      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-      setOpen(false);
+  const [create] = useCreateAvailabilityTemplateMutation();
+  const handleSaveMainInfo = () => {
+    if (!record?.templateName?.trim()) {
+      dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
+      return;
+    }
+    if (!record?.facilityId) {
+      dispatch(notify({ msg: 'Facility is required', sev: 'warning' }));
+      return;
+    }
+    if (!record?.departmentId) {
+      dispatch(notify({ msg: 'Department is required', sev: 'warning' }));
+      return;
+    }
+
+    // if (template?.id) {
+
+    //   dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
+    //   setOpen(false);
+    //   return;
+    // }
+
+
+
+    const payload = {
+      ...record,
+      numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
+      durationMinutes: Number(record?.durationMinutes),
+      allowedServices: Array.isArray(record?.allowedServices)
+        ? record.allowedServices
+        : []
     };
+    console.log("objectToAdd: ", payload);
+    create(payload).unwrap();
+    // setRecord(newTemplate);
+    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    setOpen(false);
+  };
   return (
     <MyModal
       open={open}

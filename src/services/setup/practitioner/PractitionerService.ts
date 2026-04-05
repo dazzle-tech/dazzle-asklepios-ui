@@ -168,6 +168,24 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
+    // Get appointable practitioners based on logged-in facility
+    getAppointablePractitionerByLoggedInFacility: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/appointable/by-loggedIn-facility',
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
     createPractitioner: builder.mutation<any, any>({
       query: body => ({
         url: '/api/setup/practitioner',
@@ -263,6 +281,8 @@ export const {
   useLazyGetPractitionerByIdQuery,
   useGetActiveAppointablePractitionersQuery,
   useLazyGetActiveAppointablePractitionersQuery,
+  useGetAppointablePractitionerByLoggedInFacilityQuery,
+  useLazyGetAppointablePractitionerByLoggedInFacilityQuery,
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
