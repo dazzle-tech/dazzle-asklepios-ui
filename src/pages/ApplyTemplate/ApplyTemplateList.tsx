@@ -14,6 +14,8 @@ import {
 } from '@/services/appointment/availabilityTemplateService';
 import type { AvailabilityGenerationBatch, AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import type { LinkMap } from '@/utils/paginationHelper';
+import { PaginationPerPage } from '@/utils/paginationPerPage';
 import { CalendarDays } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Panel } from 'rsuite';
@@ -24,6 +26,15 @@ const ApplyTemplateList = () => {
   const [recordOfSearch, setRecordOfSearch] = useState({ templateName: '' });
   const [selectedTemplate, setSelectedTemplate] = useState<AvailabilityTemplateResponseVM | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
+  const [batchPaginationParams, setBatchPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
+  const [batchSortColumn, setBatchSortColumn] = useState('id');
+  const [batchSortType, setBatchSortType] = useState<'asc' | 'desc'>('asc');
+  const [batchLinks, setBatchLinks] = useState<LinkMap>({});
 
   const { data: templatesResponse = [], isFetching } = useGetAvailabilityTemplatesActiveByStatusQuery({
     status: 'PUBLISHED'
@@ -32,9 +43,12 @@ const ApplyTemplateList = () => {
   const { data: departmentsResponse = [] } = useGetAllDepartmentsWithoutPaginationQuery({});
   const [getTemplatesByName, { data: searchedTemplates = [], isFetching: isSearchingByName }] =
     useLazyGetAvailabilityTemplatesByTemplateNameQuery();
-  const { data: generationBatches = [], isFetching: isFetchingBatches } =
+  const { data: generationBatchesResponse, isFetching: isFetchingBatches } =
     useGetAvailabilityGenerationBatchesByTemplateQuery(
-      { templateId: selectedTemplate?.id ?? 0 },
+      {
+        templateId: selectedTemplate?.id ?? 0,
+        ...batchPaginationParams
+      },
       { skip: !selectedTemplate?.id }
     );
 
@@ -47,6 +61,25 @@ const ApplyTemplateList = () => {
       dispatch(setDivContent(''));
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!selectedTemplate?.id) {
+      return;
+    }
+    setBatchPaginationParams({
+      page: 0,
+      size: 15,
+      sort: 'id,asc',
+      timestamp: Date.now()
+    });
+    setBatchSortColumn('id');
+    setBatchSortType('asc');
+    setBatchLinks({});
+  }, [selectedTemplate?.id]);
+
+  useEffect(() => {
+    setBatchLinks(generationBatchesResponse?.links ?? {});
+  }, [generationBatchesResponse?.links]);
 
   useEffect(() => {
     const search = recordOfSearch.templateName?.trim();
@@ -115,6 +148,30 @@ const ApplyTemplateList = () => {
       ]),
     []
   );
+
+  const generationBatches = generationBatchesResponse?.data ?? [];
+  const batchTotalCount = generationBatchesResponse?.totalCount ?? 0;
+
+  const handleBatchSortChange = (sortColumn: string, sortType: 'asc' | 'desc') => {
+    setBatchSortColumn(sortColumn);
+    setBatchSortType(sortType);
+    setBatchPaginationParams({
+      ...batchPaginationParams,
+      sort: `${sortColumn},${sortType}`,
+      page: 0,
+      timestamp: Date.now()
+    });
+  };
+
+  const handleBatchPageChange = (event: unknown, newPage: number) => {
+    PaginationPerPage.handlePageChange(
+      event,
+      newPage,
+      batchPaginationParams,
+      batchLinks,
+      setBatchPaginationParams
+    );
+  };
 
   const scopeColorMap = useMemo(
     () =>
@@ -316,6 +373,22 @@ const ApplyTemplateList = () => {
               data={generationBatches}
               loading={isFetchingBatches}
               columns={generationBatchColumns}
+              page={batchPaginationParams.page}
+              rowsPerPage={batchPaginationParams.size}
+              totalCount={batchTotalCount}
+              onPageChange={handleBatchPageChange}
+              onRowsPerPageChange={e => {
+                const newSize = Number(e.target.value);
+                setBatchPaginationParams({
+                  ...batchPaginationParams,
+                  size: newSize,
+                  page: 0,
+                  timestamp: Date.now()
+                });
+              }}
+              sortColumn={batchSortColumn}
+              sortType={batchSortType}
+              onSortChange={handleBatchSortChange}
             />
           </Panel>
         </Box>

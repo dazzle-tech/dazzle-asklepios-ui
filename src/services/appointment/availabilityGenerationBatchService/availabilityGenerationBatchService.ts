@@ -5,8 +5,24 @@ import type {
   AvailabilityGenerationBatch,
   AvailabilityGenerationBatchApplyDTO
 } from '@/types/model-types-new';
+import { parseLinkHeader } from '@/utils/paginationHelper';
 
 type Id = number | string;
+
+type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+
+type LinkMap = {
+  next?: string | null;
+  prev?: string | null;
+  first?: string | null;
+  last?: string | null;
+};
+
+type PagedResult<T> = {
+  data: T[];
+  totalCount: number;
+  links?: LinkMap;
+};
 
 export const availabilityGenerationBatchService = createApi({
   reducerPath: 'availabilityGenerationBatchApi',
@@ -29,13 +45,22 @@ export const availabilityGenerationBatchService = createApi({
     }),
 
     getAvailabilityGenerationBatchesByTemplate: builder.query<
-      AvailabilityGenerationBatch[],
-      { templateId: Id }
+      PagedResult<AvailabilityGenerationBatch>,
+      { templateId: Id } & PagedParams
     >({
-      query: ({ templateId }) => ({
+      query: ({ templateId, page, size, sort = 'id,asc' }) => ({
         url: `/api/patient/availability-generation-batches/template/${templateId}`,
-        method: 'GET'
+        method: 'GET',
+        params: { page, size, sort }
       }),
+      transformResponse: (response: AvailabilityGenerationBatch[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       },
