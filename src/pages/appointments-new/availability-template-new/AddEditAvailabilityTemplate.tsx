@@ -23,7 +23,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 import { newAvailabilityTemplateCreateDTO, newAvailabilityTemplateResponseVM } from '@/types/model-types-constructor-new';
-import { useCreateAvailabilityTemplateMutation, useGetAvailabilityTemplatesByParentTemplateIdQuery } from '@/services/appointment/availabilityTemplateService';
+import { useCreateAvailabilityTemplateMutation, useGetAvailabilityTemplateQuery, useGetAvailabilityTemplatesByParentTemplateIdQuery, useUpdateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
 import { formatEnumString } from '@/utils';
 import AddResourceModal from './AddResourceModal';
 import PreviewSlotsModal from './PreviewSlotsModal';
@@ -77,8 +77,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
   const { data: departmentServices = []} =
       useGetDepartmentServicesQuery(
-        { departmentId: selectedDepartment?.departmentId },
-        { skip: !selectedDepartment?.departmentId }
+        { departmentId: record?.departmentId },
+        { skip: !record?.departmentId }
       );
       console.log("departmentServices: ", departmentServices);
   const daysEnum = useEnumOptions("DayOfWeek");
@@ -107,6 +107,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     [dayOptions]
   );
   const workingDaysTouchedRef = useRef(false);
+  const allowedServicesTouchedRef = useRef(false);
   const isEditMode = !!template?.id;
   const workingDaysRecord = useMemo(() => {
     const map: Record<string, boolean> = {};
@@ -139,6 +140,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       workingDays: nextWorkingDays,
     }));
   };
+  console.log("workingDaysRecord: ", workingDaysRecord);
   const { data: templates } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
     // { parentTemplateId: record?.id }
     {
@@ -173,6 +175,11 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   }
 
   const [create] = useCreateAvailabilityTemplateMutation();
+  const [update] = useUpdateAvailabilityTemplateMutation();
+  const { data: templateById } = useGetAvailabilityTemplateQuery(
+    { id: template?.id },
+    { skip: !template?.id }
+  );
   const handleSaveMainInfo = () => {
     if (!record?.templateName?.trim()) {
       dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
@@ -187,18 +194,25 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       return;
     }
 
-    if (template?.id) {
+    const payload = {
+      ...record,
+      resourceId: record?.departmentId,
+      numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
+      durationMinutes: Number(record?.durationMinutes),
+      allowedServices: Array.isArray(record?.allowedServices)
+        ? record.allowedServices
+        : []
+    };
+    console.log("objectToAdd: ", payload);
 
+    if (template?.id) {
+      update({ id: template.id, ...payload }).unwrap();
       dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       setOpen(false);
       return;
     }
 
-
-
-    console.log("objectToAdd: ", { ...record, numberOfResourcesExpected: Number(record.numberOfResourcesExpected), durationMinutes: Number(record?.durationMinutes) });
-    create({ ...record, resourceId: record?.departmentId, numberOfResourcesExpected: Number(record.numberOfResourcesExpected), durationMinutes: Number(record?.durationMinutes) }).unwrap();
-    // setRecord(newTemplate);
+    create(payload).unwrap();
     dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     setOpen(false);
   };
@@ -206,11 +220,29 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   // Effects
   useEffect(() => {
     if (template?.id) {
-      setRecord({ ...template, facilityId: selectedFacility?.id });
+      const source: any = templateById ?? template;
+      const rawAllowed = source?.allowedServices;
+      const normalizedAllowedServices = Array.isArray(rawAllowed)
+        ? rawAllowed
+            .map((s: any) => {
+              if (typeof s === 'string') return { id: null, service: s };
+              if (s && typeof s === 'object' && 'service' in s) {
+                return { id: s.id ?? null, service: s.service ?? null };
+              }
+              return null;
+            })
+            .filter(Boolean)
+        : [];
+
+      setRecord({
+        ...source,
+        facilityId: selectedFacility?.id,
+        allowedServices: normalizedAllowedServices,
+      });
     } else {
       setRecord({ ...newAvailabilityTemplateCreateDTO, facilityId: selectedFacility?.id });
     }
-  }, [template]);
+  }, [template, templateById]);
 
   const appliedWorkingDaysFacilityIdRef = useRef<string | number | null>(null);
   useEffect(() => {
@@ -219,10 +251,46 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   }, [record?.facilityId]);
 
   useEffect(() => {
+    allowedServicesTouchedRef.current = false;
+  }, [record?.departmentId, isEditMode]);
+
+  const departmentServiceValues = useMemo(() => {
+    if (!Array.isArray(departmentServices)) return [];
+    return departmentServices
+      .map((s: any) => s?.service)
+      .filter((v: any) => typeof v === 'string' && v.length > 0);
+  }, [departmentServices]);
+
+  const departmentServiceValuesKey = useMemo(
+    () => departmentServiceValues.join('|'),
+    [departmentServiceValues]
+  );
+
+  useEffect(() => {
     if (isEditMode) return;
+    if (allowedServicesTouchedRef.current) return;
+    if (!departmentServiceValues || departmentServiceValues.length === 0) return;
+
+    setRecord(prev => {
+      const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
+      if (prevAllowed.length > 0) return prev;
+      return {
+        ...prev,
+        allowedServices: departmentServiceValues.map((service: string) => ({
+          id: null,
+          service
+        })),
+      };
+    });
+  }, [isEditMode, departmentServiceValuesKey]);
+
+  useEffect(() => {
     if (!dayOptions || dayOptions.length === 0) return;
     if (!record?.facilityId) return;
     if (workingDaysTouchedRef.current) return;
+    const hasWorkingDays =
+      Array.isArray(record?.workingDays) && record.workingDays.length > 0;
+    if (hasWorkingDays) return;
 
     const facilities = facilityListResponse ?? [];
     const selectedFacilityData = facilities.find(
@@ -268,12 +336,12 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       };
     });
   }, [
-    isEditMode,
     record?.facilityId,
     facilityListResponse,
     selectedFacilityFullObject,
     organizationDefinitions,
     dayOptionsKey,
+    record?.workingDays,
   ]);
 
 
@@ -478,19 +546,24 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
               </Col>
             </Row>
 
-            {/* <Row>
+            <Row>
               <Col md={24}>
                 <SectionContainer
                   title="Services Allowed"
                   content={
                     <Form fluid>
                       <Row>
-                        {allServices.map((service: any) => {
-                          const fieldName = `service_${service.id}`;
-                          // const isChecked = selectedServiceIds.includes(service.id);
-                          const isChecked = servicesByDepartmentList?.data?.some(s => s.id === service.id);
+                        {encounterReasonEnum.map((service: any) => {
+                          const serviceValue = service.value;
+                          const fieldName = `service_${serviceValue}`;
+                          const selectedServiceValues = Array.isArray(record?.allowedServices)
+                            ? record.allowedServices
+                                .map((s: any) => s?.service)
+                                .filter((v: any) => typeof v === 'string' && v.length > 0)
+                            : [];
+                          const isChecked = selectedServiceValues.includes(serviceValue);
                           return (
-                            <Col md={8} key={service.id}>
+                            <Col md={8} key={serviceValue}>
                               <MyInput
                                 width="100%"
                                 fieldType="check"
@@ -498,25 +571,34 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                                 record={{ [fieldName]: isChecked }}
                                 setRecord={(next: any) => {
                                   const checked = Boolean(next[fieldName]);
+                                  allowedServicesTouchedRef.current = true;
                                   setRecord(prev => {
-                                    const prevIds = prev?.allowedServiceIds ?? [];
+                                    const prevAllowed = Array.isArray(prev?.allowedServices)
+                                      ? prev.allowedServices
+                                      : [];
+                                    const prevValues = prevAllowed
+                                      .map((s: any) => s?.service)
+                                      .filter((v: any) => typeof v === 'string' && v.length > 0);
                                     if (checked) {
-                                      if (prevIds.includes(service.id)) return prev;
+                                      if (prevValues.includes(serviceValue)) return prev;
                                       return {
                                         ...prev,
-                                        allowedServiceIds: [...prevIds, service.id]
+                                        allowedServices: [
+                                          ...prevAllowed,
+                                          { id: null, service: serviceValue }
+                                        ]
                                       };
                                     }
                                     return {
                                       ...prev,
-                                      allowedServiceIds: prevIds.filter(
-                                        (id: any) => id !== service.id
-                                      )
+                                      allowedServices: prevAllowed.filter(
+                                        (s: any) => s?.service !== serviceValue
+                                      ),
                                     };
                                   });
                                 }}
                                 showLabel={false}
-                                label={service.name}
+                                label={service.label}
                               />
                             </Col>
                           );
@@ -526,7 +608,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                   }
                 />
               </Col>
-            </Row> */}
+            </Row>
 
             <SectionContainer
               title="Days"
@@ -606,7 +688,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       open={open}
       setOpen={setOpen}
       actionButtonFunction={handleSaveMainInfo}
-      hideActionBtn={record?.id}
       title={
         template?.id
           ? <Translate>Edit Availability Template</Translate>
