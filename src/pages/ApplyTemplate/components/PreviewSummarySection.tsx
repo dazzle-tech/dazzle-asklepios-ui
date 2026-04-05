@@ -1,11 +1,13 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { TimerReset } from "lucide-react";
 import { useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from "@/services/appointment/availabilityTemplate/availabilityTemplateInterval";
 import type { AvailabilityGenerationBatchApplyDTO, AvailabilityTemplateIntervalResponseVM } from "@/types/model-types-new";
 import { useGetActiveHolidaysInRangeQuery } from "@/services/system-configurations/organizationHolidaysService";
 import { useAppSelector } from "@/hooks";
 import { MiniStat } from "./shared";
+import { formatLocalDateForApi, parseApplyTemplateDateTime } from "../applyTemplateDateUtils";
 
 type Props = {
   templateId?: number | null;
@@ -15,47 +17,14 @@ type Props = {
 };
 
 function toDateOnly(input: unknown): Date | null {
-  if (!input) return null;
-  if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return new Date(input.getFullYear(), input.getMonth(), input.getDate());
-  }
-  if (typeof input === "string") {
-    const raw = input.trim();
-
-    // Support the common UI format "DD-MM-YYYY" / "DD/MM/YYYY"
-    const dmy = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-    if (dmy) {
-      const dd = Number(dmy[1]);
-      const mm = Number(dmy[2]);
-      const yyyy = Number(dmy[3]);
-      if (!Number.isNaN(dd) && !Number.isNaN(mm) && !Number.isNaN(yyyy)) {
-        const parsed = new Date(yyyy, mm - 1, dd);
-        if (!Number.isNaN(parsed.getTime())) return parsed;
-      }
-    }
-
-    // Accept either "YYYY-MM-DD" or any ISO-like date; only date part matters.
-    const datePart = raw.includes("T") ? raw.split("T")[0] : raw;
-    const parsed = new Date(datePart);
-    if (!Number.isNaN(parsed.getTime())) {
-      return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
-    }
-  }
-  return null;
+  const d = parseApplyTemplateDateTime(input);
+  if (!d) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 function formatDaysLabel(days: number): string {
   if (!Number.isFinite(days) || days <= 0) return "-";
   return days === 1 ? "1 day" : `${days} days`;
-}
-
-function toYmd(input: unknown): string {
-  const date = toDateOnly(input);
-  if (!date) return "";
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
 }
 
 function jsDayToIso(jsDay: number): number {
@@ -157,8 +126,8 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
     selectedDepartment?.facility?.facilityId ??
     null;
 
-  const fromDate = toYmd((dto as any)?.startDate);
-  const toDate = toYmd((dto as any)?.endDate);
+  const fromDate = formatLocalDateForApi((dto as any)?.startDate);
+  const toDate = formatLocalDateForApi((dto as any)?.endDate);
   const shouldFetchHolidays = Boolean(facilityIdFromAuth) && Boolean(fromDate) && Boolean(toDate);
   const { data: holidaysInRange = [] } = useGetActiveHolidaysInRangeQuery(
     { fromDate, toDate, facilityId: Number(facilityIdFromAuth) },
@@ -253,6 +222,7 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
           Preview Summary
         </CardTitle>
       </CardHeader>
+      <Separator />
       <CardContent className="grid gap-3 px-5 pb-5 sm:grid-cols-2 xl:grid-cols-4">
         <MiniStat label="Slots/Day avg" value={days > 0 ? String(avgSlotsPerDay) : "-"} />
         <MiniStat label="Total Slots" value={days > 0 ? String(totalSlots) : "-"} />

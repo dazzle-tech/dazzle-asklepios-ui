@@ -3,7 +3,21 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { BaseQuery } from '../../newApi'; 
 import { OrganizationHolidayCreateDTO, OrganizationHolidayResponseVM, OrganizationHolidayUpdateDTO } from '@/types/model-types-new';
 
-
+/** Spring @RequestParam LocalDate expects yyyy-MM-dd. Never send a raw Date (serialization can become M/D/YY). */
+function toLocalDateQueryParam(value: unknown): string {
+  if (value == null || value === "") return "";
+  if (typeof value === "string") {
+    const t = value.trim();
+    return t;
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  return String(value);
+}
 
 export const organizationHolidaysService = createApi({
   reducerPath: 'organizationHolidayApi',
@@ -94,7 +108,11 @@ export const organizationHolidaysService = createApi({
     >({
       query: ({ fromDate, toDate, facilityId }) => ({
         url: '/api/setup/organization-holiday/by-date-range',
-        params: { fromDate, toDate, facilityId }
+        params: {
+          fromDate: toLocalDateQueryParam(fromDate),
+          toDate: toLocalDateQueryParam(toDate),
+          facilityId,
+        },
       }),
       providesTags: ['OrganizationHoliday']
     }),

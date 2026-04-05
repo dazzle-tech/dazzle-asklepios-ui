@@ -15,9 +15,9 @@ import { useAppSelector } from "@/hooks";
 import { formatEnumString } from "@/utils";
 import SlotsToBeGeneratedSection from "./SlotsToBeGeneratedSection";
 import ApplicationSummarySection from "./ApplicationSummarySection";
+import { formatLocalDateForApi, parseApplyTemplateDateTime } from "../applyTemplateDateUtils";
 
 const DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"] as const;
-const toDate = (v: any): Date | null => (v instanceof Date && !Number.isNaN(v.getTime()) ? v : (typeof v === "string" ? new Date(v) : null));
 const parseHHmm = (v?: string | null) => {
   if (!v) return null;
   const [h, m] = String(v).split(":").map(Number);
@@ -38,10 +38,10 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
     String((dto as any)?.scope ?? "").toUpperCase() === "SPECIFIC_RESOURCE"
       ? Number((dto as any)?.childTemplateId ?? 0)
       : Number((dto as any)?.templateId ?? 0);
-  const startDate = toDate((dto as any)?.startDate);
-  const endDate = toDate((dto as any)?.endDate);
-  const fromDate = startDate ? format(startDate, "yyyy-MM-dd") : "";
-  const toDateStr = endDate ? format(endDate, "yyyy-MM-dd") : "";
+  const startDate = parseApplyTemplateDateTime((dto as any)?.startDate);
+  const endDate = parseApplyTemplateDateTime((dto as any)?.endDate);
+  const fromDate = formatLocalDateForApi((dto as any)?.startDate);
+  const toDateStr = formatLocalDateForApi((dto as any)?.endDate);
   const { data: holidays = [] } = useGetActiveHolidaysInRangeQuery(
     { fromDate, toDate: toDateStr, facilityId: Number(facilityIdFromAuth) },
     { skip: !fromDate || !toDateStr || !facilityIdFromAuth }
@@ -139,8 +139,8 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
       );
       const holidaySet = new Set<string>();
       for (const h of holidays as any[]) {
-        const hs = toDate(h?.startDate);
-        const he = toDate(h?.endDate ?? h?.startDate);
+        const hs = parseApplyTemplateDateTime(h?.startDate);
+        const he = parseApplyTemplateDateTime(h?.endDate ?? h?.startDate);
         if (!hs || !he) continue;
         for (let d = new Date(hs); d <= he; d.setDate(d.getDate() + 1)) {
           holidaySet.add(format(d, "yyyy-MM-dd"));

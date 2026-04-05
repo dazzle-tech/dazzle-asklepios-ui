@@ -1,7 +1,6 @@
 import * as React from "react";
 import MyInput from "@/components/MyInput";
 import { Form } from "rsuite";
-import { format } from "date-fns";
 import {
   Settings2,
   TriangleAlert,
@@ -17,36 +16,13 @@ import { useGetActiveHolidaysInRangeQuery } from "@/services/system-configuratio
 import { useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from "@/services/appointment/availabilityTemplate/availabilityTemplateInterval";
 import { useAppSelector } from "@/hooks";
 import { formatEnumString } from "@/utils";
+import { formatLocalDateForApi } from "../applyTemplateDateUtils";
 
 export type EffectiveTemplateIntervalsStatus = {
   effectiveTemplateId: number;
   isLoading: boolean;
   hasAnyInterval: boolean;
 };
-
-/** Parse MyInput datetime / ISO / Date the same way as ApplyTemplateStepOne. */
-function parseDtoDateTime(value: unknown): Date | null {
-  if (value == null || value === "") return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof value === "string") {
-    const raw = value.trim();
-    const dmy = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
-    if (dmy) {
-      const dd = Number(dmy[1]);
-      const mm = Number(dmy[2]);
-      const yyyy = Number(dmy[3]);
-      const hh = dmy[4] != null ? Number(dmy[4]) : 0;
-      const min = dmy[5] != null ? Number(dmy[5]) : 0;
-      if (![dd, mm, yyyy, hh, min].some(n => Number.isNaN(n))) {
-        const d = new Date(yyyy, mm - 1, dd, hh, min, 0, 0);
-        if (!Number.isNaN(d.getTime())) return d;
-      }
-    }
-    const d = new Date(raw);
-    if (!Number.isNaN(d.getTime())) return d;
-  }
-  return null;
-}
 
 type ApplyConfigurationSectionProps = {
   dto: AvailabilityGenerationBatchApplyDTO;
@@ -191,10 +167,8 @@ const ApplyConfigurationSection: React.FC<ApplyConfigurationSectionProps> = ({
     onEffectiveTemplateIntervalsStatus,
   ]);
 
-  const startParsed = parseDtoDateTime((dto as any)?.startDate);
-  const endParsed = parseDtoDateTime((dto as any)?.endDate);
-  const fromDate = startParsed ? format(startParsed, "yyyy-MM-dd") : "";
-  const toDate = endParsed ? format(endParsed, "yyyy-MM-dd") : "";
+  const fromDate = formatLocalDateForApi((dto as any)?.startDate);
+  const toDate = formatLocalDateForApi((dto as any)?.endDate);
   const shouldFetchHolidays = facilityIdForHolidays > 0 && Boolean(fromDate) && Boolean(toDate);
   const { data: holidaysInRange = [], isFetching: isLoadingHolidays } =
     useGetActiveHolidaysInRangeQuery(

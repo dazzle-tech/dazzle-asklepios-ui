@@ -11,6 +11,7 @@ import { Form } from "rsuite";
 import { addMonths, isAfter, isBefore, startOfMinute } from "date-fns";
 import type { AvailabilityTemplateResponseVM } from "@/types/model-types-new";
 import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
+import { parseApplyTemplateDateTime } from "../applyTemplateDateUtils";
 
 type ApplyTemplateStepOneProps = {
   selectedTemplate?: AvailabilityTemplateResponseVM | null;
@@ -19,32 +20,9 @@ type ApplyTemplateStepOneProps = {
   onValidationChange?: (isValid: boolean) => void;
 };
 
-function parseFormDateTime(value: unknown): Date | null {
-  if (value == null || value === "") return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof value === "string") {
-    const raw = value.trim();
-    const dmy = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
-    if (dmy) {
-      const dd = Number(dmy[1]);
-      const mm = Number(dmy[2]);
-      const yyyy = Number(dmy[3]);
-      const hh = dmy[4] != null ? Number(dmy[4]) : 0;
-      const min = dmy[5] != null ? Number(dmy[5]) : 0;
-      if (![dd, mm, yyyy, hh, min].some(n => Number.isNaN(n))) {
-        const d = new Date(yyyy, mm - 1, dd, hh, min, 0, 0);
-        if (!Number.isNaN(d.getTime())) return d;
-      }
-    }
-    const d = new Date(raw);
-    if (!Number.isNaN(d.getTime())) return d;
-  }
-  return null;
-}
-
 function validateDateRange(startRaw: unknown, endRaw: unknown): { ok: boolean; message: string } {
-  const start = parseFormDateTime(startRaw);
-  const end = parseFormDateTime(endRaw);
+  const start = parseApplyTemplateDateTime(startRaw);
+  const end = parseApplyTemplateDateTime(endRaw);
   if (!start || !end) {
     return { ok: false, message: "From and To date and time are required." };
   }
@@ -85,8 +63,6 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
   const formState = dto ?? internalFormState;
   const setFormState = setDto ?? setInternalFormState;
 
-  // Only reset dates/scope when the *template id* changes. Step 1 unmounts on step 2, so this must not
-  // run on every remount with the same template — otherwise Back would wipe the parent's dto.
   React.useEffect(() => {
     const nextId = selectedTemplate?.id ?? 0;
     setFormState((prev) => {
@@ -178,7 +154,10 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
   return (
     <>
       <div className="px-5">
-        <Form fluid className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Form
+          fluid
+          className="apply-template-step1-fields grid grid-cols-1 gap-x-3 gap-y-2 md:grid-cols-3"
+        >
           <MyInput
             fieldName="templateId"
             fieldLabel="Template"
