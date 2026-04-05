@@ -147,7 +147,11 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   );
   const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
-  const DayOfWeek = useEnumOptions('DayOfWeek');
+  const dayOptions = useEnumOptions('DayOfWeek');
+  const dayOptionsKey = useMemo(
+    () => (dayOptions ?? []).map(d => `${d.value}:${d.label}`).join('|'),
+    [dayOptions]
+  );
   const allServices = servicesList?.data ?? [];
   const departmentServiceIds = (servicesByDepartmentList?.data ?? []).map((s: any) => s.id);
   const selectedServiceIds = record?.allowedServiceIds ?? [];
@@ -155,9 +159,9 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const isEditMode = !!template?.id;
   const workingDaysRecord = useMemo(() => {
     const map: Record<string, boolean> = {};
-    if (!DayOfWeek || DayOfWeek.length === 0) return map;
+    if (!dayOptions || dayOptions.length === 0) return map;
 
-    DayOfWeek.forEach(day => {
+    dayOptions.forEach(day => {
       map[day.value] = false;
     });
 
@@ -168,12 +172,12 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     });
 
     return map;
-  }, [record?.workingDays, DayOfWeek]);
+  }, [record?.workingDays, dayOptionsKey]);
 
   const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
-    if (!DayOfWeek || DayOfWeek.length === 0) return;
+    if (!dayOptions || dayOptions.length === 0) return;
 
-    const nextWorkingDays = DayOfWeek.map(day => ({
+    const nextWorkingDays = dayOptions.map(day => ({
       dayOfWeek: day.value,
       isWorking: !!nextRecord[day.value],
     }));
@@ -207,7 +211,7 @@ console.log("templatestemplates: ", templates)
               <AvailabilityDayGrid
                parentTemplate={record}
                templates={templates}
-
+               day={day?.value}
               />
             </>
 
@@ -343,7 +347,7 @@ console.log("templatestemplates: ", templates)
   // ]);
   useEffect(() => {
     if (isEditMode) return;
-    if (!DayOfWeek || DayOfWeek.length === 0) return;
+    if (!dayOptions || dayOptions.length === 0) return;
     if (!record?.facilityId) return;
     if (workingDaysTouchedRef.current) return;
 
@@ -366,7 +370,7 @@ console.log("templatestemplates: ", templates)
 
     if (!sourceWorkingDays || sourceWorkingDays.length === 0) return;
 
-    const normalizedWorkingDays = DayOfWeek.map(day => {
+    const normalizedWorkingDays = dayOptions.map(day => {
       const found = sourceWorkingDays.find(
         (d: any) => String(d?.dayOfWeek) === String(day.value)
       );
@@ -376,17 +380,27 @@ console.log("templatestemplates: ", templates)
       };
     });
 
-    setRecord(prev => ({
-      ...prev,
-      workingDays: normalizedWorkingDays,
-    }));
+    setRecord(prev => {
+      const prevDays = prev?.workingDays ?? [];
+      const same =
+        prevDays.length === normalizedWorkingDays.length &&
+        prevDays.every((d, i) =>
+          d.dayOfWeek === normalizedWorkingDays[i].dayOfWeek &&
+          d.isWorking === normalizedWorkingDays[i].isWorking
+        );
+      if (same) return prev;
+      return {
+        ...prev,
+        workingDays: normalizedWorkingDays,
+      };
+    });
   }, [
     isEditMode,
     record?.facilityId,
     facilityListResponse,
     selectedFacilityFullObject,
     organizationDefinitions,
-    DayOfWeek,
+    dayOptionsKey,
   ]);
 
   useEffect(() => {
@@ -663,7 +677,7 @@ console.log("templatestemplates: ", templates)
               title="Days"
               content={
                 <Form fluid layout='inline'>
-                  {DayOfWeek?.map(day => (
+                  {dayOptions?.map(day => (
                     <MyInput
                       key={day.value}
                       width="13vw"
@@ -694,14 +708,6 @@ console.log("templatestemplates: ", templates)
                   onClick={() => setOpenPreview(true)}
                 >
                   <Translate>Preview slots</Translate>
-                </MyButton>
-
-                <MyButton
-                  appearance="primary"
-                  disabled={record?.id ? false : true}
-                  onClick={() => setOpenAddExceptionModal(true)}
-                >
-                  <Translate>Add Exception</Translate>
                 </MyButton>
                 <MyButton onClick={() => setOpenAddResource(true)} prefixIcon={() => <FaPlus />} disabled={template?.id ? false : true}>Add Resource</MyButton>
 

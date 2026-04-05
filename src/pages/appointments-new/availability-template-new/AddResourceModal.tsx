@@ -42,7 +42,7 @@ const AddResourceModal = ({
   const dispatch = useAppDispatch();
   const [record, setRecord] = useState({...newAvailabilityTemplateCreateDTO});
   useEffect(() => {
-  setRecord({...record, parentTemplateId: mainTemplate?.id, facilityId: selectedFacility?.id});
+  setRecord({...record, parentTemplateId: mainTemplate?.id, facilityId: selectedFacility?.id, departmentId: mainTemplate?.departmentId});
   },[mainTemplate, selectedFacility]);
   const [currentColor, setCurrentColor] = useState(mainTemplate?.color || '#6982F0');
 
@@ -120,21 +120,20 @@ const AddResourceModal = ({
                   </Row>
                   <Row>
                     <Col md={12}>
+                     
                       <MyInput
-                        column
-                        fieldLabel="Facility"
-                        selectData={facilityListResponse ?? []}
-                        fieldType="select"
-                        selectDataLabel="name"
-                        selectDataValue="id"
-                        fieldName="facilityId"
+                        fieldName="templateType"
                         record={record}
                         setRecord={setRecord}
+                        fieldType='select'
+                        selectData={templateTypeEnum ?? []}
+                        selectDataLabel="label"
+                        selectDataValue='value'
                         width="100%"
-                        required
-                        disabled
                       />
                     </Col>
+                    {/* {record.templateType === 'PRACTITIONER' ?
+                    (
                     <Col md={12}>
                       <MyInput
                         width="100%"
@@ -150,19 +149,27 @@ const AddResourceModal = ({
                         required
                       />
                     </Col>
+                    ) : (record.templateType === 'PRACTITIONER') ? (
+
+                    )
+                  } */}
                   </Row>
 
                   <Row>
                     <Col md={12}>
-                      <MyInput
-                        fieldName="templateType"
+                       <MyInput
+                        column
+                        fieldLabel="Facility"
+                        selectData={facilityListResponse ?? []}
+                        fieldType="select"
+                        selectDataLabel="name"
+                        selectDataValue="id"
+                        fieldName="facilityId"
                         record={record}
                         setRecord={setRecord}
-                        fieldType='select'
-                        selectData={templateTypeEnum ?? []}
-                        selectDataLabel="label"
-                        selectDataValue='value'
                         width="100%"
+                        required
+                        disabled
                       />
                     </Col>
                     <div className="block">

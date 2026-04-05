@@ -26,11 +26,13 @@ const generateDayTimes = (step: number) => {
 
 const AvailabilityDayGrid = ({
     templates,
-    parentTemplate
+    parentTemplate,
+    day
 }: {
 
       templates: any;
-    parentTemplate: any
+    parentTemplate: any;
+    day: string;
 
     // step: number;
     // activeDay: number;
@@ -55,7 +57,7 @@ const AvailabilityDayGrid = ({
     // , [120]);
     const [openAddInterval, setOpenAddInterval] = useState(false);
     
-    const [channelToAddInterval, setChannelToAddInterval] = useState({});
+    const [resourceToAddInterval, setResourceToAddInterval] = useState({});
 
 
 
@@ -99,12 +101,13 @@ const mergedArray = [
                                     // className="channel-cell add-channel-cell"
                                     ><>
                                             <AvailabilityTemplateSummaryCard
-                                                title={t?.templateName}
-                                                type={t?.templateType}
-                                                capacity="1"
-                                                departmentCapacity={"test"}
-                                                services={["test", "test2"]}
-                                                backgroundColor={t?.templateColor}
+                                              template={t}
+                                                // title={t?.templateName}
+                                                // type={t?.templateType}
+                                                // capacity="1"
+                                                // departmentCapacity={"test"}
+                                                // services={["test", "test2"]}
+                                                // backgroundColor={t?.templateColor}
                                             />
                                             {/* {t?.intervals?.map(interval => (
                                                 <AvailabilityIntervalCard
@@ -115,7 +118,7 @@ const mergedArray = [
                                                 />
                                             ))} */}
 
-                                            <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t?.templateColor ?? "#6982F0"} onClick={() => { setChannelToAddInterval(t); setOpenAddInterval(true) }}>Add Interval</MyButton>
+                                            <MyButton prefixIcon={() => <FaPlus />} width="300px" appearance='ghost' color={t?.templateColor ?? "#6982F0"} onClick={() => { setResourceToAddInterval(t); setOpenAddInterval(true) }}>Add Interval</MyButton>
                                         </>
                                     </div>
                                 </>
@@ -124,18 +127,20 @@ const mergedArray = [
                         </div>
                     </div>
                 </div>
-                {/* <AddIntervalModal
-                    step={step}
-                    record={intervalForm}
-                    setRecord={setIntervalForm}
+                <AddIntervalModal
+                    // step={step}
+                    // record={intervalForm}
+                    // setRecord={setIntervalForm}
                     open={openAddInterval}
                     setOpen={setOpenAddInterval}
+                    // day={day}
+                    // template={template}
+                    // templatesData={templatesData}
+                    // setTemplatesData={setTemplatesData}
+                    // channel={channelToAddInterval}
+                    resource={resourceToAddInterval}
                     day={day}
-                    template={template}
-                    templatesData={templatesData}
-                    setTemplatesData={setTemplatesData}
-                    channel={channelToAddInterval}
-                /> */}
+                />
                 
 
             </div>
