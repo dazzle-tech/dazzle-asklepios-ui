@@ -4,6 +4,7 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import MemberIcon from '@rsuite/icons/Member';
 import './styles.less';
 import { useSelector } from 'react-redux';
+import Translate from '../Translate';
 
 interface PatientInfoCard {
   patient: any;
@@ -36,27 +37,27 @@ const PatientInfoCard = ({ patient}: PatientInfoCard) => {
 
     <div style={{ display: 'grid', gridTemplateColumns: '1fr  1fr 1fr', rowGap: 20, columnGap: 25 }}>
     <div>
-    <div className='div-data'>Patient Name</div>
+    <div className='div-data'><Translate>Patient Name</Translate></div>
     <div className="patient-info">{(patient?.firstName || '') + "  " + (patient?.lastName || '')}</div>
      </div>
       <div>
-        <div className="div-data"> Gender & Age</div>
+        <div className="div-data"><Translate>Gender & Age</Translate></div>
         <div className="patient-info">  { (patient?.genderLvalue?.lovDisplayValue || '') + (patient?.dob ? calculateAgeFormat(patient.dob) + '' : '')}</div>
       </div>
       <div>
-        <div className="div-data">Date of Register</div>
+        <div className="div-data"><Translate>Date of Register</Translate></div>
         <div className="patient-info">{(patient?.strength || '') + (patient?.unitLvalue?.lovDisplayVale || '')}</div>
       </div>
       <div>
-        <div className="div-data">Document Type</div>
+        <div className="div-data"><Translate>Document Type</Translate></div>
         <div className="patient-info">{ (patient?.documentTypeLvalue?.lovDisplayVale || '')}</div>
       </div>
       <div>
-        <div className="div-data">Document Country</div>
+        <div className="div-data"><Translate>Document Country</Translate></div>
         <div className="patient-info">{ patient?.documentCountryLvalue?.lovDisplayVale || " "}</div>
       </div>
       <div>
-        <div className="div-data">Document Number</div>
+        <div className="div-data"><Translate>Document Number</Translate></div>
         <div className="patient-info"> {(patient?.documentNo || '')}</div>
       </div>
     </div>

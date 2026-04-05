@@ -215,7 +215,7 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
           <Col md={12}>
             <Row>
                 <SectionContainer 
-                  title="Maintenance Information" 
+                  title={<Translate>Maintenance Information</Translate>} 
                   content={<MaintenanceInformation product={product} setProduct={setProduct} disabled={false} />} 
               />
             </Row>

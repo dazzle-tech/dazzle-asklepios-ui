@@ -17,6 +17,7 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 
 import '../styles.less';
+import Translate from '@/components/Translate';
 
 const Hospitalizations = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -99,7 +100,7 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
     },
     {
       key: 'lengthOfStayDays',
-      title: 'LENGTH OF STAY (DAYS)',
+      title: <span><Translate>LENGTH OF STAY</Translate> (<Translate>DAYS</Translate>)</span>,
       flexGrow: 2,
       dataKey: 'lengthOfStayDays'
     },

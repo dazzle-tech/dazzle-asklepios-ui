@@ -56,7 +56,7 @@ const Card: React.FC<CardProps> = ({ record, setRecord }) => {
             <MyInput
               width={250}
               fieldType="text"
-              fieldLabel="Emargency Contact Name"
+              fieldLabel="Emergency Contact Name"
               fieldName={'emargencyContactName'}
               record={record}
               setRecord={setRecord}
@@ -64,7 +64,7 @@ const Card: React.FC<CardProps> = ({ record, setRecord }) => {
             <MyInput
               width={250}
               fieldType="text"
-              fieldLabel="Emargency Contact Phone"
+              fieldLabel="Emergency Contact Phone"
               fieldName={'emargencyContactPhone'}
               record={record}
               setRecord={setRecord}

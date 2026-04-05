@@ -174,7 +174,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
               <MyInput
                 width={'13vw'}
                 fieldType="text"
-                fieldLabel="Emargency Contact Name"
+                fieldLabel="Emergency Contact Name"
                 fieldName={'emargencyContactName'}
                 record={record}
                 setRecord={setRecord}
@@ -182,7 +182,7 @@ const AddSupplierSetup = ({ open, setOpen, record, setRecord }) => {
               <MyInput
                 width={'13vw'}
                 fieldType="text"
-                fieldLabel="Emargency Contact Phone"
+                fieldLabel="Emergency Contact Phone"
                 fieldName={'emargencyContactPhone'}
                 record={record}
                 setRecord={setRecord}
