@@ -56,7 +56,7 @@ const ChiefComplainTriage = ({ patient, encounter, readOnly = false }) => {
   const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const { data: painPatternLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_PATTERN');
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-  const patientConditionEnumOptions = useEnumOptions('PatientCondition');
+  const patientConditionEnumOptions = useEnumOptions('Condition');
 
   useEffect(() => {
     if (latestChiefComplain && !isFetchingLatest) {
