@@ -22,6 +22,7 @@ import { useGetDepartmentServicesQuery } from '@/services/departmentServicesServ
 import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetAppointableCatalogsByLoggedInFacilityQuery } from '@/services/setup/catalog/catalogService';
 import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
+import { formatEnumString } from '@/utils';
 
 
 
@@ -631,7 +632,7 @@ const AddResourceModal = ({
                             });
                           }}
                           showLabel={false}
-                          label={serviceValue}
+                          label={formatEnumString(serviceValue)}
                         />
                       </Col>
                     );

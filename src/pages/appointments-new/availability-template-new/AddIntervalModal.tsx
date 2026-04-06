@@ -4,11 +4,21 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import './AddIntervalModal.less';
 import MyModal from '@/components/MyModal/MyModal';
-import { AvailabilityTemplateIntervalCreateDTO } from '@/types/model-types-new';
-import { newAvailabilityTemplateIntervalCreateDTO } from '@/types/model-types-constructor-new';
+import {
+    AvailabilityTemplateIntervalCreateDTO,
+    AvailabilityTemplateIntervalResponseVM,
+    AvailabilityTemplateIntervalUpdateDTO
+} from '@/types/model-types-new';
+import {
+    newAvailabilityTemplateIntervalCreateDTO,
+    newAvailabilityTemplateIntervalUpdateDTO
+} from '@/types/model-types-constructor-new';
 import { formatEnumString } from '@/utils';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useCreateAvailabilityTemplateIntervalMutation } from '@/services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import {
+    useCreateAvailabilityTemplateIntervalMutation,
+    useUpdateAvailabilityTemplateIntervalMutation
+} from '@/services/appointment/availabilityTemplate/availabilityTemplateInterval';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 
@@ -27,7 +37,9 @@ const AddIntervalModal = ({
     // setTemplatesData,
     // channel
     resource,
-    day
+    day,
+    intervalToEdit,
+    parentTemplate
 }: {
     // step: number;
     // dayLabel?: string;
@@ -42,10 +54,15 @@ const AddIntervalModal = ({
     // channel: any;
     resource: any;
     day: string;
+    intervalToEdit?: AvailabilityTemplateIntervalResponseVM | null;
+    parentTemplate: AvailabilityTemplateResponseVM;
 }) => {
-    const [record, setRecord] = useState<AvailabilityTemplateIntervalCreateDTO>({...newAvailabilityTemplateIntervalCreateDTO});
+    const [record, setRecord] = useState<
+        AvailabilityTemplateIntervalCreateDTO | AvailabilityTemplateIntervalUpdateDTO
+    >({ ...newAvailabilityTemplateIntervalCreateDTO });
     const dispatch = useAppDispatch();
     const allowedServicesTouchedRef = useRef(false);
+    const isEditMode = Boolean(intervalToEdit?.id);
 
     const normalizeAllowedServices = (input: any) => {
         if (!Array.isArray(input)) return [];
@@ -86,6 +103,7 @@ const AddIntervalModal = ({
 
     const slotStrategyEnum = useEnumOptions('SlotStrategy');
     const [createAvailabilityTemplateInterval] = useCreateAvailabilityTemplateIntervalMutation();
+    const [updateAvailabilityTemplateInterval] = useUpdateAvailabilityTemplateIntervalMutation();
 
     useEffect(() => {
         if (!open) return;
@@ -94,6 +112,25 @@ const AddIntervalModal = ({
 
     useEffect(() => {
         if (!open) return;
+        if (isEditMode && intervalToEdit) {
+            setRecord({
+                ...newAvailabilityTemplateIntervalUpdateDTO,
+                id: intervalToEdit?.id ?? 0,
+                dayOfWeek: intervalToEdit?.dayOfWeek ?? day,
+                startTime: intervalToEdit?.startTime ?? '',
+                endTime: intervalToEdit?.endTime ?? '',
+                slotStrategy: intervalToEdit?.slotStrategy ?? '',
+                slotDurationMinutes: intervalToEdit?.slotDurationMinutes ?? 0,
+                allowedServices: normalizeAllowedServices(intervalToEdit?.allowedServices)
+            });
+            return;
+        }
+        setRecord({ ...newAvailabilityTemplateIntervalCreateDTO });
+    }, [open, isEditMode, intervalToEdit?.id, day]);
+
+    useEffect(() => {
+        if (!open) return;
+        if (isEditMode) return;
         if (allowedServicesTouchedRef.current) return;
         if (templateAllowedServices.length === 0) return;
         setRecord(prev => {
@@ -105,6 +142,14 @@ const AddIntervalModal = ({
             };
         });
     }, [open, templateAllowedServices]);
+    
+    useEffect(() => {
+          if(record?.slotStrategy === 'AS_DEPARTMENT_POOL'){
+            setRecord({...record, slotDurationMinutes: parentTemplate.durationMinutes})
+          }else{
+             setRecord({...record, slotDurationMinutes: 0})
+          }
+    },[record?.slotStrategy]);
 
     const conjureFormContent = (stepNumber = 0) => {
         switch (stepNumber) {
@@ -113,11 +158,10 @@ const AddIntervalModal = ({
                     <Form fluid className="add-interval-modal">
                         <div className="day-title">{formatEnumString(day)}</div>
                         <Divider />
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h6>
                                 <Translate>Interval</Translate>
                             </h6>
-                            
                         </div>
                         <div className="interval-row">
                             <MyInput
@@ -227,6 +271,7 @@ const AddIntervalModal = ({
                                     width={"15vw"}
                                     rightAddon="min"
                                     fieldLabel='Duration'
+                                    disabled={record?.slotStrategy === 'AS_DEPARTMENT_POOL'}
                                 />
                             </Form>
                         </div>
@@ -243,18 +288,54 @@ const AddIntervalModal = ({
     };
 
     const handleSave = async () => {
+        const rawSlotDuration = (record as any)?.slotDurationMinutes;
+        const parsedSlotDuration = Number(rawSlotDuration);
+        const normalizedSlotDuration = Number.isFinite(parsedSlotDuration)
+            ? parsedSlotDuration
+            : null;
+
+        if (isEditMode && intervalToEdit?.id) {
+            const payload: AvailabilityTemplateIntervalUpdateDTO = {
+                id: intervalToEdit.id,
+                dayOfWeek: day,
+                startTime: (record as any)?.startTime ?? '',
+                endTime: (record as any)?.endTime ?? '',
+                slotStrategy: (record as any)?.slotStrategy ?? '',
+                slotDurationMinutes: normalizedSlotDuration,
+                allowedServices: normalizeAllowedServices((record as any)?.allowedServices)
+            };
+
+            await updateAvailabilityTemplateInterval({
+                id: intervalToEdit.id,
+                body: payload
+            })
+                .unwrap()
+                .then(() => {
+                    dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
+                })
+                .catch(() => {
+                    dispatch(notify({ msg: 'Failed to update', sev: 'warning' }));
+                });
+
+            setOpen(false);
+            return;
+        }
+
         const payload: AvailabilityTemplateIntervalCreateDTO = {
-            ...record,
-            templateId: resource?.id ?? record.templateId,
+            ...(record as AvailabilityTemplateIntervalCreateDTO),
+            templateId: resource?.id ?? (record as AvailabilityTemplateIntervalCreateDTO).templateId,
             dayOfWeek: day,
-            slotDurationMinutes: Number(record.slotDurationMinutes)
+            slotDurationMinutes: Number(record?.slotDurationMinutes)
         };
         console.log("internalToAdd: ", payload);
-        await createAvailabilityTemplateInterval(payload).unwrap().then(() => {
-            dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
-        }).catch(() => {
-            dispatch(notify({ msg: 'Failed to save', sev: 'warning' }));
-        })
+        await createAvailabilityTemplateInterval(payload)
+            .unwrap()
+            .then(() => {
+                dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
+            })
+            .catch(() => {
+                dispatch(notify({ msg: 'Failed to save', sev: 'warning' }));
+            });
         setOpen(false);
     };
     
@@ -264,10 +345,10 @@ const AddIntervalModal = ({
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Add Interval"
+            title={isEditMode ? "Edit Interval" : "Add Interval"}
             size="40vw"
             content={conjureFormContent}
-            actionButtonLabel="Save"
+            actionButtonLabel={isEditMode ? "Update" : "Save"}
             actionButtonFunction={handleSave}
         />
     );

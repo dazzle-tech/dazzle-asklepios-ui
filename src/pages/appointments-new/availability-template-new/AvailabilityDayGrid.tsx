@@ -27,10 +27,17 @@ type TemplateColumnProps = {
     day: string;
     onAddInterval: (template: any) => void;
     onEditTemplate?: (template: any) => void;
+    onEditInterval?: (interval: AvailabilityTemplateIntervalResponseVM, template: any) => void;
 };
 
 // افصلها على ملف ثاني
-const TemplateColumn: React.FC<TemplateColumnProps> = ({ template, day, onAddInterval, onEditTemplate }) => {
+const TemplateColumn: React.FC<TemplateColumnProps> = ({
+    template,
+    day,
+    onAddInterval,
+    onEditTemplate,
+    onEditInterval
+}) => {
     const shouldFetch = Boolean(template?.id) && Boolean(day);
     const { data: intervals = [], isFetching } = useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery(
         { templateId: template?.id, dayOfWeek: day },
@@ -67,6 +74,11 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({ template, day, onAddInt
                         interval={interval}
                         slotLabel={formatSlotLabel(interval)}
                         backgroundColor={template?.templateColor ?? "#6982F0"}
+                        onEdit={() => {
+                            if (onEditInterval) {
+                                onEditInterval(interval, template);
+                            }
+                        }}
                     />
                 ))
             )}
@@ -105,6 +117,7 @@ const AvailabilityDayGrid = ({
     const [openAddInterval, setOpenAddInterval] = useState(false);
     
     const [resourceToAddInterval, setResourceToAddInterval] = useState({});
+    const [intervalToEdit, setIntervalToEdit] = useState<AvailabilityTemplateIntervalResponseVM | null>(null);
 
 
 
@@ -144,7 +157,16 @@ const mergedArray = [
                                     key={t?.id}
                                     template={t}
                                     day={day}
-                                    onAddInterval={(template) => { setResourceToAddInterval(template); setOpenAddInterval(true); }}
+                                    onAddInterval={(template) => {
+                                        setIntervalToEdit(null);
+                                        setResourceToAddInterval(template);
+                                        setOpenAddInterval(true);
+                                    }}
+                                    onEditInterval={(interval, template) => {
+                                        setIntervalToEdit(interval);
+                                        setResourceToAddInterval(template);
+                                        setOpenAddInterval(true);
+                                    }}
                                     onEditTemplate={onEditTemplate}
                                 />
                             ))}
@@ -156,6 +178,8 @@ const mergedArray = [
                     setOpen={setOpenAddInterval}
                     resource={resourceToAddInterval}
                     day={day}
+                    intervalToEdit={intervalToEdit}
+                    parentTemplate={parentTemplate}
                 />
                 
 

@@ -69,7 +69,7 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
              <div style={{ display: 'flex', gap: '5px' }}>
                       {/* <IoSettingsSharp onClick={onSettingsClick} className='icons-style'/> */}
                       <CiSquareMinus className='icons-style' onClick={() => setShowDetails(!showDetails)} />
-                      <FaRegEdit className='icons-style' />
+                      <FaRegEdit className='icons-style' onClick={onEdit} />
                      
                         <MdDelete
                           className='icons-style'
@@ -102,4 +102,3 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
 };
 
 export default AvailabilityIntervalCard;
-
