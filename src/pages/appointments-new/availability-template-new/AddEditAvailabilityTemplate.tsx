@@ -502,7 +502,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                         <MyInput
                           width="100%"
                           fieldType="number"
-                          fieldLabel="NumberOfResources"
+                          fieldLabel="Number Of Resources"
                           fieldName="numberOfResourcesExpected"
                           record={record}
                           setRecord={setRecord}

@@ -182,9 +182,12 @@ const AvailabilityTemplatePageNew = () => {
             size={24}
             fill="var(--primary-gray)"
             className="icons-style"
+            style={{ cursor: rowData?.status === "DRAFT" ? 'pointer' : 'not-allowed' }}
             onClick={() => {
+              if(rowData.status === "DRAFT"){
               setSelectedTemplate(rowData);
               setOpenModal(true);
+              }
             }}
           />
           {rowData?.isActive ? (

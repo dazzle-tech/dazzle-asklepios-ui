@@ -144,12 +144,16 @@ const AddIntervalModal = ({
     }, [open, templateAllowedServices]);
     
     useEffect(() => {
-          if(record?.slotStrategy === 'AS_DEPARTMENT_POOL'){
-            setRecord({...record, slotDurationMinutes: parentTemplate.durationMinutes})
-          }else{
-             setRecord({...record, slotDurationMinutes: 0})
-          }
-    },[record?.slotStrategy]);
+        setRecord(prev => {
+            if (prev?.slotStrategy !== 'AS_DEPARTMENT_POOL') return prev;
+            const nextDuration = parentTemplate?.durationMinutes ?? 0;
+            if (prev?.slotDurationMinutes === nextDuration) return prev;
+            return {
+                ...prev,
+                slotDurationMinutes: nextDuration
+            };
+        });
+    }, [record?.slotStrategy, parentTemplate?.durationMinutes]);
 
     const conjureFormContent = (stepNumber = 0) => {
         switch (stepNumber) {
