@@ -96,6 +96,21 @@ export const patientPreferredHealthProfessionalService = createApi({
       invalidatesTags: (_res, _err, { patientId }) => [
         { type: 'PatientPreferredHealthProfessional', id: patientId }
       ]
+    }),
+
+    getActivePatientPreferredHealthProfessionals: builder.query<
+      PagedResult<PatientPreferredHealthProfessional>,
+      { patientId: Id } & PagedParams
+    >({
+      query: ({ patientId, page, size, sort = 'id,desc' }) => ({
+        url: `/api/patient/preferred-health-professionals/patient/${patientId}/active`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: (_res, _err, { patientId }) => [
+        { type: 'PatientPreferredHealthProfessional', id: patientId }
+      ]
     })
   })
 });
@@ -105,5 +120,7 @@ export const {
   useLazyGetPatientPreferredHealthProfessionalsQuery,
   useCreatePatientPreferredHealthProfessionalMutation,
   useUpdatePatientPreferredHealthProfessionalMutation,
-  useDeletePatientPreferredHealthProfessionalMutation
+  useDeletePatientPreferredHealthProfessionalMutation,
+  useGetActivePatientPreferredHealthProfessionalsQuery,
+  useLazyGetActivePatientPreferredHealthProfessionalsQuery
 } = patientPreferredHealthProfessionalService;

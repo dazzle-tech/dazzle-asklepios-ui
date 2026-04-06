@@ -1,6 +1,6 @@
-import { BaseQuery } from "@/newApi";
-import { parseLinkHeader } from "@/utils/paginationHelper";
-import { createApi } from "@reduxjs/toolkit/dist/query/react";
+import { BaseQuery } from '@/newApi';
+import { parseLinkHeader } from '@/utils/paginationHelper';
+import { createApi } from '@reduxjs/toolkit/dist/query/react';
 
 type PagedParams = {
   page: number;
@@ -29,10 +29,10 @@ export type PayorSaveVM = any;
 export type PayorUpdateVM = any;
 
 export const PayorService = createApi({
-  reducerPath: "newPayorApi",
+  reducerPath: 'newPayorApi',
   baseQuery: BaseQuery,
-  tagTypes: ["Payor"],
-  endpoints: (builder) => ({
+  tagTypes: ['Payor'],
+  endpoints: builder => ({
     getAllPayors: builder.query<
       PagedResult<Payor>,
       PagedParams & {
@@ -41,70 +41,86 @@ export const PayorService = createApi({
         code?: string;
       }
     >({
-      query: ({ page, size, sort = "id,asc", category, name, code }) => ({
-        url: "/api/setup/payor",
-        method: "GET",
+      query: ({ page, size, sort = 'id,asc', category, name, code }) => ({
+        url: '/api/setup/payor',
+        method: 'GET',
         params: {
           page,
           size,
           sort,
           ...(category ? { category } : {}),
           ...(name ? { name } : {}),
-          ...(code ? { code } : {}),
-        },
+          ...(code ? { code } : {})
+        }
       }),
       transformResponse: (response: Payor[], meta) => {
         const headers = meta?.response?.headers;
         return {
           data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
         };
       },
-      providesTags: ["Payor"],
+      providesTags: ['Payor']
     }),
 
     // 🔹 Get single payor by id
     getPayorById: builder.query<Payor, number | string>({
-      query: (id) => ({
+      query: id => ({
         url: `/api/setup/payor/${id}`,
-        method: "GET",
+        method: 'GET'
       }),
-      providesTags: (result, error, id) => [{ type: "Payor", id }],
+      providesTags: (result, error, id) => [{ type: 'Payor', id }]
     }),
 
     // 🔹 Create payor
     createPayor: builder.mutation<Payor, PayorSaveVM>({
-      query: (body) => ({
-        url: "/api/setup/payor",
-        method: "POST",
-        body,
+      query: body => ({
+        url: '/api/setup/payor',
+        method: 'POST',
+        body
       }),
-      invalidatesTags: ["Payor"],
+      invalidatesTags: ['Payor']
     }),
 
     // 🔹 Update payor
     updatePayor: builder.mutation<Payor, PayorUpdateVM>({
-      query: (body) => ({
-        url: "/api/setup/payor",
-        method: "PUT",
-        body,
+      query: body => ({
+        url: '/api/setup/payor',
+        method: 'PUT',
+        body
       }),
       invalidatesTags: (result, error, body: any) =>
-        body?.id
-          ? [{ type: "Payor", id: body.id }, "Payor"]
-          : ["Payor"],
+        body?.id ? [{ type: 'Payor', id: body.id }, 'Payor'] : ['Payor']
     }),
 
     // 🔹 Toggle active status
     togglePayorActive: builder.mutation<Payor, number | string>({
-      query: (id) => ({
+      query: id => ({
         url: `/api/setup/payor/${id}/toggle-active`,
-        method: "PATCH",
+        method: 'PATCH'
       }),
-      invalidatesTags: ["Payor"],
+      invalidatesTags: ['Payor']
     }),
-  }),
+
+    // 🔹 Get all active payors
+    getAllActivePayors: builder.query<PagedResult<Payor>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/payor/active',
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: Payor[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Payor']
+    })
+  })
 });
 
 export const {
@@ -114,4 +130,6 @@ export const {
   useCreatePayorMutation,
   useUpdatePayorMutation,
   useTogglePayorActiveMutation,
+  useGetAllActivePayorsQuery,
+  useLazyGetAllActivePayorsQuery
 } = PayorService;
