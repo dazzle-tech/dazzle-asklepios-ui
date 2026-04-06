@@ -28,6 +28,7 @@ import { formatEnumString } from '@/utils';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { newAvailabilityTemplateResponseVM } from '@/types/model-types-constructor-new';
 import AddEditAvailabilityTemplate from './AddEditAvailabilityTemplate';
+import { MdPublish } from "react-icons/md";
 
 
 const AvailabilityTemplatePageNew = () => {
@@ -177,19 +178,7 @@ const AvailabilityTemplatePageNew = () => {
       flexGrow: 2,
       render: (rowData) => (
         <div className="container-of-icons">
-          <MdModeEdit
-            title="Edit"
-            size={24}
-            fill="var(--primary-gray)"
-            className="icons-style"
-            style={{ cursor: rowData?.status === "DRAFT" ? 'pointer' : 'not-allowed' }}
-            onClick={() => {
-              if(rowData.status === "DRAFT"){
-              setSelectedTemplate(rowData);
-              setOpenModal(true);
-              }
-            }}
-          />
+           
           {rowData?.isActive ? (
             <MdDelete
               title="Deactivate"
@@ -214,6 +203,29 @@ const AvailabilityTemplatePageNew = () => {
                 setOpenConfirmToggleTemplate(true);
               }}
             />
+          )}
+          {rowData.status === "DRAFT" && (
+          <MdModeEdit
+            title="Edit"
+            size={24}
+            fill="var(--primary-gray)"
+            className="icons-style"
+            style={{ cursor: rowData?.status === "DRAFT" ? 'pointer' : 'not-allowed' }}
+            onClick={() => {
+              if(rowData.status === "DRAFT"){
+              setSelectedTemplate(rowData);
+              setOpenModal(true);
+              }
+            }}
+          />
+           )}
+          {rowData.status === "PUBLISHED" && (
+            <MdPublish
+              title="Publish"
+              size={24}
+              fill="var(--primary-gray)"
+              className="icons-style"
+             />
           )}
         </div>
       )
