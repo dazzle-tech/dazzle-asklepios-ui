@@ -1,7 +1,7 @@
 import { useLoadTenantQuery } from '@/services/authService';
 import { Icon } from '@rsuite/icons';
 import { BlockUI } from 'primereact/blockui';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import * as icons from 'react-icons/fa6';
 import { MdDashboard } from 'react-icons/md';
 import { IntlProvider } from 'react-intl';
@@ -220,8 +220,6 @@ import OrganizationHolidays from './pages/system-configurations/organization-hol
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
 
-type BackendMenuItem = { screen?: string | null };
-
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -234,6 +232,12 @@ const PUBLIC_PATHS = new Set([
 
 const norm = (s?: string | null) => (s ?? '').toLowerCase().trim().replace(/^\/+/, '');
 
+type BackendMenuItem = {
+  module?: string | null;
+  label?: string | null;
+  screen?: string | null;
+};
+
 function ParentPermissionGuard() {
   const location = useLocation();
   const authSlice = useAppSelector((s) => s.auth);
@@ -241,19 +245,17 @@ function ParentPermissionGuard() {
   const path = location.pathname || '/';
   const cleanPath = norm(path.split('?')[0]);
   const selectedDepartment = authSlice.selectedDepartment;
+  const selectedDepartmentId = selectedDepartment?.departmentId;
 
-  const [getDepartmentById, { data: department, isLoading, isFetching, error }] =
-    useLazyGetDepartmentByIdQuery();
-
-  useEffect(() => {
-    if (selectedDepartment?.departmentId) {
-      getDepartmentById(selectedDepartment.departmentId);
+  const [
+    getDepartmentById,
+    {
+      data: department,
+      isLoading,
+      isFetching,
+      error
     }
-  }, [selectedDepartment?.departmentId, getDepartmentById]);
-
-  if (PUBLIC_PATHS.has(path)) return <Outlet />;
-  if (!authSlice?.menu) return <Outlet />;
-  if (!cleanPath) return <Outlet />;
+  ] = useLazyGetDepartmentByIdQuery();
 
   const matchedModule = MODULES.find((m: any) =>
     (m.screens ?? []).some((s: any) => norm(s.navPath) === cleanPath)
@@ -263,18 +265,34 @@ function ParentPermissionGuard() {
     (s: any) => norm(s.navPath) === cleanPath
   );
 
+  const moduleDepartmentTypes = matchedModule?.departmentTypes ?? [];
+  const requiresDepartmentTypeValidation = moduleDepartmentTypes.length > 0;
+
+  const allowedCodes = useMemo(
+    () =>
+      new Set(
+        ((authSlice.menu ?? []) as BackendMenuItem[]).map((x) =>
+          String(x.screen ?? '').toUpperCase()
+        )
+      ),
+    [authSlice.menu]
+  );
+
+  useEffect(() => {
+    if (!requiresDepartmentTypeValidation) return;
+    if (!selectedDepartmentId) return;
+
+    getDepartmentById(selectedDepartmentId, true);
+  }, [requiresDepartmentTypeValidation, selectedDepartmentId, getDepartmentById]);
+
+  if (PUBLIC_PATHS.has(path)) return <Outlet />;
+  if (!authSlice?.menu) return <Outlet />;
+  if (!cleanPath) return <Outlet />;
   if (!matchedModule || !matchedScreen) return <Outlet />;
 
-  // permission check على مستوى الشاشة
   const requiredCode = matchedScreen.code;
 
   if (requiredCode) {
-    const allowedCodes = new Set(
-      (authSlice.menu as BackendMenuItem[]).map((x) =>
-        String(x.screen ?? '').toUpperCase()
-      )
-    );
-
     const hasPermission = allowedCodes.has(String(requiredCode).toUpperCase());
 
     if (!hasPermission) {
@@ -282,81 +300,83 @@ function ParentPermissionGuard() {
     }
   }
 
-  // department type check على مستوى الـ module
-  const moduleDepartmentTypes = matchedModule.departmentTypes ?? [];
+  if (!requiresDepartmentTypeValidation) {
+    return <Outlet />;
+  }
 
-  if (moduleDepartmentTypes.length > 0) {
-    if (!selectedDepartment?.departmentId) {
-      return (
-        <Navigate
-          to="/error-department-type"
-          replace
-          state={{
-            from: path,
-            message: 'Please select a department first.',
-            currentType: null,
-            allowedTypes: moduleDepartmentTypes
-          }}
-        />
-      );
-    }
-
-    if (isLoading || isFetching) {
-      return <Outlet />;
-    }
-
-    if (error) {
-      return (
-        <Navigate
-          to="/error-department-type"
-          replace
-          state={{
-            from: path,
-            message: 'Unable to validate current department type.',
-            currentType: null,
-            allowedTypes: moduleDepartmentTypes
-          }}
-        />
-      );
-    }
-
-    const currentDepartmentType = String(department?.departmentType ?? '').toUpperCase();
-    const allowedDepartmentTypes = moduleDepartmentTypes.map((x: string) =>
-      String(x).toUpperCase()
+  if (!selectedDepartmentId) {
+    return (
+      <Navigate
+        to="/error-department-type"
+        replace
+        state={{
+          from: path,
+          message: 'Please select a department first.',
+          currentType: null,
+          allowedTypes: moduleDepartmentTypes
+        }}
+      />
     );
+  }
 
-    const isCompatible = allowedDepartmentTypes.includes(currentDepartmentType);
+  // مهم: لا ترجعي شاشة بيضا
+  // أثناء الفحص خليه يبقى على نفس الصفحة
+  if (isLoading || isFetching) {
+    return <Outlet />;
+  }
 
-    if (!isCompatible) {
-      return (
-        <Navigate
-          to="/error-department-type"
-          replace
-          state={{
-            from: path,
-            message: 'Current Department type is not compatible with this module.',
-            currentType: currentDepartmentType,
-            allowedTypes: allowedDepartmentTypes
-          }}
-        />
-      );
-    }
+  if (error) {
+    return (
+      <Navigate
+        to="/error-department-type"
+        replace
+        state={{
+          from: path,
+          message: 'Unable to validate current department type.',
+          currentType: null,
+          allowedTypes: moduleDepartmentTypes
+        }}
+      />
+    );
+  }
+
+  const currentDepartmentType = String(department?.departmentType ?? '').toUpperCase();
+  const allowedDepartmentTypes = moduleDepartmentTypes.map((x: string) =>
+    String(x).toUpperCase()
+  );
+
+  // إذا لسه ما وصلت البيانات، لا تومضي الصفحة
+  if (!currentDepartmentType) {
+    return <Outlet />;
+  }
+
+  const isCompatible = allowedDepartmentTypes.includes(currentDepartmentType);
+
+  if (!isCompatible) {
+    return (
+      <Navigate
+        to="/error-department-type"
+        replace
+        state={{
+          from: path,
+          message: 'Current Department type is not compatible with this module.',
+          currentType: currentDepartmentType,
+          allowedTypes: allowedDepartmentTypes
+        }}
+      />
+    );
   }
 
   return <Outlet />;
 }
 
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
-  const dispatch = useAppDispatch();
-  const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
 
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
-  const selectedFacility = tenant?.selectedFacility || null;
   const navigate = useNavigate();
 
   
