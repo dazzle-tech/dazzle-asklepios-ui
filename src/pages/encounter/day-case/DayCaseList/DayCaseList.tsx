@@ -39,7 +39,7 @@ import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/ph
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 import './style.less';
 
-const DayCaseList = () => {
+const   DayCaseList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -614,17 +614,23 @@ const DayCaseList = () => {
           <div className="day-case-list-table-buttons-position">
             <MyButton onClick={() => setOpenRefillModal(true)}>
               <FontAwesomeIcon icon={faBoxOpen} />
+            <Translate>
               Refill Stock
+          </Translate>
             </MyButton>
 
             <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
               <FontAwesomeIcon icon={faListCheck} />
+            <Translate>
               Task Management
+            </Translate>
             </MyButton>
 
             <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
               <FontAwesomeIcon icon={faFile} />
+            <Translate>
               Encounter Logs
+            </Translate>
             </MyButton>
           </div>
         }

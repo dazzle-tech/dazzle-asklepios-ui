@@ -6,7 +6,7 @@ import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { notify } from '@/utils/uiReducerActions';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetPractitionersByFacilityQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAllActivePractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import {
   newPractitioner,
@@ -67,7 +67,7 @@ const AddPrefferdHealthProfessionalModal = ({
   const [refreshToken, setRefreshToken] = useState(0);
 
   const { data: practitionersResponse, isFetching: loadingPractitioners } =
-    useGetPractitionersByFacilityQuery(
+    useGetAllActivePractitionersQuery(
       {
         facilityId: hpRecord?.facilityId,
         page: practitionerPage,
@@ -285,14 +285,6 @@ const AddPrefferdHealthProfessionalModal = ({
     }
   }, [open, editable, practitionerRecord]);
 
-
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
-
   return (
     <MyModal
       open={open}
@@ -318,7 +310,7 @@ const AddPrefferdHealthProfessionalModal = ({
         }
       ]}
       size="35vw"
-      content={<div dir={dir}>{content}</div>}
+      content={content}
     />
   );
 };

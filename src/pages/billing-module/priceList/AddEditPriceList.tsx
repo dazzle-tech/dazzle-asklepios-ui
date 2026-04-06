@@ -138,7 +138,7 @@ const AddEditPriceList = ({
           <>
             <MyInput
               fieldType="checkPicker"
-              fieldLabel="Facilities (bulk)"
+              fieldLabel={<span><Translate>Facilities</Translate><span>(<Translate>bulk</Translate>)</span> </span>}
               fieldName="facilityIds"
               selectData={allFacilities ?? []}
               selectDataLabel="name"
@@ -147,7 +147,7 @@ const AddEditPriceList = ({
               setRecord={setPriceList}
               searchable
               width={520}
-              placeholder="Select at least one facility"
+              placeholder={<Translate>Select at least one facility</Translate>}
               required
             />
             <small style={{ opacity: 0.7 }}>

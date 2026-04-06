@@ -218,7 +218,7 @@ const paginatedData = useMemo(() => {
               object={contraindication}
               setOpject={setContraindication}
               fieldName="icd10CodeId"
-              label="Contraindications (ICD-10)"
+              label={<span><Translate>Contraindications</Translate> <Translate>(ICD-10)</Translate></span>}
               mode="singleICD10"
               required
             />

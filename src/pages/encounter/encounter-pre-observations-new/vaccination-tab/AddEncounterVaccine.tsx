@@ -44,6 +44,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import Translate from '@/components/Translate';
 
 const ENCOUNTER_VACCINATION_ERROR_MAP: Record<string, string> = {
   'patient.notfound': 'Patient not found.',
@@ -481,6 +482,13 @@ const AddEncounterVaccine = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalFacilityToggle.isExternalFacility]);
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <AdvancedModal
       open={open}
@@ -496,7 +504,7 @@ const AddEncounterVaccine = ({
         </MyButton>
       }
       rightContent={
-        <div className={clsx('right-main-container', { 'disabled-panel': edit })}>
+        <div className={clsx('right-main-container', { 'disabled-panel': edit })} dir={dir}>
           {/* ── Vaccine Name Search ── */}
           <div className="search-list">
             <MyLabel label="Vaccine Name" />
@@ -571,7 +579,7 @@ const AddEncounterVaccine = ({
               column
               disabled
               fieldType="text"
-              fieldLabel="Vaccin Name"
+              fieldLabel="Vaccine Name"
               fieldName="name"
               record={vaccine}
               setRecord={setVaccine}
@@ -843,7 +851,7 @@ const AddEncounterVaccine = ({
         </div>
       }
       leftContent={
-        <div className="left-main-container">
+        <div className="left-main-container" dir={dir}>
           <Form layout="inline" fluid className="fields-container">
             <MyInput
               width={160}
@@ -879,7 +887,7 @@ const AddEncounterVaccine = ({
           </Form>
 
           <div>
-            <h6>Vaccine Brands</h6>
+            <h6><Translate>Vaccine Brands</Translate></h6>
             <InfoCardList
               list={vaccine?.id ? allBrands : []}
               fields={['manufacture', 'volume', 'unit', 'marketingAuthorizationHolder', 'isActive']}

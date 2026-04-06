@@ -422,7 +422,7 @@ const InternalDrugOrder = () => {
     },
     {
       key: 'DayNo',
-      title: <Translate>Day No.</Translate>,
+      title: <Translate>Day Number</Translate>,
       render: rowData => {
         return rowData.DayNo || rowData.dayNo || 'N/A';
       }
