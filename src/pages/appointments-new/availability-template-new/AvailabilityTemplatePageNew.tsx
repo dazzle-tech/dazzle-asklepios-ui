@@ -15,7 +15,8 @@ import WarningMessage from './WarningMessage';
 import {
   useGetAvailabilityTemplatesByTemplateTypeQuery,
   useGetAvailabilityTemplatesQuery,
-  useToggleAvailabilityTemplateActiveMutation
+  useToggleAvailabilityTemplateActiveMutation,
+  useUpdateAvailabilityTemplateMutation
 } from '@/services/appointment/availabilityTemplateService';
 import { useGetActiveFacilitiesQuery, useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetAllDepartmentsWithoutPaginationQuery, useGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
@@ -60,6 +61,7 @@ const AvailabilityTemplatePageNew = () => {
       { skip: !selectedFacility?.id }
     );
   const [toggleTemplateActive] = useToggleAvailabilityTemplateActiveMutation();
+  const [updateTemplate] = useUpdateAvailabilityTemplateMutation();
    const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
   
@@ -143,6 +145,33 @@ const AvailabilityTemplatePageNew = () => {
     }
   };
 
+  const handlePublishTemplate = async (rowData: AvailabilityTemplateResponseVM) => {
+    if (!rowData?.id) return;
+    try {
+      dispatch(showSystemLoader());
+      await updateTemplate({
+        ...rowData,
+        status: 'PUBLISHED'
+      }).unwrap();
+      dispatch(
+        notify({
+          msg: 'Template published successfully',
+          sev: 'success'
+        })
+      );
+      refetch();
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: 'Publish failed, please try again',
+          sev: 'warning'
+        })
+      );
+    } finally {
+      dispatch(hideSystemLoader());
+    }
+  };
+
   const columns = [
     {
       key: 'templateName',
@@ -205,6 +234,7 @@ const AvailabilityTemplatePageNew = () => {
             />
           )}
           {rowData.status === "DRAFT" && (
+            <>
           <MdModeEdit
             title="Edit"
             size={24}
@@ -218,15 +248,16 @@ const AvailabilityTemplatePageNew = () => {
               }
             }}
           />
-           )}
-          {rowData.status === "PUBLISHED" && (
-            <MdPublish
+          <MdPublish
               title="Publish"
               size={24}
               fill="var(--primary-gray)"
               className="icons-style"
+              onClick={() => handlePublishTemplate(rowData)}
              />
-          )}
+             </>
+           )}
+         
         </div>
       )
     }

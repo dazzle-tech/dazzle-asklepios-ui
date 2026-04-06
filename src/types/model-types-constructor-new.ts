@@ -1030,7 +1030,8 @@ export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateR
   requireConfirmation: null,
   financialDetails: null,
   workingDays: [],
-  allowedServices: []
+  allowedServices: [],
+  isActive: true,
 };
 
 export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGenerationBatchApplyDTO = {

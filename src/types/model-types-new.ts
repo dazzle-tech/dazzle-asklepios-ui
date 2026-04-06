@@ -325,6 +325,7 @@ export interface AvailabilityTemplateResponseVM {
   workingDays?: AvailabilityTemplateWorkingDay[] | null;
   intervals?: any[] | null;
   allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
+  isActive: boolean;
 }
 
 export interface AvailabilityTemplateCreateDTO {
