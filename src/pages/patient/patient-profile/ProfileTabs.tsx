@@ -92,7 +92,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       content: <ConsentFormTab patient={localPatient} isClick={!localPatient.id} />
     },
     {
-      title: 'Preferred Health Professional',
+      title: 'Primary Care Provider',
       content: <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
     },
     { title: 'Family Members', content: <PatientFamilyMembers localPatient={localPatient} /> },
