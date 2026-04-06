@@ -1005,9 +1005,10 @@ export const newAvailabilityTemplateUpdateDTO: modelTypes.AvailabilityTemplateUp
 };
 
 export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateResponseVM = {
-  id: 0,
-  facilityId: 0,
-  departmentId: 0,
+  id: undefined,
+  facilityId: undefined,
+  departmentId: undefined,
+  resourceId: undefined,
   templateName: '',
   templateType: '',
   templateColor: null,

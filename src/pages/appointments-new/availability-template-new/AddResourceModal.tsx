@@ -15,7 +15,7 @@ import { Department } from '@/types/model-types-new';
 import { useGetAppointableServicesByLoggedInFacilityQuery, useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
 import { useGetAppointablePractitionerByLoggedInFacilityQuery, useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import { newAvailabilityTemplateCreateDTO } from '@/types/model-types-constructor-new';
-import { useCreateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
+import { useCreateAvailabilityTemplateMutation, useUpdateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
@@ -26,34 +26,62 @@ import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configu
 
 
 const AddResourceModal = ({
-  // record,
-  // setRecord,
   mainTemplate,
   open,
   setOpen,
+  editRecord,
   selectedDepartment,
   selectedFacility
 }: {
-  // record: any;
-  // setRecord: any;
   mainTemplate: any;
   open: boolean;
   setOpen: any;
+  editRecord?: any;
   selectedDepartment: any
   selectedFacility: any;
 }) => {
   const dispatch = useAppDispatch();
   const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
+  const prevTemplateTypeRef = useRef<any>(record?.templateType);
   useEffect(() => {
     if (!open) return;
+    if (editRecord?.id) {
+      const rawAllowed = editRecord?.allowedServices;
+      const normalizedAllowedServices = Array.isArray(rawAllowed)
+        ? rawAllowed
+            .map((s: any) => {
+              if (typeof s === 'string') return { id: null, service: s };
+              if (s && typeof s === 'object' && 'service' in s) {
+                return { id: s.id ?? null, service: s.service ?? null };
+              }
+              return null;
+            })
+            .filter(Boolean)
+        : [];
+      setRecord({
+        ...editRecord,
+        allowedServices: normalizedAllowedServices,
+        facilityId: selectedFacility?.id ?? editRecord?.facilityId,
+        departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId
+      });
+      return;
+    }
     setRecord({
       ...newAvailabilityTemplateCreateDTO,
       parentTemplateId: mainTemplate?.id,
       facilityId: selectedFacility?.id,
       departmentId: mainTemplate?.departmentId
     });
-  }, [open, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
+  }, [open, editRecord?.id, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
   const [currentColor, setCurrentColor] = useState(mainTemplate?.color || '#6982F0');
+  useEffect(() => {
+    if (!open) return;
+    if (editRecord?.id) {
+      setCurrentColor(editRecord?.templateColor ?? mainTemplate?.color ?? '#6982F0');
+    } else {
+      setCurrentColor(mainTemplate?.color ?? '#6982F0');
+    }
+  }, [open, editRecord?.id, editRecord?.templateColor, mainTemplate?.color]);
 
   const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
@@ -286,11 +314,18 @@ const AddResourceModal = ({
   ]);
 
   useEffect(() => {
-    setRecord({...record, resourceId: undefined});
-  },[record?.templateType]);
-  // useEffect(() => {
-  //   console.log("resource record: ", record);
-  // },[record]);
+    if (prevTemplateTypeRef.current === record?.templateType) return;
+    if (!prevTemplateTypeRef.current) {
+      prevTemplateTypeRef.current = record?.templateType;
+      return;
+    }
+    prevTemplateTypeRef.current = record?.templateType;
+    if(!record?.templateType)
+    setRecord(prev => ({ ...prev, resourceId: undefined }));
+  }, [record?.templateType]);
+  useEffect(() => {
+    console.log("resource record: ", record);
+  },[record]);
   const conjureFormContent = () => (
     <Form fluid>
       <Row>
@@ -632,6 +667,7 @@ const AddResourceModal = ({
   );
 
   const [create] = useCreateAvailabilityTemplateMutation();
+  const [update] = useUpdateAvailabilityTemplateMutation();
   const handleSaveMainInfo = () => {
     if (!record?.templateName?.trim()) {
       dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
@@ -664,13 +700,24 @@ const AddResourceModal = ({
         : []
     };
     console.log("objectToAdd(resource): ", payload);
-    create(payload).unwrap().then(() => {
-       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-    setOpen(false);
-    }).catch((e) => {
-       dispatch(notify({ msg: 'Error', sev: 'warning' }));
-       console.log("error: ", e);
-    });
+    const mutation = isEditMode
+      ? update({ id: record.id, ...payload })
+      : create(payload);
+    mutation
+      .unwrap()
+      .then(() => {
+        dispatch(
+          notify({
+            msg: isEditMode ? 'Updated Successfully' : 'Saved Successfully',
+            sev: 'success'
+          })
+        );
+        setOpen(false);
+      })
+      .catch((e) => {
+        dispatch(notify({ msg: 'Error', sev: 'warning' }));
+        console.log("error: ", e);
+      });
     // setRecord(newTemplate);
     
   };
@@ -678,11 +725,11 @@ const AddResourceModal = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Add Resource"
+      title={isEditMode ? "Edit Resource" : "Add Resource"}
       size="md"
       content={conjureFormContent}
       actionButtonFunction={handleSaveMainInfo}
-      actionButtonLabel="Add"
+      actionButtonLabel={isEditMode ? "Save" : "Add"}
 
     />
   );

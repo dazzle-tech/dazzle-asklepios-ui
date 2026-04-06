@@ -36,22 +36,25 @@ type AddEditAvailabilityTemplateProps = {
   open: boolean
   setOpen: any;
   template: AvailabilityTemplateResponseVM;
-  templatesData: any;
-  setTemplatesData: any
+  
 };
 
-const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template, templatesData, setTemplatesData }) => {
+const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template }) => {
+  const dispatch = useAppDispatch();
+  const authSlice = useAppSelector((s) => s.auth);
+  const selectedDepartment = authSlice.selectedDepartment;
+  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
+  const selectedFacility = tenant?.selectedFacility || null;
 
+  const appliedWorkingDaysFacilityIdRef = useRef<string | number | null>(null);
   const [record, setRecord] = useState<any>(
     { ...newAvailabilityTemplateResponseVM }
   );
-
-  const dispatch = useAppDispatch();
-  
   const [currentColor, setCurrentColor] = useState(record?.color || '#6982F0');
   const [openPreviewSlotsModal, setOpenPreviewSlotsModal] = useState(false);
   const [openAddExceptionModal, setOpenAddExceptionModal] = useState<boolean>(false);
   const [openAddResource, setOpenAddResource] = useState<boolean>(false);
+  const [resourceToEdit, setResourceToEdit] = useState<any>(null);
   
   const {
     data: facilityListResponse,
@@ -59,10 +62,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     isFetching: isFetchingFacilities
   } = useGetActiveFacilitiesQuery({});
   const { data: organizationDefinitions } = useGetAllOrganizationDefinitionsQuery({});
-  const authSlice = useAppSelector((s) => s.auth);
-  const selectedDepartment = authSlice.selectedDepartment;
-  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
-  const selectedFacility = tenant?.selectedFacility || null;
   const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
     skip: !selectedFacility?.id
   });
@@ -74,14 +73,11 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       skip: !record?.facilityId
     }
   );
-
   const { data: departmentServices = []} =
       useGetDepartmentServicesQuery(
         { departmentId: record?.departmentId },
         { skip: !record?.departmentId }
       );
-  const daysEnum = useEnumOptions("DayOfWeek");
-  const encounterReasonEnum = useEnumOptions("EncounterReason");
   const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
     {
       sourceId: selectedDepartment?.departmentId
@@ -98,9 +94,26 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       skip: !record?.departmentId
     }
   );
+  const { data: templates } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
+    {
+      parentTemplateId: record?.id
+    },
+    {
+      skip: !record?.id
+    }
+
+  );
+   const { data: templateById } = useGetAvailabilityTemplateQuery(
+    { id: template?.id },
+    { skip: !template?.id }
+  );
+  const [create] = useCreateAvailabilityTemplateMutation();
+  const [update] = useUpdateAvailabilityTemplateMutation();
   const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
   const dayOptions = useEnumOptions('DayOfWeek');
+   const daysEnum = useEnumOptions("DayOfWeek");
+  const encounterReasonEnum = useEnumOptions("EncounterReason");
   const dayOptionsKey = useMemo(
     () => (dayOptions ?? []).map(d => `${d.value}:${d.label}`).join('|'),
     [dayOptions]
@@ -139,29 +152,35 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       workingDays: nextWorkingDays,
     }));
   };
-  const { data: templates } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
-    // { parentTemplateId: record?.id }
-    {
-      parentTemplateId: record?.id
-    },
-    {
-      skip: !record?.id
-    }
 
+  const departmentServiceValues = useMemo(() => {
+    if (!Array.isArray(departmentServices)) return [];
+    return departmentServices
+      .map((s: any) => s?.service)
+      .filter((v: any) => typeof v === 'string' && v.length > 0);
+  }, [departmentServices]);
+
+  const departmentServiceValuesKey = useMemo(
+    () => departmentServiceValues.join('|'),
+    [departmentServiceValues]
   );
+  
   const tabData = () => {
     let arr = [];
     {
       daysEnum.map((day, index) => (
         arr.push({
           title: formatEnumString(day.value),
-          // disabled: !record?.workingDays?.find(d => d.dayOfWeek === day.value)?.isWorking ,
           content:
             <>
               <AvailabilityDayGrid
                 parentTemplate={record}
                 templates={templates}
                 day={day?.value}
+                onEditTemplate={(templateToEdit) => {
+                  setResourceToEdit(templateToEdit);
+                  setOpenAddResource(true);
+                }}
               />
             </>
 
@@ -171,12 +190,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     return arr;
   }
 
-  const [create] = useCreateAvailabilityTemplateMutation();
-  const [update] = useUpdateAvailabilityTemplateMutation();
-  const { data: templateById } = useGetAvailabilityTemplateQuery(
-    { id: template?.id },
-    { skip: !template?.id }
-  );
+  
+ 
   const handleSaveMainInfo = () => {
     if (!record?.templateName?.trim()) {
       dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
@@ -241,7 +256,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }
   }, [template, templateById]);
 
-  const appliedWorkingDaysFacilityIdRef = useRef<string | number | null>(null);
+  
   useEffect(() => {
     workingDaysTouchedRef.current = false;
     appliedWorkingDaysFacilityIdRef.current = null;
@@ -251,17 +266,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     allowedServicesTouchedRef.current = false;
   }, [record?.departmentId, isEditMode]);
 
-  const departmentServiceValues = useMemo(() => {
-    if (!Array.isArray(departmentServices)) return [];
-    return departmentServices
-      .map((s: any) => s?.service)
-      .filter((v: any) => typeof v === 'string' && v.length > 0);
-  }, [departmentServices]);
-
-  const departmentServiceValuesKey = useMemo(
-    () => departmentServiceValues.join('|'),
-    [departmentServiceValues]
-  );
+  
 
   useEffect(() => {
     if (isEditMode) return;
@@ -644,7 +649,16 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                 >
                   <Translate>Preview slots</Translate>
                 </MyButton>
-                <MyButton onClick={() => setOpenAddResource(true)} prefixIcon={() => <FaPlus />} disabled={template?.id ? false : true}>Add Resource</MyButton>
+                <MyButton
+                  onClick={() => {
+                    setResourceToEdit(null);
+                    setOpenAddResource(true);
+                  }}
+                  prefixIcon={() => <FaPlus />}
+                  disabled={template?.id ? false : true}
+                >
+                  Add Resource
+                </MyButton>
 
               </div>
             </div>
@@ -662,9 +676,11 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
             <AddResourceModal
               open={openAddResource}
-              setOpen={setOpenAddResource}
-              // record={record}
-              // setRecord={setRecord}
+              setOpen={(next: boolean) => {
+                if (!next) setResourceToEdit(null);
+                setOpenAddResource(next);
+              }}
+              editRecord={resourceToEdit}
               mainTemplate={record}
               selectedDepartment={selectedDepartment}
               selectedFacility={selectedFacility}
@@ -692,9 +708,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
           : <Translate>New Availability Template</Translate>
       }
       size="70vw"
-      // content={
-      //   <AddEditAvailabilityTemplate template={selectedTemplate} templatesData={templatesData} setTemplatesData={setTemplatesData} />
-      // }
       content={conjureFormContent}
     />
   )

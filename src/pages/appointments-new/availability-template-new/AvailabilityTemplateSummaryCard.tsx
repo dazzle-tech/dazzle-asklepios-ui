@@ -10,11 +10,13 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { formatEnumString } from '@/utils';
 
 type DepartmentPoolCardProps = {
-  template: any
+  template: any;
+  onEdit?: (template: any) => void;
 };
 
 const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
-  template
+  template,
+  onEdit
 }) => {
   const [showServicesPopup, setShowServicesPopup] = useState(false);
   const [showDetails, setShowDetails] = useState<boolean>(true);
@@ -67,7 +69,10 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
           {/* <IoSettingsSharp onClick={onSettingsClick} className='icons-style'/> */}
           <CiSquareMinus className='icons-style' onClick={() => setShowDetails(!showDetails)} />
           {template.parentTemplateId && (
-            <FaRegEdit className='icons-style' />
+            <FaRegEdit
+              className='icons-style'
+              onClick={() => onEdit?.(template)}
+            />
           )}
           {template.parentTemplateId && (
             <MdDelete className='icons-style'

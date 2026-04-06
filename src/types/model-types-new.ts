@@ -301,6 +301,7 @@ export interface AvailabilityTemplateResponseVM {
   id: number;
   facilityId: number;
   departmentId: number;
+  resourceId: number;
   templateName: string;
   templateType: string;
   templateColor?: string | null;

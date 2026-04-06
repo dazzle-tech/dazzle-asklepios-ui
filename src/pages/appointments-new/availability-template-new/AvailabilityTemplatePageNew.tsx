@@ -13,6 +13,7 @@ import SlotCard from './SlotCard';
 import DateNavigator from './DateNavigator';
 import WarningMessage from './WarningMessage';
 import {
+  useGetAvailabilityTemplatesByTemplateTypeQuery,
   useGetAvailabilityTemplatesQuery,
   useToggleAvailabilityTemplateActiveMutation
 } from '@/services/appointment/availabilityTemplateService';
@@ -49,7 +50,7 @@ const AvailabilityTemplatePageNew = () => {
     'deactivate'
   );
 
-   const { data: templatesList, isFetching, refetch } = useGetAvailabilityTemplatesQuery({});
+   const { data: templatesList, isFetching, refetch } = useGetAvailabilityTemplatesByTemplateTypeQuery({templateType: "DEPARTMENT"});
   const { data: facilitiesResponse } = useGetActiveFacilitiesQuery({});
   const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
   const { data: departmentforLoggedInFacility, isFetching: deptFetching } =

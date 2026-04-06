@@ -26,10 +26,11 @@ type TemplateColumnProps = {
     template: any;
     day: string;
     onAddInterval: (template: any) => void;
+    onEditTemplate?: (template: any) => void;
 };
 
 // افصلها على ملف ثاني
-const TemplateColumn: React.FC<TemplateColumnProps> = ({ template, day, onAddInterval }) => {
+const TemplateColumn: React.FC<TemplateColumnProps> = ({ template, day, onAddInterval, onEditTemplate }) => {
     const shouldFetch = Boolean(template?.id) && Boolean(day);
     const { data: intervals = [], isFetching } = useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery(
         { templateId: template?.id, dayOfWeek: day },
@@ -54,6 +55,7 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({ template, day, onAddInt
         >
             <AvailabilityTemplateSummaryCard
                 template={template}
+                onEdit={onEditTemplate}
             />
 
             {isFetching ? (
@@ -85,12 +87,14 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({ template, day, onAddInt
 const AvailabilityDayGrid = ({
     templates,
     parentTemplate,
-    day
+    day,
+    onEditTemplate
 }: {
 
       templates: any;
     parentTemplate: any;
     day: string;
+    onEditTemplate?: (template: any) => void;
 
 }) => {
 
@@ -141,6 +145,7 @@ const mergedArray = [
                                     template={t}
                                     day={day}
                                     onAddInterval={(template) => { setResourceToAddInterval(template); setOpenAddInterval(true); }}
+                                    onEditTemplate={onEditTemplate}
                                 />
                             ))}
                         </div>
