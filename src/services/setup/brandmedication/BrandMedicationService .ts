@@ -59,24 +59,24 @@ export const BrandMedicationService = createApi({
     }),
 
     // 🔹 Update
-   updateBrandMedication: builder.mutation({
-  query: (body ) => {
+    updateBrandMedication: builder.mutation({
+      query: (body) => {
 
 
-    return {
-      url: `/api/setup/brand-medication/${body.id}`,
-      method: "PUT",
-      body,
-    };
-  },
-  invalidatesTags: (result, error, { id }) => [
-    { type: "BrandMedication", id },
-    "BrandMedication",
-  ],
-}),
+        return {
+          url: `/api/setup/brand-medication/${body.id}`,
+          method: "PUT",
+          body,
+        };
+      },
+      invalidatesTags: (result, error, { id }) => [
+        { type: "BrandMedication", id },
+        "BrandMedication",
+      ],
+    }),
 
 
-     
+
 
 
     // 🔹 Toggle Active
@@ -226,7 +226,7 @@ export const BrandMedicationService = createApi({
       providesTags: ["BrandMedication"],
     }),
 
-        // 🔹 Search by Brand name/code OR ActiveIngredient name/ATC
+    // 🔹 Search by Brand name/code OR ActiveIngredient name/ATC
     searchBrandMedicationsByNameOrActive: builder.query<
       [],
       { keyword: string }
@@ -237,7 +237,16 @@ export const BrandMedicationService = createApi({
       }),
       providesTags: ["BrandMedication"],
     }),
-
+    getBrandMedicationsByIds: builder.query<any[], { ids: (number | string)[] }>({
+      query: ({ ids }) => ({
+        url: "/api/setup/brand-medication/by-ids",
+        method: "GET",
+        params: {
+          ids: ids.join(","),
+        },
+      }),
+      providesTags: ["BrandMedication"],
+    }),
   }),
 });
 
@@ -264,4 +273,6 @@ export const {
   useGetBrandMedicationsByIsActiveQuery,
   useLazyGetBrandMedicationsByIsActiveQuery,
   useSearchBrandMedicationsByNameOrActiveQuery,
+  useGetBrandMedicationsByIdsQuery,
+  useLazyGetBrandMedicationsByIdsQuery,
 } = BrandMedicationService;

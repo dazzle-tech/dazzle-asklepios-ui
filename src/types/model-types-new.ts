@@ -768,6 +768,8 @@ export interface BrandMedication {
   uomGroupId?: number;
   uomGroupUnitId?: number;
   hasActiveIngredient?: boolean;
+  price: number;
+  currency: string;
 }
 
 export interface MedicationCategoryClass {
@@ -3154,32 +3156,74 @@ export type EmergencyTriageLevelAssessmentUpdate = Pick<
 export type EmergencyTriageDestinationUpdate = Pick<EmergencyTriage, 'id' | 'destination'>;
 
 
+export type BillingItemType =
+  | 'MEDICATION'
+  | 'LABORATORY'
+  | 'RADIOLOGY'
+  | 'PATHOLOGY'
+  | 'SERVICE'
+  | 'PROCEDURE';
+
 export type PatientServiceAndProduct = {
   id: number;
   patientId: number;
   encounterId: number;
-  category: string;
+  billingItemType: BillingItemType;
+
+  brandMedicationId?: number | null;
+  diagnosticTestId?: number | null;
   serviceId?: number | null;
-  productId?: number | null;
-  productType?: string | null;
+  procedureId?: number | null;
+
   quantity: number;
+  unitPrice: number;
+  discountAmount: number;
+  exemptionAmount: number;
+  taxAmount: number;
+  currency: string;
+
+  isBilled: boolean;
+  billingInvoiceId?: number | null;
+  billingInvoiceItemId?: number | null;
 };
 
 export type PatientServiceProductCreateDTO = {
   patientId: number;
   encounterId: number;
-  category: string;
-  serviceId?: number;
-  productId?: number;
+  billingItemType: BillingItemType;
+
+  brandMedicationId?: number | null;
+  diagnosticTestId?: number | null;
+  serviceId?: number | null;
+  procedureId?: number | null;
+
   quantity: number;
+  unitPrice: number;
+  discountAmount?: number | null;
+  exemptionAmount?: number | null;
+  taxAmount?: number | null;
+  currency: string;
 };
 
 export type PatientServiceProductUpdateDTO = {
   id: number;
-  category: string;
-  serviceId?: number;
-  productId?: number;
+  billingItemType: BillingItemType;
+
+  brandMedicationId?: number | null;
+  diagnosticTestId?: number | null;
+  serviceId?: number | null;
+  procedureId?: number | null;
+
   quantity: number;
+  unitPrice: number;
+  discountAmount?: number | null;
+  exemptionAmount?: number | null;
+  taxAmount?: number | null;
+  currency: string;
+
+  isBilled?: boolean | null;
+  billingInvoiceId?: number | null;
+  billingInvoiceItemId?: number | null;
 };
 
 // =============================

@@ -611,7 +611,9 @@ export const newBrandMedication: modelTypes.BrandMedication = {
   isActive: true,
   uomGroupId: null,
   uomGroupUnitId: null,
-  hasActiveIngredient: false
+  hasActiveIngredient: false,
+  price: 0,
+  currency: ''
 };
 
 // ------------------- Substitute -------------------
@@ -2103,33 +2105,61 @@ export const newPatientServiceAndProduct: modelTypes.PatientServiceAndProduct = 
   id: undefined,
   patientId: undefined,
   encounterId: undefined,
-  category: '',
+  billingItemType: undefined,
+
+  brandMedicationId: undefined,
+  diagnosticTestId: undefined,
   serviceId: undefined,
-  productId: undefined,
+  procedureId: undefined,
+
   quantity: 0,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: '',
-  lastModifiedDate: null
+  unitPrice: 0,
+  discountAmount: 0,
+  exemptionAmount: 0,
+  taxAmount: 0,
+  currency: '',
+
+  isBilled: false,
+  billingInvoiceId: undefined,
+  billingInvoiceItemId: undefined,
 };
 
 export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProductCreateDTO = {
   patientId: undefined,
   encounterId: undefined,
-  category: '',
+  billingItemType: undefined,
+
+  brandMedicationId: undefined,
+  diagnosticTestId: undefined,
   serviceId: undefined,
-  productId: undefined,
-  quantity: 1
-};
+  procedureId: undefined,
+
+  quantity: 1,
+  unitPrice: 0,
+  currency: ''};
 
 export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProductUpdateDTO = {
   id: undefined,
-  category: undefined,
-  serviceId: undefined,
-  productId: undefined,
-  quantity: 0
-};
+  billingItemType: undefined,
 
+  brandMedicationId: undefined,
+  diagnosticTestId: undefined,
+  serviceId: undefined,
+  procedureId: undefined,
+
+  quantity: 0,
+  unitPrice: 0,
+  discountAmount: 0,
+  exemptionAmount: 0,
+  taxAmount: 0,
+  totalAmount: 0,
+  currency: '',
+  notes: '',
+
+  isBilled: false,
+  billingInvoiceId: undefined,
+  billingInvoiceItemId: undefined,
+};
 // =====================
 // Consultation
 // =====================
