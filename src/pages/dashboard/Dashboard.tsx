@@ -219,11 +219,11 @@ const Dashboard = () => {
               title={
                 <TitleWithIcon
                   icon={<FontAwesomeIcon icon={faStethoscope} />}
-                  text="Top Diagnoses"
+                  text={<Translate>Top Diagnoses</Translate>}
                   iconColor="#8f98ab"
                 />
               }
-              subtitle="Most common diagnoses this month"
+              subtitle={<Translate>Most common diagnoses this month</Translate>}
               data={[
                 { name: 'Hypertension', value: 289, percentage: '27.1%', trend: 'up' },
                 { name: 'Type 2 Diabetes', value: 234, percentage: '21.9%', trend: 'down' },
@@ -247,11 +247,11 @@ const Dashboard = () => {
               title={
                 <TitleWithIcon
                   icon={<FontAwesomeIcon icon={faPills} />}
-                  text="Top Medications"
+                  text={<Translate>Top Medications</Translate>}
                   iconColor="#8f98ab"
                 />
               }
-              subtitle="Most prescribed medications this month"
+              subtitle={<Translate>Most prescribed medications this month</Translate>}
               data={[
                 { name: 'Metformin', value: 342, percentage: '23.0%', trend: 'up' },
                 { name: 'Lisinopril', value: 298, percentage: '20.1%', trend: 'down' },
@@ -277,11 +277,11 @@ const Dashboard = () => {
               title={
                 <TitleWithIcon
                   icon={<FontAwesomeIcon icon={faVial} />}
-                  text="Top Lab Findings"
+                  text={<Translate>Top Lab Findings</Translate>}
                   iconColor="#8f98ab"
                 />
               }
-              subtitle="Most frequent lab test findings"
+              subtitle={<Translate>Most frequent lab test findings</Translate>}
               data={[
                 { name: 'Elevated Glucose', value: 156, percentage: '16.6%', trend: 'up' },
                 { name: 'High Cholesterol', value: 234, percentage: '24.8%', trend: 'up' },

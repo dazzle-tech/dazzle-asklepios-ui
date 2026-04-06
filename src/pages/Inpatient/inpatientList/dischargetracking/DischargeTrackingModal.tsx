@@ -2,6 +2,7 @@ import React from 'react';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './style.less';
+import Translate from '@/components/Translate';
 // Dummy data for the tables
 const dischargeInfo = [
   {
@@ -116,7 +117,7 @@ const approvalStatusColumns = [
       />
     )
   },
-  { key: 'expireIn', title: 'Expire In (Timer)', width: 50 }
+  { key: 'expireIn', title: <span><Translate>Expire In </Translate>(<Translate>Timer</Translate>)</span>, width: 50 }
 ];
 
 // Main modal component

@@ -6,6 +6,7 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import TableTaskManagment from '../table-task-managment/TableTaskManagment';
 
 import '../style.less';
+import Translate from '@/components/Translate';
 
 const PhysicianOrderSummary = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -192,7 +193,7 @@ const PhysicianOrderSummary = () => {
       key: 'text'
     },
     {
-      title: 'Created By / At',
+      title: <Translate>Created By / At</Translate>,
       key: 'createdByAt',
       render: (row: any) =>
         row?.createdBy ? (

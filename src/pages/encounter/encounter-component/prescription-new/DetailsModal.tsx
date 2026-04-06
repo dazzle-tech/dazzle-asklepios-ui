@@ -45,6 +45,7 @@ import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/set
 import InfoCardList from '@/components/InfoCardList';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
+import Translate from '@/components/Translate';
 
 const DetailsModal = ({
   edit,
@@ -716,7 +717,7 @@ const DetailsModal = ({
           </span>
         }
         size="70vw"
-        leftTitle={selectedGeneric ? selectedGeneric.name : 'Select Generic'}
+        leftTitle={<Translate>{selectedGeneric ? selectedGeneric.name : 'Select Generic'}</Translate>}
         rightTitle="Medication Order Details"
         leftContent={
           <div dir={dir}>
@@ -861,7 +862,8 @@ const DetailsModal = ({
                           >
                             {instructionTypeOptions?.map((instruction, index) => (
                               <Radio key={index} value={instruction.value}>
-                                {instruction.label}
+
+                                <Translate>{instruction.label}</Translate>
                               </Radio>
                             ))}
                           </RadioGroup>

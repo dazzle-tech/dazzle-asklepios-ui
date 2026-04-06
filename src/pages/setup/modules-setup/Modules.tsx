@@ -52,9 +52,17 @@ const Modules = () => {
   const divContent = (
     "Modules"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Modules'));
   dispatch(setDivContent(divContent));
 
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -66,12 +74,7 @@ const Modules = () => {
     handleFilterChange('name', recordOfSearch['name']);
   }, [recordOfSearch]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+ 
 
   // handling click on Add New Button
   const handleModuleNew = () => {

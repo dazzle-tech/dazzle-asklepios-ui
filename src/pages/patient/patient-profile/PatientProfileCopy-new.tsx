@@ -364,8 +364,6 @@ const PatientProfile = () => {
                 content={
                   // ✅ pass encounterRefetchTrigger so the table knows when to refetch
                   <PatientVisitHistoryTable
-                    quickAppointmentModel={quickAppointmentModel}
-                    setQuickAppointmentModel={setQuickAppointmentModel}
                     localPatient={localPatient}
                     encounterRefetchTrigger={encounterRefetchTrigger}
                   />

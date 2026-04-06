@@ -12,6 +12,7 @@ import DynamicCard from "@/components/DynamicCard";
 import MyModal from "@/components/MyModal/MyModal";
 import VitalsignGraphs from "./VitalsignGraphs";
 import './style.less';
+import Translate from "@/components/Translate";
 
 const VitalSignICU: React.FC = () => {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
@@ -99,7 +100,7 @@ const VitalSignICU: React.FC = () => {
               value: (
                 <>
                   <FontAwesomeIcon icon={item.icon} className="vital-icon" />
-                  <h5 className="vital-label">{item.label}</h5>
+                  <h5 className="vital-label"><Translate>{item.label}</Translate></h5>
                 </>
               ),
               showLabel: false,

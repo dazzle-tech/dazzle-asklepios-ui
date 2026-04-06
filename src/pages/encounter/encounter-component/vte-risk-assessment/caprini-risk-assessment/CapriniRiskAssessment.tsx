@@ -161,8 +161,15 @@ const CapriniRiskAssessment = () => {
     return rowData.id === selectedRowId ? 'selected-row' : '';
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <MyTable
         data={paginatedData}
         columns={columns}

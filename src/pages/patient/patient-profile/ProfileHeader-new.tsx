@@ -93,6 +93,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
+
+  
   const handlePrintInformation = async () => {
     if (!localPatient?.id) return;
 

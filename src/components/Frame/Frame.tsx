@@ -703,7 +703,6 @@ const Frame = (props: FrameProps) => {
                           vertical: 'top',
                           horizontal: 'left'
                         }}
-                        getContentAnchorEl={null}
                         PaperProps={{
                           sx: {
                             '& .MuiMenuItem-root': {
