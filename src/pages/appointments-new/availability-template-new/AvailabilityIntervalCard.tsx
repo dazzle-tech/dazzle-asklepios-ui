@@ -27,6 +27,7 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
   backgroundColor = "#6982F0"
 }) => {
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
+  const [showDetails, setShowDetails] = useState<boolean>(true);
   const [deleteAvailabilityTemplateInterval] = useDeleteAvailabilityTemplateIntervalMutation();
 
   function hexToRGBA(hex, opacity = 0.2) {
@@ -67,7 +68,7 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
             <span>{startLabel} - {endLabel}</span>
              <div style={{ display: 'flex', gap: '5px' }}>
                       {/* <IoSettingsSharp onClick={onSettingsClick} className='icons-style'/> */}
-                      <CiSquareMinus className='icons-style'  />
+                      <CiSquareMinus className='icons-style' onClick={() => setShowDetails(!showDetails)} />
                       <FaRegEdit className='icons-style' />
                      
                         <MdDelete
@@ -79,11 +80,13 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
           </div>
     
           {/* Body */}
+          {showDetails && (
           <div className='body-of-availability-template-summary-card'>
             <div>
               <span>Slots:</span> {computedSlotLabel}
             </div>
           </div>
+          )}
 
           <DeletionConfirmationModal
             open={openConfirmDeleteModal}

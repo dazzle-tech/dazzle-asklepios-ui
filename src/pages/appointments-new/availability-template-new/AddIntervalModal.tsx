@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Form, Checkbox, Divider, Row, CheckboxGroup } from 'rsuite';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Form, Divider, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import './AddIntervalModal.less';
 import MyModal from '@/components/MyModal/MyModal';
-import MyButton from '@/components/MyButton/MyButton';
-import { FaPlus } from "react-icons/fa";
 import { AvailabilityTemplateIntervalCreateDTO } from '@/types/model-types-new';
 import { newAvailabilityTemplateIntervalCreateDTO } from '@/types/model-types-constructor-new';
 import { formatEnumString } from '@/utils';
@@ -47,16 +45,67 @@ const AddIntervalModal = ({
 }) => {
     const [record, setRecord] = useState<AvailabilityTemplateIntervalCreateDTO>({...newAvailabilityTemplateIntervalCreateDTO});
     const dispatch = useAppDispatch();
-   
-    const serviceOptions = [
-  { label: 'Vaccination', value: 'VACCINATION' },
-  { label: 'Follow-up', value: 'FOLLOW_UP' },
-  { label: 'Consultation', value: 'CONSULTATION' }
-];
-   
+    const allowedServicesTouchedRef = useRef(false);
+
+    const normalizeAllowedServices = (input: any) => {
+        if (!Array.isArray(input)) return [];
+        return input
+            .map((s: any) => {
+                if (typeof s === 'string') return { id: null, service: s };
+                if (s && typeof s === 'object' && 'service' in s) {
+                    return { id: s.id ?? null, service: s.service ?? null };
+                }
+                return null;
+            })
+            .filter(Boolean);
+    };
+
+    const templateAllowedServices = useMemo(
+        () => normalizeAllowedServices(resource?.allowedServices),
+        [resource?.allowedServices]
+    );
+
+    const templateAllowedServiceValues = useMemo(() => {
+        const values = templateAllowedServices
+            .map((s: any) => s?.service)
+            .filter((v: any) => typeof v === 'string' && v.length > 0);
+        return Array.from(new Set(values));
+    }, [templateAllowedServices]);
+
+    const templateAllowedServiceMap = useMemo(() => {
+        const map = new Map<string, number | null>();
+        templateAllowedServices.forEach((s: any) => {
+            if (typeof s?.service === 'string') {
+                if (!map.has(s.service)) {
+                    map.set(s.service, s.id ?? null);
+                }
+            }
+        });
+        return map;
+    }, [templateAllowedServices]);
 
     const slotStrategyEnum = useEnumOptions('SlotStrategy');
     const [createAvailabilityTemplateInterval] = useCreateAvailabilityTemplateIntervalMutation();
+
+    useEffect(() => {
+        if (!open) return;
+        allowedServicesTouchedRef.current = false;
+    }, [open, resource?.id]);
+
+    useEffect(() => {
+        if (!open) return;
+        if (allowedServicesTouchedRef.current) return;
+        if (templateAllowedServices.length === 0) return;
+        setRecord(prev => {
+            const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
+            if (prevAllowed.length > 0) return prev;
+            return {
+                ...prev,
+                allowedServices: templateAllowedServices,
+            };
+        });
+    }, [open, templateAllowedServices]);
+
     const conjureFormContent = (stepNumber = 0) => {
         switch (stepNumber) {
             case 0:
@@ -93,16 +142,62 @@ const AddIntervalModal = ({
                         </div>
                         <div className="block">
                             <Translate>Services Allowed (optional):</Translate>
-                            <CheckboxGroup
-                                inline
-                                
-                            >
-                                {serviceOptions.map(s => (
-                                    <Checkbox key={s.value} value={s.value}>
-                                        {s.label}
-                                    </Checkbox>
-                                ))}
-                            </CheckboxGroup>
+                            <Form fluid>
+                                <Row>
+                                    {templateAllowedServiceValues.map(serviceValue => {
+                                        const fieldName = `service_${serviceValue}`;
+                                        const selectedServiceValues = Array.isArray(record?.allowedServices)
+                                            ? record.allowedServices
+                                                  .map((s: any) => s?.service)
+                                                  .filter((v: any) => typeof v === 'string' && v.length > 0)
+                                            : [];
+                                        const isChecked = selectedServiceValues.includes(serviceValue);
+                                        return (
+                                            <Col md={8} key={serviceValue}>
+                                                <MyInput
+                                                    width="100%"
+                                                    fieldType="check"
+                                                    fieldName={fieldName}
+                                                    record={{ [fieldName]: isChecked }}
+                                                    setRecord={(next: any) => {
+                                                        const checked = Boolean(next[fieldName]);
+                                                        allowedServicesTouchedRef.current = true;
+                                                        setRecord(prev => {
+                                                            const prevAllowed = Array.isArray(prev?.allowedServices)
+                                                                ? prev.allowedServices
+                                                                : [];
+                                                            const prevValues = prevAllowed
+                                                                .map((s: any) => s?.service)
+                                                                .filter((v: any) => typeof v === 'string' && v.length > 0);
+                                                            if (checked) {
+                                                                if (prevValues.includes(serviceValue)) return prev;
+                                                                return {
+                                                                    ...prev,
+                                                                    allowedServices: [
+                                                                        ...prevAllowed,
+                                                                        {
+                                                                            id: templateAllowedServiceMap.get(serviceValue) ?? null,
+                                                                            service: serviceValue
+                                                                        }
+                                                                    ]
+                                                                };
+                                                            }
+                                                            return {
+                                                                ...prev,
+                                                                allowedServices: prevAllowed.filter(
+                                                                    (s: any) => s?.service !== serviceValue
+                                                                ),
+                                                            };
+                                                        });
+                                                    }}
+                                                    showLabel={false}
+                                                    label={formatEnumString(serviceValue)}
+                                                />
+                                            </Col>
+                                        );
+                                    })}
+                                </Row>
+                            </Form>
                         </div>
 
                         <Divider />
@@ -154,6 +249,7 @@ const AddIntervalModal = ({
             dayOfWeek: day,
             slotDurationMinutes: Number(record.slotDurationMinutes)
         };
+        console.log("internalToAdd: ", payload);
         await createAvailabilityTemplateInterval(payload).unwrap().then(() => {
             dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
         }).catch(() => {

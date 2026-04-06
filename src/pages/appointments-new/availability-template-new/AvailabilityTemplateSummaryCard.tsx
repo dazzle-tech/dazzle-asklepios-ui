@@ -44,6 +44,13 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
     }
   };
 
+  const allowedServiceNames = (template?.allowedServices ?? [])
+    .map((s: any) => s?.service)
+    .filter((s: any) => typeof s === 'string' && s.trim().length > 0)
+    .map((s: string) => formatEnumString(s)) as string[];
+
+  const allowedServicesText = allowedServiceNames.length > 0 ? allowedServiceNames.join(', ') : '—';
+
   return (
     <div
       className="availability-template-summary-card"
@@ -59,7 +66,9 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
         <div style={{ display: 'flex', gap: '5px' }}>
           {/* <IoSettingsSharp onClick={onSettingsClick} className='icons-style'/> */}
           <CiSquareMinus className='icons-style' onClick={() => setShowDetails(!showDetails)} />
-          <FaRegEdit className='icons-style' />
+          {template.parentTemplateId && (
+            <FaRegEdit className='icons-style' />
+          )}
           {template.parentTemplateId && (
             <MdDelete className='icons-style'
               onClick={() => {
@@ -82,7 +91,11 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
             <strong>Parallel Capacity:</strong> {"1"}
           </div>
 
-          <Whisper placement="top" trigger="click" speaker={<Tooltip>{["Test, Test"].join(', ')}</Tooltip>}>
+          <Whisper
+            placement="top"
+            trigger="click"
+            speaker={<Tooltip>{allowedServicesText}</Tooltip>}
+          >
             <div className="services-text">
               <strong>Services allowed:&nbsp;</strong>
 
@@ -92,7 +105,7 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
                 onClick={() => setShowServicesPopup(true)}
                 title="Click to view all services"
               >
-                {["Test, Test"].join(', ')}
+                {allowedServicesText}
               </span>
             </div>
           </Whisper>
