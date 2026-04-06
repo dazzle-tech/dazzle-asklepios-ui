@@ -48,11 +48,8 @@ const SignIn = () => {
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
-  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
-  const result = useGetActiveFacilitiesQuery({});
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(undefined);
 
-  console.log('result:', result);
-  const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
   const {
     data: langData,
     isFetching: langsLoading,
@@ -133,9 +130,6 @@ const SignIn = () => {
     }
   };
 
-  const storedUser = JSON.parse(localStorage.getItem('user'));
-
-  console.log(storedUser);
 
   // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -167,10 +161,12 @@ const SignIn = () => {
     setErrText(' ');
   }, [newPassword, newPasswordConfirm]);
 
-  useEffect(() => {
-    const selectedObject = langData?.find(item => item?.langKey === credentials?.language);
-    localStorage.setItem('direction', selectedObject?.direction);
-  }, [credentials.language]);
+ useEffect(() => {
+  const selectedObject = langData?.find(item => item?.langKey === credentials?.language);
+  if (selectedObject?.direction) {
+    localStorage.setItem('direction', selectedObject.direction);
+  }
+}, [credentials.language, langData]);
 
   // useEffect(() => {
   //   dispatch(setLang(langRecord['lang']));
