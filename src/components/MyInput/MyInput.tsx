@@ -49,19 +49,19 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-  | 'text'
-  | 'password'
-  | 'textarea'
-  | 'checkbox'
-  | 'datetime'
-  | 'time'
-  | 'select'
-  | 'selectPagination'
-  | 'multyPicker'
-  | 'checkPicker'
-  | 'date'
-  | 'number'
-  | 'check';
+    | 'text'
+    | 'password'
+    | 'textarea'
+    | 'checkbox'
+    | 'datetime'
+    | 'time'
+    | 'select'
+    | 'selectPagination'
+    | 'multyPicker'
+    | 'checkPicker'
+    | 'date'
+    | 'number'
+    | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -207,8 +207,7 @@ const MyInput = ({
     }
   }, [props.disabled, recording]);
 
-const rawLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
-
+  const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
 
   const handleValueChange = (value: any) => {
     if (!setRecord || typeof setRecord !== 'function') return;
@@ -444,8 +443,8 @@ const rawLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
               (isArrayLabel
                 ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
                 : props.isEnum
-                  ? (label: any) => formatEnumString(String(label))
-                  : undefined)
+                ? (label: any) => formatEnumString(String(label))
+                : undefined)
             }
             searchBy={props.searchBy}
             container={resolveContainer()}
@@ -472,15 +471,15 @@ const rawLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
             renderValue={
               isArrayLabel
                 ? (value, item, selectedElement) => {
-                  if (!item) return selectedElement;
-                  return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                }
+                    if (!item) return selectedElement;
+                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                  }
                 : props.isEnum
-                  ? (value, item, selectedElement) => {
+                ? (value, item, selectedElement) => {
                     const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
                     return <span>{formatEnumString(String(base))}</span>;
                   }
-                  : undefined
+                : undefined
             }
             disabledItemValues={
               props.disabledItemValues
@@ -516,12 +515,12 @@ const rawLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                  {
-                    [valueKey]: '__load_more__',
-                    [labelKey]: 'Load more...',
-                    isLoadMore: true
-                  }
-                ]
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -780,8 +779,8 @@ const rawLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
               ? 0
               : ''
             : record?.[fieldName] !== null && record?.[fieldName] !== undefined
-              ? record[fieldName]
-              : '';
+            ? record[fieldName]
+            : '';
 
         const inputControl = (
           <Form.Control
@@ -1000,12 +999,8 @@ const rawLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
         {showLabel && (
           <MyLabel
             label={
-                      typeof rawLabel === 'string' ? (
-                        <Translate>{rawLabel}</Translate>
-                      ) : (
-                        rawLabel
-                      )
-                    }
+              typeof fieldLabel === 'string' ? <Translate>{fieldLabel}</Translate> : fieldLabel
+            }
             error={validationResult}
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />
