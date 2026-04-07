@@ -58,7 +58,6 @@ import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 
 const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expandNotes }) => {
-  console.log('MainScreenBar render');
   const dispatch = useDispatch();
   const mode = useAppSelector(state => state.ui.mode);
   const trigger = useRef<WhisperInstance>(null);
@@ -155,11 +154,7 @@ const selectedDepartmentEffective = useMemo(() => {
 
 
 useEffect(() => {
-       console.log('effect setSelectedDepartment fired', {
-    selectedDepartment,
-    selectedDepartmentEffective,
-    activeDepartmentsLength: activeDepartments.length
-  });
+  
   if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
     return;
   }

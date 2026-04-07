@@ -1,56 +1,90 @@
-import Translate from '@/components/Translate';
 import React, { useEffect, useState } from 'react';
 import { Panel } from 'rsuite';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { FaEye } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+
+import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
+import { useAppSelector } from '@/hooks';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { notify } from '@/utils/uiReducerActions';
 
-import { useGetFormTemplatesQuery, useLazyGetFormTemplateQuery } from '@/services/setup/formTemplateService';
+import {
+  useGetFormTemplatesQuery,
+  useLazyGetFormTemplatesQuery
+} from '@/services/setup/formTemplateService';
 import { useLazyGetFormEntriesByTemplateQuery } from '@/services/setup/formEntriesService';
 
 import UseTemplateModal from './UseTemplateModal';
 import EntryPreviewModal from './EntryPreviewModal';
 import EditEntryModal from './EditEntryModal';
-import { MdPrint } from 'react-icons/md';
-import { FaEye } from 'react-icons/fa';
-import { MdModeEdit } from 'react-icons/md';
+
+const EMPTY_PAGED_RESULT = {
+  data: [],
+  totalCount: 0,
+  links: {}
+};
 
 const FormTemplatesUseScreen = () => {
   const dispatch = useDispatch();
   const mode = useSelector((state: any) => state.ui.mode);
+  const authSlice = useAppSelector((s) => s.auth);
 
-  // templates pagination
-  const [tplParams, setTplParams] = useState({ page: 0, size: 15, sort: 'id,asc', timestamp: Date.now() });
-  const { data: templatesResp, isFetching: tplFetching } = useGetFormTemplatesQuery(tplParams);
+  const selectedDepartmentId = authSlice.selectedDepartment?.departmentId;
 
-  // selected template
+  const [tplParams, setTplParams] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
+
+  const [entryParams, setEntryParams] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,desc',
+    timestamp: Date.now()
+  });
+
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [entriesResp, setEntriesResp] = useState<any>(EMPTY_PAGED_RESULT);
 
-  // entries pagination
-  const [entryParams, setEntryParams] = useState({ page: 0, size: 15, sort: 'id,desc', timestamp: Date.now() });
-  const [loadEntries, entriesQueryState] = useLazyGetFormEntriesByTemplateQuery();
-  const [entriesResp, setEntriesResp] = useState<any>({ data: [], totalCount: 0, links: {} });
-
-  // Use modal
   const [useOpen, setUseOpen] = useState(false);
-
-  // Preview modal
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<any>(null);
 
-  // Edit modal
   const [editOpen, setEditOpen] = useState(false);
   const [editEntry, setEditEntry] = useState<any>(null);
 
-  // template full (formJson) for preview/edit/print
   const [tplFull, setTplFull] = useState<any>(null);
-  const [loadTemplate] = useLazyGetFormTemplateQuery();
+
+  const {
+    data: templatesResp,
+    isFetching: tplFetching
+  } = useGetFormTemplatesQuery(
+    {
+      page: tplParams.page,
+      size: tplParams.size,
+      sort: tplParams.sort,
+      timestamp: tplParams.timestamp,
+      params: {
+        departmentId: selectedDepartmentId
+      }
+    },
+    {
+      skip: !selectedDepartmentId
+    }
+  );
+
+  const [loadTemplate] = useLazyGetFormTemplatesQuery();
+  const [loadEntries, entriesQueryState] = useLazyGetFormEntriesByTemplateQuery();
 
   useEffect(() => {
     dispatch(setPageCode('UseFormTemplates'));
     dispatch(setDivContent('Use Form Templates'));
+
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
@@ -66,31 +100,67 @@ const FormTemplatesUseScreen = () => {
         sort: params.sort,
         timestamp: Date.now()
       }).unwrap();
-      setEntriesResp(resp ?? { data: [], totalCount: 0, links: {} });
+      console.log('fetchEntries resp =', resp);
+      setEntriesResp(resp ?? EMPTY_PAGED_RESULT);
     } catch (e) {
       console.error(e);
-      setEntriesResp({ data: [], totalCount: 0, links: {} });
+      setEntriesResp(EMPTY_PAGED_RESULT);
       dispatch(notify({ msg: 'Failed to load saved forms', sev: 'error' }));
     }
   };
 
   useEffect(() => {
-    if (!selectedTemplate?.id) return;
+    setTplParams((prev) => ({ ...prev, page: 0, timestamp: Date.now() }));
+    setEntryParams((prev) => ({ ...prev, page: 0 }));
+    setSelectedTemplate(null);
+    setTplFull(null);
+    setEntriesResp(EMPTY_PAGED_RESULT);
+  }, [selectedDepartmentId]);
+
+  useEffect(() => {
+    if (!selectedTemplate?.id) {
+      setEntriesResp(EMPTY_PAGED_RESULT);
+      return;
+    }
+
     fetchEntries(selectedTemplate.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplate?.id, entryParams.page, entryParams.size, entryParams.sort]);
 
   const ensureTemplateLoaded = async () => {
-    if (tplFull?.id === selectedTemplate?.id) return tplFull;
-    const full = await loadTemplate(Number(selectedTemplate?.id)).unwrap();
-    setTplFull(full);
+    const alreadySelected =
+      tplFull?.data?.find((x: any) => x.id === selectedTemplate?.id) ?? null;
+
+    if (alreadySelected) return alreadySelected;
+
+    const resp = await loadTemplate({
+      page: 0,
+      size: 50,
+      sort: 'id,asc',
+      timestamp: Date.now(),
+      params: {
+        departmentId: selectedDepartmentId
+      }
+    }).unwrap();
+
+    setTplFull(resp);
+
+    const full =
+      resp?.data?.find((x: any) => x.id === selectedTemplate?.id) ?? null;
+
     return full;
   };
 
   const handleOpenPreview = async (entryRow: any) => {
     try {
       if (!selectedTemplate?.id) return;
-      await ensureTemplateLoaded();
+
+      const full = await ensureTemplateLoaded();
+      if (!full) {
+        dispatch(notify({ msg: 'Template details not found', sev: 'error' }));
+        return;
+      }
+
       setPreviewEntry(entryRow);
       setPreviewOpen(true);
     } catch (e) {
@@ -102,7 +172,13 @@ const FormTemplatesUseScreen = () => {
   const handleOpenEdit = async (entryRow: any) => {
     try {
       if (!selectedTemplate?.id) return;
-      await ensureTemplateLoaded();
+
+      const full = await ensureTemplateLoaded();
+      if (!full) {
+        dispatch(notify({ msg: 'Template details not found', sev: 'error' }));
+        return;
+      }
+
       setEditEntry(entryRow);
       setEditOpen(true);
     } catch (e) {
@@ -111,9 +187,25 @@ const FormTemplatesUseScreen = () => {
     }
   };
 
-  const isTemplateSelected = (rowData: any) => (rowData?.id === selectedTemplate?.id ? 'selected-row' : '');
+  const isTemplateSelected = (rowData: any) =>
+    rowData?.id === selectedTemplate?.id ? 'selected-row' : '';
 
-  // TEMPLATE TABLE columns
+  const formatDateTime = (date?: string) => {
+    if (!date) return '';
+
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return date;
+
+    return d.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
   const templateColumns = [
     { key: 'name', title: <Translate>Template</Translate>, flexGrow: 4 },
     { key: 'description', title: <Translate>Description</Translate>, flexGrow: 6 },
@@ -138,42 +230,23 @@ const FormTemplatesUseScreen = () => {
     }
   ];
 
-    const formatDateTime = (date?: string) => {
-      if (!date) return '';
-      const d = new Date(date);
-      if (isNaN(d.getTime())) return date;
-
-      return d.toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      });
-    };
-
-
-
-
-  // ENTRIES TABLE columns (✅ 3 icons: View + Edit + Print)
   const entriesColumns = [
     { key: 'title', title: <Translate>Title</Translate>, flexGrow: 6 },
-  {
-    key: 'createdByAt',
-    title: 'Created By\\At',
-    dataKey: 'createdByAt',
-    width: 200,
-    render: (row: any) => (
-      <>
-        {row.createdBy}
-        <br />
-        <span className="date-table-style">
-          {formatDateTime(row.createdDate)}
-        </span>
-          </>
-    )
-  },
+    {
+      key: 'createdByAt',
+      title: 'Created By\\At',
+      dataKey: 'createdByAt',
+      width: 200,
+      render: (row: any) => (
+        <>
+          {row.createdBy}
+          <br />
+          <span className="date-table-style">
+            {formatDateTime(row.createdDate)}
+          </span>
+        </>
+      )
+    },
     {
       key: 'icons',
       title: '',
@@ -199,9 +272,11 @@ const FormTemplatesUseScreen = () => {
     }
   ];
 
+  const currentTemplateFull =
+    tplFull?.data?.find((x: any) => x.id === selectedTemplate?.id) ?? null;
+
   return (
     <Panel className={mode === 'dark' ? 'dashboard-dark' : ''}>
-      {/* TOP TABLE: Templates */}
       <MyTable
         height={400}
         data={templatesResp?.data ?? []}
@@ -211,16 +286,28 @@ const FormTemplatesUseScreen = () => {
         rowClassName={isTemplateSelected}
         onRowClick={(row: any) => {
           setSelectedTemplate(row);
-          setEntryParams(prev => ({ ...prev, page: 0 }));
-          setTplFull(null); // reset cached full template
+          setEntryParams((prev) => ({ ...prev, page: 0 }));
+          setTplFull(null);
         }}
         page={tplParams.page}
         rowsPerPage={tplParams.size}
-        onPageChange={(e: any, newPage: number) => setTplParams(prev => ({ ...prev, page: newPage }))}
-        onRowsPerPageChange={(e: any) => setTplParams(prev => ({ ...prev, size: parseInt(e.target.value, 10), page: 0 }))}
+        onPageChange={(e: any, newPage: number) =>
+          setTplParams((prev) => ({
+            ...prev,
+            page: newPage,
+            timestamp: Date.now()
+          }))
+        }
+        onRowsPerPageChange={(e: any) =>
+          setTplParams((prev) => ({
+            ...prev,
+            size: parseInt(e.target.value, 10),
+            page: 0,
+            timestamp: Date.now()
+          }))
+        }
       />
 
-      {/* BOTTOM TABLE: Entries */}
       <div style={{ marginTop: 14 }}>
         <div style={{ fontWeight: 800, marginBottom: 8 }}>
           <Translate>Saved Forms</Translate>
@@ -235,39 +322,63 @@ const FormTemplatesUseScreen = () => {
           loading={entriesQueryState.isFetching}
           page={entryParams.page}
           rowsPerPage={entryParams.size}
-          onPageChange={(e: any, newPage: number) => setEntryParams(prev => ({ ...prev, page: newPage }))}
-          onRowsPerPageChange={(e: any) => setEntryParams(prev => ({ ...prev, size: parseInt(e.target.value, 10), page: 0 }))}
+          onPageChange={(e: any, newPage: number) =>
+            setEntryParams((prev) => ({ ...prev, page: newPage }))
+          }
+          onRowsPerPageChange={(e: any) =>
+            setEntryParams((prev) => ({
+              ...prev,
+              size: parseInt(e.target.value, 10),
+              page: 0
+            }))
+          }
         />
       </div>
 
-      {/* Use Modal */}
       <UseTemplateModal
         open={useOpen}
-        setOpen={(v: boolean) => {
-          setUseOpen(v);
-          if (!v && selectedTemplate?.id) {
-            fetchEntries(selectedTemplate.id, { ...entryParams, page: 0, timestamp: Date.now() });
+        setOpen={setUseOpen}
+        templateRow={selectedTemplate}
+        onSaved={async (savedEntry: any) => {
+          if (savedEntry) {
+            setEntriesResp((prev: any) => ({
+              ...prev,
+              data: [savedEntry, ...(prev?.data ?? [])],
+              totalCount: (prev?.totalCount ?? 0) + 1
+            }));
+          }
+
+          if (selectedTemplate?.id) {
+            setTimeout(async () => {
+              await fetchEntries(selectedTemplate.id, {
+                ...entryParams,
+                page: 0,
+                timestamp: Date.now()
+              });
+            }, 500);
           }
         }}
-        templateRow={selectedTemplate}
       />
 
-      {/* Preview Modal */}
       <EntryPreviewModal
         open={previewOpen}
         setOpen={setPreviewOpen}
-        template={tplFull}
+        template={currentTemplateFull}
         entry={previewEntry}
       />
 
-      {/* Edit Modal */}
       <EditEntryModal
         open={editOpen}
         setOpen={setEditOpen}
-        template={tplFull}
+        template={currentTemplateFull}
         entry={editEntry}
         onSaved={() => {
-          if (selectedTemplate?.id) fetchEntries(selectedTemplate.id, { ...entryParams, timestamp: Date.now() });
+          if (selectedTemplate?.id) {
+            fetchEntries(selectedTemplate.id, {
+              ...entryParams,
+              timestamp: Date.now()
+            });
+          }
         }}
       />
     </Panel>
