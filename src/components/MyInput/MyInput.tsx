@@ -207,7 +207,7 @@ const MyInput = ({
     }
   }, [props.disabled, recording]);
 
-const rawLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
+  const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
 
 
   const handleValueChange = (value: any) => {
@@ -999,11 +999,12 @@ const rawLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
       <Form.ControlLabel>
         {showLabel && (
           <MyLabel
+          //  label={fieldLabel}
             label={
-                      typeof rawLabel === 'string' ? (
-                        <Translate>{rawLabel}</Translate>
+                      typeof fieldLabel === 'string' ? (
+                        <Translate>{fieldLabel}</Translate>
                       ) : (
-                        rawLabel
+                        fieldLabel
                       )
                     }
             error={validationResult}
