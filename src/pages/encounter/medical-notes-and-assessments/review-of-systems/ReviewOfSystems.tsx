@@ -207,7 +207,7 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
             </div>
 
             <div className="bt-right">
-              <MyButton onClick={() => setOpenModel(true)} prefixIcon={() => <icons.List />}>
+              <MyButton onClick={() => setOpenModel(true)} prefixIcon={() => <icons.List />} >
                 Findings
               </MyButton>
             </div>
@@ -222,6 +222,8 @@ const ReviewOfSystems = ({ edit, patient, encounter, ...props }) => {
                   leftArrow={false}
                   arrowClick={() => setSelectedSystem(item)}
                   footerContant={item.lovDisplayVale}
+                  isSelected={selectedSystem?.key === item.key}
+
                 />
               ))}
             </div>
