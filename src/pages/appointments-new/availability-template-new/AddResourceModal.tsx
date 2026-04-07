@@ -32,7 +32,8 @@ const AddResourceModal = ({
   setOpen,
   editRecord,
   selectedDepartment,
-  selectedFacility
+  selectedFacility,
+  ...props
 }: {
   mainTemplate: any;
   open: boolean;
@@ -40,6 +41,7 @@ const AddResourceModal = ({
   editRecord?: any;
   selectedDepartment: any
   selectedFacility: any;
+  readOnly?: boolean;
 }) => {
   const dispatch = useAppDispatch();
   const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
@@ -346,6 +348,7 @@ const AddResourceModal = ({
                         setRecord={setRecord}
                         width="100%"
                         required
+                        disabled={props?.readOnly}
                       />
                     </Col>
                     <Col md={12}>
@@ -360,7 +363,7 @@ const AddResourceModal = ({
                         selectData={statusEnum ?? []}
                         selectDataLabel="label"
                         selectDataValue="value"
-                        readOnly
+                        disabled
                       />
                     </Col>
                   </Row>
@@ -376,6 +379,8 @@ const AddResourceModal = ({
                         selectDataLabel="label"
                         selectDataValue='value'
                         width="100%"
+                        disabled={props?.readOnly}
+                        required
                       />
                     </Col>
                     {record.templateType === 'PRACTITIONER' ?
@@ -393,6 +398,7 @@ const AddResourceModal = ({
                         setRecord={setRecord}
                         menuMaxHeight={200}
                         required
+                        disabled={props?.readOnly}
                       />
                     </Col>
                     ) : (record.templateType === 'SERVICE') ? (
@@ -409,6 +415,7 @@ const AddResourceModal = ({
                         setRecord={setRecord}
                         menuMaxHeight={200}
                         required
+                        disabled={props?.readOnly}
                       />
                     </Col>
                     ):(record.templateType === 'CATALOG') ? (
@@ -425,6 +432,7 @@ const AddResourceModal = ({
                         setRecord={setRecord}
                         menuMaxHeight={200}
                         required
+                        disabled={props?.readOnly}
                       />
                     </Col>
                     ):
@@ -442,6 +450,7 @@ const AddResourceModal = ({
                         setRecord={setRecord}
                         menuMaxHeight={200}
                         required
+                        disabled={props?.readOnly}
                       />
                     </Col>
                     ):
@@ -491,7 +500,7 @@ const AddResourceModal = ({
                         setRecord={setRecord}
                         width="100%"
                         rightAddon="min"
-                        required
+                        disabled={props?.readOnly}
                       />
                     </Col>
                     <Col md={12}>
@@ -501,6 +510,7 @@ const AddResourceModal = ({
                         record={record}
                         setRecord={setRecord}
                         width="100%"
+                        disabled
                       />
                     </Col>
                   </Row>
@@ -529,6 +539,7 @@ const AddResourceModal = ({
                     selectDataValue="id"
                     record={record}
                     setRecord={setRecord}
+                    disabled={props?.readOnly}
                   />
                   <MyInput
                     width="100%"
@@ -537,6 +548,7 @@ const AddResourceModal = ({
                     fieldName="numberOfResourcesExpected"
                     record={record}
                     setRecord={setRecord}
+                    disabled={props?.readOnly}
                   />
                   <Row>
                     <Col md={12}>
@@ -547,6 +559,7 @@ const AddResourceModal = ({
                         record={record}
                         setRecord={setRecord}
                         showLabel={false}
+                        disabled={props?.readOnly}
                       />
                     </Col>
                     {record['requirePractitioner'] && (
@@ -561,6 +574,8 @@ const AddResourceModal = ({
                           selectDataValue="id"
                           record={record}
                           setRecord={setRecord}
+                          disabled={props?.readOnly}
+                          required
                         />
                       </Col>
                     )}
@@ -572,6 +587,7 @@ const AddResourceModal = ({
                     record={record}
                     setRecord={setRecord}
                     showLabel={false}
+                    disabled={props?.readOnly}
                   />
                 </Form>
               </>
@@ -633,6 +649,7 @@ const AddResourceModal = ({
                           }}
                           showLabel={false}
                           label={formatEnumString(serviceValue)}
+                          disabled={props?.readOnly}
                         />
                       </Col>
                     );
@@ -659,6 +676,7 @@ const AddResourceModal = ({
                 setRecord={setWorkingDaysRecord}
                 label={day.label}
                 showLabel={false}
+                disabled={props?.readOnly}
               />
             ))}
           </Form>
@@ -671,25 +689,30 @@ const AddResourceModal = ({
   const [update] = useUpdateAvailabilityTemplateMutation();
   const handleSaveMainInfo = () => {
     if (!record?.templateName?.trim()) {
-      dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
-      return;
-    }
-    if (!record?.facilityId) {
-      dispatch(notify({ msg: 'Facility is required', sev: 'warning' }));
-      return;
-    }
-    if (!record?.departmentId) {
-      dispatch(notify({ msg: 'Department is required', sev: 'warning' }));
-      return;
-    }
-
-    // if (template?.id) {
-
-    //   dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
-    //   setOpen(false);
-    //   return;
-    // }
-
+          dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
+          return;
+        }
+        if (!record?.facilityId) {
+          dispatch(notify({ msg: 'Facility is required', sev: 'warning' }));
+          return;
+        }
+         if (!record?.templateType) {
+          dispatch(notify({ msg: 'Template Type is required', sev: 'warning' }));
+          return;
+        }
+        if (!record?.departmentId) {
+          dispatch(notify({ msg: 'Department is required', sev: 'warning' }));
+          return;
+        }
+        if (!record?.resourceId) {
+          dispatch(notify({ msg: 'Resource is required', sev: 'warning' }));
+          return;
+        }
+        if (record?.requirePractitioner && !record?.defaultPractitionerId) {
+          dispatch(notify({ msg: 'Default Practitioner is required', sev: 'warning' }));
+          return;
+        }
+        
 
 
     const payload = {
@@ -726,12 +749,12 @@ const AddResourceModal = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={isEditMode ? "Edit Resource" : "Add Resource"}
+      title={props?.readOnly ? 'View Resource' : isEditMode ? "Edit Resource" : "Add Resource"}
       size="md"
       content={conjureFormContent}
       actionButtonFunction={handleSaveMainInfo}
       actionButtonLabel={isEditMode ? "Save" : "Add"}
-
+      hideActionBtn={props?.readOnly}
     />
   );
 };

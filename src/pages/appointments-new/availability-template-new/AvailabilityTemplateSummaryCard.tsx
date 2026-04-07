@@ -12,13 +12,14 @@ import { formatEnumString } from '@/utils';
 type DepartmentPoolCardProps = {
   template: any;
   onEdit?: (template: any) => void;
+  readOnly?: boolean;
 };
 
 const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
   template,
-  onEdit
+  onEdit,
+  ...props
 }) => {
-  const [showServicesPopup, setShowServicesPopup] = useState(false);
   const [showDetails, setShowDetails] = useState<boolean>(true);
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
   const [deleteAvailabilityTemplate] = useDeleteAvailabilityTemplateMutation();
@@ -74,7 +75,7 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
               onClick={() => onEdit?.(template)}
             />
           )}
-          {template.parentTemplateId && (
+          {(template.parentTemplateId && !props.readOnly) && (
             <MdDelete className='icons-style'
               onClick={() => {
                 if (template.parentTemplateId)
@@ -107,7 +108,6 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
 
               <span
                 // className="services-text"
-                onClick={() => setShowServicesPopup(true)}
                 title="Click to view all services"
               >
                 {allowedServicesText}

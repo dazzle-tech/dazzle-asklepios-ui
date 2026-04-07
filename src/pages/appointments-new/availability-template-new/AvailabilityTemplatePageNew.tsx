@@ -30,14 +30,15 @@ import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { newAvailabilityTemplateResponseVM } from '@/types/model-types-constructor-new';
 import AddEditAvailabilityTemplate from './AddEditAvailabilityTemplate';
 import { MdPublish } from "react-icons/md";
+import AvailabilityTemplateDetailsSection from './AvailabilityTemplateDetailsSection';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
 
 const AvailabilityTemplatePageNew = () => {
- 
+
   const dispatch = useAppDispatch();
-   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
- 
+
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter?: string; value?: string }>({});
   const [isFiltered, setIsFiltered] = useState(false);
   const [filteredList, setFilteredList] = useState<any[]>([]);
@@ -52,7 +53,7 @@ const AvailabilityTemplatePageNew = () => {
     'deactivate'
   );
 
-   const { data: templatesList, isFetching, refetch } = useGetAvailabilityTemplatesByTemplateTypeQuery({templateType: "DEPARTMENT"});
+  const { data: templatesList, isFetching, refetch } = useGetAvailabilityTemplatesByTemplateTypeQuery({ templateType: "DEPARTMENT" });
   const { data: facilitiesResponse } = useGetActiveFacilitiesQuery({});
   const { data: allDepartments } = useGetAllDepartmentsWithoutPaginationQuery({});
   const { data: departmentforLoggedInFacility, isFetching: deptFetching } =
@@ -62,9 +63,9 @@ const AvailabilityTemplatePageNew = () => {
     );
   const [toggleTemplateActive] = useToggleAvailabilityTemplateActiveMutation();
   const [updateTemplate] = useUpdateAvailabilityTemplateMutation();
-   const statusEnum = useEnumOptions('TemplateStatus');
+  const statusEnum = useEnumOptions('TemplateStatus');
   const templateTypeEnum = useEnumOptions('TemplateType');
-  
+
 
   const handleFilterChange = (field?: string, value?: string) => {
     const list = templatesList ?? [];
@@ -151,7 +152,10 @@ const AvailabilityTemplatePageNew = () => {
       dispatch(showSystemLoader());
       await updateTemplate({
         ...rowData,
-        status: 'PUBLISHED'
+        status: 'PUBLISHED',
+        defaultBufferBeforeMinutes: rowData.defaultBufferBeforeMinutes ?? 0,
+        defaultBufferAfterMinutes: rowData.defaultBufferAfterMinutes ?? 0,
+        parallelCapacityValue: rowData.parallelCapacityValue ?? 0,
       }).unwrap();
       dispatch(
         notify({
@@ -207,7 +211,7 @@ const AvailabilityTemplatePageNew = () => {
       flexGrow: 2,
       render: (rowData) => (
         <div className="container-of-icons">
-           
+
           {rowData?.isActive ? (
             <MdDelete
               title="Deactivate"
@@ -235,29 +239,29 @@ const AvailabilityTemplatePageNew = () => {
           )}
           {rowData.status === "DRAFT" && (
             <>
-          <MdModeEdit
-            title="Edit"
-            size={24}
-            fill="var(--primary-gray)"
-            className="icons-style"
-            style={{ cursor: rowData?.status === "DRAFT" ? 'pointer' : 'not-allowed' }}
-            onClick={() => {
-              if(rowData.status === "DRAFT"){
-              setSelectedTemplate(rowData);
-              setOpenModal(true);
-              }
-            }}
-          />
-          <MdPublish
-              title="Publish"
-              size={24}
-              fill="var(--primary-gray)"
-              className="icons-style"
-              onClick={() => handlePublishTemplate(rowData)}
-             />
-             </>
-           )}
-         
+              <MdModeEdit
+                title="Edit"
+                size={24}
+                fill="var(--primary-gray)"
+                className="icons-style"
+                style={{ cursor: rowData?.status === "DRAFT" ? 'pointer' : 'not-allowed' }}
+                onClick={() => {
+                  if (rowData.status === "DRAFT") {
+                    setSelectedTemplate(rowData);
+                    setOpenModal(true);
+                  }
+                }}
+              />
+              <MdPublish
+                title="Publish"
+                size={24}
+                fill="var(--primary-gray)"
+                className="icons-style"
+                onClick={() => handlePublishTemplate(rowData)}
+              />
+            </>
+          )}
+
         </div>
       )
     }
@@ -354,10 +358,19 @@ const AvailabilityTemplatePageNew = () => {
     }
   }, [pageIndex, rowsPerPage, totalCount]);
 
+  useEffect(() => {
+      dispatch(setPageCode('AvailabilityTemplate'));
+      dispatch(setDivContent('Availability Template'));
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+      };
+    }, [dispatch]);
+
 
   return (
     <Panel>
-
+      <div className='container-of-table-and-section-availability-template'>
       <MyTable
         columns={columns}
         data={pagedList}
@@ -384,23 +397,28 @@ const AvailabilityTemplatePageNew = () => {
               onClick={() => {
                 setSelectedTemplate(
                   { ...newAvailabilityTemplateResponseVM }
-                
+
                 );
                 setOpenModal(true);
               }}
             >
               Add Template
             </MyButton>
-          
+
           </>
         }
       />
-
+      {selectedTemplate?.id && (
+        <AvailabilityTemplateDetailsSection
+          template={selectedTemplate}
+        />
+      )}
+      </div>
       <AddEditAvailabilityTemplate
-       open={openModal}
+        open={openModal}
         setOpen={setOpenModal}
         template={selectedTemplate}
-        />
+      />
       <DeletionConfirmationModal
         open={openConfirmToggleTemplate}
         setOpen={setOpenConfirmToggleTemplate}
