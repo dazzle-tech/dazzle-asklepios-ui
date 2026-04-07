@@ -18,12 +18,19 @@ interface PatientBillingSideProps {
     freeBalance: number;
     outstanding: number;
   };
+  financeDetails?: {
+    walletBalance: number;
+    totalDebt: number;
+    simulatedInvoiceIncrease: number;
+    simulatedPaymentDecrease: number;
+  };
   setPatient?: (patient: any) => void;
 }
 
 const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
   patient,
   balance,
+  financeDetails,
   setPatient,
 }) => {
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
@@ -161,9 +168,59 @@ const PatientBillingSide: React.FC<PatientBillingSideProps> = ({
 
       <div className="info-section">
         <div className="info-column">
-          <Text className="info-label">Total Current Balance</Text>
+          <Text className="info-label">Current Balance</Text>
           <Text className="info-value">
             {totalBalance.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Text>
+        </div>
+      </div>
+
+      <div className="info-section" style={{ marginTop: '10px' }}>
+        <div className="info-column">
+          <Text className="info-label">Patient Wallet</Text>
+          <Text className="info-value">
+            {Number(financeDetails?.walletBalance ?? 0).toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Text>
+        </div>
+      </div>
+
+      <div className="info-section" style={{ marginTop: '10px' }}>
+        <div className="info-column">
+          <Text className="info-label">Outstanding Debt</Text>
+          <Text className="info-value">
+            {Number(financeDetails?.totalDebt ?? 0).toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Text>
+        </div>
+      </div>
+
+      <div className="info-section" style={{ marginTop: '10px' }}>
+        <div className="info-column">
+          <Text className="info-label">Invoice Impact </Text>
+          <Text className="info-value">
+            +{' '}
+            {Number(financeDetails?.simulatedInvoiceIncrease ?? 0).toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Text>
+        </div>
+      </div>
+
+      <div className="info-section" style={{ marginTop: '10px' }}>
+        <div className="info-column">
+          <Text className="info-label">Payment Impact </Text>
+          <Text className="info-value" style={{ color: 'var(--primary-green, #27ae60)' }}>
+            -{' '}
+            {Number(financeDetails?.simulatedPaymentDecrease ?? 0).toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}

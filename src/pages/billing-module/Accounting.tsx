@@ -33,8 +33,9 @@ import {
 } from '@/types/model-types-new';
 
 import {
-  useGetPatientAccountSummaryQuery,
-} from '@/services/billing/BillingService';
+  useGetPatientBalanceQuery,
+  useGetPatientLedgerSummaryQuery,
+} from '@/services/encounters/patientPaymentsService';
 import {
   useCreatePatientInvoiceMutation,
 } from '@/services/patient/patientBillingInvoiceService';
@@ -61,6 +62,9 @@ const Accounting: React.FC = () => {
 
   const [allBillingItems, setAllBillingItems] = useState<BillingItem[]>([]);
   const [filteredBilling, setFilteredBilling] = useState<BillingItem[]>([]);
+  const [simulatedInvoiceIncrease, setSimulatedInvoiceIncrease] = useState(0);
+  const [simulatedPaymentDecrease, setSimulatedPaymentDecrease] = useState(0);
+  const [tabsResetKey, setTabsResetKey] = useState(0);
 
   const divContent = 'Accounting';
 
@@ -68,29 +72,44 @@ const Accounting: React.FC = () => {
   const [createPatientInvoice] = useCreatePatientInvoiceMutation();
   const [createPatientInvoiceItem] = useCreatePatientInvoiceItemMutation();
 
-  // ---- Patient account summary ----
-  const {
-    data: accountSummary,
-    refetch: refetchAccountSummary,
-  } = useGetPatientAccountSummaryQuery(
-    { patientKey: patient?.key },
-    { skip: !patient?.key }
-  );
-
-  const balance = {
-    freeBalance: Number(accountSummary?.freeBalance ?? 0),
-    outstanding: Number(accountSummary?.outstandingBalance ?? 0),
-  };
-
   const toNumericId = (val: unknown): number | null => {
+    if (val == null || val === '') return null;
     const n = Number(val as any);
-    return Number.isFinite(n) ? n : null;
+    return Number.isFinite(n) && n > 0 ? n : null;
   };
   const patientNumericId =
     toNumericId(patient?.id) ??
     toNumericId((patient as any)?.patientId) ??
     toNumericId(patient?.key) ??
     null;
+
+  const {
+    data: patientWalletBalance,
+    refetch: refetchPatientWalletBalance,
+  } = useGetPatientBalanceQuery(
+    { patientId: patientNumericId as number },
+    { skip: patientNumericId == null }
+  );
+
+  const {
+    data: patientLedgerSummary,
+    refetch: refetchPatientLedgerSummary,
+  } = useGetPatientLedgerSummaryQuery(
+    { patientId: patientNumericId as number },
+    { skip: patientNumericId == null }
+  );
+
+  const balance = {
+    freeBalance: Number(
+      patientLedgerSummary?.walletBalance ?? patientWalletBalance ?? 0
+    ),
+    outstanding: Math.max(
+      0,
+      Number(patientLedgerSummary?.totalDebt ?? 0) +
+        simulatedInvoiceIncrease -
+        simulatedPaymentDecrease
+    ),
+  };
 
   const {
     data: patientServicesAndProductsResponse,
@@ -198,6 +217,17 @@ const Accounting: React.FC = () => {
     setFilteredBilling(patientItems);
   };
 
+  const handleClosePatient = () => {
+    setPatient({ ...newApPatient });
+    setEncounter({ ...newApEncounter });
+    setAllBillingItems([]);
+    setFilteredBilling([]);
+    setDateFilter({ fromDate: null, toDate: null });
+    setSimulatedInvoiceIncrease(0);
+    setSimulatedPaymentDecrease(0);
+    setTabsResetKey(prev => prev + 1);
+  };
+
 
   const handleCreateInvoiceFromBilling = async (selectedIds: string[]) => {
     const hasPatient = patient?.id != null || patient?.key != null;
@@ -267,7 +297,9 @@ const Accounting: React.FC = () => {
 
       if (patient?.id) await refetchPatientServicesAndProductsByPatient();
 
-      await refetchAccountSummary();
+      await refetchPatientWalletBalance();
+      await refetchPatientLedgerSummary();
+      setSimulatedInvoiceIncrease(prev => prev + totalAmount);
 
       setAllBillingItems(prev =>
         prev.filter(item => !selectedIds.includes(item.id))
@@ -286,6 +318,8 @@ const Accounting: React.FC = () => {
     if (!patient?.key) {
       setAllBillingItems([]);
       setFilteredBilling([]);
+      setSimulatedInvoiceIncrease(0);
+      setSimulatedPaymentDecrease(0);
       return;
     }
   }, [patient]);
@@ -305,6 +339,12 @@ const Accounting: React.FC = () => {
   }, [patient?.id, patient?.key, patientNumericId]);
 
   useEffect(() => {
+    if (patientNumericId == null || !patient?.id) {
+      setAllBillingItems([]);
+      setFilteredBilling([]);
+      return;
+    }
+
     if (!patientServicesAndProductsResponse?.data) {
       setAllBillingItems([]);
       setFilteredBilling([]);
@@ -408,7 +448,7 @@ const Accounting: React.FC = () => {
       totalRows: mapped.length,
       rows: mapped,
     });
-  }, [patientServicesAndProductsResponse, patient, services, products, brands]);
+  }, [patientServicesAndProductsResponse, patientNumericId, patient?.id, services, products, brands]);
 
   useEffect(() => {
     setFilteredBilling(allBillingItems);
@@ -472,7 +512,14 @@ const Accounting: React.FC = () => {
     },
     {
       title: 'Invoices',
-      content: <Invoices patient={patient} />,
+      content: (
+        <Invoices
+          patient={patient}
+          onSimulatedInvoicePayment={amount =>
+            setSimulatedPaymentDecrease(prev => prev + Number(amount || 0))
+          }
+        />
+      ),
     },
     {
       title: 'Print Receipt(s)',
@@ -492,7 +539,7 @@ const Accounting: React.FC = () => {
           title="Search Patient"
           content={contentOfSearchSection()}
         />
-        <MyTab data={tabData} />
+        <MyTab key={`${patient?.id ?? 'no-patient'}-${tabsResetKey}`} data={tabData} />
       </div>
 
       {patient?.id && (
@@ -500,7 +547,15 @@ const Accounting: React.FC = () => {
           <PatientBillingSide
             patient={patient}
             balance={balance}
-            setPatient={setPatient}
+            financeDetails={{
+              walletBalance: Number(
+                patientLedgerSummary?.walletBalance ?? patientWalletBalance ?? 0
+              ),
+              totalDebt: Number(patientLedgerSummary?.totalDebt ?? 0),
+              simulatedInvoiceIncrease,
+              simulatedPaymentDecrease,
+            }}
+            setPatient={() => handleClosePatient()}
           />
         </div>
       )}
