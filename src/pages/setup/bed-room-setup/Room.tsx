@@ -1,190 +1,474 @@
 import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Panel } from 'rsuite';
-import { FaUndo } from 'react-icons/fa';
-import { MdModeEdit } from 'react-icons/md';
-import { MdDelete } from 'react-icons/md';
-import { useAppDispatch } from '@/hooks';
+import { FaUndo, FaBed, FaConciergeBell } from 'react-icons/fa';
+import { MdModeEdit, MdDelete } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
+
+import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { ApRoom } from '@/types/model-types';
-import { newApRoom } from '@/types/model-types-constructor';
-import MyInput from '@/components/MyInput';
-import {
-  addFilterToListRequest,
-  conjureValueBasedOnIDFromList,
-  formatEnumString,
-  fromCamelCaseToDBName
-} from '@/utils';
-import {
-  useGetRoomListQuery,
-  useDeactiveActivRoomMutation
-} from '@/services/setupService';
-import ReactDOMServer from 'react-dom/server';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+
+import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+
 import AddEditRoom from './AddEditRoom';
-import { FaBed } from 'react-icons/fa';
-import { FaConciergeBell } from 'react-icons/fa';
-import './styles.less';
 import AddBed from './AddBed';
 import AddService from './AddService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import './styles.less';
 
-const Room = () => {
+import { Room, Department } from '@/types/model-types-new';
+import { newRoom } from '@/types/model-types-constructor-new';
+
+import { useGetDepartmentsQuery } from '@/services/security/departmentService';
+import {
+  useGetRoomsQuery,
+  useGetRoomsByDepartmentIdQuery,
+  useGetRoomsByNameQuery,
+  useChangeRoomActivationStatusMutation
+} from '@/services/setup/room/roomService';
+import { formatEnumString } from '@/utils';
+
+const PAGE_SIZE = 20;
+
+type FilterCriteria = '' | 'department' | 'name';
+
+const filterCriteriaOptions = [
+  { label: 'Department', value: 'department' },
+  { label: 'Room Name', value: 'name' }
+];
+
+const initialRoomFilter = {
+  criteria: '' as FilterCriteria,
+  departmentId: null as string | null,
+  name: ''
+};
+
+const ROOM_ERROR_MAP: Record<string, string> = {
+  notfound: 'Room not found.',
+  'facility.notfound': 'Facility not found.',
+  'department.notfound': 'Department not found.',
+  'unique.room.name.department': 'A room with the same name already exists in this department.',
+  'gender.required': 'Gender is required when the room is gender-specific.',
+  'appointable.requirements.invalid': 'Appointable room requires valid duration and buffer values.',
+  'room.has.occupied.beds': 'Cannot deactivate room because it has occupied beds.',
+  'db.constraint': 'Database constraint violation while saving room.'
+};
+
+const handleRoomCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
+  const data = err?.data ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const normalizeMsg = (msg: string) => {
+      const m = (msg || '').toLowerCase();
+      if (m.includes('must not be null')) return 'is required';
+      if (m.includes('must not be blank')) return 'must not be blank';
+      if (m.includes('size must be between')) return 'length is out of range';
+      if (m.includes('must be greater')) return 'value is too small';
+      if (m.includes('must be less')) return 'value is too large';
+      return msg || 'invalid value';
+    };
+
+    const lines = data.fieldErrors.map((fe: any) => `• ${fe.field}: ${normalizeMsg(fe.message)}`);
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}` + suffix,
+        sev: 'warn'
+      })
+    );
+    return;
+  }
+
+  const messageProp: string = data?.message || '';
+  const errorKey = messageProp.startsWith('error.') ? messageProp.substring(6) : data?.errorKey;
+
+  const humanMsg =
+    (errorKey && keyMap[errorKey]) ||
+    data?.detail ||
+    data?.title ||
+    data?.message ||
+    'Unexpected error';
+
+  dispatch(
+    notify({
+      msg: humanMsg + suffix,
+      sev: 'error'
+    })
+  );
+};
+
+const RoomSection = () => {
   const dispatch = useAppDispatch();
-  const [room, setRoom] = useState<ApRoom>({ ...newApRoom });
+
+  const [room, setRoom] = useState<Room>({ ...newRoom });
+
   const [openAddBedModal, setAddBedModal] = useState(false);
-  const [openConfirmDeleteRoomModal, setOpenConfirmDeleteRoomModal] =
-    useState<boolean>(false);
-  const [stateOfDeleteRoomModal, setStateOfDeleteRoomModal] =
-    useState<string>('delete');
+  const [openConfirmDeleteRoomModal, setOpenConfirmDeleteRoomModal] = useState(false);
+  const [stateOfDeleteRoomModal, setStateOfDeleteRoomModal] = useState<'deactivate' | 'reactivate'>(
+    'deactivate'
+  );
   const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
   const [openAddServicePopup, setOpenAddServicePopup] = useState(false);
-  const [roomToEdit, setRoomToEdit] = useState<ApRoom | null>(null);
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: []
+  const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
+
+  const [roomPagination, setRoomPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc'
   });
 
-  // Fetch Room list response
-  const {
-    data: roomListResponseLoading,
-    refetch,
-    isFetching
-  } = useGetRoomListQuery(listRequest);
+  const [roomFilter, setRoomFilter] = useState<{
+    criteria: FilterCriteria;
+    departmentId: string | null;
+    name: string;
+  }>(initialRoomFilter);
 
-  // deactivate/reactivate Room
-  const [deactiveActiveRoom] = useDeactiveActivRoomMutation();
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+  const [appliedRoomFilter, setAppliedRoomFilter] = useState<{
+    criteria: FilterCriteria;
+    departmentId: string | null;
+    name: string;
+  }>(initialRoomFilter);
 
-  // Pagination values
-  const pageIndex = listRequest.pageNumber - 1;
-  const rowsPerPage = listRequest.pageSize;
-  const totalCount = roomListResponseLoading?.extraNumeric ?? 0;
+  const [deptPage, setDeptPage] = useState(0);
+  const [allDepartments, setAllDepartments] = useState<Department[]>([]);
+  const [deptHasMore, setDeptHasMore] = useState(false);
+  const [deptNextLink, setDeptNextLink] = useState<string | null>(null);
+  const [filterSession, setFilterSession] = useState(0);
 
-  // Available fields for filtering
-  const filterFields = [
-    { label: 'Room Name', value: 'name' },
-    { label: 'Floor', value: 'floor' },
-    { label: 'Location Details', value: 'locationDetails' }
-  ];
+  const { data: departmentsResp, isFetching: isDeptLoading } = useGetDepartmentsQuery({
+    page: deptPage,
+    size: PAGE_SIZE,
+    sort: 'name,asc'
+  });
 
-  // Header page setUp
-  const divContent = 'Rooms';
-  dispatch(setPageCode('Rooms'));
-  dispatch(setDivContent(divContent));
+  const hasDepartmentFilter =
+    appliedRoomFilter.criteria === 'department' && !!appliedRoomFilter.departmentId;
+  const hasNameFilter =
+    appliedRoomFilter.criteria === 'name' && !!appliedRoomFilter.name?.trim();
 
-  // class name for selected row
-  const isSelected = rowData => {
-    if (rowData && room && room.key === rowData.key) {
-      return 'selected-row';
-    } else return '';
+  const roomsQuery = useGetRoomsQuery(
+    {
+      page: roomPagination.page,
+      size: roomPagination.size,
+      sort: roomPagination.sort
+    },
+    {
+      skip: hasDepartmentFilter || hasNameFilter
+    }
+  );
+
+  const roomsByDepartmentQuery = useGetRoomsByDepartmentIdQuery(
+    {
+      departmentId: Number(appliedRoomFilter.departmentId),
+      page: roomPagination.page,
+      size: roomPagination.size,
+      sort: roomPagination.sort
+    },
+    {
+      skip: !hasDepartmentFilter
+    }
+  );
+
+  const roomsByNameQuery = useGetRoomsByNameQuery(
+    {
+      name: appliedRoomFilter.name.trim(),
+      page: roomPagination.page,
+      size: roomPagination.size,
+      sort: roomPagination.sort
+    },
+    {
+      skip: !hasNameFilter
+    }
+  );
+
+  const [changeRoomActivationStatus] = useChangeRoomActivationStatusMutation();
+
+  useEffect(() => {
+    if (!departmentsResp) return;
+
+    const rows = departmentsResp.data ?? [];
+    const nextLink = departmentsResp.links?.next ?? null;
+
+    setDeptHasMore(Boolean(nextLink));
+    setDeptNextLink(nextLink);
+
+    if (deptPage === 0) {
+      setAllDepartments(rows as Department[]);
+    } else {
+      setAllDepartments(prev => {
+        const seenIds = new Set(prev.map(d => Number(d.id)));
+        const merged = [...prev];
+
+        rows.forEach((d: Department) => {
+          if (!seenIds.has(Number(d.id))) {
+            merged.push(d);
+          }
+        });
+
+        return merged;
+      });
+    }
+  }, [departmentsResp, deptPage]);
+
+  const departmentFilterOptions = useMemo(
+    () =>
+      allDepartments.map((d: Department) => ({
+        label: d.name ?? '',
+        value: String(d.id)
+      })),
+    [allDepartments]
+  );
+
+  const activeRoomsResponse = hasDepartmentFilter
+    ? roomsByDepartmentQuery.data
+    : hasNameFilter
+      ? roomsByNameQuery.data
+      : roomsQuery.data;
+
+  const isFetching =
+    roomsQuery.isFetching || roomsByDepartmentQuery.isFetching || roomsByNameQuery.isFetching;
+
+  const tableData = useMemo(() => {
+    return activeRoomsResponse?.data ?? [];
+  }, [activeRoomsResponse?.data]);
+
+  const totalCount = activeRoomsResponse?.totalCount ?? 0;
+  const pageIndex = roomPagination.page;
+  const rowsPerPage = roomPagination.size;
+
+  const refetchActiveList = async () => {
+    if (hasDepartmentFilter) {
+      await roomsByDepartmentQuery.refetch();
+      return;
+    }
+
+    if (hasNameFilter) {
+      await roomsByNameQuery.refetch();
+      return;
+    }
+
+    await roomsQuery.refetch();
   };
+
+  useEffect(() => {
+    dispatch(setPageCode('Rooms'));
+    dispatch(setDivContent('Rooms'));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (roomToEdit) {
       setRoom(roomToEdit);
       setOpenAddEditPopup(true);
-      setRoomToEdit(null); 
+      setRoomToEdit(null);
     }
   }, [roomToEdit]);
 
-  const handleEdit = (rowData: ApRoom) => {
+  const handleEdit = (rowData: Room) => {
     setRoomToEdit(rowData);
   };
 
-  // handle filter change
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listRequest
-        )
-      );
-    } else {
-      setListRequest({ ...listRequest, filters: [] });
-    }
-  };
-
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-  };
-
-  // Handle change rows per page in navigation
-  const handleRowsPerPageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setListRequest({
-      ...listRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1
-    });
-  };
-
-  // Handle add new Room
   const handleAddRoom = () => {
-    setRoom({ ...newApRoom });
+    setRoom({ ...newRoom });
     setOpenAddEditPopup(true);
   };
 
-  // handle Deactive Reactivate Room
-  const handleDeactiveReactivateRoom = () => {
-    deactiveActiveRoom(room)
-      .unwrap()
-      .then(() => {
-        refetch();
-        if (room.isValid) {
-          dispatch(notify('Room Deactived Successfully'));
-        } else {
-          dispatch(notify('Room Activated Successfully'));
-        }
-        setRoom(newApRoom);
-      });
-    setOpenConfirmDeleteRoomModal(false);
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setRoomPagination(prev => ({
+      ...prev,
+      page: newPage
+    }));
   };
 
-  // Filter table
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRoomPagination(prev => ({
+      ...prev,
+      size: parseInt(event.target.value, 10),
+      page: 0
+    }));
+  };
+
+  const handleToggleRoom = async () => {
+    if (!room?.id) return;
+
+    try {
+      const active = !room.isActive;
+
+      await changeRoomActivationStatus({ id: room.id, active }).unwrap();
+
+      dispatch(
+        notify({
+          msg: active ? 'Room Activated Successfully' : 'Room Deactivated Successfully',
+          sev: 'success'
+        })
+      );
+
+      await refetchActiveList();
+      setRoom({ ...newRoom });
+    } catch (err: any) {
+      handleRoomCrudError(err, dispatch, ROOM_ERROR_MAP);
+    } finally {
+      setOpenConfirmDeleteRoomModal(false);
+    }
+  };
+
+  const handleResetFilter = () => {
+    setRoomFilter({ ...initialRoomFilter });
+    setAppliedRoomFilter({ ...initialRoomFilter });
+    setRoomPagination(prev => ({ ...prev, page: 0 }));
+    setDeptPage(0);
+    setDeptNextLink(null);
+    setDeptHasMore(false);
+    setFilterSession(prev => prev + 1);
+  };
+
+  const isSelected = (rowData: Room) => {
+    if (rowData && room && room.id === rowData.id) {
+      return 'selected-row';
+    }
+    return '';
+  };
+
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form layout="inline" fluid style={{ display: 'flex', gap: 10 }}>
       <MyInput
-        selectDataValue="value"
-        selectDataLabel="label"
-        selectData={filterFields}
-        fieldName="filter"
+        width="180px"
+        fieldName="criteria"
         fieldType="select"
-        record={recordOfFilter}
-        setRecord={updatedRecord => {
-          setRecordOfFilter({
-            ...recordOfFilter,
-            filter: updatedRecord.filter,
-            value: ''
+        selectData={filterCriteriaOptions}
+        selectDataLabel="label"
+        selectDataValue="value"
+        record={roomFilter}
+        setRecord={(updated: any) => {
+          const next = typeof updated === 'function' ? updated(roomFilter) : updated;
+          const nextCriteria = (next?.criteria ?? '') as FilterCriteria;
+
+          if (!nextCriteria) {
+            handleResetFilter();
+            return;
+          }
+
+          setRoomFilter({
+            criteria: nextCriteria,
+            departmentId: null,
+            name: ''
           });
+
+          setDeptPage(0);
+          setDeptNextLink(null);
+          setDeptHasMore(false);
+          setFilterSession(prev => prev + 1);
         }}
         showLabel={false}
-        placeholder="Select Filter"
+        placeholder="Select Criteria"
         searchable={false}
       />
-      <MyInput
-        fieldName="value"
-        fieldType="text"
-        record={recordOfFilter}
-        setRecord={setRecordOfFilter}
-        showLabel={false}
-        placeholder="Search"
-      />
+
+      {roomFilter.criteria === 'department' && (
+        <MyInput
+          key={`department-filter-${filterSession}`}
+          width="240px"
+          fieldName="departmentId"
+          fieldLabel=""
+          fieldType="selectPagination"
+          selectData={departmentFilterOptions}
+          selectDataLabel="label"
+          selectDataValue="value"
+          record={roomFilter}
+          setRecord={(updated: any) => {
+            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
+            const nextDepartmentId = next?.departmentId ?? null;
+
+            if (!nextDepartmentId) {
+              handleResetFilter();
+              return;
+            }
+
+            setRoomFilter(prev => ({
+              ...prev,
+              departmentId: nextDepartmentId
+            }));
+          }}
+          loading={isDeptLoading}
+          searchable
+          showLabel={false}
+          placeholder="Select Department"
+          hasMore={deptHasMore}
+          onFetchMore={async () => {
+            if (!deptNextLink) return;
+            const { page } = extractPaginationFromLink(deptNextLink);
+            setDeptPage(page);
+          }}
+        />
+      )}
+
+      {roomFilter.criteria === 'name' && (
+        <MyInput
+          width="220px"
+          fieldName="name"
+          fieldType="text"
+          record={roomFilter}
+          setRecord={(updated: any) => {
+            const next = typeof updated === 'function' ? updated(roomFilter) : updated;
+            const nextName = next?.name ?? '';
+
+            if (!nextName.trim()) {
+              handleResetFilter();
+              return;
+            }
+
+            setRoomFilter(prev => ({
+              ...prev,
+              name: nextName
+            }));
+          }}
+          showLabel={false}
+          placeholder="Search Room Name"
+        />
+      )}
+
+      <MyButton
+        color="var(--deep-blue)"
+        onClick={() => {
+          if (
+            !roomFilter.criteria ||
+            (roomFilter.criteria === 'department' && !roomFilter.departmentId) ||
+            (roomFilter.criteria === 'name' && !roomFilter.name.trim())
+          ) {
+            handleResetFilter();
+            return;
+          }
+
+          setAppliedRoomFilter({
+            criteria: roomFilter.criteria,
+            departmentId: roomFilter.departmentId,
+            name: roomFilter.name
+          });
+
+          setRoomPagination(prev => ({
+            ...prev,
+            page: 0
+          }));
+        }}
+        width="80px"
+      >
+        Search
+      </MyButton>
     </Form>
   );
 
-  // Icons column (Edit, Add Bed, reactive/Deactivate)
-  const iconsForActions = (rowData: ApRoom) => (
+  const iconsForActions = (rowData: Room) => (
     <div className="container-of-icons">
       <FaConciergeBell
         className="icons-style"
@@ -197,6 +481,7 @@ const Room = () => {
           setOpenAddServicePopup(true);
         }}
       />
+
       <FaBed
         className="icons-style"
         title="Add Bed"
@@ -208,6 +493,7 @@ const Room = () => {
           setAddBedModal(true);
         }}
       />
+
       <MdModeEdit
         className="icons-style"
         title="Edit"
@@ -218,7 +504,8 @@ const Room = () => {
           handleEdit(rowData);
         }}
       />
-      {rowData?.isValid ? (
+
+      {rowData?.isActive ? (
         <MdDelete
           className="icons-style"
           title="Deactivate"
@@ -248,7 +535,6 @@ const Room = () => {
     </div>
   );
 
-  //Table columns
   const tableColumns = [
     {
       key: 'name',
@@ -256,107 +542,74 @@ const Room = () => {
       flexGrow: 4
     },
     {
-      key: 'facilityKey',
+      key: 'facilityId',
       title: <Translate>Facility</Translate>,
       flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnIDFromList(
-            facilityListResponse ?? [],
-            rowData.facilityKey,
-            'name'
-          )}
-        </span>
-      )
+      render: (rowData: Room) => <span>{rowData.facility?.name ?? 'N/A'}</span>
     },
     {
       key: 'floor',
       title: <Translate>Floor</Translate>,
-      flexGrow: 4
+      flexGrow: 3
     },
     {
-      key: 'locationDetails',
-      title: <Translate>Location Details</Translate>,
-      flexGrow: 4
+      key: 'departmentId',
+      title: <Translate>Department</Translate>,
+      flexGrow: 4,
+      render: (rowData: Room) => <span>{rowData.department?.name ?? 'N/A'}</span>
     },
     {
-      key: 'typeLkey',
+      key: 'type',
       title: <Translate>Type</Translate>,
-      flexGrow: 4,
-      render: rowData =>
-        rowData?.typeLvalue
-          ? rowData.typeLvalue.lovDisplayVale
-          : rowData.typeLkey
+      flexGrow: 3,
+      render: (rowData: Room) => formatEnumString(rowData.type) ?? 'N/A'
     },
     {
-      key: 'genderLkey',
-      title: <Translate>Gender Spacific</Translate>,
-      flexGrow: 4,
-      render: rowData =>
-       formatEnumString( rowData?.genderLkey )
+      key: 'gender',
+      title: <Translate>Gender Specific</Translate>,
+      flexGrow: 3,
+      render: (rowData: Room) => (rowData.isSpecificGender ? rowData.gender || 'Yes' : 'No')
     },
     {
-      key: 'isValid',
+      key: 'isActive',
       title: <Translate>Status</Translate>,
-      flexGrow: 4,
-      render: rowData => (rowData.isValid ? 'Valid' : 'InValid')
+      flexGrow: 3,
+      render: (rowData: Room) =>
+        rowData.isActive ? (
+          <MyBadgeStatus contant="Active" color="#45b887" />
+        ) : (
+          <MyBadgeStatus contant="Inactive" color="#969fb0" />
+        )
     },
     {
-      key: 'bedCount',
-      title: <Translate>Bed Count</Translate>,
-      flexGrow: 4,
-      render: rowData => (rowData?.bedCount ? rowData.bedCount : '0')
+      key: 'parallelCapacityValue',
+      title: <Translate>Parallel Capacity</Translate>,
+      flexGrow: 3,
+      render: (rowData: Room) => rowData.parallelCapacityValue ?? 1
     },
     {
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: rowData => iconsForActions(rowData)
+      render: (rowData: Room) => iconsForActions(rowData)
     }
   ];
 
-  //useEffect for filter
-  useEffect(() => {
-    if (recordOfFilter['filter']) {
-      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
-    } else {
-      setListRequest({
-        ...initialListRequest,
-        pageSize: listRequest.pageSize,
-        pageNumber: 1
-      });
-    }
-  }, [recordOfFilter]);
-
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
-              // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <Panel dir={dir}>
       <MyTable
         height={450}
-        data={roomListResponseLoading?.object ?? []}
+        data={tableData}
         loading={isFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         filters={filters()}
-        onRowClick={rowData => {
+        onRowClick={(rowData: Room) => {
           setRoom(rowData);
-        }}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortChange={(sortBy, sortType) => {
-          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
         }}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
@@ -376,27 +629,31 @@ const Room = () => {
           </div>
         }
       />
+
       <DeletionConfirmationModal
         open={openConfirmDeleteRoomModal}
         setOpen={setOpenConfirmDeleteRoomModal}
         itemToDelete="Room"
-        actionButtonFunction={handleDeactiveReactivateRoom}
+        actionButtonFunction={handleToggleRoom}
         actionType={stateOfDeleteRoomModal}
       />
+
       <AddEditRoom
         open={openAddEditPopup}
         setOpen={setOpenAddEditPopup}
         room={room}
         setRoom={setRoom}
-        refetch={refetch}
+        refetch={refetchActiveList}
       />
+
       <AddBed
         open={openAddBedModal}
         setOpen={setAddBedModal}
         room={room}
         setRoom={setRoom}
-        refetchRoom={refetch}
+        refetchRoom={refetchActiveList}
       />
+
       <AddService
         open={openAddServicePopup}
         setOpen={setOpenAddServicePopup}
@@ -407,4 +664,4 @@ const Room = () => {
   );
 };
 
-export default Room;
+export default RoomSection;

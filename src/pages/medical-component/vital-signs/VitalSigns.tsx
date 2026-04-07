@@ -229,34 +229,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Vital signs saved successfully', sev: 'success' }));
-        if (encounter && !encounter.isObserved) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: encounter?.hasPrescription ?? false,
-            hasOrder: encounter?.hasOrder ?? false,
-            isObserved: true
-          }
-        }).unwrap();
-
-      }
     } catch (error: any) {
       showApiError(error);
     }

@@ -16,6 +16,7 @@ import FlowSheetICU from "./i.c.u-tabs/FlowSheetTab/FlowSheetICU";
 import Neurological from './i.c.u-tabs/NeurologicalTab/NeurologicalICU'
 import InvasiveDeviceICU from "./i.c.u-tabs/invasivedevice/InvasiveDeviceICU";
 import SafetyBundleICU from "./i.c.u-tabs/safetybundletab/SafetyBundleICU";
+import Translate from "@/components/Translate";
 const ICUTabs: React.FC = () => {
   const [activeKey, setActiveKey] = useState<string | number>('1');
 
@@ -28,19 +29,19 @@ const ICUTabs: React.FC = () => {
   return (<div dir={dir}>
     <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
 
-      <Tabs.Tab eventKey="1" title="Overview">
+      <Tabs.Tab eventKey="1" title={<Translate>Overview</Translate>}>
         <><OverviewICU></OverviewICU></>
       </Tabs.Tab>
 
-      <Tabs.Tab eventKey="2" title="Flow Sheet">
+      <Tabs.Tab eventKey="2" title={<Translate>Flow Sheet</Translate>}>
         <><FlowSheetICU></FlowSheetICU></>
 
       </Tabs.Tab>
 
-      <Tabs.Tab eventKey="3" title="Neurological">
+      <Tabs.Tab eventKey="3" title={<Translate>Neurological</Translate>}>
         <><Neurological></Neurological></>
       </Tabs.Tab>
-      <Tabs.Tab eventKey="4" title="Invasive Devices">
+      <Tabs.Tab eventKey="4" title={<Translate>Invasive Devices</Translate>}>
         <><SectionContainer
           title={
             <>
@@ -50,7 +51,7 @@ const ICUTabs: React.FC = () => {
 
         </>
       </Tabs.Tab>
-      <Tabs.Tab eventKey="5" title="Safety Bundle">
+      <Tabs.Tab eventKey="5" title={<Translate>Safety Bundle</Translate>}>
         <><SafetyBundleICU></SafetyBundleICU></>
       </Tabs.Tab>
     </Tabs>

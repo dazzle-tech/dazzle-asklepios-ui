@@ -415,7 +415,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                         checked={showReviewed}
                         onChange={(_, checked) => setShowReviewed(checked)}
                     >
-                        Show Reviewed Report
+                        <Translate>Show Reviewed Report</Translate>
                     </Checkbox>
                 </div>
             </div>

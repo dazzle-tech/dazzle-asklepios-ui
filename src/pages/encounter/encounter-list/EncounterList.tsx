@@ -68,10 +68,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw)
@@ -85,7 +85,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'patient.notfound': 'Patient not found.',
   'patient.hasOngoing.notAllowed':
     'Patient already has an ongoing encounter. Starting another one is not allowed.',
-  'cancel.notAllowed.rule': 'Cancel is allowed only when status is NEW and isObserved is false.',
+  'cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
   'followUpEncounter.required.byReason':
     'Follow-up encounter is required when reason is FOLLOW_UP (and must be empty otherwise).',
   'followUpEncounter.notfound': 'Follow-up encounter not found.',
@@ -168,23 +168,23 @@ const EncounterList = () => {
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
 
- useEffect(() => {
-  dispatch(setPageCode('P_Encounters'));
-  dispatch(setDivContent('Patients Visit List'));
+  useEffect(() => {
+    dispatch(setPageCode('P_Encounters'));
+    dispatch(setDivContent('Patients Visit List'));
 
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  };
-}, [dispatch]);
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(' '));
+    };
+  }, [dispatch]);
 
   const [encounter, setLocalEncounter] = useState<any>({
     ...newApEncounter,
     discharge: false
   });
-const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
-const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
-// getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
+  const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
+  const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
+  // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
@@ -262,7 +262,7 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
 
     return {
-      departmentId:departmentId,
+      departmentId: departmentId,
       fromDate,
       toDate,
       statusIn: normalizedStatusIn,
@@ -338,19 +338,19 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     return Array.from(new Set(ids));
   }, [tableData]);
   useEffect(() => {
-  const pid =
-  
-    encounter?.patient?.id ;
+    const pid =
 
-  if (pid) triggerGetPatientById({ id: pid });
-}, [encounter?.patient?.id]);
+      encounter?.patient?.id;
+
+    if (pid) triggerGetPatientById({ id: pid });
+  }, [encounter?.patient?.id]);
 
   useEffect(() => {
     if (patientIdsForBulk.length === 0) return;
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
@@ -425,72 +425,80 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
       await cancelEncounter({ id: encounterId }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       return true;
-    } catch (error: any) {
-      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
       return false;
     }
   };
   const fetchPatientForEncounter = async (enc: any) => {
-  const pid =
-    enc?.patient?.id ??
-    null;
+    const pid =
+      enc?.patient?.id ??
+      null;
 
-  if (!pid) return null;
+    if (!pid) return null;
 
-  try {
-    const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
-    return fullPatient;
-  } catch (e) {
-    handleCrudError(e, dispatch, { 'patient.notfound': 'Patient not found.' });
-    return null;
-  }
-};
-const handleGoToVisit = async (encounterData: any) => {
-  const isStarted = await startEncounterSafe(encounterData);
-  if (!isStarted) return;
-
-  dispatch(showSystemLoader());
-  const fullPatient = await fetchPatientForEncounter(encounterData);
-  dispatch(hideSystemLoader());
-
-  if (!fullPatient) {
-    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
-    return;
-  }
-
-  dispatch(setEncounter(encounterData));
-  dispatch(setPatient(fullPatient));
-
-  
-  const privatePatientPath = '/user-access-patient-private';
-  const encounterPath = '/encounter';
-  const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
-
-  navigate(targetPath, {
-    state: {
-      info: 'toEncounter',
-      fromPage: 'EncounterList',
-      patient: fullPatient,
-      encounter: encounterData
+    try {
+      const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
+      return fullPatient;
+    } catch (e) {
+      handleCrudError(e, dispatch, { 'patient.notfound': 'Patient not found.' });
+      return null;
     }
-  });
+  };
+  const handleGoToVisit = async (encounterData: any) => {
+    const isStarted = await startEncounterSafe(encounterData);
+    if (!isStarted) return;
 
-  sessionStorage.setItem('encounterPageSource', 'EncounterList');
-};
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+
+    const privatePatientPath = '/user-access-patient-private';
+    const encounterPath = '/encounter';
+    const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
+
+    navigate(targetPath, {
+      state: {
+        info: 'toEncounter',
+        fromPage: 'EncounterList',
+        patient: fullPatient,
+        encounter: encounterData
+      }
+    });
+
+    sessionStorage.setItem('encounterPageSource', 'EncounterList');
+  };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
-      dispatch(showSystemLoader());
-  const fullPatient = await fetchPatientForEncounter(encounterData);
-  dispatch(hideSystemLoader());
-      if (!fullPatient) {
-    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
-    return;
-  }
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
 
-  dispatch(setEncounter(encounterData));
-  dispatch(setPatient(fullPatient));
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
     const targetPath = fullPatient?.isPrivatePatient
       ? '/user-access-patient-private'
       : '/nurse-station';
@@ -499,7 +507,7 @@ const handleGoToVisit = async (encounterData: any) => {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,
         encounter: encounterData,
-        edit: encounterData?.status ?.toUpperCase() === 'CLOSED'
+        edit: encounterData?.status?.toUpperCase() === 'CLOSED'
       }
     });
   };
@@ -881,12 +889,12 @@ const handleGoToVisit = async (encounterData: any) => {
     );
   }
 
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
   return (
-<>
-     <div className="count-div-on-top-of-page-visit-list">
+    <>
+      <div className="count-div-on-top-of-page-visit-list">
         <DetailsCard
           title="Total Patients"
           number={totalPatientsCount ?? 0}
@@ -938,81 +946,80 @@ const handleGoToVisit = async (encounterData: any) => {
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
         />
+          <MyModal
+            open={openRefillModal}
+            setOpen={setOpenRefillModal}
+            title="Refill"
+            size="90vw"
+            content={<RefillModalComponent />}
+            hideActionBtn={true}
+            cancelButtonLabel="Close"
+          />
 
-        <MyModal
-          open={openRefillModal}
-          setOpen={setOpenRefillModal}
-          title="Refill"
-          size="90vw"
-          content={<RefillModalComponent />}
-          hideActionBtn={true}
-          cancelButtonLabel="Close"
-        />
+          <DeletionConfirmationModal
+            open={open}
+            setOpen={setOpen}
+            actionButtonFunction={handleCancelEncounter}
+            actionType="Deactivate"
+            confirmationQuestion="Do you want to cancel this Encounter?"
+            actionButtonLabel="Cancel"
+            cancelButtonLabel="Close"
+          />
 
-        <DeletionConfirmationModal
-          open={open}
-          setOpen={setOpen}
-          actionButtonFunction={handleCancelEncounter}
-          actionType="Deactivate"
-          confirmationQuestion="Do you want to cancel this Encounter?"
-          actionButtonLabel="Cancel"
-          cancelButtonLabel="Close"
-        />
+          <DeletionConfirmationModal
+            open={openNurseAssessment}
+            setOpen={setOpenNurseAssessment}
+            actionButtonFunction={async () => {
 
-        <DeletionConfirmationModal
-          open={openNurseAssessment}
-          setOpen={setOpenNurseAssessment}
-          actionButtonFunction={async () => {
-        
               await handleGoToPreVisitObservations(encounter);
-            
-          }}
-          actionType="confirm"
-          confirmationQuestion="Do you want to start Nurse Assessment?"
-          actionButtonLabel="Start"
-          cancelButtonLabel="Close"
-        />
 
-        <MyModal
-          open={openPhysicianOrderSummaryModal}
-          setOpen={setOpenPhysicianOrderSummaryModal}
-          title="Task Management"
-          size="90vw"
-          content={<PhysicianOrderSummaryModal />}
-          actionButtonLabel="Save"
-          cancelButtonLabel="Close"
-        />
+            }}
+            actionType="confirm"
+            confirmationQuestion="Do you want to start Nurse Assessment?"
+            actionButtonLabel="Start"
+            cancelButtonLabel="Close"
+          />
 
-        <MyModal
-          open={openEncounterLogsModal}
-          setOpen={setOpenEncounterLogsModal}
-          title="Encounter Logs"
-          size="70vw"
-          content={<EncounterLogsTable />}
-          actionButtonLabel="Close"
-          actionButtonFunction={() => setOpenEncounterLogsModal(false)}
-          cancelButtonLabel="Cancel"
-        />
+          <MyModal
+            open={openPhysicianOrderSummaryModal}
+            setOpen={setOpenPhysicianOrderSummaryModal}
+            title="Task Management"
+            size="90vw"
+            content={<PhysicianOrderSummaryModal />}
+            actionButtonLabel="Save"
+            cancelButtonLabel="Close"
+          />
 
-        <MyModal
-          open={openEMRModal}
-          setOpen={setOpenEMRModal}
-          title="Electronic Medical Record"
-          size="90vw"
-          content={
-            emrPatient && emrEncounter ? (
-              <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
-            ) : (
-              <div className="encounter-list__no-patient">No patient selected.</div>
-            )
-          }
-          actionButtonLabel="Close"
-          actionButtonFunction={() => setOpenEMRModal(false)}
-          cancelButtonLabel="Cancel"
-        />
-      </Panel>
-    </div>
-  </>
+          <MyModal
+            open={openEncounterLogsModal}
+            setOpen={setOpenEncounterLogsModal}
+            title="Encounter Logs"
+            size="70vw"
+            content={<EncounterLogsTable />}
+            actionButtonLabel="Close"
+            actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+            cancelButtonLabel="Cancel"
+          />
+
+          <MyModal
+            open={openEMRModal}
+            setOpen={setOpenEMRModal}
+            title="Electronic Medical Record"
+            size="90vw"
+            content={
+              emrPatient && emrEncounter ? (
+                <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
+              ) : (
+                <div className="encounter-list__no-patient">No patient selected.</div>
+              )
+            }
+            actionButtonLabel="Close"
+            actionButtonFunction={() => setOpenEMRModal(false)}
+            cancelButtonLabel="Cancel"
+          />
+        </Panel>
+      </div>
+    </>
   );
 };
 

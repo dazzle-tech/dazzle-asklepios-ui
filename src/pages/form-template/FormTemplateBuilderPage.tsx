@@ -40,7 +40,7 @@ const FormTemplateBuilderPage = () => {
 
   // Header setup like your other pages
   useEffect(() => {
-    const title = templateId ? 'Edit Form Template' : 'New Form Template';
+    const title = templateId ? <Translate>Edit Form Template</Translate> : <Translate>New Form Template</Translate>;
     dispatch(setPageCode('FormTemplateBuilder'));
     dispatch(setDivContent(title));
 
@@ -244,7 +244,7 @@ const FormTemplateBuilderPage = () => {
           <div className={'form-template-grid'}>
             <MyInput
               width={width > 900 ? '18vw' : '100%'}
-              fieldLabel="Template Name"
+              fieldLabel={<Translate>Template Name</Translate>}
               fieldName="name"
               record={template}
               setRecord={setTemplate}

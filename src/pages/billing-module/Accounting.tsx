@@ -25,7 +25,7 @@ import { useGetPatientServicesAndProductsByPatientQuery } from '@/services/encou
 
 import { useGetServicesQuery } from '@/services/setup/serviceService';
 import { useGetInventoryProductsQuery } from '@/services/inventory/inventory-products/inventoryProductsService';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import {
   BrandMedication,
   InventoryProduct,
@@ -148,9 +148,13 @@ const Accounting: React.FC = () => {
     brands.find(b => String(b.id) === String(id));
 
   useEffect(() => {
-    dispatch(setPageCode('Operation_Module'));
+  dispatch(setPageCode('Operation_Module'));
     dispatch(setDivContent(divContent));
-  }, [dispatch]);
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // ---------- HELPERS ----------
 

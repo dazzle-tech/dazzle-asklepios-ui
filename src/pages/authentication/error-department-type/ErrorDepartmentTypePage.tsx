@@ -5,6 +5,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import * as errors from '@/images/errors';
 import { MODULES } from '@/config/modules-config';
 import './styles.less';
+import { formatEnumString } from '@/utils';
+
 const norm = (s?: string | null) => (s ?? '').toLowerCase().trim().replace(/^\/+/, '');
 
 const ErrorDepartmentTypePage = () => {
@@ -20,14 +22,16 @@ const ErrorDepartmentTypePage = () => {
     location.state?.message || 'Current Department type is not compatible with this module.';
   const allowedTypes = location.state?.allowedTypes || [];
 
-  const [getDepartmentById, { data: department, isLoading, isFetching }] =
-    useLazyGetDepartmentByIdQuery();
+  const [
+    getDepartmentById,
+    { data: department, isLoading, isFetching, isUninitialized },
+  ] = useLazyGetDepartmentByIdQuery();
 
   useEffect(() => {
-    if (selectedDepartment?.departmentId) {
+    if (selectedDepartment?.departmentId && isUninitialized) {
       getDepartmentById(selectedDepartment.departmentId);
     }
-  }, [selectedDepartment?.departmentId, getDepartmentById]);
+  }, [selectedDepartment?.departmentId, isUninitialized, getDepartmentById]);
 
   useEffect(() => {
     if (!fromPath) return;
@@ -53,6 +57,13 @@ const ErrorDepartmentTypePage = () => {
     }
   }, [department?.departmentType, fromPath, navigate]);
 
+  const isChecking =
+    !!selectedDepartment?.departmentId && (isUninitialized || isLoading || isFetching);
+
+  if (isChecking) {
+    return null;
+  }
+
   return (
     <div className="error-page">
       <div className="error-page__container">
@@ -68,10 +79,10 @@ const ErrorDepartmentTypePage = () => {
 
         <div className="error-page__details">
           <div>
-            <strong>Current Type:</strong> {department?.departmentType || 'N/A'}
+            <strong>Current Type:</strong> {formatEnumString(department?.departmentType) || 'N/A'}
           </div>
           <div>
-            <strong>Allowed Types:</strong> {allowedTypes.length ? allowedTypes.join(', ') : 'N/A'}
+            <strong>Allowed Types:</strong> {allowedTypes.length ? allowedTypes.map(formatEnumString).join(', ') : 'N/A'}
           </div>
         </div>
 

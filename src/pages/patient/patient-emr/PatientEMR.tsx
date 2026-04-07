@@ -75,7 +75,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = patient || enc ? undefined : (location.state as any);
-  console.log('PatientEMR propsData', propsData?.patient, propsData?.encounter);
   const [encounter, setLocalEncounter] = useState<any>(
     enc ?? propsData?.encounter ?? { ...newApEncounter, discharge: false }
   );
@@ -245,7 +244,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
             />
           </div>
 
-          <div className="animation-emr-card-patient-emr">
+          {/* <div className="animation-emr-card-patient-emr">
             <EMRCard
               number={3}
               footerText="Services"
@@ -258,7 +257,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               }
               active={activeSectionCard === 'services'}
             />
-          </div>
+          </div> */}
 
           <div className="animation-emr-card-patient-emr">
             <EMRCard

@@ -34,7 +34,7 @@ import EncounterDischarge from '../encounter-component/encounter-discharge/Encou
 import PhysicianOrderSummary from '../encounter-component/physician-order-summary/physician-order-summary-component';
 import WoundCareDocumentation from '../encounter-component/wound-care-documentation';
 import MyTab from '@/components/MyTab';
-const InpatientNurseStation = ({}) => {
+const InpatientNurseStation = ({ }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = location.state;
@@ -58,9 +58,16 @@ const InpatientNurseStation = ({}) => {
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
       setReadOnly(true);
-    } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 

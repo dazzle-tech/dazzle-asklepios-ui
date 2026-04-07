@@ -262,7 +262,7 @@ import {
 } from '@/services/encounterService';
 import FullViewTable from './FullViewTable';
 import Section from '@/components/Section';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import { useGetAllChronicRawQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
@@ -451,7 +451,7 @@ const PatientChronicMedication = ({ patient, title = null }) => {
   return (
     <Section
       isContainOnlyTable
-      title={title ? title : ' Patient Chronic Medication'}
+      title={title ? title : <Translate>Patient Chronic Medication</Translate>}
       content={
         <MyTable
           columns={tableColumns}

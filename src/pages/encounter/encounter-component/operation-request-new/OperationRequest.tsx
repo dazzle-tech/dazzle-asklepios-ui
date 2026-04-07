@@ -7,6 +7,7 @@ import { useGetRequestedOperationQuery } from '@/services/operationService';
 import AnesthesiaCarePlan from './AnesthesiaCarePlan';
 import PreCheckList from './PreCheckList';
 import './styles.less';
+import Translate from '@/components/Translate';
 const OperationRequest = props => {
   const location = useLocation();
 
@@ -37,7 +38,7 @@ const OperationRequest = props => {
   return (
     <div dir={dir}>
     <Tabs defaultActiveKey="1" appearance="subtle">
-      <Tabs.Tab eventKey="1" title=" Request">
+      <Tabs.Tab eventKey="1" title={<Translate>Request</Translate>}>
         <div className="remove-over-flow-handle">
           <Request
             patient={patient}
@@ -47,7 +48,7 @@ const OperationRequest = props => {
           />
         </div>
       </Tabs.Tab>
-      <Tabs.Tab eventKey="2" title="Anesthesia Care Plan" disabled={!requestedOperation?.object}>
+      <Tabs.Tab eventKey="2" title={<Translate>Anesthesia Care Plan</Translate>} disabled={!requestedOperation?.object}>
         {' '}
         <div className="remove-over-flow-handle">
           <AnesthesiaCarePlan
@@ -58,7 +59,7 @@ const OperationRequest = props => {
           />
         </div>
       </Tabs.Tab>
-      <Tabs.Tab eventKey="3" title=" Pre-Op Checklist" disabled={!requestedOperation?.object}>
+      <Tabs.Tab eventKey="3" title={<Translate>Pre-Op Checklist</Translate>} disabled={!requestedOperation?.object}>
         <div className="remove-over-flow-handle">
           <PreCheckList
             operation={requestedOperation}
@@ -68,7 +69,7 @@ const OperationRequest = props => {
           />
         </div>
       </Tabs.Tab>
-      <Tabs.Tab eventKey="4" title="  Devices\ Implants" disabled={!requestedOperation?.object}>
+      <Tabs.Tab eventKey="4" title={<Translate>Devices\ Implants</Translate>} disabled={!requestedOperation?.object}>
         4
       </Tabs.Tab>
     </Tabs></div>

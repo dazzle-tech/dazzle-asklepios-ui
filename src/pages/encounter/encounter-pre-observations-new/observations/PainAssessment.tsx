@@ -232,7 +232,6 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       }));
 
       dispatch(notify({ msg: 'Pain assessment saved successfully', sev: 'success' }));
-       
     } catch (err: any) {
       showApiError(err);
     }

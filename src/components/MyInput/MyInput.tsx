@@ -49,19 +49,19 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-    | 'text'
-    | 'password'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check';
+  | 'text'
+  | 'password'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -115,6 +115,7 @@ type MyInputProps = {
   enterClick?: () => Promise<boolean | void> | boolean | void;
   isEnum?: boolean;
   allowEnterNewLine?: boolean;
+  showZero?: boolean;
   disablePastDates?: boolean;
   disableFutureDates?: boolean;
   showWarningIfBeforeYear1900?: boolean;
@@ -219,6 +220,21 @@ const MyInput = ({
 
       const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
       setRecord({ ...record, [fieldName]: dateStr });
+      return;
+    }
+
+    if (fieldType === 'number') {
+      if (value === '' || value === null || value === undefined) {
+        setRecord({ ...record, [fieldName]: null });
+        return;
+      }
+
+      const numericValue = typeof value === 'number' ? value : Number(value);
+
+      setRecord({
+        ...record,
+        [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+      });
       return;
     }
 
@@ -442,8 +458,8 @@ const MyInput = ({
               (isArrayLabel
                 ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
                 : props.isEnum
-                ? (label: any) => formatEnumString(String(label))
-                : undefined)
+                  ? (label: any) => formatEnumString(String(label))
+                  : undefined)
             }
             searchBy={props.searchBy}
             container={resolveContainer()}
@@ -470,15 +486,15 @@ const MyInput = ({
             renderValue={
               isArrayLabel
                 ? (value, item, selectedElement) => {
-                    if (!item) return selectedElement;
-                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                  }
+                  if (!item) return selectedElement;
+                  return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                }
                 : props.isEnum
-                ? (value, item, selectedElement) => {
+                  ? (value, item, selectedElement) => {
                     const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
                     return <span>{formatEnumString(String(base))}</span>;
                   }
-                : undefined
+                  : undefined
             }
             disabledItemValues={
               props.disabledItemValues
@@ -514,12 +530,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                    {
-                      [valueKey]: '__load_more__',
-                      [labelKey]: 'Load more...',
-                      isLoadMore: true
-                    }
-                  ]
+                  {
+                    [valueKey]: '__load_more__',
+                    [labelKey]: 'Load more...',
+                    isLoadMore: true
+                  }
+                ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -772,6 +788,15 @@ const MyInput = ({
             : 0) +
           (rightAddon ? 2 : 0);
 
+        const value =
+          record?.[fieldName] === 0
+            ? props.showZero
+              ? 0
+              : ''
+            : record?.[fieldName] !== null && record?.[fieldName] !== undefined
+              ? record[fieldName]
+              : '';
+
         const inputControl = (
           <Form.Control
             className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
@@ -787,9 +812,21 @@ const MyInput = ({
             name={fieldName}
             max={props.max}
             min={0}
-            value={record[fieldName] ?? ''}
+            value={value}
             accepter={InputNumber}
-            onChange={handleValueChange}
+            onChange={(value) => {
+              if (value === '' || value === null || value === undefined) {
+                setRecord?.({ ...record, [fieldName]: null });
+                return;
+              }
+
+              const numericValue = typeof value === 'number' ? value : Number(value);
+
+              setRecord?.({
+                ...record,
+                [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+              });
+            }}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
           />
@@ -815,7 +852,9 @@ const MyInput = ({
                   {leftAddon}
                 </InputGroup.Addon>
               )}
+
               {inputControl}
+
               {rightAddon && (
                 <InputGroup.Addon
                   className="my-input-addon"
@@ -986,7 +1025,13 @@ const MyInput = ({
       <Form.ControlLabel>
         {showLabel && (
           <MyLabel
-            label={fieldLabel}
+            label={
+              typeof fieldLabel === 'string' ? (
+                <Translate>{fieldLabel}</Translate>
+              ) : (
+                fieldLabel
+              )
+            }
             error={validationResult}
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />

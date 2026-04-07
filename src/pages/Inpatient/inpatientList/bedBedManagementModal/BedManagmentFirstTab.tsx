@@ -3,15 +3,19 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { useFetchBedsRelatedToDepartmentQuery, useSaveBedMutation } from '@/services/setupService';
+import {
+  useCountActiveBedsQuery,
+  useCountBedsByStatusQuery,
+  useGetBedsByDepartmentIdQuery,
+  useMarkBedAsOutOfServiceMutation,
+  useMarkBedAsReadyMutation
+} from '@/services/setup/room/bedService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   faBed,
   faBroom,
   faExclamationTriangle,
-  // faIdCard,
   faStopCircle,
-  // faTable,
   faThumbsUp,
   faUser
 } from '@fortawesome/free-solid-svg-icons';
@@ -19,46 +23,68 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Form, Tooltip, Whisper } from 'rsuite';
+import './bedcard.less';
 import BedCards from './BedCards';
-import './BedManagmentFirstTab.less';
+import { formatEnumString } from '@/utils';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
+const BedManagmentFirstTab = ({ departmentKey }) => {
   const mode = useSelector((state: any) => state.ui.mode);
-  //
   const dispatch = useAppDispatch();
-  const [saveBed] = useSaveBedMutation();
-  const [viewMode, setViewMode] = useState('table'); // view mode state
+  const [markBedAsOutOfService] = useMarkBedAsOutOfServiceMutation();
+  const [markBedAsReady] = useMarkBedAsReadyMutation();
+  const [viewMode] = useState('table');
 
-  // Sort data to show occupied beds first
-  // const sortedData = [...data].sort((a, b) => {
-  //   const statusA = a?.bed?.statusLvalue?.lovDisplayVale || a?.bed?.statusLkey || '';
-  //   const statusB = b?.bed?.statusLvalue?.lovDisplayVale || b?.bed?.statusLkey || '';
+  const [bedPagination, setBedPagination] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc'
+  });
 
-  //   if (statusA.toLowerCase() === 'occupied' && statusB.toLowerCase() !== 'occupied') {
-  //     return -1;
-  //   }
-  //   if (statusA.toLowerCase() !== 'occupied' && statusB.toLowerCase() === 'occupied') {
-  //     return 1;
-  //   }
-  //   return 0;
-  // });
   const {
-    data: fetchBedsRelatedToDepartmentResponse,
+    data: bedsResponse,
     refetch,
     isFetching,
     isLoading
-  } = useFetchBedsRelatedToDepartmentQuery(
-    { resourceKey: departmentKey },
+  } = useGetBedsByDepartmentIdQuery(
+    {
+      departmentId: departmentKey,
+      page: bedPagination.page,
+      size: bedPagination.size,
+      sort: bedPagination.sort
+    },
     { skip: !departmentKey }
   );
 
-  // Set bed status to Out of Service
-  const handleChangeToOutService = bed => {
-    saveBed({
-      ...bed,
-      statusLkey: '5258592140444674',
-      isValid: true
-    })
+  const { data: totalBeds = 0 } = useCountActiveBedsQuery(
+    { departmentId: departmentKey },
+    { skip: !departmentKey }
+  );
+
+  const { data: occupiedBeds = 0 } = useCountBedsByStatusQuery(
+    { departmentId: departmentKey, status: 'OCCUPIED' },
+    { skip: !departmentKey }
+  );
+
+  const { data: availableBeds = 0 } = useCountBedsByStatusQuery(
+    { departmentId: departmentKey, status: 'EMPTY' },
+    { skip: !departmentKey }
+  );
+
+  const { data: outOfServiceBeds = 0 } = useCountBedsByStatusQuery(
+    { departmentId: departmentKey, status: 'OUT_OF_SERVICE' },
+    { skip: !departmentKey }
+  );
+
+  const { data: inCleaning = 0 } = useCountBedsByStatusQuery(
+    { departmentId: departmentKey, status: 'IN_CLEANING' },
+    { skip: !departmentKey }
+  );
+
+  const bedsData = bedsResponse?.data ?? [];
+
+  const handleChangeToOutService = (bed: any) => {
+    markBedAsOutOfService({ id: bed?.id })
       .unwrap()
       .then(() => {
         dispatch(notify('Bed Out of Service'));
@@ -69,16 +95,11 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
       });
   };
 
-  // Set bed status to Ready
-  const handleChangeToReady = bed => {
-    saveBed({
-      ...bed,
-      statusLkey: '5258243122289092',
-      isValid: true
-    })
+  const handleChangeToReady = (bed: any) => {
+    markBedAsReady({ id: bed?.id })
       .unwrap()
       .then(() => {
-        dispatch(notify('Bed Empty'));
+        dispatch(notify('Bed Ready'));
         refetch();
       })
       .catch(() => {
@@ -86,44 +107,61 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
       });
   };
 
-  // Table column definitions
   const tableColumns = [
     {
       key: 'roomName',
       title: <Translate>roomName</Translate>,
-      render: rowData => rowData?.roomName
+      render: rowData => rowData?.room?.name
     },
     {
       key: 'bedName',
       title: <Translate>Bed Name</Translate>,
       fullText: true,
-      render: rowData => rowData?.bed?.name
+      render: rowData => rowData?.name
     },
     {
       key: 'bedStatus',
       title: <Translate>Status</Translate>,
-      render: rowData =>
-        rowData?.bed.statusLvalue
-          ? rowData?.bed.statusLvalue.lovDisplayVale
-          : rowData?.bed.statusLkey
+      render: rowData => {
+        const status = rowData?.status;
+        if (!status) return '-';
+
+        let color = 'var(--primary-gray)';
+
+        if (status === 'EMPTY') {
+          color = '#28a745';
+        } else if (status === 'OCCUPIED') {
+          color = '#1b9cd7';
+        } else if (status === 'OUT_OF_SERVICE') {
+          color = '#dc3545';
+        } else if (status === 'IN_CLEANING') {
+          color = '#ff8902ff';
+        }
+
+        return (
+          <MyBadgeStatus
+            color={color}
+            contant={formatEnumString(status)}
+          />
+        );
+      }
     },
     {
       key: 'actions',
       title: '',
-      // Action buttons for status change
       render: rowData => {
-        const deactivate = <Tooltip>Deactivate</Tooltip>;
+        const deactivate = <Tooltip>Out of service</Tooltip>;
         const ready = <Tooltip>Ready</Tooltip>;
+
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            {(rowData?.bed?.statusLkey === '5258572711068224' ||
-              rowData?.bed?.statusLkey === '5258243122289092') && (
+            {(rowData?.status === 'EMPTY' || rowData?.status === 'IN_CLEANING') && (
               <Whisper trigger="hover" placement="top" speaker={deactivate}>
                 <div>
                   <MyButton
                     size="small"
                     onClick={() => {
-                      handleChangeToOutService(rowData?.bed);
+                      handleChangeToOutService(rowData);
                     }}
                   >
                     <FontAwesomeIcon icon={faStopCircle} />
@@ -131,15 +169,15 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
                 </div>
               </Whisper>
             )}
-            {(rowData?.bed?.statusLkey === '5258572711068224' ||
-              rowData?.bed?.statusLkey === '5258592140444674') && (
+
+            {(rowData?.status === 'IN_CLEANING' || rowData?.status === 'OUT_OF_SERVICE') && (
               <Whisper trigger="hover" placement="top" speaker={ready}>
                 <div>
                   <MyButton
                     size="small"
                     backgroundColor="black"
                     onClick={() => {
-                      handleChangeToReady(rowData?.bed);
+                      handleChangeToReady(rowData);
                     }}
                   >
                     <FontAwesomeIcon icon={faThumbsUp} />
@@ -153,56 +191,18 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
     }
   ];
 
-  // Calculate statistics (use latest fetched data)
-  const bedsData = fetchBedsRelatedToDepartmentResponse ?? [];
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
-  const totalBeds = bedsData.length;
-  const occupiedBeds = bedsData.filter(item => {
-    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
-    return status.toLowerCase() === 'occupied';
-  }).length;
-  const availableBeds = bedsData.filter(item => {
-    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
-    return status.toLowerCase() === 'empty';
-  }).length;
-  const outOfServiceBeds = bedsData.filter(item => {
-    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
-    return status.toLowerCase() === 'out of service';
-  }).length;
-  const inCleaning = bedsData.filter(item => {
-    const status = item?.bed?.statusLvalue?.lovDisplayVale || item?.bed?.statusLkey || '';
-    return status.toLowerCase() === 'in cleaning';
-  }).length;
-
-
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <div dir={dir}>
-      {/* Toggle view icons */}
-      {/* <div className="icons-2">
-        <FontAwesomeIcon
-          icon={faIdCard}
-          className={`fa-table-cells-row-lock-icon ${viewMode === 'card' ? 'active' : ''}`}
-          onClick={() => setViewMode('card')}
-        />
-        <FontAwesomeIcon
-          icon={faTable}
-          className={`fa-table-cells-row-unlock-icon ${viewMode === 'table' ? 'active' : ''}`}
-          onClick={() => setViewMode('table')}
-        />
-      </div> */}
-      {/* Statistics Cards */}
       <div className="statistics-container">
         <DetailsCard
           title="Total Beds"
           number={totalBeds}
           icon={faBed}
           color={mode === 'light' ? 'black' : 'white'}
-          // backgroundClassName="total"
           position="left"
           width={250}
         />
@@ -248,21 +248,28 @@ const BedManagmentFirstTab = ({ data = [], departmentKey }) => {
         />
       </div>
 
-      {/* View mode switch */}
-      {viewMode === 'table' ? (
-        <MyTable
-          height={600}
-          data={fetchBedsRelatedToDepartmentResponse ?? []}
-          columns={tableColumns}
-          loading={isFetching || isLoading}
-        />
-      ) : (
-        <BedCards
-          data={fetchBedsRelatedToDepartmentResponse ?? []}
-          handleChangeToReady={handleChangeToReady}
-          handleChangeToOutService={handleChangeToOutService}
-        />
-      )}
+      <MyTable
+        height={400}
+        data={bedsData}
+        columns={tableColumns}
+        loading={isFetching || isLoading}
+        page={bedPagination.page}
+        rowsPerPage={bedPagination.size}
+        totalCount={bedsResponse?.totalCount ?? 0}
+        onPageChange={(_: unknown, newPage: number) => {
+          setBedPagination(prev => ({
+            ...prev,
+            page: newPage
+          }));
+        }}
+        onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          setBedPagination(prev => ({
+            ...prev,
+            size: parseInt(event.target.value, 10),
+            page: 0
+          }));
+        }}
+      />
     </div>
   );
 };

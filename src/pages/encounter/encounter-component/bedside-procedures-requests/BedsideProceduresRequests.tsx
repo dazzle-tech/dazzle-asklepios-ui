@@ -157,7 +157,7 @@ const BedsideProceduresRequests = () => {
             Cancel
           </MyButton>
 
-          <Checkbox>Show Cancelled</Checkbox>
+          <Checkbox><Translate>Show Cancelled</Translate></Checkbox>
         </div>
         <MyButton prefixIcon={() => <PlusIcon />} onClick={handleNew}>
           Add New

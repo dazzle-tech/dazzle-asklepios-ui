@@ -15,6 +15,7 @@ import {
   showSystemLoader,
 } from "@/utils/uiReducerActions";
 import "./style.less";
+import Translate from "@/components/Translate/Translate";
 
 interface ReportResultTemplateModalProps {
   open: boolean;
@@ -129,13 +130,12 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={
-        initialData
-          ? readOnly
-            ? "View Template"
-            : "Edit Template"
-          : "Add Template"
-      }
+      title={ <Translate>
+      {initialData
+        ? readOnly
+          ? "View Template"
+          : "Edit Template"
+        : "Add Template"}</Translate>}
       actionButtonLabel={readOnly ? undefined : "Save"}
       actionButtonFunction={readOnly ? undefined : handleSave}
       size="50vw"
@@ -156,7 +156,7 @@ const ReportResultTemplateModal: React.FC<ReportResultTemplateModalProps> = ({
             />
           </div>
 
-          <div className="report-template-label">Report Template</div>
+          <div className="report-template-label"><Translate>Report Template</Translate></div>
 
           <div className="editor-template-label">
             <Editor

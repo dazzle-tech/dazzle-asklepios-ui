@@ -112,7 +112,7 @@ import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesInte
 import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 
-import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService ';
+import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService';
 import { BrandMedicationSubstituteService } from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 
@@ -206,6 +206,10 @@ import { organizationHolidaysService } from './services/system-configurations/or
 import { departmentServicesService } from './services/departmentServicesService';
 import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
 import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
+import { roomService } from './services/setup/room/roomService';
+import { bedService } from './services/setup/room/bedService';
+import { bedRoomService } from './services/setup/room/bedRoomService';
+import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 
 export const store = configureStore({
   reducer: {
@@ -505,7 +509,13 @@ export const store = configureStore({
     [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
     [patientAdministrativeWarningsService.reducerPath]:
       patientAdministrativeWarningsService.reducer,
-    [observationServiceNew.reducerPath]: observationServiceNew.reducer
+    [observationServiceNew.reducerPath]: observationServiceNew.reducer,
+
+    // setup - room and bed management
+    [roomService.reducerPath]: roomService.reducer,
+    [bedService.reducerPath]: bedService.reducer,
+    [bedRoomService.reducerPath]: bedRoomService.reducer,
+    [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
   },
 
   middleware: getDefaultMiddleware =>
@@ -743,7 +753,11 @@ export const store = configureStore({
         patientAdministrativeWarningsService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
-        departmentServicesService.middleware
+        departmentServicesService.middleware,
+        roomService.middleware,
+        bedService.middleware,
+        bedRoomService.middleware,
+        encounterAssignToBedService.middleware,
       ]
     ) as any
 });

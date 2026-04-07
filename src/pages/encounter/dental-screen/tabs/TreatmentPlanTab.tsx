@@ -283,8 +283,8 @@ const TreatmentPlanTab = ({
           savePlannedTreatment({
             ...draftPlannedTreatment,
             type: 'DRAFT',
-            encounterKey: encounter.key,
-            patientKey: patient.key,
+            encounterKey: encounter?.id,
+            patientKey: patient?.id,
             fees: Math.min(99, Math.max(-99, Math.round(Number(activePlannedTreatment.fees) || 0))),
             discount: Math.min(
               99,
@@ -362,8 +362,8 @@ const TreatmentPlanTab = ({
           savePlannedTreatment({
             ...activePlannedTreatment,
             type: 'CURRENT',
-            encounterKey: encounter.key,
-            patientKey: patient.key,
+            encounterKey: encounter?.id,
+            patientKey: patient?.id,
             fees: Math.min(99, Math.max(-99, Math.round(Number(activePlannedTreatment.fees) || 0))),
             discount: Math.min(
               99,

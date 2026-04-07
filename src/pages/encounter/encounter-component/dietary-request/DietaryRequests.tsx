@@ -15,6 +15,7 @@ import { newApPatient } from '@/types/model-types-constructor';
 import './style.less';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
 
 const initialForm = {
   dietOrderType: '',
@@ -596,7 +597,7 @@ const getRowClassName = rowData => {
     <>
       <div className="table-buttons-left-part-handle-positions">
         <MyButton prefixIcon={() => <BlockIcon />}>Cancel</MyButton>
-        <Checkbox>Show Cancelled</Checkbox>
+        <Checkbox><Translate>Show Cancelled</Translate></Checkbox>
       </div>
       <div className="bt-right">
         <MyButton

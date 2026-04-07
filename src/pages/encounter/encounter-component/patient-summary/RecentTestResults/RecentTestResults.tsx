@@ -322,7 +322,7 @@ console.log('Orders response in RecentTestResults:', ordersResponse);
   return (
     <Section
       isContainOnlyTable
-      title="Recent Test Results"
+      title={<Translate>Recent Test Results</Translate>}
       content={
         <MyTable
           columns={columns}

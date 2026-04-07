@@ -112,7 +112,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
           disabled={!localPatient?.id}
           prefixIcon={() => <PlusRound />}
         >
-          New Relative
+          <Translate>New Relative</Translate>
         </MyButton>
 
         <MyButton

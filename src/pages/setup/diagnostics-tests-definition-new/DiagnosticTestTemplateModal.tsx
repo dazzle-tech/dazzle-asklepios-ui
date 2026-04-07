@@ -207,7 +207,7 @@ const DiagnosticTestTemplateModal: React.FC<DiagnosticTestTemplateModalProps> = 
           <MyInput
             column
             width="100%"
-            fieldLabel="Template Name"
+            fieldLabel={<Translate>Template Name</Translate>}
             fieldName="name"
             fieldType="text"
             record={formData}

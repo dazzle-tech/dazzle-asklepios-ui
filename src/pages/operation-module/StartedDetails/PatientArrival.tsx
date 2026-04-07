@@ -12,6 +12,7 @@ import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
 import StaffMember from "@/pages/encounter/encounter-component/procedure/StaffMember";
 import clsx from "clsx";
+import Translate from "@/components/Translate";
 const PatientArrival = ({ operation, patient, encounter, user, editable, activeTab, setActiveTab }) => {
     const dispatch = useAppDispatch();
     const [openCheckLit, setOpenCheckList] = useState(false);
@@ -134,7 +135,7 @@ const PatientArrival = ({ operation, patient, encounter, user, editable, activeT
                         })}>
                             <Col md={3}>
                                 <br />
-                                <MyButton onClick={() => setOpenCheckList(true)}>Pre-Op Checklist</MyButton></Col>
+                                <MyButton onClick={() => setOpenCheckList(true)}><Translate>Pre-Op Checklist</Translate></MyButton></Col>
                             <Col md={6}>
                                 <MyInput
                                     width="100%"

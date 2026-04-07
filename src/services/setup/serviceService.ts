@@ -80,6 +80,16 @@ export const serviceService = createApi({
       providesTags: ['Service'],
     }),
 
+    // GET /api/setup/service/active/by-facility/{facilityId}
+    getActiveServicesByFacility: builder.query<PagedResult<any>, WithFacility & PagedParams>({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/active/by-facility/${encodeURIComponent(String(facilityId))}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
     // GET /api/setup/service/by-category/{category}
     getServicesByCategory: builder.query<
       PagedResult<any>,
@@ -276,6 +286,8 @@ export const {
   useLazyGetServicesBulkByIdsQuery,
   useGetServicesQuery,
   useLazyGetServicesQuery,
+  useGetActiveServicesByFacilityQuery,
+  useLazyGetActiveServicesByFacilityQuery,
   useGetServicesByCategoryQuery,
   useLazyGetServicesByCategoryQuery,
   useGetServicesByCodeQuery,
