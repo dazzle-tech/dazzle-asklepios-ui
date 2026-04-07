@@ -319,8 +319,7 @@ function ParentPermissionGuard() {
     );
   }
 
-  // مهم: لا ترجعي شاشة بيضا
-  // أثناء الفحص خليه يبقى على نفس الصفحة
+
   if (isLoading || isFetching) {
     return <Outlet />;
   }
@@ -345,7 +344,6 @@ function ParentPermissionGuard() {
     String(x).toUpperCase()
   );
 
-  // إذا لسه ما وصلت البيانات، لا تومضي الصفحة
   if (!currentDepartmentType) {
     return <Outlet />;
   }
@@ -379,18 +377,18 @@ const App = () => {
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
   const navigate = useNavigate();
 
-  
-useEffect(() => {
-  const onPageShow = (e: PageTransitionEvent) => {
-    if (e.persisted) {
-      const token = localStorage.getItem('token');
-      if (!token) navigate('/login', { replace: true });
-    }
-  };
 
-  window.addEventListener('pageshow', onPageShow);
-  return () => window.removeEventListener('pageshow', onPageShow);
-}, [navigate]);
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        const token = localStorage.getItem('token');
+        if (!token) navigate('/login', { replace: true });
+      }
+    };
+
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, [navigate]);
 
   // ------------------------------ MENU BUILD HELPERS ---------------------------
   type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
@@ -507,7 +505,7 @@ useEffect(() => {
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
-       {/* <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
+      {/* <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
         <img
           style={{ height: '40px', width: '110px' }}
           src={Logo}
@@ -516,7 +514,7 @@ useEffect(() => {
        
       </div> */}
 
-   
+
       <div
         id="blocker-error"
         style={{
@@ -563,7 +561,7 @@ useEffect(() => {
                     }
                     blocked={uiSlice.loading}
                   >
-                    <ParentPermissionGuard  />
+                    <ParentPermissionGuard />
                   </BlockUI>
                 </ProtectedRoute>
               </AuthGuard>
@@ -602,7 +600,7 @@ useEffect(() => {
               <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="organization-holidays" element={<OrganizationHolidays />} />
               <Route path="/patient-report" element={<StimulsoftReportViewer />} />
-  <Route path="/patient-report-designer" element={<ReportDesigner />} />
+              <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="progress-notes" element={<ProgressNotes />} />
 
@@ -641,7 +639,7 @@ useEffect(() => {
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
                 <Route path="pediatric" element={<Pediatric />} />
-                
+
                 <Route
                   path="multidisciplinary-team-notes"
                   element={<MultidisciplinaryTeamNotes />}
@@ -667,7 +665,7 @@ useEffect(() => {
                 <Route path="continuous-observation" element={<ContinuousObservations />} />
                 <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
                 <Route path="sliding-scale" element={<SlidingScale />} />
-
+                <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
               </Route>
               <Route path="price-list" element={<PriceLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
@@ -680,13 +678,13 @@ useEffect(() => {
               <Route path="room" element={<Room />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservationsNew />} >
-                 <Route path="progress-notes" element={<ProgressNotes />} />
+                <Route path="progress-notes" element={<ProgressNotes />} />
                 <Route
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
-                    <Route path="previous-measurements" element={<PreviousMeasurements />} />
-                 <Route path="service-and-products" element={<ServiceAndProductsNew {...({} as any)} />} />
+                <Route path="previous-measurements" element={<PreviousMeasurements />} />
+                <Route path="service-and-products" element={<ServiceAndProductsNew {...({} as any)} />} />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />
@@ -694,7 +692,7 @@ useEffect(() => {
                 <Route path="drug-order" element={<DrugOrderNew />} />
                 <Route index element={<Observations />} />
                 <Route path="clinical-visit" element={<SOAP />} />
-                <Route path="observations" element={<Observations   />} />
+                <Route path="observations" element={<Observations />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
@@ -776,7 +774,7 @@ useEffect(() => {
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
               <Route path="billing-accounting" element={<Accounting />} />
-              <Route path="billing-claims" element={<Claimscreen/>} />
+              <Route path="billing-claims" element={<Claimscreen />} />
 
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
@@ -821,10 +819,10 @@ useEffect(() => {
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
-              <Route path='enums' element={<Enums/> }/>
+              <Route path='enums' element={<Enums />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path='enums' element={<Enums />} />
-              <Route path='payor-setup' element={<PayerSetup/>} />
+              <Route path='payor-setup' element={<PayerSetup />} />
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
               <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />

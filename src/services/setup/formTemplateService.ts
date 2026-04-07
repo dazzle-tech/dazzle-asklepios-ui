@@ -77,43 +77,51 @@ export const formTemplateService = createApi({
     // LIST (Paged) - main table
     // GET /api/setup/form-templates?page=&size=&sort=
     // -------------------------
-    getFormTemplates: builder.query<PagedResult<FormTemplate>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
-        url: `/api/setup/form-templates`,
-        method: "GET",
-        params: { page, size, sort },
-      }),
-      transformResponse: (response: any, meta) => {
-        const headers = meta?.response?.headers;
-        const isArray = Array.isArray(response);
+       getFormTemplates: builder.query<
+  PagedResult<FormTemplate>,
+  PagedParams & { params?: Record<string, any> }
+>({
+  query: ({ page, size, sort = "id,asc", params }) => ({
+    url: `/api/setup/form-templates`,
+    method: "GET",
+    params: {
+      page,
+      size,
+      sort,
+      ...params,
+    },
+  }),
+  transformResponse: (response: any, meta) => {
+    const headers = meta?.response?.headers;
+    const isArray = Array.isArray(response);
 
-        if (isArray) {
-          return {
-            data: response as FormTemplate[],
-            totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-            links: parseLinkHeader(headers?.get("Link")),
-          };
-        }
+    if (isArray) {
+      return {
+        data: response as FormTemplate[],
+        totalCount: Number(headers?.get("X-Total-Count") ?? 0),
+        links: parseLinkHeader(headers?.get("Link")),
+      };
+    }
 
-        const obj = unwrapObjectOrReturn<PagedResult<FormTemplate>>(response);
-        return {
-          data: obj?.data ?? [],
-          totalCount: obj?.totalCount ?? 0,
-          links: obj?.links ?? undefined,
-        };
-      },
+    const obj = unwrapObjectOrReturn<PagedResult<FormTemplate>>(response);
+    return {
+      data: obj?.data ?? [],
+      totalCount: obj?.totalCount ?? 0,
+      links: obj?.links ?? undefined,
+    };
+  },
 
-      providesTags: ["FormTemplate"],
+  providesTags: ["FormTemplate"],
 
-      serializeQueryArgs: ({ endpointName, queryArgs }) => {
-        const { timestamp, ...rest } = queryArgs || ({} as any);
-        return `${endpointName}-${JSON.stringify(rest)}`;
-      },
-      forceRefetch({ currentArg, previousArg }) {
-        return currentArg?.timestamp !== previousArg?.timestamp;
-      },
-    }),
+  serializeQueryArgs: ({ endpointName, queryArgs }) => {
+    const { timestamp, ...rest } = queryArgs || ({} as any);
+    return `${endpointName}-${JSON.stringify(rest)}`;
+  },
 
+  forceRefetch({ currentArg, previousArg }) {
+    return currentArg?.timestamp !== previousArg?.timestamp;
+  },
+}),
     // -------------------------
     // FILTERS 
     // -------------------------
