@@ -248,6 +248,22 @@ export const departmentService = createApi({
         method: 'POST',
         body: ids
       })
+    }),
+
+    getActiveDepartments: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/department/active',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Department']
     })
   })
 });
@@ -281,4 +297,6 @@ export const {
   useGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
   useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
   useGetDepartmentsBulkMutation,
+  useGetActiveDepartmentsQuery,
+  useLazyGetActiveDepartmentsQuery
 } = departmentService;
