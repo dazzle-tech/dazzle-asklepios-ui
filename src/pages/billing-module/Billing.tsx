@@ -18,7 +18,7 @@ import type { BillingItem } from '@/types/model-types-new';
 type BillingProps = {
   data: BillingItem[];
   patient: any;
-  onCreateInvoice: (selectedIds: string[]) => void;
+  onCreateInvoice: (selectedIds: string[]) => Promise<void>;
 };
 
 const Billing = ({ data, patient, onCreateInvoice }: BillingProps) => {
@@ -77,8 +77,6 @@ const Billing = ({ data, patient, onCreateInvoice }: BillingProps) => {
       return;
     }
 
-    // 🔹 يروح على Accounting → handleCreateInvoiceFromBilling
-    // ننتظر إنشاء الفاتورة والبنود قبل توليد الـ PDF
     await onCreateInvoice(selectedRows);
 
     try {

@@ -29,13 +29,10 @@ import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication
 import {
   BrandMedication,
   InventoryProduct,
-  BillingInvoiceCreateVM,
-  BillingInvoiceItemCreateVM,
   BillingItem,
 } from '@/types/model-types-new';
 
 import {
-  // old billing service (kept for other screens)
   useGetPatientAccountSummaryQuery,
 } from '@/services/billing/BillingService';
 import {
@@ -45,9 +42,6 @@ import {
   useCreatePatientInvoiceItemMutation,
 } from '@/services/patient/patientBillingInvoiceItemService';
 
-// ---------- CONSTANTS ----------
-
-// ---------- COMPONENT ----------
 
 const Accounting: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -204,7 +198,6 @@ const Accounting: React.FC = () => {
     setFilteredBilling(patientItems);
   };
 
-  // ---------- إنشاء Invoice من الـ Billing + تحديث is_valid + تحديث Balance ----------
 
   const handleCreateInvoiceFromBilling = async (selectedIds: string[]) => {
     const hasPatient = patient?.id != null || patient?.key != null;
@@ -241,7 +234,6 @@ const Accounting: React.FC = () => {
     const currency = itemsToInvoice[0]?.currency || 'USD';
 
     try {
-      // 1) إنشاء الفاتورة
       const invoicePayload = {
         patientId: Number(patient?.id ?? patientNumericId),
         facilityId: Number(facilityId),
@@ -256,7 +248,6 @@ const Accounting: React.FC = () => {
       const invoice = await createPatientInvoice(invoicePayload as any).unwrap();
       console.log('[Accounting] created invoice response', invoice);
 
-      // 2) إنشاء Invoice Items
       const itemPayloads = itemsToInvoice.map(it => ({
         invoiceId: Number(invoice.id),
         nurseServiceProductId: Number(it.nurseServiceProductKey),
@@ -319,32 +310,40 @@ const Accounting: React.FC = () => {
       return;
     }
 
-    const apiRows = patientServicesAndProductsResponse.data ?? [];
+    const apiRows = (patientServicesAndProductsResponse.data ?? []).filter(
+      (row: any) => !row?.isBilled
+    );
     console.log('[Accounting] patient services/products API response', {
       patientId: patient?.id,
       totalRows: apiRows.length,
       rows: apiRows,
     });
 
-    const mapped: BillingItem[] = apiRows.map((row, index) => {
+    const mapped: BillingItem[] = apiRows.map((row: any, index: number) => {
       const id = String(row.id ?? index);
-      const category = String(row.category ?? '').toUpperCase();
+      const itemType = String(
+        row.billingItemType ?? row.category ?? row.productType ?? 'OTHER'
+      ).toUpperCase();
 
       const type =
-        category === 'SERVICE'
+        itemType === 'SERVICE'
           ? 'Service'
-          : category === 'PRODUCT'
-          ? 'Product'
+          :  itemType === 'MEDICATION'
+          ? 'MEDICATION'
+          : itemType === 'PROCEDURE'
+          ? 'Procedure'
+          : itemType === 'LABORATORY' || itemType === 'RADIOLOGY' || itemType === 'PATHOLOGY'
+          ? 'Diagnostic'
           : 'Other';
 
       let name = `Item #${id}`;
       let clinic = '';
 
-      if (category === 'SERVICE') {
+      if (itemType === 'SERVICE') {
         const service = services.find(s => s.id === row.serviceId);
         name = service?.name ?? `Service #${row.serviceId}`;
-      } else if (category === 'PRODUCT') {
-        const product = getProductById(row.productId);
+      } else if (itemType === 'PRODUCT') {
+        const product = getProductById(row.productId ?? row.warehouseProductId);
         if (product) {
           if (product.type === 'MEDICATION' && product.brandId) {
             const brand = getBrandById(product.brandId);
@@ -353,14 +352,22 @@ const Accounting: React.FC = () => {
             name = product.name;
           }
         } else {
-          name = `Product #${row.productId}`;
+          name = `Product #${row.productId ?? row.warehouseProductId}`;
         }
+      } else if (itemType === 'MEDICATION') {
+        const brand = getBrandById(row.brandMedicationId ?? row.productId);
+        name = brand?.name ?? `Medication #${row.brandMedicationId ?? row.productId}`;
+      } else if (itemType === 'LABORATORY' || itemType === 'RADIOLOGY' || itemType === 'PATHOLOGY') {
+        name = `Diagnostic #${row.diagnosticTestId ?? row.productId ?? id}`;
+      } else if (itemType === 'PROCEDURE') {
+        name = `Procedure #${row.procedureId ?? row.productId ?? id}`;
       }
 
       const quantity = Number(row.quantity ?? 1);
       const serviceRow = services.find(s => s.id === row.serviceId) as any;
-      const productRow = getProductById(row.productId) as any;
+      const productRow = getProductById(row.productId ?? row.warehouseProductId) as any;
       const price = Number(
+        row?.unitPrice ??
         serviceRow?.price ??
           serviceRow?.unitPrice ??
           productRow?.sellingPrice ??
@@ -385,7 +392,7 @@ const Accounting: React.FC = () => {
         name,
         price,
         totalPrice,
-        currency: 'USD',
+        currency: row?.currency ?? 'USD',
         discount: 0,
         priceList: 'Standard',
         patientKey: String(patientNumericId),
@@ -403,11 +410,9 @@ const Accounting: React.FC = () => {
   }, [patientServicesAndProductsResponse, patient, services, products, brands]);
 
   useEffect(() => {
-    // Data already scoped by patient in the query; no extra filter needed.
     setFilteredBilling(allBillingItems);
   }, [allBillingItems]);
 
-  // ---------- UI SECTIONS ----------
 
   const contentOfSearchSection = () => (
     <>
@@ -474,7 +479,6 @@ const Accounting: React.FC = () => {
     },
   ];
 
-                  // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 
