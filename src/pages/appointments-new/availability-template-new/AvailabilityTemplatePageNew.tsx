@@ -37,6 +37,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const AvailabilityTemplatePageNew = () => {
 
   const dispatch = useAppDispatch();
+  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
 
   const [recordOfFilter, setRecordOfFilter] = useState<{ filter?: string; value?: string }>({});
