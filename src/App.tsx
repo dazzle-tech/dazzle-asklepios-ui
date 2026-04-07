@@ -85,8 +85,6 @@ import Allergies from './pages/encounter/encounter-pre-observations-new/Allergie
 import EncounterPreObservationsNew from './pages/encounter/encounter-pre-observations-new/EncounterPreObservations';
 import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
 import Observations from './pages/encounter/encounter-pre-observations-new/observations/Observations';
-import ServiceAndProducts from './pages/encounter/encounter-pre-observations/Service&Products';
-import ServiceAndProductsNew from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 import VaccinationTab from './pages/encounter/encounter-pre-observations-new/vaccination-tab';
 import Warning from './pages/encounter/encounter-pre-observations-new/warning';
 import EncounterRegistration from './pages/encounter/encounter-registration';
@@ -219,6 +217,7 @@ import Logo from './images/Logo_BLUE_New.svg';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
+import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -666,6 +665,7 @@ const App = () => {
                 <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
                 <Route path="sliding-scale" element={<SlidingScale />} />
                 <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
+                <Route path="service-and-products" element={<ServiceAndProductsTab {...({} as any)} />} />
               </Route>
               <Route path="price-list" element={<PriceLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
@@ -684,7 +684,7 @@ const App = () => {
                   element={<PressureUlcerRiskAssessment />}
                 />
                 <Route path="previous-measurements" element={<PreviousMeasurements />} />
-                <Route path="service-and-products" element={<ServiceAndProductsNew {...({} as any)} />} />
+                <Route path="service-and-products" element={<ServiceAndProductsTab {...({} as any)} />} />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />

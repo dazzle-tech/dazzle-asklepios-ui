@@ -17,7 +17,7 @@ import { newPatientServiceAndProduct } from '@/types/model-types-constructor-new
 
 import { useLazyGetServicesBulkByIdsQuery } from '@/services/setup/serviceService';
 import { useLazyGetProcedureByIdQuery } from '@/services/setup/procedure/procedureService';
-import { useLazyGetBrandMedicationsByIdsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useLazyGetBrandMedicationsByIdsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import AddEditPatientServiceAndProduct from './AddEditPatientServiceAndProduct';
 
@@ -150,11 +150,11 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
 
         const proceduresPromise = procedureIds.length
           ? Promise.all(
-              procedureIds.map(async id => {
-                const item = await fetchProcedureById({ id }, true).unwrap();
-                return item;
-              })
-            )
+            procedureIds.map(async id => {
+              const item = await fetchProcedureById({ id }, true).unwrap();
+              return item;
+            })
+          )
           : Promise.resolve([]);
 
         const [servicesData, medicationsData, diagnosticTestsData, proceduresData] =
@@ -310,7 +310,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       title: '',
       render: (rowData: PatientServiceAndProduct) => (
         <div className="container-of-icons">
-          <MdModeEdit
+          {!rowData?.isBilled && <MdModeEdit
             title="Edit"
             size={24}
             fill="var(--primary-gray)"
@@ -319,8 +319,9 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
               setPatientServiceAndProduct(rowData);
               setPopupOpen(true);
             }}
-          />
-          <MdDelete
+          />}
+
+          {!rowData?.isBilled && <MdDelete
             title="Delete"
             size={24}
             fill="var(--primary-pink)"
@@ -329,7 +330,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
               setPatientServiceAndProduct(rowData);
               setOpenModal(true);
             }}
-          />
+          />}
         </div>
       ),
     },

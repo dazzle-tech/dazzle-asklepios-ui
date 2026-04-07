@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Form } from "rsuite";
 import MyInput from "@/components/MyInput";
 import { useEnumOptions } from "@/services/enumsApi";
-import { useGetAllBrandMedicationsQuery } from "@/services/setup/brandmedication/BrandMedicationService ";
+import { useGetAllBrandMedicationsQuery } from "@/services/setup/brandmedication/BrandMedicationService";
 
 const BasicInf = ({ product, setProduct, disabled }) => {
   const productType = useEnumOptions("ProductTypes");
