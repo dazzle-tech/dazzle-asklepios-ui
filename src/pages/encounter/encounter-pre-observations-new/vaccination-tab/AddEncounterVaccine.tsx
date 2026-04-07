@@ -15,7 +15,7 @@ import {
 } from '@/services/encounterMedical/encounterVaccinationService';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useLazyGetVaccinesByNameQuery } from '@/services/vaccine/vaccineService';
+import { useLazyGetActiveVaccinesByNameQuery } from '@/services/vaccine/vaccineService';
 import {
   useGetVaccineDosesByVaccineIdQuery,
   useGetNextVaccineDoseQuery
@@ -178,7 +178,7 @@ const AddEncounterVaccine = ({
   const [hasMoreVaccines, setHasMoreVaccines] = useState(false);
   const [searchSession, setSearchSession] = useState(0);
 
-  const [triggerSearchVaccines, vaccinesSearchState] = useLazyGetVaccinesByNameQuery();
+  const [triggerSearchVaccines, vaccinesSearchState] = useLazyGetActiveVaccinesByNameQuery();
 
   const executeSearch = () => {
     const q = inputValue.trim();
@@ -482,12 +482,11 @@ const AddEncounterVaccine = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalFacilityToggle.isExternalFacility]);
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <AdvancedModal
@@ -887,7 +886,9 @@ const AddEncounterVaccine = ({
           </Form>
 
           <div>
-            <h6><Translate>Vaccine Brands</Translate></h6>
+            <h6>
+              <Translate>Vaccine Brands</Translate>
+            </h6>
             <InfoCardList
               list={vaccine?.id ? allBrands : []}
               fields={['manufacture', 'volume', 'unit', 'marketingAuthorizationHolder', 'isActive']}

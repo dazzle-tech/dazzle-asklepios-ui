@@ -417,13 +417,11 @@ const Details = ({
     }
   };
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-        // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
@@ -463,7 +461,7 @@ const Details = ({
           >
             <div className="main-details-consultion-page-container">
               <SectionContainer
-                title={<Translate>Choose Consultant</Translate>}
+                title={<Translate></Translate>}
                 content={
                   <div className="consultion-details-modal-handle-position">
                     <MyInput

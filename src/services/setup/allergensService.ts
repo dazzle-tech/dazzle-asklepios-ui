@@ -23,7 +23,7 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
   return {
     data: response,
     totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-    links: parseLinkHeader(headers?.get('Link')),
+    links: parseLinkHeader(headers?.get('Link'))
   };
 };
 
@@ -31,75 +31,84 @@ export const allergensService = createApi({
   reducerPath: 'allergensApi',
   baseQuery: BaseQuery,
   tagTypes: ['Allergens'],
-  endpoints: (builder) => ({
+  endpoints: builder => ({
     getAllergens: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/allergen',
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ['Allergens'],
+      providesTags: ['Allergens']
     }),
 
     getAllergensByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
       query: ({ type, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/allergen/by-type/${encodeURIComponent(type)}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ['Allergens'],
+      providesTags: ['Allergens']
     }),
 
     getAllergensByTypewithoutPagination: builder.query<any[], { type: string }>({
       query: ({ type }) => ({
-        url: `/api/setup/allergen/by-type/${encodeURIComponent(type)}`,
+        url: `/api/setup/allergen/by-type/${encodeURIComponent(type)}`
       }),
-      providesTags: ['Allergens'],
+      providesTags: ['Allergens']
     }),
 
     getAllergensByName: builder.query<PagedResult<any>, { name: string } & PagedParams>({
       query: ({ name, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/allergen/by-name/${encodeURIComponent(name)}`,
-        params: { page, size, sort },
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ['Allergens'],
+      providesTags: ['Allergens']
     }),
 
     addAllergen: builder.mutation<any, any>({
-      query: (body) => ({
+      query: body => ({
         url: '/api/setup/allergen',
         method: 'POST',
-        body: { ...body },
+        body: { ...body }
       }),
-      invalidatesTags: ['Allergens'],
+      invalidatesTags: ['Allergens']
     }),
 
     updateAllergen: builder.mutation<any, { id: Id } & any>({
       query: ({ id, ...body }) => ({
         url: `/api/setup/allergen/${id}`,
         method: 'PUT',
-        body: { id, ...body },
+        body: { id, ...body }
       }),
-      invalidatesTags: ['Allergens'],
+      invalidatesTags: ['Allergens']
     }),
 
     deleteAllergen: builder.mutation<void, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/allergen/${id}`,
-        method: 'DELETE',
+        method: 'DELETE'
       }),
-      invalidatesTags: ['Allergens'],
+      invalidatesTags: ['Allergens']
     }),
 
     toggleAllergenIsActive: builder.mutation<any, { id: Id }>({
       query: ({ id }) => ({
         url: `/api/setup/allergen/${id}/toggle-active`,
-        method: 'PATCH',
+        method: 'PATCH'
       }),
-      invalidatesTags: ['Allergens'],
+      invalidatesTags: ['Allergens']
     }),
-  }),
+
+    getActiveAllergens: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/allergen/active',
+        params: { page, size, sort }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Allergens']
+    })
+  })
 });
 
 export const {
@@ -110,5 +119,7 @@ export const {
   useUpdateAllergenMutation,
   useDeleteAllergenMutation,
   useToggleAllergenIsActiveMutation,
-  useGetAllergensByTypewithoutPaginationQuery
+  useGetAllergensByTypewithoutPaginationQuery,
+  useGetActiveAllergensQuery,
+  useLazyGetActiveAllergensQuery
 } = allergensService;
