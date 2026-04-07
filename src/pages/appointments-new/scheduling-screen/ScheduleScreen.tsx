@@ -8,6 +8,7 @@ import {
   Button,
   Form,
   Drawer,
+  Calendar as RsCalendar,
   DatePicker,
   Checkbox,
   Modal,
@@ -42,6 +43,7 @@ import { useGetAppointablePractitionerByLoggedInFacilityQuery } from '@/services
 import { useGetAppointableCatalogsByLoggedInFacilityQuery } from '@/services/setup/catalog/catalogService';
 import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetAppointableServicesByLoggedInFacilityQuery } from '@/services/setup/serviceService';
+import { useLazyGetAppointmentsByStatusBetweenDatesQuery } from '@/services/appointment/appointmentService';
 import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
 import MyInput from '@/components/MyInput';
 import CalenderSimpleIcon from '@rsuite/icons/CalenderSimple';
@@ -78,6 +80,10 @@ const ScheduleScreen = () => {
   const [saveAppointment] = useSaveAppointmentMutation();
   const [searchAppointments, { data: searchedAppointmentsResponse, isFetching: isSearchingAppointments }] =
     useLazySearchAppointmentsQuery();
+  const [
+    getAppointmentsByStatusBetweenDates,
+    { data: todayAppointmentsResponse, isFetching: isFetchingTodayAppointments }
+  ] = useLazyGetAppointmentsByStatusBetweenDatesQuery();
 
   const [requestApproveModalOpen, setRequestApproveModalOpen] = useState(false);
   const [requestToApprove, setRequestToApprove] = useState<any>(null);
@@ -117,6 +123,7 @@ const ScheduleScreen = () => {
   const [calendarDate, setCalendarDate] = useState<Date | null>(null);
   const [finalAppointments, setFinalAppointments] = useState<any[]>([]);
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
+  const [rightPanelDate, setRightPanelDate] = useState<Date>(new Date());
   const [reasonViewRecord, setReasonViewRecord] = useState({
     reason: '',
     otherReason: ''
@@ -214,6 +221,7 @@ const ScheduleScreen = () => {
 
   const extractTimeFromTimestamp = timestamp => {
     const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return '--:--';
     const hours = date.getUTCHours();
     const minutes = date.getUTCMinutes();
     const dateTime = `${hours}:${minutes} `;
@@ -226,6 +234,19 @@ const ScheduleScreen = () => {
       const today = new Date();
 
       const formattedAppointments = sourceAppointments.map((appointment: any) => {
+        const startRaw =
+          appointment?.appointmentStart ??
+          appointment?.appointment_start ??
+          appointment?.startDatetime ??
+          appointment?.start_datetime;
+        const endRaw =
+          appointment?.appointmentEnd ??
+          appointment?.appointment_end ??
+          appointment?.endDatetime ??
+          appointment?.end_datetime;
+
+        const startDate = convertDate(startRaw);
+        const endDate = convertDate(endRaw);
         const dob = new Date(appointment?.patient?.dob);
         const patientFullName =
           appointment?.patient?.full_name ||
@@ -234,15 +255,35 @@ const ScheduleScreen = () => {
             ? `${appointment.patient.first_name} ${appointment.patient.last_name}`.trim()
             : appointment?.patient?.first_name ||
               appointment?.patient?.last_name ||
-              'Unknown Patient');
+              appointment?.reason ||
+              'Appointment');
+
+        const departmentColumnId =
+          appointment?.departmentId ??
+          appointment?.department_id ??
+          appointment?.department ??
+          null;
+        const normalizedDepartmentColumnId =
+          departmentColumnId !== null && typeof departmentColumnId !== 'undefined'
+            ? String(departmentColumnId)
+            : '';
+
+        const resourceKey =
+          appointment?.resourceKey ??
+          appointment?.resource_key ??
+          appointment?.resourceId ??
+          appointment?.resource_id;
+        const normalizedResourceKey =
+          resourceKey !== null && typeof resourceKey !== 'undefined' ? String(resourceKey) : '';
 
         const resource = resourcesWithAvailabilityResponse.object.find(
-          item => item.key === appointment.resourceKey
+          item => String(item.key) === normalizedResourceKey
         );
 
-        const isHidden = appointment?.appointmentStatus === 'Canceled';
+        const statusText = appointment?.appointmentStatus ?? appointment?.status ?? '';
+        const isHidden = String(statusText).toUpperCase() === 'CANCELED';
         return {
-          id: appointment?.key,
+          id: appointment?.key ?? appointment?.id,
           title: ` ${patientFullName}, ${
             isNaN(dob.getTime()) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
           }Y  ${
@@ -251,15 +292,18 @@ const ScheduleScreen = () => {
               : ''
           }
  `,
-          start: convertDate(appointment.appointmentStart),
-          end: convertDate(appointment.appointmentEnd),
+          start: startDate,
+          end: endDate,
           text: appointment.notes || 'No additional details available',
           appointmentData: appointment,
           hidden: isHidden,
-          resourceId: appointment?.resourceKey,
+          // Calendar columns are departments; bind events by department id.
+          resourceId: normalizedDepartmentColumnId,
+          // Keep actual resource id for resource-type/resource filtering logic.
+          filterResourceId: normalizedResourceKey,
           fromTo: `${extractTimeFromTimestamp(
-            appointment.appointmentStart
-          )} - ${extractTimeFromTimestamp(appointment.appointmentEnd)}`
+            startRaw
+          )} - ${extractTimeFromTimestamp(endRaw)}`
         };
       });
       setAppointmentsData(formattedAppointments);
@@ -345,13 +389,15 @@ const ScheduleScreen = () => {
 
     setSelectedEvent(freshEvent);
 
-    const status = freshEvent?.appointmentData?.appointmentStatus;
+    const status = String(
+      freshEvent?.appointmentData?.appointmentStatus ?? freshEvent?.appointmentData?.status ?? ''
+    ).toUpperCase();
 
-    if (status === 'Canceled' || status === 'No-Show') {
+    if (status === 'CANCELED' || status === 'NO_SHOW' || status === 'NO-SHOW') {
       const reasonKey = freshEvent?.appointmentData?.reasonLkey;
 
       const reasonLovList =
-        status === 'Canceled'
+        status === 'CANCELED'
           ? cancelResonLovQueryResponse?.object
           : noShowResonLovQueryResponse?.object;
 
@@ -363,6 +409,15 @@ const ScheduleScreen = () => {
       });
 
       setShowReasonModal(true);
+      return;
+    }
+
+    // NEW slots are not booked yet; click should go straight to booking modal.
+    if (status === 'NEW') {
+      setViewAppointmentData(freshEvent?.appointmentData ?? null);
+      setShowAppointmentOnly(false);
+      setActionsModalOpen(false);
+      setModalOpen(true);
       return;
     }
 
@@ -414,6 +469,35 @@ const ScheduleScreen = () => {
   }, [selectedFacility?.id]);
 
   useEffect(() => {
+    const rows = (searchedAppointmentsResponse as any)?.data ?? [];
+    // Debug: print search API appointment list in devtools.
+    console.log('[ScheduleScreen] searchAppointments rows:', rows);
+  }, [searchedAppointmentsResponse]);
+
+  useEffect(() => {
+    const day = rightPanelDate ?? currentCalendarDate ?? new Date();
+    const start = new Date(day);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(day);
+    end.setHours(23, 59, 59, 999);
+    const status = String(selectedAppointmentStatus?.status ?? 'CONFIRMED');
+
+    void getAppointmentsByStatusBetweenDates({
+      status,
+      startDatetime: start.toISOString(),
+      endDatetime: end.toISOString(),
+      page: 0,
+      size: 100,
+      sort: 'id,asc'
+    });
+  }, [
+    rightPanelDate,
+    currentCalendarDate,
+    selectedAppointmentStatus?.status,
+    getAppointmentsByStatusBetweenDates
+  ]);
+
+  useEffect(() => {
     dispatch(setPageCode('Schedule_Screen'));
     dispatch(setDivContent('Scheduling'));
     return () => {
@@ -433,66 +517,54 @@ const ScheduleScreen = () => {
   // Derived resources list (synchronous) to avoid a one-render "stale columns" glitch
   // when filters change (react-big-calendar can render once before an effect updates state).
   const finalResourceLit = useMemo(() => {
-    const selectedType = String(selectedResourceTypeValue?.value ?? '').toUpperCase();
     const selectedDeptId = selectedDepartment?.departmentId ? String(selectedDepartment.departmentId) : '';
     const deptColumns = (departmentOptions ?? []).map((d: any) => ({
       key: String(d?.id ?? ''),
       resourceName: d?.name ?? d?.departmentName ?? `Department #${d?.id ?? ''}`
     }));
 
-    // Default entry state: show columns from selected facility appointable departments.
-    if (!selectedType || selectedType === 'DEPARTMENT') {
-      if (selectedDeptId) {
-        return deptColumns.filter((d: any) => String(d?.key) === selectedDeptId);
-      }
-      return deptColumns;
+    // Calendar headers are always departments for selected facility.
+    if (selectedDeptId) {
+      return deptColumns.filter((d: any) => String(d?.key) === selectedDeptId);
     }
+    return deptColumns;
+  }, [
+    selectedDepartment?.departmentId,
+    departmentOptions
+  ]);
 
-    const all = resourcesWithAvailabilityResponse?.object ?? [];
-    let list = all;
-
-    // Resource Type filter
+  const selectedResourceKeysForFilter = useMemo(() => {
+    if (Array.isArray(selectedResources?.resourceKey) && selectedResources.resourceKey.length > 0) {
+      return new Set((selectedResources.resourceKey ?? []).map((k: any) => String(k)));
+    }
     if (selectedResourceType?.resourcesType?.length) {
+      const all = resourcesWithAvailabilityResponse?.object ?? [];
       const normalizeType = (v: any) => String(v ?? '').trim().toUpperCase();
       const selectedTypes = selectedResourceType.resourcesType.map(normalizeType).filter(Boolean);
-      list = list.filter(r => {
-        const resourceTypes = [r?.resourceTypeLkey, r?.resource_type, r?.resourceType]
-          .map(normalizeType)
-          .filter(Boolean);
-        return resourceTypes.some(t => selectedTypes.includes(t));
-      });
+      const keys = all
+        .filter((r: any) => {
+          const resourceTypes = [r?.resourceTypeLkey, r?.resource_type, r?.resourceType]
+            .map(normalizeType)
+            .filter(Boolean);
+          return resourceTypes.some((t: string) => selectedTypes.includes(t));
+        })
+        .map((r: any) => String(r?.key));
+      return new Set(keys);
     }
-
-    // Specific Resources filter
-    if (Array.isArray(selectedResources?.resourceKey) && selectedResources.resourceKey.length) {
-      list = list.filter(r => selectedResources.resourceKey.includes(r.key));
-    }
-
-    return list;
-  }, [
-    selectedResourceTypeValue?.value,
-    selectedDepartment?.departmentId,
-    departmentOptions,
-    resourcesWithAvailabilityResponse?.object,
-    selectedResourceType?.resourcesType,
-    selectedResources?.resourceKey
-  ]);
+    return null;
+  }, [selectedResources?.resourceKey, selectedResourceType?.resourcesType, resourcesWithAvailabilityResponse]);
 
   // Filter appointments based on selected resources
   const filteredAppointments = useMemo(() => {
-    const hasResourceTypeFilter = selectedResourceType?.resourcesType?.length > 0;
-    const selectedResourceKeys = selectedResources?.resourceKey ?? [];
-    const hasResourceFilter = Array.isArray(selectedResourceKeys) && selectedResourceKeys.length > 0;
-
-    if (!hasResourceTypeFilter && !hasResourceFilter) {
+    if (!selectedResourceKeysForFilter) {
       // No filters applied, show all appointments
       return appointmentsData;
     }
 
-    // Filter appointments to only show those matching the selected resources
-    const filteredResourceKeys = new Set((finalResourceLit ?? []).map(r => r.key));
-
-    let list = appointmentsData.filter(event => filteredResourceKeys.has(event.resourceId));
+    // Filter appointments to only show those matching selected resource filter
+    let list = appointmentsData.filter(event =>
+      selectedResourceKeysForFilter.has(String((event as any).filterResourceId ?? event.resourceId))
+    );
 
     if (selectedAppointmentStatus?.status) {
       const statusNeedle = String(selectedAppointmentStatus.status).toUpperCase();
@@ -511,9 +583,9 @@ const ScheduleScreen = () => {
     return list;
   }, [
     appointmentsData,
-    finalResourceLit,
     selectedResourceType,
     selectedResources,
+    selectedResourceKeysForFilter,
     selectedAppointmentStatus?.status,
     selectedBookingMode?.bookingMode
   ]);
@@ -572,9 +644,7 @@ const ScheduleScreen = () => {
 
   const visibleResources =
     currentView === 'day'
-      ? (finalResourceLit ?? []).filter(
-          r => appointmentResourceKeys.has(r.key) || availabilityResourceKeys.has(r.key)
-        )
+      ? (finalResourceLit ?? [])
       : (finalResourceLit ?? []);
 
   // Force BigCalendar to remount when filters change (react-big-calendar can keep stale resource columns otherwise)
@@ -844,48 +914,6 @@ const ScheduleScreen = () => {
             <ArrowRightLineIcon />
           </button>
         </div>
-
-        <ButtonGroup
-          style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }}
-          size="md"
-        >
-          <Button
-            className="btn-scheduling"
-            style={{ border: 'none', height: '35px' }}
-            onClick={() => {
-              setCurrentView(Views.MONTH), onView(Views.MONTH);
-            }}
-          >
-            <Text>Month</Text>
-          </Button>
-          <Button
-            className="btn-scheduling"
-            style={{ border: 'none', height: '35px' }}
-            onClick={() => {
-              setCurrentView(Views.WEEK), onView(Views.WEEK);
-            }}
-          >
-            <Text>Week</Text>
-          </Button>
-          <Button
-            className="btn-scheduling"
-            style={{ border: 'none', height: '35px' }}
-            onClick={() => {
-              setCurrentView(Views.DAY), onView(Views.DAY);
-            }}
-          >
-            <Text>Day</Text>
-          </Button>
-          <Button
-            className="btn-scheduling"
-            style={{ border: 'none', height: '35px' }}
-            onClick={() => {
-              setCurrentView(Views.AGENDA), onView(Views.AGENDA);
-            }}
-          >
-            <Text>Agenda</Text>
-          </Button>
-        </ButtonGroup>
       </div>
     );
   };
@@ -945,6 +973,113 @@ const ScheduleScreen = () => {
   const minTime = new Date();
   minTime.setHours(8, 0, 0);
 
+  const todayAppointmentsList = useMemo(() => {
+    const rows = (todayAppointmentsResponse as any)?.data ?? [];
+    const mappedFromStatusQuery = rows.map((a: any) => {
+      const dt = new Date(
+        a?.appointmentDateTime ??
+          a?.appointmentStart ??
+          a?.appointment_start ??
+          a?.applyStartDateTime ??
+          Date.now()
+      );
+      const timeLabel = Number.isNaN(dt.getTime())
+        ? '--:--'
+        : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const patient = a?.patient ?? {};
+      const patientName =
+        patient?.full_name ||
+        patient?.fullName ||
+        [patient?.first_name, patient?.last_name].filter(Boolean).join(' ') ||
+        'Unknown';
+      return {
+        id: a?.id ?? a?.key ?? `${patientName}-${timeLabel}`,
+        timeLabel,
+        patientName,
+        status: a?.status ?? a?.appointmentStatus ?? '-'
+      };
+    });
+
+    if (mappedFromStatusQuery.length > 0) {
+      return mappedFromStatusQuery;
+    }
+
+    // Fallback: derive right panel list from currently loaded calendar events for selected day.
+    const day = new Date(rightPanelDate ?? currentCalendarDate ?? new Date());
+    const y = day.getFullYear();
+    const m = day.getMonth();
+    const d = day.getDate();
+    return (finalAppointments ?? [])
+      .filter((e: any) => {
+        const dt = new Date(e?.start);
+        return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
+      })
+      .map((e: any) => {
+        const dt = new Date(e?.start);
+        return {
+          id: e?.id ?? `${e?.title ?? 'appt'}-${dt.getTime()}`,
+          timeLabel: Number.isNaN(dt.getTime())
+            ? '--:--'
+            : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          patientName: String(e?.title ?? 'Unknown').split(',')[0] ?? 'Unknown',
+          status: e?.appointmentData?.appointmentStatus ?? '-'
+        };
+      });
+  }, [todayAppointmentsResponse, finalAppointments, rightPanelDate, currentCalendarDate]);
+
+
+  const todayTimelineRows = useMemo(() => {
+    const statusColor = (status: string) => {
+      const s = String(status ?? '').toUpperCase();
+      if (s.includes('CONFIRM')) return '#60D394';
+      if (s.includes('COMPLETE')) return '#6DA7E8';
+      if (s.includes('NEW')) return '#4B7BEC';
+      if (s.includes('CHECK')) return '#F5B971';
+      if (s.includes('NO_SHOW') || s.includes('NO-SHOW')) return '#E8CF5A';
+      return '#C8D1E1';
+    };
+    const hours = [8, 9, 10, 11, 12];
+    return hours.map(hour => {
+      const matches = todayAppointmentsList.filter((a: any) => {
+        const parsed = new Date(`1970-01-01T${a.timeLabel?.replace(' ', '')}`);
+        if (!Number.isNaN(parsed.getTime())) return parsed.getHours() === hour;
+        const h = Number(String(a.timeLabel ?? '').split(':')[0]);
+        return h === hour;
+      });
+      const dots = matches.slice(0, 8).map((m: any) => statusColor(m.status));
+      while (dots.length < 8) dots.push('#E6EBF3');
+      return { hour, dots };
+    });
+  }, [todayAppointmentsList]);
+
+  const rightPanelAppointmentRows = useMemo(() => {
+    const statusColor = (status: string) => {
+      const s = String(status ?? '').toUpperCase();
+      if (s.includes('CONFIRM')) return '#60D394';
+      if (s.includes('COMPLETE')) return '#6DA7E8';
+      if (s.includes('NEW')) return '#4B7BEC';
+      if (s.includes('CHECK')) return '#F5B971';
+      if (s.includes('NO_SHOW') || s.includes('NO-SHOW')) return '#E8CF5A';
+      return '#9DB5DA';
+    };
+
+    return (todayAppointmentsList ?? []).slice(0, 5).map((a: any) => {
+      const hourPart = String(a?.timeLabel ?? '').split(':')[0] || '--';
+      const hourNum = Number(hourPart);
+      const hourLabel = Number.isFinite(hourNum)
+        ? `${((hourNum + 11) % 12) + 1} ${hourNum >= 12 ? 'PM' : 'AM'}`
+        : '--';
+      const dots = Array.from({ length: 8 }).map((_, idx) =>
+        idx < 4 ? statusColor(a?.status) : '#E6ECF7'
+      );
+      return {
+        ...a,
+        hourLabel,
+        dots
+      };
+    });
+  }, [todayAppointmentsList]);
+
   const hexToRgba = (hex, alpha = 0.1) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -953,8 +1088,39 @@ const ScheduleScreen = () => {
   };
 
   const MyEvent = ({ event }) => {
+    const status = String(
+      event?.appointmentData?.appointmentStatus ?? event?.appointmentData?.status ?? ''
+    ).toUpperCase();
     const image = event?.appointmentData?.profilePicture;
     const content_type = event?.appointmentData?.profilePicture;
+
+    if (status === 'NEW') {
+      const startLabel =
+        event?.start instanceof Date && !Number.isNaN(event.start.getTime())
+          ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : '--:--';
+      return (
+        <div style={{ padding: '4px 6px' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#6FA8EB',
+              color: '#fff',
+              borderRadius: 4,
+              padding: '4px 8px',
+              fontSize: 11,
+              fontWeight: 600,
+              lineHeight: 1.2
+            }}
+          >
+            <span>{startLabel}</span>
+            <span style={{ opacity: 0.95 }}>Free Slot</span>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div
@@ -1006,7 +1172,19 @@ const ScheduleScreen = () => {
       return item?.borderColor ? item.color : '#007bff';
     };
 
-    const status = event?.appointmentData?.appointmentStatus;
+    const status = String(event?.appointmentData?.appointmentStatus ?? event?.appointmentData?.status ?? '');
+    if (normalize(status) === 'new') {
+      return {
+        style: {
+          backgroundColor: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
+          padding: 0,
+          width: 'fit-content',
+          minWidth: 'fit-content'
+        }
+      };
+    }
     const backgroundColor = getBackgroundColor(status);
     const borderColor = getBorderColor(status);
 
@@ -1163,7 +1341,9 @@ const ScheduleScreen = () => {
           position: 'relative',
           width: '100%',
           display: 'flex',
-          justifyContent: 'flex-start'
+          justifyContent: 'flex-start',
+          minHeight: 'calc(100vh - 90px)',
+          overflowY: 'auto'
         }}
         className="inline-two-four-container"
       >
@@ -1311,7 +1491,11 @@ const ScheduleScreen = () => {
         </div>
 
         {/* =================== Right Side ============= */}
-        <Panel bordered className="right-section">
+        <Panel
+          bordered
+          className="right-section"
+          style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', minHeight: 620 }}
+        >
           <div
             style={{
               marginTop: '27px',
@@ -1324,7 +1508,7 @@ const ScheduleScreen = () => {
           >
             <div />
 
-            <div>
+            {/* <div>
               <div style={{ display: 'flex', gap: '5px' }}>
                 <MyButton
                   appearance="ghost"
@@ -1352,30 +1536,34 @@ const ScheduleScreen = () => {
                   <Translate>Add New Appointments</Translate>
                 </MyButton>
               </div>
-            </div>
+            </div> */}
           </div>
 
-          <BigCalendar
-            key={calendarKey}
-            date={currentCalendarDate}
-            onNavigate={date => {
-              setCalendarDate(date);
-              setCurrentCalendarDate(date);
-            }}
-            className={`my-calendar ${currentView}`}
-            style={{ height: '73vh' }}
-            min={minTime}
-            {...(currentView === 'day' && {
-              resources: visibleResources ?? [],
-              resourceIdAccessor: 'key',
-              resourceTitleAccessor: 'resourceName'
-            })}
-            formats={formats}
-            localizer={localizer}
-            events={finalAppointments ?? []}
-            step={60}
-            timeslots={1}
-            onSelectSlot={slotInfo => {
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1, minHeight: 0 }}>
+            <div style={{ minHeight: 0, height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+              <BigCalendar
+                key={calendarKey}
+                toolbar={false}
+                date={currentCalendarDate}
+                onNavigate={date => {
+                  setCalendarDate(date);
+                  setCurrentCalendarDate(date);
+                  setRightPanelDate(date);
+                }}
+                className={`my-calendar ${currentView}`}
+                style={{ height: currentView === 'day' || currentView === 'week' ? 'max-content' : '100%' }}
+                min={minTime}
+                {...(currentView === 'day' && {
+                  resources: visibleResources ?? [],
+                  resourceIdAccessor: 'key',
+                  resourceTitleAccessor: 'resourceName'
+                })}
+                formats={formats}
+                localizer={localizer}
+                events={finalAppointments ?? []}
+                step={60}
+                timeslots={1}
+                onSelectSlot={slotInfo => {
               if (slotInfo.resourceId) {
                 const currentResource = resourcesWithAvailabilityResponse?.object.find(
                   r => r.key === slotInfo.resourceId
@@ -1414,27 +1602,186 @@ const ScheduleScreen = () => {
                   return;
                 }
               }
-              setSelectedSlot(slotInfo);
-              setModalOpen(true);
-            }}
-            startAccessor="start"
-            endAccessor="end"
-            views={['month', 'week', 'day', 'agenda']}
-            defaultView={currentView}
-            selectable={true}
-            onSelectEvent={event => {
-              handleSelectEvent(event);
-            }}
-            tooltipAccessor={event => getTooltipContent(event)}
-            onView={view => setCurrentView(view)}
-            eventPropGetter={eventPropGetter}
-            components={{
-              toolbar: CustomToolbar,
-              resourceHeader: ResourceHeader,
-              event: MyEvent
-            }}
-            slotPropGetter={currentView == 'day' ? slotPropGetter : null}
-          />
+              // Ignore clicks on empty/non-available areas.
+              return;
+                }}
+                startAccessor="start"
+                endAccessor="end"
+                views={['month', 'week', 'day', 'agenda']}
+                defaultView={currentView}
+                selectable={true}
+                onSelectEvent={event => {
+                  handleSelectEvent(event);
+                }}
+                tooltipAccessor={event => getTooltipContent(event)}
+                onView={view => setCurrentView(view)}
+                eventPropGetter={eventPropGetter}
+                components={{
+                  resourceHeader: ResourceHeader,
+                  event: MyEvent
+                }}
+                slotPropGetter={currentView == 'day' ? slotPropGetter : null}
+              />
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+                height: '100%',
+                minHeight: 0
+              }}
+            >
+              <Panel bordered style={{ padding: 10, borderRadius: 12, flex: '0 0 auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+                  <ButtonGroup
+                    style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }}
+                    size="xs"
+                  >
+                    <Button
+                      className="btn-scheduling"
+                      style={{ border: 'none', height: '30px' }}
+                      appearance={currentView === Views.WEEK ? 'primary' : 'subtle'}
+                      onClick={() => setCurrentView(Views.WEEK)}
+                    >
+                      <Text>Week</Text>
+                    </Button>
+                    <Button
+                      className="btn-scheduling"
+                      style={{ border: 'none', height: '30px' }}
+                      appearance={currentView === Views.DAY ? 'primary' : 'subtle'}
+                      onClick={() => setCurrentView(Views.DAY)}
+                    >
+                      <Text>Day</Text>
+                    </Button>
+                    <Button
+                      className="btn-scheduling"
+                      style={{ border: 'none', height: '30px' }}
+                      appearance={currentView === Views.MONTH ? 'primary' : 'subtle'}
+                      onClick={() => setCurrentView(Views.MONTH)}
+                    >
+                      <Text>Month</Text>
+                    </Button>
+                    <Button
+                      className="btn-scheduling"
+                      style={{ border: 'none', height: '30px' }}
+                      appearance={currentView === Views.AGENDA ? 'primary' : 'subtle'}
+                      onClick={() => setCurrentView(Views.AGENDA)}
+                    >
+                      <Text>Agenda</Text>
+                    </Button>
+                  </ButtonGroup>
+                </div>
+                <RsCalendar
+                  value={rightPanelDate}
+                  onChange={(d: Date | null) => {
+                    if (d) {
+                      setRightPanelDate(d);
+                      setCurrentCalendarDate(d);
+                      setCalendarDate(d);
+                    }
+                  }}
+                  compact
+                  style={{ width: '100%', height: 220, fontSize: 12 }}
+                />
+              </Panel>
+
+              <Panel
+                bordered
+                style={{
+                  padding: 8,
+                  borderRadius: 12,
+                  flex: 1,
+                  minHeight: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <strong>{todayAppointmentsList.length} today appointments</strong>
+                </div>
+                <div style={{ marginBottom: 8 }} />
+                <div
+                  style={{
+                    border: '1px solid #edf1f7',
+                    borderRadius: 10,
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    flex: 1,
+                    minHeight: 140,
+                    maxHeight: 220
+                  }}
+                >
+                  {isFetchingTodayAppointments ? (
+                    <div style={{ padding: 10 }}><Text muted>Loading...</Text></div>
+                  ) : rightPanelAppointmentRows.length > 0 ? (
+                    rightPanelAppointmentRows.map((row: any, idx: number) => (
+                      <div
+                        key={row.id}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '42px 1fr 12px',
+                          alignItems: 'center',
+                          gap: 6,
+                          padding: '8px 6px',
+                          borderBottom: idx === rightPanelAppointmentRows.length - 1 ? 'none' : '1px solid #f0f3f8'
+                        }}
+                      >
+                        <span style={{ fontSize: 11, color: '#7b8794' }}>{row.hourLabel}</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#263238' }}>{row.patientName}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 11, color: '#8a94a6' }}>{row.timeLabel}</span>
+                            <div style={{ display: 'flex', gap: 3 }}>
+                              {row.dots.map((color: string, dotIdx: number) => (
+                                <span
+                                  key={`${row.id}-dot-${dotIdx}`}
+                                  style={{ width: 6, height: 6, borderRadius: 6, display: 'inline-block', backgroundColor: color }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <ArrowRightLineIcon style={{ fontSize: 12, opacity: 0.45 }} />
+                      </div>
+                    ))
+                  ) : (
+                    todayTimelineRows.map((row: any) => (
+                      <div
+                        key={row.hour}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '48px 1fr 12px',
+                          alignItems: 'center',
+                          gap: 6,
+                          padding: '8px 6px',
+                          borderBottom: '1px solid #f0f3f8'
+                        }}
+                      >
+                        <span style={{ fontSize: 11, color: '#7b8794' }}>{row.hour} AM</span>
+                        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                          {row.dots.map((color: string, idx: number) => (
+                            <span
+                              key={`${row.hour}-${idx}`}
+                              style={{ width: 8, height: 8, borderRadius: 8, display: 'inline-block', backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                        <ArrowRightLineIcon style={{ fontSize: 12, opacity: 0.45 }} />
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8, gap: 4 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: 6, backgroundColor: '#3478F6', display: 'inline-block' }} />
+                  <span style={{ width: 6, height: 6, borderRadius: 6, backgroundColor: '#BFD3F6', display: 'inline-block' }} />
+                  <span style={{ width: 6, height: 6, borderRadius: 6, backgroundColor: '#E6ECF7', display: 'inline-block' }} />
+                </div>
+              </Panel>
+            </div>
+          </div>
 
           <Stack style={{ margin: '0.4%' }}>
             {legendItems.map(({ label, color }) => (

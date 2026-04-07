@@ -66,6 +66,21 @@
   flex: none !important;
 }
 
+// Ensure the main calendar body is scrollable in day/week with many rows.
+.my-calendar .rbc-time-view {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.my-calendar .rbc-time-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+}
+
 .my-calendar.day .rbc-time-view .rbc-time-content > .rbc-day-slot {
   min-width: 300px !important;
 }

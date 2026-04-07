@@ -80,7 +80,7 @@ export const appointmentFromTemplateService = createApi({
     >({
       query: ({ filter, page, size, sort = 'id,asc' }) => ({
         url: '/api/patient/appointments/search',
-        method: 'GET',
+        method: 'POST',
         params: { page, size, sort },
         body: filter
       }),
