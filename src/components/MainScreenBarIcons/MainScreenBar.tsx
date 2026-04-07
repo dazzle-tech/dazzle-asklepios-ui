@@ -572,7 +572,7 @@ useEffect(() => {
                 />
               </IconButton>
             </Tooltip> */}
-            {authSlice.user?.admin && authSlice.user?.jobRole === 'PHYSICIAN' && (
+            { authSlice.user?.jobRole === 'PHYSICIAN' && (
               <Tooltip title="My Consultations">
                 <IconButton
                   size="small"
