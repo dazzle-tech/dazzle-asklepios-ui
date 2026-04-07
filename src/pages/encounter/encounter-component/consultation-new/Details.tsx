@@ -461,7 +461,7 @@ const Details = ({
           >
             <div className="main-details-consultion-page-container">
               <SectionContainer
-                title={<Translate></Translate>}
+                title={<Translate>Choose Consultant</Translate>}
                 content={
                   <div className="consultion-details-modal-handle-position">
                     <MyInput
