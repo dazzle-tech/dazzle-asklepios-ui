@@ -298,7 +298,7 @@ const FunctionalAssessment = ({ patient, encounter, edit }) => {
                         setFunctionalAssessmentStatus('');
                     }
                 }}>
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => {
                     if (checked) {

@@ -75,7 +75,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = patient || enc ? undefined : (location.state as any);
-  console.log('PatientEMR propsData', propsData?.patient, propsData?.encounter);
   const [encounter, setLocalEncounter] = useState<any>(
     enc ?? propsData?.encounter ?? { ...newApEncounter, discharge: false }
   );

@@ -384,9 +384,11 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
                   setElectrocardiogramEcgStatus(checked ? '3196709905099521' : '')
                 }
               >
-                Show Cancelled
+                <Translate>Show Cancelled</Translate>
               </Checkbox>
-              <Checkbox onChange={(value, checked) => setAllData(checked)}>Show All</Checkbox>
+              <Checkbox onChange={(value, checked) => setAllData(checked)}>
+                <Translate>Show All</Translate>
+              </Checkbox>
             </div>
             <div className="bt-right-2">
               <MyButton
@@ -394,7 +396,7 @@ const ElectrocardiogramECG = ({ patient, encounter, edit }) => {
                 prefixIcon={() => <PlusIcon />}
                 onClick={handleAddNewElectrocardiogram}
               >
-                Add
+                <Translate>Add</Translate>
               </MyButton>
             </div>
           </div>

@@ -765,7 +765,7 @@ const Prescription = props => {
               setShowCanceled(!showCanceled);
             }}
           >
-            Show cancelled
+<Translate>Show Cancelled</Translate>
           </Checkbox>
         </div>
       </div>

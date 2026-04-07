@@ -5,6 +5,7 @@ import { BiQuestionMark } from 'react-icons/bi';
 import MyModal from '@/components/MyModal/MyModal';
 import './styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import Translate from '@/components/Translate';
 const AddEditQuestionnaire = ({ open, setOpen, questionnaire, setQuestionnaire, width }) => {
   const { data: questionnaireTypeLovQueryResponse } =
     useGetLovValuesByCodeQuery('QUESTIONNAIRE_TYPE');
@@ -35,10 +36,10 @@ const AddEditQuestionnaire = ({ open, setOpen, questionnaire, setQuestionnaire, 
               record=""
               setRecord=""
             />
-            <label>Sequence Or Full View</label>
+            <Translate>Sequence Or Full View</Translate>
             <RadioGroup name="radio-group-inline" inline >
-              <Radio value="sequence">Sequence</Radio>
-              <Radio value="fv">Full View</Radio>
+              <Radio value="sequence"><Translate>Sequence</Translate></Radio>
+              <Radio value="fv"><Translate>Full View</Translate></Radio>
             </RadioGroup>
           </Form>
         );

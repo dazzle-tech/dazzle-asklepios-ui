@@ -6,6 +6,7 @@ import { useGetPreviousClosedEncounterQuery } from '@/services/encounters/patien
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetPrimaryByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useGetIcdDiagnosisByIdQuery } from '@/services/setup/icdTreeService';
+import Translate from '@/components/Translate';
 const PreviuosVisitData = ({ patient, encounter }) => {
   
 
@@ -34,7 +35,7 @@ const {
   
   return (
     <Section
-      title="Previous Visit"
+      title={<Translate>Previous Visit</Translate>}
       content={
         <Form disabled layout="inline" fluid>
           <MyInput

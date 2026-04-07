@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip, Typography } f
 import ArrowDownLineIcon from '@rsuite/icons/ArrowDownLine';
 import NoticeIcon from '@rsuite/icons/Notice';
 import { FaEarthAmericas } from 'react-icons/fa6';
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import ChatScreen from '../ChatScreen/ChatScreen';
 import './style.less';
@@ -125,10 +125,11 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
   const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
-  const selectedDepartmentEffective =
-    storedDepartmentMatch ??
+const selectedDepartmentEffective = useMemo(() => {
+  return storedDepartmentMatch ??
     defaultDepartmentEntity ??
     (activeDepartments.length > 0 ? activeDepartments[0] : null);
+}, [storedDepartmentMatch, defaultDepartmentEntity, activeDepartments]);
 
   const resolveFacilityName = (facilityId?: string | number | null) => {
     if (facilityId != null) {
@@ -151,55 +152,58 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     return resolved;
   };
 
-  useEffect(() => {
-    if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
-      return;
-    }
 
-    if (activeDepartments.length === 0 && !isLoadingDepartments && !selectedDepartment) {
-      if (!hasWarnedNoDepartmentRef.current) {
-        toast(
-          'No departments are assigned to your user. Please contact the administrator to configure departments.'
-        );
-        hasWarnedNoDepartmentRef.current = true;
-      }
-      return;
-    }
+useEffect(() => {
+  
+  if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
+    return;
+  }
 
-    if (!selectedDepartmentEffective) {
-      return;
-    }
-
-    const resolvedDepartmentName = resolveDepartmentName(selectedDepartmentEffective.departmentId);
-    const resolvedFacilityName = resolveFacilityName(selectedDepartmentEffective.facilityId);
-
-    if (
-      !selectedDepartment ||
-      selectedDepartment?.departmentId !== selectedDepartmentEffective.departmentId ||
-      selectedDepartment?.facilityId !== selectedDepartmentEffective.facilityId ||
-      selectedDepartment?.departmentName !== resolvedDepartmentName ||
-      selectedDepartment?.facilityName !== resolvedFacilityName
-    ) {
-      dispatch(
-        setSelectedDepartment({
-          departmentId: selectedDepartmentEffective.departmentId,
-          facilityId: selectedDepartmentEffective.facilityId,
-          departmentName: resolvedDepartmentName,
-          facilityName: resolvedFacilityName
-        })
+  if (activeDepartments.length === 0 && !isLoadingDepartments && !selectedDepartment) {
+    if (!hasWarnedNoDepartmentRef.current) {
+      toast(
+        'No departments are assigned to your user. Please contact the administrator to configure departments.'
       );
+      hasWarnedNoDepartmentRef.current = true;
     }
-  }, [
-    selectedDepartment,
-    selectedDepartmentEffective,
-    activeDepartments,
-    departments,
-    facilities,
-    isLoadingDepartments,
-    dispatch,
-    toast
-  ]);
+    return;
+  }
 
+  if (!selectedDepartmentEffective) {
+    return;
+  }
+
+  const nextDepartmentId = selectedDepartmentEffective.departmentId;
+  const nextFacilityId = selectedDepartmentEffective.facilityId;
+
+  const sameSelection =
+    selectedDepartment?.departmentId === nextDepartmentId &&
+    selectedDepartment?.facilityId === nextFacilityId;
+
+  if (sameSelection) {
+    return;
+  }
+
+  dispatch(
+    setSelectedDepartment({
+      departmentId: nextDepartmentId,
+      facilityId: nextFacilityId,
+      departmentName: resolveDepartmentName(nextDepartmentId),
+      facilityName: resolveFacilityName(nextFacilityId)
+    })
+  );
+}, [
+  authSlice?.user?.id,
+  authSlice?.tenant?.selectedFacility?.id,
+  selectedDepartment?.departmentId,
+  selectedDepartment?.facilityId,
+  selectedDepartmentEffective?.departmentId,
+  selectedDepartmentEffective?.facilityId,
+  isLoadingDepartments,
+  activeDepartments.length,
+  dispatch,
+  toast
+]);
   // container to choose action from more menu
   const contentOfMoreIconMenu = (
     <Popover full>
@@ -367,7 +371,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       console.log('token before logout:', localStorage.getItem('id_token'));
       try {
         await logout({}).unwrap();
-      } catch (e) {}
+      } catch (e) { }
 
       dispatch({ type: 'auth/logout' });
       localStorage.clear();
@@ -421,12 +425,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         {(selectedDepartment?.facilityName ||
           authSlice?.tenant?.selectedFacility?.name ||
           authSlice?.tenant?.selectedFacility?.facilityName) && (
-          <span style={{ fontSize: '12px', color: '#6c757d' }}>
-            {selectedDepartment?.facilityName ??
-              authSlice?.tenant?.selectedFacility?.name ??
-              authSlice?.tenant?.selectedFacility?.facilityName}
-          </span>
-        )}
+            <span style={{ fontSize: '12px', color: '#6c757d' }}>
+              {selectedDepartment?.facilityName ??
+                authSlice?.tenant?.selectedFacility?.name ??
+                authSlice?.tenant?.selectedFacility?.facilityName}
+            </span>
+          )}
       </div>
       <Divider style={{ margin: 0 }} />
       {isLoadingDepartments ? (
@@ -440,7 +444,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               defaultDepartmentEntity?.id != null
                 ? defaultDepartmentEntity.id === dept.id
                 : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                  defaultDepartmentEntity?.facilityId === dept.facilityId;
+                defaultDepartmentEntity?.facilityId === dept.facilityId;
             const isActive =
               selectedDepartment?.departmentId === dept.departmentId &&
               selectedDepartment?.facilityId === dept.facilityId;
@@ -532,13 +536,15 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         {width >= 930 ? (
           <>
             <Tooltip title="Customize Form">
-              <IconButton size="small">
+              <IconButton
+                size="small"
+                onClick={() => {
+                  navigate('/form-template-use');
+                }}
+              >
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faFileLines}
-                  onClick={() => {
-                    navigate('/form-template-use');
-                  }}
                 />
               </IconButton>
             </Tooltip>
@@ -566,7 +572,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Tooltip> */}
-            {authSlice.user?.admin && authSlice.user?.jobRole === 'PHYSICIAN' && (
+            { authSlice.user?.jobRole === 'PHYSICIAN' && (
               <Tooltip title="My Consultations">
                 <IconButton
                   size="small"
@@ -705,13 +711,13 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}></span>
                   <span style={{ color: '#9E9E9E', fontSize: '12px' }}></span>
                 </div>
-                  <ArrowDownLineIcon
-                    style={{
-                      marginInlineStart: 8,
-                      position: 'relative',
-                      zIndex: 10
-                    }}
-                  />
+                <ArrowDownLineIcon
+                  style={{
+                    marginInlineStart: 8,
+                    position: 'relative',
+                    zIndex: 10
+                  }}
+                />
               </div>
             </Whisper>
           </>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Panel, Stack, ButtonToolbar, SelectPicker, IconButton } from 'rsuite';
 import * as icons from '@rsuite/icons';
 import Translate from '@/components/Translate';
@@ -6,12 +6,14 @@ import DentalChart from '@/components/NewDentalChart';
 import ToothActionCard from '@/components/NewDentalChart/ToothActionCard/ToothActionCard';
 import { newApDentalChartTooth } from '@/types/model-types-constructor';
 import { useGetActionsQuery, useGetChartDataQuery } from '@/services/dentalService';
-import { useGetCdtsQuery, useGetServicesQuery } from '@/services/setupService';
+import { useGetCdtsQuery, useGetDentalActionsQuery, useGetServicesQuery } from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
 import { Box, Typography } from '@mui/material';
 import './styles.less';
 import ToothIcon from '@/images/svgs/ToothIcon';
 import DentalRecordIcon from '@/images/svgs/DentalRecordIcon';
+
+import { useGetServicesByCategoryQuery } from '@/services/setup/serviceService';
 
 const ChartTab = ({
   currentChart,
@@ -28,6 +30,8 @@ const ChartTab = ({
   isLoading
 }) => {
   const dentalActionsRes = useGetActionsQuery({ ...initialListRequest, pageSize: 1000 });
+
+  const {data:serviceList}=useGetServicesByCategoryQuery({page:0,size:1000,category:'DENTAL'});
   const dentalServicesRes = useGetServicesQuery({
     ...initialListRequest,
     filters: [{ fieldName: 'category_lkey', operator: 'match', value: '6418596687583232' }],
@@ -141,9 +145,9 @@ const ChartTab = ({
             setChartObject={setCurrentChart}
             selectedTooth={selectedTooth}
             setSelectedTooth={setSelectedTooth}
-            dentalActionsList={dentalActionsRes.data?.object ?? []}
+              dentalActionsList={dentalActionsRes.data?.object ?? []}
             dentalActionsMap={dentalActionsMap}
-            dentalServicesList={dentalServicesRes.data?.object ?? []}
+            dentalServicesList={serviceList?.data ?? []}
             dentalServicesMap={dentalServicesMap}
             cdtList={cdtListRes.data?.object ?? []}
             cdtMap={cdtMap}

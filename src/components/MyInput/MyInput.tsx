@@ -209,6 +209,7 @@ const MyInput = ({
 
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
 
+
   const handleValueChange = (value: any) => {
     if (!setRecord || typeof setRecord !== 'function') return;
 
@@ -1017,7 +1018,14 @@ const MyInput = ({
       <Form.ControlLabel>
         {showLabel && (
           <MyLabel
-            label={fieldLabel}
+          //  label={fieldLabel}
+            label={
+                      typeof fieldLabel === 'string' ? (
+                        <Translate>{fieldLabel}</Translate>
+                      ) : (
+                        fieldLabel
+                      )
+                    }
             error={validationResult}
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />

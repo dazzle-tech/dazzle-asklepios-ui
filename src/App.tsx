@@ -1,7 +1,7 @@
 import { useLoadTenantQuery } from '@/services/authService';
 import { Icon } from '@rsuite/icons';
 import { BlockUI } from 'primereact/blockui';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import * as icons from 'react-icons/fa6';
 import { MdDashboard } from 'react-icons/md';
 import { IntlProvider } from 'react-intl';
@@ -222,8 +222,6 @@ import { useLazyGetDepartmentByIdQuery } from './services/security/departmentSer
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
 import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
 
-type BackendMenuItem = { screen?: string | null };
-
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -236,6 +234,12 @@ const PUBLIC_PATHS = new Set([
 
 const norm = (s?: string | null) => (s ?? '').toLowerCase().trim().replace(/^\/+/, '');
 
+type BackendMenuItem = {
+  module?: string | null;
+  label?: string | null;
+  screen?: string | null;
+};
+
 function ParentPermissionGuard() {
   const location = useLocation();
   const authSlice = useAppSelector((s) => s.auth);
@@ -243,19 +247,17 @@ function ParentPermissionGuard() {
   const path = location.pathname || '/';
   const cleanPath = norm(path.split('?')[0]);
   const selectedDepartment = authSlice.selectedDepartment;
+  const selectedDepartmentId = selectedDepartment?.departmentId;
 
-  const [getDepartmentById, { data: department, isLoading, isFetching, error }] =
-    useLazyGetDepartmentByIdQuery();
-
-  useEffect(() => {
-    if (selectedDepartment?.departmentId) {
-      getDepartmentById(selectedDepartment.departmentId);
+  const [
+    getDepartmentById,
+    {
+      data: department,
+      isLoading,
+      isFetching,
+      error
     }
-  }, [selectedDepartment?.departmentId, getDepartmentById]);
-
-  if (PUBLIC_PATHS.has(path)) return <Outlet />;
-  if (!authSlice?.menu) return <Outlet />;
-  if (!cleanPath) return <Outlet />;
+  ] = useLazyGetDepartmentByIdQuery();
 
   const matchedModule = MODULES.find((m: any) =>
     (m.screens ?? []).some((s: any) => norm(s.navPath) === cleanPath)
@@ -265,18 +267,34 @@ function ParentPermissionGuard() {
     (s: any) => norm(s.navPath) === cleanPath
   );
 
+  const moduleDepartmentTypes = matchedModule?.departmentTypes ?? [];
+  const requiresDepartmentTypeValidation = moduleDepartmentTypes.length > 0;
+
+  const allowedCodes = useMemo(
+    () =>
+      new Set(
+        ((authSlice.menu ?? []) as BackendMenuItem[]).map((x) =>
+          String(x.screen ?? '').toUpperCase()
+        )
+      ),
+    [authSlice.menu]
+  );
+
+  useEffect(() => {
+    if (!requiresDepartmentTypeValidation) return;
+    if (!selectedDepartmentId) return;
+
+    getDepartmentById(selectedDepartmentId, true);
+  }, [requiresDepartmentTypeValidation, selectedDepartmentId, getDepartmentById]);
+
+  if (PUBLIC_PATHS.has(path)) return <Outlet />;
+  if (!authSlice?.menu) return <Outlet />;
+  if (!cleanPath) return <Outlet />;
   if (!matchedModule || !matchedScreen) return <Outlet />;
 
-  // permission check على مستوى الشاشة
   const requiredCode = matchedScreen.code;
 
   if (requiredCode) {
-    const allowedCodes = new Set(
-      (authSlice.menu as BackendMenuItem[]).map((x) =>
-        String(x.screen ?? '').toUpperCase()
-      )
-    );
-
     const hasPermission = allowedCodes.has(String(requiredCode).toUpperCase());
 
     if (!hasPermission) {
@@ -284,95 +302,95 @@ function ParentPermissionGuard() {
     }
   }
 
-  // department type check على مستوى الـ module
-  const moduleDepartmentTypes = matchedModule.departmentTypes ?? [];
+  if (!requiresDepartmentTypeValidation) {
+    return <Outlet />;
+  }
 
-  if (moduleDepartmentTypes.length > 0) {
-    if (!selectedDepartment?.departmentId) {
-      return (
-        <Navigate
-          to="/error-department-type"
-          replace
-          state={{
-            from: path,
-            message: 'Please select a department first.',
-            currentType: null,
-            allowedTypes: moduleDepartmentTypes
-          }}
-        />
-      );
-    }
-
-    if (isLoading || isFetching) {
-      return <Outlet />;
-    }
-
-    if (error) {
-      return (
-        <Navigate
-          to="/error-department-type"
-          replace
-          state={{
-            from: path,
-            message: 'Unable to validate current department type.',
-            currentType: null,
-            allowedTypes: moduleDepartmentTypes
-          }}
-        />
-      );
-    }
-
-    const currentDepartmentType = String(department?.departmentType ?? '').toUpperCase();
-    const allowedDepartmentTypes = moduleDepartmentTypes.map((x: string) =>
-      String(x).toUpperCase()
+  if (!selectedDepartmentId) {
+    return (
+      <Navigate
+        to="/error-department-type"
+        replace
+        state={{
+          from: path,
+          message: 'Please select a department first.',
+          currentType: null,
+          allowedTypes: moduleDepartmentTypes
+        }}
+      />
     );
+  }
 
-    const isCompatible = allowedDepartmentTypes.includes(currentDepartmentType);
 
-    if (!isCompatible) {
-      return (
-        <Navigate
-          to="/error-department-type"
-          replace
-          state={{
-            from: path,
-            message: 'Current Department type is not compatible with this module.',
-            currentType: currentDepartmentType,
-            allowedTypes: allowedDepartmentTypes
-          }}
-        />
-      );
-    }
+  if (isLoading || isFetching) {
+    return <Outlet />;
+  }
+
+  if (error) {
+    return (
+      <Navigate
+        to="/error-department-type"
+        replace
+        state={{
+          from: path,
+          message: 'Unable to validate current department type.',
+          currentType: null,
+          allowedTypes: moduleDepartmentTypes
+        }}
+      />
+    );
+  }
+
+  const currentDepartmentType = String(department?.departmentType ?? '').toUpperCase();
+  const allowedDepartmentTypes = moduleDepartmentTypes.map((x: string) =>
+    String(x).toUpperCase()
+  );
+
+  if (!currentDepartmentType) {
+    return <Outlet />;
+  }
+
+  const isCompatible = allowedDepartmentTypes.includes(currentDepartmentType);
+
+  if (!isCompatible) {
+    return (
+      <Navigate
+        to="/error-department-type"
+        replace
+        state={{
+          from: path,
+          message: 'Current Department type is not compatible with this module.',
+          currentType: currentDepartmentType,
+          allowedTypes: allowedDepartmentTypes
+        }}
+      />
+    );
   }
 
   return <Outlet />;
 }
 
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
   const mode = useSelector((state: any) => state.ui.mode);
-  const dispatch = useAppDispatch();
-  const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
 
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
-  const selectedFacility = tenant?.selectedFacility || null;
   const navigate = useNavigate();
 
-  
-useEffect(() => {
-  const onPageShow = (e: PageTransitionEvent) => {
-    if (e.persisted) {
-      const token = localStorage.getItem('token');
-      if (!token) navigate('/login', { replace: true });
-    }
-  };
 
-  window.addEventListener('pageshow', onPageShow);
-  return () => window.removeEventListener('pageshow', onPageShow);
-}, [navigate]);
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        const token = localStorage.getItem('token');
+        if (!token) navigate('/login', { replace: true });
+      }
+    };
+
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, [navigate]);
 
   // ------------------------------ MENU BUILD HELPERS ---------------------------
   type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
@@ -489,7 +507,7 @@ useEffect(() => {
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
-       {/* <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
+      {/* <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
         <img
           style={{ height: '40px', width: '110px' }}
           src={Logo}
@@ -498,7 +516,7 @@ useEffect(() => {
        
       </div> */}
 
-   
+
       <div
         id="blocker-error"
         style={{
@@ -545,7 +563,7 @@ useEffect(() => {
                     }
                     blocked={uiSlice.loading}
                   >
-                    <ParentPermissionGuard  />
+                    <ParentPermissionGuard />
                   </BlockUI>
                 </ProtectedRoute>
               </AuthGuard>
@@ -584,7 +602,7 @@ useEffect(() => {
               <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="organization-holidays" element={<OrganizationHolidays />} />
               <Route path="/patient-report" element={<StimulsoftReportViewer />} />
-  <Route path="/patient-report-designer" element={<ReportDesigner />} />
+              <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="progress-notes" element={<ProgressNotes />} />
 
@@ -623,7 +641,7 @@ useEffect(() => {
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
                 <Route path="pediatric" element={<Pediatric />} />
-                
+
                 <Route
                   path="multidisciplinary-team-notes"
                   element={<MultidisciplinaryTeamNotes />}
@@ -649,7 +667,7 @@ useEffect(() => {
                 <Route path="continuous-observation" element={<ContinuousObservations />} />
                 <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
                 <Route path="sliding-scale" element={<SlidingScale />} />
-
+                <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
               </Route>
               <Route path="price-list" element={<PriceLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
@@ -662,13 +680,13 @@ useEffect(() => {
               <Route path="room" element={<Room />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservationsNew />} >
-                 <Route path="progress-notes" element={<ProgressNotes />} />
+                <Route path="progress-notes" element={<ProgressNotes />} />
                 <Route
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
-                    <Route path="previous-measurements" element={<PreviousMeasurements />} />
-                 <Route path="service-and-products" element={<ServiceAndProductsNew {...({} as any)} />} />
+                <Route path="previous-measurements" element={<PreviousMeasurements />} />
+                <Route path="service-and-products" element={<ServiceAndProductsNew {...({} as any)} />} />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />
@@ -676,7 +694,7 @@ useEffect(() => {
                 <Route path="drug-order" element={<DrugOrderNew />} />
                 <Route index element={<Observations />} />
                 <Route path="clinical-visit" element={<SOAP />} />
-                <Route path="observations" element={<Observations   />} />
+                <Route path="observations" element={<Observations />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
@@ -758,7 +776,7 @@ useEffect(() => {
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransferNew />} />
               <Route path="billing-accounting" element={<Accounting />} />
-              <Route path="billing-claims" element={<Claimscreen/>} />
+              <Route path="billing-claims" element={<Claimscreen />} />
 
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
               <Route path="product-catalog" element={<ProductCatalog />} />
@@ -804,10 +822,10 @@ useEffect(() => {
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
-              <Route path='enums' element={<Enums/> }/>
+              <Route path='enums' element={<Enums />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
               <Route path='enums' element={<Enums />} />
-              <Route path='payor-setup' element={<PayerSetup/>} />
+              <Route path='payor-setup' element={<PayerSetup />} />
               <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
               <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
               <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />

@@ -3,7 +3,7 @@ import { Panel, Form, Whisper, Tooltip } from "rsuite";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import { MdCheckCircle, MdCancel } from "react-icons/md";
+import { MdCheckCircle } from "react-icons/md";
 import { BrandMedication } from "@/types/model-types-new";
 import { newBrandMedication } from "@/types/model-types-constructor-new";
 
@@ -35,22 +35,146 @@ import "./styles.less";
 import { GiMedicines } from "react-icons/gi";
 import AddActiveIngredient from "./AddActiveIngredient";
 import { HiOutlineSwitchHorizontal } from "react-icons/hi";
-import { conjureValueBasedOnKeyFromList, conjureValuesFromList, formatEnumString } from "@/utils";
+import { conjureValueBasedOnKeyFromList, formatEnumString } from "@/utils";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import AddBrandSubstitute from "./AddBrandSubstitute";
-import { title } from "process";
 import { useEnumOptions } from "@/services/enumsApi";
+
+const FIELD_LABELS: Record<string, string> = {
+  id: "ID",
+  name: "Brand Name",
+  code: "Brand Code",
+  manufacturer: "Manufacturer",
+  dosageForm: "Dosage Form",
+  usageInstructions: "Usage Instructions",
+  storageRequirements: "Storage Requirements",
+  expiresAfterOpening: "Expires After Opening",
+  expiresAfterOpeningValue: "Expires After Opening Value",
+  expiresAfterOpeningUnit: "Expires After Opening Unit",
+  useSinglePatient: "Single Patient Use",
+  highCostMedication: "High Cost Medication",
+  costCategory: "Cost Category",
+  roa: "ROA",
+  isActive: "Active",
+  uomGroupId: "UOM Group",
+  uomGroupUnitId: "Base UOM",
+  price: "Price",
+  currency: "Currency",
+};
+
+const formatFieldName = (field?: string): string => {
+  if (!field) return "";
+  return FIELD_LABELS[field] || field;
+};
+
+const normalizeConstraintMessage = (message?: string): string => {
+  if (!message) return "is invalid";
+
+  const normalized = message.toLowerCase().trim();
+
+  if (
+    normalized.includes("must not be null") ||
+    normalized.includes("must not be blank") ||
+    normalized.includes("must not be empty") ||
+    normalized.includes("is required")
+  ) {
+    return "is required";
+  }
+
+  if (normalized.includes("failed to convert")) {
+    return "has invalid value";
+  }
+
+  if (normalized.includes("must be greater than or equal to")) {
+    return message;
+  }
+
+  return message;
+};
+
+const prettifyInlineBackendMessage = (message: string): string => {
+  return message
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const firstColonIndex = part.indexOf(":");
+      if (firstColonIndex === -1) {
+        return part;
+      }
+
+      const rawField = part.slice(0, firstColonIndex).trim();
+      const rawMessage = part.slice(firstColonIndex + 1).trim();
+
+      const field = formatFieldName(rawField);
+      const normalizedMessage = normalizeConstraintMessage(rawMessage);
+
+      return field ? `${field} ${normalizedMessage}` : normalizedMessage;
+    })
+    .join(", ");
+};
+
+const buildFieldErrorMessage = (field?: string, message?: string): string => {
+  const prettyField = formatFieldName(field);
+  const prettyMessage = normalizeConstraintMessage(message);
+
+  if (!prettyField) return prettyMessage;
+  return `${prettyField} ${prettyMessage}`;
+};
+
+const getErrorMessage = (error: any): string => {
+  if (error?.data?.fieldErrors?.length) {
+    return error.data.fieldErrors
+      .map((e: any) =>
+        buildFieldErrorMessage(
+          e.field || e.property || e.path,
+          e.message || e.defaultMessage
+        )
+      )
+      .join(", ");
+  }
+
+  if (error?.data?.errors?.length) {
+    return error.data.errors
+      .map((e: any) => {
+        if (typeof e === "string") return e;
+
+        return buildFieldErrorMessage(
+          e.field || e.property || e.path,
+          e.message || e.defaultMessage || String(e)
+        );
+      })
+      .join(", ");
+  }
+
+  if (typeof error?.data?.message === "string") {
+    return prettifyInlineBackendMessage(error.data.message);
+  }
+
+  if (typeof error?.data === "string") {
+    return prettifyInlineBackendMessage(error.data);
+  }
+
+  if (typeof error?.message === "string") {
+    return prettifyInlineBackendMessage(error.message);
+  }
+
+  return (
+    error?.data?.title ||
+    error?.error ||
+    "Unexpected error occurred"
+  );
+};
 
 const GenericMedications = () => {
   const dispatch = useAppDispatch();
 
-  // ---------- State ----------
   const [brandMedication, setBrandMedication] = useState<BrandMedication>({
     ...newBrandMedication,
   });
 
   const [openActiveIngredientPopup, setOpenActiveIngredientPopup] = useState(false);
-  const [openSubstitute, setOpenSubstitute] = useState(false)
+  const [openSubstitute, setOpenSubstitute] = useState(false);
   const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [actionType, setActionType] = useState<"deactivate" | "reactivate">("deactivate");
@@ -62,6 +186,7 @@ const GenericMedications = () => {
 
   const isSelected = (rowData: BrandMedication) =>
     rowData?.id === brandMedication?.id ? "selected-row" : "";
+
   const [paginationParams, setPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -72,20 +197,23 @@ const GenericMedications = () => {
   const [sortColumn, setSortColumn] = useState("id");
   const [sortType, setSortType] = useState<"asc" | "desc">("asc");
 
-  // ---------- Queries ----------
-  const { data: allMedications, isFetching, refetch } = useGetAllBrandMedicationsQuery(paginationParams);
+  const { data: allMedications, isFetching, refetch } =
+    useGetAllBrandMedicationsQuery(paginationParams);
+
   const totalCount = allMedications?.totalCount ?? 0;
-  // Fetch Generic Medication Lov  list response
+
   const { data: brandMedicationLovQueryResponse } =
-    useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
-  // Fetch doseage Form Lov  list response
-  const { data: doseageFormLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
-  const roaEnumOptions = useEnumOptions('MedRoa');
+    useGetLovValuesByCodeQuery("GEN_MED_MANUFACTUR");
+
+  const { data: doseageFormLovQueryResponse } =
+    useGetLovValuesByCodeQuery("DOSAGE_FORMS");
+
+  const roaEnumOptions = useEnumOptions("MedRoa");
+
   const [addBrandMedication] = useCreateBrandMedicationMutation();
   const [updateBrandMedication] = useUpdateBrandMedicationMutation();
   const [toggleActive] = useToggleBrandMedicationActiveMutation();
 
-  // Lazy filters
   const [getByName] = useLazyGetBrandMedicationsByNameQuery();
   const [getByManufacturer] = useLazyGetBrandMedicationsByManufacturerQuery();
   const [getByDosageForm] = useLazyGetBrandMedicationsByDosageFormQuery();
@@ -95,56 +223,64 @@ const GenericMedications = () => {
   const [getByUseSinglePatient] = useLazyGetBrandMedicationsByUseSinglePatientQuery();
   const [getByIsActive] = useLazyGetBrandMedicationsByIsActiveQuery();
 
-  // ---------- Effects ----------
   useEffect(() => {
     dispatch(setPageCode("Brand_Medications"));
     dispatch(setDivContent("Brand Medications List"));
+
     return () => {
       dispatch(setPageCode(""));
       dispatch(setDivContent(""));
     };
   }, [dispatch]);
 
-  // ---------- Handlers ----------
   const handleSave = async () => {
     try {
       if (brandMedication.id) {
         const { hasActiveIngredient, ...updatePayload } = brandMedication;
-
         await updateBrandMedication(updatePayload).unwrap();
-
-
         dispatch(notify({ msg: "Updated successfully", sev: "success" }));
       } else {
         const { hasActiveIngredient, ...payload } = brandMedication;
-
         await addBrandMedication(payload).unwrap();
         dispatch(notify({ msg: "Added successfully", sev: "success" }));
       }
+
       setOpenAddEditPopup(false);
-    } catch (error) {
-      dispatch(notify({ msg: "Error saving medication", sev: "error" }));
+      refetch();
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: getErrorMessage(error),
+          sev: "error",
+        })
+      );
     }
   };
 
   const handleToggleActive = async (id: number) => {
-
     try {
-      await toggleActive(brandMedication?.id).unwrap();
+      await toggleActive(id).unwrap();
       dispatch(notify({ msg: "Status toggled", sev: "success" }));
-      setOpenConfirmModal(false)
+      setOpenConfirmModal(false);
       refetch();
-    } catch {
-      dispatch(notify({ msg: "Failed to toggle active", sev: "error" }));
-      setOpenConfirmModal(false)
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: getErrorMessage(error),
+          sev: "error",
+        })
+      );
+      setOpenConfirmModal(false);
     }
   };
 
+  const normalizeBool = (v: any) => (v === true || v === "true" ? true : false);
+
   const handleFilterChange = async (field: string, value: string) => {
     if (!field || value === undefined || value === null || value === "") {
-
       setIsFiltered(false);
       setFilteredList([]);
+      setFilteredTotal(0);
       return;
     }
 
@@ -174,21 +310,18 @@ const GenericMedications = () => {
             ...params,
           }).unwrap();
           break;
-
         case "useSinglePatient":
           response = await getByUseSinglePatient({
             useSinglePatient: normalizeBool(value),
             ...params,
           }).unwrap();
           break;
-
         case "isActive":
           response = await getByIsActive({
             isActive: normalizeBool(value),
             ...params,
           }).unwrap();
           break;
-
         default:
           return;
       }
@@ -196,8 +329,13 @@ const GenericMedications = () => {
       setFilteredList(response.data ?? []);
       setFilteredTotal(response.totalCount ?? 0);
       setIsFiltered(true);
-    } catch {
-      dispatch(notify({ msg: "Error filtering", sev: "error" }));
+    } catch (error: any) {
+      dispatch(
+        notify({
+          msg: getErrorMessage(error),
+          sev: "error",
+        })
+      );
     }
   };
 
@@ -205,12 +343,13 @@ const GenericMedications = () => {
     setSortColumn(col);
     setSortType(type);
     const sort = `${col},${type}`;
-    setPaginationParams({ ...paginationParams, sort, page: 0, timestamp: Date.now() });
+    setPaginationParams({
+      ...paginationParams,
+      sort,
+      page: 0,
+      timestamp: Date.now(),
+    });
   };
-
-  // ---------- Render ----------
-  const normalizeBool = (v: any) =>
-    v === true || v === "true" ? true : false;
 
   const renderFilterValueInput = () => {
     switch (recordOfFilter.filter) {
@@ -260,36 +399,42 @@ const GenericMedications = () => {
         );
 
       case "expiresAfterOpening":
-        return <MyInput
-          fieldName="value"
-          fieldType="checkbox"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
+        return (
+          <MyInput
+            fieldName="value"
+            fieldType="checkbox"
+            record={recordOfFilter}
+            setRecord={setRecordOfFilter}
+            showLabel={false}
+            placeholder="Search"
+          />
+        );
 
       case "isActive":
-        return <MyInput
-          fieldName="value"
-          fieldType="checkbox"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
+        return (
+          <MyInput
+            fieldName="value"
+            fieldType="checkbox"
+            record={recordOfFilter}
+            setRecord={setRecordOfFilter}
+            showLabel={false}
+            placeholder="Search"
+          />
+        );
+
       case "useSinglePatient":
-        return <MyInput
-          fieldName="value"
-          fieldType="checkbox"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
+        return (
+          <MyInput
+            fieldName="value"
+            fieldType="checkbox"
+            record={recordOfFilter}
+            setRecord={setRecordOfFilter}
+            showLabel={false}
+            placeholder="Search"
+          />
+        );
 
       default:
-
         return (
           <MyInput
             fieldName="value"
@@ -312,7 +457,6 @@ const GenericMedications = () => {
           { label: "Brand Name", value: "name" },
           { label: "Manufacturer", value: "manufacturer" },
           { label: "Dosage Form", value: "dosageForm" },
-
           { label: "ROA", value: "roa" },
           { label: "Expires After Opening", value: "expiresAfterOpening" },
           { label: "Single Patient Use", value: "useSinglePatient" },
@@ -321,12 +465,15 @@ const GenericMedications = () => {
         selectDataLabel="label"
         selectDataValue="value"
         record={recordOfFilter}
-        setRecord={(r) => setRecordOfFilter({ ...recordOfFilter, filter: r.filter, value: "" })}
+        setRecord={(r) =>
+          setRecordOfFilter({ ...recordOfFilter, filter: r.filter, value: "" })
+        }
         showLabel={false}
         placeholder="Select Filter"
       />
 
       {renderFilterValueInput()}
+
       <MyButton
         color="var(--deep-blue)"
         width="80px"
@@ -348,6 +495,7 @@ const GenericMedications = () => {
           setOpenAddEditPopup(true);
         }}
       />
+
       {row.isActive ? (
         <MdDelete
           title="Deactivate"
@@ -356,6 +504,7 @@ const GenericMedications = () => {
           className="icons-style"
           onClick={() => {
             setBrandMedication(row);
+            setActionType("deactivate");
             setOpenConfirmModal(true);
           }}
         />
@@ -367,83 +516,102 @@ const GenericMedications = () => {
           className="icons-style"
           onClick={() => {
             setBrandMedication(row);
+            setActionType("reactivate");
             setOpenConfirmModal(true);
           }}
         />
       )}
 
-      <Whisper placement="top" speaker={<Tooltip><Translate>Active Ingredient</Translate></Tooltip>}>
+      <Whisper
+        placement="top"
+        speaker={
+          <Tooltip>
+            <Translate>Active Ingredient</Translate>
+          </Tooltip>
+        }
+      >
         <GiMedicines
           className="icons-style"
           title="Active Ingredient"
           size={22}
           onClick={() => {
             setBrandMedication(row);
-            setOpenActiveIngredientPopup(true)
+            setOpenActiveIngredientPopup(true);
           }}
         />
       </Whisper>
-      {row.hasActiveIngredient &&
-        <Whisper placement="top" speaker={<Tooltip><Translate>Substitute</Translate></Tooltip>}>
+
+      {row.hasActiveIngredient && (
+        <Whisper
+          placement="top"
+          speaker={
+            <Tooltip>
+              <Translate>Substitute</Translate>
+            </Tooltip>
+          }
+        >
           <HiOutlineSwitchHorizontal
             className="icons-style"
             title="Substitute"
             size={22}
             onClick={() => {
               setBrandMedication(row);
-              setOpenSubstitute(true)
+              setOpenSubstitute(true);
             }}
           />
-        </Whisper>}
+        </Whisper>
+      )}
     </div>
   );
 
   const columns = [
     { key: "name", title: <Translate>Brand Name</Translate>, flexGrow: 4 },
-
     {
-      key: "manufacturer", title: <Translate>Manufacturer</Translate>, flexGrow: 4,
-      render: (rowData) => conjureValueBasedOnKeyFromList(
-        brandMedicationLovQueryResponse?.object,
-        rowData?.manufacturer,
-        "lovDisplayVale"
-      )
+      key: "manufacturer",
+      title: <Translate>Manufacturer</Translate>,
+      flexGrow: 4,
+      render: (rowData: BrandMedication) =>
+        conjureValueBasedOnKeyFromList(
+          brandMedicationLovQueryResponse?.object,
+          rowData?.manufacturer,
+          "lovDisplayVale"
+        ),
     },
     {
-      key: "dosageForm", title: <Translate>Dosage Form</Translate>, flexGrow: 4,
-      render: (rowData) => conjureValueBasedOnKeyFromList(
-        doseageFormLovQueryResponse?.object,
-        rowData?.dosageForm,
-        "lovDisplayVale"
-      )
+      key: "dosageForm",
+      title: <Translate>Dosage Form</Translate>,
+      flexGrow: 4,
+      render: (rowData: BrandMedication) =>
+        conjureValueBasedOnKeyFromList(
+          doseageFormLovQueryResponse?.object,
+          rowData?.dosageForm,
+          "lovDisplayVale"
+        ),
     },
-
     {
-      key: "roa", title: <Translate>ROA</Translate>, flexGrow: 3,
-     render: rowData => <p>{formatEnumString(rowData?.roa)}</p>,
+      key: "roa",
+      title: <Translate>ROA</Translate>,
+      flexGrow: 3,
+      render: (rowData: BrandMedication) => <p>{formatEnumString(rowData?.roa)}</p>,
     },
-    { key: "isActive", title: <Translate>Status</Translate>, flexGrow: 2, render: (r: BrandMedication) => (r.isActive ? "Active" : "Inactive") },
+    {
+      key: "isActive",
+      title: <Translate>Status</Translate>,
+      flexGrow: 2,
+      render: (r: BrandMedication) => (r.isActive ? "Active" : "Inactive"),
+    },
     { key: "actions", title: "", flexGrow: 2, render: iconsForActions },
-
-
     {
       key: "hasActiveIngredient",
       title: "Active Ingredient",
-      render: (row) =>
-        row.hasActiveIngredient && (
-          <MdCheckCircle size={22} color="var(--success)" />
-        )
-    }
-
-
+      render: (row: BrandMedication) =>
+        row.hasActiveIngredient && <MdCheckCircle size={22} color="var(--success)" />,
+    },
   ];
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const direction = localStorage.getItem("direction") || "LTR";
+  const isRTL = direction === "RTL";
+  const dir = isRTL ? "rtl" : "ltr";
 
   return (
     <Panel dir={dir}>
@@ -460,9 +628,15 @@ const GenericMedications = () => {
         onSortChange={handleSortChange}
         page={paginationParams.page}
         rowsPerPage={paginationParams.size}
-        onPageChange={(_, p) => setPaginationParams({ ...paginationParams, page: p })}
+        onPageChange={(_, p) =>
+          setPaginationParams({ ...paginationParams, page: p })
+        }
         onRowsPerPageChange={(e) =>
-          setPaginationParams({ ...paginationParams, size: Number(e.target.value), page: 0 })
+          setPaginationParams({
+            ...paginationParams,
+            size: Number(e.target.value),
+            page: 0,
+          })
         }
         tableButtons={
           <MyButton
@@ -500,6 +674,7 @@ const GenericMedications = () => {
         open={openActiveIngredientPopup}
         setOpen={setOpenActiveIngredientPopup}
       />
+
       <AddBrandSubstitute
         open={openSubstitute}
         setOpen={setOpenSubstitute}

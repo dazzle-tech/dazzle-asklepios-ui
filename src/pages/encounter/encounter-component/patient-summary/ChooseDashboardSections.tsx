@@ -9,6 +9,7 @@ import {
   useAddUserDashboardComponentsMutation,
   useDeleteUserDashboardComponentsMutation
 } from '@/services/encounterService';
+import Translate from '@/components/Translate';
 const ChooseDashboardSections = ({
   open,
   setOpen,
@@ -60,7 +61,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="all"
-                fieldLabel="Select All"
+                fieldLabel={<Translate>Select All</Translate>}
                 record={selectedAll}
                 setRecord={setSelectedAll}
                 showLabel={false}
@@ -68,7 +69,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c1"
-                fieldLabel="Body Diagram"
+                fieldLabel={<Translate>Body Diagram</Translate>}
                 record={displays}
                 setRecord={setDisplays}
                 showLabel={false}
@@ -76,7 +77,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c2"
-                fieldLabel="Previuos Visit"
+                fieldLabel={<Translate>Previous Visit</Translate>}
                 record={displays}
                 showLabel={false}
                 setRecord={setDisplays}
@@ -84,7 +85,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c3"
-                fieldLabel="Patient Major Problem"
+                fieldLabel={<Translate>Patient Major Problem</Translate>}
                 record={displays}
                 setRecord={setDisplays}
                 showLabel={false}
@@ -92,7 +93,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c4"
-                fieldLabel="Patient Chronic Medication"
+                fieldLabel={<Translate>Patient Chronic Medication</Translate>}
                 record={displays}
                 setRecord={setDisplays}
                 showLabel={false}
@@ -100,7 +101,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c5"
-                fieldLabel="Patient Observation"
+                fieldLabel={<Translate>Patient Observation</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -108,7 +109,7 @@ const ChooseDashboardSections = ({
               {/* <MyInput
                 fieldType="check"
                 fieldName="c6"
-                fieldLabel="Functional Assessment"
+                fieldLabel={<Translate>Functional Assessment</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -116,7 +117,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c7"
-                fieldLabel="Active Allergies"
+                fieldLabel={<Translate>Active Allergies</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -124,7 +125,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c8"
-                fieldLabel="Medical Warnings"
+                fieldLabel={<Translate>Medical Warnings</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -132,7 +133,7 @@ const ChooseDashboardSections = ({
               {/* <MyInput
                 fieldType="check"
                 fieldName="c9"
-                fieldLabel="Pain Assessment"
+                fieldLabel={<Translate>Pain Assessment</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -141,7 +142,7 @@ const ChooseDashboardSections = ({
               {/* <MyInput
                 fieldType="check"
                 fieldName="c10"
-                fieldLabel="General Assessment"
+                fieldLabel={<Translate>General Assessment</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -149,7 +150,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c11"
-                fieldLabel="Procedures"
+                fieldLabel={<Translate>Procedures</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -157,7 +158,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c12"
-                fieldLabel="Recent Test Results"
+                fieldLabel={<Translate>Recent Test Results</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -165,7 +166,7 @@ const ChooseDashboardSections = ({
               {/* <MyInput
                 fieldType="check"
                 fieldName="c13"
-                fieldLabel="Last 24-h Medications"
+                fieldLabel={<Translate>Last 24-h Medications</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -173,7 +174,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c14"
-                fieldLabel="Intake Outputs"
+                fieldLabel={<Translate>Intake Outputs</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}
@@ -181,7 +182,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c15"
-                fieldLabel="Chief Complain"
+                fieldLabel={<Translate>Chief Complain</Translate>}
                 showLabel={false}
                 record={displays}
                 setRecord={setDisplays}

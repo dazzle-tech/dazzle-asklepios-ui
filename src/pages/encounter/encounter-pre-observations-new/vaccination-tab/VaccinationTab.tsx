@@ -569,7 +569,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
                     handleShowCancelledToggle(isShowCancelledChecked);
                   }}
                 >
-                  Show Cancelled
+                  <Translate>Show Cancelled</Translate>
                 </Checkbox>
 
                 <Checkbox

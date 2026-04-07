@@ -70,6 +70,13 @@ const CurrentVisitModal: React.FC<CurrentVisitModalProps> = ({ open, setOpen, on
     }
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -81,7 +88,7 @@ const CurrentVisitModal: React.FC<CurrentVisitModalProps> = ({ open, setOpen, on
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       content={
-        <Form fluid layout="vertical" className="visit-modal-form">
+        <Form fluid layout="vertical" className="visit-modal-form" dir={dir}>
           <div className='main-container-coulmn-position'>
 
             {/* Date & Weeks (read-only) */}

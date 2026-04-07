@@ -109,7 +109,7 @@ const ProgressNotes: React.FC = () => {
       },
       {
         key: 'created',
-        title: 'CREATED AT / BY',
+        title: <Translate>CREATED AT / BY</Translate>,
         render: (row: ProgressNote) =>
           row.createdDate ? (
             <>
@@ -219,7 +219,7 @@ const ProgressNotes: React.FC = () => {
           <MyInput
             column
             width={220}
-            fieldLabel="Show Cancelled"
+            fieldLabel={<Translate>Show Cancelled</Translate>}
             fieldType="check"
             showLabel={false}
             fieldName="showCancelled"

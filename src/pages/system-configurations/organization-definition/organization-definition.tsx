@@ -196,7 +196,7 @@ const OrganizationDefinition = () => {
                 <Row>
                   <Col md={12}>
                     <MyInput
-                      fieldLabel="Organization Name"
+                      fieldLabel={<Translate>Organization Name</Translate>}
                       fieldName="name"
                       record={organization}
                       setRecord={setOrganization}
@@ -207,7 +207,7 @@ const OrganizationDefinition = () => {
                   </Col>
                   <Col md={12}>
                     <MyInput
-                      fieldLabel="Organization Address"
+                      fieldLabel={<Translate>Organization Address</Translate>}
                       fieldName="address"
                       record={organization}
                       setRecord={setOrganization}
@@ -218,7 +218,7 @@ const OrganizationDefinition = () => {
                 </Row>
                 <Row>
                   <MyInput
-                    fieldLabel="Organization Description"
+                    fieldLabel={<Translate>Organization Description</Translate>}
                     fieldName="description"
                     fieldType="textarea"
                     record={organization}
@@ -242,7 +242,7 @@ const OrganizationDefinition = () => {
                 <Row>
                   <Col md={12}>
                     <MyInput
-                      fieldLabel="Organization Contact Name"
+                      fieldLabel={<Translate>Organization Contact Name</Translate>}
                       fieldName="contactName"
                       record={organization}
                       setRecord={setOrganization}
@@ -252,7 +252,7 @@ const OrganizationDefinition = () => {
                   </Col>
                   <Col md={12}>
                     <MyInput
-                      fieldLabel="Contact Email"
+                      fieldLabel={<Translate>Contact Email</Translate>}
                       fieldName="contactEmail"
                       fieldType="text"
                       record={organization}
@@ -264,7 +264,7 @@ const OrganizationDefinition = () => {
                 </Row>
                 <Row>
                   <MyInput
-                    fieldLabel="Contact Address"
+                    fieldLabel={<Translate>Contact Address</Translate>}
                     fieldName="contactAddress"
                     fieldType="textarea"
                     record={organization}
@@ -277,7 +277,7 @@ const OrganizationDefinition = () => {
                 <Row>
                   <Col md={12}>
                     <MyInput
-                      fieldLabel="Contact Mobile"
+                      fieldLabel={<Translate>Contact Mobile</Translate>}
                       fieldName="contactMobile"
                       fieldType="text"
                       record={organization}
@@ -288,7 +288,7 @@ const OrganizationDefinition = () => {
                   </Col>
                   <Col md={12}>
                     <MyInput
-                      fieldLabel="Contact Land Number"
+                      fieldLabel={<Translate>Contact Land Number</Translate>}
                       fieldName="contactLandNumber"
                       fieldType="text"
                       record={organization}
@@ -312,7 +312,7 @@ const OrganizationDefinition = () => {
             content={
               <div className='organization-section'>
                 <MyInput
-                  fieldLabel="Tax Value (%)"
+                  fieldLabel={<span><Translate>Tax Value</Translate> (%)</span>}
                   fieldName="taxValue"
                   fieldType="number"
                   record={organization}
@@ -336,6 +336,7 @@ const OrganizationDefinition = () => {
                   <Col md={12}>
                     <MyInput
                       fieldName="defaultTimeZone"
+                      fieldLabel={<Translate>Default Time Zone</Translate>}
                       fieldType="select"
                       selectData={timeZone ?? []}
                       selectDataLabel="label"
@@ -351,7 +352,7 @@ const OrganizationDefinition = () => {
                     <MyInput
                       width="100%"
                       fieldName="defaultLanguageId"
-                      fieldLabel='Default Language'
+                      fieldLabel={<Translate>Default Language</Translate>}
                       fieldType="select"
                       selectData={langData}
                       selectDataLabel="langName"
@@ -380,7 +381,7 @@ const OrganizationDefinition = () => {
                       key={day.value}
                       fieldType="check"
                       fieldName={day.value}
-                      label={day.label}
+                      fieldLabel={<Translate>{day.label}</Translate>}
                       record={workingDaysRecord}
                       setRecord={setWorkingDaysRecord}
                       disabled={isLoadingData}

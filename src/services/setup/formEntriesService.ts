@@ -18,6 +18,9 @@ type PagedResult<T> = {
   totalCount: number;
   links?: LinkMap;
 };
+const unwrapObjectOrReturn = <T>(response: any): T => {
+  return (response?.object ?? response) as T;
+};
 
 export const FormEntriesService = createApi({
   reducerPath: "formEntryApi",
@@ -26,28 +29,41 @@ export const FormEntriesService = createApi({
   endpoints: (builder) => ({
     // GET /api/setup/form-entries?templateId=&page=&size=&sort=
     getFormEntriesByTemplate: builder.query<PagedResult<FormEntry>, { templateId: number | string } & PagedParams>({
-      query: ({ templateId, page, size, sort = "id,desc" }) => ({
-        url: `/api/setup/form-entries`,
-        method: "GET",
-        params: { templateId, page, size, sort },
-      }),
-      transformResponse: (response: FormEntry[], meta) => {
-        const headers = meta?.response?.headers;
-        return {
-          data: response,
-          totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-          links: parseLinkHeader(headers?.get("Link")),
-        };
-      },
-      providesTags: (r, e, arg) => [{ type: "FormEntry", id: `tpl-${arg.templateId}` }],
-      serializeQueryArgs: ({ endpointName, queryArgs }) => {
-        const { timestamp, ...rest } = queryArgs || ({} as any);
-        return `${endpointName}-${JSON.stringify(rest)}`;
-      },
-      forceRefetch({ currentArg, previousArg }) {
-        return currentArg?.timestamp !== previousArg?.timestamp;
-      },
-    }),
+  query: ({ templateId, page, size, sort = "id,desc" }) => ({
+    url: `/api/setup/form-entries`,
+    method: "GET",
+    params: { templateId, page, size, sort },
+  }),
+  transformResponse: (response: any, meta) => {
+    const headers = meta?.response?.headers;
+    const raw = unwrapObjectOrReturn<any>(response);
+
+    if (Array.isArray(raw)) {
+      return {
+        data: raw,
+        totalCount: Number(headers?.get("X-Total-Count") ?? raw.length ?? 0),
+        links: parseLinkHeader(headers?.get("Link")),
+      };
+    }
+
+    return {
+      data: raw?.data ?? [],
+      totalCount: Number(raw?.totalCount ?? headers?.get("X-Total-Count") ?? 0),
+      links: raw?.links ?? parseLinkHeader(headers?.get("Link")),
+    };
+  },
+  providesTags: (r, e, arg) => [
+    { type: "FormEntry", id: `tpl-${arg.templateId}` },
+    "FormEntry"
+  ],
+  serializeQueryArgs: ({ endpointName, queryArgs }) => {
+    const { timestamp, ...rest } = queryArgs || ({} as any);
+    return `${endpointName}-${JSON.stringify(rest)}`;
+  },
+  forceRefetch({ currentArg, previousArg }) {
+    return currentArg?.timestamp !== previousArg?.timestamp;
+  },
+}),
 
     // POST /api/setup/form-entries
     createFormEntry: builder.mutation<FormEntry, FormEntryCreateVM>({

@@ -8,6 +8,7 @@ import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import './Style.less';
+import Translate from '@/components/Translate';
 
 // Initial sample data for the table
 const initialSampleData = [
@@ -139,7 +140,9 @@ const GlasgowComaScale = () => {
     <div className="table-buttons-container">
       <div className="left-group">
         <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
-        <Checkbox>Show Cancelled</Checkbox>
+        <Checkbox>
+          <Translate>Show Cancelled</Translate>
+        </Checkbox>
       </div>
       <div className="right-group">
         <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>

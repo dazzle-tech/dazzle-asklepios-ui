@@ -177,7 +177,7 @@ const MorseFallScale = () => {
             fieldName=""
             record=""
             setRecord=""
-            fieldLabel="Show Cancelled"
+            fieldLabel={<Translate>Show Cancelled</Translate>}
             showLabel={false}
           />
         </Form>

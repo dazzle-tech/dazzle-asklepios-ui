@@ -388,7 +388,7 @@ const PainAssessment = ({ patient, encounter, edit }) => {
                         setPainAssessmentStatus('');
                     }
                 }}>
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => {
                     if (checked) {
@@ -398,7 +398,7 @@ const PainAssessment = ({ patient, encounter, edit }) => {
                         setAllData(false);
                     }
                 }}>
-                    Show All
+                    <Translate>Show All</Translate>
                 </Checkbox>
                 <div className='bt-right'>
                     <MyButton
