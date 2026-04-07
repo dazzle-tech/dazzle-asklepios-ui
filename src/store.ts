@@ -206,6 +206,7 @@ import { organizationHolidaysService } from './services/system-configurations/or
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import { appointmentFromTemplateService } from './services/appointment/appointmentService';
 import { departmentServicesService } from './services/departmentServicesService';
 import { roomService } from './services/setup/room/roomService';
 import { bedService } from './services/setup/room/bedService';
@@ -447,6 +448,7 @@ export const store = configureStore({
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
     [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
     [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
+    [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
     // AI Services
@@ -756,6 +758,7 @@ export const store = configureStore({
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
         availabilityTemplateIntervalService.middleware,
+        appointmentFromTemplateService.middleware,
         departmentServicesService.middleware,
         roomService.middleware,
         bedService.middleware,

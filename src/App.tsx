@@ -141,7 +141,7 @@ import Recovery from './pages/recovery';
 import ResetPassword from './pages/reset-password/ResetPassword';
 import CreatePassword from './pages/create-password/CreatePassword';
 import ReviewResults from './pages/review-results/ReviewResults';
-import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
+import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
 import ApplyTemplateList from './pages/ApplyTemplate/ApplyTemplateList';
 import AccessRoles from './pages/setup/access-roles';
 import AgeGroupSetup from './pages/setup/age-group';
