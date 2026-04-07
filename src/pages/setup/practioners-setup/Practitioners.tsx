@@ -58,8 +58,17 @@ const Practitioners = () => {
   const divContent = (
     "Practitioners"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Practitioners'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -109,13 +118,6 @@ const Practitioners = () => {
       );
     }
   }, [practitioner.primaryFacilityKey]);
-
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
    // Handle page change in navigation
    const handlePageChange = (_: unknown, newPage: number) => {

@@ -866,10 +866,6 @@ const EncounterList = () => {
 
   const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
-  // useEffect(() => {
-  //   dispatch(setPageCode(''));
-  //   dispatch(setDivContent(' '));
-  // }, [location.pathname, dispatch]);
 
   useEffect(() => {
     if (tableLoading) dispatch(showSystemLoader());

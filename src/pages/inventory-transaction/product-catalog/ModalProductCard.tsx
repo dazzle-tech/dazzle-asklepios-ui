@@ -90,15 +90,17 @@ const ModalProductCard = ({
   // const rowsPerPage = transferProductListRequest.pageSize;
   // const totalCount = transferProductListResponseLoading?.extraNumeric ?? 0;
 
+
+
+useEffect(() => {
   dispatch(setPageCode('ProductList'));
+  dispatch(setDivContent('Product List'));
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // handle click om edit  
   const handleEdit = () => {

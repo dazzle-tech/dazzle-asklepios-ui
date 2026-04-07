@@ -52,8 +52,16 @@ const ERWaitingList = () => {
 
   // header setup
   const divContent = 'ER Wating List';
+
+useEffect(() => {
   dispatch(setPageCode('ER_Waiting_List'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: bookVisitLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
@@ -143,11 +151,6 @@ const ERWaitingList = () => {
   };
 
   //useEffect
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
-
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) setManualSearchTriggered(false);
   }, [isFetching, manualSearchTriggered]);

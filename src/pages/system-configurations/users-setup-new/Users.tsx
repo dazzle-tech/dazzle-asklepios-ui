@@ -106,8 +106,18 @@ const Users = () => {
   const divContent = (
     "Users"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('Users'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
   // ClassName for selected row
   const isSelected = rowData => {
     if (rowData && user && rowData.id === user.id) {
@@ -122,12 +132,6 @@ const Users = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
    
 const formatErrorKey = (msg?: string) => {
   if (!msg) return '';

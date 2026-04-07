@@ -84,8 +84,17 @@ const MedicationMatrix = () => {
 
   // Page header setup
   const divContent = 'Medication Matrix SetUp';
+
+
+useEffect(() => {
   dispatch(setPageCode('Medication Matrix SetUp'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   const handleEdit = type => {
     switch (type) {
@@ -179,12 +188,6 @@ const MedicationMatrix = () => {
     }
   ];
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
             // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
