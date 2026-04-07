@@ -450,7 +450,7 @@ const NormalConsultation = (props: any) => {
                   Print
                 </MyButton>
                 <Checkbox checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-                  Show Cancelled
+                <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <Checkbox checked={!showPrev} onChange={() => setShowPrev(!showPrev)}>
                   Show Previous Consultations
@@ -473,7 +473,9 @@ const NormalConsultation = (props: any) => {
                   disabled={selectedRows.length === 0 || edit}
                   prefixIcon={() => <CheckIcon />}
                 >
+                  <Translate>
                   Submit
+                  </Translate>
                 </MyButton>
               </div>
             </div>

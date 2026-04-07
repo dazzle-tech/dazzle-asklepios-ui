@@ -24,6 +24,7 @@ import { useLocation } from 'react-router-dom';
 import { Checkbox } from 'rsuite';
 import DetailsTele from './DetailsTele';
 import './styles.less';
+import Translate from '@/components/Translate';
 
 const TelephonicConsultation = props => {
   const location = useLocation();
@@ -297,7 +298,7 @@ const TelephonicConsultation = props => {
         </MyButton>
 
         <Checkbox checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
-          Show Cancelled
+                <Translate>Show Cancelled</Translate>
         </Checkbox>
       </div>
 

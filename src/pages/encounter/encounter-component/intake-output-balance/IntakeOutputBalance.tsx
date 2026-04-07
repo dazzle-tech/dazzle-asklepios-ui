@@ -308,7 +308,7 @@ const IntakeOutputBalance = () => {
       <Col md={12}>
         <Row>
           <SectionContainer 
-           title={<>Intakes
+           title={<><Translate>Intakes</Translate>
            
                            <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
@@ -353,7 +353,7 @@ const IntakeOutputBalance = () => {
         </Row>
         <Row>
           <SectionContainer 
-           title={<>Outputs
+           title={<><Translate>Outputs</Translate>
                 <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

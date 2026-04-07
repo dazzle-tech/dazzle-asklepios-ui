@@ -9,6 +9,7 @@ import GenericAdministeredMedications from "@/pages/encounter/encounter-componen
 import { ApPreOperationAssessment } from '@/types/model-types';
 import { newApPreOperationAdministeredMedications, newApPreOperationAssessment } from '@/types/model-types-constructor';
 import { useGetPreOperationMedicationsListQuery, useSavePreOperationMedicationsMutation } from '@/services/encounterService';
+import { Translate } from '@mui/icons-material';
 const PreOperationAssessment = () => {
     const [preOperationAssessment, setPreOperationAssessment] = useState<ApPreOperationAssessment>({ ...newApPreOperationAssessment });
 
@@ -39,7 +40,7 @@ const PreOperationAssessment = () => {
                         <Row>
                             <div className='container-form'>
                                 <div className='title-div'>
-                                    <Text>Pre-Operation Assessment</Text>
+                                    <Text><Translate>Pre-Operation Assessment</Translate></Text>
                                 </div>
                                 <Divider />
                                 <Form fluid layout='inline'  >
@@ -137,7 +138,7 @@ const PreOperationAssessment = () => {
                         <Row>
                             <div className='container-form'>
                                 <div className='title-div'>
-                                    <Text>Vitals on Admission</Text>
+                                    <Text><Translate>Vitals on Admission</Translate></Text>
                                 </div>
                                 <Divider />
                                 <VitalSigns object={vital} setObject={setVital} />
@@ -146,7 +147,7 @@ const PreOperationAssessment = () => {
                         <Row>
                             <div className='container-form'>
                                 <div className='title-div'>
-                                    <Text>Pre-Medication Given</Text>
+                                    <Text><Translate>Pre-Medication Given</Translate></Text>
                                 </div>
                                 <Divider />
                                 <GenericAdministeredMedications

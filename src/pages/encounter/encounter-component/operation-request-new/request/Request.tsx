@@ -384,7 +384,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
                     Cancel
                   </MyButton>
                   <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                   </Checkbox>
                 </div>
                 <div className="bt-right-2">
@@ -395,7 +395,9 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
                     }}
                   >
                     <FontAwesomeIcon icon={faPlus} style={{ marginRight: 5 }} />
-                    Add Request
+                    <Translate>
+                      Add Request
+                    </Translate>
                   </MyButton>
 
                   <MyButton
@@ -403,7 +405,9 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
                     onClick={handleSubmit}
                   >
                     <FontAwesomeIcon icon={faCheck} style={{ marginRight: 5 }} />
+                    <Translate>
                     Submit
+                    </Translate>
                   </MyButton>
                 </div>
               </div>

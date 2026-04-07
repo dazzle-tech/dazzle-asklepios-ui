@@ -323,7 +323,7 @@ const EchoDopplerTest = ({ patient, encounter, edit }) => {
           <Translate>Cancel</Translate>
         </MyButton>
         <Checkbox checked={showCancelled} onChange={(_, checked) => setShowCancelled(checked)}>
-          Show Cancelled
+                <Translate>Show Cancelled</Translate>
         </Checkbox>
       </div>
 

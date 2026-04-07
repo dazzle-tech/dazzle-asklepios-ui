@@ -15,7 +15,7 @@ import {
   showSystemLoader,
 } from "@/utils/uiReducerActions";
 import "./style.less";
-import Translate from "@/components/Translate";
+import Translate from "@/components/Translate/Translate";
 
 interface ReportResultTemplateModalProps {
   open: boolean;

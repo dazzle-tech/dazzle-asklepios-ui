@@ -4,6 +4,7 @@ import { Col, Divider, Row, Form, Text } from 'rsuite';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import Translate from '@/components/Translate';
 
 const DischargeFollowUp = () => {
 
@@ -21,7 +22,7 @@ const DischargeFollowUp = () => {
                         <Row>
                             <div className='container-form'>
                                 <div className='title-div'>
-                                    <Text>Discharge & Follow-Up</Text>
+                                    <Text><Translate>Discharge & Follow-Up</Translate></Text>
                                 </div>
                                 <Divider />
                                 <Form fluid layout='inline'  >

@@ -6,6 +6,7 @@ import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import Translate from '@/components/Translate';
 const AddNewModal = ({
   open,
   setOpen,
@@ -71,7 +72,7 @@ const AddNewModal = ({
             <MyInput
               width="100%"
               fieldName="urinaryFrequencyOrUrgencyOrIncontinence"
-              fieldLabel="Urinary frequency, urgency or incontinence"
+              fieldLabel={<Translate>Urinary frequency, urgency or incontinence</Translate>}
               fieldType="select"
               selectData={booleanLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
