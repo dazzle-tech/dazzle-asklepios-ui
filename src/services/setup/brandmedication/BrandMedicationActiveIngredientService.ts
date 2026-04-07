@@ -35,6 +35,17 @@ export const BrandMedicationActiveIngredientService = createApi({
       }),
       invalidatesTags: ["BrandMedicationActiveIngredient"],
     }),
+
+    getActiveIngredientsByBrands: builder.mutation<
+      Record<string, string[]>,
+      number[]
+    >({
+      query: brandIds => ({
+        url: "/api/setup/brand-medication-active-ingredient/by-brands",
+        method: "POST",
+        body: brandIds,
+      }),
+    }),
   }),
 });
 
@@ -43,5 +54,6 @@ export const {
   useGetActiveIngredientsByBrandQuery,
   useLazyGetActiveIngredientsByBrandQuery,
   useDeleteActiveIngredientMutation,
+  useGetActiveIngredientsByBrandsMutation
 } = BrandMedicationActiveIngredientService;
 

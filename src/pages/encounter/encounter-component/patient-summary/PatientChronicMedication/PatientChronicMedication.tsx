@@ -254,7 +254,7 @@
 // please dont remove The commented code 
 
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import '../styles.less';
 import MyTable from '@/components/MyTable';
 import {
@@ -268,7 +268,7 @@ import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import { useGetAllChronicRawQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-
+import { useGetActiveIngredientsByBrandsMutation } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 const PatientChronicMedication = ({ patient, title = null }) => {
   const [open, setOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState('id');
@@ -308,11 +308,20 @@ const PatientChronicMedication = ({ patient, title = null }) => {
   const { data: customeInstructions, isLoading: isLoadingCustomeInstructions } = useGetCustomeInstructionsQuery({
     ...({} as any)
   });
-
+const [
+  getActiveIngredientsByBrands,
+  { data: activeIngredientsMap = {}, isLoading: isLoadingActiveIngredients }
+] = useGetActiveIngredientsByBrandsMutation();
 
   const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
   const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
+const brandIds = useMemo(() => {
+  const ids = (chronicMedications?.data ?? [])
+    .map((row: any) => row.medicationsId ?? row.genericMedicationsId)
+    .filter((id: any) => id !== null && id !== undefined);
 
+  return Array.from(new Set(ids.map((id: any) => Number(id))));
+}, [chronicMedications?.data]);
   const totalCount = chronicMedications?.totalCount ?? 0;
   const tableColumns = [
     {
@@ -393,6 +402,19 @@ const PatientChronicMedication = ({ patient, title = null }) => {
         return '-';
       }
     },
+    {
+  key: 'activeIngredient',
+  title: <Translate>Active Ingredient</Translate>,
+  flexGrow: 2,
+  render: (rowData: any) => {
+    const brandId = String(rowData.medicationsId ?? rowData.genericMedicationsId);
+    const ingredients = activeIngredientsMap?.[brandId] ?? [];
+
+    if (!ingredients.length) return '-';
+
+    return ingredients.join(', ');
+  }
+}
   ];
 
   const getLovDisplay = (list: any[] = [], key: any, labelKey = 'lovDisplayVale') => {
@@ -448,6 +470,12 @@ const PatientChronicMedication = ({ patient, title = null }) => {
     });
   };
 
+  useEffect(() => {
+  if (brandIds.length > 0) {
+    getActiveIngredientsByBrands(brandIds);
+  }
+}, [brandIds, getActiveIngredientsByBrands]);
+
   return (
     <Section
       isContainOnlyTable
@@ -456,7 +484,7 @@ const PatientChronicMedication = ({ patient, title = null }) => {
         <MyTable
           columns={tableColumns}
           totalCount={totalCount}
-          loading={isLoading || isLoadingCustomeInstructions || isLoadingGenericMedication || isLoadingPredefinedInstructions}
+          loading={isLoading || isLoadingCustomeInstructions || isLoadingGenericMedication || isLoadingPredefinedInstructions||  isLoadingActiveIngredients}
           data={chronicMedications?.data ?? []}
           page={paginationParams.page}
           rowsPerPage={paginationParams.size}
@@ -495,6 +523,8 @@ const PatientChronicMedication = ({ patient, title = null }) => {
           sortType={sortType}
           handlePageChange={handlePageChange}
           handleSortChange={handleSortChange}
+            activeIngredientsMap={activeIngredientsMap}
+
         />
       }
     />
