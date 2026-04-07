@@ -362,6 +362,10 @@ const AddPayment: React.FC<AddPaymentProps> = ({
         Type: item.type,
         Quantity: item.quantity ?? 1,
         Price: item.price,
+        TotalPrice:
+          item.totalPrice != null
+            ? Number(item.totalPrice)
+            : Number(item.price || 0) * Number(item.quantity || 1),
         Currency: item.currency,
       })),
     [invoiceItems]
@@ -397,6 +401,12 @@ const AddPayment: React.FC<AddPaymentProps> = ({
       flexGrow: 2,
       title: <Translate>Price</Translate>,
       dataKey: 'Price',
+    },
+    {
+      key: 'TotalPrice',
+      flexGrow: 2,
+      title: <Translate>Total Price</Translate>,
+      dataKey: 'TotalPrice',
     },
     {
       key: 'Currency',

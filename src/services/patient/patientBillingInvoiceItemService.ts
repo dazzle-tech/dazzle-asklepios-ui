@@ -65,6 +65,30 @@ export const patientBillingInvoiceItemService = createApi({
       providesTags: ['PatientBillingInvoiceItem'],
     }),
 
+    // GET /api/patient/billing/by-invoice/{invoiceId}
+    getPatientInvoiceItemsByInvoiceId: builder.query<
+      PagedResult<any>,
+      { invoiceId: number; page?: number; size?: number; sort?: string }
+    >({
+      query: ({ invoiceId, page = 0, size = 50, sort = 'id,asc' }) => ({
+        url: `/api/patient/billing/by-invoice/${invoiceId}`,
+        method: 'GET',
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: (_r, _e, { invoiceId }) => [
+        'PatientBillingInvoiceItem',
+        { type: 'PatientBillingInvoiceItem', id: invoiceId },
+      ],
+    }),
+
     getPatientInvoiceItemById: builder.query<any, number>({
       query: id => ({
         url: `/api/patient/billing/invoice-item/${id}`,
@@ -82,6 +106,8 @@ export const {
   useUpdatePatientInvoiceItemMutation,
   useGetPatientInvoiceItemsQuery,
   useLazyGetPatientInvoiceItemsQuery,
+  useGetPatientInvoiceItemsByInvoiceIdQuery,
+  useLazyGetPatientInvoiceItemsByInvoiceIdQuery,
   useGetPatientInvoiceItemByIdQuery,
 } = patientBillingInvoiceItemService;
 

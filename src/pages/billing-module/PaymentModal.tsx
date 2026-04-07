@@ -110,12 +110,13 @@ import AddPayment from './AddPayment';
 import {
   useCreatePaymentMutation,
   useCreatePaymentAllocationMutation,
-  useGetInvoiceItemsQuery,
   useGetPatientAccountSummaryQuery,
 } from '@/services/billing/BillingService';
+import { useGetPatientInvoiceItemsByInvoiceIdQuery } from '@/services/patient/patientBillingInvoiceItemService';
 
 import type {
   BillingItem,
+  BillingInvoiceItemResponseVM,
   PatientPaymentCreateVM,
   PaymentAllocationCreateVM,
 } from '@/types/model-types-new';
@@ -136,12 +137,37 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const authSlice = useAppSelector(state => state.auth);
   const facilityId = authSlice?.tenant?.selectedFacility?.id;
 
-  // 🟢 نجيب الآيتمز تبعت الفاتورة
-  const { data: invoiceItemsResponse } = useGetInvoiceItemsQuery(
-    { invoiceId: invoice?.id },
+  // 🟢 نجيب آيتمز الفاتورة المختارة مباشرة من الباك
+  const { data: invoiceItemsResponse } = useGetPatientInvoiceItemsByInvoiceIdQuery(
+    { invoiceId: Number(invoice?.id), page: 0, size: 100, sort: 'id,asc' },
     { skip: !invoice?.id }
   );
-  const invoiceItems: BillingItem[] = invoiceItemsResponse?.data ?? [];
+  const rawInvoiceItems: BillingInvoiceItemResponseVM[] = invoiceItemsResponse?.data ?? [];
+  const invoiceItems: BillingItem[] = rawInvoiceItems.map((item, index) => {
+    const code = String(item.code ?? '');
+    const [mappedType, mappedName] = code.includes('::')
+      ? code.split('::')
+      : ['', code];
+    const quantity = Number(item.quantity ?? 1);
+    const unitPrice = Number(item.unitPrice ?? 0);
+    const totalPrice = Number(item.totalPrice ?? unitPrice * quantity);
+
+    return {
+      id: String(item.id ?? index),
+      nurseServiceProductKey: String((item as any).nurseServiceProductId ?? ''),
+      clinic: '',
+      chargeDate: '',
+      type: mappedType || 'N/A',
+      name: mappedName || `Item #${item.id}`,
+      price: unitPrice,
+      totalPrice,
+      currency: item.currency ?? 'USD',
+      discount: 0,
+      priceList: 'Standard',
+      patientKey: String(localPatient?.key ?? ''),
+      quantity,
+    };
+  });
 
   // 🟢 Patient balance
   const {

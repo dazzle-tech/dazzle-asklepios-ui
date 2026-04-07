@@ -251,7 +251,8 @@ const Accounting: React.FC = () => {
       const itemPayloads = itemsToInvoice.map(it => ({
         invoiceId: Number(invoice.id),
         nurseServiceProductId: Number(it.nurseServiceProductKey),
-        code: it.name,
+        // Keep both type and display name so payment screens can render full details later.
+        code: `${it.type}::${it.name}`,
         quantity: Number(it.quantity),
         unitPrice: Number(it.price),
         totalPrice: Number(it.totalPrice ?? it.price * (it.quantity || 1)),
