@@ -7,6 +7,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import OrderModal from './OrderModal';
 import { Checkbox } from 'rsuite';
 import './styles.less';
+import Translate from '@/components/Translate';
 
 const OrderDetailsSection = ({ orders, orderColumns, onRowClick }) => {
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -103,7 +104,7 @@ const OrderDetailsSection = ({ orders, orderColumns, onRowClick }) => {
                     checked={showCancelled}
                     onChange={() => setShowCancelled(!showCancelled)}
                   >
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                   </Checkbox>
                 </div>
                 <div className="flex-8">

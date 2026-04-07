@@ -269,7 +269,7 @@ const [painLevel, setPainLevel] = useState(0);
             <Row>
               <Col md={24}>
                 <SectionContainer
-                  title="Patient Observations & Complaints"
+                  title={<Translate>Patient Observations & Complaints</Translate>}
                   content={
                     <>
                       <Row>

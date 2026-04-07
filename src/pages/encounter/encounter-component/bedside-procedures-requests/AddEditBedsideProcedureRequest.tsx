@@ -6,6 +6,7 @@ import { Form, Radio, RadioGroup } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { faSuitcaseMedical } from '@fortawesome/free-solid-svg-icons';
+import Translate from '@/components/Translate';
 const AddEditBedsideProcedureRequest = ({
   open,
   setOpen,
@@ -52,10 +53,10 @@ const AddEditBedsideProcedureRequest = ({
               record={bedsideProceduresRequest}
               setRecord={setBedsideProceduresRequest}
             />
-            <label>Executed By</label>
+            <label><Translate>Executed By</Translate></label>
             <RadioGroup name="executedBy" inline>
-              <Radio value="nurse">Nurse</Radio>
-              <Radio value="physician">Physician </Radio>
+              <Radio value="nurse"><Translate>Nurse</Translate></Radio>
+              <Radio value="physician"><Translate>Physician</Translate></Radio>
             </RadioGroup>
           </Form>
         );

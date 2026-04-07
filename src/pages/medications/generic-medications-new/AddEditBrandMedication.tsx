@@ -22,7 +22,7 @@ import { FaUnity } from 'react-icons/fa6';
 import { MdOutlineMedicationLiquid } from 'react-icons/md';
 import { Col, Form, Row } from 'rsuite';
 import './styles.less';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useEnumCapitalized, useEnumOptions } from '@/services/enumsApi';
 import { uomGroup } from '@/types/model-types-new';
 import { newUOMGroup } from '@/types/model-types-constructor-new';
 const AddEditBrandMedication = ({
@@ -53,6 +53,7 @@ const AddEditBrandMedication = ({
 
   const units = useEnumOptions("Unit")
 
+  const currencyOptions = useEnumCapitalized("Currency");
 
   const {
     data: uomGroupsListResponse,
@@ -96,7 +97,6 @@ const AddEditBrandMedication = ({
         return (
           <Form fluid>
             <Row>
-
               <Col md={8}>
                 <MyInput
                   required
@@ -162,7 +162,34 @@ const AddEditBrandMedication = ({
 
 
             </Row>
+            <Row>
+              <Col md={12}>
+                <MyInput
+                  required
+                  width="100%"
+                  fieldLabel="Price"
+                  fieldName="price"
+                  fieldType="number"
+                  record={brandMedication}
+                  setRecord={setBrandMedication}
+                />
+              </Col>
 
+              <Col md={12}>
+                <MyInput
+                  required
+                  width="100%"
+                  fieldLabel="Currency"
+                  fieldType="select"
+                  fieldName="currency"
+                  selectData={currencyOptions ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={brandMedication}
+                  setRecord={setBrandMedication}
+                />
+              </Col>
+            </Row>
             <br />
             <MyInput
               width="100%"
@@ -298,11 +325,11 @@ const AddEditBrandMedication = ({
     }
   };
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (

@@ -247,7 +247,7 @@ const Dashboard = () => {
               title={
                 <TitleWithIcon
                   icon={<FontAwesomeIcon icon={faPills} />}
-                  text={<Translate>Top Medications</Translate>}
+                  text={<Translate>Top Medications</Translate>} 
                   iconColor="#8f98ab"
                 />
               }

@@ -62,7 +62,7 @@ const PreObservation = ({ patient }) => {
   return (
     <Section
       isContainOnlyTable
-      title="Patient Observation"
+      title={<Translate>Patient Observation</Translate>}
       content={
         <MyTable data={vitalPage ?? []} columns={columns} height={250} />
       }

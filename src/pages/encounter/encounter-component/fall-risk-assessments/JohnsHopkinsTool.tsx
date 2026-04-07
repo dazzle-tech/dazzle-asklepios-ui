@@ -15,6 +15,7 @@ import JhonsHopkinsToolSecondModal from './JhonsHopkinsToolSecondModal';
 import MyButton from '@/components/MyButton/MyButton';
 import './Style.less';
 import { Whisper, Tooltip } from 'rsuite';
+import Translate from '@/components/Translate';
 
 //Table Data
 const sampleData = [
@@ -197,7 +198,9 @@ const tablebuttons = (
         }}>
         Cancel
       </MyButton>
-      <Checkbox>Show Cancelled</Checkbox>
+      <Checkbox>
+        <Translate>Show Cancelled</Translate>
+      </Checkbox>
     </div>
     <div className="right-group">
 <MyButton

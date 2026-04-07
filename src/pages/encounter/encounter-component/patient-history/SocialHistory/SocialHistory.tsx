@@ -147,7 +147,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     },
     {
       key: 'createdDate',
-      title: 'CREATED AT / BY',
+      title: <Translate>CREATED AT / BY</Translate>,
       expandable: true,
       render: (row: any) =>
         row?.createdDate ? (
