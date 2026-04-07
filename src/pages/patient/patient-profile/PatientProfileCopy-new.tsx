@@ -243,17 +243,17 @@ const PatientProfile = () => {
   /* ======================== EFFECTS ========================= */
   /* ========================================================= */
 
-  useEffect(() => {
+
+useEffect(() => {
     dispatch(setPageCode('Patient_Registration'));
     dispatch(setDivContent(divContent));
     dispatch(setPatient({ ...newPatient }));
 
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   useEffect(() => {
     if (propsData && propsData.patient) {
       setLocalPatient(propsData.patient);
