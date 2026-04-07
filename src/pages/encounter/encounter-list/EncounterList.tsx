@@ -183,7 +183,6 @@ const EncounterList = () => {
     discharge: false
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
-  const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
   // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
@@ -544,7 +543,14 @@ const EncounterList = () => {
     setPage(0);
     setSearchTick(prev => prev + 1);
   };
+  const isAdmin = !!authSlice.user?.admin;
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
 
+  const canSeeNurseStation = isAdmin || jobRole === 'NURSE';
+  const canSeeDoctorVisit = isAdmin || jobRole === 'PHYSICIAN';
+  const canSeeEMR = isAdmin || jobRole === 'PHYSICIAN';
+  const canSeePrint = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
+  const canSeeCancel = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -669,59 +675,65 @@ const EncounterList = () => {
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="black"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    if (row?.isObserved) {
-                      handleGoToPreVisitObservations(row);
-                    } else {
-                      setOpenNurseAssessment(true);
-                    }
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserNurse} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {canSeeNurseStation && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="black"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      if (row?.isObserved) {
+                        handleGoToPreVisitObservations(row);
+                      } else {
+                        setOpenNurseAssessment(true);
+                      }
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserNurse} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
-              <div>
-                <MyButton
-                  size="small"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    handleGoToVisit(row);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserDoctor} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {canSeeDoctorVisit && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+                <div>
+                  <MyButton
+                    size="small"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleGoToVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserDoctor} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="violet"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    setEmrEncounter(row);
-                    setEmrPatient(row?.patientObject ?? null);
-                    dispatch(setEncounter(row));
-                    if (row?.patientObject) dispatch(setPatient(row.patientObject));
-                    setOpenEMRModal(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faFileWaveform} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {canSeeEMR && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="violet"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      setEmrEncounter(row);
+                      setEmrPatient(row?.patientObject ?? null);
+                      dispatch(setEncounter(row));
+                      if (row?.patientObject) dispatch(setPatient(row.patientObject));
+                      setOpenEMRModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faFileWaveform} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            {isNew && (
+            {canSeeCancel && isNew && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
                   <MyButton
@@ -737,17 +749,19 @@ const EncounterList = () => {
               </Whisper>
             )}
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="light-blue"
-                  onClick={() => setLocalEncounter(row)}
-                >
-                  <FontAwesomeIcon icon={faPrint} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {canSeePrint && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="light-blue"
+                    onClick={() => setLocalEncounter(row)}
+                  >
+                    <FontAwesomeIcon icon={faPrint} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
           </Form>
         );
       },
@@ -924,24 +938,24 @@ const EncounterList = () => {
           width="15vw"
         />
       </div>
-  <div dir={isRTL ? 'rtl' : 'ltr'}>
-      <Panel>
-        <MyTable
-          filters={filters()}
-          height={600}
-          data={normalizedTableData}
-          columns={tableColumns}
-          rowClassName={(row: any) =>
-            row && encounter && row.id === encounter.id ? 'selected-row' : ''
-          }
-          loading={tableLoading}
-          onRowClick={(row: any) => setLocalEncounter(row)}
-          page={page}
-          rowsPerPage={pageSize}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        />
+      <div dir={isRTL ? 'rtl' : 'ltr'}>
+        <Panel>
+          <MyTable
+            filters={filters()}
+            height={600}
+            data={normalizedTableData}
+            columns={tableColumns}
+            rowClassName={(row: any) =>
+              row && encounter && row.id === encounter.id ? 'selected-row' : ''
+            }
+            loading={tableLoading}
+            onRowClick={(row: any) => setLocalEncounter(row)}
+            page={page}
+            rowsPerPage={pageSize}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+          />
           <MyModal
             open={openRefillModal}
             setOpen={setOpenRefillModal}
