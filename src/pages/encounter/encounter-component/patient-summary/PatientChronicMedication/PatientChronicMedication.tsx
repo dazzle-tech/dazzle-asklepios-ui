@@ -7,7 +7,7 @@ import {
 } from '@/services/encounterService';
 import FullViewTable from './FullViewTable';
 import Section from '@/components/Section';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import { useGetAllChronicRawQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';

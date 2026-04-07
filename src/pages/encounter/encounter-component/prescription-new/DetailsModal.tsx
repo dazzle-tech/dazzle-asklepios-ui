@@ -1,6 +1,5 @@
 import AdvancedModal from '@/components/AdvancedModal';
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
-import InfoCardList from '@/components/InfoCardList';
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
@@ -19,12 +18,15 @@ import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/set
 import {
   useGetBrandMedicationByIdQuery,
   useSearchBrandMedicationsByNameOrActiveQuery
-} from '@/services/setup/brandmedication/BrandMedicationService ';
+} from '@/services/setup/brandmedication/BrandMedicationService';
+import './styles.less';
+import { AttachmentUploadModal } from '@/components/AttachmentModals';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
+import InfoCardList from '@/components/InfoCardList';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faRightLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -36,8 +38,6 @@ import DiagnosticsOrder from '../diagnostics-order-new';
 import Substitues from '../drug-order/SubstitutesNew';
 import ActiveIngrediantList from './ActiveIngredient';
 import Instructions from './Instructions';
-import './styles.less';
-
 const DetailsModal = ({
   edit,
   open,
@@ -1157,4 +1157,5 @@ const DetailsModal = ({
     </div>
   );
 };
+
 export default DetailsModal;

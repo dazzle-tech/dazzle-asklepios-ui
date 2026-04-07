@@ -184,17 +184,17 @@ const ProductCatalog = () => {
     const divContent = (
            "Product Catalog"
     );
-    // page header setup
+
+    useEffect(() => {
     dispatch(setPageCode('ProductCatalog'));
     dispatch(setDivContent(divContent));
 
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
-    useEffect(() => {
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent('  '));
-        };
-    }, [location.pathname, dispatch]);
 
   // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';

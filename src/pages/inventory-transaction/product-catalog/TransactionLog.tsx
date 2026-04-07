@@ -245,19 +245,21 @@ const TransactionLog = ({ selectedProduct }) => {
          }
      };
  
-     useEffect(() => {
-             return () => {
-                 dispatch(setPageCode(''));
-                 dispatch(setDivContent('  '));
-             };
-         }, [location.pathname, dispatch]);
- 
+
      // Effects
      useEffect(() => {
          handleManualSearch();
      }, []);
      // page header setup
-     dispatch(setPageCode('Inventory_Transaction'));
+useEffect(() => {
+  dispatch(setPageCode('Inventory_Transaction'));
+  dispatch(setDivContent('Inventory Transaction'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
                            // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';

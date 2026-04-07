@@ -22,7 +22,7 @@ import {
 } from '@/types/model-types-constructor-new';
 
 import { useGetActiveServicesByFacilityQuery } from '@/services/setup/serviceService';
-import { useGetBrandMedicationsByIsActiveQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetBrandMedicationsByIsActiveQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetActiveDiagnosticTestsByTypeQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetActiveProceduresByFacilityQuery } from '@/services/setup/procedure/procedureService';
 
@@ -48,7 +48,7 @@ const AddEditPatientServiceAndProduct = ({
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-  const billingItemTypeOptions = useEnumOptions('BillingItemTypes') ?? [];
+  const billingItemTypeOptions = useEnumOptions('BillingItemTypes');
 
   const {
     data: activeServicesResponse,
@@ -439,9 +439,7 @@ const AddEditPatientServiceAndProduct = ({
           discountAmount: patientServiceAndProduct.discountAmount ?? 0,
           exemptionAmount: patientServiceAndProduct.exemptionAmount ?? 0,
           taxAmount: patientServiceAndProduct.taxAmount ?? 0,
-          totalAmount: patientServiceAndProduct.totalAmount ?? 0,
           currency: patientServiceAndProduct.currency,
-          notes: patientServiceAndProduct.notes ?? '',
           isBilled: patientServiceAndProduct.isBilled ?? false,
           billingInvoiceId: patientServiceAndProduct.billingInvoiceId ?? null,
           billingInvoiceItemId: patientServiceAndProduct.billingInvoiceItemId ?? null,

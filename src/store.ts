@@ -112,7 +112,7 @@ import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesInte
 import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 
-import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService ';
+import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService';
 import { BrandMedicationSubstituteService } from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 

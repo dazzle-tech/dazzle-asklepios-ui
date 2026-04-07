@@ -223,6 +223,21 @@ const MyInput = ({
       return;
     }
 
+    if (fieldType === 'number') {
+      if (value === '' || value === null || value === undefined) {
+        setRecord({ ...record, [fieldName]: null });
+        return;
+      }
+
+      const numericValue = typeof value === 'number' ? value : Number(value);
+
+      setRecord({
+        ...record,
+        [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+      });
+      return;
+    }
+
     setRecord({ ...record, [fieldName]: value });
   };
 
@@ -799,7 +814,19 @@ const MyInput = ({
             min={0}
             value={value}
             accepter={InputNumber}
-            onChange={handleValueChange}
+            onChange={(value) => {
+              if (value === '' || value === null || value === undefined) {
+                setRecord?.({ ...record, [fieldName]: null });
+                return;
+              }
+
+              const numericValue = typeof value === 'number' ? value : Number(value);
+
+              setRecord?.({
+                ...record,
+                [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+              });
+            }}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
           />
@@ -999,7 +1026,11 @@ const MyInput = ({
         {showLabel && (
           <MyLabel
             label={
-              typeof fieldLabel === 'string' ? <Translate>{fieldLabel}</Translate> : fieldLabel
+              typeof fieldLabel === 'string' ? (
+                <Translate>{fieldLabel}</Translate>
+              ) : (
+                fieldLabel
+              )
             }
             error={validationResult}
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
