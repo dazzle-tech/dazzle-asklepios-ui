@@ -85,7 +85,7 @@ const ChooseDashboardSections = ({
               <MyInput
                 fieldType="check"
                 fieldName="c3"
-                fieldLabel={<Translate>Patient Major Problem</Translate>}
+                fieldLabel={<Translate>Chronic Diseases</Translate>}
                 record={displays}
                 setRecord={setDisplays}
                 showLabel={false}
