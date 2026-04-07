@@ -322,7 +322,7 @@ useEffect(() => {
     dispatch(setPageCode(''));
     dispatch(setDivContent(''));
   };
-}, [dispatch]);
+}, [currentHeader,dispatch]);
 
 
   useEffect(() => {
