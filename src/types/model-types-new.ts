@@ -4006,3 +4006,19 @@ export interface PatientEncounterDischarge {
   dischargeType: string | null;
   dischargeAt: string | null;
 }
+export interface CurrentMedication {
+  patientId: number;
+  activeIngredientId: number;
+  instructions?: string | null;
+  startDate: string | Date | null;
+}
+
+export type CurrentMedicationCreate = CurrentMedication;
+
+export type CurrentMedicationUpdate = CurrentMedication & {
+  id: number;
+};
+
+export type CurrentMedicationForm = CurrentMedication & {
+  id?: number;
+};

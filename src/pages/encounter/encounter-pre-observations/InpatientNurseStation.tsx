@@ -48,8 +48,16 @@ const InpatientNurseStation = ({ }) => {
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   // Page header setup
   const divContent = 'Nurse Anamnesis';
-  dispatch(setPageCode('Nurse_Station'));
-  dispatch(setDivContent(divContent));
+
+  useEffect(() => {
+    dispatch(setPageCode('Nurse_Station'));
+    dispatch(setDivContent(divContent));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -72,12 +80,7 @@ const InpatientNurseStation = ({ }) => {
   };
 
   // Effects
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
   useEffect(() => {
     // TODO update status to be a LOV value
     if (localEncounter?.encounterStatusLkey === '91109811181900') {

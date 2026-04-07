@@ -476,8 +476,17 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
 
   // Header page setUp
   const divContent = 'Diagnostics Tests Definition';
+
+
+useEffect(() => {
   dispatch(setPageCode('Diagnostics_Tests'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   const isSelected = rowData => {
     if (rowData && diagnosticsTest && rowData.id === diagnosticsTest.id) {
@@ -733,13 +742,6 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-  // update list when filter is changed
 
   useEffect(() => {
     if (!openProfileModal) {

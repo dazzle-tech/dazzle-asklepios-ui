@@ -153,13 +153,6 @@ const ProductList = ({
     }
   }, [recordOfFilter]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
 
 
   // handle click om edit  

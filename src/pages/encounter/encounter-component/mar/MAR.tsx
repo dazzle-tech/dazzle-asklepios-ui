@@ -667,12 +667,15 @@ const MAR = () => {
   ];
 
   // Effects
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+      useEffect(() => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent(''));
+        };
+      }, [dispatch]);
 
           // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';

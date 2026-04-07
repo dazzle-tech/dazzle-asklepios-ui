@@ -62,34 +62,37 @@ const FIELD_LABELS: Record<string, string> = {
   currency: "Currency",
 };
 
+const BRAND_MEDICATION_ERROR_MAP: Record<string, string> = {
+  namerequired: "Brand Name is required.",
+  dosageformrequired: "Dosage Form is required.",
+  uomGrouprequired: "UOM Group is required.",
+  uomGroupUnitrequired: "Base UOM is required.",
+  notfound: "Requested Brand Medication record was not found.",
+};
+
 const formatFieldName = (field?: string): string => {
   if (!field) return "";
   return FIELD_LABELS[field] || field;
 };
 
-const normalizeConstraintMessage = (message?: string): string => {
-  if (!message) return "is invalid";
-
-  const normalized = message.toLowerCase().trim();
+const normalizeFieldMessage = (msg?: string) => {
+  const m = (msg || "").toLowerCase().trim();
 
   if (
-    normalized.includes("must not be null") ||
-    normalized.includes("must not be blank") ||
-    normalized.includes("must not be empty") ||
-    normalized.includes("is required")
+    m.includes("must not be null") ||
+    m.includes("must not be blank") ||
+    m.includes("must not be empty") ||
+    m.includes("is required")
   ) {
     return "is required";
   }
 
-  if (normalized.includes("failed to convert")) {
-    return "has invalid value";
-  }
+  if (m.includes("failed to convert")) return "has invalid value";
+  if (m.includes("size must be between")) return "length is out of range";
+  if (m.includes("must be greater")) return "value is too small";
+  if (m.includes("must be less")) return "value is too large";
 
-  if (normalized.includes("must be greater than or equal to")) {
-    return message;
-  }
-
-  return message;
+  return msg || "invalid value";
 };
 
 const prettifyInlineBackendMessage = (message: string): string => {
@@ -99,70 +102,82 @@ const prettifyInlineBackendMessage = (message: string): string => {
     .filter(Boolean)
     .map((part) => {
       const firstColonIndex = part.indexOf(":");
-      if (firstColonIndex === -1) {
-        return part;
-      }
+      if (firstColonIndex === -1) return part;
 
       const rawField = part.slice(0, firstColonIndex).trim();
       const rawMessage = part.slice(firstColonIndex + 1).trim();
 
       const field = formatFieldName(rawField);
-      const normalizedMessage = normalizeConstraintMessage(rawMessage);
+      const normalizedMessage = normalizeFieldMessage(rawMessage);
 
       return field ? `${field} ${normalizedMessage}` : normalizedMessage;
     })
     .join(", ");
 };
 
-const buildFieldErrorMessage = (field?: string, message?: string): string => {
-  const prettyField = formatFieldName(field);
-  const prettyMessage = normalizeConstraintMessage(message);
+const handleCrudError = (
+  err: any,
+  dispatch: any,
+  keyMap: Record<string, string>
+) => {
+  const data = err?.data ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : "";
 
-  if (!prettyField) return prettyMessage;
-  return `${prettyField} ${prettyMessage}`;
-};
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map((fe: any) => {
+      const field = formatFieldName(fe.field || fe.property || fe.path);
+      return `• ${field || "Field"}: ${normalizeFieldMessage(
+        fe.message || fe.defaultMessage
+      )}`;
+    });
 
-const getErrorMessage = (error: any): string => {
-  if (error?.data?.fieldErrors?.length) {
-    return error.data.fieldErrors
-      .map((e: any) =>
-        buildFieldErrorMessage(
-          e.field || e.property || e.path,
-          e.message || e.defaultMessage
-        )
-      )
-      .join(", ");
-  }
-
-  if (error?.data?.errors?.length) {
-    return error.data.errors
-      .map((e: any) => {
-        if (typeof e === "string") return e;
-
-        return buildFieldErrorMessage(
-          e.field || e.property || e.path,
-          e.message || e.defaultMessage || String(e)
-        );
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join("\n")}${suffix}`,
+        sev: "error",
       })
-      .join(", ");
+    );
+    return;
   }
 
-  if (typeof error?.data?.message === "string") {
-    return prettifyInlineBackendMessage(error.data.message);
+  if (Array.isArray(data?.errors) && data.errors.length > 0) {
+    const lines = data.errors.map((e: any) => {
+      if (typeof e === "string") return `• ${prettifyInlineBackendMessage(e)}`;
+
+      const field = formatFieldName(e.field || e.property || e.path);
+      const message = normalizeFieldMessage(e.message || e.defaultMessage);
+      return `• ${field ? `${field}: ${message}` : message}`;
+    });
+
+    dispatch(
+      notify({
+        msg: `Please fix the following errors:\n${lines.join("\n")}${suffix}`,
+        sev: "error",
+      })
+    );
+    return;
   }
 
-  if (typeof error?.data === "string") {
-    return prettifyInlineBackendMessage(error.data);
-  }
+  const rawMessage: string = data?.message || err?.message || "";
+  const errorKey =
+    data?.errorKey ||
+    (rawMessage?.startsWith("error.") ? rawMessage.substring(6) : undefined);
 
-  if (typeof error?.message === "string") {
-    return prettifyInlineBackendMessage(error.message);
-  }
+  const humanMsg =
+    (errorKey && keyMap[errorKey]) ||
+    keyMap[rawMessage] ||
+    data?.detail ||
+    data?.title ||
+    (rawMessage ? prettifyInlineBackendMessage(rawMessage) : "") ||
+    err?.error ||
+    "Unexpected error occurred";
 
-  return (
-    error?.data?.title ||
-    error?.error ||
-    "Unexpected error occurred"
+  dispatch(
+    notify({
+      msg: `${humanMsg}${suffix}`,
+      sev: "error",
+    })
   );
 };
 
@@ -248,12 +263,7 @@ const GenericMedications = () => {
       setOpenAddEditPopup(false);
       refetch();
     } catch (error: any) {
-      dispatch(
-        notify({
-          msg: getErrorMessage(error),
-          sev: "error",
-        })
-      );
+      handleCrudError(error, dispatch, BRAND_MEDICATION_ERROR_MAP);
     }
   };
 
@@ -264,12 +274,7 @@ const GenericMedications = () => {
       setOpenConfirmModal(false);
       refetch();
     } catch (error: any) {
-      dispatch(
-        notify({
-          msg: getErrorMessage(error),
-          sev: "error",
-        })
-      );
+      handleCrudError(error, dispatch, BRAND_MEDICATION_ERROR_MAP);
       setOpenConfirmModal(false);
     }
   };
@@ -330,12 +335,7 @@ const GenericMedications = () => {
       setFilteredTotal(response.totalCount ?? 0);
       setIsFiltered(true);
     } catch (error: any) {
-      dispatch(
-        notify({
-          msg: getErrorMessage(error),
-          sev: "error",
-        })
-      );
+      handleCrudError(error, dispatch, BRAND_MEDICATION_ERROR_MAP);
     }
   };
 
@@ -399,29 +399,7 @@ const GenericMedications = () => {
         );
 
       case "expiresAfterOpening":
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="checkbox"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Search"
-          />
-        );
-
       case "isActive":
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="checkbox"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Search"
-          />
-        );
-
       case "useSinglePatient":
         return (
           <MyInput

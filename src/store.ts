@@ -210,6 +210,8 @@ import { roomService } from './services/setup/room/roomService';
 import { bedService } from './services/setup/room/bedService';
 import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
+import { currentMedicationService } from './services/patients/currentMedicationService';
+
 
 export const store = configureStore({
   reducer: {
@@ -516,6 +518,7 @@ export const store = configureStore({
     [bedService.reducerPath]: bedService.reducer,
     [bedRoomService.reducerPath]: bedRoomService.reducer,
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
+    [currentMedicationService.reducerPath]: currentMedicationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -758,6 +761,7 @@ export const store = configureStore({
         bedService.middleware,
         bedRoomService.middleware,
         encounterAssignToBedService.middleware,
+        currentMedicationService.middleware
       ]
     ) as any
 });
