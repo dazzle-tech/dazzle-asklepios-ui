@@ -209,7 +209,6 @@ const MyInput = ({
 
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
 
-
   const handleValueChange = (value: any) => {
     if (!setRecord || typeof setRecord !== 'function') return;
 
@@ -221,6 +220,21 @@ const MyInput = ({
 
       const dateStr = value ? dayjs(value).format('YYYY-MM-DD') : null;
       setRecord({ ...record, [fieldName]: dateStr });
+      return;
+    }
+
+    if (fieldType === 'number') {
+      if (value === '' || value === null || value === undefined) {
+        setRecord({ ...record, [fieldName]: null });
+        return;
+      }
+
+      const numericValue = typeof value === 'number' ? value : Number(value);
+
+      setRecord({
+        ...record,
+        [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+      });
       return;
     }
 
@@ -800,7 +814,19 @@ const MyInput = ({
             min={0}
             value={value}
             accepter={InputNumber}
-            onChange={handleValueChange}
+            onChange={(value) => {
+              if (value === '' || value === null || value === undefined) {
+                setRecord?.({ ...record, [fieldName]: null });
+                return;
+              }
+
+              const numericValue = typeof value === 'number' ? value : Number(value);
+
+              setRecord?.({
+                ...record,
+                [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+              });
+            }}
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
           />
@@ -999,14 +1025,13 @@ const MyInput = ({
       <Form.ControlLabel>
         {showLabel && (
           <MyLabel
-          //  label={fieldLabel}
             label={
-                      typeof fieldLabel === 'string' ? (
-                        <Translate>{fieldLabel}</Translate>
-                      ) : (
-                        fieldLabel
-                      )
-                    }
+              typeof fieldLabel === 'string' ? (
+                <Translate>{fieldLabel}</Translate>
+              ) : (
+                fieldLabel
+              )
+            }
             error={validationResult}
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />

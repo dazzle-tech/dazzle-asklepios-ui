@@ -19,7 +19,14 @@ import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/set
 import {
   useGetBrandMedicationByIdQuery,
   useSearchBrandMedicationsByNameOrActiveQuery
-} from '@/services/setup/brandmedication/BrandMedicationService ';
+} from '@/services/setup/brandmedication/BrandMedicationService';
+import './styles.less';
+import SectionContainer from '@/components/SectionsoContainer';
+import { AttachmentUploadModal } from '@/components/AttachmentModals';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
+import InfoCardList from '@/components/InfoCardList';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApPrescriptionMedications } from '@/types/model-types-constructor';

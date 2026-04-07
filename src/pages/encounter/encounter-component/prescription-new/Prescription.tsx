@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useGeneratePrescriptionPdfMutation } from '@/services/setup/PrescriptionReportRequest';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
