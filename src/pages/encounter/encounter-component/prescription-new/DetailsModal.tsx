@@ -1157,4 +1157,5 @@ const DetailsModal = ({
     </div>
   );
 };
+
 export default DetailsModal;
