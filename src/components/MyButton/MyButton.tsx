@@ -1,24 +1,41 @@
 import React from 'react';
 import { Button } from 'rsuite';
 import './styles.less';
-import { Box } from '@mui/material';
 import { useSelector } from 'react-redux';
 import Translate from '../Translate';
+
 type Appearance = 'primary' | 'default' | 'link' | 'subtle' | 'ghost';
+
+type MyButtonProps = {
+  prefixIcon?: React.ElementType | null;
+  postfixIcon?: React.ElementType | null;
+  children?: React.ReactNode;
+  onClick?: () => void;
+  appearance?: Appearance;
+  size?: 'lg' | 'md' | 'sm' | 'xs' | string;
+  loading?: boolean;
+  color?: string;
+  backgroundColor?: string;
+  width?: string | number;
+  radius?: string | number;
+  disabled?: boolean;
+  style?: React.CSSProperties;
+};
+
 const MyButton = ({
   prefixIcon: Prefix = null,
   postfixIcon: Postfix = null,
   children = null,
   onClick = () => {},
-  appearance = 'primary' as Appearance,
+  appearance = 'primary',
   size = 'small',
   loading = false,
-  color,
+  color = 'var(--primary-blue)',
   backgroundColor,
   width,
   radius,
   ...props
-}) => {
+}: MyButtonProps) => {
   const mode = useSelector((state: any) => state.ui.mode);
 
   return (
@@ -29,7 +46,7 @@ const MyButton = ({
       style={{
         color:
           appearance === 'ghost' || appearance === 'link' || appearance === 'subtle'
-            ? color ?? 'var(--primary-blue)'
+            ? color
             : 'white',
         width,
         borderRadius: radius,
@@ -37,16 +54,14 @@ const MyButton = ({
           appearance === 'ghost' || appearance === 'link' || appearance === 'subtle'
             ? 'transparent'
             : backgroundColor ?? 'var(--primary-blue)',
-        border:
-          appearance === 'ghost'
-            ? `2px solid ${color ?? 'var(--primary-blue)'}`
-            : 'none',
+        border: appearance === 'ghost' ? `2px solid ${color}` : 'none',
+        ...props.style
       }}
       {...props}
       onClick={onClick}
       loading={loading}
     >
-      {Prefix && <Prefix c style={{ marginRight: '8px', color: 'inherit' }} />}
+      {Prefix && <Prefix style={{ marginRight: '8px', color: 'inherit' }} />}
       {children && <Translate>{children}</Translate>}
       {Postfix && <Postfix style={{ marginLeft: '8px', color: 'inherit' }} />}
     </Button>

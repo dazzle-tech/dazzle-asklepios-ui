@@ -617,7 +617,7 @@ const ProcedureModule: React.FC = () => {
             object={record}
             setOpject={setRecord}
             fieldName="indication"
-            fieldLabel="Indication"
+            fieldLabel={<Translate>Indication</Translate>}
           />
         </div>
       </Form>
@@ -674,7 +674,7 @@ const ProcedureModule: React.FC = () => {
         <SearchPatientCriteria record={record} setRecord={setRecord} searchMarginTop={0}/>
 
         <Checkbox style={{marginTop:'1.2vw'}} checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-          Show Cancelled
+          <Translate>Show Cancelled</Translate>
         </Checkbox>
       </Form>
       <AdvancedSearchFilters searchFilter={true} content={contents} />

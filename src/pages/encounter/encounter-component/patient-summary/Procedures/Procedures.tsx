@@ -166,7 +166,7 @@ const Procedures = ({ patient }) => {
 
   return (
     <Section
-      title="Procedures"
+      title={<Translate>Procedures</Translate>}
       isContainOnlyTable
       content={
         <MyTable

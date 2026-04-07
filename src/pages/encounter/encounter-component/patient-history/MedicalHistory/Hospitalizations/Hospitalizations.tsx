@@ -100,7 +100,7 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
     },
     {
       key: 'lengthOfStayDays',
-      title: <span><Translate>LENGTH OF STAY</Translate> (<Translate>DAYS</Translate>)</span>,
+      title:<span><Translate>LENGTH OF STAY</Translate><Translate>(Days)</Translate></span>,
       flexGrow: 2,
       dataKey: 'lengthOfStayDays'
     },

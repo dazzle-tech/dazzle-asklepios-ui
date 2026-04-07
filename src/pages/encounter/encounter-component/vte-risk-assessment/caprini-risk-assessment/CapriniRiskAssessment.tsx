@@ -9,6 +9,7 @@ import CapriniRiskAssessmentModal from './CapriniRiskAssessmentModal';
 import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import './style.less';
+import Translate from '@/components/Translate';
 
 // Initial sample data for testing or demo purposes
 const initialSampleData = [
@@ -147,7 +148,7 @@ const CapriniRiskAssessment = () => {
     <div className="table-buttons-container">
       <div className="left-group">
         <MyButton prefixIcon={() => <CloseOutlineIcon />}>Cancel</MyButton>
-        <Checkbox>Show Cancelled</Checkbox> {/* Not implemented yet */}
+        <Checkbox><Translate>Show Cancelled</Translate></Checkbox> {/* Not implemented yet */}
       </div>
       <div className="right-group">
         <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setModalOpen(true)}>

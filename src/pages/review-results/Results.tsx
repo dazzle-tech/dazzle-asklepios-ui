@@ -566,12 +566,18 @@ const Result = forwardRef<any, any>(
             <Checkbox
               checked={showReview}
               onChange={(_, checked) => setShowReview(checked)}
-            ><Translate>Show Review Result</Translate>
+            >
+              <Translate>
+                Show Review Result
+              </Translate>
             </Checkbox>
             <Checkbox
               checked={showAbnormal}
               onChange={(_, checked) => setShowAbnormal(checked)}
-            ><Translate>Show Abnormal Result</Translate>
+            >
+              <Translate>
+                Show Abnormal Result
+              </Translate>
             </Checkbox>
           </div>
         </div>

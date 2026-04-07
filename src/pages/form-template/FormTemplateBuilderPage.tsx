@@ -40,7 +40,7 @@ const FormTemplateBuilderPage = () => {
 
   // Header setup like your other pages
   useEffect(() => {
-    const title = templateId ? 'Edit Form Template' : 'New Form Template';
+    const title = templateId ? <Translate>Edit Form Template</Translate> : <Translate>New Form Template</Translate>;
     dispatch(setPageCode('FormTemplateBuilder'));
     dispatch(setDivContent(title));
 

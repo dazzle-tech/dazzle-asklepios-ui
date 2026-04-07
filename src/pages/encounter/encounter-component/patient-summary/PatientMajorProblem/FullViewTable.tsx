@@ -56,7 +56,7 @@ const FullViewTable = ({ open, setOpen, data, icdMap }) => {
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Patient Major Problem"
+            title={<Translate>Patient Major Problem</Translate>}
             content={<MyTable
                 data={data ?? []}
                 columns={tableColumns}
@@ -65,7 +65,7 @@ const FullViewTable = ({ open, setOpen, data, icdMap }) => {
             hideCancel={false}
             bodyheight="70vh"
             hideBack={true}
-            steps={[{ title: "Major Diagnoses", icon:  <FontAwesomeIcon icon={faLungsVirus }/>}]}
+            steps={[{ title: <Translate>Major Diagnoses</Translate>, icon:  <FontAwesomeIcon icon={faLungsVirus }/>}]}
             hideActionBtn={true}
         />
     );

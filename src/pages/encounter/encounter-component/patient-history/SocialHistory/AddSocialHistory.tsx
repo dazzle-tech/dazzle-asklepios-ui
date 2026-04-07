@@ -15,6 +15,7 @@ import {
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import './style.less';
+import Translate from '@/components/Translate';
 
 type SocialHistory = {
   id?: number | null;
@@ -224,7 +225,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
   const content = (
     <div className="padding-8">
       <CollapsibleSection
-        title="Smoking History"
+        title={<Translate>Smoking History</Translate>}
         icon={faSmoking}
         color="#415be7"
         isOpen={smokingExpanded}
@@ -319,7 +320,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Alcohol Consumption"
+        title={<Translate>Alcohol Consumption</Translate>}
         icon={faWineGlass}
         color="#415be7"
         isOpen={alcoholExpanded}
@@ -365,7 +366,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Substance Use"
+        title={<Translate>Substance Use</Translate>}
         icon={faPills}
         color="#415be7"
         isOpen={substanceExpanded}
@@ -378,7 +379,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
               width={180}
               column
               fieldType="checkbox"
-              fieldLabel="Substance Use"
+              fieldLabel={<Translate>Substance Use</Translate>}
               fieldName="substanceUse"
               record={record}
               setRecord={setRecord}
@@ -418,7 +419,7 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="Health Conditions"
+        title={<Translate>Health Conditions</Translate>}
         icon={faHeartbeat}
         color="#415be7"
         isOpen={healthExpanded}

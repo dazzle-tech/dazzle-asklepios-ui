@@ -10,11 +10,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { useGetFormTemplateQuery } from '@/services/setup/formTemplateService';
 import { useCreateFormEntryMutation } from '@/services/setup/formEntriesService';
 
-const UseTemplateModal = ({
-    open,
-    setOpen,
-    templateRow
-}) => {
+const UseTemplateModal = ({ open, setOpen, templateRow, onSaved }: any) => {
     const dispatch = useDispatch();
     const templateId = templateRow?.id;
 
@@ -42,41 +38,42 @@ const UseTemplateModal = ({
         return s;
     }, [tpl?.formJson]);
 
-    const handleSave = async () => {
-        if (!templateRow?.id) return;
+ const handleSave = async () => {
+    if (!templateRow?.id) return;
 
-        // If user didn’t click complete, take current data anyway:
-        const data = completedData ?? survey?.data;
+    const data = completedData ?? survey?.data;
 
+    if (!entryTitle?.trim()) {
+        dispatch(notify({ msg: 'Title is required', sev: 'warning' }));
+        return;
+    }
 
-        if (!entryTitle?.trim()) {
-            dispatch(notify({ msg: 'Title is required', sev: 'warning' }));
-            return;
-        }
-        if (!data || Object.keys(data).length === 0) {
-            dispatch(notify({ msg: 'Please fill the form before saving', sev: 'warning' }));
-            return;
-        }
+    if (!data || Object.keys(data).length === 0) {
+        dispatch(notify({ msg: 'Please fill the form before saving', sev: 'warning' }));
+        return;
+    }
 
-        const facilityId = templateRow.facilityId;
-        const departmentId = templateRow.departmentId;
+    const facilityId = templateRow.facilityId;
+    const departmentId = templateRow.departmentId;
 
-        try {
-            await createEntry({
-                title: entryTitle.trim(),
-                templateId: templateRow.id,
-                facilityId,
-                departmentId,
-                dataJson: JSON.stringify(data)
-            }).unwrap();
+    try {
+       const saved=  await createEntry({
+            title: entryTitle.trim(),
+            templateId: templateRow.id,
+            facilityId,
+            departmentId,
+            dataJson: JSON.stringify(data)
+        }).unwrap();
 
-            dispatch(notify({ msg: 'Form saved successfully', sev: 'success' }));
-            setOpen(false);
-        } catch (e) {
-            console.error(e);
-            dispatch(notify({ msg: 'Failed to save form', sev: 'error' }));
-        }
-    };
+        await onSaved?.(saved);
+
+        dispatch(notify({ msg: 'Form saved successfully', sev: 'success' }));
+        setOpen(false);
+    } catch (e) {
+        console.error(e);
+        dispatch(notify({ msg: 'Failed to save form', sev: 'error' }));
+    }
+};
 
     const content = () => (
         <div style={{ padding: 12 }}>

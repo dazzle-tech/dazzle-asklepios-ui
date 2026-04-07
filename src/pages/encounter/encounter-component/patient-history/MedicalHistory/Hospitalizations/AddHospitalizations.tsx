@@ -226,7 +226,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       <MyInput
         width={200}
         column
-        fieldLabel={<Translate>Length of stay (days)</Translate>}
+        fieldLabel={<span><Translate>Length of stay</Translate><Translate>(Days)</Translate></span>}
         fieldType="number"
         fieldName="lengthOfStayDays"
         record={formData}

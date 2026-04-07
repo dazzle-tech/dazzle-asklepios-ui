@@ -293,7 +293,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
                         setPositionStatus('');
                     }
                 }}>
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <div className='bt-right'>
                     <MyButton

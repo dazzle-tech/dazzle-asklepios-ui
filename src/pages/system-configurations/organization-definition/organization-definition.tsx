@@ -381,7 +381,7 @@ const OrganizationDefinition = () => {
                       key={day.value}
                       fieldType="check"
                       fieldName={day.value}
-                      fieldLabel={<Translate>{day.value}</Translate>}
+                      fieldLabel={<Translate>{day.label}</Translate>}
                       record={workingDaysRecord}
                       setRecord={setWorkingDaysRecord}
                       disabled={isLoadingData}
