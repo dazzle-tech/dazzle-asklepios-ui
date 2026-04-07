@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Tabs, Divider, Form, RadioGroup, Radio, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -33,13 +33,11 @@ import { useGetDepartmentServicesQuery } from '@/services/departmentServicesServ
 
 
 type AddEditAvailabilityTemplateProps = {
-  open: boolean
-  setOpen: any;
   template: AvailabilityTemplateResponseVM;
   
 };
 
-const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template }) => {
+const AvailabilityTemplateDetailsSection: React.FC<AddEditAvailabilityTemplateProps> = ({ template }) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector((s) => s.auth);
   const selectedDepartment = authSlice.selectedDepartment;
@@ -181,6 +179,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                   setResourceToEdit(templateToEdit);
                   setOpenAddResource(true);
                 }}
+                readOnly
               />
             </>
 
@@ -191,51 +190,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   }
 
   
- 
-  const handleSaveMainInfo = () => {
-    if (!record?.templateName?.trim()) {
-      dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
-      return;
-    }
-    if (!record?.facilityId) {
-      dispatch(notify({ msg: 'Facility is required', sev: 'warning' }));
-      return;
-    }
-     if (!record?.templateType) {
-      dispatch(notify({ msg: 'Template Type is required', sev: 'warning' }));
-      return;
-    }
-    if (!record?.departmentId) {
-      dispatch(notify({ msg: 'Department is required', sev: 'warning' }));
-      return;
-    }
-    if (record?.requirePractitioner && !record?.defaultPractitionerId) {
-      dispatch(notify({ msg: 'Default Practitioner is required', sev: 'warning' }));
-      return;
-    }
-
-    const payload = {
-      ...record,
-      resourceId: record?.departmentId,
-      numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
-      durationMinutes: Number(record?.durationMinutes),
-      allowedServices: Array.isArray(record?.allowedServices)
-        ? record.allowedServices
-        : []
-    };
-    console.log("objectToAdd: ", payload);
-
-    if (template?.id) {
-      update({ id: template.id, ...payload }).unwrap();
-      dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
-      setOpen(false);
-      return;
-    }
-
-    create(payload).unwrap();
-    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' })).then(() => setOpen(false);)
-    
-  };
 
   // Effects
   useEffect(() => {
@@ -355,10 +309,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   ]);
 
 
-  const conjureFormContent = (stepNumber = 0) => {
-    switch (stepNumber) {
-      case 0:
-        return (
+  
+   return (
           <div className="availability-template-modal">
             <Row>
               <Col md={12}>
@@ -376,7 +328,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                               record={record}
                               setRecord={setRecord}
                               width="100%"
-                              required
+                              disabled
                             />
                           </Col>
                           <Col md={12}>
@@ -408,7 +360,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                               record={record}
                               setRecord={setRecord}
                               width="100%"
-                              required
+                              
                               disabled
                             />
                           </Col>
@@ -424,7 +376,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                               record={record}
                               setRecord={setRecord}
                               menuMaxHeight={200}
-                              required
+                              disabled
                             />
                           </Col>
                         </Row>
@@ -441,13 +393,13 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                               selectDataValue='value'
                               width="100%"
                               disabled
-                              required
                             />
                           </Col>
                           <div className="block">
                             <Translate>Color</Translate>
                             <div className="color-picker-row">
                               <input
+                              disabled
                                 type="color"
                                 value={currentColor}
                                 onChange={e => {
@@ -469,6 +421,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                               setRecord={setRecord}
                               width="100%"
                               rightAddon="min"
+                              disabled
                             />
                           </Col>
                           <Col md={12}>
@@ -507,6 +460,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                           selectDataValue="id"
                           record={record}
                           setRecord={setRecord}
+                          disabled
                         />
                         <MyInput
                           width="100%"
@@ -515,6 +469,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                           fieldName="numberOfResourcesExpected"
                           record={record}
                           setRecord={setRecord}
+                          disabled
                         />
                         <Row>
                           <Col md={12}>
@@ -525,6 +480,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                               record={record}
                               setRecord={setRecord}
                               showLabel={false}
+                              disabled
                             />
                           </Col>
                           {record['requirePractitioner'] && (
@@ -539,7 +495,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                                 selectDataValue="id"
                                 record={record}
                                 setRecord={setRecord}
-                                required
+                                disabled
                               />
                             </Col>
                           )}
@@ -551,6 +507,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                           record={record}
                           setRecord={setRecord}
                           showLabel={false}
+                          disabled
                         />
                       </Form>
                     </>
@@ -578,6 +535,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                           return (
                             <Col md={8} key={serviceValue}>
                               <MyInput
+                              disabled
                                 width="100%"
                                 fieldType="check"
                                 fieldName={fieldName}
@@ -629,6 +587,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                 <Form fluid layout='inline'>
                   {dayOptions?.map(day => (
                     <MyInput
+                    disabled
                       key={day.value}
                       width="13vw"
                       fieldName={day.value}
@@ -659,16 +618,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                 >
                   <Translate>Preview slots</Translate>
                 </MyButton>
-                <MyButton
-                  onClick={() => {
-                    setResourceToEdit(null);
-                    setOpenAddResource(true);
-                  }}
-                  prefixIcon={() => <FaPlus />}
-                  disabled={template?.id ? false : true}
-                >
-                  Add Resource
-                </MyButton>
+                
 
               </div>
             </div>
@@ -694,6 +644,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
               mainTemplate={record}
               selectedDepartment={selectedDepartment}
               selectedFacility={selectedFacility}
+              readOnly
             />
 
             <AddExceptionModal
@@ -704,24 +655,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
           </div>
         );
-    }
-  };
-
-  return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      actionButtonFunction={handleSaveMainInfo}
-      title={
-        template?.id
-          ? <Translate>Edit Availability Template</Translate>
-          : <Translate>New Availability Template</Translate>
-      }
-      size="70vw"
-      content={conjureFormContent}
-    />
-  )
 };
 
-export default AddEditAvailabilityTemplate;
+export default AvailabilityTemplateDetailsSection;
 

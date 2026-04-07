@@ -7,7 +7,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import {
     AvailabilityTemplateIntervalCreateDTO,
     AvailabilityTemplateIntervalResponseVM,
-    AvailabilityTemplateIntervalUpdateDTO
+    AvailabilityTemplateIntervalUpdateDTO,
+    AvailabilityTemplateResponseVM
 } from '@/types/model-types-new';
 import {
     newAvailabilityTemplateIntervalCreateDTO,
@@ -25,37 +26,22 @@ import { useAppDispatch } from '@/hooks';
 /* ===================== COMPONENT ===================== */
 
 const AddIntervalModal = ({
-    // step,
-    // dayLabel = 'Sunday',
-    // record,
-    // setRecord,
     open,
     setOpen,
-    // day,
-    // template,
-    // templatesData,
-    // setTemplatesData,
-    // channel
     resource,
     day,
     intervalToEdit,
-    parentTemplate
+    parentTemplate,
+    ...props
 }: {
-    // step: number;
-    // dayLabel?: string;
-    // record: IntervalRecord;
-    // setRecord: React.Dispatch<React.SetStateAction<IntervalRecord>>;
+    
     open: boolean;
     setOpen: any;
-    // day: string;
-    // template: any;
-    // templatesData: any;
-    // setTemplatesData: any;
-    // channel: any;
     resource: any;
     day: string;
     intervalToEdit?: AvailabilityTemplateIntervalResponseVM | null;
     parentTemplate: AvailabilityTemplateResponseVM;
+    readOnly?: boolean;
 }) => {
     const [record, setRecord] = useState<
         AvailabilityTemplateIntervalCreateDTO | AvailabilityTemplateIntervalUpdateDTO
@@ -176,6 +162,7 @@ const AddIntervalModal = ({
                                 placeholder="Start Time"
                                 width="100%"
                                 required
+                                disabled={props?.readOnly}
                             />
 
                             <MyInput
@@ -186,6 +173,7 @@ const AddIntervalModal = ({
                                 placeholder="End Time"
                                 width="100%"
                                 required
+                                disabled={props?.readOnly}
                             />
                         </div>
                         <div className="block">
@@ -239,7 +227,8 @@ const AddIntervalModal = ({
                                                         });
                                                     }}
                                                     showLabel={false}
-                                                    label={formatEnumString(serviceValue)}
+                                                    fieldLabel={formatEnumString(serviceValue)}
+                                                    disabled={props?.readOnly}
                                                 />
                                             </Col>
                                         );
@@ -265,6 +254,7 @@ const AddIntervalModal = ({
                                     selectDataLabel="label"
                                     selectDataValue="value"
                                     width="15vw"
+                                    disabled={props?.readOnly}
                                 />
 
                                 <MyInput
@@ -275,7 +265,7 @@ const AddIntervalModal = ({
                                     width={"15vw"}
                                     rightAddon="min"
                                     fieldLabel='Duration'
-                                    disabled={record?.slotStrategy === 'AS_DEPARTMENT_POOL'}
+                                    disabled={record?.slotStrategy === 'AS_DEPARTMENT_POOL' || props?.readOnly}
                                 />
                             </Form>
                         </div>
@@ -349,11 +339,12 @@ const AddIntervalModal = ({
         <MyModal
             open={open}
             setOpen={setOpen}
-            title={isEditMode ? "Edit Interval" : "Add Interval"}
+            title={props?.readOnly? 'View Interval' : isEditMode ? "Edit Interval" : "Add Interval"}
             size="40vw"
             content={conjureFormContent}
             actionButtonLabel={isEditMode ? "Update" : "Save"}
             actionButtonFunction={handleSave}
+            hideActionBtn={props?.readOnly}
         />
     );
 };

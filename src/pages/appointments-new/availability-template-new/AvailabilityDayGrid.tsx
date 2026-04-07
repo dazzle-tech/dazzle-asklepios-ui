@@ -7,6 +7,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import { FaPlus } from "react-icons/fa";
 import { useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from '@/services/appointment/availabilityTemplate/availabilityTemplateInterval';
 import type { AvailabilityTemplateIntervalResponseVM } from '@/types/model-types-new';
+import { PropaneSharp } from '@mui/icons-material';
 
 
 
@@ -28,15 +29,16 @@ type TemplateColumnProps = {
     onAddInterval: (template: any) => void;
     onEditTemplate?: (template: any) => void;
     onEditInterval?: (interval: AvailabilityTemplateIntervalResponseVM, template: any) => void;
+    readOnly: boolean;
 };
 
-// افصلها على ملف ثاني
 const TemplateColumn: React.FC<TemplateColumnProps> = ({
     template,
     day,
     onAddInterval,
     onEditTemplate,
-    onEditInterval
+    onEditInterval,
+    readOnly
 }) => {
     const shouldFetch = Boolean(template?.id) && Boolean(day);
     const { data: intervals = [], isFetching } = useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery(
@@ -63,6 +65,7 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({
             <AvailabilityTemplateSummaryCard
                 template={template}
                 onEdit={onEditTemplate}
+                readOnly={readOnly}
             />
 
             {isFetching ? (
@@ -79,19 +82,21 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({
                                 onEditInterval(interval, template);
                             }
                         }}
+                        readOnly={readOnly}
                     />
                 ))
             )}
-
-            <MyButton
-                prefixIcon={() => <FaPlus />}
-                width="300px"
-                appearance='ghost'
-                color={template?.templateColor ?? "#6982F0"}
-                onClick={() => { onAddInterval(template); }}
-            >
-                Add Interval
-            </MyButton>
+            {!readOnly && (
+                <MyButton
+                    prefixIcon={() => <FaPlus />}
+                    width="300px"
+                    appearance='ghost'
+                    color={template?.templateColor ?? "#6982F0"}
+                    onClick={() => { onAddInterval(template); }}
+                >
+                    Add Interval
+                </MyButton>
+            )}
         </div>
     );
 };
@@ -100,36 +105,37 @@ const AvailabilityDayGrid = ({
     templates,
     parentTemplate,
     day,
-    onEditTemplate
+    onEditTemplate,
+    ...props
 }: {
 
-      templates: any;
+    templates: any;
     parentTemplate: any;
     day: string;
     onEditTemplate?: (template: any) => void;
-
+    readOnly?: boolean;
 }) => {
 
-    const times = 
-    // useMemo(() =>
-         generateDayTimes(120)
+    const times =
+        // useMemo(() =>
+        generateDayTimes(120)
     // , [120]);
     const [openAddInterval, setOpenAddInterval] = useState(false);
-    
+
     const [resourceToAddInterval, setResourceToAddInterval] = useState({});
     const [intervalToEdit, setIntervalToEdit] = useState<AvailabilityTemplateIntervalResponseVM | null>(null);
 
 
 
 
-const normalizedTemplates = Array.isArray(templates)
-    ? templates
-    : (templates as any)?.data ?? [];
+    const normalizedTemplates = Array.isArray(templates)
+        ? templates
+        : (templates as any)?.data ?? [];
 
-const mergedArray = [
-  ...(parentTemplate?.id ? [parentTemplate] : []),
-  ...normalizedTemplates
-];
+    const mergedArray = [
+        ...(parentTemplate?.id ? [parentTemplate] : []),
+        ...normalizedTemplates
+    ];
 
 
     return (
@@ -147,7 +153,7 @@ const mergedArray = [
                 <div className="channels-wrapper">
 
                     <div
-                      
+
                         style={{ display: "flex", padding: "5px" }}
                     >
 
@@ -168,6 +174,7 @@ const mergedArray = [
                                         setOpenAddInterval(true);
                                     }}
                                     onEditTemplate={onEditTemplate}
+                                    readOnly={props?.readOnly}
                                 />
                             ))}
                         </div>
@@ -180,8 +187,9 @@ const mergedArray = [
                     day={day}
                     intervalToEdit={intervalToEdit}
                     parentTemplate={parentTemplate}
+                    readOnly={props?.readOnly}
                 />
-                
+
 
             </div>
         </>

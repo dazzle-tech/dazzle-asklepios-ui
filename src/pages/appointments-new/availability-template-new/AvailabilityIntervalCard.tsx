@@ -16,6 +16,7 @@ interface Props {
   onEdit?: () => void;
   onDelete?: () => void;
   backgroundColor?: string;
+  readOnly?: boolean;
 }
 
 const AvailabilityIntervalCard: React.FC<Props> = ({
@@ -24,7 +25,8 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
   type = 'NORMAL',
   onEdit,
   onDelete,
-  backgroundColor = "#6982F0"
+  backgroundColor = "#6982F0",
+  ...props
 }) => {
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
   const [showDetails, setShowDetails] = useState<boolean>(true);
@@ -70,11 +72,12 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
                       {/* <IoSettingsSharp onClick={onSettingsClick} className='icons-style'/> */}
                       <CiSquareMinus className='icons-style' onClick={() => setShowDetails(!showDetails)} />
                       <FaRegEdit className='icons-style' onClick={onEdit} />
-                     
+                        {!props?.readOnly &&(
                         <MdDelete
                           className='icons-style'
                           onClick={() => setOpenConfirmDeleteModal(true)}
                         />
+                        )}
                     </div>
             
           </div>
@@ -83,7 +86,7 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
           {showDetails && (
           <div className='body-of-availability-template-summary-card'>
             <div>
-              <span>Slots:</span> {computedSlotLabel}
+              <span>Duration:</span> {computedSlotLabel}
             </div>
           </div>
           )}
