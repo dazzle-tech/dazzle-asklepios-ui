@@ -9,7 +9,7 @@ import { notify } from "@/utils/uiReducerActions";
 
 import {
   useGetAllBrandMedicationsQuery,
-} from "@/services/setup/brandmedication/BrandMedicationService ";
+} from "@/services/setup/brandmedication/BrandMedicationService";
 
 import {
   useCreateBrandMedicationSubstituteMutation,

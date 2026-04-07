@@ -35,7 +35,7 @@ import { PlusRound } from '@rsuite/icons';
 import {
   useGetBrandMedicationByIdQuery,
   useSearchBrandMedicationsByNameOrActiveQuery
-} from '@/services/setup/brandmedication/BrandMedicationService ';
+} from '@/services/setup/brandmedication/BrandMedicationService';
 import './styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';

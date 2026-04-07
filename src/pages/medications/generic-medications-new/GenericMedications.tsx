@@ -20,7 +20,7 @@ import {
   useLazyGetBrandMedicationsByExpiresAfterOpeningQuery,
   useLazyGetBrandMedicationsByUseSinglePatientQuery,
   useLazyGetBrandMedicationsByIsActiveQuery,
-} from "@/services/setup/brandmedication/BrandMedicationService ";
+} from "@/services/setup/brandmedication/BrandMedicationService";
 
 import MyTable from "@/components/MyTable";
 import MyInput from "@/components/MyInput";

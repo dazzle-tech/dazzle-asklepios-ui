@@ -30,7 +30,7 @@ import { ApNurseServiceProduct } from '@/types/model-types';
 
 import { useGetServicesQuery } from '@/services/setup/serviceService';
 import { useGetInventoryProductsQuery } from '@/services/inventory/inventory-products/inventoryProductsService';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import {
   BrandMedication,
   InventoryProduct,

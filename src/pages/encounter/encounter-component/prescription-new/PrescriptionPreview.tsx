@@ -4,7 +4,7 @@ import MyInput from "@/components/MyInput";
 import MyTagInput from "@/components/MyTagInput/MyTagInput";
 import { Form, Input, Text } from "rsuite";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import { useGetBrandMedicationByIdQuery } from "@/services/setup/brandmedication/BrandMedicationService ";
+import { useGetBrandMedicationByIdQuery } from "@/services/setup/brandmedication/BrandMedicationService";
 import { useGetCustomeInstructionsQuery } from "@/services/encounterService";
 import { useGetAllPrescriptionInstructionsQuery } from "@/services/setup/prescription-instruction/prescriptionInstructionService";
 import { useEnumOptions } from "@/services/enumsApi";
