@@ -127,9 +127,9 @@ const ScheduleScreen = () => {
   const [finalAppointments, setFinalAppointments] = useState<any[]>([]);
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
   const [rightPanelDate, setRightPanelDate] = useState<Date>(new Date());
+  const [reasonModalType, setReasonModalType] = useState<'Cancel' | 'No-show'>('Cancel');
   const [reasonViewRecord, setReasonViewRecord] = useState({
     reason: '',
-    otherReason: ''
   });
 
   const isFollowUpAppointment = (appt: any) => {
@@ -393,24 +393,18 @@ const ScheduleScreen = () => {
     setSelectedEvent(freshEvent);
 
     const status = String(
-      freshEvent?.appointmentData?.appointmentStatus ?? freshEvent?.appointmentData?.status ?? ''
+      freshEvent?.appointmentData?.status ?? ''
     ).toUpperCase();
-
-    if (status === 'CANCELED' || status === 'NO_SHOW' || status === 'NO-SHOW') {
-      const reasonKey = freshEvent?.appointmentData?.reasonLkey;
-
-      const reasonLovList =
-        status === 'CANCELED'
-          ? cancelResonLovQueryResponse?.object
-          : noShowResonLovQueryResponse?.object;
-
-      const matchedReason = reasonLovList?.find(r => r.key === reasonKey);
-
+    const isCanceled = status === 'CANCELLED' || status === 'CANCELED';
+    const isNoShow = status === 'NOSHOW' || status === 'NO_SHOW' || status === 'NO-SHOW';
+    if (isCanceled || isNoShow) {
+      setReasonModalType(isCanceled ? 'Cancel' : 'No-show');
+      const reason = isCanceled
+        ? freshEvent?.appointmentData?.cancelReason
+        : freshEvent?.appointmentData?.noShowReason;
       setReasonViewRecord({
-        reason: matchedReason?.lovDisplayVale || '',
-        otherReason: freshEvent?.appointmentData?.otherReason || ''
+        reason: reason || freshEvent?.appointmentData?.otherReason || ''
       });
-
       setShowReasonModal(true);
       return;
     }
@@ -1760,8 +1754,12 @@ const ScheduleScreen = () => {
         </Drawer.Body>
       </Drawer>
 
-      <Modal open={showReasonModal} onClose={() => setShowReasonModal(false)}>
-        <Modal.Header />
+      <Modal
+        open={showReasonModal}
+        onClose={() => setShowReasonModal(false)}
+        className="schedule-reason-center-modal"
+      >
+        <Modal.Header >Reason for {reasonModalType === 'Cancel' ? 'Cancellation' : 'No-Show'}</Modal.Header>
         <Modal.Body>
           <Form fluid layout="vertical">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 520, maxWidth: '100%' }}>
@@ -1770,15 +1768,6 @@ const ScheduleScreen = () => {
                 column
                 fieldLabel="Reason"
                 fieldName="reason"
-                record={reasonViewRecord}
-                setRecord={setReasonViewRecord}
-                disabled
-              />
-              <MyInput
-                width="100%"
-                column
-                fieldLabel="Other Reason"
-                fieldName="otherReason"
                 fieldType="textarea"
                 rows={3}
                 record={reasonViewRecord}
