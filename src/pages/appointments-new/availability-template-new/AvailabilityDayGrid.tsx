@@ -132,10 +132,9 @@ const AvailabilityDayGrid = ({
         ? templates
         : (templates as any)?.data ?? [];
 
-    const mergedArray = [
-        ...(parentTemplate?.id ? [parentTemplate] : []),
-        ...normalizedTemplates
-    ];
+    const mergedArray = parentTemplate?.id
+  ? [parentTemplate, ...normalizedTemplates]
+  : [];
 
 
     return (
