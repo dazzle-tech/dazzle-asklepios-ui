@@ -852,6 +852,15 @@ const BookPatient = ({
                             rows={2}
                             disabled={readOnly}
                           />
+                        </div>
+                      </Panel>
+                    }
+                  />
+                  <SectionContainer
+                    title="Upcoming Encounter Details"
+                    content={
+                      <Panel bordered style={{ padding: 12 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                           <MyInput
                             fieldType="select"
                             fieldName="service"
@@ -866,33 +875,6 @@ const BookPatient = ({
                             required={!readOnly}
                             disabled={readOnly}
                           />
-                          {record?.service === 'FOLLOW_UP' && (
-                            <MyInput
-                              fieldType="selectPagination"
-                              fieldName="followUpEncounterId"
-                              fieldLabel="Previous encounter"
-                              record={record}
-                              setRecord={setRecord}
-                              selectData={modifiedPrevEncounters}
-                              selectDataLabel="combinedLabel"
-                              selectDataValue="id"
-                              width="100%"
-                              menuMaxHeight={200}
-                              loading={isPrevFetching}
-                              searchable={false}
-                              hasMore={prevHasMore}
-                              required={!readOnly && record?.service === 'FOLLOW_UP'}
-                              disabled={
-                                readOnly || !bookingPatientId || !appointmentDepartmentId
-                              }
-                              onFetchMore={() => {
-                                if (prevList?.links?.next) {
-                                  const { page } = extractPaginationFromLink(prevList.links.next);
-                                  setPrevPage(page);
-                                }
-                              }}
-                            />
-                          )}
                           <MyInput
                             fieldType="select"
                             fieldName="priority"
@@ -907,6 +889,35 @@ const BookPatient = ({
                             required={!readOnly}
                             disabled={readOnly}
                           />
+                          {record?.service === 'FOLLOW_UP' && (
+                            <div style={{ gridColumn: '1 / -1' }}>
+                              <MyInput
+                                fieldType="selectPagination"
+                                fieldName="followUpEncounterId"
+                                fieldLabel="Previous encounter"
+                                record={record}
+                                setRecord={setRecord}
+                                selectData={modifiedPrevEncounters}
+                                selectDataLabel="combinedLabel"
+                                selectDataValue="id"
+                                width="100%"
+                                menuMaxHeight={200}
+                                loading={isPrevFetching}
+                                searchable={false}
+                                hasMore={prevHasMore}
+                                required={!readOnly && record?.service === 'FOLLOW_UP'}
+                                disabled={
+                                  readOnly || !bookingPatientId || !appointmentDepartmentId
+                                }
+                                onFetchMore={() => {
+                                  if (prevList?.links?.next) {
+                                    const { page } = extractPaginationFromLink(prevList.links.next);
+                                    setPrevPage(page);
+                                  }
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
                       </Panel>
                     }
