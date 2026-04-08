@@ -124,9 +124,13 @@ const MyModal = ({
           {steps[activeStep]?.footer}
           {activeStep === computedPagesCount - 1 && !hideActionBtn && (
             <MyButton
-              onClick={() => {
-                actionButtonFunction();
-                setInternalStep(0);
+              onClick={async () => {
+                try {
+                  await Promise.resolve(actionButtonFunction());
+                  setInternalStep(0);
+                } catch {
+                  /* caller / RTK handles errors; stay on current step */
+                }
               }}
               disabled={isDisabledActionBtn}
             >

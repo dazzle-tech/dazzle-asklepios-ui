@@ -925,6 +925,154 @@ export const newVisitDuration: modelTypes.VisitDuration = {
   lastModifiedDate: null
 };
 
+// ------------------- Availability Template -------------------
+export const newAvailabilityTemplateWorkingDay: modelTypes.AvailabilityTemplateWorkingDay = {
+  dayOfWeek: 0,
+  isWorking: false
+};
+
+export const newAvailabilityTemplateAllowedServiceDTO: modelTypes.AvailabilityTemplateAllowedServiceDTO = {
+  id: null,
+  service: ''
+};
+
+export const newAvailabilityTemplateAllowedServiceResponseVM: modelTypes.AvailabilityTemplateAllowedServiceResponseVM = {
+  id: null,
+  service: null
+};
+
+export const newAvailabilityTemplateIntervalResponseVM: modelTypes.AvailabilityTemplateIntervalResponseVM = {
+  id: null,
+  templateId: null,
+  dayOfWeek: null,
+  startTime: null,
+  endTime: null,
+  slotStrategy: null,
+  slotDurationMinutes: null,
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateIntervalCreateDTO: modelTypes.AvailabilityTemplateIntervalCreateDTO = {
+  templateId: 0,
+  dayOfWeek: '',
+  startTime: '',
+  endTime: '',
+  slotStrategy: '',
+  slotDurationMinutes: 0,
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateIntervalUpdateDTO: modelTypes.AvailabilityTemplateIntervalUpdateDTO = {
+  id: 0,
+  dayOfWeek: null,
+  startTime: null,
+  endTime: null,
+  slotStrategy: null,
+  slotDurationMinutes: null,
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCreateDTO = {
+  facilityId: undefined,
+  departmentId: undefined,
+  templateName: '',
+  templateType: 'DEPARTMENT',
+  resourceId: undefined,
+  templateColor: "#6982F0",
+  status: 'DRAFT',
+  versionNo: 1,
+  copyFromTemplateId: null,
+  parentTemplateId: null,
+  durationMinutes: 0,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
+  parallelCapacityValue: 1,
+  defaultServiceId: null,
+  numberOfResourcesExpected: null,
+  requirePractitioner: false,
+  defaultPractitionerId: null,
+  requireBilling: false,
+  requirePreAssessment: false,
+  allowPatientPortalBooking: false,
+  requireConfirmation: false,
+  financialDetails: 'BOTH', 
+  isActive: true,
+  workingDays: [],
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateUpdateDTO: modelTypes.AvailabilityTemplateUpdateDTO = {
+  id: 0,
+  ...newAvailabilityTemplateCreateDTO
+};
+
+export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateResponseVM = {
+  id: undefined,
+  facilityId: undefined,
+  departmentId: undefined,
+  resourceId: undefined,
+  templateName: '',
+  templateType: '',
+  templateColor: null,
+  status: '',
+  versionNo: null,
+  copyFromTemplateId: null,
+  parentTemplateId: null,
+  durationMinutes: null,
+  defaultBufferBeforeMinutes: null,
+  defaultBufferAfterMinutes: null,
+  parallelCapacityValue: null,
+  defaultServiceId: null,
+  numberOfResourcesExpected: null,
+  requirePractitioner: null,
+  defaultPractitionerId: null,
+  requireBilling: null,
+  requirePreAssessment: null,
+  allowPatientPortalBooking: null,
+  requireConfirmation: null,
+  financialDetails: null,
+  workingDays: [],
+  allowedServices: [],
+  isActive: true,
+};
+
+export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGenerationBatchApplyDTO = {
+  templateId: 0,
+  startDate: '',
+  endDate: '',
+  deferred: false,
+  deferredAt: null,
+  scope: '',
+  holidayHandlingMode: null
+};
+
+export const newApplyAvailabilityTemplateResponseVM: modelTypes.ApplyAvailabilityTemplateResponseVM = {
+  batchId: null,
+  templateId: null,
+  scope: null,
+  applyStartDateTime: null,
+  applyEndDateTime: null,
+  totalSlots: null,
+  dailyAvg: null,
+  executionStatus: null,
+  message: null,
+  holidayHandlingMode: null
+};
+
+export const newAvailabilityGenerationBatch: modelTypes.AvailabilityGenerationBatch = {
+  id: 0,
+  templateId: null,
+  holidayHandlingMode: null,
+  scope: null,
+  applyStartDateTime: null,
+  applyEndDateTime: null,
+  totalSlots: null,
+  dailyAvg: null,
+  executionStatus: null,
+  createdDate: null,
+  lastModifiedDate: null
+};
+
 // ------------------- Price List -------------------
 export const newPriceList: modelTypes.PriceList = {
   id: undefined,
