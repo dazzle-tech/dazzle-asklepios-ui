@@ -5,20 +5,12 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
-import MyModal from '@/components/MyModal/MyModal';
-import EditAvailabilityTemplateModalNew from './AddEditAvailabilityTemplate';
-import AvailabilityIntervalCard from './AvailabilityIntervalCard';
-import AvailabilityTemplateSummaryCard from './AvailabilityTemplateSummaryCard';
-import SlotCard from './SlotCard';
-import DateNavigator from './DateNavigator';
-import WarningMessage from './WarningMessage';
 import {
   useGetAvailabilityTemplatesByTemplateTypeQuery,
-  useGetAvailabilityTemplatesQuery,
   useToggleAvailabilityTemplateActiveMutation,
   useUpdateAvailabilityTemplateMutation
 } from '@/services/appointment/availabilityTemplateService';
-import { useGetActiveFacilitiesQuery, useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetAllDepartmentsWithoutPaginationQuery, useGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
 import { FaUndo } from "react-icons/fa";
 import { useEnumOptions } from '@/services/enumsApi';
