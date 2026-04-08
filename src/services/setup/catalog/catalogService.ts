@@ -169,6 +169,7 @@ export const catalogService = createApi({
 export const {
   useGetCatalogsQuery,
   useGetCatalogByIdQuery,
+  useLazyGetCatalogByIdQuery,
   useGetCatalogByDepartmentQuery,
   useLazyGetCatalogByDepartmentQuery,
   useGetCatalogByTypeQuery,

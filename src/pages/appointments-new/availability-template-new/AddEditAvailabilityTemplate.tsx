@@ -727,6 +727,8 @@
 
 // // export default AddEditAvailabilityTemplate;
 
+
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Divider, Form, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
@@ -736,7 +738,7 @@ import './styles.less';
 import AvailabilityDayGrid from './AvailabilityDayGrid';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
-import { useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetAppointableDepartmentsQuery, useGetDepartmentByIdQuery, useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import MyTab from '@/components/MyTab';
 import { FaPlus } from "react-icons/fa";
 import { notify } from '@/utils/uiReducerActions';
@@ -753,6 +755,7 @@ import AddResourceModal from './AddResourceModal';
 import PreviewSlotsModal from './PreviewSlotsModal';
 import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
 import { useEnumOptions } from '@/services/enumsApi';
+import { duration } from '@mui/material';
 
 
 type AddEditAvailabilityTemplateProps = {
@@ -828,6 +831,9 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     { id: template?.id },
     { skip: !template?.id }
   );
+  
+   const [getDepartment, { data, isLoading }] = useLazyGetDepartmentByIdQuery();
+ 
 
   const [create] = useCreateAvailabilityTemplateMutation();
   const [update] = useUpdateAvailabilityTemplateMutation();
@@ -927,6 +933,26 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       allowedServices: normalizeAllowedServices(templateById?.allowedServices),
     }));
   }, [templateById]);
+
+   useEffect(() => {
+  if (!record?.departmentId) {
+    setRecord(prev => ({
+      ...prev,
+      durationMinutes: 0 
+    }));
+    return;
+  }
+
+  getDepartment(record.departmentId)
+    .unwrap()
+    .then(res => {
+      setRecord(prev => ({
+        ...prev,
+        durationMinutes: res.defaultDurationMinutes
+      }));
+    });
+
+}, [record?.departmentId]);
 
 
   useEffect(() => {

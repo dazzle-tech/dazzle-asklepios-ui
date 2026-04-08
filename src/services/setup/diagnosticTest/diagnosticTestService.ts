@@ -1,4 +1,5 @@
 import { BaseQuery } from "@/newApi";
+import { DiagnosticTest } from "@/types/model-types-new";
 import { parseLinkHeader } from "@/utils/paginationHelper";
 import { createApi } from "@reduxjs/toolkit/dist/query/react";
 
@@ -14,16 +15,6 @@ type PagedResult<T> = {
   data: T[];
   totalCount: number;
   links?: LinkMap;
-};
-
-type DiagnosticTest = {
-  id: string;
-  name: string;
-  type: string;
-  internalCode?: string;
-  price?: number;
-  currency?: string;
-  specialNotes?: string;
 };
 
 export const diagnosticTestService = createApi({
