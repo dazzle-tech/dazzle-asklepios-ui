@@ -41,8 +41,6 @@ type AddEditAvailabilityTemplateProps = {
 
 const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template }) => {
   const dispatch = useAppDispatch();
-  const authSlice = useAppSelector((s) => s.auth);
-  const selectedDepartment = authSlice.selectedDepartment;
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
 
@@ -692,7 +690,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
               }}
               editRecord={resourceToEdit}
               mainTemplate={record}
-              selectedDepartment={selectedDepartment}
               selectedFacility={selectedFacility}
             />
 
