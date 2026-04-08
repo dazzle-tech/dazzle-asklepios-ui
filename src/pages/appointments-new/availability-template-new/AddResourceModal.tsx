@@ -31,7 +31,6 @@ const AddResourceModal = ({
   open,
   setOpen,
   editRecord,
-  selectedDepartment,
   selectedFacility,
   ...props
 }: {
@@ -39,7 +38,6 @@ const AddResourceModal = ({
   open: boolean;
   setOpen: any;
   editRecord?: any;
-  selectedDepartment: any
   selectedFacility: any;
   readOnly?: boolean;
 }) => {
@@ -109,10 +107,10 @@ const AddResourceModal = ({
   const { data: servicesAppointableByLoggedOnFacility } = useGetAppointableServicesByLoggedInFacilityQuery({});
   const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
     {
-      sourceId: selectedDepartment?.departmentId
+      sourceId: record?.departmentId
     },
     {
-      skip: !selectedDepartment?.departmentId
+      skip: !record?.departmentId
     }
   );
   const { data: practitionerListResponse } = useGetPractitionerByDepartmentQuery(
