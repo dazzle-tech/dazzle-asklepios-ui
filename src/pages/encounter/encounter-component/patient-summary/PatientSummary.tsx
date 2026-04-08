@@ -20,6 +20,7 @@ import PainAssessmentSummary from '../nursing-reports-summary/PainAssessmentSumm
 import GeneralAssessmentSummary from '../nursing-reports-summary/GeneralAssessmentSummary';
 import FunctionalAssessmentSummary from '../nursing-reports-summary/FunctionalAssessmentSummary';
 import { useGetUserDashboardComponentsQuery } from '@/services/encounterService';
+import PatientPlan from './PatientPlan';
 // import MedicalTimeline from '../../encounter-screen/MedicalTimeLine';
 
 const PatientSummary = () => {
@@ -39,7 +40,7 @@ const PatientSummary = () => {
     c6: false,
     c7: true,
     c8: true,
-    c9: false,
+    c9: true,
     c10: false,
     c11: false,
     c12: false,
@@ -68,11 +69,12 @@ const PatientSummary = () => {
     col2: [
       { id: 'c7', content: <ActiveAllergies patient={patient} />, display: true },
       { id: 'c8', content: <MedicalWarnings patient={patient} />, display: true },
-      // {
-      //   id: 'c9',
-      //   content: <PainAssessmentSummary patient={patient} encounter={encounter} />,
-      //   display: false
-      // },
+
+      {
+        id: 'c9',
+        content: <PatientPlan patient={patient} />,
+        display: true
+      },
       // {
       //   id: 'c10',
       //   content: <GeneralAssessmentSummary patient={patient} encounter={encounter} />,

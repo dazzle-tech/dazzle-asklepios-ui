@@ -48,8 +48,14 @@ const CountrySetup: React.FC = () => {
     setSelectedCommunity(c);
   };
 
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel className="geo-hierarchy-container">
+    <Panel className="geo-hierarchy-container" dir={dir}>
       <div className="geo-columns">
         <CountrySection onSelect={handleSelectCountry} selectedCountry={selectedCountry} />
 

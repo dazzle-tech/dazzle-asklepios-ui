@@ -70,8 +70,17 @@ const Catalog = () => {
   const divContent = (
    "Catalog"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Catalog'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -335,13 +344,6 @@ const Catalog = () => {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
   }, [saveDiagnosticTestCatalogHeaderMutation.data]);
-
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   return (
     <Panel>

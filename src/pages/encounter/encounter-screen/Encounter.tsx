@@ -313,10 +313,17 @@ const Encounter = () => {
   const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
 
   const divContent = `Patient Visit > ${currentHeader}`;
-  useEffect(() => {
+
+useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));
     dispatch(setDivContent(divContent));
-  }, [currentHeader, dispatch]);
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [currentHeader,dispatch]);
+
 
   useEffect(() => {
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');

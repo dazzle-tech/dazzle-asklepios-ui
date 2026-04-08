@@ -91,6 +91,35 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
 };
 
 /* ========================================================= */
+/* ── Name-field trailing-character validation ──────────── */
+/* ========================================================= */
+
+const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'thirdName', label: 'Third Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'firstNameSecondaryLang', label: 'First Name (Sec. Lang)' },
+  { key: 'secondNameSecondaryLang', label: 'Second Name (Sec. Lang)' },
+  { key: 'thirdNameSecondaryLang', label: 'Third Name (Sec. Lang)' },
+  { key: 'lastNameSecondaryLang', label: 'Last Name (Sec. Lang)' }
+];
+
+// Rejects values that end with one or more spaces, hyphens, or hash signs
+const INVALID_TRAILING_CHARS = /[\s\-#]+$/;
+
+const validatePatientNameFields = (patient: Patient): string | null => {
+  for (const { key, label } of NAME_FIELDS) {
+    const value = String((patient as any)[key] ?? '');
+    if (!value) continue;
+    if (INVALID_TRAILING_CHARS.test(value)) {
+      return `${label} must not end with a space, hyphen (-), or hash (#).`;
+    }
+  }
+  return null;
+};
+
+/* ========================================================= */
 /* ======================= Component ======================== */
 /* ========================================================= */
 
@@ -150,6 +179,14 @@ const PatientProfile = () => {
   /* ========================================================= */
 
   const handleSave = async () => {
+    // ── Validate name fields for trailing spaces / hyphens / hashes ──
+    const nameError = validatePatientNameFields(localPatient);
+    if (nameError) {
+      dispatch(notify({ msg: nameError, sev: 'warning' }));
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────
+
     try {
       if (localPatient?.id) {
         const updated = await updatePatient({
@@ -250,9 +287,9 @@ const PatientProfile = () => {
 
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
+      dispatch(setDivContent(''));
     };
-  }, [location.pathname, dispatch]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (propsData && propsData.patient) {
@@ -298,13 +335,10 @@ const PatientProfile = () => {
     }
   };
 
-  // ✅ NEW: callback passed to PatientQuickAppointment so the table refetches after save
   const handleEncounterSaved = () => {
     setEncounterRefetchTrigger(prev => prev + 1);
   };
 
-  // ✅ NEW: when the modal closes (from ProfileHeader's quick appointment),
-  //         also bump the trigger so the table always stays fresh
   const handleQuickAppointmentClose = (val: boolean) => {
     setQuickAppointmentModel(val);
     if (!val) setEncounterRefetchTrigger(prev => prev + 1);
@@ -314,7 +348,6 @@ const PatientProfile = () => {
   /* ========================= RENDER ========================= */
   /* ========================================================= */
 
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
 
@@ -362,7 +395,6 @@ const PatientProfile = () => {
               <SectionContainer
                 title={<Translate>Visit history</Translate>}
                 content={
-                  // ✅ pass encounterRefetchTrigger so the table knows when to refetch
                   <PatientVisitHistoryTable
                     localPatient={localPatient}
                     encounterRefetchTrigger={encounterRefetchTrigger}
@@ -394,10 +426,8 @@ const PatientProfile = () => {
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
           localPatient={localPatient}
-          // ✅ use the wrapper so closing also triggers a refetch
           setQuickAppointmentModel={handleQuickAppointmentClose}
           localVisit={localVisit}
-          // ✅ also trigger immediately when encounter is saved (before modal closes)
           onEncounterSaved={handleEncounterSaved}
         />
       )}

@@ -96,17 +96,19 @@ const NurseStation = () => {
     return map;
   }, []);
 
-  useEffect(() => {
     const header = headersMap[location.pathname] || 'Nurse Dashboard';
 
-    dispatch(setPageCode('Nurse_Station'));
-    dispatch(setDivContent(`Nurse Station > ${header}`));
 
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(' '));
-    };
-  }, [location.pathname, headersMap, dispatch]);
+    useEffect(() => {
+      
+        dispatch(setPageCode('Nurse_Station'));
+        dispatch(setDivContent(`Nurse Station > ${header}`));
+
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+      };
+    }, [dispatch]);
 
   useEffect(() => {
     if (!propsData?.encounter) {

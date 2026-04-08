@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+
 import { Form, Checkbox, CheckboxGroup, RadioGroup, Radio, Text, Row, Col } from 'rsuite';
+
 import MyInput from '@/components/MyInput';
 import './AddResourceModal.less';
 import MyModal from '@/components/MyModal/MyModal';
@@ -7,20 +9,21 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import { FaPlus, FaTrash } from "react-icons/fa";
+import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { Department } from '@/types/model-types-new';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
-import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import { Department } from '@/types/model-types-new';
-import { useGetAppointableServicesByLoggedInFacilityQuery, useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
-import { useGetAppointablePractitionerByLoggedInFacilityQuery, useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetAppointableServicesByLoggedInFacilityQuery, useGetServicesByDepartmentQuery, useLazyGetServiceByIdQuery, useLazyGetServiceItemByIdQuery } from '@/services/setup/serviceService';
+import { useGetAppointablePractitionerByLoggedInFacilityQuery, useGetPractitionerByDepartmentQuery, useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import { newAvailabilityTemplateCreateDTO } from '@/types/model-types-constructor-new';
 import { useCreateAvailabilityTemplateMutation, useUpdateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
-import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetAppointableCatalogsByLoggedInFacilityQuery } from '@/services/setup/catalog/catalogService';
+import { useGetAllActiveAppointableDiagnosticTestsQuery, useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useGetAppointableCatalogsByLoggedInFacilityQuery, useLazyGetCatalogByIdQuery } from '@/services/setup/catalog/catalogService';
+
 import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 import { formatEnumString } from '@/utils';
 
@@ -101,14 +104,31 @@ const AddResourceModal = ({
     skip: !selectedFacility?.id
   });
 
-  const { data: practitionersAppointableByLoggedOnFacility } = useGetAppointablePractitionerByLoggedInFacilityQuery({});
-  const { data: diagnosticTestsAppointable } = useGetAllActiveAppointableDiagnosticTestsQuery({});
-  const { data: catalogsAppointableByLoggedOnFacility } = useGetAppointableCatalogsByLoggedInFacilityQuery({});
-  const { data: servicesAppointableByLoggedOnFacility } = useGetAppointableServicesByLoggedInFacilityQuery({});
+
+  const { data: practitionersAppointableByLoggedOnFacility } = useGetAppointablePractitionerByLoggedInFacilityQuery({
+    page: 0,
+    size: 500,
+    sort: 'id,asc'
+  });
+  const { data: diagnosticTestsAppointable } = useGetAllActiveAppointableDiagnosticTestsQuery({
+    page: 0,
+    size: 500,
+    sort: 'id,asc'
+  });
+  const { data: catalogsAppointableByLoggedOnFacility } = useGetAppointableCatalogsByLoggedInFacilityQuery({
+    page: 0,
+    size: 500,
+    sort: 'id,asc'
+  });
+  const { data: servicesAppointableByLoggedOnFacility } = useGetAppointableServicesByLoggedInFacilityQuery({
+    page: 0,
+    size: 500,
+    sort: 'id,asc'
+  });
   const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
     {
       sourceId: record?.departmentId,
-      page: 0,
+       page: 0,
       size: 500,
       sort: 'id,asc'
     },
@@ -116,10 +136,69 @@ const AddResourceModal = ({
       skip: !record?.departmentId
     }
   );
+  const [getPractitioner] = useLazyGetPractitionerByIdQuery();
+  const [getDiagnosticTest] = useLazyGetDiagnosticTestByIdQuery();
+  const [getCatalog] = useLazyGetCatalogByIdQuery();
+  const [getServic] = useLazyGetServiceByIdQuery();
+
+  useEffect(() => {
+    if(record?.id){
+      return;
+    }
+    if (!record?.resourceId) {
+      setRecord(prev => ({
+        ...prev,
+        durationMinutes: 0 
+      }));
+      return;
+    }
+  
+    if(record?.templateType === "PRACTITIONER"){
+    getPractitioner(record.resourceId)
+      .unwrap()
+      .then(res => {
+        setRecord(prev => ({
+          ...prev,
+          durationMinutes: res.defaultDurationMinutes
+        }));
+      });
+    } else if(record?.templateType === 'DIAGNOSTIC_TEST'){
+    getDiagnosticTest(String(record.resourceId))
+      .unwrap()
+      .then(res => {
+        setRecord(prev => ({
+          ...prev,
+          durationMinutes: res?.data.defaultDurationMinutes
+        }));
+      });
+    }
+    else if(record?.templateType === 'CATALOG'){
+    getCatalog(record.resourceId)
+      .unwrap()
+      .then(res => {
+        setRecord(prev => ({
+          ...prev,
+          durationMinutes: res.defaultDurationMinutes
+        }));
+      });
+    }
+     else if(record?.templateType === 'SERVICE'){
+    getService(record.resourceId)
+      .unwrap()
+      .then(res => {
+        setRecord(prev => ({
+          ...prev,
+          durationMinutes: res.defaultDurationMinutes
+        }));
+      });
+    }
+  
+  }, [record?.resourceId]);
+
   const { data: practitionerListResponse } = useGetPractitionerByDepartmentQuery(
     {
       departmentId: record?.departmentId,
-      page: 0,
+       page: 0,
       size: 500,
       sort: 'id,asc'
     },
@@ -260,6 +339,19 @@ const AddResourceModal = ({
       };
     });
   }, [departmentServiceValuesKey, isEditMode, parentTemplateAllowedServices]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (parentTemplateAllowedServices.length === 0) return;
+    setRecord(prev => {
+      const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
+      if (prevAllowed.length > 0) return prev;
+      return {
+        ...prev,
+        allowedServices: parentTemplateAllowedServices,
+      };
+    });
+  }, [open, parentTemplateAllowedServices]);
 
   useEffect(() => {
     if (!dayOptions || dayOptions.length === 0) return;

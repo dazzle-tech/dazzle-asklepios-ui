@@ -63,8 +63,17 @@ const InpatientList = () => {
   const divContent = (
       "Inpatient Visit List"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('In_Patient_Encounters'));
   dispatch(setDivContent(divContent));
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
   const [open, setOpen] = useState(false);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
@@ -386,10 +395,7 @@ const InpatientList = () => {
   );
 
   //useEffect
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
+
   useEffect(() => {
     refetchEncounter();
   }, []);

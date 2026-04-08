@@ -41,6 +41,7 @@ const IncidentPortal: React.FC = () => {
         };
     }, [location.pathname, dispatch]);
 
+    
 
     return (
         <QueryClientProvider client={queryClient}>

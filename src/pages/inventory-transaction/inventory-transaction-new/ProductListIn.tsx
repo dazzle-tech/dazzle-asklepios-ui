@@ -124,9 +124,17 @@ const ProductListIn = ({
   const divContent = (
       "Inventory Transaction Products"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('ProductList'));
   dispatch(setDivContent(divContent));
-
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && transactionProduct && transactionProduct.key === rowData.key) {
@@ -153,12 +161,6 @@ const ProductListIn = ({
   refetchProduct();
   }, [showSubChildModal]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
 
 

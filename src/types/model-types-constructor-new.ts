@@ -1196,6 +1196,27 @@ export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
   status: ''
 };
 
+export const newBillingInvoiceCreateDTO: modelTypes.BillingInvoiceCreateDTO = {
+  patientId: null,
+  facilityId: 0,
+  status: 'NEW',
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: 'USD',
+};
+
+export const newBillingInvoiceUpdateDTO: modelTypes.BillingInvoiceUpdateDTO = {
+  id: 0,
+  patientId: null,
+  facilityId: 0,
+  status: 'NEW',
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: 'USD',
+};
+
 export const newBillingInvoiceUpdate: modelTypes.BillingInvoiceUpdateVM = {
   id: 0,
   facilityId: 0,
@@ -1289,6 +1310,27 @@ export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
   unitPrice: 0,
   totalPrice: 0,
   currency: null
+};
+
+export const newBillingInvoiceItemCreateDTO: modelTypes.BillingInvoiceItemCreateDTO = {
+  invoiceId: 0,
+  nurseServiceProductId: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: 'USD',
+};
+
+export const newBillingInvoiceItemUpdateDTO: modelTypes.BillingInvoiceItemUpdateDTO = {
+  id: 0,
+  invoiceId: 0,
+  nurseServiceProductId: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: 'USD',
 };
 
 export const newBillingInvoiceItemUpdate: modelTypes.BillingInvoiceItemUpdateVM = {

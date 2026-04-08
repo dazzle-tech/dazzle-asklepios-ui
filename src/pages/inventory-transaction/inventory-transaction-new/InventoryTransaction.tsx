@@ -475,12 +475,6 @@ const InventoryTransaction = () => {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     handleManualSearch();
@@ -510,8 +504,17 @@ const InventoryTransaction = () => {
   }, [dateFilter]);
 
   const divContent = 'Inventory Transaction';
+
+
+useEffect(() => {
   dispatch(setPageCode('Inventory_Transaction'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   const tablebuttons = (
     <div className="bt-right-group">

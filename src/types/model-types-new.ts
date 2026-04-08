@@ -258,12 +258,12 @@ export interface AvailabilityTemplateWorkingDay {
 
 export interface AvailabilityTemplateAllowedServiceDTO {
   id?: number | null;
-  service: EncounterReason;
+  service: string | null;
 }
 
 export interface AvailabilityTemplateAllowedServiceResponseVM {
   id?: number | null;
-  service?: EncounterReason | null;
+  service?: string | null;
 }
 
 export interface AvailabilityTemplateIntervalResponseVM {
@@ -1461,6 +1461,49 @@ export interface BillingInvoiceCreateVM {
   totalAmount: number | string;
   paidAmount?: number | string | null;
   balanceAmount?: number | string | null;
+  currency?: string | null;
+}
+
+// New DTOs aligned with /api/patient/billing/invoice backend
+export interface BillingInvoiceCreateDTO {
+  patientId?: number | null;
+  facilityId: number;
+  status?: string | null;
+  totalAmount: number | string;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceUpdateDTO {
+  id: number;
+  patientId?: number | null;
+  facilityId?: number | null;
+  status?: string | null;
+  totalAmount?: number | string | null;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceItemCreateDTO {
+  invoiceId: number;
+  nurseServiceProductId?: number | null;
+  code?: string | null;
+  quantity: number | string;
+  unitPrice: number | string;
+  totalPrice: number | string;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceItemUpdateDTO {
+  id: number;
+  invoiceId?: number | null;
+  nurseServiceProductId?: number | null;
+  code?: string | null;
+  quantity?: number | string | null;
+  unitPrice?: number | string | null;
+  totalPrice?: number | string | null;
   currency?: string | null;
 }
 
@@ -4167,3 +4210,19 @@ export interface PatientEncounterDischarge {
   dischargeType: string | null;
   dischargeAt: string | null;
 }
+export interface CurrentMedication {
+  patientId: number;
+  activeIngredientId: number;
+  instructions?: string | null;
+  startDate: string | Date | null;
+}
+
+export type CurrentMedicationCreate = CurrentMedication;
+
+export type CurrentMedicationUpdate = CurrentMedication & {
+  id: number;
+};
+
+export type CurrentMedicationForm = CurrentMedication & {
+  id?: number;
+};

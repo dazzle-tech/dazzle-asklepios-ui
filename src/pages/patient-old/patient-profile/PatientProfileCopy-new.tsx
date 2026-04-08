@@ -178,16 +178,6 @@ const PatientProfile = () => {
   };
 
   // Effects
-  useEffect(() => {
-    dispatch(setPageCode('Patient_Registration'));
-    dispatch(setDivContent(divContent));
-    dispatch(setPatient({ ...newApPatient }));
-
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     if (propsData && propsData.patient) {
@@ -204,6 +194,7 @@ const PatientProfile = () => {
       setValidationResult(savePatientMutation.error.data.validationResult);
     }
   }, [savePatientMutation]);
+  
   useEffect(() => {
     dispatch(setPageCode('Patient_Registration'));
     dispatch(setDivContent(divContent));

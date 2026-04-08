@@ -314,6 +314,7 @@ export const {
   useGetServiceItemsQuery,
   useGetServiceItemsByServiceQuery,
   useGetServiceItemByIdQuery,
+  useLazyGetServiceItemByIdQuery,
   useAddServiceItemMutation,
   useUpdateServiceItemMutation,
   useToggleServiceItemIsActiveMutation,
