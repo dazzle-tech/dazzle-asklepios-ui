@@ -205,6 +205,9 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   }, [templateById]);
 
    useEffect(() => {
+    if(record?.id){
+      return;
+    }
   if (!record?.departmentId) {
     setRecord(prev => ({
       ...prev,
@@ -440,6 +443,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                             record={record}
                             setRecord={handleDepartmentChange}
                             menuMaxHeight={200}
+                            disabled={record?.id}
                             required
                           />
                         </Col>

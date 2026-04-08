@@ -127,12 +127,15 @@ const AddResourceModal = ({
       skip: !record?.departmentId
     }
   );
-  const [getPractitioner, {data: practitionerObject }] = useLazyGetPractitionerByIdQuery();
-  const [getDiagnosticTest, {data: diagnosticTestObject }] = useLazyGetDiagnosticTestByIdQuery();
-  const [getCatalog, { data: catalogObject }] = useLazyGetCatalogByIdQuery();
-  const [getService, { data: serviceObject }] = useLazyGetServiceByIdQuery();
+  const [getPractitioner] = useLazyGetPractitionerByIdQuery();
+  const [getDiagnosticTest] = useLazyGetDiagnosticTestByIdQuery();
+  const [getCatalog] = useLazyGetCatalogByIdQuery();
+  const [getServic] = useLazyGetServiceByIdQuery();
 
   useEffect(() => {
+    if(record?.id){
+      return;
+    }
     if (!record?.resourceId) {
       setRecord(prev => ({
         ...prev,
