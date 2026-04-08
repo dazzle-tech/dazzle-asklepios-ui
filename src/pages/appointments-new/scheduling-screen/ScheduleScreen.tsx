@@ -509,9 +509,11 @@ const ScheduleScreen = () => {
   const legendItems = [
     { label: 'No-Show', color: '#FDE68A' },
     { label: 'Checked In', color: '#FDBA74' },
-    { label: 'New', color: '#fafafeff', borderColor: '#007bff' },
-    { label: 'Confirmed', color: '#166534' },
-    { label: 'Completed', color: '#93C5FD' }
+    { label: 'New', color: '#E8F6EF', borderColor: '#89D0B2' },
+    { label: 'In Service', color: '#C7D2FE' },
+    { label: 'Confirmed', color: '#86EFAC' },
+    { label: 'Completed', color: '#93C5FD' },
+    { label: 'Cancel', color: '#FECACA' }
   ];
 
   // Derived resources list (synchronous) to avoid a one-render "stale columns" glitch
@@ -1025,6 +1027,8 @@ const ScheduleScreen = () => {
       if (s.includes('NEW')) return '#4B7BEC';
       if (s.includes('CHECK')) return '#F5B971';
       if (s.includes('NO_SHOW') || s.includes('NO-SHOW')) return '#E8CF5A';
+      if (s.includes('IN_SERVICE') || s.includes('IN SERVICE')) return '#7C8BF3';
+      if (s.includes('CANCEL')) return '#F87171';
       return '#C8D1E1';
     };
     const hours = [8, 9, 10, 11, 12];
@@ -1049,6 +1053,8 @@ const ScheduleScreen = () => {
       if (s.includes('NEW')) return '#4B7BEC';
       if (s.includes('CHECK')) return '#F5B971';
       if (s.includes('NO_SHOW') || s.includes('NO-SHOW')) return '#E8CF5A';
+      if (s.includes('IN_SERVICE') || s.includes('IN SERVICE')) return '#7C8BF3';
+      if (s.includes('CANCEL')) return '#F87171';
       return '#9DB5DA';
     };
 
@@ -1152,14 +1158,27 @@ const ScheduleScreen = () => {
 
   const eventPropGetter = event => {
     const normalize = str => str?.toLowerCase().replace(/[-_]/g, ' ').trim();
+    const normalizeStatusForLegend = (status: string) => {
+      const s = normalize(status);
+      if (s?.includes('cancel')) return 'cancel';
+      if (s?.includes('no show')) return 'no show';
+      if (s?.includes('checked in') || s?.includes('check in')) return 'checked in';
+      if (s?.includes('in service')) return 'in service';
+      if (s?.includes('confirm')) return 'confirmed';
+      if (s?.includes('complete')) return 'completed';
+      if (s?.includes('new')) return 'new';
+      return s;
+    };
 
     const getBackgroundColor = status => {
-      const item = legendItems.find(i => normalize(i.label) === normalize(status));
+      const key = normalizeStatusForLegend(status);
+      const item = legendItems.find(i => normalize(i.label) === key);
       return item ? hexToRgba(item.color, 0.15) : '#ffffffff';
     };
 
     const getBorderColor = status => {
-      const item = legendItems.find(i => normalize(i.label) === normalize(status));
+      const key = normalizeStatusForLegend(status);
+      const item = legendItems.find(i => normalize(i.label) === key);
       return item?.borderColor ? item.color : '#007bff';
     };
 
