@@ -99,6 +99,11 @@ const AvailabilityTemplatePageNew = () => {
     setFilteredList(filtered);
     setIsFiltered(true);
     setPaginationParams(prev => ({ ...prev, page: 0 }));
+    const selectedExists = filtered.some(
+      item => item.id === selectedTemplate?.id
+    );
+    if(!selectedExists)
+    setSelectedTemplate({ ...newAvailabilityTemplateResponseVM })
   };
 
   const currentList = useMemo(() => {
@@ -360,60 +365,60 @@ const AvailabilityTemplatePageNew = () => {
   }, [pageIndex, rowsPerPage, totalCount]);
 
   useEffect(() => {
-      dispatch(setPageCode('AvailabilityTemplate'));
-      dispatch(setDivContent('Availability Template'));
-      return () => {
-        dispatch(setPageCode(''));
-        dispatch(setDivContent(''));
-      };
-    }, [dispatch]);
+    dispatch(setPageCode('AvailabilityTemplate'));
+    dispatch(setDivContent('Availability Template'));
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
 
   return (
     <Panel>
       <div className='container-of-table-and-section-availability-template'>
-      <MyTable
-        columns={columns}
-        data={pagedList}
-        height={500}
-        rowClassName={isSelected}
-        onRowClick={rowdata => setSelectedTemplate(rowdata)}
-        filters={filters}
-        loading={isFetching}
-        totalCount={totalCount}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        onPageChange={(_, newPage) => {
-          setPaginationParams(prev => ({ ...prev, page: newPage }));
-        }}
-        onRowsPerPageChange={e => {
-          const newSize = Number(e.target.value);
-          setPaginationParams({ page: 0, size: newSize });
-        }}
-        tableButtons={
-          <>
-            <MyButton
-              icon="plus"
-              appearance="primary"
-              onClick={() => {
-                setSelectedTemplate(
-                  { ...newAvailabilityTemplateResponseVM }
+        <MyTable
+          columns={columns}
+          data={pagedList}
+          height={500}
+          rowClassName={isSelected}
+          onRowClick={rowdata => setSelectedTemplate(rowdata)}
+          filters={filters}
+          loading={isFetching}
+          totalCount={totalCount}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          onPageChange={(_, newPage) => {
+            setPaginationParams(prev => ({ ...prev, page: newPage }));
+          }}
+          onRowsPerPageChange={e => {
+            const newSize = Number(e.target.value);
+            setPaginationParams({ page: 0, size: newSize });
+          }}
+          tableButtons={
+            <>
+              <MyButton
+                icon="plus"
+                appearance="primary"
+                onClick={() => {
+                  setSelectedTemplate(
+                    { ...newAvailabilityTemplateResponseVM }
 
-                );
-                setOpenModal(true);
-              }}
-            >
-              Add Template
-            </MyButton>
+                  );
+                  setOpenModal(true);
+                }}
+              >
+                Add Template
+              </MyButton>
 
-          </>
-        }
-      />
-      {selectedTemplate?.id && (
-        <AvailabilityTemplateDetailsSection
-          template={selectedTemplate}
+            </>
+          }
         />
-      )}
+        {selectedTemplate?.id && (
+          <AvailabilityTemplateDetailsSection
+            template={selectedTemplate}
+          />
+        )}
       </div>
       <AddEditAvailabilityTemplate
         open={openModal}
