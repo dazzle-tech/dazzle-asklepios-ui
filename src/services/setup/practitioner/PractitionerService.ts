@@ -261,6 +261,24 @@ export const PractitionerService = createApi({
         };
       },
       providesTags: ['Practitioner']
+    }),
+
+    // Get all active practitioners
+    getAllActivePractitioners: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/active',
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
     })
   })
 });
@@ -292,5 +310,7 @@ export const {
   useExistsPractitionerByUserIdQuery,
   useLazyExistsPractitionerByUserIdQuery,
   useGetSpecialistPractitionersQuery,
-  useLazyGetSpecialistPractitionersQuery
+  useLazyGetSpecialistPractitionersQuery,
+  useGetAllActivePractitionersQuery,
+  useLazyGetAllActivePractitionersQuery
 } = PractitionerService;

@@ -2,7 +2,7 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';

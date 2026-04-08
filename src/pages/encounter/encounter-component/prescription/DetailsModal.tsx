@@ -35,6 +35,7 @@ import { PlusRound } from '@rsuite/icons';
 
 import './styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
 
 const DetailsModal = ({
   edit,
@@ -471,8 +472,9 @@ const DetailsModal = ({
                             }}
                           >
                             {instructionTypeQueryResponse?.object?.map((instruction, index) => (
+                            
                               <Radio key={index} value={instruction.key}>
-                                {instruction.lovDisplayVale}
+                              <Translate>  {instruction.lovDisplayVale}</Translate>
                               </Radio>
                             ))}
                           </RadioGroup>

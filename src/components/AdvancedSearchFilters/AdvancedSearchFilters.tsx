@@ -7,6 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '../MyButton/MyButton';
 import './styles.less';
+import Translate from '../Translate';
 
 const AdvancedSearchFilters = ({
   searchFilter = true,
@@ -27,7 +28,7 @@ const AdvancedSearchFilters = ({
             onClick={() => setShowAdvanced(!showAdvanced)}
             prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlassPlus} />}
           >
-            Advanced
+           <Translate>Advanced</Translate>
           </MyButton>
         )}
 
@@ -38,7 +39,7 @@ const AdvancedSearchFilters = ({
             prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />}
             onClick={searchOnClick}
           >
-            Search
+            <Translate>Search</Translate>
           </MyButton>
         )}
 
@@ -46,7 +47,7 @@ const AdvancedSearchFilters = ({
           prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
           onClick={clearOnClick}
         >
-          Clear
+          <Translate>Clear</Translate>
         </MyButton>
       </div>
 

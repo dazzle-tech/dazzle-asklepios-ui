@@ -3,7 +3,7 @@ import { Panel, Form, Whisper, Tooltip } from "rsuite";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 import { setDivContent, setPageCode } from "@/reducers/divSlice";
-import { MdCheckCircle, MdCancel } from "react-icons/md";
+import { MdCheckCircle } from "react-icons/md";
 import { BrandMedication } from "@/types/model-types-new";
 import { newBrandMedication } from "@/types/model-types-constructor-new";
 
@@ -20,7 +20,7 @@ import {
   useLazyGetBrandMedicationsByExpiresAfterOpeningQuery,
   useLazyGetBrandMedicationsByUseSinglePatientQuery,
   useLazyGetBrandMedicationsByIsActiveQuery,
-} from "@/services/setup/brandmedication/BrandMedicationService ";
+} from "@/services/setup/brandmedication/BrandMedicationService";
 
 import MyTable from "@/components/MyTable";
 import MyInput from "@/components/MyInput";
@@ -35,478 +35,670 @@ import "./styles.less";
 import { GiMedicines } from "react-icons/gi";
 import AddActiveIngredient from "./AddActiveIngredient";
 import { HiOutlineSwitchHorizontal } from "react-icons/hi";
-import { conjureValueBasedOnKeyFromList, conjureValuesFromList, formatEnumString } from "@/utils";
+import { conjureValueBasedOnKeyFromList, formatEnumString } from "@/utils";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import AddBrandSubstitute from "./AddBrandSubstitute";
-import { title } from "process";
 import { useEnumOptions } from "@/services/enumsApi";
 
-const GenericMedications = () => {
-  const dispatch = useAppDispatch();
+const FIELD_LABELS: Record<string, string> = {
+  id: "ID",
+  name: "Brand Name",
+  code: "Brand Code",
+  manufacturer: "Manufacturer",
+  dosageForm: "Dosage Form",
+  usageInstructions: "Usage Instructions",
+  storageRequirements: "Storage Requirements",
+  expiresAfterOpening: "Expires After Opening",
+  expiresAfterOpeningValue: "Expires After Opening Value",
+  expiresAfterOpeningUnit: "Expires After Opening Unit",
+  useSinglePatient: "Single Patient Use",
+  highCostMedication: "High Cost Medication",
+  costCategory: "Cost Category",
+  roa: "ROA",
+  isActive: "Active",
+  uomGroupId: "UOM Group",
+  uomGroupUnitId: "Base UOM",
+  price: "Price",
+  currency: "Currency",
+};
 
-  // ---------- State ----------
-  const [brandMedication, setBrandMedication] = useState<BrandMedication>({
-    ...newBrandMedication,
-  });
+const BRAND_MEDICATION_ERROR_MAP: Record<string, string> = {
+  namerequired: "Brand Name is required.",
+  dosageformrequired: "Dosage Form is required.",
+  uomGrouprequired: "UOM Group is required.",
+  uomGroupUnitrequired: "Base UOM is required.",
+  notfound: "Requested Brand Medication record was not found.",
+};
 
-  const [openActiveIngredientPopup, setOpenActiveIngredientPopup] = useState(false);
-  const [openSubstitute, setOpenSubstitute] = useState(false)
-  const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
-  const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [actionType, setActionType] = useState<"deactivate" | "reactivate">("deactivate");
+const formatFieldName = (field?: string): string => {
+  if (!field) return "";
+  return FIELD_LABELS[field] || field;
+};
 
-  const [recordOfFilter, setRecordOfFilter] = useState({ filter: "", value: "" });
-  const [isFiltered, setIsFiltered] = useState(false);
-  const [filteredList, setFilteredList] = useState<BrandMedication[]>([]);
-  const [filteredTotal, setFilteredTotal] = useState(0);
+const normalizeFieldMessage = (msg?: string) => {
+  const m = (msg || "").toLowerCase().trim();
 
-  const isSelected = (rowData: BrandMedication) =>
-    rowData?.id === brandMedication?.id ? "selected-row" : "";
-  const [paginationParams, setPaginationParams] = useState({
-    page: 0,
-    size: 15,
-    sort: "id,asc",
-    timestamp: Date.now(),
-  });
+  if (
+    m.includes("must not be null") ||
+    m.includes("must not be blank") ||
+    m.includes("must not be empty") ||
+    m.includes("is required")
+  ) {
+    return "is required";
+  }
 
-  const [sortColumn, setSortColumn] = useState("id");
-  const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+  if (m.includes("failed to convert")) return "has invalid value";
+  if (m.includes("size must be between")) return "length is out of range";
+  if (m.includes("must be greater")) return "value is too small";
+  if (m.includes("must be less")) return "value is too large";
 
-  // ---------- Queries ----------
-  const { data: allMedications, isFetching, refetch } = useGetAllBrandMedicationsQuery(paginationParams);
-  const totalCount = allMedications?.totalCount ?? 0;
-  // Fetch Generic Medication Lov  list response
-  const { data: brandMedicationLovQueryResponse } =
-    useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
-  // Fetch doseage Form Lov  list response
-  const { data: doseageFormLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
-  const roaEnumOptions = useEnumOptions('MedRoa');
-  const [addBrandMedication] = useCreateBrandMedicationMutation();
-  const [updateBrandMedication] = useUpdateBrandMedicationMutation();
-  const [toggleActive] = useToggleBrandMedicationActiveMutation();
+  return msg || "invalid value";
+};
 
-  // Lazy filters
-  const [getByName] = useLazyGetBrandMedicationsByNameQuery();
-  const [getByManufacturer] = useLazyGetBrandMedicationsByManufacturerQuery();
-  const [getByDosageForm] = useLazyGetBrandMedicationsByDosageFormQuery();
-  const [getByUsageInstructions] = useLazyGetBrandMedicationsByUsageInstructionsQuery();
-  const [getByRoa] = useLazyGetBrandMedicationsByRoaQuery();
-  const [getByExpiresAfterOpening] = useLazyGetBrandMedicationsByExpiresAfterOpeningQuery();
-  const [getByUseSinglePatient] = useLazyGetBrandMedicationsByUseSinglePatientQuery();
-  const [getByIsActive] = useLazyGetBrandMedicationsByIsActiveQuery();
+const prettifyInlineBackendMessage = (message: string): string => {
+  return message
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const firstColonIndex = part.indexOf(":");
+      if (firstColonIndex === -1) return part;
 
-  // ---------- Effects ----------
-  useEffect(() => {
-    dispatch(setPageCode("Brand_Medications"));
-    dispatch(setDivContent("Brand Medications List"));
-    return () => {
-      dispatch(setPageCode(""));
-      dispatch(setDivContent(""));
-    };
-  }, [dispatch]);
+      const rawField = part.slice(0, firstColonIndex).trim();
+      const rawMessage = part.slice(firstColonIndex + 1).trim();
 
-  // ---------- Handlers ----------
-  const handleSave = async () => {
-    try {
-      if (brandMedication.id) {
-        const { hasActiveIngredient, ...updatePayload } = brandMedication;
+      const field = formatFieldName(rawField);
+      const normalizedMessage = normalizeFieldMessage(rawMessage);
 
-        await updateBrandMedication(updatePayload).unwrap();
+      return field ? `${field} ${normalizedMessage}` : normalizedMessage;
+    })
+    .join(", ");
+};
 
+  export const handleCrudError = (
+    error: any,
+    dispatch: any,
+    keyMap?: Record<string, string>
+  ) => {
+    const data = error?.data ?? {};
 
-        dispatch(notify({ msg: "Updated successfully", sev: "success" }));
-      } else {
-        const { hasActiveIngredient, ...payload } = brandMedication;
+    const traceId =
+      data?.traceId || data?.requestId || data?.correlationId;
+    const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
-        await addBrandMedication(payload).unwrap();
-        dispatch(notify({ msg: "Added successfully", sev: "success" }));
+    const rawMessage =
+      data?.detail ||
+      data?.message ||
+      data?.title ||
+      '';
+
+    let message = '';
+
+    // 1) Spring validation errors
+    if (rawMessage.includes('Validation failed')) {
+      const blocks = rawMessage.split('[Field error in object').slice(1);
+
+      if (blocks.length) {
+        const lines = blocks
+          .map((block: string) => {
+            const fieldMatch = block.match(/on field '([^']+)'/);
+            const field = fieldMatch?.[1] || '';
+
+            const label = FIELD_LABELS[field] || field;
+            const lowerBlock = block.toLowerCase();
+
+            let normalized = 'invalid value';
+
+            if (
+              lowerBlock.includes('must not be empty') ||
+              lowerBlock.includes('must not be null') ||
+              lowerBlock.includes('must not be blank') ||
+              lowerBlock.includes('is required')
+            ) {
+              normalized = 'is required';
+            } else if (lowerBlock.includes('failed to convert')) {
+              normalized = 'has invalid value';
+            } else if (lowerBlock.includes('size must be between')) {
+              normalized = 'length is out of range';
+            } else if (lowerBlock.includes('must be greater')) {
+              normalized = 'value is too small';
+            } else if (lowerBlock.includes('must be less')) {
+              normalized = 'value is too large';
+            }
+
+            if (!label) return null;
+
+            return `• ${label} ${normalized}`;
+          })
+          .filter(Boolean);
+
+        if (lines.length) {
+          message = lines.join('\n');
+        }
       }
-      setOpenAddEditPopup(false);
-    } catch (error) {
-      dispatch(notify({ msg: "Error saving medication", sev: "error" }));
     }
+
+    // 2) PostgreSQL duplicate / DB errors
+    if (!message) {
+      let backendMessage = rawMessage;
+
+      if (backendMessage.includes('Detail:')) {
+        const match = backendMessage.match(/Detail:\s*(.*?)(\]|\[|$)/);
+        if (match?.[1]) {
+          backendMessage = match[1].trim();
+        }
+      }
+
+      if (backendMessage.includes('already exists')) {
+        if (backendMessage.includes('(code)')) {
+          message = 'Brand Code already exists';
+        } else {
+          message = 'Record already exists';
+        }
+      } else {
+        message = backendMessage;
+      }
+    }
+
+    // 3) keyMap fallback
+    if (!message) {
+      const messageProp: string = data?.message || '';
+      const errorKey = messageProp.startsWith('error.')
+        ? messageProp.substring(6)
+        : undefined;
+
+      message =
+        (errorKey && keyMap?.[errorKey]) ||
+        'Unexpected error';
+    }
+
+    dispatch(
+      notify({
+        msg: message + suffix,
+        sev: 'error'
+      })
+    );
   };
 
-  const handleToggleActive = async (id: number) => {
+  const GenericMedications = () => {
+    const dispatch = useAppDispatch();
 
-    try {
-      await toggleActive(brandMedication?.id).unwrap();
-      dispatch(notify({ msg: "Status toggled", sev: "success" }));
-      setOpenConfirmModal(false)
-      refetch();
-    } catch {
-      dispatch(notify({ msg: "Failed to toggle active", sev: "error" }));
-      setOpenConfirmModal(false)
-    }
-  };
+    const [brandMedication, setBrandMedication] = useState<BrandMedication>({
+      ...newBrandMedication,
+    });
 
-  const handleFilterChange = async (field: string, value: string) => {
-    if (!field || value === undefined || value === null || value === "") {
+    const [openActiveIngredientPopup, setOpenActiveIngredientPopup] = useState(false);
+    const [openSubstitute, setOpenSubstitute] = useState(false);
+    const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
+    const [openConfirmModal, setOpenConfirmModal] = useState(false);
+    const [actionType, setActionType] = useState<"deactivate" | "reactivate">("deactivate");
 
-      setIsFiltered(false);
-      setFilteredList([]);
-      return;
-    }
+    const [recordOfFilter, setRecordOfFilter] = useState({ filter: "", value: "" });
+    const [isFiltered, setIsFiltered] = useState(false);
+    const [filteredList, setFilteredList] = useState<BrandMedication[]>([]);
+    const [filteredTotal, setFilteredTotal] = useState(0);
 
-    try {
-      const params = { page: 0, size: 15, sort: "id,asc" };
-      let response;
+    const isSelected = (rowData: BrandMedication) =>
+      rowData?.id === brandMedication?.id ? "selected-row" : "";
 
-      switch (field) {
-        case "name":
-          response = await getByName({ name: value, ...params }).unwrap();
-          break;
+    const [paginationParams, setPaginationParams] = useState({
+      page: 0,
+      size: 15,
+      sort: "id,asc",
+      timestamp: Date.now(),
+    });
+
+    const [sortColumn, setSortColumn] = useState("id");
+    const [sortType, setSortType] = useState<"asc" | "desc">("asc");
+
+    const { data: allMedications, isFetching, refetch } =
+      useGetAllBrandMedicationsQuery(paginationParams);
+
+    const totalCount = allMedications?.totalCount ?? 0;
+
+    const { data: brandMedicationLovQueryResponse } =
+      useGetLovValuesByCodeQuery("GEN_MED_MANUFACTUR");
+
+    const { data: doseageFormLovQueryResponse } =
+      useGetLovValuesByCodeQuery("DOSAGE_FORMS");
+
+    const roaEnumOptions = useEnumOptions("MedRoa");
+
+    const [addBrandMedication] = useCreateBrandMedicationMutation();
+    const [updateBrandMedication] = useUpdateBrandMedicationMutation();
+    const [toggleActive] = useToggleBrandMedicationActiveMutation();
+
+    const [getByName] = useLazyGetBrandMedicationsByNameQuery();
+    const [getByManufacturer] = useLazyGetBrandMedicationsByManufacturerQuery();
+    const [getByDosageForm] = useLazyGetBrandMedicationsByDosageFormQuery();
+    const [getByUsageInstructions] = useLazyGetBrandMedicationsByUsageInstructionsQuery();
+    const [getByRoa] = useLazyGetBrandMedicationsByRoaQuery();
+    const [getByExpiresAfterOpening] = useLazyGetBrandMedicationsByExpiresAfterOpeningQuery();
+    const [getByUseSinglePatient] = useLazyGetBrandMedicationsByUseSinglePatientQuery();
+    const [getByIsActive] = useLazyGetBrandMedicationsByIsActiveQuery();
+
+    useEffect(() => {
+      dispatch(setPageCode("Brand_Medications"));
+      dispatch(setDivContent("Brand Medications List"));
+
+      return () => {
+        dispatch(setPageCode(""));
+        dispatch(setDivContent(""));
+      };
+    }, [dispatch]);
+
+    const handleSave = async () => {
+      try {
+        if (brandMedication.id) {
+          const { hasActiveIngredient, ...updatePayload } = brandMedication;
+          await updateBrandMedication(updatePayload).unwrap();
+          dispatch(notify({ msg: "Updated successfully", sev: "success" }));
+        } else {
+          const { hasActiveIngredient, ...payload } = brandMedication;
+          await addBrandMedication(payload).unwrap();
+          dispatch(notify({ msg: "Added successfully", sev: "success" }));
+        }
+
+        setOpenAddEditPopup(false);
+        refetch();
+      } catch (error: any) {
+        handleCrudError(error, dispatch, BRAND_MEDICATION_ERROR_MAP);
+      }
+    };
+
+    const handleToggleActive = async (id: number) => {
+      try {
+        await toggleActive(id).unwrap();
+        dispatch(notify({ msg: "Status toggled", sev: "success" }));
+        setOpenConfirmModal(false);
+        refetch();
+      } catch (error: any) {
+        handleCrudError(error, dispatch, BRAND_MEDICATION_ERROR_MAP);
+        setOpenConfirmModal(false);
+      }
+    };
+
+    const normalizeBool = (v: any) => (v === true || v === "true" ? true : false);
+
+    const handleFilterChange = async (field: string, value: string) => {
+      if (!field || value === undefined || value === null || value === "") {
+        setIsFiltered(false);
+        setFilteredList([]);
+        setFilteredTotal(0);
+        return;
+      }
+
+      try {
+        const params = { page: 0, size: 15, sort: "id,asc" };
+        let response;
+
+        switch (field) {
+          case "name":
+            response = await getByName({ name: value, ...params }).unwrap();
+            break;
+          case "manufacturer":
+            response = await getByManufacturer({ manufacturer: value, ...params }).unwrap();
+            break;
+          case "dosageForm":
+            response = await getByDosageForm({ dosageForm: value, ...params }).unwrap();
+            break;
+          case "usageInstructions":
+            response = await getByUsageInstructions({ usageInstructions: value, ...params }).unwrap();
+            break;
+          case "roa":
+            response = await getByRoa({ roa: value, ...params }).unwrap();
+            break;
+          case "expiresAfterOpening":
+            response = await getByExpiresAfterOpening({
+              expiresAfterOpening: normalizeBool(value),
+              ...params,
+            }).unwrap();
+            break;
+          case "useSinglePatient":
+            response = await getByUseSinglePatient({
+              useSinglePatient: normalizeBool(value),
+              ...params,
+            }).unwrap();
+            break;
+          case "isActive":
+            response = await getByIsActive({
+              isActive: normalizeBool(value),
+              ...params,
+            }).unwrap();
+            break;
+          default:
+            return;
+        }
+
+        setFilteredList(response.data ?? []);
+        setFilteredTotal(response.totalCount ?? 0);
+        setIsFiltered(true);
+      } catch (error: any) {
+        handleCrudError(error, dispatch, BRAND_MEDICATION_ERROR_MAP);
+      }
+    };
+
+    const handleSortChange = (col: string, type: "asc" | "desc") => {
+      setSortColumn(col);
+      setSortType(type);
+      const sort = `${col},${type}`;
+      setPaginationParams({
+        ...paginationParams,
+        sort,
+        page: 0,
+        timestamp: Date.now(),
+      });
+    };
+
+    const renderFilterValueInput = () => {
+      switch (recordOfFilter.filter) {
         case "manufacturer":
-          response = await getByManufacturer({ manufacturer: value, ...params }).unwrap();
-          break;
+          return (
+            <MyInput
+              fieldName="value"
+              fieldType="select"
+              selectData={brandMedicationLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={recordOfFilter}
+              showLabel={false}
+              setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+              placeholder="Select Manufacturer"
+            />
+          );
+
         case "dosageForm":
-          response = await getByDosageForm({ dosageForm: value, ...params }).unwrap();
-          break;
-        case "usageInstructions":
-          response = await getByUsageInstructions({ usageInstructions: value, ...params }).unwrap();
-          break;
+          return (
+            <MyInput
+              fieldName="value"
+              fieldType="select"
+              selectData={doseageFormLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={recordOfFilter}
+              showLabel={false}
+              setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+              placeholder="Select Dosage Form"
+            />
+          );
+
         case "roa":
-          response = await getByRoa({ roa: value, ...params }).unwrap();
-          break;
+          return (
+            <MyInput
+              fieldType="select"
+              fieldName="roa"
+              selectData={roaEnumOptions ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={recordOfFilter}
+              showLabel={false}
+              setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
+              placeholder="Select Roa"
+            />
+          );
+
         case "expiresAfterOpening":
-          response = await getByExpiresAfterOpening({
-            expiresAfterOpening: normalizeBool(value),
-            ...params,
-          }).unwrap();
-          break;
-
-        case "useSinglePatient":
-          response = await getByUseSinglePatient({
-            useSinglePatient: normalizeBool(value),
-            ...params,
-          }).unwrap();
-          break;
-
         case "isActive":
-          response = await getByIsActive({
-            isActive: normalizeBool(value),
-            ...params,
-          }).unwrap();
-          break;
+        case "useSinglePatient":
+          return (
+            <MyInput
+              fieldName="value"
+              fieldType="checkbox"
+              record={recordOfFilter}
+              setRecord={setRecordOfFilter}
+              showLabel={false}
+              placeholder="Search"
+            />
+          );
 
         default:
-          return;
+          return (
+            <MyInput
+              fieldName="value"
+              fieldType="text"
+              record={recordOfFilter}
+              setRecord={setRecordOfFilter}
+              showLabel={false}
+              placeholder="Search"
+            />
+          );
       }
+    };
 
-      setFilteredList(response.data ?? []);
-      setFilteredTotal(response.totalCount ?? 0);
-      setIsFiltered(true);
-    } catch {
-      dispatch(notify({ msg: "Error filtering", sev: "error" }));
-    }
-  };
-
-  const handleSortChange = (col: string, type: "asc" | "desc") => {
-    setSortColumn(col);
-    setSortType(type);
-    const sort = `${col},${type}`;
-    setPaginationParams({ ...paginationParams, sort, page: 0, timestamp: Date.now() });
-  };
-
-  // ---------- Render ----------
-  const normalizeBool = (v: any) =>
-    v === true || v === "true" ? true : false;
-
-  const renderFilterValueInput = () => {
-    switch (recordOfFilter.filter) {
-      case "manufacturer":
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="select"
-            selectData={brandMedicationLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={recordOfFilter}
-            showLabel={false}
-            setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-            placeholder="Select Manufacturer"
-          />
-        );
-
-      case "dosageForm":
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="select"
-            selectData={doseageFormLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={recordOfFilter}
-            showLabel={false}
-            setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-            placeholder="Select Dosage Form"
-          />
-        );
-
-      case "roa":
-        return (
-          <MyInput
-            fieldType="select"
-            fieldName="roa"
-            selectData={roaEnumOptions ?? []}
-            selectDataLabel="label"
-            selectDataValue="value"
-            record={recordOfFilter}
-            showLabel={false}
-            setRecord={(u) => setRecordOfFilter({ ...recordOfFilter, value: u.value })}
-            placeholder="Select Roa"
-          />
-        );
-
-      case "expiresAfterOpening":
-        return <MyInput
-          fieldName="value"
-          fieldType="checkbox"
+    const filters = () => (
+      <Form layout="inline" fluid>
+        <MyInput
+          fieldName="filter"
+          fieldType="select"
+          selectData={[
+            { label: "Brand Name", value: "name" },
+            { label: "Manufacturer", value: "manufacturer" },
+            { label: "Dosage Form", value: "dosageForm" },
+            { label: "ROA", value: "roa" },
+            { label: "Expires After Opening", value: "expiresAfterOpening" },
+            { label: "Single Patient Use", value: "useSinglePatient" },
+            { label: "Active", value: "isActive" },
+          ]}
+          selectDataLabel="label"
+          selectDataValue="value"
           record={recordOfFilter}
-          setRecord={setRecordOfFilter}
+          setRecord={(r) =>
+            setRecordOfFilter({ ...recordOfFilter, filter: r.filter, value: "" })
+          }
           showLabel={false}
-          placeholder="Search"
+          placeholder="Select Filter"
         />
 
-      case "isActive":
-        return <MyInput
-          fieldName="value"
-          fieldType="checkbox"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
-      case "useSinglePatient":
-        return <MyInput
-          fieldName="value"
-          fieldType="checkbox"
-          record={recordOfFilter}
-          setRecord={setRecordOfFilter}
-          showLabel={false}
-          placeholder="Search"
-        />
+        {renderFilterValueInput()}
 
-      default:
+        <MyButton
+          color="var(--deep-blue)"
+          width="80px"
+          onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
+        >
+          Search
+        </MyButton>
+      </Form>
+    );
 
-        return (
-          <MyInput
-            fieldName="value"
-            fieldType="text"
-            record={recordOfFilter}
-            setRecord={setRecordOfFilter}
-            showLabel={false}
-            placeholder="Search"
-          />
-        );
-    }
-  };
-
-  const filters = () => (
-    <Form layout="inline" fluid>
-      <MyInput
-        fieldName="filter"
-        fieldType="select"
-        selectData={[
-          { label: "Brand Name", value: "name" },
-          { label: "Manufacturer", value: "manufacturer" },
-          { label: "Dosage Form", value: "dosageForm" },
-
-          { label: "ROA", value: "roa" },
-          { label: "Expires After Opening", value: "expiresAfterOpening" },
-          { label: "Single Patient Use", value: "useSinglePatient" },
-          { label: "Active", value: "isActive" },
-        ]}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={recordOfFilter}
-        setRecord={(r) => setRecordOfFilter({ ...recordOfFilter, filter: r.filter, value: "" })}
-        showLabel={false}
-        placeholder="Select Filter"
-      />
-
-      {renderFilterValueInput()}
-      <MyButton
-        color="var(--deep-blue)"
-        width="80px"
-        onClick={() => handleFilterChange(recordOfFilter.filter, recordOfFilter.value)}
-      >
-        Search
-      </MyButton>
-    </Form>
-  );
-
-  const iconsForActions = (row: BrandMedication) => (
-    <div className="container-of-icons">
-      <MdModeEdit
-        className="icons-style"
-        title="Edit"
-        size={22}
-        onClick={() => {
-          setBrandMedication(row);
-          setOpenAddEditPopup(true);
-        }}
-      />
-      {row.isActive ? (
-        <MdDelete
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
+    const iconsForActions = (row: BrandMedication) => (
+      <div className="container-of-icons">
+        <MdModeEdit
           className="icons-style"
-          onClick={() => {
-            setBrandMedication(row);
-            setOpenConfirmModal(true);
-          }}
-        />
-      ) : (
-        <FaUndo
-          title="Activate"
-          size={24}
-          fill="var(--primary-gray)"
-          className="icons-style"
-          onClick={() => {
-            setBrandMedication(row);
-            setOpenConfirmModal(true);
-          }}
-        />
-      )}
-
-      <Whisper placement="top" speaker={<Tooltip><Translate>Active Ingredient</Translate></Tooltip>}>
-        <GiMedicines
-          className="icons-style"
-          title="Active Ingredient"
+          title="Edit"
           size={22}
           onClick={() => {
             setBrandMedication(row);
-            setOpenActiveIngredientPopup(true)
+            setOpenAddEditPopup(true);
           }}
         />
-      </Whisper>
-      {row.hasActiveIngredient &&
-        <Whisper placement="top" speaker={<Tooltip><Translate>Substitute</Translate></Tooltip>}>
-          <HiOutlineSwitchHorizontal
+
+        {row.isActive ? (
+          <MdDelete
+            title="Deactivate"
+            size={24}
+            fill="var(--primary-pink)"
             className="icons-style"
-            title="Substitute"
+            onClick={() => {
+              setBrandMedication(row);
+              setActionType("deactivate");
+              setOpenConfirmModal(true);
+            }}
+          />
+        ) : (
+          <FaUndo
+            title="Activate"
+            size={24}
+            fill="var(--primary-gray)"
+            className="icons-style"
+            onClick={() => {
+              setBrandMedication(row);
+              setActionType("reactivate");
+              setOpenConfirmModal(true);
+            }}
+          />
+        )}
+
+        <Whisper
+          placement="top"
+          speaker={
+            <Tooltip>
+              <Translate>Active Ingredient</Translate>
+            </Tooltip>
+          }
+        >
+          <GiMedicines
+            className="icons-style"
+            title="Active Ingredient"
             size={22}
             onClick={() => {
               setBrandMedication(row);
-              setOpenSubstitute(true)
+              setOpenActiveIngredientPopup(true);
             }}
           />
-        </Whisper>}
-    </div>
-  );
+        </Whisper>
 
-  const columns = [
-    { key: "name", title: <Translate>Brand Name</Translate>, flexGrow: 4 },
-
-    {
-      key: "manufacturer", title: <Translate>Manufacturer</Translate>, flexGrow: 4,
-      render: (rowData) => conjureValueBasedOnKeyFromList(
-        brandMedicationLovQueryResponse?.object,
-        rowData?.manufacturer,
-        "lovDisplayVale"
-      )
-    },
-    {
-      key: "dosageForm", title: <Translate>Dosage Form</Translate>, flexGrow: 4,
-      render: (rowData) => conjureValueBasedOnKeyFromList(
-        doseageFormLovQueryResponse?.object,
-        rowData?.dosageForm,
-        "lovDisplayVale"
-      )
-    },
-
-    {
-      key: "roa", title: <Translate>ROA</Translate>, flexGrow: 3,
-     render: rowData => <p>{formatEnumString(rowData?.roa)}</p>,
-    },
-    { key: "isActive", title: <Translate>Status</Translate>, flexGrow: 2, render: (r: BrandMedication) => (r.isActive ? "Active" : "Inactive") },
-    { key: "actions", title: "", flexGrow: 2, render: iconsForActions },
-
-
-    {
-      key: "hasActiveIngredient",
-      title: "Active Ingredient",
-      render: (row) =>
-        row.hasActiveIngredient && (
-          <MdCheckCircle size={22} color="var(--success)" />
-        )
-    }
-
-
-  ];
-
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
-
-  return (
-    <Panel dir={dir}>
-      <MyTable
-        height={500}
-        data={isFiltered ? filteredList : allMedications?.data ?? []}
-        totalCount={isFiltered ? filteredTotal : totalCount}
-        loading={isFetching}
-        columns={columns}
-        filters={filters()}
-        rowClassName={isSelected}
-        sortColumn={sortColumn}
-        sortType={sortType}
-        onSortChange={handleSortChange}
-        page={paginationParams.page}
-        rowsPerPage={paginationParams.size}
-        onPageChange={(_, p) => setPaginationParams({ ...paginationParams, page: p })}
-        onRowsPerPageChange={(e) =>
-          setPaginationParams({ ...paginationParams, size: Number(e.target.value), page: 0 })
-        }
-        tableButtons={
-          <MyButton
-            prefixIcon={() => <AddOutlineIcon />}
-            color="var(--deep-blue)"
-            onClick={() => {
-              setBrandMedication({ ...newBrandMedication });
-              setOpenAddEditPopup(true);
-            }}
-            width="109px"
+        {row.hasActiveIngredient && (
+          <Whisper
+            placement="top"
+            speaker={
+              <Tooltip>
+                <Translate>Substitute</Translate>
+              </Tooltip>
+            }
           >
-            Add New
-          </MyButton>
-        }
-      />
+            <HiOutlineSwitchHorizontal
+              className="icons-style"
+              title="Substitute"
+              size={22}
+              onClick={() => {
+                setBrandMedication(row);
+                setOpenSubstitute(true);
+              }}
+            />
+          </Whisper>
+        )}
+      </div>
+    );
 
-      <AddEditBrandMedication
-        open={openAddEditPopup}
-        setOpen={setOpenAddEditPopup}
-        brandMedication={brandMedication}
-        setBrandMedication={setBrandMedication}
-        handleSave={handleSave}
-      />
+    const columns = [
+      { key: "name", title: <Translate>Brand Name</Translate>, flexGrow: 4 },
+      {
+        key: "manufacturer",
+        title: <Translate>Manufacturer</Translate>,
+        flexGrow: 4,
+        render: (rowData: BrandMedication) =>
+          conjureValueBasedOnKeyFromList(
+            brandMedicationLovQueryResponse?.object,
+            rowData?.manufacturer,
+            "lovDisplayVale"
+          ),
+      },
+      {
+        key: "dosageForm",
+        title: <Translate>Dosage Form</Translate>,
+        flexGrow: 4,
+        render: (rowData: BrandMedication) =>
+          conjureValueBasedOnKeyFromList(
+            doseageFormLovQueryResponse?.object,
+            rowData?.dosageForm,
+            "lovDisplayVale"
+          ),
+      },
+      {
+        key: "roa",
+        title: <Translate>ROA</Translate>,
+        flexGrow: 3,
+        render: (rowData: BrandMedication) => <p>{formatEnumString(rowData?.roa)}</p>,
+      },
+      {
+        key: "isActive",
+        title: <Translate>Status</Translate>,
+        flexGrow: 2,
+        render: (r: BrandMedication) => (r.isActive ? "Active" : "Inactive"),
+      },
+      { key: "actions", title: "", flexGrow: 2, render: iconsForActions },
+      {
+        key: "hasActiveIngredient",
+        title: "Active Ingredient",
+        render: (row: BrandMedication) =>
+          row.hasActiveIngredient && <MdCheckCircle size={22} color="var(--success)" />,
+      },
+    ];
 
-      <DeletionConfirmationModal
-        open={openConfirmModal}
-        setOpen={setOpenConfirmModal}
-        itemToDelete="Brand Medication"
-        actionButtonFunction={() => handleToggleActive(brandMedication.id!)}
-        actionType={actionType}
-      />
+    const direction = localStorage.getItem("direction") || "LTR";
+    const isRTL = direction === "RTL";
+    const dir = isRTL ? "rtl" : "ltr";
 
-      <AddActiveIngredient
-        brandMedication={brandMedication}
-        open={openActiveIngredientPopup}
-        setOpen={setOpenActiveIngredientPopup}
-      />
-      <AddBrandSubstitute
-        open={openSubstitute}
-        setOpen={setOpenSubstitute}
-        brandMedication={brandMedication}
-      />
-    </Panel>
-  );
-};
+    return (
+      <Panel dir={dir}>
+        <MyTable
+          height={500}
+          data={isFiltered ? filteredList : allMedications?.data ?? []}
+          totalCount={isFiltered ? filteredTotal : totalCount}
+          loading={isFetching}
+          columns={columns}
+          filters={filters()}
+          rowClassName={isSelected}
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={handleSortChange}
+          page={paginationParams.page}
+          rowsPerPage={paginationParams.size}
+          onPageChange={(_, p) =>
+            setPaginationParams({ ...paginationParams, page: p })
+          }
+          onRowsPerPageChange={(e) =>
+            setPaginationParams({
+              ...paginationParams,
+              size: Number(e.target.value),
+              page: 0,
+            })
+          }
+          tableButtons={
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={() => {
+                setBrandMedication({ ...newBrandMedication });
+                setOpenAddEditPopup(true);
+              }}
+              width="109px"
+            >
+              Add New
+            </MyButton>
+          }
+        />
+
+        <AddEditBrandMedication
+          open={openAddEditPopup}
+          setOpen={setOpenAddEditPopup}
+          brandMedication={brandMedication}
+          setBrandMedication={setBrandMedication}
+          handleSave={handleSave}
+        />
+
+        <DeletionConfirmationModal
+          open={openConfirmModal}
+          setOpen={setOpenConfirmModal}
+          itemToDelete="Brand Medication"
+          actionButtonFunction={() => handleToggleActive(brandMedication.id!)}
+          actionType={actionType}
+        />
+
+        <AddActiveIngredient
+          brandMedication={brandMedication}
+          open={openActiveIngredientPopup}
+          setOpen={setOpenActiveIngredientPopup}
+        />
+
+        <AddBrandSubstitute
+          open={openSubstitute}
+          setOpen={setOpenSubstitute}
+          brandMedication={brandMedication}
+        />
+      </Panel>
+    );
+  };
 
 export default GenericMedications;

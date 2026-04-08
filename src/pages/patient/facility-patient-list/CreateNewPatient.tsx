@@ -148,8 +148,7 @@ const toHumanPatientDocumentError = (
     'type.required': 'Document type is required.',
     'primary.exists': 'This patient already has a primary document.',
     'unique.document': 'A document with the same number, type, and country already exists.',
-    'patient.emergency.notAllowed.withOngoing':
-      'Patient currently treated by another doctor',
+    'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
     'db.constraint':
       'A document with this number already exists for this patient. Please use a different document number.',
     notfound: 'Patient document not found.'
@@ -357,7 +356,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const PAGE_SIZE = 5;
 
-  // Encounter type and department state for ER Triage
   const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
   const [deptPage, setDeptPage] = useState(0);
@@ -371,7 +369,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
     useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery();
 
   const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(null);
-  // Insurance state
+
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>();
   const [payorPage, setPayorPage] = useState(0);
   const [payorSearchKeyword, setPayorSearchKeyword] = useState('');
@@ -441,7 +439,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
   };
 
   const fetchDepartments = async (page = 0) => {
-    if (!selectedFacilityId || encounterType !== 'EMERGENCY') return;
+    if (!selectedFacilityId) return;
 
     try {
       console.log('[TRACE] fetchDepartments:start', {
@@ -492,7 +490,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-
   useEffect(() => {
     const facilityId = selectedDepartment?.facilityId;
 
@@ -500,13 +497,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
       typeof facilityId === 'number' && !Number.isNaN(facilityId) ? facilityId : null
     );
   }, [selectedDepartment?.facilityId]);
+
   useEffect(() => {
     if (!open) return;
     if (pageCode !== 'ER_Triage') return;
-    if (!selectedFacilityId || encounterType !== 'EMERGENCY') return;
+    if (!selectedFacilityId) return;
 
+    setDeptPage(0);
+    setSelectedDepartmentId(null);
     fetchDepartments(0);
-  }, [open, pageCode, selectedFacilityId, encounterType]);
+  }, [open, pageCode, selectedFacilityId]);
+
   useEffect(() => {
     console.log('[TRACE] modal state', {
       open,
@@ -519,22 +520,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     });
   }, [open, pageCode, selectedFacilityId, encounterType, deptPage, selectedDepartmentId, selectedDepartment]);
 
-
   useEffect(() => {
-    if (!open) return;
-
-    setDeptPage(0);
-    setSelectedDepartmentId(null);
-    setAllDepartments([]);
-  }, [open, selectedFacilityId]);
-
-
-
+    console.log('[TRACE] selectedDepartment changed', selectedDepartment);
+  }, [selectedDepartment]);
 
   useEffect(() => {
     console.log('[TRACE] modal open changed', { open });
   }, [open]);
-  const [deptRequestNo, setDeptRequestNo] = useState(0);
 
   useEffect(() => {
     setPayorPage(0);
@@ -1058,6 +1050,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               width={200}
               column
+              required
               fieldName="secondName"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -1121,6 +1114,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               setRecord={setLocalPatient}
               width={200}
             />
+
             {pageCode === 'ER_Triage' && (
               <>
                 <MyInput
@@ -1160,7 +1154,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     }
                   }}
                   searchable
-                  disabled={!selectedFacilityId || encounterType !== 'EMERGENCY'}
+                  disabled={!selectedFacilityId}
                   loading={isDepartmentsFetching}
                   hasMore={deptHasMore}
                   onFetchMore={() => {
@@ -1173,6 +1167,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 />
               </>
             )}
+
             <MyInput
               width={200}
               column
@@ -1182,8 +1177,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
               record={localPatient}
               setRecord={setLocalPatient}
             />
-
-
           </Form>
         );
 
@@ -1249,7 +1242,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     ...newRecord,
                     number:
                       secondaryDocument.type === 'NO_DOC' ||
-                        secondaryDocument.type === 'NO_DOCUMENT'
+                      secondaryDocument.type === 'NO_DOCUMENT'
                         ? 'NO_DOCUMENT'
                         : newRecord.number
                   });
@@ -1688,11 +1681,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
 
   const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
@@ -1703,7 +1696,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
           title: 'Basic Info',
           icon: <FontAwesomeIcon icon={faUser} />,
           disabledNext: !localPatient?.id,
-
           footer: (
             <MyButton onClick={pageCode === 'ER_Triage' ? handleSavePatientAndQuick : handleSave}>
               {pageCode === 'ER_Triage' ? 'Save & Create Quick Appointment' : 'Save'}
@@ -1729,7 +1721,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
       ]}
       size="33vw"
       position="right"
-      content={(step) => <div dir={dir}>{conjureFormContent(step)}</div>}
+      content={step => <div dir={dir}>{conjureFormContent(step)}</div>}
       actionButtonFunction={async () => {
         const saved = await handleSave();
         if (!saved) return;
@@ -1739,6 +1731,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
         } else {
           navigate('/patient-profile', { state: { patient: saved } });
         }
+
         setOpen(false);
         setLocalPatient({ ...newPatient });
         setPatientInsurance({ ...newPatientInsurance });

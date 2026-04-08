@@ -239,7 +239,9 @@ const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
               <MyButton prefixIcon={() => <CloseOutline />}>
                 <Translate>Cancel</Translate>
               </MyButton>
-              <Checkbox>Show Cancelled</Checkbox>
+              <Checkbox>
+                <Translate>Show Cancelled</Translate>
+              </Checkbox>
             </div>
 
             <div className="bt-right-2">
@@ -256,7 +258,9 @@ const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
                 prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
                 width="100px"
               >
+                <Translate>
                 Submit
+                </Translate>
               </MyButton>
             </div>
           </div>

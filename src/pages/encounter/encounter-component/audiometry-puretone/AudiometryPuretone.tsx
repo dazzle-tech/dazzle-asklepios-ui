@@ -404,7 +404,7 @@ const AudiometryPuretone = () => {
                   }
                 }}
               >
-                Show Cancelled
+                <Translate>Show Cancelled</Translate>
               </Checkbox>
               <Checkbox
                 onChange={(value, checked) => {

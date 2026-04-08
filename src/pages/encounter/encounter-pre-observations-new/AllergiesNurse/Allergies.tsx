@@ -345,7 +345,7 @@ const Allergies = (props: AllergiesProps) => {
           </MyButton>
 
           <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-            Show Cancelled
+            <Translate>Show Cancelled</Translate>
           </Checkbox>
         </div>
 

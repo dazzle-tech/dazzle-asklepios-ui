@@ -594,7 +594,7 @@ const Referrals = (props: any) => {
                     if (!showCanceled) setEditing(true);
                   }}
                 >
-                  Show Cancelled
+                  <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>
               <div className="bt-right-2">

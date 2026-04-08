@@ -180,7 +180,7 @@ const IntraoperativeMonitoring = ({ operation, editable }) => {
                     onClick={() => setOpen(true)}
                 >
                     <AddOutlineIcon style={{ marginRight: 8 }} />
-                    Add
+                    <Translate>Add</Translate>
                 </MyButton>
 
             </div>
@@ -330,7 +330,7 @@ const IntraoperativeMonitoring = ({ operation, editable }) => {
                             fieldType="number"
                             rightAddon="%"
                             fieldName="ppv"
-                            fieldLabel="PPV"
+                            fieldLabel={<Translate>PPV</Translate>}
                             record={monitor}
                             setRecord={setMonitor}
                         /></Col>
@@ -342,7 +342,7 @@ const IntraoperativeMonitoring = ({ operation, editable }) => {
                         <MyInput
                             width="100%"
                             fieldType="number"
-                            fieldLabel="BP Systolic"
+                            fieldLabel={<Translate>BP Systolic</Translate>}
                             fieldName="bpSystolic"
                             record={monitor}
                             setRecord={setMonitor}
@@ -360,7 +360,7 @@ const IntraoperativeMonitoring = ({ operation, editable }) => {
                         <MyInput
                             width="100%"
                             fieldType="number"
-                            fieldLabel="BP Diastolic"
+                            fieldLabel={<Translate>BP Diastolic</Translate>}
                             fieldName="bpDiastolic"
                             record={monitor}
                             setRecord={setMonitor}

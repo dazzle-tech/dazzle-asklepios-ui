@@ -112,7 +112,7 @@ import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesInte
 import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 
-import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService ';
+import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService';
 import { BrandMedicationSubstituteService } from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 
@@ -207,10 +207,13 @@ import { availabilityTemplateService } from './services/appointment/availability
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
 import { departmentServicesService } from './services/departmentServicesService';
+import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
+import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
 import { roomService } from './services/setup/room/roomService';
 import { bedService } from './services/setup/room/bedService';
 import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
+import { currentMedicationService } from './services/patients/currentMedicationService';
 
 
 export const store = configureStore({
@@ -414,6 +417,10 @@ export const store = configureStore({
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
+    // patient billing (new endpoints)
+    [patientBillingInvoiceService.reducerPath]: patientBillingInvoiceService.reducer,
+    [patientBillingInvoiceItemService.reducerPath]: patientBillingInvoiceItemService.reducer,
+
     // Templates
     // report templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
@@ -518,6 +525,7 @@ export const store = configureStore({
     [bedService.reducerPath]: bedService.reducer,
     [bedRoomService.reducerPath]: bedRoomService.reducer,
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
+    [currentMedicationService.reducerPath]: currentMedicationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -678,6 +686,8 @@ export const store = configureStore({
         BillingService.middleware,
         PriceListService.middleware,
         PriceListItemService.middleware,
+        patientBillingInvoiceService.middleware,
+        patientBillingInvoiceItemService.middleware,
 
         // report templates
         ReportTemplateService.middleware,
@@ -761,6 +771,7 @@ export const store = configureStore({
         bedService.middleware,
         bedRoomService.middleware,
         encounterAssignToBedService.middleware,
+        currentMedicationService.middleware
       ]
     ) as any
 });

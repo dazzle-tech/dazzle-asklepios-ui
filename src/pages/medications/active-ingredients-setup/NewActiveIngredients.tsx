@@ -85,73 +85,73 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
 
   const TabData = [
     {
-      title: 'Indications',
+      title: { label: <Translate>Indications</Translate> },
       content: (
           <Section
-            title="Indications"
+            title={<Translate>Indications</Translate>}
             content={<Indications selectedActiveIngredients={selectedactiveIngredient} />}
           />
       ),
     },
     {
-      title: 'Contraindications',
+      title: { label: <Translate>Contraindications</Translate> },
       content: (
           <Section
-            title="Contraindications"
+            title={<Translate>Contraindications</Translate>}
             content={<Contraindications activeIngredients={activeIngredient} />}
           />
       )
     },
     {
-      title: 'Advers Effects',
+      title: { label: <Translate>Advers Effects</Translate> },
       content: (
           <AdversEffects activeIngredients={activeIngredient} />
       )
     },
     {
-      title: 'Toxicity',
+      title: { label: <Translate>Toxicity</Translate> },
       content: (
-          <Section title="Toxicity" content={<Toxicity activeIngredients={activeIngredient} />} />
+          <Section title={<Translate>Toxicity</Translate>} content={<Toxicity activeIngredients={activeIngredient} />} />
       )
     },
     {
-      title: 'MOA & Pharmacokinetics',
+      title: { label: <Translate>MOA & Pharmacokinetics</Translate> },
       content: (
           <MOAAndPharmacokinetics activeIngredient={activeIngredient} />
       )
     },
     {
-      title: 'Drug Drug & Food Interactions',
+      title: { label: <Translate>Drug Drug & Food Interactions</Translate> },
       content: (
           <DrugDrugAndFoodInteractions activeIngredient={activeIngredient} />
       )
     },
     {
-      title: 'Pregnancy / Lactation & Special Population',
+      title: { label: <Translate>Pregnancy / Lactation & Special Population</Translate> },
       content: (
           <PregnancyLactationAndSpecialPopulation activeIngredient={activeIngredient} />
       )
     },
     {
-      title: 'Dose Adjustment',
+      title: { label: <Translate>Dose Adjustment</Translate> },
       content: (
           <Section
-            title="Dose Adjustment"
+            title={<Translate>Dose Adjustment</Translate>}
             content={<DoseAdjustment activeIngredients={activeIngredient} />}
           />
       )
     },
     {
-      title: 'Synonyms',
+      title: { label: <Translate>Synonyms</Translate> },
       content: (
-          <Section title="Synonyms" content={<Synonyms activeIngredients={activeIngredient} />} />
+          <Section title={<Translate>Synonyms</Translate>} content={<Synonyms activeIngredients={activeIngredient} />} />
       )
     },
     {
-      title: 'Pre-requested Tests',
+      title: { label: <Translate>Pre-requested Tests</Translate> },
       content: (
           <Section
-            title="Pre-requested Tests"
+            title={<Translate>Pre-requested Tests</Translate>}
             content={<PreRequestedTests activeIngredients={activeIngredient} />}
           />
       )

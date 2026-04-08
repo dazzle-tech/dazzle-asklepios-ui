@@ -39,16 +39,25 @@ import PhysicianOrderSummaryModal from '@/pages/encounter/encounter-component/ph
 import EncounterLogsTable from '@/pages/Inpatient/inpatientList/EncounterLogsTable';
 import './style.less';
 
-const DayCaseList = () => {
+const   DayCaseList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
   const divContent = 'DayCase List';
 
-  dispatch(setPageCode('P_DayCaseEncounters'));
+  useEffect(() => {
+    dispatch(setPageCode('P_DayCaseEncounters'));
+    dispatch(setDivContent(divContent));
+
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
+
   const [cancelEncounter] = useCancelEncounterMutation();
-  dispatch(setDivContent(divContent));
   const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
@@ -547,10 +556,7 @@ const DayCaseList = () => {
   //         refetchEncounter();
   //     }
   // }, [departmentFilter, isFetching]);
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
+
   useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
       setManualSearchTriggered(false);
@@ -614,17 +620,23 @@ const DayCaseList = () => {
           <div className="day-case-list-table-buttons-position">
             <MyButton onClick={() => setOpenRefillModal(true)}>
               <FontAwesomeIcon icon={faBoxOpen} />
+            <Translate>
               Refill Stock
+          </Translate>
             </MyButton>
 
             <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
               <FontAwesomeIcon icon={faListCheck} />
+            <Translate>
               Task Management
+            </Translate>
             </MyButton>
 
             <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
               <FontAwesomeIcon icon={faFile} />
+            <Translate>
               Encounter Logs
+            </Translate>
             </MyButton>
           </div>
         }

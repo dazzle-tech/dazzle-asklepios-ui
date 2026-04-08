@@ -611,7 +611,9 @@ export const newBrandMedication: modelTypes.BrandMedication = {
   isActive: true,
   uomGroupId: null,
   uomGroupUnitId: null,
-  hasActiveIngredient: false
+  hasActiveIngredient: false,
+  price: 0,
+  currency: ''
 };
 
 // ------------------- Substitute -------------------
@@ -1151,6 +1153,27 @@ export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
   status: ''
 };
 
+export const newBillingInvoiceCreateDTO: modelTypes.BillingInvoiceCreateDTO = {
+  patientId: null,
+  facilityId: 0,
+  status: 'NEW',
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: 'USD',
+};
+
+export const newBillingInvoiceUpdateDTO: modelTypes.BillingInvoiceUpdateDTO = {
+  id: 0,
+  patientId: null,
+  facilityId: 0,
+  status: 'NEW',
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: 'USD',
+};
+
 export const newBillingInvoiceUpdate: modelTypes.BillingInvoiceUpdateVM = {
   id: 0,
   facilityId: 0,
@@ -1244,6 +1267,27 @@ export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
   unitPrice: 0,
   totalPrice: 0,
   currency: null
+};
+
+export const newBillingInvoiceItemCreateDTO: modelTypes.BillingInvoiceItemCreateDTO = {
+  invoiceId: 0,
+  nurseServiceProductId: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: 'USD',
+};
+
+export const newBillingInvoiceItemUpdateDTO: modelTypes.BillingInvoiceItemUpdateDTO = {
+  id: 0,
+  invoiceId: 0,
+  nurseServiceProductId: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: 'USD',
 };
 
 export const newBillingInvoiceItemUpdate: modelTypes.BillingInvoiceItemUpdateVM = {
@@ -2251,33 +2295,61 @@ export const newPatientServiceAndProduct: modelTypes.PatientServiceAndProduct = 
   id: undefined,
   patientId: undefined,
   encounterId: undefined,
-  category: '',
+  billingItemType: undefined,
+
+  brandMedicationId: undefined,
+  diagnosticTestId: undefined,
   serviceId: undefined,
-  productId: undefined,
+  procedureId: undefined,
+
   quantity: 0,
-  createdBy: '',
-  createdDate: null,
-  lastModifiedBy: '',
-  lastModifiedDate: null
+  unitPrice: 0,
+  discountAmount: 0,
+  exemptionAmount: 0,
+  taxAmount: 0,
+  currency: '',
+
+  isBilled: false,
+  billingInvoiceId: undefined,
+  billingInvoiceItemId: undefined,
 };
 
 export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProductCreateDTO = {
   patientId: undefined,
   encounterId: undefined,
-  category: '',
+  billingItemType: undefined,
+
+  brandMedicationId: undefined,
+  diagnosticTestId: undefined,
   serviceId: undefined,
-  productId: undefined,
-  quantity: 1
-};
+  procedureId: undefined,
+
+  quantity: 1,
+  unitPrice: 0,
+  currency: ''};
 
 export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProductUpdateDTO = {
   id: undefined,
-  category: undefined,
-  serviceId: undefined,
-  productId: undefined,
-  quantity: 0
-};
+  billingItemType: undefined,
 
+  brandMedicationId: undefined,
+  diagnosticTestId: undefined,
+  serviceId: undefined,
+  procedureId: undefined,
+
+  quantity: 0,
+  unitPrice: 0,
+  discountAmount: 0,
+  exemptionAmount: 0,
+  taxAmount: 0,
+  totalAmount: 0,
+  currency: '',
+  notes: '',
+
+  isBilled: false,
+  billingInvoiceId: undefined,
+  billingInvoiceItemId: undefined,
+};
 // =====================
 // Consultation
 // =====================

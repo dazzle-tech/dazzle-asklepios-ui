@@ -661,7 +661,7 @@ const ERWaitingList = () => {
           column
           width={150}
           fieldType="check"
-          fieldLabel="Show Cancelled"
+          fieldLabel={<Translate>Show Cancelled</Translate>}
           fieldName="showCancelled"
           showLabel={false}
           record={{ showCancelled }}

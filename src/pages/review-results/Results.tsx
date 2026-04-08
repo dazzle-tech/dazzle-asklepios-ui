@@ -490,7 +490,7 @@ const Result = forwardRef<any, any>(
         },
         {
           key: 'action',
-          title: <Translate>REVIEW</Translate>,
+          title: <Translate>Review</Translate>,
           flexGrow: 1,
           align: 'center',
           render: (rowData: any) => {
@@ -567,13 +567,17 @@ const Result = forwardRef<any, any>(
               checked={showReview}
               onChange={(_, checked) => setShowReview(checked)}
             >
-              Show Review Result
+              <Translate>
+                Show Review Result
+              </Translate>
             </Checkbox>
             <Checkbox
               checked={showAbnormal}
               onChange={(_, checked) => setShowAbnormal(checked)}
             >
-              Show Abnormal Result
+              <Translate>
+                Show Abnormal Result
+              </Translate>
             </Checkbox>
           </div>
         </div>

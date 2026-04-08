@@ -51,8 +51,6 @@ const SignIn = () => {
   const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
   const result = useGetActiveFacilitiesQuery({});
 
-  console.log('result:', result);
-  const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
   const {
     data: langData,
     isFetching: langsLoading,

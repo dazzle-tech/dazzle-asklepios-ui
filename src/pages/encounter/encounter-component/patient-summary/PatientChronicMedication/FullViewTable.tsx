@@ -262,7 +262,7 @@ const FullViewTable = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Patient Chronic Medication"
+      title={<Translate>Patient Chronic Medication</Translate>}
       content={
       <MyTable
                 columns={tableColumns}
@@ -292,7 +292,7 @@ const FullViewTable = ({
       hideBack={true}
       steps={[
         {
-          title: "Patient Chronic Medication",
+          title: <Translate>Patient Chronic Medication</Translate>,
           icon: <FontAwesomeIcon icon={faPills} />
         }
       ]}

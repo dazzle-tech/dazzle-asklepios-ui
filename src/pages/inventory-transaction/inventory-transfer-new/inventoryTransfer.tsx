@@ -245,15 +245,17 @@ const inventoryTransfer = () => {
            "Transfer Product"
     );
     // page header setup
-    dispatch(setPageCode('Inventory_Transfer'));
-    dispatch(setDivContent(divContent));
+
 
     useEffect(() => {
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent('  '));
-        };
-    }, [location.pathname, dispatch]);
+    dispatch(setPageCode('Inventory_Transfer'));
+    dispatch(setDivContent(divContent));
+    
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+      };
+    }, [dispatch]);
 
 const filters = (<>                <Form layout='inline' fluid>
                     <MyInput

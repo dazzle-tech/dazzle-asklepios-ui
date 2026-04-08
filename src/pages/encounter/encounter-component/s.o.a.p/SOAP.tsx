@@ -25,6 +25,7 @@ import {
 import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 
 import type { PatientEncounter } from '@/types/model-types-new';
+import Translate from '@/components/Translate';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -141,7 +142,7 @@ const SOAP = props => {
         <div className={clsx('column-container', { 'disabled-panel': edit })}>
           <div className="top-section">
             <SectionContainer
-              title={<>Chief Complaint</>}
+              title={<Translate>Chief Complaint</Translate>}
               content={
                 <Form fluid>
                   <MyInput
@@ -165,7 +166,7 @@ const SOAP = props => {
           </div>
 
           <SectionContainer
-            title="Patient Diagnosis"
+            title={<Translate>Patient Diagnosis</Translate>}
             content={
               <PatientDiagnosis
                 patient={patient}
