@@ -1092,7 +1092,8 @@ export const newAppointmentFromTemplateBookPatientDTO: modelTypes.AppointmentFro
   status: null,
   note: null,
   service: null,
-  priority: null
+  priority: null,
+  followUpEncounterId: null
 };
 
 export const newAppointmentFromTemplateCancelDTO: modelTypes.AppointmentFromTemplateCancelDTO = {

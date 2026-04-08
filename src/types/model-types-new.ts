@@ -428,6 +428,7 @@ export interface AppointmentFromTemplateBookPatientDTO {
   note?: string | null;
   service?: string | null;
   priority?: string | null;
+  followUpEncounterId?: number | null;
 }
 
 export interface AppointmentFromTemplateCancelDTO {

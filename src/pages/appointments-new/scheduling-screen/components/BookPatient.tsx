@@ -24,6 +24,8 @@ import ProfileSidebar from '@/pages/patient/patient-profile/ProfileSidebar-new';
 import Translate from '@/components/Translate';
 import { formatEnumString } from '@/utils';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
+import { useLazyGetPreviousEncountersSameDepartmentQuery } from '@/services/encounters/patientEncounterService';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 
 type BookPatientProps = {
@@ -48,7 +50,7 @@ const BookPatient = ({
 }: BookPatientProps) => {
   const dispatch = useAppDispatch();
   const [bookPatientAppointment, { isLoading }] = useBookPatientAppointmentMutation();
-  const encounterReasonEnum = useEnumOptions('EncounterReason', { exclude: ['FOLLOW_UP'] });
+  const encounterReasonEnum = useEnumOptions('EncounterReason');
   const encounterPriorityEnum = useEnumOptions('EncounterPriority');
 
   useEffect(() => {
@@ -81,7 +83,16 @@ const BookPatient = ({
           appointmentData.encounterReason ??
           appointmentData.visitTypeLkey ??
           null,
-        priority: appointmentPriority ?? prev.priority ?? null
+        priority: appointmentPriority ?? prev.priority ?? null,
+        followUpEncounterId:
+          (appointmentData.service ??
+            appointmentData.encounterReason ??
+            appointmentData.visitTypeLkey) === 'FOLLOW_UP'
+            ? appointmentData.followUpEncounterId ??
+              appointmentData.previousEncounterId ??
+              prev.followUpEncounterId ??
+              null
+            : null
       }));
       return;
     }
@@ -101,7 +112,14 @@ const BookPatient = ({
       defaultService: appointmentDefaultService ?? prev.defaultService ?? null,
       reason: appointmentReason ?? prev.reason ?? '',
       service: appointmentService ?? prev.service ?? null,
-      priority: appointmentPriority ?? prev.priority ?? null
+      priority: appointmentPriority ?? prev.priority ?? null,
+      followUpEncounterId:
+        (appointmentService ?? prev.service) === 'FOLLOW_UP'
+          ? appointmentData?.followUpEncounterId ??
+            appointmentData?.previousEncounterId ??
+            prev.followUpEncounterId ??
+            null
+          : null
     }));
   }, [open, appointmentData, readOnly]);
 
@@ -339,8 +357,16 @@ const BookPatient = ({
     service: null,
     reason: '',
     note: '',
-    priority: null
+    priority: null,
+    followUpEncounterId: null
   });
+
+  const [prevPage, setPrevPage] = useState(0);
+  const prevSize = 15;
+  const [allPrevEncounters, setAllPrevEncounters] = useState<any[]>([]);
+  const [triggerPrevious, { data: prevList, isFetching: isPrevFetching }] =
+    useLazyGetPreviousEncountersSameDepartmentQuery();
+
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [patientAction, setPatientAction] = useState<'select' | 'quick'>('select');
@@ -359,6 +385,91 @@ const BookPatient = ({
     }
   }, [open, readOnly, appointmentData, viewPatientById]);
 
+  const bookingPatientId = Number(record?.patientId);
+  const isFollowUpService = record?.service === 'FOLLOW_UP';
+
+  useEffect(() => {
+    if (record.service === 'FOLLOW_UP') return;
+    if (record.followUpEncounterId == null) return;
+    setRecord((prev: any) => ({ ...prev, followUpEncounterId: null }));
+  }, [record.service, record.followUpEncounterId]);
+
+  useEffect(() => {
+    if (!open || isFollowUpService) return;
+    setPrevPage(0);
+    setAllPrevEncounters([]);
+  }, [open, isFollowUpService]);
+
+  useEffect(() => {
+    if (!open || !isFollowUpService) return;
+    if (!bookingPatientId || !appointmentDepartmentId) return;
+
+    setPrevPage(0);
+    setAllPrevEncounters([]);
+    triggerPrevious({
+      patientId: bookingPatientId,
+      departmentId: appointmentDepartmentId,
+      page: 0,
+      size: prevSize,
+      sort: 'id,desc'
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isFollowUpService, bookingPatientId, appointmentDepartmentId]);
+
+  useEffect(() => {
+    if (!open || !isFollowUpService) return;
+    if (!bookingPatientId || !appointmentDepartmentId) return;
+    if (prevPage === 0) return;
+
+    triggerPrevious({
+      patientId: bookingPatientId,
+      departmentId: appointmentDepartmentId,
+      page: prevPage,
+      size: prevSize,
+      sort: 'id,desc'
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prevPage, open, isFollowUpService, bookingPatientId, appointmentDepartmentId]);
+
+  useEffect(() => {
+    const rows = prevList?.data ?? [];
+    if (!rows.length) return;
+
+      setAllPrevEncounters(previousEncounters => {
+        const seenIds = new Set(previousEncounters.map((encounter: any) => encounter.id));
+        const merged = [...previousEncounters];
+        rows.forEach((encounter: any) => {
+          if (!seenIds.has(encounter.id)) merged.push(encounter);
+        });
+        return merged;
+      });
+  }, [prevList]);
+
+  const prevHasMore = Boolean(prevList?.links?.next);
+
+  const modifiedPrevEncounters = useMemo(() => {
+    return (allPrevEncounters ?? []).map((encounter: any) => ({
+      ...encounter,
+      combinedLabel: `${encounter.id} , ${encounter.encounterDate ?? ''} , ${encounter.status ?? ''}`
+    }));
+  }, [allPrevEncounters]);
+
+  const visitDetailsStepBlocked = useMemo(() => {
+    if (!record?.service) return true;
+    if (!readOnly) {
+      const hasPriority = record?.priority != null && String(record.priority).trim() !== '';
+      if (!hasPriority) return true;
+    }
+    if (record.service === 'FOLLOW_UP') {
+      return (
+        !Number(record?.followUpEncounterId) ||
+        !bookingPatientId ||
+        !appointmentDepartmentId
+      );
+    }
+    return false;
+  }, [readOnly, record?.service, record?.priority, record?.followUpEncounterId, bookingPatientId, appointmentDepartmentId]);
+
   const modalSteps = useMemo(
     () => [
       {
@@ -367,10 +478,10 @@ const BookPatient = ({
       },
       {
         title: 'Visit Details',
-        disabledNext: readOnly ? false : !record?.service
+        disabledNext: readOnly ? false : visitDetailsStepBlocked
       }
     ],
-    [readOnly, record?.patientId, record?.service]
+    [readOnly, record?.patientId, visitDetailsStepBlocked]
   );
 
   const handlePatientSelect = (patient: any) => {
@@ -414,6 +525,8 @@ const BookPatient = ({
 
   const handleClose = () => {
     setOpen(false);
+    setPrevPage(0);
+    setAllPrevEncounters([]);
     setRecord({
       patientId: null,
       status: 'BOOKED',
@@ -422,7 +535,8 @@ const BookPatient = ({
       service: null,
       reason: '',
       note: '',
-      priority: null
+      priority: null,
+      followUpEncounterId: null
     });
     setSelectedPatient(null);
     setQuickPatientModalOpen(false);
@@ -440,6 +554,25 @@ const BookPatient = ({
       dispatch(notify({ msg: 'Please select service', sev: 'warning' }));
       throw new Error('Missing service');
     }
+    if (record?.priority == null || String(record.priority).trim() === '') {
+      dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
+      throw new Error('Missing priority');
+    }
+    if (record.service === 'FOLLOW_UP') {
+      if (!appointmentDepartmentId) {
+        dispatch(
+          notify({
+            msg: 'Follow-up requires an appointment department to load previous encounters.',
+            sev: 'warning'
+          })
+        );
+        throw new Error('Missing department for follow-up');
+      }
+      if (!Number(record.followUpEncounterId)) {
+        dispatch(notify({ msg: 'Please select a previous encounter for follow-up.', sev: 'warning' }));
+        throw new Error('Missing follow-up encounter');
+      }
+    }
 
     await bookPatientAppointment({
       id: appointmentId,
@@ -450,7 +583,11 @@ const BookPatient = ({
       note: record?.note || null,
       status: 'BOOKED',
       service: record?.service || null,
-      priority: record?.priority ? String(record.priority) : null
+      priority: record?.priority ? String(record.priority) : null,
+      followUpEncounterId:
+        record?.service === 'FOLLOW_UP' && Number(record?.followUpEncounterId)
+          ? Number(record.followUpEncounterId)
+          : null
     }).unwrap();
 
     dispatch(notify({ msg: 'Appointment booked successfully', sev: 'success' }));
@@ -729,6 +866,33 @@ const BookPatient = ({
                             required={!readOnly}
                             disabled={readOnly}
                           />
+                          {record?.service === 'FOLLOW_UP' && (
+                            <MyInput
+                              fieldType="selectPagination"
+                              fieldName="followUpEncounterId"
+                              fieldLabel="Previous encounter"
+                              record={record}
+                              setRecord={setRecord}
+                              selectData={modifiedPrevEncounters}
+                              selectDataLabel="combinedLabel"
+                              selectDataValue="id"
+                              width="100%"
+                              menuMaxHeight={200}
+                              loading={isPrevFetching}
+                              searchable={false}
+                              hasMore={prevHasMore}
+                              required={!readOnly && record?.service === 'FOLLOW_UP'}
+                              disabled={
+                                readOnly || !bookingPatientId || !appointmentDepartmentId
+                              }
+                              onFetchMore={() => {
+                                if (prevList?.links?.next) {
+                                  const { page } = extractPaginationFromLink(prevList.links.next);
+                                  setPrevPage(page);
+                                }
+                              }}
+                            />
+                          )}
                           <MyInput
                             fieldType="select"
                             fieldName="priority"
@@ -740,6 +904,7 @@ const BookPatient = ({
                             selectDataValue="value"
                             width="100%"
                             searchable={false}
+                            required={!readOnly}
                             disabled={readOnly}
                           />
                         </div>
