@@ -310,20 +310,18 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
           <div className="button-group-left-align">
             <Form fluid layout="inline" className="registration-header-buttons-section">
-              <MyButton>
-                <Translate>Scan Document</Translate>
-              </MyButton>
+              <MyButton>Scan Document</MyButton>
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
               >
-                <Translate>Save</Translate>
+                Save
               </MyButton>
               <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear}>
-                <Translate>Clear</Translate>
+                Clear
               </MyButton>
               <MyButton appearance="ghost" disabled={!localPatient.key} onClick={handleNewVisit}>
-                <Translate>Quick Appointment</Translate>
+                Quick Appointment
               </MyButton>
 
               <AdministrativeWarningsModal
