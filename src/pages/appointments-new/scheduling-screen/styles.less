@@ -77,8 +77,8 @@
 .my-calendar .rbc-time-content {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto !important;
-  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
 }
 
 .my-calendar.day .rbc-time-view .rbc-time-content > .rbc-day-slot {
@@ -103,6 +103,16 @@
   background-color: #ffe5d9;
   border-radius: 10px;
   overflow: hidden;
+}
+
+/* Custom selected/focus ring: darker tone of slot background (not blue) */
+.rbc-event:focus,
+.rbc-event.rbc-selected,
+.rbc-selected {
+  outline: 2px solid #7faa93 !important;
+  outline-offset: 0 !important;
+  box-shadow: 0 0 0 1px #6d977f !important;
+  border-color: #6d977f !important;
 }
 
 .rbc-event-label {

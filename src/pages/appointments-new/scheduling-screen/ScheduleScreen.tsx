@@ -59,6 +59,8 @@ import ViewAppointmentRequests from './ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
 import { calculateAgeFormat } from '@/utils';
 import { update } from 'lodash';
+import TodayAppointmentsList from './components/TodayAppointmentsList';
+import BookPatient from './components/BookPatient';
 
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
@@ -66,6 +68,7 @@ const ScheduleScreen = () => {
   const [validationResult] = useState({});
   const [recordSearchAppointment, setRecordSearchAppointment] = useState({ value: '' });
   const [modalOpen, setModalOpen] = useState(false);
+  const [bookPatientModalOpen, setBookPatientModalOpen] = useState(false);
   const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
   const [followUpDraftData, setFollowUpDraftData] = useState<any>(null);
   const [ActionsModalOpen, setActionsModalOpen] = useState(false);
@@ -417,7 +420,7 @@ const ScheduleScreen = () => {
       setViewAppointmentData(freshEvent?.appointmentData ?? null);
       setShowAppointmentOnly(false);
       setActionsModalOpen(false);
-      setModalOpen(true);
+      setBookPatientModalOpen(true);
       return;
     }
 
@@ -510,7 +513,7 @@ const ScheduleScreen = () => {
     { label: 'No-Show', color: '#FDE68A' },
     { label: 'Checked In', color: '#FDBA74' },
     { label: 'New', color: '#fafafeff', borderColor: '#007bff' },
-    { label: 'Confirmed', color: '#34D399' },
+    { label: 'Confirmed', color: '#166534' },
     { label: 'Completed', color: '#93C5FD' }
   ];
 
@@ -1031,7 +1034,7 @@ const ScheduleScreen = () => {
   const todayTimelineRows = useMemo(() => {
     const statusColor = (status: string) => {
       const s = String(status ?? '').toUpperCase();
-      if (s.includes('CONFIRM')) return '#60D394';
+      if (s.includes('CONFIRM')) return '#166534';
       if (s.includes('COMPLETE')) return '#6DA7E8';
       if (s.includes('NEW')) return '#4B7BEC';
       if (s.includes('CHECK')) return '#F5B971';
@@ -1055,7 +1058,7 @@ const ScheduleScreen = () => {
   const rightPanelAppointmentRows = useMemo(() => {
     const statusColor = (status: string) => {
       const s = String(status ?? '').toUpperCase();
-      if (s.includes('CONFIRM')) return '#60D394';
+      if (s.includes('CONFIRM')) return '#166534';
       if (s.includes('COMPLETE')) return '#6DA7E8';
       if (s.includes('NEW')) return '#4B7BEC';
       if (s.includes('CHECK')) return '#F5B971';
@@ -1099,25 +1102,30 @@ const ScheduleScreen = () => {
         event?.start instanceof Date && !Number.isNaN(event.start.getTime())
           ? event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : '--:--';
+      const endLabel =
+        event?.end instanceof Date && !Number.isNaN(event.end.getTime())
+          ? event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : '--:--';
       return (
-        <div style={{ padding: '4px 6px' }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              background: '#6FA8EB',
-              color: '#fff',
-              borderRadius: 4,
-              padding: '4px 8px',
-              fontSize: 11,
-              fontWeight: 600,
-              lineHeight: 1.2
-            }}
-          >
-            <span>{startLabel}</span>
-            <span style={{ opacity: 0.95 }}>Free Slot</span>
-          </div>
+        <div
+          style={{
+            width: '100%',
+            height: 'calc(100% - 4px)',
+            margin: '2px 0',
+            background: '#DDF2E7',
+            color: '#4B5563',
+            borderRadius: 6,
+            border: '1px solid #9CCEB5',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 10px',
+            boxSizing: 'border-box',
+            fontSize: 12,
+            fontWeight: 600,
+            lineHeight: 1.2
+          }}
+        >
+            {startLabel} - {endLabel}
         </div>
       );
     }
@@ -1180,8 +1188,8 @@ const ScheduleScreen = () => {
           border: 'none',
           boxShadow: 'none',
           padding: 0,
-          width: 'fit-content',
-          minWidth: 'fit-content'
+          width: '100%',
+          minWidth: 0
         }
       };
     }
@@ -1191,7 +1199,7 @@ const ScheduleScreen = () => {
     return {
       style: {
         backgroundColor,
-        borderColor: '#007bff',
+        borderColor,
         borderWidth: '3px',
         borderStyle: 'solid',
         borderRadius: '10px',
@@ -1339,208 +1347,135 @@ const ScheduleScreen = () => {
         style={{
           backgroundColor: mode === 'light' ? 'rgba(250, 250, 250, 8)' : 'var(--extra-dark-black)',
           position: 'relative',
+          zIndex: 0,
           width: '100%',
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'flex-start',
+          height: 'auto',
           minHeight: 'calc(100vh - 90px)',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          gap: 12
         }}
-        className="inline-two-four-container"
       >
-        <div className="schedual-screen-filters-waiting-list-position">
+        {/* Top section: appointment search filters */}
+        <div style={{ width: '100%', paddingInline: 8, paddingTop: 8 }}>
           <SectionContainer
             title={'Filters'}
             content={
-              <Panel className="left-section" bordered>
-                <div>
-                  <Form fluid layout="inline">
-                    <MyInput
-                      disabled
-                      height={35}
-                      width={'11.5vw'}
-                      column
-                      fieldLabel="Facility"
-                      selectData={activeFacilitiesResponse ?? []}
-                      fieldType="select"
-                      selectDataLabel="name"
-                      selectDataValue="id"
-                      fieldName="id"
-                      record={selectedFacility}
-                      setRecord={setSelectedFacility}
-                      searchable={false}
-                    />
-                  </Form>
+              <Form fluid layout="inline">
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap', width: '100%' }}>
+                  {/* Facility is preselected from logged-in tenant and shown as read-only */}
+                  <MyInput
+                    disabled
+                    height={35}
+                    width={'11.5vw'}
+                    column
+                    fieldLabel="Facility"
+                    selectData={activeFacilitiesResponse ?? []}
+                    fieldType="select"
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    fieldName="id"
+                    record={selectedFacility}
+                    setRecord={setSelectedFacility}
+                    searchable={false}
+                  />
 
-                  <Form fluid layout="inline">
-                    <MyInput
-                      height={35}
-                      width={'11.5vw'}
-                      column
-                      fieldLabel="Department"
-                      selectData={departmentOptions ?? []}
-                      fieldType="select"
-                      selectDataLabel="name"
-                      selectDataValue="id"
-                      fieldName="departmentId"
-                      record={selectedDepartment}
-                      setRecord={setSelectedDepartment}
-                      searchable
-                    />
-                  </Form>
+                  {/* Department filter narrows schedule results by department */}
+                  <MyInput
+                    height={35}
+                    width={'11.5vw'}
+                    column
+                    fieldLabel="Department"
+                    selectData={departmentOptions ?? []}
+                    fieldType="select"
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    fieldName="departmentId"
+                    record={selectedDepartment}
+                    setRecord={setSelectedDepartment}
+                    searchable
+                  />
 
-                  <Form fluid layout="inline">
-                    <MyInput
-                      height={35}
-                      width={'11.5vw'}
-                      column
-                      fieldLabel="Resource Type"
-                      fieldType="select"
-                      fieldName="value"
-                      selectData={TemplateTypeEnum ?? []}
-                      selectDataLabel="label"
-                      selectDataValue="value"
-                      record={selectedResourceTypeValue}
-                      setRecord={setSelectedResourceTypeValue}
-                      searchable={false}
-                    />
-                  </Form>
+                  {/* Resource type controls which resources are available in picker below */}
+                  <MyInput
+                    height={35}
+                    width={'11.5vw'}
+                    column
+                    fieldLabel="Resource Type"
+                    fieldType="select"
+                    fieldName="value"
+                    selectData={TemplateTypeEnum ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={selectedResourceTypeValue}
+                    setRecord={setSelectedResourceTypeValue}
+                    searchable={false}
+                  />
 
-                  <Form fluid layout="inline">
-                    <MyInput
-                      height={35}
-                      width={'11.5vw'}
-                      column
-                      fieldLabel="Resource"
-                      selectData={filteredResourcesList ?? []}
-                      fieldType="multyPicker"
-                      selectDataLabel="resourceName"
-                      selectDataValue="key"
-                      fieldName="resourceKey"
-                      record={selectedResources}
-                      setRecord={setSelectedResources}
-                      disabled={!selectedResourceTypeValue?.value}
-                    />
-                  </Form>
+                  {/* Multi-select resources; enabled only after selecting a resource type */}
+                  <MyInput
+                    height={35}
+                    width={'11.5vw'}
+                    column
+                    fieldLabel="Resource"
+                    selectData={filteredResourcesList ?? []}
+                    fieldType="multyPicker"
+                    selectDataLabel="resourceName"
+                    selectDataValue="key"
+                    fieldName="resourceKey"
+                    record={selectedResources}
+                    setRecord={setSelectedResources}
+                    disabled={!selectedResourceTypeValue?.value}
+                  />
 
-                  <Form fluid layout="inline">
-                    <MyInput
-                      height={35}
-                      width={'11.5vw'}
-                      column
-                      fieldLabel="Status"
-                      fieldType="select"
-                      fieldName="status"
-                      selectData={AppointmentStatusEnum ?? []}
-                      selectDataLabel="label"
-                      selectDataValue="value"
-                      record={selectedAppointmentStatus}
-                      setRecord={setSelectedAppointmentStatus}
-                    />
-                  </Form>
+                  {/* Appointment status filter */}
+                  <MyInput
+                    height={35}
+                    width={'11.5vw'}
+                    column
+                    fieldLabel="Status"
+                    fieldType="select"
+                    fieldName="status"
+                    selectData={AppointmentStatusEnum ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={selectedAppointmentStatus}
+                    setRecord={setSelectedAppointmentStatus}
+                  />
 
-                  <Form fluid layout="inline">
-                    <MyInput
-                      height={35}
-                      width={'11.5vw'}
-                      column
-                      fieldLabel="Booking Mode"
-                      fieldType="select"
-                      fieldName="bookingMode"
-                      selectData={BookingModeEnum ?? []}
-                      selectDataLabel="label"
-                      selectDataValue="value"
-                      record={selectedBookingMode}
-                      setRecord={setSelectedBookingMode}
-                    />
-                  </Form>
-
-                  <div style={{ marginTop: 8, marginBottom: 4 }}>
-                    <MyButton
-                      prefixIcon={() => <SearchIcon />}
-                      onClick={handleSearchAppointmentsByCriteria}
-                      loading={isSearchingAppointments}
-                      color="var(--deep-blue)"
-                      width="120px"
-                    >
-                      Search
-                    </MyButton>
-                  </div>
+                  {/* Booking mode filter */}
+                  <MyInput
+                    height={35}
+                    width={'11.5vw'}
+                    column
+                    fieldLabel="Booking Mode"
+                    fieldType="select"
+                    fieldName="bookingMode"
+                    selectData={BookingModeEnum ?? []}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={selectedBookingMode}
+                    setRecord={setSelectedBookingMode}
+                  />
                 </div>
-              </Panel>
+              </Form>
             }
           />
 
-          <SectionContainer
-            title={'WAITING LIST'}
-            content={
-              <div style={{ width: '100%', height: 300, marginTop: 18, overflow: 'auto' }}>
-                {data.map(item => (
-                  <Panel key={item.id} style={{ height: '37', marginBottom: 10 }}>
-                    <Stack direction="row" spacing={10}>
-                      <Avatar style={{ fontSize: '37px' }} circle src={item.avatar} alt="Avatar" />
-                      <div>
-                        <p style={{ fontSize: '14px', margin: 0 }}>{item.name}</p>
-                        <p style={{ fontSize: '12px', margin: 0 }}>{item.date}</p>
-                      </div>
-                    </Stack>
-                  </Panel>
-                ))}
-              </div>
-            }
-          />
+       
         </div>
 
         {/* =================== Right Side ============= */}
         <Panel
           bordered
           className="right-section"
-          style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', minHeight: 620 }}
+          style={{ display: 'flex', flexDirection: 'column', minHeight: 620 }}
         >
-          <div
-            style={{
-              marginTop: '27px',
-              marginInline: '14px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem'
-            }}
-          >
-            <div />
-
-            {/* <div>
-              <div style={{ display: 'flex', gap: '5px' }}>
-                <MyButton
-                  appearance="ghost"
-                  onClick={() => setAppRequestModalOpen(true)}
-                  prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
-                >
-                  View App Requests
-                </MyButton>
-
-                <MyButton appearance="ghost" prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}>
-                  Print Report
-                </MyButton>
-
-                <MyButton
-                  onClick={() => {
-                    // Clear all appointment-related state when opening new appointment modal
-                    setViewAppointmentData(null);
-                    setSelectedEvent(null);
-                    setShowAppointmentOnly(false);
-                    setSelectedSlot(null);
-                    setModalOpen(true);
-                  }}
-                  prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
-                >
-                  <Translate>Add New Appointments</Translate>
-                </MyButton>
-              </div>
-            </div> */}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1, minHeight: 0 }}>
-            <div style={{ minHeight: 0, height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1 }}>
+            <div style={{ minHeight: 0, height: '100%' }}>
               <BigCalendar
                 key={calendarKey}
                 toolbar={false}
@@ -1687,99 +1622,12 @@ const ScheduleScreen = () => {
                 />
               </Panel>
 
-              <Panel
-                bordered
-                style={{
-                  padding: 8,
-                  borderRadius: 12,
-                  flex: 1,
-                  minHeight: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'hidden'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <strong>{todayAppointmentsList.length} today appointments</strong>
-                </div>
-                <div style={{ marginBottom: 8 }} />
-                <div
-                  style={{
-                    border: '1px solid #edf1f7',
-                    borderRadius: 10,
-                    overflowY: 'auto',
-                    overflowX: 'hidden',
-                    flex: 1,
-                    minHeight: 140,
-                    maxHeight: 220
-                  }}
-                >
-                  {isFetchingTodayAppointments ? (
-                    <div style={{ padding: 10 }}><Text muted>Loading...</Text></div>
-                  ) : rightPanelAppointmentRows.length > 0 ? (
-                    rightPanelAppointmentRows.map((row: any, idx: number) => (
-                      <div
-                        key={row.id}
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '42px 1fr 12px',
-                          alignItems: 'center',
-                          gap: 6,
-                          padding: '8px 6px',
-                          borderBottom: idx === rightPanelAppointmentRows.length - 1 ? 'none' : '1px solid #f0f3f8'
-                        }}
-                      >
-                        <span style={{ fontSize: 11, color: '#7b8794' }}>{row.hourLabel}</span>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#263238' }}>{row.patientName}</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 11, color: '#8a94a6' }}>{row.timeLabel}</span>
-                            <div style={{ display: 'flex', gap: 3 }}>
-                              {row.dots.map((color: string, dotIdx: number) => (
-                                <span
-                                  key={`${row.id}-dot-${dotIdx}`}
-                                  style={{ width: 6, height: 6, borderRadius: 6, display: 'inline-block', backgroundColor: color }}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <ArrowRightLineIcon style={{ fontSize: 12, opacity: 0.45 }} />
-                      </div>
-                    ))
-                  ) : (
-                    todayTimelineRows.map((row: any) => (
-                      <div
-                        key={row.hour}
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '48px 1fr 12px',
-                          alignItems: 'center',
-                          gap: 6,
-                          padding: '8px 6px',
-                          borderBottom: '1px solid #f0f3f8'
-                        }}
-                      >
-                        <span style={{ fontSize: 11, color: '#7b8794' }}>{row.hour} AM</span>
-                        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                          {row.dots.map((color: string, idx: number) => (
-                            <span
-                              key={`${row.hour}-${idx}`}
-                              style={{ width: 8, height: 8, borderRadius: 8, display: 'inline-block', backgroundColor: color }}
-                            />
-                          ))}
-                        </div>
-                        <ArrowRightLineIcon style={{ fontSize: 12, opacity: 0.45 }} />
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8, gap: 4 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: 6, backgroundColor: '#3478F6', display: 'inline-block' }} />
-                  <span style={{ width: 6, height: 6, borderRadius: 6, backgroundColor: '#BFD3F6', display: 'inline-block' }} />
-                  <span style={{ width: 6, height: 6, borderRadius: 6, backgroundColor: '#E6ECF7', display: 'inline-block' }} />
-                </div>
-              </Panel>
+              <TodayAppointmentsList
+                todayAppointmentsList={todayAppointmentsList}
+                isFetchingTodayAppointments={isFetchingTodayAppointments}
+                rightPanelAppointmentRows={rightPanelAppointmentRows}
+                todayTimelineRows={todayTimelineRows}
+              />
             </div>
           </div>
 
@@ -1842,6 +1690,16 @@ const ScheduleScreen = () => {
         showOnly={false}
         selectedSlot={null}
         forceStatus="Confirmed"
+      />
+      <BookPatient
+        open={bookPatientModalOpen}
+        setOpen={setBookPatientModalOpen}
+        appointmentData={selectedEvent?.appointmentData}
+        practitioners={(appointablePractitionersResponse as any)?.data ?? []}
+        services={(appointableServicesResponse as any)?.data ?? []}
+        onBooked={async () => {
+          await handleSearchAppointmentsByCriteria();
+        }}
       />
 
       <FollowupAppointmentModal

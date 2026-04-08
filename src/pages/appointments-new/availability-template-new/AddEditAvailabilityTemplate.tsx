@@ -80,7 +80,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       );
   const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
     {
-      sourceId: selectedDepartment?.departmentId
+      sourceId: selectedDepartment?.departmentId,
+      page: 0,
+      size: 500,
+      sort: 'id,asc'
     },
     {
       skip: !selectedDepartment?.departmentId
@@ -88,7 +91,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   );
   const { data: practitionerListResponse } = useGetPractitionerByDepartmentQuery(
     {
-      departmentId: record?.departmentId
+      departmentId: record?.departmentId,
+      page: 0,
+      size: 500,
+      sort: 'id,asc'
     },
     {
       skip: !record?.departmentId
@@ -233,7 +239,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }
 
     create(payload).unwrap();
-    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' })).then(() => setOpen(false);)
+    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    setOpen(false);
     
   };
 
