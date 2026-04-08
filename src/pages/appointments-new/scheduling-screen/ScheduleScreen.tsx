@@ -69,6 +69,7 @@ const ScheduleScreen = () => {
   const [recordSearchAppointment, setRecordSearchAppointment] = useState({ value: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [bookPatientModalOpen, setBookPatientModalOpen] = useState(false);
+  const [bookPatientReadOnly, setBookPatientReadOnly] = useState(false);
   const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
   const [followUpDraftData, setFollowUpDraftData] = useState<any>(null);
   const [ActionsModalOpen, setActionsModalOpen] = useState(false);
@@ -411,6 +412,7 @@ const ScheduleScreen = () => {
 
     // NEW slots are not booked yet; click should go straight to booking modal.
     if (status === 'NEW') {
+      setBookPatientReadOnly(false);
       setViewAppointmentData(freshEvent?.appointmentData ?? null);
       setShowAppointmentOnly(false);
       setActionsModalOpen(false);
@@ -682,21 +684,10 @@ const ScheduleScreen = () => {
     if (dataToView) {
       isOpeningViewModalRef.current = true;
       setViewAppointmentData(dataToView);
-      const eventToSet = selectedEvent
-        ? { ...selectedEvent, appointmentData: dataToView }
-        : { appointmentData: dataToView };
-      setSelectedEvent(eventToSet);
-      setAppointment(dataToView);
-      setShowAppointmentOnly(true);
+      setBookPatientReadOnly(true);
+      setBookPatientModalOpen(true);
       setActionsModalOpen(false);
       setTimeout(() => {
-        if (isFollowUpAppointment(dataToView)) {
-          setFollowUpDraftData(dataToView);
-          setFollowUpModalOpen(true);
-          setModalOpen(false);
-        } else {
-          setModalOpen(true);
-        }
         isOpeningViewModalRef.current = false;
       }, 10);
     }
@@ -1687,8 +1678,19 @@ const ScheduleScreen = () => {
       />
       <BookPatient
         open={bookPatientModalOpen}
-        setOpen={setBookPatientModalOpen}
-        appointmentData={selectedEvent?.appointmentData}
+        setOpen={nextOpen => {
+          setBookPatientModalOpen(nextOpen);
+          if (!nextOpen) {
+            if (bookPatientReadOnly) {
+              setViewAppointmentData(null);
+              setSelectedEvent(null);
+              setAppointment(null as any);
+            }
+            setBookPatientReadOnly(false);
+          }
+        }}
+        readOnly={bookPatientReadOnly}
+        appointmentData={viewAppointmentData || selectedEvent?.appointmentData}
         practitioners={(appointablePractitionersResponse as any)?.data ?? []}
         services={(appointableServicesResponse as any)?.data ?? []}
         onBooked={async () => {
