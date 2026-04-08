@@ -23,6 +23,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import ProfileSidebar from '@/pages/patient/patient-profile/ProfileSidebar-new';
 import Translate from '@/components/Translate';
 import { formatEnumString } from '@/utils';
+import { useGetPatientByIdQuery } from '@/services/patient/patientService';
 
 
 type BookPatientProps = {
@@ -32,6 +33,8 @@ type BookPatientProps = {
   practitioners?: any[];
   services?: any[];
   onBooked?: () => Promise<void> | void;
+  /** When true, shows the same flow read-only (opened from View action on an existing appointment). */
+  readOnly?: boolean;
 };
 
 const BookPatient = ({
@@ -40,41 +43,81 @@ const BookPatient = ({
   appointmentData,
   practitioners = [],
   services = [],
-  onBooked
+  onBooked,
+  readOnly = false
 }: BookPatientProps) => {
   const dispatch = useAppDispatch();
   const [bookPatientAppointment, { isLoading }] = useBookPatientAppointmentMutation();
-  const encounterReasonEnum = useEnumOptions('EncounterReason');
+  const encounterReasonEnum = useEnumOptions('EncounterReason', { exclude: ['FOLLOW_UP'] });
+  const encounterPriorityEnum = useEnumOptions('EncounterPriority');
 
   useEffect(() => {
-    if (open) {
-      // Debug: inspect appointment payload when opening booking modal
-      // eslint-disable-next-line no-console
-      console.log('BookPatient opened with appointmentData:', appointmentData);
+    if (!open) return;
+    // Debug: inspect appointment payload when opening booking modal
+    // eslint-disable-next-line no-console
+    console.log('BookPatient opened with appointmentData:', appointmentData, 'readOnly:', readOnly);
 
-      // Prefill defaults from appointment when available
-      const appointmentDefaultPractitioner =
-        appointmentData?.defaultPractitionerId ||
-        null;
-      const appointmentDefaultService =
-        appointmentData?.defaultServiceId ||
-        null;
-      const appointmentReason = appointmentData?.reason || null;
-      const appointmentService =
-        appointmentData?.service ||
-        appointmentData?.encounterReason ||
-        appointmentData?.visitTypeLkey ||
-        null;
+    const appointmentPriority =
+      appointmentData?.priority ??
+      null;
 
+    if (readOnly && appointmentData) {
+      const rawPatientId =
+        appointmentData.patientId ??
+        (typeof appointmentData.patient === 'object'
+          ? appointmentData.patient?.id ?? appointmentData.patient?.key
+          : appointmentData.patient);
+      const pid = Number(rawPatientId);
       setRecord(prev => ({
         ...prev,
-        defaultPractitioner: appointmentDefaultPractitioner ?? prev.defaultPractitioner ?? null,
-        defaultService: appointmentDefaultService ?? prev.defaultService ?? null,
-        reason: appointmentReason ?? prev.reason ?? '',
-        service: appointmentService ?? prev.service ?? null
+        patientId: Number.isFinite(pid) && pid > 0 ? pid : prev.patientId,
+        status: appointmentData.status || appointmentData.appointmentStatus || prev.status,
+        defaultPractitioner: appointmentData.defaultPractitionerId ?? null,
+        defaultService: appointmentData.defaultServiceId ?? null,
+        reason: appointmentData.reason ?? '',
+        note: appointmentData.note ?? appointmentData.notes ?? '',
+        service:
+          appointmentData.service ??
+          appointmentData.encounterReason ??
+          appointmentData.visitTypeLkey ??
+          null,
+        priority: appointmentPriority ?? prev.priority ?? null
       }));
+      return;
     }
-  }, [open, appointmentData]);
+
+    const appointmentDefaultPractitioner = appointmentData?.defaultPractitionerId || null;
+    const appointmentDefaultService = appointmentData?.defaultServiceId || null;
+    const appointmentReason = appointmentData?.reason || null;
+    const appointmentService =
+      appointmentData?.service ||
+      appointmentData?.encounterReason ||
+      appointmentData?.visitTypeLkey ||
+      null;
+
+    setRecord(prev => ({
+      ...prev,
+      defaultPractitioner: appointmentDefaultPractitioner ?? prev.defaultPractitioner ?? null,
+      defaultService: appointmentDefaultService ?? prev.defaultService ?? null,
+      reason: appointmentReason ?? prev.reason ?? '',
+      service: appointmentService ?? prev.service ?? null,
+      priority: appointmentPriority ?? prev.priority ?? null
+    }));
+  }, [open, appointmentData, readOnly]);
+
+  const viewPatientId = useMemo(() => {
+    if (!readOnly || !appointmentData) return null;
+    const p = appointmentData.patient;
+    const raw =
+      appointmentData.patientId ?? (typeof p === 'object' ? p?.id ?? p?.key : p);
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [readOnly, appointmentData]);
+
+  const { data: viewPatientById } = useGetPatientByIdQuery(
+    { id: viewPatientId as number },
+    { skip: !open || !readOnly || !viewPatientId }
+  );
 
   const appointmentId = useMemo(() => {
     const raw = appointmentData?.id ?? null;
@@ -296,24 +339,38 @@ const BookPatient = ({
     service: null,
     reason: '',
     note: '',
+    priority: null
   });
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [patientAction, setPatientAction] = useState<'select' | 'quick'>('select');
   const [patientSidebarOpen, setPatientSidebarOpen] = useState(false);
   const [patientSidebarStyle, setPatientSidebarStyle] = useState<React.CSSProperties | null>(null);
+
+  useEffect(() => {
+    if (!open || !readOnly || !appointmentData) return;
+    const p = appointmentData.patient;
+    if (p && typeof p === 'object' && (p.firstName || p.fullName || p.lastName || p.name)) {
+      setSelectedPatient(p);
+      return;
+    }
+    if (viewPatientById) {
+      setSelectedPatient(viewPatientById);
+    }
+  }, [open, readOnly, appointmentData, viewPatientById]);
+
   const modalSteps = useMemo(
     () => [
       {
         title: 'Select Patient',
-        disabledNext: !record?.patientId
+        disabledNext: readOnly ? false : !record?.patientId
       },
       {
         title: 'Visit Details',
-        disabledNext: !record?.service
+        disabledNext: readOnly ? false : !record?.service
       }
     ],
-    [record?.patientId, record?.service]
+    [readOnly, record?.patientId, record?.service]
   );
 
   const handlePatientSelect = (patient: any) => {
@@ -364,7 +421,8 @@ const BookPatient = ({
       defaultPractitioner: null,
       service: null,
       reason: '',
-      note: ''
+      note: '',
+      priority: null
     });
     setSelectedPatient(null);
     setQuickPatientModalOpen(false);
@@ -373,6 +431,7 @@ const BookPatient = ({
   };
 
   const handleBooking = async () => {
+    if (readOnly) return;
     if (!appointmentId || !record?.patientId) {
       dispatch(notify({ msg: 'Please enter patient id', sev: 'warning' }));
       throw new Error('Missing patient id');
@@ -390,7 +449,8 @@ const BookPatient = ({
       reason: record?.reason || record?.service || null,
       note: record?.note || null,
       status: 'BOOKED',
-      service: record?.service || null
+      service: record?.service || null,
+      priority: record?.priority ? String(record.priority) : null
     }).unwrap();
 
     dispatch(notify({ msg: 'Appointment booked successfully', sev: 'success' }));
@@ -417,11 +477,12 @@ const BookPatient = ({
       <MyModal
         open={open}
         setOpen={setOpen}
-        title="Book Appointment"
+        title={readOnly ? 'View Appointment' : 'Book Appointment'}
         size="80vw"
         bodyheight="80vh"
         enforceFocus={false}
         customClassName="book-patient-modal"
+        initialStep={readOnly ? 1 : 0}
         steps={modalSteps}
         content={activeStep => (
           <Form fluid>
@@ -432,6 +493,7 @@ const BookPatient = ({
                     <div style={{ flex: 1 }}>
                       <MyButton
                         appearance="subtle"
+                        disabled={readOnly}
                         onClick={() => {
                           setPatientAction('select');
                           setPatientSidebarOpen(true);
@@ -456,6 +518,7 @@ const BookPatient = ({
                     <div style={{ flex: 1 }}>
                       <MyButton
                         appearance="subtle"
+                        disabled={readOnly}
                         onClick={() => {
                           setPatientAction('quick');
                           setPatientSidebarOpen(false);
@@ -617,6 +680,7 @@ const BookPatient = ({
                             selectDataLabel="label"
                             selectDataValue="id"
                             width="100%"
+                            disabled={readOnly}
                           />
                           <MyInput
                             fieldType="select"
@@ -628,6 +692,7 @@ const BookPatient = ({
                             selectDataLabel="label"
                             selectDataValue="id"
                             width="100%"
+                            disabled={readOnly}
                           />
                           <MyInput
                             fieldType="textarea"
@@ -637,8 +702,9 @@ const BookPatient = ({
                             setRecord={setRecord}
                             width="100%"
                             rows={2}
+                            disabled={readOnly}
                           />
-                        
+
                           <MyInput
                             fieldType="textarea"
                             fieldName="note"
@@ -647,8 +713,9 @@ const BookPatient = ({
                             setRecord={setRecord}
                             width="100%"
                             rows={2}
+                            disabled={readOnly}
                           />
-                            <MyInput
+                          <MyInput
                             fieldType="select"
                             fieldName="service"
                             fieldLabel="Service"
@@ -659,7 +726,21 @@ const BookPatient = ({
                             selectDataValue="value"
                             width="100%"
                             searchable={false}
-                            required
+                            required={!readOnly}
+                            disabled={readOnly}
+                          />
+                          <MyInput
+                            fieldType="select"
+                            fieldName="priority"
+                            fieldLabel="Priority"
+                            record={record}
+                            setRecord={setRecord}
+                            selectData={encounterPriorityEnum ?? []}
+                            selectDataLabel="label"
+                            selectDataValue="value"
+                            width="100%"
+                            searchable={false}
+                            disabled={readOnly}
                           />
                         </div>
                       </Panel>
@@ -673,6 +754,7 @@ const BookPatient = ({
         actionButtonLabel={isLoading ? 'Booking...' : 'Book'}
         actionButtonFunction={handleBooking}
         isDisabledActionBtn={isLoading}
+        hideActionBtn={readOnly}
         handleCancelFunction={handleClose}
         cancelButtonLabel="Cancel"
       />

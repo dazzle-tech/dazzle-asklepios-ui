@@ -161,7 +161,13 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
       currentStatus === 'CANCELED' ||
       currentStatus === 'CANCELLED' ||
       currentStatus === 'NOSHOW';
-    const isReasonViewOnly = isDirectReasonStatus && Boolean(resonType);
+    /** Appointment is in a terminal state where only View should be available (no cancel/no-show/edit). */
+    const isViewOnlyActionsStatus =
+      currentStatus === 'COMPLETED' ||
+      currentStatus === 'INSERVICE' ||
+      currentStatus === 'CHECKEDIN';
+    const isReasonViewOnly =
+      Boolean(resonType) && (isDirectReasonStatus || isViewOnlyActionsStatus);
 
     const handleCheckIn = async () => {
       const id = getAppointmentId();
@@ -472,14 +478,20 @@ const handleCancel = async () => {
         <Form fluid layout="inline">
             <MyButton
               width="250px"
-              disabled={currentStatus !== "CONFIRMED"}
+              disabled={currentStatus !== "CONFIRMED" || isViewOnlyActionsStatus}
               onClick={handleCheckIn}
               color="cyan"
               appearance="primary"
             >
                 Check-In
             </MyButton>
-            <MyButton width="250px" disabled={currentStatus === "CONFIRMED"} onClick={handleConfirm} color="violet" appearance="primary">
+            <MyButton
+              width="250px"
+              disabled={currentStatus === "CONFIRMED" || isViewOnlyActionsStatus}
+              onClick={handleConfirm}
+              color="violet"
+              appearance="primary"
+            >
                 Confirm
             </MyButton>
             <MyButton width="250px" disabled={true} onClick={() => editAppointment()} color="violet" appearance="primary">
@@ -488,10 +500,22 @@ const handleCancel = async () => {
             <MyButton width="250px" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
                 View
             </MyButton>
-            <MyButton width="250px" disabled={["NOSHOW", "CONFIRMED"].includes(currentStatus)} onClick={() => { setResonType('No-show') }} color="blue" appearance="primary">
+            <MyButton
+              width="250px"
+              disabled={["NO_SHOW", "CONFIRMED"].includes(currentStatus) || isViewOnlyActionsStatus}
+              onClick={() => { setResonType('No-show') }}
+              color="blue"
+              appearance="primary"
+            >
                 No-show
             </MyButton>
-            <MyButton width="250px" disabled={["CANCELED", "CONFIRMED"].includes(currentStatus)} onClick={() => { setResonType('Cancel') }} color="blue" appearance="primary">
+            <MyButton
+              width="250px"
+              disabled={["CANCELLED", "CONFIRMED"].includes(currentStatus) || isViewOnlyActionsStatus}
+              onClick={() => { setResonType('Cancel') }}
+              color="blue"
+              appearance="primary"
+            >
                 Cancel
             </MyButton>
         </Form>
