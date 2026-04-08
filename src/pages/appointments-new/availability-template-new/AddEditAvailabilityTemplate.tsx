@@ -190,7 +190,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
   
  
-  const handleSaveMainInfo = () => {
+  const handleSaveMainInfo = async () => {
     if (!record?.templateName?.trim()) {
       dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
       return;
@@ -223,19 +223,35 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     };
     console.log("objectToAdd: ", payload);
 
+    try {
     if (template?.id) {
-      update({ id: template.id, ...payload }).unwrap();
+      await update({ id: template.id, ...payload }).unwrap();
       dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
-      setOpen(false);
-      return;
+    } else {
+      await create(payload).unwrap();
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     }
-
-    create(payload).unwrap();
-    setOpen(false);
-    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    setOpen(false); 
+  } catch (err) {
+    dispatch(notify({ msg: 'Failed to save', sev: 'warning' }));
+  }
     
   };
 
+  useEffect(() => {
+  if (isEditMode) return;
+  
+  workingDaysTouchedRef.current = false;
+  setRecord(prev => ({ ...prev, workingDays: [] }));
+  
+}, [record?.facilityId]);
+useEffect(() => {
+  if (isEditMode) return;
+  
+  allowedServicesTouchedRef.current = false;
+  setRecord(prev => ({ ...prev, allowedServices: [], defaultServiceId: null }));
+  
+}, [record?.departmentId]);
   // Effects
   useEffect(() => {
     if (template?.id) {
