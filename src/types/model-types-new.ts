@@ -400,6 +400,58 @@ export interface AvailabilityGenerationBatch {
 }
 
 /* =========================
+ *  Appointments From Template
+ * ========================= */
+
+export type AppointmentStatus = string;
+export type BookingMode = string;
+export type TemplateType = string;
+export type EncounterReason = string;
+
+export interface AppointmentFromTemplate {
+  id?: number | null;
+  patientId?: number | null;
+  availabilityTemplateId?: number | null;
+  encounterReason?: EncounterReason | null;
+  status?: AppointmentStatus | null;
+  appointmentDateTime?: string | null;
+  durationMinutes?: number | null;
+}
+
+export interface AppointmentFromTemplateBookPatientDTO {
+  id: number;
+  patientId: number;
+  defaultService?: number | null;
+  defaultPractitioner?: number | null;
+  reason?: string | null;
+  status?: AppointmentStatus | null;
+  note?: string | null;
+  service?: string | null;
+  priority?: string | null;
+  followUpEncounterId?: number | null;
+}
+
+export interface AppointmentFromTemplateCancelDTO {
+  id: number;
+  cancelReason: string;
+}
+
+export interface AppointmentFromTemplateNoShowDTO {
+  id: number;
+  noShowReason: string;
+}
+
+export interface AppointmentFromTemplateSearchFilterDTO {
+  facility?: number | null;
+  department?: number | null;
+  resourceType?: TemplateType | null;
+  resourceId?: number | null;
+  status?: AppointmentStatus | null;
+  bookingMode?: BookingMode | null;
+  patientId?: number | null;
+}
+
+/* =========================
  *  Clinical Staff / Practitioner
  * ========================= */
 

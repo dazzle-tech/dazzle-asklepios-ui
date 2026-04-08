@@ -1,4 +1,3 @@
-﻿
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Divider, Form, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
@@ -101,9 +100,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     { id: template?.id },
     { skip: !template?.id }
   );
-  
-   const [getDepartment, { data, isLoading }] = useLazyGetDepartmentByIdQuery();
- 
+
+  const [getDepartment, { data, isLoading }] = useLazyGetDepartmentByIdQuery();
 
   const [create] = useCreateAvailabilityTemplateMutation();
   const [update] = useUpdateAvailabilityTemplateMutation();

@@ -1073,6 +1073,49 @@ export const newAvailabilityGenerationBatch: modelTypes.AvailabilityGenerationBa
   lastModifiedDate: null
 };
 
+export const newAppointmentFromTemplate: modelTypes.AppointmentFromTemplate = {
+  id: null,
+  patientId: null,
+  availabilityTemplateId: null,
+  encounterReason: null,
+  status: null,
+  appointmentDateTime: null,
+  durationMinutes: null
+};
+
+export const newAppointmentFromTemplateBookPatientDTO: modelTypes.AppointmentFromTemplateBookPatientDTO = {
+  id: 0,
+  patientId: 0,
+  defaultService: null,
+  defaultPractitioner: null,
+  reason: null,
+  status: null,
+  note: null,
+  service: null,
+  priority: null,
+  followUpEncounterId: null
+};
+
+export const newAppointmentFromTemplateCancelDTO: modelTypes.AppointmentFromTemplateCancelDTO = {
+  id: 0,
+  cancelReason: ''
+};
+
+export const newAppointmentFromTemplateNoShowDTO: modelTypes.AppointmentFromTemplateNoShowDTO = {
+  id: 0,
+  noShowReason: ''
+};
+
+export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFromTemplateSearchFilterDTO = {
+  facility: null,
+  department: null,
+  resourceType: null,
+  resourceId: null,
+  status: null,
+  bookingMode: null,
+  patientId: null,
+};
+
 // ------------------- Price List -------------------
 export const newPriceList: modelTypes.PriceList = {
   id: undefined,

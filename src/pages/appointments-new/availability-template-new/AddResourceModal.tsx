@@ -1,9 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Form, Row, Col } from 'rsuite';
+
+import { Form, Checkbox, CheckboxGroup, RadioGroup, Radio, Text, Row, Col } from 'rsuite';
+
 import MyInput from '@/components/MyInput';
 import './AddResourceModal.less';
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import { FaPlus, FaTrash } from "react-icons/fa";
+import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { Department } from '@/types/model-types-new';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
@@ -16,6 +23,7 @@ import { useAppDispatch } from '@/hooks';
 import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
 import { useGetAllActiveAppointableDiagnosticTestsQuery, useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetAppointableCatalogsByLoggedInFacilityQuery, useLazyGetCatalogByIdQuery } from '@/services/setup/catalog/catalogService';
+
 import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 import { formatEnumString } from '@/utils';
 
@@ -95,6 +103,7 @@ const AddResourceModal = ({
   const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
     skip: !selectedFacility?.id
   });
+
 
   const { data: practitionersAppointableByLoggedOnFacility } = useGetAppointablePractitionerByLoggedInFacilityQuery({
     page: 0,
@@ -304,6 +313,18 @@ const AddResourceModal = ({
       });
       return;
     }
+    useEffect(() => {
+      if (!open) return;
+      if (parentTemplateAllowedServices.length === 0) return;
+      setRecord(prev => {
+        const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
+        if (prevAllowed.length > 0) return prev;
+        return {
+          ...prev,
+          allowedServices: parentTemplateAllowedServices,
+        };
+      });
+    }, [open, parentTemplateAllowedServices]);
 
     if (!departmentServiceValues || departmentServiceValues.length === 0) return;
     setRecord(prev => {
