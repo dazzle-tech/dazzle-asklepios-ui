@@ -94,7 +94,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   );
 
 
-  
+
   const handlePrintInformation = async () => {
     if (!localPatient?.id) return;
 
@@ -483,10 +483,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 container={() => document.body}
                 preventOverflow
                 rootClose
+                open={openMoreMenu}
+                onOpen={() => setOpenMoreMenu(true)}
+                onClose={() => setOpenMoreMenu(false)}
                 speaker={contentOfMoreIconMenu}
               >
                 <span style={{ display: 'inline-block' }}>
-                  <MyButton size="small">
+                  <MyButton
+                    size="small"
+                    onClick={() => setOpenMoreMenu(prev => !prev)}
+                  >
                     <FontAwesomeIcon icon={faEllipsisVertical} />
                   </MyButton>
                 </span>
