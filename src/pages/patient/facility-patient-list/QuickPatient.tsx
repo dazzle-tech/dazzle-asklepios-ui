@@ -168,7 +168,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
         return merged;
       });
     } catch (error) {
-      console.error('fetchDepartments error:', error);
+      console.error('fetchDepartments error:', warning);
 
       if (page === 0) {
         setAllDepartments([]);
@@ -252,7 +252,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           dispatch(
             notify({
               msg: 'Please select a department before saving.',
-              sev: 'error'
+              sev: 'warning'
             })
           );
           return;
@@ -296,7 +296,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
         nationality: 'Nationality'
       });
 
-      dispatch(notify({ msg, sev: 'error' }));
+      dispatch(notify({ msg, sev: 'warning' }));
 
       if (err?.data?.validationResult) {
         setValidationResult(err.data.validationResult);
@@ -319,6 +319,17 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           vr={validationResult}
           column
           fieldName="firstName"
+          record={localPatient}
+          setRecord={setLocalPatient}
+          disabled={isUnknown}
+          width={200}
+        />
+
+        <MyInput
+          required
+          vr={validationResult}
+          column
+          fieldName="secondName"
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={isUnknown}
