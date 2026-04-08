@@ -198,9 +198,10 @@ margin-top: 2vw;}
 
 /* Center the read-only reason modal on screen */
 .rs-modal-wrapper .schedule-reason-center-modal {
-  position: relative;
-  top: 50%;
-  transform: translateY(-50%);
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
   margin: 0 auto !important;
   width: min(560px, calc(100vw - 32px));
 }
