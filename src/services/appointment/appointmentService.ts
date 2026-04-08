@@ -13,6 +13,7 @@ type Id = number | string;
 type AppointmentStatus = string;
 
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
+const APPOINTMENT_BASE_URL = '/api/patient/appointments';
 
 type LinkMap = {
   next?: string | null;
@@ -37,7 +38,7 @@ export const appointmentFromTemplateService = createApi({
       AppointmentFromTemplateBookPatientDTO
     >({
       query: body => ({
-        url: '/api/patient/appointments/book-patient',
+        url: `${APPOINTMENT_BASE_URL}/book-patient`,
         method: 'PUT',
         body
       }),
@@ -56,7 +57,7 @@ export const appointmentFromTemplateService = createApi({
       } & PagedParams
     >({
       query: ({ status, startDatetime, endDatetime, page, size, sort = 'id,asc' }) => ({
-        url: '/api/patient/appointments/by-status-and-dates',
+        url: `${APPOINTMENT_BASE_URL}/by-status-and-dates`,
         method: 'GET',
         params: { status, startDatetime, endDatetime, page, size, sort }
       }),
@@ -79,7 +80,7 @@ export const appointmentFromTemplateService = createApi({
       { filter: AppointmentFromTemplateSearchFilterDTO } & PagedParams
     >({
       query: ({ filter, page, size, sort = 'id,asc' }) => ({
-        url: '/api/patient/appointments/search',
+        url: `${APPOINTMENT_BASE_URL}/search`,
         method: 'POST',
         params: { page, size, sort },
         body: filter
@@ -100,7 +101,7 @@ export const appointmentFromTemplateService = createApi({
 
     cancelAppointment: builder.mutation<AppointmentFromTemplate, AppointmentFromTemplateCancelDTO>({
       query: body => ({
-        url: '/api/patient/appointments/cancel',
+        url: `${APPOINTMENT_BASE_URL}/cancel`,
         method: 'PUT',
         body
       }),
@@ -112,7 +113,7 @@ export const appointmentFromTemplateService = createApi({
 
     noShowAppointment: builder.mutation<AppointmentFromTemplate, AppointmentFromTemplateNoShowDTO>({
       query: body => ({
-        url: '/api/patient/appointments/no-show',
+        url: `${APPOINTMENT_BASE_URL}/no-show`,
         method: 'PUT',
         body
       }),
@@ -124,7 +125,7 @@ export const appointmentFromTemplateService = createApi({
 
     confirmAppointment: builder.mutation<AppointmentFromTemplate, { id: Id }>({
       query: ({ id }) => ({
-        url: `/api/patient/appointments/${id}/confirm`,
+        url: `${APPOINTMENT_BASE_URL}/${id}/confirm`,
         method: 'PUT'
       }),
       async onQueryStarted(arg, api) {
@@ -135,7 +136,7 @@ export const appointmentFromTemplateService = createApi({
 
     checkInAppointment: builder.mutation<AppointmentFromTemplate, { id: Id }>({
       query: ({ id }) => ({
-        url: `/api/patient/appointments/${id}/check-in`,
+        url: `${APPOINTMENT_BASE_URL}/${id}/check-in`,
         method: 'PUT'
       }),
       async onQueryStarted(arg, api) {

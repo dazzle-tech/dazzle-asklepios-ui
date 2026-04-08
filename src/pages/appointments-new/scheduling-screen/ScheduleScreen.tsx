@@ -32,7 +32,7 @@ import { ApAppointment } from '@/types/model-types';
 import { faPaperPlane, faPlus, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import AppointmentActionsModal from './AppointmentActionsModal';
+import AppointmentActionsModal from './components/AppointmentActionsModal';
 import {
   useGetResourcesWithAvailabilityQuery,
   useSaveAppointmentMutation

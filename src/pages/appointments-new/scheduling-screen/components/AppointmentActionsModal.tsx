@@ -1,16 +1,19 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { Button, ButtonToolbar, Divider, Form, IconButton, Input, Modal } from "rsuite";
-import "./styles.less";
+import { Divider, Form } from "rsuite";
+import "../styles.less";
 import PageIcon from '@rsuite/icons/Page';
-import { faPrint, faSackDollar } from "@fortawesome/free-solid-svg-icons";
+import { faSackDollar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useChangeAppointmentStatusMutation } from "@/services/appointmentService";
+import {
+  useCancelAppointmentMutation,
+  useCheckInAppointmentMutation,
+  useConfirmAppointmentMutation,
+  useNoShowAppointmentMutation
+} from "@/services/appointment/appointmentService";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch, useAppSelector } from "@/hooks";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import MyInput from "@/components/MyInput";
-import CheckIcon from '@rsuite/icons/Check';
-import BlockIcon from '@rsuite/icons/Block';
 import { useCreateEncounterMutation, useGetEncountersByAppointmentQuery } from "@/services/encounters/patientEncounterService";
 import type { PatientEncounter } from "@/types/model-types-new";
 import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
@@ -18,17 +21,18 @@ import { calculateAgeFormat } from "@/utils";
 import MyModal from "@/components/MyModal/MyModal";
 import MyButton from "@/components/MyButton/MyButton";
 import { faClock } from '@fortawesome/free-solid-svg-icons';
-import { useGetResourceByIdQuery } from '@/services/setup/resource/ResourceService';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
 import { newPatientPayments, newPatientInsurance } from '@/types/model-types-constructor-new';
 
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
 
-    const [changeAppointmentStatus, changeAppointmentStatusMutation] = useChangeAppointmentStatusMutation()
+    const [cancelAppointment] = useCancelAppointmentMutation();
+    const [noShowAppointment] = useNoShowAppointmentMutation();
+    const [confirmAppointment] = useConfirmAppointmentMutation();
+    const [checkInAppointment] = useCheckInAppointmentMutation();
     const dispatch = useAppDispatch();
     const authSlice = useAppSelector(state => state.auth);
     const [localAppointmentData, setLocalAppoitmentData] = useState(appointment)
-    const [resonModal, setResonModal] = useState(false)
     const [resonType, setResonType] = useState(null)
     const { data: noShowResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
     const { data: cancelResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
@@ -77,28 +81,32 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         return null;
     }, [authSlice?.tenant?.selectedFacility]);
 
-    // Fetch the selected resource to get its resourceKey (similar to PatientQuickAppointment)
-    const { data: selectedResource } = useGetResourceByIdQuery(localAppointmentData?.resourceKey, {
-        skip: !localAppointmentData?.resourceKey
-    });
+    const getAppointmentId = () =>
+      Number(localAppointmentData?.id || localAppointmentData?.key || appointment?.appointmentData?.id || appointment?.appointmentData?.key || 0);
+    const normalizeStatus = (value: any) => String(value ?? '').replace(/[-_\s]/g, '').toUpperCase();
+    const statusValue = localAppointmentData?.status || localAppointmentData?.appointmentStatus || appointment?.appointmentData?.status || appointment?.appointmentData?.appointmentStatus;
+    const currentStatus = normalizeStatus(statusValue);
 
-    const handleCheckIn = () => {
-        const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Checked-In", reasonLkey: null, otherReason: null })
-            .unwrap()
-            .then(() => {
-                dispatch(notify({ msg: 'Appointment Checked-In Successfully', sev: 'success' }));
-                onStatusChange()
-                onActionsModalClose()
-            })
-            .catch((error) => {
-                if (error?.status === 422) {
-                    // Validation error - already handled by the mutation
-                } else {
-                    dispatch(notify({ msg: 'An error occurred while checking in the appointment', sev: 'warn' }));
-                }
-            });
-    }
+    const handleCheckIn = async () => {
+      const id = getAppointmentId();
+      if (!id) {
+        dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
+        return;
+      }
+      if (currentStatus !== 'CONFIRMED') {
+        dispatch(notify({ msg: 'Please confirm the appointment before check-in', sev: 'warning' }));
+        return;
+      }
+
+      try {
+        await checkInAppointment({ id }).unwrap();
+        dispatch(notify({ msg: 'Appointment Checked-In Successfully', sev: 'success' }));
+        onStatusChange();
+        onActionsModalClose();
+      } catch (error: any) {
+        dispatch(notify({ msg: 'An error occurred while checking in the appointment', sev: 'warn' }));
+      }
+    };
     const handleSaveVisit = async (data) => {
         try {
             // Check if the resource type is department-based (similar to PatientQuickAppointment)
@@ -211,8 +219,28 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         }
     };
 
-    // Get current appointment status (from local state or appointment prop)
-    const currentAppointmentStatus = localAppointmentData?.appointmentStatus || appointment?.appointmentData?.appointmentStatus;
+    // Keep original label for title and use normalized value for business rules
+    const currentAppointmentStatus = statusValue;
+    const modalPatientTitle = useMemo(() => {
+      const patient: any = localAppointmentData?.patient || appointment?.appointmentData?.patient || {};
+      const patientName =
+        [
+          patient?.firstName,
+          patient?.secondName,
+          patient?.thirdName,
+          patient?.lastName
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .trim() || patient?.fullName || 'Unknown Patient';
+      const mrn =
+        patient?.medicalRecordNumber ||
+        patient?.patientMrn ||
+        patient?.mrn ||
+        '';
+
+      return mrn ? `${patientName} (${mrn})` : patientName;
+    }, [localAppointmentData?.patient, appointment?.appointmentData?.patient]);
 
     // Get appointment ID for fetching encounter
     const appointmentId = useMemo(() => {
@@ -221,10 +249,10 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     }, [appointment?.appointmentData, localAppointmentData]);
 
     // Fetch encounter for confirmed appointments
-    const { data: encounterByAppointmentResponse, isLoading: isLoadingEncounter } = useGetEncountersByAppointmentQuery(
+    const { data: encounterByAppointmentResponse } = useGetEncountersByAppointmentQuery(
         { appointmentId: appointmentId },
         { 
-            skip: !appointmentId || !isActionsModalOpen || currentAppointmentStatus !== "Confirmed"
+            skip: !appointmentId || !isActionsModalOpen || currentStatus !== "CONFIRMED"
         }
     );
 
@@ -235,7 +263,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     // Set encounter when fetched for confirmed appointment
     useEffect(() => {
-        if (encounterByAppointmentResponse && currentAppointmentStatus === "Confirmed") {
+        if (encounterByAppointmentResponse && currentStatus === "CONFIRMED") {
             // The API returns a string (encounter ID), but we need the full encounter object
             // If it's just an ID string, we might need to fetch the full encounter
             // For now, we'll try to use it as is - if it's an ID, we'll need to handle it differently
@@ -269,7 +297,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 setCreatedEncounter(encounterId as PatientEncounter);
             }
         }
-    }, [encounterByAppointmentResponse, currentAppointmentStatus, localAppointmentData, appointmentId]);
+    }, [encounterByAppointmentResponse, currentStatus, localAppointmentData, appointmentId]);
 
     useEffect(() => {
         if (localAppointmentData) {
@@ -294,23 +322,23 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleConfirm = async () => {
         try {
-            const appointmentData = appointment?.appointmentData || localAppointmentData;
+            const id = getAppointmentId();
+            if (!id) {
+              dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
+              return;
+            }
             
             // First, create the encounter
-            await handleSaveVisit(localAppointmentData || appointmentData);
+            await handleSaveVisit(localAppointmentData || appointment?.appointmentData);
             
             // Then, confirm the appointment
-            await changeAppointmentStatus({ 
-                ...appointmentData, 
-                appointmentStatus: "Confirmed", 
-                reasonLkey: null, 
-                otherReason: null 
-            }).unwrap();
+            await confirmAppointment({ id }).unwrap();
             
             // Update local appointment data to reflect confirmed status
             setLocalAppoitmentData(prev => ({
                 ...prev,
-                appointmentStatus: "Confirmed"
+                appointmentStatus: "CONFIRMED",
+                status: "CONFIRMED"
             }));
             
             dispatch(notify({ msg: 'Appointment Confirmed and Encounter Created Successfully', sev: 'success' }));
@@ -373,20 +401,23 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     };
 
 const handleNonShow = () => {
-  const payload = {
-    ...localAppointmentData,
-    appointmentStatus: 'No-Show',
-    reasonLkey: reasonKey?.reasonLkey,
-    otherReason: otherReason?.otherReason
-  };
+  const id = getAppointmentId();
+  if (!id) {
+    dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
+    return;
+  }
+  const reasonText = String(otherReason?.otherReason || reasonKey?.lovDisplayVale || reasonKey?.key || '').trim();
+  if (!reasonText) {
+    dispatch(notify({ msg: 'Please add no-show reason', sev: 'warning' }));
+    return;
+  }
 
-  changeAppointmentStatus(payload)
+  noShowAppointment({ id, noShowReason: reasonText })
     .unwrap()
     .then(() => {
       dispatch(notify({ msg: 'Appointment Status has been changed Successfully', sev: 'success' }));
       onStatusChange();
       onActionsModalClose();
-      setResonModal(false);
       setResonType(null);
       setOtherReason(null);
       setResonKey(null);
@@ -395,16 +426,18 @@ const handleNonShow = () => {
 
 
 const handleCancel = () => {
-  const appointmentData = appointment?.appointmentData;
+  const id = getAppointmentId();
+  if (!id) {
+    dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
+    return;
+  }
+  const reasonText = String(otherReason?.otherReason || reasonKey?.lovDisplayVale || reasonKey?.key || '').trim();
+  if (!reasonText) {
+    dispatch(notify({ msg: 'Please add cancel reason', sev: 'warning' }));
+    return;
+  }
 
-  const payload = {
-    ...appointmentData,
-    appointmentStatus: 'Canceled',
-    reasonLkey: reasonKey?.reasonLkey,
-    otherReason: otherReason?.otherReason
-  };
-
-  changeAppointmentStatus(payload)
+  cancelAppointment({ id, cancelReason: reasonText })
     .unwrap()
     .then(() => {
       dispatch(notify({ msg: 'Appointment has been canceled Successfully', sev: 'success' }));
@@ -415,32 +448,31 @@ const handleCancel = () => {
       setResonKey(null);
     });
 };
-
-
-
-    const handleChangeAction = () => {
-        onActionsModalClose()
-    }
-
     // Appoinment Actions Modal Content
     const actionsModalContent = (
         <Form fluid layout="inline">
-            <MyButton width="250px" disabled={["Checked-In", "Confirmed"].includes(currentAppointmentStatus)} onClick={handleCheckIn} color="cyan" appearance="primary">
+            <MyButton
+              width="250px"
+              disabled={currentStatus !== "CONFIRMED"}
+              onClick={handleCheckIn}
+              color="cyan"
+              appearance="primary"
+            >
                 Check-In
             </MyButton>
-            <MyButton width="250px" disabled={currentAppointmentStatus == "Confirmed"} onClick={handleConfirm} color="violet" appearance="primary">
+            <MyButton width="250px" disabled={currentStatus === "CONFIRMED"} onClick={handleConfirm} color="violet" appearance="primary">
                 Confirm
             </MyButton>
-            <MyButton width="250px" disabled={["No-Show", "Confirmed"].includes(currentAppointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} color="blue" appearance="primary">
+            <MyButton width="250px" disabled={["NOSHOW", "CONFIRMED"].includes(currentStatus)} onClick={() => { setResonType('No-show') }} color="blue" appearance="primary">
                 No-show
             </MyButton>
             <MyButton width="250px" onClick={() => viewAppointment(appointment?.appointmentData)} color="cyan" appearance="primary">
                 View
             </MyButton>
-            <MyButton width="250px" disabled={["Confirmed"].includes(currentAppointmentStatus)} onClick={() => editAppointment()} color="violet" appearance="primary">
+            <MyButton width="250px" disabled={["CONFIRMED"].includes(currentStatus)} onClick={() => editAppointment()} color="violet" appearance="primary">
                 Change
             </MyButton>
-            <MyButton width="250px" disabled={["Canceled", "Confirmed"].includes(currentAppointmentStatus)} onClick={() => { setResonType('Cancel') }} color="blue" appearance="primary">
+            <MyButton width="250px" disabled={["CANCELED", "CONFIRMED"].includes(currentStatus)} onClick={() => { setResonType('Cancel') }} color="blue" appearance="primary">
                 Cancel
             </MyButton>
         </Form>
@@ -477,10 +509,10 @@ const handleCancel = () => {
             <MyModal
                 open={isActionsModalOpen}
                 setOpen={onActionsModalClose}
-                title={`${appointment?.title}  ${appointment?.fromTo}  ${currentAppointmentStatus}`}
+                title={modalPatientTitle}
                 size="38vw"
                 bodyheight="50vh"
-                position="right"
+                position="center"
                 content={actionsModalContent}
                 hideBack={true}
                 hideActionBtn={true}
@@ -493,7 +525,7 @@ const handleCancel = () => {
                         <MyButton 
                             appearance="ghost" 
                             prefixIcon={() => <FontAwesomeIcon icon={faSackDollar} />}
-                            disabled={currentAppointmentStatus !== "Confirmed"}
+                            disabled={currentStatus !== "CONFIRMED"}
                             onClick={handleOpenPaymentModal}
                         >
                             Add Payment
