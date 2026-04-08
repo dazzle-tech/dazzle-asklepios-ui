@@ -231,6 +231,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }
 
     create(payload).unwrap();
+    setOpen(false);
     dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     
   };
