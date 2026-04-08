@@ -121,6 +121,7 @@ const ScheduleScreen = () => {
   const [showCanceled, setShowCanceled] = useState<boolean>(false);
   const [filteredMonth] = useState<Date>();
   const [showReasonModal, setShowReasonModal] = useState(false);
+  const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const [currentView, setCurrentView] = useState('day');
   const [totalAppointmentsText, setTotalAppointmentsText] = useState<string>();
   const [calendarDate, setCalendarDate] = useState<Date | null>(null);
@@ -1106,26 +1107,23 @@ const ScheduleScreen = () => {
         event?.end instanceof Date && !Number.isNaN(event.end.getTime())
           ? event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : '--:--';
+      const modeText =
+        event?.appointmentData?.bookingModeLvalue?.lovDisplayVale ||
+        event?.appointmentData?.bookingMode ||
+        event?.appointmentData?.visitTypeLvalue?.lovDisplayVale ||
+        'Walk-in';
+      const templateText =
+        event?.appointmentData?.templateName || event?.appointmentData?.resourceName || 'Lab Template';
       return (
-        <div
-          style={{
-            width: '100%',
-            height: 'calc(100% - 4px)',
-            margin: '2px 0',
-            background: '#DDF2E7',
-            color: '#4B5563',
-            borderRadius: 6,
-            border: '1px solid #9CCEB5',
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0 10px',
-            boxSizing: 'border-box',
-            fontSize: 12,
-            fontWeight: 600,
-            lineHeight: 1.2
-          }}
-        >
-            {startLabel} - {endLabel}
+         <div className="available-slot-card">
+           <div className="available-slot-title">Available Slot</div>
+           <div className="available-slot-status-row">
+             <span className="available-slot-dot" />
+             <span>
+               {modeText} <span className="available-slot-separator">•</span> {templateText}
+             </span>
+           </div>
+           <div className="available-slot-time">{startLabel} - {endLabel}</div>
         </div>
       );
     }
@@ -1213,9 +1211,9 @@ const ScheduleScreen = () => {
 
   const slotPropGetter = (date, resourceId) => {
     const defaultShadedStyle = {
-      backgroundColor: '#eee',
+      backgroundColor: '#ffffff',
       pointerEvents: 'none',
-      color: '#ccc'
+      color: '#d5dbe5'
     };
 
     const currentResource = resourcesWithAvailabilityResponse?.object.find(r => r.key === resourceId);
@@ -1342,8 +1340,9 @@ const ScheduleScreen = () => {
   };
 
   return (
-    <div>
+    <div className="appointments-schedule-screen">
       <div
+        className={`appointments-schedule-layout ${filtersCollapsed ? 'filters-collapsed' : ''}`}
         style={{
           backgroundColor: mode === 'light' ? 'rgba(250, 250, 250, 8)' : 'var(--extra-dark-black)',
           position: 'relative',
@@ -1360,12 +1359,27 @@ const ScheduleScreen = () => {
         }}
       >
         {/* Top section: appointment search filters */}
-        <div style={{ width: '100%', paddingInline: 8, paddingTop: 8 }}>
+        <div
+          className={`appointments-filters-wrap ${filtersCollapsed ? 'collapsed' : ''}`}
+          style={{ width: '100%', paddingInline: 8, paddingTop: 8 }}
+        >
           <SectionContainer
             title={'Filters'}
+            action={
+              <button
+                type="button"
+                className="appointments-filters-collapse-btn"
+                onClick={() => setFiltersCollapsed(prev => !prev)}
+                aria-label={filtersCollapsed ? 'Expand filters' : 'Collapse filters'}
+                title={filtersCollapsed ? 'Expand filters' : 'Collapse filters'}
+              >
+                {filtersCollapsed ? '▾' : '▴'}
+              </button>
+            }
             content={
+              !filtersCollapsed && (
               <Form fluid layout="inline">
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap', width: '100%' }}>
+                <div className="appointments-filter-row" style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap', width: '100%' }}>
                   {/* Facility is preselected from logged-in tenant and shown as read-only */}
                   <MyInput
                     disabled
@@ -1462,6 +1476,7 @@ const ScheduleScreen = () => {
                   />
                 </div>
               </Form>
+              )
             }
           />
 
@@ -1471,11 +1486,11 @@ const ScheduleScreen = () => {
         {/* =================== Right Side ============= */}
         <Panel
           bordered
-          className="right-section"
+          className="right-section appointments-main-card"
           style={{ display: 'flex', flexDirection: 'column', minHeight: 620 }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1 }}>
-            <div style={{ minHeight: 0, height: '100%' }}>
+          <div className="appointments-content-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1 }}>
+            <div className="appointments-calendar-pane" style={{ minHeight: 0, height: '100%' }}>
               <BigCalendar
                 key={calendarKey}
                 toolbar={false}
@@ -1560,6 +1575,7 @@ const ScheduleScreen = () => {
             </div>
 
             <div
+              className="appointments-right-pane"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -1568,7 +1584,7 @@ const ScheduleScreen = () => {
                 minHeight: 0
               }}
             >
-              <Panel bordered style={{ padding: 10, borderRadius: 12, flex: '0 0 auto' }}>
+              <Panel bordered className="appointments-mini-panel" style={{ padding: 10, borderRadius: 12, flex: '0 0 auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
                   <ButtonGroup
                     style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }}
@@ -1631,7 +1647,7 @@ const ScheduleScreen = () => {
             </div>
           </div>
 
-          <Stack style={{ margin: '0.4%' }}>
+          <Stack className="appointments-legend" style={{ margin: '0.4%' }}>
             {legendItems.map(({ label, color }) => (
               <Stack style={{ marginRight: '36px' }} spacing={6} alignItems="center" key={label}>
                 <div
