@@ -721,9 +721,8 @@ const AddResourceModal = ({
         ? record.allowedServices
         : []
     };
-    console.log("objectToAdd(resource): ", payload);
     const mutation = isEditMode
-      ? update({ id: record.id, ...payload })
+      ? update({ id: record?.id, ...payload })
       : create(payload);
     mutation
       .unwrap()
@@ -740,7 +739,6 @@ const AddResourceModal = ({
         dispatch(notify({ msg: 'Error', sev: 'warning' }));
         console.log("error: ", e);
       });
-    // setRecord(newTemplate);
     
   };
   return (

@@ -1,25 +1,20 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Tabs, Divider, Form, RadioGroup, Radio, Row, Col } from 'rsuite';
+import { Divider, Form, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import './styles.less';
 import AvailabilityDayGrid from './AvailabilityDayGrid';
 import MyModal from '@/components/MyModal/MyModal';
-import { useGetActiveFacilitiesQuery, useGetAllFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
-import { useGetActiveDepartmentByFacilityListQuery, useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
-import { VscNotebookTemplate } from "react-icons/vsc";
-import { title } from 'process';
+import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
+import {  useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import MyTab from '@/components/MyTab';
 import { FaPlus } from "react-icons/fa";
 import { notify } from '@/utils/uiReducerActions';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import AddRoomModal from './AddResourceModal';
-import AddExceptionModal from './AddExceptionModal';
+import { useAppDispatch } from '@/hooks';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
-import { useGetAllPractitionersQuery, useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
-import { useEnumOptions } from '@/services/enumsApi';
+import { useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 import { newAvailabilityTemplateCreateDTO, newAvailabilityTemplateResponseVM } from '@/types/model-types-constructor-new';
@@ -28,8 +23,7 @@ import { formatEnumString } from '@/utils';
 import AddResourceModal from './AddResourceModal';
 import PreviewSlotsModal from './PreviewSlotsModal';
 import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
-
-
+import { useEnumOptions } from '@/services/enumsApi';
 
 
 type AddEditAvailabilityTemplateProps = {
@@ -50,7 +44,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   );
   const [currentColor, setCurrentColor] = useState(record?.color || '#6982F0');
   const [openPreviewSlotsModal, setOpenPreviewSlotsModal] = useState(false);
-  const [openAddExceptionModal, setOpenAddExceptionModal] = useState<boolean>(false);
   const [openAddResource, setOpenAddResource] = useState<boolean>(false);
   const [resourceToEdit, setResourceToEdit] = useState<any>(null);
   
@@ -221,17 +214,18 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
         ? record.allowedServices
         : []
     };
-    console.log("objectToAdd: ", payload);
 
     try {
     if (template?.id) {
-      await update({ id: template.id, ...payload }).unwrap();
+      const updated = await update({ id: template.id, ...payload }).unwrap();
+      setRecord(updated)
       dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
     } else {
-      await create(payload).unwrap();
+      const created = await create(payload).unwrap();
+      setRecord(created)
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     }
-    setOpen(false); 
+    // setOpen(false); 
   } catch (err) {
     dispatch(notify({ msg: 'Failed to save', sev: 'warning' }));
   }
@@ -680,7 +674,7 @@ useEffect(() => {
                     setOpenAddResource(true);
                   }}
                   prefixIcon={() => <FaPlus />}
-                  disabled={template?.id ? false : true}
+                  disabled={record?.id ? false : true}
                 >
                   Add Resource
                 </MyButton>
@@ -708,12 +702,6 @@ useEffect(() => {
               editRecord={resourceToEdit}
               mainTemplate={record}
               selectedFacility={selectedFacility}
-            />
-
-            <AddExceptionModal
-              open={openAddExceptionModal}
-              setOpen={setOpenAddExceptionModal}
-              template={{}}
             />
 
           </div>
