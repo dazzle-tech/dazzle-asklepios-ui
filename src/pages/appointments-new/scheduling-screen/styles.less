@@ -318,7 +318,6 @@ gap: 0.4vw;}
 .show-rejected-view-appointment-request{display: flex;
 margin-top: 2vw;}
 
-/* Reduce only the large gap under "Filters" title in this screen */
 .appointments-filters-wrap .container-form-section {
   padding-top: 12px;
   padding-bottom: 12px;
@@ -389,4 +388,20 @@ margin-top: 2vw;}
   border-radius: 50%;
   background: #8ecfb3;
   display: inline-block;
+}
+/* Patient search sidebar overlay (same behavior as ER Triage) */
+.book-patient-sidebar-overlay {
+  z-index: 5000;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+}
+
+/* Center the read-only reason modal on screen */
+.rs-modal-wrapper .schedule-reason-center-modal {
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 auto !important;
+  width: min(560px, calc(100vw - 32px));
 }

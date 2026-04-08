@@ -359,6 +359,7 @@ export const {
   useGetEncountersByPatientQuery,
   useLazyGetEncountersByPatientQuery,
   useGetEncountersByAppointmentQuery,
+  useLazyGetEncountersByAppointmentQuery,
   useGetPreviousClosedEncounterQuery,
   useMoveWaitingListToNewMutation,
   useCountDepartmentTotalByDateRangeQuery,

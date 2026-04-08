@@ -28,7 +28,8 @@ const MyModal = ({
   cancelButtonLabel = 'Cancel',
   handleCancelFunction = () => {},
   modalColor = 'var(--primary-blue)',
-  initialStep = 0
+  initialStep = 0,
+  enforceFocus = true
 }) => {
   const [internalStep, setInternalStep] = useState(initialStep);
   const activeStep = internalStep;
@@ -62,6 +63,7 @@ const MyModal = ({
       open={open}
       onClose={handleCancel}
       size={size}
+      enforceFocus={enforceFocus}
       className={`${modalClass} ${customClassName} ${
         mode === 'light' ? 'modal-light' : 'modal-dark'
       }`}

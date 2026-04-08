@@ -1090,7 +1090,10 @@ export const newAppointmentFromTemplateBookPatientDTO: modelTypes.AppointmentFro
   defaultPractitioner: null,
   reason: null,
   status: null,
-  note: null
+  note: null,
+  service: null,
+  priority: null,
+  followUpEncounterId: null
 };
 
 export const newAppointmentFromTemplateCancelDTO: modelTypes.AppointmentFromTemplateCancelDTO = {
