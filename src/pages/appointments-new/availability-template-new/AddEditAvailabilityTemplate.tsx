@@ -7,7 +7,7 @@ import './styles.less';
 import AvailabilityDayGrid from './AvailabilityDayGrid';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetActiveFacilitiesQuery, useGetAllFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
-import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useGetActiveDepartmentByFacilityListQuery, useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import { VscNotebookTemplate } from "react-icons/vsc";
 import { title } from 'process';
 import MyTab from '@/components/MyTab';
@@ -65,7 +65,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
     skip: !selectedFacility?.id
   });
-  const { data: departmentListResponse } = useGetActiveDepartmentByFacilityListQuery(
+  const { data: departmentListResponse } = useGetAppointableDepartmentsQuery(
     {
       facilityId: record?.facilityId
     },
@@ -80,10 +80,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       );
   const { data: servicesByDepartmentList, isFetching: isFetchingServicesByDepartmentList, refetch: refetchservicesByDepartmentList } = useGetServicesByDepartmentQuery(
     {
-      sourceId: selectedDepartment?.departmentId
+      sourceId: record?.departmentId
     },
     {
-      skip: !selectedDepartment?.departmentId
+      skip: !record?.departmentId
     }
   );
   const { data: practitionerListResponse } = useGetPractitionerByDepartmentQuery(
@@ -233,7 +233,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }
 
     create(payload).unwrap();
-    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' })).then(() => setOpen(false);)
+    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     
   };
 
@@ -418,7 +418,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                               fieldName="departmentId"
                               fieldLabel="Department"
                               fieldType="select"
-                              selectData={departmentListResponse ?? []}
+                              selectData={departmentListResponse?.data ?? []}
                               selectDataLabel="name"
                               selectDataValue="id"
                               record={record}
