@@ -43,7 +43,7 @@ const ASSIGN_TO_BED_ERROR_MAP: Record<string, string> = {
   'db.constraint': 'Database constraint violation while saving assignment.',
   'patient.encounter.mismatch': 'The selected patient does not belong to the selected encounter.',
   'activeAssignment.notfound': 'Active assignment not found.',
-  'invalid.status.transition': 'Only encounters in waiting list can be moved to new.'
+  'invalid.status.transition': 'This action is only allowed for encounters in Waiting List or Triage Started status.'
 };
 
 const normalizeFieldMessage = (msg: string) => {
@@ -313,11 +313,11 @@ const BedAssignmentModal: React.FC<Props> = ({
     </Form>
   );
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <MyModal
       open={open}

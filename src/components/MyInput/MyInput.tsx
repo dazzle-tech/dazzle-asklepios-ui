@@ -120,6 +120,9 @@ type MyInputProps = {
   disableFutureDates?: boolean;
   showWarningIfBeforeYear1900?: boolean;
   showWarningIfInPast?: boolean;
+  min?: number;
+  step?: number;
+  allowDecimal?: boolean;
 };
 
 const MyInput = ({
@@ -791,13 +794,70 @@ const MyInput = ({
         const value =
           record?.[fieldName] === 0
             ? props.showZero
-              ? 0
+              ? '0'
               : ''
             : record?.[fieldName] !== null && record?.[fieldName] !== undefined
-              ? record[fieldName]
+              ? String(record[fieldName])
               : '';
 
-        const inputControl = (
+        const inputControl = props.allowDecimal ? (
+          <Form.Control
+            className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
+            style={{
+              width: numInputWidth,
+              height: props?.height ?? 30,
+              minWidth: numInputWidth,
+              maxWidth: numInputWidth,
+              flexShrink: 0,
+              paddingRight: rightAddon ? '2px' : undefined
+            }}
+            disabled={props.disabled}
+            name={fieldName}
+            accepter={Input}
+            type="text"
+            inputMode="decimal"
+            value={value}
+            placeholder={props.placeholder}
+            onChange={(value: string) => {
+              if (value === '' || value === null || value === undefined) {
+                setRecord?.({ ...record, [fieldName]: '' });
+                return;
+              }
+
+              let normalized = value.replace(',', '.');
+              normalized = normalized.replace(/[^0-9.]/g, '');
+
+              const firstDotIndex = normalized.indexOf('.');
+              if (firstDotIndex !== -1) {
+                normalized =
+                  normalized.slice(0, firstDotIndex + 1) +
+                  normalized.slice(firstDotIndex + 1).replace(/\./g, '');
+              }
+
+              setRecord?.({
+                ...record,
+                [fieldName]: normalized
+              });
+            }}
+            onBlur={() => {
+              const currentValue = record?.[fieldName];
+
+              if (currentValue === '' || currentValue === null || currentValue === undefined) {
+                setRecord?.({ ...record, [fieldName]: null });
+                return;
+              }
+
+              const normalized = String(currentValue).replace(',', '.').trim();
+              const numericValue = Number(normalized);
+
+              setRecord?.({
+                ...record,
+                [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+              });
+            }}
+            onKeyDown={focusNextField}
+          />
+        ) : (
           <Form.Control
             className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
             style={{
@@ -811,9 +871,10 @@ const MyInput = ({
             disabled={props.disabled}
             name={fieldName}
             max={props.max}
-            min={0}
-            value={value}
+            min={props.min ?? 0}
+            step={props.step ?? 1}
             accepter={InputNumber}
+            value={record?.[fieldName] ?? null}
             onChange={(value) => {
               if (value === '' || value === null || value === undefined) {
                 setRecord?.({ ...record, [fieldName]: null });
@@ -824,7 +885,7 @@ const MyInput = ({
 
               setRecord?.({
                 ...record,
-                [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+                [fieldName]: Number.isNaN(numericValue) ? null : Math.trunc(numericValue)
               });
             }}
             placeholder={props.placeholder}
@@ -878,7 +939,6 @@ const MyInput = ({
 
         return inputControl;
       }
-
       case 'check':
         return (
           <Checkbox

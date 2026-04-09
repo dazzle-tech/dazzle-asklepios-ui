@@ -213,6 +213,8 @@ const Encounter = () => {
       navigate('/day-case-list');
     } else if (propsData?.fromPage === 'ER_Department') {
       navigate('/ER-department');
+    }  else if (propsData?.fromPage === 'Urgent_Care_List') {
+      navigate('/urgent-care-department-list');
     } else {
       navigate('/encounter-list');
     }
@@ -515,7 +517,7 @@ const Encounter = () => {
                   appearance="ghost"
                 >
                   <Translate>
-                    {localEncounter?.encounterType === 'EMERGENCY' ? 'Discharge' : 'Complete Visit'}
+                    {localEncounter?.encounterType === 'EMERGENCY' ? 'Disposition' : 'Complete Visit'}
                   </Translate>
                 </MyButton>
 

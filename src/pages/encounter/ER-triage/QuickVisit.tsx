@@ -112,7 +112,7 @@ const QuickVisit = ({ }) => {
 
                                         appearance="ghost"
                                     >
-                                        <Translate>{localEncounter?.encounterType == "EMERGENCY" ? "Discharge" : "Complete Visit"}</Translate>
+                                        <Translate>{localEncounter?.encounterType == "EMERGENCY" ? "Disposition" : "Complete Visit"}</Translate>
                                     </MyButton>)}
                                     <Divider vertical />
                                     <MyButton

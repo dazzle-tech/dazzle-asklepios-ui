@@ -13,7 +13,7 @@ type LinkMap = {
 };
 type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
-type BedStatus = 'EMPTY' | 'OCCUPIED' | 'IN_CLEANING' | 'OUT_OF_SERVICE';
+type BedStatus = 'READY' | 'OCCUPIED' | 'IN_CLEANING' | 'OUT_OF_SERVICE';
 
 const mapPaged = (response: Bed[], meta: any): PagedResult<Bed> => {
   const headers = meta?.response?.headers;

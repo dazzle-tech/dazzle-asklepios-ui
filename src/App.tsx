@@ -218,6 +218,9 @@ import OrganizationHolidays from './pages/system-configurations/organization-hol
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
 import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
+import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
+import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage';
+import UrgentCareList from './pages/encounter/urgent-care/UrgentCareList';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -588,9 +591,12 @@ const App = () => {
               <Route path="patient-old/patient-list" element={<PatientListLegacy />} />
               <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
               <Route path="ER-start-triage" element={<ERStartTriageNew />} />
+              <Route path="urgent-care-start-triage" element={<UrgentCareStartTriage />} />
+              <Route path="urgent-care-department-list" element={<UrgentCareList />} />
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
+              <Route path="urgent-care-triage" element={<UrgentCareTriage/>} />
               <Route path="view-triage" element={<ViewTriageNew />} />
               <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
