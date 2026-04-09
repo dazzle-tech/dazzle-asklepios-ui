@@ -187,6 +187,107 @@
   background: #ffffff;
 }
 
+.appointments-slot-summary-bar {
+  padding: 10px 12px 12px;
+  margin: 0;
+  border-bottom: 1px solid #edf1f7;
+  background: #ffffff;
+  border-radius: 12px 12px 0 0;
+}
+
+.appointments-slot-summary-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 14px;
+  margin-bottom: 10px;
+}
+
+.appointments-slot-summary-scope-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.appointments-slot-summary-scope-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.appointments-slot-summary-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+}
+
+/* One horizontal line: Slots + all status chips; scroll on narrow viewports */
+.appointments-slot-summary-metrics--single-row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.appointments-slot-summary-item--shrink0 {
+  flex-shrink: 0;
+}
+
+.appointments-slot-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 0;
+}
+
+.appointments-slot-summary-text {
+  font-size: 13px;
+  color: #334155;
+}
+
+.appointments-slot-summary-text strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.appointments-slot-summary-muted {
+  color: #94a3b8;
+}
+
+.appointments-slot-summary-divider {
+  width: 1px;
+  height: 22px;
+  background: #dce3ef;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.appointments-slot-summary-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
+}
+
+.appointments-slot-summary-icon--total {
+  background: #22c55e;
+}
+
+.appointments-slot-summary-icon--available {
+  background: #16a34a;
+}
+
+.appointments-slot-summary-icon--booked {
+  background: #3b82f6;
+}
+
+
 .appointments-content-grid {
   padding: 10px;
   background: #ffffff;

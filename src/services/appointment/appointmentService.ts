@@ -68,16 +68,26 @@ export const appointmentFromTemplateService = createApi({
     getAppointmentsByStatusBetweenDates: builder.query<
       PagedResult<AppointmentFromTemplate>,
       {
-        status: AppointmentStatus;
+        status: AppointmentStatus[];
         startDatetime: string;
         endDatetime: string;
       } & PagedParams
     >({
-      query: ({ status, startDatetime, endDatetime, page, size, sort = 'id,asc' }) => ({
-        url: `${APPOINTMENT_BASE_URL}/by-status-and-dates`,
-        method: 'GET',
-        params: { status, startDatetime, endDatetime, page, size, sort }
-      }),
+      query: ({ status, startDatetime, endDatetime, page, size, sort = 'id,asc' }) => {
+        const query = new URLSearchParams();
+        (status ?? []).forEach(s => {
+          if (s) query.append('status', s);
+        });
+        query.set('startDatetime', startDatetime);
+        query.set('endDatetime', endDatetime);
+        query.set('page', String(page));
+        query.set('size', String(size));
+        query.set('sort', sort);
+        return {
+          url: `${APPOINTMENT_BASE_URL}/by-status-and-dates?${query.toString()}`,
+          method: 'GET'
+        };
+      },
       transformResponse: (response: AppointmentFromTemplate[], meta) => {
         const headers = meta?.response?.headers;
         return {

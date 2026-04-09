@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Calendar as BigCalendar, Views, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -29,7 +29,21 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import AppointmentModal from './AppoitmentModal';
 import FollowupAppointmentModal from './FollowupAppointmentModal';
 import { ApAppointment } from '@/types/model-types';
-import { faPaperPlane, faPlus, faPrint } from '@fortawesome/free-solid-svg-icons';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import {
+  faCalendarCheck,
+  faCheckDouble,
+  faCircleCheck,
+  faCirclePlus,
+  faClock,
+  faPaperPlane,
+  faPlus,
+  faPrint,
+  faStethoscope,
+  faUserCheck,
+  faUserSlash,
+  faXmark
+} from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentActionsModal from './components/AppointmentActionsModal';
@@ -61,6 +75,55 @@ import { calculateAgeFormat } from '@/utils';
 import { update } from 'lodash';
 import TodayAppointmentsList from './components/TodayAppointmentsList';
 import BookPatient from './components/BookPatient';
+import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
+
+/** Resolve numeric patient id from appointment payload (not nested patient object). */
+const getAppointmentPatientId = (appointment: any): number | null => {
+  const raw =
+    appointment?.patientId ??
+    appointment?.patientKey ??
+    (typeof appointment?.patient === 'object'
+      ? appointment.patient?.id ?? appointment.patient?.key
+      : appointment?.patient);
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+/**
+ * Legend colors (footer + event styling) + summary bar icon (expressive) + circle fill for white-icon contrast.
+ */
+const SCHEDULE_LEGEND_ITEMS: {
+  label: string;
+  color: string;
+  borderColor?: string;
+  icon: IconDefinition;
+  summaryIconBg: string;
+}[] = [
+  { label: 'No-Show', color: '#FDE68A', icon: faUserSlash, summaryIconBg: '#b45309' },
+  { label: 'Checked In', color: '#FDBA74', icon: faUserCheck, summaryIconBg: '#ea580c' },
+  { label: 'Booked', color: '#87CEFA', icon: faCalendarCheck, summaryIconBg: '#0284c7' },
+  { label: 'New', color: '#E8F6EF', borderColor: '#89D0B2', icon: faCirclePlus, summaryIconBg: '#059669' },
+  { label: 'In Service', color: '#C7D2FE', icon: faStethoscope, summaryIconBg: '#4f46e5' },
+  { label: 'Confirmed', color: '#ADFF2F', icon: faCheckDouble, summaryIconBg: '#65a30d' },
+  { label: 'Completed', color: '#93C5FD', icon: faCircleCheck, summaryIconBg: '#1d4ed8' },
+  { label: 'Cancel', color: '#FECACA', icon: faXmark, summaryIconBg: '#dc2626' }
+];
+
+const normLegendStr = (str: string) => String(str ?? '').toLowerCase().replace(/[-_]/g, ' ').trim();
+
+/** Maps API appointment status to legend bucket key (aligned with eventPropGetter). */
+const appointmentStatusToLegendBucket = (rawStatus: string): string => {
+  const s = normLegendStr(rawStatus);
+  if (s.includes('cancel')) return 'cancel';
+  if (s.includes('no show')) return 'no show';
+  if (s.includes('checked in') || s.includes('check in')) return 'checked in';
+  if (s.includes('book')) return 'booked';
+  if (s.includes('in service')) return 'in service';
+  if (s.includes('confirm')) return 'confirmed';
+  if (s.includes('complete')) return 'completed';
+  if (s.includes('new')) return 'new';
+  return s || 'unknown';
+};
 
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
@@ -233,6 +296,43 @@ const ScheduleScreen = () => {
     return dateTime;
   };
 
+  const appointmentPatientIdsForService = useMemo(() => {
+    const ids = new Set<number>();
+    const collect = (list: any[]) => {
+      (list ?? []).forEach((a: any) => {
+        const id = getAppointmentPatientId(a);
+        if (id != null) ids.add(id);
+      });
+    };
+    collect(searchedAppointmentsResponse?.data ?? []);
+    collect((todayAppointmentsResponse as any)?.data ?? []);
+    return Array.from(ids).sort((a, b) => a - b);
+  }, [searchedAppointmentsResponse, todayAppointmentsResponse]);
+
+  const { data: patientsByIdsData } = useGetPatientsByIdsQuery(
+    { ids: appointmentPatientIdsForService },
+    { skip: appointmentPatientIdsForService.length === 0 }
+  );
+
+  const patientDisplayByPatientService = useMemo(() => {
+    const m = new Map<string, { name: string; mrn: string }>();
+    for (const p of patientsByIdsData ?? []) {
+      const id = (p as any)?.id;
+      if (id == null) continue;
+      const name =
+        [(p as any).firstName, (p as any).secondName, (p as any).thirdName, (p as any).lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
+        (p as any).fullName ||
+        '';
+      const mrn =
+        (p as any).medicalRecordNumber ?? (p as any).patientMrn ?? (p as any).mrn ?? '';
+      m.set(String(id), { name: String(name || '').trim(), mrn: String(mrn || '').trim() });
+    }
+    return m;
+  }, [patientsByIdsData]);
+
   useEffect(() => {
     const sourceAppointments = searchedAppointmentsResponse?.data ?? [];
     if (sourceAppointments && resourcesWithAvailabilityResponse?.object) {
@@ -253,15 +353,28 @@ const ScheduleScreen = () => {
         const startDate = convertDate(startRaw);
         const endDate = convertDate(endRaw);
         const dob = new Date(appointment?.patient?.dob);
-        const patientFullName =
+        const patientIdNum = getAppointmentPatientId(appointment);
+        const fromPatientService =
+          patientIdNum != null ? patientDisplayByPatientService.get(String(patientIdNum)) : undefined;
+        const patientFullNameFromNested =
           appointment?.patient?.full_name ||
           appointment?.patient?.fullName ||
           (appointment?.patient?.first_name && appointment?.patient?.last_name
             ? `${appointment.patient.first_name} ${appointment.patient.last_name}`.trim()
             : appointment?.patient?.first_name ||
               appointment?.patient?.last_name ||
-              appointment?.reason ||
-              'Appointment');
+              '');
+        const patientFullName =
+          (fromPatientService?.name && fromPatientService.name.trim()) || patientFullNameFromNested || '';
+        const patientMrnFromNested =
+          appointment?.patient?.patient_mrn ??
+          appointment?.patient?.patientMrn ??
+          appointment?.patient?.mrn ??
+          appointment?.patientMrn ??
+          appointment?.patient_mrn ??
+          '';
+        const patientMrn =
+          (fromPatientService?.mrn && fromPatientService.mrn.trim()) || patientMrnFromNested || '';
 
         const departmentColumnId =
           appointment?.departmentId ??
@@ -284,19 +397,35 @@ const ScheduleScreen = () => {
         const resource = resourcesWithAvailabilityResponse.object.find(
           item => String(item.key) === normalizedResourceKey
         );
+        const resourceNameFromService =
+          normalizedResourceKey && resourceNameById.get(normalizedResourceKey)
+            ? String(resourceNameById.get(normalizedResourceKey))
+            : '';
+        const resourceNameForTitle =
+          resourceNameFromService ||
+          resource?.resourceName ||
+          resource?.name ||
+          appointment?.resourceName ||
+          appointment?.resource_name ||
+          '';
+        const slotTitle = [patientFullName, patientMrn ? `MRN: ${patientMrn}` : '', resourceNameForTitle]
+          .filter(Boolean)
+          .join(' | ');
 
         const statusText = appointment?.appointmentStatus ?? appointment?.status ?? '';
         const isHidden = String(statusText).toUpperCase() === 'CANCELED';
         return {
           id: appointment?.key ?? appointment?.id,
-          title: ` ${patientFullName}, ${
-            isNaN(dob.getTime()) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
-          }Y  ${
-            !(currentView === 'day' || currentView === 'week')
-              ? ', ' + (resource?.resourceName || 'Unknown Resource')
-              : ''
-          }
- `,
+          title:
+            slotTitle ||
+            ` ${patientFullName}, ${
+              isNaN(dob.getTime()) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
+            }Y  ${
+              !(currentView === 'day' || currentView === 'week')
+                ? ', ' + (resource?.resourceName || 'Unknown Resource')
+                : ''
+            }
+`,
           start: startDate,
           end: endDate,
           text: appointment.notes || 'No additional details available',
@@ -316,7 +445,9 @@ const ScheduleScreen = () => {
   }, [
     searchedAppointmentsResponse,
     resourcesWithAvailabilityResponse,
-    currentView
+    currentView,
+    patientDisplayByPatientService,
+    resourceNameById
   ]);
 
   const departmentOptions = useMemo(
@@ -364,6 +495,63 @@ const ScheduleScreen = () => {
     return [];
   }, [
     selectedResourceTypeValue?.value,
+    departmentOptions,
+    appointablePractitionersResponse,
+    appointableCatalogsResponse,
+    appointableDiagnosticTestsResponse,
+    appointableServicesResponse
+  ]);
+
+  const normalizeResourceTypeKey = (value: any) =>
+    String(value ?? '')
+      .trim()
+      .toUpperCase()
+      .replace(/[\s-]+/g, '_');
+
+  const resourceNameByTypeAndId = useMemo(() => {
+    const departmentMap = new Map<string, string>();
+    (departmentOptions ?? []).forEach((d: any) => {
+      const id = d?.id;
+      const name = d?.name ?? d?.departmentName;
+      if (id != null && name) departmentMap.set(String(id), String(name));
+    });
+
+    const practitionerMap = new Map<string, string>();
+    (((appointablePractitionersResponse as any)?.data ?? []) as any[]).forEach((p: any) => {
+      const id = p?.id;
+      const name = [p?.firstName, p?.lastName].filter(Boolean).join(' ') || p?.fullName;
+      if (id != null && name) practitionerMap.set(String(id), String(name));
+    });
+
+    const catalogMap = new Map<string, string>();
+    (((appointableCatalogsResponse as any)?.data ?? []) as any[]).forEach((c: any) => {
+      const id = c?.id;
+      const name = c?.name ?? c?.catalogName;
+      if (id != null && name) catalogMap.set(String(id), String(name));
+    });
+
+    const diagnosticTestMap = new Map<string, string>();
+    (((appointableDiagnosticTestsResponse as any)?.data ?? []) as any[]).forEach((t: any) => {
+      const id = t?.id;
+      const name = t?.name ?? t?.testName;
+      if (id != null && name) diagnosticTestMap.set(String(id), String(name));
+    });
+
+    const serviceMap = new Map<string, string>();
+    (((appointableServicesResponse as any)?.data ?? []) as any[]).forEach((s: any) => {
+      const id = s?.id;
+      const name = s?.name ?? s?.serviceName;
+      if (id != null && name) serviceMap.set(String(id), String(name));
+    });
+
+    return {
+      DEPARTMENT: departmentMap,
+      PRACTITIONER: practitionerMap,
+      CATALOG: catalogMap,
+      DIAGNOSTIC_TEST: diagnosticTestMap,
+      SERVICE: serviceMap
+    };
+  }, [
     departmentOptions,
     appointablePractitionersResponse,
     appointableCatalogsResponse,
@@ -432,7 +620,7 @@ const ScheduleScreen = () => {
   const [drowerOpen, setDrowerOpen] = useState(false);
   const dispatch = useAppDispatch();
 
-  const handleSearchAppointmentsByCriteria = async () => {
+  const handleSearchAppointmentsByCriteria = useCallback(async () => {
     const firstResourceId =
       Array.isArray(selectedResources?.resourceKey) && selectedResources.resourceKey.length > 0
         ? Number(selectedResources.resourceKey[0])
@@ -461,18 +649,21 @@ const ScheduleScreen = () => {
         sort: 'id,asc'
       }).unwrap();
     } catch {}
-  };
+  }, [
+    searchAppointments,
+    selectedFacility?.id,
+    selectedDepartment?.departmentId,
+    selectedResourceTypeValue?.value,
+    selectedResources?.resourceKey,
+    selectedAppointmentStatus?.status,
+    selectedBookingMode?.bookingMode,
+    recordSearchAppointment?.value
+  ]);
 
   useEffect(() => {
     if (!selectedFacility?.id) return;
     void handleSearchAppointmentsByCriteria();
-  }, [selectedFacility?.id]);
-
-  useEffect(() => {
-    const rows = (searchedAppointmentsResponse as any)?.data ?? [];
-    // Debug: print search API appointment list in devtools.
-    console.log('[ScheduleScreen] searchAppointments rows:', rows);
-  }, [searchedAppointmentsResponse]);
+  }, [selectedFacility?.id, handleSearchAppointmentsByCriteria]);
 
   useEffect(() => {
     const day = rightPanelDate ?? currentCalendarDate ?? new Date();
@@ -483,7 +674,7 @@ const ScheduleScreen = () => {
     const status = String(selectedAppointmentStatus?.status ?? 'CONFIRMED');
 
     void getAppointmentsByStatusBetweenDates({
-      status,
+      status: [status],
       startDatetime: start.toISOString(),
       endDatetime: end.toISOString(),
       page: 0,
@@ -506,15 +697,7 @@ const ScheduleScreen = () => {
     };
   }, [dispatch]);
 
-  const legendItems = [
-    { label: 'No-Show', color: '#FDE68A' },
-    { label: 'Checked In', color: '#FDBA74' },
-    { label: 'New', color: '#E8F6EF', borderColor: '#89D0B2' },
-    { label: 'In Service', color: '#C7D2FE' },
-    { label: 'Confirmed', color: '#86EFAC' },
-    { label: 'Completed', color: '#93C5FD' },
-    { label: 'Cancel', color: '#FECACA' }
-  ];
+  const legendItems = SCHEDULE_LEGEND_ITEMS;
 
   // Derived resources list (synchronous) to avoid a one-render "stale columns" glitch
   // when filters change (react-big-calendar can render once before an effect updates state).
@@ -556,17 +739,20 @@ const ScheduleScreen = () => {
     return null;
   }, [selectedResources?.resourceKey, selectedResourceType?.resourcesType, resourcesWithAvailabilityResponse]);
 
-  // Filter appointments based on selected resources
+  // Filter appointments: department matches calendar columns (event.resourceId); optional resource / status / booking.
   const filteredAppointments = useMemo(() => {
-    if (!selectedResourceKeysForFilter) {
-      // No filters applied, show all appointments
-      return appointmentsData;
+    let list = appointmentsData;
+
+    if (selectedDepartment?.departmentId != null && String(selectedDepartment.departmentId) !== '') {
+      const deptId = String(selectedDepartment.departmentId);
+      list = list.filter(event => String((event as any).resourceId ?? '') === deptId);
     }
 
-    // Filter appointments to only show those matching selected resource filter
-    let list = appointmentsData.filter(event =>
-      selectedResourceKeysForFilter.has(String((event as any).filterResourceId ?? event.resourceId))
-    );
+    if (selectedResourceKeysForFilter) {
+      list = list.filter(event =>
+        selectedResourceKeysForFilter.has(String((event as any).filterResourceId ?? event.resourceId))
+      );
+    }
 
     if (selectedAppointmentStatus?.status) {
       const statusNeedle = String(selectedAppointmentStatus.status).toUpperCase();
@@ -585,8 +771,7 @@ const ScheduleScreen = () => {
     return list;
   }, [
     appointmentsData,
-    selectedResourceType,
-    selectedResources,
+    selectedDepartment?.departmentId,
     selectedResourceKeysForFilter,
     selectedAppointmentStatus?.status,
     selectedBookingMode?.bookingMode
@@ -596,6 +781,72 @@ const ScheduleScreen = () => {
     currentView === 'agenda' || showCanceled
       ? filteredAppointments
       : filteredAppointments.filter(event => !event.hidden);
+
+  const calendarViewRange = useMemo(() => {
+    const a = moment(currentCalendarDate);
+    if (currentView === 'day') {
+      return { start: a.clone().startOf('day').toDate(), end: a.clone().endOf('day').toDate() };
+    }
+    if (currentView === 'week') {
+      return { start: a.clone().startOf('week').toDate(), end: a.clone().endOf('week').toDate() };
+    }
+    if (currentView === 'month') {
+      return { start: a.clone().startOf('month').toDate(), end: a.clone().endOf('month').toDate() };
+    }
+    return { start: a.clone().startOf('day').toDate(), end: a.clone().endOf('day').toDate() };
+  }, [currentView, currentCalendarDate]);
+
+  const slotSummaryBarStats = useMemo(() => {
+    const { start, end } = calendarViewRange;
+    const rs = start.getTime();
+    const re = end.getTime();
+    const inRange = (visibleAppointments ?? []).filter((ev: any) => {
+      const s = ev?.start ? new Date(ev.start) : null;
+      const e = ev?.end ? new Date(ev.end) : s;
+      if (!s || Number.isNaN(s.getTime())) return false;
+      const st = s.getTime();
+      const et = e && !Number.isNaN(e.getTime()) ? e.getTime() : st;
+      return st < re && et > rs;
+    });
+
+    const bucketCounts: Record<string, number> = {};
+    for (const ev of inRange) {
+      const raw = String(
+        ev?.appointmentData?.appointmentStatus ?? ev?.appointmentData?.status ?? ''
+      ).trim();
+      const bucket = appointmentStatusToLegendBucket(raw);
+      bucketCounts[bucket] = (bucketCounts[bucket] || 0) + 1;
+    }
+
+    const legendNormKeys = new Set(SCHEDULE_LEGEND_ITEMS.map(i => normLegendStr(i.label)));
+    let otherCount = 0;
+    Object.entries(bucketCounts).forEach(([k, n]) => {
+      if (!legendNormKeys.has(k)) otherCount += n;
+    });
+
+    const legendRow = SCHEDULE_LEGEND_ITEMS.map(item => ({
+      label: item.label,
+      color: item.color,
+      borderColor: item.borderColor,
+      icon: item.icon,
+      summaryIconBg: item.summaryIconBg,
+      count: bucketCounts[normLegendStr(item.label)] ?? 0
+    }));
+
+    const total = inRange.length;
+
+    return {
+      total,
+      legendRow,
+      otherCount,
+      rangeLabel:
+        currentView === 'day'
+          ? moment(currentCalendarDate).format('ddd, MMM D, YYYY')
+          : currentView === 'week'
+            ? `${moment(calendarViewRange.start).format('MMM D')} – ${moment(calendarViewRange.end).format('MMM D, YYYY')}`
+            : moment(currentCalendarDate).format('MMMM YYYY')
+    };
+  }, [visibleAppointments, calendarViewRange, currentView, currentCalendarDate]);
 
   const appointmn =
     visibleAppointments?.map(appt => appt.appointmentData?.patient?.key).filter(Boolean) || [];
@@ -978,10 +1229,14 @@ const ScheduleScreen = () => {
         ? '--:--'
         : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const patient = a?.patient ?? {};
+      const pid = getAppointmentPatientId(a);
+      const fromSvc = pid != null ? patientDisplayByPatientService.get(String(pid)) : undefined;
       const patientName =
+        (fromSvc?.name && fromSvc.name.trim()) ||
         patient?.full_name ||
         patient?.fullName ||
         [patient?.first_name, patient?.last_name].filter(Boolean).join(' ') ||
+        [patient?.firstName, patient?.lastName].filter(Boolean).join(' ') ||
         'Unknown';
       return {
         id: a?.id ?? a?.key ?? `${patientName}-${timeLabel}`,
@@ -1016,12 +1271,19 @@ const ScheduleScreen = () => {
           status: e?.appointmentData?.appointmentStatus ?? '-'
         };
       });
-  }, [todayAppointmentsResponse, finalAppointments, rightPanelDate, currentCalendarDate]);
+  }, [
+    todayAppointmentsResponse,
+    finalAppointments,
+    rightPanelDate,
+    currentCalendarDate,
+    patientDisplayByPatientService
+  ]);
 
 
   const todayTimelineRows = useMemo(() => {
     const statusColor = (status: string) => {
       const s = String(status ?? '').toUpperCase();
+      if (s.includes('BOOK')) return '#059669';
       if (s.includes('CONFIRM')) return '#166534';
       if (s.includes('COMPLETE')) return '#6DA7E8';
       if (s.includes('NEW')) return '#4B7BEC';
@@ -1048,6 +1310,7 @@ const ScheduleScreen = () => {
   const rightPanelAppointmentRows = useMemo(() => {
     const statusColor = (status: string) => {
       const s = String(status ?? '').toUpperCase();
+      if (s.includes('BOOK')) return '#059669';
       if (s.includes('CONFIRM')) return '#166534';
       if (s.includes('COMPLETE')) return '#6DA7E8';
       if (s.includes('NEW')) return '#4B7BEC';
@@ -1086,6 +1349,35 @@ const ScheduleScreen = () => {
     const status = String(
       event?.appointmentData?.appointmentStatus ?? event?.appointmentData?.status ?? ''
     ).toUpperCase();
+    const appointment = event?.appointmentData ?? {};
+    const patient = appointment?.patient ?? {};
+    const pid = getAppointmentPatientId(appointment);
+    const fromSvc = pid != null ? patientDisplayByPatientService.get(String(pid)) : undefined;
+    const patientName =
+      (fromSvc?.name && fromSvc.name.trim()) ||
+      patient?.full_name ||
+      patient?.fullName ||
+      [patient?.first_name, patient?.last_name].filter(Boolean).join(' ') ||
+      [patient?.firstName, patient?.lastName].filter(Boolean).join(' ') ||
+      '';
+    const mrn =
+      (fromSvc?.mrn && fromSvc.mrn.trim()) ||
+      (patient?.patient_mrn ??
+        patient?.patientMrn ??
+        patient?.mrn ??
+        appointment?.patientMrn ??
+        appointment?.patient_mrn ??
+        '');
+    const resourceNameText =
+      appointment?.resourceName ||
+      appointment?.resource_name ||
+      event?.resource?.resourceName ||
+      (event?.filterResourceId != null ? resourceNameById.get(String(event.filterResourceId)) : '') ||
+      '';
+    const patientSlotText =
+      [patientName, mrn ? `MRN: ${mrn}` : '', resourceNameText].filter(Boolean).join(' | ') ||
+      resourceNameText ||
+      'Appointment';
     const image = event?.appointmentData?.profilePicture;
     const content_type = event?.appointmentData?.profilePicture;
 
@@ -1098,23 +1390,64 @@ const ScheduleScreen = () => {
         event?.end instanceof Date && !Number.isNaN(event.end.getTime())
           ? event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : '--:--';
-      const modeText =
-        event?.appointmentData?.bookingModeLvalue?.lovDisplayVale ||
-        event?.appointmentData?.bookingMode ||
-        event?.appointmentData?.visitTypeLvalue?.lovDisplayVale ||
-        'Walk-in';
-      const templateText =
-        event?.appointmentData?.templateName || event?.appointmentData?.resourceName || 'Lab Template';
+      const resourceTypeKey = normalizeResourceTypeKey(
+        appointment?.resourceTypeLkey ??
+          appointment?.resourceType ??
+          appointment?.resource_type ??
+          appointment?.templateType ??
+          appointment?.template_type
+      );
+      const idsToTry = [
+        appointment?.resourceKey,
+        appointment?.resource_key,
+        appointment?.resourceId,
+        appointment?.resource_id,
+        appointment?.departmentId,
+        appointment?.department_id,
+        appointment?.practitionerId,
+        appointment?.practitioner_id,
+        appointment?.catalogId,
+        appointment?.catalog_id,
+        appointment?.diagnosticTestId,
+        appointment?.diagnostic_test_id,
+        appointment?.serviceId,
+        appointment?.service_id,
+        appointment?.resource?.key,
+        event?.filterResourceId
+      ]
+        .filter((v: any) => v !== null && typeof v !== 'undefined')
+        .map((v: any) => String(v));
+
+      const byTypeMap =
+        (resourceNameByTypeAndId as any)[resourceTypeKey] ??
+        (resourceTypeKey === 'DIAGNOSTIC TEST'
+          ? (resourceNameByTypeAndId as any).DIAGNOSTIC_TEST
+          : undefined);
+      const resourceNameFromTypeMap =
+        byTypeMap instanceof Map ? idsToTry.map((id: string) => byTypeMap.get(id)).find(Boolean) : '';
+      const resourceNameFromServiceMap = idsToTry.map((id: string) => resourceNameById.get(id)).find(Boolean);
+      const resourceNameFromAvailability =
+        (resourcesWithAvailabilityResponse?.object ?? [])
+          .find((r: any) => idsToTry.includes(String(r?.key)))
+          ?.resourceName ?? '';
+
+      const resourceText =
+        resourceNameFromTypeMap ||
+        resourceNameFromServiceMap ||
+        resourceNameFromAvailability ||
+        appointment?.resourceName ||
+        appointment?.resource_name ||
+        event?.resource?.resourceName ||
+        'Unknown Resource';
       return (
          <div className="available-slot-card">
-           <div className="available-slot-title">Available Slot</div>
+           <div className="available-slot-title">{startLabel} - {endLabel}</div>
            <div className="available-slot-status-row">
              <span className="available-slot-dot" />
              <span>
-               {modeText} <span className="available-slot-separator">•</span> {templateText}
+              {resourceText}
              </span>
            </div>
-           <div className="available-slot-time">{startLabel} - {endLabel}</div>
         </div>
       );
     }
@@ -1140,7 +1473,7 @@ const ScheduleScreen = () => {
         </div>
 
         <div>
-          <p style={{ fontSize: '12px', color: 'black' }}>{event.title}</p>
+          <p style={{ fontSize: '12px', color: 'black' }}>{patientSlotText}</p>
           <p
             style={{
               fontSize: '10px',
@@ -1163,6 +1496,7 @@ const ScheduleScreen = () => {
       if (s?.includes('cancel')) return 'cancel';
       if (s?.includes('no show')) return 'no show';
       if (s?.includes('checked in') || s?.includes('check in')) return 'checked in';
+      if (s?.includes('book')) return 'booked';
       if (s?.includes('in service')) return 'in service';
       if (s?.includes('confirm')) return 'confirmed';
       if (s?.includes('complete')) return 'completed';
@@ -1252,8 +1586,11 @@ const ScheduleScreen = () => {
       .filter((a: any) => !a?.appointmentStart)
       .map((a: any) => {
         const patient = a?.patient || {};
+        const reqPid = getAppointmentPatientId(a);
+        const reqFromSvc = reqPid != null ? patientDisplayByPatientService.get(String(reqPid)) : undefined;
 
         const patientName =
+          (reqFromSvc?.name && reqFromSvc.name.trim()) ||
           patient?.full_name ||
           patient?.fullName ||
           (patient?.first_name && patient?.last_name
@@ -1263,7 +1600,8 @@ const ScheduleScreen = () => {
         const patientGender = patient?.genderLvalue?.lovDisplayVale || patient?.genderLkey || '';
         const patientAge = patient?.dob ? calculateAgeFormat(patient.dob) : '';
 
-        const patientMrn = patient?.patient_mrn || '';
+        const patientMrn =
+          (reqFromSvc?.mrn && reqFromSvc.mrn.trim()) || patient?.patient_mrn || '';
 
         const resourceKey = a?.resourceKey ?? a?.resource_key ?? a?.resource?.key ?? null;
 
@@ -1317,7 +1655,12 @@ const ScheduleScreen = () => {
           _raw: a
         };
       });
-  }, [searchedAppointmentsResponse, resourcesWithAvailabilityResponse?.object, resourceNameById]);
+  }, [
+    searchedAppointmentsResponse,
+    resourcesWithAvailabilityResponse?.object,
+    resourceNameById,
+    patientDisplayByPatientService
+  ]);
 
   const handleApproveRequest = (row: any) => {
     setRequestToApprove(row?._raw);
@@ -1493,8 +1836,64 @@ const ScheduleScreen = () => {
           className="right-section appointments-main-card"
           style={{ display: 'flex', flexDirection: 'column', minHeight: 620 }}
         >
+          <div className="appointments-slot-summary-bar">
+            <div className="appointments-slot-summary-scope">
+              <span className="appointments-slot-summary-scope-date">{slotSummaryBarStats.rangeLabel}</span>
+              <span className="appointments-slot-summary-scope-meta">
+                {selectedDepartment?.departmentId
+                  ? (departmentOptions as any[])?.find(
+                      (d: any) => String(d?.id) === String(selectedDepartment.departmentId)
+                    )?.name ?? `Dept #${selectedDepartment.departmentId}`
+                  : 'All departments'}
+                {selectedResourceKeysForFilter && selectedResources?.resourceKey?.length
+                  ? ` · ${selectedResources.resourceKey.length} resource(s)`
+                  : selectedResourceTypeValue?.value
+                    ? ` · ${String(selectedResourceTypeValue.value)}`
+                    : ''}
+              </span>
+            </div>
+            <div className="appointments-slot-summary-metrics appointments-slot-summary-metrics--single-row">
+              <div className="appointments-slot-summary-item appointments-slot-summary-item--shrink0">
+                <span className="appointments-slot-summary-icon appointments-slot-summary-icon--total">
+                  <FontAwesomeIcon icon={faClock} />
+                </span>
+                <span className="appointments-slot-summary-text">
+                  <strong>{slotSummaryBarStats.total}</strong> Slots
+                </span>
+              </div>
+              {slotSummaryBarStats.legendRow.map(row => (
+                <React.Fragment key={row.label}>
+                  <div className="appointments-slot-summary-divider" />
+                  <div className="appointments-slot-summary-item appointments-slot-summary-item--shrink0">
+                    <span
+                      className="appointments-slot-summary-icon"
+                      style={{ backgroundColor: row.summaryIconBg }}
+                    >
+                      <FontAwesomeIcon icon={row.icon} />
+                    </span>
+                    <span className="appointments-slot-summary-text">
+                      <strong>{row.count}</strong> {row.label}
+                    </span>
+                  </div>
+                </React.Fragment>
+              ))}
+              {slotSummaryBarStats.otherCount > 0 ? (
+                <>
+                  <div className="appointments-slot-summary-divider" />
+                  <div className="appointments-slot-summary-item appointments-slot-summary-item--shrink0">
+                    <span className="appointments-slot-summary-text appointments-slot-summary-muted">
+                      <strong>{slotSummaryBarStats.otherCount}</strong> Other
+                    </span>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
           <div className="appointments-content-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1 }}>
-            <div className="appointments-calendar-pane" style={{ minHeight: 0, height: '100%' }}>
+            <div
+              className="appointments-calendar-pane"
+              style={{ minHeight: 0, height: '100%', overflowX: 'auto', overflowY: 'hidden' }}
+            >
               <BigCalendar
                 key={calendarKey}
                 toolbar={false}
@@ -1505,7 +1904,13 @@ const ScheduleScreen = () => {
                   setRightPanelDate(date);
                 }}
                 className={`my-calendar ${currentView}`}
-                style={{ height: currentView === 'day' || currentView === 'week' ? 'max-content' : '100%' }}
+                style={{
+                  height: currentView === 'day' || currentView === 'week' ? 'max-content' : '100%',
+                  minWidth:
+                    currentView === 'day' || currentView === 'week'
+                      ? `${Math.max((visibleResources?.length || 1) * 300, 900)}px`
+                      : '100%'
+                }}
                 min={minTime}
                 {...(currentView === 'day' && {
                   resources: visibleResources ?? [],
@@ -1643,10 +2048,12 @@ const ScheduleScreen = () => {
               </Panel>
 
               <TodayAppointmentsList
+                selectedDate={rightPanelDate ?? currentCalendarDate}
                 todayAppointmentsList={todayAppointmentsList}
                 isFetchingTodayAppointments={isFetchingTodayAppointments}
                 rightPanelAppointmentRows={rightPanelAppointmentRows}
                 todayTimelineRows={todayTimelineRows}
+                onViewAppointment={handleViewAppointment}
               />
             </div>
           </div>

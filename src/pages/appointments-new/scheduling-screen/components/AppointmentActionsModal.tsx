@@ -502,9 +502,9 @@ const handleCancel = async () => {
             </MyButton>
             <MyButton
               width="250px"
-              disabled={["NO_SHOW", "CONFIRMED"].includes(currentStatus) || isViewOnlyActionsStatus}
               onClick={() => { setResonType('No-show') }}
               color="blue"
+              disabled={true}
               appearance="primary"
             >
                 No-show
@@ -556,7 +556,7 @@ const handleCancel = async () => {
                 open={isActionsModalOpen && !isDirectReasonStatus}
                 setOpen={onActionsModalClose}
                 title={modalPatientTitle}
-                size="38vw"
+                size="560px"
                 bodyheight="50vh"
                 position="center"
                 content={actionsModalContent}
