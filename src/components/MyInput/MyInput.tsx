@@ -406,28 +406,48 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            shouldDisableDate={(date: Date) => {
+              const today = new Date(new Date().setHours(0, 0, 0, 0));
+              const minDate = new Date(1900, 0, 1);
+              if (date < minDate) return true;
+              if (props.disablePastDates) return date < today;
+              if (props.disableFutureDates) return date > today;
+              return false;
+            }}
           />
         );
 
       case 'time':
         return (
           <Form.Control
-            className="custom-time-input"
+            className="custom-date-input"
             style={
               {
                 width: props?.width ?? 145,
-                '--custom-time-input': `${props?.height ?? 30}px`
+                '--input-height': `${props?.height ?? 30}px`
               } as React.CSSProperties
             }
             disabled={props.disabled}
             name={fieldName}
-            value={record[fieldName] ? record[fieldName] : null}
             accepter={TimePicker}
-            onChange={handleValueChange}
-            onClean={() => handleValueChange(null)}
-            placeholder={props.placeholder}
+            value={record[fieldName] ? (() => {
+              const [h, m, s] = record[fieldName].split(':').map(Number);
+              const d = new Date(1970, 0, 1, h, m, s ?? 0);
+              return d;
+            })() : null}
+            onChange={(value: Date | null) => {
+              if (!value) {
+                setRecord?.({ ...record, [fieldName]: null });
+                return;
+              }
+              const h = String(value.getHours()).padStart(2, '0');
+              const m = String(value.getMinutes()).padStart(2, '0');
+              const s = String(value.getSeconds()).padStart(2, '0');
+              setRecord?.({ ...record, [fieldName]: `${h}:${m}:${s}` });
+            }}
+            placeholder={props.placeholder ?? 'HH:mm'}
             format="HH:mm"
-            cleanable
+            cleanable={false}
             onKeyDown={focusNextField}
             open={isTimeOpen}
             onOpen={() => setIsTimeOpen(true)}
@@ -435,7 +455,6 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
-            hideMinutes={props?.hideMinutes ? props?.hideMinutes : false}
           />
         );
 

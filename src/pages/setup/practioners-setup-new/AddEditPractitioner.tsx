@@ -54,6 +54,8 @@ const AddEditPractitioner = ({
   } = useGetAppointableDepartmentsQuery(
     {
       facilityId: practitioner?.facilityId,
+      page: deptPage,
+      size: 10,
     },
     {
       skip: !practitioner?.facilityId,
@@ -67,6 +69,8 @@ const AddEditPractitioner = ({
   } = useGetDepartmentByFacilityQuery(
     {
       facilityId: practitioner?.facilityId,
+      page: deptPage,
+      size: 10,
     },
     {
       skip: !practitioner?.facilityId,
@@ -105,14 +109,16 @@ const AddEditPractitioner = ({
   useEffect(() => {
     if (practitioner?.appointable) {
       if (facilityAppointableDepartments?.data) {
-        setAllDepartments(facilityAppointableDepartments.data);
+        setAllDepartments((prev) =>
+        deptPage === 0 ? facilityAppointableDepartments.data : [...prev, ...facilityAppointableDepartments.data]
+      );
       }
     }
     else {
       if (facilityDepartments?.data) {
-        setAllDepartments(
-          facilityDepartments.data
-        );
+        setAllDepartments((prev) =>
+        deptPage === 0 ? facilityDepartments.data : [...prev, ...facilityDepartments.data]
+      );
       }
     }
   }, [facilityAppointableDepartments, facilityDepartments, practitioner, practitioner?.appointable]);

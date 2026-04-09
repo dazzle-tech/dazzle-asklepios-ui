@@ -1576,7 +1576,6 @@ const isSelectedRelation = rowData => {
                   disabled={!editing}
                 />
                 <MyInput
-                  required
                   width={165}
                   vr={validationResult}
                   column
