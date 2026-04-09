@@ -92,6 +92,29 @@ export const appointmentFromTemplateService = createApi({
       providesTags: ['AppointmentFromTemplate']
     }),
 
+    getAppointmentsByBatchId: builder.query<
+      PagedResult<AppointmentFromTemplate>,
+      { batchId: Id } & PagedParams
+    >({
+      query: ({ batchId, page, size, sort = 'id,asc' }) => ({
+        url: `${APPOINTMENT_BASE_URL}/by-batch-id/${batchId}`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: AppointmentFromTemplate[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
     searchAppointments: builder.query<
       PagedResult<AppointmentFromTemplate>,
       { filter: AppointmentFromTemplateSearchFilterDTO } & PagedParams
@@ -169,6 +192,8 @@ export const {
   useCreateQuickAppointmentMutation,
   useGetAppointmentsByStatusBetweenDatesQuery,
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
+  useGetAppointmentsByBatchIdQuery,
+  useLazyGetAppointmentsByBatchIdQuery,
   useSearchAppointmentsQuery,
   useLazySearchAppointmentsQuery,
   useCancelAppointmentMutation,

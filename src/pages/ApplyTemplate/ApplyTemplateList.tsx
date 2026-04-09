@@ -6,13 +6,18 @@ import { Box } from '@mui/material';
 import { useAppDispatch } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetAvailabilityGenerationBatchesByTemplateQuery } from '@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
+import { useGetAppointmentsByBatchIdQuery } from '@/services/appointment/appointmentService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import {
   useGetAvailabilityTemplatesActiveByStatusQuery,
   useLazyGetAvailabilityTemplatesByTemplateNameQuery
 } from '@/services/appointment/availabilityTemplateService';
-import type { AvailabilityGenerationBatch, AvailabilityTemplateResponseVM } from '@/types/model-types-new';
+import type {
+  AppointmentFromTemplate,
+  AvailabilityGenerationBatch,
+  AvailabilityTemplateResponseVM
+} from '@/types/model-types-new';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import type { LinkMap } from '@/utils/paginationHelper';
 import { PaginationPerPage } from '@/utils/paginationPerPage';
@@ -35,6 +40,16 @@ const ApplyTemplateList = () => {
   const [batchSortColumn, setBatchSortColumn] = useState('id');
   const [batchSortType, setBatchSortType] = useState<'asc' | 'desc'>('asc');
   const [batchLinks, setBatchLinks] = useState<LinkMap>({});
+  const [selectedBatchId, setSelectedBatchId] = useState<number | null>(null);
+  const [appointmentPaginationParams, setAppointmentPaginationParams] = useState({
+    page: 0,
+    size: 15,
+    sort: 'id,asc',
+    timestamp: Date.now()
+  });
+  const [appointmentSortColumn, setAppointmentSortColumn] = useState('id');
+  const [appointmentSortType, setAppointmentSortType] = useState<'asc' | 'desc'>('asc');
+  const [appointmentLinks, setAppointmentLinks] = useState<LinkMap>({});
 
   const { data: templatesResponse = [], isFetching } = useGetAvailabilityTemplatesActiveByStatusQuery({
     status: 'PUBLISHED'
@@ -50,6 +65,14 @@ const ApplyTemplateList = () => {
         ...batchPaginationParams
       },
       { skip: !selectedTemplate?.id }
+    );
+  const { data: appointmentsByBatchResponse, isFetching: isFetchingAppointmentsByBatch } =
+    useGetAppointmentsByBatchIdQuery(
+      {
+        batchId: selectedBatchId ?? 0,
+        ...appointmentPaginationParams
+      },
+      { skip: !selectedBatchId }
     );
 
   useEffect(() => {
@@ -75,11 +98,25 @@ const ApplyTemplateList = () => {
     setBatchSortColumn('id');
     setBatchSortType('asc');
     setBatchLinks({});
+    setSelectedBatchId(null);
+    setAppointmentPaginationParams({
+      page: 0,
+      size: 15,
+      sort: 'id,asc',
+      timestamp: Date.now()
+    });
+    setAppointmentSortColumn('id');
+    setAppointmentSortType('asc');
+    setAppointmentLinks({});
   }, [selectedTemplate?.id]);
 
   useEffect(() => {
     setBatchLinks(generationBatchesResponse?.links ?? {});
   }, [generationBatchesResponse?.links]);
+
+  useEffect(() => {
+    setAppointmentLinks(appointmentsByBatchResponse?.links ?? {});
+  }, [appointmentsByBatchResponse?.links]);
 
   useEffect(() => {
     const search = recordOfSearch.templateName?.trim();
@@ -151,6 +188,8 @@ const ApplyTemplateList = () => {
 
   const generationBatches = generationBatchesResponse?.data ?? [];
   const batchTotalCount = generationBatchesResponse?.totalCount ?? 0;
+  const appointmentsByBatch = appointmentsByBatchResponse?.data ?? [];
+  const appointmentTotalCount = appointmentsByBatchResponse?.totalCount ?? 0;
 
   const handleBatchSortChange = (sortColumn: string, sortType: 'asc' | 'desc') => {
     setBatchSortColumn(sortColumn);
@@ -170,6 +209,27 @@ const ApplyTemplateList = () => {
       batchPaginationParams,
       batchLinks,
       setBatchPaginationParams
+    );
+  };
+
+  const handleAppointmentSortChange = (sortColumn: string, sortType: 'asc' | 'desc') => {
+    setAppointmentSortColumn(sortColumn);
+    setAppointmentSortType(sortType);
+    setAppointmentPaginationParams({
+      ...appointmentPaginationParams,
+      sort: `${sortColumn},${sortType}`,
+      page: 0,
+      timestamp: Date.now()
+    });
+  };
+
+  const handleAppointmentPageChange = (event: unknown, newPage: number) => {
+    PaginationPerPage.handlePageChange(
+      event,
+      newPage,
+      appointmentPaginationParams,
+      appointmentLinks,
+      setAppointmentPaginationParams
     );
   };
 
@@ -325,6 +385,76 @@ const ApplyTemplateList = () => {
     }
   ];
 
+  const appointmentColumns = [
+    {
+      key: 'startDatetime',
+      title: <Translate>Start Datetime</Translate>,
+      flexGrow: 3,
+      render: (rowData: AppointmentFromTemplate) => (
+        <p>{(rowData as any)?.startDatetime ? formatDateWithoutSeconds((rowData as any).startDatetime) : '-'}</p>
+      )
+    },
+    {
+      key: 'endDatetime',
+      title: <Translate>End Datetime</Translate>,
+      flexGrow: 3,
+      render: (rowData: AppointmentFromTemplate) => (
+        <p>{(rowData as any)?.endDatetime ? formatDateWithoutSeconds((rowData as any).endDatetime) : '-'}</p>
+      )
+    },
+    {
+      key: 'capacityIndex',
+      title: <Translate>Capacity Index</Translate>,
+      flexGrow: 2,
+      render: (rowData: AppointmentFromTemplate) => <p>{(rowData as any)?.capacityIndex ?? '-'}</p>
+    },
+    {
+      key: 'deffered',
+      title: <Translate>Deffered</Translate>,
+      flexGrow: 2,
+      render: (rowData: AppointmentFromTemplate) => {
+        const rawValue = (rowData as any)?.deffered ?? (rowData as any)?.deferred;
+        if (rawValue === true) return <p>True</p>;
+        if (rawValue === false) return <p>False</p>;
+        return <p>-</p>;
+      }
+    },
+    {
+      key: 'defferedAt',
+      title: <Translate>Deffered At</Translate>,
+      flexGrow: 3,
+      render: (rowData: AppointmentFromTemplate) => (
+        <p>{(rowData as any)?.defferedAt ? formatDateWithoutSeconds((rowData as any).defferedAt) : '-'}</p>
+      )
+    },
+    {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      flexGrow: 2,
+      render: (rowData: AppointmentFromTemplate) => {
+        const statusRaw = String((rowData as any)?.status ?? '');
+        const s = statusRaw.toUpperCase();
+        const getStatusColor = () => {
+          if (s.includes('BOOK')) return '#059669';
+          if (s.includes('CONFIRM')) return '#166534';
+          if (s.includes('COMPLETE')) return '#6DA7E8';
+          if (s.includes('NEW')) return '#4B7BEC';
+          if (s.includes('CHECK')) return '#F5B971';
+          if (s.includes('NO_SHOW') || s.includes('NO-SHOW')) return '#E8CF5A';
+          if (s.includes('IN_SERVICE') || s.includes('IN SERVICE')) return '#7C8BF3';
+          if (s.includes('CANCEL')) return '#F87171';
+          return '#C8D1E1';
+        };
+
+        return statusRaw ? (
+          <MyBadgeStatus color={getStatusColor()} contant={formatEnumString(statusRaw)} />
+        ) : (
+          <p>-</p>
+        );
+      }
+    }
+  ];
+
   return (
     <div>
       <Panel>
@@ -373,6 +503,20 @@ const ApplyTemplateList = () => {
               data={generationBatches}
               loading={isFetchingBatches}
               columns={generationBatchColumns}
+              onRowClick={(rowData: AvailabilityGenerationBatch) => {
+                const batchId = Number((rowData as any)?.id ?? 0);
+                if (!batchId) return;
+                setSelectedBatchId(batchId);
+                setAppointmentPaginationParams({
+                  ...appointmentPaginationParams,
+                  page: 0,
+                  sort: 'id,asc',
+                  timestamp: Date.now()
+                });
+                setAppointmentSortColumn('id');
+                setAppointmentSortType('asc');
+                setAppointmentLinks({});
+              }}
               page={batchPaginationParams.page}
               rowsPerPage={batchPaginationParams.size}
               totalCount={batchTotalCount}
@@ -389,6 +533,35 @@ const ApplyTemplateList = () => {
               sortColumn={batchSortColumn}
               sortType={batchSortType}
               onSortChange={handleBatchSortChange}
+            />
+          </Panel>
+        </Box>
+      )}
+
+      {selectedTemplate?.id && selectedBatchId && (
+        <Box mt={3}>
+          <Panel header={`Appointments - Batch #${selectedBatchId}`}>
+            <MyTable
+              height={320}
+              data={appointmentsByBatch}
+              loading={isFetchingAppointmentsByBatch}
+              columns={appointmentColumns}
+              page={appointmentPaginationParams.page}
+              rowsPerPage={appointmentPaginationParams.size}
+              totalCount={appointmentTotalCount}
+              onPageChange={handleAppointmentPageChange}
+              onRowsPerPageChange={e => {
+                const newSize = Number(e.target.value);
+                setAppointmentPaginationParams({
+                  ...appointmentPaginationParams,
+                  size: newSize,
+                  page: 0,
+                  timestamp: Date.now()
+                });
+              }}
+              sortColumn={appointmentSortColumn}
+              sortType={appointmentSortType}
+              onSortChange={handleAppointmentSortChange}
             />
           </Panel>
         </Box>
