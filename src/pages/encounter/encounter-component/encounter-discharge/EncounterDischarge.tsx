@@ -56,7 +56,6 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
                 dischargeAt: localEncounter.dischargeAt
             };
 
-            // ✅ جيب السرير قبل الديشارج
             let bedId: number | null = null;
             try {
                 const activeAssignment = await getActiveAssignmentByEncounterId({
@@ -80,13 +79,11 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
                 }
             }
 
-            // ✅ اعمل discharge
             await dischargeEncounter({
                 id: numericId,
                 body: dischargePayload
             }).unwrap();
 
-            // ✅ بعدين حدّث حالة السرير
             if (bedId) {
                 try {
                     await markBedAsInCleaning({ id: bedId }).unwrap();
@@ -163,14 +160,14 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Discharge Encounter"
+            title="Disposition"
             actionButtonFunction={handleCompleteEncounter}
             position="center"
             size="28vw"
             bodyheight="70vh"
             steps={[
                 {
-                    title: 'Discharge Encounter',
+                    title: 'Disposition',
                     icon: <FontAwesomeIcon icon={faSignOutAlt} />
                 }
             ]}

@@ -49,19 +49,19 @@ const focusNextField = (e: any) => {
 type MyInputProps = {
   fieldName: string;
   fieldType?:
-    | 'text'
-    | 'password'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check';
+  | 'text'
+  | 'password'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -120,6 +120,9 @@ type MyInputProps = {
   disableFutureDates?: boolean;
   showWarningIfBeforeYear1900?: boolean;
   showWarningIfInPast?: boolean;
+  min?: number;
+  step?: number;
+  allowDecimal?: boolean;
 };
 
 const MyInput = ({
@@ -406,48 +409,28 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
-            shouldDisableDate={(date: Date) => {
-              const today = new Date(new Date().setHours(0, 0, 0, 0));
-              const minDate = new Date(1900, 0, 1);
-              if (date < minDate) return true;
-              if (props.disablePastDates) return date < today;
-              if (props.disableFutureDates) return date > today;
-              return false;
-            }}
           />
         );
 
       case 'time':
         return (
           <Form.Control
-            className="custom-date-input"
+            className="custom-time-input"
             style={
               {
                 width: props?.width ?? 145,
-                '--input-height': `${props?.height ?? 30}px`
+                '--custom-time-input': `${props?.height ?? 30}px`
               } as React.CSSProperties
             }
             disabled={props.disabled}
             name={fieldName}
+            value={record[fieldName] ? record[fieldName] : null}
             accepter={TimePicker}
-            value={record[fieldName] ? (() => {
-              const [h, m, s] = record[fieldName].split(':').map(Number);
-              const d = new Date(1970, 0, 1, h, m, s ?? 0);
-              return d;
-            })() : null}
-            onChange={(value: Date | null) => {
-              if (!value) {
-                setRecord?.({ ...record, [fieldName]: null });
-                return;
-              }
-              const h = String(value.getHours()).padStart(2, '0');
-              const m = String(value.getMinutes()).padStart(2, '0');
-              const s = String(value.getSeconds()).padStart(2, '0');
-              setRecord?.({ ...record, [fieldName]: `${h}:${m}:${s}` });
-            }}
-            placeholder={props.placeholder ?? 'HH:mm'}
+            onChange={handleValueChange}
+            onClean={() => handleValueChange(null)}
+            placeholder={props.placeholder}
             format="HH:mm"
-            cleanable={false}
+            cleanable
             onKeyDown={focusNextField}
             open={isTimeOpen}
             onOpen={() => setIsTimeOpen(true)}
@@ -455,6 +438,7 @@ const MyInput = ({
             placement={pickerPlacement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
+            hideMinutes={props?.hideMinutes ? props?.hideMinutes : false}
           />
         );
 
@@ -477,8 +461,8 @@ const MyInput = ({
               (isArrayLabel
                 ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
                 : props.isEnum
-                ? (label: any) => formatEnumString(String(label))
-                : undefined)
+                  ? (label: any) => formatEnumString(String(label))
+                  : undefined)
             }
             searchBy={props.searchBy}
             container={resolveContainer()}
@@ -505,15 +489,15 @@ const MyInput = ({
             renderValue={
               isArrayLabel
                 ? (value, item, selectedElement) => {
-                    if (!item) return selectedElement;
-                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                  }
+                  if (!item) return selectedElement;
+                  return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                }
                 : props.isEnum
-                ? (value, item, selectedElement) => {
+                  ? (value, item, selectedElement) => {
                     const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
                     return <span>{formatEnumString(String(base))}</span>;
                   }
-                : undefined
+                  : undefined
             }
             disabledItemValues={
               props.disabledItemValues
@@ -549,12 +533,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                    {
-                      [valueKey]: '__load_more__',
-                      [labelKey]: 'Load more...',
-                      isLoadMore: true
-                    }
-                  ]
+                  {
+                    [valueKey]: '__load_more__',
+                    [labelKey]: 'Load more...',
+                    isLoadMore: true
+                  }
+                ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -810,13 +794,70 @@ const MyInput = ({
         const value =
           record?.[fieldName] === 0
             ? props.showZero
-              ? 0
+              ? '0'
               : ''
             : record?.[fieldName] !== null && record?.[fieldName] !== undefined
-            ? record[fieldName]
-            : '';
+              ? String(record[fieldName])
+              : '';
 
-        const inputControl = (
+        const inputControl = props.allowDecimal ? (
+          <Form.Control
+            className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
+            style={{
+              width: numInputWidth,
+              height: props?.height ?? 30,
+              minWidth: numInputWidth,
+              maxWidth: numInputWidth,
+              flexShrink: 0,
+              paddingRight: rightAddon ? '2px' : undefined
+            }}
+            disabled={props.disabled}
+            name={fieldName}
+            accepter={Input}
+            type="text"
+            inputMode="decimal"
+            value={value}
+            placeholder={props.placeholder}
+            onChange={(value: string) => {
+              if (value === '' || value === null || value === undefined) {
+                setRecord?.({ ...record, [fieldName]: '' });
+                return;
+              }
+
+              let normalized = value.replace(',', '.');
+              normalized = normalized.replace(/[^0-9.]/g, '');
+
+              const firstDotIndex = normalized.indexOf('.');
+              if (firstDotIndex !== -1) {
+                normalized =
+                  normalized.slice(0, firstDotIndex + 1) +
+                  normalized.slice(firstDotIndex + 1).replace(/\./g, '');
+              }
+
+              setRecord?.({
+                ...record,
+                [fieldName]: normalized
+              });
+            }}
+            onBlur={() => {
+              const currentValue = record?.[fieldName];
+
+              if (currentValue === '' || currentValue === null || currentValue === undefined) {
+                setRecord?.({ ...record, [fieldName]: null });
+                return;
+              }
+
+              const normalized = String(currentValue).replace(',', '.').trim();
+              const numericValue = Number(normalized);
+
+              setRecord?.({
+                ...record,
+                [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+              });
+            }}
+            onKeyDown={focusNextField}
+          />
+        ) : (
           <Form.Control
             className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
             style={{
@@ -830,9 +871,10 @@ const MyInput = ({
             disabled={props.disabled}
             name={fieldName}
             max={props.max}
-            min={0}
-            value={value}
+            min={props.min ?? 0}
+            step={props.step ?? 1}
             accepter={InputNumber}
+            value={record?.[fieldName] ?? null}
             onChange={(value) => {
               if (value === '' || value === null || value === undefined) {
                 setRecord?.({ ...record, [fieldName]: null });
@@ -843,7 +885,7 @@ const MyInput = ({
 
               setRecord?.({
                 ...record,
-                [fieldName]: Number.isNaN(numericValue) ? null : numericValue
+                [fieldName]: Number.isNaN(numericValue) ? null : Math.trunc(numericValue)
               });
             }}
             placeholder={props.placeholder}
@@ -897,7 +939,6 @@ const MyInput = ({
 
         return inputControl;
       }
-
       case 'check':
         return (
           <Checkbox

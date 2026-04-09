@@ -137,7 +137,7 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
   { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products' },
-   { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' }
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' }
 
 ];
 
@@ -298,7 +298,8 @@ export const MODULES: Module[] =
         }
       ]
     },
-    {name: "Scheduling",
+    {
+      name: "Scheduling",
       description: "",
       icon: "FaCalendarDay",
       viewOrder: 3,
@@ -330,7 +331,8 @@ export const MODULES: Module[] =
         }
       ],
     },
-    {name: "Telemedicine",
+    {
+      name: "Telemedicine",
       description: "",
       icon: "FaVideo",
       viewOrder: 4,
@@ -343,11 +345,12 @@ export const MODULES: Module[] =
       }],
 
     },
-    {name: "EMR Module",
+    {
+      name: "EMR Module",
       description: null,
       icon: "FaFileWaveform",
       viewOrder: 4,
-            departmentTypes:["OUTPATIENT_CLINIC", "INPATIENT_WARD", "DAY_CASE", "EMERGENCY_ROOM"],
+      departmentTypes: ["OUTPATIENT_CLINIC", "INPATIENT_WARD", "DAY_CASE", "EMERGENCY_ROOM"],
 
       screens: [
         {
@@ -359,11 +362,12 @@ export const MODULES: Module[] =
 
       ],
     },
-    {name: "Clinics Management",
+    {
+      name: "Clinics Management",
       description: null,
       icon: "FaStethoscope",
       viewOrder: 4,
-        departmentTypes:["OUTPATIENT_CLINIC"],
+      departmentTypes: ["OUTPATIENT_CLINIC"],
       screens: [
 
         {
@@ -376,7 +380,8 @@ export const MODULES: Module[] =
 
       ],
     },
-    {name: "Inpatient Care",
+    {
+      name: "Inpatient Care",
       description: "",
       icon: "FaBed",
       viewOrder: 5,
@@ -392,7 +397,8 @@ export const MODULES: Module[] =
 
       ],
     },
-    {name: "Day Case",
+    {
+      name: "Day Case",
       description: "",
       icon: "FaPersonShelter",
       viewOrder: 6,
@@ -405,11 +411,12 @@ export const MODULES: Module[] =
 
       ],
     },
-    { name: "Emergency",
+    {
+      name: "Emergency",
       description: "",
       icon: "FaExplosion",
       viewOrder: 6,
-        departmentTypes: ["EMERGENCY_ROOM"],
+      departmentTypes: ["EMERGENCY_ROOM"],
       screens: [
         {
           name: "ER Triage",
@@ -422,7 +429,19 @@ export const MODULES: Module[] =
 
       ],
     },
-    {name: "Procedures",
+    {
+      name: "Urgent Care",
+      description: "",
+      icon: "FaNotesMedical",
+      viewOrder: 6,
+      departmentTypes: ["EMERGENCY_ROOM"],
+      screens: [
+        { name: "Urgent Care Triage",code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage"},
+        { name: "Urgent Care Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
+      ],
+    },
+    {
+      name: "Procedures",
       description: "",
       icon: "FaSquareParking",
       viewOrder: 7,
@@ -433,7 +452,8 @@ export const MODULES: Module[] =
         icon: "FaClipboardUser", viewOrder: 0, navPath: "procedure-module"
       }],
     },
-    {name: "Operation Theater",
+    {
+      name: "Operation Theater",
       description: "",
       icon: "FaHeartPulse",
       viewOrder: 8,
@@ -449,7 +469,8 @@ export const MODULES: Module[] =
 
       ],
     },
-    {name: "Laboratory",
+    {
+      name: "Laboratory",
       description: "",
       icon: "FaFlask",
       viewOrder: 9,
@@ -463,7 +484,8 @@ export const MODULES: Module[] =
 
       }],
     },
-    {name: "Radiology",
+    {
+      name: "Radiology",
       description: "",
       icon: "FaXRay",
       viewOrder: 10,
@@ -476,7 +498,8 @@ export const MODULES: Module[] =
 
       }],
     },
-    {name: "Pharmacy",
+    {
+      name: "Pharmacy",
       description: "",
       icon: "FaPrescriptionBottleMedical",
       viewOrder: 11,
@@ -490,7 +513,8 @@ export const MODULES: Module[] =
         { name: "Controlled Medications", code: "CONTROLLED_MEDICATIONS", description: "", icon: "FaBiohazard", viewOrder: 2, navPath: "pharmacy-controlled-medications" },
       ],
     },
-    {name: "Inventory Management",
+    {
+      name: "Inventory Management",
       description: "",
       icon: "FaBoxesPacking",
       viewOrder: 12,
@@ -555,7 +579,8 @@ export const MODULES: Module[] =
 
       ],
     },
-    {name: "Inventory Management New",
+    {
+      name: "Inventory Management New",
       description: "",
       icon: "FaBoxesPacking",
       viewOrder: 12,
@@ -620,11 +645,12 @@ export const MODULES: Module[] =
 
       ],
     },
-    {name: "Billing & Finance",
+    {
+      name: "Billing & Finance",
       description: "",
       icon: "FaMoneyBill1",
       viewOrder: 12,
-       departmentTypes:["REGISTRATION"],
+      departmentTypes: ["REGISTRATION"],
       screens: [
         {
           name: "Ledger Account",
@@ -653,7 +679,8 @@ export const MODULES: Module[] =
         },
       ],
     },
-    {name: "Purchasing",
+    {
+      name: "Purchasing",
       description: "",
       icon: "FaMobileRetro",
       viewOrder: 13,
