@@ -68,8 +68,18 @@ const ProductSetup = () => {
   } = useGetProductQuery(listRequest);
   // Header page setUp
   const divContent = 'Inventory Products Setup';
+
+
+useEffect(() => {
   dispatch(setPageCode('Product'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -94,12 +104,6 @@ const ProductSetup = () => {
     }
   }, [saveProductMutation.data]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   // handle click on Add New button
   const handleNew = () => {

@@ -51,7 +51,6 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
   const encounterIdNumber: number | null =
     localEncounter?.id ? Number(localEncounter?.id) : null;
   
-    console.log("encounterIdNumber", encounterIdNumber);
   const { data: planLovQueryResponse } =
     useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');
 

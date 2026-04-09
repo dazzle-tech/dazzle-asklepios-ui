@@ -44,8 +44,17 @@ const QuickVisit = ({ }) => {
     const divContent = (
         "Quick Visit"
     );
+
+
+    useEffect(() => {
     dispatch(setPageCode('Quick_Visit'));
     dispatch(setDivContent(divContent));
+
+    return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+    };
+    }, [dispatch]);
 
     const handleCompleteEncounter = async () => {
         try {
@@ -68,13 +77,7 @@ const QuickVisit = ({ }) => {
     };
 
 
-    // Effects
-    useEffect(() => {
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent('  '));
-        };
-    }, [location.pathname, dispatch]);
+
     useEffect(() => {
         // TODO update status to be a LOV value
         if (localEncounter?.encounterStatusLkey === '91109811181900') {

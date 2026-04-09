@@ -925,6 +925,219 @@ export const newVisitDuration: modelTypes.VisitDuration = {
   lastModifiedDate: null
 };
 
+// ------------------- Availability Template -------------------
+export const newAvailabilityTemplateWorkingDay: modelTypes.AvailabilityTemplateWorkingDay = {
+  dayOfWeek: 0,
+  isWorking: false
+};
+
+export const newAvailabilityTemplateAllowedServiceDTO: modelTypes.AvailabilityTemplateAllowedServiceDTO = {
+  id: null,
+  service: ''
+};
+
+export const newAvailabilityTemplateAllowedServiceResponseVM: modelTypes.AvailabilityTemplateAllowedServiceResponseVM = {
+  id: null,
+  service: null
+};
+
+export const newAvailabilityTemplateIntervalResponseVM: modelTypes.AvailabilityTemplateIntervalResponseVM = {
+  id: null,
+  templateId: null,
+  dayOfWeek: null,
+  startTime: null,
+  endTime: null,
+  slotStrategy: null,
+  slotDurationMinutes: null,
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateIntervalCreateDTO: modelTypes.AvailabilityTemplateIntervalCreateDTO = {
+  templateId: 0,
+  dayOfWeek: '',
+  startTime: '',
+  endTime: '',
+  slotStrategy: '',
+  slotDurationMinutes: 0,
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateIntervalUpdateDTO: modelTypes.AvailabilityTemplateIntervalUpdateDTO = {
+  id: 0,
+  dayOfWeek: null,
+  startTime: null,
+  endTime: null,
+  slotStrategy: null,
+  slotDurationMinutes: null,
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCreateDTO = {
+  facilityId: undefined,
+  departmentId: undefined,
+  templateName: '',
+  templateType: 'DEPARTMENT',
+  resourceId: undefined,
+  templateColor: "#6982F0",
+  status: 'DRAFT',
+  versionNo: 1,
+  copyFromTemplateId: null,
+  parentTemplateId: null,
+  durationMinutes: 0,
+  defaultBufferBeforeMinutes: 0,
+  defaultBufferAfterMinutes: 0,
+  parallelCapacityValue: 1,
+  defaultServiceId: null,
+  numberOfResourcesExpected: null,
+  requirePractitioner: false,
+  defaultPractitionerId: null,
+  requireBilling: false,
+  requirePreAssessment: false,
+  allowPatientPortalBooking: false,
+  requireConfirmation: false,
+  financialDetails: 'BOTH', 
+  isActive: true,
+  workingDays: [],
+  allowedServices: []
+};
+
+export const newAvailabilityTemplateUpdateDTO: modelTypes.AvailabilityTemplateUpdateDTO = {
+  id: 0,
+  ...newAvailabilityTemplateCreateDTO
+};
+
+export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateResponseVM = {
+  id: undefined,
+  facilityId: undefined,
+  departmentId: undefined,
+  resourceId: undefined,
+  templateName: '',
+  templateType: '',
+  templateColor: null,
+  status: '',
+  versionNo: null,
+  copyFromTemplateId: null,
+  parentTemplateId: null,
+  durationMinutes: null,
+  defaultBufferBeforeMinutes: null,
+  defaultBufferAfterMinutes: null,
+  parallelCapacityValue: null,
+  defaultServiceId: null,
+  numberOfResourcesExpected: null,
+  requirePractitioner: null,
+  defaultPractitionerId: null,
+  requireBilling: null,
+  requirePreAssessment: null,
+  allowPatientPortalBooking: null,
+  requireConfirmation: null,
+  financialDetails: null,
+  workingDays: [],
+  allowedServices: [],
+  isActive: true,
+};
+
+export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGenerationBatchApplyDTO = {
+  templateId: 0,
+  startDate: '',
+  endDate: '',
+  deferred: false,
+  deferredAt: null,
+  scope: '',
+  holidayHandlingMode: null
+};
+
+export const newApplyAvailabilityTemplateResponseVM: modelTypes.ApplyAvailabilityTemplateResponseVM = {
+  batchId: null,
+  templateId: null,
+  scope: null,
+  applyStartDateTime: null,
+  applyEndDateTime: null,
+  totalSlots: null,
+  dailyAvg: null,
+  executionStatus: null,
+  message: null,
+  holidayHandlingMode: null
+};
+
+export const newAvailabilityGenerationBatch: modelTypes.AvailabilityGenerationBatch = {
+  id: 0,
+  templateId: null,
+  holidayHandlingMode: null,
+  scope: null,
+  applyStartDateTime: null,
+  applyEndDateTime: null,
+  totalSlots: null,
+  dailyAvg: null,
+  executionStatus: null,
+  createdDate: null,
+  lastModifiedDate: null
+};
+
+export const newAppointmentFromTemplate: modelTypes.AppointmentFromTemplate = {
+  id: null,
+  patientId: null,
+  availabilityTemplateId: null,
+  encounterReason: null,
+  status: null,
+  appointmentDateTime: null,
+  durationMinutes: null
+};
+
+export const newAppointmentFromTemplateBookPatientDTO: modelTypes.AppointmentFromTemplateBookPatientDTO = {
+  id: 0,
+  patientId: 0,
+  defaultService: null,
+  defaultPractitioner: null,
+  reason: null,
+  status: null,
+  note: null,
+  service: null,
+  priority: null,
+  followUpEncounterId: null
+};
+
+export const newAppointmentFromTemplateQuickAppointmentDTO: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+  facilityId: 0,
+  departmentId: 0,
+  resourceType: '' as any,
+  resourceId: 0,
+  patientId: 0,
+  service: '' as any,
+  priority: '',
+  defaultServiceId: null,
+  defaultPractitionerId: null,
+  reason: null,
+  note: null,
+  followUpEncounterId: null,
+  originType: null,
+  originName: null
+};
+
+export const newAppointmentFromTemplateQuickAppointmentResponseVM: modelTypes.AppointmentFromTemplateQuickAppointmentResponseVM = {
+  appointmentFromTemplate: { ...newAppointmentFromTemplate },
+  encounter: { ...newPatientEncounter }
+};
+
+export const newAppointmentFromTemplateCancelDTO: modelTypes.AppointmentFromTemplateCancelDTO = {
+  id: 0,
+  cancelReason: ''
+};
+
+export const newAppointmentFromTemplateNoShowDTO: modelTypes.AppointmentFromTemplateNoShowDTO = {
+  id: 0,
+  noShowReason: ''
+};
+
+export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFromTemplateSearchFilterDTO = {
+  facility: null,
+  department: null,
+  resourceType: null,
+  resourceId: null,
+  status: null,
+  bookingMode: null,
+  patientId: null,
+};
+
 // ------------------- Price List -------------------
 export const newPriceList: modelTypes.PriceList = {
   id: undefined,
@@ -1003,6 +1216,27 @@ export const newBillingInvoice: modelTypes.BillingInvoiceCreateVM = {
   encounterReason: '',
   priorityLevel: '',
   status: ''
+};
+
+export const newBillingInvoiceCreateDTO: modelTypes.BillingInvoiceCreateDTO = {
+  patientId: null,
+  facilityId: 0,
+  status: 'NEW',
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: 'USD',
+};
+
+export const newBillingInvoiceUpdateDTO: modelTypes.BillingInvoiceUpdateDTO = {
+  id: 0,
+  patientId: null,
+  facilityId: 0,
+  status: 'NEW',
+  totalAmount: 0,
+  paidAmount: 0,
+  balanceAmount: 0,
+  currency: 'USD',
 };
 
 export const newBillingInvoiceUpdate: modelTypes.BillingInvoiceUpdateVM = {
@@ -1098,6 +1332,27 @@ export const newBillingInvoiceItem: modelTypes.BillingInvoiceItemCreateVM = {
   unitPrice: 0,
   totalPrice: 0,
   currency: null
+};
+
+export const newBillingInvoiceItemCreateDTO: modelTypes.BillingInvoiceItemCreateDTO = {
+  invoiceId: 0,
+  nurseServiceProductId: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: 'USD',
+};
+
+export const newBillingInvoiceItemUpdateDTO: modelTypes.BillingInvoiceItemUpdateDTO = {
+  id: 0,
+  invoiceId: 0,
+  nurseServiceProductId: null,
+  code: null,
+  quantity: 0,
+  unitPrice: 0,
+  totalPrice: 0,
+  currency: 'USD',
 };
 
 export const newBillingInvoiceItemUpdate: modelTypes.BillingInvoiceItemUpdateVM = {

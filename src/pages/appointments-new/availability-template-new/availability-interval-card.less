@@ -1,0 +1,113 @@
+.availability-interval-card {
+  width: 100%;
+  height: 100%;
+  background: #eef4ff;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  pointer-events: auto;
+}
+
+
+.interval-card-header {
+  height: 32px;
+  color: #fff;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.interval-time {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.interval-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.interval-card-actions button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.85;
+  padding: 0;
+}
+
+.interval-card-actions button:hover {
+  opacity: 1;
+}
+
+
+.interval-card-body {
+  flex: 1;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: transparent;
+}
+
+.interval-info {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.interval-info .label {
+  font-weight: 600;
+  color: #3b3b3b;
+}
+
+.slot-label {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #3b3b3b;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.slot-label *,
+.availability-interval-card input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+
+.interval-pattern {
+  margin-top: auto;
+  height: 18px;
+  border-radius: 4px;
+}
+
+
+.availability-interval-card.break {
+  opacity: 0.6;
+}
+
+
+@media (max-height: 60px) {
+  .interval-card-body {
+    padding: 4px 6px;
+  }
+
+  .interval-pattern {
+    display: none;
+  }
+}

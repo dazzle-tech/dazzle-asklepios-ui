@@ -314,6 +314,21 @@ export const MODULES: Module[] =
           viewOrder: 0,
           navPath: "schedual-screen",
         },
+        {
+          name: "Availability Templates New",
+          code: "AVAILABILITY_TEMPLATES_NEW",
+          description: "",
+          icon: "FaCalendarDays",
+          viewOrder: 1,
+          navPath: "availability-templates-new",
+        },{
+          name: "Apply Template",
+          code: "APPLY_TEMPLATE",
+          description: "",
+          icon: "FaCalendarCheck",
+          viewOrder: 1,
+          navPath: "apply-template",
+        }
       ],
     },
     {

@@ -146,12 +146,30 @@ export const catalogService = createApi({
   },
 }),
 
+    // GET /api/setup/catalog/appointable/by-loggedIn-facility?page=&size=&sort=
+    getAppointableCatalogsByLoggedInFacility: builder.query<PagedResult<CatalogResponseVM>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/catalog/appointable/by-loggedIn-facility',
+        params: { page, size, sort },
+      }),
+      transformResponse: (response: CatalogResponseVM[], meta): PagedResult<CatalogResponseVM> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
+      providesTags: ['Catalog'],
+    }),
+
   }),
 });
 
 export const {
   useGetCatalogsQuery,
   useGetCatalogByIdQuery,
+  useLazyGetCatalogByIdQuery,
   useGetCatalogByDepartmentQuery,
   useLazyGetCatalogByDepartmentQuery,
   useGetCatalogByTypeQuery,
@@ -161,5 +179,6 @@ export const {
   useAddCatalogMutation,
   useUpdateCatalogMutation,
   useDeleteCatalogMutation,
-  useGetUnselectedTestsForCatalogQuery
+  useGetUnselectedTestsForCatalogQuery,
+  useGetAppointableCatalogsByLoggedInFacilityQuery
 } = catalogService;

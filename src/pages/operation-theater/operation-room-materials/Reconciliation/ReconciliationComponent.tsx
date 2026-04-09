@@ -164,7 +164,7 @@ const Reconciliation: React.FC = () => {
   const filterstable = (
     <>
       <Form fluid>
-        <h5 className="requested-procedures-table-header">Requested Operation</h5>
+        <h5 className="requested-procedures-table-header"><Translate>Requested Operation</Translate></h5>
         <div className="from-to-input-position">
           <MyInput
             width="100%"

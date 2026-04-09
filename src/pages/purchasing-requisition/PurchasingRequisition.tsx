@@ -356,9 +356,18 @@ const PurchasingRequisition = () => {
   // This allows the page to be rendered correctly in the application
   // and to be displayed in the sidebar navigation
   // Set the page code and content in the Redux store
-  dispatch(setPageCode('Purchasing_Requisition'));
+
   // Set the div content in the Redux store
+
+  useEffect(() => {
+  dispatch(setPageCode('Purchasing_Requisition'));
   dispatch(setDivContent(divContent));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // Calculate the page index based on the current page number
   const pageIndex = listRequest.pageNumber - 1;
   // Calculate the number of rows per page and total count
@@ -403,12 +412,6 @@ const PurchasingRequisition = () => {
 
   //  useEffect
   // This effect runs when the component mounts or when the pathname changes
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
                       // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';

@@ -238,7 +238,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
       setIsCountryFiltered(true);
       setCountryFilterPagination(prev => ({ ...prev, page, size, sort }));
     } catch {
-      dispatch(notify({ msg: 'Failed to filter countries', sev: 'error' }));
+      dispatch(notify({ msg: 'Failed to filter countries', sev: 'warning' }));
       resetCountryToUnfiltered();
     }
   };
@@ -301,7 +301,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
 
   const handleSaveCountry = async (payload: Country) => {
     if (!payload.name?.trim()) {
-      dispatch(notify({ msg: 'Country name is required', sev: 'error' }));
+      dispatch(notify({ msg: 'Country name is required', sev: 'warning' }));
       return;
     }
 
@@ -349,7 +349,7 @@ const CountrySection: React.FC<Props> = ({ onSelect, selectedCountry }) => {
       dispatch(
         notify({
           msg: deleteMode === 'deactivate' ? 'Failed to deactivate' : 'Failed to activate',
-          sev: 'error'
+          sev: 'warning'
         })
       );
     } finally {

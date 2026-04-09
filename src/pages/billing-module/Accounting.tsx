@@ -19,14 +19,9 @@ import Billing from './Billing';
 import Invoices from './Invoices';
 import Receipt from './Receipt';
 import ProfileSidebar from '../patient/patient-profile/ProfileSidebar-new';
-import PatientSide from '../encounter/encounter-main-info-section/PatienSide';
+import PatientBillingSide from './PatientBillingSide';
 
-import { initialListRequest, ListRequest } from '@/types/types';
-import {
-  useGetNurseServiceProductListQuery,
-  useSaveNurseServiceProductMutation,
-} from '@/services/encounterService';
-import { ApNurseServiceProduct } from '@/types/model-types';
+import { useGetPatientServicesAndProductsByPatientQuery } from '@/services/encounters/patientServicesAndProductsService';
 
 import { useGetServicesQuery } from '@/services/setup/serviceService';
 import { useGetInventoryProductsQuery } from '@/services/inventory/inventory-products/inventoryProductsService';
@@ -34,23 +29,20 @@ import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication
 import {
   BrandMedication,
   InventoryProduct,
-  BillingInvoiceCreateVM,
-  BillingInvoiceItemCreateVM,
   BillingItem,
 } from '@/types/model-types-new';
 
 import {
-  useCreateInvoiceMutation,
-  useCreateInvoiceItemMutation,
-  useGetPatientAccountSummaryQuery,
-} from '@/services/billing/BillingService';
+  useGetPatientBalanceQuery,
+  useGetPatientLedgerSummaryQuery,
+} from '@/services/encounters/patientPaymentsService';
+import {
+  useCreatePatientInvoiceMutation,
+} from '@/services/patient/patientBillingInvoiceService';
+import {
+  useCreatePatientInvoiceItemMutation,
+} from '@/services/patient/patientBillingInvoiceItemService';
 
-// ---------- CONSTANTS ----------
-
-const SERVICE_CATEGORY_LKEY = '19257854232732994';
-const PRODUCT_CATEGORY_LKEY = '19257880375908711';
-
-// ---------- COMPONENT ----------
 
 const Accounting: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -70,48 +62,69 @@ const Accounting: React.FC = () => {
 
   const [allBillingItems, setAllBillingItems] = useState<BillingItem[]>([]);
   const [filteredBilling, setFilteredBilling] = useState<BillingItem[]>([]);
-
-  // نحتفظ بالأصول من الباك اند عشان نقدر نعمل update صح
-  const [nurseRows, setNurseRows] = useState<ApNurseServiceProduct[]>([]);
+  const [simulatedInvoiceIncrease, setSimulatedInvoiceIncrease] = useState(0);
+  const [simulatedPaymentDecrease, setSimulatedPaymentDecrease] = useState(0);
+  const [tabsResetKey, setTabsResetKey] = useState(0);
 
   const divContent = 'Accounting';
 
   // ---- RTK Billing mutations ----
-  const [createInvoice] = useCreateInvoiceMutation();
-  const [createInvoiceItem] = useCreateInvoiceItemMutation();
+  const [createPatientInvoice] = useCreatePatientInvoiceMutation();
+  const [createPatientInvoiceItem] = useCreatePatientInvoiceItemMutation();
 
-  // ---- Nurse service product save (create/update نفس الفنكشن) ----
-  const [saveNurseServiceProduct] = useSaveNurseServiceProductMutation();
+  const toNumericId = (val: unknown): number | null => {
+    if (val == null || val === '') return null;
+    const n = Number(val as any);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+  const patientNumericId =
+    toNumericId(patient?.id) ??
+    toNumericId((patient as any)?.patientId) ??
+    toNumericId(patient?.key) ??
+    null;
 
-  // ---- Patient account summary ----
   const {
-    data: accountSummary,
-    refetch: refetchAccountSummary,
-  } = useGetPatientAccountSummaryQuery(
-    { patientKey: patient?.key },
-    { skip: !patient?.key }
+    data: patientWalletBalance,
+    refetch: refetchPatientWalletBalance,
+  } = useGetPatientBalanceQuery(
+    { patientId: patientNumericId as number },
+    { skip: patientNumericId == null }
+  );
+
+  const {
+    data: patientLedgerSummary,
+    refetch: refetchPatientLedgerSummary,
+  } = useGetPatientLedgerSummaryQuery(
+    { patientId: patientNumericId as number },
+    { skip: patientNumericId == null }
   );
 
   const balance = {
-    freeBalance: Number(accountSummary?.freeBalance ?? 0),
-    outstanding: Number(accountSummary?.outstandingBalance ?? 0),
+    freeBalance: Number(
+      patientLedgerSummary?.walletBalance ?? patientWalletBalance ?? 0
+    ),
+    outstanding: Math.max(
+      0,
+      Number(patientLedgerSummary?.totalDebt ?? 0) +
+        simulatedInvoiceIncrease -
+        simulatedPaymentDecrease
+    ),
   };
 
-  // ---- ListRequest for nurse-service-product-list ----
-  const [nurseServiceProductListRequest, setNurseServiceProductListRequest] =
-    useState<ListRequest>({
-      ...initialListRequest,
-      filters: [],
-      pageSize: 100,
-    });
-
   const {
-    data: nurseServiceProductListResponse,
-    isFetching,
-    refetch: refetchNurseList,
-  } = useGetNurseServiceProductListQuery(nurseServiceProductListRequest, {
-    skip: !patient?.key,
-  });
+    data: patientServicesAndProductsResponse,
+    refetch: refetchPatientServicesAndProductsByPatient,
+  } = useGetPatientServicesAndProductsByPatientQuery(
+    {
+      patientId: patientNumericId as number,
+      page: 0,
+      size: 500,
+      sort: 'id,desc',
+    },
+    {
+      skip: patientNumericId == null,
+    }
+  );
 
   // ---- Master data (services / products / brands) ----
   const page = 0;
@@ -142,7 +155,7 @@ const Accounting: React.FC = () => {
   const brands: BrandMedication[] = brandMedicationList?.data ?? [];
 
   const getProductById = (id?: number | string) =>
-    products.find(p => String(p.Id) === String(id));
+    products.find(p => String((p as any).id ?? (p as any).Id) === String(id));
 
   const getBrandById = (id?: number | string) =>
     brands.find(b => String(b.id) === String(id));
@@ -204,13 +217,37 @@ const Accounting: React.FC = () => {
     setFilteredBilling(patientItems);
   };
 
-  // ---------- إنشاء Invoice من الـ Billing + تحديث is_valid + تحديث Balance ----------
+  const handleClosePatient = () => {
+    setPatient({ ...newApPatient });
+    setEncounter({ ...newApEncounter });
+    setAllBillingItems([]);
+    setFilteredBilling([]);
+    setDateFilter({ fromDate: null, toDate: null });
+    setSimulatedInvoiceIncrease(0);
+    setSimulatedPaymentDecrease(0);
+    setTabsResetKey(prev => prev + 1);
+  };
+
 
   const handleCreateInvoiceFromBilling = async (selectedIds: string[]) => {
-    if (!patient?.key || selectedIds.length === 0) return;
+    const hasPatient = patient?.id != null || patient?.key != null;
+    if (!hasPatient || selectedIds.length === 0) {
+      console.warn('[Accounting] Skip create invoice: missing patient or no selected rows', {
+        patient,
+        selectedCount: selectedIds.length,
+      });
+      return;
+    }
 
     const facilityId = authSlice?.tenant?.selectedFacility?.id;
     if (!facilityId) return;
+    if (patientNumericId == null || !Number.isFinite(Number(patientNumericId))) {
+      console.warn('[Accounting] Cannot create invoice: invalid patientNumericId', {
+        patient,
+        patientNumericId,
+      });
+      return;
+    }
 
     const itemsToInvoice = allBillingItems.filter(item =>
       selectedIds.includes(item.id)
@@ -227,56 +264,43 @@ const Accounting: React.FC = () => {
     const currency = itemsToInvoice[0]?.currency || 'USD';
 
     try {
-      // 1) إنشاء الفاتورة
-      const invoicePayload: BillingInvoiceCreateVM = {
-        facilityId,
-        patientKey: patient.key,
-        encounterKey: encounter?.key ?? null,
+      const invoicePayload = {
+        patientId: Number(patient?.id ?? patientNumericId),
+        facilityId: Number(facilityId),
+        status: 'PENDING',
         totalAmount,
         paidAmount: 0,
         balanceAmount: totalAmount,
         currency,
       };
 
-      const invoice = await createInvoice(invoicePayload).unwrap();
+      console.log('[Accounting] create invoice payload', invoicePayload);
+      const invoice = await createPatientInvoice(invoicePayload as any).unwrap();
+      console.log('[Accounting] created invoice response', invoice);
 
-      // 2) إنشاء Invoice Items
-      const itemPayloads: BillingInvoiceItemCreateVM[] = itemsToInvoice.map(
-        item => ({
-          invoiceId: invoice.id,
-          nurseServiceProductKey: item.nurseServiceProductKey,
-          code: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          totalPrice:
-            item.totalPrice ?? item.price * (item.quantity || 1),
-          currency: item.currency,
-        })
+      const itemPayloads = itemsToInvoice.map(it => ({
+        invoiceId: Number(invoice.id),
+        nurseServiceProductId: Number(it.nurseServiceProductKey),
+        // Keep both type and display name so payment screens can render full details later.
+        code: `${it.type}::${it.name}`,
+        quantity: Number(it.quantity),
+        unitPrice: Number(it.price),
+        totalPrice: Number(it.totalPrice ?? it.price * (it.quantity || 1)),
+        currency: it.currency,
+      }));
+
+      console.log('[Accounting] create invoice items payloads', itemPayloads);
+      await Promise.all(
+        itemPayloads.map(p => createPatientInvoiceItem(p as any).unwrap())
       );
+      console.log('[Accounting] created invoice items DONE');
 
-      await Promise.all(itemPayloads.map(p => createInvoiceItem(p).unwrap()));
+      if (patient?.id) await refetchPatientServicesAndProductsByPatient();
 
-     for (const billingItem of itemsToInvoice) {
-  const src = nurseRows.find(
-    r => String(r.key) === String(billingItem.nurseServiceProductKey)
-  );
-  if (!src) continue;
+      await refetchPatientWalletBalance();
+      await refetchPatientLedgerSummary();
+      setSimulatedInvoiceIncrease(prev => prev + totalAmount);
 
-  const updated: ApNurseServiceProduct = {
-    ...src,
-    isValid: false, 
-  };
-
-  await saveNurseServiceProduct(updated).unwrap();
-}
-
-      // 4) نعمل refetch للـ list (عشان الفلتر is_valid = true يشيلهم من Billing)
-      await refetchNurseList();
-
-      // 5) نحدث الـ balance في كرت المريض
-      await refetchAccountSummary();
-
-      // 6) ننظف الـ state المحلي برضه
       setAllBillingItems(prev =>
         prev.filter(item => !selectedIds.includes(item.id))
       );
@@ -292,58 +316,75 @@ const Accounting: React.FC = () => {
 
   useEffect(() => {
     if (!patient?.key) {
-      setNurseServiceProductListRequest(prev => ({
-        ...prev,
-        filters: [],
-      }));
       setAllBillingItems([]);
       setFilteredBilling([]);
-      setNurseRows([]);
+      setSimulatedInvoiceIncrease(0);
+      setSimulatedPaymentDecrease(0);
       return;
     }
-
-    setNurseServiceProductListRequest(prev => ({
-      ...prev,
-      filters: [
-        { fieldName: 'patient_key', operator: 'match', value: patient.key },
-        { fieldName: 'deleted_at', operator: 'isNull', value: undefined },
-        { fieldName: 'is_valid', operator: 'match', value: 'true' },
-      ],
-      pageSize: 100,
-    }));
   }, [patient]);
 
   useEffect(() => {
-    if (!patient?.key || !nurseServiceProductListResponse?.object) {
+    if (patientNumericId == null) {
+      console.warn('[Accounting] Skip loading services/products: missing numeric patientId', {
+        patientRaw: patient,
+      });
+      return;
+    }
+    refetchPatientServicesAndProductsByPatient();
+    console.log('[Accounting] Selected patient -> loading services/products', {
+      patientId: patientNumericId,
+      patientKey: patient?.key,
+    });
+  }, [patient?.id, patient?.key, patientNumericId]);
+
+  useEffect(() => {
+    if (patientNumericId == null || !patient?.id) {
       setAllBillingItems([]);
       setFilteredBilling([]);
-      setNurseRows([]);
       return;
     }
 
-    const apiRows: ApNurseServiceProduct[] =
-      nurseServiceProductListResponse.object ?? [];
+    if (!patientServicesAndProductsResponse?.data) {
+      setAllBillingItems([]);
+      setFilteredBilling([]);
+      return;
+    }
 
-    setNurseRows(apiRows);
+    const apiRows = (patientServicesAndProductsResponse.data ?? []).filter(
+      (row: any) => !row?.isBilled
+    );
+    console.log('[Accounting] patient services/products API response', {
+      patientId: patient?.id,
+      totalRows: apiRows.length,
+      rows: apiRows,
+    });
 
-    const mapped: BillingItem[] = apiRows.map((row, index) => {
-      const id = String(row.key ?? index);
+    const mapped: BillingItem[] = apiRows.map((row: any, index: number) => {
+      const id = String(row.id ?? index);
+      const itemType = String(
+        row.billingItemType ?? row.category ?? row.productType ?? 'OTHER'
+      ).toUpperCase();
 
       const type =
-        row.categoryLkey === SERVICE_CATEGORY_LKEY
+        itemType === 'SERVICE'
           ? 'Service'
-          : row.categoryLkey === PRODUCT_CATEGORY_LKEY
-          ? 'Product'
+          :  itemType === 'MEDICATION'
+          ? 'MEDICATION'
+          : itemType === 'PROCEDURE'
+          ? 'Procedure'
+          : itemType === 'LABORATORY' || itemType === 'RADIOLOGY' || itemType === 'PATHOLOGY'
+          ? 'Diagnostic'
           : 'Other';
 
       let name = `Item #${id}`;
       let clinic = '';
 
-      if (row.categoryLkey === SERVICE_CATEGORY_LKEY) {
+      if (itemType === 'SERVICE') {
         const service = services.find(s => s.id === row.serviceId);
         name = service?.name ?? `Service #${row.serviceId}`;
-      } else if (row.categoryLkey === PRODUCT_CATEGORY_LKEY) {
-        const product = getProductById(row.warehouseProductId);
+      } else if (itemType === 'PRODUCT') {
+        const product = getProductById(row.productId ?? row.warehouseProductId);
         if (product) {
           if (product.type === 'MEDICATION' && product.brandId) {
             const brand = getBrandById(product.brandId);
@@ -352,55 +393,67 @@ const Accounting: React.FC = () => {
             name = product.name;
           }
         } else {
-          name = `Product #${row.warehouseProductId}`;
+          name = `Product #${row.productId ?? row.warehouseProductId}`;
         }
+      } else if (itemType === 'MEDICATION') {
+        const brand = getBrandById(row.brandMedicationId ?? row.productId);
+        name = brand?.name ?? `Medication #${row.brandMedicationId ?? row.productId}`;
+      } else if (itemType === 'LABORATORY' || itemType === 'RADIOLOGY' || itemType === 'PATHOLOGY') {
+        name = `Diagnostic #${row.diagnosticTestId ?? row.productId ?? id}`;
+      } else if (itemType === 'PROCEDURE') {
+        name = `Procedure #${row.procedureId ?? row.productId ?? id}`;
       }
 
       const quantity = Number(row.quantity ?? 1);
-      const price = Number(row.unitPrice ?? 0);
-      const totalPrice =
-        row.totalPrice != null ? Number(row.totalPrice) : price * quantity;
+      const serviceRow = services.find(s => s.id === row.serviceId) as any;
+      const productRow = getProductById(row.productId ?? row.warehouseProductId) as any;
+      const price = Number(
+        row?.unitPrice ??
+        serviceRow?.price ??
+          serviceRow?.unitPrice ??
+          productRow?.sellingPrice ??
+          productRow?.salePrice ??
+          productRow?.price ??
+          0
+      );
+      const totalPrice = price * quantity;
 
-      const dateFromBackend = row.createdAt
-        ? new Date(row.createdAt)
+      const dateFromBackend = (row as any).createdDate
+        ? new Date((row as any).createdDate)
         : new Date();
 
       const chargeDate = dateFromBackend.toISOString().slice(0, 10);
 
       return {
         id,
-        nurseServiceProductKey: String(row.key),
+        nurseServiceProductKey: String(row.id),
         clinic,
         chargeDate,
         type,
         name,
         price,
         totalPrice,
-        currency: 'USD',
+        currency: row?.currency ?? 'USD',
         discount: 0,
         priceList: 'Standard',
-        patientKey: row.patientKey,
+        patientKey: String(patientNumericId),
         quantity,
       };
     });
 
     setAllBillingItems(mapped);
     setFilteredBilling(mapped);
-  }, [nurseServiceProductListResponse, patient, services, products, brands]);
+    console.log('[Accounting] mapped billing items', {
+      patientId: patient?.id,
+      totalRows: mapped.length,
+      rows: mapped,
+    });
+  }, [patientServicesAndProductsResponse, patientNumericId, patient?.id, services, products, brands]);
 
   useEffect(() => {
-    if (!patient?.key) {
-      setFilteredBilling([]);
-      return;
-    }
+    setFilteredBilling(allBillingItems);
+  }, [allBillingItems]);
 
-    const patientItems = allBillingItems.filter(
-      item => item.patientKey === patient.key
-    );
-    setFilteredBilling(patientItems);
-  }, [patient, allBillingItems]);
-
-  // ---------- UI SECTIONS ----------
 
   const contentOfSearchSection = () => (
     <>
@@ -459,7 +512,14 @@ const Accounting: React.FC = () => {
     },
     {
       title: 'Invoices',
-      content: <Invoices patient={patient} />,
+      content: (
+        <Invoices
+          patient={patient}
+          onSimulatedInvoicePayment={amount =>
+            setSimulatedPaymentDecrease(prev => prev + Number(amount || 0))
+          }
+        />
+      ),
     },
     {
       title: 'Print Receipt(s)',
@@ -467,7 +527,6 @@ const Accounting: React.FC = () => {
     },
   ];
 
-                  // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 
@@ -480,13 +539,29 @@ const Accounting: React.FC = () => {
           title="Search Patient"
           content={contentOfSearchSection()}
         />
-        <MyTab data={tabData} />
+        <MyTab key={`${patient?.id ?? 'no-patient'}-${tabsResetKey}`} data={tabData} />
       </div>
 
-      <br />
+      {patient?.id && (
+        <div className="right-box">
+          <PatientBillingSide
+            patient={patient}
+            balance={balance}
+            financeDetails={{
+              walletBalance: Number(
+                patientLedgerSummary?.walletBalance ?? patientWalletBalance ?? 0
+              ),
+              totalDebt: Number(patientLedgerSummary?.totalDebt ?? 0),
+              simulatedInvoiceIncrease,
+              simulatedPaymentDecrease,
+            }}
+            setPatient={() => handleClosePatient()}
+          />
+        </div>
+      )}
 
-      <div>
-        {!patient?.key ? (
+      {!patient?.id && (
+        <div className="right-box">
           <ProfileSidebar
             expand={expand}
             setExpand={setExpand}
@@ -495,23 +570,8 @@ const Accounting: React.FC = () => {
             refetchData={refetchData}
             setRefetchData={setRefetchData}
           />
-        ) : (
-          <div
-            style={{
-              border: '1px solid var(--rs-border-primary)',
-              borderRadius: '5px',
-            }}
-          >
-            <PatientSide
-              patient={patient}
-              encounter={encounter}
-              setPatient={setPatient}
-              hideVisitDetails
-              balance={balance}
-            />
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

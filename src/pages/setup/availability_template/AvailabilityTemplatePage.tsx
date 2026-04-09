@@ -102,8 +102,17 @@ const AvailabilityTemplatePage = () => {
 
   // Header page setup
   const divContent = "Availability Templates";
+
+
+useEffect(() => {
   dispatch(setPageCode('Availability Templates'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // Class name for selected row
   const isSelected = (rowData: AvailabilityTemplate) => {
@@ -119,12 +128,6 @@ const AvailabilityTemplatePage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     if (record['filter']) {

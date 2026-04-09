@@ -109,8 +109,17 @@ const MedicationMatrix = () => {
   const divContent = (
     "Medication Matrix SetUp"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('Medication Matrix SetUp'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   const handleEdit = type => {
     switch (type) {
@@ -286,12 +295,6 @@ const MedicationMatrix = () => {
     }));
   }, [selectedCategories.key]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     const updatedFilters = [

@@ -248,6 +248,232 @@ export interface VisitDuration {
 }
 
 /* =========================
+ *  Availability Templates
+ * ========================= */
+
+export interface AvailabilityTemplateWorkingDay {
+  dayOfWeek: number | string;
+  isWorking: boolean;
+}
+
+export interface AvailabilityTemplateAllowedServiceDTO {
+  id?: number | null;
+  service: string | null;
+}
+
+export interface AvailabilityTemplateAllowedServiceResponseVM {
+  id?: number | null;
+  service?: string | null;
+}
+
+export interface AvailabilityTemplateIntervalResponseVM {
+  id?: number | null;
+  templateId?: number | null;
+  dayOfWeek?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  slotStrategy?: string | null;
+  slotDurationMinutes?: number | null;
+  allowedServices?: AvailabilityTemplateAllowedServiceResponseVM[] | null;
+}
+
+export interface AvailabilityTemplateIntervalCreateDTO {
+  templateId: number;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  slotStrategy: string;
+  slotDurationMinutes: number;
+  allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
+}
+
+export interface AvailabilityTemplateIntervalUpdateDTO {
+  id: number;
+  dayOfWeek?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  slotStrategy?: string | null;
+  slotDurationMinutes?: number | null;
+  allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
+}
+
+export interface AvailabilityTemplateResponseVM {
+  id: number;
+  facilityId: number;
+  departmentId: number;
+  resourceId: number;
+  templateName: string;
+  templateType: string;
+  templateColor?: string | null;
+  status: string;
+  versionNo?: number | null;
+  copyFromTemplateId?: number | null;
+  parentTemplateId?: number | null;
+  durationMinutes?: number | null;
+  defaultBufferBeforeMinutes?: number | null;
+  defaultBufferAfterMinutes?: number | null;
+  parallelCapacityValue?: number | null;
+  defaultServiceId?: number | null;
+  numberOfResourcesExpected?: number | null;
+  requirePractitioner?: boolean | null;
+  defaultPractitionerId?: number | null;
+  requireBilling?: boolean | null;
+  requirePreAssessment?: boolean | null;
+  allowPatientPortalBooking?: boolean | null;
+  requireConfirmation?: boolean | null;
+  financialDetails?: string | null;
+  workingDays?: AvailabilityTemplateWorkingDay[] | null;
+  intervals?: any[] | null;
+  allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
+  isActive: boolean;
+}
+
+export interface AvailabilityTemplateCreateDTO {
+  facilityId: number;
+  departmentId: number;
+  templateName: string;
+  templateType: string;
+  resourceId: number;
+  templateColor?: string | null;
+  status: string;
+  versionNo?: number | null;
+  copyFromTemplateId?: number | null;
+  parentTemplateId?: number | null;
+  durationMinutes?: number | null;
+  defaultBufferBeforeMinutes: number;
+  defaultBufferAfterMinutes: number;
+  parallelCapacityValue: number;
+  defaultServiceId?: number | null;
+  numberOfResourcesExpected?: number | null;
+  requirePractitioner: boolean;
+  defaultPractitionerId?: number | null;
+  requireBilling: boolean;
+  requirePreAssessment: boolean;
+  allowPatientPortalBooking: boolean;
+  requireConfirmation: boolean;
+  financialDetails?: string;
+  isActive: boolean;
+  workingDays?: AvailabilityTemplateWorkingDay[] | null;
+  allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
+
+}
+
+export interface AvailabilityTemplateUpdateDTO extends AvailabilityTemplateCreateDTO {
+  id: number;
+}
+
+export interface AvailabilityGenerationBatchApplyDTO {
+  templateId: number;
+  startDate: string;
+  endDate: string;
+  deferred: boolean;
+  deferredAt?: string | null;
+  scope: string;
+  holidayHandlingMode?: string | null;
+}
+
+export interface ApplyAvailabilityTemplateResponseVM {
+  batchId?: number | null;
+  templateId?: number | null;
+  scope?: string | null;
+  applyStartDateTime?: string | null;
+  applyEndDateTime?: string | null;
+  totalSlots?: number | null;
+  dailyAvg?: number | null;
+  executionStatus?: string | null;
+  message?: string | null;
+  holidayHandlingMode?: string | null;
+}
+
+export interface AvailabilityGenerationBatch {
+  id: number;
+  templateId?: number | null;
+  holidayHandlingMode?: string | null;
+  scope?: string | null;
+  applyStartDateTime?: string | null;
+  applyEndDateTime?: string | null;
+  totalSlots?: number | null;
+  dailyAvg?: number | null;
+  executionStatus?: string | null;
+  createdDate?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+/* =========================
+ *  Appointments From Template
+ * ========================= */
+
+export type AppointmentStatus = string;
+export type BookingMode = string;
+export type TemplateType = string;
+export type EncounterReason = string;
+
+export interface AppointmentFromTemplate {
+  id?: number | null;
+  patientId?: number | null;
+  availabilityTemplateId?: number | null;
+  encounterReason?: EncounterReason | null;
+  status?: AppointmentStatus | null;
+  appointmentDateTime?: string | null;
+  durationMinutes?: number | null;
+}
+
+export interface AppointmentFromTemplateBookPatientDTO {
+  id: number;
+  patientId: number;
+  defaultService?: number | null;
+  defaultPractitioner?: number | null;
+  reason?: string | null;
+  status?: AppointmentStatus | null;
+  note?: string | null;
+  service?: string | null;
+  priority?: string | null;
+  followUpEncounterId?: number | null;
+}
+
+export interface AppointmentFromTemplateQuickAppointmentDTO {
+  facilityId: number;
+  departmentId: number;
+  resourceType: TemplateType;
+  resourceId: number;
+  patientId: number;
+  service: EncounterReason;
+  priority: string;
+  defaultServiceId?: number | null;
+  defaultPractitionerId?: number | null;
+  reason?: string | null;
+  note?: string | null;
+  followUpEncounterId?: number | null;
+  originType?: string | null;
+  originName?: string | null;
+}
+
+export interface AppointmentFromTemplateQuickAppointmentResponseVM {
+  appointmentFromTemplate: AppointmentFromTemplate;
+  encounter: PatientEncounter;
+}
+
+export interface AppointmentFromTemplateCancelDTO {
+  id: number;
+  cancelReason: string;
+}
+
+export interface AppointmentFromTemplateNoShowDTO {
+  id: number;
+  noShowReason: string;
+}
+
+export interface AppointmentFromTemplateSearchFilterDTO {
+  facility?: number | null;
+  department?: number | null;
+  resourceType?: TemplateType | null;
+  resourceId?: number | null;
+  status?: AppointmentStatus | null;
+  bookingMode?: BookingMode | null;
+  patientId?: number | null;
+}
+
+/* =========================
  *  Clinical Staff / Practitioner
  * ========================= */
 
@@ -1257,6 +1483,49 @@ export interface BillingInvoiceCreateVM {
   totalAmount: number | string;
   paidAmount?: number | string | null;
   balanceAmount?: number | string | null;
+  currency?: string | null;
+}
+
+// New DTOs aligned with /api/patient/billing/invoice backend
+export interface BillingInvoiceCreateDTO {
+  patientId?: number | null;
+  facilityId: number;
+  status?: string | null;
+  totalAmount: number | string;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceUpdateDTO {
+  id: number;
+  patientId?: number | null;
+  facilityId?: number | null;
+  status?: string | null;
+  totalAmount?: number | string | null;
+  paidAmount?: number | string | null;
+  balanceAmount?: number | string | null;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceItemCreateDTO {
+  invoiceId: number;
+  nurseServiceProductId?: number | null;
+  code?: string | null;
+  quantity: number | string;
+  unitPrice: number | string;
+  totalPrice: number | string;
+  currency?: string | null;
+}
+
+export interface BillingInvoiceItemUpdateDTO {
+  id: number;
+  invoiceId?: number | null;
+  nurseServiceProductId?: number | null;
+  code?: string | null;
+  quantity?: number | string | null;
+  unitPrice?: number | string | null;
+  totalPrice?: number | string | null;
   currency?: string | null;
 }
 
@@ -3963,3 +4232,19 @@ export interface PatientEncounterDischarge {
   dischargeType: string | null;
   dischargeAt: string | null;
 }
+export interface CurrentMedication {
+  patientId: number;
+  activeIngredientId: number;
+  instructions?: string | null;
+  startDate: string | Date | null;
+}
+
+export type CurrentMedicationCreate = CurrentMedication;
+
+export type CurrentMedicationUpdate = CurrentMedication & {
+  id: number;
+};
+
+export type CurrentMedicationForm = CurrentMedication & {
+  id?: number;
+};

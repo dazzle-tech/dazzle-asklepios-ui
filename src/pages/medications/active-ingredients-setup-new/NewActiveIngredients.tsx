@@ -337,7 +337,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 name: '',
                 medicalCategoryId: null,
                 drugClassId: null,
-                atcCode: null,
+                atcCode: '',
                 isControlled: false,
                 controlled: null,
                 hasBlackBoxWarning: false,
