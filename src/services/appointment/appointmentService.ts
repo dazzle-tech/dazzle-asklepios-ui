@@ -4,6 +4,8 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import type {
   AppointmentFromTemplate,
   AppointmentFromTemplateBookPatientDTO,
+  AppointmentFromTemplateQuickAppointmentDTO,
+  AppointmentFromTemplateQuickAppointmentResponseVM,
   AppointmentFromTemplateCancelDTO,
   AppointmentFromTemplateNoShowDTO,
   AppointmentFromTemplateSearchFilterDTO
@@ -48,6 +50,21 @@ export const appointmentFromTemplateService = createApi({
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 
+    createQuickAppointment: builder.mutation<
+      AppointmentFromTemplateQuickAppointmentResponseVM,
+      AppointmentFromTemplateQuickAppointmentDTO
+    >({
+      query: body => ({
+        url: `${APPOINTMENT_BASE_URL}/quick-appointment`,
+        method: 'POST',
+        body
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      invalidatesTags: ['AppointmentFromTemplate']
+    }),
+
     getAppointmentsByStatusBetweenDates: builder.query<
       PagedResult<AppointmentFromTemplate>,
       {
@@ -60,6 +77,29 @@ export const appointmentFromTemplateService = createApi({
         url: `${APPOINTMENT_BASE_URL}/by-status-and-dates`,
         method: 'GET',
         params: { status, startDatetime, endDatetime, page, size, sort }
+      }),
+      transformResponse: (response: AppointmentFromTemplate[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
+    getAppointmentsByBatchId: builder.query<
+      PagedResult<AppointmentFromTemplate>,
+      { batchId: Id } & PagedParams
+    >({
+      query: ({ batchId, page, size, sort = 'id,asc' }) => ({
+        url: `${APPOINTMENT_BASE_URL}/by-batch-id/${batchId}`,
+        method: 'GET',
+        params: { page, size, sort }
       }),
       transformResponse: (response: AppointmentFromTemplate[], meta) => {
         const headers = meta?.response?.headers;
@@ -149,8 +189,11 @@ export const appointmentFromTemplateService = createApi({
 
 export const {
   useBookPatientAppointmentMutation,
+  useCreateQuickAppointmentMutation,
   useGetAppointmentsByStatusBetweenDatesQuery,
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
+  useGetAppointmentsByBatchIdQuery,
+  useLazyGetAppointmentsByBatchIdQuery,
   useSearchAppointmentsQuery,
   useLazySearchAppointmentsQuery,
   useCancelAppointmentMutation,
