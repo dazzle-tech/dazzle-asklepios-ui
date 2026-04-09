@@ -1,83 +1,178 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
-import { CalendarDays, ChevronDown, Search } from "lucide-react";
-import { legendItems, slotRows, slotToneClasses, SurfaceCard, weekDays } from "./shared";
 import type { AvailabilityGenerationBatchApplyDTO } from "@/types/model-types-new";
 import PreviewSummarySection from "./PreviewSummarySection";
+import { formatLocalDateForApi, parseApplyTemplateDateTime } from "../applyTemplateDateUtils";
+import { useLazyGetAppointmentsByDepartmentBetweenDatesQuery } from "@/services/appointment/appointmentService";
+import PreviewSlotsCardSection from "./PreviewSlotsCardSection";
 
 const PreviewSlotsSection: React.FC<{
   templateId?: number | null;
   templateDurationMinutes?: number | null;
+  departmentId?: number | null;
   dto?: AvailabilityGenerationBatchApplyDTO;
   setDto?: React.Dispatch<React.SetStateAction<AvailabilityGenerationBatchApplyDTO>>;
-}> = ({ templateId, templateDurationMinutes, dto, setDto }) => {
+  onSlotCellSelect?: (payload: { dateKey: string; timeLabel: string; slots: any[] }) => void;
+  selectedCellKey?: string | null;
+}> = ({ templateId, templateDurationMinutes, departmentId, dto, setDto, onSlotCellSelect, selectedCellKey }) => {
   void dto;
   void setDto;
-  return (
-    <div className="space-y-4">
-      <SurfaceCard
-        title="Preview Slots"
-        description="Generated availability by day and time"
-        icon={CalendarDays}
-        headerAction={
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-600"
-            >
-              View by: <span className="font-semibold text-slate-800">Week</span>
-              <ChevronDown className="h-4 w-4" />
-            </button>
-          </div>
+
+  const [triggerAppointmentsByDepartment] = useLazyGetAppointmentsByDepartmentBetweenDatesQuery();
+  const [matrix, setMatrix] = React.useState<
+    Record<string, { count: number; statuses: Record<string, number> }>
+  >({});
+  const [slotsByCell, setSlotsByCell] = React.useState<Record<string, any[]>>({});
+  const [timeRows, setTimeRows] = React.useState<string[]>([]);
+  const [isLoadingCounts, setIsLoadingCounts] = React.useState(false);
+
+  const startDate = React.useMemo(() => parseApplyTemplateDateTime((dto as any)?.startDate), [dto]);
+  const endDate = React.useMemo(() => parseApplyTemplateDateTime((dto as any)?.endDate), [dto]);
+
+  const rangeStart = React.useMemo(
+    () => (startDate ? new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()) : null),
+    [startDate]
+  );
+  const rangeEnd = React.useMemo(
+    () => (endDate ? new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()) : null),
+    [endDate]
+  );
+
+  const periodDays = React.useMemo(() => {
+    if (!rangeStart || !rangeEnd || rangeEnd < rangeStart) return [] as Date[];
+    const rows: Date[] = [];
+    for (let d = new Date(rangeStart); d <= rangeEnd; d.setDate(d.getDate() + 1)) {
+      rows.push(new Date(d));
+    }
+    return rows;
+  }, [startDate, endDate]);
+
+  const getStatusColor = React.useCallback((statusRaw: string) => {
+    const s = String(statusRaw ?? "").toUpperCase();
+    if (s.includes("BOOK")) return "#059669";
+    if (s.includes("CONFIRM")) return "#166534";
+    if (s.includes("COMPLETE")) return "#6DA7E8";
+    if (s.includes("NEW")) return "#4B7BEC";
+    if (s.includes("CHECK")) return "#F5B971";
+    if (s.includes("NO_SHOW") || s.includes("NO-SHOW")) return "#E8CF5A";
+    if (s.includes("IN_SERVICE") || s.includes("IN SERVICE")) return "#7C8BF3";
+    if (s.includes("CANCEL")) return "#F87171";
+    return "#C8D1E1";
+  }, []);
+  const statusLegendItems = React.useMemo(
+    () => [
+      { label: "Booked", color: "#059669" },
+      { label: "Confirmed", color: "#166534" },
+      { label: "Completed", color: "#6DA7E8" },
+      { label: "New", color: "#4B7BEC" },
+      { label: "Checked In", color: "#F5B971" },
+      { label: "No Show", color: "#E8CF5A" },
+      { label: "In Service", color: "#7C8BF3" },
+      { label: "Cancelled", color: "#F87171" },
+      { label: "Empty", color: "#E2E8F0" }
+    ],
+    []
+  );
+
+  const timeToMinutes = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return Number.MAX_SAFE_INTEGER;
+    return h * 60 + m;
+  };
+
+  React.useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      const depId = Number(departmentId ?? 0);
+      if (!depId || !startDate || !endDate || endDate < startDate) {
+        if (mounted) {
+          setMatrix({});
+          setSlotsByCell({});
+          setTimeRows([]);
         }
-      >
-        <div className="overflow-hidden rounded-2xl border border-slate-200">
-          <div className="grid grid-cols-[90px_repeat(5,minmax(0,1fr))] border-b border-slate-200 bg-slate-50 text-center text-xs font-semibold text-slate-500">
-            <div className="px-3 py-3 text-left"> </div>
-            {weekDays.map((day) => (
-              <div key={day} className="border-l border-slate-200 px-3 py-3">
-                {day}
-              </div>
-            ))}
-          </div>
+        return;
+      }
 
-          {slotRows.map((row) => (
-            <div
-              key={row.time}
-              className="grid grid-cols-[90px_repeat(5,minmax(0,1fr))] border-b border-slate-100 last:border-b-0"
-            >
-              <div className="px-3 py-3 text-sm font-medium text-slate-600">{row.time}</div>
-              {row.cells.map((cell, index) => (
-                <div key={`${row.time}-${index}`} className="border-l border-slate-100 px-2 py-2">
-                  <div
-                    className={cn(
-                      "flex h-9 items-center justify-center rounded-lg text-xs font-semibold",
-                      slotToneClasses[cell.tone],
-                    )}
-                  >
-                    {cell.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+      setIsLoadingCounts(true);
+      try {
+        const startIso = new Date(startDate).toISOString();
+        const endIso = new Date(endDate).toISOString();
+        const nextMatrix: Record<string, { count: number; statuses: Record<string, number> }> = {};
+        const nextSlotsByCell: Record<string, any[]> = {};
+        const times = new Set<string>();
+        let page = 0;
+        const size = 200;
 
-        <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
-          {legendItems.map((item) => (
-            <div key={item.label} className="flex items-center gap-2">
-              <span className={cn("h-2.5 w-2.5 rounded-full", slotToneClasses[item.tone].split(" ")[0])} />
-              {item.label}
-            </div>
-          ))}
-        </div>
-      </SurfaceCard>
+        while (true) {
+          const response = await triggerAppointmentsByDepartment({
+            departmentId: depId,
+            startDatetime: startIso,
+            endDatetime: endIso,
+            page,
+            size,
+            sort: "id,asc",
+            timestamp: Date.now()
+          }).unwrap();
+
+          const rows = response?.data ?? [];
+          rows.forEach((row: any) => {
+            const rawStart = row?.startDatetime ?? row?.appointmentDateTime;
+            if (!rawStart) return;
+            const d = new Date(rawStart);
+            if (Number.isNaN(d.getTime())) return;
+            const dateKey = formatLocalDateForApi(d);
+            if (!dateKey) return;
+            const timeKey = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+            const cellKey = `${dateKey}|${timeKey}`;
+            const status = String(row?.status ?? "").toUpperCase() || "UNKNOWN";
+            if (!nextMatrix[cellKey]) nextMatrix[cellKey] = { count: 0, statuses: {} };
+            nextMatrix[cellKey].count += 1;
+            nextMatrix[cellKey].statuses[status] = (nextMatrix[cellKey].statuses[status] ?? 0) + 1;
+            if (!nextSlotsByCell[cellKey]) nextSlotsByCell[cellKey] = [];
+            nextSlotsByCell[cellKey].push(row);
+            times.add(timeKey);
+          });
+
+          if (!response?.links?.next || rows.length === 0) break;
+          page += 1;
+        }
+
+        if (mounted) {
+          setMatrix(nextMatrix);
+          setSlotsByCell(nextSlotsByCell);
+          setTimeRows(Array.from(times).sort((a, b) => timeToMinutes(a) - timeToMinutes(b)));
+        }
+      } catch {
+        if (mounted) {
+          setMatrix({});
+          setSlotsByCell({});
+          setTimeRows([]);
+        }
+      } finally {
+        if (mounted) setIsLoadingCounts(false);
+      }
+    };
+
+    void load();
+    return () => {
+      mounted = false;
+    };
+  }, [departmentId, startDate, endDate, triggerAppointmentsByDepartment]);
+
+  return (
+    <div className="min-w-0 space-y-4 overflow-x-hidden">
+      <PreviewSlotsCardSection
+        startDate={startDate}
+        endDate={endDate}
+        periodDays={periodDays}
+        timeRows={timeRows}
+        matrix={matrix}
+        getStatusColor={getStatusColor}
+        statusLegendItems={statusLegendItems}
+        isLoadingCounts={isLoadingCounts}
+        selectedCellKey={selectedCellKey}
+        slotsByCell={slotsByCell}
+        onCellClick={onSlotCellSelect}
+      />
 
       <PreviewSummarySection
         templateId={templateId ?? null}

@@ -65,6 +65,17 @@ export const availabilityGenerationBatchService = createApi({
         await onQueryStarted(arg, api);
       },
       providesTags: ['AvailabilityGenerationBatch']
+    }),
+
+    getAvailabilityGenerationBatchById: builder.query<AvailabilityGenerationBatch, Id>({
+      query: id => ({
+        url: `/api/patient/availability-generation-batches/${id}`,
+        method: 'GET'
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AvailabilityGenerationBatch']
     })
   })
 });
@@ -72,5 +83,7 @@ export const availabilityGenerationBatchService = createApi({
 export const {
   useApplyAvailabilityTemplateMutation,
   useGetAvailabilityGenerationBatchesByTemplateQuery,
-  useLazyGetAvailabilityGenerationBatchesByTemplateQuery
+  useLazyGetAvailabilityGenerationBatchesByTemplateQuery,
+  useGetAvailabilityGenerationBatchByIdQuery,
+  useLazyGetAvailabilityGenerationBatchByIdQuery
 } = availabilityGenerationBatchService;

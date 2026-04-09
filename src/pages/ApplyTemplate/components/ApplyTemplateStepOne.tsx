@@ -48,6 +48,9 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
   setDto,
   onValidationChange,
 }) => {
+  const [selectedPreviewCell, setSelectedPreviewCell] = React.useState<{ dateKey: string; timeLabel: string } | null>(null);
+  const [selectedPreviewCellSlots, setSelectedPreviewCellSlots] = React.useState<any[]>([]);
+  const [selectedPreviewSlot, setSelectedPreviewSlot] = React.useState<any | null>(null);
   const facilityId = selectedTemplate?.facilityId ?? null;
   const departmentId = selectedTemplate?.departmentId ?? null;
   const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
@@ -284,7 +287,7 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
         </Form>
       </div>
 
-      <div className="grid gap-4 bg-slate-50 p-4 xl:grid-cols-[1.05fr_1.25fr_0.95fr]">
+      <div className="grid gap-4 overflow-x-hidden bg-slate-50 p-4 xl:grid-cols-[1.05fr_1.25fr_0.95fr]">
         <ApplyConfigurationSection
           dto={formState}
           setDto={setFormState}
@@ -294,10 +297,26 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
         <PreviewSlotsSection
           templateId={selectedTemplate?.id}
           templateDurationMinutes={selectedTemplate?.durationMinutes ?? null}
+          departmentId={selectedTemplate?.departmentId ?? null}
           dto={formState}
           setDto={setFormState}
+          selectedCellKey={
+            selectedPreviewCell ? `${selectedPreviewCell.dateKey}|${selectedPreviewCell.timeLabel}` : null
+          }
+          onSlotCellSelect={({ dateKey, timeLabel, slots }) => {
+            setSelectedPreviewCell({ dateKey, timeLabel });
+            setSelectedPreviewCellSlots(slots ?? []);
+            setSelectedPreviewSlot((slots ?? [])[0] ?? null);
+          }}
         />
-        <SlotDetailsSection dto={formState} setDto={setFormState} />
+        <SlotDetailsSection
+          dto={formState}
+          setDto={setFormState}
+          selectedCell={selectedPreviewCell}
+          selectedCellSlots={selectedPreviewCellSlots}
+          selectedSlot={selectedPreviewSlot}
+          onSelectSlot={setSelectedPreviewSlot}
+        />
       </div>
     </>
   );

@@ -115,6 +115,33 @@ export const appointmentFromTemplateService = createApi({
       providesTags: ['AppointmentFromTemplate']
     }),
 
+    getAppointmentsByDepartmentBetweenDates: builder.query<
+      PagedResult<AppointmentFromTemplate>,
+      {
+        departmentId: Id;
+        startDatetime: string;
+        endDatetime: string;
+      } & PagedParams
+    >({
+      query: ({ departmentId, startDatetime, endDatetime, page, size, sort = 'id,asc' }) => ({
+        url: `${APPOINTMENT_BASE_URL}/by-department-and-dates`,
+        method: 'GET',
+        params: { departmentId, startDatetime, endDatetime, page, size, sort }
+      }),
+      transformResponse: (response: AppointmentFromTemplate[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response ?? [],
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
     searchAppointments: builder.query<
       PagedResult<AppointmentFromTemplate>,
       { filter: AppointmentFromTemplateSearchFilterDTO } & PagedParams
@@ -194,6 +221,8 @@ export const {
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
   useGetAppointmentsByBatchIdQuery,
   useLazyGetAppointmentsByBatchIdQuery,
+  useGetAppointmentsByDepartmentBetweenDatesQuery,
+  useLazyGetAppointmentsByDepartmentBetweenDatesQuery,
   useSearchAppointmentsQuery,
   useLazySearchAppointmentsQuery,
   useCancelAppointmentMutation,
