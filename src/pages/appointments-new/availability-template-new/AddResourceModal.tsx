@@ -14,7 +14,7 @@ import { Department } from '@/types/model-types-new';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
-import { useGetAppointableServicesByLoggedInFacilityQuery, useGetServicesByDepartmentQuery, useLazyGetServiceByIdQuery, useLazyGetServiceItemByIdQuery } from '@/services/setup/serviceService';
+import { useGetAppointableServicesByLoggedInFacilityQuery, useGetServicesByDepartmentQuery, useLazyGetServiceByIdQuery } from '@/services/setup/serviceService';
 import { useGetAppointablePractitionerByLoggedInFacilityQuery, useGetPractitionerByDepartmentQuery, useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
 import { newAvailabilityTemplateCreateDTO } from '@/types/model-types-constructor-new';
 import { useCreateAvailabilityTemplateMutation, useUpdateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
@@ -45,7 +45,10 @@ const AddResourceModal = ({
   readOnly?: boolean;
 }) => {
   const dispatch = useAppDispatch();
-  const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
+  const [createAvailabilityTemplate] = useCreateAvailabilityTemplateMutation();
+  const [updateAvailabilityTemplate] = useUpdateAvailabilityTemplateMutation();
+
+  const [record, setRecord] = useState<any>({ ...newAvailabilityTemplateCreateDTO });
   const prevTemplateTypeRef = useRef<any>(record?.templateType);
   useEffect(() => {
     if (!open) return;
@@ -76,7 +79,7 @@ const AddResourceModal = ({
       facilityId: selectedFacility?.id,
       departmentId: mainTemplate?.departmentId
     });
-  }, [open, editRecord?.id, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
+  }, [open, editRecord, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
   const [currentColor, setCurrentColor] = useState(mainTemplate?.color || '#6982F0');
   useEffect(() => {
     if (!open) return;
@@ -139,61 +142,51 @@ const AddResourceModal = ({
   const [getPractitioner] = useLazyGetPractitionerByIdQuery();
   const [getDiagnosticTest] = useLazyGetDiagnosticTestByIdQuery();
   const [getCatalog] = useLazyGetCatalogByIdQuery();
-  const [getServic] = useLazyGetServiceByIdQuery();
+  const [getServiceById] = useLazyGetServiceByIdQuery();
 
   useEffect(() => {
-    if(record?.id){
+    if (record?.id) {
       return;
     }
     if (!record?.resourceId) {
       setRecord(prev => ({
         ...prev,
-        durationMinutes: 0 
+        durationMinutes: 0
       }));
       return;
     }
-  
-    if(record?.templateType === "PRACTITIONER"){
-    getPractitioner(record.resourceId)
-      .unwrap()
-      .then(res => {
-        setRecord(prev => ({
-          ...prev,
-          durationMinutes: res.defaultDurationMinutes
-        }));
-      });
-    } else if(record?.templateType === 'DIAGNOSTIC_TEST'){
-    getDiagnosticTest(String(record.resourceId))
-      .unwrap()
-      .then(res => {
-        setRecord(prev => ({
-          ...prev,
-          durationMinutes: res?.data.defaultDurationMinutes
-        }));
-      });
+
+    const rid = record.resourceId;
+    const t = record?.templateType;
+
+    const applyDuration = (minutes: number | null | undefined) => {
+      if (minutes == null || Number.isNaN(Number(minutes))) return;
+      setRecord(prev => ({ ...prev, durationMinutes: Number(minutes) }));
+    };
+
+    if (t === 'PRACTITIONER') {
+      getPractitioner(rid)
+        .unwrap()
+        .then(res => applyDuration(res?.defaultDurationMinutes))
+        .catch(() => {});
+    } else if (t === 'DIAGNOSTIC_TEST') {
+      getDiagnosticTest(String(rid))
+        .unwrap()
+        .then(res => applyDuration(res?.data?.defaultDurationMinutes))
+        .catch(() => {});
+    } else if (t === 'CATALOG') {
+      getCatalog(rid)
+        .unwrap()
+        .then(res => applyDuration(res?.defaultDurationMinutes))
+        .catch(() => {});
+    } else if (t === 'SERVICE') {
+      getServiceById(rid)
+        .unwrap()
+        .then(res => applyDuration(res?.defaultDurationMinutes))
+        .catch(() => {});
     }
-    else if(record?.templateType === 'CATALOG'){
-    getCatalog(record.resourceId)
-      .unwrap()
-      .then(res => {
-        setRecord(prev => ({
-          ...prev,
-          durationMinutes: res.defaultDurationMinutes
-        }));
-      });
-    }
-     else if(record?.templateType === 'SERVICE'){
-    getService(record.resourceId)
-      .unwrap()
-      .then(res => {
-        setRecord(prev => ({
-          ...prev,
-          durationMinutes: res.defaultDurationMinutes
-        }));
-      });
-    }
-  
-  }, [record?.resourceId]);
+    // Lazy triggers from RTK are stable; keep deps to record fields only.
+  }, [record?.id, record?.resourceId, record?.templateType]);
 
   const { data: practitionerListResponse } = useGetPractitionerByDepartmentQuery(
     {
@@ -300,6 +293,7 @@ const AddResourceModal = ({
   );
 
   useEffect(() => {
+    if (!open) return;
     if (allowedServicesTouchedRef.current) return;
     if (!isEditMode) {
       if (parentTemplateAllowedServices.length === 0) return;
@@ -313,18 +307,6 @@ const AddResourceModal = ({
       });
       return;
     }
-    useEffect(() => {
-      if (!open) return;
-      if (parentTemplateAllowedServices.length === 0) return;
-      setRecord(prev => {
-        const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
-        if (prevAllowed.length > 0) return prev;
-        return {
-          ...prev,
-          allowedServices: parentTemplateAllowedServices,
-        };
-      });
-    }, [open, parentTemplateAllowedServices]);
 
     if (!departmentServiceValues || departmentServiceValues.length === 0) return;
     setRecord(prev => {
@@ -338,20 +320,7 @@ const AddResourceModal = ({
         })),
       };
     });
-  }, [departmentServiceValuesKey, isEditMode, parentTemplateAllowedServices]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (parentTemplateAllowedServices.length === 0) return;
-    setRecord(prev => {
-      const prevAllowed = Array.isArray(prev?.allowedServices) ? prev.allowedServices : [];
-      if (prevAllowed.length > 0) return prev;
-      return {
-        ...prev,
-        allowedServices: parentTemplateAllowedServices,
-      };
-    });
-  }, [open, parentTemplateAllowedServices]);
+  }, [open, departmentServiceValuesKey, isEditMode, parentTemplateAllowedServices]);
 
   useEffect(() => {
     if (!dayOptions || dayOptions.length === 0) return;
@@ -423,9 +392,6 @@ const AddResourceModal = ({
     if (!record?.templateType)
       setRecord(prev => ({ ...prev, resourceId: undefined }));
   }, [record?.templateType]);
-  useEffect(() => {
-    console.log("resource record: ", record);
-  }, [record]);
   const conjureFormContent = () => (
     <Form fluid>
       <Row>
@@ -782,8 +748,6 @@ const AddResourceModal = ({
     </Form>
   );
 
-  const [create] = useCreateAvailabilityTemplateMutation();
-  const [update] = useUpdateAvailabilityTemplateMutation();
   const handleSaveMainInfo = () => {
     if (!record?.templateName?.trim()) {
       dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
@@ -821,8 +785,8 @@ const AddResourceModal = ({
         : []
     };
     const mutation = isEditMode
-      ? update({ id: record?.id, ...payload })
-      : create(payload);
+      ? updateAvailabilityTemplate({ id: record?.id, ...payload })
+      : createAvailabilityTemplate(payload);
     mutation
       .unwrap()
       .then(() => {
