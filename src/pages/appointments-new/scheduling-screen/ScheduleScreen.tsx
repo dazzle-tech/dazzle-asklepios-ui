@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Calendar as BigCalendar, Views, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -29,7 +29,21 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import AppointmentModal from './AppoitmentModal';
 import FollowupAppointmentModal from './FollowupAppointmentModal';
 import { ApAppointment } from '@/types/model-types';
-import { faPaperPlane, faPlus, faPrint } from '@fortawesome/free-solid-svg-icons';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import {
+  faCalendarCheck,
+  faCheckDouble,
+  faCircleCheck,
+  faCirclePlus,
+  faClock,
+  faPaperPlane,
+  faPlus,
+  faPrint,
+  faStethoscope,
+  faUserCheck,
+  faUserSlash,
+  faXmark
+} from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentActionsModal from './components/AppointmentActionsModal';
@@ -73,6 +87,42 @@ const getAppointmentPatientId = (appointment: any): number | null => {
       : appointment?.patient);
   const n = Number(raw);
   return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+/**
+ * Legend colors (footer + event styling) + summary bar icon (expressive) + circle fill for white-icon contrast.
+ */
+const SCHEDULE_LEGEND_ITEMS: {
+  label: string;
+  color: string;
+  borderColor?: string;
+  icon: IconDefinition;
+  summaryIconBg: string;
+}[] = [
+  { label: 'No-Show', color: '#FDE68A', icon: faUserSlash, summaryIconBg: '#b45309' },
+  { label: 'Checked In', color: '#FDBA74', icon: faUserCheck, summaryIconBg: '#ea580c' },
+  { label: 'Booked', color: '#87CEFA', icon: faCalendarCheck, summaryIconBg: '#0284c7' },
+  { label: 'New', color: '#E8F6EF', borderColor: '#89D0B2', icon: faCirclePlus, summaryIconBg: '#059669' },
+  { label: 'In Service', color: '#C7D2FE', icon: faStethoscope, summaryIconBg: '#4f46e5' },
+  { label: 'Confirmed', color: '#ADFF2F', icon: faCheckDouble, summaryIconBg: '#65a30d' },
+  { label: 'Completed', color: '#93C5FD', icon: faCircleCheck, summaryIconBg: '#1d4ed8' },
+  { label: 'Cancel', color: '#FECACA', icon: faXmark, summaryIconBg: '#dc2626' }
+];
+
+const normLegendStr = (str: string) => String(str ?? '').toLowerCase().replace(/[-_]/g, ' ').trim();
+
+/** Maps API appointment status to legend bucket key (aligned with eventPropGetter). */
+const appointmentStatusToLegendBucket = (rawStatus: string): string => {
+  const s = normLegendStr(rawStatus);
+  if (s.includes('cancel')) return 'cancel';
+  if (s.includes('no show')) return 'no show';
+  if (s.includes('checked in') || s.includes('check in')) return 'checked in';
+  if (s.includes('book')) return 'booked';
+  if (s.includes('in service')) return 'in service';
+  if (s.includes('confirm')) return 'confirmed';
+  if (s.includes('complete')) return 'completed';
+  if (s.includes('new')) return 'new';
+  return s || 'unknown';
 };
 
 const ScheduleScreen = () => {
@@ -570,7 +620,7 @@ const ScheduleScreen = () => {
   const [drowerOpen, setDrowerOpen] = useState(false);
   const dispatch = useAppDispatch();
 
-  const handleSearchAppointmentsByCriteria = async () => {
+  const handleSearchAppointmentsByCriteria = useCallback(async () => {
     const firstResourceId =
       Array.isArray(selectedResources?.resourceKey) && selectedResources.resourceKey.length > 0
         ? Number(selectedResources.resourceKey[0])
@@ -599,12 +649,21 @@ const ScheduleScreen = () => {
         sort: 'id,asc'
       }).unwrap();
     } catch {}
-  };
+  }, [
+    searchAppointments,
+    selectedFacility?.id,
+    selectedDepartment?.departmentId,
+    selectedResourceTypeValue?.value,
+    selectedResources?.resourceKey,
+    selectedAppointmentStatus?.status,
+    selectedBookingMode?.bookingMode,
+    recordSearchAppointment?.value
+  ]);
 
   useEffect(() => {
     if (!selectedFacility?.id) return;
     void handleSearchAppointmentsByCriteria();
-  }, [selectedFacility?.id]);
+  }, [selectedFacility?.id, handleSearchAppointmentsByCriteria]);
 
   useEffect(() => {
     const day = rightPanelDate ?? currentCalendarDate ?? new Date();
@@ -638,16 +697,7 @@ const ScheduleScreen = () => {
     };
   }, [dispatch]);
 
-  const legendItems = [
-    { label: 'No-Show', color: '#FDE68A' },
-    { label: 'Checked In', color: '#FDBA74' },
-    { label: 'Booked', color: '#87CEFA' },
-    { label: 'New', color: '#E8F6EF', borderColor: '#89D0B2' },
-    { label: 'In Service', color: '#C7D2FE' },
-    { label: 'Confirmed', color: '#ADFF2F' },
-    { label: 'Completed', color: '#93C5FD' },
-    { label: 'Cancel', color: '#FECACA' }
-  ];
+  const legendItems = SCHEDULE_LEGEND_ITEMS;
 
   // Derived resources list (synchronous) to avoid a one-render "stale columns" glitch
   // when filters change (react-big-calendar can render once before an effect updates state).
@@ -689,17 +739,20 @@ const ScheduleScreen = () => {
     return null;
   }, [selectedResources?.resourceKey, selectedResourceType?.resourcesType, resourcesWithAvailabilityResponse]);
 
-  // Filter appointments based on selected resources
+  // Filter appointments: department matches calendar columns (event.resourceId); optional resource / status / booking.
   const filteredAppointments = useMemo(() => {
-    if (!selectedResourceKeysForFilter) {
-      // No filters applied, show all appointments
-      return appointmentsData;
+    let list = appointmentsData;
+
+    if (selectedDepartment?.departmentId != null && String(selectedDepartment.departmentId) !== '') {
+      const deptId = String(selectedDepartment.departmentId);
+      list = list.filter(event => String((event as any).resourceId ?? '') === deptId);
     }
 
-    // Filter appointments to only show those matching selected resource filter
-    let list = appointmentsData.filter(event =>
-      selectedResourceKeysForFilter.has(String((event as any).filterResourceId ?? event.resourceId))
-    );
+    if (selectedResourceKeysForFilter) {
+      list = list.filter(event =>
+        selectedResourceKeysForFilter.has(String((event as any).filterResourceId ?? event.resourceId))
+      );
+    }
 
     if (selectedAppointmentStatus?.status) {
       const statusNeedle = String(selectedAppointmentStatus.status).toUpperCase();
@@ -718,8 +771,7 @@ const ScheduleScreen = () => {
     return list;
   }, [
     appointmentsData,
-    selectedResourceType,
-    selectedResources,
+    selectedDepartment?.departmentId,
     selectedResourceKeysForFilter,
     selectedAppointmentStatus?.status,
     selectedBookingMode?.bookingMode
@@ -729,6 +781,72 @@ const ScheduleScreen = () => {
     currentView === 'agenda' || showCanceled
       ? filteredAppointments
       : filteredAppointments.filter(event => !event.hidden);
+
+  const calendarViewRange = useMemo(() => {
+    const a = moment(currentCalendarDate);
+    if (currentView === 'day') {
+      return { start: a.clone().startOf('day').toDate(), end: a.clone().endOf('day').toDate() };
+    }
+    if (currentView === 'week') {
+      return { start: a.clone().startOf('week').toDate(), end: a.clone().endOf('week').toDate() };
+    }
+    if (currentView === 'month') {
+      return { start: a.clone().startOf('month').toDate(), end: a.clone().endOf('month').toDate() };
+    }
+    return { start: a.clone().startOf('day').toDate(), end: a.clone().endOf('day').toDate() };
+  }, [currentView, currentCalendarDate]);
+
+  const slotSummaryBarStats = useMemo(() => {
+    const { start, end } = calendarViewRange;
+    const rs = start.getTime();
+    const re = end.getTime();
+    const inRange = (visibleAppointments ?? []).filter((ev: any) => {
+      const s = ev?.start ? new Date(ev.start) : null;
+      const e = ev?.end ? new Date(ev.end) : s;
+      if (!s || Number.isNaN(s.getTime())) return false;
+      const st = s.getTime();
+      const et = e && !Number.isNaN(e.getTime()) ? e.getTime() : st;
+      return st < re && et > rs;
+    });
+
+    const bucketCounts: Record<string, number> = {};
+    for (const ev of inRange) {
+      const raw = String(
+        ev?.appointmentData?.appointmentStatus ?? ev?.appointmentData?.status ?? ''
+      ).trim();
+      const bucket = appointmentStatusToLegendBucket(raw);
+      bucketCounts[bucket] = (bucketCounts[bucket] || 0) + 1;
+    }
+
+    const legendNormKeys = new Set(SCHEDULE_LEGEND_ITEMS.map(i => normLegendStr(i.label)));
+    let otherCount = 0;
+    Object.entries(bucketCounts).forEach(([k, n]) => {
+      if (!legendNormKeys.has(k)) otherCount += n;
+    });
+
+    const legendRow = SCHEDULE_LEGEND_ITEMS.map(item => ({
+      label: item.label,
+      color: item.color,
+      borderColor: item.borderColor,
+      icon: item.icon,
+      summaryIconBg: item.summaryIconBg,
+      count: bucketCounts[normLegendStr(item.label)] ?? 0
+    }));
+
+    const total = inRange.length;
+
+    return {
+      total,
+      legendRow,
+      otherCount,
+      rangeLabel:
+        currentView === 'day'
+          ? moment(currentCalendarDate).format('ddd, MMM D, YYYY')
+          : currentView === 'week'
+            ? `${moment(calendarViewRange.start).format('MMM D')} – ${moment(calendarViewRange.end).format('MMM D, YYYY')}`
+            : moment(currentCalendarDate).format('MMMM YYYY')
+    };
+  }, [visibleAppointments, calendarViewRange, currentView, currentCalendarDate]);
 
   const appointmn =
     visibleAppointments?.map(appt => appt.appointmentData?.patient?.key).filter(Boolean) || [];
@@ -1718,6 +1836,59 @@ const ScheduleScreen = () => {
           className="right-section appointments-main-card"
           style={{ display: 'flex', flexDirection: 'column', minHeight: 620 }}
         >
+          <div className="appointments-slot-summary-bar">
+            <div className="appointments-slot-summary-scope">
+              <span className="appointments-slot-summary-scope-date">{slotSummaryBarStats.rangeLabel}</span>
+              <span className="appointments-slot-summary-scope-meta">
+                {selectedDepartment?.departmentId
+                  ? (departmentOptions as any[])?.find(
+                      (d: any) => String(d?.id) === String(selectedDepartment.departmentId)
+                    )?.name ?? `Dept #${selectedDepartment.departmentId}`
+                  : 'All departments'}
+                {selectedResourceKeysForFilter && selectedResources?.resourceKey?.length
+                  ? ` · ${selectedResources.resourceKey.length} resource(s)`
+                  : selectedResourceTypeValue?.value
+                    ? ` · ${String(selectedResourceTypeValue.value)}`
+                    : ''}
+              </span>
+            </div>
+            <div className="appointments-slot-summary-metrics appointments-slot-summary-metrics--single-row">
+              <div className="appointments-slot-summary-item appointments-slot-summary-item--shrink0">
+                <span className="appointments-slot-summary-icon appointments-slot-summary-icon--total">
+                  <FontAwesomeIcon icon={faClock} />
+                </span>
+                <span className="appointments-slot-summary-text">
+                  <strong>{slotSummaryBarStats.total}</strong> Slots
+                </span>
+              </div>
+              {slotSummaryBarStats.legendRow.map(row => (
+                <React.Fragment key={row.label}>
+                  <div className="appointments-slot-summary-divider" />
+                  <div className="appointments-slot-summary-item appointments-slot-summary-item--shrink0">
+                    <span
+                      className="appointments-slot-summary-icon"
+                      style={{ backgroundColor: row.summaryIconBg }}
+                    >
+                      <FontAwesomeIcon icon={row.icon} />
+                    </span>
+                    <span className="appointments-slot-summary-text">
+                      <strong>{row.count}</strong> {row.label}
+                    </span>
+                  </div>
+                </React.Fragment>
+              ))}
+              {slotSummaryBarStats.otherCount > 0 ? (
+                <>
+                  <div className="appointments-slot-summary-divider" />
+                  <div className="appointments-slot-summary-item appointments-slot-summary-item--shrink0">
+                    <span className="appointments-slot-summary-text appointments-slot-summary-muted">
+                      <strong>{slotSummaryBarStats.otherCount}</strong> Other
+                    </span>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
           <div className="appointments-content-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1 }}>
             <div
               className="appointments-calendar-pane"
