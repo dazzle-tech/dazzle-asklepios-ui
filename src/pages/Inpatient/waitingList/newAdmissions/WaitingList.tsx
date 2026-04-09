@@ -30,8 +30,17 @@ const WaitingList = () => {
     const divContent = (
         "Inpatient Waiting List"
     );
+
+useEffect(() => {
     dispatch(setPageCode('Waiting_Patient_Encounters'));
     dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
     const [patientAdmissionModal, setPatientAdmissionModal] = useState(false);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
@@ -93,10 +102,7 @@ const WaitingList = () => {
         }
     };
     //useEffect
-    useEffect(() => {
-        dispatch(setPageCode(''));
-        dispatch(setDivContent(' '));
-    }, [location.pathname, dispatch, isLoading]);
+
     useEffect(() => {
         refetchEncounter();
     }, []);

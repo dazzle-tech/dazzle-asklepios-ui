@@ -289,7 +289,7 @@
 
 // export default AddPayment;
 // src/pages/accounting/AddPayment.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Checkbox } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -313,7 +313,7 @@ type AddPaymentProps = {
   // 🟢 هدول اللي راح نعرضهم بالجدول تحت
   invoiceItems: BillingItem[];
   // 🟢 هاد اللي رح نستدعيه من برّا (PaymentModal)
-  onSave: (payment: PatientPaymentCreateVM) => void;
+  onSave: (payment: PatientPaymentCreateVM, selectedItemIds: string[]) => void;
   loading?: boolean;
 };
 
@@ -346,6 +346,28 @@ const AddPayment: React.FC<AddPaymentProps> = ({
   });
 
   const paymentMethodSelected = record.PaymentMethod;
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const allIds = (invoiceItems ?? []).map(item => String(item.id));
+    setSelectedItemIds(allIds);
+  }, [invoiceItems, dueAmount]);
+
+  useEffect(() => {
+    const selectedTotal = (invoiceItems ?? [])
+      .filter(item => selectedItemIds.includes(String(item.id)))
+      .reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.totalPrice != null
+              ? item.totalPrice
+              : Number(item.price || 0) * Number(item.quantity || 1)
+          ),
+        0
+      );
+    setRecord((prev: any) => ({ ...prev, Amount: selectedTotal }));
+  }, [selectedItemIds, invoiceItems]);
 
   // LOVs نفس ما كان
   const { data: currencyLovQueryResponse } =
@@ -362,6 +384,10 @@ const AddPayment: React.FC<AddPaymentProps> = ({
         Type: item.type,
         Quantity: item.quantity ?? 1,
         Price: item.price,
+        TotalPrice:
+          item.totalPrice != null
+            ? Number(item.totalPrice)
+            : Number(item.price || 0) * Number(item.quantity || 1),
         Currency: item.currency,
       })),
     [invoiceItems]
@@ -371,8 +397,31 @@ const AddPayment: React.FC<AddPaymentProps> = ({
     {
       key: 'select',
       flexGrow: 1,
-      title: <Checkbox />,
-      render: () => <Checkbox />,
+      title: (
+        <Checkbox
+          checked={
+            tableData.length > 0 && selectedItemIds.length === tableData.length
+          }
+          indeterminate={
+            selectedItemIds.length > 0 &&
+            selectedItemIds.length < tableData.length
+          }
+          onChange={(_, checked) => {
+            setSelectedItemIds(checked ? tableData.map(row => String(row.id)) : []);
+          }}
+        />
+      ),
+      render: (row: any) => (
+        <Checkbox
+          checked={selectedItemIds.includes(String(row.id))}
+          onChange={(_, checked) => {
+            const rowId = String(row.id);
+            setSelectedItemIds(prev =>
+              checked ? [...prev, rowId] : prev.filter(id => id !== rowId)
+            );
+          }}
+        />
+      ),
     },
     {
       key: 'ServiceName',
@@ -399,6 +448,12 @@ const AddPayment: React.FC<AddPaymentProps> = ({
       dataKey: 'Price',
     },
     {
+      key: 'TotalPrice',
+      flexGrow: 2,
+      title: <Translate>Total Price</Translate>,
+      dataKey: 'TotalPrice',
+    },
+    {
       key: 'Currency',
       flexGrow: 2,
       title: <Translate>Currency</Translate>,
@@ -408,7 +463,7 @@ const AddPayment: React.FC<AddPaymentProps> = ({
 
   const handleSaveClick = () => {
     const amountNumber = Number(record.Amount || 0);
-    if (!amountNumber || amountNumber <= 0) return;
+    if (!amountNumber || amountNumber <= 0 || selectedItemIds.length === 0) return;
 
     const payment: PatientPaymentCreateVM = {
       // هدول رح نكمّلهم في PaymentModal (facilityId + patientKey)
@@ -430,7 +485,7 @@ const AddPayment: React.FC<AddPaymentProps> = ({
       notes: null,
     };
 
-    onSave(payment);
+    onSave(payment, selectedItemIds);
   };
 
   return (

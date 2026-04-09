@@ -38,7 +38,7 @@ const toHumanBackendError = (err: any): string => {
   if (errorKey === 'unique.patient_practitioner')
     return 'A practitioner is already preferred.' + traceId;
 
-  return detail || title || message || 'Failed to save Preferred Health Professional.' + traceId;
+  return detail || title || message || 'Failed to save Primary Care Provider.' + traceId;
 };
 
 const AddPrefferdHealthProfessionalModal = ({
@@ -117,8 +117,18 @@ const AddPrefferdHealthProfessionalModal = ({
         return;
       }
 
-      if (!hpRecord.facilityId || !hpRecord.practitionerId) {
-        dispatch(notify({ msg: 'HP Organization and HP Name are required', sev: 'warning' }));
+      // if (!hpRecord.facilityId || !hpRecord.practitionerId) {
+      //   dispatch(notify({ msg: 'CP Organization and CP Name are required', sev: 'warning' }));
+      //   return;
+      // }
+
+      if (!hpRecord.facilityId) {
+        dispatch(notify({ msg: 'CP Organization is required', sev: 'warning' }));
+        return;
+      }
+
+      if (!hpRecord.practitionerId) {
+        dispatch(notify({ msg: 'CP Name is required', sev: 'warning' }));
         return;
       }
 
@@ -131,14 +141,14 @@ const AddPrefferdHealthProfessionalModal = ({
           body
         }).unwrap();
 
-        dispatch(notify({ msg: 'Preferred Health Professional updated', sev: 'success' }));
+        dispatch(notify({ msg: 'Primary Care Provider updated', sev: 'success' }));
       } else {
         await createPreferredHP({
           patientId: patient.id,
           body
         }).unwrap();
 
-        dispatch(notify({ msg: 'Preferred Health Professional added', sev: 'success' }));
+        dispatch(notify({ msg: 'Primary Care Provider added', sev: 'success' }));
       }
 
       setOpen(false);
@@ -158,7 +168,7 @@ const AddPrefferdHealthProfessionalModal = ({
       <MyInput
         column
         required
-        fieldLabel="HP Organization"
+        fieldLabel="CP Organization"
         fieldType="select"
         fieldName="facilityId"
         selectData={facilityListResponse ?? []}
@@ -186,7 +196,7 @@ const AddPrefferdHealthProfessionalModal = ({
       <MyInput
         column
         required
-        fieldLabel="HP Name"
+        fieldLabel="CP Name"
         fieldType="selectPagination"
         fieldName="practitionerId"
         selectData={practitionerCache}
@@ -295,17 +305,13 @@ const AddPrefferdHealthProfessionalModal = ({
           setPractitionerCache([]);
         }
       }}
-      title={
-        editable
-          ? 'Edit Patient Preferred Health Professional'
-          : 'New Patient Preferred Health Professional'
-      }
+      title={editable ? 'Edit Patient Primary Care Provider' : 'New Patient Primary Care Provider'}
       actionButtonLabel={editable ? 'Update' : 'Save'}
       bodyheight="65vh"
       actionButtonFunction={handleSave}
       steps={[
         {
-          title: 'Preferred Health Professional',
+          title: 'Primary Care Provider',
           icon: <FontAwesomeIcon icon={faHospitalUser} />
         }
       ]}

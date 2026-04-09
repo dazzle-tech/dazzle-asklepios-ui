@@ -46,8 +46,17 @@ const UOMGroup = () => {
   const divContent = (
     "UOM Groups"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('UOM_Groups'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
  // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -72,12 +81,6 @@ const UOMGroup = () => {
     }
   }, [saveUomGroupMutation.data]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   // handle click on Add New button
   const handleUomGroupNew = () => {

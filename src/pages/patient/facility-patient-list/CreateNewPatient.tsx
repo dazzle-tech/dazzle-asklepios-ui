@@ -1050,6 +1050,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               width={200}
               column
+              required
               fieldName="secondName"
               record={localPatient}
               setRecord={setLocalPatient}

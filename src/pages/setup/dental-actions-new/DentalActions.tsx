@@ -311,12 +311,6 @@ const filters = () => (
   }, []);
 
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
 
     const {

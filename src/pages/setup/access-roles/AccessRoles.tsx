@@ -56,9 +56,17 @@ const AccessRoles = () => {
   const divContent = (
     "Access Roles"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Access_Roles'));
   dispatch(setDivContent(divContent));
-
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -73,12 +81,7 @@ const AccessRoles = () => {
   useEffect(() => {
     handleFilterChange('name', recordOfSearch['screen']);
   }, [recordOfSearch]);
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
 
   // Handle click on Add New Button
   const handleNew = () => {

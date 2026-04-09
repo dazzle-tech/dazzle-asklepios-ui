@@ -8,8 +8,6 @@ import { useFindConsultationByPatientQuery } from "@/services/consultation/consu
 import { useFindByPatientQuery } from "@/services/patients/telephonicConsultationService";
 import { useGetAllPractitionersQuery } from "@/services/setup/practitioner/PractitionerService";
 
-import { initialListRequest } from "@/types/types";
-
 const ClinicalConsultationsTables = ({ patient, encounter }) => {
 
   const [page, setPage] = useState(0);

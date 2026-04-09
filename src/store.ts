@@ -203,11 +203,18 @@ import { RelationsMatrixService } from './services/patients/RelationsMatrixServi
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
+import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
+import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
+import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import { appointmentFromTemplateService } from './services/appointment/appointmentService';
 import { departmentServicesService } from './services/departmentServicesService';
+import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
+import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
 import { roomService } from './services/setup/room/roomService';
 import { bedService } from './services/setup/room/bedService';
 import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
+import { currentMedicationService } from './services/patients/currentMedicationService';
 
 
 export const store = configureStore({
@@ -411,6 +418,10 @@ export const store = configureStore({
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
+    // patient billing (new endpoints)
+    [patientBillingInvoiceService.reducerPath]: patientBillingInvoiceService.reducer,
+    [patientBillingInvoiceItemService.reducerPath]: patientBillingInvoiceItemService.reducer,
+
     // Templates
     // report templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
@@ -440,6 +451,11 @@ export const store = configureStore({
 
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
+
+    [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
+    [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
+    [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
+    [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
     // AI Services
@@ -511,6 +527,7 @@ export const store = configureStore({
     [bedService.reducerPath]: bedService.reducer,
     [bedRoomService.reducerPath]: bedRoomService.reducer,
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
+    [currentMedicationService.reducerPath]: currentMedicationService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -671,6 +688,8 @@ export const store = configureStore({
         BillingService.middleware,
         PriceListService.middleware,
         PriceListItemService.middleware,
+        patientBillingInvoiceService.middleware,
+        patientBillingInvoiceItemService.middleware,
 
         // report templates
         ReportTemplateService.middleware,
@@ -746,11 +765,16 @@ export const store = configureStore({
         patientAdministrativeWarningsService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
+        availabilityTemplateService.middleware,
+        availabilityGenerationBatchService.middleware,
+        availabilityTemplateIntervalService.middleware,
+        appointmentFromTemplateService.middleware,
         departmentServicesService.middleware,
         roomService.middleware,
         bedService.middleware,
         bedRoomService.middleware,
         encounterAssignToBedService.middleware,
+        currentMedicationService.middleware
       ]
     ) as any
 });

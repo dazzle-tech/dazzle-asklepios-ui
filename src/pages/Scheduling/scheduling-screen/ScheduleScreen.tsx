@@ -323,6 +323,8 @@ const ScheduleScreen = () => {
     };
   }, [dispatch]);
 
+  
+
   const legendItems = [
     { label: 'No-Show', color: '#FDE68A' },
     { label: 'Checked In', color: '#FDBA74' },
@@ -760,12 +762,6 @@ const ScheduleScreen = () => {
 
   const [currentCalView, setCurrentCalView] = useState('month'); // Force "month" view
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   const ResourceHeader = ({ resource }) => {
     return (

@@ -66,8 +66,17 @@ const Catalog = () => {
   const testTypeEnum = useEnumOptions('TestType');
   // Header page setUp
   const divContent = 'Catalog';
+
+
+  useEffect(() => {
   dispatch(setPageCode('Catalog'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // Pagination values
   const pageIndex = paginationParams.page;
   const rowsPerPage = paginationParams.size;
@@ -331,12 +340,6 @@ const Catalog = () => {
     setLink(diagnosticsTestCatalogHeaderListResponse?.links);
   }, [diagnosticsTestCatalogHeaderListResponse?.links]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
             // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
