@@ -1096,6 +1096,28 @@ export const newAppointmentFromTemplateBookPatientDTO: modelTypes.AppointmentFro
   followUpEncounterId: null
 };
 
+export const newAppointmentFromTemplateQuickAppointmentDTO: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+  facilityId: 0,
+  departmentId: 0,
+  resourceType: '' as any,
+  resourceId: 0,
+  patientId: 0,
+  service: '' as any,
+  priority: '',
+  defaultServiceId: null,
+  defaultPractitionerId: null,
+  reason: null,
+  note: null,
+  followUpEncounterId: null,
+  originType: null,
+  originName: null
+};
+
+export const newAppointmentFromTemplateQuickAppointmentResponseVM: modelTypes.AppointmentFromTemplateQuickAppointmentResponseVM = {
+  appointmentFromTemplate: { ...newAppointmentFromTemplate },
+  encounter: { ...newPatientEncounter }
+};
+
 export const newAppointmentFromTemplateCancelDTO: modelTypes.AppointmentFromTemplateCancelDTO = {
   id: 0,
   cancelReason: ''

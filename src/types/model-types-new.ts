@@ -433,6 +433,28 @@ export interface AppointmentFromTemplateBookPatientDTO {
   followUpEncounterId?: number | null;
 }
 
+export interface AppointmentFromTemplateQuickAppointmentDTO {
+  facilityId: number;
+  departmentId: number;
+  resourceType: TemplateType;
+  resourceId: number;
+  patientId: number;
+  service: EncounterReason;
+  priority: string;
+  defaultServiceId?: number | null;
+  defaultPractitionerId?: number | null;
+  reason?: string | null;
+  note?: string | null;
+  followUpEncounterId?: number | null;
+  originType?: string | null;
+  originName?: string | null;
+}
+
+export interface AppointmentFromTemplateQuickAppointmentResponseVM {
+  appointmentFromTemplate: AppointmentFromTemplate;
+  encounter: PatientEncounter;
+}
+
 export interface AppointmentFromTemplateCancelDTO {
   id: number;
   cancelReason: string;
