@@ -96,6 +96,63 @@ const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
   );
 };
 
+const AssignBedAction = ({
+  rowData,
+  isPendingPayment,
+  setLocalEncounter,
+  setOpenBedAssignmentModal
+}: {
+  rowData: any;
+  isPendingPayment: boolean;
+  setLocalEncounter: (row: any) => void;
+  setOpenBedAssignmentModal: (open: boolean) => void;
+}) => {
+  const encounterId = toNumberOrNaN(rowData?.id ?? rowData?.encounterId ?? rowData?.key);
+
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(
+    encounterId as any,
+    {
+      skip: Number.isNaN(encounterId)
+    }
+  );
+
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const emergencyLevel = latest?.emergencyLevel ?? null;
+
+  const statusUpper = String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase();
+  const isTriageStarted = statusUpper === 'TRIAGE_STARTED';
+
+  const disabled = isPendingPayment || !isTriageStarted || !emergencyLevel;
+
+  const speaker = isPendingPayment ? (
+    <Tooltip>Please add payment first</Tooltip>
+  ) : !isTriageStarted ? (
+    <Tooltip>Assign Bed is only available when triage is started</Tooltip>
+  ) : !emergencyLevel ? (
+    <Tooltip>Please set Emergency Level first</Tooltip>
+  ) : (
+    <Tooltip>Assign Bed</Tooltip>
+  );
+
+  return (
+    <Whisper trigger="hover" placement="top" speaker={speaker}>
+      <div>
+        <MyButton
+          size="small"
+          backgroundColor="black"
+          disabled={disabled}
+          onClick={() => {
+            setLocalEncounter(rowData);
+            setOpenBedAssignmentModal(true);
+          }}
+        >
+          <FontAwesomeIcon icon={faBedPulse} />
+        </MyButton>
+      </div>
+    </Whisper>
+  );
+};
+
 const UrgentCareTriage = () => {
   const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
   const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
@@ -1282,7 +1339,6 @@ const UrgentCareTriage = () => {
           <Tooltip>Start Triage</Tooltip>
         );
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
-        const tooltipAssignBed = <Tooltip>Assign Bed</Tooltip>;
         const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
         const tooltipPaymentDisabled = (
@@ -1419,29 +1475,12 @@ const UrgentCareTriage = () => {
               </div>
             </Whisper>
 
-            <Whisper
-              trigger="hover"
-              placement="top"
-              speaker={isPendingPayment ? tooltipBlockedByPayment : tooltipAssignBed}
-            >
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="black"
-                  onClick={() => {
-                    setLocalEncounter(rowData);
-                    setOpenBedAssignmentModal(true);
-                  }}
-                  disabled={
-                    isPendingPayment ||
-                    String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() !==
-                      'TRIAGE_STARTED'
-                  }
-                >
-                  <FontAwesomeIcon icon={faBedPulse} />
-                </MyButton>
-              </div>
-            </Whisper>
+            <AssignBedAction
+              rowData={rowData}
+              isPendingPayment={isPendingPayment}
+              setLocalEncounter={setLocalEncounter}
+              setOpenBedAssignmentModal={setOpenBedAssignmentModal}
+            />
 
             {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST', 'PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
