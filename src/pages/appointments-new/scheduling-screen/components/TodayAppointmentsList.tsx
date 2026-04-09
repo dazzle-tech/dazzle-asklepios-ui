@@ -1,20 +1,117 @@
 import React from 'react';
 import { Panel, Text } from 'rsuite';
 import ArrowRightLineIcon from '@rsuite/icons/ArrowRightLine';
+import { useGetAppointmentsByStatusBetweenDatesQuery } from '@/services/appointment/appointmentService';
 
 type TodayAppointmentsListProps = {
-  todayAppointmentsList: any[];
-  isFetchingTodayAppointments: boolean;
-  rightPanelAppointmentRows: any[];
-  todayTimelineRows: any[];
+  selectedDate?: Date | null;
+  todayAppointmentsList?: any[];
+  isFetchingTodayAppointments?: boolean;
+  rightPanelAppointmentRows?: any[];
+  todayTimelineRows?: any[];
+  onViewAppointment?: (appointmentData: any) => void;
 };
 
 const TodayAppointmentsList = ({
-  todayAppointmentsList,
-  isFetchingTodayAppointments,
-  rightPanelAppointmentRows,
-  todayTimelineRows
+  selectedDate,
+  onViewAppointment
 }: TodayAppointmentsListProps) => {
+  const day = new Date(selectedDate ?? new Date());
+  const start = new Date(day);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(day);
+  end.setHours(23, 59, 59, 999);
+
+  const allowedStatuses = ['CHECKED_IN', 'BOOKED', 'IN_SERVICE', 'CONFIRMED'];
+  const { data: todayAppointmentsResponse, isFetching: isFetchingTodayAppointments } =
+    useGetAppointmentsByStatusBetweenDatesQuery({
+      status: allowedStatuses,
+      startDatetime: start.toISOString(),
+      endDatetime: end.toISOString(),
+      page: 0,
+      size: 100,
+      sort: 'id,asc'
+    });
+
+  const todayAppointmentsList = React.useMemo(() => {
+    const rows = (todayAppointmentsResponse as any)?.data ?? [];
+    return rows.map((a: any) => {
+      const dt = new Date(
+        a?.appointmentDateTime ??
+          a?.appointmentStart ??
+          a?.appointment_start ??
+          a?.applyStartDateTime ??
+          Date.now()
+      );
+      const timeLabel = Number.isNaN(dt.getTime())
+        ? '--:--'
+        : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const patient = a?.patient ?? {};
+      const patientName =
+        patient?.full_name ||
+        patient?.fullName ||
+        [patient?.first_name, patient?.last_name].filter(Boolean).join(' ') ||
+        [patient?.firstName, patient?.lastName].filter(Boolean).join(' ') ||
+        'Unknown';
+      return {
+        id: a?.id ?? a?.key ?? `${patientName}-${timeLabel}`,
+        timeLabel,
+        patientName,
+        status: a?.status ?? a?.appointmentStatus ?? '-',
+        _raw: a
+      };
+    });
+  }, [todayAppointmentsResponse]);
+
+  const rightPanelAppointmentRows = React.useMemo(() => {
+    const statusColor = (status: string) => {
+      const s = String(status ?? '').toUpperCase();
+      if (s.includes('BOOK')) return '#059669';
+      if (s.includes('CONFIRM')) return '#166534';
+      if (s.includes('CHECK')) return '#F5B971';
+      if (s.includes('IN_SERVICE') || s.includes('IN SERVICE')) return '#7C8BF3';
+      return '#9DB5DA';
+    };
+    return (todayAppointmentsList ?? []).slice(0, 5).map((a: any) => {
+      const hourPart = String(a?.timeLabel ?? '').split(':')[0] || '--';
+      const hourNum = Number(hourPart);
+      const hourLabel = Number.isFinite(hourNum)
+        ? `${((hourNum + 11) % 12) + 1} ${hourNum >= 12 ? 'PM' : 'AM'}`
+        : '--';
+      const dots = Array.from({ length: 8 }).map((_, idx) =>
+        idx < 4 ? statusColor(a?.status) : '#E6ECF7'
+      );
+      return {
+        ...a,
+        hourLabel,
+        dots
+      };
+    });
+  }, [todayAppointmentsList]);
+
+  const todayTimelineRows = React.useMemo(() => {
+    const statusColor = (status: string) => {
+      const s = String(status ?? '').toUpperCase();
+      if (s.includes('BOOK')) return '#059669';
+      if (s.includes('CONFIRM')) return '#166534';
+      if (s.includes('CHECK')) return '#F5B971';
+      if (s.includes('IN_SERVICE') || s.includes('IN SERVICE')) return '#7C8BF3';
+      return '#C8D1E1';
+    };
+    const hours = [8, 9, 10, 11, 12];
+    return hours.map(hour => {
+      const matches = todayAppointmentsList.filter((a: any) => {
+        const parsed = new Date(`1970-01-01T${a.timeLabel?.replace(' ', '')}`);
+        if (!Number.isNaN(parsed.getTime())) return parsed.getHours() === hour;
+        const h = Number(String(a.timeLabel ?? '').split(':')[0]);
+        return h === hour;
+      });
+      const dots = matches.slice(0, 8).map((m: any) => statusColor(m.status));
+      while (dots.length < 8) dots.push('#E6EBF3');
+      return { hour, dots };
+    });
+  }, [todayAppointmentsList]);
+
   return (
     <Panel
       bordered
@@ -75,7 +172,10 @@ const TodayAppointmentsList = ({
                   </div>
                 </div>
               </div>
-              <ArrowRightLineIcon style={{ fontSize: 12, opacity: 0.45 }} />
+              <ArrowRightLineIcon
+                style={{ fontSize: 12, opacity: 0.45, cursor: 'pointer' }}
+                onClick={() => onViewAppointment?.(row?._raw)}
+              />
             </div>
           ))
         ) : (

@@ -426,6 +426,8 @@ export interface AppointmentFromTemplateBookPatientDTO {
   reason?: string | null;
   status?: AppointmentStatus | null;
   note?: string | null;
+  originType?: string | null;
+  originName?: string | null;
   service?: string | null;
   priority?: string | null;
   followUpEncounterId?: number | null;

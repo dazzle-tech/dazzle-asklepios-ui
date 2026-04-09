@@ -20,6 +20,7 @@ import { useGetServiceByIdQuery } from '@/services/setup/serviceService';
 import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import { useGetFacilityByIdQuery } from '@/services/security/facilityService';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import ProfileSidebar from '@/pages/patient/patient-profile/ProfileSidebar-new';
 import Translate from '@/components/Translate';
 import { formatEnumString } from '@/utils';
@@ -52,6 +53,7 @@ const BookPatient = ({
   const [bookPatientAppointment, { isLoading }] = useBookPatientAppointmentMutation();
   const encounterReasonEnum = useEnumOptions('EncounterReason');
   const encounterPriorityEnum = useEnumOptions('EncounterPriority');
+  const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
 
   useEffect(() => {
     if (!open) return;
@@ -83,6 +85,8 @@ const BookPatient = ({
           appointmentData.encounterReason ??
           appointmentData.visitTypeLkey ??
           null,
+        originType: appointmentData.originType ?? null,
+        originName: appointmentData.originName ?? '',
         priority: appointmentPriority ?? prev.priority ?? null,
         followUpEncounterId:
           (appointmentData.service ??
@@ -112,6 +116,8 @@ const BookPatient = ({
       defaultService: appointmentDefaultService ?? prev.defaultService ?? null,
       reason: appointmentReason ?? prev.reason ?? '',
       service: appointmentService ?? prev.service ?? null,
+      originType: appointmentData?.originType ?? prev.originType ?? null,
+      originName: appointmentData?.originName ?? prev.originName ?? '',
       priority: appointmentPriority ?? prev.priority ?? null,
       followUpEncounterId:
         (appointmentService ?? prev.service) === 'FOLLOW_UP'
@@ -357,6 +363,8 @@ const BookPatient = ({
     service: null,
     reason: '',
     note: '',
+    originType: null,
+    originName: '',
     priority: null,
     followUpEncounterId: null
   });
@@ -535,6 +543,8 @@ const BookPatient = ({
       service: null,
       reason: '',
       note: '',
+      originType: null,
+      originName: '',
       priority: null,
       followUpEncounterId: null
     });
@@ -581,6 +591,8 @@ const BookPatient = ({
       defaultPractitioner: record?.defaultPractitioner ? Number(record.defaultPractitioner) : null,
       reason: record?.reason || record?.service || null,
       note: record?.note || null,
+      originType: record?.originType ? String(record.originType) : null,
+      originName: record?.originName ? String(record.originName) : null,
       status: 'BOOKED',
       service: record?.service || null,
       priority: record?.priority ? String(record.priority) : null,
@@ -887,6 +899,27 @@ const BookPatient = ({
                             width="100%"
                             searchable={false}
                             required={!readOnly}
+                            disabled={readOnly}
+                          />
+                          <MyInput
+                            fieldType="select"
+                            fieldName="originType"
+                            fieldLabel="Origin Type"
+                            record={record}
+                            setRecord={setRecord}
+                            selectData={patOriginLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            width="100%"
+                            searchable={false}
+                            disabled={readOnly}
+                          />
+                          <MyInput
+                            fieldName="originName"
+                            fieldLabel="Origin Name"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
                             disabled={readOnly}
                           />
                           {record?.service === 'FOLLOW_UP' && (
