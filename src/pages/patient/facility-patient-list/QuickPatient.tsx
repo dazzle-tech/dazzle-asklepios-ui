@@ -138,7 +138,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
 
   const fetchDepartments = async (page = 0) => {
     if (!selectedFacilityId) return;
-    if (pageCode !== 'ER_Triage') return;
+    if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') return;
 
     try {
       const result = await triggerDepartments({
@@ -179,7 +179,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
   useEffect(() => {
     if (!open) return;
 
-    if (pageCode !== 'ER_Triage') {
+    if (pageCode !== 'ER_Triage'&& pageCode !== 'Urgent_Care_Triage') {
       setAllDepartments([]);
       return;
     }
@@ -198,7 +198,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
   }, [open, pageCode, selectedFacilityId, encounterType, deptPage]);
 
   useEffect(() => {
-    if (open && pageCode === 'ER_Triage') {
+    if (open && (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage')) {
       setDeptPage(0);
       setSelectedDepartmentId(null);
       setAllDepartments([]);
@@ -244,7 +244,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
         savedPatient = await addPatient(payload).unwrap();
       }
 
-      if (pageCode === 'ER_Triage') {
+      if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
         const facilityId = selectedFacilityId;
         const departmentId = selectedDepartmentId;
 
@@ -402,7 +402,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           Unknown Patient: <Toggle onChange={setIsUnknown} checked={isUnknown} />
         </div>
 
-        {pageCode === 'ER_Triage' && (
+        {(pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') && (
           <>
             <MyInput
               column
