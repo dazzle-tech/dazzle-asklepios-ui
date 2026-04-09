@@ -2,6 +2,18 @@ import React from 'react';
 import { Panel, Text } from 'rsuite';
 import ArrowRightLineIcon from '@rsuite/icons/ArrowRightLine';
 import { useGetAppointmentsByStatusBetweenDatesQuery } from '@/services/appointment/appointmentService';
+import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
+
+const getAppointmentPatientId = (appointment: any): number | null => {
+  const raw =
+    appointment?.patientId ??
+    appointment?.patientKey ??
+    (typeof appointment?.patient === 'object'
+      ? appointment.patient?.id ?? appointment.patient?.key
+      : appointment?.patient);
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
 
 type TodayAppointmentsListProps = {
   selectedDate?: Date | null;
@@ -33,6 +45,40 @@ const TodayAppointmentsList = ({
       sort: 'id,asc'
     });
 
+  const todayPatientIds = React.useMemo(() => {
+    const rows = (todayAppointmentsResponse as any)?.data ?? [];
+    const ids = new Set<number>();
+    rows.forEach((a: any) => {
+      const id = getAppointmentPatientId(a);
+      if (id != null) ids.add(id);
+    });
+    return Array.from(ids).sort((x, y) => x - y);
+  }, [todayAppointmentsResponse]);
+
+  const { data: todayPatientsByIds } = useGetPatientsByIdsQuery(
+    { ids: todayPatientIds },
+    { skip: todayPatientIds.length === 0 }
+  );
+
+  const todayPatientDisplayById = React.useMemo(() => {
+    const m = new Map<string, { name: string; mrn: string }>();
+    for (const p of todayPatientsByIds ?? []) {
+      const id = (p as any)?.id;
+      if (id == null) continue;
+      const name =
+        [(p as any).firstName, (p as any).secondName, (p as any).thirdName, (p as any).lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
+        (p as any).fullName ||
+        '';
+      const mrn =
+        (p as any).medicalRecordNumber ?? (p as any).patientMrn ?? (p as any).mrn ?? '';
+      m.set(String(id), { name: String(name || '').trim(), mrn: String(mrn || '').trim() });
+    }
+    return m;
+  }, [todayPatientsByIds]);
+
   const todayAppointmentsList = React.useMemo(() => {
     const rows = (todayAppointmentsResponse as any)?.data ?? [];
     return rows.map((a: any) => {
@@ -47,7 +93,10 @@ const TodayAppointmentsList = ({
         ? '--:--'
         : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const patient = a?.patient ?? {};
+      const pid = getAppointmentPatientId(a);
+      const fromSvc = pid != null ? todayPatientDisplayById.get(String(pid)) : undefined;
       const patientName =
+        (fromSvc?.name && fromSvc.name.trim()) ||
         patient?.full_name ||
         patient?.fullName ||
         [patient?.first_name, patient?.last_name].filter(Boolean).join(' ') ||
@@ -61,7 +110,7 @@ const TodayAppointmentsList = ({
         _raw: a
       };
     });
-  }, [todayAppointmentsResponse]);
+  }, [todayAppointmentsResponse, todayPatientDisplayById]);
 
   const rightPanelAppointmentRows = React.useMemo(() => {
     const statusColor = (status: string) => {

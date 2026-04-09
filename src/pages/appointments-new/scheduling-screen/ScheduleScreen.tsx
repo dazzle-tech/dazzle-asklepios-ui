@@ -61,6 +61,19 @@ import { calculateAgeFormat } from '@/utils';
 import { update } from 'lodash';
 import TodayAppointmentsList from './components/TodayAppointmentsList';
 import BookPatient from './components/BookPatient';
+import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
+
+/** Resolve numeric patient id from appointment payload (not nested patient object). */
+const getAppointmentPatientId = (appointment: any): number | null => {
+  const raw =
+    appointment?.patientId ??
+    appointment?.patientKey ??
+    (typeof appointment?.patient === 'object'
+      ? appointment.patient?.id ?? appointment.patient?.key
+      : appointment?.patient);
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
 
 const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
@@ -233,6 +246,43 @@ const ScheduleScreen = () => {
     return dateTime;
   };
 
+  const appointmentPatientIdsForService = useMemo(() => {
+    const ids = new Set<number>();
+    const collect = (list: any[]) => {
+      (list ?? []).forEach((a: any) => {
+        const id = getAppointmentPatientId(a);
+        if (id != null) ids.add(id);
+      });
+    };
+    collect(searchedAppointmentsResponse?.data ?? []);
+    collect((todayAppointmentsResponse as any)?.data ?? []);
+    return Array.from(ids).sort((a, b) => a - b);
+  }, [searchedAppointmentsResponse, todayAppointmentsResponse]);
+
+  const { data: patientsByIdsData } = useGetPatientsByIdsQuery(
+    { ids: appointmentPatientIdsForService },
+    { skip: appointmentPatientIdsForService.length === 0 }
+  );
+
+  const patientDisplayByPatientService = useMemo(() => {
+    const m = new Map<string, { name: string; mrn: string }>();
+    for (const p of patientsByIdsData ?? []) {
+      const id = (p as any)?.id;
+      if (id == null) continue;
+      const name =
+        [(p as any).firstName, (p as any).secondName, (p as any).thirdName, (p as any).lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
+        (p as any).fullName ||
+        '';
+      const mrn =
+        (p as any).medicalRecordNumber ?? (p as any).patientMrn ?? (p as any).mrn ?? '';
+      m.set(String(id), { name: String(name || '').trim(), mrn: String(mrn || '').trim() });
+    }
+    return m;
+  }, [patientsByIdsData]);
+
   useEffect(() => {
     const sourceAppointments = searchedAppointmentsResponse?.data ?? [];
     if (sourceAppointments && resourcesWithAvailabilityResponse?.object) {
@@ -253,7 +303,10 @@ const ScheduleScreen = () => {
         const startDate = convertDate(startRaw);
         const endDate = convertDate(endRaw);
         const dob = new Date(appointment?.patient?.dob);
-        const patientFullName =
+        const patientIdNum = getAppointmentPatientId(appointment);
+        const fromPatientService =
+          patientIdNum != null ? patientDisplayByPatientService.get(String(patientIdNum)) : undefined;
+        const patientFullNameFromNested =
           appointment?.patient?.full_name ||
           appointment?.patient?.fullName ||
           (appointment?.patient?.first_name && appointment?.patient?.last_name
@@ -261,13 +314,17 @@ const ScheduleScreen = () => {
             : appointment?.patient?.first_name ||
               appointment?.patient?.last_name ||
               '');
-        const patientMrn =
+        const patientFullName =
+          (fromPatientService?.name && fromPatientService.name.trim()) || patientFullNameFromNested || '';
+        const patientMrnFromNested =
           appointment?.patient?.patient_mrn ??
           appointment?.patient?.patientMrn ??
           appointment?.patient?.mrn ??
           appointment?.patientMrn ??
           appointment?.patient_mrn ??
           '';
+        const patientMrn =
+          (fromPatientService?.mrn && fromPatientService.mrn.trim()) || patientMrnFromNested || '';
 
         const departmentColumnId =
           appointment?.departmentId ??
@@ -304,38 +361,6 @@ const ScheduleScreen = () => {
         const slotTitle = [patientFullName, patientMrn ? `MRN: ${patientMrn}` : '', resourceNameForTitle]
           .filter(Boolean)
           .join(' | ');
-        console.log('[ScheduleScreen] appointment mapped:', {
-          id: appointment?.key ?? appointment?.id,
-          status: appointment?.appointmentStatus ?? appointment?.status,
-          patient: appointment?.patient,
-          patientNameCandidates: {
-            full_name: appointment?.patient?.full_name,
-            fullName: appointment?.patient?.fullName,
-            first_name: appointment?.patient?.first_name,
-            last_name: appointment?.patient?.last_name,
-            firstName: appointment?.patient?.firstName,
-            lastName: appointment?.patient?.lastName
-          },
-          mrnCandidates: {
-            patient_patient_mrn: appointment?.patient?.patient_mrn,
-            patient_patientMrn: appointment?.patient?.patientMrn,
-            patient_mrn: appointment?.patient?.mrn,
-            appointment_patientMrn: appointment?.patientMrn,
-            appointment_patient_mrn: appointment?.patient_mrn
-          },
-          resourceCandidates: {
-            resourceKey: normalizedResourceKey,
-            resourceFromList: resource?.resourceName ?? resource?.name,
-            resourceFromService: resourceNameFromService,
-            resourceFromAppointment: appointment?.resourceName ?? appointment?.resource_name
-          },
-          computed: {
-            patientFullName,
-            patientMrn,
-            resourceNameForTitle,
-            slotTitle
-          }
-        });
 
         const statusText = appointment?.appointmentStatus ?? appointment?.status ?? '';
         const isHidden = String(statusText).toUpperCase() === 'CANCELED';
@@ -370,7 +395,9 @@ const ScheduleScreen = () => {
   }, [
     searchedAppointmentsResponse,
     resourcesWithAvailabilityResponse,
-    currentView
+    currentView,
+    patientDisplayByPatientService,
+    resourceNameById
   ]);
 
   const departmentOptions = useMemo(
@@ -578,12 +605,6 @@ const ScheduleScreen = () => {
     if (!selectedFacility?.id) return;
     void handleSearchAppointmentsByCriteria();
   }, [selectedFacility?.id]);
-
-  useEffect(() => {
-    const rows = (searchedAppointmentsResponse as any)?.data ?? [];
-    // Debug: print search API appointment list in devtools.
-    console.log('[ScheduleScreen] searchAppointments rows:', rows);
-  }, [searchedAppointmentsResponse]);
 
   useEffect(() => {
     const day = rightPanelDate ?? currentCalendarDate ?? new Date();
@@ -1090,10 +1111,14 @@ const ScheduleScreen = () => {
         ? '--:--'
         : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const patient = a?.patient ?? {};
+      const pid = getAppointmentPatientId(a);
+      const fromSvc = pid != null ? patientDisplayByPatientService.get(String(pid)) : undefined;
       const patientName =
+        (fromSvc?.name && fromSvc.name.trim()) ||
         patient?.full_name ||
         patient?.fullName ||
         [patient?.first_name, patient?.last_name].filter(Boolean).join(' ') ||
+        [patient?.firstName, patient?.lastName].filter(Boolean).join(' ') ||
         'Unknown';
       return {
         id: a?.id ?? a?.key ?? `${patientName}-${timeLabel}`,
@@ -1128,7 +1153,13 @@ const ScheduleScreen = () => {
           status: e?.appointmentData?.appointmentStatus ?? '-'
         };
       });
-  }, [todayAppointmentsResponse, finalAppointments, rightPanelDate, currentCalendarDate]);
+  }, [
+    todayAppointmentsResponse,
+    finalAppointments,
+    rightPanelDate,
+    currentCalendarDate,
+    patientDisplayByPatientService
+  ]);
 
 
   const todayTimelineRows = useMemo(() => {
@@ -1202,19 +1233,23 @@ const ScheduleScreen = () => {
     ).toUpperCase();
     const appointment = event?.appointmentData ?? {};
     const patient = appointment?.patient ?? {};
+    const pid = getAppointmentPatientId(appointment);
+    const fromSvc = pid != null ? patientDisplayByPatientService.get(String(pid)) : undefined;
     const patientName =
+      (fromSvc?.name && fromSvc.name.trim()) ||
       patient?.full_name ||
       patient?.fullName ||
       [patient?.first_name, patient?.last_name].filter(Boolean).join(' ') ||
       [patient?.firstName, patient?.lastName].filter(Boolean).join(' ') ||
       '';
     const mrn =
-      patient?.patient_mrn ??
-      patient?.patientMrn ??
-      patient?.mrn ??
-      appointment?.patientMrn ??
-      appointment?.patient_mrn ??
-      '';
+      (fromSvc?.mrn && fromSvc.mrn.trim()) ||
+      (patient?.patient_mrn ??
+        patient?.patientMrn ??
+        patient?.mrn ??
+        appointment?.patientMrn ??
+        appointment?.patient_mrn ??
+        '');
     const resourceNameText =
       appointment?.resourceName ||
       appointment?.resource_name ||
@@ -1433,8 +1468,11 @@ const ScheduleScreen = () => {
       .filter((a: any) => !a?.appointmentStart)
       .map((a: any) => {
         const patient = a?.patient || {};
+        const reqPid = getAppointmentPatientId(a);
+        const reqFromSvc = reqPid != null ? patientDisplayByPatientService.get(String(reqPid)) : undefined;
 
         const patientName =
+          (reqFromSvc?.name && reqFromSvc.name.trim()) ||
           patient?.full_name ||
           patient?.fullName ||
           (patient?.first_name && patient?.last_name
@@ -1444,7 +1482,8 @@ const ScheduleScreen = () => {
         const patientGender = patient?.genderLvalue?.lovDisplayVale || patient?.genderLkey || '';
         const patientAge = patient?.dob ? calculateAgeFormat(patient.dob) : '';
 
-        const patientMrn = patient?.patient_mrn || '';
+        const patientMrn =
+          (reqFromSvc?.mrn && reqFromSvc.mrn.trim()) || patient?.patient_mrn || '';
 
         const resourceKey = a?.resourceKey ?? a?.resource_key ?? a?.resource?.key ?? null;
 
@@ -1498,7 +1537,12 @@ const ScheduleScreen = () => {
           _raw: a
         };
       });
-  }, [searchedAppointmentsResponse, resourcesWithAvailabilityResponse?.object, resourceNameById]);
+  }, [
+    searchedAppointmentsResponse,
+    resourcesWithAvailabilityResponse?.object,
+    resourceNameById,
+    patientDisplayByPatientService
+  ]);
 
   const handleApproveRequest = (row: any) => {
     setRequestToApprove(row?._raw);
