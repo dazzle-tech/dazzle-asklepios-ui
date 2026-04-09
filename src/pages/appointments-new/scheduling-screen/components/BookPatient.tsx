@@ -831,16 +831,7 @@ const BookPatient = ({
                             width="100%"
                             disabled={readOnly}
                           />
-                          <MyInput
-                            fieldType="textarea"
-                            fieldName="reason"
-                            fieldLabel="Reason"
-                            record={record}
-                            setRecord={setRecord}
-                            width="100%"
-                            rows={2}
-                            disabled={readOnly}
-                          />
+                        
 
                           <MyInput
                             fieldType="textarea"
@@ -861,6 +852,16 @@ const BookPatient = ({
                     content={
                       <Panel bordered style={{ padding: 12 }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <MyInput
+                            fieldType="textarea"
+                            fieldName="reason"
+                            fieldLabel="Chief Complaint"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
+                            rows={2}
+                            disabled={readOnly}
+                          />
                           <MyInput
                             fieldType="select"
                             fieldName="service"

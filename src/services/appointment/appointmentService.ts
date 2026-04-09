@@ -4,6 +4,8 @@ import { parseLinkHeader } from '@/utils/paginationHelper';
 import type {
   AppointmentFromTemplate,
   AppointmentFromTemplateBookPatientDTO,
+  AppointmentFromTemplateQuickAppointmentDTO,
+  AppointmentFromTemplateQuickAppointmentResponseVM,
   AppointmentFromTemplateCancelDTO,
   AppointmentFromTemplateNoShowDTO,
   AppointmentFromTemplateSearchFilterDTO
@@ -40,6 +42,21 @@ export const appointmentFromTemplateService = createApi({
       query: body => ({
         url: `${APPOINTMENT_BASE_URL}/book-patient`,
         method: 'PUT',
+        body
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      invalidatesTags: ['AppointmentFromTemplate']
+    }),
+
+    createQuickAppointment: builder.mutation<
+      AppointmentFromTemplateQuickAppointmentResponseVM,
+      AppointmentFromTemplateQuickAppointmentDTO
+    >({
+      query: body => ({
+        url: `${APPOINTMENT_BASE_URL}/quick-appointment`,
+        method: 'POST',
         body
       }),
       async onQueryStarted(arg, api) {
@@ -149,6 +166,7 @@ export const appointmentFromTemplateService = createApi({
 
 export const {
   useBookPatientAppointmentMutation,
+  useCreateQuickAppointmentMutation,
   useGetAppointmentsByStatusBetweenDatesQuery,
   useLazyGetAppointmentsByStatusBetweenDatesQuery,
   useSearchAppointmentsQuery,

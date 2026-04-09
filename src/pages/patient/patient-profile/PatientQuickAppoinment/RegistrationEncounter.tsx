@@ -518,7 +518,7 @@ console.log("department fetched by ID: ", referralDepartment);
         vr={validationResult}
         column
         fieldType="select"
-        fieldLabel="Reason"
+        fieldLabel="Service"
         fieldName="encounterReason"
         selectData={EncounterReasonEnum ?? []}
         selectDataLabel="label"
@@ -585,6 +585,15 @@ console.log("department fetched by ID: ", referralDepartment);
         fieldType="textarea"
         fieldLabel="Notes"
         fieldName="notes"
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+        record={localEncounter}
+      />
+       <MyInput
+        column
+        fieldType="textarea"
+        fieldLabel="Chief Complaint"
+        fieldName="chiefComplaint"
         setRecord={setLocalEncounter}
         disabled={isReadOnly}
         record={localEncounter}
