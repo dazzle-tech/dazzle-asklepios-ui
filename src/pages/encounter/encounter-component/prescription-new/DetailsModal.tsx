@@ -38,6 +38,7 @@ import DiagnosticsOrder from '../diagnostics-order-new';
 import Substitues from '../drug-order/SubstitutesNew';
 import ActiveIngrediantList from './ActiveIngredient';
 import Instructions from './Instructions';
+import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 const DetailsModal = ({
   edit,
   open,
@@ -632,11 +633,15 @@ const DetailsModal = ({
 
   useEffect(() => {
     if (!open) return;
-    // Only clear if we're adding new medication (no key and no id)
-    if (!prescriptionMedication?.key && !prescriptionMedication?.id) {
+
+    if (
+      !prescriptionMedication?.id &&
+      !prescriptionMedication?.indicationIcd
+    ) {
       handleCleare();
     }
-  }, [open, prescriptionMedication?.key, prescriptionMedication?.id]);
+  }, [open]);
+
 
   // Handle click outside medication search dropdown
   useEffect(() => {
@@ -689,6 +694,13 @@ const DetailsModal = ({
         .map((name: string) => String(name).trim())
     )
   );
+
+useEffect(() => {
+  console.log('📊 prescriptionMedication.indicationIcd changed:',
+    prescriptionMedication?.indicationIcd
+  );
+}, [prescriptionMedication?.indicationIcd]);
+
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
@@ -968,14 +980,29 @@ const DetailsModal = ({
                             <span className="required-asterisk">*</span>
                           </Text>
                         </div>
-                        <Icd10DiagnosisSearch
-                          diagnosisId={(prescriptionMedication.indicationIcd as any) ?? null}
-                          setDiagnosisId={(id: number | null) =>
-                            setPrescriptionMedications(prev => ({ ...prev, indicationIcd: id }))
-                          }
-                          label=""
-                          disabled={preKey == null}
-                        />
+                          <PatientDiagnosisTable
+                            patient={patient}
+                            disabled={false}
+                            selectMode
+                            onSelectDiagnosis={(ids) => {
+                              console.log('📥 received in modal:', ids);
+
+                              const selectedIcd = ids?.[0];
+
+                              console.log('🎯 selected ICD:', selectedIcd);
+
+                              setPrescriptionMedications(prev => {
+                                const updated = {
+                                  ...prev,
+                                  indicationIcd: selectedIcd
+                                };
+
+                                console.log('🧾 updated prescriptionMedication:', updated);
+
+                                return updated;
+                              });
+                            }}
+                          />
                       </div>
 
                       {/* Other Fields Section - Two Columns Below */}
