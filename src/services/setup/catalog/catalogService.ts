@@ -180,5 +180,6 @@ export const {
   useUpdateCatalogMutation,
   useDeleteCatalogMutation,
   useGetUnselectedTestsForCatalogQuery,
-  useGetAppointableCatalogsByLoggedInFacilityQuery
+  useGetAppointableCatalogsByLoggedInFacilityQuery,
+  useLazyGetAppointableCatalogsByLoggedInFacilityQuery
 } = catalogService;

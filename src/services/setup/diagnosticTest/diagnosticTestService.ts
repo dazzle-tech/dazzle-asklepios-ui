@@ -212,6 +212,7 @@ export const {
   useGetDiagnosticTestsByIdsQuery,
   useLazyGetDiagnosticTestsByIdsQuery,
   useGetAllActiveAppointableDiagnosticTestsQuery,
+  useLazyGetAllActiveAppointableDiagnosticTestsQuery,
   useGetAllActiveDiagnosticTestsQuery,
   useGetActiveDiagnosticTestsByTypeQuery,
   useLazyGetActiveDiagnosticTestsByTypeQuery,

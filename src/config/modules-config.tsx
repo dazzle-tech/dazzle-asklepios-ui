@@ -315,12 +315,12 @@ export const MODULES: Module[] =
           navPath: "schedual-screen",
         },
         {
-          name: "Availability Templates New",
+          name: "Availability Templates",
           code: "AVAILABILITY_TEMPLATES_NEW",
           description: "",
           icon: "FaCalendarDays",
           viewOrder: 1,
-          navPath: "availability-templates-new",
+          navPath: "availability-templates",
         },{
           name: "Apply Template",
           code: "APPLY_TEMPLATE",

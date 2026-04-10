@@ -8,6 +8,10 @@ import { FaPlus } from "react-icons/fa";
 import { useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from '@/services/appointment/availabilityTemplate/availabilityTemplateInterval';
 import type { AvailabilityTemplateIntervalResponseVM } from '@/types/model-types-new';
 import { PropaneSharp } from '@mui/icons-material';
+import { useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useLazyGetCatalogByIdQuery } from '@/services/setup/catalog/catalogService';
+import { useLazyGetServiceByIdQuery } from '@/services/setup/serviceService';
 
 
 
@@ -30,6 +34,7 @@ type TemplateColumnProps = {
     onEditTemplate?: (template: any) => void;
     onEditInterval?: (interval: AvailabilityTemplateIntervalResponseVM, template: any) => void;
     readOnly: boolean;
+    dayInclude: boolean;
 };
 
 const TemplateColumn: React.FC<TemplateColumnProps> = ({
@@ -38,7 +43,8 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({
     onAddInterval,
     onEditTemplate,
     onEditInterval,
-    readOnly
+    readOnly,
+    dayInclude
 }) => {
     const shouldFetch = Boolean(template?.id) && Boolean(day);
     const { data: intervals = [], isFetching } = useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery(
@@ -86,7 +92,7 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({
                     />
                 ))
             )}
-            {!readOnly && (
+            {((!readOnly) && dayInclude) && (
                 <MyButton
                     prefixIcon={() => <FaPlus />}
                     width="300px"
@@ -114,6 +120,7 @@ const AvailabilityDayGrid = ({
     day: string;
     onEditTemplate?: (template: any) => void;
     readOnly?: boolean;
+    dayInclude?: boolean;
 }) => {
 
     const times =
@@ -136,6 +143,7 @@ const AvailabilityDayGrid = ({
   ? [parentTemplate, ...normalizedTemplates]
   : [];
 
+   
 
     return (
         <>
@@ -174,6 +182,7 @@ const AvailabilityDayGrid = ({
                                     }}
                                     onEditTemplate={onEditTemplate}
                                     readOnly={props?.readOnly}
+                                    dayInclude={props?.dayInclude}
                                 />
                             ))}
                         </div>

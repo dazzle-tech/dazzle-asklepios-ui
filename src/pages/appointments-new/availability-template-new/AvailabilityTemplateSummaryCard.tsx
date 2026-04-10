@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CiSquareMinus } from "react-icons/ci";
 import { FaRegEdit } from "react-icons/fa";
 import { IoSettingsSharp } from "react-icons/io5";
@@ -8,6 +8,11 @@ import { MdDelete } from "react-icons/md";
 import { useDeleteAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { formatEnumString } from '@/utils';
+import { useLazyGetPractitionerByIdQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useLazyGetDiagnosticTestByIdQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
+import { useLazyGetCatalogByIdQuery } from '@/services/setup/catalog/catalogService';
+import { useLazyGetServiceByIdQuery } from '@/services/setup/serviceService';
+import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
 
 type DepartmentPoolCardProps = {
   template: any;
@@ -21,6 +26,9 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
   ...props
 }) => {
   const [showDetails, setShowDetails] = useState<boolean>(true);
+
+  const [resourceName, setRresourceName] = useState<string>("");
+  const [departmentName, setDepartmentName] = useState<string>("");
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
   const [deleteAvailabilityTemplate] = useDeleteAvailabilityTemplateMutation();
 
@@ -31,7 +39,13 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
     const b = parseInt(hex.substring(4, 6), 16);
 
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+
   }
+  const [getPractitioner] = useLazyGetPractitionerByIdQuery();
+  const [getDiagnosticTest] = useLazyGetDiagnosticTestByIdQuery();
+  const [getCatalog] = useLazyGetCatalogByIdQuery();
+  const [getService] = useLazyGetServiceByIdQuery();
+   const [getDepartment, { data, isLoading }] = useLazyGetDepartmentByIdQuery();
 
   const handleDeleteConfirm = async () => {
     if (!template?.id) {
@@ -53,6 +67,61 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
     .map((s: string) => formatEnumString(s)) as string[];
 
   const allowedServicesText = allowedServiceNames.length > 0 ? allowedServiceNames.join(', ') : '—';
+
+
+
+  useEffect(() => {
+    if (!template?.id) {
+      return;
+    }
+    if(template?.templateType === "DEPARTMENT"){
+    getDepartment(template.departmentId)
+    .unwrap()
+    .then(res => {
+       setDepartmentName(res?.name);
+    });
+    return;
+  }
+
+    if (!template?.resourceId) {
+      setRresourceName("");
+      return;
+    }
+
+    if (template?.templateType === "PRACTITIONER") {
+      getPractitioner(template.resourceId)
+        .unwrap()
+        .then(res => {
+          setRresourceName(res?.firstName + " " + res?.lastName);
+        });
+    } else if (template?.templateType === 'DIAGNOSTIC_TEST') {
+      getDiagnosticTest(String(template.resourceId))
+        .unwrap()
+        .then(res => {
+          setRresourceName(res?.data?.name);
+        });
+    }
+    else if (template?.templateType === 'CATALOG') {
+      getCatalog(template.resourceId)
+        .unwrap()
+        .then(res => {
+          setRresourceName(res?.name);
+        });
+    }
+    else if (template?.templateType === 'SERVICE') {
+      getService(template.resourceId)
+        .unwrap()
+        .then(res => {
+          setRresourceName(res?.name);
+        });
+    }
+
+  }, [template]);
+
+  useEffect(() => {
+    console.log("departmentName: ", departmentName);
+    console.log("resourceName: ", resourceName);
+  },[departmentName, resourceName]);
 
   return (
     <div
@@ -94,7 +163,11 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
           </div>
 
           <div>
-            <strong>Parallel Capacity:</strong> {"1"}
+            <strong>Parallel Capacity:</strong> {template.parallelCapacityValue}
+          </div>
+
+          <div>
+            <strong>{departmentName ? 'Department Name:' : 'Resource Name:'}</strong> {departmentName ? departmentName : resourceName}
           </div>
 
           <Whisper
