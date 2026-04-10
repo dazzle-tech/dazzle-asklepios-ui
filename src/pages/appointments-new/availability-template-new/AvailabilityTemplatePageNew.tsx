@@ -5,6 +5,7 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import {
   useGetAvailabilityTemplatesByTemplateTypeQuery,
   useToggleAvailabilityTemplateActiveMutation,
@@ -390,7 +391,7 @@ const AvailabilityTemplatePageNew = () => {
           tableButtons={
             <>
               <MyButton
-                icon="plus"
+                prefixIcon={() => <AddOutlineIcon />}
                 appearance="primary"
                 onClick={() => {
                   setSelectedTemplate(

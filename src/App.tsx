@@ -845,7 +845,7 @@ const App = () => {
               <Route path="new" element={<FormTemplateBuilderPage />} />
               <Route path=":id" element={<FormTemplateBuilderPage />} />
               <Route path="availability-template" element={<AvailabilityTemplatePage />} />
-              <Route path="availability-templates-new" element={<AvailabilityTemplatePageNew />} />
+              <Route path="availability-templates" element={<AvailabilityTemplatePageNew />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

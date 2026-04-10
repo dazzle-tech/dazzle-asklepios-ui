@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Divider, Form, Row, Col } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -7,14 +7,14 @@ import './styles.less';
 import AvailabilityDayGrid from './AvailabilityDayGrid';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
-import { useGetAppointableDepartmentsQuery, useGetDepartmentByIdQuery, useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import { useGetAppointableDepartmentsQuery, useGetDepartmentByIdQuery, useLazyGetAppointableDepartmentsQuery, useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import MyTab from '@/components/MyTab';
 import { FaPlus } from "react-icons/fa";
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
-import { useGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
+import { useGetServicesByDepartmentQuery, useLazyGetServicesByDepartmentQuery } from '@/services/setup/serviceService';
+import { useGetPractitionerByDepartmentQuery, useLazyGetPractitionerByDepartmentQuery } from '@/services/setup/practitioner/PractitionerService';
 import { AvailabilityTemplateResponseVM } from '@/types/model-types-new';
 import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 import { newAvailabilityTemplateCreateDTO } from '@/types/model-types-constructor-new';
@@ -25,6 +25,7 @@ import PreviewSlotsModal from './PreviewSlotsModal';
 import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
 import { useEnumOptions } from '@/services/enumsApi';
 import { duration } from '@mui/material';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 
 type AddEditAvailabilityTemplateProps = {
@@ -49,6 +50,33 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
   const [departmentChangeCount, setDepartmentChangeCount] = useState(0);
 
+  const deptSize = 20;
+  const [deptPage, setDeptPage] = useState(0);
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
+  const [deptHasMore, setDeptHasMore] = useState(false);
+  const [deptNextLink, setDeptNextLink] = useState<string | null>(null);
+
+  const [triggerDepartments, { isFetching: isDeptLoading }] =
+    useLazyGetAppointableDepartmentsQuery();
+
+  const serviceSize = 20;
+  const [servicePage, setServicePage] = useState(0);
+  const [allServices, setAllServices] = useState<any[]>([]);
+  const [serviceHasMore, setServiceHasMore] = useState(false);
+  const [serviceNextLink, setServiceNextLink] = useState<string | null>(null);
+
+  const [triggerServices, { isFetching: isServiceLoading }] =
+    useLazyGetServicesByDepartmentQuery();
+
+  const practitionerSize = 20;
+  const [practitionerPage, setPractitionerPage] = useState(0);
+  const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
+  const [practitionerHasMore, setPractitionerHasMore] = useState(false);
+  const [practitionerNextLink, setPractitionerNextLink] = useState<string | null>(null);
+
+  const [triggerPractitioners, { isFetching: isPractitionerLoading }] =
+    useLazyGetPractitionerByDepartmentQuery();
+
   const userChangedServicesRef = useRef(false);
   const userChangedWorkingDaysRef = useRef(false);
 
@@ -61,37 +89,13 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
     skip: !selectedFacility?.id,
   });
-  const { data: departmentListResponse } = useGetAppointableDepartmentsQuery(
-    {
-      facilityId: record?.facilityId,
-      page: 0,
-      size: 500,
-      sort: 'id,asc'
-    },
-    { skip: !record?.facilityId }
-  );
+  
   const { data: departmentServices = [] } = useGetDepartmentServicesQuery(
     { departmentId: record?.departmentId },
     { skip: !record?.departmentId }
   );
-  const { data: servicesByDepartmentList } = useGetServicesByDepartmentQuery(
-    {
-      sourceId: record?.departmentId,
-      page: 0,
-      size: 500,
-      sort: 'id,asc'
-    },
-    { skip: !record?.departmentId }
-  );
-  const { data: practitionerListResponse } = useGetPractitionerByDepartmentQuery(
-    {
-      departmentId: record?.departmentId,
-      page: 0,
-      size: 500,
-      sort: 'id,asc'
-    },
-    { skip: !record?.departmentId }
-  );
+  
+  
   const { data: templates } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
     { parentTemplateId: record?.id },
     { skip: !record?.id }
@@ -103,6 +107,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
   const [getDepartment, { data, isLoading }] = useLazyGetDepartmentByIdQuery();
 
+
   const [create] = useCreateAvailabilityTemplateMutation();
   const [update] = useUpdateAvailabilityTemplateMutation();
 
@@ -112,6 +117,122 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const daysEnum = useEnumOptions('DayOfWeek');
   const encounterReasonEnum = useEnumOptions('EncounterReason');
 
+  const departmentOptions = allDepartments.map(d => ({
+    label: d.name,
+    value: d.id
+  }));
+  const serviceOptions = allServices.map(s => ({
+    label: s.name,
+    value: s.id
+  }));
+
+  const practitionerOptions = allPractitioners.map(p => ({
+    label: `${p.firstName} ${p.lastName}`,
+    value: p.id
+  }));
+
+  const loadDepartments = async ({
+    facilityId,
+    page = 0,
+    append = false
+  }: {
+    facilityId: any;
+    page?: number;
+    append?: boolean;
+  }) => {
+    if (!facilityId) return;
+
+    try {
+      const response = await triggerDepartments({
+        facilityId,
+        page,
+        size: deptSize,
+        sort: 'id,asc'
+      }).unwrap();
+
+      const rows = response?.data ?? [];
+      const nextLink = response?.links?.next ?? null;
+
+      setDeptHasMore(Boolean(nextLink));
+      setDeptNextLink(nextLink);
+
+      if (append) {
+        setAllDepartments(prev => {
+          const seen = new Set(prev.map(d => d.id));
+          return [...prev, ...rows.filter(d => !seen.has(d.id))];
+        });
+      } else {
+        setAllDepartments(rows);
+      }
+    } catch (e) {
+      console.error(e);
+      setAllDepartments([]);
+    }
+  };
+
+  const loadServices = async ({ page = 0, append = false }) => {
+    if (!record?.departmentId) return;
+
+    try {
+      const res = await triggerServices({
+        sourceId: record.departmentId,
+        page,
+        size: serviceSize,
+        sort: 'id,asc'
+      }).unwrap();
+
+      const rows = res?.data ?? [];
+      const nextLink = res?.links?.next ?? null;
+
+      setServiceHasMore(Boolean(nextLink));
+      setServiceNextLink(nextLink);
+
+      if (append) {
+        setAllServices(prev => {
+          const seen = new Set(prev.map(s => s.id));
+          return [...prev, ...rows.filter(s => !seen.has(s.id))];
+        });
+      } else {
+        setAllServices(rows);
+      }
+
+    } catch (e) {
+      console.error(e);
+      setAllServices([]);
+    }
+  };
+
+  const loadPractitioners = async ({ page = 0, append = false }) => {
+    if (!record?.departmentId) return;
+
+    try {
+      const res = await triggerPractitioners({
+        departmentId: record.departmentId,
+        page,
+        size: practitionerSize,
+        sort: 'id,asc'
+      }).unwrap();
+
+      const rows = res?.data ?? [];
+      const nextLink = res?.links?.next ?? null;
+
+      setPractitionerHasMore(Boolean(nextLink));
+      setPractitionerNextLink(nextLink);
+
+      if (append) {
+        setAllPractitioners(prev => {
+          const seen = new Set(prev.map(p => p.id));
+          return [...prev, ...rows.filter(p => !seen.has(p.id))];
+        });
+      } else {
+        setAllPractitioners(rows);
+      }
+
+    } catch (e) {
+      console.error(e);
+      setAllPractitioners([]);
+    }
+  };
 
   const normalizeAllowedServices = (raw: any) => {
     if (!Array.isArray(raw)) return [];
@@ -202,28 +323,28 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     }));
   }, [templateById]);
 
-   useEffect(() => {
-    if(record?.id){
+  useEffect(() => {
+    if (record?.id) {
       return;
     }
-  if (!record?.departmentId) {
-    setRecord(prev => ({
-      ...prev,
-      durationMinutes: 0 
-    }));
-    return;
-  }
-
-  getDepartment(record.departmentId)
-    .unwrap()
-    .then(res => {
+    if (!record?.departmentId) {
       setRecord(prev => ({
         ...prev,
-        durationMinutes: res.defaultDurationMinutes
+        durationMinutes: 0
       }));
-    });
+      return;
+    }
 
-}, [record?.departmentId]);
+    getDepartment(record.departmentId)
+      .unwrap()
+      .then(res => {
+        setRecord(prev => ({
+          ...prev,
+          durationMinutes: res.defaultDurationMinutes
+        }));
+      });
+
+  }, [record?.departmentId]);
 
 
   useEffect(() => {
@@ -261,6 +382,39 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     departmentChangeCount,
     departmentServices,
   ]);
+
+  useEffect(() => {
+    if (!record?.facilityId) return;
+
+    setAllDepartments([]);
+    setDeptPage(0);
+
+    loadDepartments({
+      facilityId: record.facilityId,
+      page: 0
+    });
+
+  }, [record?.facilityId]);
+
+  useEffect(() => {
+    if (!record?.departmentId) return;
+
+    setAllServices([]);
+    setServicePage(0);
+
+    loadServices({ page: 0 });
+
+  }, [record?.departmentId]);
+
+  useEffect(() => {
+    if (!record?.departmentId) return;
+
+    setAllPractitioners([]);
+    setPractitionerPage(0);
+
+    loadPractitioners({ page: 0 });
+
+  }, [record?.departmentId]);
 
 
   const handleDepartmentChange = (next: any) => {
@@ -359,6 +513,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       title: formatEnumString(day.value),
       content: (
         <AvailabilityDayGrid
+          dayInclude={record?.workingDays?.find(d => d.dayOfWeek === day.value)?.isWorking}
           parentTemplate={record}
           templates={templates}
           day={day?.value}
@@ -429,17 +584,30 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                           />
                         </Col>
                         <Col md={12}>
-                          {/* ✅ استخدمنا setRecord custom عشان نتحكم باختيار الـ department */}
                           <MyInput
                             width="100%"
                             fieldName="departmentId"
                             fieldLabel="Department"
-                            fieldType="select"
-                            selectData={departmentListResponse?.data ?? []}
-                            selectDataLabel="name"
-                            selectDataValue="id"
+                            fieldType="selectPagination"
+                            selectData={departmentOptions}
+                            selectDataLabel="label"
+                            selectDataValue="value"
                             record={record}
                             setRecord={handleDepartmentChange}
+                            loading={isDeptLoading}
+                            hasMore={deptHasMore}
+                            onFetchMore={async () => {
+                              if (!deptNextLink || !record?.facilityId) return;
+
+                              const { page } = extractPaginationFromLink(deptNextLink);
+                              setDeptPage(page);
+
+                              await loadDepartments({
+                                facilityId: record.facilityId,
+                                page,
+                                append: true
+                              });
+                            }}
                             menuMaxHeight={200}
                             disabled={record?.id}
                             required
@@ -509,14 +677,26 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                   content={
                     <Form fluid>
                       <MyInput
+                        key={`service-${record?.departmentId}`}
                         width="100%"
-                        fieldType="select"
+                        fieldType="selectPagination"
+                        fieldLabel='Default Service'
                         fieldName="defaultServiceId"
-                        selectData={servicesByDepartmentList?.data ?? []}
-                        selectDataLabel="name"
-                        selectDataValue="id"
+                        selectData={serviceOptions}
+                        selectDataLabel="label"
+                        selectDataValue="value"
                         record={record}
                         setRecord={setRecord}
+                        loading={isServiceLoading}
+                        hasMore={serviceHasMore}
+                        onFetchMore={async () => {
+                          if (!serviceNextLink) return;
+
+                          const { page } = extractPaginationFromLink(serviceNextLink);
+                          setServicePage(page);
+
+                          await loadServices({ page, append: true });
+                        }}
                       />
                       <MyInput
                         width="100%"
@@ -540,16 +720,26 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                         {record['requirePractitioner'] && (
                           <Col md={12}>
                             <MyInput
+                              key={`practitioner-${record?.departmentId}`}
                               width="100%"
-                              fieldType="select"
+                              fieldType="selectPagination"
                               fieldLabel="Default Practitioner"
                               fieldName="defaultPractitionerId"
-                              selectData={practitionerListResponse?.data ?? []}
-                              selectDataLabel="firstName"
-                              selectDataValue="id"
+                              selectData={practitionerOptions}
+                              selectDataLabel="label"
+                              selectDataValue="value"
                               record={record}
                               setRecord={setRecord}
-                              required
+                              loading={isPractitionerLoading}
+                              hasMore={practitionerHasMore}
+                              onFetchMore={async () => {
+                                if (!practitionerNextLink) return;
+
+                                const { page } = extractPaginationFromLink(practitionerNextLink);
+                                setPractitionerPage(page);
+
+                                await loadPractitioners({ page, append: true });
+                              }}
                             />
                           </Col>
                         )}
