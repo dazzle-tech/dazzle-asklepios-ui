@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
-import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
+import { useGetAllActivePlansQuery } from '@/services/setup/payer/PayorPlanService';
 import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal/AdvancedModal';
 import { formatEnumString } from '@/utils';
-import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
+import { useGetAllActivePayorsQuery } from '@/services/setup/payer/PayorService';
 import InsuranceBenefitsCard from './InsuranceBenefitsCard';
 import './styles.less';
 import PlanCoverageItemsSection from './PlanCoverageItemsSection';
@@ -121,22 +121,22 @@ const InsuranceModal = ({
   const [relativePage, setRelativePage] = useState(0);
   const [allRelatives, setAllRelatives] = useState<any[]>([]);
 
+  // بعد
   const {
     data: payorResponse,
     isLoading: payorLoading,
     isFetching: payorFetching
-  } = useGetAllPayorsQuery({
+  } = useGetAllActivePayorsQuery({
     page: payorPage,
     size: 20,
-    sort: 'name,asc',
-    ...(payorSearchKeyword && { name: payorSearchKeyword })
+    sort: 'name,asc'
   });
 
   const {
     data: plansResponse,
     isLoading: plansLoading,
     isFetching: plansFetching
-  } = useGetPlansByPayorQuery(
+  } = useGetAllActivePlansQuery(
     {
       payorId: Number(patientInsurance?.payorId) || 0,
       page: planPage,
@@ -436,13 +436,11 @@ const InsuranceModal = ({
     </div>
   );
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <AdvancedModal

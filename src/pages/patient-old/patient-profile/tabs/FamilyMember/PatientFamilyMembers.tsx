@@ -117,7 +117,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
                     onClick={handleNewRelative}
                     disabled={!localPatient.key}
                     prefixIcon={() => <PlusRound />}>
-                    New Relative
+                    <Translate>New Relative</Translate>
                 </MyButton>
                 <MyButton
                     disabled={!selectedPatientRelation.key}

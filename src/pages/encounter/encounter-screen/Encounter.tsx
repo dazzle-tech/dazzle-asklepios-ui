@@ -42,7 +42,7 @@ import { useLazyExistsPatientDiagnosisByEncounterIdQuery } from '@/services/medi
 
 const Encounter = () => {
   const mode = useSelector((state: any) => state.ui.mode);
-  const [action, setAction] = useState(() => () => {});
+  const [action, setAction] = useState(() => () => { });
 
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
@@ -133,7 +133,7 @@ const Encounter = () => {
     if (!hasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (buttonPosition.x + dragOffset.x), 2) +
-          Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
+        Math.pow(e.clientY - (buttonPosition.y + dragOffset.y), 2)
       );
 
       if (movedDistance > 5) {
@@ -213,6 +213,8 @@ const Encounter = () => {
       navigate('/day-case-list');
     } else if (propsData?.fromPage === 'ER_Department') {
       navigate('/ER-department');
+    }  else if (propsData?.fromPage === 'Urgent_Care_List') {
+      navigate('/urgent-care-department-list');
     } else {
       navigate('/encounter-list');
     }
@@ -231,9 +233,16 @@ const Encounter = () => {
         await completeEncounter({ id: propsData.encounter.id }).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
-    } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
@@ -253,7 +262,7 @@ const Encounter = () => {
     if (!aiHasMoved) {
       const movedDistance = Math.sqrt(
         Math.pow(e.clientX - (aiButtonPosition.x + aiDragOffset.x), 2) +
-          Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
+        Math.pow(e.clientY - (aiButtonPosition.y + aiDragOffset.y), 2)
       );
 
       if (movedDistance > 5) setAiHasMoved(true);
@@ -306,10 +315,17 @@ const Encounter = () => {
   const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
 
   const divContent = `Patient Visit > ${currentHeader}`;
-  useEffect(() => {
+
+useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));
     dispatch(setDivContent(divContent));
-  }, [currentHeader, dispatch]);
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [currentHeader,dispatch]);
+
 
   useEffect(() => {
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
@@ -350,8 +366,6 @@ const Encounter = () => {
       navigate('/encounter-list', { replace: true });
     }
   }, [selectedDeptId, propsData?.encounter]);
-
-
 
   return (
     <ActionContext.Provider value={{ action, setAction }}>
@@ -465,6 +479,11 @@ const Encounter = () => {
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={async () => {
                     try {
+                      if (localEncounter?.encounterType === 'EMERGENCY') {
+                        setOpenDischargeModal(true);
+                        return;
+                      }
+
                       if (!encounterId) {
                         dispatch(
                           notify({
@@ -498,10 +517,15 @@ const Encounter = () => {
                       );
                     }
                   }}
-                  disabled={!encounterId || isCheckingPatientDiagnosis}
+                  disabled={
+                    localEncounter?.encounterType !== 'EMERGENCY' &&
+                    (!encounterId || isCheckingPatientDiagnosis)
+                  }
                   appearance="ghost"
                 >
-                  <Translate>Complete Visit</Translate>
+                  <Translate>
+                    {localEncounter?.encounterType === 'EMERGENCY' ? 'Disposition' : 'Complete Visit'}
+                  </Translate>
                 </MyButton>
 
                 {location.pathname == '/encounter' && (
@@ -679,7 +703,7 @@ const Encounter = () => {
         appointmentData={followUpDraftAppointmentData}
         resourceType={selectedResourceType}
         facility={selectedFacility}
-        onSave={() => {}}
+        onSave={() => { }}
         showOnly={showAppointmentOnly}
         selectedSlot={undefined}
       />

@@ -34,13 +34,13 @@ const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, w
               selectDataValue="id"
               record={agegroups}
               setRecord={setAgeGroups}
-              disabled={agegroups?.facilityId}
+              disabled={agegroups?.id}
               required
             />
 
             <MyInput
               width="100%"
-              disabled={agegroups.key ? true : false}
+              disabled={agegroups.id ? true : false}
               fieldName="ageGroup"
               fieldType="select"
               selectData={ageGroupOptions ?? []}
@@ -113,10 +113,10 @@ const AddEditAgeGroup = ({ open, setOpen, agegroups, setAgeGroups, handleSave, w
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={agegroups?.key ? 'Edit Age Group' : 'New Age Group'}
+      title={agegroups?.id ? 'Edit Age Group' : 'New Age Group'}
       position="right"
       content={(stepNumber) => (<div dir={dir}>{conjureFormContent(stepNumber)}</div>)}
-      actionButtonLabel={agegroups?.key ? 'Save' : 'Create'}
+      actionButtonLabel={agegroups?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Age Group Info', icon: <FaBabyCarriage /> }]}
       size={width > 600 ? '36vw' : '70vw'}

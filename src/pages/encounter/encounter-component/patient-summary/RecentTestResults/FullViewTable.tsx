@@ -119,7 +119,7 @@ const FullViewTable = ({ open, setOpen, results, notesResponse, openNotesModal, 
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Recent Test Results"
+            title={<Translate>Recent Test Results</Translate>}
             content={
                 <>
                     <MyTable

@@ -145,7 +145,72 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
           record={department}
           setRecord={setDepartment}
         />
+
       </div>
+      <MyInput
+        column
+        fieldType="number"
+        fieldName="parallelCapacityValue"
+        record={department}
+        setRecord={setDepartment}
+        width="100%"
+        required
+      />
+      <MyInput
+        column
+        fieldType="number"
+        fieldName="defaultDurationMinutes"
+        record={department}
+        setRecord={setDepartment}
+        width="100%"
+        required={department?.appointable}
+      />
+      <MyInput
+        column
+        fieldType="number"
+        fieldName="defaultBufferBeforeMinutes"
+        record={department}
+        setRecord={setDepartment}
+        width="100%"
+        required={department?.appointable}
+      />
+      <MyInput
+        column
+        fieldType="number"
+        fieldName="defaultBufferAfterMinutes"
+        record={department}
+        setRecord={setDepartment}
+        width="100%"
+        required={department?.appointable}
+      />
+      <MyInput
+        column
+        fieldType="checkbox"
+        fieldName="parallelCapacityEnabled"
+        record={department}
+        setRecord={setDepartment}
+      />
+      <MyInput
+        column
+        fieldType="checkbox"
+        fieldName="requirePractitioner"
+        record={department}
+        setRecord={setDepartment}
+      />
+      <MyInput
+        column
+        fieldType="checkbox"
+        fieldName="requireBilling"
+        record={department}
+        setRecord={setDepartment}
+      />
+      <MyInput
+        column
+        fieldType="checkbox"
+        fieldName="requirePreAssessment"
+        record={department}
+        setRecord={setDepartment}
+      />
 
       {/* Actions */}
       <div style={{ display: 'flex', alignItems: 'flex-end', marginLeft: '10px', marginTop: '20px' }}>

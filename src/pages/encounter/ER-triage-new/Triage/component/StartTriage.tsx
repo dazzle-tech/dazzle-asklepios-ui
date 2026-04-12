@@ -38,7 +38,6 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
   const dispatch = useAppDispatch();
 
   const [triage, setTriage] = useState<any>(emergencyTriageNew ?? {});
-  const [refetchPatientObservations, setRefetchPatientObservations] = useState(false);
   const [openSendToModal, setOpenSendToModal] = useState(false);
 
   useEffect(() => {

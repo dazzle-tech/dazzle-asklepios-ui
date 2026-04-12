@@ -253,7 +253,7 @@ const {
           checked={showCancelled}
           onChange={(_, checked) => setShowCancelled(checked)}
         >
-          Show Cancelled
+                <Translate>Show Cancelled</Translate>
         </Checkbox>
 
         <MyTable

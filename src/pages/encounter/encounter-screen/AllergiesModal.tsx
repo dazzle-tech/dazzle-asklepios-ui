@@ -257,7 +257,7 @@ const AllergiesModal = ({ open, setOpen, patient }) => {
                   setShowCanceled(!showCanceled);
                 }}
               >
-                Show Cancelled
+                <Translate>Show Cancelled</Translate>
               </Checkbox>
             </div>
             <MyTable

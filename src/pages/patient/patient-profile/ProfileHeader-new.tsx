@@ -93,6 +93,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
+
+  
   const handlePrintInformation = async () => {
     if (!localPatient?.id) return;
 
@@ -117,7 +119,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const contentOfMoreIconMenu = (
-    <Popover full>
+    <Popover>
       <Dropdown.Menu>
         <Dropdown.Item
           disabled={localPatient.id === undefined}
@@ -214,7 +216,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   );
 
   const contentOfPrintIconMenu = (
-    <Popover full>
+    <Popover>
       <Dropdown.Menu>
         <Dropdown.Item
           disabled={!localPatient?.id}
@@ -322,19 +324,17 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
       <Stack>
         <Stack.Item grow={1}>
-          <Form layout="inline" fluid className="profile-header">
+          <Form fluid className="profile-header">
             <AvatarGroup spacing={6} className="avatar-card-parent">
               <input
                 type="file"
@@ -424,9 +424,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </div>
             </AvatarGroup>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <AvatarGroup spacing={6}>
-              </AvatarGroup>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '15px'
+              }}
+            >
+              <AvatarGroup spacing={6}></AvatarGroup>
             </div>
             <div
               style={{
@@ -436,20 +442,22 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 justifyContent: 'flex-end'
               }}
             >
-              <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
+              <MyButton onClick={handleScanDocumentClick}>
+                <Translate>Scan Document</Translate>
+              </MyButton>
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
               >
-                {localPatient?.id ? 'Edit' : 'Save'}
+                <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                 onClick={handleClear}
               >
-                Clear
+                <Translate>Clear</Translate>
               </MyButton>
 
               <MyButton
@@ -457,11 +465,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 onClick={() => setQuickPatientModalOpen(true)}
                 prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
               >
-                Quick Patient
+                <Translate>Quick Patient</Translate>
               </MyButton>
 
               <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                Quick Appointment
+                <Translate>Quick Appointment</Translate>
               </MyButton>
 
               <AdministrativeWarningsModal
@@ -469,13 +477,35 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 validationResult={validationResult}
               />
 
-              <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
-                <FontAwesomeIcon icon={faEllipsisVertical} />
-              </MyButton>
+              <Whisper
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                container={() => document.body}
+                preventOverflow
+                rootClose
+                speaker={contentOfMoreIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton size="small">
+                    <FontAwesomeIcon icon={faEllipsisVertical} />
+                  </MyButton>
+                </span>
+              </Whisper>
 
-              <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
-                <FontAwesomeIcon icon={faPrint} />
-              </MyButton>
+              <Whisper
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                container={() => document.body}
+                preventOverflow
+                rootClose
+                speaker={contentOfPrintIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton size="small">
+                    <FontAwesomeIcon icon={faPrint} />
+                  </MyButton>
+                </span>
+              </Whisper>
             </div>
           </Form>
         </Stack.Item>

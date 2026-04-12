@@ -58,7 +58,7 @@ const MedicalWarnings = ({ patient }) => {
   return (
     <Section
       isContainOnlyTable
-      title="Medical Warnings"
+      title={<Translate>Medical Warnings</Translate>}
       content={
         <MyTable
           data={activeWarnings}

@@ -306,7 +306,7 @@ const TransferTestList = ({
             style={{
               display: 'flex',
               gap: '16px',
-              alignItems: 'stretch', // 👈 مهم
+              alignItems: 'stretch',
               height: '100%'
             }}
           >

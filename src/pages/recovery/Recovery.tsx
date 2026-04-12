@@ -397,7 +397,7 @@ const Recovery = () => {
           setRecord={setDateFilter}
           showLabel={false}
         />
-        <Checkbox>Show Moved to bed</Checkbox>
+        <Checkbox><Translate>Show Moved to bed</Translate></Checkbox>
 
         <Form fluid className="container-of-filter-fields-department">
           <MyInput

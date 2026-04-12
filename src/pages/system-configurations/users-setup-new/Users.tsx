@@ -51,7 +51,7 @@ const Users = () => {
   const [saveUser, saveUserMutation] = useAddUserMutation();
   // Fetch users list response
   const [pageIndex, setPageIndex] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
 
 
@@ -90,8 +90,8 @@ const Users = () => {
 
   };
 
-  const users = usersResponse ?? [];
-  const totalCount = usersResponse?.length ?? 0;
+  const users = usersResponse?.data ?? [];
+  const totalCount = usersResponse?.totalCount ?? 0;
 
 
   // Available fields for filtering
@@ -106,8 +106,18 @@ const Users = () => {
   const divContent = (
     "Users"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('Users'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
   // ClassName for selected row
   const isSelected = rowData => {
     if (rowData && user && rowData.id === user.id) {
@@ -122,13 +132,21 @@ const Users = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+   
+const formatErrorKey = (msg?: string) => {
+  if (!msg) return '';
 
+  const key = msg.split('.').pop() || msg;
+
+  return key
+    .replace(/exists/gi, ' already exists')
+    .replace(/user/gi, 'login name')
+    .replace(/email/gi, 'Email')
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^./, s => s.toUpperCase());
+};
 
   // Handle Save User
   const handleSave = async () => {
@@ -140,37 +158,38 @@ const Users = () => {
         refetch();
       } else {
         const response = await saveUser({ ...user }).unwrap();
+
         dispatch(notify({ msg: 'The User has been saved successfully', sev: 'success' }));
         refetch();
       }
 
       refetchFacility();
       setCanProceed(true);
-    } catch (error) {
-      console.error("❌ Error saving user:", error);
+   } catch (error: any) {
+  console.error("❌ Error saving user:", error);
 
-      let backendMessage = "Failed to save user";
+  const apiError = error?.data;
+  const message = apiError?.message?.toLowerCase();
 
-      const apiError = error?.data;
-      const message = apiError?.message?.toLowerCase();
+  const knownErrors: Record<string, string> = {
+    "error.emailexists": "This email is already in use",
+    "error.userexists": "This username is already in use",
+  };
 
-      if (message === "error.emailexists") {
-        backendMessage = "This email is already in use";
-      } else if (apiError?.fieldErrors?.length > 0) {
-        backendMessage = apiError.fieldErrors[0].message;
-      } else if (apiError?.detail) {
-        backendMessage = apiError.detail;
-      } else if (apiError?.message) {
-        backendMessage = apiError.message;
-      }
+  const backendMessage =
+    (message && knownErrors[message]) ||
+    apiError?.fieldErrors?.[0]?.message ||
+    (message ? formatErrorKey(message) : '') ||
+    apiError?.detail ||
+    "Failed to save user";
 
-      dispatch(
-        notify({
-          msg: backendMessage,
-          sev: "warning",
-        })
-      );
-    }
+  dispatch(
+    notify({
+      msg: backendMessage,
+      sev: "warning",
+    })
+  );
+}
   };
 
   // Handle click on Add New button
@@ -382,7 +401,7 @@ const Users = () => {
         <MyInput
           fieldName="login"
           fieldType="text"
-          fieldLabel='Username'
+          fieldLabel={<Translate>Username</Translate>}
           record={filters}
           setRecord={setFilters}
         />
@@ -434,11 +453,11 @@ const Users = () => {
     </Box>
   );
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (

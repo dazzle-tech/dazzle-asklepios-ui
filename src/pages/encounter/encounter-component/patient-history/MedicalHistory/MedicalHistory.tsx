@@ -2,16 +2,16 @@ import React from 'react';
 import PatientProblems from '@/pages/encounter/encounter-component/patient-history/MedicalHistory/PatientProblems/PatientProblems';
 import FamilyHistory from './FamilyHistory';
 import Hospitalizations from './Hospitalizations';
+import CurrentMedication from './CurrentMedication/CurrentMedication';
 // import BloodTransfusion from './BloodTransfusion/BloodTransfusion';
 // import PatientHistorySummary from './PatientHistorySummary/PatientHistorySummary';
+
 const MedicalHistory = ({ patient, encounter, edit, toShowData }) => {
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div className="medical-main-container" dir={dir}>
@@ -29,8 +29,10 @@ const MedicalHistory = ({ patient, encounter, edit, toShowData }) => {
         edit={edit}
         toShowData={toShowData}
       />
+      <CurrentMedication patient={patient} edit={edit} toShowData={toShowData} />
       {/* <BloodTransfusion patient={patient} encounter={encounter} edit={edit} /> */}
     </div>
   );
 };
+
 export default MedicalHistory;

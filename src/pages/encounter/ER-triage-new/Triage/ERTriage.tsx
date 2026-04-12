@@ -55,9 +55,6 @@ import {
   useGetBulkPatientBasicInfoMutation,
   useLazyGetPatientWristbandQuery
 } from '@/services/patient/patientService';
-
-import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
 import MyModal from '@/components/MyModal/MyModal';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import { printPatientWristband } from '@/utils/printPatientWristband';
@@ -207,12 +204,12 @@ const ERTriage = () => {
     const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
     const end = toDateSafe(
       latest?.completedDate ??
-        completedDate ??
-        completedAt ??
-        rowUpdatedAt ??
-        fallbackUpdatedAt ??
-        completedDate ??
-        null
+      completedDate ??
+      completedAt ??
+      rowUpdatedAt ??
+      fallbackUpdatedAt ??
+      completedDate ??
+      null
     );
     if (!triageStart || !end) return <></>;
     return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
@@ -267,7 +264,6 @@ const ERTriage = () => {
 
   const departmentId = Number(selectedDepartment?.departmentId ?? selectedDepartment?.id ?? 0) || 0;
 
-  // ✅ التعديل: fromDate = أسبوع قبل اليوم
   const lastWeekDefault = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
@@ -403,7 +399,7 @@ const ERTriage = () => {
     if (patientIdsForBulk.length === 0) return;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientByIdMap = useMemo(() => {
@@ -734,8 +730,8 @@ const ERTriage = () => {
               isPendingPayment
                 ? 'click'
                 : lockHoverUntilLeave
-                ? 'click'
-                : (['hover', 'click'] as any)
+                  ? 'click'
+                  : (['hover', 'click'] as any)
             }
             placement="leftStart"
             speaker={prioritySpeaker}
@@ -766,22 +762,12 @@ const ERTriage = () => {
       const statusUpper = String(
         encounterData?.status ?? encounterData?.encounterStatus ?? ''
       ).toUpperCase();
-      if (statusUpper === 'TRIAGE_STARTED') {
-        const targetPath = '/ER-start-triage';
-        sessionStorage.setItem('encounterPageSource', 'EncounterList');
-        navigate(targetPath, {
-          state: {
-            info: 'to_Start_Triage',
-            fromPage: 'ER_Triage',
-            patient: patientData,
-            encounter: encounterData,
-            emergencyTriageNew: null
-          }
-        });
-        return;
-      }
 
-      if (typeof encounterId === 'number' && !Number.isNaN(encounterId)) {
+      if (
+        statusUpper !== 'TRIAGE_STARTED' &&
+        typeof encounterId === 'number' &&
+        !Number.isNaN(encounterId)
+      ) {
         await updateEncounter({
           id: encounterId,
           body: buildEncounterUpdateBody(encounterData, { status: 'TRIAGE_STARTED' })
@@ -789,7 +775,9 @@ const ERTriage = () => {
       }
 
       const emergencyTriageNew =
-        typeof encounterId === 'number' && !Number.isNaN(encounterId) && !Number.isNaN(patientId)
+        typeof encounterId === 'number' &&
+          !Number.isNaN(encounterId) &&
+          !Number.isNaN(patientId)
           ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
           : null;
 
@@ -799,7 +787,7 @@ const ERTriage = () => {
 
       if (!emergencyTriageNew) {
         console.warn(
-          '[ER Triage] Could not create/get new emergency triage record: missing numeric patientId/encounterId',
+          '[ER Triage] Could not create/get emergency triage record: missing numeric patientId/encounterId',
           { patientId, encounterId, patientData, encounterData }
         );
       }
@@ -813,13 +801,26 @@ const ERTriage = () => {
           emergencyTriageNew
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Start triage error:', error, { encounterData, patientData });
+
+      const errorKey =
+        error?.message ||
+        error?.data?.message ||
+        '';
+
+      let readableMessage = 'Failed to start triage';
+
+      if (errorKey === 'error.patient.emergency.notAllowed.withOngoing') {
+        readableMessage =
+          'Cannot start a new triage because the patient already has an ongoing encounter.';
+      } else if (errorKey) {
+        readableMessage = errorKey.replaceAll('.', ' ');
+      }
+
       dispatch(
         notify({
-          msg:
-            (error as any)?.message ||
-            'Failed to start triage (missing required encounter fields?)',
+          msg: readableMessage,
           sev: 'error'
         })
       );
@@ -1009,7 +1010,7 @@ const ERTriage = () => {
     },
     {
       key: 'patientFullName',
-      title: <Translate>PATIENT NAME </Translate>,
+      title: <Translate>PATIENT NAME</Translate>,
       fullText: true,
       render: (rowData: any) => {
         const tooltipSpeaker = (
@@ -1188,7 +1189,7 @@ const ERTriage = () => {
 
             {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               COMPLETE_TRIAGE_STATUS_CODE ||
-            String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
+              String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               SENT_TO_ER_STATUS_CODE ? (
               <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
                 <div>
@@ -1278,11 +1279,11 @@ const ERTriage = () => {
                     );
                     const patientId = toNumberOrNaN(
                       patientData?.id ??
-                        patientData?.patientId ??
-                        patientData?.key ??
-                        rowData?.patientId ??
-                        rowData?.patientKey ??
-                        rowData?.patient_key
+                      patientData?.patientId ??
+                      patientData?.key ??
+                      rowData?.patientId ??
+                      rowData?.patientKey ??
+                      rowData?.patient_key
                     );
 
                     try {
@@ -1301,7 +1302,7 @@ const ERTriage = () => {
                   disabled={
                     isPendingPayment ||
                     String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() !==
-                      'TRIAGE_STARTED'
+                    'TRIAGE_STARTED'
                   }
                 >
                   <FontAwesomeIcon icon={faPaperPlane} />
@@ -1312,20 +1313,20 @@ const ERTriage = () => {
             {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST', 'PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
             ) && (
-              <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
-                <div>
-                  <MyButton
-                    size="small"
-                    onClick={() => {
-                      setLocalEncounter(rowData);
-                      setOpen(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faRectangleXmark} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
+                <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+                  <div>
+                    <MyButton
+                      size="small"
+                      onClick={() => {
+                        setLocalEncounter(rowData);
+                        setOpen(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faRectangleXmark} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
           </Form>
         );
       },
@@ -1415,11 +1416,11 @@ const ERTriage = () => {
       </>
     );
   };
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <div dir={dir}>
       {patientSidebarOpen && (

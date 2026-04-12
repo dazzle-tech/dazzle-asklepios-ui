@@ -92,13 +92,15 @@ const ModalProductCard = ({
 
   dispatch(setPageCode('ProductList'));
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+useEffect(() => {
+  
+  dispatch(setDivContent('Facilities'));
 
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // handle click om edit  
   const handleEdit = () => {

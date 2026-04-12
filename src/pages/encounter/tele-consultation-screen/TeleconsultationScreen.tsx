@@ -307,33 +307,33 @@ const TeleconsultationRequests = () => {
     },
     {
       key: 'patient',
-      title: 'Patient Name',
+      title: <Translate>Patient Name</Translate>,
       dataKey: 'patientName',
       width: 200,
       render: (row: any) => <div>{row.patient?.fullName}</div>
     },
     {
       key: 'gender',
-      title: 'Gender',
+      title: <Translate>Gender</Translate>,
       dataKey: 'gender',
       width: 80,
       render: (row: any) => <div>{row.patient?.genderLvalue?.lovDisplayVale ?? ''}</div>
     },
     {
       key: 'age',
-      title: 'Age',
+      title: <Translate>Age</Translate>,
       dataKey: 'age',
       width: 60,
       render: (row: any) => <div>{calculateAgeFormat(row.patient?.dob)}</div>
     },
     {
       key: 'questionToConsultant',
-      title: 'Question To Consultant',
+      title: <Translate>Question To Consultant</Translate>,
       width: 180
     },
     {
       key: 'expectedResponseTime',
-      title: <Translate>Expected Repones Date</Translate>,
+      title: <Translate>Expected Response Date</Translate>,
       width: 180,
       render: (row: any) => {
         return formatDateWithoutSeconds(row.expectedResponseTime);
@@ -341,7 +341,7 @@ const TeleconsultationRequests = () => {
     },
     {
       key: 'urgencyLkey',
-      title: 'Urgency',
+      title: <Translate>Urgency</Translate>,
       width: 80,
       render: row => {
         return row.urgencyLvalue?.lovDisplayVale;
@@ -349,7 +349,7 @@ const TeleconsultationRequests = () => {
     },
     {
       key: 'statusLkey',
-      title: 'Status',
+      title: <Translate>Status</Translate>,
       width: 100,
       render: row => {
         return (
@@ -362,7 +362,7 @@ const TeleconsultationRequests = () => {
     },
     {
       key: 'actions',
-      title: 'Actions',
+      title: <Translate>Actions</Translate>,
       width: 120,
       render: (rowData: ApTeleConsultation) => (
         <div className="actions-icons-tele-consultation-screen">

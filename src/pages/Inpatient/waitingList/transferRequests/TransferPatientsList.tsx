@@ -75,7 +75,7 @@ const TransferPatientsList = () => {
                         setTransferRequest(checked ? '91098528988200' : '');
                     }}
                 >
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                 </Checkbox>
             </div>
         </Form>

@@ -1086,7 +1086,9 @@ const MyConsultations = () => {
             onClick={handleSubmit}
             disabled={selectedRows.length === 0}
           >
+            <Translate>
             Submit
+            </Translate>
           </MyButton>
         </div>
       </div>

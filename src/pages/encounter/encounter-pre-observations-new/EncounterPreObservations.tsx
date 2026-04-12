@@ -96,17 +96,19 @@ const NurseStation = () => {
     return map;
   }, []);
 
-  useEffect(() => {
     const header = headersMap[location.pathname] || 'Nurse Dashboard';
 
-    dispatch(setPageCode('Nurse_Station'));
-    dispatch(setDivContent(`Nurse Station > ${header}`));
 
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(' '));
-    };
-  }, [location.pathname, headersMap, dispatch]);
+    useEffect(() => {
+      
+        dispatch(setPageCode('Nurse_Station'));
+        dispatch(setDivContent(`Nurse Station > ${header}`));
+
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+      };
+    }, [dispatch]);
 
   useEffect(() => {
     if (!propsData?.encounter) {
@@ -142,13 +144,16 @@ const NurseStation = () => {
           sev: 'success'
         })
       );
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'An error occurred while completing the encounter',
-          sev: 'error'
-        })
-      );
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     } finally {
       dispatch(hideSystemLoader());
     }
@@ -242,7 +247,6 @@ const NurseStation = () => {
               >
                 Generate Report
               </MyButton>
-
               <MyButton
                 disabled={edit}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}

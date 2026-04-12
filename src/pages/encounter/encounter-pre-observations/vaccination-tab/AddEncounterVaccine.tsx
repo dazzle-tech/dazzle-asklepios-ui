@@ -32,6 +32,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
 import InfoCardList from '@/components/InfoCardList';
 import clsx from 'clsx';
+import Translate from '@/components/Translate';
 
 const AddEncounterVaccine = ({
   open,
@@ -446,6 +447,14 @@ const AddEncounterVaccine = ({
     }
   }, [isEncounterStatusClosed, isDisabled, isEncounterVaccineStatusClose]);
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
   return (
     <AdvancedModal
       open={open}
@@ -461,7 +470,7 @@ const AddEncounterVaccine = ({
         </MyButton>
       }
       rightContent={
-        <div className={clsx('right-main-container', { 'disabled-panel': edit })}>
+        <div className={clsx('right-main-container', { 'disabled-panel': edit })} dir={dir}>
           <div className="search-list">
             <MyLabel label="Vaccine Name" />
             <InputGroup inside>
@@ -497,7 +506,7 @@ const AddEncounterVaccine = ({
               column
               disabled
               fieldType="text"
-              fieldLabel="Vaccin Name"
+              fieldLabel="Vaccine Name"
               fieldName="vaccineName"
               record={vaccine}
               setRecord={setVaccine}
@@ -779,7 +788,7 @@ const AddEncounterVaccine = ({
         </div>
       }
       leftContent={
-        <div className="left-main-container">
+        <div className="left-main-container" dir={dir}>
           <Form layout="inline" fluid className="fields-container">
             <MyInput
               width={160}
@@ -823,7 +832,7 @@ const AddEncounterVaccine = ({
             />
           </Form>
           <div>
-            <h6>Vaccine Brands</h6>
+            <h6><Translate>Vaccine Brands</Translate></h6>
             <InfoCardList
               list={vaccine?.key ? vaccineBrandsListResponseLoading?.object ?? [] : []}
               fields={[

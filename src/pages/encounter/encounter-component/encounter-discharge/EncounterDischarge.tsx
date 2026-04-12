@@ -1,174 +1,134 @@
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch } from '@/hooks';
 import { Form } from 'rsuite';
-import { newApEncounter } from '@/types/model-types-constructor';
-import { ApEncounter, ApBed } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
-import './styles.less'
-import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
-import { PatientEncounter } from '@/types/model-types-new';
+import './styles.less';
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-import { useGetLovValuesByCodeQuery, useSaveBedMutation, useLazyGetBedListQuery } from '@/services/setupService';
-import { useLazyGetEncounterAssignToBedQuery } from '@/services/encounterService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { PatientEncounterDischarge } from '@/types/model-types-new';
+import { newPatientEncounterDischarge } from '@/types/model-types-constructor-new';
+
+import { useMarkBedAsInCleaningMutation } from '@/services/setup/room/bedService';
 import MyInput from '@/components/MyInput';
-import { ListRequest } from '@/types/types';
-import { initialListRequest } from '@/types/types';
+import { useLazyGetActiveAssignmentByEncounterIdQuery } from '@/services/patients/emergency/encounterAssignToBedService';
+import { useDischargeEncounterMutation } from '@/services/encounters/patientEncounterService';
 
 const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
     const dispatch = useAppDispatch();
-    const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...newApEncounter, dischargeAt: (new Date()).getTime() });
-    const [updateEncounter] = useUpdateEncounterMutation();
-    const [saveBed] = useSaveBedMutation();
-    const [getEncounterAssignToBed] = useLazyGetEncounterAssignToBedQuery();
-    const [getBedList] = useLazyGetBedListQuery();
 
-    // Fetch discharge type LOV
-    const { data: dischargeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DC_TYPES');
+    const [localEncounter, setLocalEncounter] = useState<PatientEncounterDischarge>({
+        ...newPatientEncounterDischarge,
+        dischargeAt: new Date().toISOString()
+    });
 
-    // Function to handle the discharge of the encounter
+    const [dischargeEncounter] = useDischargeEncounterMutation();
+    const [markBedAsInCleaning] = useMarkBedAsInCleaningMutation();
+    const [getActiveAssignmentByEncounterId] = useLazyGetActiveAssignmentByEncounterIdQuery();
+
+    const dischargeTypeEnum = useEnumOptions('DischargeType');
+
     const handleCompleteEncounter = async () => {
         try {
-            // Get encounter id - handle both old (key) and new (id) formats
             const encounterId = encounter?.id ?? encounter?.key;
-            
+
             if (!encounterId) {
                 dispatch(notify({ msg: 'Encounter ID is required', sev: 'error' }));
                 return;
             }
 
-            // Convert encounter ID to number if it's a string
             const numericId = typeof encounterId === 'string' ? Number(encounterId) : encounterId;
 
-            // Build update payload - preserve all encounter fields and update status to "Discharge"
-            // Handle both old (ApEncounter) and new (PatientEncounter) encounter types
-            const updatePayload: PatientEncounter = {
-                id: numericId,
-                patientId: encounter.patientId ?? (encounter as any).patient?.id ?? ((encounter as any).patientKey ? Number((encounter as any).patientKey) : 0),
-                facilityId: encounter.facilityId ?? ((encounter as any).facilityKey ? Number((encounter as any).facilityKey) : 0),
-                departmentId: encounter.departmentId ?? ((encounter as any).departmentKey ? Number((encounter as any).departmentKey) : 0),
-                practitionerId: encounter.practitionerId ?? ((encounter as any).practitionerKey ? Number((encounter as any).practitionerKey) : null),
-                encounterType: encounter.encounterType ?? (encounter as any).encounterTypeLkey ?? '',
-                encounterReason: encounter.encounterReason ?? (encounter as any).reasonLkey ?? '',
-                priorityLevel: encounter.priorityLevel ?? (encounter as any).encounterPriorityLkey ?? '',
-                status: 'DISCHARGED', // Update status to Discharge
-                encounterNumber: encounter.encounterNumber ?? (encounter as any).visitId ?? null,
-                encounterDate: encounter.encounterDate ?? (encounter as any).plannedStartDate ?? null,
-                followUpEncounterId: encounter.followUpEncounterId ?? ((encounter as any).followUpEncounterKey ? Number((encounter as any).followUpEncounterKey) : null),
-                originType: encounter.originType ?? (encounter as any).originLkey ?? null,
-                originName: encounter.originName ?? (encounter as any).admissionSource ?? null,
-                notes: encounter.notes ?? (encounter as any).encounterNotes ?? null,
-                departmentDailySequenceNumber: encounter.departmentDailySequenceNumber ?? null,
-                chiefComplaint: encounter.chiefComplaint ?? (encounter as any).chiefComplaint ?? null,
-                hasPrescription: encounter.hasPrescription ?? false,
-                hasOrder: encounter.hasOrder ?? false,
-                isObserved: encounter.isObserved ?? (encounter as any).isObserved ?? false,
-                paymentDate: (encounter as any).paymentDate ?? '',
-                amount: (encounter as any).amount ?? 0
-            };
-
-            // Ensure required fields are present
-            if (!updatePayload.facilityId || !updatePayload.departmentId || !updatePayload.patientId) {
-                dispatch(notify({ msg: 'Encounter missing required fields (facilityId, departmentId, or patientId)', sev: 'error' }));
+            if (!localEncounter.dischargeType) {
+                dispatch(notify({ msg: 'Discharge Type is required', sev: 'error' }));
                 return;
             }
 
-            // Update the encounter using updateEncounter mutation with status "Discharge"
-            await updateEncounter({ 
-                id: numericId, 
-                body: updatePayload 
+            if (!localEncounter.dischargeAt) {
+                dispatch(notify({ msg: 'Discharge Date Time is required', sev: 'error' }));
+                return;
+            }
+
+            const dischargePayload: PatientEncounterDischarge = {
+                encounterId: numericId,
+                dischargeType: localEncounter.dischargeType,
+                dischargeAt: localEncounter.dischargeAt
+            };
+
+            let bedId: number | null = null;
+            try {
+                const activeAssignment = await getActiveAssignmentByEncounterId({
+                    encounterId: numericId
+                }).unwrap();
+
+                bedId = activeAssignment?.bedId ?? null;
+            } catch (bedError: any) {
+                const isNotFoundError =
+                    bedError?.status === 404 ||
+                    bedError?.originalStatus === 404 ||
+                    bedError?.data?.status === 404;
+
+                if (!isNotFoundError) {
+                    dispatch(
+                        notify({
+                            msg: 'Failed to load active bed assignment before discharge',
+                            sev: 'warning'
+                        })
+                    );
+                }
+            }
+
+            await dischargeEncounter({
+                id: numericId,
+                body: dischargePayload
             }).unwrap();
 
-            // After successful discharge, handle bed status update
-            // try {
-            //     // Get encounter assign to bed record using the service query
-            //     const encounterAssignToBedListRequest: ListRequest = {
-            //         ...initialListRequest,
-            //         filters: [
-            //             {
-            //                 fieldName: 'encounter_key',
-            //                 operator: 'match',
-            //                 value: String(encounterId)
-            //             }
-            //         ],
-            //         pageSize: 1
-            //     };
-                
-            //     const encounterAssignToBedResponse = await getEncounterAssignToBed(encounterAssignToBedListRequest).unwrap();
-            //     const encounterAssignToBed = Array.isArray(encounterAssignToBedResponse) 
-            //         ? encounterAssignToBedResponse[0] 
-            //         : encounterAssignToBedResponse;
-                
-            //     if (encounterAssignToBed?.bedKey) {
-            //         // Get the bed details using getBedList from setupService
-            //         const bedListRequest: ListRequest = {
-            //             ...initialListRequest,
-            //             filters: [
-            //                 {
-            //                     fieldName: 'key',
-            //                     operator: 'match',
-            //                     value: encounterAssignToBed.bedKey
-            //                 }
-            //             ],
-            //             pageSize: 1
-            //         };
-                    
-            //         // Use the lazy query hook to get the bed
-            //         const bedQueryResult = await getBedList(bedListRequest).unwrap();
-                    
-            //         // Get the bed from the response
-            //         const bedResponse = bedQueryResult?.object;
-            //         const bed = Array.isArray(bedResponse) ? bedResponse[0] : bedResponse;
-                    
-            //         if (bed) {
-            //             // Update bed status to 5258572711068224
-            //             await saveBed({
-            //                 ...bed,
-            //                 statusLkey: '5258572711068224',
-            //                 isValid: bed.isValid !== undefined ? bed.isValid : true
-            //             } as ApBed).unwrap();
-            //         }
-            //     }
-            // } catch (bedError: any) {
-            //     // Check if error is 404 (no bed assignment found) - this is expected and should be silently ignored
-            //     const isNotFoundError = bedError?.status === 404 || bedError?.data?.status === 404;
-                
-            //     if (!isNotFoundError) {
-            //         // Only handle non-404 errors (unexpected failures)
-            //         // Optionally notify user about bed status update failure for unexpected errors
-            //         // dispatch(notify({ msg: 'Encounter discharged but bed status update failed', sev: 'warning' }));
-            //     }
-            //     // For 404 errors, silently continue - encounter doesn't have a bed assignment, which is fine
-            // }
-            
-            dispatch(notify({ msg: ' Encounter Discharge Successfully', sev: 'success' }));
+            if (bedId) {
+                try {
+                    await markBedAsInCleaning({ id: bedId }).unwrap();
+                } catch {
+                    dispatch(
+                        notify({
+                            msg: 'Encounter discharged but bed status update failed',
+                            sev: 'warning'
+                        })
+                    );
+                }
+            }
+
+            dispatch(notify({ msg: 'Encounter Discharged Successfully', sev: 'success' }));
             setOpen(false);
+
             if (refetch) {
                 refetch();
             }
-        }
-        catch (error: any) {
-            // Extract error message from the error object
-            const errorMessage = error?.data?.message || error?.data?.detail || error?.message || 'An error occurred while discharging the encounter';
+        } catch (error: any) {
+            const errorMessage =
+                error?.data?.message ||
+                error?.data?.detail ||
+                error?.message ||
+                'An error occurred while discharging the encounter';
+
             dispatch(notify({ msg: errorMessage, sev: 'error' }));
         }
     };
-    // Modal Content 
+
     const content = (
-        <Form fluid layout='inline' className='encounter-discharge-form'>
+        <Form fluid layout="inline" className="encounter-discharge-form">
             <MyInput
                 column
                 width={300}
                 fieldLabel="Discharge Type"
                 fieldType="select"
-                fieldName="dischargeTypeLkey"
-                selectData={dischargeTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                fieldName="dischargeType"
+                selectData={dischargeTypeEnum ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={localEncounter}
                 setRecord={setLocalEncounter}
-                searchable={false} />
+                searchable={false}
+            />
             <MyInput
                 column
                 width={300}
@@ -177,45 +137,43 @@ const EncounterDischarge = ({ open, setOpen, encounter, refetch = null }) => {
                 fieldName="dischargeAt"
                 record={localEncounter}
                 setRecord={setLocalEncounter}
-                searchable={false} />
-            <MyInput
-                column
-                width={300}
-                fieldLabel="Discharge Diagnosis"
-                fieldType="textarea"
-                fieldName="diagnosis"
-                record={localEncounter}
-                setRecord={setLocalEncounter}
-                disabled={true} />
+                searchable={false}
+            />
         </Form>
-    )
+    );
 
-    //Effects
     useEffect(() => {
         if (encounter) {
+            const encounterId = encounter?.id ?? encounter?.key;
+
             setLocalEncounter({
-                ...encounter,
-                dischargeAt: encounter.dischargeAt ? new Date(encounter.dischargeAt).getTime() : new Date().getTime()
+                encounterId: encounterId ? Number(encounterId) : null,
+                dischargeType: encounter?.dischargeType ?? null,
+                dischargeAt: encounter?.dischargeAt
+                    ? new Date(encounter.dischargeAt).toISOString()
+                    : new Date().toISOString()
             });
         }
     }, [encounter]);
-
 
     return (
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Discharge Encounter"
+            title="Disposition"
             actionButtonFunction={handleCompleteEncounter}
-            position='center'
-            size='28vw'
-            bodyheight='70vh'
-            steps={[{
-                title: "Discharge Encounter",
-                icon: <FontAwesomeIcon icon={faSignOutAlt} />
-            },]}
+            position="center"
+            size="28vw"
+            bodyheight="70vh"
+            steps={[
+                {
+                    title: 'Disposition',
+                    icon: <FontAwesomeIcon icon={faSignOutAlt} />
+                }
+            ]}
             content={content}
-        ></MyModal>
+        />
     );
 };
+
 export default EncounterDischarge;
