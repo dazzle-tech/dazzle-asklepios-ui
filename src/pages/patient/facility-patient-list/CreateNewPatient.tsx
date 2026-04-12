@@ -29,8 +29,11 @@ import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
 import { useAddPatientMutation, useUpdatePatientMutation } from '@/services/patient/patientService';
 import { useCreateQuickAppointmentMutation } from '@/services/appointment/appointmentService';
-import * as modelTypes from '@/types/model-types-new';
-
+import type {
+  AppointmentFromTemplateQuickAppointmentDTO,
+  TemplateType,
+  EncounterReason
+} from '@/types/model-types-new';
 import {
   newAddress,
   newPatient,
@@ -962,13 +965,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
       const practitionerId = 0;
 
-      const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+      const payload: AppointmentFromTemplateQuickAppointmentDTO = {
         facilityId: Number(facilityId),
         departmentId: Number(departmentId),
-        resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
+        resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as TemplateType,
         resourceId: practitionerId > 0 ? practitionerId : Number(departmentId),
         patientId: Number(saved?.id ?? 0),
-        service: 'URGENT_VISIT' as modelTypes.EncounterReason,
+        service: 'URGENT_VISIT' as EncounterReason,
         priority: 'NORMAL',
         defaultServiceId: null,
         defaultPractitionerId: practitionerId > 0 ? practitionerId : null,

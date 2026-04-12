@@ -16,8 +16,11 @@ import { notify } from '@/utils/uiReducerActions';
 
 import type { Patient } from '@/types/model-types-new';
 import { newPatient } from '@/types/model-types-constructor-new';
-import * as modelTypes from '@/types/model-types-new';
-
+import type {
+  AppointmentFromTemplateQuickAppointmentDTO,
+  TemplateType,
+  EncounterReason
+} from '@/types/model-types-new';
 import {
   useAddPatientMutation,
   useAddUnknownPatientMutation
@@ -358,13 +361,13 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
 
         const practitionerId = 0;
 
-        const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+        const payload: AppointmentFromTemplateQuickAppointmentDTO = {
           facilityId: Number(facilityId),
           departmentId: Number(departmentId),
-          resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
+          resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as TemplateType,
           resourceId: practitionerId > 0 ? practitionerId : Number(departmentId),
           patientId: Number(savedPatient.id ?? 0),
-          service: 'URGENT_VISIT' as modelTypes.EncounterReason,
+          service: 'URGENT_VISIT' as EncounterReason,
           priority: 'NORMAL',
           defaultServiceId: null,
           defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
