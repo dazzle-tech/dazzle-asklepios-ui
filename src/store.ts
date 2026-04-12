@@ -203,6 +203,10 @@ import { RelationsMatrixService } from './services/patients/RelationsMatrixServi
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
+import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
+import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
+import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import { appointmentFromTemplateService } from './services/appointment/appointmentService';
 import { departmentServicesService } from './services/departmentServicesService';
 import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
 import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
@@ -447,6 +451,11 @@ export const store = configureStore({
 
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
+
+    [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
+    [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
+    [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
+    [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
     // AI Services
@@ -756,6 +765,10 @@ export const store = configureStore({
         patientAdministrativeWarningsService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
+        availabilityTemplateService.middleware,
+        availabilityGenerationBatchService.middleware,
+        availabilityTemplateIntervalService.middleware,
+        appointmentFromTemplateService.middleware,
         departmentServicesService.middleware,
         roomService.middleware,
         bedService.middleware,

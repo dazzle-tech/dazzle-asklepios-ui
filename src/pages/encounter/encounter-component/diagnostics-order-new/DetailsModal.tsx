@@ -11,6 +11,7 @@ import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import './styles.less';
+import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 
 const DetailsModal = ({
   test,
@@ -20,7 +21,8 @@ const DetailsModal = ({
   orderTest,
   setOrderTest,
   order,
-  edit
+  edit,
+  patient
 }) => {
   const [actionType] = useState(null);
   const [requestedPatientAttacment] = useState();
@@ -208,6 +210,19 @@ const DetailsModal = ({
                 setRecord={setOrderTest}
               />
 
+                <PatientDiagnosisTable
+                  patient={patient}
+                  disabled={!isEditable}
+                  selectMode
+                  onSelectDiagnosis={(ids) => {
+                    const selectedIcd = ids?.[0];
+
+                    setOrderTest(prev => ({
+                      ...prev,
+                      indicationIcd: selectedIcd
+                    }));
+                  }}
+                />
             </Form>
           </div>
         }

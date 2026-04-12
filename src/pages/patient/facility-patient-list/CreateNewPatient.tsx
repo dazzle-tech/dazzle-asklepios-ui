@@ -500,7 +500,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   useEffect(() => {
     if (!open) return;
-    if (pageCode !== 'ER_Triage') return;
+    if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') return;
     if (!selectedFacilityId) return;
 
     setDeptPage(0);
@@ -874,7 +874,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
       setLocalPatient(saved);
 
-      if (pageCode === 'ER_Triage') {
+      if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
         const facilityId = selectedFacilityId;
         const departmentId = selectedDepartmentId;
 
@@ -909,7 +909,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
       dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
 
-      if (pageCode !== 'ER_Triage') {
+      if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') {
         navigate('/patient-profile', { state: { patient: saved } });
       }
     } catch (err) {
@@ -1050,6 +1050,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               width={200}
               column
+              required
               fieldName="secondName"
               record={localPatient}
               setRecord={setLocalPatient}
@@ -1114,7 +1115,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               width={200}
             />
 
-            {pageCode === 'ER_Triage' && (
+            {(pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') && (
               <>
                 <MyInput
                   column
@@ -1696,8 +1697,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
           icon: <FontAwesomeIcon icon={faUser} />,
           disabledNext: !localPatient?.id,
           footer: (
-            <MyButton onClick={pageCode === 'ER_Triage' ? handleSavePatientAndQuick : handleSave}>
-              {pageCode === 'ER_Triage' ? 'Save & Create Quick Appointment' : 'Save'}
+            <MyButton onClick={pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage' ? handleSavePatientAndQuick : handleSave}>
+              {pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage' ? 'Save & Create Quick Appointment' : 'Save'}
             </MyButton>
           )
         },
@@ -1727,6 +1728,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
         if (pageCode === 'ER_Triage') {
           navigate('/ER-triage');
+        } else if (pageCode === 'Urgent_Care_Triage') {
+          navigate('/urgent-care-triage');
         } else {
           navigate('/patient-profile', { state: { patient: saved } });
         }

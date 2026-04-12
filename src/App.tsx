@@ -139,7 +139,8 @@ import Recovery from './pages/recovery';
 import ResetPassword from './pages/reset-password/ResetPassword';
 import CreatePassword from './pages/create-password/CreatePassword';
 import ReviewResults from './pages/review-results/ReviewResults';
-import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
+import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
+import ApplyTemplateList from './pages/ApplyTemplate/ApplyTemplateList';
 import AccessRoles from './pages/setup/access-roles';
 import AgeGroupSetup from './pages/setup/age-group';
 import Allergens from './pages/setup/allergens-setup';
@@ -217,7 +218,11 @@ import Logo from './images/Logo_BLUE_New.svg';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
+import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
 import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
+import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
+import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage';
+import UrgentCareList from './pages/encounter/urgent-care/UrgentCareList';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -588,9 +593,12 @@ const App = () => {
               <Route path="patient-old/patient-list" element={<PatientListLegacy />} />
               <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
               <Route path="ER-start-triage" element={<ERStartTriageNew />} />
+              <Route path="urgent-care-start-triage" element={<UrgentCareStartTriage />} />
+              <Route path="urgent-care-department-list" element={<UrgentCareList />} />
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
+              <Route path="urgent-care-triage" element={<UrgentCareTriage/>} />
               <Route path="view-triage" element={<ViewTriageNew />} />
               <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
@@ -800,6 +808,7 @@ const App = () => {
               <Route path="error-department-type" element={<ErrorDepartmentTypePage />} />
               <Route path="playground" element={<Playground />} />
               <Route path="schedual-screen" element={<ScheduleScreen />} />
+              <Route path="apply-template" element={<ApplyTemplateList />} />
               <Route path="patient-EMR" element={<PatientEMR />} />
               <Route path="lab-module" element={<Lab />} />
               <Route path="rad-module" element={<Rad />} />
@@ -836,6 +845,7 @@ const App = () => {
               <Route path="new" element={<FormTemplateBuilderPage />} />
               <Route path=":id" element={<FormTemplateBuilderPage />} />
               <Route path="availability-template" element={<AvailabilityTemplatePage />} />
+              <Route path="availability-templates" element={<AvailabilityTemplatePageNew />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

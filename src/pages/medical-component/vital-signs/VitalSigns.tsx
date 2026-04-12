@@ -86,7 +86,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       id: undefined,
       patientId,
       encounterId,
-      isTriage, 
+      isTriage,
       isActive:
         typeof (source as any)?.isActive === 'boolean'
           ? (source as any).isActive
@@ -125,7 +125,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       temperature: vitalSigns.temperature ?? null,
       oxygenSaturation: vitalSigns.oxygenSaturation ?? null,
       respiratoryRate: vitalSigns.respiratoryRate ?? null,
-      isTriage, 
+      isTriage,
       isActive: typeof vitalSigns.isActive === 'boolean' ? vitalSigns.isActive : true,
       notes: vitalSigns.notes ?? null
     };
@@ -218,14 +218,14 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
     try {
       const createResponse = await createVitalSigns(vitalSignsCreatePayload as any).unwrap();
-         
+
       setVitalSigns(previousVitalSigns => ({
         ...previousVitalSigns,
         ...createResponse,
         patientId,
         encounterId,
-        isTriage, 
-        id: undefined 
+        isTriage,
+        id: undefined
       }));
 
       dispatch(notify({ msg: 'Vital signs saved successfully', sev: 'success' }));
@@ -233,7 +233,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       showApiError(error);
     }
   };
-
+console.log("vitalSigns---", vitalSigns);
   const handleClearVitalSigns = () => {
     setVitalSigns({
       ...newVitalSigns,
@@ -294,6 +294,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
             <div className="margin-bot-10">
               <MyInput
+                required={isTriage}
                 width="100%"
                 fieldType="select"
                 fieldLabel="Measurment Site"
@@ -310,6 +311,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
             <div className="vital-signs-handle-position-row">
               <MyInput
+                required={isTriage}
                 width="100%"
                 fieldType="number"
                 fieldName="heartRate"
@@ -321,6 +323,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
               />
 
               <MyInput
+                required
                 width="100%"
                 fieldType="number"
                 rightAddon="C"
@@ -328,12 +331,13 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 record={vitalSigns}
                 setRecord={setVitalSigns}
                 disabled={disabled}
-                required
+                allowDecimal
               />
             </div>
 
             <div className="vital-signs-handle-position-row">
               <MyInput
+                required={isTriage}
                 width="100%"
                 fieldType="number"
                 rightAddon=" % "
@@ -341,9 +345,11 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
                 record={vitalSigns}
                 setRecord={setVitalSigns}
                 disabled={disabled}
+                allowDecimal
               />
 
               <MyInput
+                required={isTriage}
                 width="100%"
                 fieldType="number"
                 rightAddon="bpm"

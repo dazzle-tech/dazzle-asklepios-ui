@@ -25,7 +25,7 @@ import { useLazyGetActiveProceduresByFacilityAndCategoryQuery } from '@/services
 import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
-
+import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 const FIELD_ORDER = [
   'procedureId',
   'toFacilityId',
@@ -483,22 +483,25 @@ const Details = ({
                       content={
                         <>
                           <div className="fill-height-content">
-                            <Icd10DiagnosisSearch
-                              diagnosisId={procedure.indicationId}
-                              setDiagnosisId={id => {
-                                setProcedure({
-                                  ...procedure,
-                                  indicationId: id
-                                });
-                              }}
-                              label="Indication"
-                              disabled={
-                                editing ||
-                                edit ||
-                                (procedure?.id && procedure?.status !== 'REQUESTED')
-                              }
-                              pageSize={15}
-                            />
+                            <div style={{ marginBottom: 10 }}>
+                              <PatientDiagnosisTable
+                                patient={patient}
+                                disabled={
+                                  editing ||
+                                  edit ||
+                                  (procedure?.id && procedure?.status !== 'REQUESTED')
+                                }
+                                selectMode
+                                onSelectDiagnosis={(ids) => {
+                                  const selectedIcd = ids?.[0];
+
+                                  setProcedure(prev => ({
+                                    ...prev,
+                                    indicationId: selectedIcd
+                                  }));
+                                }}
+                              />
+                            </div>
 
                             <MyInput
                               width="100%"

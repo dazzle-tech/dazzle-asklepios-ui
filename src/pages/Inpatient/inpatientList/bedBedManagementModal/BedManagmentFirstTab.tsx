@@ -67,7 +67,7 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
   );
 
   const { data: availableBeds = 0 } = useCountBedsByStatusQuery(
-    { departmentId: departmentKey, status: 'EMPTY' },
+    { departmentId: departmentKey, status: 'READY' },
     { skip: !departmentKey }
   );
 
@@ -128,7 +128,7 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
 
         let color = 'var(--primary-gray)';
 
-        if (status === 'EMPTY') {
+        if (status === 'READY') {
           color = '#28a745';
         } else if (status === 'OCCUPIED') {
           color = '#1b9cd7';
@@ -155,7 +155,7 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            {(rowData?.status === 'EMPTY' || rowData?.status === 'IN_CLEANING') && (
+            {(rowData?.status === 'READY' || rowData?.status === 'IN_CLEANING') && (
               <Whisper trigger="hover" placement="top" speaker={deactivate}>
                 <div>
                   <MyButton
@@ -218,7 +218,7 @@ const BedManagmentFirstTab = ({ departmentKey }) => {
         />
 
         <DetailsCard
-          title="Empty"
+          title="Ready"
           number={availableBeds}
           icon={faBed}
           color="#28a745"

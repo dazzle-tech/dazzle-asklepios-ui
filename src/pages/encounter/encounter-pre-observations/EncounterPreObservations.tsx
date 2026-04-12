@@ -171,7 +171,7 @@ const EncounterPreObservations = ({ }) => {
                         >
                           <Translate>
                             {localEncounter?.resourceTypeLvalue?.valueCode == 'BRT_INPATIENT'
-                              ? 'Discharge'
+                              ? 'Disposition'
                               : 'Complete Visit'}
                           </Translate>
                         </MyButton>
