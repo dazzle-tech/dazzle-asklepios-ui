@@ -29,6 +29,7 @@ import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import WarningDetailsSection from './WarningDetailsSection';
 import './styles.less';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
 interface WarningProps {
   patient?: any;
@@ -322,6 +323,16 @@ const Warning = (props: WarningProps) => {
       timestamp: Date.now()
     });
   };
+
+useEffect(() => {
+  dispatch(setPageCode('medical_warnings'));
+  dispatch(setDivContent('Medical Warnings'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
 
       // Direction handling for RTL/LTR
