@@ -3,9 +3,11 @@ import MyModal from "@/components/MyModal/MyModal";
 import { useNavigate } from "react-router-dom";
 import type { AvailabilityGenerationBatchApplyDTO, AvailabilityTemplateResponseVM } from "@/types/model-types-new";
 import { useApplyAvailabilityTemplateMutation } from "@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService";
-import ApplyTemplateStepOne from "./components/ApplyTemplateStepOne";
+import ApplyTemplateStepOne, { type ApplyTemplateStepOneHandle } from "./components/ApplyTemplateStepOne";
 import ApplyTemplateStepTwo from "./components/ApplyTemplateStepTwo";
 import { formatLocalDateTimeForApi } from "./applyTemplateDateUtils";
+import { useAppDispatch } from "@/hooks";
+import { notify } from "@/utils/uiReducerActions";
 
 function buildApplyAvailabilityPayload(dto: AvailabilityGenerationBatchApplyDTO): AvailabilityGenerationBatchApplyDTO {
   const scope = String((dto as any)?.scope ?? "").trim().toUpperCase();
@@ -43,10 +45,11 @@ type ApplyTemplateProps = {
 };
 
 const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTemplate }) => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const stepOneRef = React.useRef<ApplyTemplateStepOneHandle>(null);
   const [applyAvailabilityTemplate, { isLoading: isApplying }] = useApplyAvailabilityTemplateMutation();
   const [internalOpen, setInternalOpen] = React.useState(true);
-  const [isStepOneValid, setIsStepOneValid] = React.useState(true);
   const [formState, setFormState] = React.useState<AvailabilityGenerationBatchApplyDTO>({
     templateId: selectedTemplate?.id ?? 0,
     startDate: "",
@@ -66,11 +69,28 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
         idx === 0
           ? {
               ...item,
-              disabledNext: !isStepOneValid,
+              disabledNext: false,
             }
           : item
       ),
-    [isStepOneValid]
+    []
+  );
+
+  const handleBeforeNext = React.useCallback(
+    async (activeStep: number) => {
+      if (activeStep !== 0) return true;
+      const result = stepOneRef.current?.validate();
+      if (!result?.ok) {
+        const msg =
+          result.messages.length > 0
+            ? result.messages.join(" ")
+            : "Please complete all required fields before continuing.";
+        dispatch(notify({ msg, sev: "warning" }));
+        return false;
+      }
+      return true;
+    },
+    [dispatch]
   );
 
   const handleClose = React.useCallback(() => {
@@ -109,16 +129,17 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
       content={(stepNumber) =>
         stepNumber === 0 ? (
           <ApplyTemplateStepOne
+            ref={stepOneRef}
             selectedTemplate={selectedTemplate}
             dto={formState}
             setDto={setFormState}
-            onValidationChange={setIsStepOneValid}
           />
         ) : (
           <ApplyTemplateStepTwo selectedTemplate={selectedTemplate} dto={formState} />
         )
       }
       steps={modalSteps}
+      onBeforeNext={handleBeforeNext}
       handleCancelFunction={handleClose}
       cancelButtonLabel="Close"
       actionButtonLabel="Apply Template"
