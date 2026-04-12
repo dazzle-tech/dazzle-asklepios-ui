@@ -80,6 +80,7 @@ const Prescription = (props: Props) => {
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] =
     useState<PatientPrescriptionMedication | null>(null);
+  const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<any>(null);
 
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [submitAssignModalOpen, setSubmitAssignModalOpen] = useState(false);

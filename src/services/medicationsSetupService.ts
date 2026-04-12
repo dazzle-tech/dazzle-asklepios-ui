@@ -474,6 +474,7 @@ export const medicationsSetupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    
      saveMedicationCategoriesActiveIngredient: builder.mutation({
           query: (data: { medicationCategoriesActiveIngredient: ApMedicationCategoriesActiveIngredient; ai; }) => {
             const param = data.ai;

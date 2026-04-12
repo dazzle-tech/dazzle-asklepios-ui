@@ -19,7 +19,6 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
-
 const mapPaged = <T>(response: T[], meta): PagedResult<T> => {
   const headers = meta?.response?.headers;
   return {
@@ -50,8 +49,8 @@ export const activeIngredientsService = createApi({
                 type: 'ActiveIngredients' as const,
                 id: item.id as Id,
               })),
-              { type: 'ActiveIngredients', id: 'LIST' },
-            ]
+            { type: 'ActiveIngredients', id: 'LIST' },
+          ]
           : [{ type: 'ActiveIngredients', id: 'LIST' }],
     }),
 
@@ -61,6 +60,19 @@ export const activeIngredientsService = createApi({
     >({
       query: ({ name, page, size, sort = 'id,asc', timestamp }) => ({
         url: `/api/setup/active-ingredients/by-name/${encodeURIComponent(name)}`,
+        params: { page, size, sort, timestamp },
+      }),
+      transformResponse: (response: ActiveIngredient[], meta) =>
+        mapPaged<ActiveIngredient>(response, meta),
+      providesTags: [{ type: 'ActiveIngredients', id: 'LIST' }],
+    }),
+
+    getActiveIngredientsActiveByName: builder.query<
+      PagedResult<ActiveIngredient>,
+      { name: string } & PagedParams
+    >({
+      query: ({ name, page, size, sort = 'id,asc', timestamp }) => ({
+        url: `/api/setup/active-ingredients/active/by-name/${encodeURIComponent(name)}`,
         params: { page, size, sort, timestamp },
       }),
       transformResponse: (response: ActiveIngredient[], meta) =>
@@ -112,10 +124,28 @@ export const activeIngredientsService = createApi({
       invalidatesTags: (_result, _error, { id }) =>
         id != null
           ? [
-              { type: 'ActiveIngredients', id },
-              { type: 'ActiveIngredients', id: 'LIST' },
-            ]
+            { type: 'ActiveIngredients', id },
+            { type: 'ActiveIngredients', id: 'LIST' },
+          ]
           : [{ type: 'ActiveIngredients', id: 'LIST' }],
+    }),
+    getAllActiveIngredients: builder.query<
+      PagedResult<ActiveIngredient>,
+      { name?: string } & PagedParams
+    >({
+      query: ({ name, page, size, sort = 'id,asc', timestamp }) => ({
+        url: '/api/setup/active-ingredients/active',
+        params: {
+          page,
+          size,
+          sort,
+          timestamp,
+          ...(name && name.trim() ? { name } : {}),
+        },
+      }),
+      transformResponse: (response: ActiveIngredient[], meta) =>
+        mapPaged<ActiveIngredient>(response, meta),
+      providesTags: [{ type: 'ActiveIngredients', id: 'LIST' }],
     }),
 
     toggleActiveIngredientIsActive: builder.mutation<ActiveIngredient, { id: Id }>({
@@ -126,9 +156,9 @@ export const activeIngredientsService = createApi({
       invalidatesTags: (_result, _error, { id }) =>
         id != null
           ? [
-              { type: 'ActiveIngredients', id },
-              { type: 'ActiveIngredients', id: 'LIST' },
-            ]
+            { type: 'ActiveIngredients', id },
+            { type: 'ActiveIngredients', id: 'LIST' },
+          ]
           : [{ type: 'ActiveIngredients', id: 'LIST' }],
     }),
   }),
@@ -139,6 +169,8 @@ export const {
   useLazyGetActiveIngredientsQuery,
   useGetActiveIngredientsByNameQuery,
   useLazyGetActiveIngredientsByNameQuery,
+  useGetActiveIngredientsActiveByNameQuery,
+  useLazyGetActiveIngredientsActiveByNameQuery,
   useGetActiveIngredientsByDrugClassQuery,
   useLazyGetActiveIngredientsByDrugClassQuery,
   useGetActiveIngredientsByAtcCodeQuery,
@@ -146,6 +178,8 @@ export const {
   useCreateActiveIngredientMutation,
   useUpdateActiveIngredientMutation,
   useToggleActiveIngredientIsActiveMutation,
+  useGetAllActiveIngredientsQuery,
+  useLazyGetAllActiveIngredientsQuery,
 } = activeIngredientsService;
 
 export default activeIngredientsService;

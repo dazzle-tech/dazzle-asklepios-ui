@@ -22,7 +22,7 @@ export const sanitizeActiveIngredient = (input: ActiveIngredient): ActiveIngredi
   otc: toBoolean(input.otc),
   hasSynonyms: toBoolean(input.hasSynonyms),
   antimicrobial: toBoolean(input.antimicrobial),
-  highRiskMed: toBoolean(input.highRiskMed),
+  highAlert: toBoolean(input.highAlert),
   abortiveMedication: toBoolean(input.abortiveMedication),
   laborInducingMed: toBoolean(input.laborInducingMed),
   isControlled: toBoolean(input.isControlled),
