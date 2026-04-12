@@ -110,15 +110,15 @@ const AddEditPractitioner = ({
     if (practitioner?.appointable) {
       if (facilityAppointableDepartments?.data) {
         setAllDepartments((prev) =>
-        deptPage === 0 ? facilityAppointableDepartments.data : [...prev, ...facilityAppointableDepartments.data]
-      );
+          deptPage === 0 ? facilityAppointableDepartments.data : [...prev, ...facilityAppointableDepartments.data]
+        );
       }
     }
     else {
       if (facilityDepartments?.data) {
         setAllDepartments((prev) =>
-        deptPage === 0 ? facilityDepartments.data : [...prev, ...facilityDepartments.data]
-      );
+          deptPage === 0 ? facilityDepartments.data : [...prev, ...facilityDepartments.data]
+        );
       }
     }
   }, [facilityAppointableDepartments, facilityDepartments, practitioner, practitioner?.appointable]);
@@ -226,7 +226,17 @@ const AddEditPractitioner = ({
     setSearchResultVisible(true);
   };
 
-
+ useEffect(() => {
+ 
+   if (!practitioner?.appointable) {
+     
+       setPractitioner(prev => ({
+         ...prev,
+         defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+       }));
+     
+   }
+ }, [practitioner?.appointable]);
   // Main modal content
   const conjureFormContentOfMainModal = (stepNumber) => {
     switch (stepNumber) {
@@ -459,17 +469,20 @@ const AddEditPractitioner = ({
                           required
                         />
                       </Col>
-                      <Col md={12}>
-                        <MyInput
-                          fieldType="number"
-                          fieldName="defaultDurationMinutes"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          width="100%"
-                          required={practitioner.appointable}
-                        />
-                      </Col>
+                      {practitioner?.appointable && (
+                        <Col md={12}>
+                          <MyInput
+                            fieldType="number"
+                            fieldName="defaultDurationMinutes"
+                            record={practitioner}
+                            setRecord={setPractitioner}
+                            width="100%"
+                            required={practitioner.appointable}
+                          />
+                        </Col>
+                      )}
                     </Row>
+                    {practitioner?.appointable && (
                     <Row>
                       <Col md={12}>
                         <MyInput
@@ -492,6 +505,7 @@ const AddEditPractitioner = ({
                         />
                       </Col>
                     </Row>
+                    )}
                   </>
                 }
               />
@@ -626,11 +640,11 @@ const AddEditPractitioner = ({
     </Form>
   );
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
