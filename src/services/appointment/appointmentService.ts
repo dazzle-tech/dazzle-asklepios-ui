@@ -152,6 +152,17 @@ export const appointmentFromTemplateService = createApi({
       providesTags: ['AppointmentFromTemplate']
     }),
 
+    getAppointmentById: builder.query<AppointmentFromTemplate, { id: Id }>({
+      query: ({ id }) => ({
+        url: `${APPOINTMENT_BASE_URL}/${id}`,
+        method: 'GET'
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
     searchAppointments: builder.query<
       PagedResult<AppointmentFromTemplate>,
       { filter: AppointmentFromTemplateSearchFilterDTO } & PagedParams
@@ -233,6 +244,8 @@ export const {
   useLazyGetAppointmentsByBatchIdQuery,
   useGetAppointmentsByDepartmentBetweenDatesQuery,
   useLazyGetAppointmentsByDepartmentBetweenDatesQuery,
+  useGetAppointmentByIdQuery,
+  useLazyGetAppointmentByIdQuery,
   useSearchAppointmentsQuery,
   useLazySearchAppointmentsQuery,
   useCancelAppointmentMutation,
