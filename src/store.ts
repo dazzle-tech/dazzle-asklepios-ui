@@ -768,7 +768,7 @@ export const store = configureStore({
         patientAdministrativeWarningsService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
-        PolicyDefinitionService.middleware
+        PolicyDefinitionService.middleware,
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
         availabilityTemplateIntervalService.middleware,
