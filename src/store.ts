@@ -203,6 +203,7 @@ import { RelationsMatrixService } from './services/patients/RelationsMatrixServi
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
+import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
@@ -245,6 +246,8 @@ export const store = configureStore({
 
     // setup
     [setupService.reducerPath]: setupService.reducer,
+
+    [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
 
     // inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
@@ -765,6 +768,7 @@ export const store = configureStore({
         patientAdministrativeWarningsService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
+        PolicyDefinitionService.middleware
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
         availabilityTemplateIntervalService.middleware,

@@ -4164,6 +4164,30 @@ export interface NurseSummaryReportVM {
   generatedAt: string | null;
 }
 
+export type PolicyDefinition = {
+  id?: number;
+  facilityId?: number;
+  facilityName?: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  isActive?: boolean;
+};
+
+export type PolicyDefinitionCreateDTO = {
+  facilityId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+};
+
+export type PolicyDefinitionUpdateDTO = {
+  id: number;
+  facilityId: number;
+  code: string;
+  name: string;
+  description?: string | null;
+};
 export type PatientDiagnosisFlag = {
   encounterId: number;
   hasPrimaryDiagnoses: boolean;
