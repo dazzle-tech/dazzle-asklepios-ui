@@ -4,14 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { RootState } from '@/store';
 import { logout, checkTokenValidity } from '@/reducers/authSlice';
 
-// ==================
-// AuthGuard Component
-// ==================
-// This component protects routes by checking if the user is authenticated.
-// - It validates the token when the component mounts.
-// - It re-checks the token periodically (every 60 seconds).
-// - If the token is invalid or session is expired, it logs the user out and redirects to login.
-// Wrap protected routes with <AuthGuard> ... </AuthGuard>.
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -22,14 +14,35 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     dispatch(checkTokenValidity());
   }, [dispatch]);
 
-  // Re-check token validity every 60 seconds (to auto-logout on expiration)
+  // Re-check token validity every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       dispatch(checkTokenValidity());
-    }, 60000); // 1 minute
+    }, 60000);
 
-    return () => clearInterval(interval); // cleanup on unmount
+    return () => clearInterval(interval);
   }, [dispatch]);
+
+  // Listen for logout from other tabs
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'id_token' && event.newValue === null) {
+        dispatch(logout());
+        navigate('/login', { replace: true });
+      }
+
+      if (event.key === 'logout_event') {
+        dispatch(logout());
+        navigate('/login', { replace: true });
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [dispatch, navigate]);
 
   // Redirect to login if token is missing or session expired
   useEffect(() => {
@@ -39,7 +52,6 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [token, sessionExpiredBackdrop, dispatch, navigate]);
 
-  // Render child components if authenticated
   return <>{children}</>;
 };
 
