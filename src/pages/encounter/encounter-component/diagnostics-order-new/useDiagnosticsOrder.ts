@@ -22,7 +22,7 @@ import { useGetFavoriteDiagnosticTestsByUserQuery } from '@/services/diagnosic-o
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetDepartmentsQuery } from '@/services/security/departmentService';
 import {
-  useGetAllDiagnosticTestsQuery,
+  useGetAllActiveDiagnosticTestsQuery,
   useGetDiagnosticTestsByIdsQuery
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -156,7 +156,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     return toNumericId(match?.id ?? match?.departmentId ?? match?.key ?? match?.departmentKey);
   };
 
-const { data: testsResponse, isFetching } = useGetAllDiagnosticTestsQuery(paginationParams);
+const { data: testsResponse, isFetching } = useGetAllActiveDiagnosticTestsQuery(paginationParams);
 const testsList = testsResponse?.data ?? [];
 
 const { data: ageGroupsResponse } = useGetAgeGroupsQuery({

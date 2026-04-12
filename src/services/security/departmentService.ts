@@ -81,6 +81,22 @@ export const departmentService = createApi({
       providesTags: ['Department']
     }),
 
+    getActiveDepartmentByType: builder.query<PagedResult<any>, { type: string } & PagedParams>({
+      query: ({ type, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/active/department/by-type/${type}`,
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Department']
+    }),
+
     // GET /api/setup/department/by-type-and-facility/{type}/{facilityId}?page=&size=&sort=
     getDepartmentByTypeAndFacility: builder.query<
       PagedResult<any>,
@@ -264,6 +280,25 @@ export const departmentService = createApi({
         };
       },
       providesTags: ['Department']
+    }),
+
+    getActiveAppointableDepartments: builder.query<
+      PagedResult<any>,
+      { facilityId: number } & PagedParams
+    >({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/department/appointable/active',
+        params: { facilityId, page, size, sort }
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Department']
     })
   })
 });
@@ -298,5 +333,9 @@ export const {
   useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery,
   useGetDepartmentsBulkMutation,
   useGetActiveDepartmentsQuery,
-  useLazyGetActiveDepartmentsQuery
+  useLazyGetActiveDepartmentsQuery,
+  useGetActiveAppointableDepartmentsQuery,
+  useLazyGetActiveAppointableDepartmentsQuery,
+  useGetActiveDepartmentByTypeQuery,
+  useLazyGetActiveDepartmentByTypeQuery
 } = departmentService;
