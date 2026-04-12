@@ -28,19 +28,18 @@ import {
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
 import { useAddPatientMutation, useUpdatePatientMutation } from '@/services/patient/patientService';
-import { useCreateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useCreateQuickAppointmentMutation } from '@/services/appointment/appointmentService';
+import * as modelTypes from '@/types/model-types-new';
 
 import {
   newAddress,
   newPatient,
   newPatientDocument,
-  newPatientEncounter,
   newPatientInsurance
 } from '@/types/model-types-constructor-new';
 import {
   Address,
   Patient,
-  PatientEncounter,
   PatientInsurance,
   SimpleArea,
   SimpleCommunity,
@@ -66,6 +65,100 @@ import {
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import { useGetRelativePatientsByCategoryQuery } from '@/services/patients/PatientRelationService';
+
+const ENCOUNTER_ERROR_MAP: Record<string, string> = {
+  'payload.required': 'Encounter data is required.',
+  'patient.invalid': 'Invalid patient id.',
+  'patient.notfound': 'Patient not found.',
+  'followUpEncounter.invalid': 'Invalid follow-up encounter id.',
+  'followUpEncounter.notfound': 'Follow-up encounter not found.',
+  'encounterNumber.duplicate': 'Encounter number already exists.',
+  'id.notfound': 'Encounter record not found.',
+  notfound: 'Encounter record not found.',
+  'followUpEncounter.required.followup':
+    'Follow-up Encounter is required when Reason is Follow up.',
+  'followUpEncounter.required.byReason':
+    'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
+  'patient.department.date.duplicate':
+    'This patient already has an encounter in this department on the selected date.',
+  'department.date.sequence.duplicate':
+    'Daily sequence number already exists for this department and date. Please try again.',
+  'patient.emergency.notAllowed.withOngoing':
+    'Patient currently treated by another doctor',
+  duplicate: 'Duplicate record.',
+  'facility.invalid': 'Invalid facility id.',
+  'department.invalid': 'Invalid department id.',
+  'practitioner.invalid': 'Invalid practitioner id.',
+  'db.constraint': 'Database constraint violation while saving encounter.'
+};
+
+const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
+  patientId: 'Patient',
+  facilityId: 'Facility',
+  departmentId: 'Department',
+  practitionerId: 'Practitioner',
+  encounterType: 'Encounter Type',
+  encounterReason: 'Reason',
+  followUpEncounterId: 'Follow-up Encounter',
+  priorityLevel: 'Priority',
+  originType: 'Origin Type',
+  originName: 'Origin Name',
+  notes: 'Notes',
+  status: 'Status',
+  encounterDate: 'Date',
+  departmentDailySequenceNumber: 'Department Daily Sequence'
+};
+
+const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
+  const data = err?.data ?? err ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  const normalizeMsg = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('must not be null')) return 'is required';
+    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('size')) return 'length is out of range';
+    if (m.includes('greater')) return 'value is too small';
+    if (m.includes('less')) return 'value is too large';
+    return msg || 'invalid value';
+  };
+
+  const toLabel = (field: string) => ENCOUNTER_FIELD_LABELS[field] ?? field;
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map(
+      (fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`
+    );
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
+        sev: 'error'
+      })
+    );
+    return;
+  }
+
+  const messageProp: string = data?.message || '';
+  const errorKey =
+    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
+    data?.errorKey;
+
+  const humanMsg =
+    (errorKey && keyMap[errorKey]) ||
+    data?.detail ||
+    data?.title ||
+    data?.message ||
+    'Unexpected error';
+
+  dispatch(
+    notify({
+      msg: humanMsg + suffix,
+      sev: 'error'
+    })
+  );
+};
 
 const toHumanPatientDocumentError = (
   err,
@@ -338,7 +431,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [updatePatient] = useUpdatePatientMutation();
   const [addPatientDocument] = useAddPatientDocumentMutation();
   const [addNoDocument] = useAddNoDocumentMutation();
-  const [createEncounter] = useCreateEncounterMutation();
+  const [createQuickAppointment] = useCreateQuickAppointmentMutation();
   const [createAddress] = useCreateAddressMutation();
   const [updateAddress] = useUpdateAddressMutation();
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
@@ -362,7 +455,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
   const EncounterTypeEnum = useEnumOptions('EncounterType');
-  const authSlice = useAppSelector((s) => s.auth);
+  const authSlice = useAppSelector(s => s.auth);
 
   const selectedDepartment = authSlice.selectedDepartment;
   const [triggerDepartments, { data: deptList, isFetching: isDepartmentsFetching }] =
@@ -467,9 +560,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
       });
 
       setAllDepartments(prev => {
-        if (page === 0) {
-          return rows;
-        }
+        if (page === 0) return rows;
 
         const seenIds = new Set(prev.map((d: any) => Number(d.id)));
         const merged = [...prev];
@@ -484,9 +575,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
       });
     } catch (error) {
       console.error('[TRACE] fetchDepartments:error', error);
-      if (page === 0) {
-        setAllDepartments([]);
-      }
+      if (page === 0) setAllDepartments([]);
     }
   };
 
@@ -507,26 +596,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
     setSelectedDepartmentId(null);
     fetchDepartments(0);
   }, [open, pageCode, selectedFacilityId]);
-
-  useEffect(() => {
-    console.log('[TRACE] modal state', {
-      open,
-      pageCode,
-      selectedFacilityId,
-      encounterType,
-      deptPage,
-      selectedDepartmentId,
-      selectedDepartment
-    });
-  }, [open, pageCode, selectedFacilityId, encounterType, deptPage, selectedDepartmentId, selectedDepartment]);
-
-  useEffect(() => {
-    console.log('[TRACE] selectedDepartment changed', selectedDepartment);
-  }, [selectedDepartment]);
-
-  useEffect(() => {
-    console.log('[TRACE] modal open changed', { open });
-  }, [open]);
 
   useEffect(() => {
     setPayorPage(0);
@@ -598,7 +667,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const mapped = docCountriesData.data.map((c: any) => ({
       ...c,
       displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
+        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') ||
+        c.name
     }));
 
     if (docCountryPage === 0) {
@@ -746,7 +816,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const mapped = addrCountriesResponse.data.map((c: any) => ({
       ...c,
       displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
+        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') ||
+        c.name
     }));
 
     setAddrCountryCache(prev => (addrCountryPage === 0 ? mapped : [...prev, ...mapped]));
@@ -827,13 +898,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-          id: localPatient.id,
-          data: { ...localPatient, isCompletedPatient: true }
-        }).unwrap()
+            id: localPatient.id,
+            data: { ...localPatient, isCompletedPatient: true }
+          }).unwrap()
         : await addPatient({
-          ...localPatient,
-          isCompletedPatient: true
-        }).unwrap();
+            ...localPatient,
+            isCompletedPatient: true
+          }).unwrap();
 
       setLocalPatient(saved);
 
@@ -861,49 +932,59 @@ const CreateNewPatient = ({ open, setOpen }) => {
   };
 
   const handleSavePatientAndQuick = async () => {
+    const facilityId = selectedFacilityId;
+    const departmentId = selectedDepartmentId;
+
+    if (!departmentId || !facilityId) {
+      dispatch(
+        notify({
+          msg: 'Please select a department before saving.',
+          sev: 'error'
+        })
+      );
+      return;
+    }
+
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-          id: localPatient.id,
-          data: { ...localPatient, isCompletedPatient: true }
-        }).unwrap()
+            id: localPatient.id,
+            data: { ...localPatient, isCompletedPatient: true }
+          }).unwrap()
         : await addPatient({
-          ...localPatient,
-          isCompletedPatient: true
-        }).unwrap();
+            ...localPatient,
+            isCompletedPatient: true
+          }).unwrap();
 
       setLocalPatient(saved);
 
-      if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
-        const facilityId = selectedFacilityId;
-        const departmentId = selectedDepartmentId;
+      await saveAddressIfNeeded(Number(saved?.id ?? 0));
 
-        if (!departmentId || !facilityId) {
-          dispatch(
-            notify({
-              msg: 'Please select a department before saving.',
-              sev: 'error'
-            })
-          );
-          return;
-        }
+      const practitionerId = 0;
 
-        const encounterBody: PatientEncounter = {
-          ...newPatientEncounter,
-          id: 0,
-          patientId: Number(saved.id ?? 0),
-          facilityId,
-          departmentId,
-          encounterType: 'EMERGENCY',
-          encounterReason: 'URGENT_VISIT',
-          status: 'WAITING_TRIAGE',
-          encounterDate: new Date(),
-          paymentDate: new Date().toISOString(),
-          amount: 0
-        };
+      const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+        facilityId: Number(facilityId),
+        departmentId: Number(departmentId),
+        resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
+        resourceId: practitionerId > 0 ? practitionerId : Number(departmentId),
+        patientId: Number(saved?.id ?? 0),
+        service: 'URGENT_VISIT' as modelTypes.EncounterReason,
+        priority: 'NORMAL',
+        defaultServiceId: null,
+        defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
+        reason: null,
+        note: null,
+        followUpEncounterId: null,
+        originType: null,
+        originName: null
+      };
 
-        await createEncounter({ body: encounterBody }).unwrap();
+      const quickSaved = await createQuickAppointment(payload).unwrap();
+      const returnedEncounter = (quickSaved as any)?.encounter ?? null;
 
+      if (returnedEncounter && typeof returnedEncounter === 'object') {
+        dispatch(setRefetchEncounter(true));
+      } else {
         dispatch(setRefetchEncounter(true));
       }
 
@@ -912,7 +993,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
       if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') {
         navigate('/patient-profile', { state: { patient: saved } });
       }
-    } catch (err) {
+    } catch (err: any) {
+      const encounterLikeError =
+        Array.isArray(err?.data?.fieldErrors) ||
+        !!err?.data?.errorKey ||
+        (typeof err?.data?.message === 'string' && err.data.message.startsWith('error.'));
+
+      if (encounterLikeError) {
+        handleCrudError(err, dispatch, ENCOUNTER_ERROR_MAP);
+        return;
+      }
+
       const msg = toHumanBackendError(err, {
         firstName: 'First Name',
         lastName: 'Last Name',
@@ -1683,7 +1774,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
@@ -1697,8 +1787,16 @@ const CreateNewPatient = ({ open, setOpen }) => {
           icon: <FontAwesomeIcon icon={faUser} />,
           disabledNext: !localPatient?.id,
           footer: (
-            <MyButton onClick={pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage' ? handleSavePatientAndQuick : handleSave}>
-              {pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage' ? 'Save & Create Quick Appointment' : 'Save'}
+            <MyButton
+              onClick={
+                pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage'
+                  ? handleSavePatientAndQuick
+                  : handleSave
+              }
+            >
+              {pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage'
+                ? 'Save & Create Quick Appointment'
+                : 'Save'}
             </MyButton>
           )
         },

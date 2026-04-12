@@ -14,17 +14,112 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { notify } from '@/utils/uiReducerActions';
 
-import type { Patient, PatientEncounter } from '@/types/model-types-new';
-import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
+import type { Patient } from '@/types/model-types-new';
+import { newPatient } from '@/types/model-types-constructor-new';
+import * as modelTypes from '@/types/model-types-new';
 
 import {
   useAddPatientMutation,
   useAddUnknownPatientMutation
 } from '@/services/patient/patientService';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useCreateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useCreateQuickAppointmentMutation } from '@/services/appointment/appointmentService';
 import { useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+
+const ENCOUNTER_ERROR_MAP: Record<string, string> = {
+  'payload.required': 'Encounter data is required.',
+  'patient.invalid': 'Invalid patient id.',
+  'patient.notfound': 'Patient not found.',
+  'followUpEncounter.invalid': 'Invalid follow-up encounter id.',
+  'followUpEncounter.notfound': 'Follow-up encounter not found.',
+  'encounterNumber.duplicate': 'Encounter number already exists.',
+  'id.notfound': 'Encounter record not found.',
+  notfound: 'Encounter record not found.',
+  'followUpEncounter.required.followup':
+    'Follow-up Encounter is required when Reason is Follow up.',
+  'followUpEncounter.required.byReason':
+    'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
+  'patient.department.date.duplicate':
+    'This patient already has an encounter in this department on the selected date.',
+  'department.date.sequence.duplicate':
+    'Daily sequence number already exists for this department and date. Please try again.',
+  'patient.emergency.notAllowed.withOngoing':
+    'Patient currently treated by another doctor',
+  duplicate: 'Duplicate record.',
+  'facility.invalid': 'Invalid facility id.',
+  'department.invalid': 'Invalid department id.',
+  'practitioner.invalid': 'Invalid practitioner id.',
+  'db.constraint': 'Database constraint violation while saving encounter.'
+};
+
+const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
+  patientId: 'Patient',
+  facilityId: 'Facility',
+  departmentId: 'Department',
+  practitionerId: 'Practitioner',
+  encounterType: 'Encounter Type',
+  encounterReason: 'Reason',
+  followUpEncounterId: 'Follow-up Encounter',
+  priorityLevel: 'Priority',
+  originType: 'Origin Type',
+  originName: 'Origin Name',
+  notes: 'Notes',
+  status: 'Status',
+  encounterDate: 'Date',
+  departmentDailySequenceNumber: 'Department Daily Sequence'
+};
+
+const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
+  const data = err?.data ?? err ?? {};
+  const traceId = data?.traceId || data?.requestId || data?.correlationId;
+  const suffix = traceId ? `\nTrace ID: ${traceId}` : '';
+
+  const normalizeMsg = (msg: string) => {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('must not be null')) return 'is required';
+    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('size')) return 'length is out of range';
+    if (m.includes('greater')) return 'value is too small';
+    if (m.includes('less')) return 'value is too large';
+    return msg || 'invalid value';
+  };
+
+  const toLabel = (field: string) => ENCOUNTER_FIELD_LABELS[field] ?? field;
+
+  if (Array.isArray(data?.fieldErrors) && data.fieldErrors.length > 0) {
+    const lines = data.fieldErrors.map(
+      (fe: any) => `• ${toLabel(fe.field)}: ${normalizeMsg(fe.message)}`
+    );
+
+    dispatch(
+      notify({
+        msg: `Please fix the following fields:\n${lines.join('\n')}${suffix}`,
+        sev: 'error'
+      })
+    );
+    return;
+  }
+
+  const messageProp: string = data?.message || '';
+  const errorKey =
+    (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
+    data?.errorKey;
+
+  const humanMsg =
+    (errorKey && keyMap[errorKey]) ||
+    data?.detail ||
+    data?.title ||
+    data?.message ||
+    'Unexpected error';
+
+  dispatch(
+    notify({
+      msg: humanMsg + suffix,
+      sev: 'error'
+    })
+  );
+};
 
 const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
   const data = err?.data ?? {};
@@ -54,7 +149,10 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
   }
 
   if (message === 'error.required.when.not.unknown') {
-    return 'Required fields are missing. Turn on "Unknown Patient" or fill First Name, Last Name, Gender and DOB.' + traceId;
+    return (
+      'Required fields are missing. Turn on "Unknown Patient" or fill First Name, Last Name, Gender and DOB.' +
+      traceId
+    );
   }
 
   if (errorKey === 'db.constraint') {
@@ -87,7 +185,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
 
   const [addPatient] = useAddPatientMutation();
   const [addUnknownPatient] = useAddUnknownPatientMutation();
-  const [createEncounter] = useCreateEncounterMutation();
+  const [createQuickAppointment] = useCreateQuickAppointmentMutation();
 
   const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
@@ -168,7 +266,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
         return merged;
       });
     } catch (error) {
-      console.error('fetchDepartments error:', warning);
+      console.error('fetchDepartments error:', error);
 
       if (page === 0) {
         setAllDepartments([]);
@@ -179,7 +277,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
   useEffect(() => {
     if (!open) return;
 
-    if (pageCode !== 'ER_Triage'&& pageCode !== 'Urgent_Care_Triage') {
+    if (pageCode !== 'ER_Triage' && pageCode !== 'Urgent_Care_Triage') {
       setAllDepartments([]);
       return;
     }
@@ -258,22 +356,32 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           return;
         }
 
-        const encounterBody: PatientEncounter = {
-          ...newPatientEncounter,
-          id: 0,
+        const practitionerId = 0;
+
+        const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+          facilityId: Number(facilityId),
+          departmentId: Number(departmentId),
+          resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
+          resourceId: practitionerId > 0 ? practitionerId : Number(departmentId),
           patientId: Number(savedPatient.id ?? 0),
-          facilityId,
-          departmentId,
-          encounterType: 'EMERGENCY',
-          encounterReason: 'URGENT_VISIT',
-          status: 'WAITING_TRIAGE',
-          encounterDate: new Date(),
-          paymentDate: new Date().toISOString(),
-          amount: 0
+          service: 'URGENT_VISIT' as modelTypes.EncounterReason,
+          priority: 'NORMAL',
+          defaultServiceId: null,
+          defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
+          reason: null,
+          note: null,
+          followUpEncounterId: null,
+          originType: null,
+          originName: null
         };
 
-        await createEncounter({ body: encounterBody }).unwrap();
-        dispatch(setRefetchEncounter(true));
+        try {
+          await createQuickAppointment(payload).unwrap();
+          dispatch(setRefetchEncounter(true));
+        } catch (encounterError: any) {
+          handleCrudError(encounterError, dispatch, ENCOUNTER_ERROR_MAP);
+          return;
+        }
       }
 
       setLocalPatient(savedPatient);
