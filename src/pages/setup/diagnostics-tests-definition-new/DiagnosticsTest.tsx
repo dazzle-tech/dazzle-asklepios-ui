@@ -9,7 +9,7 @@ import { useSetDiagnosticTestForRequestMutation } from '@/services/diagnosic-ord
 import { useEnumOptions } from '@/services/enumsApi';
 import {
   useCreateDiagnosticTestMutation,
-  useGetAllDiagnosticTestsQuery,
+  useGetAllActiveDiagnosticTestsQuery,
   useLazyGetDiagnosticTestsByNameQuery,
   useLazyGetDiagnosticTestsByTypeQuery,
   useToggleDiagnosticTestActiveMutation,
@@ -75,7 +75,7 @@ const DiagnosticsTest: React.FC<DiagnosticsTestProps> = ({ testRequest }) => {
     data: diagnodticsTestList,
     refetch: refetchDiagnostics,
     isFetching
-  } = useGetAllDiagnosticTestsQuery(paginationParams);
+  } = useGetAllActiveDiagnosticTestsQuery(paginationParams);
 
   const testType = useEnumOptions('TestType');
 
