@@ -15,6 +15,22 @@ const getAppointmentPatientId = (appointment: any): number | null => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
+/** Same start field order as the scheduling calendar (`ScheduleScreen` event mapping). */
+const getAppointmentStartDate = (a: any): Date | null => {
+  const raw =
+    a?.appointmentStart ??
+    a?.appointment_start ??
+    a?.startDatetime ??
+    a?.start_datetime ??
+    a?.appointmentDateTime ??
+    a?.appointment_datetime ??
+    a?.applyStartDateTime ??
+    a?.apply_start_datetime;
+  if (raw == null || raw === '') return null;
+  const dt = new Date(raw);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+};
+
 type TodayAppointmentsListProps = {
   selectedDate?: Date | null;
   todayAppointmentsList?: any[];
@@ -81,17 +97,14 @@ const TodayAppointmentsList = ({
 
   const todayAppointmentsList = React.useMemo(() => {
     const rows = (todayAppointmentsResponse as any)?.data ?? [];
-    return rows.map((a: any) => {
-      const dt = new Date(
-        a?.appointmentDateTime ??
-          a?.appointmentStart ??
-          a?.appointment_start ??
-          a?.applyStartDateTime ??
-          Date.now()
-      );
-      const timeLabel = Number.isNaN(dt.getTime())
+    const mapped = rows.map((a: any) => {
+      const startDate = getAppointmentStartDate(a);
+      const timeLabel = !startDate
         ? '--:--'
-        : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        : startDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true });
+      const hourLabel = !startDate
+        ? '--'
+        : new Intl.DateTimeFormat(undefined, { hour: 'numeric', hour12: true }).format(startDate);
       const patient = a?.patient ?? {};
       const pid = getAppointmentPatientId(a);
       const fromSvc = pid != null ? todayPatientDisplayById.get(String(pid)) : undefined;
@@ -105,10 +118,17 @@ const TodayAppointmentsList = ({
       return {
         id: a?.id ?? a?.key ?? `${patientName}-${timeLabel}`,
         timeLabel,
+        hourLabel,
+        startDate,
         patientName,
         status: a?.status ?? a?.appointmentStatus ?? '-',
         _raw: a
       };
+    });
+    return mapped.sort((x: any, y: any) => {
+      const tx = x.startDate instanceof Date ? x.startDate.getTime() : 0;
+      const ty = y.startDate instanceof Date ? y.startDate.getTime() : 0;
+      return tx - ty;
     });
   }, [todayAppointmentsResponse, todayPatientDisplayById]);
 
@@ -122,17 +142,11 @@ const TodayAppointmentsList = ({
       return '#9DB5DA';
     };
     return (todayAppointmentsList ?? []).slice(0, 5).map((a: any) => {
-      const hourPart = String(a?.timeLabel ?? '').split(':')[0] || '--';
-      const hourNum = Number(hourPart);
-      const hourLabel = Number.isFinite(hourNum)
-        ? `${((hourNum + 11) % 12) + 1} ${hourNum >= 12 ? 'PM' : 'AM'}`
-        : '--';
       const dots = Array.from({ length: 8 }).map((_, idx) =>
         idx < 4 ? statusColor(a?.status) : '#E6ECF7'
       );
       return {
         ...a,
-        hourLabel,
         dots
       };
     });
@@ -150,10 +164,8 @@ const TodayAppointmentsList = ({
     const hours = [8, 9, 10, 11, 12];
     return hours.map(hour => {
       const matches = todayAppointmentsList.filter((a: any) => {
-        const parsed = new Date(`1970-01-01T${a.timeLabel?.replace(' ', '')}`);
-        if (!Number.isNaN(parsed.getTime())) return parsed.getHours() === hour;
-        const h = Number(String(a.timeLabel ?? '').split(':')[0]);
-        return h === hour;
+        const d = a?.startDate;
+        return d instanceof Date && !Number.isNaN(d.getTime()) && d.getHours() === hour;
       });
       const dots = matches.slice(0, 8).map((m: any) => statusColor(m.status));
       while (dots.length < 8) dots.push('#E6EBF3');
