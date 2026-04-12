@@ -41,8 +41,7 @@ import {
 import { openChangePassword, openEditProfile, notify } from '@/utils/uiReducerActions';
 import { useLogoutMutation } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
-import { setUser, setSelectedDepartment } from '@/reducers/authSlice';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { logout, setSelectedDepartment } from '@/reducers/authSlice';
 import { useAppSelector } from '@/hooks';
 import { useChangeLangMutation } from '@/services/uiService';
 import { setLang, setMode } from '@/reducers/uiSlice';
@@ -74,30 +73,37 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     },
     [dispatch]
   );
+
   const { data: departmentsResponse } = useGetDepartmentsQuery({ page: 0, size: 10000 });
   const departments = departmentsResponse?.data ?? [];
+
   const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilitiesResponse) ? facilitiesResponse : [];
+
   const [showChatModal, setShowChatModal] = useState(false);
   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
-  const [width, setWidth] = useState<number>(window.innerWidth); // window width
+  const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
+
   const { data: langData } = useGetAllLanguagesQuery({});
   const navigate = useNavigate();
   const userId = authSlice.user?.id;
+
   type UserDepartmentWithNames = UserDepartment & {
     departmentName?: string | null;
     facilityName?: string | null;
   };
+
   const selectedDepartment = authSlice.selectedDepartment;
   const hasWarnedNoDepartmentRef = useRef(false);
+
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
   const facilityKey = selectedFacilityId ?? 'no-facility';
+
   const {
     data: activeDepartmentsResponse,
-    isLoading: isLoadingDepartments,
-    isFetching: isFetchingDepartments
+    isLoading: isLoadingDepartments
   } = useGetActiveUserDepartmentsByUserQuery(
     { userId: userId as number, facilityId: facilityKey },
     {
@@ -105,7 +111,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       refetchOnMountOrArgChange: true
     }
   );
+
   const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
+
   const storedDepartmentMatch =
     selectedDepartment &&
     activeDepartments.find(
@@ -113,6 +121,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         dept?.departmentId === selectedDepartment.departmentId &&
         dept?.facilityId === selectedDepartment.facilityId
     );
+
   const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
   const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
 
@@ -125,86 +134,88 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
   const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
-const selectedDepartmentEffective = useMemo(() => {
-  return storedDepartmentMatch ??
-    defaultDepartmentEntity ??
-    (activeDepartments.length > 0 ? activeDepartments[0] : null);
-}, [storedDepartmentMatch, defaultDepartmentEntity, activeDepartments]);
+
+  const selectedDepartmentEffective = useMemo(() => {
+    return (
+      storedDepartmentMatch ??
+      defaultDepartmentEntity ??
+      (activeDepartments.length > 0 ? activeDepartments[0] : null)
+    );
+  }, [storedDepartmentMatch, defaultDepartmentEntity, activeDepartments]);
 
   const resolveFacilityName = (facilityId?: string | number | null) => {
     if (facilityId != null) {
       const resolved =
         conjureValueBasedOnIDFromList(facilities as any[], facilityId, 'name') ??
         (facilityId ? `Facility #${facilityId}` : undefined);
-      if (resolved) {
-        return resolved;
-      }
+
+      if (resolved) return resolved;
     }
+
     const tenantFacility = authSlice?.tenant?.selectedFacility;
     return tenantFacility?.name ?? tenantFacility?.facilityName ?? undefined;
   };
 
   const resolveDepartmentName = (departmentId?: string | number | null) => {
     if (departmentId == null) return undefined;
-    const resolved =
+
+    return (
       conjureValueBasedOnIDFromList(departments as any[], departmentId, 'name') ??
-      (departmentId ? `Department #${departmentId}` : undefined);
-    return resolved;
+      (departmentId ? `Department #${departmentId}` : undefined)
+    );
   };
 
-
-useEffect(() => {
-  
-  if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
-    return;
-  }
-
-  if (activeDepartments.length === 0 && !isLoadingDepartments && !selectedDepartment) {
-    if (!hasWarnedNoDepartmentRef.current) {
-      toast(
-        'No departments are assigned to your user. Please contact the administrator to configure departments.'
-      );
-      hasWarnedNoDepartmentRef.current = true;
+  useEffect(() => {
+    if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
+      return;
     }
-    return;
-  }
 
-  if (!selectedDepartmentEffective) {
-    return;
-  }
+    if (activeDepartments.length === 0 && !isLoadingDepartments && !selectedDepartment) {
+      if (!hasWarnedNoDepartmentRef.current) {
+        toast(
+          'No departments are assigned to your user. Please contact the administrator to configure departments.'
+        );
+        hasWarnedNoDepartmentRef.current = true;
+      }
+      return;
+    }
 
-  const nextDepartmentId = selectedDepartmentEffective.departmentId;
-  const nextFacilityId = selectedDepartmentEffective.facilityId;
+    if (!selectedDepartmentEffective) {
+      return;
+    }
 
-  const sameSelection =
-    selectedDepartment?.departmentId === nextDepartmentId &&
-    selectedDepartment?.facilityId === nextFacilityId;
+    const nextDepartmentId = selectedDepartmentEffective.departmentId;
+    const nextFacilityId = selectedDepartmentEffective.facilityId;
 
-  if (sameSelection) {
-    return;
-  }
+    const sameSelection =
+      selectedDepartment?.departmentId === nextDepartmentId &&
+      selectedDepartment?.facilityId === nextFacilityId;
 
-  dispatch(
-    setSelectedDepartment({
-      departmentId: nextDepartmentId,
-      facilityId: nextFacilityId,
-      departmentName: resolveDepartmentName(nextDepartmentId),
-      facilityName: resolveFacilityName(nextFacilityId)
-    })
-  );
-}, [
-  authSlice?.user?.id,
-  authSlice?.tenant?.selectedFacility?.id,
-  selectedDepartment?.departmentId,
-  selectedDepartment?.facilityId,
-  selectedDepartmentEffective?.departmentId,
-  selectedDepartmentEffective?.facilityId,
-  isLoadingDepartments,
-  activeDepartments.length,
-  dispatch,
-  toast
-]);
-  // container to choose action from more menu
+    if (sameSelection) {
+      return;
+    }
+
+    dispatch(
+      setSelectedDepartment({
+        departmentId: nextDepartmentId,
+        facilityId: nextFacilityId,
+        departmentName: resolveDepartmentName(nextDepartmentId),
+        facilityName: resolveFacilityName(nextFacilityId)
+      })
+    );
+  }, [
+    authSlice?.user?.id,
+    authSlice?.tenant?.selectedFacility?.id,
+    selectedDepartment?.departmentId,
+    selectedDepartment?.facilityId,
+    selectedDepartmentEffective?.departmentId,
+    selectedDepartmentEffective?.facilityId,
+    isLoadingDepartments,
+    activeDepartments.length,
+    dispatch,
+    toast
+  ]);
+
   const contentOfMoreIconMenu = (
     <Popover full>
       <Dropdown.Menu>
@@ -214,6 +225,7 @@ useEffect(() => {
             Customize Form
           </div>
         </Dropdown.Item>
+
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faChartColumn} />
@@ -227,6 +239,7 @@ useEffect(() => {
             Announcements
           </div>
         </Dropdown.Item>
+
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faHeadset} />
@@ -253,11 +266,7 @@ useEffect(() => {
           <Dropdown.Item
             onClick={() => {
               setOpenMoreMenu(false);
-              if (mode === 'light') {
-                dispatch(setMode('dark'));
-              } else {
-                dispatch(setMode('light'));
-              }
+              dispatch(setMode(mode === 'light' ? 'dark' : 'light'));
             }}
           >
             <div className="container-of-icon-and-key1">
@@ -294,7 +303,6 @@ useEffect(() => {
                 <Stack spacing={4}>
                   <Badge /> <span style={{ color: '#57606a' }}>{time}</span>
                 </Stack>
-
                 <p>{content}</p>
               </List.Item>
             );
@@ -306,20 +314,11 @@ useEffect(() => {
       </Popover>
     );
   };
+
   const uiSlice = useAppSelector(state => state.ui);
+
   const renderLangSpeaker = ({ onClose, left, top, className }: any, ref) => {
-    // const uiSlice = useAppSelector(state => state.ui);
-
-    const [
-      changeLang,
-      { isLoading: isChangingLang, data: changeLangResult, error: changeLangError }
-    ] = useChangeLangMutation();
-
-    const handleChangeLang = lang => {
-      changeLang(lang).unwrap();
-    };
-
-    const handleSelect = eventKey => {
+    const handleSelect = () => {
       onClose();
     };
 
@@ -328,9 +327,8 @@ useEffect(() => {
         <Dropdown.Menu onSelect={handleSelect}>
           <Dropdown.Item divider />
           {langData?.map(lang => (
-            <>
+            <React.Fragment key={lang.langKey}>
               <Dropdown.Item
-                key={lang.langKey}
                 active={uiSlice?.lang === lang?.langKey}
                 onClick={() => {
                   dispatch(setLang(lang?.langKey));
@@ -342,48 +340,42 @@ useEffect(() => {
                 {lang.langName}
               </Dropdown.Item>
               <Dropdown.Item divider />
-            </>
+            </React.Fragment>
           ))}
         </Dropdown.Menu>
       </Popover>
     );
   };
 
-  const renderAdminSpeaker = ({ onClose, left, top, className, open }: any, ref) => {
+  const renderAdminSpeaker = ({ onClose, left, top, className }: any, ref) => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const [apiLogout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
     const handleOpenChangePassword = () => {
       dispatch(openChangePassword());
     };
+
     const handleOpenShowEditProfile = () => {
       dispatch(openEditProfile());
     };
 
-    const [logout, { isLoading: isLoggingOut, data: logoutResult, error: logoutError }] =
-      useLogoutMutation();
-    const navigate = useNavigate();
-
-    const handleSelect = eventKey => {
+    const handleSelect = () => {
       onClose();
     };
 
     const handleLogout = async () => {
-      console.log('token before logout:', localStorage.getItem('id_token'));
       try {
-        await logout({}).unwrap();
-      } catch (e) { }
-
-      dispatch({ type: 'auth/logout' });
-      localStorage.clear();
-
-      window.location.replace('/#/login');
-    };
-
-    useEffect(() => {
-      if (logoutResult && !isLoggingOut && !authSlice.user) {
-        navigate('/login');
+        await apiLogout({}).unwrap();
+      } catch (e) {
       }
-    }, [isLoggingOut, authSlice.user]);
+
+      dispatch(logout());
+
+      localStorage.setItem('logout_event', Date.now().toString());
+
+      navigate('/login', { replace: true });
+    };
 
     return (
       <Popover ref={ref} className={className} style={{ left, top }} full>
@@ -394,17 +386,21 @@ useEffect(() => {
               {authSlice.user?.firstName}-{authSlice.user?.lastName}
             </strong>
           </Dropdown.Item>
+
           <Dropdown.Item panel style={{ padding: 10, width: 160 }}>
             <p>Job Role</p>
             <strong>{formatEnumString(authSlice.user?.jobRole)}</strong>
           </Dropdown.Item>
+
           <Dropdown.Item divider />
           <Dropdown.Item onSelect={handleOpenShowEditProfile}>Edit Profile</Dropdown.Item>
           <Dropdown.Item eventKey="change-password" onSelect={handleOpenChangePassword}>
             Change Password
           </Dropdown.Item>
           <Dropdown.Item divider />
-          <Dropdown.Item onClick={handleLogout}>Sign out</Dropdown.Item>
+          <Dropdown.Item onClick={handleLogout} disabled={isLoggingOut}>
+            {isLoggingOut ? 'Signing out...' : 'Sign out'}
+          </Dropdown.Item>
         </Dropdown.Menu>
       </Popover>
     );
@@ -432,7 +428,9 @@ useEffect(() => {
             </span>
           )}
       </div>
+
       <Divider style={{ margin: 0 }} />
+
       {isLoadingDepartments ? (
         <div style={{ padding: '12px' }}>Loading departments…</div>
       ) : activeDepartments.length === 0 ? (
@@ -445,9 +443,11 @@ useEffect(() => {
                 ? defaultDepartmentEntity.id === dept.id
                 : defaultDepartmentEntity?.departmentId === dept.departmentId &&
                 defaultDepartmentEntity?.facilityId === dept.facilityId;
+
             const isActive =
               selectedDepartment?.departmentId === dept.departmentId &&
               selectedDepartment?.facilityId === dept.facilityId;
+
             return (
               <List.Item key={dept.id ?? `${dept.userId}-${dept.departmentId}`}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -463,14 +463,12 @@ useEffect(() => {
                         textAlign: 'left'
                       }}
                       onClick={() => {
-                        const resolvedDepartmentName = resolveDepartmentName(dept.departmentId);
-                        const resolvedFacilityName = resolveFacilityName(dept.facilityId);
                         dispatch(
                           setSelectedDepartment({
                             departmentId: dept.departmentId,
                             facilityId: dept.facilityId,
-                            departmentName: resolvedDepartmentName,
-                            facilityName: resolvedFacilityName
+                            departmentName: resolveDepartmentName(dept.departmentId),
+                            facilityName: resolveFacilityName(dept.facilityId)
                           })
                         );
                         window.location.reload();
@@ -479,6 +477,7 @@ useEffect(() => {
                     >
                       {resolveDepartmentName(dept.departmentId)}
                     </button>
+
                     {isActive && (
                       <span
                         style={{
@@ -492,6 +491,7 @@ useEffect(() => {
                         Current
                       </span>
                     )}
+
                     {isDefault && (
                       <span
                         style={{
@@ -506,7 +506,6 @@ useEffect(() => {
                       </span>
                     )}
                   </div>
-                  {/* Facility name intentionally omitted here; shown under My Departments header */}
                 </div>
               </List.Item>
             );
@@ -520,7 +519,6 @@ useEffect(() => {
     setOpenMoreMenu(false);
   }, []);
 
-  // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
@@ -548,6 +546,7 @@ useEffect(() => {
                 />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="Customize Dashboard">
               <IconButton size="small">
                 <FontAwesomeIcon
@@ -556,23 +555,8 @@ useEffect(() => {
                 />
               </IconButton>
             </Tooltip>
-            {/* <Tooltip title="Secure Messaging">
-              <IconButton size="small" onClick={() => setShowChatModal(true)}>
-                <FontAwesomeIcon
-                  className="header-screen-bar-icon-size-handle"
-                  icon={faCommentDots}
-                />
-              </IconButton>
-            </Tooltip> */}
-            {/* <Tooltip title="My Appointments">
-              <IconButton size="small" onClick={() => setShowAppointmentsModal(true)}>
-                <FontAwesomeIcon
-                  className="header-screen-bar-icon-size-handle"
-                  icon={faCalendarDays}
-                />
-              </IconButton>
-            </Tooltip> */}
-            { authSlice.user?.jobRole === 'PHYSICIAN' && (
+
+            {authSlice.user?.jobRole === 'PHYSICIAN' && (
               <Tooltip title="My Consultations">
                 <IconButton
                   size="small"
@@ -593,11 +577,13 @@ useEffect(() => {
                 <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBullhorn} />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="Help & Support">
               <IconButton size="small">
                 <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faHeadset} />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="Sticky Notes">
               <IconButton size="small" onClick={() => setExpandNotes(!expandNotes)}>
                 <FontAwesomeIcon
@@ -606,6 +592,7 @@ useEffect(() => {
                 />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="MedCare Incident Portal" className="hidden">
               <IconButton
                 size="small"
@@ -634,6 +621,7 @@ useEffect(() => {
                 />
               </span>
             </Whisper>
+
             {openMoreMenu && (
               <div
                 onClick={closeMenus}
@@ -649,6 +637,7 @@ useEffect(() => {
             )}
           </>
         )}
+
         {(width > 500 || !displaySearch) && (
           <>
             <Whisper placement="bottomEnd" trigger="click" speaker={renderDepartmentsSpeaker}>
@@ -663,6 +652,7 @@ useEffect(() => {
                 </Tooltip>
               </span>
             </Whisper>
+
             <Whisper
               placement="bottomEnd"
               trigger="click"
@@ -673,6 +663,7 @@ useEffect(() => {
                 <FaEarthAmericas size={20} color={mode === 'light' ? '#333' : 'var(--white)'} />
               </IconButton>
             </Whisper>
+
             <Whisper
               placement="bottomEnd"
               trigger="click"
@@ -686,7 +677,9 @@ useEffect(() => {
                 />
               </IconButton>
             </Whisper>
+
             <Divider style={{ height: '31px', fontSize: '4px' }} vertical />
+
             <Whisper
               placement="bottomEnd"
               trigger="click"
@@ -723,38 +716,6 @@ useEffect(() => {
           </>
         )}
       </div>
-
-      {/* Chat Screen Modal */}
-      {/* <Dialog
-        open={showChatModal}
-        onClose={() => setShowChatModal(false)}
-        maxWidth="lg"
-        fullWidth
-        classes={{ paper: 'chat-modal-paper' }}
-      >
-        <DialogTitle className="chat-modal-title">
-          <div className="chat-modal-title-inner">
-            <Typography variant="h6">Secure Messaging</Typography>
-            <IconButton onClick={() => setShowChatModal(false)} size="small">
-              <CloseIcon />
-            </IconButton>
-          </div>
-        </DialogTitle>
-        <DialogContent className="chat-modal-content">
-          <ChatScreen />
-        </DialogContent>
-      </Dialog> */}
-
-      {/* <MyModal
-        open={showAppointmentsModal}
-        setOpen={setShowAppointmentsModal}
-        title="My Appointments"
-        size="70vw"
-        bodyheight="78vh"
-        content={<MyAppointmentScreen />}
-        hideBack={true}
-        actionButtonLabel="Save"
-      /> */}
     </>
   );
 };
