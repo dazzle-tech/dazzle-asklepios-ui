@@ -45,6 +45,8 @@ import {
   type BloodPressureResponseVM,
 } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 import Translate from '@/components/Translate';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
@@ -88,6 +90,8 @@ const formatDateTime = (d: Date) => {
 
 const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: patientProp }) => {
   const location = useLocation();
+  const dispatch = useAppDispatch();
+  
   const patientFromLocation = (location.state as any)?.patient;
   const patient = patientProp ?? patientFromLocation;
 
@@ -461,6 +465,17 @@ const vitalTotal =
 
 
   // ------------------ render ------------------
+
+useEffect(() => {
+  dispatch(setPageCode('previousmeasurements'));
+  dispatch(setDivContent('Previous Measurements'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
 
           // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
