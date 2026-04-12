@@ -2752,6 +2752,31 @@ export const newReferralRequest: modelTypes.ReferralRequest = {
   acceptedDate: null,
   acceptedBy: null
 };
+
+export const newPolicyDefinition : modelTypes.PolicyDefinition = {
+  id: undefined,
+  facilityId: undefined,
+  facilityName: '',
+  code: '',
+  name: '',
+  description: '',
+  isActive: true,
+};
+
+export const newPolicyDefinitionCreateDTO : modelTypes.PolicyDefinitionCreateDTO = {
+  facilityId: undefined,
+  code: '',
+  name: '',
+  description: '',
+};
+
+export const newPolicyDefinitionUpdateDTO : modelTypes.PolicyDefinitionUpdateDTO = {
+  id: undefined,
+  facilityId: undefined,
+  code: '',
+  name: '',
+  description: '',
+};
 export const newRoom: modelTypes.Room = {
   id: undefined,
   facilityId: null,

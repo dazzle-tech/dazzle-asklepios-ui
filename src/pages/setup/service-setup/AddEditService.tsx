@@ -48,6 +48,18 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
     }
   }, [service?.facilityId, facilityListResponse]);
 
+   useEffect(() => {
+   
+     if (!service?.appointable) {
+       
+         setService(prev => ({
+           ...prev,
+           defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+         }));
+       
+     }
+   }, [service?.appointable]);
+
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
@@ -164,6 +176,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   required
                 />
                </div>
+               {service?.appointable && (
               <div className="container-of-field-service">
                 <MyInput
                   fieldType="number"
@@ -174,8 +187,10 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                   required={service.appointable}
                 />
                </div>
+               )}
             </div>
              <br />
+              {service?.appointable && (
              <div className="container-of-two-fields-service">
               <div className="container-of-field-service">
                 <MyInput
@@ -198,6 +213,7 @@ const AddEditService: React.FC<AddEditServiceProps> = ({
                 />
                </div>
              </div>
+              )}
           </Form>
         );
     }
