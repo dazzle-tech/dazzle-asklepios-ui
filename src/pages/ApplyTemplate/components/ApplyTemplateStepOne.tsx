@@ -22,6 +22,10 @@ type ApplyTemplateStepOneProps = {
   onValidationChange?: (isValid: boolean) => void;
 };
 
+export type ApplyTemplateStepOneHandle = {
+  validate: () => { ok: boolean; messages: string[] };
+};
+
 function validateDateRange(startRaw: unknown, endRaw: unknown): { ok: boolean; message: string } {
   const start = parseApplyTemplateDateTime(startRaw);
   const end = parseApplyTemplateDateTime(endRaw);
@@ -42,12 +46,10 @@ function validateDateRange(startRaw: unknown, endRaw: unknown): { ok: boolean; m
   return { ok: true, message: "" };
 }
 
-const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
-  selectedTemplate,
-  dto,
-  setDto,
-  onValidationChange,
-}) => {
+const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
+  { selectedTemplate, dto, setDto, onValidationChange }: ApplyTemplateStepOneProps,
+  ref: React.ForwardedRef<ApplyTemplateStepOneHandle>
+) {
   const [selectedPreviewCell, setSelectedPreviewCell] = React.useState<{ dateKey: string; timeLabel: string } | null>(null);
   const [selectedPreviewCellSlots, setSelectedPreviewCellSlots] = React.useState<any[]>([]);
   const [selectedPreviewSlot, setSelectedPreviewSlot] = React.useState<any | null>(null);
@@ -116,20 +118,6 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
   const holidayHandlingModeSet = Boolean(
     String((formState as any)?.holidayHandlingMode ?? "").trim()
   );
-  /** When org holidays exist in range, user must pick Exclude vs Include-as-exception before continuing */
-  const holidayHandlingValidationOk = React.useMemo(() => {
-    if (!shouldFetchHolidays) return true;
-    if (isHolidaysQueryError) return true;
-    if (isFetchingHolidays) return false;
-    const count = (holidaysInRange as unknown[])?.length ?? 0;
-    return count === 0 || holidayHandlingModeSet;
-  }, [
-    shouldFetchHolidays,
-    isHolidaysQueryError,
-    isFetchingHolidays,
-    holidaysInRange,
-    holidayHandlingModeSet,
-  ]);
 
   const [templateIntervalsStatus, setTemplateIntervalsStatus] =
     React.useState<EffectiveTemplateIntervalsStatus>({
@@ -156,30 +144,67 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
     });
   }, [selectedTemplate?.id]);
 
-  React.useEffect(() => {
+  const collectStepOneValidationMessages = React.useCallback((): string[] => {
+    const messages: string[] = [];
     const scope = String((formState as any)?.scope ?? "").trim().toUpperCase();
     const isScopeSelected = scope.length > 0;
     const isSpecificResource = scope === "SPECIFIC_RESOURCE";
     const hasSelectedResourceTemplate = Number((formState as any)?.childTemplateId ?? 0) > 0;
-    const scopeOk = isScopeSelected && (!isSpecificResource || hasSelectedResourceTemplate);
-    const intervalsApplyOk =
-      !templateIntervalsStatus.isLoading &&
-      templateIntervalsStatus.effectiveTemplateId > 0 &&
-      templateIntervalsStatus.hasAnyInterval;
-    const isValid =
-      scopeOk && dateRangeValidation.ok && intervalsApplyOk && holidayHandlingValidationOk;
-    onValidationChange?.(isValid);
+    if (!isScopeSelected) {
+      messages.push("Please select an apply scope.");
+    } else if (isSpecificResource && !hasSelectedResourceTemplate) {
+      messages.push("Please select a resource template for Specific resource scope.");
+    }
+    if (!dateRangeValidation.ok) {
+      messages.push(dateRangeValidation.message);
+    }
+    if (templateIntervalsStatus.isLoading) {
+      messages.push("Please wait while availability intervals are loaded.");
+    } else if (
+      templateIntervalsStatus.effectiveTemplateId <= 0 ||
+      !templateIntervalsStatus.hasAnyInterval
+    ) {
+      messages.push("The effective template has no configured availability intervals.");
+    }
+    if (shouldFetchHolidays && !isHolidaysQueryError) {
+      if (isFetchingHolidays) {
+        messages.push("Please wait while holidays in the selected range are checked.");
+      } else {
+        const count = (holidaysInRange as unknown[])?.length ?? 0;
+        if (count > 0 && !holidayHandlingModeSet) {
+          messages.push("Please select how to handle holidays (exclude or include as exception).");
+        }
+      }
+    }
+    return messages;
   }, [
-    formState?.scope,
-    (formState as any)?.childTemplateId,
-    (formState as any)?.holidayHandlingMode,
+    formState,
     dateRangeValidation.ok,
+    dateRangeValidation.message,
     templateIntervalsStatus.isLoading,
     templateIntervalsStatus.effectiveTemplateId,
     templateIntervalsStatus.hasAnyInterval,
-    holidayHandlingValidationOk,
-    onValidationChange,
+    shouldFetchHolidays,
+    isHolidaysQueryError,
+    isFetchingHolidays,
+    holidaysInRange,
+    holidayHandlingModeSet,
   ]);
+
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      validate: () => {
+        const messages = collectStepOneValidationMessages();
+        return { ok: messages.length === 0, messages };
+      },
+    }),
+    [collectStepOneValidationMessages]
+  );
+
+  React.useEffect(() => {
+    onValidationChange?.(collectStepOneValidationMessages().length === 0);
+  }, [collectStepOneValidationMessages, onValidationChange]);
 
   const facilityName = React.useMemo(() => {
     return (facilityData as any)?.name ?? "";
@@ -320,6 +345,8 @@ const ApplyTemplateStepOne: React.FC<ApplyTemplateStepOneProps> = ({
       </div>
     </>
   );
-};
+});
+
+ApplyTemplateStepOne.displayName = "ApplyTemplateStepOne";
 
 export default ApplyTemplateStepOne;

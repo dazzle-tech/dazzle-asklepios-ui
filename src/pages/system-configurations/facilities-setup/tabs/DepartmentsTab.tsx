@@ -75,7 +75,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   const [openForm, setOpenForm] = useState(false);
   const [showScreen, setShowScreen] = useState({});
   const [showNurseScreen, setShowNurseScreen] = useState({});
-   const [showService, setShowService] = useState({});
+  const [showService, setShowService] = useState({});
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
   const [openScreensNursePopup, setOpenScreensNursePopup] = useState(false);
   const [openAddServicePopup, setOpenAddServicePopup] = useState(false);
@@ -216,7 +216,9 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       }
     }
 
-
+    if (department?.appointable && !department.encounterType) {
+      missingFields.push('Encounter Type is required for appointable department');
+    }
     if (missingFields.length) {
       dispatch(
         notify({
@@ -456,9 +458,9 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
         fill="var(--primary-gray)"
         className="icons-style"
         onClick={() => {
-            setDepartment(rowData);
-            setOpenAddServicePopup(true);
-          }}
+          setDepartment(rowData);
+          setOpenAddServicePopup(true);
+        }}
       />
 
     </div>
@@ -584,11 +586,11 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     );
   };
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (

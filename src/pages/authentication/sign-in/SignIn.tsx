@@ -21,7 +21,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
-import Logo from '../../../images/Logo_BLUE_New.svg';
+import Logo from '../../../images/Logo_BLUE_New.png';
 import './styles.less';
 
 const SignIn = () => {
