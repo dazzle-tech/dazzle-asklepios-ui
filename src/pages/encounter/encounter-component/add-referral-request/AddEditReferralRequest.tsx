@@ -5,9 +5,9 @@ import { Form } from 'rsuite';
 import './styles.less';
 import { FaComment } from 'react-icons/fa';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useAppSelector } from '@/hooks';
-import { useLazyGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
+import { useLazyGetActiveAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 const AddEditReferralRequest = ({
@@ -24,7 +24,7 @@ const AddEditReferralRequest = ({
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const selectedDepartment = useAppSelector(state => state.auth?.selectedDepartment);
 
-  const { data: facilityResponse } = useGetAllFacilitiesQuery({});
+  const { data: facilityResponse } = useGetActiveFacilitiesQuery({});
 
   const facilityOptions =
     facilityResponse?.map(f => ({ label: f.name ?? '', value: f.id })) ?? [];
@@ -39,7 +39,7 @@ const AddEditReferralRequest = ({
   const [modalSession, setModalSession] = useState(0);
 
   const [triggerDepartments, { isFetching: isDeptLoading }] =
-    useLazyGetAppointableDepartmentsQuery();
+    useLazyGetActiveAppointableDepartmentsQuery();
 
   const prevToFacilityId = useRef(undefined);
 
