@@ -544,13 +544,6 @@ const InventoryTransaction = () => {
         }
     };
    
-    useEffect(() => {
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent('  '));
-        };
-    }, [location.pathname, dispatch]);
-
     // Effects
     useEffect(() => {
         handleManualSearch();
@@ -601,9 +594,17 @@ const InventoryTransaction = () => {
             "Inventory Transaction"
     );
     // page header setup
+
+
+    useEffect(() => {
     dispatch(setPageCode('Inventory_Transaction'));
     dispatch(setDivContent(divContent));
-
+    
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+      };
+    }, [dispatch]);
     const tablebuttons = (<div className='bt-right-group'>
                     <div className='btns-group'>
                         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={() => { setOpen(true), setInventoryTransaction({ ...newApInventoryTransaction }) }}>Add Transaction</MyButton>

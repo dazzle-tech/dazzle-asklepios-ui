@@ -102,8 +102,17 @@ const WarehouseItemsSetup = () => {
   const divContent = (
     "Warehouse Products"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Warehouse_Items_Setup'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && warehouse && warehouse.key === rowData.key) {
@@ -125,12 +134,6 @@ const WarehouseItemsSetup = () => {
     }
   }, [recordOfFilter]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   // handle click om edit  
   const handleEdit = () => {

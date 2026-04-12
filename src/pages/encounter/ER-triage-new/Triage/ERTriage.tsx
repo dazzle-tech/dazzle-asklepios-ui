@@ -55,9 +55,6 @@ import {
   useGetBulkPatientBasicInfoMutation,
   useLazyGetPatientWristbandQuery
 } from '@/services/patient/patientService';
-
-import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
 import MyModal from '@/components/MyModal/MyModal';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import { printPatientWristband } from '@/utils/printPatientWristband';

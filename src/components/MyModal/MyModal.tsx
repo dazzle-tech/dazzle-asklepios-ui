@@ -28,7 +28,8 @@ const MyModal = ({
   cancelButtonLabel = 'Cancel',
   handleCancelFunction = () => {},
   modalColor = 'var(--primary-blue)',
-  initialStep = 0
+  initialStep = 0,
+  enforceFocus = true
 }) => {
   const [internalStep, setInternalStep] = useState(initialStep);
   const activeStep = internalStep;
@@ -62,6 +63,7 @@ const MyModal = ({
       open={open}
       onClose={handleCancel}
       size={size}
+      enforceFocus={enforceFocus}
       className={`${modalClass} ${customClassName} ${
         mode === 'light' ? 'modal-light' : 'modal-dark'
       }`}
@@ -124,9 +126,13 @@ const MyModal = ({
           {steps[activeStep]?.footer}
           {activeStep === computedPagesCount - 1 && !hideActionBtn && (
             <MyButton
-              onClick={() => {
-                actionButtonFunction();
-                setInternalStep(0);
+              onClick={async () => {
+                try {
+                  await Promise.resolve(actionButtonFunction());
+                  setInternalStep(0);
+                } catch {
+                  /* caller / RTK handles errors; stay on current step */
+                }
               }}
               disabled={isDisabledActionBtn}
             >

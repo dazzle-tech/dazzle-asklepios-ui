@@ -1796,7 +1796,7 @@ const isSelectedRelation = rowData => {
                 <Translate>Consent Forms</Translate>
               </Tab>
               <Tab>
-                <Translate>Preferred Health Professional</Translate>
+                <Translate>Primary Care Provider</Translate>
               </Tab>
               <Tab>
                 <Translate>Family Members</Translate>

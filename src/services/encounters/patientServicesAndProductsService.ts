@@ -63,6 +63,21 @@ export const patientServicesAndProductsService = createApi({
       ],
     }),
 
+    // GET /api/patient/patient-services-products/by-patient/{patientId}
+    getPatientServicesAndProductsByPatient: builder.query<
+      PagedResult<PatientServiceAndProduct>,
+      { patientId: number; page?: number; size?: number; sort?: string }
+    >({
+      query: ({ patientId, page = 0, size = 10, sort = 'id,desc' }) => ({
+        url: `/api/patient/patient-services-products/by-patient/${patientId}?page=${page}&size=${size}&sort=${sort}`,
+        method: 'GET',
+      }),
+      transformResponse: (response: PatientServiceAndProduct[], meta) => mapPaged(response, meta),
+      providesTags: (_res, _err, { patientId }) => [
+        { type: 'PatientServiceAndProduct', id: patientId },
+      ],
+    }),
+
     // PUT /api/patient/patient-services-products/{id}
     updatePatientServiceOrProduct: builder.mutation<
       PatientServiceAndProduct,
@@ -103,6 +118,8 @@ export const {
   useCreatePatientServiceOrProductMutation,
   useGetPatientServicesAndProductsByEncounterQuery,
   useLazyGetPatientServicesAndProductsByEncounterQuery,
+  useGetPatientServicesAndProductsByPatientQuery,
+  useLazyGetPatientServicesAndProductsByPatientQuery,
   useUpdatePatientServiceOrProductMutation,
   useDeletePatientServiceOrProductMutation,
   

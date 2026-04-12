@@ -54,8 +54,17 @@ const GenericMedications = () => {
   const divContent = (
       "Brand Medications List"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Brand_Medications'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -98,12 +107,7 @@ const GenericMedications = () => {
     }
   }, [removeGenericMedicationMutation]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
   // update list after new/edit Generic Medication
   useEffect(() => {
     if (saveGenericMedicationMutation.data) {

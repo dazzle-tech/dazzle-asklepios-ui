@@ -26,6 +26,7 @@ const BasicInfo = ({
         width={170}
         vr={validationResult}
         column
+        required
         fieldName="secondName"
         record={localPatient}
         setRecord={setLocalPatient}

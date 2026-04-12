@@ -295,10 +295,6 @@ const ERList = () => {
     </>
   );
 
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
 
   useEffect(() => {
     refetchEncounter();

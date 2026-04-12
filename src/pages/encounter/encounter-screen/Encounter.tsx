@@ -213,6 +213,8 @@ const Encounter = () => {
       navigate('/day-case-list');
     } else if (propsData?.fromPage === 'ER_Department') {
       navigate('/ER-department');
+    }  else if (propsData?.fromPage === 'Urgent_Care_List') {
+      navigate('/urgent-care-department-list');
     } else {
       navigate('/encounter-list');
     }
@@ -313,10 +315,17 @@ const Encounter = () => {
   const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
 
   const divContent = `Patient Visit > ${currentHeader}`;
-  useEffect(() => {
+
+useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));
     dispatch(setDivContent(divContent));
-  }, [currentHeader, dispatch]);
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [currentHeader,dispatch]);
+
 
   useEffect(() => {
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
@@ -515,7 +524,7 @@ const Encounter = () => {
                   appearance="ghost"
                 >
                   <Translate>
-                    {localEncounter?.encounterType === 'EMERGENCY' ? 'Discharge' : 'Complete Visit'}
+                    {localEncounter?.encounterType === 'EMERGENCY' ? 'Disposition' : 'Complete Visit'}
                   </Translate>
                 </MyButton>
 
