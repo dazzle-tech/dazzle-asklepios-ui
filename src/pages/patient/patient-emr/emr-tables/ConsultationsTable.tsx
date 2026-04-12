@@ -99,9 +99,9 @@ const ClinicalConsultationsTables = ({ patient, encounter }) => {
       title: <Translate>PRACTITIONER</Translate>,
       flexGrow: 2,
       render: row => {
-        const practitioner = physicians.find(p => p.id === row.practitionerId);
+        const practitioner = physicians.find(p => p?.id === row?.practitionerId);
         return practitioner
-          ? practitioner.firstName + " " + practitioner.lastName
+          ? practitioner?.firstName + " " + practitioner?.lastName
           : "-";
       }
     },
@@ -110,15 +110,15 @@ const ClinicalConsultationsTables = ({ patient, encounter }) => {
       title: <Translate>DATE TIME</Translate>,
       flexGrow: 2,
       render: row =>
-        row.dateTime
-          ? formatDateWithoutSeconds(row.dateTime)
+        row?.dateTime
+          ? formatDateWithoutSeconds(row?.dateTime)
           : "-"
     },
     {
       key: "consultantNotes",
       title: <Translate>CONSULTANT NOTES</Translate>,
       flexGrow: 4,
-      render: row => row.consultantNotes ?? "-"
+      render: row => row?.consultantNotes ?? "-"
     }
   ], [physicians]);
 
