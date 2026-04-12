@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -36,6 +36,12 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
+    useEffect(() => {
+      if(!department?.appointable){
+        setDepartment({...department, defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0, encounterType: ''})
+      }
+
+    },[department?.appointable]);
 
   return (
     <Form
@@ -116,6 +122,7 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
           selectDataValue="value"
           record={department}
           setRecord={setDepartment}
+          required
         />
       )}
 
@@ -156,6 +163,8 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
         width="100%"
         required
       />
+      {department?.appointable && (
+        <>
       <MyInput
         column
         fieldType="number"
@@ -183,6 +192,8 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
         width="100%"
         required={department?.appointable}
       />
+      </>
+      )}
       <MyInput
         column
         fieldType="checkbox"
