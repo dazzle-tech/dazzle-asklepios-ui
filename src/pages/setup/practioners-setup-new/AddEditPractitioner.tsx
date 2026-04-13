@@ -16,7 +16,7 @@ import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetUserQuery } from '@/services/userService';
 import { AppUser } from '@/types/model-types';
 import MyButton from '@/components/MyButton/MyButton';
-import { useGetAppointableDepartmentsQuery, useGetDepartmentsQuery } from '@/services/security/departmentService';
+import { useGetAppointableDepartmentsQuery, useGetDepartmentByFacilityQuery, useGetDepartmentsQuery } from '@/services/security/departmentService';
 import {
   useCreatePractitionerDepartmentMutation,
   useDeletePractitionerDepartmentMutation,
@@ -48,9 +48,9 @@ const AddEditPractitioner = ({
   const [deptPage, setDeptPage] = useState(0);
 
   const {
-    data: deptResponse,
-    isFetching: loadingDepartments,
-    refetch: refetchDepartments,
+    data: facilityAppointableDepartments,
+    isFetching: loadingfacilityAppointableDepartments,
+    refetch: refetchfacilityAppointableDepartments,
   } = useGetAppointableDepartmentsQuery(
     {
       facilityId: practitioner?.facilityId,
@@ -62,8 +62,20 @@ const AddEditPractitioner = ({
     }
   );
 
-
-
+  const {
+    data: facilityDepartments,
+    isFetching: loadingFacilityDepartments,
+    refetch: refetchFacilityDepartments,
+  } = useGetDepartmentByFacilityQuery(
+    {
+      facilityId: practitioner?.facilityId,
+      page: deptPage,
+      size: 10,
+    },
+    {
+      skip: !practitioner?.facilityId,
+    }
+  );
 
   // Practitioner Departments API
   const {
@@ -95,13 +107,22 @@ const AddEditPractitioner = ({
 
 
   useEffect(() => {
-    if (deptResponse?.data) {
-      setAllDepartments((prev) =>
-        deptPage === 0 ? deptResponse.data : [...prev, ...deptResponse.data]
-      );
+    if (practitioner?.appointable) {
+      if (facilityAppointableDepartments?.data) {
+        setAllDepartments((prev) =>
+          deptPage === 0 ? facilityAppointableDepartments.data : [...prev, ...facilityAppointableDepartments.data]
+        );
+      }
     }
-  }, [deptResponse]);
-  console.log("practitioner: ", practitioner);
+    else {
+      if (facilityDepartments?.data) {
+        setAllDepartments((prev) =>
+          deptPage === 0 ? facilityDepartments.data : [...prev, ...facilityDepartments.data]
+        );
+      }
+    }
+  }, [facilityAppointableDepartments, facilityDepartments, practitioner, practitioner?.appointable]);
+
   // Required fields validation
   const validateRequiredFields = () => {
     const fieldLabels = {
@@ -205,7 +226,17 @@ const AddEditPractitioner = ({
     setSearchResultVisible(true);
   };
 
-
+ useEffect(() => {
+ 
+   if (!practitioner?.appointable) {
+     
+       setPractitioner(prev => ({
+         ...prev,
+         defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+       }));
+     
+   }
+ }, [practitioner?.appointable]);
   // Main modal content
   const conjureFormContentOfMainModal = (stepNumber) => {
     switch (stepNumber) {
@@ -438,17 +469,20 @@ const AddEditPractitioner = ({
                           required
                         />
                       </Col>
-                      <Col md={12}>
-                        <MyInput
-                          fieldType="number"
-                          fieldName="defaultDurationMinutes"
-                          record={practitioner}
-                          setRecord={setPractitioner}
-                          width="100%"
-                          required={practitioner.appointable}
-                        />
-                      </Col>
+                      {practitioner?.appointable && (
+                        <Col md={12}>
+                          <MyInput
+                            fieldType="number"
+                            fieldName="defaultDurationMinutes"
+                            record={practitioner}
+                            setRecord={setPractitioner}
+                            width="100%"
+                            required={practitioner.appointable}
+                          />
+                        </Col>
+                      )}
                     </Row>
+                    {practitioner?.appointable && (
                     <Row>
                       <Col md={12}>
                         <MyInput
@@ -471,6 +505,7 @@ const AddEditPractitioner = ({
                         />
                       </Col>
                     </Row>
+                    )}
                   </>
                 }
               />
@@ -493,11 +528,11 @@ const AddEditPractitioner = ({
               setRecord={setLocalSelection}
               searchable
               width={520}
-              disabled={loadingDepartments}
-              hasMore={deptResponse?.links?.next ? true : false}
+              loading={loadingfacilityAppointableDepartments || loadingFacilityDepartments}
+              hasMore={facilityAppointableDepartments?.links?.next ? true : false}
               onFetchMore={() => {
-                if (deptResponse?.links?.next) {
-                  const { page } = extractPaginationFromLink(deptResponse.links.next);
+                if (facilityAppointableDepartments?.links?.next) {
+                  const { page } = extractPaginationFromLink(facilityAppointableDepartments.links.next);
                   setDeptPage(page);
                 }
               }}
@@ -605,11 +640,11 @@ const AddEditPractitioner = ({
     </Form>
   );
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (

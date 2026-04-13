@@ -58,10 +58,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw) {
@@ -115,7 +115,7 @@ const ERWaitingList = () => {
 
     triggerGetDepartmentById(Number(departmentId))
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [departmentId, triggerGetDepartmentById]);
 
   const isEmergencyDepartment = useMemo(() => {
@@ -257,7 +257,7 @@ const ERWaitingList = () => {
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo, isEmergencyDepartment]);
 
   const patientMap = useMemo(() => {
@@ -296,9 +296,9 @@ const ERWaitingList = () => {
       ).trim();
       const secondName = String(
         patientFromMap?.secondName ??
-          row?.patient?.secondName ??
-          row?.patientObject?.secondName ??
-          ''
+        row?.patient?.secondName ??
+        row?.patientObject?.secondName ??
+        ''
       ).trim();
       const thirdName = String(
         patientFromMap?.thirdName ?? row?.patient?.thirdName ?? row?.patientObject?.thirdName ?? ''
@@ -358,8 +358,16 @@ const ERWaitingList = () => {
       refetchEncounters();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       setOpen(false);
-    } catch {
-      dispatch(notify({ msg: 'Error cancelling encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
@@ -653,7 +661,7 @@ const ERWaitingList = () => {
           column
           width={150}
           fieldType="check"
-          fieldLabel="Show Cancelled"
+          fieldLabel={<Translate>Show Cancelled</Translate>}
           fieldName="showCancelled"
           showLabel={false}
           record={{ showCancelled }}
@@ -794,7 +802,7 @@ const ERWaitingList = () => {
         open={openBedAssigmentModal}
         setOpen={setOpenBedAssigment}
         encounter={encounter}
-        departmentKey={String(encounter?.departmentId) ?? String(departmentId)}
+        departmentId={String(encounter?.departmentId) ?? String(departmentId)}
       />
 
       <MyTable

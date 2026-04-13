@@ -17,6 +17,7 @@ import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import '../styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import Translate from '@/components/Translate';
 
 const SocialHistory = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -146,7 +147,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     },
     {
       key: 'createdDate',
-      title: 'CREATED AT / BY',
+      title: <Translate>CREATED AT / BY</Translate>,
       expandable: true,
       render: (row: any) =>
         row?.createdDate ? (
@@ -469,7 +470,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
                           width={220}
                           column
                           fieldType="text"
-                          fieldLabel="Created By / At"
+                          fieldLabel={<Translate>Created By / At</Translate>}
                           fieldName="createdBy"
                           record={{
                             createdBy: previewRow.createdDate

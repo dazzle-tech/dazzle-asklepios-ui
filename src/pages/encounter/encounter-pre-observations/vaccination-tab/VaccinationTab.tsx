@@ -475,7 +475,7 @@ const VaccinationTab = ({
                     }
                   }}
                 >
-                  Show Cancelled
+                  <Translate>Show Cancelled</Translate>
                 </Checkbox>
 
                 <Checkbox

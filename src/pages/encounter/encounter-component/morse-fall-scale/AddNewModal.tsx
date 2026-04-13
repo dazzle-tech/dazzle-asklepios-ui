@@ -6,6 +6,7 @@ import MyInput from '@/components/MyInput';
 import { Col, Form, Radio, RadioGroup, Row, Text } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import Translate from '@/components/Translate';
 const AddNewModal = ({
   open,
   setOpen,
@@ -117,31 +118,31 @@ const AddNewModal = ({
               record={morseFallScale}
               setRecord={setMorseFallScale}
             />
-            <Text>Patient`s walking aid</Text>
+            <Text><Translate>Patient`s walking aid</Translate></Text>
             <RadioGroup value={walkingAid} onChange={value => setWalkingAid(value)}>
               <Row gutter={10}>
-                <Radio value="None">None</Radio>
-                <Radio value="Crutches">Crutches</Radio>
-                <Radio value="Cane">Cane</Radio>
-                <Radio value="Walker">Walker</Radio>
-                <Radio value="Furniture">Furniture </Radio>
+                <Radio value="None"><Translate>None</Translate></Radio>
+                <Radio value="Crutches"><Translate>Crutches</Translate></Radio>
+                <Radio value="Cane"><Translate>Cane</Translate></Radio>
+                <Radio value="Walker"><Translate>Walker</Translate></Radio>
+                <Radio value="Furniture"><Translate>Furniture</Translate></Radio>
               </Row>
             </RadioGroup>
             <br />
-            <Text>Gait/Transfer</Text>
+            <Text><Translate>Gait/Transfer</Translate></Text>
             <RadioGroup value={gaitTransfer} onChange={value => setGaitTransfer(value)}>
               <Row gutter={10}>
-                <Radio value="Normal">Normal</Radio>
-                <Radio value="Weak">Weak</Radio>
-                <Radio value="Impaired">Impaired</Radio>
+                <Radio value="Normal"><Translate>Normal</Translate></Radio>
+                <Radio value="Weak"><Translate>Weak</Translate></Radio>
+                <Radio value="Impaired"><Translate>Impaired</Translate></Radio>
               </Row>
             </RadioGroup>
             <br />
-            <Text>Mental status</Text>
+            <Text><Translate>Mental status</Translate></Text>
             <RadioGroup value={mentalStatus} onChange={value => setMentalStatus(value)}>
               <Row gutter={10}>
-                <Radio value="Oriented">Oriented</Radio>
-                <Radio value="Forgets Limitations">Forgets Limitations</Radio>
+                <Radio value="Oriented"><Translate>Oriented</Translate></Radio>
+                <Radio value="Forgets Limitations"><Translate>Forgets Limitations</Translate></Radio>
               </Row>
             </RadioGroup>
             <br />

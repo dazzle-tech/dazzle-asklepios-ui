@@ -67,7 +67,7 @@ const ActiveAllergies = ({ patient }) => {
   return (
     <Section
       isContainOnlyTable
-      title="Active Allergies"
+      title={<Translate>Active Allergies</Translate>}
       content={
         <MyTable
           data={activeAllergies}

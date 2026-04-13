@@ -25,6 +25,7 @@ import {
 import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 
 import type { PatientEncounter } from '@/types/model-types-new';
+import Translate from '@/components/Translate';
 
 const SOAP = props => {
   const dispatch = useAppDispatch();
@@ -41,7 +42,11 @@ const SOAP = props => {
 
   const [localEncounter, setLocalEncounter] = useState<any>(encounterFromNav || {});
 
-  const { data: encounterFromServer, isLoading, isFetching } = useGetEncounterByIdQuery(
+  const {
+    data: encounterFromServer,
+    isLoading,
+    isFetching
+  } = useGetEncounterByIdQuery(
     { id: encounterId },
     {
       skip: !encounterId,
@@ -141,7 +146,7 @@ const SOAP = props => {
         <div className={clsx('column-container', { 'disabled-panel': edit })}>
           <div className="top-section">
             <SectionContainer
-              title={<>Chief Complaint</>}
+              title={<Translate>Chief </Translate>}
               content={
                 <Form fluid>
                   <MyInput
@@ -165,7 +170,7 @@ const SOAP = props => {
           </div>
 
           <SectionContainer
-            title="Patient Diagnosis"
+            title={<Translate>Patient Diagnosis</Translate>}
             content={
               <PatientDiagnosis
                 patient={patient}
@@ -208,21 +213,20 @@ const SOAP = props => {
     return () => dispatch(hideSystemLoader());
   }, [isLoading, isFetching, dispatch]);
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div className="patient-summary-container">
-        <MyTab
-          data={tabData.map(tab => ({
-            ...tab,
-            content: <div dir={dir}>{tab.content}</div>
-          }))}
-        />
+      <MyTab
+        data={tabData.map(tab => ({
+          ...tab,
+          content: <div dir={dir}>{tab.content}</div>
+        }))}
+      />
     </div>
   );
 };

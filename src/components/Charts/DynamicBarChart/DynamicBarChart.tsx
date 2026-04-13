@@ -5,6 +5,7 @@ import 'chart.js/auto';
 import { Button } from 'rsuite';
 import { useSelector } from 'react-redux';
 import './styles.less'
+import Translate from '@/components/Translate';
 // Original single-column data type
 type BarChartDataPoint = {
   label: string;
@@ -169,7 +170,7 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
     className="dynamic-bar-chart-container"
     dir={direction === 'RTL' ? 'rtl' : 'ltr'}
   >
-      <span className="font-12">Admissions, discharges, and emergency visits</span>
+      <span className="font-12"><Translate>Admissions, discharges, and emergency visits</Translate></span>
       {selectable && (
         <div style={{ marginBottom: 10 }}>
           {selectedBar ? (
@@ -178,7 +179,7 @@ const DynamicBarChart: React.FC<DynamicBarChartProps> = ({
               {selectedBar.label}: <b style={{ color: 'rebeccapurple' }}>{selectedBar.value}</b>
             </span>
           ) : (
-            <span>Click on a bar to select</span>
+            <span><Translate>Click on a bar to select</Translate></span>
           )}
         </div>
       )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Col, Divider, Drawer, Form, List, Panel, Row } from 'rsuite';
@@ -21,11 +21,11 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
-import './styles.less';
-import { useLazyGetNurseSummaryReportQuery } from '@/services/observationServiceNew';
-import { printNurseSummaryReport } from '@/utils/printNurseSummaryReport';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useLazyGetNurseSummaryReportQuery } from '@/services/observationServiceNew';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { printNurseSummaryReport } from '@/utils/printNurseSummaryReport';
+import './styles.less';
 
 const NurseStation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -38,6 +38,8 @@ const NurseStation = () => {
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
   });
+
+const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
 
   // === LOVs ===
   const { data: bloodPressureMeasurementSiteLov } =
@@ -87,26 +89,37 @@ const NurseStation = () => {
     );
   }, [allowedSheetCodes, searchTerm.term]);
 
-  const headersMap = useMemo(() => {
-    const map: any = {};
-    MedicalSheets.forEach(ms => {
-      const fullPath = `/nurse-station/${ms.path.startsWith('/') ? ms.path.slice(1) : ms.path}`;
-      map[fullPath] = ms.name;
-    });
-    return map;
-  }, []);
+const headersMap = useMemo(() => {
+  const map: Record<string, string> = {};
 
-  useEffect(() => {
-    const header = headersMap[location.pathname] || 'Nurse Dashboard';
+  MedicalSheets.forEach(ms => {
+    const fullPath = ms.path.startsWith('/nurse-station')
+      ? ms.path
+      : `/nurse-station${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
 
-    dispatch(setPageCode('Nurse_Station'));
-    dispatch(setDivContent(`Nurse Station > ${header}`));
+    map[fullPath] = ms.name;
+  });
 
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(' '));
-    };
-  }, [location.pathname, headersMap, dispatch]);
+  return map;
+}, []);
+
+useEffect(() => {
+  setCurrentHeader(headersMap[location.pathname] || 'Nurse Dashboard');
+}, [location.pathname, headersMap]);
+
+
+const divContent = `Nurse Station > ${currentHeader}`;
+
+useEffect(() => {
+  dispatch(setPageCode('Nurse_Station'));
+  dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [currentHeader, dispatch]);
+
 
   useEffect(() => {
     if (!propsData?.encounter) {
@@ -142,13 +155,16 @@ const NurseStation = () => {
           sev: 'success'
         })
       );
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'An error occurred while completing the encounter',
-          sev: 'error'
-        })
-      );
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     } finally {
       dispatch(hideSystemLoader());
     }
@@ -242,7 +258,6 @@ const NurseStation = () => {
               >
                 Generate Report
               </MyButton>
-
               <MyButton
                 disabled={edit}
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}

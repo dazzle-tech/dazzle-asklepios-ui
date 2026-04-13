@@ -55,8 +55,16 @@ const Lov = () => {
   const divContent = (
     "LOVs"
   );
-  dispatch(setPageCode('Lovs'));
+ 
+  useEffect(() => {
+ dispatch(setPageCode('Lovs'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   const isSelected = rowData => {
     if (rowData && lov && rowData.key === lov.key) {
       return 'selected-row';
@@ -88,12 +96,7 @@ const Lov = () => {
     }
   }, [saveLovMutation.data]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+ 
 
   // handle click on Add New button 
   const handleLovNew = () => {

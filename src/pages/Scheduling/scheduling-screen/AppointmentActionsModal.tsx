@@ -213,6 +213,9 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     // Get current appointment status (from local state or appointment prop)
     const currentAppointmentStatus = localAppointmentData?.appointmentStatus || appointment?.appointmentData?.appointmentStatus;
+    const normalizedStatus = String(currentAppointmentStatus || '').replace(/[-_\s]/g, '').toUpperCase();
+    const isDirectReasonStatus = normalizedStatus === 'CANCELED' || normalizedStatus === 'NOSHOW';
+    const isReasonViewOnly = isDirectReasonStatus && Boolean(resonType);
 
     // Get appointment ID for fetching encounter
     const appointmentId = useMemo(() => {
@@ -232,6 +235,12 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         if (appointment)
             setLocalAppoitmentData(appointment.appointmentData)
     }, [appointment])
+
+    useEffect(() => {
+      if (!isActionsModalOpen || !isDirectReasonStatus) return;
+      setResonType(normalizedStatus === 'NOSHOW' ? 'No-show' : 'Cancel');
+      setOtherReason({ otherReason: String(localAppointmentData?.otherReason || '') });
+    }, [isActionsModalOpen, isDirectReasonStatus, normalizedStatus, localAppointmentData?.otherReason]);
 
     // Set encounter when fetched for confirmed appointment
     useEffect(() => {
@@ -460,6 +469,7 @@ const handleCancel = () => {
                     selectDataValue="key"
                     record={reasonKey}
                     setRecord={setResonKey}
+                    disabled={isReasonViewOnly}
                 />
                 <MyInput
                     width="100%"
@@ -468,6 +478,7 @@ const handleCancel = () => {
                     fieldName="otherReason"
                     record={otherReason}
                     setRecord={setOtherReason}
+                    disabled={isReasonViewOnly}
                 />
             </div>
         </Form>
@@ -475,7 +486,7 @@ const handleCancel = () => {
     return (
         <div>
             <MyModal
-                open={isActionsModalOpen}
+                open={isActionsModalOpen && !isDirectReasonStatus}
                 setOpen={onActionsModalClose}
                 title={`${appointment?.title}  ${appointment?.fromTo}  ${currentAppointmentStatus}`}
                 size="38vw"
@@ -510,6 +521,7 @@ const handleCancel = () => {
                 position="right"
                 content={cancelModalContent}
                 actionButtonFunction={() => { resonType === 'Cancel' ? handleCancel() : handleNonShow() }}
+                hideActionBtn={isReasonViewOnly}
                 isDisabledActionBtn={!(otherReason || reasonKey)}
                 steps={[{ title: "Reason", icon: <FontAwesomeIcon icon={faClock} /> }]}
             />

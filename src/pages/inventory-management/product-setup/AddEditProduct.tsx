@@ -27,6 +27,7 @@ import MaintenanceInformation from "./MaintenanceInformation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDiceD6 } from "@fortawesome/free-solid-svg-icons";
 import SectionContainer from "@/components/SectionsoContainer";
+import Translate from "@/components/Translate";
 
 const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
   const dispatch = useAppDispatch();
@@ -215,7 +216,7 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
           <Col md={12}>
             <Row>
                 <SectionContainer 
-                  title="Maintenance Information" 
+                  title={<Translate>Maintenance Information</Translate>} 
                   content={<MaintenanceInformation product={product} setProduct={setProduct} disabled={false} />} 
               />
             </Row>

@@ -83,7 +83,6 @@ const RecentTestResults = forwardRef<any, Props>(({ patient }) => {
   const [openNotesModal, setOpenNotesModal] = useState(false);
   const [open, setOpen] = useState<boolean>(false);
   const patientId = patient?.id;
-console.log('Patient ID in RecentTestResults:', patientId);
  const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
 
@@ -99,13 +98,11 @@ console.log('Patient ID in RecentTestResults:', patientId);
     data: ordersResponse,
     isFetching: isOrdersFetching
   } = useFilterDiagnosticOrdersQuery(ordersQueryParams);
-console.log('Orders response in RecentTestResults:', ordersResponse);
   const orders = ordersResponse?.data ?? [];
     const orderIds = useMemo(
       () => orders.map((o: any) => o.id).filter(Boolean),
       [orders]
     );
-   console.log('Order IDs in RecentTestResults:', orderIds);
 
   const queryParams = useMemo(() => {
       if (!patientId) return skipToken;
@@ -322,7 +319,7 @@ console.log('Orders response in RecentTestResults:', ordersResponse);
   return (
     <Section
       isContainOnlyTable
-      title="Recent Test Results"
+      title={<Translate>Recent Test Results</Translate>}
       content={
         <MyTable
           columns={columns}

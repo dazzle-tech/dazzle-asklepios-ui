@@ -192,7 +192,6 @@ const BodyMeasurements: React.FC<BodyMeasurementsProps> = ({
       }));
 
       dispatch(notify({ msg: 'Body measurements saved successfully', sev: 'success' }));
-      
     } catch (error: any) {
       showApiError(error);
     }

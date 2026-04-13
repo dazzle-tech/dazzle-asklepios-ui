@@ -53,14 +53,14 @@ import {
 } from '@/services/encounters/er-triage/emergencyTriageService';
 import {
   useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientWristbandPdfQuery,
   useLazyGetPatientWristbandQuery
 } from '@/services/patient/patientService';
-
-import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
 import MyModal from '@/components/MyModal/MyModal';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import { printPatientWristband } from '@/utils/printPatientWristband';
+import { useAppSelector } from '@/hooks';
+import { is } from 'date-fns/locale';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -114,6 +114,11 @@ const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
 const ERTriage = () => {
   const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
   const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+  const isReceptionist = jobRole === 'RECEPTIONIST';
+  const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
+
 
   const toDateSafe = (value: any): Date | null => {
     if (!value && value !== 0) return null;
@@ -207,12 +212,12 @@ const ERTriage = () => {
     const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
     const end = toDateSafe(
       latest?.completedDate ??
-        completedDate ??
-        completedAt ??
-        rowUpdatedAt ??
-        fallbackUpdatedAt ??
-        completedDate ??
-        null
+      completedDate ??
+      completedAt ??
+      rowUpdatedAt ??
+      fallbackUpdatedAt ??
+      completedDate ??
+      null
     );
     if (!triageStart || !end) return <></>;
     return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
@@ -239,22 +244,24 @@ const ERTriage = () => {
 
   const handlePrintWristband = async (rowData: any) => {
     try {
-      const patientId = rowData?.patientObject?.id ?? rowData?.patientId ?? rowData?.patient?.id;
+      const blob = await triggerGetPatientWristbandPdf({
+        patientId: rowData.patientId
+      }).unwrap();
 
-      if (!patientId) return;
+      const fileURL = window.URL.createObjectURL(blob);
 
-      const res = await triggerWristband({ patientId }).unwrap();
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `wristband-${rowData.patientId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-      await printPatientWristband(res);
-    } catch (err: any) {
-      console.error('Wristband print failed', err);
-
-      dispatch(
-        notify({
-          msg: err?.data?.message || 'Failed to print wristband',
-          sev: 'error'
-        })
-      );
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download wristband pdf', error);
     }
   };
   const selectedDepartment = useMemo(() => {
@@ -402,7 +409,7 @@ const ERTriage = () => {
     if (patientIdsForBulk.length === 0) return;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientByIdMap = useMemo(() => {
@@ -678,7 +685,7 @@ const ERTriage = () => {
     }
   };
 
-  const EncounterPriorityAction = ({ rowData }: { rowData: any }) => {
+  const EncounterPriorityAction = ({ rowData, isReceptionist }: { rowData: any; isReceptionist: boolean }) => {
     const whisperRef = useRef<any>(null);
     const [lockHoverUntilLeave, setLockHoverUntilLeave] = useState(false);
     const isPendingPayment = isPendingPaymentStatus(rowData);
@@ -733,8 +740,8 @@ const ERTriage = () => {
               isPendingPayment
                 ? 'click'
                 : lockHoverUntilLeave
-                ? 'click'
-                : (['hover', 'click'] as any)
+                  ? 'click'
+                  : (['hover', 'click'] as any)
             }
             placement="leftStart"
             speaker={prioritySpeaker}
@@ -755,67 +762,80 @@ const ERTriage = () => {
     );
   };
 
-const handleGoToVisit = async (encounterData: any, patientData: any) => {
-  try {
-    const encounterId = encounterData?.id;
-    const patientId = toNumberOrNaN(
-      patientData?.id ?? patientData?.patientId ?? patientData?.key
-    );
+  const handleGoToVisit = async (encounterData: any, patientData: any) => {
+    try {
+      const encounterId = encounterData?.id;
+      const patientId = toNumberOrNaN(
+        patientData?.id ?? patientData?.patientId ?? patientData?.key
+      );
 
-    const statusUpper = String(
-      encounterData?.status ?? encounterData?.encounterStatus ?? ''
-    ).toUpperCase();
+      const statusUpper = String(
+        encounterData?.status ?? encounterData?.encounterStatus ?? ''
+      ).toUpperCase();
 
-    if (
-      statusUpper !== 'TRIAGE_STARTED' &&
-      typeof encounterId === 'number' &&
-      !Number.isNaN(encounterId)
-    ) {
-      await updateEncounter({
-        id: encounterId,
-        body: buildEncounterUpdateBody(encounterData, { status: 'TRIAGE_STARTED' })
-      }).unwrap();
-    }
+      if (
+        statusUpper !== 'TRIAGE_STARTED' &&
+        typeof encounterId === 'number' &&
+        !Number.isNaN(encounterId)
+      ) {
+        await updateEncounter({
+          id: encounterId,
+          body: buildEncounterUpdateBody(encounterData, { status: 'TRIAGE_STARTED' })
+        }).unwrap();
+      }
 
-    const emergencyTriageNew =
-      typeof encounterId === 'number' &&
-      !Number.isNaN(encounterId) &&
-      !Number.isNaN(patientId)
-        ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
-        : null;
+      const emergencyTriageNew =
+        typeof encounterId === 'number' &&
+          !Number.isNaN(encounterId) &&
+          !Number.isNaN(patientId)
+          ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
+          : null;
 
-    const targetPath = '/ER-start-triage';
+      const targetPath = '/ER-start-triage';
 
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
+      sessionStorage.setItem('encounterPageSource', 'EncounterList');
 
-    if (!emergencyTriageNew) {
-      console.warn(
-        '[ER Triage] Could not create/get emergency triage record: missing numeric patientId/encounterId',
-        { patientId, encounterId, patientData, encounterData }
+      if (!emergencyTriageNew) {
+        console.warn(
+          '[ER Triage] Could not create/get emergency triage record: missing numeric patientId/encounterId',
+          { patientId, encounterId, patientData, encounterData }
+        );
+      }
+
+      navigate(targetPath, {
+        state: {
+          info: 'to_Start_Triage',
+          fromPage: 'ER_Triage',
+          patient: patientData,
+          encounter: encounterData,
+          emergencyTriageNew
+        }
+      });
+    } catch (error: any) {
+      console.error('Start triage error:', error, { encounterData, patientData });
+
+      const errorKey =
+        error?.message ||
+        error?.data?.message ||
+        '';
+
+      let readableMessage = 'Failed to start triage';
+
+      if (errorKey === 'error.patient.emergency.notAllowed.withOngoing') {
+        readableMessage =
+          'Cannot start a new triage because the patient already has an ongoing encounter.';
+      } else if (errorKey) {
+        readableMessage = errorKey.replaceAll('.', ' ');
+      }
+
+      dispatch(
+        notify({
+          msg: readableMessage,
+          sev: 'error'
+        })
       );
     }
-
-    navigate(targetPath, {
-      state: {
-        info: 'to_Start_Triage',
-        fromPage: 'ER_Triage',
-        patient: patientData,
-        encounter: encounterData,
-        emergencyTriageNew
-      }
-    });
-  } catch (error) {
-    console.error('Start triage error:', error, { encounterData, patientData });
-    dispatch(
-      notify({
-        msg:
-          (error as any)?.message ||
-          'Failed to start triage (missing required encounter fields?)',
-        sev: 'error'
-      })
-    );
-  }
-};
+  };
 
   useEffect(() => {
     const onResize = () => setWindowHeight(window.innerHeight);
@@ -1000,7 +1020,7 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
     },
     {
       key: 'patientFullName',
-      title: <Translate>PATIENT NAME </Translate>,
+      title: <Translate>PATIENT NAME</Translate>,
       fullText: true,
       render: (rowData: any) => {
         const tooltipSpeaker = (
@@ -1132,7 +1152,7 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
                   size="small"
                   radius="6px"
                   backgroundColor="violet"
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment || isReceptionist}
                   onClick={() => {
                     const patientData = rowData?.patientObject;
 
@@ -1175,11 +1195,11 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
               </div>
             </Whisper>
 
-            <EncounterPriorityAction rowData={rowData} />
+            <EncounterPriorityAction rowData={rowData} isReceptionist={isReceptionist} />
 
             {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               COMPLETE_TRIAGE_STATUS_CODE ||
-            String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
+              String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               SENT_TO_ER_STATUS_CODE ? (
               <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
                 <div>
@@ -1190,7 +1210,7 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
                       setLocalEncounter(rowData);
                       handleGoToViewTriage(rowData, patientData);
                     }}
-                    disabled={isPendingPayment}
+                    disabled={isPendingPayment || isReceptionist}
                   >
                     <FontAwesomeIcon icon={faCommentMedical} />
                   </MyButton>
@@ -1211,6 +1231,7 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
                       handleGoToVisit(rowData, rowData?.patientObject);
                     }}
                     disabled={
+                      isReceptionist ||
                       isPendingPayment ||
                       !['NEW', 'WAITING_TRIAGE', 'TRIAGE_STARTED'].includes(
                         String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
@@ -1238,12 +1259,13 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
                     setLocalEncounter(rowData);
                     handlePrintWristband(rowData);
                   }}
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment || isReceptionist}
                 >
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>
               </div>
             </Whisper>
+
 
             <Whisper
               trigger="hover"
@@ -1269,11 +1291,11 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
                     );
                     const patientId = toNumberOrNaN(
                       patientData?.id ??
-                        patientData?.patientId ??
-                        patientData?.key ??
-                        rowData?.patientId ??
-                        rowData?.patientKey ??
-                        rowData?.patient_key
+                      patientData?.patientId ??
+                      patientData?.key ??
+                      rowData?.patientId ??
+                      rowData?.patientKey ??
+                      rowData?.patient_key
                     );
 
                     try {
@@ -1290,9 +1312,10 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
                     setOpenSendToModal(true);
                   }}
                   disabled={
+                    isReceptionist ||
                     isPendingPayment ||
                     String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() !==
-                      'TRIAGE_STARTED'
+                    'TRIAGE_STARTED'
                   }
                 >
                   <FontAwesomeIcon icon={faPaperPlane} />
@@ -1303,20 +1326,21 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
             {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST', 'PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
             ) && (
-              <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
-                <div>
-                  <MyButton
-                    size="small"
-                    onClick={() => {
-                      setLocalEncounter(rowData);
-                      setOpen(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faRectangleXmark} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
+                <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+                  <div>
+                    <MyButton
+                      size="small"
+                      onClick={() => {
+                        setLocalEncounter(rowData);
+                        setOpen(true);
+                      }}
+                      disabled={isReceptionist}
+                    >
+                      <FontAwesomeIcon icon={faRectangleXmark} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
           </Form>
         );
       },
@@ -1406,11 +1430,11 @@ const handleGoToVisit = async (encounterData: any, patientData: any) => {
       </>
     );
   };
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
   return (
     <div dir={dir}>
       {patientSidebarOpen && (

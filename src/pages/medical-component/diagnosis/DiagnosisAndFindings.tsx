@@ -5,6 +5,7 @@ import { useGetReviewOfSystemByEncounterQuery } from '@/services/medicalsheetsEn
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import React, { useEffect, useState } from 'react';
 import { Col, Row } from 'rsuite';
+import Translate from '@/components/Translate';
 
 const DiagnosisAndFindings = ({ encounter, patient }) => {
   const [primaryDiagnosis, setPrimaryDiagnosis] = useState<any>(null);
@@ -92,16 +93,16 @@ const DiagnosisAndFindings = ({ encounter, patient }) => {
       <Row>
         <Col md={24}>
           <MyCard
-            title="Primary Diagnosis"
-            contant={diagnosisText || 'No primary diagnosis recorded'}
+            title={<Translate>Primary Diagnosis</Translate>}
+            contant={<Translate>{diagnosisText || 'No primary diagnosis recorded'}</Translate>}
           />
         </Col>
       </Row>
       <Row>
         <Col md={24}>
           <MyCard
-            title="Physical Examination - Findings Summary"
-            contant={findingsSummaryText || 'No findings recorded'}
+            title={<Translate>Physical Examination - Findings Summary</Translate>}
+            contant={<Translate>{findingsSummaryText || 'No findings recorded'}</Translate>}
           />
         </Col>
       </Row>

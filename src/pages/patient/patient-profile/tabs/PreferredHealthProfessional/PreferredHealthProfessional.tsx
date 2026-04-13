@@ -106,7 +106,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
       .unwrap()
       .then(() => {
         dispatch(
-          notify({ msg: 'Preferred Health Professional Deleted Successfully', sev: 'success' })
+          notify({ msg: 'Primary Care Provider Deleted Successfully', sev: 'success' })
         );
         refetch();
       });
@@ -243,7 +243,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
           disabled={isClick}
           prefixIcon={() => <PlusRound />}
         >
-          New Preferred Health Professional
+          New Primary Care Provider
         </MyButton>
       </div>
 

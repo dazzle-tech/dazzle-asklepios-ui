@@ -1,51 +1,44 @@
 import AdvancedModal from '@/components/AdvancedModal';
-import { useAppDispatch } from '@/hooks';
-import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { notify } from '@/utils/uiReducerActions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import SearchIcon from '@rsuite/icons/Search';
-import React, { useEffect, useState } from 'react';
-import { Dropdown, Form, Input, InputGroup, Radio, RadioGroup, Text } from 'rsuite';
-import ActiveIngrediantList from './ActiveIngredient';
+import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import MyButton from '@/components/MyButton/MyButton';
-import PlusIcon from '@rsuite/icons/Plus';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
+import MyModal from '@/components/MyModal/MyModal';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
-import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
+import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
+import { useEnumOptions } from '@/services/enumsApi';
 import {
   useCreatePatientPrescriptionMedicationMutation,
   useUpdatePatientPrescriptionMedicationMutation
 } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
-import { newApPrescriptionMedications } from '@/types/model-types-constructor';
-import { faRightLeft, faPills } from '@fortawesome/free-solid-svg-icons';
-import Instructions from './Instructions';
-import Substitues from '../drug-order/SubstitutesNew';
-import clsx from 'clsx';
-import DiagnosticsOrder from '../diagnostics-order-new';
-import CheckIcon from '@rsuite/icons/Check';
-import MyModal from '@/components/MyModal/MyModal';
-import MyTable from '@/components/MyTable';
-import { newApDrugOrderMedications } from '@/types/model-types-constructor';
-import { faStar } from '@fortawesome/free-solid-svg-icons';
-import { FaDownload } from 'react-icons/fa';
-import { PlusRound } from '@rsuite/icons';
+import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
 import {
   useGetBrandMedicationByIdQuery,
   useSearchBrandMedicationsByNameOrActiveQuery
-} from '@/services/setup/brandmedication/BrandMedicationService ';
+} from '@/services/setup/brandmedication/BrandMedicationService';
 import './styles.less';
-import SectionContainer from '@/components/SectionsoContainer';
 import { AttachmentUploadModal } from '@/components/AttachmentModals';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
-import { useEnumOptions } from '@/services/enumsApi';
-import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/setup/activeIngredients/activeIngredientPreRequestedTestService';
 import InfoCardList from '@/components/InfoCardList';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
-
+import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { newApPrescriptionMedications } from '@/types/model-types-constructor';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { notify } from '@/utils/uiReducerActions';
+import { faRightLeft } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import CheckIcon from '@rsuite/icons/Check';
+import SearchIcon from '@rsuite/icons/Search';
+import React, { useEffect, useState } from 'react';
+import { Dropdown, Form, Input, InputGroup, Radio, RadioGroup, Text } from 'rsuite';
+import DiagnosticsOrder from '../diagnostics-order-new';
+import Substitues from '../drug-order/SubstitutesNew';
+import ActiveIngrediantList from './ActiveIngredient';
+import Instructions from './Instructions';
+import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 const DetailsModal = ({
   edit,
   open,
@@ -640,11 +633,15 @@ const DetailsModal = ({
 
   useEffect(() => {
     if (!open) return;
-    // Only clear if we're adding new medication (no key and no id)
-    if (!prescriptionMedication?.key && !prescriptionMedication?.id) {
+
+    if (
+      !prescriptionMedication?.id &&
+      !prescriptionMedication?.indicationIcd
+    ) {
       handleCleare();
     }
-  }, [open, prescriptionMedication?.key, prescriptionMedication?.id]);
+  }, [open]);
+
 
   // Handle click outside medication search dropdown
   useEffect(() => {
@@ -698,6 +695,13 @@ const DetailsModal = ({
     )
   );
 
+useEffect(() => {
+  console.log('📊 prescriptionMedication.indicationIcd changed:',
+    prescriptionMedication?.indicationIcd
+  );
+}, [prescriptionMedication?.indicationIcd]);
+
+
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -716,7 +720,7 @@ const DetailsModal = ({
           </span>
         }
         size="70vw"
-        leftTitle={selectedGeneric ? selectedGeneric.name : 'Select Generic'}
+        leftTitle={<Translate>{selectedGeneric ? selectedGeneric.name : 'Select Generic'}</Translate>}
         rightTitle="Medication Order Details"
         leftContent={
           <div dir={dir}>
@@ -861,7 +865,8 @@ const DetailsModal = ({
                           >
                             {instructionTypeOptions?.map((instruction, index) => (
                               <Radio key={index} value={instruction.value}>
-                                {instruction.label}
+
+                                <Translate>{instruction.label}</Translate>
                               </Radio>
                             ))}
                           </RadioGroup>
@@ -975,14 +980,29 @@ const DetailsModal = ({
                             <span className="required-asterisk">*</span>
                           </Text>
                         </div>
-                        <Icd10DiagnosisSearch
-                          diagnosisId={(prescriptionMedication.indicationIcd as any) ?? null}
-                          setDiagnosisId={(id: number | null) =>
-                            setPrescriptionMedications(prev => ({ ...prev, indicationIcd: id }))
-                          }
-                          label=""
-                          disabled={preKey == null}
-                        />
+                          <PatientDiagnosisTable
+                            patient={patient}
+                            disabled={false}
+                            selectMode
+                            onSelectDiagnosis={(ids) => {
+                              console.log('📥 received in modal:', ids);
+
+                              const selectedIcd = ids?.[0];
+
+                              console.log('🎯 selected ICD:', selectedIcd);
+
+                              setPrescriptionMedications(prev => {
+                                const updated = {
+                                  ...prev,
+                                  indicationIcd: selectedIcd
+                                };
+
+                                console.log('🧾 updated prescriptionMedication:', updated);
+
+                                return updated;
+                              });
+                            }}
+                          />
                       </div>
 
                       {/* Other Fields Section - Two Columns Below */}
@@ -1164,4 +1184,5 @@ const DetailsModal = ({
     </div>
   );
 };
+
 export default DetailsModal;

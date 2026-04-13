@@ -1,0 +1,507 @@
+.inline-two-four-container {
+  display: grid;
+  grid-template-columns: 2.5fr 6fr;
+  gap: 15px;
+  width: 100%;
+  height: 100vh;
+}
+
+.appointments-schedule-screen {
+  .container-form-section {
+    border-radius: 14px;
+    border: 1px solid #e6ebf4;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  }
+}
+
+.appointments-schedule-layout {
+  padding: 8px 10px 12px;
+  border-radius: 14px;
+}
+
+.appointments-schedule-layout.filters-collapsed {
+  gap: 6px !important;
+}
+
+.right-section {
+  background-color: rgb(255, 255, 255);
+  height: auto;
+  min-height: fit-content;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: fit-content;
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid #dfe6f2;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.left-section {
+  width: 16vw;
+  max-width: 273px;
+  padding: 16px;
+
+  background-color: #fff;
+  box-sizing: border-box;
+  flex-shrink: 1;
+}
+
+@media (max-width: 600px) {
+  .left-section {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 450px) {
+  .left-section {
+    max-width: 160px;
+  }
+}
+
+.rbc-day-slot .rbc-time-slot {
+  height: 80px;
+}
+
+.rbc-row {
+  height: 64px;
+}
+
+.rbc-time-header {
+  height: 62px;
+}
+
+.rbc-time-content > * > .rbc-timeslot-group {
+  min-height: 81px;
+}
+
+.rbc-time-gutter {
+  width: 41px;
+  font-size: 12px;
+}
+
+.rbc-time-content > .rbc-time-gutter {
+  min-width: 41px !important;
+  max-width: 41px !important;
+  flex: none !important;
+}
+
+// Ensure the main calendar body is scrollable in day/week with many rows.
+.my-calendar .rbc-time-view {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.my-calendar .rbc-time-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  border-color: #e8edf6;
+}
+
+.my-calendar.day .rbc-time-view .rbc-time-content > .rbc-day-slot {
+  min-width: 300px !important;
+}
+
+.my-calendar.day .rbc-time-view .rbc-header {
+  min-width: 300px !important;
+  flex: none !important;
+  text-align: center;
+}
+
+.rbc-time-header-cell.rbc-today {
+  background-color: #ffffff !important;
+}
+
+.rbc-event,
+.rbc-background-event {
+  z-index: 2;
+  padding: 0px !important;
+  border: none !important;
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+/* Custom selected/focus ring: darker tone of slot background (not blue) */
+.rbc-event:focus,
+.rbc-event.rbc-selected,
+.rbc-selected {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+.rbc-event-label {
+  display: none !important;
+}
+
+.rbc-today {
+  background-color: rgba(13, 110, 253, 0.07) !important;
+}
+
+.event-label-badge {
+  margin-left: auto;
+  background-color: #bbdff7;
+  font-size: 10px;
+  border-radius: 10px;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+
+.rbc-month-view .rbc-row:first-child {
+  height: 18px;
+  // background-color: #b8d3c977;
+  overflow: hidden;
+}
+
+.my-calendar.week .rbc-allday-cell,
+.my-calendar.week .rbc-allday-events {
+  display: none !important;
+}
+
+.appointment-main-container {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.calender-icon-schedule {
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  background-color: #e3e4e8;
+}
+
+.appointments-main-card {
+  background: #ffffff;
+}
+
+.appointments-slot-summary-bar {
+  padding: 10px 12px 12px;
+  margin: 0;
+  border-bottom: 1px solid #edf1f7;
+  background: #ffffff;
+  border-radius: 12px 12px 0 0;
+}
+
+.appointments-slot-summary-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 14px;
+  margin-bottom: 10px;
+}
+
+.appointments-slot-summary-scope-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.appointments-slot-summary-scope-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.appointments-slot-summary-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+}
+
+/* One horizontal line: Slots + all status chips; scroll on narrow viewports */
+.appointments-slot-summary-metrics--single-row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.appointments-slot-summary-item--shrink0 {
+  flex-shrink: 0;
+}
+
+.appointments-slot-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 0;
+}
+
+.appointments-slot-summary-text {
+  font-size: 13px;
+  color: #334155;
+}
+
+.appointments-slot-summary-text strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.appointments-slot-summary-muted {
+  color: #94a3b8;
+}
+
+.appointments-slot-summary-divider {
+  width: 1px;
+  height: 22px;
+  background: #dce3ef;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.appointments-slot-summary-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
+}
+
+.appointments-slot-summary-icon--total {
+  background: #22c55e;
+}
+
+.appointments-slot-summary-icon--available {
+  background: #16a34a;
+}
+
+.appointments-slot-summary-icon--booked {
+  background: #3b82f6;
+}
+
+
+.appointments-content-grid {
+  padding: 10px;
+  background: #ffffff;
+}
+
+.appointments-calendar-pane {
+  border-radius: 12px;
+  border: 1px solid #e5ebf5;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.appointments-right-pane {
+  border-radius: 12px;
+}
+
+.appointments-mini-panel {
+  border: 1px solid #e5ebf5 !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+.appointments-legend {
+  padding: 10px 12px;
+  border-top: 1px solid #edf1f7;
+  background: #ffffff;
+}
+
+.appointments-filter-row {
+  row-gap: 10px;
+}
+
+.appointments-filters-collapse-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #5c6b80;
+  line-height: 1;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.appointments-filters-collapse-btn:hover {
+  background: transparent;
+}
+
+.my-calendar .rbc-time-header,
+.my-calendar .rbc-month-header,
+.my-calendar .rbc-header {
+  background: #ffffff;
+  border-color: #e8edf6;
+  color: #54637a;
+  font-weight: 600;
+}
+
+.my-calendar .rbc-time-header-content,
+.my-calendar .rbc-time-gutter,
+.my-calendar .rbc-time-content,
+.my-calendar .rbc-day-bg,
+.my-calendar .rbc-timeslot-group {
+  background: #ffffff;
+}
+
+/* Visual cue only: keep cells looking static while preserving existing behavior */
+.my-calendar .rbc-day-slot .rbc-time-slot,
+.my-calendar .rbc-day-bg {
+  cursor: default !important;
+}
+
+.my-calendar .rbc-month-row + .rbc-month-row,
+.my-calendar .rbc-day-bg + .rbc-day-bg {
+  border-color: #edf2f8;
+}
+
+.my-calendar .rbc-off-range-bg {
+  background: #fafcff;
+}
+
+.my-calendar .rbc-current-time-indicator {
+  display: none !important;
+}
+
+.dark {
+  .left-section,
+  .right-section {
+    background-color: var(--dark-black) !important;
+  }
+  .appointments-main-card,
+  .appointments-calendar-pane,
+  .appointments-content-grid {
+    background: #11151d !important;
+    border-color: #2b313d !important;
+  }
+  .appointments-mini-panel {
+    background: #141a24 !important;
+    border-color: #2b313d !important;
+  }
+  .appointments-legend {
+    border-color: #2b313d;
+  }
+  .calender-icon-schedule{
+    background-color: var(--gray-dark) !important;
+    color: var(--white) !important;
+  }
+  .btn-scheduling:hover{
+    background-color: rgb(60, 60, 60);
+  }
+}
+
+.left-content-sections-main-conatainer{display: flex;
+flex-direction: column;
+gap: 1vw;}
+
+.right-content-sections-main-conatainer{display: flex;
+flex-direction: column;
+gap: 1vw;}
+
+.schedual-screen-filters-waiting-list-position{display: flex;
+flex-direction: column;
+gap: 0.4vw;}
+
+.show-rejected-view-appointment-request{display: flex;
+margin-top: 2vw;}
+
+.appointments-filters-wrap .container-form-section {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.appointments-filters-wrap.collapsed .container-form-section {
+  padding-top: 10px;
+  padding-bottom: 8px;
+}
+
+.appointments-filters-wrap .rs-divider-horizontal {
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+}
+
+.appointments-filters-wrap.collapsed .rs-divider-horizontal {
+  margin-bottom: 0 !important;
+}
+
+.available-slot-card {
+  width: calc(100% - 2px);
+  min-height: calc(100% - 4px);
+  margin: 2px 1px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #bfe3d2;
+  border-left: 3px solid #7dbfa3;
+  background: linear-gradient(180deg, #effaf5 0%, #e8f6ef 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  box-sizing: border-box;
+}
+
+.available-slot-title {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #2f3f57;
+}
+
+.available-slot-time {
+  font-size: 12px;
+  font-weight: 700;
+  color: #36506d;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.available-slot-status-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #6a7c92;
+  line-height: 1.1;
+}
+
+.available-slot-separator {
+  margin: 0 4px;
+}
+
+.available-slot-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8ecfb3;
+  display: inline-block;
+}
+/* Patient search sidebar overlay (same behavior as ER Triage) */
+.book-patient-sidebar-overlay {
+  z-index: 5000;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+}
+
+/* Center the read-only reason modal on screen */
+.rs-modal-wrapper .schedule-reason-center-modal {
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 auto !important;
+  width: min(560px, calc(100vw - 32px));
+}

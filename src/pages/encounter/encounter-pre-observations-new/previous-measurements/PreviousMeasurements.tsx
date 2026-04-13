@@ -44,6 +44,9 @@ import {
   type OxygenSaturationResponseVM,
   type BloodPressureResponseVM,
 } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
+import Translate from '@/components/Translate';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
@@ -87,6 +90,8 @@ const formatDateTime = (d: Date) => {
 
 const PreviousMeasurements: React.FC<PreviousMeasurementsProps> = ({ patient: patientProp }) => {
   const location = useLocation();
+  const dispatch = useAppDispatch();
+  
   const patientFromLocation = (location.state as any)?.patient;
   const patient = patientProp ?? patientFromLocation;
 
@@ -257,12 +262,12 @@ const vitalTotal =
     },
     {
       key: 'weight',
-      title: clickableHeader({ source: 'body', key: 'weight' }, 'WEIGHT (kg)'),
+      title: clickableHeader({ source: 'body', key: 'weight' }, <Translate>WEIGHT (kg)</Translate>),
       dataKey: 'weight',
     },
     {
       key: 'height',
-      title: clickableHeader({ source: 'body', key: 'height' }, 'HEIGHT (cm)'),
+      title: clickableHeader({ source: 'body', key: 'height' }, <Translate>HEIGHT (cm)</Translate>),
       dataKey: 'height',
     },
   ];
@@ -279,19 +284,19 @@ const vitalTotal =
     },
     {
       key: 'temperature',
-      title: clickableHeader({ source: 'vital', key: 'temperature' }, 'TEMPERATURE (C)'),
+      title: clickableHeader({ source: 'vital', key: 'temperature' }, <Translate>TEMPERATURE (C)</Translate>),
       dataKey: 'temperature',
     },
     {
       key: 'pulseRate',
-      title: clickableHeader({ source: 'vital', key: 'pulseRate' }, 'PULSE RATE (bpm)'),
+      title: clickableHeader({ source: 'vital', key: 'pulseRate' }, <Translate>PULSE RATE (bpm)</Translate>),
       dataKey: 'pulseRate',
     },
     {
       key: 'respiratoryRate',
       title: clickableHeader(
         { source: 'vital', key: 'respiratoryRate' },
-        'RESPIRATORY RATE (bpm)'
+        <Translate>RESPIRATORY RATE (bpm)</Translate>
       ),
       dataKey: 'respiratoryRate',
     },
@@ -299,7 +304,7 @@ const vitalTotal =
       key: 'bloodPressure',
       title: clickableHeader(
         { source: 'vital', key: 'bloodPressure' },
-        'BLOOD PRESSURE (mmHg) (X\\Y)'
+        <Translate>BLOOD PRESSURE (mmHg) (X\Y)</Translate>
       ),
       render: (row: VitalSignsResponseVM) => {
         if (row.bloodPressureSystolic == null || row.bloodPressureDiastolic == null) return '';
@@ -308,7 +313,7 @@ const vitalTotal =
     },
     {
       key: 'oxygenSaturation',
-      title: clickableHeader({ source: 'vital', key: 'oxygenSaturation' }, 'OXYGEN SATURATION (%)'),
+      title: clickableHeader({ source: 'vital', key: 'oxygenSaturation' }, <Translate>OXYGEN SATURATION (%)</Translate>),
       dataKey: 'oxygenSaturation',
     },
   ];
@@ -461,6 +466,17 @@ const vitalTotal =
 
   // ------------------ render ------------------
 
+useEffect(() => {
+  dispatch(setPageCode('previousmeasurements'));
+  dispatch(setDivContent('Previous Measurements'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
+
           // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -474,7 +490,7 @@ const vitalTotal =
 
       <div className="pm-grid margin-top-20">
         <div className="pm-col">
-          <h4 className="font-size-14">Body Measurements</h4>
+          <h4 className="font-size-14"><Translate>Body Measurements</Translate></h4>
           <MyTable
             height={280}
             data={bodyRows}
@@ -497,7 +513,7 @@ const vitalTotal =
         </div>
 
         <div className="pm-col">
-          <h4 className="font-size-14">Vital Signs</h4>
+          <h4 className="font-size-14"><Translate>Vital Signs</Translate></h4>
           <MyTable
             height={280}
             data={vitalRows}

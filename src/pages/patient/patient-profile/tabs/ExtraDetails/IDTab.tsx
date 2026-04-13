@@ -31,6 +31,8 @@ const IDTab = ({ localPatient }) => {
   });
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
 
+  console.log('countryLovQueryResponse', countryLovQueryResponse);
+
   const [deletePatientDocument] = useDeletePatientDocumentMutation();
 
   // Pagination
@@ -132,7 +134,6 @@ const IDTab = ({ localPatient }) => {
       .map(word => word.charAt(0) + word.slice(1).toLowerCase())
       .join(' ');
   };
-
 
   const columns = [
     {
@@ -282,7 +283,7 @@ const IDTab = ({ localPatient }) => {
           disabled={!localPatient?.id}
           prefixIcon={() => <PlusRound />}
         >
-          New Document
+          <Translate>New Document</Translate>
         </MyButton>
       </div>
 

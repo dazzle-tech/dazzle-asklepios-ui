@@ -35,6 +35,7 @@ import { PlusRound } from '@rsuite/icons';
 
 import './styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
 
 const DetailsModal = ({
   edit,
@@ -471,8 +472,9 @@ const DetailsModal = ({
                             }}
                           >
                             {instructionTypeQueryResponse?.object?.map((instruction, index) => (
+                            
                               <Radio key={index} value={instruction.key}>
-                                {instruction.lovDisplayVale}
+                              <Translate>  {instruction.lovDisplayVale}</Translate>
                               </Radio>
                             ))}
                           </RadioGroup>
@@ -743,7 +745,7 @@ const DetailsModal = ({
                     <MyLabel label="Parameters to monitor" />
                     <MyTagInput tags={tags} setTags={setTags} />
 
-                    <div className="prescription-refills-blocks">
+                    {/* <div className="prescription-refills-blocks">
                       <MyInput
                         disabled={preKey != null ? false : true}
                         width={140}
@@ -779,7 +781,7 @@ const DetailsModal = ({
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
                       />
-                    </div>
+                    </div> */}
                   </Form>
                 }
               />

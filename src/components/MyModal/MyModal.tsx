@@ -28,7 +28,35 @@ const MyModal = ({
   cancelButtonLabel = 'Cancel',
   handleCancelFunction = () => {},
   modalColor = 'var(--primary-blue)',
-  initialStep = 0
+  initialStep = 0,
+  enforceFocus = true,
+  /** If it returns false (or a Promise that resolves false), the step does not advance. */
+  onBeforeNext
+}: {
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>> | ((open: boolean) => void);
+  title: React.ReactNode;
+  icon?: any;
+  pagesCount?: number;
+  bodyheight?: string;
+  content?: any;
+  size?: string;
+  steps?: any[];
+  footerButtons?: React.ReactNode;
+  position?: string;
+  hideCancel?: boolean;
+  hideBack?: boolean;
+  hideActionBtn?: boolean;
+  isDisabledActionBtn?: boolean;
+  actionButtonLabel?: string;
+  actionButtonFunction?: () => void | Promise<void>;
+  customClassName?: string;
+  cancelButtonLabel?: string;
+  handleCancelFunction?: () => void;
+  modalColor?: string;
+  initialStep?: number;
+  enforceFocus?: boolean;
+  onBeforeNext?: (activeStep: number) => boolean | Promise<boolean>;
 }) => {
   const [internalStep, setInternalStep] = useState(initialStep);
   const activeStep = internalStep;
@@ -36,7 +64,11 @@ const MyModal = ({
   const mode = useSelector((state: any) => state.ui.mode);
   const computedPagesCount = steps.length > pagesCount ? steps.length : pagesCount;
   const modalClass = position === 'left' ? 'left-modal' : position === 'right' ? 'rigth-modal' : '';
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (typeof onBeforeNext === 'function') {
+      const ok = await Promise.resolve(onBeforeNext(activeStep));
+      if (ok === false) return;
+    }
     if (activeStep < computedPagesCount - 1) {
       updateStep(prev => prev + 1);
     }
@@ -62,6 +94,7 @@ const MyModal = ({
       open={open}
       onClose={handleCancel}
       size={size}
+      enforceFocus={enforceFocus}
       className={`${modalClass} ${customClassName} ${
         mode === 'light' ? 'modal-light' : 'modal-dark'
       }`}
@@ -124,9 +157,13 @@ const MyModal = ({
           {steps[activeStep]?.footer}
           {activeStep === computedPagesCount - 1 && !hideActionBtn && (
             <MyButton
-              onClick={() => {
-                actionButtonFunction();
-                setInternalStep(0);
+              onClick={async () => {
+                try {
+                  await Promise.resolve(actionButtonFunction());
+                  setInternalStep(0);
+                } catch {
+                  /* caller / RTK handles errors; stay on current step */
+                }
               }}
               disabled={isDisabledActionBtn}
             >

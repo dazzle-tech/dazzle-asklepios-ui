@@ -21,9 +21,8 @@ import {
   newPatientPayments
 } from '@/types/model-types-constructor-new';
 import {
-  useCreateEncounterMutation,
-  useUpdateEncounterMutation
-} from '@/services/encounters/patientEncounterService';
+  useCreateQuickAppointmentMutation
+} from '@/services/appointment/appointmentService';
 import { useAcceptReferralRequestMutation } from '@/services/medicalsheetsEncounter/referralRequestService';
 import * as modelTypes from '@/types/model-types-new';
 
@@ -44,13 +43,14 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'This patient already has an encounter in this department on the selected date.',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
+  'patient.emergency.notAllowed.withOngoing':
+    'Patient currently treated by another doctor',
   duplicate: 'Duplicate record.',
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
   'practitioner.invalid': 'Invalid practitioner id.',
   'db.constraint': 'Database constraint violation while saving encounter.'
 };
-
 const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
   patientId: 'Patient',
   facilityId: 'Facility',
@@ -154,8 +154,7 @@ const PatientQuickAppointment = ({
   const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode);
   const paymentReadOnly = Boolean(isViewMode || isLockedAfterPayment);
 
-  const [createEncounter] = useCreateEncounterMutation();
-  const [updateEncounter] = useUpdateEncounterMutation();
+  const [createQuickAppointment] = useCreateQuickAppointmentMutation();
   const [acceptReferralRequest] = useAcceptReferralRequestMutation();
 
   const didAcceptReferralRef = useRef(false);
@@ -220,6 +219,12 @@ const PatientQuickAppointment = ({
     if (!localEncounter?.encounterReason) missingFields.push('Reason');
     if (!localEncounter?.priorityLevel) missingFields.push('Priority');
     if (!localEncounter?.encounterDate) missingFields.push('Date');
+    if (
+      localEncounter?.encounterReason === 'FOLLOW_UP' &&
+      !localEncounter?.followUpEncounterId
+    ) {
+      missingFields.push('Follow-up Encounter');
+    }
 
     if (missingFields.length > 0) {
       const lines = missingFields.map(field => `• ${field}: is required`);
@@ -235,25 +240,49 @@ const PatientQuickAppointment = ({
     if (!validateRequiredFields()) return;
 
     try {
-      const body: PatientEncounter = {
-        ...localEncounter,
-        patientId: Number(localPatient?.id ?? localPatient?.key ?? 0),
-        encounterDate: localEncounter?.encounterDate ?? new Date()
+      const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
+      const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+      const departmentId = Number(localEncounter?.departmentId ?? 0);
+
+      const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
+        facilityId: Number(localEncounter?.facilityId ?? 0),
+        departmentId,
+        resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
+        resourceId: practitionerId > 0 ? practitionerId : departmentId,
+        patientId,
+        service: String(localEncounter?.encounterReason ?? '') as modelTypes.EncounterReason,
+        priority: String(localEncounter?.priorityLevel ?? ''),
+        defaultServiceId: (localEncounter as any)?.defaultServiceId
+          ? Number((localEncounter as any).defaultServiceId)
+          : null,
+        defaultPractitionerId: practitionerId > 0 ? practitionerId : null,
+        reason: (localEncounter as any)?.chiefComplaint  as string | null,
+        note: (localEncounter?.notes ?? null) as string | null,
+        followUpEncounterId:
+          localEncounter?.encounterReason === 'FOLLOW_UP' && localEncounter?.followUpEncounterId
+            ? Number(localEncounter.followUpEncounterId)
+            : null,
+        originType: (localEncounter as any)?.originType ?? null,
+        originName: (localEncounter as any)?.originName ?? null
       };
 
-      const saved =
-        body.id && Number(body.id) > 0
-          ? await updateEncounter({ id: body.id, body }).unwrap()
-          : await createEncounter({ body }).unwrap();
+      const saved = await createQuickAppointment(payload).unwrap();
+      const returnedEncounter = (saved as any)?.encounter ?? null;
+      const returnedAppointment = (saved as any)?.appointmentFromTemplate ?? null;
+      const createdEncounterId = Number(returnedEncounter?.id ?? 0) || localEncounter?.id || 0;
 
-      const normalizedSaved: any = { ...saved };
-      const v = normalizedSaved?.encounterDate;
-      if (typeof v === 'string' || typeof v === 'number') {
-        const d = new Date(v);
-        if (!Number.isNaN(d.getTime())) normalizedSaved.encounterDate = d;
+      if (returnedEncounter && typeof returnedEncounter === 'object') {
+        setLocalEncounter(prev => ({ ...prev, ...returnedEncounter }));
+      } else {
+        setLocalEncounter(prev => ({ ...prev, id: createdEncounterId || prev.id }));
       }
-
-      setLocalEncounter(prev => ({ ...prev, ...normalizedSaved }));
+      setPaymentDraft((prev: any) => ({
+        ...prev,
+        encounterId: createdEncounterId || prev.encounterId
+      }));
+      if (returnedAppointment && typeof returnedAppointment === 'object') {
+        setValidationResult((prev: any) => ({ ...prev, appointmentFromTemplate: returnedAppointment }));
+      }
       setIsEncounterSaved(true);
 
       if (
@@ -265,7 +294,7 @@ const PatientQuickAppointment = ({
         didAcceptReferralRef.current = true;
       }
 
-      dispatch(notify({ msg: 'Encounter Saved Successfully', sev: 'success' }));
+      dispatch(notify({ msg: 'Quick appointment saved successfully', sev: 'success' }));
 
       if (onEncounterSaved) await onEncounterSaved();
     } catch (err: any) {

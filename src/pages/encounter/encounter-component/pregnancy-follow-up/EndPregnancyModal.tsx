@@ -319,6 +319,13 @@ const modalContent = (
     setOpen(false);
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -329,7 +336,7 @@ const modalContent = (
       actionButtonLabel="Save"
       steps={[{ title: 'End Pregnancy',icon:<FontAwesomeIcon icon={faPersonPregnant}/> }]}
       actionButtonFunction={handleSave}
-      content={modalContent}
+      content={<div dir={dir}>{modalContent}</div>}
     />
   );
 };

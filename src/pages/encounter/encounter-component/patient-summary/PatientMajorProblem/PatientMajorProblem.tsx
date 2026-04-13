@@ -151,7 +151,7 @@ const PatientMajorProblem: React.FC<PatientDiagnosisProps> = ({
     return (
     <Section
       isContainOnlyTable
-      title="Patient Major Problem"
+      title={<Translate>Chronic Diseases</Translate>}
       content={
        <MyTable
             data={tableData}

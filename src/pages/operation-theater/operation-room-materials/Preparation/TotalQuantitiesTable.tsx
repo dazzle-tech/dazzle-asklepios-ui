@@ -1,6 +1,7 @@
 //Declares
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
 
 //Table Data
 const sampleData = [
@@ -76,7 +77,7 @@ const TotalQuantitiesTable = () => {
     return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
   });
 
-  const filters = (<><h5 className="total-quantities-table-header">Total Counts</h5>
+  const filters = (<><h5 className="total-quantities-table-header"><Translate>Total Counts</Translate></h5>
 
   </>);
 //Pagination

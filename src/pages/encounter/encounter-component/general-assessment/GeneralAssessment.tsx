@@ -401,7 +401,7 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
                         setGeneralAssessmentStatus('');
                     }
                 }}>
-                    Show Cancelled
+                    <Translate>Show Cancelled</Translate>
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => {
                     if (checked) {

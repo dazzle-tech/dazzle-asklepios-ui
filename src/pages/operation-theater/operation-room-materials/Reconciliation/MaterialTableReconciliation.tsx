@@ -5,6 +5,7 @@ import { Checkbox } from 'rsuite';
 import { formatDateWithoutSeconds } from '@/utils';
 import { Form } from 'rsuite';
 import '../Preparation/styles.less';
+import Translate from '@/components/Translate';
 //Table Data
 const sampleData = [
   {
@@ -102,13 +103,13 @@ const MaterialTableReconciliation = () => {
     <div className="check-boxes-material-table-positions">
 
           <h5 className="operation-materials-table-header" style={{ margin: 0 }}>
-            Operation Materials
+           <Translate>Operation Materials</Translate>
           </h5>
-            <Checkbox>Implant</Checkbox>
+            <Checkbox><Translate>Implant</Translate></Checkbox>
 
-            <Checkbox>Consumable</Checkbox>
+            <Checkbox><Translate>Consumable</Translate></Checkbox>
 
-            <Checkbox>Surgical Instrument</Checkbox>
+            <Checkbox><Translate>Surgical Instrument</Translate></Checkbox>
 </div>
       </Form>
 

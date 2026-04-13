@@ -33,8 +33,17 @@ const Metadata = () => {
   const divContent = (
     "Metadata"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('Metadata'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // className for selected row
   const isSelected = rowData => {
@@ -50,12 +59,6 @@ const Metadata = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   useEffect(() => {
     handleFilterChange('objectName', recordOFSearch['objectName']);

@@ -177,6 +177,8 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOrderTest={setOrderTest}
         handleSaveTest={handleSaveTest}
         edit={edit}
+        patient={encounter?.patient}
+
       />
 
 

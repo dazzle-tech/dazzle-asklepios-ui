@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useGeneratePrescriptionPdfMutation } from '@/services/setup/PrescriptionReportRequest';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
@@ -64,7 +64,8 @@ const Prescription = (props: Props) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
-
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+   const isNurse = jobRole === 'NURSE';
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -1040,14 +1041,14 @@ const Prescription = (props: Props) => {
         <div className={clsx('bt-right', { 'disabled-panel': edit })}>
           <UrgencyButton />
 
-          <MyButton loading={isLoadingPrescriptions}>Validate with Gallon Reasoner</MyButton>
+          <MyButton loading={isLoadingPrescriptions}><Translate>Validate with Gallon Reasoner</Translate></MyButton>
 
           <MyButton
             onClick={handleNewPrescriptionAndAddMedication}
             prefixIcon={() => <PlusIcon />}
             loading={isLoadingPrescriptions || isLoadingCreateOrGet}
             disabled={
-              edit || 
+              edit ||  isNurse||
               !currentPrescription?.id ||
               String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
             }

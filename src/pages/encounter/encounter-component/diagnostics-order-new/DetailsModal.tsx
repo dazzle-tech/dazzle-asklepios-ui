@@ -1,7 +1,7 @@
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
-import { useGetDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { useGetActiveDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { faVials } from '@fortawesome/free-solid-svg-icons';
@@ -11,6 +11,7 @@ import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import './styles.less';
+import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 
 const DetailsModal = ({
   test,
@@ -20,7 +21,8 @@ const DetailsModal = ({
   orderTest,
   setOrderTest,
   order,
-  edit
+  edit,
+  patient
 }) => {
   const [actionType] = useState(null);
   const [requestedPatientAttacment] = useState();
@@ -28,7 +30,7 @@ const DetailsModal = ({
 
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
   const [deptPage, setDeptPage] = useState(0);
-  const { data: receivedLabList } = useGetDepartmentByTypeQuery(
+  const { data: receivedLabList } = useGetActiveDepartmentByTypeQuery(
     receivedType
       ? {
         type: receivedType,
@@ -208,6 +210,19 @@ const DetailsModal = ({
                 setRecord={setOrderTest}
               />
 
+                <PatientDiagnosisTable
+                  patient={patient}
+                  disabled={!isEditable}
+                  selectMode
+                  onSelectDiagnosis={(ids) => {
+                    const selectedIcd = ids?.[0];
+
+                    setOrderTest(prev => ({
+                      ...prev,
+                      indicationIcd: selectedIcd
+                    }));
+                  }}
+                />
             </Form>
           </div>
         }

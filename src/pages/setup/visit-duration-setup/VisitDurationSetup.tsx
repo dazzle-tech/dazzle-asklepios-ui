@@ -21,6 +21,7 @@ import { Form, Panel } from 'rsuite';
 import VisitDurationSetupModal from './VisitDurationSetupModal';
 import { VisitDuration } from '@/types/model-types-new';
 import { newVisitDuration } from '@/types/model-types-constructor-new';
+import Translate from '@/components/Translate';
 
 type SortType = 'asc' | 'desc';
 
@@ -220,7 +221,7 @@ const VisitDurationSetup: React.FC = () => {
     },
     {
       key: 'durationInMinutes',
-      title: 'Duration (mins)',
+      title: <span><Translate>Duration</Translate><Translate>(mins)</Translate></span>,
       dataKey: 'durationInMinutes',
       width: 150,
       render: (row: VisitDuration) =>

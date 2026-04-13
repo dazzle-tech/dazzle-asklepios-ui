@@ -26,9 +26,10 @@ import {
   faTriangleExclamation,
   faUsersLine
 } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState,useEffect } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
@@ -51,6 +52,8 @@ interface ProfileHeaderProps {
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setLocalPatient: (patient: Patient) => void;
   setOpenReferralRequestModal: (value: boolean) => void;
+  eligibilityChecked: boolean;
+  setEligibilityChecked: (val: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -67,6 +70,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setLocalPatient,
   setOpenReferralRequestModal
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const [patientImage, setPatientImage] = useState<ApAttachment | undefined>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
@@ -74,7 +79,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
@@ -92,6 +96,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { patientId: patientId! },
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
+
+
 
   const handlePrintInformation = async () => {
     if (!localPatient?.id) return;
@@ -117,7 +123,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   };
 
   const contentOfMoreIconMenu = (
-    <Popover full>
+    <Popover>
       <Dropdown.Menu>
         <Dropdown.Item
           disabled={localPatient.id === undefined}
@@ -214,7 +220,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   );
 
   const contentOfPrintIconMenu = (
-    <Popover full>
+    <Popover>
       <Dropdown.Menu>
         <Dropdown.Item
           disabled={!localPatient?.id}
@@ -322,19 +328,24 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
 
+useEffect(() => {
+  if (location.state?.eligibilityDone) {
+    setEligibilityChecked(true);
+  }
+}, [location.state]);
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
       <Stack>
         <Stack.Item grow={1}>
-          <Form layout="inline" fluid className="profile-header">
+          <Form fluid className="profile-header">
             <AvatarGroup spacing={6} className="avatar-card-parent">
               <input
                 type="file"
@@ -424,9 +435,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </div>
             </AvatarGroup>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <AvatarGroup spacing={6}>
-              </AvatarGroup>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '15px'
+              }}
+            >
+              <AvatarGroup spacing={6}></AvatarGroup>
             </div>
             <div
               style={{
@@ -436,20 +453,31 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 justifyContent: 'flex-end'
               }}
             >
-              <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
+              {/* <MyButton onClick={handleScanDocumentClick}>
+                <Translate>Scan Document</Translate>
+              </MyButton> */}
+
+              <MyButton
+                onClick={() => {
+                  setEligibilityChecked(true);
+                  navigate(`/patient-profile/${localPatient?.id}`);
+                }}
+              >
+                <Translate>Eligibility Check</Translate>
+              </MyButton>
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                 onClick={handleSave}
               >
-                {localPatient?.id ? 'Edit' : 'Save'}
+                <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
               </MyButton>
 
               <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                 onClick={handleClear}
               >
-                Clear
+                <Translate>Clear</Translate>
               </MyButton>
 
               <MyButton
@@ -457,11 +485,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 onClick={() => setQuickPatientModalOpen(true)}
                 prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
               >
-                Quick Patient
+                <Translate>Quick Patient</Translate>
               </MyButton>
 
               <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                Quick Appointment
+                <Translate>Quick Appointment</Translate>
               </MyButton>
 
               <AdministrativeWarningsModal
@@ -469,13 +497,41 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 validationResult={validationResult}
               />
 
-              <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
-                <FontAwesomeIcon icon={faEllipsisVertical} />
-              </MyButton>
+              <Whisper
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                container={() => document.body}
+                preventOverflow
+                rootClose
+                open={openMoreMenu}
+                onOpen={() => setOpenMoreMenu(true)}
+                onClose={() => setOpenMoreMenu(false)}
+                speaker={contentOfMoreIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton
+                    size="small"
+                    onClick={() => setOpenMoreMenu(prev => !prev)}
+                  >
+                    <FontAwesomeIcon icon={faEllipsisVertical} />
+                  </MyButton>
+                </span>
+              </Whisper>
 
-              <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
-                <FontAwesomeIcon icon={faPrint} />
-              </MyButton>
+              <Whisper
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                container={() => document.body}
+                preventOverflow
+                rootClose
+                speaker={contentOfPrintIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton size="small">
+                    <FontAwesomeIcon icon={faPrint} />
+                  </MyButton>
+                </span>
+              </Whisper>
             </div>
           </Form>
         </Stack.Item>

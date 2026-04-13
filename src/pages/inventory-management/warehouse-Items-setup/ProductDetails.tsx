@@ -128,8 +128,17 @@ const ProductDetails = ({
   const divContent = (
     "Warehouse Products"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('ProductList'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // class name for selected row
   const isSelected = rowData => {
@@ -152,12 +161,6 @@ const ProductDetails = ({
     }
   }, [recordOfFilter]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
 
 
