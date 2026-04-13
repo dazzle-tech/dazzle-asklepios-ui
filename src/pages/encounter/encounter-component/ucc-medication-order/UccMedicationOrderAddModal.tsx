@@ -7,18 +7,35 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { Form } from 'rsuite';
 import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
+import { RadioGroup, Radio } from 'rsuite';
+
+
 type FormType = {
   medicationId?: number | string;
   medicationClass?: string;
   isHighAlert?: string;
   instructions?: string;
+  instructionType?: 'MANUAL' | 'CUSTOM';
+  predefinedInstruction?: string;
+  customInstruction?: string;
 };
+
 import './styles.less';
+import Instructions from '../prescription-new/Instructions';
 
 const UccMedicationOrderAddModal = ({ open, setOpen, onAdd }) => {
   const dispatch = useAppDispatch();
 
 const [form, setForm] = useState<FormType>({});
+
+const [selectedOption, setSelectedOption] = useState(null);
+const [customeinst, setCustomeinst] = useState({
+  dose: null,
+  unit: null,
+  frequency: null,
+  roa: null
+});
+const [inst, setInst] = useState(null);
 
 const { data: activeIngredientsAll } = useGetActiveIngredientsQuery({
   page: 0,
@@ -80,7 +97,7 @@ const options = useMemo(() => {
       actionButtonLabel="Save"
       actionButtonFunction={() =>{}}
       position="right"
-      size="23vw"
+      size="33vw"
       content={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Form fluid dir={dir}>
@@ -98,6 +115,7 @@ const options = useMemo(() => {
                     />
                       <div className="add-medication-info-container"> 
                     <MyInput
+                      width="14.5vw"
                       fieldType="text"
                       fieldLabel="Medication Class"
                       fieldName="medicationClass"
@@ -106,6 +124,7 @@ const options = useMemo(() => {
                       disabled
                     />
                     <MyInput
+                      width="14.5vw"
                       fieldType="text"
                       fieldLabel="High Risk Med"
                       fieldName="isHighAlert"
@@ -114,14 +133,31 @@ const options = useMemo(() => {
                       disabled
                     />
                       </div>
-                    <MyInput
-                      width="100%"
-                      fieldType="textarea"
-                      fieldLabel="INSTRUCTIONS"
-                      fieldName="instructions"
-                      record={form}
-                      setRecord={setForm}
-                    />
+
+                      <div className="prescription-radio-group">
+                        <RadioGroup
+                          value={selectedOption}
+                          inline
+                          onChange={(value) => {
+                            setSelectedOption(value);
+                          }}
+                        >
+                          <Radio value="MANUAL_INSTRUCTIONS">Manual Instructions</Radio>
+                          <Radio value="CUSTOM_INSTRUCTIONS">Custom Instructions</Radio>
+                        </RadioGroup>
+                      </div>
+
+
+                      <Instructions
+                        selectedOption={selectedOption}
+                        setCustomeinst={setCustomeinst}
+                        customeinst={customeinst}
+                        selectedGeneric={null}
+                        setInst={setInst}
+                        prescriptionMedication={{ instructions: inst }}
+                      />
+
+
           </Form>
         </div>
       }
