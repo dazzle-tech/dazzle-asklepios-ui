@@ -465,7 +465,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                 />
               </div>
 
-              <div className="animation-emr-card-patient-emr">
+              {/* <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={3}
                   footerText="Pathology"
@@ -476,7 +476,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   onClick={() => setActiveCard(activeCard === 'pathology' ? null : 'pathology')}
                   active={activeCard === 'pathology'}
                 />
-              </div>
+              </div> */}
             </div>
           )}
 
