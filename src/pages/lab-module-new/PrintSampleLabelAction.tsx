@@ -10,28 +10,38 @@ import { useLazyGetSampleLabelPdfQuery } from '@/services/setup/diagnosticTest/d
 export default function PrintSampleLabelAction({ rowData }: { rowData: any }) {
   const dispatch = useAppDispatch();
   const [trigger, { isFetching }] = useLazyGetSampleLabelPdfQuery();
+const onPrint = async (e: any) => {
+  e.stopPropagation();
 
-  const onPrint = async (e: any) => {
-    e.stopPropagation();
+  try {
+    const result = await trigger({ orderTestId: rowData.id }).unwrap();
 
-    try {
-      const blob = await trigger({ orderTestId: rowData.id }).unwrap();
-      const url = window.URL.createObjectURL(blob);
-
-      window.open(url, '_blank', 'noopener,noreferrer');
-
-      // اختياري: تنظيف الذاكرة بعد شوي
-      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
-    } catch (err: any) {
+    if (!result) {
       dispatch(
         notify({
-          msg: err?.data?.message || 'Print failed',
-          sev: 'error'
+          msg: 'No collected sample found',
+          sev: 'warning'
         })
       );
+      return;
     }
-  };
 
+    const url = window.URL.createObjectURL(
+      new Blob([result], { type: 'application/pdf' })
+    );
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+
+    setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+  } catch (err: any) {
+    dispatch(
+      notify({
+        msg: err?.data?.message || 'Print failed',
+        sev: 'error'
+      })
+    );
+  }
+};
   return (
     <Whisper placement="top" trigger="hover" speaker={<Tooltip>Print Sample Label</Tooltip>}>
       <span style={{ display: 'inline-block' }}>

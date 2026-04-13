@@ -144,11 +144,18 @@ export const diagnosticOrderTestCollectedSampleService = createApi({
       providesTags: ["DiagnosticOrderTestCollectedSample"],
 
     }),
-    getSampleLabelPdf: builder.query<Blob, { orderTestId: number }>({
+
+
+    getSampleLabelPdf: builder.query<Blob | null, { orderTestId: number }>({
       query: ({ orderTestId }) => ({
         url: `/api/analytics/diagnostic-order-tests/${orderTestId}/sample-label/pdf`,
         method: 'GET',
-        responseHandler: (response) => response.blob()
+        responseHandler: async (response) => {
+          if (response.status === 204) {
+            return null;
+          }
+          return await response.blob();
+        }
       })
     })
   }),
