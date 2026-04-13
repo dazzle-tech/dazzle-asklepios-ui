@@ -226,6 +226,7 @@ import NurseAssessment from './pages/encounter/encounter-pre-observations-new/ob
 import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
 import FavoriteTests from './pages/review-results';
 import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
+import UrgentCareListMain from './pages/encounter/urgent-care/UrgentCateListMain';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -585,7 +586,7 @@ const App = () => {
               <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
               <Route path="ER-start-triage" element={<ERStartTriageNew />} />
               <Route path="urgent-care-start-triage" element={<UrgentCareStartTriage />} />
-              <Route path="urgent-care-department-list" element={<UrgentCareList />} />
+              <Route path="urgent-care-department-list" element={<UrgentCareListMain />} />
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
