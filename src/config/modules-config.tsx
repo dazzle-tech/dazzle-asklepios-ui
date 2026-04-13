@@ -137,8 +137,8 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
   { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products' },
-  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' }
-
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' },
+  { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' }
 ];
 
 
