@@ -107,7 +107,6 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   // Lazy queries for filtering
   const [getDepartmentsByFacility, { data: departmentListResponse, isFetching }] =
     useLazyGetDepartmentByFacilityQuery();
-    console.log("departmentListResponse: ", departmentListResponse);
   const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
   const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
 

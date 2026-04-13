@@ -29,7 +29,6 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
   onSave,
   onCancel,
 }) => {
-  console.log("coming department: ", department)
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
