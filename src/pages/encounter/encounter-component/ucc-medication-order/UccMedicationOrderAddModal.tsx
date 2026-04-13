@@ -8,6 +8,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { Form, RadioGroup, Radio, Row, Col } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import './styles.less';
+import Instructions from '../prescription-new/Instructions';
 
 const UccMedicationOrderAddModal = ({
   open,
