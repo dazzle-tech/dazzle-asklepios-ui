@@ -8,6 +8,43 @@ import type {
 
 type Id = number | string;
 
+type AvailabilityTemplateLog = {
+  id: number;
+  templateId: number;
+  operationType: string;
+  logDate: string;
+  logBy?: string | null;
+  facilityId: number;
+  departmentId: number;
+  templateName: string;
+  templateType: string;
+  resourceId: number;
+  templateColor?: string | null;
+  status: string;
+  versionNo: number;
+  copyFromTemplateId?: number | null;
+  parentTemplateId?: number | null;
+  durationMinutes: number;
+  defaultBufferBeforeMinutes: number;
+  defaultBufferAfterMinutes: number;
+  parallelCapacityValue: number;
+  defaultServiceId?: number | null;
+  numberOfResourcesExpected?: number | null;
+  requirePractitioner: boolean;
+  defaultPractitionerId?: number | null;
+  requireBilling: boolean;
+  requirePreAssessment: boolean;
+  allowPatientPortalBooking: boolean;
+  requireConfirmation: boolean;
+  financialDetails: string;
+  workingDays: any;
+  isActive: boolean;
+  createdBy: string;
+  createdDate: string;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+};
+
 export const availabilityTemplateService = createApi({
   reducerPath: 'availabilityTemplateApi',
   baseQuery: BaseQuery,
@@ -173,6 +210,17 @@ export const availabilityTemplateService = createApi({
         await onQueryStarted(arg, api);
       },
       providesTags: ['AvailabilityTemplate']
+    }),
+
+    getAvailabilityTemplateLogs: builder.query<AvailabilityTemplateLog[], { templateId: Id }>({
+      query: ({ templateId }) => ({
+        url: `/api/patient/availability-templates/${templateId}/logs`,
+        method: 'GET'
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AvailabilityTemplate']
     })
   })
 });
@@ -196,5 +244,7 @@ export const {
   useLazyGetAvailabilityTemplatesByDepartmentIdQuery,
   useGetAvailabilityTemplatesByStatusQuery,
   useLazyGetAvailabilityTemplatesByStatusQuery,
-  useGetAvailabilityTemplatesActiveByStatusQuery
+  useGetAvailabilityTemplatesActiveByStatusQuery,
+  useGetAvailabilityTemplateLogsQuery,
+  useLazyGetAvailabilityTemplateLogsQuery
 } = availabilityTemplateService;
