@@ -58,6 +58,8 @@ import {
 import MyModal from '@/components/MyModal/MyModal';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import { printPatientWristband } from '@/utils/printPatientWristband';
+import { useAppSelector } from '@/hooks';
+import { is } from 'date-fns/locale';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -111,7 +113,9 @@ const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
 const ERTriage = () => {
   const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
   const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
-
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+   const isReceptionist = jobRole === 'RECEPTIONIST';
   const toDateSafe = (value: any): Date | null => {
     if (!value && value !== 0) return null;
     if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
@@ -675,7 +679,7 @@ const ERTriage = () => {
     }
   };
 
-  const EncounterPriorityAction = ({ rowData }: { rowData: any }) => {
+  const EncounterPriorityAction = ({ rowData, isReceptionist }: { rowData: any; isReceptionist: boolean }) => {
     const whisperRef = useRef<any>(null);
     const [lockHoverUntilLeave, setLockHoverUntilLeave] = useState(false);
     const isPendingPayment = isPendingPaymentStatus(rowData);
@@ -1142,7 +1146,7 @@ const ERTriage = () => {
                   size="small"
                   radius="6px"
                   backgroundColor="violet"
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment || isReceptionist}
                   onClick={() => {
                     const patientData = rowData?.patientObject;
 
@@ -1175,7 +1179,7 @@ const ERTriage = () => {
                 <MyButton
                   size="small"
                   backgroundColor="green"
-                  disabled={!isPendingPayment}
+                  disabled={!isPendingPayment }
                   onClick={() => {
                     void handleAddPayment(rowData);
                   }}
@@ -1185,7 +1189,7 @@ const ERTriage = () => {
               </div>
             </Whisper>
 
-            <EncounterPriorityAction rowData={rowData} />
+            <EncounterPriorityAction rowData={rowData} isReceptionist={isReceptionist} />
 
             {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               COMPLETE_TRIAGE_STATUS_CODE ||
@@ -1200,7 +1204,7 @@ const ERTriage = () => {
                       setLocalEncounter(rowData);
                       handleGoToViewTriage(rowData, patientData);
                     }}
-                    disabled={isPendingPayment}
+                    disabled={isPendingPayment || isReceptionist}
                   >
                     <FontAwesomeIcon icon={faCommentMedical} />
                   </MyButton>
@@ -1221,6 +1225,7 @@ const ERTriage = () => {
                       handleGoToVisit(rowData, rowData?.patientObject);
                     }}
                     disabled={
+                       isReceptionist ||
                       isPendingPayment ||
                       !['NEW', 'WAITING_TRIAGE', 'TRIAGE_STARTED'].includes(
                         String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
@@ -1248,7 +1253,7 @@ const ERTriage = () => {
                     setLocalEncounter(rowData);
                     handlePrintWristband(rowData);
                   }}
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment || isReceptionist}
                 >
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>
@@ -1300,6 +1305,7 @@ const ERTriage = () => {
                     setOpenSendToModal(true);
                   }}
                   disabled={
+                     isReceptionist ||
                     isPendingPayment ||
                     String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() !==
                     'TRIAGE_STARTED'
@@ -1321,6 +1327,7 @@ const ERTriage = () => {
                         setLocalEncounter(rowData);
                         setOpen(true);
                       }}
+                      disabled={isReceptionist}
                     >
                       <FontAwesomeIcon icon={faRectangleXmark} />
                     </MyButton>
