@@ -53,6 +53,7 @@ import {
 } from '@/services/encounters/er-triage/emergencyTriageService';
 import {
   useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientWristbandPdfQuery,
   useLazyGetPatientWristbandQuery
 } from '@/services/patient/patientService';
 import MyModal from '@/components/MyModal/MyModal';
@@ -115,7 +116,10 @@ const ERTriage = () => {
   const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
   const authSlice = useAppSelector(state => state.auth);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
-   const isReceptionist = jobRole === 'RECEPTIONIST';
+  const isReceptionist = jobRole === 'RECEPTIONIST';
+  const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
+
+
   const toDateSafe = (value: any): Date | null => {
     if (!value && value !== 0) return null;
     if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
@@ -240,22 +244,24 @@ const ERTriage = () => {
 
   const handlePrintWristband = async (rowData: any) => {
     try {
-      const patientId = rowData?.patientObject?.id ?? rowData?.patientId ?? rowData?.patient?.id;
+      const blob = await triggerGetPatientWristbandPdf({
+        patientId: rowData.patientId
+      }).unwrap();
 
-      if (!patientId) return;
+      const fileURL = window.URL.createObjectURL(blob);
 
-      const res = await triggerWristband({ patientId }).unwrap();
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `wristband-${rowData.patientId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-      await printPatientWristband(res);
-    } catch (err: any) {
-      console.error('Wristband print failed', err);
-
-      dispatch(
-        notify({
-          msg: err?.data?.message || 'Failed to print wristband',
-          sev: 'error'
-        })
-      );
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download wristband pdf', error);
     }
   };
   const selectedDepartment = useMemo(() => {
@@ -1179,7 +1185,7 @@ const ERTriage = () => {
                 <MyButton
                   size="small"
                   backgroundColor="green"
-                  disabled={!isPendingPayment }
+                  disabled={!isPendingPayment}
                   onClick={() => {
                     void handleAddPayment(rowData);
                   }}
@@ -1225,7 +1231,7 @@ const ERTriage = () => {
                       handleGoToVisit(rowData, rowData?.patientObject);
                     }}
                     disabled={
-                       isReceptionist ||
+                      isReceptionist ||
                       isPendingPayment ||
                       !['NEW', 'WAITING_TRIAGE', 'TRIAGE_STARTED'].includes(
                         String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
@@ -1259,6 +1265,7 @@ const ERTriage = () => {
                 </MyButton>
               </div>
             </Whisper>
+
 
             <Whisper
               trigger="hover"
@@ -1305,7 +1312,7 @@ const ERTriage = () => {
                     setOpenSendToModal(true);
                   }}
                   disabled={
-                     isReceptionist ||
+                    isReceptionist ||
                     isPendingPayment ||
                     String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() !==
                     'TRIAGE_STARTED'

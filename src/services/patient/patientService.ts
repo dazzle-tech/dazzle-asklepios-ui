@@ -198,9 +198,9 @@ export const newPatientService = createApi({
       providesTags: result =>
         result
           ? [
-              ...result.map(p => ({ type: 'Patient' as const, id: p.id })),
-              { type: 'Patient', id: 'LIST' }
-            ]
+            ...result.map(p => ({ type: 'Patient' as const, id: p.id })),
+            { type: 'Patient', id: 'LIST' }
+          ]
           : [{ type: 'Patient', id: 'LIST' }]
     }),
 
@@ -268,6 +268,14 @@ export const newPatientService = createApi({
         method: 'GET'
       })
     })
+    ,
+    getPatientWristbandPdf: builder.query<Blob, { patientId: number }>({
+      query: ({ patientId }) => ({
+        url: `/api/analytics/${patientId}/wristband/pdf`,
+        method: 'GET',
+        responseHandler: (response) => response.blob()
+      })
+    })
   })
 });
 
@@ -301,5 +309,6 @@ export const {
   useGetBulkPatientBasicInfoMutation,
   useLazyGetPatientLabelQuery,
   useLazyGetPatientInformationReportQuery,
-  useLazyGetPatientWristbandQuery
+  useLazyGetPatientWristbandQuery,
+  useLazyGetPatientWristbandPdfQuery
 } = newPatientService;
