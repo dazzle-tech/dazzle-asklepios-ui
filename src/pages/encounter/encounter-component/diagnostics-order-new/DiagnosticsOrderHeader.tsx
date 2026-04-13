@@ -16,6 +16,7 @@ import CheckIcon from '@rsuite/icons/Check';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import Translate from '@/components/Translate';
+import { useAppSelector } from '@/hooks';
 
 type Props = {
   // data
@@ -99,7 +100,9 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
-
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+   const isNurse = jobRole === 'NURSE';
   return (
   <div dir={dir}>
     <div className="main-container">
@@ -135,7 +138,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
               loading={isFetching}
               onClick={handleSaveOrders}
               prefixIcon={() => <PlusIcon />}
-              disabled={hasOpenOrder}
+              disabled={hasOpenOrder || isNurse}
             >
               New Order
             </MyButton>
@@ -223,7 +226,7 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             <FontAwesomeIcon icon={faStar} /> Recall Favorite
           </MyButton>
 
-          <MyButton onClick={handleSubmitPres} disabled={isSubmitDisabled} prefixIcon={() => <CheckIcon />}>
+          <MyButton onClick={handleSubmitPres} disabled={isSubmitDisabled || isNurse} prefixIcon={() => <CheckIcon />}>
             Sign &amp; Submit
           </MyButton>
         </div>
@@ -241,19 +244,19 @@ const DiagnosticsOrderHeader: React.FC<Props> = props => {
             <Translate>Show Canceled</Translate>
             </Checkbox>
 
-            <MyButton disabled={isSubmitDisabled} onClick={() => setOpenTestsModal(true)}>
+            <MyButton disabled={isSubmitDisabled || isNurse} onClick={() => setOpenTestsModal(true)}>
               <FontAwesomeIcon icon={faPlus} /> <Translate>Add Test</Translate>
             </MyButton>
 
             <MyButton
-              disabled={orders.id ?? orders.key ? selectedRows.length === 0 : true}
+              disabled={isNurse || (orders.id ?? orders.key ? selectedRows.length === 0 : true)}
               prefixIcon={() => <CloseOutlineIcon />}
               onClick={OpenConfirmDeleteModel}
             >
               Cancel
             </MyButton>
 
-            <MyButton disabled={selectedRows.length === 0} onClick={() => setBulkDepartmentModalOpen(true)}>
+            <MyButton disabled={isNurse || selectedRows.length === 0} onClick={() => setBulkDepartmentModalOpen(true)}>
               Assign Department
             </MyButton>
           </div>
