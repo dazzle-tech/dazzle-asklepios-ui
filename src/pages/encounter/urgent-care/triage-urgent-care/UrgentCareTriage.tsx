@@ -1471,8 +1471,7 @@ const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
                     setLocalEncounter(rowData);
                     handlePrintWristband(rowData);
                   }}
-                   disabled={true}
-                  // disabled={isPendingPayment }
+                  disabled={isPendingPayment }
                 >
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>
