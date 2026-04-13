@@ -42,7 +42,11 @@ const SOAP = props => {
 
   const [localEncounter, setLocalEncounter] = useState<any>(encounterFromNav || {});
 
-  const { data: encounterFromServer, isLoading, isFetching } = useGetEncounterByIdQuery(
+  const {
+    data: encounterFromServer,
+    isLoading,
+    isFetching
+  } = useGetEncounterByIdQuery(
     { id: encounterId },
     {
       skip: !encounterId,
@@ -142,7 +146,7 @@ const SOAP = props => {
         <div className={clsx('column-container', { 'disabled-panel': edit })}>
           <div className="top-section">
             <SectionContainer
-              title={<Translate>Chief Complaint</Translate>}
+              title={<Translate>Chief </Translate>}
               content={
                 <Form fluid>
                   <MyInput
@@ -209,21 +213,20 @@ const SOAP = props => {
     return () => dispatch(hideSystemLoader());
   }, [isLoading, isFetching, dispatch]);
 
-    // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div className="patient-summary-container">
-        <MyTab
-          data={tabData.map(tab => ({
-            ...tab,
-            content: <div dir={dir}>{tab.content}</div>
-          }))}
-        />
+      <MyTab
+        data={tabData.map(tab => ({
+          ...tab,
+          content: <div dir={dir}>{tab.content}</div>
+        }))}
+      />
     </div>
   );
 };

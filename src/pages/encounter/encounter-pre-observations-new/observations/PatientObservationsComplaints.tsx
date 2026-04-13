@@ -19,13 +19,16 @@ import {
   useGetLatestPatientObservationsComplaintsByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService';
 
+import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
 import MultiSelectAppender from '@/pages/medical-component/multi-select-appender/MultiSelectAppender';
+
 type PatientObservationsComplaintsProps = {
   patientId: number;
   encounterId: number;
-  encounter?: any;
+  encounter: PatientEncounter;
+  setEncounter: (e: PatientEncounter) => void;
   disabled?: boolean;
   width?: string;
   title?: React.ReactNode;
@@ -35,6 +38,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
   patientId,
   encounterId,
   encounter,
+  setEncounter,
   disabled = false,
   width = '100%',
   title = 'Patient Observations & Complaints'
@@ -43,10 +47,11 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
 
   // Enums / LOVs
   const patientConditions = useEnumOptions('Condition');
-  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+  const encounterPriority = useEnumOptions('EncounterPriority');
 
   // === API ===
   const [createPatientObservationsComplaints] = useCreatePatientObservationsComplaintsMutation();
+  const [updateEncounter] = useUpdateEncounterMutation();
 
   const { data: latestByEncounter } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
     { encounterId },
@@ -59,6 +64,8 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     patientId,
     encounterId
   });
+
+  const [clearKey, setClearKey] = useState(0);
 
   useEffect(() => {
     if (!latestByEncounter) return;
@@ -76,9 +83,6 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     }));
   }, [latestByEncounter, patientId, encounterId]);
 
-  /**
-   * CREATE payload only (no id / audit fields).
-   */
   const createPayload = useMemo(() => {
     return {
       patientId,
@@ -91,10 +95,35 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     };
   }, [record, patientId, encounterId]);
 
+  const toEncounterPayload = (enc: any): PatientEncounter => ({
+    id: Number(enc?.id),
+    patientId: Number(enc?.patientId ?? enc?.patient?.id),
+    encounterNumber: enc?.encounterNumber ?? null,
+    facilityId: Number(enc?.facilityId),
+    departmentId: Number(enc?.departmentId),
+    practitionerId: enc?.practitionerId ?? null,
+    paymentDate: enc?.paymentDate,
+    amount: enc?.amount,
+    encounterType: enc?.encounterType,
+    encounterReason: enc?.encounterReason,
+    followUpEncounterId: enc?.followUpEncounterId ?? enc?.followUpEncounter?.id ?? null,
+    priorityLevel: enc?.priorityLevel,
+    originType: enc?.originType ?? null,
+    originName: enc?.originName ?? null,
+    notes: enc?.notes ?? null,
+    departmentDailySequenceNumber: enc?.departmentDailySequenceNumber ?? null,
+    encounterDate: enc?.encounterDate ?? null,
+    status: enc?.status,
+    chiefComplaint: enc?.chiefComplaint ?? null,
+    hasPrescription: Boolean(enc?.hasPrescription),
+    hasOrder: Boolean(enc?.hasOrder),
+    isObserved: Boolean(enc?.isObserved)
+  });
+
   const normalizeFieldErrorMessage = (message: string) => {
     const m = (message || '').toLowerCase();
-    if (m.includes('must not be null')) return 'is required';
-    if (m.includes('must not be blank')) return 'must not be blank';
+    if (m.includes('must not be null')) return 'must not be empty';
+    if (m.includes('must not be blank')) return 'must not be empty';
     if (m.includes('size must be between')) return 'length is out of range';
     if (m.includes('must be greater')) return 'value is too small';
     if (m.includes('must be less')) return 'value is too large';
@@ -102,6 +131,8 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
   };
 
   const showApiError = (error: any) => {
+    console.log('full error:', JSON.stringify(error));
+
     const data = error?.data ?? {};
     const traceId = data?.traceId || data?.requestId || data?.correlationId;
     const traceSuffix = traceId ? `\nTrace ID: ${traceId}` : '';
@@ -120,7 +151,8 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
         patientConditions: 'Patient Conditions',
         cognitiveCheck: 'Cognitive Check',
         isActive: 'Active',
-        id: 'Id'
+        id: 'Id',
+        priorityLevel: 'Priority'
       };
 
       const lines = data.fieldErrors.map((fe: any) => {
@@ -143,7 +175,10 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     const keyMap: Record<string, string> = {
       'payload.required': 'Patient observations & complaints payload is required.',
       'patient.required': 'Patient id is required.',
+      'patient.notfound': 'Patient not found.',
       'encounter.required': 'Encounter id is required.',
+      'db.constraint': 'Database constraint violated while saving.',
+      'patient.invalid': 'Invalid patient id.',
       notfound: 'No patient observations & complaints found.'
     };
 
@@ -157,7 +192,6 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     dispatch(notify({ msg: humanMsg + traceSuffix, sev: 'warning' }));
   };
 
-
   const handleSave = async () => {
     if (!patientId) {
       dispatch(notify({ msg: 'Patient id is required.', sev: 'warning' }));
@@ -169,7 +203,18 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
       return;
     }
 
+    if (!encounter.priorityLevel) {
+      dispatch(
+        notify({
+          msg: 'Please fix the following fields:\n• Priority: must not be empty',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     try {
+      // Save observations & complaints
       const created = await createPatientObservationsComplaints(createPayload as any).unwrap();
       setRecord(prev => ({
         ...prev,
@@ -178,6 +223,13 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
         encounterId,
         id: undefined
       }));
+
+      const encounterPayload = toEncounterPayload(encounter);
+      const updatedEncounter = await updateEncounter({
+        id: encounter.id,
+        body: encounterPayload
+      }).unwrap();
+      setEncounter(updatedEncounter);
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
     } catch (err: any) {
@@ -189,8 +241,16 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
     setRecord({
       ...newPatientObservationsComplaints,
       patientId,
-      encounterId
-    } as any);
+      encounterId,
+      patientConditions: '' as any
+    });
+
+    setEncounter({
+      ...encounter,
+      priorityLevel: null as any
+    });
+
+    setClearKey(prev => prev + 1);
   };
 
   return (
@@ -246,6 +306,7 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
             </div>
 
             <MultiSelectAppender
+              key={clearKey}
               label="Patient Conditions"
               options={patientConditions ?? []}
               optionLabel="label"
@@ -260,15 +321,16 @@ const PatientObservationsComplaints: React.FC<PatientObservationsComplaintsProps
             />
 
             <MyInput
+              required
               width="100%"
               fieldLabel="Priority"
               fieldType="select"
-              fieldName="priorityLkey"
-              selectData={encounterPriorityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={record}
-              setRecord={setRecord}
+              fieldName="priorityLevel"
+              selectData={encounterPriority ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={encounter}
+              setRecord={setEncounter}
               disabled={disabled}
               searchable={false}
             />

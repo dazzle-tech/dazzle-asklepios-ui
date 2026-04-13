@@ -51,6 +51,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   patientId={Number((localPatient as any)?.id ?? localPatient?.id)}
                   encounterId={Number((localEncounter as any)?.id)}
                   encounter={localEncounter}
+                  setEncounter={setLocalEncounter} 
                 />
               </Col>
             </Row>
