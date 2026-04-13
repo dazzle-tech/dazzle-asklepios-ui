@@ -225,6 +225,7 @@ import UrgentCareList from './pages/encounter/urgent-care/UrgentCareList';
 import NurseAssessment from './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment';
 import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
 import FavoriteTests from './pages/review-results';
+import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -632,6 +633,7 @@ const App = () => {
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
                 <Route path="dialysis-request" element={<DialysisRequest />} />
+                <Route path="ucc-medication-order" element={<UccMedicationOrder />} />
                 <Route path="operation-request" element={<OperationRequestNew />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
