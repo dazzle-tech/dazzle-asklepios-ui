@@ -2831,13 +2831,14 @@ export interface ProgressNoteCancelVM {
 
 export type ProgressNoteLogVM = {
   id: number;
-  action: 'INSERT' | 'UPDATE' | 'DELETE';
+  action: string;
   createdBy: string;
   createdDate: string;
-  lastModifiedBy?: string;
-  lastModifiedDate?: string;
-
-  activeIngredients?: PatientAllergiesActiveIngredientResponse[];
+  lastModifiedBy: string;
+  lastModifiedDate: string;
+  payload?: string;
+  oldNoteText?: string;
+  newNoteText?: string;
 };
 
 export interface PatientAllergiesActiveIngredientCreate {
@@ -3842,6 +3843,7 @@ export interface PatientObservationsComplaints {
   latestFunctionalStatus?: string | null;
   latestCognitiveCheck?: string | null;
 
+  patientConditions?: string | null;
   isActive: boolean;
   functionalStatus?: string | null;
   cognitiveCheck?: string | null;
