@@ -1208,18 +1208,18 @@ const UrgentCareList = () => {
     );
   }
 
-  if (!isDepartmentFetching && departmentData && !isEmergencyDepartment) {
-    return (
-      <Panel>
-        <div className="encounter-list__no-department">
-          <p>
-            User Current Department should be Emergency to View This Screen, so no ER encounters are
-            available.
-          </p>
-        </div>
-      </Panel>
-    );
-  }
+  // if (!isDepartmentFetching && departmentData && !isEmergencyDepartment) {
+  //   return (
+  //     <Panel>
+  //       <div className="encounter-list__no-department">
+  //         <p>
+  //           User Current Department should be Emergency to View This Screen, so no ER encounters are
+  //           available.
+  //         </p>
+  //       </div>
+  //     </Panel>
+  //   );
+  // }
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';

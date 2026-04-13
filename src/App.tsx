@@ -225,6 +225,7 @@ import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-
 import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
 import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage';
 import UrgentCareList from './pages/encounter/urgent-care/UrgentCareList';
+import UrgentCareListMain from './pages/encounter/urgent-care/UrgentCateListMain';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -596,7 +597,7 @@ const App = () => {
               <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
               <Route path="ER-start-triage" element={<ERStartTriageNew />} />
               <Route path="urgent-care-start-triage" element={<UrgentCareStartTriage />} />
-              <Route path="urgent-care-department-list" element={<UrgentCareList />} />
+              <Route path="urgent-care-department-list" element={<UrgentCareListMain />} />
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
