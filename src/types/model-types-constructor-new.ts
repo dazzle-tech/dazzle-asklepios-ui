@@ -46,7 +46,7 @@ export const newDepartment: modelTypes.Department = {
   departmentCode: '',
   phoneNumber: '',
   email: '',
-  encounterType: '',
+  encounterType: null,
   isActive: true,
   hasMedicalSheets: false,
   hasNurseMedicalSheets: false,

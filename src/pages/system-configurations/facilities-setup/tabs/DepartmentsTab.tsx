@@ -107,6 +107,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   // Lazy queries for filtering
   const [getDepartmentsByFacility, { data: departmentListResponse, isFetching }] =
     useLazyGetDepartmentByFacilityQuery();
+    console.log("departmentListResponse: ", departmentListResponse);
   const [getDepartmentsByType] = useLazyGetDepartmentByTypeQuery();
   const [getDepartmentsByName] = useLazyGetDepartmentByNameQuery();
 
@@ -288,7 +289,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     }
     setOpenForm(false);
     setLoad(true);
-    updateDepartment(department)
+    updateDepartment({...department, encounterType: department?.encounterType || undefined})
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));

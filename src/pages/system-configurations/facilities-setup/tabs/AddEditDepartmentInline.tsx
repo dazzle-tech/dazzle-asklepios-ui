@@ -29,19 +29,25 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
   onSave,
   onCancel,
 }) => {
+  console.log("coming department: ", department)
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  useEffect(() => {
+    if (!department?.appointable) {
+      setDepartment(prev => ({
+        ...prev,
+        defaultDurationMinutes: undefined,
+        defaultBufferAfterMinutes: 0,
+        defaultBufferBeforeMinutes: 0,
+        encounterType: ''
+      }));
+    }
 
-    useEffect(() => {
-      if(!department?.appointable){
-        setDepartment({...department, defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0, encounterType: ''})
-      }
-
-    },[department?.appointable]);
+  }, [department?.appointable]);
 
   return (
     <Form
@@ -138,7 +144,7 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
         />
 
       </div>
-       {/* Third row – encounter type (conditional) */}
+      {/* Third row – encounter type (conditional) */}
       {department?.appointable && (
         <MyInput
           column
@@ -165,34 +171,34 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
       />
       {department?.appointable && (
         <>
-      <MyInput
-        column
-        fieldType="number"
-        fieldName="defaultDurationMinutes"
-        record={department}
-        setRecord={setDepartment}
-        width="100%"
-        required={department?.appointable}
-      />
-      <MyInput
-        column
-        fieldType="number"
-        fieldName="defaultBufferBeforeMinutes"
-        record={department}
-        setRecord={setDepartment}
-        width="100%"
-        required={department?.appointable}
-      />
-      <MyInput
-        column
-        fieldType="number"
-        fieldName="defaultBufferAfterMinutes"
-        record={department}
-        setRecord={setDepartment}
-        width="100%"
-        required={department?.appointable}
-      />
-      </>
+          <MyInput
+            column
+            fieldType="number"
+            fieldName="defaultDurationMinutes"
+            record={department}
+            setRecord={setDepartment}
+            width="100%"
+            required={department?.appointable}
+          />
+          <MyInput
+            column
+            fieldType="number"
+            fieldName="defaultBufferBeforeMinutes"
+            record={department}
+            setRecord={setDepartment}
+            width="100%"
+            required={department?.appointable}
+          />
+          <MyInput
+            column
+            fieldType="number"
+            fieldName="defaultBufferAfterMinutes"
+            record={department}
+            setRecord={setDepartment}
+            width="100%"
+            required={department?.appointable}
+          />
+        </>
       )}
       <MyInput
         column
@@ -203,28 +209,28 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
       />
       {department?.appointable && (
         <>
-      <MyInput
-        column
-        fieldType="checkbox"
-        fieldName="requirePractitioner"
-        record={department}
-        setRecord={setDepartment}
-      />
-      <MyInput
-        column
-        fieldType="checkbox"
-        fieldName="requireBilling"
-        record={department}
-        setRecord={setDepartment}
-      />
-      <MyInput
-        column
-        fieldType="checkbox"
-        fieldName="requirePreAssessment"
-        record={department}
-        setRecord={setDepartment}
-      />
-      </>
+          <MyInput
+            column
+            fieldType="checkbox"
+            fieldName="requirePractitioner"
+            record={department}
+            setRecord={setDepartment}
+          />
+          <MyInput
+            column
+            fieldType="checkbox"
+            fieldName="requireBilling"
+            record={department}
+            setRecord={setDepartment}
+          />
+          <MyInput
+            column
+            fieldType="checkbox"
+            fieldName="requirePreAssessment"
+            record={department}
+            setRecord={setDepartment}
+          />
+        </>
       )}
       {/* Actions */}
       <div style={{ display: 'flex', alignItems: 'flex-end', marginLeft: '10px', marginTop: '20px' }}>
