@@ -39,6 +39,8 @@ const NurseStation = () => {
     ...propsData?.encounter
   });
 
+const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
+
   // === LOVs ===
   const { data: bloodPressureMeasurementSiteLov } =
     useGetLovValuesByCodeQuery('BP_MEASURMENT_SITE');
@@ -87,28 +89,37 @@ const NurseStation = () => {
     );
   }, [allowedSheetCodes, searchTerm.term]);
 
-  const headersMap = useMemo(() => {
-    const map: any = {};
-    MedicalSheets.forEach(ms => {
-      const fullPath = `/nurse-station/${ms.path.startsWith('/') ? ms.path.slice(1) : ms.path}`;
-      map[fullPath] = ms.name;
-    });
-    return map;
-  }, []);
+const headersMap = useMemo(() => {
+  const map: Record<string, string> = {};
 
-    const header = headersMap[location.pathname] || 'Nurse Dashboard';
+  MedicalSheets.forEach(ms => {
+    const fullPath = ms.path.startsWith('/nurse-station')
+      ? ms.path
+      : `/nurse-station${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
+
+    map[fullPath] = ms.name;
+  });
+
+  return map;
+}, []);
+
+useEffect(() => {
+  setCurrentHeader(headersMap[location.pathname] || 'Nurse Dashboard');
+}, [location.pathname, headersMap]);
 
 
-    useEffect(() => {
-      
-        dispatch(setPageCode('Nurse_Station'));
-        dispatch(setDivContent(`Nurse Station > ${header}`));
+const divContent = `Nurse Station > ${currentHeader}`;
 
-      return () => {
-        dispatch(setPageCode(''));
-        dispatch(setDivContent(''));
-      };
-    }, [dispatch]);
+useEffect(() => {
+  dispatch(setPageCode('Nurse_Station'));
+  dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [currentHeader, dispatch]);
+
 
   useEffect(() => {
     if (!propsData?.encounter) {

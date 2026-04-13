@@ -224,6 +224,7 @@ export const MODULES: Module[] =
           viewOrder: 0,
           navPath: "price-list",
         },
+        { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
       ],
     },
 

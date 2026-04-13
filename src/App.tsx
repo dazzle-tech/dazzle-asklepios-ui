@@ -218,6 +218,8 @@ import Logo from './images/Logo_BLUE_New.svg';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
+import PolicyDefinitions from './pages/setup/policy-definition';
+
 import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
 import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
@@ -775,6 +777,7 @@ const App = () => {
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
+              <Route path="policy-definition" element={<PolicyDefinitions />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />

@@ -745,7 +745,7 @@ const DetailsModal = ({
                     <MyLabel label="Parameters to monitor" />
                     <MyTagInput tags={tags} setTags={setTags} />
 
-                    <div className="prescription-refills-blocks">
+                    {/* <div className="prescription-refills-blocks">
                       <MyInput
                         disabled={preKey != null ? false : true}
                         width={140}
@@ -781,7 +781,7 @@ const DetailsModal = ({
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
                       />
-                    </div>
+                    </div> */}
                   </Form>
                 }
               />

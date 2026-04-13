@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import ReloadIcon from '@rsuite/icons/Reload';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
 import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
@@ -25,6 +25,7 @@ import { useGetAllergensQuery } from '@/services/setup/allergensService';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import AllergyDetailsSection from './AllergyDetailsSection';
 import { useGetUserFullNameByLoginQuery } from '@/services/userService';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
 interface AllergiesProps {
   patient?: any;
@@ -309,6 +310,8 @@ const Allergies = (props: AllergiesProps) => {
     });
   };
 
+
+  
       // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';

@@ -9,7 +9,9 @@ import PatientObservationsComplaints from './PatientObservationsComplaints';
 import PainAssessment from './PainAssessment';
 import AdditionalMeasurements from './AdditionalMeasurements';
 import { Patient, PatientEncounter } from '@/types/model-types-new';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
+import { useAppDispatch } from '@/hooks';
 export type ObservationsRef = {};
 
 type ObservationsProps = {
@@ -20,6 +22,7 @@ type ObservationsProps = {
 
 const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref) => {
   const location = useLocation();
+  const dispatch = useAppDispatch();
   const state = location.state || {};
   const patient = props.patient || (state.patient as Patient);
   const encounter = props.encounter || (state.encounter as PatientEncounter);
@@ -37,6 +40,17 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
       setIsEncounterStatusClosed(false);
     }
   }, [localEncounter?.status]);
+
+
+  useEffect(() => {
+  dispatch(setPageCode('observations'));
+  dispatch(setDivContent('Observations'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   return (
     <div ref={ref as any} className={clsx('basuc-div', { 'disabled-panel': edit })}>
