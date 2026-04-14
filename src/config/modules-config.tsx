@@ -450,7 +450,7 @@ export const MODULES: Module[] =
       departmentTypes: ["EMERGENCY_ROOM"],
       screens: [
         { name: "Urgent Care Triage",code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage"},
-        { name: "Urgent Care Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
+        { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
       ],
     },
     {
