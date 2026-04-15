@@ -865,21 +865,23 @@ export interface ApDiagnosticOrderTestsResultNotes {
 } 
 
 export interface ApDiagnosticOrderTestsSamples { 
-	key:string;
-	orderKey:string;
-	testKey:string;
-	notes:string;
-	unitLkey:string;
-	quantity:number;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	sampleCollectedAt:number;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-} 
+  key: string;
+  orderKey: string;
+  testKey: string;
+  notes: string;
+  unitLkey: string;
+  quantity: number;
+  createdBy: string;
+  updatedBy: string;
+  deletedBy: string;
+  sampleCollectedAt: number;
+  expiryDate?: number;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt: number;
+  isValid: boolean;
+  sourceOfSample: string;
+}
 
 export interface ApDiagnosticOrders { 
 	key:string;

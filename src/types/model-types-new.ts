@@ -687,6 +687,9 @@ export interface DiagnosticOrderTestCollectedSampleDTO {
   unit: string;
   quantity: number | string;
   collectedAt: Date | string;
+  expiryDate: Date | string | null;
+  sourceOfSample: string | null;
+
 }
 
 export interface DiagnosticOrderTestCollectedSampleBulkSameDTO {
@@ -3065,6 +3068,10 @@ export interface DiagnosticOrderTest extends AuditingEntity {
 
   cancellationReason?: string;
   cancelledBy?: string;
+
+  undoAcceptReason?: string;
+  undoAcceptBy?: string;
+  undoAcceptDate?: string;
 }
 
 export interface DiagnosticOrderCreateDTO {
