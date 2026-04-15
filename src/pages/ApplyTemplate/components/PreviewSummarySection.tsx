@@ -3,7 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { TimerReset } from "lucide-react";
 import { useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from "@/services/appointment/availabilityTemplate/availabilityTemplateInterval";
-import type { AvailabilityGenerationBatchApplyDTO, AvailabilityTemplateIntervalResponseVM } from "@/types/model-types-new";
+import {
+  useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery,
+} from "@/services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak";
+import type {
+  AvailabilityGenerationBatchApplyDTO,
+  AvailabilityTemplateIntervalBreakResponseVM,
+  AvailabilityTemplateIntervalResponseVM,
+} from "@/types/model-types-new";
 import { useGetActiveHolidaysInRangeQuery } from "@/services/system-configurations/organizationHolidaysService";
 import { useAppSelector } from "@/hooks";
 import { MiniStat } from "./shared";
@@ -58,18 +65,78 @@ function parseTimeToMinutes(value: unknown): number | null {
   return null;
 }
 
+function findOverlappingBreakEnd(
+  breaks: AvailabilityTemplateIntervalBreakResponseVM[],
+  slotStart: number,
+  slotEnd: number
+): number | null {
+  const overlappingBreakEnds = breaks
+    .map((intervalBreak) => {
+      const breakStart = parseTimeToMinutes(intervalBreak?.startTime);
+      const breakEnd = parseTimeToMinutes(intervalBreak?.endTime);
+      if (breakStart == null || breakEnd == null || breakEnd <= breakStart) return null;
+      const isOverlapping = slotStart < breakEnd && slotEnd > breakStart;
+      return isOverlapping ? breakEnd : null;
+    })
+    .filter((v): v is number => v != null);
+  if (overlappingBreakEnds.length === 0) return null;
+  return Math.max(...overlappingBreakEnds);
+}
+
 function countSlotsForInterval(interval: AvailabilityTemplateIntervalResponseVM, templateDurationMinutes: number): number {
   const start = parseTimeToMinutes(interval?.startTime ?? interval?.fromTime ?? interval?.start);
   const end = parseTimeToMinutes(interval?.endTime ?? interval?.toTime ?? interval?.end);
   if (start == null || end == null) return 0;
-  const span = Math.max(0, end - start);
   const intervalDuration = Number(interval?.slotDurationMinutes ?? templateDurationMinutes);
   if (!Number.isFinite(intervalDuration) || intervalDuration <= 0) return 0;
-  return Math.floor(span / intervalDuration);
+
+  let slots = 0;
+  let cursor = start;
+  const intervalBreaks: AvailabilityTemplateIntervalBreakResponseVM[] = [];
+  while (cursor + intervalDuration <= end) {
+    const slotStart = cursor;
+    const slotEnd = slotStart + intervalDuration;
+    const overlappingBreakEnd = findOverlappingBreakEnd(intervalBreaks, slotStart, slotEnd);
+    if (overlappingBreakEnd != null) {
+      cursor = overlappingBreakEnd;
+      continue;
+    }
+    slots += 1;
+    cursor = slotEnd;
+  }
+  return slots;
+}
+
+function countSlotsForIntervalWithBreaks(
+  interval: AvailabilityTemplateIntervalResponseVM,
+  templateDurationMinutes: number,
+  breaks: AvailabilityTemplateIntervalBreakResponseVM[]
+): number {
+  const start = parseTimeToMinutes(interval?.startTime ?? interval?.fromTime ?? interval?.start);
+  const end = parseTimeToMinutes(interval?.endTime ?? interval?.toTime ?? interval?.end);
+  if (start == null || end == null) return 0;
+  const intervalDuration = Number(interval?.slotDurationMinutes ?? templateDurationMinutes);
+  if (!Number.isFinite(intervalDuration) || intervalDuration <= 0) return 0;
+
+  let slots = 0;
+  let cursor = start;
+  while (cursor + intervalDuration <= end) {
+    const slotStart = cursor;
+    const slotEnd = slotStart + intervalDuration;
+    const overlappingBreakEnd = findOverlappingBreakEnd(breaks, slotStart, slotEnd);
+    if (overlappingBreakEnd != null) {
+      cursor = overlappingBreakEnd;
+      continue;
+    }
+    slots += 1;
+    cursor = slotEnd;
+  }
+  return slots;
 }
 
 function computePreview(
   intervalsByDay: Record<string, AvailabilityTemplateIntervalResponseVM[]>,
+  breaksByIntervalId: Record<number, AvailabilityTemplateIntervalBreakResponseVM[]>,
   templateDurationMinutes: number,
   dto: AvailabilityGenerationBatchApplyDTO | undefined,
   holidayDates: string[] = []
@@ -106,7 +173,9 @@ function computePreview(
     const dayKey = isoToDayOfWeekEnum(isoDay);
     const dayIntervals = intervalsByDay[dayKey] ?? [];
     for (const interval of dayIntervals) {
-      totalSlots += countSlotsForInterval(interval, templateDurationMinutes);
+      const intervalId = Number(interval?.id ?? 0);
+      const intervalBreaks = intervalId ? breaksByIntervalId[intervalId] ?? [] : [];
+      totalSlots += countSlotsForIntervalWithBreaks(interval, templateDurationMinutes, intervalBreaks);
     }
   }
 
@@ -164,7 +233,9 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
   }, [holidaysInRange, shouldFetchHolidays, dto?.startDate, dto?.endDate]);
 
   const [intervalsByDay, setIntervalsByDay] = React.useState<Record<string, AvailabilityTemplateIntervalResponseVM[]>>({});
+  const [breaksByIntervalId, setBreaksByIntervalId] = React.useState<Record<number, AvailabilityTemplateIntervalBreakResponseVM[]>>({});
   const [triggerIntervalsByDay] = useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery();
+  const [triggerBreaksByInterval] = useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery();
 
   React.useEffect(() => {
     let mounted = true;
@@ -173,7 +244,10 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
       const start = toDateOnly((dto as any)?.startDate);
       const end = toDateOnly((dto as any)?.endDate);
       if (!templateId || !start || !end || end < start) {
-        if (mounted) setIntervalsByDay({});
+        if (mounted) {
+          setIntervalsByDay({});
+          setBreaksByIntervalId({});
+        }
         return;
       }
 
@@ -193,25 +267,43 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
           }
         })
       );
+      const nextBreaksByIntervalId: Record<number, AvailabilityTemplateIntervalBreakResponseVM[]> = {};
+      await Promise.all(
+        Object.values(nextMap)
+          .flat()
+          .map(async (interval) => {
+            const intervalId = Number(interval?.id ?? 0);
+            if (!intervalId || nextBreaksByIntervalId[intervalId]) return;
+            try {
+              nextBreaksByIntervalId[intervalId] = (await triggerBreaksByInterval({ intervalId }).unwrap()) ?? [];
+            } catch {
+              nextBreaksByIntervalId[intervalId] = [];
+            }
+          })
+      );
 
-      if (mounted) setIntervalsByDay(nextMap);
+      if (mounted) {
+        setIntervalsByDay(nextMap);
+        setBreaksByIntervalId(nextBreaksByIntervalId);
+      }
     };
 
     void loadIntervals();
     return () => {
       mounted = false;
     };
-  }, [dto?.startDate, dto?.endDate, templateId, triggerIntervalsByDay]);
+  }, [dto?.startDate, dto?.endDate, templateId, triggerIntervalsByDay, triggerBreaksByInterval]);
 
   const { totalSlots, avgSlotsPerDay, exceptions, days } = React.useMemo(
     () =>
       computePreview(
         intervalsByDay,
+        breaksByIntervalId,
         Number(templateDurationMinutes ?? 0),
         dto,
         holidayDates && holidayDates.length > 0 ? holidayDates : Array.from(holidayDateSet)
       ),
-    [intervalsByDay, templateDurationMinutes, dto, holidayDates, holidayDateSet],
+    [intervalsByDay, breaksByIntervalId, templateDurationMinutes, dto, holidayDates, holidayDateSet],
   );
 
   return (

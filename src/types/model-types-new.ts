@@ -297,6 +297,20 @@ export interface AvailabilityTemplateIntervalUpdateDTO {
   allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
 }
 
+export interface AvailabilityTemplateIntervalBreakCreateDTO {
+  intervalId: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface AvailabilityTemplateIntervalBreakResponseVM {
+  id?: number | null;
+  intervalId?: number | null;
+  templateId?: number | null;
+  startTime?: string | null;
+  endTime?: string | null;
+}
+
 export interface AvailabilityTemplateResponseVM {
   id: number;
   facilityId: number;

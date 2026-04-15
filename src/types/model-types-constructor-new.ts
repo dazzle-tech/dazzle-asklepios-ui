@@ -972,6 +972,20 @@ export const newAvailabilityTemplateIntervalUpdateDTO: modelTypes.AvailabilityTe
   allowedServices: []
 };
 
+export const newAvailabilityTemplateIntervalBreakCreateDTO: modelTypes.AvailabilityTemplateIntervalBreakCreateDTO = {
+  intervalId: 0,
+  startTime: '',
+  endTime: ''
+};
+
+export const newAvailabilityTemplateIntervalBreakResponseVM: modelTypes.AvailabilityTemplateIntervalBreakResponseVM = {
+  id: null,
+  intervalId: null,
+  templateId: null,
+  startTime: null,
+  endTime: null
+};
+
 export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCreateDTO = {
   facilityId: undefined,
   departmentId: undefined,
