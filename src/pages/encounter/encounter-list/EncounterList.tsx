@@ -51,6 +51,7 @@ import { useGetBulkPatientBasicInfoMutation, useLazyGetPatientByIdQuery } from '
 import 'react-tabs/style/react-tabs.css';
 import './styles.less';
 import { skipToken } from '@tanstack/react-query';
+import { useSearchAppointmentsQuery } from '@/services/appointment/appointmentService';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -216,8 +217,8 @@ const EncounterList = () => {
   const [pageSize, setPageSize] = useState(10);
   const DEFAULT_SORT = 'id,desc';
 
-  const today = useMemo(() => new Date(), []);
-  const todayStr = useMemo(() => formatDate(today), [today]);
+  const today = new Date();
+  const todayStr = formatDate(today);
 
   const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
 
@@ -303,6 +304,32 @@ const EncounterList = () => {
     isLoading: isEncountersLoading,
     refetch: refetchEncounters
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
+
+console.log('📊 Encounter List - Filter Params:', filterParams);
+
+const { data: appointmentsData } = useSearchAppointmentsQuery({
+  filter: {
+    facility: selectedDepartment?.facilityId,
+    department: departmentId
+  },
+  page: 0,
+  size: 50,
+  sort: 'id,desc'
+});
+
+  const appointmentsMap = useMemo(() => {
+    const map: any = {};
+
+    (appointmentsData?.data ?? []).forEach((appt: any) => {
+      const patientId = appt?.patient?.id;
+
+      if (patientId) {
+        map[patientId] = appt;
+      }
+    });
+
+    return map;
+  }, [appointmentsData]);
 
   const todayCountsSkip = !departmentId;
   const { data: totalPatientsCount } = useCountTodayDepartmentTotalPatientsQuery(
@@ -402,6 +429,8 @@ const EncounterList = () => {
       };
     });
   }, [tableData, patientMap]);
+
+  console.log('🔥 RAW TABLE DATA:', tableData);
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
@@ -551,6 +580,30 @@ const EncounterList = () => {
   const canSeeEMR = isAdmin || jobRole === 'PHYSICIAN';
   const canSeePrint = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
   const canSeeCancel = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
+
+  const safeFormatDate = (value: any) => {
+    if (!value) return '';
+
+    try {
+      const date = value instanceof Date ? value : new Date(value);
+
+      if (isNaN(date.getTime())) return '';
+
+      // 🟢 format Date + Time
+      const formattedDate = date.toLocaleDateString('en-GB'); // 12/04/2026
+      const formattedTime = date.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      return `${formattedDate} ${formattedTime}`;
+    } catch {
+      return '';
+    }
+  };
+
+  console.log('📅 FULL appointmentsData:', appointmentsData?.data);
+
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -766,8 +819,38 @@ const EncounterList = () => {
         );
       },
       expandable: false
+    },
+    {
+      key: 'appointmentTime',
+      title: 'APPOINTMENT TIME',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.startDatetime)
+    },
+    {
+      key: 'confirmTime',
+      title: 'CONFIRM TIME',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.confirmedAt)
+    },
+    {
+      key: 'checkInTime',
+      title: 'CHECK-IN TIME',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.checkedInAt)
+    },
+    {
+      key: 'seenByPhysicianTime',
+      title: 'SEEN BY PHYSICIAN',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.lastModifiedBy)
     }
   ];
+
+  console.log('📅 appointments:', appointmentsData);
 
   const filters = () => (
     <>
