@@ -365,7 +365,12 @@ const AddResourceModal = ({
         ...editRecord,
         allowedServices: normalizedAllowedServices,
         facilityId: selectedFacility?.id ?? editRecord?.facilityId,
-        departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId
+        departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId,
+        parallelCapacityValue: Number(
+          editRecord?.parallelCapacityValue ??
+          mainTemplate?.parallelCapacityValue ??
+          1
+        )
       });
       return;
     }
@@ -373,7 +378,8 @@ const AddResourceModal = ({
       ...newAvailabilityTemplateCreateDTO,
       parentTemplateId: mainTemplate?.id,
       facilityId: selectedFacility?.id,
-      departmentId: mainTemplate?.departmentId
+      departmentId: mainTemplate?.departmentId,
+      parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1)
     });
   }, [open, editRecord?.id, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
 
@@ -417,6 +423,7 @@ const AddResourceModal = ({
       setRecord(prev => ({
         ...prev,
         durationMinutes: 0,
+        parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
         defaultPractitionerId: undefined
       }));
       return;
@@ -429,6 +436,7 @@ const AddResourceModal = ({
           setRecord(prev => ({
             ...prev,
             durationMinutes: res.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
             defaultPractitionerId: res?.id
           }));
         });
@@ -438,7 +446,8 @@ const AddResourceModal = ({
         .then(res => {
           setRecord(prev => ({
             ...prev,
-            durationMinutes: res?.data.defaultDurationMinutes
+            durationMinutes: res?.data.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
           }));
         });
     } else if (record?.templateType === 'CATALOG') {
@@ -447,7 +456,8 @@ const AddResourceModal = ({
         .then(res => {
           setRecord(prev => ({
             ...prev,
-            durationMinutes: res.defaultDurationMinutes
+            durationMinutes: res.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
           }));
         });
     } else if (record?.templateType === 'SERVICE') {
@@ -456,7 +466,8 @@ const AddResourceModal = ({
         .then(res => {
           setRecord(prev => ({
             ...prev,
-            durationMinutes: res.defaultDurationMinutes
+            durationMinutes: res.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
           }));
         });
     }
@@ -466,7 +477,8 @@ const AddResourceModal = ({
         .then(res => {
           setRecord(prev => ({
             ...prev,
-            durationMinutes: res.defaultDurationMinutes
+            durationMinutes: res.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
           }));
         });
     }
@@ -905,6 +917,20 @@ const AddResourceModal = ({
                     </Col>
                     <Col md={12}>
                       <MyInput
+                        fieldName="parallelCapacityValue"
+                        fieldLabel="Parallel Capacity Value"
+                        fieldType="number"
+                        record={record}
+                        setRecord={setRecord}
+                        width="100%"
+                        min={1}
+                        disabled={props?.readOnly}
+                      />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={12}>
+                      <MyInput
                         fieldName="versionNo"
                         fieldType="number"
                         record={record}
@@ -1141,6 +1167,7 @@ const AddResourceModal = ({
       ...record,
       numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
       durationMinutes: Number(record?.durationMinutes),
+      parallelCapacityValue: Number(record?.parallelCapacityValue ?? 1),
       allowedServices: Array.isArray(record?.allowedServices)
         ? record.allowedServices
         : []
