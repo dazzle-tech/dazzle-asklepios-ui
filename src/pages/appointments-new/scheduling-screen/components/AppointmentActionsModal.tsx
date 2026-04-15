@@ -183,7 +183,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
       try {
         await checkInAppointment({ id }).unwrap();
-        dispatch(notify({ msg: 'Appointment Checked-In Successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'Appointment Checked-In and Encounter Created  Successfully', sev: 'success' }));
         onStatusChange();
         onActionsModalClose();
       } catch (error: any) {
@@ -363,7 +363,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 status: "CONFIRMED"
             }));
             
-            dispatch(notify({ msg: 'Appointment Confirmed and Encounter Created Successfully', sev: 'success' }));
+            dispatch(notify({ msg: 'Appointment Confirmed Successfully', sev: 'success' }));
             onStatusChange();
             onActionsModalClose();
         } catch (error: any) {
