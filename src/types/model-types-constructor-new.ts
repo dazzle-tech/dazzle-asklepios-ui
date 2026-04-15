@@ -342,7 +342,9 @@ export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTe
     orderTestId: 0,
     unit: '',
     quantity: 0,
-    collectedAt: ''
+    collectedAt: '',
+    expiryDate: null,
+    sourceOfSample: null
   };
 
 export const newDiagnosticOrderTestCollectedSampleBulkSame: modelTypes.DiagnosticOrderTestCollectedSampleBulkSameDTO =
@@ -2135,7 +2137,10 @@ export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
   patientArrivedNoteRad: undefined,
 
   cancellationReason: undefined,
-  cancelledBy: undefined
+  cancelledBy: undefined,
+  undoAcceptReason: undefined,
+  undoAcceptBy: undefined,
+  undoAcceptDate: undefined
 };
 
 export const newDiagnosticOrderTestResultCreate: modelTypes.DiagnosticOrderTestResultCreateDTO = {
