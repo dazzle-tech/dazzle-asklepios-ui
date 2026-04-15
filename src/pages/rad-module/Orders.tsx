@@ -222,6 +222,11 @@ const Orders = forwardRef<any, OrdersProps>(
         }
       },
       {
+            key: 'diagnosis',
+            title: <Translate>Diagnosis</Translate>,
+            flexGrow: 3,
+      },
+      {
         key: 'status',
         title: <Translate>STATUS</Translate>,
         flexGrow: 2,
