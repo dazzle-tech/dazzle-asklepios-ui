@@ -212,17 +212,21 @@ import FormTemplates from './pages/form-template/FormTemplate';
 import FormTemplateBuilderPage from './pages/form-template/FormTemplateBuilderPage';
 import FormTemplatesUseScreen from './components/FormsTemplate/FormTemplatesUseScreen';
 import AvailabilityTemplatePage from './pages/setup/availability_template';
-import "survey-core/survey-core.min.css";
-import "survey-creator-core/survey-creator-core.min.css";
+import 'survey-core/survey-core.min.css';
+import 'survey-creator-core/survey-creator-core.min.css';
 import Logo from './images/Logo_BLUE_New.svg';
 import OrganizationHolidays from './pages/system-configurations/organization-holidays';
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
+import PolicyDefinitions from './pages/setup/policy-definition';
+
 import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
 import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
 import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage';
 import UrgentCareList from './pages/encounter/urgent-care/UrgentCareList';
+import NurseAssessment from './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment';
+import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -244,30 +248,21 @@ type BackendMenuItem = {
 
 function ParentPermissionGuard() {
   const location = useLocation();
-  const authSlice = useAppSelector((s) => s.auth);
+  const authSlice = useAppSelector(s => s.auth);
 
   const path = location.pathname || '/';
   const cleanPath = norm(path.split('?')[0]);
   const selectedDepartment = authSlice.selectedDepartment;
   const selectedDepartmentId = selectedDepartment?.departmentId;
 
-  const [
-    getDepartmentById,
-    {
-      data: department,
-      isLoading,
-      isFetching,
-      error
-    }
-  ] = useLazyGetDepartmentByIdQuery();
+  const [getDepartmentById, { data: department, isLoading, isFetching, error }] =
+    useLazyGetDepartmentByIdQuery();
 
   const matchedModule = MODULES.find((m: any) =>
     (m.screens ?? []).some((s: any) => norm(s.navPath) === cleanPath)
   );
 
-  const matchedScreen = matchedModule?.screens?.find(
-    (s: any) => norm(s.navPath) === cleanPath
-  );
+  const matchedScreen = matchedModule?.screens?.find((s: any) => norm(s.navPath) === cleanPath);
 
   const moduleDepartmentTypes = matchedModule?.departmentTypes ?? [];
   const requiresDepartmentTypeValidation = moduleDepartmentTypes.length > 0;
@@ -275,9 +270,7 @@ function ParentPermissionGuard() {
   const allowedCodes = useMemo(
     () =>
       new Set(
-        ((authSlice.menu ?? []) as BackendMenuItem[]).map((x) =>
-          String(x.screen ?? '').toUpperCase()
-        )
+        ((authSlice.menu ?? []) as BackendMenuItem[]).map(x => String(x.screen ?? '').toUpperCase())
       ),
     [authSlice.menu]
   );
@@ -323,7 +316,6 @@ function ParentPermissionGuard() {
     );
   }
 
-
   if (isLoading || isFetching) {
     return <Outlet />;
   }
@@ -344,9 +336,7 @@ function ParentPermissionGuard() {
   }
 
   const currentDepartmentType = String(department?.departmentType ?? '').toUpperCase();
-  const allowedDepartmentTypes = moduleDepartmentTypes.map((x: string) =>
-    String(x).toUpperCase()
-  );
+  const allowedDepartmentTypes = moduleDepartmentTypes.map((x: string) => String(x).toUpperCase());
 
   if (!currentDepartmentType) {
     return <Outlet />;
@@ -372,7 +362,6 @@ function ParentPermissionGuard() {
   return <Outlet />;
 }
 
-
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -380,7 +369,6 @@ const App = () => {
 
   const [navigationMap, setNavigationMap] = useState<any[]>([]);
   const navigate = useNavigate();
-
 
   useEffect(() => {
     const onPageShow = (e: PageTransitionEvent) => {
@@ -397,14 +385,13 @@ const App = () => {
   // ------------------------------ MENU BUILD HELPERS ---------------------------
   type BackendMenuItem = { module?: string | null; label?: string | null; screen?: string | null };
 
-
   const buildPermissionLookup = (menuItems: BackendMenuItem[]) => {
     const globalAllowed = new Set<string>();
     const moduleAllowed = new Map<string, Set<string>>();
 
     for (const m of menuItems ?? []) {
       const nLabel = m.label;
-      const nScreen = (m.screen ?? '');
+      const nScreen = m.screen ?? '';
       const nModule = m.module;
 
       if (nLabel) globalAllowed.add(nLabel);
@@ -518,7 +505,6 @@ const App = () => {
        
       </div> */}
 
-
       <div
         id="blocker-error"
         style={{
@@ -578,7 +564,10 @@ const App = () => {
               <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="my-consultations" element={<MyConsultations />} />
               <Route path="patient-profile-old" element={<PatientProfile />} />
-              <Route path="patient-quick-appointment" element={<PatientQuickAppointment {...({} as any)} />} />
+              <Route
+                path="patient-quick-appointment"
+                element={<PatientQuickAppointment {...({} as any)} />}
+              />
               <Route path="patient-profile" element={<PatientProfileNew />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
@@ -587,7 +576,10 @@ const App = () => {
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="information-desk" element={<FacilityPatientList />} />
               <Route path="patient-old/patient-profile" element={<PatientProfileOLD />} />
-              <Route path="patient-old/facility-patient-list" element={<PatientOldFacilityPatientList />} />
+              <Route
+                path="patient-old/facility-patient-list"
+                element={<PatientOldFacilityPatientList />}
+              />
               <Route path="patient-old/patient-chart" element={<PatientChartLegacy />} />
               <Route path="patient-old/patient-emr" element={<PatientEMRLegacy />} />
               <Route path="patient-old/patient-list" element={<PatientListLegacy />} />
@@ -598,7 +590,7 @@ const App = () => {
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
-              <Route path="urgent-care-triage" element={<UrgentCareTriage/>} />
+              <Route path="urgent-care-triage" element={<UrgentCareTriage />} />
               <Route path="view-triage" element={<ViewTriageNew />} />
               <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
@@ -673,7 +665,10 @@ const App = () => {
                 <Route path="FLACC-neonates-pain-assessment" element={<NeonatesPainAssessment />} />
                 <Route path="sliding-scale" element={<SlidingScale />} />
                 <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
-                <Route path="service-and-products" element={<ServiceAndProductsTab {...({} as any)} />} />
+                <Route
+                  path="service-and-products"
+                  element={<ServiceAndProductsTab {...({} as any)} />}
+                />
               </Route>
               <Route path="price-list" element={<PriceLists />} />
               <Route path="/doctor-round/round" element={<ViewRound />} />
@@ -685,14 +680,19 @@ const App = () => {
               <Route path="day-case-list" element={<DayCaseList />} />
               <Route path="room" element={<Room />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
-              <Route path="nurse-station" element={<EncounterPreObservationsNew />} >
+              <Route path="nurse-station" element={<EncounterPreObservationsNew />}>
+                <Route path="nurse-assessment" element={<NurseAssessment />} />
+                <Route path="physician-assessment" element={<PhysicianAssessment />} />
                 <Route path="progress-notes" element={<ProgressNotes />} />
                 <Route
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
                 <Route path="previous-measurements" element={<PreviousMeasurements />} />
-                <Route path="service-and-products" element={<ServiceAndProductsTab {...({} as any)} />} />
+                <Route
+                  path="service-and-products"
+                  element={<ServiceAndProductsTab {...({} as any)} />}
+                />
                 <Route path="vte-risk-assessment" element={<VTERiskAssessment />} />
                 <Route path="glasgow-coma-scale" element={<GlasgowComaScale />} />
                 <Route path="medication-order" element={<DrugOrderNew />} />
@@ -777,6 +777,7 @@ const App = () => {
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
+              <Route path="policy-definition" element={<PolicyDefinitions />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransactionNew />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
@@ -828,24 +829,50 @@ const App = () => {
               <Route path="medication-schedule" element={<MedicationSchedule />} />
               <Route path="language-setup" element={<LanguagesSetup />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
-              <Route path='enums' element={<Enums />} />
+              <Route path="enums" element={<Enums />} />
               {/* <Route path="service-and-products" element={<ServiceAndProducts />} /> */}
-              <Route path='enums' element={<Enums />} />
-              <Route path='payor-setup' element={<PayerSetup />} />
-              <Route path="inventory-management-product-setup" element={<InventoryManagementProductSetup />} />
-              <Route path="inventory-management-transaction" element={<InventoryManagementTransaction />} />
-              <Route path="inventory-management-transfer" element={<InventoryManagementTransfer />} />
-              <Route path="inventory-management-transfer-approval" element={<InventoryManagementTransferApproval />} />
-              <Route path="inventory-management-product-catalog" element={<InventoryManagementProductCatalog />} />
-              <Route path="inventory-management-warehouse-setup" element={<InventoryManagementWarehouseSetup />} />
-              <Route path="inventory-management-warehouse-items-setup" element={<InventoryManagementWarehouseItemsSetup />} />
-              <Route path="inventory-management-department-stock" element={<InventoryManagementDepartmentStock />} />
+              <Route path="enums" element={<Enums />} />
+              <Route path="payor-setup" element={<PayerSetup />} />
+              <Route
+                path="inventory-management-product-setup"
+                element={<InventoryManagementProductSetup />}
+              />
+              <Route
+                path="inventory-management-transaction"
+                element={<InventoryManagementTransaction />}
+              />
+              <Route
+                path="inventory-management-transfer"
+                element={<InventoryManagementTransfer />}
+              />
+              <Route
+                path="inventory-management-transfer-approval"
+                element={<InventoryManagementTransferApproval />}
+              />
+              <Route
+                path="inventory-management-product-catalog"
+                element={<InventoryManagementProductCatalog />}
+              />
+              <Route
+                path="inventory-management-warehouse-setup"
+                element={<InventoryManagementWarehouseSetup />}
+              />
+              <Route
+                path="inventory-management-warehouse-items-setup"
+                element={<InventoryManagementWarehouseItemsSetup />}
+              />
+              <Route
+                path="inventory-management-department-stock"
+                element={<InventoryManagementDepartmentStock />}
+              />
               <Route path="form-template-use" element={<FormTemplatesUseScreen />} />
               <Route path="form-template" element={<FormTemplates />} />
               <Route path="new" element={<FormTemplateBuilderPage />} />
               <Route path=":id" element={<FormTemplateBuilderPage />} />
               <Route path="availability-template" element={<AvailabilityTemplatePage />} />
               <Route path="availability-templates" element={<AvailabilityTemplatePageNew />} />
+              <Route path="nurse-assessment" element={<NurseAssessment />} />
+              <Route path="physician-assessment" element={<PhysicianAssessment />} />
             </Route>
           </Route>
           <Route path="reset-password" element={<ResetPassword />} />

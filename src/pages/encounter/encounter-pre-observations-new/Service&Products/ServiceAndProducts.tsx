@@ -20,6 +20,7 @@ import { useLazyGetProcedureByIdQuery } from '@/services/setup/procedure/procedu
 import { useLazyGetBrandMedicationsByIdsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useLazyGetDiagnosticTestsByIdsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import AddEditPatientServiceAndProduct from './AddEditPatientServiceAndProduct';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
 const ServiceAndProductsTab = ({ edit: propEdit }) => {
   const location = useLocation();
@@ -335,6 +336,16 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
       ),
     },
   ];
+
+useEffect(() => {
+  dispatch(setPageCode('serviceandproducts'));
+  dispatch(setDivContent('Service and Products'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   return (
     <div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Col, Divider, Drawer, Form, List, Panel, Row } from 'rsuite';
@@ -21,11 +21,11 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
-import './styles.less';
-import { useLazyGetNurseSummaryReportQuery } from '@/services/observationServiceNew';
-import { printNurseSummaryReport } from '@/utils/printNurseSummaryReport';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useEnumOptions } from '@/services/enumsApi';
+import { useLazyGetNurseSummaryReportQuery } from '@/services/observationServiceNew';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { printNurseSummaryReport } from '@/utils/printNurseSummaryReport';
+import './styles.less';
 
 const NurseStation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -38,6 +38,8 @@ const NurseStation = () => {
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
   });
+
+const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
 
   // === LOVs ===
   const { data: bloodPressureMeasurementSiteLov } =
@@ -87,28 +89,37 @@ const NurseStation = () => {
     );
   }, [allowedSheetCodes, searchTerm.term]);
 
-  const headersMap = useMemo(() => {
-    const map: any = {};
-    MedicalSheets.forEach(ms => {
-      const fullPath = `/nurse-station/${ms.path.startsWith('/') ? ms.path.slice(1) : ms.path}`;
-      map[fullPath] = ms.name;
-    });
-    return map;
-  }, []);
+const headersMap = useMemo(() => {
+  const map: Record<string, string> = {};
 
-    const header = headersMap[location.pathname] || 'Nurse Dashboard';
+  MedicalSheets.forEach(ms => {
+    const fullPath = ms.path.startsWith('/nurse-station')
+      ? ms.path
+      : `/nurse-station${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
+
+    map[fullPath] = ms.name;
+  });
+
+  return map;
+}, []);
+
+useEffect(() => {
+  setCurrentHeader(headersMap[location.pathname] || 'Nurse Dashboard');
+}, [location.pathname, headersMap]);
 
 
-    useEffect(() => {
-      
-        dispatch(setPageCode('Nurse_Station'));
-        dispatch(setDivContent(`Nurse Station > ${header}`));
+const divContent = `Nurse Station > ${currentHeader}`;
 
-      return () => {
-        dispatch(setPageCode(''));
-        dispatch(setDivContent(''));
-      };
-    }, [dispatch]);
+useEffect(() => {
+  dispatch(setPageCode('Nurse_Station'));
+  dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [currentHeader, dispatch]);
+
 
   useEffect(() => {
     if (!propsData?.encounter) {

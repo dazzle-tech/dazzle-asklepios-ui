@@ -110,13 +110,13 @@ module.exports = {
 
   plugins: [
     new HtmlwebpackPlugin({
-      title: 'Asklepios',
+      title: 'OneHealth',
       filename: 'index.html',
       template: './src/index.html',
       inject: true,
       hash: true,
       path: './',
-     favicon: './public/Ask-Rod-Logo.png',
+     favicon: './public/r-and-d-projects.atlassian1.png',
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',

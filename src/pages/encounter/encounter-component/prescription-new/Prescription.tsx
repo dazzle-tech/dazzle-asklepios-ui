@@ -64,7 +64,8 @@ const Prescription = (props: Props) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
-
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+   const isNurse = jobRole === 'NURSE';
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -1048,7 +1049,7 @@ const Prescription = (props: Props) => {
             prefixIcon={() => <PlusIcon />}
             loading={isLoadingPrescriptions || isLoadingCreateOrGet}
             disabled={
-              edit || 
+              edit ||  isNurse||
               !currentPrescription?.id ||
               String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
             }

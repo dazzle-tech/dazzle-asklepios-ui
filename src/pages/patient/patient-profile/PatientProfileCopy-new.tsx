@@ -130,7 +130,7 @@ const PatientProfile = () => {
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
   const [openReferralRequestModal, setOpenReferralRequestModal] = useState(false);
-
+const [eligibilityChecked, setEligibilityChecked] = useState(false);
   const [checkDuplication] = useGetDuplicationCandidatesMutation();
 
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
@@ -188,10 +188,20 @@ const PatientProfile = () => {
     // ─────────────────────────────────────────────────────────────────
 
     try {
+      // ✅ Mandatory Eligibility Check
+
+
+      // =========================
+      // UPDATE FLOW
+      // =========================
       if (localPatient?.id) {
         const updated = await updatePatient({
           id: localPatient.id,
-          data: { ...localPatient, isCompletedPatient: true, isUnknown: false }
+          data: {
+            ...localPatient,
+            isCompletedPatient: true,
+            isUnknown: false
+          }
         }).unwrap();
 
         setLocalPatient(updated);
@@ -199,17 +209,25 @@ const PatientProfile = () => {
         setValidationResult(undefined);
         setRefetchData(true);
 
-        dispatch(notify({ msg: 'Patient Updated Successfully', sev: 'success' }));
+        dispatch(
+          notify({
+            msg: 'Patient Updated Successfully',
+            sev: 'success'
+          })
+        );
 
         if (searchRef.current) {
           setTimeout(() => {
             searchRef.current?.();
           }, 500);
         }
+
         return;
       }
 
-      // CREATE flow: duplication check
+      // =========================
+      // CREATE FLOW - DUPLICATION CHECK
+      // =========================
       const duplicationResponse = await checkDuplication({
         dto: {
           ruleId: selectedFacility?.ruleId,
@@ -232,7 +250,9 @@ const PatientProfile = () => {
         return;
       }
 
-      // CREATE flow: save
+      // =========================
+      // CREATE FLOW - SAVE
+      // =========================
       const saved = await addPatient({
         ...localPatient,
         isCompletedPatient: true,
@@ -244,7 +264,12 @@ const PatientProfile = () => {
       setValidationResult(undefined);
       setRefetchData(true);
 
-      dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+      dispatch(
+        notify({
+          msg: 'Patient Saved Successfully',
+          sev: 'success'
+        })
+      );
 
       if (searchRef.current) {
         setTimeout(() => {
@@ -375,6 +400,8 @@ const PatientProfile = () => {
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
             setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
             setOpenReferralRequestModal={setOpenReferralRequestModal}
+            eligibilityChecked={eligibilityChecked}
+            setEligibilityChecked={setEligibilityChecked}
           />
 
           <div className="container-of-tabs-reg">

@@ -137,7 +137,19 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
   { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products' },
-  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' }
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' },
+  {
+    name: 'Nurse Assessment',
+    code: 'NURSE_ASSESSMENT',
+    icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />,
+    path: '/nurse-assessment'
+  },
+  {
+    name: 'Physician Assessment',
+    code: 'PHYSICIAN_ASSESSMENT',
+    icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
+    path: '/physician-assessment'
+  }
 
 ];
 
@@ -212,6 +224,7 @@ export const MODULES: Module[] =
           viewOrder: 0,
           navPath: "price-list",
         },
+        { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
       ],
     },
 
@@ -437,7 +450,7 @@ export const MODULES: Module[] =
       departmentTypes: ["EMERGENCY_ROOM"],
       screens: [
         { name: "Urgent Care Triage",code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage"},
-        { name: "Urgent Care Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
+        { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
       ],
     },
     {

@@ -44,7 +44,7 @@ import {
   faUserSlash,
   faXmark
 } from '@fortawesome/free-solid-svg-icons';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentActionsModal from './components/AppointmentActionsModal';
 import {
@@ -143,6 +143,7 @@ const ScheduleScreen = () => {
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
   const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
+  const dispatch = useAppDispatch();
 
   const [saveAppointment] = useSaveAppointmentMutation();
   const [searchAppointments, { data: searchedAppointmentsResponse, isFetching: isSearchingAppointments }] =
@@ -601,6 +602,20 @@ const ScheduleScreen = () => {
 
     // NEW slots are not booked yet; click should go straight to booking modal.
     if (status === 'NEW') {
+      const apptStart =
+        freshEvent?.start instanceof Date ? freshEvent.start : new Date(freshEvent?.start as string | number);
+      if (
+        moment(apptStart).isValid() &&
+        moment(apptStart).startOf('day').isBefore(moment().startOf('day'))
+      ) {
+        dispatch(
+          notify({
+            msg: 'Previous days: available slots cannot be booked.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
       setBookPatientReadOnly(false);
       setViewAppointmentData(freshEvent?.appointmentData ?? null);
       setShowAppointmentOnly(false);
@@ -618,7 +633,6 @@ const ScheduleScreen = () => {
 
   const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
   const [drowerOpen, setDrowerOpen] = useState(false);
-  const dispatch = useAppDispatch();
 
   const handleSearchAppointmentsByCriteria = useCallback(async () => {
     const firstResourceId =
@@ -1923,6 +1937,15 @@ const ScheduleScreen = () => {
                 step={60}
                 timeslots={1}
                 onSelectSlot={slotInfo => {
+              if (moment(slotInfo.start).startOf('day').isBefore(moment().startOf('day'))) {
+                dispatch(
+                  notify({
+                    msg: 'Previous days: available slots cannot be booked.',
+                    sev: 'warning'
+                  })
+                );
+                return;
+              }
               if (slotInfo.resourceId) {
                 const currentResource = resourcesWithAvailabilityResponse?.object.find(
                   r => r.key === slotInfo.resourceId

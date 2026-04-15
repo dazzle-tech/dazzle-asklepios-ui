@@ -49,6 +49,7 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
         type: diagnosticsTestCatalogHeader?.type,
         departmentId: diagnosticsTestCatalogHeader?.departmentId,
         facilityId: diagnosticsTestCatalogHeader?.facilityId,
+        appointable: diagnosticsTestCatalogHeader?.appointable,
         parallelCapacityValue: diagnosticsTestCatalogHeader.parallelCapacityValue ?? 1,
         defaultDurationMinutes: diagnosticsTestCatalogHeader?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: diagnosticsTestCatalogHeader.defaultBufferBeforeMinutes ?? 0,
@@ -60,51 +61,51 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
   const handleSave = () => {
 
     let messages = [];
-        const obj = !diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM;
-        const isEmpty = (val) => val === null || val === undefined || val === '';
-        const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
-        if (
-          obj?.parallelCapacityValue === null ||
-          obj?.parallelCapacityValue === undefined ||
-          obj?.parallelCapacityValue < 1
-        ) {
-          messages.push(
-            'Field Parallel Capacity Value is required and should be greater than or equal to 1'
-          );
-        }
-        if (obj?.appointable) {
-          if (isEmpty(obj?.defaultDurationMinutes) || obj?.defaultDurationMinutes <= 0) {
-            messages.push('Field Default Duration Minutes is required and should be greater than 0')
-          }
-          if (isEmpty(obj?.defaultBufferBeforeMinutes) || obj?.defaultBufferBeforeMinutes < 0) {
-            messages.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
-          }
-          if (isEmpty(obj?.defaultBufferAfterMinutes) || obj?.defaultBufferAfterMinutes < 0) {
-            messages.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
-          }
-        }
-        else {
-          if (isNotEmpty(obj?.defaultDurationMinutes) && obj?.defaultDurationMinutes <= 0) {
-            messages.push('Field Default Duration Minutes should be greater than 0')
-          }
-          if (isNotEmpty(obj?.defaultBufferBeforeMinutes) && obj?.defaultBufferBeforeMinutes < 0) {
-            messages.push('Field Default Buffer Before Minutes should be greater then or equal 0')
-          }
-          if (isNotEmpty(obj?.defaultBufferAfterMinutes) && obj?.defaultBufferAfterMinutes < 0) {
-            messages.push('Field Default Buffer After Minutes should be greater then or equal 0')
-          }
-        }
-        if (messages.length > 0) {
-          dispatch(
-            notify({
-              msg: messages.join(', '),
-              sev: 'warning',
-            })
-          );
-    
-          return ;
-        }
-    
+    const obj = !diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM;
+    const isEmpty = (val) => val === null || val === undefined || val === '';
+    const isNotEmpty = (val) => val !== null && val !== undefined && val !== '';
+    if (
+      obj?.parallelCapacityValue === null ||
+      obj?.parallelCapacityValue === undefined ||
+      obj?.parallelCapacityValue < 1
+    ) {
+      messages.push(
+        'Field Parallel Capacity Value is required and should be greater than or equal to 1'
+      );
+    }
+    if (obj?.appointable) {
+      if (isEmpty(obj?.defaultDurationMinutes) || obj?.defaultDurationMinutes <= 0) {
+        messages.push('Field Default Duration Minutes is required and should be greater than 0')
+      }
+      if (isEmpty(obj?.defaultBufferBeforeMinutes) || obj?.defaultBufferBeforeMinutes < 0) {
+        messages.push('Field Default Buffer Before Minutes is required and should be greater then or equal 0')
+      }
+      if (isEmpty(obj?.defaultBufferAfterMinutes) || obj?.defaultBufferAfterMinutes < 0) {
+        messages.push('Field Default Buffer After Minutes is required and should be greater then or equal 0')
+      }
+    }
+    else {
+      if (isNotEmpty(obj?.defaultDurationMinutes) && obj?.defaultDurationMinutes <= 0) {
+        messages.push('Field Default Duration Minutes should be greater than 0')
+      }
+      if (isNotEmpty(obj?.defaultBufferBeforeMinutes) && obj?.defaultBufferBeforeMinutes < 0) {
+        messages.push('Field Default Buffer Before Minutes should be greater then or equal 0')
+      }
+      if (isNotEmpty(obj?.defaultBufferAfterMinutes) && obj?.defaultBufferAfterMinutes < 0) {
+        messages.push('Field Default Buffer After Minutes should be greater then or equal 0')
+      }
+    }
+    if (messages.length > 0) {
+      dispatch(
+        notify({
+          msg: messages.join(', '),
+          sev: 'warning',
+        })
+      );
+
+      return;
+    }
+
 
     if (!diagnosticsTestCatalogHeader?.id) {
       addCatalog(catalogCreateVM)
@@ -130,6 +131,25 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
     }
   };
 
+  useEffect(() => {
+    const appointable = !diagnosticsTestCatalogHeader?.id
+      ? catalogCreateVM?.appointable
+      : catalogUpdateVM?.appointable;
+
+    if (!appointable) {
+      if (!diagnosticsTestCatalogHeader?.id) {
+        setCatalogCreateVM(prev => ({
+          ...prev,
+          defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+        }));
+      } else {
+        setCatalogUpdateVM(prev => ({
+          ...prev,
+          defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+        }));
+      }
+    }
+  }, [catalogCreateVM?.appointable, catalogUpdateVM?.appointable]);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -138,155 +158,166 @@ const AddEditCatalog = ({ open, setOpen, diagnosticsTestCatalogHeader, width }) 
           <Form fluid>
             <Row>
               <Col md={12}>
-            <MyInput
-              width="100%"
-              fieldName="type"
-              fieldType="select"
-              selectData={testTypeEnum ?? []}
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-              setRecord={
-                !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-              }
-              searchable={false}
-              required
-            />
-            </Col>
-             <Col md={12}>
-            <MyInput
-              width={"100%"}
-              column
-              fieldLabel="Appointable"
-              fieldType="checkbox"
-              fieldName="appointable"
-              record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-              setRecord={
-                !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-              }
-            />
-            </Col>
+                <MyInput
+                  width="100%"
+                  fieldName="type"
+                  fieldType="select"
+                  selectData={testTypeEnum ?? []}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                  setRecord={
+                    !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                  }
+                  searchable={false}
+                  required
+                />
+              </Col>
+              <Col md={12}>
+                <MyInput
+                  width={"100%"}
+                  column
+                  fieldLabel="Appointable"
+                  fieldType="checkbox"
+                  fieldName="appointable"
+                  record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                  setRecord={
+                    !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                  }
+                />
+              </Col>
             </Row>
             <Row>
-               <Col md={12}>
-            <MyInput
-              placeholder="Select Facility"
-              width="100%"
-              fieldType="select"
-              fieldLabel="Facility"
-              selectData={facilityListResponse ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              fieldName="facilityId"
-              record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-              setRecord={
-                !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-              }
-              searchable={false}
-            />
-            </Col>
-             <Col md={12}>
-            <MyInput
-              width="100%"
-              fieldName="departmentId"
-              fieldType="select"
-              selectData={departmentListResponse ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-              setRecord={
-                !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-              }
-              menuMaxHeight={200}
-            />
-            </Col>
+              <Col md={12}>
+                <MyInput
+                  placeholder="Select Facility"
+                  width="100%"
+                  fieldType="select"
+                  fieldLabel="Facility"
+                  selectData={facilityListResponse ?? []}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  fieldName="facilityId"
+                  record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                  setRecord={
+                    !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                  }
+                  searchable={false}
+                />
+              </Col>
+              <Col md={12}>
+                <MyInput
+                  width="100%"
+                  fieldName="departmentId"
+                  fieldType="select"
+                  selectData={departmentListResponse ?? []}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                  setRecord={
+                    !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                  }
+                  menuMaxHeight={200}
+                />
+              </Col>
             </Row>
             <Row>
-            <MyInput
-              width="100%"
-              fieldName="name"
-              fieldLabel="Catalog Name"
-              record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-              setRecord={
-                !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-              }
-              required
-            />
+              <MyInput
+                width="100%"
+                fieldName="name"
+                fieldLabel="Catalog Name"
+                record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                setRecord={
+                  !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                }
+                required
+              />
             </Row>
             <Row>
-            <MyInput
-              width="100%"
-              fieldName="description"
-              record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-              setRecord={
-                !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-              }
-              required
-            />
+              <MyInput
+                width="100%"
+                fieldName="description"
+                record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                setRecord={
+                  !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                }
+                required
+              />
             </Row>
-              <Row>
-                <Col md={12}>
-                  <MyInput
-                    fieldType="number"
-                    fieldName="parallelCapacityValue"
-                    record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-                    setRecord={
-                      !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-                    }
-                    width="100%"
-                    required
-                  />
-                </Col>
-                <Col md={12}>
-                  <MyInput
-                    fieldType="number"
-                    fieldName="defaultDurationMinutes"
-                    record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-                    setRecord={
-                      !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-                    }
-                    width="100%"
-                    required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
-                  />
-                </Col>
-              </Row>
-              <Row>
-                <Col md={12}>
-                  <MyInput
-                    fieldType="number"
-                    fieldName="defaultBufferBeforeMinutes"
-                    record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-                    setRecord={
-                      !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-                    }
-                    width="100%"
-                    required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
-                  />
-                </Col>
-                <Col md={12}>
-                  <MyInput
-                    fieldType="number"
-                    fieldName="defaultBufferAfterMinutes"
-                    record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
-                    setRecord={
-                      !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
-                    }
-                    width="100%"
-                    required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
-                  />
-                </Col>
-              </Row>
-
+            <Row>
+              <Col md={12}>
+                <MyInput
+                  fieldType="number"
+                  fieldName="parallelCapacityValue"
+                  record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                  setRecord={
+                    !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                  }
+                  width="100%"
+                  required
+                />
+              </Col>
+              {(
+                !diagnosticsTestCatalogHeader?.id
+                  ? catalogCreateVM?.appointable
+                  : catalogUpdateVM?.appointable
+              ) && (
+                  <Col md={12}>
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultDurationMinutes"
+                      record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                      setRecord={
+                        !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                      }
+                      width="100%"
+                      required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
+                    />
+                  </Col>
+                )}
+            </Row>
+            {(
+              !diagnosticsTestCatalogHeader?.id
+                ? catalogCreateVM?.appointable
+                : catalogUpdateVM?.appointable
+            ) && (
+                <Row>
+                  <Col md={12}>
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultBufferBeforeMinutes"
+                      record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                      setRecord={
+                        !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                      }
+                      width="100%"
+                      required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
+                    />
+                  </Col>
+                  <Col md={12}>
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultBufferAfterMinutes"
+                      record={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM : catalogUpdateVM}
+                      setRecord={
+                        !diagnosticsTestCatalogHeader?.id ? setCatalogCreateVM : setCatalogUpdateVM
+                      }
+                      width="100%"
+                      required={!diagnosticsTestCatalogHeader?.id ? catalogCreateVM?.appointable : catalogUpdateVM?.appointable}
+                    />
+                  </Col>
+                </Row>
+              )}
           </Form>
         );
     }
   };
 
-              // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal

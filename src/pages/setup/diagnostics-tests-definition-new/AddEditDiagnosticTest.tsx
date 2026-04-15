@@ -330,6 +330,18 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
       }));
     }
   }, [open, facility]);
+
+  useEffect(() => {
+
+  if (!diagnosticsTest?.appointable) {
+    
+      setDiagnosticsTest(prev => ({
+        ...prev,
+        defaultDurationMinutes: undefined, defaultBufferAfterMinutes: 0, defaultBufferBeforeMinutes: 0
+      }));
+    
+  }
+}, [diagnosticsTest?.appointable]);
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -602,17 +614,20 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                   required
                 />
               </div>
-              <div className="container-of-field-diagnostic">
-                <MyInput
-                  fieldType="number"
-                  fieldName="defaultDurationMinutes"
-                  record={diagnosticsTest}
-                  setRecord={setDiagnosticsTest}
-                  width="100%"
-                  required={diagnosticsTest?.appointable}
-                />
-              </div>
+              {diagnosticsTest?.appointable && (
+                  <div className="container-of-field-diagnostic">
+                    <MyInput
+                      fieldType="number"
+                      fieldName="defaultDurationMinutes"
+                      record={diagnosticsTest}
+                      setRecord={setDiagnosticsTest}
+                      width="100%"
+                      required={diagnosticsTest?.appointable}
+                    />
+                  </div>
+                )}
             </div>
+             {diagnosticsTest?.appointable && (
             <div className="container-of-two-fields-diagnostic">
               <div className="container-of-field-diagnostic">
                 <MyInput
@@ -635,6 +650,7 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
                 />
               </div>
             </div>
+             )}
           </Form>
         );
       case 1:
@@ -642,11 +658,11 @@ const AddEditDiagnosticTest: React.FC<AddEditDiagnosticTestProps> = ({
     }
   };
 
-              // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (

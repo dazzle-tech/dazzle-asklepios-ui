@@ -17,6 +17,44 @@ type AppointmentStatus = string;
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
 const APPOINTMENT_BASE_URL = '/api/patient/appointments';
 
+type AppointmentLog = {
+  id: number;
+  appointmentId: number;
+  operationType: string;
+  logDate: string;
+  logBy?: string | null;
+  facilityId: number;
+  departmentId: number;
+  availabilityGenerationBatchId?: number | null;
+  resourceType: string;
+  resourceId: number;
+  capacityIndex?: number | null;
+  startDatetime: string;
+  endDatetime: string;
+  patientId?: number | null;
+  defaultServiceId?: number | null;
+  defaultPractitionerId?: number | null;
+  reason?: string | null;
+  bookingMode: string;
+  status: string;
+  service?: string | null;
+  serviceGroupId?: number | null;
+  deferred: boolean;
+  deferredAt?: string | null;
+  noShowReason?: string | null;
+  cancelReason?: string | null;
+  cancelledBy?: string | null;
+  priority: string;
+  originType?: string | null;
+  originName?: string | null;
+  note?: string | null;
+  followUpEncounterId?: number | null;
+  createdBy: string;
+  createdDate: string;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+};
+
 type LinkMap = {
   next?: string | null;
   prev?: string | null;
@@ -152,6 +190,17 @@ export const appointmentFromTemplateService = createApi({
       providesTags: ['AppointmentFromTemplate']
     }),
 
+    getAppointmentById: builder.query<AppointmentFromTemplate, { id: Id }>({
+      query: ({ id }) => ({
+        url: `${APPOINTMENT_BASE_URL}/${id}`,
+        method: 'GET'
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
+    }),
+
     searchAppointments: builder.query<
       PagedResult<AppointmentFromTemplate>,
       { filter: AppointmentFromTemplateSearchFilterDTO } & PagedParams
@@ -220,6 +269,17 @@ export const appointmentFromTemplateService = createApi({
         await onQueryStarted(arg, api);
       },
       invalidatesTags: ['AppointmentFromTemplate']
+    }),
+
+    getAppointmentLogs: builder.query<AppointmentLog[], { appointmentId: Id }>({
+      query: ({ appointmentId }) => ({
+        url: `${APPOINTMENT_BASE_URL}/${appointmentId}/logs`,
+        method: 'GET'
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      providesTags: ['AppointmentFromTemplate']
     })
   })
 });
@@ -233,10 +293,14 @@ export const {
   useLazyGetAppointmentsByBatchIdQuery,
   useGetAppointmentsByDepartmentBetweenDatesQuery,
   useLazyGetAppointmentsByDepartmentBetweenDatesQuery,
+  useGetAppointmentByIdQuery,
+  useLazyGetAppointmentByIdQuery,
   useSearchAppointmentsQuery,
   useLazySearchAppointmentsQuery,
   useCancelAppointmentMutation,
   useNoShowAppointmentMutation,
   useConfirmAppointmentMutation,
-  useCheckInAppointmentMutation
+  useCheckInAppointmentMutation,
+  useGetAppointmentLogsQuery,
+  useLazyGetAppointmentLogsQuery
 } = appointmentFromTemplateService;

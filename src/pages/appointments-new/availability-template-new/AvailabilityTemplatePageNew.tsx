@@ -25,6 +25,8 @@ import AddEditAvailabilityTemplate from './AddEditAvailabilityTemplate';
 import { MdPublish } from "react-icons/md";
 import AvailabilityTemplateDetailsSection from './AvailabilityTemplateDetailsSection';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { RiFolderHistoryLine } from "react-icons/ri";
+import AvailabilityTemplateLogModal from './AvailabilityTemplateLogModal';
 
 
 const AvailabilityTemplatePageNew = () => {
@@ -41,6 +43,7 @@ const AvailabilityTemplatePageNew = () => {
     size: 5
   });
   const [openModal, setOpenModal] = useState(false);
+  const [openAvailabilityTemplateLogModal, setOpenAvailabilityTemplateLogModal] = useState<boolean>(false);
   const [selectedTemplate, setSelectedTemplate] = useState<AvailabilityTemplateResponseVM>({ ...newAvailabilityTemplateResponseVM });
   const [openConfirmToggleTemplate, setOpenConfirmToggleTemplate] = useState(false);
   const [toggleActionType, setToggleActionType] = useState<'deactivate' | 'reactivate'>(
@@ -95,8 +98,8 @@ const AvailabilityTemplatePageNew = () => {
     const selectedExists = filtered.some(
       item => item.id === selectedTemplate?.id
     );
-    if(!selectedExists)
-    setSelectedTemplate({ ...newAvailabilityTemplateResponseVM })
+    if (!selectedExists)
+      setSelectedTemplate({ ...newAvailabilityTemplateResponseVM })
   };
 
   const currentList = useMemo(() => {
@@ -260,7 +263,16 @@ const AvailabilityTemplatePageNew = () => {
               />
             </>
           )}
-
+          <RiFolderHistoryLine
+            title="Log"
+            size={24}
+            fill="var(--primary-gray)"
+            className="icons-style"
+            onClick={() => {
+              setSelectedTemplate(rowData);
+              setOpenAvailabilityTemplateLogModal(true);
+            }}
+          />
         </div>
       )
     }
@@ -424,6 +436,11 @@ const AvailabilityTemplatePageNew = () => {
         itemToDelete="Availability Template"
         actionButtonFunction={handleToggleTemplateActive}
         actionType={toggleActionType}
+      />
+      <AvailabilityTemplateLogModal
+        open={openAvailabilityTemplateLogModal}
+        setOpen={setOpenAvailabilityTemplateLogModal}
+        template={selectedTemplate}
       />
 
     </Panel>
