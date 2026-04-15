@@ -32,9 +32,10 @@ type AddEditAvailabilityTemplateProps = {
   open: boolean;
   setOpen: any;
   template: AvailabilityTemplateResponseVM;
+  setTemplate: (t: AvailabilityTemplateResponseVM) => void;
 };
 
-const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template }) => {
+const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template, setTemplate}) => {
   const dispatch = useAppDispatch();
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
@@ -89,22 +90,17 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
   const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
     skip: !selectedFacility?.id,
   });
-  
+
   const { data: departmentServices = [] } = useGetDepartmentServicesQuery(
     { departmentId: record?.departmentId },
     { skip: !record?.departmentId }
   );
-  
-  
+
+
   const { data: templates } = useGetAvailabilityTemplatesByParentTemplateIdQuery(
     { parentTemplateId: record?.id },
     { skip: !record?.id }
   );
-  const { data: templateById } = useGetAvailabilityTemplateQuery(
-    { id: template?.id },
-    { skip: !template?.id }
-  );
-
   const [getDepartment, { data, isLoading }] = useLazyGetDepartmentByIdQuery();
 
 
@@ -296,11 +292,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     userChangedWorkingDaysRef.current = false;
 
     if (isEditMode) {
-      const source: any = templateById ?? template;
       setRecord({
-        ...source,
+        ...template,
         facilityId: selectedFacility?.id,
-        allowedServices: normalizeAllowedServices(source?.allowedServices),
+        allowedServices: normalizeAllowedServices(template?.allowedServices),
       });
     } else {
       setRecord({
@@ -315,13 +310,13 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
 
 
   useEffect(() => {
-    if (!open || !isEditMode || !templateById) return;
+    if (!open || !isEditMode || !template) return;
     setRecord(prev => ({
-      ...templateById,
+      ...template,
       facilityId: selectedFacility?.id,
-      allowedServices: normalizeAllowedServices(templateById?.allowedServices),
+      allowedServices: normalizeAllowedServices(template?.allowedServices),
     }));
-  }, [templateById]);
+  }, [template]);
 
   useEffect(() => {
     if (record?.id) {
@@ -460,6 +455,18 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     setRecord(prev => ({ ...prev, workingDays: nextWorkingDays }));
   };
 
+  // extract the error message from the bad request that coming from the backend
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
 
   const handleSaveMainInfo = async () => {
     if (!record?.templateName?.trim()) {
@@ -494,15 +501,18 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     try {
       if (template?.id) {
         const updated = await update({ id: template.id, ...payload }).unwrap();
-        setRecord(updated);
+        // setRecord(updated);
+        setTemplate(updated)
         dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       } else {
         const created = await create(payload).unwrap();
-        setRecord(created);
+        // setRecord(created);
+        setTemplate(created)
         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       }
     } catch (err) {
-      dispatch(notify({ msg: 'Failed to save', sev: 'warning' }));
+      const errorMsg = extractErrorMessage(err) || 'Save Failed';
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
   };
 

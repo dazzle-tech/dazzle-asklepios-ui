@@ -148,6 +148,19 @@ const AvailabilityTemplatePageNew = () => {
     }
   };
 
+  // extract the error message from the bad request that coming from the backend
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
   const handlePublishTemplate = async (rowData: AvailabilityTemplateResponseVM) => {
     if (!rowData?.id) return;
     try {
@@ -167,12 +180,8 @@ const AvailabilityTemplatePageNew = () => {
       );
       refetch();
     } catch (error) {
-      dispatch(
-        notify({
-          msg: 'Publish failed, please try again',
-          sev: 'warning'
-        })
-      );
+      const errorMsg = extractErrorMessage(error) || 'Save Failed';
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     } finally {
       dispatch(hideSystemLoader());
     }
@@ -429,6 +438,7 @@ const AvailabilityTemplatePageNew = () => {
         open={openModal}
         setOpen={setOpenModal}
         template={selectedTemplate}
+        setTemplate={setSelectedTemplate}
       />
       <DeletionConfirmationModal
         open={openConfirmToggleTemplate}

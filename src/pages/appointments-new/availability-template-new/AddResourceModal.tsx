@@ -34,6 +34,7 @@ import {
 import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 import { formatEnumString } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { useLazyGetActiveAppointableRoomsByDepartmentIdQuery, useLazyGetRoomByIdQuery } from '@/services/setup/room/roomService';
 
 
 
@@ -56,12 +57,8 @@ const AddResourceModal = ({
   const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
   const prevTemplateTypeRef = useRef<any>(record?.templateType);
 
-  // ─── Practitioners (appointable by facility) Pagination State ──────────────
-  const practitionerFacilitySize = 20;
-  const [allPractitionersFacility, setAllPractitionersFacility] = useState<any[]>([]);
-  const [practitionerFacilityHasMore, setPractitionerFacilityHasMore] = useState(false);
-  const [practitionerFacilityNextLink, setPractitionerFacilityNextLink] = useState<string | null>(null);
-
+ 
+  
   const [triggerPractitionersFacility, { isFetching: isPractitionerFacilityLoading }] =
     useLazyGetAppointablePractitionerByLoggedInFacilityQuery();
 
@@ -82,6 +79,15 @@ const AddResourceModal = ({
 
   const [triggerCatalogs, { isFetching: isCatalogLoading }] =
     useLazyGetAppointableCatalogsByLoggedInFacilityQuery();
+
+  const roomSize = 20;
+  const [roomPage, setRoomPage] = useState(0);
+  const [allRooms, setAllRooms] = useState<any[]>([]);
+  const [roomHasMore, setRoomHasMore] = useState(false);
+  const [roomNextLink, setRoomNextLink] = useState<string | null>(null);
+
+  const [triggerRooms, { isFetching: isRoomLoading }] =
+    useLazyGetActiveAppointableRoomsByDepartmentIdQuery();
 
   // ─── Services (appointable by facility) Pagination State ──────────────────
   const servicesFacilitySize = 20;
@@ -110,12 +116,7 @@ const AddResourceModal = ({
   const [triggerPractitionersDept, { isFetching: isPractitionerDeptLoading }] =
     useLazyGetPractitionerByDepartmentQuery();
 
-  // ─── Options ───────────────────────────────────────────────────────────────
-  const practitionerFacilityOptions = allPractitionersFacility.map(p => ({
-    label: `${p.firstName} ${p.lastName}`,
-    value: p.id
-  }));
-
+  
   const diagnosticTestOptions = allDiagnosticTests.map(d => ({
     label: d.name,
     value: d.id
@@ -141,34 +142,11 @@ const AddResourceModal = ({
     value: p.id
   }));
 
-  // ─── Load Functions ────────────────────────────────────────────────────────
-  const loadPractitionersFacility = async ({ page = 0, append = false }) => {
-    try {
-      const res = await triggerPractitionersFacility({
-        page,
-        size: practitionerFacilitySize,
-        sort: 'id,asc'
-      }).unwrap();
+  const roomOptions = allRooms.map(r => ({
+    label: r.name,
+    value: r.id
+  }));
 
-      const rows = res?.data ?? [];
-      const nextLink = res?.links?.next ?? null;
-
-      setPractitionerFacilityHasMore(Boolean(nextLink));
-      setPractitionerFacilityNextLink(nextLink);
-
-      if (append) {
-        setAllPractitionersFacility(prev => {
-          const seen = new Set(prev.map(p => p.id));
-          return [...prev, ...rows.filter(p => !seen.has(p.id))];
-        });
-      } else {
-        setAllPractitionersFacility(rows);
-      }
-    } catch (e) {
-      console.error(e);
-      setAllPractitionersFacility([]);
-    }
-  };
 
   const loadDiagnosticTests = async ({ page = 0, append = false }) => {
     try {
@@ -223,6 +201,38 @@ const AddResourceModal = ({
     } catch (e) {
       console.error(e);
       setAllCatalogs([]);
+    }
+  };
+
+  const loadRooms = async ({ page = 0, append = false }) => {
+    if (!record?.departmentId) return;
+
+    try {
+      const res = await triggerRooms({
+        departmentId: record.departmentId,
+        page,
+        size: roomSize,
+        sort: 'id,asc'
+      }).unwrap();
+
+      const rows = res?.data ?? [];
+      const nextLink = res?.links?.next ?? null;
+
+      setRoomHasMore(Boolean(nextLink));
+      setRoomNextLink(nextLink);
+
+      if (append) {
+        setAllRooms(prev => {
+          const seen = new Set(prev.map(r => r.id));
+          return [...prev, ...rows.filter(r => !seen.has(r.id))];
+        });
+      } else {
+        setAllRooms(rows);
+      }
+
+    } catch (e) {
+      console.error(e);
+      setAllRooms([]);
     }
   };
 
@@ -314,10 +324,8 @@ const AddResourceModal = ({
     }
   };
 
-  // ─── Effects للتحميل التلقائي ───────────────────────────────────────────────
   useEffect(() => {
     if (!open) return;
-    loadPractitionersFacility({ page: 0 });
     loadDiagnosticTests({ page: 0 });
     loadCatalogs({ page: 0 });
     loadServicesFacility({ page: 0 });
@@ -327,13 +335,16 @@ const AddResourceModal = ({
     if (!record?.departmentId) return;
     setAllServicesDept([]);
     loadServicesDept({ page: 0 });
-  }, [record?.departmentId]);
 
-  useEffect(() => {
-    if (!record?.departmentId) return;
     setAllPractitionersDept([]);
     loadPractitionersDept({ page: 0 });
+
+    setAllRooms([]);
+    setRoomPage(0);
+    loadRooms({ page: 0 });
   }, [record?.departmentId]);
+
+
 
   useEffect(() => {
     if (!open) return;
@@ -396,6 +407,7 @@ const AddResourceModal = ({
   const [getDiagnosticTest] = useLazyGetDiagnosticTestByIdQuery();
   const [getCatalog] = useLazyGetCatalogByIdQuery();
   const [getService] = useLazyGetServiceByIdQuery();
+  const [getRoom] = useLazyGetRoomByIdQuery();
 
   useEffect(() => {
     if (record?.id) {
@@ -404,7 +416,8 @@ const AddResourceModal = ({
     if (!record?.resourceId) {
       setRecord(prev => ({
         ...prev,
-        durationMinutes: 0
+        durationMinutes: 0,
+        defaultPractitionerId: undefined
       }));
       return;
     }
@@ -415,7 +428,8 @@ const AddResourceModal = ({
         .then(res => {
           setRecord(prev => ({
             ...prev,
-            durationMinutes: res.defaultDurationMinutes
+            durationMinutes: res.defaultDurationMinutes,
+            defaultPractitionerId: res?.id
           }));
         });
     } else if (record?.templateType === 'DIAGNOSTIC_TEST') {
@@ -438,6 +452,16 @@ const AddResourceModal = ({
         });
     } else if (record?.templateType === 'SERVICE') {
       getService(record.resourceId)
+        .unwrap()
+        .then(res => {
+          setRecord(prev => ({
+            ...prev,
+            durationMinutes: res.defaultDurationMinutes
+          }));
+        });
+    }
+    else if (record?.templateType === 'ROOM') {
+      getRoom({ id: record.resourceId })
         .unwrap()
         .then(res => {
           setRecord(prev => ({
@@ -649,13 +673,11 @@ const AddResourceModal = ({
       return;
     }
     prevTemplateTypeRef.current = record?.templateType;
-    if (!record?.templateType)
-      setRecord(prev => ({ ...prev, resourceId: undefined }));
+      setRecord(prev => ({ ...prev, resourceId: undefined, requirePractitioner: record?.templateType === 'PRACTITIONER' ? true : false}));
   }, [record?.templateType]);
-
   useEffect(() => {
-    console.log("resource record: ", record);
-  }, [record]);
+     console.log("record resource: ", record)
+  },[record]);
 
   const conjureFormContent = () => (
     <Form fluid>
@@ -711,26 +733,26 @@ const AddResourceModal = ({
                     </Col>
                     {record.templateType === 'PRACTITIONER' ? (
                       <Col md={12}>
-                        <MyInput
+                         <MyInput
                           width="100%"
-                          fieldName="resourceId"
-                          fieldLabel="Practitioner"
                           fieldType="selectPagination"
-                          selectData={practitionerFacilityOptions}
+                         fieldName="resourceId"
+                          fieldLabel="Practitioner"
+                          selectData={practitionerDeptOptions}
                           selectDataLabel="label"
                           selectDataValue="value"
                           record={record}
                           setRecord={setRecord}
-                          loading={isPractitionerFacilityLoading}
-                          hasMore={practitionerFacilityHasMore}
+                          loading={isPractitionerDeptLoading}
+                          hasMore={practitionerDeptHasMore}
                           onFetchMore={async () => {
-                            if (!practitionerFacilityNextLink) return;
-                            const { page } = extractPaginationFromLink(practitionerFacilityNextLink);
-                            await loadPractitionersFacility({ page, append: true });
+                            if (!practitionerDeptNextLink) return;
+                            const { page } = extractPaginationFromLink(practitionerDeptNextLink);
+                            await loadPractitionersDept({ page, append: true });
                           }}
-                          menuMaxHeight={200}
-                          required
+                           menuMaxHeight={200}
                           disabled={props?.readOnly}
+                          required
                         />
                       </Col>
                     ) : record.templateType === 'SERVICE' ? (
@@ -805,9 +827,35 @@ const AddResourceModal = ({
                           disabled={props?.readOnly}
                         />
                       </Col>
-                    ) : (
-                      <></>
-                    )}
+                    )
+                      : record.templateType === 'ROOM' ? (
+                        <Col md={12}>
+                          <MyInput
+                            key={`room-${record?.departmentId}`}
+                            width="100%"
+                            fieldType="selectPagination"
+                            fieldLabel="Room"
+                            fieldName="resourceId"
+                            selectData={roomOptions}
+                            selectDataLabel="label"
+                            selectDataValue="value"
+                            record={record}
+                            setRecord={setRecord}
+                            loading={isRoomLoading}
+                            hasMore={roomHasMore}
+                            onFetchMore={async () => {
+                              if (!roomNextLink) return;
+
+                              const { page } = extractPaginationFromLink(roomNextLink);
+                              setRoomPage(page);
+
+                              await loadRooms({ page, append: true });
+                            }}
+                          />
+                        </Col>
+                      ) : (
+                        <></>
+                      )}
                   </Row>
 
                   <Row>
@@ -914,7 +962,7 @@ const AddResourceModal = ({
                         record={record}
                         setRecord={setRecord}
                         showLabel={false}
-                        disabled={props?.readOnly}
+                        disabled={props?.readOnly || record?.templateType === 'PRACTITIONER'}
                       />
                     </Col>
                     {record['requirePractitioner'] && (
@@ -937,7 +985,7 @@ const AddResourceModal = ({
                             const { page } = extractPaginationFromLink(practitionerDeptNextLink);
                             await loadPractitionersDept({ page, append: true });
                           }}
-                          disabled={props?.readOnly}
+                          disabled={props?.readOnly || record?.templateType === 'PRACTITIONER'}
                           required
                         />
                       </Col>
@@ -1049,6 +1097,20 @@ const AddResourceModal = ({
 
   const [create] = useCreateAvailabilityTemplateMutation();
   const [update] = useUpdateAvailabilityTemplateMutation();
+
+  // extract the error message from the bad request that coming from the backend
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
   const handleSaveMainInfo = () => {
     if (!record?.templateName?.trim()) {
       dispatch(notify({ msg: 'Template Name is required', sev: 'warning' }));
@@ -1098,8 +1160,8 @@ const AddResourceModal = ({
         setOpen(false);
       })
       .catch((e) => {
-        dispatch(notify({ msg: 'Error', sev: 'warning' }));
-        console.log("error: ", e);
+        const errorMsg = extractErrorMessage(e) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       });
   };
 
