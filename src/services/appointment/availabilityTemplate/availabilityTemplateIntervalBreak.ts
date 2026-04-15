@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { BaseQuery, onQueryStarted } from "../../../newApi";
-import type { AvailabilityTemplateIntervalBreakResponseVM } from "@/types/model-types-new";
+import type { AvailabilityTemplateIntervalBreakCreateDTO, AvailabilityTemplateIntervalBreakResponseVM } from "@/types/model-types-new";
 
 type Id = number | string;
 
@@ -22,10 +22,40 @@ export const availabilityTemplateIntervalBreakService = createApi({
       },
       providesTags: ["AvailabilityTemplateIntervalBreak"],
     }),
+
+    createAvailabilityTemplateIntervalBreak: builder.mutation<
+      AvailabilityTemplateIntervalBreakResponseVM,
+      AvailabilityTemplateIntervalBreakCreateDTO
+    >({
+      query: (body) => ({
+        url: `/api/patient/availability-template-interval-breaks`,
+        method: "POST",
+        body,
+      }),
+      async onQueryStarted(arg, api) {
+        await onQueryStarted(arg, api);
+      },
+      invalidatesTags: ["AvailabilityTemplateIntervalBreak"],
+    }),
+
+    deleteAvailabilityTemplateIntervalBreak: builder.mutation<
+      void,
+      { id: Id }
+    >({
+      query: ({ id }) => ({
+        url: `/api/patient/availability-template-interval-breaks/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["AvailabilityTemplateIntervalBreak"],
+    }),
+
   }),
+
 });
 
 export const {
   useGetAvailabilityTemplateIntervalBreaksByIntervalQuery,
   useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery,
+  useCreateAvailabilityTemplateIntervalBreakMutation,
+  useDeleteAvailabilityTemplateIntervalBreakMutation
 } = availabilityTemplateIntervalBreakService;
