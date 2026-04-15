@@ -552,14 +552,14 @@ const Result = forwardRef<any, Props>(
             case 'CRITICAL_UPPER':
               return (
                 <HStack spacing={10}>
-                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
+                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} color='red'/>
                   <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />
                 </HStack>
               );
             case 'CRITICAL_LOWER':
               return (
                 <HStack spacing={10}>
-                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
+                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} color='red'/>
                   <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />
                 </HStack>
               );
