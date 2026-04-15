@@ -165,127 +165,142 @@ const FullViewTable = ({
   sortColumn,
   sortType,
   handlePageChange,
-  handleSortChange
+  handleSortChange,
+  activeIngredientsMap
+
 }) => {
 
- const tableColumns = [
-      {
-        key: 'medicationsId',
-        dataKey: 'medicationsId',
-        title: <Translate>Medication Name</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => {
-          const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-          return genericMedicationListResponse?.data?.find(
-            (item: any) => String(item.id) === String(medId)
-          )?.name;
+  const tableColumns = [
+    {
+      key: 'medicationsId',
+      dataKey: 'medicationsId',
+      title: <Translate>Medication Name</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
+        return genericMedicationListResponse?.data?.find(
+          (item: any) => String(item.id) === String(medId)
+        )?.name;
+      }
+    },
+    {
+  key: 'activeIngredient',
+  title: <Translate>Active Ingredient</Translate>,
+  flexGrow: 2,
+  render: (rowData: any) => {
+    const brandId = String(rowData.medicationsId ?? rowData.genericMedicationsId);
+    const ingredients = activeIngredientsMap?.[brandId] ?? [];
+
+    if (!ingredients.length) return '-';
+
+    return ingredients.join(', ');
+  }
+},
+    {
+      key: 'instructions',
+      dataKey: '',
+      title: 'Instructions',
+      flexGrow: 3,
+      render: (rowData: any) => {
+        const type = rowData?.instructionsType;
+
+        if (rowData?.instructionsType === 'PRE_DEFINED_INSTRUCTIONS') {
+          const inst = (predefinedInstructionsListResponse?.data ?? []).find(
+            (x: any) => Number(x.id) === Number(rowData?.instructions)
+          );
+          if (!inst) return 'No predefined instructions';
+          return [inst?.dose, formatEnumString(inst?.unit), formatEnumString(inst?.rout), formatEnumString(inst?.frequency)]
+            .map(v => (v == null ? '' : String(v).trim()))
+            .filter(Boolean)
+            .join(', ');
         }
-      },
-      {
-        key: 'instructions',
-        dataKey: '',
-        title: 'Instructions',
-        flexGrow: 3,
-        render: (rowData: any) => {
-          const type = rowData?.instructionsType;
-  
-          if (rowData?.instructionsType === 'PRE_DEFINED_INSTRUCTIONS') {
-            const inst = (predefinedInstructionsListResponse?.data ?? []).find(
-              (x: any) => Number(x.id) === Number(rowData?.instructions)
-            );
-            if (!inst) return 'No predefined instructions';
-            return [inst?.dose, formatEnumString(inst?.unit), formatEnumString(inst?.rout), formatEnumString(inst?.frequency)]
-              .map(v => (v == null ? '' : String(v).trim()))
-              .filter(Boolean)
-              .join(', ');
-          }
-  
-          if (type === 'MANUAL_INSTRUCTIONS') {
-            return rowData?.instructions || 'No instructions';
-          }
-  
-          if (type === 'CUSTOM_INSTRUCTIONS') {
-            // Try reading from medication object first (new API)
-            if (rowData?.dose != null || rowData?.doesUnit || rowData?.frequency || rowData?.rout) {
-              // Get LOV arrays - handle both object and direct array formats
-              const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
-              const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
-  
-              const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) ||
-                formatEnumString(rowData?.doesUnit) ||
-                (rowData?.doesUnit ? String(rowData.doesUnit) : '');
-              const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) ||
-                formatEnumString(rowData?.frequency) ||
-                (rowData?.frequency ? String(rowData.frequency) : '');
-              return [
-                toStr(rowData?.dose),
-                unitDisplay,
-                formatEnumString(rowData?.rout),
-                freqDisplay
-              ]
-                .map(s => s.trim())
-                .filter(Boolean)
-                .join(', ');
-            }
-  
-            // Fallback to legacy custom instructions lookup
-            const ci = customeInstructions.find(
-              (x: any) => String(x.prescriptionMedicationsKey) === String(rowData?.id ?? rowData?.key)
-            );
-  
+
+        if (type === 'MANUAL_INSTRUCTIONS') {
+          return rowData?.instructions || 'No instructions';
+        }
+
+        if (type === 'CUSTOM_INSTRUCTIONS') {
+          // Try reading from medication object first (new API)
+          if (rowData?.dose != null || rowData?.doesUnit || rowData?.frequency || rowData?.rout) {
+            // Get LOV arrays - handle both object and direct array formats
+            const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
+            const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
+
+            const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) ||
+              formatEnumString(rowData?.doesUnit) ||
+              (rowData?.doesUnit ? String(rowData.doesUnit) : '');
+            const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) ||
+              formatEnumString(rowData?.frequency) ||
+              (rowData?.frequency ? String(rowData.frequency) : '');
             return [
-              toStr(ci?.dose),
-              toStr(ci?.unitLvalue?.lovDisplayVale),
-              formatEnumString(ci?.roaLkey),
-              toStr(ci?.frequencyLvalue?.lovDisplayVale)
+              toStr(rowData?.dose),
+              unitDisplay,
+              formatEnumString(rowData?.rout),
+              freqDisplay
             ]
               .map(s => s.trim())
               .filter(Boolean)
               .join(', ');
           }
-  
-          return '-';
+
+          // Fallback to legacy custom instructions lookup
+          const ci = customeInstructions.find(
+            (x: any) => String(x.prescriptionMedicationsKey) === String(rowData?.id ?? rowData?.key)
+          );
+
+          return [
+            toStr(ci?.dose),
+            toStr(ci?.unitLvalue?.lovDisplayVale),
+            formatEnumString(ci?.roaLkey),
+            toStr(ci?.frequencyLvalue?.lovDisplayVale)
+          ]
+            .map(s => s.trim())
+            .filter(Boolean)
+            .join(', ');
         }
-      },
-      {
-        key: 'instructionsType',
-        title: <Translate>Instructions Type</Translate>,
-        flexGrow: 1,
-        render: (rowData: any) => (
-          <span>{formatEnumString(rowData.instructionsType)}</span>
-        ),
-      },
-      
-    ];
- 
+
+        return '-';
+      }
+    },
+    {
+      key: 'instructionsType',
+      title: <Translate>Instructions Type</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => (
+        <span>{formatEnumString(rowData.instructionsType)}</span>
+      ),
+    },
+
+  ];
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={<Translate>Patient Chronic Medication</Translate>}
       content={
-      <MyTable
-                columns={tableColumns}
-                totalCount={totalCount}
-                loading={isLoading}
-                data={data ?? []}
-                page={paginationParams.page}
-                rowsPerPage={paginationParams.size}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={e => {
-                  const newSize = Number(e.target.value);
-                  setPaginationParams({
-                    ...paginationParams,
-                    size: newSize,
-                    page: 0,
-                    timestamp: Date.now()
-                  });
-                }}
-                sortColumn={sortColumn}
-                sortType={sortType}
-                onSortChange={handleSortChange}
-              />
-    }
+        <MyTable
+          columns={tableColumns}
+          totalCount={totalCount}
+          loading={isLoading}
+          data={data ?? []}
+          page={paginationParams.page}
+          rowsPerPage={paginationParams.size}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={e => {
+            const newSize = Number(e.target.value);
+            setPaginationParams({
+              ...paginationParams,
+              size: newSize,
+              page: 0,
+              timestamp: Date.now()
+            });
+          }}
+          sortColumn={sortColumn}
+          sortType={sortType}
+          onSortChange={handleSortChange}
+        />
+      }
       hideCancel={false}
       bodyheight="70vh"
       size="70vw"
