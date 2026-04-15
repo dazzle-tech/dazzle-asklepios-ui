@@ -441,7 +441,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 <Col md={6}>
                   <MyInput
                     width="100%"
-                    fieldName="highAlert"
+                    fieldName="isHighAlert"
                     fieldType="checkbox"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -496,11 +496,11 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 <Col md={6}>
                   <MyInput
                     width="100%"
-                    fieldName="isLASA"
+                    fieldName="isLookAlikeSoundAlike"
                     fieldType="checkbox"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
-                    fieldLabel="Is LASA"
+                    fieldLabel="Is Look-Alike/Sound-Alike"
                   />
                 </Col>
                 <Col md={6}>

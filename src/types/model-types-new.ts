@@ -797,8 +797,8 @@ export interface ActiveIngredient {
   otc?: boolean | null;
   hasSynonyms?: boolean | null;
   antimicrobial?: boolean | null;
-  highAlert?: boolean ;
-  isLASA?: boolean ;
+  isLookAlikeSoundAlike?: boolean ;
+  isHighAlert?: boolean | null;
   abortiveMedication?: boolean | null;
   laborInducingMed?: boolean | null;
   isControlled?: boolean | null;
