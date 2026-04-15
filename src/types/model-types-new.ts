@@ -4372,7 +4372,7 @@ export interface BedTransaction {
 export interface PatientEncounterDischarge {
   encounterId: number | null;
   dischargeType: string | null;
-  dischargeAt: string | null;
+  dischargeAt: Date | string | null;
 }
 export interface CurrentMedication {
   patientId: number;

@@ -56,9 +56,13 @@ import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { Patient } from '@/types/model-types-new';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 
+dayjs.extend(duration);
 import './styles.less';
 import 'react-tabs/style/react-tabs.css';
+import { Expand } from '@mui/icons-material';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -480,7 +484,21 @@ const ERList = () => {
       skip: !isEmergencyDepartment || encounterIdsForLocations.length === 0
     }
   );
+const calculateEncounterDuration = (createdAt: string, dischargeAt: string) => {
+  if (!createdAt || !dischargeAt) return '-';
 
+  const start = dayjs(createdAt);
+  const end = dayjs(dischargeAt);
+
+  const diffMs = end.diff(start);
+
+  const dur = dayjs.duration(diffMs);
+
+  const hours = Math.floor(dur.asHours());
+  const minutes = dur.minutes();
+
+  return `${hours}h ${minutes}m`;
+};
   const roomIdsFromAssignments = useMemo(() => {
     return Array.from(
       new Set(
@@ -883,6 +901,11 @@ const ERList = () => {
       render: (row: any) => row?.encounterDate ?? row?.plannedStartDate ?? '-'
     },
     {
+      key: 'dischargeat',
+      title: 'DATE',
+      render: (row: any) => row?.dischargeAt
+    },
+    {
       key: 'status',
       title: 'STATUS',
       render: (row: any) => {
@@ -906,6 +929,12 @@ const ERList = () => {
         );
       }
     },
+    {
+  key: 'duration',
+  title: 'DURATION',
+  expandable:true,
+render: (row: any) =>
+  calculateEncounterDuration(row?.createdAt, row?.dischargeAt)},
     {
       key: 'actions',
       title: ' ',
