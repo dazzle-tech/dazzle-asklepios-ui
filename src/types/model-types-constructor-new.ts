@@ -460,7 +460,7 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   otc: false,
   hasSynonyms: false,
   antimicrobial: false,
-  isHighAlert: false,
+  highAlert: false,
   isLookAlikeSoundAlike: false,
   abortiveMedication: false,
   laborInducingMed: false,

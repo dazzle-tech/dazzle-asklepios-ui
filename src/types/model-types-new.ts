@@ -798,7 +798,7 @@ export interface ActiveIngredient {
   hasSynonyms?: boolean | null;
   antimicrobial?: boolean | null;
   isLookAlikeSoundAlike?: boolean ;
-  isHighAlert?: boolean | null;
+  highAlert?: boolean | null;
   abortiveMedication?: boolean | null;
   laborInducingMed?: boolean | null;
   isControlled?: boolean | null;

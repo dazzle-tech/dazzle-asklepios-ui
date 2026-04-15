@@ -441,7 +441,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 <Col md={6}>
                   <MyInput
                     width="100%"
-                    fieldName="isHighAlert"
+                    fieldName="highAlert"
                     fieldType="checkbox"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}

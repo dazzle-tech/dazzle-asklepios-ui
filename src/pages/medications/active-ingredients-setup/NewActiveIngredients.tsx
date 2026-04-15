@@ -314,7 +314,7 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack }) => {
                 <Col md={4}>
                   <MyInput
                     width={400}
-                    fieldName="isHighAlert"
+                    fieldName="highAlert"
                     fieldType="checkbox"
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
