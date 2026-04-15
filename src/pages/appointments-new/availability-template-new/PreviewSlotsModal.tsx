@@ -1,15 +1,18 @@
-
 import React, { useEffect, useMemo, useState } from 'react';
-import { Divider } from 'rsuite';
 import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import './PreviewCalendar.less';
 import AvailabilityTemplateSummaryCard from './AvailabilityTemplateSummaryCard';
 import SlotCard from './SlotCard';
-import { IoWarning } from "react-icons/io5";
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from '@/services/appointment/availabilityTemplate/availabilityTemplateInterval';
-import type { AvailabilityTemplateIntervalResponseVM, AvailabilityTemplateResponseVM } from '@/types/model-types-new';
+import {
+    useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery
+} from '@/services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak';
+import type {
+    AvailabilityTemplateIntervalResponseVM,
+    AvailabilityTemplateResponseVM
+} from '@/types/model-types-new';
 import MyTab from '@/components/MyTab';
 
 type Props = {
@@ -17,7 +20,6 @@ type Props = {
     onClose: () => void;
     templateName?: string;
     step?: number;
-    slotsBeforeAfter?: number;
     parentTemplate?: AvailabilityTemplateResponseVM | null;
     templates?: AvailabilityTemplateResponseVM[] | null;
 };
@@ -33,6 +35,29 @@ const minutesToTime = (totalMinutes: number) => {
     return `${h}:${m}`;
 };
 
+const parseHHmm = (v?: string | null) => {
+    if (!v) return null;
+    const [h, m] = String(v).split(":").map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    return h * 60 + m;
+};
+
+const findOverlappingBreakEnd = (breaks, slotStart, slotEnd) => {
+    const overlappingBreakEnds = breaks
+        .map((b) => {
+            const breakStart = parseHHmm(b?.startTime);
+            const breakEnd = parseHHmm(b?.endTime);
+
+            if (breakStart == null || breakEnd == null || breakEnd <= breakStart) return null;
+
+            const isOverlapping = slotStart < breakEnd && slotEnd > breakStart;
+            return isOverlapping ? breakEnd : null;
+        })
+        .filter(Boolean);
+
+    return overlappingBreakEnds.length ? Math.max(...overlappingBreakEnds) : null;
+};
+
 const PreviewSlotsModal: React.FC<Props> = ({
     open,
     onClose,
@@ -44,46 +69,18 @@ const PreviewSlotsModal: React.FC<Props> = ({
     const dayOptions = useEnumOptions("DayOfWeek");
     const [activeTab, setActiveTab] = useState<string>('1');
 
-    useEffect(() => {
-        if (!dayOptions || dayOptions.length === 0) return;
-        if (!activeTab) {
-            setActiveTab('1');
-        }
-    }, [dayOptions, activeTab]);
-
-
-    const generateDayTimes = (stepMinutes: number) => {
-        const times: { label: string; minutes: number }[] = [];
-        for (let m = 0; m < 24 * 60; m += stepMinutes) {
-            const h = Math.floor(m / 60).toString().padStart(2, '0');
-            const mm = (m % 60).toString().padStart(2, '0');
-            times.push({ label: `${h}:${mm}`, minutes: m });
-        }
-        return times;
-    };
-
     const safeStep = typeof step === 'number' && step > 0 ? step : 30;
-    
-    const times = 
-    // useMemo(() =>
-         generateDayTimes(120)
-    // , [safeStep]);
 
     const mergedTemplates = useMemo(() => {
         const list: AvailabilityTemplateResponseVM[] = [];
-        if (parentTemplate?.id) {
-            list.push(parentTemplate);
-        }
-        if (Array.isArray(templates)) {
-            list.push(...templates);
-        }
+        if (parentTemplate?.id) list.push(parentTemplate);
+        if (Array.isArray(templates)) list.push(...templates);
         return list;
     }, [parentTemplate, templates]);
 
     const displayTemplateName =
         templateName ??
         parentTemplate?.templateName ??
-        (parentTemplate as any)?.name ??
         '';
 
     const activeIndex = Math.max(0, (Number(activeTab || '1') || 1) - 1);
@@ -110,20 +107,9 @@ const PreviewSlotsModal: React.FC<Props> = ({
             }
             content={
                 <>
-                    <MyTab
-                        data={tabData}
-                        activeTab={activeTab}
-                        setActiveTab={setActiveTab}
-                    />
+                    <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} />
+
                     <div className="calendar-wrapper">
-                        <div className="time-column">
-                            <div className="time-header">Time</div>
-                            {times.map(t => (
-                                <div key={t.minutes} className="time-cell">
-                                    {t.label}
-                                </div>
-                            ))}
-                        </div>
                         <div className="channels-wrapper">
                             <div style={{ display: "flex", padding: "5px" }} >
                                 {mergedTemplates.map(t => (
@@ -155,64 +141,97 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({
     fallbackSlotMinutes
 }) => {
     const dayOfWeek = day == null ? '' : String(day);
-    const shouldFetch = Boolean(template?.id) && Boolean(dayOfWeek);
-    const { data: intervals = [], isFetching } = useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery(
-        { templateId: template?.id, dayOfWeek },
-        { skip: !shouldFetch }
-    );
+
+    const { data: intervals = [], isFetching } =
+        useGetAvailabilityTemplateIntervalsByTemplateAndDayQuery(
+            { templateId: template?.id, dayOfWeek },
+            { skip: !template?.id || !dayOfWeek }
+        );
+
+    const [loadBreaksByInterval] = useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery();
+    const [intervalBreaks, setIntervalBreaks] = useState({});
+
+    useEffect(() => {
+        const load = async () => {
+            const map = {};
+
+            for (const interval of intervals ?? []) {
+                const id = interval?.id;
+                if (!id) continue;
+
+                try {
+                    map[id] = await loadBreaksByInterval({ intervalId: id }).unwrap();
+                } catch {
+                    map[id] = [];
+                }
+            }
+
+            setIntervalBreaks(map);
+        };
+
+        if (intervals?.length) load();
+    }, [intervals]);
 
     const slotsCapacity =
         template?.parallelCapacityValue != null
             ? String(template.parallelCapacityValue)
             : '-';
+
     const templateColor = template?.templateColor ?? "#6982F0";
 
     return (
-        <div
-            style={{
-                width: "320px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-            }}
-        >
+        <div style={{ width: "320px", display: "flex", flexDirection: "column", gap: "8px" }}>
             <AvailabilityTemplateSummaryCard template={template} />
 
             {isFetching ? (
-                <div style={{ padding: "8px 4px" }}>Loading...</div>
+                <div>Loading...</div>
             ) : (
-                (intervals ?? []).map((interval: AvailabilityTemplateIntervalResponseVM) => {
-                    const slotsList: { displayTime: string }[] = [];
-                    const intervalStartMins = timeToMinutes(interval?.startTime ?? '00:00');
-                    const intervalEndMins = timeToMinutes(interval?.endTime ?? '00:00');
-                    const slotDurationMinutes =
+                intervals.map((interval: AvailabilityTemplateIntervalResponseVM) => {
+                    const slotsList: { displayTime: string; isBreak: boolean }[] = [];
+
+                    const startMins = timeToMinutes(interval?.startTime ?? '00:00');
+                    const endMins = timeToMinutes(interval?.endTime ?? '00:00');
+
+                    const slotDuration =
                         interval?.slotDurationMinutes ??
                         template?.durationMinutes ??
                         fallbackSlotMinutes;
-                    const totalSlotDuration = slotDurationMinutes;
 
-                    let currentPointer = intervalStartMins;
+                    let cursor = startMins;
 
-                    while (currentPointer + totalSlotDuration <= intervalEndMins) {
-                        const slotStart = currentPointer;
-                        const slotEnd = currentPointer + totalSlotDuration;
+                    while (cursor + slotDuration <= endMins) {
+                        const slotStart = cursor;
+                        const slotEnd = cursor + slotDuration;
+
+                        const breaks = intervalBreaks[interval.id] ?? [];
+
+                        const overlappingBreakEnd = findOverlappingBreakEnd(
+                            breaks,
+                            slotStart,
+                            slotEnd
+                        );
+
+                        if (overlappingBreakEnd != null) {
+                            cursor = overlappingBreakEnd;
+                            continue;
+                        }
 
                         slotsList.push({
                             displayTime: `${minutesToTime(slotStart)} - ${minutesToTime(slotEnd)}`,
+                            isBreak: false
                         });
 
-                        currentPointer = slotEnd;
+                        cursor = slotEnd;
                     }
 
                     return (
-                        <React.Fragment key={interval?.id ?? `${interval?.startTime}-${interval?.endTime}`}>
+                        <React.Fragment key={interval?.id}>
                             {slotsList.map((slot, idx) => (
                                 <SlotCard
                                     key={idx}
                                     time={slot.displayTime}
-                                    slots={slotsCapacity}
-                                    status="New"
-                                    backgroundColor={templateColor}
+                                    slots={slot.isBreak ? '-' : slotsCapacity}
+                                    backgroundColor={slot.isBreak ? '#F04438' : templateColor}
                                 />
                             ))}
                         </React.Fragment>

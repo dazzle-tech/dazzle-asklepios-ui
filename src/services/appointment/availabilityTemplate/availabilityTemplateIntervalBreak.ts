@@ -22,7 +22,7 @@ export const availabilityTemplateIntervalBreakService = createApi({
       },
       providesTags: ["AvailabilityTemplateIntervalBreak"],
     }),
-    
+
     createAvailabilityTemplateIntervalBreak: builder.mutation<
       AvailabilityTemplateIntervalBreakResponseVM,
       AvailabilityTemplateIntervalBreakCreateDTO
@@ -35,15 +35,27 @@ export const availabilityTemplateIntervalBreakService = createApi({
       async onQueryStarted(arg, api) {
         await onQueryStarted(arg, api);
       },
-      invalidatesTags: ["AvailabilityTemplateIntervalBreak"], 
+      invalidatesTags: ["AvailabilityTemplateIntervalBreak"],
     }),
-    
+
+    deleteAvailabilityTemplateIntervalBreak: builder.mutation<
+      void,
+      { id: Id }
+    >({
+      query: ({ id }) => ({
+        url: `/api/patient/availability-template-interval-breaks/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["AvailabilityTemplateIntervalBreak"],
+    }),
+
   }),
-  
+
 });
 
 export const {
   useGetAvailabilityTemplateIntervalBreaksByIntervalQuery,
   useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery,
-   useCreateAvailabilityTemplateIntervalBreakMutation,
+  useCreateAvailabilityTemplateIntervalBreakMutation,
+  useDeleteAvailabilityTemplateIntervalBreakMutation
 } = availabilityTemplateIntervalBreakService;

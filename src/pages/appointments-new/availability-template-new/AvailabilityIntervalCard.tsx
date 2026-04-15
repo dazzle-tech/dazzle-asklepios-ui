@@ -81,12 +81,11 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
                           onClick={() => setOpenConfirmDeleteModal(true)}
                         />
                         )}
-                        {!props?.readOnly &&(
                         <MdOutlineTimerOff 
                           className='icons-style'
                           onClick={() => setOpenAddBreakModal(true)}
                         />
-                        )}
+                        
                     </div>
             
           </div>
@@ -113,6 +112,7 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
            open={openِAddBreakModal}
            setOpen={setOpenAddBreakModal}
            interval={interval}
+           readOnly={props?.readOnly}
           />
         </div>
   );

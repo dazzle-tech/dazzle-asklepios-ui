@@ -1,42 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Form, Row, Col } from 'rsuite';
+import React, { useEffect, useState } from 'react';
+import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import './AddResourceModal.less';
 import MyModal from '@/components/MyModal/MyModal';
-import Translate from '@/components/Translate';
-import SectionContainer from '@/components/SectionsoContainer';
-import { useEnumOptions } from '@/services/enumsApi';
-import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
-import {
-    useLazyGetAppointableServicesByLoggedInFacilityQuery,
-    useLazyGetServicesByDepartmentQuery,
-    useLazyGetServiceByIdQuery,
-    useLazyGetServiceItemByIdQuery
-} from '@/services/setup/serviceService';
-import {
-    useLazyGetAppointablePractitionerByLoggedInFacilityQuery,
-    useLazyGetPractitionerByDepartmentQuery,
-    useLazyGetPractitionerByIdQuery
-} from '@/services/setup/practitioner/PractitionerService';
-import { newAvailabilityTemplateCreateDTO, newAvailabilityTemplateIntervalBreakCreateDTO } from '@/types/model-types-constructor-new';
-import { useCreateAvailabilityTemplateMutation, useUpdateAvailabilityTemplateMutation } from '@/services/appointment/availabilityTemplateService';
+import { MdDelete } from 'react-icons/md';
+import { newAvailabilityTemplateIntervalBreakCreateDTO } from '@/types/model-types-constructor-new';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
-import { useGetDepartmentServicesQuery } from '@/services/departmentServicesService';
-import {
-    useLazyGetAllActiveAppointableDiagnosticTestsQuery,
-    useLazyGetDiagnosticTestByIdQuery
-} from '@/services/setup/diagnosticTest/diagnosticTestService';
-import {
-    useLazyGetAppointableCatalogsByLoggedInFacilityQuery,
-    useLazyGetCatalogByIdQuery
-} from '@/services/setup/catalog/catalogService';
-import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
-import { formatEnumString } from '@/utils';
-import { extractPaginationFromLink } from '@/utils/paginationHelper';
-import { useLazyGetActiveAppointableRoomsByDepartmentIdQuery, useLazyGetRoomByIdQuery } from '@/services/setup/room/roomService';
 import { AvailabilityTemplateIntervalBreakCreateDTO, AvailabilityTemplateIntervalResponseVM } from '@/types/model-types-new';
-import { useCreateAvailabilityTemplateIntervalBreakMutation } from '@/services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak';
+import { useCreateAvailabilityTemplateIntervalBreakMutation, useDeleteAvailabilityTemplateIntervalBreakMutation, useGetAvailabilityTemplateIntervalBreaksByIntervalQuery } from '@/services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
 
 
@@ -52,11 +27,17 @@ const AddBreakModal = ({
     readOnly?: boolean;
 }) => {
     const dispatch = useAppDispatch();
-    const [record, setRecord] = useState<AvailabilityTemplateIntervalBreakCreateDTO>({ ...newAvailabilityTemplateIntervalBreakCreateDTO })
+    const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState<boolean>(false);
+    const [record, setRecord] = useState<AvailabilityTemplateIntervalBreakCreateDTO>({ ...newAvailabilityTemplateIntervalBreakCreateDTO });
+    const [idToDeleteBreak, setIdToDeleteBreak] = useState<number>(undefined);
+    const { data = [], isFetching } =
+        useGetAvailabilityTemplateIntervalBreaksByIntervalQuery(
+            { intervalId: interval?.id },
+            { skip: !interval?.id }
+        );
     const [createAvailabilityTemplateIntervalBreak] = useCreateAvailabilityTemplateIntervalBreakMutation();
-
+    const [deleteBreak] = useDeleteAvailabilityTemplateIntervalBreakMutation();
     const isValidTimeFormat = (time?: string) => {
-        // يقبل HH:mm أو HH:mm:ss
         return /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(time || '');
     };
 
@@ -119,6 +100,10 @@ const AddBreakModal = ({
             }
         }
 
+        if (record.startTime < interval.startTime || record.startTime > interval.endTime) {
+            errors.push('Break must be within interval');
+        }
+
         if (errors.length > 0) {
             dispatch(
                 notify({
@@ -133,15 +118,55 @@ const AddBreakModal = ({
             .unwrap()
             .then(() => {
                 dispatch(notify({ msg: 'Added Successfully', sev: 'success' }));
-                setOpen(false);
+                setRecord({ ...newAvailabilityTemplateIntervalBreakCreateDTO })
             })
             .catch((e) => {
                 const errorMsg = extractErrorMessage(e) || 'Save Failed';
                 dispatch(notify({ msg: errorMsg, sev: 'warning' }));
             });
-        setOpen(false);
     };
 
+    const handleDelete = async (id: number) => {
+        try {
+            await deleteBreak({ id }).unwrap();
+            dispatch(notify({ msg: 'Deleted Successfully', sev: 'success' }));
+            setIdToDeleteBreak(undefined);
+            setOpenConfirmDeleteModal(false);
+        } catch {
+            dispatch(notify({ msg: 'Delete Failed', sev: 'warning' }));
+        }
+    };
+
+    const columns = [
+        {
+            key: 'startTime',
+            title: 'Start Time',
+        },
+        {
+            key: 'endTime',
+            title: 'End Time',
+        },
+        {
+            key: 'actions',
+            title: '',
+            render: (rowData) => (
+                <div className="container-of-icons">
+                    {!props?.readOnly && (
+                        <MdDelete
+                            size={22}
+                            className="icons-style"
+                            fill="var(--primary-pink)"
+                            title="Delete"
+                            onClick={() => {
+                                setIdToDeleteBreak(rowData.id);
+                                setOpenConfirmDeleteModal(true);
+                            }}
+                        />
+                    )}
+                </div>
+            )
+        }
+    ];
 
     const conjureFormContent = () => (
         <Form fluid>
@@ -166,22 +191,42 @@ const AddBreakModal = ({
                 required
                 disabled={props?.readOnly}
             />
-
+            <MyButton onClick={handleSave}  disabled={props?.readOnly}>
+                Add Break
+            </MyButton>
+            <MyTable
+                columns={columns}
+                data={data}
+                loading={isFetching}
+                height={300}
+            />
+            <DeletionConfirmationModal
+                open={openConfirmDeleteModal}
+                setOpen={setOpenConfirmDeleteModal}
+                itemToDelete="Break"
+                actionButtonFunction={() => handleDelete(idToDeleteBreak)}
+                actionType="delete"
+                confirmationQuestion="Are you sure you want to delete this Break?"
+                actionButtonLabel="Delete"
+            />
         </Form>
     );
 
+    useEffect(() => {
+        if (!openConfirmDeleteModal)
+            setIdToDeleteBreak(undefined)
+    }, [openConfirmDeleteModal]);
     return (
         <MyModal
             open={open}
             setOpen={setOpen}
             title={"Add Break"}
-            size="md"
+            size="sm"
             content={conjureFormContent}
-            actionButtonFunction={handleSave}
-            actionButtonLabel={"Save"}
-            hideActionBtn={props?.readOnly}
+        hideActionBtn
         />
     );
 };
 
 export default AddBreakModal;
+
