@@ -138,7 +138,7 @@ import Rad from './pages/rad-module/RadiologyMain';
 import Recovery from './pages/recovery';
 import ResetPassword from './pages/reset-password/ResetPassword';
 import CreatePassword from './pages/create-password/CreatePassword';
-import ReviewResults from './pages/review-results/ReviewResults';
+import Favoraite from './pages/review-results';
 import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
 import ApplyTemplateList from './pages/ApplyTemplate/ApplyTemplateList';
 import AccessRoles from './pages/setup/access-roles';
@@ -180,13 +180,10 @@ import Vaccine from './pages/setup/vaccine-setup';
 import VisitDurationSetup from './pages/setup/visit-duration-setup';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
-import { useLoadNavigationMapQuery } from './services/uiService';
-import { setScreenKey } from './utils/uiReducerActions';
 import NewDepartments from './pages/setup/departments-setup/Departments-new';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
 import { MODULES } from '@/config/modules-config';
-import RoleManegment from './pages/setup/role-managemen';
-import { useGetMenuQuery } from './services/security/UserRoleService';
+
 import CallOverlay from './components/Overlay/CallOverlay';
 import LanguagesSetup from './pages/setup/language-setup/Language';
 import Pediatric from './pages/encounter/encounter-component/pediatric';
@@ -227,6 +224,7 @@ import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-c
 import UrgentCareList from './pages/encounter/urgent-care/UrgentCareList';
 import NurseAssessment from './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment';
 import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
+import FavoriteTests from './pages/review-results';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -750,7 +748,7 @@ const App = () => {
                 <Route path="sliding-scale" element={<SlidingScale />} />
               </Route>
               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
-              <Route path="review-results" element={<ReviewResults />} />
+              <Route path="review-results" element={<FavoriteTests />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />

@@ -3,10 +3,13 @@ import React, { useRef } from 'react';
 import Rad from './Rad';
 import RadiologistWorklist from './radiologist-worklist/RadiologistWorklist';
 import RequestedTest from './requested-tests/RequestedTest';
-
+import Reports from '@/pages/rad-module/Reports';
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
+import { useAppSelector } from '@/hooks';
 const RadiologyMain = () => {
   const radRef = useRef<any>(null);
-
+  const authSlice = useAppSelector(state => state.auth);
+const user = authSlice?.user;
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -35,6 +38,14 @@ const RadiologyMain = () => {
       content: (
         <div dir={dir}>
           <RequestedTest requestType="RADIOLOGY" />
+        </div>
+      )
+    },
+    {
+      title : 'Reviewed Reports',
+      content : (
+        <div dir={dir}>
+          <Reports setPatient={setPatient} setEncounter={setEncounter} user={user}/>
         </div>
       )
     }
