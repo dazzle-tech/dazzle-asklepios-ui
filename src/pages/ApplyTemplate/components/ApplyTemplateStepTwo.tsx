@@ -7,8 +7,16 @@ import {
   type GeneratedSlot,
   Pill,
 } from "./shared";
-import type { AvailabilityGenerationBatchApplyDTO, AvailabilityTemplateIntervalResponseVM, AvailabilityTemplateResponseVM } from "@/types/model-types-new";
+import type {
+  AvailabilityGenerationBatchApplyDTO,
+  AvailabilityTemplateIntervalBreakResponseVM,
+  AvailabilityTemplateIntervalResponseVM,
+  AvailabilityTemplateResponseVM,
+} from "@/types/model-types-new";
 import { useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from "@/services/appointment/availabilityTemplate/availabilityTemplateInterval";
+import {
+  useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery,
+} from "@/services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak";
 import { useGetActiveHolidaysInRangeQuery } from "@/services/system-configurations/organizationHolidaysService";
 import { useLazyGetAvailabilityTemplateQuery } from "@/services/appointment/availabilityTemplateService";
 import { useAppSelector } from "@/hooks";
@@ -29,6 +37,23 @@ const toHHmm = (mins: number) => {
   const m = mins % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 };
+const findOverlappingBreakEnd = (
+  breaks: AvailabilityTemplateIntervalBreakResponseVM[],
+  slotStart: number,
+  slotEnd: number
+) => {
+  const overlappingBreakEnds = breaks
+    .map((intervalBreak) => {
+      const breakStart = parseHHmm(intervalBreak?.startTime as any);
+      const breakEnd = parseHHmm(intervalBreak?.endTime as any);
+      if (breakStart == null || breakEnd == null || breakEnd <= breakStart) return null;
+      const isOverlapping = slotStart < breakEnd && slotEnd > breakStart;
+      return isOverlapping ? breakEnd : null;
+    })
+    .filter((v): v is number => v != null);
+  if (overlappingBreakEnds.length === 0) return null;
+  return Math.max(...overlappingBreakEnds);
+};
 
 const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateResponseVM | null; dto?: AvailabilityGenerationBatchApplyDTO }> = ({ selectedTemplate, dto }) => {
   const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
@@ -47,6 +72,7 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
     { skip: !fromDate || !toDateStr || !facilityIdFromAuth }
   );
   const [loadByDay] = useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery();
+  const [loadBreaksByInterval] = useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery();
   const [loadTemplateById] = useLazyGetAvailabilityTemplateQuery();
   const [generatedSlots, setGeneratedSlots] = React.useState<GeneratedSlot[]>(generatedSlotsMock);
   const totalSlotsToBeCreated = React.useMemo(
@@ -141,6 +167,21 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
           }
         })
       );
+      const intervalBreaksByIntervalId: Record<number, AvailabilityTemplateIntervalBreakResponseVM[]> = {};
+      await Promise.all(
+        Object.values(intervalsByDay)
+          .flat()
+          .map(async (interval) => {
+            const intervalId = Number(interval?.id ?? 0);
+            if (!intervalId || intervalBreaksByIntervalId[intervalId]) return;
+            try {
+              intervalBreaksByIntervalId[intervalId] =
+                (await loadBreaksByInterval({ intervalId }).unwrap()) ?? [];
+            } catch {
+              intervalBreaksByIntervalId[intervalId] = [];
+            }
+          })
+      );
       const holidaySet = new Set<string>();
       for (const h of holidays as any[]) {
         const hs = parseApplyTemplateDateTime(h?.startDate);
@@ -175,16 +216,37 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
           continue;
         }
         for (const it of intervalsByDay[dayKey] ?? []) {
+          const intervalId = Number(it?.id ?? 0);
+          const breaks = intervalId ? intervalBreaksByIntervalId[intervalId] ?? [] : [];
           const startMins = parseHHmm(it?.startTime as any);
           const endMins = parseHHmm(it?.endTime as any);
           const slotDuration = Number(it?.slotDurationMinutes ?? duration);
           if (startMins == null || endMins == null || !slotDuration || slotDuration <= 0 || endMins <= startMins) {
             continue;
           }
-          for (let cursor = startMins; cursor + slotDuration <= endMins; cursor += slotDuration) {
+          for (let cursor = startMins; cursor + slotDuration <= endMins;) {
+            const slotStart = cursor;
+            const slotEnd = cursor + slotDuration;
+            const overlappingBreakEnd = findOverlappingBreakEnd(breaks, slotStart, slotEnd);
+            if (overlappingBreakEnd != null) {
+              const skippedDuration = Math.max(0, overlappingBreakEnd - slotStart);
+              rows.push({
+                date: format(d, "EEE, MMM dd"),
+                time: `${toHHmm(slotStart)} - ${toHHmm(overlappingBreakEnd)}`,
+                channel: "Interval Break",
+                duration: `${skippedDuration} min`,
+                capacity: "—",
+                status: "Will be skipped",
+                tone: "skipped",
+                checked: false,
+                alert: true,
+              });
+              cursor = overlappingBreakEnd;
+              continue;
+            }
             rows.push({
               date: format(d, "EEE, MMM dd"),
-              time: `${toHHmm(cursor)} - ${toHHmm(cursor + slotDuration)}`,
+              time: `${toHHmm(slotStart)} - ${toHHmm(slotEnd)}`,
               channel: channelLabel,
               duration: `${slotDuration} min`,
               capacity: `${templateCapacity} slots`,
@@ -192,6 +254,7 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
               tone: "created",
               checked: true,
             });
+            cursor = slotEnd;
           }
         }
       }
@@ -201,7 +264,7 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
     return () => {
       mounted = false;
     };
-  }, [effectiveTemplateId, fromDate, toDateStr, selectedTemplate?.durationMinutes, (dto as any)?.scope, (dto as any)?.holidayHandlingMode, loadByDay, holidays]);
+  }, [effectiveTemplateId, fromDate, toDateStr, selectedTemplate?.durationMinutes, (dto as any)?.scope, (dto as any)?.holidayHandlingMode, loadByDay, loadBreaksByInterval, holidays]);
 
   return (
     <>
