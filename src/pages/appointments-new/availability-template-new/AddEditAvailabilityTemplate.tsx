@@ -325,7 +325,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     if (!record?.departmentId) {
       setRecord(prev => ({
         ...prev,
-        durationMinutes: 0
+        durationMinutes: 0,
+        parallelCapacityValue: 1
       }));
       return;
     }
@@ -335,7 +336,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       .then(res => {
         setRecord(prev => ({
           ...prev,
-          durationMinutes: res.defaultDurationMinutes
+          durationMinutes: res.defaultDurationMinutes,
+          parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
         }));
       });
 
@@ -495,6 +497,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       resourceId: record?.departmentId,
       numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
       durationMinutes: Number(record?.durationMinutes),
+      parallelCapacityValue: Number(record?.parallelCapacityValue ?? 1),
       allowedServices: Array.isArray(record?.allowedServices) ? record.allowedServices : [],
     };
 
@@ -666,6 +669,19 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                             rightAddon="min"
                           />
                         </Col>
+                        <Col md={12}>
+                          <MyInput
+                            fieldName="parallelCapacityValue"
+                            fieldLabel="Parallel Capacity Value"
+                            fieldType="number"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
+                            min={1}
+                          />
+                        </Col>
+                      </Row>
+                      <Row>
                         <Col md={12}>
                           <MyInput
                             fieldName="versionNo"
