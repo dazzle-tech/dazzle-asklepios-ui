@@ -25,6 +25,7 @@ import {
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
 import { formatEnumString } from '@/utils';
 import './styles.less';
+
 const UccMedicationOrder = (props: any) => {
   const location = useLocation();
   const patient = props.patient || location.state?.patient;
@@ -328,6 +329,7 @@ const UccMedicationOrder = (props: any) => {
       width: 120,
       render: (row: any) => (
         <div style={{ display: 'flex', gap: 10 }}>
+
 
           <FontAwesomeIcon
             icon={faPenToSquare}

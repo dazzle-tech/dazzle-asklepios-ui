@@ -7,6 +7,7 @@ export const MedicationCategoriesClassService = createApi({
   endpoints: builder => ({
 
    
+    
     addMedicationCategoryClass: builder.mutation({
       query: MedicationCategoryClass => ({
         url: '/api/setup/medication-categories-class',
