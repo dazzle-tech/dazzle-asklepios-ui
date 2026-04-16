@@ -37,6 +37,7 @@ import Substitues from '../drug-order/SubstitutesNew';
 import ActiveIngrediantList from './ActiveIngredient';
 import Instructions from './Instructions';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
+import { useCheckCurrentMedicationExistsQuery, useLazyCheckCurrentMedicationExistsQuery } from '@/services/patients/currentMedicationService';
 
 const DetailsModal = ({
   edit,
@@ -133,8 +134,18 @@ const DetailsModal = ({
   const { data: Brand } = useGetBrandMedicationByIdQuery(medIdForBrand, {
     skip: !medIdForBrand
   });
-
-  const {
+const {
+  data: exists,
+  isFetching
+} = useCheckCurrentMedicationExistsQuery(
+  {
+    patientId: patient?.id,
+    activeIngredientId: selectedActiveIngredient?.id
+  },
+  {
+    skip: !selectedActiveIngredient?.id || !patient?.id
+  }
+);  const {
     data: customeInstructions,
     refetch: refetchCo
   } = useGetCustomeInstructionsQuery({
@@ -164,7 +175,16 @@ const DetailsModal = ({
     useCreatePatientPrescriptionMedicationMutation();
   const [updatePrescriptionMedication, { isLoading: isUpdatingPrescriptionMedication }] =
     useUpdatePatientPrescriptionMedicationMutation();
-
+useEffect(() => {
+  if (exists === true) {
+    dispatch(
+      notify({
+        msg: 'This active ingredient already exists in patient current medications and is written in prescription',
+        sev: 'warning'
+      })
+    );
+  }
+}, [exists]);
   useEffect(() => {
     if (!open) {
       setSearchKeyword('');
@@ -670,15 +690,16 @@ const DetailsModal = ({
     setShowActiveIngredientDropdown(!!value);
   };
 
-  const handleActiveIngredientClick =async (activeIngredient: any) => {
-    setSelectedActiveIngredient(activeIngredient);
-    setActiveIngredientKeyword(activeIngredient?.name ?? '');
-    setShowActiveIngredientDropdown(false);
+const handleActiveIngredientClick = async (activeIngredient: any) => {
+  setSelectedActiveIngredient(activeIngredient);
+  setActiveIngredientKeyword(activeIngredient?.name ?? '');
+  setShowActiveIngredientDropdown(false);
 
-    setSelectedGeneric(null);
-    setSearchKeyword('');
-    setShowMedicationDropdown(false);
-      if (activeIngredient?.id) {
+  setSelectedGeneric(null);
+  setSearchKeyword('');
+  setShowMedicationDropdown(false);
+
+  if (activeIngredient?.id) {
     try {
       await getBrandsByActive([activeIngredient.id]).unwrap();
     } catch (e) {
@@ -686,15 +707,15 @@ const DetailsModal = ({
     }
   }
 
-    if (activeIngredient?.highAlert) {
-      dispatch(
-        notify({
-          msg: 'This active ingredient is high alert',
-          sev: 'warning'
-        })
-      );
-    }
-  };
+  if (activeIngredient?.highAlert) {
+    dispatch(
+      notify({
+        msg: 'This active ingredient is high alert',
+        sev: 'warning'
+      })
+    );
+  }
+};
 
   const handleSaveAndClose = () => {
     handleSaveMedication(true);
