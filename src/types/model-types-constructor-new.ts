@@ -2883,7 +2883,7 @@ export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder 
 
   isHighAlert: false,
 
-  status: 'NEW',
+  status: null,
 
   submittedDate: null,
   submittedBy: null,

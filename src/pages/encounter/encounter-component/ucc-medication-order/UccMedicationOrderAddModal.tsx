@@ -8,28 +8,22 @@ import { notify } from '@/utils/uiReducerActions';
 import { Form, RadioGroup, Radio, Row, Col } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import './styles.less';
-
+import { newActiveIngredient, newPatientUccMedicationOrder } from '@/types/model-types-constructor-new';
+import { useGetMedicationCategoryClassByClassIdQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
+import { useEnumOptions } from '@/services/enumsApi';
 const UccMedicationOrderAddModal = ({
   open,
   setOpen,
   onAdd,
   encounter,
-  patient
+  patient,
+  editRow
 }) => {
   const dispatch = useAppDispatch();
 
   // ================= state =================
-  const [record, setRecord] = useState<any>({
-    activeIngredientId: null,
-    medicationClass: '',
-    isHighAlert: '',
-    instructionText: '',
-    dose: null,
-    unit: null,
-    frequency: null,
-    roa: null
-  });
-
+  const [record, setRecord] = useState<any>({ ...newPatientUccMedicationOrder });
+  const [selectedActiveIngredient, setSelectedActiveIngredient] = useState({ ...newActiveIngredient })
   const [selectedOption, setSelectedOption] = useState<
     'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS'
   >('MANUAL_INSTRUCTIONS');
@@ -42,48 +36,53 @@ const UccMedicationOrderAddModal = ({
 
   const { data: unitLov } = useGetLovValuesByCodeQuery('UOM');
   const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
+  const roaOptions = useEnumOptions("RouteOfAdministration");
 
-  // ================= options =================
-  const options = useMemo(() => {
-    const list = Array.isArray(activeIngredientsAll?.data)
-      ? activeIngredientsAll.data
-      : [];
 
-    return list
-      .filter(item => item?.isActive)
-      .map(item => ({
-        label: item?.name,
-        value: Number(item?.id),
-        raw: item
-      }));
-  }, [activeIngredientsAll]);
+  const { data: classData } = useGetMedicationCategoryClassByClassIdQuery(
+    selectedActiveIngredient?.drugClassId,
+    { skip: !selectedActiveIngredient?.drugClassId }
+  );
 
-  // ================= AUTO FILL =================
+
   useEffect(() => {
-    if (!record.activeIngredientId) return;
+    if (!selectedActiveIngredient?.drugClassId) {
+      setSelectedActiveIngredient(prev => ({
+        ...prev,
+        drugClassName: ''
+      }));
+      return;
+    }
 
-    const selected = options.find(
-      o => o.value === record.activeIngredientId
+    if (!classData) return;
+
+    setSelectedActiveIngredient(prev => ({
+      ...prev,
+      drugClassName: classData.name
+    }));
+  }, [classData, selectedActiveIngredient?.drugClassId]);
+
+  useEffect(() => {
+    if (!record.activeIngredientId) {
+      setSelectedActiveIngredient({ ...newActiveIngredient });
+      return;
+    }
+
+    const selected = activeIngredientsAll?.data?.find(
+      o => o.id === record.activeIngredientId
     );
 
-    if (!selected?.raw) return;
+    if (!selected) {
+      setSelectedActiveIngredient({ ...newActiveIngredient });
+      return;
+    }
 
-    const raw = selected.raw;
+    setSelectedActiveIngredient({
+      ...selected,
+      drugClassName: '' // 🔥 reset مؤقت لحد ما API يرجع
+    });
+  }, [record.activeIngredientId, activeIngredientsAll?.data]);
 
-    setRecord(prev => ({
-      ...prev,
-
-      // ❌ ما في class name → بس id
-      medicationClass: raw?.drugClassId
-        ? `Class #${raw.drugClassId}`
-        : '',
-
-      // ✅ الصح
-      isHighAlert: raw?.highRiskMed ? 'Yes' : 'No'
-    }));
-  }, [record.activeIngredientId, options]);
-
-  // ================= SAVE =================
   const handleSave = () => {
     if (!record.activeIngredientId) {
       dispatch(notify({ msg: 'Please select active ingredient', sev: 'error' }));
@@ -113,39 +112,54 @@ const UccMedicationOrderAddModal = ({
       return;
     }
 
-      const payload = {
-        patientId: patient.id,
-        encounterId: encounter.id,
-        activeIngredientId: record.activeIngredientId,
-        instructionType: selectedOption,
-        instructionText: finalInstruction,
-        dose: record?.dose || null,
-        doseUnit: record?.unit || null,
-        frequency: record?.frequency || null,
-        route: record?.roa || null,
-        isHighAlert: record.isHighAlert === 'Yes'
-      };
+    if (selectedOption === 'CUSTOM_INSTRUCTIONS') {
+      const missing: string[] = [];
+
+      if (!record?.dose) missing.push('Dose');
+      if (!record?.unit) missing.push('Unit');
+      if (!record?.frequency) missing.push('Frequency');
+      if (!record?.roa) missing.push('ROA');
+
+      if (missing.length > 0) {
+        dispatch(
+          notify({
+            msg: `Please fill required fields:\n${missing.join(', ')}`,
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      finalInstruction = [
+        record.dose,
+        record.unit,
+        record.frequency,
+        record.roa
+      ]
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    const payload = {
+      patientId: patient.id,
+      encounterId: encounter.id,
+      activeIngredientId: record.activeIngredientId,
+      instructionType: selectedOption,
+      instructionText: finalInstruction,
+      dose: record?.dose || null,
+      doseUnit: record?.unit || null,
+      frequency: record?.frequency || null,
+      route: record?.roa || null,
+    };
 
     try {
-      onAdd(payload);
+      if (editRow?.id) {
+        onAdd({ ...payload, id: editRow.id, isEdit: true });
+      } else {
+        onAdd(payload);
+      }
 
-      dispatch(
-        notify({
-          msg: 'Medication added successfully',
-          sev: 'success'
-        })
-      );
-
-      setRecord({
-        activeIngredientId: null,
-        medicationClass: '',
-        isHighAlert: '',
-        instructionText: '',
-        dose: null,
-        unit: null,
-        frequency: null,
-        roa: null
-      });
+      setRecord({ ...newPatientUccMedicationOrder });
 
       setSelectedOption('MANUAL_INSTRUCTIONS');
       setOpen(false);
@@ -159,15 +173,40 @@ const UccMedicationOrderAddModal = ({
     }
   };
 
-  // ================= RTL =================
   const dir = (localStorage.getItem('direction') || 'LTR') === 'RTL' ? 'rtl' : 'ltr';
 
-  // ================= UI =================
+
+useEffect(() => {
+  if (!editRow) return;
+
+  setRecord({
+    activeIngredientId: editRow.activeIngredientId,
+    instructionText: editRow.instructionText,
+    dose: editRow.dose,
+    unit: editRow.doseUnit,
+    frequency: editRow.frequency,
+    roa: editRow.route
+  });
+
+  setSelectedOption(editRow.instructionType || 'MANUAL_INSTRUCTIONS');
+}, [editRow, open]);
+
+useEffect(() => {
+  if (!open) {
+    setRecord({ ...newPatientUccMedicationOrder });
+    setSelectedOption('MANUAL_INSTRUCTIONS');
+  }
+}, [open]);
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={<Translate>Add Medication</Translate>}
+      title={
+        <Translate>
+          {editRow ? 'Edit Medication' : 'Add Medication'}
+        </Translate>
+      }
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       position="right"
@@ -182,32 +221,31 @@ const UccMedicationOrderAddModal = ({
               fieldType="select"
               fieldLabel="Active Ingredient"
               fieldName="activeIngredientId"
-              selectData={options}
-              selectDataLabel="label"
-              selectDataValue="value"
+              selectData={activeIngredientsAll?.data ?? []}
+              selectDataLabel="name"
+              selectDataValue="id"
               record={record}
               setRecord={setRecord}
             />
 
-            {/* Info */}
             <div className="add-medication-info-container">
               <MyInput
                 width="14.5vw"
                 fieldType="text"
                 fieldLabel="Medication Class"
-                fieldName="medicationClass"
-                record={record}
-                setRecord={setRecord}
+                fieldName="drugClassName"
+                record={selectedActiveIngredient}
+                setRecord={setSelectedActiveIngredient}
                 disabled
               />
 
               <MyInput
                 width="14.5vw"
-                fieldType="text"
-                fieldLabel="High Risk Med"
-                fieldName="isHighAlert"
-                record={record}
-                setRecord={setRecord}
+                fieldType="checkbox"
+                fieldLabel="High Alert"
+                fieldName="highAlert"
+                record={selectedActiveIngredient}
+                setRecord={setSelectedActiveIngredient}
                 disabled
               />
             </div>
@@ -237,53 +275,63 @@ const UccMedicationOrderAddModal = ({
 
             {/* Custom */}
             {selectedOption === 'CUSTOM_INSTRUCTIONS' && (
-              <Row gutter={16}>
-                <Col md={6}>
-                  <MyInput
-                    fieldType="number"
-                    fieldName="dose"
-                    fieldLabel="Dose"
-                    record={record}
-                    setRecord={setRecord}
-                  />
-                </Col>
+              <div style={{ marginTop: 10 }}>
+                <Row gutter={16}>
 
-                <Col md={6}>
-                  <MyInput
-                    fieldType="select"
-                    fieldLabel="Unit"
-                    selectData={unitLov?.object || []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName="unit"
-                    record={record}
-                    setRecord={setRecord}
-                  />
-                </Col>
+                  <Col md={6}>
+                    <MyInput
+                      fieldType="number"
+                      fieldName="dose"
+                      fieldLabel="Dose"
+                      record={record}
+                      setRecord={setRecord}
+                      required
+                    />
+                  </Col>
 
-                <Col md={6}>
-                  <MyInput
-                    fieldType="select"
-                    fieldLabel="Frequency"
-                    selectData={frequencyLov?.object || []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName="frequency"
-                    record={record}
-                    setRecord={setRecord}
-                  />
-                </Col>
+                  <Col md={6}>
+                    <MyInput
+                      fieldType="select"
+                      fieldLabel="Unit"
+                      selectData={unitLov?.object || []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="unit"
+                      record={record}
+                      setRecord={setRecord}
+                      required
+                    />
+                  </Col>
 
-                <Col md={6}>
-                  <MyInput
-                    fieldType="text"
-                    fieldLabel="ROA"
-                    fieldName="roa"
-                    record={record}
-                    setRecord={setRecord}
-                  />
-                </Col>
-              </Row>
+                  <Col md={6}>
+                    <MyInput
+                      fieldType="select"
+                      fieldLabel="Frequency"
+                      selectData={frequencyLov?.object || []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="frequency"
+                      record={record}
+                      setRecord={setRecord}
+                      required
+                    />
+                  </Col>
+
+                  <Col md={6}>
+                    <MyInput
+                      fieldType="select" // 🔥 بدل text خليها select زي النظام
+                      fieldLabel="ROA"
+                      selectData={roaOptions}
+                      selectDataLabel="label"
+                      selectDataValue="value"
+                      fieldName="roa"
+                      record={record}
+                      setRecord={setRecord}
+                      required
+                    />
+                  </Col>
+                </Row>
+              </div>
             )}
           </Form>
         </div>

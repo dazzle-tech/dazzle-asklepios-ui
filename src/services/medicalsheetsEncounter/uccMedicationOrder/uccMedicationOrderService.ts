@@ -24,9 +24,7 @@ export const uccMedicationOrderService = createApi({
   tagTypes: ['UccMedicationOrder'],
   endpoints: builder => ({
 
-    // =========================
-    // 🔹 CREATE
-    // =========================
+    // ================= CREATE =================
     createUccMedicationOrder: builder.mutation<
       modelTypes.PatientUccMedicationOrder,
       modelTypes.PatientUccMedicationOrder
@@ -39,9 +37,7 @@ export const uccMedicationOrderService = createApi({
       invalidatesTags: ['UccMedicationOrder'],
     }),
 
-    // =========================
-    // 🔹 UPDATE
-    // =========================
+    // ================= UPDATE =================
     updateUccMedicationOrder: builder.mutation<
       modelTypes.PatientUccMedicationOrder,
       { id: Id; data: modelTypes.PatientUccMedicationOrder }
@@ -57,9 +53,7 @@ export const uccMedicationOrderService = createApi({
       ],
     }),
 
-    // =========================
-    // 🔹 GET BY ID
-    // =========================
+    // ================= GET BY ID =================
     getUccMedicationOrderById: builder.query<
       modelTypes.PatientUccMedicationOrder,
       Id
@@ -72,9 +66,7 @@ export const uccMedicationOrderService = createApi({
       ],
     }),
 
-    // =========================
-    // 🔹 FILTER (🔥 أهم واحد)
-    // =========================
+    // ================= FILTER (PAGINATION) =================
     filterUccMedicationOrders: builder.query<
       PagedResult<modelTypes.PatientUccMedicationOrder>,
       {
@@ -122,13 +114,22 @@ export const uccMedicationOrderService = createApi({
       }),
 
       transformResponse: (
-        response: modelTypes.PatientUccMedicationOrder[],
+        response: any,
         meta
       ): PagedResult<modelTypes.PatientUccMedicationOrder> => {
         const headers = meta?.response?.headers;
 
+        // 🔥 الحالة 1: Spring Page object
+        if (response?.content) {
+          return {
+            data: response.content ?? [],
+            totalCount: response.totalElements ?? 0,
+          };
+        }
+
+        // 🔥 الحالة 2: Header-based pagination
         return {
-          data: response,
+          data: response ?? [],
           totalCount: Number(headers?.get('X-Total-Count') ?? 0),
           links: parseLinkHeader(headers?.get('Link')),
         };
@@ -137,25 +138,23 @@ export const uccMedicationOrderService = createApi({
       providesTags: ['UccMedicationOrder'],
     }),
 
-    // =========================
-    // 🔥 ACTIONS
-    // =========================
+    // ================= SUBMIT =================
+submitUccMedicationOrder: builder.mutation<
+  modelTypes.PatientUccMedicationOrder,
+  { id: Id; isHighAlert: boolean }
+>({
+  query: ({ id, isHighAlert }) => ({
+    url: `/api/patient/urgent-care-medication-orders/${id}/submit`,
+    method: 'POST',
+    body: { isHighAlert }, // 🔥 لازم
+  }),
+  invalidatesTags: (_res, _err, { id }) => [
+    { type: 'UccMedicationOrder', id },
+    'UccMedicationOrder',
+  ],
+}),
 
-    submitUccMedicationOrder: builder.mutation<
-      modelTypes.PatientUccMedicationOrder,
-      { id: Id; isHighAlert: boolean }
-    >({
-      query: ({ id, isHighAlert }) => ({
-        url: `/api/patient/urgent-care-medication-orders/${id}/submit`,
-        method: 'POST',
-        body: { isHighAlert },
-      }),
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'UccMedicationOrder', id },
-        'UccMedicationOrder',
-      ],
-    }),
-
+    // ================= ADMINISTER =================
     administerUccMedicationOrder: builder.mutation<
       modelTypes.PatientUccMedicationOrder,
       Id
@@ -170,6 +169,7 @@ export const uccMedicationOrderService = createApi({
       ],
     }),
 
+    // ================= DOUBLE CHECK =================
     doubleCheckUccMedicationOrder: builder.mutation<
       modelTypes.PatientUccMedicationOrder,
       Id
@@ -184,6 +184,7 @@ export const uccMedicationOrderService = createApi({
       ],
     }),
 
+    // ================= DISCARD =================
     discardUccMedicationOrder: builder.mutation<
       modelTypes.PatientUccMedicationOrder,
       { id: Id; discardReason: string }
@@ -199,6 +200,7 @@ export const uccMedicationOrderService = createApi({
       ],
     }),
 
+    // ================= CANCEL =================
     cancelUccMedicationOrder: builder.mutation<
       modelTypes.PatientUccMedicationOrder,
       { id: Id; cancellationReason: string }
