@@ -216,6 +216,30 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       return;
     }
 
+    const missingFields: string[] = [];
+    if (!vitalSigns.bloodPressureSystolic && vitalSigns.bloodPressureSystolic !== 0)
+      missingFields.push('Blood Pressure Systolic');
+    if (!vitalSigns.bloodPressureDiastolic && vitalSigns.bloodPressureDiastolic !== 0)
+      missingFields.push('Blood Pressure Diastolic');
+    if (!vitalSigns.heartRate && vitalSigns.heartRate !== 0)
+      missingFields.push('Heart Rate');
+    if (!vitalSigns.temperature && vitalSigns.temperature !== 0)
+      missingFields.push('Temperature');
+    if (!vitalSigns.oxygenSaturation && vitalSigns.oxygenSaturation !== 0)
+      missingFields.push('Oxygen Saturation');
+    if (!vitalSigns.respiratoryRate && vitalSigns.respiratoryRate !== 0)
+      missingFields.push('Respiratory Rate');
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill in the required fields:\n${missingFields.map(f => `• ${f}`).join('\n')}`,
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     try {
       const createResponse = await createVitalSigns(vitalSignsCreatePayload as any).unwrap();
 
@@ -233,7 +257,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       showApiError(error);
     }
   };
-console.log("vitalSigns---", vitalSigns);
   const handleClearVitalSigns = () => {
     setVitalSigns({
       ...newVitalSigns,
@@ -294,7 +317,6 @@ console.log("vitalSigns---", vitalSigns);
 
             <div className="margin-bot-10">
               <MyInput
-                required={isTriage}
                 width="100%"
                 fieldType="select"
                 fieldLabel="Measurment Site"
@@ -311,7 +333,7 @@ console.log("vitalSigns---", vitalSigns);
 
             <div className="vital-signs-handle-position-row">
               <MyInput
-                required={isTriage}
+                required
                 width="100%"
                 fieldType="number"
                 fieldName="heartRate"
@@ -337,7 +359,7 @@ console.log("vitalSigns---", vitalSigns);
 
             <div className="vital-signs-handle-position-row">
               <MyInput
-                required={isTriage}
+                required
                 width="100%"
                 fieldType="number"
                 rightAddon=" % "
@@ -349,7 +371,7 @@ console.log("vitalSigns---", vitalSigns);
               />
 
               <MyInput
-                required={isTriage}
+                required
                 width="100%"
                 fieldType="number"
                 rightAddon="bpm"

@@ -60,7 +60,16 @@ export const currentMedicationService = createApi({
         method: 'DELETE'
       }),
       invalidatesTags: ['CurrentMedication']
-    })
+    }),
+    checkCurrentMedicationExists: builder.query<
+      boolean,
+      { patientId: Id; activeIngredientId: Id }
+    >({
+      query: ({ patientId, activeIngredientId }) => ({
+        url: '/api/patient/current-medication/exists',
+        params: { patientId, activeIngredientId }
+      })
+    }),
   })
 });
 
@@ -69,5 +78,7 @@ export const {
   useLazyGetCurrentMedicationsQuery,
   useAddCurrentMedicationMutation,
   useUpdateCurrentMedicationMutation,
-  useDeleteCurrentMedicationMutation
+  useDeleteCurrentMedicationMutation,
+  useCheckCurrentMedicationExistsQuery,
+  useLazyCheckCurrentMedicationExistsQuery,
 } = currentMedicationService;

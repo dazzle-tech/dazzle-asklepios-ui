@@ -712,6 +712,7 @@ export interface DiagnosticOrderTestCollectedSampleBulkSameDTO {
   unit: string;
   quantity: number | string;
   collectedAt: Date | string;
+  sourceOfSample: string;
 }
 
 export interface DiagnosticOrderTestCollectedSampleResponseVM {
@@ -3754,7 +3755,8 @@ export interface EncounterPlan {
   id?: number;
   patientId: number | null;
   encounterId: number | null;
-  planInstructions: string | null;
+  goals: string | null;
+  treatmentPlan: string | null;
 
   createdBy?: string | null;
   createdDate?: Date | null;
@@ -3792,7 +3794,8 @@ export interface EncounterPlan {
   id?: number;
   patientId: number | null;
   encounterId: number | null;
-  planInstructions: string | null;
+  goals: string | null;
+  treatmentPlan: string | null;
 
   createdBy?: string | null;
   createdDate?: Date | null;
@@ -4298,3 +4301,52 @@ export type CurrentMedicationUpdate = CurrentMedication & {
 export type CurrentMedicationForm = CurrentMedication & {
   id?: number;
 };
+
+
+export interface PatientUccMedicationOrder {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  activeIngredientId: number;
+
+  instructionType: 'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS';
+  instructionText?: string | null;
+
+  dose?: number | null;
+  doseUnit?: string | null;
+  route?: string | null;
+  frequency?: string | null;
+
+  isHighAlert?: boolean | null;
+
+  status?: 
+    | 'WAITING_DOUBLE_CHECK'
+    | 'ADMINISTERED'
+    | 'CANCELLED'
+    | 'DISCARDED'
+    | 'NEW'
+    | 'SUBMITTED';
+
+  submittedDate?: string | Date | null;
+  submittedBy?: string | null;
+
+  administeredDate?: string | Date | null;
+  administeredBy?: string | null;
+
+  doubleCheckedDate?: string | Date | null;
+  doubleCheckedBy?: string | null;
+
+  discardedDate?: string | Date | null;
+  discardedBy?: string | null;
+  discardReason?: string | null;
+
+  cancelledDate?: string | Date | null;
+  cancelledBy?: string | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}
