@@ -46,7 +46,7 @@ export const newDepartment: modelTypes.Department = {
   departmentCode: '',
   phoneNumber: '',
   email: '',
-  encounterType: '',
+  encounterType: null,
   isActive: true,
   hasMedicalSheets: false,
   hasNurseMedicalSheets: false,
@@ -342,7 +342,9 @@ export const newDiagnosticOrderTestCollectedSample: modelTypes.DiagnosticOrderTe
     orderTestId: 0,
     unit: '',
     quantity: 0,
-    collectedAt: ''
+    collectedAt: '',
+    expiryDate: null,
+    sourceOfSample: null
   };
 
 export const newDiagnosticOrderTestCollectedSampleBulkSame: modelTypes.DiagnosticOrderTestCollectedSampleBulkSameDTO =
@@ -460,7 +462,8 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   otc: false,
   hasSynonyms: false,
   antimicrobial: false,
-  highRiskMed: false,
+  highAlert: false,
+  isLookAlikeSoundAlike: false,
   abortiveMedication: false,
   laborInducingMed: false,
   isControlled: false,
@@ -970,6 +973,20 @@ export const newAvailabilityTemplateIntervalUpdateDTO: modelTypes.AvailabilityTe
   slotStrategy: null,
   slotDurationMinutes: null,
   allowedServices: []
+};
+
+export const newAvailabilityTemplateIntervalBreakCreateDTO: modelTypes.AvailabilityTemplateIntervalBreakCreateDTO = {
+  intervalId: 0,
+  startTime: '',
+  endTime: ''
+};
+
+export const newAvailabilityTemplateIntervalBreakResponseVM: modelTypes.AvailabilityTemplateIntervalBreakResponseVM = {
+  id: null,
+  intervalId: null,
+  templateId: null,
+  startTime: null,
+  endTime: null
 };
 
 export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCreateDTO = {
@@ -2018,6 +2035,7 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   id: undefined as any,
   prescriptionHeaderId: null as any,
   medicationsId: null as any,
+  activeIngredientId: null,
   instructionsType: null,
   instructions: null,
   dose: null,
@@ -2028,7 +2046,6 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   durationType: null,
   chronicMedication: false,
   maximumDose: null,
-  validUtil: null,
   allowedSubstitute: false,
   indicationManually: null,
   indicationUse: null,
@@ -2135,7 +2152,10 @@ export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
   patientArrivedNoteRad: undefined,
 
   cancellationReason: undefined,
-  cancelledBy: undefined
+  cancelledBy: undefined,
+  undoAcceptReason: undefined,
+  undoAcceptBy: undefined,
+  undoAcceptDate: undefined
 };
 
 export const newDiagnosticOrderTestResultCreate: modelTypes.DiagnosticOrderTestResultCreateDTO = {

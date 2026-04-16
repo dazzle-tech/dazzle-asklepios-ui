@@ -26,15 +26,20 @@ type OrdersProps = {
     toDate?: Date;
   };
   loading?: boolean;
+  orderNumberFilter?: string;
 };
 
 const Orders = forwardRef<any, OrdersProps>(
-  ({ order, setOrder, dateFilter, loading }, ref) => {
+  ({ order, setOrder, dateFilter, loading, orderNumberFilter }, ref) => {
     const authSlice = useAppSelector(state => state.auth);
     const selectedDepartment = authSlice.selectedDepartment;
 
     const [sortColumn, setSortColumn] = useState('id');
     const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
+
+    useEffect(() => {
+      setPaginationParams(prev => ({ ...prev, page: 0 }));
+    }, [orderNumberFilter]);
 
     const [paginationParams, setPaginationParams] = useState({
       page: 0,
@@ -79,7 +84,10 @@ const Orders = forwardRef<any, OrdersProps>(
             testType: 'RADIOLOGY',
             status: 'SUBMITTED',
             submittedDateFrom: fromDateParam,
-            submittedDateTo: toDateParam
+            submittedDateTo: toDateParam,
+            ...(orderNumberFilter?.trim()
+              ? { orderNumber: orderNumberFilter.trim() }
+              : {})
           }
         : skipToken
     );

@@ -32,6 +32,7 @@ type Resource = {
   id?: number;
   resourceType: string;
   resourceKey: string;
+  parallelCapacityValue?: number;
   isAllowParallel?: boolean;
   isActive?: boolean;
   resourceName?: string;
@@ -40,6 +41,7 @@ type Resource = {
 const newResource: Resource = {
   resourceType: "",
   resourceKey: "",
+  parallelCapacityValue: 1,
   isAllowParallel: true,
   isActive: true,
 };
@@ -274,6 +276,7 @@ const Resources = () => {
       const payload = {
         resourceType: resource.resourceType,
         resourceKey: resource.resourceKey,
+        parallelCapacityValue: Number(resource.parallelCapacityValue ?? 1),
         isAllowParallel: resource.isAllowParallel ?? true,
         isActive: resource.isActive ?? true,
         resourceName: resourceName
@@ -318,6 +321,7 @@ const Resources = () => {
       const payload = {
         resourceType: resource.resourceType,
         resourceKey: resource.resourceKey,
+        parallelCapacityValue: Number(resource.parallelCapacityValue ?? 1),
         isAllowParallel: resource.isAllowParallel ?? true,
         isActive: resource.isActive ?? true,
         resourceName: resourceName

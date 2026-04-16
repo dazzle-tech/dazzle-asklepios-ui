@@ -160,39 +160,53 @@ const ProgressNotes: React.FC = () => {
         key: 'edit',
         title: 'ACTIONS',
         width: 120,
-        render: (row: ProgressNote) => (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <MdModeEdit
-              size={22}
-              onClick={() => {
-                setSelectedNote(row);
-                setOpenAddModal(true);
-              }}
-              style={{ cursor: 'pointer', color: 'gray' }}
-            />
+        render: (row: ProgressNote) => {
+          const isEdited = row.lastModifiedDate && row.createdDate !== row.lastModifiedDate;
 
-            <MdHistory
-              size={22}
-              title="View History"
-              onClick={() => {
-                setLogNoteId(row.id);
-                setOpenLogsModal(true);
-              }}
-              style={{ cursor: 'pointer', color: '#4C6EF5' }}
-            />
-          </div>
-        )
+          return (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <MdModeEdit
+                size={22}
+                onClick={() => {
+                  setSelectedNote(row);
+                  setOpenAddModal(true);
+                }}
+                style={{ cursor: 'pointer', color: 'gray' }}
+              />
+
+              <MdHistory
+                size={22}
+                title="View History"
+                onClick={() => {
+                  setLogNoteId(row.id);
+                  setOpenLogsModal(true);
+                }}
+                style={{ cursor: 'pointer', color: '#4C6EF5' }}
+              />
+
+              {isEdited && (
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    backgroundColor: '#f59e0b'
+                  }}
+                />
+              )}
+            </div>
+          );
+        }
       }
     ],
     []
   );
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>

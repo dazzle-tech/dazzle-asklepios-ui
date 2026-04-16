@@ -207,6 +207,7 @@ import { PolicyDefinitionService } from './services/setup/policyDefinition/polic
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import { availabilityTemplateIntervalBreakService } from './services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak';
 import { appointmentFromTemplateService } from './services/appointment/appointmentService';
 import { departmentServicesService } from './services/departmentServicesService';
 import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
@@ -458,6 +459,7 @@ export const store = configureStore({
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
     [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
     [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
+    [availabilityTemplateIntervalBreakService.reducerPath]: availabilityTemplateIntervalBreakService.reducer,
     [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
@@ -774,6 +776,7 @@ export const store = configureStore({
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
         availabilityTemplateIntervalService.middleware,
+        availabilityTemplateIntervalBreakService.middleware,
         appointmentFromTemplateService.middleware,
         departmentServicesService.middleware,
         roomService.middleware,
