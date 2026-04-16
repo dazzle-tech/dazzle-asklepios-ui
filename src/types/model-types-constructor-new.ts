@@ -2569,7 +2569,8 @@ export const newEncounterPlan: modelTypes.EncounterPlan = {
   id: undefined,
   patientId: null,
   encounterId: null,
-  planInstructions: '',
+  goals: '',
+  treatmentPlan: '',
 
   createdBy: '',
   createdDate: null,
