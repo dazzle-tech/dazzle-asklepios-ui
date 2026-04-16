@@ -50,8 +50,8 @@ export const activeIngredientsService = createApi({
                 type: 'ActiveIngredients' as const,
                 id: item.id as Id,
               })),
-              { type: 'ActiveIngredients', id: 'LIST' },
-            ]
+            { type: 'ActiveIngredients', id: 'LIST' },
+          ]
           : [{ type: 'ActiveIngredients', id: 'LIST' }],
     }),
 
@@ -112,9 +112,9 @@ export const activeIngredientsService = createApi({
       invalidatesTags: (_result, _error, { id }) =>
         id != null
           ? [
-              { type: 'ActiveIngredients', id },
-              { type: 'ActiveIngredients', id: 'LIST' },
-            ]
+            { type: 'ActiveIngredients', id },
+            { type: 'ActiveIngredients', id: 'LIST' },
+          ]
           : [{ type: 'ActiveIngredients', id: 'LIST' }],
     }),
 
@@ -126,9 +126,9 @@ export const activeIngredientsService = createApi({
       invalidatesTags: (_result, _error, { id }) =>
         id != null
           ? [
-              { type: 'ActiveIngredients', id },
-              { type: 'ActiveIngredients', id: 'LIST' },
-            ]
+            { type: 'ActiveIngredients', id },
+            { type: 'ActiveIngredients', id: 'LIST' },
+          ]
           : [{ type: 'ActiveIngredients', id: 'LIST' }],
     }),
   }),
