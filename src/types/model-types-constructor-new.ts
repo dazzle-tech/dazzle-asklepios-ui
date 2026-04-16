@@ -2863,3 +2863,42 @@ export const newPatientEncounterDischarge: modelTypes.PatientEncounterDischarge 
   dischargeType: null,
   dischargeAt: null
 };
+
+
+export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder = {
+  id: undefined,
+
+  patientId: null,
+  encounterId: null,
+
+  activeIngredientId: null,
+
+  instructionType: 'MANUAL_INSTRUCTIONS',
+  instructionText: null,
+
+  dose: null,
+  doseUnit: null,
+  route: null,
+  frequency: null,
+
+  isHighAlert: false,
+
+  status: 'NEW',
+
+  submittedDate: null,
+  submittedBy: null,
+
+  administeredDate: null,
+  administeredBy: null,
+
+  doubleCheckedDate: null,
+  doubleCheckedBy: null,
+
+  discardedDate: null,
+  discardedBy: null,
+  discardReason: null,
+
+  cancelledDate: null,
+  cancelledBy: null,
+  cancellationReason: null,
+};
