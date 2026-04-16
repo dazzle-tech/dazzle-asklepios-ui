@@ -32,11 +32,13 @@ const BulkCollectSampleModal = ({
   const dispatch = useAppDispatch();
 
   const { data: valueUnitLov } = useGetLovValuesByCodeQuery("VALUE_UNIT");
+  const { data: sampleSourceLov } = useGetLovValuesByCodeQuery("SAMPLE_SOURCE");
 
 const [record, setRecord] = useState({
   quantity: null,
   unitLkey: null,
-  collectedAt: new Date()
+  collectedAt: new Date(),
+  sourceOfSample: null
 });
 
 
@@ -45,7 +47,7 @@ const [record, setRecord] = useState({
 
     const handleSave = async () => {
 
-      if (!record.quantity || !record.unitLkey || !record.collectedAt) {
+      if (!record.quantity || !record.unitLkey || !record.collectedAt || !record.sourceOfSampleLkey) {
         dispatch(notify({ msg: "All fields are required", sev: "warning" }));
         return;
       }
@@ -81,6 +83,7 @@ const [record, setRecord] = useState({
         return;
       }
 
+      
       try {
 
         await bulkCreate({
@@ -91,7 +94,8 @@ const [record, setRecord] = useState({
           collectedAt:
             record.collectedAt instanceof Date
               ? record.collectedAt.toISOString()
-              : record.collectedAt
+              : record.collectedAt,
+          sourceOfSample: record.sourceOfSample
         }).unwrap();
 
         dispatch(
@@ -122,7 +126,8 @@ const [record, setRecord] = useState({
         setRecord({
           quantity: null,
           unitLkey: null,
-          collectedAt: new Date()
+          collectedAt: new Date(),
+          sourceOfSample: null
         });
       }
     }, [open]);
@@ -175,6 +180,18 @@ const [record, setRecord] = useState({
                 fieldLabel="Sample Collected"
                 fieldName="collectedAt"
                 fieldType="datetime"
+                record={record}
+                setRecord={setRecord}
+                column
+                width={"14vw"}
+              />
+              <MyInput
+                fieldLabel="Source of Sample"
+                fieldName="sourceOfSample"
+                fieldType="select"
+                selectData={sampleSourceLov?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
                 record={record}
                 setRecord={setRecord}
                 column

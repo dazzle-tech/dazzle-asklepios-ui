@@ -712,6 +712,7 @@ export interface DiagnosticOrderTestCollectedSampleBulkSameDTO {
   unit: string;
   quantity: number | string;
   collectedAt: Date | string;
+  sourceOfSample: string;
 }
 
 export interface DiagnosticOrderTestCollectedSampleResponseVM {
@@ -3754,7 +3755,8 @@ export interface EncounterPlan {
   id?: number;
   patientId: number | null;
   encounterId: number | null;
-  planInstructions: string | null;
+  goals: string | null;
+  treatmentPlan: string | null;
 
   createdBy?: string | null;
   createdDate?: Date | null;
@@ -3792,7 +3794,8 @@ export interface EncounterPlan {
   id?: number;
   patientId: number | null;
   encounterId: number | null;
-  planInstructions: string | null;
+  goals: string | null;
+  treatmentPlan: string | null;
 
   createdBy?: string | null;
   createdDate?: Date | null;
