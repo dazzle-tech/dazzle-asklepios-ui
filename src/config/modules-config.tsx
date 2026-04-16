@@ -137,7 +137,20 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
   { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products' },
-  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' }
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' },
+  { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' },
+  {
+    name: 'Nurse Assessment',
+    code: 'NURSE_ASSESSMENT',
+    icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />,
+    path: '/nurse-assessment'
+  },
+  {
+    name: 'Physician Assessment',
+    code: 'PHYSICIAN_ASSESSMENT',
+    icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
+    path: '/physician-assessment'
+  }
 
 ];
 
@@ -377,7 +390,7 @@ export const MODULES: Module[] =
           description: "", icon: "FaList",
           viewOrder: 1, navPath: "encounter-list"
         },
-        { name: "Review Results", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
+        { name: "My Favorite Tests", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
 
       ],
     },
@@ -438,7 +451,7 @@ export const MODULES: Module[] =
       departmentTypes: ["EMERGENCY_ROOM"],
       screens: [
         { name: "Urgent Care Triage",code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage"},
-        { name: "Urgent Care Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
+        { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
       ],
     },
     {

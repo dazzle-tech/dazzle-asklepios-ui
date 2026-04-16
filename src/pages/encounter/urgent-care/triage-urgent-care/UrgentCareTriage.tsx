@@ -50,6 +50,7 @@ import {
 } from '@/services/encounters/er-triage/emergencyTriageService';
 import {
   useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientWristbandPdfQuery,
   useLazyGetPatientWristbandQuery
 } from '@/services/patient/patientService';
 import MyModal from '@/components/MyModal/MyModal';
@@ -247,11 +248,11 @@ const UrgentCareTriage = () => {
     const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
     const end = toDateSafe(
       latest?.completedDate ??
-        completedDate ??
-        completedAt ??
-        rowUpdatedAt ??
-        fallbackUpdatedAt ??
-        null
+      completedDate ??
+      completedAt ??
+      rowUpdatedAt ??
+      fallbackUpdatedAt ??
+      null
     );
     if (!triageStart || !end) return <></>;
     return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
@@ -278,27 +279,29 @@ const UrgentCareTriage = () => {
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
+const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
+ const handlePrintWristband = async (rowData: any) => {
+  try {
+    const blob = await triggerGetPatientWristbandPdf({
+      patientId: rowData.patientId
+    }).unwrap();
 
-  const handlePrintWristband = async (rowData: any) => {
-    try {
-      const patientId = rowData?.patientObject?.id ?? rowData?.patientId ?? rowData?.patient?.id;
+    const fileURL = window.URL.createObjectURL(blob);
 
-      if (!patientId) return;
+    const link = document.createElement('a');
+    link.href = fileURL;
+    link.download = `wristband-${rowData.patientId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 
-      const res = await triggerWristband({ patientId }).unwrap();
-
-      await printPatientWristband(res);
-    } catch (err: any) {
-      console.error('Wristband print failed', err);
-
-      dispatch(
-        notify({
-          msg: err?.data?.message || 'Failed to print wristband',
-          sev: 'error'
-        })
-      );
-    }
-  };
+    setTimeout(() => {
+      window.URL.revokeObjectURL(fileURL);
+    }, 1000);
+  } catch (error) {
+    console.error('Failed to download wristband pdf', error);
+  }
+};
 
   const selectedDepartment = useMemo(() => {
     try {
@@ -445,7 +448,7 @@ const UrgentCareTriage = () => {
     if (patientIdsForBulk.length === 0) return;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientByIdMap = useMemo(() => {
@@ -641,12 +644,12 @@ const UrgentCareTriage = () => {
 
   useEffect(() => {
     if (roomIdsFromAssignments.length === 0) return;
-    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => {});
+    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => { });
   }, [roomIdsFromAssignments, getRoomsByIds]);
 
   useEffect(() => {
     if (bedIdsFromAssignments.length === 0) return;
-    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => {});
+    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => { });
   }, [bedIdsFromAssignments, getBedsByIds]);
 
   const roomsMap = useMemo(() => {
@@ -701,17 +704,17 @@ const UrgentCareTriage = () => {
         resolvedBed: bedFromApi,
         apRoom: roomFromApi?.name
           ? {
-              ...(row?.apRoom ?? {}),
-              key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
-              name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
-            }
+            ...(row?.apRoom ?? {}),
+            key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
+            name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
+          }
           : row?.apRoom,
         apBed: bedFromApi?.name
           ? {
-              ...(row?.apBed ?? {}),
-              key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
-              name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
-            }
+            ...(row?.apBed ?? {}),
+            key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
+            name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
+          }
           : row?.apBed
       };
     });
@@ -939,8 +942,8 @@ const UrgentCareTriage = () => {
 
       const emergencyTriageNew =
         typeof encounterId === 'number' &&
-        !Number.isNaN(encounterId) &&
-        !Number.isNaN(patientId)
+          !Number.isNaN(encounterId) &&
+          !Number.isNaN(patientId)
           ? await createOrGetEmergencyTriage({ encounterId, patientId }).unwrap()
           : null;
 
@@ -1409,7 +1412,7 @@ const UrgentCareTriage = () => {
 
             {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               COMPLETE_TRIAGE_STATUS_CODE ||
-            String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
+              String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               SENT_TO_ER_STATUS_CODE ? (
               <Whisper trigger="hover" placement="top" speaker={tooltipTriage}>
                 <div>
@@ -1468,12 +1471,13 @@ const UrgentCareTriage = () => {
                     setLocalEncounter(rowData);
                     handlePrintWristband(rowData);
                   }}
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment }
                 >
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>
               </div>
             </Whisper>
+
 
             <AssignBedAction
               rowData={rowData}
@@ -1485,20 +1489,20 @@ const UrgentCareTriage = () => {
             {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST', 'PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
             ) && (
-              <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
-                <div>
-                  <MyButton
-                    size="small"
-                    onClick={() => {
-                      setLocalEncounter(rowData);
-                      setOpen(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faRectangleXmark} />
-                  </MyButton>
-                </div>
-              </Whisper>
-            )}
+                <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+                  <div>
+                    <MyButton
+                      size="small"
+                      onClick={() => {
+                        setLocalEncounter(rowData);
+                        setOpen(true);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faRectangleXmark} />
+                    </MyButton>
+                  </div>
+                </Whisper>
+              )}
           </Form>
         );
       },
