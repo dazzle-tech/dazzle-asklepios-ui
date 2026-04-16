@@ -217,7 +217,7 @@ import { bedService } from './services/setup/room/bedService';
 import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 import { currentMedicationService } from './services/patients/currentMedicationService';
-
+import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 
 export const store = configureStore({
   reducer: {
@@ -532,7 +532,9 @@ export const store = configureStore({
     [bedService.reducerPath]: bedService.reducer,
     [bedRoomService.reducerPath]: bedRoomService.reducer,
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
-    [currentMedicationService.reducerPath]: currentMedicationService.reducer
+    [currentMedicationService.reducerPath]: currentMedicationService.reducer,
+    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer
+
   },
 
   middleware: getDefaultMiddleware =>
@@ -781,7 +783,8 @@ export const store = configureStore({
         bedService.middleware,
         bedRoomService.middleware,
         encounterAssignToBedService.middleware,
-        currentMedicationService.middleware
+        currentMedicationService.middleware,
+        uccMedicationOrderService.middleware
       ]
     ) as any
 });
