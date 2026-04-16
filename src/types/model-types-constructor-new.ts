@@ -2155,7 +2155,8 @@ export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
   cancelledBy: undefined,
   undoAcceptReason: undefined,
   undoAcceptBy: undefined,
-  undoAcceptDate: undefined
+  undoAcceptDate: undefined,
+  icdDiagnosisId: undefined,
 };
 
 export const newDiagnosticOrderTestResultCreate: modelTypes.DiagnosticOrderTestResultCreateDTO = {

@@ -3087,6 +3087,7 @@ export interface DiagnosticOrderTest extends AuditingEntity {
   undoAcceptReason?: string;
   undoAcceptBy?: string;
   undoAcceptDate?: string;
+  icdDiagnosisId?: number;
 }
 
 export interface DiagnosticOrderCreateDTO {
@@ -3132,6 +3133,7 @@ export interface DiagnosticOrderTestCreateDTO {
   processingStatus?: DiagnosticOrderTestStatus;
   submitDate?: string;
   orderType?: TestType;
+  icdDiagnosisId?: number;
 }
 
 export interface DiagnosticOrderTestUpdateDTO extends DiagnosticOrderTestCreateDTO {
