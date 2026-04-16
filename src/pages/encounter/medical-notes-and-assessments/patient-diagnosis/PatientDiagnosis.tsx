@@ -294,7 +294,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
       },
       {
         key: 'major',
-        title: <Translate>Major</Translate>,
+        title: <Translate>Chronic</Translate>,
         flexGrow: 2,
         render: (row: any) => (row?.major ? 'Yes' : 'No')
       },
@@ -442,7 +442,7 @@ const PatientDiagnosis: React.FC<PatientDiagnosisProps> = ({
 
               <div className="pd-field-switch">
                 <MyInput
-                  fieldLabel="Major"
+                  fieldLabel="Chronic"
                   fieldType="checkbox"
                   fieldName="major"
                   record={diagnosis}

@@ -815,7 +815,8 @@ export interface ActiveIngredient {
   otc?: boolean | null;
   hasSynonyms?: boolean | null;
   antimicrobial?: boolean | null;
-  highRiskMed?: boolean | null;
+  isLookAlikeSoundAlike?: boolean ;
+  highAlert?: boolean | null;
   abortiveMedication?: boolean | null;
   laborInducingMed?: boolean | null;
   isControlled?: boolean | null;
@@ -2785,6 +2786,7 @@ export interface PatientPrescriptionMedication {
   id: number;
   prescriptionHeaderId: number;
   medicationsId: number;
+  activeIngredientId: number ;
   instructionsType: null;
   instructions?: string | null;
   dose?: number | null;
@@ -2795,7 +2797,6 @@ export interface PatientPrescriptionMedication {
   durationType?: string | null;
   chronicMedication?: boolean | null;
   maximumDose?: number | null;
-  validUtil?: string | null;
   allowedSubstitute?: boolean | null;
   indicationManually?: string | null;
   indicationUse?: string | null;

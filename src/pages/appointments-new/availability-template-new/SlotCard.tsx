@@ -3,7 +3,7 @@ import React from 'react';
 import { Tooltip, Whisper } from 'rsuite';
 // import './TimeSlot.css';
 
-const SlotCard = ({ time, slots, backgroundColor = "#6982F0", status }) => {
+const SlotCard = ({ time, slots, backgroundColor = "#6982F0" }) => {
 
   function lightenHexColor(hex: string, percent: number) {
     hex = hex.replace('#', '');
@@ -21,7 +21,6 @@ const SlotCard = ({ time, slots, backgroundColor = "#6982F0", status }) => {
   const badgeColor = lightenHexColor(backgroundColor, 0.7);
 
   return (
-    <Whisper speaker={<Tooltip>{status}</Tooltip>}>
       <div className="time-slot"
         style={{ backgroundColor: backgroundColor }}
       >
@@ -32,7 +31,6 @@ const SlotCard = ({ time, slots, backgroundColor = "#6982F0", status }) => {
           {slots} slots available
         </span>
       </div>
-    </Whisper>
   );
 };
 

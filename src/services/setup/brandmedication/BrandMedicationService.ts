@@ -247,6 +247,13 @@ export const BrandMedicationService = createApi({
       }),
       providesTags: ["BrandMedication"],
     }),
+getBrandMedicationsByActiveIds: builder.mutation<any[], (number | string)[]>({
+  query: activeIds => ({
+    url: `/api/setup/brand-medication/by-active-ids`,
+    method: 'POST',
+    body: activeIds,
+  }),
+}),
   }),
 });
 
@@ -275,4 +282,6 @@ export const {
   useSearchBrandMedicationsByNameOrActiveQuery,
   useGetBrandMedicationsByIdsQuery,
   useLazyGetBrandMedicationsByIdsQuery,
+  useGetBrandMedicationsByActiveIdsMutation
+  
 } = BrandMedicationService;

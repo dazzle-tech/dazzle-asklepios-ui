@@ -1,4 +1,4 @@
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetCollectedSamplesByOrderTestIdQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestCollectedSampleService';
 import { DiagnosticOrderTestStatus } from '@/types/model-types-new';
@@ -21,7 +21,7 @@ import {
 import RequestedTest from '../rad-module/requested-tests/RequestedTest';
 import Orders from './Orders';
 import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
-import Result from './Result';
+import Result from './Results';
 import Tests from './Tests';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
@@ -35,6 +35,8 @@ const safeRefetch = async (fn?: () => any) => {
 
 const Lab = () => {
   const dispatch = useAppDispatch();
+   const authSlice = useAppSelector(state => state.auth);
+  const user = authSlice?.user;
   const OrdersRef = useRef<any>(null);
   const TestsRef = useRef<any>(null);
 
@@ -339,6 +341,18 @@ const Lab = () => {
     {
       title: 'Requested Tests',
       content: <RequestedTest requestType="LABORATORY" />
+    },
+    {
+      title: 'Reviewed Results',
+      content: (
+        <div dir={dir}>
+          <Result
+            setEncounter={setEncounter}
+            setPatient={setPatient}
+            user={user?.id} 
+    
+          />        </div>
+      )
     }
   ];
 

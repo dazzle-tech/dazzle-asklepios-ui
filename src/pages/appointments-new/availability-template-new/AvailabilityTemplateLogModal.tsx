@@ -76,12 +76,14 @@ const AvailabilityTemplateLogModal: React.FC<Props> = ({ open, setOpen, template
         width: 260,
         render: (row: any) => {
           const value = row?.workingDays;
-          if (!value || (Array.isArray(value) && value.length === 0)) return '-';
-          try {
-            return JSON.stringify(value);
-          } catch {
-            return String(value);
-          }
+
+          if (!value || !Array.isArray(value)) return '-';
+
+          const workingDays = value
+            .filter((d: any) => d?.isWorking)
+            .map((d: any) => formatEnumString(d?.dayOfWeek));
+
+          return workingDays.length ? workingDays.join(', ') : '-';
         }
       },
       { key: 'isActive', title: 'IS ACTIVE', width: 120, render: (row: any) => formatValue(row?.isActive) },

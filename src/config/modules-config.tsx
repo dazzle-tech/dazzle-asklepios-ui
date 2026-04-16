@@ -389,7 +389,7 @@ export const MODULES: Module[] =
           description: "", icon: "FaList",
           viewOrder: 1, navPath: "encounter-list"
         },
-        { name: "Review Results", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
+        { name: "My Favorite Tests", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
 
       ],
     },
