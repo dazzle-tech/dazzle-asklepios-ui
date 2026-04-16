@@ -10,18 +10,21 @@ import PlusIcon from '@rsuite/icons/Plus';
 import { Checkbox } from 'rsuite';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useLocation } from 'react-router-dom';
-
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useEnumOptions } from '@/services/enumsApi';
 import {
   useFilterUccMedicationOrdersQuery,
   useSubmitUccMedicationOrderMutation,
   useCancelUccMedicationOrderMutation,
-  useCreateUccMedicationOrderMutation
+  useCreateUccMedicationOrderMutation,
+  useUpdateUccMedicationOrderMutation
 } from '@/services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
-
+import { formatEnumString } from '@/utils';
+import './styles.less';
 const UccMedicationOrder = (props: any) => {
   const location = useLocation();
   const patient = props.patient || location.state?.patient;
@@ -32,10 +35,22 @@ const UccMedicationOrder = (props: any) => {
   const [openAdd, setOpenAdd] = useState(false);
   const [openCancel, setOpenCancel] = useState(false);
   const [selectedCancelId, setSelectedCancelId] = useState<number | null>(null);
+  const [editRow, setEditRow] = useState<any>(null);
 
-  const [cancelObject, setCancelObject] = useState({
-    cancelReason: ''
+  const [paginationParams, setPaginationParams] = useState({
+    page: 0,
+    size: 10,
+    sort: 'createdDate,desc'
   });
+
+  const [sortColumn, setSortColumn] = useState('createdDate');
+  const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
+
+  const { data: unitLov } = useGetLovValuesByCodeQuery('UOM');
+  const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
+  const roaOptions = useEnumOptions('RouteOfAdministration');
+
+  const [cancelObject, setCancelObject] = useState({ cancelReason: '' });
 
   const {
     data: ordersResponse,
@@ -45,9 +60,9 @@ const UccMedicationOrder = (props: any) => {
   } = useFilterUccMedicationOrdersQuery(
     {
       encounterId: encounter?.id,
-      page: 0,
-      size: 10,
-      sort: 'createdDate,desc'
+      page: paginationParams.page,
+      size: paginationParams.size,
+      sort: paginationParams.sort
     },
     { skip: !encounter?.id }
   );
@@ -55,43 +70,71 @@ const UccMedicationOrder = (props: any) => {
   const [submitOrder] = useSubmitUccMedicationOrderMutation();
   const [cancelOrder] = useCancelUccMedicationOrderMutation();
   const [createOrder] = useCreateUccMedicationOrderMutation();
+  const [updateOrder] = useUpdateUccMedicationOrderMutation();
 
   const { data: activeIngredientsAll } = useGetActiveIngredientsQuery({
     page: 0,
     size: 1000
   });
 
-  const rows = useMemo<any[]>(() => {
-    if (Array.isArray(ordersResponse)) return ordersResponse;
-    if (Array.isArray(ordersResponse?.data)) return ordersResponse.data;
-    if (Array.isArray((ordersResponse as any)?.content)) return (ordersResponse as any).content;
-    if (Array.isArray((ordersResponse as any)?.data?.content)) return (ordersResponse as any).data.content;
-    return [];
-  }, [ordersResponse]);
+  const rows = ordersResponse?.data || [];
+  const totalCount = ordersResponse?.totalCount || 0;
 
   const ingredientMap = useMemo(() => {
-    const map: Record<number, string> = {};
-    const list = Array.isArray(activeIngredientsAll?.data) ? activeIngredientsAll.data : [];
-
-    list.forEach((item: any) => {
-      if (item?.id != null) {
-        map[Number(item.id)] = item.name ?? item.activeIngredientName ?? '';
-      }
+    const map: Record<number, any> = {};
+    (activeIngredientsAll?.data || []).forEach((item: any) => {
+      map[item.id] = item;
     });
-
     return map;
   }, [activeIngredientsAll]);
 
   const handleAdd = async (data: any) => {
     try {
-      await createOrder(data).unwrap();
+      if (data?.isEdit && data?.id) {
+        const { id, isEdit, ...payload } = data;
+
+        const updatePayload = {
+          id,
+          activeIngredientId: payload.activeIngredientId,
+          instructionType: payload.instructionType,
+          instructionText: payload.instructionText,
+          dose: payload.dose,
+          doseUnit: payload.doseUnit,
+          frequency: payload.frequency,
+          route: payload.route
+        };
+
+        await updateOrder({
+          id,
+          data: updatePayload
+        }).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Medication Updated Successfully',
+            sev: 'success'
+          })
+        );
+
+      } else {
+        await createOrder(data).unwrap();
+
+        // 🔥 هذا الناقص
+        dispatch(
+          notify({
+            msg: 'Medication Added Successfully',
+            sev: 'success'
+          })
+        );
+      }
 
       setOpenAdd(false);
       await refetch();
+
     } catch (error: any) {
       dispatch(
         notify({
-          msg: error?.data?.detail || error?.data?.message || 'Create failed',
+          msg: error?.data?.detail || 'Operation failed',
           sev: 'error'
         })
       );
@@ -102,22 +145,22 @@ const UccMedicationOrder = (props: any) => {
     try {
       await submitOrder({
         id: row.id,
-        isHighAlert: !!row.isHighAlert
+        isHighAlert: !!ingredientMap[row?.activeIngredientId]?.highAlert
       }).unwrap();
 
-      dispatch(
-        notify({
-          msg: 'Medication submitted successfully',
-          sev: 'success'
-        })
-      );
-
+        dispatch(
+          notify({
+            msg: 'Medication Submitted Successfully',
+            sev: 'success'
+          })
+        );
       setSelectedIds(prev => prev.filter(id => id !== row.id));
       await refetch();
     } catch (error: any) {
+      console.log(error);
       dispatch(
         notify({
-          msg: error?.data?.detail || error?.data?.message || 'Submit failed',
+          msg: error?.data?.detail || 'Submit failed',
           sev: 'error'
         })
       );
@@ -133,195 +176,250 @@ const UccMedicationOrder = (props: any) => {
         cancellationReason: cancelObject.cancelReason
       }).unwrap();
 
-      dispatch(
-        notify({
-          msg: 'Medication cancelled successfully',
-          sev: 'success'
-        })
-      );
-
+        dispatch(
+          notify({
+            msg: 'Medication Cancelled Successfully',
+            sev: 'success'
+          })
+        );
       setOpenCancel(false);
-      setCancelObject({ cancelReason: '' });
       setSelectedCancelId(null);
-      setSelectedIds(prev => prev.filter(id => id !== selectedCancelId));
+      setCancelObject({ cancelReason: '' });
       await refetch();
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.data?.detail || error?.data?.message || 'Cancel failed',
-          sev: 'error'
-        })
-      );
+    } catch {
+      dispatch(notify({ msg: 'Cancel failed', sev: 'error' }));
     }
   };
 
-  const toggleRow = (row: any, checked: boolean) => {
-    if (row?.status !== 'NEW') return;
-
-    setSelectedIds(prev =>
-      checked ? [...prev, row.id] : prev.filter(id => id !== row.id)
-    );
-  };
-
-  const selectableRows = useMemo(() => rows.filter((r: any) => r?.status === 'NEW'), [rows]);
-
-  const selectableIds = useMemo(
-    () => selectableRows.map((r: any) => r.id).filter((id: any) => id != null),
-    [selectableRows]
-  );
+  const selectableRows = rows.filter((r: any) => r?.status === 'NEW');
+  const selectableIds = selectableRows.map((r: any) => r.id);
 
   const isAllSelected =
     selectableIds.length > 0 &&
-    selectableIds.every((id: number) => selectedIds.includes(id));
+    selectableIds.every(id => selectedIds.includes(id));
 
   const isIndeterminate =
-    selectedIds.length > 0 &&
-    selectableIds.length > 0 &&
-    !isAllSelected;
+    selectedIds.length > 0 && !isAllSelected;
 
   const toggleAll = (checked: boolean) => {
     setSelectedIds(checked ? selectableIds : []);
   };
 
-  const columns = useMemo(
-    () => [
-      {
-        key: 'select',
-        title: (
-          <Checkbox
-            checked={isAllSelected}
-            indeterminate={isIndeterminate}
-            disabled={!selectableIds.length}
-            onChange={(_, checked) => toggleAll(checked)}
-          />
-        ),
-        align: 'center' as const,
-        width: 60,
-        render: (row: any) => (
-          <Checkbox
-            checked={selectedIds.includes(row.id)}
-            disabled={row?.status !== 'NEW'}
-            onChange={(_, checked) => toggleRow(row, checked)}
-            onClick={e => e.stopPropagation()}
-          />
+  const toggleRow = (row: any, checked: boolean) => {
+    if (row?.status !== 'NEW') return;
+    setSelectedIds(prev =>
+      checked ? [...prev, row.id] : prev.filter(id => id !== row.id)
+    );
+  };
+
+    const handlePageChange = (_: any, newPage: number) => {
+      setPaginationParams(prev => ({
+        ...prev,
+        page: newPage
+      }));
+
+      setSelectedIds([]);
+    };
+
+  const handleSortChange = (col: string, type: 'asc' | 'desc') => {
+    setSortColumn(col);
+    setSortType(type);
+
+    setPaginationParams(prev => ({
+      ...prev,
+      page: 0,
+      sort: `${col},${type}`
+    }));
+  };
+
+
+  
+    const unitMap = useMemo(() => {
+      const map: Record<string, string> = {};
+      (unitLov?.object || []).forEach((item: any) => {
+        map[item.key] = item.lovDisplayVale;
+      });
+      return map;
+    }, [unitLov]);
+
+    const frequencyMap = useMemo(() => {
+      const map: Record<string, string> = {};
+      (frequencyLov?.object || []).forEach((item: any) => {
+        map[item.key] = item.lovDisplayVale;
+      });
+      return map;
+    }, [frequencyLov]);
+
+    const roaMap = useMemo(() => {
+      const map: Record<string, string> = {};
+      (roaOptions || []).forEach((item: any) => {
+        map[item.value] = item.label;
+      });
+      return map;
+    }, [roaOptions]);
+
+  const columns = [
+    {
+      key: 'select',
+      title: (
+        <Checkbox
+          checked={isAllSelected}
+          indeterminate={isIndeterminate}
+          onChange={(_, checked) => toggleAll(checked)}
+        />
+      ),
+      align: 'center',
+      width: 60,
+      render: (row: any) => (
+        <Checkbox
+          checked={selectedIds.includes(row.id)}
+          disabled={row?.status !== 'NEW'}
+          onChange={(_, checked) => toggleRow(row, checked)}
+        />
+      )
+    },
+    {
+      key: 'medicationName',
+      title: <Translate>MEDICATION NAME</Translate>,
+      flexGrow: 2,
+      render: (row: any) =>
+        ingredientMap[row?.activeIngredientId]?.name || '-'
+    },
+    {
+      key: 'highAlert',
+      title: <Translate>HIGH ALERT</Translate>,
+      align: 'center',
+      width: 120,
+      render: (row: any) =>
+        ingredientMap[row?.activeIngredientId]?.highAlert && (
+          <FontAwesomeIcon icon={faTriangleExclamation} color="red" />
         )
-      },
-      {
-        key: 'medicationName',
-        title: <Translate>MEDICATION NAME</Translate>,
-        flexGrow: 2,
-        render: (row: any) => {
-          const medicationId =
-            row?.medicationId ??
-            row?.activeIngredientId ??
-            row?.activeIngredient?.id ??
-            row?.medicationsId ??
-            row?.genericMedicationsId;
+    },
+    {
+      key: 'instructions',
+      title: <Translate>INSTRUCTIONS</Translate>,
+      flexGrow: 2,
+      render: (row: any) => {
+        if (!row?.instructionText) return '-';
 
-          return (
-            ingredientMap[Number(medicationId)] ||
-            row?.medicationName ||
-            row?.activeIngredientName ||
-            row?.activeIngredient?.name ||
-            row?.name ||
-            '-'
-          );
-        }
-      },
-      {
-        key: 'isHighAlert',
-        title: <Translate>HIGH_RISK_MED</Translate>,
-        align: 'center' as const,
-        width: 120,
-        render: (row: any) =>
-          row?.isHighAlert ? <FontAwesomeIcon icon={faTriangleExclamation} /> : ''
-      },
-      {
-        key: 'instructions',
-        title: <Translate>INSTRUCTIONS</Translate>,
-        flexGrow: 2,
-        render: (row: any) =>
-          String(
-            row?.instructions ??
-              row?.instructionText ??
-              row?.doseText ??
-              ''
-          )
-      },
-      {
-        key: 'status',
-        title: <Translate>STATUS</Translate>,
-        align: 'center' as const,
-        width: 120,
-        render: (row: any) => {
-          return (
-            <span>
-              {row?.status}
-            </span>
-          );
-        }
-      },
-      {
-        key: 'actions',
-        title: <Translate>ACTIONS</Translate>,
-        align: 'center' as const,
-        width: 120,
-        render: (row: any) => {
-          const canSubmit = row?.status === 'NEW';
-          const canCancel = row?.status === 'NEW';
+        const parts = row.instructionText.split(',').map((p: string) => p.trim());
 
-          return (
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <CheckRoundIcon
-                style={{
-                  cursor: canSubmit ? 'pointer' : 'not-allowed',
-                  opacity: canSubmit ? 1 : 0.4
-                }}
-                onClick={() => canSubmit && handleSubmit(row)}
-              />
-
-              <WarningRoundIcon
-                style={{
-                  cursor: canCancel ? 'pointer' : 'not-allowed',
-                  opacity: canCancel ? 1 : 0.4
-                }}
-                onClick={() => {
-                  if (!canCancel) return;
-                  setSelectedCancelId(row.id);
-                  setOpenCancel(true);
-                }}
-              />
-            </div>
-          );
-        }
+        return parts
+          .map((part: string, index: number) => {
+            if (index === 1) return unitMap[part] || part;
+            if (index === 2) return frequencyMap[part] || part;
+            if (index === 3) return roaMap[part] || part;
+            return part;
+          })
+          .join(', ');
       }
-    ],
-    [ingredientMap, isAllSelected, isIndeterminate, selectableIds.length, selectedIds]
-  );
+    },
+    {
+      key: 'status',
+      title: <Translate>STATUS</Translate>,
+      align: 'center',
+      width: 120,
+      render: (row: any) => formatEnumString(row?.status)
+    },
+    {
+      key: 'actions',
+      title: <Translate>ACTIONS</Translate>,
+      align: 'center',
+      width: 120,
+      render: (row: any) => (
+        <div style={{ display: 'flex', gap: 10 }}>
 
-console.log('ordersResponse', ordersResponse);
-console.log('rows', rows);
+          <FontAwesomeIcon
+            icon={faPenToSquare}
+            className='ucc-medication-order-icons-size'
+            style={{
+              cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
+              opacity: row?.status === 'NEW' ? 1 : 0.4
+            }}
+            onClick={() => {
+              if (row?.status !== 'NEW') return;
+              setEditRow(row);
+
+              setTimeout(() => {
+                setOpenAdd(true);
+              }, 0);
+            }}
+          />
+
+          <CheckRoundIcon
+            className='ucc-medication-order-icons-size'
+            style={{
+              cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
+              opacity: row?.status === 'NEW' ? 1 : 0.4
+            }}
+            onClick={() => {
+              if (row?.status !== 'NEW') return;
+              handleSubmit(row);
+            }}
+          />
+
+          <WarningRoundIcon
+            className='ucc-medication-order-icons-size'
+            style={{
+              cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
+              opacity: row?.status === 'NEW' ? 1 : 0.4
+            }}
+            onClick={() => {
+              if (row?.status !== 'NEW') return;
+              setSelectedCancelId(row.id);
+              setOpenCancel(true);
+            }}
+          />
+
+        </div>
+      )
+    }
+  ];
+
+console.log('ordersResponse:', ordersResponse);
 
   return (
     <div>
-      <MyTable
-        height={450}
-        data={rows}
-        loading={isLoading || isFetching}
-        columns={columns}
-        tableButtons={
+    <MyTable
+      height={450}
+      data={rows}
+      totalCount={totalCount}
+      loading={isLoading || isFetching}
+      columns={columns}
+      page={paginationParams.page}
+      rowsPerPage={paginationParams.size}
+      tableButtons={
           <MyButton onClick={() => setOpenAdd(true)} prefixIcon={() => <PlusIcon />}>
             Add
           </MyButton>
         }
-      />
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={(e: any) => {
+        const newSize = Number(e.target.value);
+
+        setPaginationParams(prev => ({
+          ...prev,
+          size: newSize,
+          page: 0
+        }));
+
+        setSelectedIds([]);
+      }}
+      onSortChange={handleSortChange}
+      sortColumn={sortColumn}
+      sortType={sortType}
+    />
 
       <UccMedicationOrderAddModal
         open={openAdd}
-        setOpen={setOpenAdd}
+        setOpen={(val) => {
+          setOpenAdd(val);
+          if (!val) setEditRow(null);
+        }}
         onAdd={handleAdd}
         encounter={encounter}
-        patient={patient || encounter?.patient}
+        patient={patient}
+        editRow={editRow}
       />
 
       <CancellationModal
@@ -333,10 +431,9 @@ console.log('rows', rows);
         fieldName="cancelReason"
         fieldLabel="CANCELLATION_REASON"
         title="Cancel Medication"
-        required
       />
     </div>
   );
 };
 
-export default UccMedicationOrder;
+export default UccMedicationOrder;  

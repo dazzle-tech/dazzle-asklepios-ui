@@ -55,6 +55,13 @@ export const MedicationCategoriesClassService = createApi({
       : `/api/setup/medication-categories-class/by-category?id=${id}&name=`,
 }),
 
+    getMedicationCategoryClassByClassId: builder.query({
+      query: (id: number | string) => ({
+        url: `/api/setup/medication-categories-class/class/${id}`,
+        method: 'GET',
+      }),
+    }),
+
   }),
 });
 
@@ -64,5 +71,6 @@ export const {
   useUpdateMedicationCategoryClassMutation,
   useGetAllMedicationCategoriesClassesQuery,
   useGetMedicationCategoryClassQuery,
+  useGetMedicationCategoryClassByClassIdQuery,
   useGetAllMedicationCategoryClassesByCategoryQuery
 } = MedicationCategoriesClassService;
