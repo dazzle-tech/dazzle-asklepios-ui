@@ -18,6 +18,7 @@ type PagedResult<T> = {
   links?: LinkMap;
 };
 
+
 export const uccMedicationOrderService = createApi({
   reducerPath: 'uccMedicationOrderApi',
   baseQuery: BaseQuery,

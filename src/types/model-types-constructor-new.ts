@@ -1,6 +1,7 @@
 import { tr } from 'date-fns/locale';
 import * as modelTypes from './model-types-new';
 // ------------------- ApUser -------------------
+
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
   login: '',

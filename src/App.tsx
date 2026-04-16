@@ -222,7 +222,6 @@ import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-
 import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
 import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage';
 import UrgentCareList from './pages/encounter/urgent-care/UrgentCareList';
-import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
 import NurseAssessment from './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment';
 import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
 import FavoriteTests from './pages/review-results';
