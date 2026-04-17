@@ -2,7 +2,7 @@ import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import {
   useCancelMutation,
@@ -32,7 +32,9 @@ const TelephonicConsultation = props => {
   const currentPatient = props.patient || location.state?.patient;
   const currentEncounter = props.encounter || location.state?.encounter;
   const isEditMode = props.edit ?? location.state?.edit ?? false;
-
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+   const isNurse = jobRole === 'NURSE';
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useAppDispatch();
 
@@ -292,7 +294,7 @@ const TelephonicConsultation = props => {
         <MyButton
           prefixIcon={() => <BlockIcon />}
           onClick={() => setIsCancelModalOpen(true)}
-          disabled={selectedConsultations.length === 0}
+          disabled={selectedConsultations.length === 0 ||isNurse}
         >
           Cancel
         </MyButton>
@@ -302,7 +304,7 @@ const TelephonicConsultation = props => {
         </Checkbox>
       </div>
 
-      <div className={clsx('bt-right-2', { 'disabled-panel': isEditMode })}>
+      <div className={clsx('bt-right-2', { 'disabled-panel': isEditMode||isNurse })}>
         <MyButton
           prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
           onClick={() => {
@@ -315,7 +317,7 @@ const TelephonicConsultation = props => {
             setIsDetailsModalOpen(true);
           }}
         >
-          Add Consultation
+          Add Consultation 
         </MyButton>
       </div>
     </div>

@@ -297,6 +297,20 @@ export interface AvailabilityTemplateIntervalUpdateDTO {
   allowedServices?: AvailabilityTemplateAllowedServiceDTO[] | null;
 }
 
+export interface AvailabilityTemplateIntervalBreakCreateDTO {
+  intervalId: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface AvailabilityTemplateIntervalBreakResponseVM {
+  id?: number | null;
+  intervalId?: number | null;
+  templateId?: number | null;
+  startTime?: string | null;
+  endTime?: string | null;
+}
+
 export interface AvailabilityTemplateResponseVM {
   id: number;
   facilityId: number;
@@ -761,6 +775,9 @@ export interface DiagnosticOrderTestCollectedSampleDTO {
   unit: string;
   quantity: number | string;
   collectedAt: Date | string;
+  expiryDate: Date | string | null;
+  sourceOfSample: string | null;
+
 }
 
 export interface DiagnosticOrderTestCollectedSampleBulkSameDTO {
@@ -769,6 +786,7 @@ export interface DiagnosticOrderTestCollectedSampleBulkSameDTO {
   unit: string;
   quantity: number | string;
   collectedAt: Date | string;
+  sourceOfSample: string;
 }
 
 export interface DiagnosticOrderTestCollectedSampleResponseVM {
@@ -871,7 +889,8 @@ export interface ActiveIngredient {
   otc?: boolean | null;
   hasSynonyms?: boolean | null;
   antimicrobial?: boolean | null;
-  highRiskMed?: boolean | null;
+  isLookAlikeSoundAlike?: boolean ;
+  highAlert?: boolean | null;
   abortiveMedication?: boolean | null;
   laborInducingMed?: boolean | null;
   isControlled?: boolean | null;
@@ -2841,6 +2860,7 @@ export interface PatientPrescriptionMedication {
   id: number;
   prescriptionHeaderId: number;
   medicationsId: number;
+  activeIngredientId: number ;
   instructionsType: null;
   instructions?: string | null;
   dose?: number | null;
@@ -2851,7 +2871,6 @@ export interface PatientPrescriptionMedication {
   durationType?: string | null;
   chronicMedication?: boolean | null;
   maximumDose?: number | null;
-  validUtil?: string | null;
   allowedSubstitute?: boolean | null;
   indicationManually?: string | null;
   indicationUse?: string | null;
@@ -2905,13 +2924,14 @@ export interface ProgressNoteCancelVM {
 
 export type ProgressNoteLogVM = {
   id: number;
-  action: 'INSERT' | 'UPDATE' | 'DELETE';
+  action: string;
   createdBy: string;
   createdDate: string;
-  lastModifiedBy?: string;
-  lastModifiedDate?: string;
-
-  activeIngredients?: PatientAllergiesActiveIngredientResponse[];
+  lastModifiedBy: string;
+  lastModifiedDate: string;
+  payload?: string;
+  oldNoteText?: string;
+  newNoteText?: string;
 };
 
 export interface PatientAllergiesActiveIngredientCreate {
@@ -3138,6 +3158,11 @@ export interface DiagnosticOrderTest extends AuditingEntity {
 
   cancellationReason?: string;
   cancelledBy?: string;
+
+  undoAcceptReason?: string;
+  undoAcceptBy?: string;
+  undoAcceptDate?: string;
+  icdDiagnosisId?: number;
 }
 
 export interface DiagnosticOrderCreateDTO {
@@ -3183,6 +3208,7 @@ export interface DiagnosticOrderTestCreateDTO {
   processingStatus?: DiagnosticOrderTestStatus;
   submitDate?: string;
   orderType?: TestType;
+  icdDiagnosisId?: number;
 }
 
 export interface DiagnosticOrderTestUpdateDTO extends DiagnosticOrderTestCreateDTO {
@@ -3805,7 +3831,8 @@ export interface EncounterPlan {
   id?: number;
   patientId: number | null;
   encounterId: number | null;
-  planInstructions: string | null;
+  goals: string | null;
+  treatmentPlan: string | null;
 
   createdBy?: string | null;
   createdDate?: Date | null;
@@ -3843,7 +3870,8 @@ export interface EncounterPlan {
   id?: number;
   patientId: number | null;
   encounterId: number | null;
-  planInstructions: string | null;
+  goals: string | null;
+  treatmentPlan: string | null;
 
   createdBy?: string | null;
   createdDate?: Date | null;
@@ -3916,6 +3944,7 @@ export interface PatientObservationsComplaints {
   latestFunctionalStatus?: string | null;
   latestCognitiveCheck?: string | null;
 
+  patientConditions?: string | null;
   isActive: boolean;
   functionalStatus?: string | null;
   cognitiveCheck?: string | null;
@@ -4348,3 +4377,52 @@ export type CurrentMedicationUpdate = CurrentMedication & {
 export type CurrentMedicationForm = CurrentMedication & {
   id?: number;
 };
+
+
+export interface PatientUccMedicationOrder {
+  id?: number;
+
+  patientId: number;
+  encounterId: number;
+
+  activeIngredientId: number;
+
+  instructionType: 'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS';
+  instructionText?: string | null;
+
+  dose?: number | null;
+  doseUnit?: string | null;
+  route?: string | null;
+  frequency?: string | null;
+
+  isHighAlert?: boolean | null;
+
+  status?: 
+    | 'WAITING_DOUBLE_CHECK'
+    | 'ADMINISTERED'
+    | 'CANCELLED'
+    | 'DISCARDED'
+    | 'NEW'
+    | 'SUBMITTED';
+
+  submittedDate?: string | Date | null;
+  submittedBy?: string | null;
+
+  administeredDate?: string | Date | null;
+  administeredBy?: string | null;
+
+  doubleCheckedDate?: string | Date | null;
+  doubleCheckedBy?: string | null;
+
+  discardedDate?: string | Date | null;
+  discardedBy?: string | null;
+  discardReason?: string | null;
+
+  cancelledDate?: string | Date | null;
+  cancelledBy?: string | null;
+  cancellationReason?: string | null;
+  createdBy?: string | null;
+  createdDate?: string | Date | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | Date | null;
+}

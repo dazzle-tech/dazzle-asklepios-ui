@@ -864,22 +864,24 @@ export const newApDiagnosticOrderTestsResultNotes:modelTypes.ApDiagnosticOrderTe
 	isValid:undefined,
 } 
 
-export const newApDiagnosticOrderTestsSamples:modelTypes.ApDiagnosticOrderTestsSamples = { 
-	key:undefined,
-	orderKey:undefined,
-	testKey:undefined,
-	notes:'',
-	unitLkey:undefined,
-	quantity:0,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	sampleCollectedAt:0,
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
-} 
+export const newApDiagnosticOrderTestsSamples: modelTypes.ApDiagnosticOrderTestsSamples = { 
+  key: undefined,
+  orderKey: undefined,
+  testKey: undefined,
+  notes: '',
+  unitLkey: undefined,
+  quantity: 0,
+  createdBy: '',
+  updatedBy: '',
+  deletedBy: '',
+  sampleCollectedAt: 0,
+  expiryDate: undefined,
+  createdAt: undefined,
+  updatedAt: undefined,
+  deletedAt: undefined,
+  isValid: undefined,
+  sourceOfSample: undefined
+};
 
 export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = { 
 	key:undefined,

@@ -320,7 +320,8 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
           receivedDepartmentId: toNumericId(receivedDepartmentId),
           reason: orderTest?.reasonLkey,
           notes: orderTest?.notes,
-          orderType: resolveOrderType(test)
+          orderType: resolveOrderType(test),
+           icdDiagnosisId: orderTest?.icdDiagnosisId,
         };
 
         await createOrderTest(createPayload).unwrap();
@@ -331,7 +332,9 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
           reason: orderTest?.reasonLkey,
-          notes: orderTest?.notes
+          notes: orderTest?.notes,
+          icdDiagnosisId: orderTest?.icdDiagnosisId,
+          
         };
 
         await updateOrderTest({ id: orderTestId, body: updatePayload }).unwrap();

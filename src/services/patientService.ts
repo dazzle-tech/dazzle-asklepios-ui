@@ -503,6 +503,8 @@ export const patientService = createApi({
         return response.object;
       }
     }),
+
+    
   }),
 
 });

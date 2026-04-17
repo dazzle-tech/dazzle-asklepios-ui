@@ -199,7 +199,7 @@ const RequestedTestTable: React.FC<Props> = ({
       },
       {
         key: 'indication',
-        title: <Translate>Indication</Translate>,
+        title: <Translate>Request Reason</Translate>,
         flexGrow: 2
       },
       {
