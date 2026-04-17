@@ -216,7 +216,6 @@ import OrganizationHolidays from './pages/system-configurations/organization-hol
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
 import PolicyDefinitions from './pages/setup/policy-definition';
-
 import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
 import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
