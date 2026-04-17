@@ -227,8 +227,6 @@ import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medica
 import NurseAssessment from './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment';
 import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
 import FavoriteTests from './pages/review-results';
-import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
-import UrgentCareListMain from './pages/encounter/urgent-care/UrgentCateListMain';
 import PreviousMeasurementsMainScreen from './pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
 
 const PUBLIC_PATHS = new Set([
