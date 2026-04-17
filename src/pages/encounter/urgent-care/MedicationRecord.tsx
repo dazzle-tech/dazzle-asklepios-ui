@@ -766,6 +766,3 @@ const MedicationRecord = () => {
       />
     </div>
   );
-};
-
-export default MedicationRecord;
