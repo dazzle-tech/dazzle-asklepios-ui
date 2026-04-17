@@ -211,6 +211,7 @@ import { appointmentFromTemplateService } from './services/appointment/appointme
 import { departmentServicesService } from './services/departmentServicesService';
 import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
 import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
+import { appointmentRequestService } from '@/services/appointment/appointmentRequestService';
 import { roomService } from './services/setup/room/roomService';
 import { bedService } from './services/setup/room/bedService';
 import { bedRoomService } from './services/setup/room/bedRoomService';
@@ -424,6 +425,7 @@ export const store = configureStore({
     // patient billing (new endpoints)
     [patientBillingInvoiceService.reducerPath]: patientBillingInvoiceService.reducer,
     [patientBillingInvoiceItemService.reducerPath]: patientBillingInvoiceItemService.reducer,
+    [appointmentRequestService.reducerPath]: appointmentRequestService.reducer,
 
     // Templates
     // report templates
@@ -693,6 +695,7 @@ export const store = configureStore({
         PriceListItemService.middleware,
         patientBillingInvoiceService.middleware,
         patientBillingInvoiceItemService.middleware,
+        appointmentRequestService.middleware,
 
         // report templates
         ReportTemplateService.middleware,

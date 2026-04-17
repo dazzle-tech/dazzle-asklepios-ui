@@ -1138,6 +1138,63 @@ export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFr
   patientId: null,
 };
 
+export const newAppointmentRequestResponseVM: modelTypes.AppointmentRequestResponseVM = {
+  id: null,
+  patientId: null,
+  patientName: null,
+  patientMrn: null,
+  facilityId: null,
+  facilityName: null,
+  departmentId: null,
+  departmentName: null,
+  sourceEncounterId: null,
+  appointmentId: null,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: null,
+  reason: null,
+  note: null,
+  status: null,
+  cancelledAt: null,
+  cancelReason: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newAppointmentRequestCreateDTO: modelTypes.AppointmentRequestCreateDTO = {
+  patientId: 0,
+  facilityId: 0,
+  departmentId: 0,
+  sourceEncounterId: 0,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: '',
+  reason: null,
+  note: null
+};
+
+export const newAppointmentRequestUpdateDTO: modelTypes.AppointmentRequestUpdateDTO = {
+  id: 0,
+  patientId: 0,
+  facilityId: 0,
+  departmentId: 0,
+  sourceEncounterId: 0,
+  appointmentId: null,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: '',
+  reason: null,
+  note: null,
+  status: '',
+  cancelReason: null
+};
+
+export const newAppointmentRequestCancelDTO: modelTypes.AppointmentRequestCancelDTO = {
+  cancelReason: ''
+};
+
 // ------------------- Price List -------------------
 export const newPriceList: modelTypes.PriceList = {
   id: undefined,
