@@ -421,6 +421,7 @@ export type AppointmentStatus = string;
 export type BookingMode = string;
 export type TemplateType = string;
 export type EncounterReason = string;
+export type EncounterPriority = string;
 
 export interface AppointmentFromTemplate {
   id?: number | null;
@@ -487,6 +488,79 @@ export interface AppointmentFromTemplateSearchFilterDTO {
   status?: AppointmentStatus | null;
   bookingMode?: BookingMode | null;
   patientId?: number | null;
+}
+
+export type AppointmentRequestStatus = string;
+
+export interface AppointmentRequestResponseVM {
+  id?: number | null;
+
+  patientId?: number | null;
+  patientName?: string | null;
+  patientMrn?: string | null;
+  
+  facilityId?: number | null;
+  facilityName?: string | null;
+
+  departmentId?: number | null;
+  departmentName?: string | null;
+
+  sourceEncounterId?: number | null;
+  appointmentId?: number | null;
+
+  requestedResourceType?: TemplateType | null;
+  requestedResourceId?: number | null;
+
+  priority?: EncounterPriority | null;
+  reason?: string | null;
+  note?: string | null;
+
+  status?: AppointmentRequestStatus | null;
+
+
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
+
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface AppointmentRequestCreateDTO {
+  patientId: number;
+  facilityId: number;
+  departmentId: number;
+  sourceEncounterId: number;
+
+  requestedResourceType?: TemplateType | null;
+  requestedResourceId?: number | null;
+
+  priority: EncounterPriority;
+  reason?: string | null;
+  note?: string | null;
+}
+
+export interface AppointmentRequestUpdateDTO {
+  id: number;
+  patientId: number;
+  facilityId: number;
+  departmentId: number;
+  sourceEncounterId: number;
+
+  appointmentId?: number | null;
+  requestedResourceType?: TemplateType | null;
+  requestedResourceId?: number | null;
+
+  priority: EncounterPriority;
+  reason?: string | null;
+  note?: string | null;
+  status: AppointmentRequestStatus;
+  cancelReason?: string | null;
+}
+
+export interface AppointmentRequestCancelDTO {
+  cancelReason: string;
 }
 
 /* =========================
