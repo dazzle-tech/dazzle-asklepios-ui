@@ -227,6 +227,7 @@ import PhysicianAssessment from './pages/encounter/encounter-pre-observations-ne
 import FavoriteTests from './pages/review-results';
 import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
 import UrgentCareListMain from './pages/encounter/urgent-care/UrgentCateListMain';
+import PreviousMeasurementsMainScreen from './pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -615,7 +616,7 @@ const App = () => {
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
                 <Route path="observations" element={<Observations />} />
-                <Route path="previous-measurements" element={<PreviousMeasurements />} />
+                <Route path="previous-measurements" element={<PreviousMeasurementsMainScreen />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
@@ -689,7 +690,7 @@ const App = () => {
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
-                <Route path="previous-measurements" element={<PreviousMeasurements />} />
+                <Route path="previous-measurements" element={<PreviousMeasurementsMainScreen />} />
                 <Route
                   path="service-and-products"
                   element={<ServiceAndProductsTab {...({} as any)} />}
