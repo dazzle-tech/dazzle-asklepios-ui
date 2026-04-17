@@ -2496,6 +2496,9 @@ export interface PatientEncounter {
 
   chiefComplaint?: string | null;
 
+  startedDate?: string | null;
+  startedBy?: string | null;
+
   hasPrescription: boolean;
   hasOrder: boolean;
   isObserved: boolean;

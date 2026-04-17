@@ -301,7 +301,8 @@ const UrgentCareList = () => {
     const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
     const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
     const normalizedPriorities =
-      uniqueNonEmpty(priorities) ?? uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
+      uniqueNonEmpty(priorities) ??
+      uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
     const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
 
     return {
@@ -610,13 +611,7 @@ const UrgentCareList = () => {
     if (refreshedBedIds.length > 0) {
       await getBedsByIds({ ids: refreshedBedIds }).unwrap();
     }
-  }, [
-    refetchEncounters,
-    refetchActiveAssignments,
-    getRoomsByIds,
-    getBedsByIds,
-    activeAssignments
-  ]);
+  }, [refetchEncounters, refetchActiveAssignments, getRoomsByIds, getBedsByIds, activeAssignments]);
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
@@ -925,6 +920,24 @@ const UrgentCareList = () => {
       key: 'encounterDate',
       title: 'DATE',
       render: (row: any) => row?.encounterDate ?? row?.plannedStartDate ?? '-'
+    },
+    {
+      key: 'startedDate',
+      title: 'STARTED DATE',
+      expandable: true,
+
+      render: (row: any) => {
+        const raw = row?.startedDate;
+        if (!raw) return '-';
+        const d = new Date(raw);
+        return isNaN(d.getTime()) ? raw : d.toLocaleString();
+      }
+    },
+    {
+      key: 'startedBy',
+      title: 'STARTED BY',
+      expandable: true,
+      render: (row: any) => row?.startedBy ?? '-'
     },
     {
       key: 'status',
