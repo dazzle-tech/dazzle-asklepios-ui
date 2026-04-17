@@ -38,6 +38,7 @@ import SampleModal from './SampleModal';
 import './styles.less';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import PrintSampleLabelAction from './PrintSampleLabelAction';
+import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 
 type Props = {
   order: any;
@@ -126,10 +127,10 @@ const Tests = forwardRef<any, Props>(
     } = useGetNotesByOrderTestIdQuery(
       test?.id
         ? {
-            orderTestId: test.id,
-            page: 0,
-            size: 100
-          }
+          orderTestId: test.id,
+          page: 0,
+          size: 100
+        }
         : skipToken
     );
 
@@ -163,15 +164,15 @@ const Tests = forwardRef<any, Props>(
     } = useFilterDiagnosticOrderTestsQuery(
       order?.id
         ? {
-            orderId: order.id,
-            status: 'SUBMITTED',
-            receivedDepartmentId: selectedDepartment?.departmentId,
-            page: paginationParams.page,
-            size: paginationParams.size,
-            sort: paginationParams.sort,
-            orderType: 'LABORATORY',
-            category: testKeyFilter.value || undefined
-          }
+          orderId: order.id,
+          status: 'SUBMITTED',
+          receivedDepartmentId: selectedDepartment?.departmentId,
+          page: paginationParams.page,
+          size: paginationParams.size,
+          sort: paginationParams.sort,
+          orderType: 'LABORATORY',
+          category: testKeyFilter.value || undefined
+        }
         : skipToken
     );
 
@@ -230,6 +231,41 @@ const Tests = forwardRef<any, Props>(
     );
 
     const pagedData = normalizedOrderTests;
+    const [
+      fetchIcdByIds,
+      {
+        data: icdDiagnosesByIds,
+        isLoading: isLoadingActiveIngredientsByIds,
+      },
+    ] = useLazyGetIcdDiagnosesByIdsQuery();
+
+    const icdIds = useMemo(() => {
+      const tests = normalizedOrderTests ?? [];
+
+      const ids = tests.map((item) => {
+
+        return item.icdDiagnosisId;
+      });
+
+
+      const filtered = ids.filter((id): id is number => id != null);
+
+
+      return filtered;
+    }, [normalizedOrderTests]);
+
+
+    useEffect(() => {
+      if (!icdIds.length) return;
+      fetchIcdByIds({
+        ids: icdIds
+      });
+    }, [icdIds, fetchIcdByIds]);
+    const icdDiagnosesMap = useMemo(() => {
+      return new Map(
+        (icdDiagnosesByIds ?? []).map((item) => [item.id, item])
+      );
+    }, [icdDiagnosesByIds]);
 
     const handleAcceptTest = async (rowData: any) => {
       if (rowData.processingStatus !== DiagnosticOrderTestStatus.SAMPLE_COLLECTED) {
@@ -455,6 +491,18 @@ const Tests = forwardRef<any, Props>(
         width: 120,
         align: 'center',
         render: rowData => resolveReasonLabel(rowData.reason ?? rowData.reasonLkey)
+      },
+      {
+        key: 'icdDiagnosis',
+        title: <Translate>ICD DIAGNOSIS</Translate>,
+        width: 160,
+        align: 'center',
+        render: (rowData: any) => {
+          const diagnosis = icdDiagnosesMap.get(rowData.icdDiagnosisId);
+          return diagnosis
+            ? `${diagnosis.icdCode ?? ''} - ${diagnosis.icdShortDescription ?? ''}`.replace(/^ - | - $/, '')
+            : '—';
+        }
       },
       {
         key: 'physician',
