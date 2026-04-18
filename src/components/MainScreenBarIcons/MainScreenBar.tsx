@@ -556,7 +556,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               </IconButton>
             </Tooltip>
 
-           
+            {authSlice.user?.jobRole === 'PHYSICIAN' && (
               <Tooltip title="My Consultations">
                 <IconButton
                   size="small"
@@ -570,7 +570,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                   />
                 </IconButton>
               </Tooltip>
-            
+            )}
 
             <Tooltip title="Announcements">
               <IconButton size="small">
