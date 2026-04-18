@@ -796,20 +796,38 @@ const Tests = forwardRef<any, Props>(
 
                       try {
                         await undoAcceptTest(rowData.id).unwrap();
+
                         dispatch(
                           notify({
                             msg: 'Undo accept successful',
                             sev: 'success'
                           })
                         );
+
                         await refetchAllRadData();
                       } catch (e: any) {
+                        const errorKey = e?.data?.errorKey || e?.data?.message || e?.error;
+                        const errorMessage = e?.data?.message || e?.data?.detail || '';
+
+                        let msg = 'Undo accept failed';
+
+                        if (
+                          errorKey === 'billed_item_cannot_undo_accept' ||
+                          errorMessage.includes('already billed')
+                        ) {
+                          msg = 'Cannot undo accept because this test is already billed';
+                        } else if (
+                          errorKey === 'invalid_transition' ||
+                          errorMessage.includes('Undo accept is allowed only from ACCEPTED')
+                        ) {
+                          msg = 'Undo accept is allowed only for accepted tests';
+                        } else if (errorMessage) {
+                          msg = errorMessage;
+                        }
+
                         dispatch(
                           notify({
-                            msg:
-                              e?.data?.message ||
-                              e?.data?.detail ||
-                              'Undo accept failed',
+                            msg,
                             sev: 'error'
                           })
                         );
@@ -962,82 +980,82 @@ const Tests = forwardRef<any, Props>(
       }
     }, [orderTests, refetchAllRadData]);
 
-// Direction handling for RTL/LTR
+    // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-    <div dir={dir}>
-      <Panel ref={ref} defaultExpanded>
+      <div dir={dir}>
+        <Panel ref={ref} defaultExpanded>
 
 
-        <MyTable
-          filters={filters()}
-          columns={columns}
-          tableButtons={tableButtons}
-          data={pagedData}
-          loading={loading || isTestsFetching}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={effectiveTotalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortColumn={sortColumn}
-          sortType={sortType}
-          onSortChange={handleSortChange}
-          onRowClick={rowData => setTest(rowData)}
-          rowClassName={isTestSelected}
-          loadingHeight={200}
+          <MyTable
+            filters={filters()}
+            columns={columns}
+            tableButtons={tableButtons}
+            data={pagedData}
+            loading={loading || isTestsFetching}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={effectiveTotalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            sortColumn={sortColumn}
+            sortType={sortType}
+            onSortChange={handleSortChange}
+            onRowClick={rowData => setTest(rowData)}
+            rowClassName={isTestSelected}
+            loadingHeight={200}
 
-        />
-
-
-        <CancellationModal
-          open={openRejectedModal}
-          setOpen={setOpenRejectedModal}
-          fieldName="rejectedReason"
-          handleCancle={handleRejectedTest}
-          object={test}
-          setObject={setTest}
-          fieldLabel="Reject Reason"
-          title="Reject"
-        />
-
-        <ChatModal
-          open={openNoteModal}
-          setOpen={setOpenNoteModal}
-          title="Technician Notes"
-          list={notesResponse?.data ?? []}
-          fieldShowName="note"
-          handleSendMessage={handleSendMessage}
-        />
-
-        <PatientArrivalModal
-          open={openArrivalModal}
-          setOpen={setOpenArrivalModal}
-          test={test}
-          setTest={setTest}
-          fetchTest={fetchTest}
-          fetchAllTests={refetchAllRadData}
-        />
-
-        <CancellationModal
-          open={openBulkRejectModal}
-          setOpen={setOpenBulkRejectModal}
-          fieldName="rejectedReason"
-          handleCancle={handleBulkReject}
-          object={{ rejectedReason: bulkRejectReason }}
-          setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
-          fieldLabel="Reject Reason"
-          title="Bulk Reject"
-          required={true}
-        />
+          />
 
 
-      </Panel>
-    </div>
+          <CancellationModal
+            open={openRejectedModal}
+            setOpen={setOpenRejectedModal}
+            fieldName="rejectedReason"
+            handleCancle={handleRejectedTest}
+            object={test}
+            setObject={setTest}
+            fieldLabel="Reject Reason"
+            title="Reject"
+          />
+
+          <ChatModal
+            open={openNoteModal}
+            setOpen={setOpenNoteModal}
+            title="Technician Notes"
+            list={notesResponse?.data ?? []}
+            fieldShowName="note"
+            handleSendMessage={handleSendMessage}
+          />
+
+          <PatientArrivalModal
+            open={openArrivalModal}
+            setOpen={setOpenArrivalModal}
+            test={test}
+            setTest={setTest}
+            fetchTest={fetchTest}
+            fetchAllTests={refetchAllRadData}
+          />
+
+          <CancellationModal
+            open={openBulkRejectModal}
+            setOpen={setOpenBulkRejectModal}
+            fieldName="rejectedReason"
+            handleCancle={handleBulkReject}
+            object={{ rejectedReason: bulkRejectReason }}
+            setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
+            fieldLabel="Reject Reason"
+            title="Bulk Reject"
+            required={true}
+          />
+
+
+        </Panel>
+      </div>
     );
   }
 );

@@ -2378,6 +2378,13 @@ export const newPatientServiceAndProduct: modelTypes.PatientServiceAndProduct = 
   billingInvoiceId: undefined,
   billingInvoiceItemId: undefined,
 };
+export enum ServiceSource {
+  LABORATORY = 'LABORATORY',
+  RADIOLOGY = 'RADIOLOGY',
+  PROCEDURE = 'PROCEDURE',
+  CONSULTATION_PORTAL = 'CONSULTATION_PORTAL',
+  SERVICE_AND_PRODUCT = 'SERVICE_AND_PRODUCT',
+}
 
 export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProductCreateDTO = {
   patientId: undefined,
@@ -2388,10 +2395,13 @@ export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProduct
   diagnosticTestId: undefined,
   serviceId: undefined,
   procedureId: undefined,
-
+  
   quantity: 1,
   unitPrice: 0,
-  currency: ''};
+  currency: '',
+  serviceSource: ServiceSource.SERVICE_AND_PRODUCT,
+  SourceId: undefined
+};
 
 export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProductUpdateDTO = {
   id: undefined,

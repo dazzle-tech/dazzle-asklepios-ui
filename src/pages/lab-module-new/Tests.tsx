@@ -680,16 +680,33 @@ const Tests = forwardRef<any, Props>(
                           sev: 'success'
                         })
                       );
+
                       await refetchAllLabData();
                       await fetchTest();
                       setTest(rowData);
                     } catch (e: any) {
+                      const errorKey = e?.data?.errorKey || e?.data?.message || e?.error;
+                      const errorMessage = e?.data?.message || e?.data?.detail || '';
+
+                      let msg = 'Undo accept failed';
+
+                      if (
+                        errorKey === 'billed_item_cannot_undo_accept' ||
+                        errorMessage.includes('already billed')
+                      ) {
+                        msg = 'Cannot undo accept because this test is already billed';
+                      } else if (
+                        errorKey === 'invalid_transition' ||
+                        errorMessage.includes('Undo accept is allowed only from ACCEPTED')
+                      ) {
+                        msg = 'Undo accept is allowed only for accepted tests';
+                      } else if (errorMessage) {
+                        msg = errorMessage;
+                      }
+
                       dispatch(
                         notify({
-                          msg:
-                            e?.data?.message ||
-                            e?.data?.detail ||
-                            'Undo accept failed',
+                          msg,
                           sev: 'error'
                         })
                       );
@@ -900,7 +917,7 @@ const Tests = forwardRef<any, Props>(
     }, [order?.id]);
 
 
-// Direction handling for RTL/LTR
+    // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 
@@ -908,116 +925,116 @@ const Tests = forwardRef<any, Props>(
 
 
     return (
-    <div dir={dir}>
-      <Panel ref={ref} defaultExpanded>
+      <div dir={dir}>
+        <Panel ref={ref} defaultExpanded>
 
-        <div style={{ minHeight: 600 }}>
-          <MyTable
-            data={normalizedOrderTests}
-            totalCount={testsResponse?.totalCount ?? 0}
-            page={paginationParams.page}
-            filters={filters()}
-            rowsPerPage={paginationParams.size}
-            columns={columns}
-            onRowClick={(rowData) => {
-              setTest(rowData);
+          <div style={{ minHeight: 600 }}>
+            <MyTable
+              data={normalizedOrderTests}
+              totalCount={testsResponse?.totalCount ?? 0}
+              page={paginationParams.page}
+              filters={filters()}
+              rowsPerPage={paginationParams.size}
+              columns={columns}
+              onRowClick={(rowData) => {
+                setTest(rowData);
+              }}
+              rowClassName={(rowData) =>
+                rowData.id === test?.id ? 'selected-row' : ''
+              }
+              onPageChange={(_, newPage) =>
+                setPaginationParams(prev => ({
+                  ...prev,
+                  page: newPage
+                }))
+              }
+              onRowsPerPageChange={(e) =>
+                setPaginationParams(prev => ({
+                  ...prev,
+                  size: Number(e.target.value),
+                  page: 0
+                }))
+              }
+              onSortChange={(column, type) =>
+                setPaginationParams(prev => ({
+                  ...prev,
+                  sort: `${column},${type}`,
+                  page: 0
+                }))
+              }
+            />
+
+          </div>
+
+          <SampleModal
+            open={openSingleSampleModal}
+            setOpen={setOpenSingleSampleModal}
+            orderTest={test}
+            onSuccess={async () => {
+              setSelectedRows([]);
+              refetchAllLabData?.();
             }}
-            rowClassName={(rowData) =>
-              rowData.id === test?.id ? 'selected-row' : ''
-            }
-            onPageChange={(_, newPage) =>
-              setPaginationParams(prev => ({
-                ...prev,
-                page: newPage
-              }))
-            }
-            onRowsPerPageChange={(e) =>
-              setPaginationParams(prev => ({
-                ...prev,
-                size: Number(e.target.value),
-                page: 0
-              }))
-            }
-            onSortChange={(column, type) =>
-              setPaginationParams(prev => ({
-                ...prev,
-                sort: `${column},${type}`,
-                page: 0
-              }))
-            }
           />
 
-        </div>
+          <CancellationModal
+            open={openRejectedModal}
+            setOpen={setOpenRejectedModal}
+            fieldName="rejectedReason"
+            handleCancle={handleRejectedTest}
+            object={test}
+            setObject={setTest}
+            fieldLabel="Reject Reason"
+            title="Reject"
+          />
 
-        <SampleModal
-          open={openSingleSampleModal}
-          setOpen={setOpenSingleSampleModal}
-          orderTest={test}
-          onSuccess={async () => {
-            setSelectedRows([]);
-            refetchAllLabData?.();
-          }}
-        />
+          <ChatModal
+            open={openNoteModal}
+            setOpen={setOpenNoteModal}
+            title="Technician Notes"
+            list={notesResponse?.data ?? []}
+            fieldShowName="note"
+            handleSendMessage={handleSendMessage}
+            loading={isNotesFetching || isSendingNote}
+          />
 
-        <CancellationModal
-          open={openRejectedModal}
-          setOpen={setOpenRejectedModal}
-          fieldName="rejectedReason"
-          handleCancle={handleRejectedTest}
-          object={test}
-          setObject={setTest}
-          fieldLabel="Reject Reason"
-          title="Reject"
-        />
-
-        <ChatModal
-          open={openNoteModal}
-          setOpen={setOpenNoteModal}
-          title="Technician Notes"
-          list={notesResponse?.data ?? []}
-          fieldShowName="note"
-          handleSendMessage={handleSendMessage}
-          loading={isNotesFetching || isSendingNote}
-        />
-
-        <BulkCollectSampleModal
-          open={openBulkSampleModal}
-          setOpen={setOpenBulkSampleModal}
-          orderId={order?.id}
-          selectedTests={normalizedOrderTests.filter(t =>
-            selectedRows.includes(t.id)
-          )}
-          onSuccess={() => {
-            setSelectedRows([]);
-            refetchAllLabData?.();
-          }}
-        />
+          <BulkCollectSampleModal
+            open={openBulkSampleModal}
+            setOpen={setOpenBulkSampleModal}
+            orderId={order?.id}
+            selectedTests={normalizedOrderTests.filter(t =>
+              selectedRows.includes(t.id)
+            )}
+            onSuccess={() => {
+              setSelectedRows([]);
+              refetchAllLabData?.();
+            }}
+          />
 
 
 
 
-        <CancellationModal
-          open={openBulkRejectModal}
-          setOpen={setOpenBulkRejectModal}
-          fieldName="rejectedReason"
-          handleCancle={handleBulkReject}
-          object={{ rejectedReason: bulkRejectReason }}
-          setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
-          fieldLabel="Reject Reason"
-          title="Bulk Reject"
-        />
+          <CancellationModal
+            open={openBulkRejectModal}
+            setOpen={setOpenBulkRejectModal}
+            fieldName="rejectedReason"
+            handleCancle={handleBulkReject}
+            object={{ rejectedReason: bulkRejectReason }}
+            setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
+            fieldLabel="Reject Reason"
+            title="Bulk Reject"
+          />
 
-        <AddResultModal
-          open={openAddResultModal}
-          setOpen={setOpenAddResultModal}
-          acceptedTests={acceptedTests}
-          onSuccess={async () => {
-            await refetchAllLabData();
-          }}
-        />
+          <AddResultModal
+            open={openAddResultModal}
+            setOpen={setOpenAddResultModal}
+            acceptedTests={acceptedTests}
+            onSuccess={async () => {
+              await refetchAllLabData();
+            }}
+          />
 
-      </Panel>
-    </div>
+        </Panel>
+      </div>
     );
   }
 );

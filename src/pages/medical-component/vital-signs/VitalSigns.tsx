@@ -295,7 +295,7 @@ console.log("vitalSigns---", vitalSigns);
             <div className="margin-bot-10">
               <MyInput
                 required={isTriage}
-                width="100%"
+                width={isTriage ?"42%" : "100%"} 
                 fieldType="select"
                 fieldLabel="Measurment Site"
                 fieldName="measurementSite"

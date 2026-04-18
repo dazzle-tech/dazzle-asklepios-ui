@@ -185,7 +185,7 @@ const EmergencyLevelAssessment = ({
               <MyInput
                 column
                 width={200}
-                fieldLabel="AVPU Scale"
+                fieldLabel="CTAS Scale"
                 fieldType="select"
                 fieldName="avpuScale"
                 selectData={avpuScaleEnumOptions}
