@@ -273,7 +273,7 @@ const RequestTestModal = ({
         },
         {
             key: 'indication',
-            title: <Translate>Indication</Translate>,
+            title: <Translate>Request Reason</Translate>,
         },
         {
             key: 'status',
@@ -445,7 +445,7 @@ const RequestTestModal = ({
                                 fieldType="textarea"
                                 record={record}
                                 setRecord={setRecord}
-                                fieldLabel="Indication"
+                                fieldLabel="Request Reason"
                                 placeholder="Enter clinical indication"
                                 width="100%"
                                 required

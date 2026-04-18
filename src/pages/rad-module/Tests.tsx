@@ -43,6 +43,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } 
 import { Checkbox, Dropdown, Form, HStack, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 import PatientArrivalModal from './PatientArrivalModal';
 import './styles.less';
+import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 
 type Props = {
   order: any;
@@ -262,11 +263,41 @@ const Tests = forwardRef<any, Props>(
       });
     }, [orderTests, testsMap, radiologyByTestIdMap, reportsByTestId]);
 
-    const acceptedStatuses = [
-      DiagnosticOrderTestStatus.ACCEPTED,
-      DiagnosticOrderTestStatus.PARTIALLY
-    ];
+    const [
+      fetchIcdByIds,
+      {
+        data: icdDiagnosesByIds,
+        isLoading: isLoadingActiveIngredientsByIds,
+      },
+    ] = useLazyGetIcdDiagnosesByIdsQuery();
 
+    const icdIds = useMemo(() => {
+      const tests = normalizedOrderTests ?? [];
+
+      const ids = tests.map((item) => {
+
+        return item.icdDiagnosisId;
+      });
+
+
+      const filtered = ids.filter((id): id is number => id != null);
+
+
+      return filtered;
+    }, [normalizedOrderTests]);
+
+
+    useEffect(() => {
+      if (!icdIds.length) return;
+      fetchIcdByIds({
+        ids: icdIds
+      });
+    }, [icdIds, fetchIcdByIds]);
+    const icdDiagnosesMap = useMemo(() => {
+      return new Map(
+        (icdDiagnosesByIds ?? []).map((item) => [item.id, item])
+      );
+    }, [icdDiagnosesByIds]);
     const isTestSelected = (rowData: any) => {
       if (rowData && test && rowData.id === test.id) return 'selected-row';
       return '';
@@ -658,6 +689,18 @@ const Tests = forwardRef<any, Props>(
         align: 'center',
         render: (rowData: any) =>
           resolveReasonLabel(rowData.reason ?? rowData.reasonLkey)
+      },
+      {
+        key: 'icdDiagnosis',
+        title: <Translate>ICD DIAGNOSIS</Translate>,
+        width: 160,
+        align: 'center',
+        render: (rowData: any) => {
+          const diagnosis = icdDiagnosesMap.get(rowData.icdDiagnosisId);
+          return diagnosis
+            ? `${diagnosis.icdCode ?? ''} - ${diagnosis.icdShortDescription ?? ''}`.replace(/^ - | - $/, '')
+            : '—';
+        }
       },
       {
         key: 'duration',

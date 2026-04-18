@@ -288,7 +288,7 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     }
     setOpenForm(false);
     setLoad(true);
-    updateDepartment(department)
+    updateDepartment({...department, encounterType: department?.encounterType || undefined})
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));

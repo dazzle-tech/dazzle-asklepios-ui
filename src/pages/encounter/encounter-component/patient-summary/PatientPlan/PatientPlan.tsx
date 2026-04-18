@@ -50,14 +50,20 @@ const PatientPlan = ({ patient, title = null }) => {
 
   const totalCount = patientPlan?.totalCount ?? 0;
   const tableColumns = [
-   
     {
-      key: 'planInstructions',
-      dataKey: 'instructions',
-      title: <Translate>Instructions</Translate>,
+      key: 'goals',
+      dataKey: 'goals',
+      title: <Translate>Goals</Translate>,
+      flexGrow: 1,
+      render: (row: any) => row.goals,
+    },
+    {
+      key: 'treatmentPlan',
+      dataKey: 'treatmentPlan',
+      title: <Translate>Treatment Plan / Management</Translate>,
       flexGrow: 2,
-      render :(row)=> row.planInstructions
-    }
+      render: (row: any) => row.treatmentPlan,
+    },
   ];
 
   const handlePageChange = (_event: any, newPage: number) => {
@@ -82,7 +88,7 @@ const PatientPlan = ({ patient, title = null }) => {
   return (
     <Section
       isContainOnlyTable
-      title={title ? title : <Translate>Patient Plan</Translate>}
+      title={title ? title : <Translate>Plan of Care</Translate>}
       content={
         <MyTable
           columns={tableColumns}
