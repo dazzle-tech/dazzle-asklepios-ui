@@ -412,7 +412,7 @@ const MyInput = ({
           />
         );
 
-       case 'time':
+      case 'time':
         return (
           <Form.Control
             className="custom-date-input"
@@ -459,6 +459,8 @@ const MyInput = ({
           ? (props.selectDataLabel as string[])
           : [props.selectDataLabel ?? ''];
         const primaryLabelKey = labelKeys[0] ?? '';
+        const valueKey = props?.selectDataValue ?? '';
+        const dataList = props?.selectData ?? [];
 
         return (
           <Form.Control
@@ -483,14 +485,28 @@ const MyInput = ({
             cleanable={props.cleanable !== undefined ? props.cleanable : true}
             readOnly={props.readOnly !== undefined ? props.readOnly : false}
             name={fieldName}
-            data={props?.selectData ?? []}
+            data={dataList}
             labelKey={primaryLabelKey}
-            valueKey={props?.selectDataValue ?? ''}
+            valueKey={valueKey}
             value={record ? record[fieldName] : ''}
-            onChange={handleValueChange}
+            onChange={(value) => {
+              handleValueChange(value);
+
+              if (props.onSelectItem) {
+                if (value === null || value === undefined || value === '') {
+                  props.onSelectItem(null);
+                  return;
+                }
+
+                const selectedItem =
+                  dataList.find((x: any) => String(x?.[valueKey]) === String(value)) ?? null;
+
+                props.onSelectItem(selectedItem);
+              }
+            }}
             defaultValue={props.defaultSelectValue}
             placeholder={props.placeholder}
-            menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
+            menuMaxHeight={getDynamicMenuMaxHeight(dataList)}
             onKeyDown={focusNextField}
             loading={props?.loading ?? false}
             open={isSelectOpen}
@@ -512,7 +528,7 @@ const MyInput = ({
             }
             disabledItemValues={
               props.disabledItemValues
-                ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
+                ? dataList.map(item => item[valueKey])
                 : []
             }
           />
@@ -696,7 +712,18 @@ const MyInput = ({
             labelKey={props?.selectDataLabel ?? ''}
             valueKey={props?.selectDataValue ?? ''}
             value={record ? record[fieldName] : []}
-            onChange={handleValueChange}
+            onChange={(value) => {
+              handleValueChange(value);
+
+              if (props.onSelectItem) {
+                const valueKey = props?.selectDataValue ?? 'id';
+                const selectedItems = (props?.selectData ?? []).filter(item =>
+                  (value ?? []).some(v => String(v) === String(item?.[valueKey]))
+                );
+
+                props.onSelectItem(selectedItems);
+              }
+            }}
             placeholder={props.placeholder ?? 'Select...'}
             groupBy={props.groupBy ?? null}
             searchBy={props.searchBy}
@@ -712,7 +739,6 @@ const MyInput = ({
             }
           />
         );
-
       case 'date':
         return (
           <Form.Control

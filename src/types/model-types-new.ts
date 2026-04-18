@@ -3560,6 +3560,14 @@ export type PatientServiceAndProduct = {
   billingInvoiceId?: number | null;
   billingInvoiceItemId?: number | null;
 };
+ 
+export enum ServiceSource {
+  LABORATORY = 'LABORATORY',
+  RADIOLOGY = 'RADIOLOGY',
+  PROCEDURE = 'PROCEDURE',
+  CONSULTATION_PORTAL = 'CONSULTATION_PORTAL',
+  SERVICE_AND_PRODUCT = 'SERVICE_AND_PRODUCT',
+}
 
 export type PatientServiceProductCreateDTO = {
   patientId: number;
@@ -3577,6 +3585,8 @@ export type PatientServiceProductCreateDTO = {
   exemptionAmount?: number | null;
   taxAmount?: number | null;
   currency: string;
+  serviceSource: ServiceSource;
+  SourceId?: number | null; // ID of the source entity (e.g., diagnostic order test ID, procedure ID, etc.)
 };
 
 export type PatientServiceProductUpdateDTO = {

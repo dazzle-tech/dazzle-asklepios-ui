@@ -317,7 +317,8 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
 
             <div className="margin-bot-10">
               <MyInput
-                width="100%"
+                required={isTriage}
+                width={isTriage ?"42%" : "100%"} 
                 fieldType="select"
                 fieldLabel="Measurment Site"
                 fieldName="measurementSite"

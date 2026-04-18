@@ -711,7 +711,7 @@ const UrgentCareList = () => {
 
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
-
+    sessionStorage.setItem('encounterPageSource', 'Urgent_Care_List');
     const targetPath = fullPatient?.isPrivatePatient
       ? '/user-access-patient-private'
       : '/nurse-station';

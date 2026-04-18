@@ -325,23 +325,41 @@ const Tests = forwardRef<any, Props>(
       }
 
       try {
-        await undoAcceptTest({
-          id: undoAcceptTargetId,
-          undoAcceptReason
-        }).unwrap();
+        await undoAcceptTest(rowData.id).unwrap();
 
-        dispatch(notify({ msg: 'Undo accept successful', sev: 'success' }));
-
-        setOpenUndoAcceptModal(false);
-        setUndoAcceptTargetId(null);
-        setUndoAcceptReason('');
+        dispatch(
+          notify({
+            msg: 'Undo accept successful',
+            sev: 'success'
+          })
+        );
 
         await refetchAllLabData();
         await fetchTest();
+        setTest(rowData);
       } catch (e: any) {
+        const errorKey = e?.data?.errorKey || e?.data?.message || e?.error;
+        const errorMessage = e?.data?.message || e?.data?.detail || '';
+
+        let msg = 'Undo accept failed';
+
+        if (
+          errorKey === 'billed_item_cannot_undo_accept' ||
+          errorMessage.includes('already billed')
+        ) {
+          msg = 'Cannot undo accept because this test is already billed';
+        } else if (
+          errorKey === 'invalid_transition' ||
+          errorMessage.includes('Undo accept is allowed only from ACCEPTED')
+        ) {
+          msg = 'Undo accept is allowed only for accepted tests';
+        } else if (errorMessage) {
+          msg = errorMessage;
+        }
+
         dispatch(
           notify({
-            msg: e?.data?.message || e?.data?.detail || 'Undo accept failed',
+            msg,
             sev: 'error'
           })
         );
