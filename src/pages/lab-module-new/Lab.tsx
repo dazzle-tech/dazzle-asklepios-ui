@@ -21,10 +21,11 @@ import {
 import RequestedTest from '../rad-module/requested-tests/RequestedTest';
 import Orders from './Orders';
 import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
-import Result from './Results';
+import Result from './Result';
 import Tests from './Tests';
 import { newPatient, newPatientEncounter } from '@/types/model-types-constructor-new';
 import { useLazyGetEncounterByIdQuery } from '@/services/encounters/patientEncounterService';
+import ReviewResults from './ReviewResults';
 
 const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
@@ -346,7 +347,7 @@ const Lab = () => {
       title: 'Reviewed Results',
       content: (
         <div dir={dir}>
-          <Result
+          <ReviewResults
             setEncounter={setEncounter}
             setPatient={setPatient}
             user={user?.id} 

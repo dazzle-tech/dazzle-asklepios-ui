@@ -110,7 +110,7 @@ const resolveLovDisplayValue = (
   );
 };
 
-const Result = forwardRef<any, any>(
+const ReviewResults = forwardRef<any, any>(
   ({ loading, setTest, refetchAllLabData, setPatient, setEncounter }, ref) => {
     const today = new Date();
     const [page, setPage] = useState(0);
@@ -694,4 +694,4 @@ const Result = forwardRef<any, any>(
   }
 );
 
-export default Result;
+export default ReviewResults;
