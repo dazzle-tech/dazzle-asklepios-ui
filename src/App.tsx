@@ -602,6 +602,8 @@ const App = () => {
               <Route path="/patient-report" element={<StimulsoftReportViewer />} />
               <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>
+                <Route path="nurse-assessment" element={<NurseAssessment />} />
+                <Route path="physician-assessment" element={<PhysicianAssessment />} />
                 <Route path="progress-notes" element={<ProgressNotes />} />
 
                 <Route
@@ -635,7 +637,7 @@ const App = () => {
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
                 <Route path="dialysis-request" element={<DialysisRequest />} />
-                  <Route path="ucc-medication-order" element={<UccMedicationOrder />} />
+                <Route path="ucc-medication-order" element={<UccMedicationOrder />} />
                 <Route path="operation-request" element={<OperationRequestNew />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
