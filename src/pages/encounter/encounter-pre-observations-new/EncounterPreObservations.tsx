@@ -236,7 +236,7 @@ const NurseStation = () => {
               />
               <MyButton
                 backgroundColor={'var(--primary-gray)'}
-                onClick={handleGoBack}
+                 onClick={() => navigate(-1)}
                 prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
               />
 
