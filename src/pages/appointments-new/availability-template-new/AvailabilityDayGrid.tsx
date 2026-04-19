@@ -58,6 +58,17 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({
         return `${minutes} min`;
     };
 
+    const isDayWorking = () => {
+    const workingDays = template?.workingDays;
+    if (!workingDays || !day) return false;
+
+    const foundDay = workingDays.find(
+        (d: any) => d.dayOfWeek === day
+    );
+
+    return foundDay?.isWorking === true;
+};
+
     return (
         <div
             key={template?.id}
@@ -92,7 +103,7 @@ const TemplateColumn: React.FC<TemplateColumnProps> = ({
                     />
                 ))
             )}
-            {((!readOnly) && dayInclude) && (
+            {((!readOnly) && isDayWorking()) && (
                 <MyButton
                     prefixIcon={() => <FaPlus />}
                     width="300px"
@@ -143,7 +154,7 @@ const AvailabilityDayGrid = ({
   ? [parentTemplate, ...normalizedTemplates]
   : [];
 
-   
+   console.log("mergedArray: ", mergedArray);
 
     return (
         <>
