@@ -283,6 +283,13 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         <span>{formatEnumString(rowData.billingItemType)}</span>
       ),
     },
+        {
+      key: 'serviceSource',
+      title: 'service Source',
+      render: (rowData: PatientServiceAndProduct) => (
+        <span>{formatEnumString(rowData.serviceSource)} Page</span>
+      ),
+    },
     {
       key: 'name',
       title: 'Name',
@@ -298,6 +305,7 @@ const ServiceAndProductsTab = ({ edit: propEdit }) => {
         <span>{rowData.unitPrice != null ? Number(rowData.unitPrice).toFixed(2) : '-'}</span>
       ),
     },
+
     {
       key: 'currency',
       title: 'Currency',
