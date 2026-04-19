@@ -46,11 +46,13 @@ import {
 import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 
-import { useGetBulkPatientBasicInfoMutation, useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
+import {
+  useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientByIdQuery
+} from '@/services/patient/patientService';
 
 import 'react-tabs/style/react-tabs.css';
 import './styles.less';
-import { skipToken } from '@tanstack/react-query';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -68,10 +70,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-    appliedSearch?.searchText ??
-    appliedSearch?.text ??
-    appliedSearch?.value ??
-    ''
+      appliedSearch?.searchText ??
+      appliedSearch?.text ??
+      appliedSearch?.value ??
+      ''
   ).trim();
 
   if (!raw)
@@ -183,7 +185,7 @@ const EncounterList = () => {
     discharge: false
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
-  // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
+  // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
@@ -337,9 +339,7 @@ const EncounterList = () => {
     return Array.from(new Set(ids));
   }, [tableData]);
   useEffect(() => {
-    const pid =
-
-      encounter?.patient?.id;
+    const pid = encounter?.patient?.id;
 
     if (pid) triggerGetPatientById({ id: pid });
   }, [encounter?.patient?.id]);
@@ -349,7 +349,7 @@ const EncounterList = () => {
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => { });
+      .catch(() => {});
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
@@ -426,7 +426,8 @@ const EncounterList = () => {
       return true;
     } catch (err: any) {
       const errorMap: Record<string, string> = {
-        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.rule':
+          'Cancellation is not allowed for the current encounter status.',
         'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
       };
 
@@ -438,9 +439,7 @@ const EncounterList = () => {
     }
   };
   const fetchPatientForEncounter = async (enc: any) => {
-    const pid =
-      enc?.patient?.id ??
-      null;
+    const pid = enc?.patient?.id ?? null;
 
     if (!pid) return null;
 
@@ -467,7 +466,6 @@ const EncounterList = () => {
 
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
-
 
     const privatePatientPath = '/user-access-patient-private';
     const encounterPath = '/encounter';
@@ -627,6 +625,23 @@ const EncounterList = () => {
       key: 'encounterDate',
       title: 'DATE',
       render: (row: any) => row?.encounterDate ?? '-'
+    },
+    {
+      key: 'startedDate',
+      title: 'STARTED DATE',
+      expandable: true,
+      render: (row: any) => {
+        const raw = row?.startedDate;
+        if (!raw) return '-';
+        const d = new Date(raw);
+        return isNaN(d.getTime()) ? raw : d.toLocaleString();
+      }
+    },
+    {
+      key: 'startedBy',
+      title: 'STARTED BY',
+      expandable: true,
+      render: (row: any) => row?.startedBy ?? '-'
     },
     {
       key: 'status',
@@ -880,7 +895,6 @@ const EncounterList = () => {
 
   const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
-
   useEffect(() => {
     if (tableLoading) dispatch(showSystemLoader());
     else dispatch(hideSystemLoader());
@@ -980,9 +994,7 @@ const EncounterList = () => {
             open={openNurseAssessment}
             setOpen={setOpenNurseAssessment}
             actionButtonFunction={async () => {
-
               await handleGoToPreVisitObservations(encounter);
-
             }}
             actionType="confirm"
             confirmationQuestion="Do you want to start Nurse Assessment?"

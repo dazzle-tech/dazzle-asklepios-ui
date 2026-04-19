@@ -223,9 +223,10 @@ const Encounter = () => {
   const followUpDraftAppointmentData = React.useMemo(() => {
     if (!patientToSend) return null;
     return {
-      patientId: (patientToSend as any)?.id ?? (patientToSend as any)?.key ?? null
+      patientId: (patientToSend as any)?.id ?? (patientToSend as any)?.key ?? null,
+      sourceEncounterId: encounterId ?? null
     };
-  }, [patientToSend]);
+  }, [patientToSend, encounterId]);
 
   const handleCompleteEncounter = async () => {
     try {

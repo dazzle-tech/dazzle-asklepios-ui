@@ -29,9 +29,9 @@ import MyButton from "@/components/MyButton/MyButton";
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 import PatientPaymentInfo, { PatientPaymentInfoHandle } from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
 import { newPatientPayments, newPatientInsurance } from '@/types/model-types-constructor-new';
+import AppointmentLogsModal from "./AppointmentLogsModal";
 
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
-
     const [cancelAppointment] = useCancelAppointmentMutation();
     const [noShowAppointment] = useNoShowAppointmentMutation();
     const [confirmAppointment] = useConfirmAppointmentMutation();
@@ -43,6 +43,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const { data: noShowResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
     const { data: cancelResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
     const [reasonKey, setResonKey] = useState<any>(null)
+    const [openAppointmentLogsModal, setOpenAppointmentLogsModal] = useState<boolean>(false);
     const [otherReason, setOtherReason] = useState<any>(null)
     const reasonOptions = useMemo(
       () => (resonType === 'Cancel' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object) ?? [],
@@ -182,7 +183,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
       try {
         await checkInAppointment({ id }).unwrap();
-        dispatch(notify({ msg: 'Appointment Checked-In Successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'Appointment Checked-In and Encounter Created  Successfully', sev: 'success' }));
         onStatusChange();
         onActionsModalClose();
       } catch (error: any) {
@@ -362,7 +363,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 status: "CONFIRMED"
             }));
             
-            dispatch(notify({ msg: 'Appointment Confirmed and Encounter Created Successfully', sev: 'success' }));
+            dispatch(notify({ msg: 'Appointment Confirmed Successfully', sev: 'success' }));
             onStatusChange();
             onActionsModalClose();
         } catch (error: any) {
@@ -502,12 +503,13 @@ const handleCancel = async () => {
             </MyButton>
             <MyButton
               width="250px"
-              onClick={() => { setResonType('No-show') }}
+              onClick={() => { setOpenAppointmentLogsModal(true) }}
               color="blue"
-              disabled={true}
+              // disabled={true}
               appearance="primary"
             >
-                No-show
+                {/* No-show */}
+                Show log
             </MyButton>
             <MyButton
               width="250px"
@@ -622,6 +624,12 @@ const handleCancel = async () => {
                         <div>Loading...</div>
                     )
                 }
+            />
+
+            <AppointmentLogsModal 
+            open={openAppointmentLogsModal}
+            setOpen={setOpenAppointmentLogsModal}
+            appointment={appointment}
             />
         </div>
     );

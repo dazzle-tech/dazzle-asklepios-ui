@@ -43,6 +43,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } 
 import { Checkbox, Dropdown, Form, HStack, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 import PatientArrivalModal from './PatientArrivalModal';
 import './styles.less';
+import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 
 type Props = {
   order: any;
@@ -262,11 +263,41 @@ const Tests = forwardRef<any, Props>(
       });
     }, [orderTests, testsMap, radiologyByTestIdMap, reportsByTestId]);
 
-    const acceptedStatuses = [
-      DiagnosticOrderTestStatus.ACCEPTED,
-      DiagnosticOrderTestStatus.PARTIALLY
-    ];
+    const [
+      fetchIcdByIds,
+      {
+        data: icdDiagnosesByIds,
+        isLoading: isLoadingActiveIngredientsByIds,
+      },
+    ] = useLazyGetIcdDiagnosesByIdsQuery();
 
+    const icdIds = useMemo(() => {
+      const tests = normalizedOrderTests ?? [];
+
+      const ids = tests.map((item) => {
+
+        return item.icdDiagnosisId;
+      });
+
+
+      const filtered = ids.filter((id): id is number => id != null);
+
+
+      return filtered;
+    }, [normalizedOrderTests]);
+
+
+    useEffect(() => {
+      if (!icdIds.length) return;
+      fetchIcdByIds({
+        ids: icdIds
+      });
+    }, [icdIds, fetchIcdByIds]);
+    const icdDiagnosesMap = useMemo(() => {
+      return new Map(
+        (icdDiagnosesByIds ?? []).map((item) => [item.id, item])
+      );
+    }, [icdDiagnosesByIds]);
     const isTestSelected = (rowData: any) => {
       if (rowData && test && rowData.id === test.id) return 'selected-row';
       return '';
@@ -660,6 +691,18 @@ const Tests = forwardRef<any, Props>(
           resolveReasonLabel(rowData.reason ?? rowData.reasonLkey)
       },
       {
+        key: 'icdDiagnosis',
+        title: <Translate>ICD DIAGNOSIS</Translate>,
+        width: 160,
+        align: 'center',
+        render: (rowData: any) => {
+          const diagnosis = icdDiagnosesMap.get(rowData.icdDiagnosisId);
+          return diagnosis
+            ? `${diagnosis.icdCode ?? ''} - ${diagnosis.icdShortDescription ?? ''}`.replace(/^ - | - $/, '')
+            : '—';
+        }
+      },
+      {
         key: 'duration',
         title: <Translate>DURATION</Translate>,
         width: 120,
@@ -796,20 +839,38 @@ const Tests = forwardRef<any, Props>(
 
                       try {
                         await undoAcceptTest(rowData.id).unwrap();
+
                         dispatch(
                           notify({
                             msg: 'Undo accept successful',
                             sev: 'success'
                           })
                         );
+
                         await refetchAllRadData();
                       } catch (e: any) {
+                        const errorKey = e?.data?.errorKey || e?.data?.message || e?.error;
+                        const errorMessage = e?.data?.message || e?.data?.detail || '';
+
+                        let msg = 'Undo accept failed';
+
+                        if (
+                          errorKey === 'billed_item_cannot_undo_accept' ||
+                          errorMessage.includes('already billed')
+                        ) {
+                          msg = 'Cannot undo accept because this test is already billed';
+                        } else if (
+                          errorKey === 'invalid_transition' ||
+                          errorMessage.includes('Undo accept is allowed only from ACCEPTED')
+                        ) {
+                          msg = 'Undo accept is allowed only for accepted tests';
+                        } else if (errorMessage) {
+                          msg = errorMessage;
+                        }
+
                         dispatch(
                           notify({
-                            msg:
-                              e?.data?.message ||
-                              e?.data?.detail ||
-                              'Undo accept failed',
+                            msg,
                             sev: 'error'
                           })
                         );
@@ -962,82 +1023,82 @@ const Tests = forwardRef<any, Props>(
       }
     }, [orderTests, refetchAllRadData]);
 
-// Direction handling for RTL/LTR
+    // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 
     const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-    <div dir={dir}>
-      <Panel ref={ref} defaultExpanded>
+      <div dir={dir}>
+        <Panel ref={ref} defaultExpanded>
 
 
-        <MyTable
-          filters={filters()}
-          columns={columns}
-          tableButtons={tableButtons}
-          data={pagedData}
-          loading={loading || isTestsFetching}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={effectiveTotalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortColumn={sortColumn}
-          sortType={sortType}
-          onSortChange={handleSortChange}
-          onRowClick={rowData => setTest(rowData)}
-          rowClassName={isTestSelected}
-          loadingHeight={200}
+          <MyTable
+            filters={filters()}
+            columns={columns}
+            tableButtons={tableButtons}
+            data={pagedData}
+            loading={loading || isTestsFetching}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={effectiveTotalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            sortColumn={sortColumn}
+            sortType={sortType}
+            onSortChange={handleSortChange}
+            onRowClick={rowData => setTest(rowData)}
+            rowClassName={isTestSelected}
+            loadingHeight={200}
 
-        />
-
-
-        <CancellationModal
-          open={openRejectedModal}
-          setOpen={setOpenRejectedModal}
-          fieldName="rejectedReason"
-          handleCancle={handleRejectedTest}
-          object={test}
-          setObject={setTest}
-          fieldLabel="Reject Reason"
-          title="Reject"
-        />
-
-        <ChatModal
-          open={openNoteModal}
-          setOpen={setOpenNoteModal}
-          title="Technician Notes"
-          list={notesResponse?.data ?? []}
-          fieldShowName="note"
-          handleSendMessage={handleSendMessage}
-        />
-
-        <PatientArrivalModal
-          open={openArrivalModal}
-          setOpen={setOpenArrivalModal}
-          test={test}
-          setTest={setTest}
-          fetchTest={fetchTest}
-          fetchAllTests={refetchAllRadData}
-        />
-
-        <CancellationModal
-          open={openBulkRejectModal}
-          setOpen={setOpenBulkRejectModal}
-          fieldName="rejectedReason"
-          handleCancle={handleBulkReject}
-          object={{ rejectedReason: bulkRejectReason }}
-          setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
-          fieldLabel="Reject Reason"
-          title="Bulk Reject"
-          required={true}
-        />
+          />
 
 
-      </Panel>
-    </div>
+          <CancellationModal
+            open={openRejectedModal}
+            setOpen={setOpenRejectedModal}
+            fieldName="rejectedReason"
+            handleCancle={handleRejectedTest}
+            object={test}
+            setObject={setTest}
+            fieldLabel="Reject Reason"
+            title="Reject"
+          />
+
+          <ChatModal
+            open={openNoteModal}
+            setOpen={setOpenNoteModal}
+            title="Technician Notes"
+            list={notesResponse?.data ?? []}
+            fieldShowName="note"
+            handleSendMessage={handleSendMessage}
+          />
+
+          <PatientArrivalModal
+            open={openArrivalModal}
+            setOpen={setOpenArrivalModal}
+            test={test}
+            setTest={setTest}
+            fetchTest={fetchTest}
+            fetchAllTests={refetchAllRadData}
+          />
+
+          <CancellationModal
+            open={openBulkRejectModal}
+            setOpen={setOpenBulkRejectModal}
+            fieldName="rejectedReason"
+            handleCancle={handleBulkReject}
+            object={{ rejectedReason: bulkRejectReason }}
+            setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
+            fieldLabel="Reject Reason"
+            title="Bulk Reject"
+            required={true}
+          />
+
+
+        </Panel>
+      </div>
     );
   }
 );

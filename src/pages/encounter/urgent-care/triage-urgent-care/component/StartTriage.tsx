@@ -1,27 +1,38 @@
 import BackButton from "@/components/BackButton/BackButton";
 import MyButton from "@/components/MyButton/MyButton";
 import Translate from "@/components/Translate";
-import { faCheckDouble } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import MyInput from "@/components/MyInput";
+import SectionContainer from "@/components/SectionsoContainer";
+import MyLabel from "@/components/MyLabel";
+import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
+
 import React, { useEffect, useMemo, useState } from "react";
 import { Divider, Form, Row } from "rsuite";
-import GeneralAssessmentTriage from "./GeneralAssessmentTriage";
+import { useNavigate } from "react-router-dom";
+
 import ChiefComplainTriage from "./ChiefComplainTriage";
 import EmergencyLevelAssessment from "./EmergencyLevelAssessment";
-import EyeAssessmentHPI from "./EyeAssessmentHPI";
+
+import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
+
+import { useAppDispatch } from "@/hooks";
+import { notify } from "@/utils/uiReducerActions";
+
 import {
   useCompleteEncounterMutation,
+  useGetEncounterByIdQuery,
+  useUpdateEncounterMutation,
 } from "@/services/encounters/patientEncounterService";
+
 import {
   useUpdateEmergencyTriageLevelAssessmentMutation,
 } from "@/services/encounters/er-triage/emergencyTriageService";
+
+import { useGetLatestPatientObservationsComplaintsByEncounterIdQuery } from "@/services/medicalsheetsEncounter/observations/patientObservationsComplaintsService";
+
 import { useEnumOptions } from "@/services/enumsApi";
-import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "@/hooks";
-import MyLabel from "@/components/MyLabel";
-import MyBadgeStatus from "@/components/MyBadgeStatus/MyBadgeStatus";
-import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
-import { notify } from "@/utils/uiReducerActions";
+
+import type { PatientEncounter } from "@/types/model-types-new";
 
 type StartTriageProps = {
   patient: any;
@@ -34,19 +45,121 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
   const navigate = useNavigate();
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [updateLevelAssessment] = useUpdateEmergencyTriageLevelAssessmentMutation();
+  const [updateEncounter] = useUpdateEncounterMutation();
   const dispatch = useAppDispatch();
 
   const [triage, setTriage] = useState<any>(emergencyTriageNew ?? {});
+  const [localEncounter, setLocalEncounter] = useState<any>(encounter ?? {});
 
   useEffect(() => {
     if (emergencyTriageNew) setTriage(emergencyTriageNew);
   }, [emergencyTriageNew]);
 
+  useEffect(() => {
+    if (encounter) setLocalEncounter(encounter);
+  }, [encounter]);
+
+  const encounterId = encounter?.id ?? encounter?.encounterId ?? encounter?.key;
+
+  const { data: encounterFromServer } = useGetEncounterByIdQuery(
+    { id: encounterId },
+    {
+      skip: !encounterId,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+    }
+  );
+
+  const { data: nurseComplaints } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
+    { encounterId },
+    { skip: !encounterId }
+  );
+
+  useEffect(() => {
+    if (encounterFromServer) {
+      setLocalEncounter({
+        ...encounterFromServer,
+        chiefComplaint:
+          encounterFromServer.chiefComplaint || nurseComplaints?.reasonOfVisit || "",
+      });
+    }
+  }, [encounterFromServer, nurseComplaints]);
+
+  const toEncounterPayload = (encounterData: any): PatientEncounter => ({
+    id: Number(encounterData?.id),
+    patientId: Number(encounterData?.patientId ?? encounterData?.patient?.id),
+    encounterNumber: encounterData?.encounterNumber ?? null,
+    facilityId: Number(encounterData?.facilityId),
+    departmentId: Number(encounterData?.departmentId),
+    practitionerId: encounterData?.practitionerId ?? null,
+    paymentDate: encounterData?.paymentDate,
+    amount: encounterData?.amount,
+    encounterType: encounterData?.encounterType,
+    encounterReason: encounterData?.encounterReason,
+    followUpEncounterId:
+      encounterData?.followUpEncounterId ?? encounterData?.followUpEncounter?.id ?? null,
+    priorityLevel: encounterData?.priorityLevel,
+    originType: encounterData?.originType ?? null,
+    originName: encounterData?.originName ?? null,
+    notes: encounterData?.notes ?? null,
+    departmentDailySequenceNumber: encounterData?.departmentDailySequenceNumber ?? null,
+    encounterDate: encounterData?.encounterDate ?? null,
+    status: encounterData?.status,
+    chiefComplaint: encounterData?.chiefComplaint ?? null,
+    hasPrescription: Boolean(encounterData?.hasPrescription),
+    hasOrder: Boolean(encounterData?.hasOrder),
+    isObserved: Boolean(encounterData?.isObserved),
+  });
+
+  const saveChiefComplaint = async () => {
+    try {
+      const idToUpdate = localEncounter?.id ?? encounterId;
+
+      if (!idToUpdate) {
+        dispatch(notify({ msg: "No encounter id to update", sev: "error" }));
+        return;
+      }
+
+      const payload = toEncounterPayload(localEncounter);
+
+      if (!payload.patientId || !payload.facilityId || !payload.departmentId) {
+        dispatch(
+          notify({
+            msg: "Missing required fields: patientId / facilityId / departmentId",
+            sev: "error",
+          })
+        );
+        return;
+      }
+
+      if (payload.encounterReason === "FOLLOW_UP" && !payload.followUpEncounterId) {
+        dispatch(
+          notify({
+            msg: "Follow-up encounter is required when reason is FOLLOW_UP",
+            sev: "error",
+          })
+        );
+        return;
+      }
+
+      const updatedEncounter = await updateEncounter({
+        id: idToUpdate,
+        body: payload,
+      }).unwrap();
+
+      setLocalEncounter(updatedEncounter);
+      dispatch(notify({ msg: "Saved Successfully", sev: "success" }));
+    } catch (error) {
+      console.error("Error saving chief complaint", error);
+      dispatch(notify({ msg: "Save Failed", sev: "error" }));
+    }
+  };
+
   const emergencyLevelEnumOptions = useEnumOptions("EmergencyLevel");
   const encounterPriorityEnumOptions = useEnumOptions("EncounterPriority");
+
   const emergencyLevelColorMap = useMemo(() => {
     const byValue: Record<string, string> = {
-      // ER triage common levels
       RESUSCITATION: "#7f1d1d",
       EMERGENT: "#dc2626",
       URGENT: "#f97316",
@@ -56,33 +169,40 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
 
     const palette = ["#dc2626", "#f97316", "#eab308", "#16a34a", "#0ea5e9", "#7c3aed"];
     const m = new Map<string, string>();
+
     emergencyLevelEnumOptions.forEach((opt, idx) => {
       if (opt?.value == null) return;
       const key = String(opt.value);
       const mapped = byValue[String(opt.value).toUpperCase()];
       m.set(key, mapped ?? palette[idx % palette.length]);
     });
+
     return m;
   }, [emergencyLevelEnumOptions]);
+
   const selectedEmergencyLevel = emergencyLevelEnumOptions.find(
     (item: any) => item.value === triage?.emergencyLevel
   );
 
   const encounterPriorityValue =
     encounter?.priorityLevel ?? encounter?.encounterPriority ?? encounter?.encounterPriorityLkey ?? null;
+
   const selectedEncounterPriority = encounterPriorityEnumOptions.find(
     (item: any) => String(item?.value) === String(encounterPriorityValue ?? "")
   );
+
   const encounterPriorityLabel =
     selectedEncounterPriority?.label ??
     (encounterPriorityValue != null ? String(encounterPriorityValue) : "");
+
   const encounterPriorityIsUrgent = useMemo(() => {
     const v = String(
       selectedEncounterPriority?.label ??
-        selectedEncounterPriority?.value ??
-        encounterPriorityValue ??
-        ""
+      selectedEncounterPriority?.value ??
+      encounterPriorityValue ??
+      ""
     ).toUpperCase();
+
     return (
       v.includes("URGENT") ||
       v.includes("CRITICAL") ||
@@ -90,6 +210,7 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
       v.includes("EMERG")
     );
   }, [selectedEncounterPriority, encounterPriorityValue]);
+
   const encounterPriorityColor = encounterPriorityIsUrgent ? "#dc2626" : "#16a34a";
 
   const handleSaveLevelAssessmentNew = async () => {
@@ -116,7 +237,6 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
       }).unwrap();
 
       setTriage((prev: any) => ({ ...prev, ...updated }));
-
       dispatch(notify({ msg: "Emergency assessment saved", sev: "success" }));
     } catch (error) {
       console.error("Error saving emergency assessment", error);
@@ -128,60 +248,28 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
     const n = typeof v === "string" ? Number(v) : v;
     return typeof n === "number" && !Number.isNaN(n) ? n : Number.NaN;
   };
+
   const patientId = toNumberOrNaN(patient?.id ?? patient?.patientId ?? patient?.key);
-  const encounterId = toNumberOrNaN(encounter?.id ?? encounter?.encounterId ?? encounter?.key);
-
-  // (moved) emergency level assessment logic is now inside <EmergencyLevelAssessment />
-
-  const handleCompleteEncounter = async () => {
-    try {
-      const id = encounter?.id ?? encounter?.key ?? null;
-      if (!id) throw new Error("Missing encounter id");
-      await completeEncounter({ id }).unwrap();
-      dispatch(notify({ msg: "Completed Successfully", sev: "success" }));
-      // After completing the visit, return to ER Triage list
-      navigate("/urgent-care-triage");
-    } catch (error) {
-      console.error("Encounter completion error:", error);
-      dispatch(
-        notify({
-          msg: "An error occurred while completing the encounter",
-          sev: "error",
-        })
-      );
-    }
-  };
-
+  const safeEncounterId = toNumberOrNaN(encounter?.id ?? encounter?.encounterId ?? encounter?.key);
 
   return (
     <div>
       <div className="bt-field-div">
         {sourcePage === "UrgentCare" && (
-          <>
-            <BackButton
-              onClick={() => {
-                navigate("/urgent-care-triage");
-              }}
-            />
-            <MyButton
-              prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-              onClick={handleCompleteEncounter}
-              appearance="ghost"
-            >
-              <Translate> Complete Visit </Translate>
-            </MyButton>
-          </>
+          <BackButton
+            onClick={() => {
+              navigate("/urgent-care-triage");
+            }}
+          />
         )}
+
         <div className="bt-right">
           <Form fluid className="patient-priority-er-level-handle-position">
             <MyLabel label="Emergency Level" />
             {triage?.emergencyLevel && (
               <MyBadgeStatus
                 color={emergencyLevelColorMap.get(String(triage?.emergencyLevel)) ?? "#98A2B4"}
-                contant={
-                  selectedEmergencyLevel?.label ??
-                  triage?.emergencyLevel
-                }
+                contant={selectedEmergencyLevel?.label ?? triage?.emergencyLevel}
               />
             )}
 
@@ -209,10 +297,10 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
       </Row>
 
       <Row gutter={30}>
-        {!Number.isNaN(patientId) && !Number.isNaN(encounterId) && (
+        {!Number.isNaN(patientId) && !Number.isNaN(safeEncounterId) && (
           <VitalSigns
             patientId={patientId}
-            encounterId={encounterId}
+            encounterId={safeEncounterId}
             isTriage
             title="Vital Signs"
           />
@@ -220,19 +308,27 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
       </Row>
 
       <Row gutter={30}>
-        <GeneralAssessmentTriage patient={patient} encounter={encounter} />
-      </Row>
-
-      <Row gutter={30}>
-          <ChiefComplainTriage patient={patient} encounter={encounter} />
-      </Row>
-      <Row gutter={30}>
-        <EyeAssessmentHPI
-          triageId={triage?.id ?? emergencyTriageNew?.id}
-          triage={triage}
-          setTriage={setTriage}
-          patient={patient}
-          encounter={encounter}
+        <SectionContainer
+          title={<Translate>Chief Complaint</Translate>}
+          content={
+            <Form fluid>
+              <MyInput
+                required
+                width="100%"
+                height="95px"
+                showLabel={false}
+                fieldType="textarea"
+                fieldName="chiefComplaint"
+                record={localEncounter}
+                setRecord={setLocalEncounter}
+              />
+            </Form>
+          }
+          action={
+            <MyButton size="small" onClick={saveChiefComplaint} disabled={!localEncounter?.chiefComplaint}>
+              Save
+            </MyButton>
+          }
         />
       </Row>
     </div>

@@ -77,6 +77,36 @@ const unwrapApiObject = <T,>(data: any): T | null => {
   return (data?.object ?? data) as T;
 };
 
+const toDateSafe = (value: any): Date | null => {
+  if (!value && value !== 0) return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+  if (typeof value === 'number') {
+    const ms = value < 1e12 ? value * 1000 : value;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof value === 'string') {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+};
+
+const formatDateTime = (value: any): string => {
+  const d = toDateSafe(value);
+  if (!d) return '';
+  return d.toLocaleString();
+};
+
+const formatDuration = (ms: number | null): string => {
+  if (ms == null || !isFinite(ms) || ms < 0) return '';
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+};
+
 const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
   const id = toNumberOrNaN(encounterId);
   const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
@@ -94,6 +124,75 @@ const EmergencyLevelCell = ({ encounterId, labelMap, colorMap }: any) => {
       contant={labelMap?.get?.(key) ?? formatEnumString(key)}
     />
   );
+};
+
+const TriageStartedAtCell = ({ encounterId, fallbackCreatedAt }: any) => {
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const createdAt = latest?.createdDate ?? fallbackCreatedAt ?? null;
+  if (!createdAt) return <></>;
+  return <>{formatDateTime(createdAt)}</>;
+};
+
+const WaitingTimeCell = ({ encounterId, arrivalCreatedAt, fallbackTriageCreatedAt }: any) => {
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const arrival = toDateSafe(arrivalCreatedAt);
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
+  if (!arrival || !triageStart) return <></>;
+  return <>{formatDuration(triageStart.getTime() - arrival.getTime())}</>;
+};
+
+const TriageCompletedAtCell = ({
+  encounterId,
+  fallbackUpdatedAt,
+  completedAt,
+  completedDate
+}: any) => {
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const v = latest?.completedDate ?? completedDate ?? completedAt ?? fallbackUpdatedAt ?? null;
+  if (!v) return <></>;
+  return <>{formatDateTime(v)}</>;
+};
+
+const TriageTimeCell = ({
+  encounterId,
+  fallbackTriageCreatedAt,
+  fallbackUpdatedAt,
+  rowUpdatedAt,
+  completedAt,
+  completedDate
+}: any) => {
+  const id = toNumberOrNaN(encounterId);
+  const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
+    skip: Number.isNaN(id)
+  });
+
+  const latest = unwrapApiObject<any>(latestEmergencyTriage);
+  const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
+  const end = toDateSafe(
+    latest?.completedDate ??
+      completedDate ??
+      completedAt ??
+      rowUpdatedAt ??
+      fallbackUpdatedAt ??
+      null
+  );
+  if (!triageStart || !end) return <></>;
+  return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
 };
 
 const AssignBedAction = ({
@@ -153,109 +252,166 @@ const AssignBedAction = ({
   );
 };
 
+const EncounterPriorityAction = ({
+  rowData,
+  encounterPriorityEnumOptions,
+  priorityDotColor,
+  isPendingPayment,
+  onUpdatePriority
+}: {
+  rowData: any;
+  encounterPriorityEnumOptions: any[];
+  priorityDotColor: Map<string, string>;
+  isPendingPayment: boolean;
+  onUpdatePriority: (rowData: any, priorityCode: string) => Promise<boolean>;
+}) => {
+  const whisperRef = useRef<any>(null);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const selectedPriority = String(rowData?.priorityLevel ?? '');
+
+  const prioritySpeaker = (
+    <Popover>
+      <div
+        style={{
+          minWidth: 220,
+          background: '#fff',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 8
+        }}
+      >
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            padding: '4px 6px 10px 6px',
+            borderBottom: '1px solid #e5e7eb',
+            marginBottom: 8,
+            color: '#111827'
+          }}
+        >
+          Priority
+        </div>
+
+        {!encounterPriorityEnumOptions?.length ? (
+          <div style={{ padding: 8, color: '#111827' }}>No priority options</div>
+        ) : (
+          encounterPriorityEnumOptions.map((p: any) => {
+            const value = String(p?.value ?? '');
+            const label = String(p?.label ?? p?.value ?? '');
+            const isSelected = selectedPriority === value;
+
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={async (e: any) => {
+                  e?.stopPropagation?.();
+                  if (!value || saving) return;
+
+                  try {
+                    setSaving(value);
+                    const ok = await onUpdatePriority(rowData, value);
+                    if (ok) {
+                      whisperRef.current?.close?.();
+                    }
+                  } finally {
+                    setSaving(null);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: '10px 12px',
+                  marginBottom: 6,
+                  borderRadius: 8,
+                  border: isSelected ? '1px solid #bfd3ff' : '1px solid #e5e7eb',
+                  background: isSelected ? '#eef4ff' : '#ffffff',
+                  color: '#111827',
+                  cursor: 'pointer'
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    minWidth: 0
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: priorityDotColor.get(value) ?? '#98A2B4',
+                      flex: '0 0 auto'
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: '#111827'
+                    }}
+                  >
+                    {label}
+                  </span>
+                </span>
+
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: '#111827',
+                    minWidth: 16,
+                    textAlign: 'right'
+                  }}
+                >
+                  {saving === value ? '...' : isSelected ? '✓' : ''}
+                </span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </Popover>
+  );
+
+  return (
+    <Whisper
+      ref={whisperRef}
+      trigger="click"
+      placement="leftStart"
+      enterable
+      speaker={
+        isPendingPayment ? (
+          <Tooltip>Please add payment first</Tooltip>
+        ) : (
+          prioritySpeaker
+        )
+      }
+    >
+      <div
+        onClick={(e: any) => {
+          e?.stopPropagation?.();
+        }}
+        style={{ display: 'inline-flex', alignItems: 'center' }}
+      >
+        <MyButton size="small" disabled={false}>
+          <FontAwesomeIcon icon={faCircleExclamation} />
+        </MyButton>
+      </div>
+    </Whisper>
+  );
+};
+
 const UrgentCareTriage = () => {
   const SENT_TO_ER_STATUS_CODE = 'SENT_TO_ER';
   const COMPLETE_TRIAGE_STATUS_CODE = 'CLOSED';
-
-  const toDateSafe = (value: any): Date | null => {
-    if (!value && value !== 0) return null;
-    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
-    if (typeof value === 'number') {
-      const ms = value < 1e12 ? value * 1000 : value;
-      const d = new Date(ms);
-      return isNaN(d.getTime()) ? null : d;
-    }
-    if (typeof value === 'string') {
-      const d = new Date(value);
-      return isNaN(d.getTime()) ? null : d;
-    }
-    return null;
-  };
-
-  const formatDateTime = (value: any): string => {
-    const d = toDateSafe(value);
-    if (!d) return '';
-    return d.toLocaleString();
-  };
-
-  const formatDuration = (ms: number | null): string => {
-    if (ms == null || !isFinite(ms) || ms < 0) return '';
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-  };
-
-  const TriageStartedAtCell = ({ encounterId, fallbackCreatedAt }: any) => {
-    const id = toNumberOrNaN(encounterId);
-    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
-      skip: Number.isNaN(id)
-    });
-
-    const latest = unwrapApiObject<any>(latestEmergencyTriage);
-
-    const createdAt = latest?.createdDate ?? fallbackCreatedAt ?? null;
-    if (!createdAt) return <></>;
-    return <>{formatDateTime(createdAt)}</>;
-  };
-
-  const WaitingTimeCell = ({ encounterId, arrivalCreatedAt, fallbackTriageCreatedAt }: any) => {
-    const id = toNumberOrNaN(encounterId);
-    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
-      skip: Number.isNaN(id)
-    });
-
-    const arrival = toDateSafe(arrivalCreatedAt);
-    const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
-    if (!arrival || !triageStart) return <></>;
-    return <>{formatDuration(triageStart.getTime() - arrival.getTime())}</>;
-  };
-
-  const TriageCompletedAtCell = ({
-    encounterId,
-    fallbackUpdatedAt,
-    completedAt,
-    completedDate
-  }: any) => {
-    const id = toNumberOrNaN(encounterId);
-    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
-      skip: Number.isNaN(id)
-    });
-
-    const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    const v = latest?.completedDate ?? completedDate ?? completedAt ?? fallbackUpdatedAt ?? null;
-    if (!v) return <></>;
-    return <>{formatDateTime(v)}</>;
-  };
-
-  const TriageTimeCell = ({
-    encounterId,
-    fallbackTriageCreatedAt,
-    fallbackUpdatedAt,
-    rowUpdatedAt,
-    completedAt,
-    completedDate
-  }: any) => {
-    const id = toNumberOrNaN(encounterId);
-    const { data: latestEmergencyTriage } = useGetLatestEmergencyTriageByEncounterQuery(id as any, {
-      skip: Number.isNaN(id)
-    });
-
-    const latest = unwrapApiObject<any>(latestEmergencyTriage);
-    const triageStart = toDateSafe(latest?.createdDate ?? fallbackTriageCreatedAt);
-    const end = toDateSafe(
-      latest?.completedDate ??
-        completedDate ??
-        completedAt ??
-        rowUpdatedAt ??
-        fallbackUpdatedAt ??
-        null
-    );
-    if (!triageStart || !end) return <></>;
-    return <>{formatDuration(end.getTime() - triageStart.getTime())}</>;
-  };
 
   const dispatch = useDispatch();
   const [cancelEncounter] = useCancelEncounterMutation();
@@ -286,7 +442,6 @@ const UrgentCareTriage = () => {
       if (!patientId) return;
 
       const res = await triggerWristband({ patientId }).unwrap();
-
       await printPatientWristband(res);
     } catch (err: any) {
       console.error('Wristband print failed', err);
@@ -461,14 +616,6 @@ const UrgentCareTriage = () => {
   const normalizedRows = useMemo(() => {
     const rows = (encountersPaged?.data ?? []) as any[];
 
-    const buildPatientFullName = (p: any) => {
-      const v = String(p?.fullName ?? '').trim();
-      if (v) return v;
-      const parts = [p?.firstName, p?.secondName, p?.thirdName, p?.lastName].filter(Boolean);
-      const joined = parts.join(' ').trim();
-      return joined || '-';
-    };
-
     return rows.map((encounterRow: any) => {
       const statusCode = String(encounterRow?.status ?? '').toUpperCase();
       const priorityCode = String(encounterRow?.priorityLevel ?? '').toUpperCase();
@@ -479,10 +626,7 @@ const UrgentCareTriage = () => {
       const patientFromEncounter = encounterRow?.patient ?? null;
       const patientMerged = patientFromEncounter || patientFromMap || null;
 
-      const fullName = patientMerged ? buildPatientFullName(patientMerged) : '-';
-
       const patientMrn = patientMerged?.medicalRecordNumber;
-
       const dateOfBirth = patientMerged?.dateOfBirth ?? patientMerged?.dob ?? null;
       const sexAtBirth = formatEnumString(patientMerged?.sexAtBirth) || '';
 
@@ -490,7 +634,6 @@ const UrgentCareTriage = () => {
         ...encounterRow,
         key: encounterRow?.id,
         patientId,
-
         patientObject: {
           id: patientId,
           medicalRecordNumber: patientMrn,
@@ -500,13 +643,10 @@ const UrgentCareTriage = () => {
           dateOfBirth,
           sexAtBirth
         },
-
         patientAge: dateOfBirth ? calculateAgeFormat(dateOfBirth) : null,
         visitId: encounterRow?.encounterNumber ?? encounterRow?.id,
-
         encounterPriority: encounterRow?.priorityLevel ?? priorityCode,
         encounterStatus: encounterRow?.status ?? statusCode,
-
         plannedStartDate: encounterRow?.encounterDate ?? null,
         createdAt:
           encounterRow?.createdDate ?? encounterRow?.createdAt ?? encounterRow?.created_at ?? null,
@@ -553,8 +693,9 @@ const UrgentCareTriage = () => {
         v.includes('CRITICAL') ||
         v.includes('STAT') ||
         v.includes('EMERG')
-      )
+      ) {
         return 0;
+      }
       return null;
     };
     const m = new Map<string, number>();
@@ -809,111 +950,39 @@ const UrgentCareTriage = () => {
     return true;
   };
 
-  const handleUpdateEncounterPriority = async (
-    rowData: any,
-    priorityCode: string
-  ): Promise<boolean> => {
-    try {
-      const encounterId = rowData?.id ?? null;
-      if (!encounterId) return false;
+  const handleUpdateEncounterPriority = useCallback(
+    async (rowData: any, priorityCode: string): Promise<boolean> => {
+      try {
+        const encounterId = rowData?.id ?? null;
+        if (!encounterId) return false;
 
-      await updateEncounter({
-        id: encounterId,
-        body: buildEncounterUpdateBody(rowData, { priorityLevel: priorityCode })
-      }).unwrap();
-      dispatch(notify({ msg: 'Priority updated', sev: 'success' }));
-      refetchEncounter();
-      return true;
-    } catch (error) {
-      console.error('Priority update error:', error, { rowData });
-      dispatch(
-        notify({
-          msg:
-            (error as any)?.message ||
-            'Failed to update priority (missing required encounter fields?)',
-          sev: 'error'
-        })
-      );
-      return false;
-    }
-  };
+        await updateEncounter({
+          id: encounterId,
+          body: buildEncounterUpdateBody(
+            {
+              ...rowData,
+              priorityLevel: priorityCode
+            },
+            { priorityLevel: priorityCode }
+          )
+        }).unwrap();
 
-  const EncounterPriorityAction = ({ rowData }: { rowData: any }) => {
-    const whisperRef = useRef<any>(null);
-    const [lockHoverUntilLeave, setLockHoverUntilLeave] = useState(false);
-    const isPendingPayment = isPendingPaymentStatus(rowData);
-
-    const prioritySpeaker = (
-      <Popover title="Priority" className="er-priority-popover">
-        <div className="er-priority-menu">
-          {(encounterPriorityEnumOptions ?? []).map((p: any) => (
-            <button
-              type="button"
-              key={p?.value}
-              className={
-                String(rowData?.priorityLevel ?? '') === String(p?.value ?? '')
-                  ? 'er-priority-item is-selected'
-                  : 'er-priority-item'
-              }
-              onClick={async (e: any) => {
-                e?.stopPropagation?.();
-                const ok = await handleUpdateEncounterPriority(rowData, String(p?.value ?? ''));
-                if (ok) {
-                  setLockHoverUntilLeave(true);
-                  whisperRef.current?.close?.();
-                }
-              }}
-            >
-              <span className="er-priority-left">
-                <span
-                  className="er-priority-dot"
-                  style={{
-                    backgroundColor: priorityDotColor.get(String(p?.value ?? '')) ?? '#98A2B4'
-                  }}
-                />
-                <span className="er-priority-label">{p?.label ?? p?.value ?? ''}</span>
-              </span>
-              {String(rowData?.priorityLevel ?? '') === String(p?.value ?? '') ? (
-                <span className="er-priority-check">✓</span>
-              ) : (
-                <span className="er-priority-check-placeholder" />
-              )}
-            </button>
-          ))}
-        </div>
-      </Popover>
-    );
-
-    return (
-      <Whisper trigger="hover" placement="top" speaker={<Tooltip>Set priority</Tooltip>}>
-        <div style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <Whisper
-            ref={whisperRef}
-            trigger={
-              isPendingPayment
-                ? 'click'
-                : lockHoverUntilLeave
-                  ? 'click'
-                  : (['hover', 'click'] as any)
-            }
-            placement="leftStart"
-            speaker={prioritySpeaker}
-            enterable
-            delayClose={300}
-          >
-            <div
-              style={{ display: 'inline-flex', alignItems: 'center' }}
-              onMouseLeave={() => setLockHoverUntilLeave(false)}
-            >
-              <MyButton size="small" disabled={isPendingPayment}>
-                <FontAwesomeIcon icon={faCircleExclamation} />
-              </MyButton>
-            </div>
-          </Whisper>
-        </div>
-      </Whisper>
-    );
-  };
+        dispatch(notify({ msg: 'Priority updated', sev: 'success' }));
+        refetchEncounter();
+        return true;
+      } catch (error) {
+        console.error('Priority update error:', error, { rowData, priorityCode });
+        dispatch(
+          notify({
+            msg: (error as any)?.message || 'Failed to update priority',
+            sev: 'error'
+          })
+        );
+        return false;
+      }
+    },
+    [updateEncounter, dispatch, refetchEncounter]
+  );
 
   const handleGoToVisit = async (encounterData: any, patientData: any) => {
     try {
@@ -968,7 +1037,6 @@ const UrgentCareTriage = () => {
       console.error('Start triage error:', error, { encounterData, patientData });
 
       const errorKey = error?.message || error?.data?.message || '';
-
       let readableMessage = 'Failed to start triage';
 
       if (errorKey === 'error.patient.emergency.notAllowed.withOngoing') {
@@ -1405,7 +1473,13 @@ const UrgentCareTriage = () => {
               </div>
             </Whisper>
 
-            <EncounterPriorityAction rowData={rowData} />
+            <EncounterPriorityAction
+              rowData={rowData}
+              encounterPriorityEnumOptions={encounterPriorityEnumOptions}
+              priorityDotColor={priorityDotColor}
+              isPendingPayment={isPendingPayment}
+              onUpdatePriority={handleUpdateEncounterPriority}
+            />
 
             {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
               COMPLETE_TRIAGE_STATUS_CODE ||

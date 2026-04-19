@@ -64,6 +64,7 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
   const [patient, setPatient] = useState({ ...newPatient });
   const [encounter, setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
+  const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
   const today = new Date();
   const [dateFilter, setDateFilter] = useState({
     fromDate: today,
@@ -276,13 +277,14 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                   setOrder={setOrder}
                   dateFilter={dateFilter}
                   loading={globalLoading}
+                  orderNumberFilter={orderNumberFilter}
                 />
               </Col>
 
               <Col xs={10}>
                 <Form fluid layout="inline">
                   <MyInput
-                    width={230}
+                    width={130}
                     placeholder="From Date"
                     fieldType="date"
                     fieldName="fromDate"
@@ -291,12 +293,21 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
                     showLabel={false}
                   />
                   <MyInput
-                    width={230}
+                    width={130}
                     placeholder="To Date"
                     fieldType="date"
                     fieldName="toDate"
                     record={dateFilter}
                     setRecord={setDateFilter}
+                    showLabel={false}
+                  />
+                  <MyInput
+                    width={130}
+                    placeholder="Order ID"
+                    fieldType="text"
+                    fieldName="orderNumber"
+                    record={{ orderNumber: orderNumberFilter }}
+                    setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}
                     showLabel={false}
                   />
                 </Form>

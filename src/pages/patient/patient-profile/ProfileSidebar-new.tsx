@@ -211,16 +211,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         selectData={[
                           { label: <Translate>MRN</Translate>, value: 'patientMrn' },
                           { label: <Translate>Document Number</Translate>, value: 'documentNo' },
-                          { label: <Translate>Full Name</Translate>, value: 'fullName' },
-                          {
-                            label: <Translate>Archiving Number</Translate>,
-                            value: 'archivingNumber'
-                          },
-                          {
-                            label: <Translate>Primary Phone Number</Translate>,
-                            value: 'phoneNumber'
-                          },
-                          { label: <Translate>Date of Birth</Translate>, value: 'dob' }
+                          { label: <Translate>Full Name</Translate>, value: 'fullName' }
                         ]}
                         selectDataLabel="label"
                         selectDataValue="value"
