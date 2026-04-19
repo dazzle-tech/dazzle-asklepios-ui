@@ -196,7 +196,6 @@ const UrgentCareViewTriage = () => {
             content={
               <Form fluid>
                 <MyInput
-                  required
                   width="100%"
                   height="95px"
                   showLabel={false}
