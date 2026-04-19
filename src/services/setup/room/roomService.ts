@@ -107,6 +107,17 @@ export const roomService = createApi({
       }),
       invalidatesTags: ['Room']
     }),
+    getActiveAppointableRoomsByDepartmentId: builder.query<
+      PagedResult<Room>,
+      { departmentId: Id } & PagedParams
+    >({
+      query: ({ departmentId, page, size, sort = 'id,asc', timestamp }) => ({
+        url: `/api/setup/room/active-appointable/by-department/${departmentId}`,
+        params: { page, size, sort, ...(timestamp ? { timestamp } : {}) }
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Room']
+    }),
   })
 });
 
@@ -124,5 +135,7 @@ export const {
   useChangeRoomActivationStatusMutation,
   useGetAvailableRoomsByDepartmentAndGenderQuery,
   useLazyGetAvailableRoomsByDepartmentAndGenderQuery,
-  useGetRoomsByIdsMutation
+  useGetRoomsByIdsMutation,
+  useGetActiveAppointableRoomsByDepartmentIdQuery,
+  useLazyGetActiveAppointableRoomsByDepartmentIdQuery
 } = roomService;

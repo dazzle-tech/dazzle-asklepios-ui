@@ -1,13 +1,15 @@
-.er-main-container{
-    display: flex;
-    gap: 15px;
+.er-main-container {
+  display: flex;
+  gap: 15px;
 }
+
 .left-box {
   width: calc(100% - 285px);
   border-radius: 5px;
-  border: 1px solid #e4e6e7;
+  border: 1px solid #e4e7e7;
   padding: 20px;
 }
+
 /* GeneralAssessmentForm.css */
 
 .form-inline-wrap {
@@ -22,47 +24,57 @@
   flex: 1 1 100%;
   width: 100%;
 }
+
 .button-right {
-    display: flex!important;
-    justify-content: flex-end !important;
+  display: flex !important;
+  justify-content: flex-end !important;
 }
 
 .button-bottom-align {
   align-self: flex-end;
 }
+
 .button-bottom-align-btm {
   margin-top: 22px;
 }
-.bt-field-div{
+
+.bt-field-div {
   display: flex;
   align-items: center;
-   gap: 5px;
-
+  gap: 5px;
 }
+
 .send-to-options-form {
   display: flex;
-  flex-direction: column;       
-  align-items: center;          
-  justify-content: center;                      
-  gap: 20px;                    
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
 }
 
-.date-filter-form{display: flex;
-flex-direction: row;}
+.date-filter-form {
+  display: flex;
+  flex-direction: row;
+}
 
-.buttons-filter-table-position-handle{
+.buttons-filter-table-position-handle {
   display: flex;
   flex-direction: row;
   gap: 0.5vw;
-  margin-bottom: 1.4vw;}
+  margin-bottom: 1.4vw;
+}
 
-  .patient-priority-er-level-handle-position{display: flex;
+.patient-priority-er-level-handle-position {
+  display: flex;
   flex-direction: row;
-gap: 1vw;}
+  gap: 1vw;
+}
 
-.er-triage-filters-position-handle{display: flex;
-flex-direction: row;
-gap: 1vw;}
+.er-triage-filters-position-handle {
+  display: flex;
+  flex-direction: row;
+  gap: 1vw;
+}
 
 .er-triage-patient-sidebar-overlay {
   position: fixed;
@@ -73,19 +85,26 @@ gap: 1vw;}
   border-radius: 10px;
 }
 
-.er-department-table-filters-position{display: flex;
-flex-direction: row;
-gap: 1vw;}
-.switch-department-er-department-position{margin-top: 1.4vw;}
+.er-department-table-filters-position {
+  display: flex;
+  flex-direction: row;
+  gap: 1vw;
+}
 
-.er-list-table-buttons-position-handle{display: flex;
-flex-direction: row;
-gap: 0.5vw;}
+.switch-department-er-department-position {
+  margin-top: 1.4vw;
+}
 
-// Priority popover (ER Triage list)
+.er-list-table-buttons-position-handle {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5vw;
+}
+
+/* Priority popover (ER Triage list) */
 .er-priority-popover {
-  padding: 0 !important;
   min-width: 240px;
+  padding: 0 !important;
 }
 
 .er-priority-popover :global(.rs-popover-title),
@@ -99,19 +118,23 @@ gap: 0.5vw;}
   border-bottom: 1px solid #e5e7eb;
 }
 
-.er-priority-popover :global(.rs-popover-content),
-.er-priority-popover .rs-popover-content {
-  padding: 0;
+.er-priority-popover :global(.rs-popover-body),
+.er-priority-popover .rs-popover-body {
+  padding: 8px !important;
 }
 
 .er-priority-menu {
-  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
 }
 
 .er-priority-item {
   width: 100%;
-  border: 0;
-  background: transparent;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -123,11 +146,12 @@ gap: 0.5vw;}
 }
 
 .er-priority-item:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: #f9fafb;
 }
 
 .er-priority-item.is-selected {
-  background: rgba(0, 0, 0, 0.08);
+  background: #eef4ff;
+  border-color: #bfd3ff;
 }
 
 .er-priority-left {
@@ -147,6 +171,7 @@ gap: 0.5vw;}
 .er-priority-label {
   font-size: 14px;
   font-weight: 500;
+  color: #111827;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -154,9 +179,24 @@ gap: 0.5vw;}
 
 .er-priority-check {
   font-weight: 700;
+  color: #111827;
 }
 
 .er-priority-check-placeholder {
   width: 12px;
   height: 12px;
 }
+
+.medication-record-container-main{
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+}
+
+.high-risk-icon-style{color: rgb(222, 222, 0);
+width: 20px;
+height: 20px;}
+
+.medication-record-order-icons-size{width: 20px;
+height: 20px;
+color: rgb(143, 143, 143);}

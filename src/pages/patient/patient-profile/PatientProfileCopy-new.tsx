@@ -189,15 +189,7 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
 
     try {
       // ✅ Mandatory Eligibility Check
-      if (!eligibilityChecked) {
-        dispatch(
-          notify({
-            msg: 'ELIGIBILITY_CHECK_REQUIRED',
-            sev: 'error'
-          })
-        );
-        return;
-      }
+
 
       // =========================
       // UPDATE FLOW

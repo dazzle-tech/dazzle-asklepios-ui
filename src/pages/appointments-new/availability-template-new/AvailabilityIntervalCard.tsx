@@ -6,6 +6,8 @@ import { MdDelete } from "react-icons/md";
 import { AvailabilityTemplateIntervalResponseVM } from '@/types/model-types-new';
 import { useDeleteAvailabilityTemplateIntervalMutation } from '@/services/appointment/availabilityTemplate/availabilityTemplateInterval';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { MdOutlineTimerOff } from "react-icons/md";
+import AddBreakModal from './AddBreakModal';
 
 
 
@@ -29,6 +31,7 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
   ...props
 }) => {
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
+  const [openِAddBreakModal, setOpenAddBreakModal] = useState(false);
   const [showDetails, setShowDetails] = useState<boolean>(true);
   const [deleteAvailabilityTemplateInterval] = useDeleteAvailabilityTemplateIntervalMutation();
 
@@ -78,6 +81,11 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
                           onClick={() => setOpenConfirmDeleteModal(true)}
                         />
                         )}
+                        <MdOutlineTimerOff 
+                          className='icons-style'
+                          onClick={() => setOpenAddBreakModal(true)}
+                        />
+                        
                     </div>
             
           </div>
@@ -99,6 +107,12 @@ const AvailabilityIntervalCard: React.FC<Props> = ({
             actionType="delete"
             confirmationQuestion="Are you sure you want to delete this interval?"
             actionButtonLabel="Delete"
+          />
+          <AddBreakModal 
+           open={openِAddBreakModal}
+           setOpen={setOpenAddBreakModal}
+           interval={interval}
+           readOnly={props?.readOnly}
           />
         </div>
   );

@@ -206,13 +206,14 @@ export const diagnosticOrderTestService = createApi({
 
     undoAcceptDiagnosticOrderTest: builder.mutation<
       DiagnosticOrderTest,
-      number
+      { id: number; undoAcceptReason: string }
     >({
-      query: id => ({
+      query: ({ id, undoAcceptReason }) => ({
         url: `/api/patient/diagnostic-order-tests/${id}/undo-accept`,
         method: 'POST',
+        body: { undoAcceptReason },
       }),
-      invalidatesTags: (_r, _e, id) => [
+      invalidatesTags: (_r, _e, { id }) => [
         { type: 'DiagnosticOrderTest', id },
         'DiagnosticOrderTest',
       ],

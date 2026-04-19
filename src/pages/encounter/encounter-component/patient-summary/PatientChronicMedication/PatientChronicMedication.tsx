@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import '../styles.less';
 import MyTable from '@/components/MyTable';
 import {
@@ -13,6 +13,7 @@ import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import { useGetAllChronicRawQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
 
 const PatientChronicMedication = ({ patient, title = null }) => {
   const [open, setOpen] = useState(false);
@@ -38,6 +39,39 @@ const PatientChronicMedication = ({ patient, title = null }) => {
       skip: !patient?.id
     }
   );
+ const [
+  getActiveIngredientsByIds,
+  {
+    data: activeIngredientsByIds,
+    isLoading: isLoadingActiveIngredientsByIds,
+  },
+] = useGetActiveIngredientsByIdsMutation();
+
+const activeIngredientIds = useMemo(() => {
+  const medications = chronicMedications?.data ?? [];
+
+  const ids = medications.map((item) => {
+   
+    return item.activeIngredientId;
+  });
+
+
+  const filtered = ids.filter((id): id is number => id != null);
+
+
+  return filtered;
+}, [chronicMedications]);
+
+
+useEffect(() => {
+  if (!activeIngredientIds.length) return;
+  getActiveIngredientsByIds(activeIngredientIds);
+}, [activeIngredientIds, getActiveIngredientsByIds]);
+const activeIngredientsMap = useMemo(() => {
+  return new Map(
+    (activeIngredientsByIds ?? []).map((item) => [item.id, item])
+  );
+}, [activeIngredientsByIds]);
 
   const { data: genericMedicationListResponse, isLoading: isLoadingGenericMedication } = useGetAllBrandMedicationsQuery({
     page: 0,
@@ -60,6 +94,17 @@ const PatientChronicMedication = ({ patient, title = null }) => {
 
   const totalCount = chronicMedications?.totalCount ?? 0;
   const tableColumns = [
+    {
+        key: 'activeIngredientId',
+      
+        title: 'Active Ingredients',
+        flexGrow: 1,
+        render: (rowData: any) => {
+         const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
+          return ingredient?.name ? String(ingredient.name) : '-';
+        }
+  
+      },
     {
       key: 'medicationsId',
       dataKey: 'medicationsId',
@@ -240,6 +285,7 @@ const PatientChronicMedication = ({ patient, title = null }) => {
           sortType={sortType}
           handlePageChange={handlePageChange}
           handleSortChange={handleSortChange}
+          activeIngredientsMap={activeIngredientsMap}
         />
       }
     />

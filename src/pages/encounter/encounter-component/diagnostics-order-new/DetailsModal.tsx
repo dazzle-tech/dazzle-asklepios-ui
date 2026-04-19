@@ -27,7 +27,7 @@ const DetailsModal = ({
   const [actionType] = useState(null);
   const [requestedPatientAttacment] = useState();
   const [receivedType, setReceivedType] = useState('');
-
+  console.log("receivedType", receivedType);
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
   const [deptPage, setDeptPage] = useState(0);
   const { data: receivedLabList } = useGetActiveDepartmentByTypeQuery(
@@ -142,10 +142,10 @@ const DetailsModal = ({
   }, [ReasonLovQueryResponse?.object]);
 
   // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
@@ -201,28 +201,22 @@ const DetailsModal = ({
                   }}
                 />
               </div>
-              <MyInput
-                height={70}
-                width={'100%'}
-                fieldLabel="Notes"
-                fieldName={'notes'}
-                record={orderTest}
-                setRecord={setOrderTest}
+              <PatientDiagnosisTable
+                patient={patient}
+                disabled={!isEditable}
+                selectMode
+                selectedDiagnosisId={orderTest?.icdDiagnosisId}
+                onSelectDiagnosis={(ids) => {
+                  const selectedIcd = ids?.[0] ?? null;
+
+                  setOrderTest(prev => ({
+                    ...prev,
+                    icdDiagnosisId: selectedIcd
+                  }));
+                }}
               />
 
-                <PatientDiagnosisTable
-                  patient={patient}
-                  disabled={!isEditable}
-                  selectMode
-                  onSelectDiagnosis={(ids) => {
-                    const selectedIcd = ids?.[0];
 
-                    setOrderTest(prev => ({
-                      ...prev,
-                      indicationIcd: selectedIcd
-                    }));
-                  }}
-                />
             </Form>
           </div>
         }

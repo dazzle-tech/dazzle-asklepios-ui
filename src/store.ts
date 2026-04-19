@@ -207,16 +207,18 @@ import { PolicyDefinitionService } from './services/setup/policyDefinition/polic
 import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
 import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
 import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import { availabilityTemplateIntervalBreakService } from './services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak';
 import { appointmentFromTemplateService } from './services/appointment/appointmentService';
 import { departmentServicesService } from './services/departmentServicesService';
 import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
 import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
+import { appointmentRequestService } from '@/services/appointment/appointmentRequestService';
 import { roomService } from './services/setup/room/roomService';
 import { bedService } from './services/setup/room/bedService';
 import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 import { currentMedicationService } from './services/patients/currentMedicationService';
-
+import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 
 export const store = configureStore({
   reducer: {
@@ -424,6 +426,7 @@ export const store = configureStore({
     // patient billing (new endpoints)
     [patientBillingInvoiceService.reducerPath]: patientBillingInvoiceService.reducer,
     [patientBillingInvoiceItemService.reducerPath]: patientBillingInvoiceItemService.reducer,
+    [appointmentRequestService.reducerPath]: appointmentRequestService.reducer,
 
     // Templates
     // report templates
@@ -458,6 +461,7 @@ export const store = configureStore({
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
     [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
     [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
+    [availabilityTemplateIntervalBreakService.reducerPath]: availabilityTemplateIntervalBreakService.reducer,
     [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
@@ -530,7 +534,9 @@ export const store = configureStore({
     [bedService.reducerPath]: bedService.reducer,
     [bedRoomService.reducerPath]: bedRoomService.reducer,
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
-    [currentMedicationService.reducerPath]: currentMedicationService.reducer
+    [currentMedicationService.reducerPath]: currentMedicationService.reducer,
+    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer
+
   },
 
   middleware: getDefaultMiddleware =>
@@ -693,6 +699,7 @@ export const store = configureStore({
         PriceListItemService.middleware,
         patientBillingInvoiceService.middleware,
         patientBillingInvoiceItemService.middleware,
+        appointmentRequestService.middleware,
 
         // report templates
         ReportTemplateService.middleware,
@@ -772,13 +779,15 @@ export const store = configureStore({
         availabilityTemplateService.middleware,
         availabilityGenerationBatchService.middleware,
         availabilityTemplateIntervalService.middleware,
+        availabilityTemplateIntervalBreakService.middleware,
         appointmentFromTemplateService.middleware,
         departmentServicesService.middleware,
         roomService.middleware,
         bedService.middleware,
         bedRoomService.middleware,
         encounterAssignToBedService.middleware,
-        currentMedicationService.middleware
+        currentMedicationService.middleware,
+        uccMedicationOrderService.middleware
       ]
     ) as any
 });
