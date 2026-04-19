@@ -5,7 +5,6 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import { GrScheduleNew } from 'react-icons/gr';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import WoundCare from './WoundCare';

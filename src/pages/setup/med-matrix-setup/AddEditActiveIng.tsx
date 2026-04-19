@@ -4,7 +4,6 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import './styles.less';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import { GrScheduleNew } from "react-icons/gr";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
