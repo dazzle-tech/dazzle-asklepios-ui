@@ -60,6 +60,7 @@ const AddVerification = ({ localPatient, setLocalPatient, validationResult, open
           column
           vr={validationResult}
           fieldLabel="Primary Mobile Number"
+          fieldType="number"
           fieldName="phoneNumber"
           record={localPatient}
           setRecord={setLocalPatient}

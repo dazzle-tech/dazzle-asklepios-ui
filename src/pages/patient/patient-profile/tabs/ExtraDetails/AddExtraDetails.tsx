@@ -266,7 +266,7 @@ const AddExtraDetails = ({
           required
           column
           width={300}
-          fieldType="text"
+          fieldType="number"
           fieldLabel="Document Number"
           fieldName="number"
           record={secondaryDocument}

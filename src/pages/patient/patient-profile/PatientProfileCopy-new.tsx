@@ -106,7 +106,7 @@ const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
 ];
 
 // Rejects values that end with one or more spaces, hyphens, or hash signs
-const INVALID_TRAILING_CHARS = /[\s\-#]+$/;
+const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
 
 const validatePatientNameFields = (patient: Patient): string | null => {
   for (const { key, label } of NAME_FIELDS) {
