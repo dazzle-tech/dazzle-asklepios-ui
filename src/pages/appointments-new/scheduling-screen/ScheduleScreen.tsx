@@ -13,7 +13,6 @@ import {
   Checkbox,
   Modal,
   Avatar,
-  Stack,
   ButtonGroup,
   Text
 } from 'rsuite';
@@ -29,6 +28,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import AppointmentModal from './AppoitmentModal';
 import FollowupAppointmentModal from './FollowupAppointmentModal';
 import { ApAppointment } from '@/types/model-types';
+import type { AppointmentFromTemplateSearchFilterDTO } from '@/types/model-types-new';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
   faCalendarCheck,
@@ -84,6 +84,9 @@ import {
   useCancelAppointmentRequestMutation,
   useGetAppointmentRequestsQuery
 } from '@/services/appointment/appointmentRequestService';
+import PatientSearch from '@/components/PatientSearch';
+
+
 
 /** Resolve numeric patient id from appointment payload (not nested patient object). */
 const getAppointmentPatientId = (appointment: any): number | null => {
@@ -151,6 +154,18 @@ const SCHEDULE_LEGEND_ITEMS: {
 
 const normLegendStr = (str: string) => String(str ?? '').toLowerCase().replace(/[-_]/g, ' ').trim();
 
+/** Collapses punctuation/spacing so enum and API values compare equal (e.g. NEW-APPOINTMENT vs NEW_APPOINTMENT). */
+const normalizeAppointmentStatusKey = (raw: unknown): string =>
+  String(raw ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+
+const appointmentStatusFromRecord = (appointmentData: any): string =>
+  normalizeAppointmentStatusKey(
+      appointmentData?.status 
+  );
+
 /** Maps API appointment status to legend bucket key (aligned with eventPropGetter). */
 const appointmentStatusToLegendBucket = (rawStatus: string): string => {
   const s = normLegendStr(rawStatus);
@@ -169,7 +184,7 @@ const ScheduleScreen = () => {
   const localizer = momentLocalizer(moment);
   const mode = useSelector((state: any) => state.ui.mode);
   const [validationResult] = useState({});
-  const [recordSearchAppointment, setRecordSearchAppointment] = useState({ value: '' });
+  const [schedulePatientFilter, setSchedulePatientFilter] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [bookPatientModalOpen, setBookPatientModalOpen] = useState(false);
   const [bookPatientReadOnly, setBookPatientReadOnly] = useState(false);
@@ -217,8 +232,8 @@ const ScheduleScreen = () => {
     () => ({ resourcesType: selectedResourceTypeValue?.value ? [selectedResourceTypeValue.value] : [] }),
     [selectedResourceTypeValue?.value]
   );
-  const [selectedResources, setSelectedResources] = useState<{ resourceKey: string[] }>({
-    resourceKey: []
+  const [selectedResources, setSelectedResources] = useState<{ resourceKey: string | null }>({
+    resourceKey: null
   });
   const [selectedAppointmentStatus, setSelectedAppointmentStatus] = useState<{ status: string | null }>({
     status: null
@@ -399,15 +414,9 @@ const ScheduleScreen = () => {
 
       const formattedAppointments = sourceAppointments.map((appointment: any) => {
         const startRaw =
-          appointment?.appointmentStart ??
-          appointment?.appointment_start ??
-          appointment?.startDatetime ??
-          appointment?.start_datetime;
+          appointment?.startDatetime 
         const endRaw =
-          appointment?.appointmentEnd ??
-          appointment?.appointment_end ??
-          appointment?.endDatetime ??
-          appointment?.end_datetime;
+          appointment?.endDatetime 
 
         const startDate = convertDate(startRaw);
         const endDate = convertDate(endRaw);
@@ -494,6 +503,7 @@ const ScheduleScreen = () => {
           resourceId: normalizedDepartmentColumnId,
           // Keep actual resource id for resource-type/resource filtering logic.
           filterResourceId: normalizedResourceKey,
+          tooltipResourceName: resourceNameForTitle,
           fromTo: `${extractTimeFromTimestamp(
             startRaw
           )} - ${extractTimeFromTimestamp(endRaw)}`
@@ -623,7 +633,7 @@ const ScheduleScreen = () => {
   }, [resourceOptions]);
 
   useEffect(() => {
-    setSelectedResources({ resourceKey: [] });
+    setSelectedResources({ resourceKey: null });
   }, [selectedResourceTypeValue?.value, selectedFacility?.id, selectedDepartment?.departmentId]);
 
   useEffect(() => {
@@ -636,9 +646,6 @@ const ScheduleScreen = () => {
     }
   }, [selectedSlot]);
 
-  const { data: noShowResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
-
-  const { data: cancelResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
 
   const handleSelectEvent = event => {
     const freshEvent = finalAppointments?.find(e => e.id === event.id) || event;
@@ -684,7 +691,8 @@ const ScheduleScreen = () => {
       }
       pendingNewSlotEventRef.current = freshEvent;
       setActionsModalOpen(false);
-      setConfirmNewSlotOpen(true);
+
+      setBookPatientModalOpen(true);
       return;
     }
 
@@ -698,15 +706,21 @@ const ScheduleScreen = () => {
   const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
   const [drowerOpen, setDrowerOpen] = useState(false);
 
-  const handleSearchAppointmentsByCriteria = useCallback(async () => {
-    const firstResourceId =
-      Array.isArray(selectedResources?.resourceKey) && selectedResources.resourceKey.length > 0
-        ? Number(selectedResources.resourceKey[0])
-        : null;
-    const patientIdCandidate = Number(recordSearchAppointment?.value);
-    const patientId = Number.isFinite(patientIdCandidate) && patientIdCandidate > 0 ? patientIdCandidate : null;
+  const schedulePatientIdForSearch = useMemo(() => {
+    if (!schedulePatientFilter) return null;
+    const n = Number(schedulePatientFilter.id ?? schedulePatientFilter.key ?? 0);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [schedulePatientFilter]);
 
-    const filter = {
+  const handleSearchAppointmentsByCriteria = useCallback(async () => {
+    const rk = selectedResources?.resourceKey;
+    const firstResourceId =
+      rk != null && String(rk).trim() !== '' && Number.isFinite(Number(rk)) && Number(rk) > 0
+        ? Number(rk)
+        : null;
+    const patientId = schedulePatientIdForSearch;
+
+    const filter: AppointmentFromTemplateSearchFilterDTO = {
       facility: selectedFacility?.id ? Number(selectedFacility.id) : null,
       department: selectedDepartment?.departmentId ? Number(selectedDepartment.departmentId) : null,
       resourceType: selectedResourceTypeValue?.value ?? null,
@@ -735,7 +749,7 @@ const ScheduleScreen = () => {
     selectedResources?.resourceKey,
     selectedAppointmentStatus?.status,
     selectedBookingMode?.bookingMode,
-    recordSearchAppointment?.value
+    schedulePatientIdForSearch
   ]);
 
   const openEditorForNewAppointment = useCallback(
@@ -918,6 +932,7 @@ const ScheduleScreen = () => {
 
       const viewPayload = {
         ...(raw ?? {}),
+        resourceType: raw?.resourceType ?? raw?.resourceTypeLkey ?? raw?.resource_type,
         patientId: effectivePatientId,
         patient:
           effectivePatientId != null && effectivePatientId > 0
@@ -940,9 +955,9 @@ const ScheduleScreen = () => {
       setRequestApproveModalOpen(false);
       setAppRequestModalOpen(false);
       setBookPatientReadOnly(false);
-      setBookPatientModalOpen(false);
       setActionsModalOpen(false);
-      setModalOpen(true);
+      setModalOpen(false);
+      setBookPatientModalOpen(true);
       return true;
     },
     [
@@ -981,7 +996,16 @@ const ScheduleScreen = () => {
   useEffect(() => {
     if (!selectedFacility?.id) return;
     void handleSearchAppointmentsByCriteria();
-  }, [selectedFacility?.id, handleSearchAppointmentsByCriteria]);
+  }, [
+    selectedFacility?.id,
+    selectedDepartment?.departmentId,
+    selectedResourceTypeValue?.value,
+    selectedResources?.resourceKey,
+    selectedAppointmentStatus?.status,
+    selectedBookingMode?.bookingMode,
+    schedulePatientIdForSearch,
+    handleSearchAppointmentsByCriteria
+  ]);
 
   useEffect(() => {
     const day = rightPanelDate ?? currentCalendarDate ?? new Date();
@@ -1037,8 +1061,9 @@ const ScheduleScreen = () => {
   ]);
 
   const selectedResourceKeysForFilter = useMemo(() => {
-    if (Array.isArray(selectedResources?.resourceKey) && selectedResources.resourceKey.length > 0) {
-      return new Set((selectedResources.resourceKey ?? []).map((k: any) => String(k)));
+    const rk = selectedResources?.resourceKey;
+    if (rk != null && String(rk).trim() !== '') {
+      return new Set([String(rk)]);
     }
     if (selectedResourceType?.resourcesType?.length) {
       const all = resourcesWithAvailabilityResponse?.object ?? [];
@@ -1073,9 +1098,9 @@ const ScheduleScreen = () => {
     }
 
     if (selectedAppointmentStatus?.status) {
-      const statusNeedle = String(selectedAppointmentStatus.status).toUpperCase();
-      list = list.filter(event =>
-        String(event?.appointmentData?.appointmentStatus ?? '').toUpperCase() === statusNeedle
+      const statusNeedle = normalizeAppointmentStatusKey(selectedAppointmentStatus.status);
+      list = list.filter(
+        event => appointmentStatusFromRecord((event as any)?.appointmentData) === statusNeedle
       );
     }
 
@@ -1086,13 +1111,22 @@ const ScheduleScreen = () => {
       );
     }
 
+    if (schedulePatientIdForSearch != null) {
+      const pid = schedulePatientIdForSearch;
+      list = list.filter(event => {
+        const evPid = getAppointmentPatientId((event as any)?.appointmentData ?? {});
+        return evPid != null && Number(evPid) === pid;
+      });
+    }
+
     return list;
   }, [
     appointmentsData,
     selectedDepartment?.departmentId,
     selectedResourceKeysForFilter,
     selectedAppointmentStatus?.status,
-    selectedBookingMode?.bookingMode
+    selectedBookingMode?.bookingMode,
+    schedulePatientIdForSearch
   ]);
 
   const visibleAppointments =
@@ -1224,11 +1258,8 @@ const ScheduleScreen = () => {
     const typeKeys = Array.isArray(selectedResourceType?.resourcesType)
       ? selectedResourceType.resourcesType.join(',')
       : '';
-    const resourceKeys = Array.isArray((selectedResources as any)?.resourceKey)
-      ? (selectedResources as any).resourceKey.join(',')
-      : Array.isArray(selectedResources)
-      ? (selectedResources as any).join(',')
-      : '';
+    const rk = (selectedResources as any)?.resourceKey;
+    const resourceKeys = rk != null && String(rk).trim() !== '' ? String(rk) : '';
     return `${facilityKey}|${typeKeys}|${resourceKeys}|${currentView}`;
   }, [selectedFacility?.id, selectedResourceType?.resourcesType, selectedResources, currentView]);
 
@@ -1478,12 +1509,97 @@ const ScheduleScreen = () => {
     );
   };
 
-  const getTooltipContent = event => {
-    if (currentView === 'month') {
-      return `${event.title} - ${event.fromTo}`;
-    } else {
-      return `${event.title}`;
+  const getTooltipResourceDisplay = (event: any) => {
+    const fromMapped = String(event?.tooltipResourceName ?? '').trim();
+    if (fromMapped) return fromMapped;
+    const ad = event?.appointmentData ?? {};
+    const direct = String(ad?.resourceName ?? ad?.resource_name ?? '').trim();
+    if (direct) return direct;
+    const fk = String(event?.filterResourceId ?? '').trim();
+    if (fk) {
+      const byId = resourceNameById.get(fk);
+      if (byId) return String(byId).trim();
+      const fromAvail = (resourcesWithAvailabilityResponse?.object ?? []).find(
+        (r: any) => String(r?.key) === fk
+      );
+      if (fromAvail?.resourceName) return String(fromAvail.resourceName).trim();
     }
+    const rid = String(
+      ad?.resourceKey ?? ad?.resource_key ?? ad?.resourceId ?? ad?.resource_id ?? ''
+    ).trim();
+    if (rid) {
+      const byId = resourceNameById.get(rid);
+      if (byId) return String(byId).trim();
+    }
+    const resourceTypeKey = normalizeResourceTypeKey(
+      ad?.resourceTypeLkey ?? ad?.resourceType ?? ad?.resource_type ?? ad?.templateType ?? ad?.template_type
+    );
+    const idsToTry = [
+      ad?.resourceKey,
+      ad?.resource_key,
+      ad?.resourceId,
+      ad?.resource_id,
+      ad?.requestedResourceId,
+      ad?.requested_resource_id,
+      ad?.departmentId,
+      ad?.department_id,
+      ad?.practitionerId,
+      ad?.practitioner_id,
+      ad?.practitionerKey,
+      ad?.practitioner_key,
+      ad?.catalogId,
+      ad?.catalog_id,
+      ad?.diagnosticTestId,
+      ad?.diagnostic_test_id,
+      ad?.serviceId,
+      ad?.service_id,
+      ad?.resource?.key,
+      event?.filterResourceId
+    ]
+      .filter((v: any) => v !== null && typeof v !== 'undefined')
+      .map((v: any) => String(v));
+    const byTypeMap =
+      (resourceNameByTypeAndId as any)[resourceTypeKey] ??
+      (resourceTypeKey === 'DIAGNOSTIC_TEST'
+        ? (resourceNameByTypeAndId as any).DIAGNOSTIC_TEST
+        : undefined);
+    const fromTypeMap =
+      byTypeMap instanceof Map ? idsToTry.map((id: string) => byTypeMap.get(id)).find(Boolean) : '';
+    if (fromTypeMap) return String(fromTypeMap).trim();
+    const fromSvcMap = idsToTry.map((id: string) => resourceNameById.get(id)).find(Boolean);
+    if (fromSvcMap) return String(fromSvcMap).trim();
+    const fromAvailName = (resourcesWithAvailabilityResponse?.object ?? [])
+      .find((r: any) => idsToTry.includes(String(r?.key)))
+      ?.resourceName;
+    if (fromAvailName) return String(fromAvailName).trim();
+    const colKey = String(event?.resourceId ?? '').trim();
+    if (colKey) {
+      const col = (finalResourceLit ?? []).find((d: any) => String(d?.key) === colKey);
+      if (col?.resourceName) return String(col.resourceName).trim();
+    }
+    const nestedRes = String(ad?.resource?.resourceName ?? ad?.resource?.name ?? '').trim();
+    if (nestedRes) return nestedRes;
+    return String(event?.resource?.resourceName ?? '').trim();
+  };
+
+  const getTooltipContent = (event: any) => {
+    const resourceName = getTooltipResourceDisplay(event);
+    const titleStr = String(event?.title ?? '').trim();
+    const fromToStr = String(event?.fromTo ?? '').trim();
+    const head =
+      currentView === 'month' ? [titleStr, fromToStr].filter(Boolean).join(' - ') : titleStr;
+    const res = String(resourceName ?? '').trim();
+    const headHasResourceSegment =
+      res &&
+      head
+        .split('|')
+        .map(s => s.trim().toLowerCase())
+        .some(seg => seg === res.toLowerCase());
+    const parts: string[] = [];
+    if (head) parts.push(head);
+    if (res && !headHasResourceSegment) parts.push(res);
+    const out = parts.join(' | ').trim();
+    return out || head || res || 'Appointment';
   };
 
   const [currentCalView, setCurrentCalView] = useState('month'); // Force "month" view
@@ -1720,10 +1836,14 @@ const ScheduleScreen = () => {
         appointment?.resource_key,
         appointment?.resourceId,
         appointment?.resource_id,
+        appointment?.requestedResourceId,
+        appointment?.requested_resource_id,
         appointment?.departmentId,
         appointment?.department_id,
         appointment?.practitionerId,
         appointment?.practitioner_id,
+        appointment?.practitionerKey,
+        appointment?.practitioner_key,
         appointment?.catalogId,
         appointment?.catalog_id,
         appointment?.diagnosticTestId,
@@ -1758,7 +1878,7 @@ const ScheduleScreen = () => {
         event?.resource?.resourceName ||
         'Unknown Resource';
       return (
-         <div className="available-slot-card">
+         <div className="available-slot-card" title={getTooltipContent(event)}>
            <div className="available-slot-title">{startLabel} - {endLabel}</div>
            <div className="available-slot-status-row">
              <span className="available-slot-dot" />
@@ -1772,6 +1892,7 @@ const ScheduleScreen = () => {
 
     return (
       <div
+        title={getTooltipContent(event)}
         style={{
           padding: '7px',
           display: 'flex',
@@ -2104,21 +2225,54 @@ const ScheduleScreen = () => {
                     searchable={false}
                   />
 
-                  {/* Multi-select resources; enabled only after selecting a resource type */}
+                  {/* Single resource; enabled only after selecting a resource type */}
                   <MyInput
                     height={35}
                     width={'11.5vw'}
                     column
                     fieldLabel="Resource"
                     selectData={filteredResourcesList ?? []}
-                    fieldType="multyPicker"
+                    fieldType="select"
                     selectDataLabel="resourceName"
                     selectDataValue="key"
                     fieldName="resourceKey"
                     record={selectedResources}
                     setRecord={setSelectedResources}
                     disabled={!selectedResourceTypeValue?.value}
+                    searchable
                   />
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      width: 'calc(11.5vw * 2 + 12px)',
+                      minWidth: 0,
+                      flex: '0 0 auto'
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        marginBottom: 4,
+                        lineHeight: 1.2,
+                        color: mode === 'light' ? 'var(--rs-text-primary)' : 'var(--rs-text-secondary)'
+                      }}
+                    >
+                      Patient
+                    </span>
+                    <PatientSearch
+                      value={schedulePatientFilter}
+                      onChange={setSchedulePatientFilter}
+                      width="100%"
+                      containerMinWidth={0}
+                      criteriaWidthPx={108}
+                      inputHeightPx={35}
+                      showLabel={false}
+                      fieldLabel="Patient"
+                    />
+                  </div>
 
                   {/* Appointment status filter */}
                   <MyInput
@@ -2173,8 +2327,8 @@ const ScheduleScreen = () => {
                       (d: any) => String(d?.id) === String(selectedDepartment.departmentId)
                     )?.name ?? `Dept #${selectedDepartment.departmentId}`
                   : 'All departments'}
-                {selectedResourceKeysForFilter && selectedResources?.resourceKey?.length
-                  ? ` · ${selectedResources.resourceKey.length} resource(s)`
+                {selectedResources?.resourceKey != null && String(selectedResources.resourceKey).trim() !== ''
+                  ? ` · ${resourceNameById.get(String(selectedResources.resourceKey))?.trim() || 'Resource'}`
                   : selectedResourceTypeValue?.value
                     ? ` · ${String(selectedResourceTypeValue.value)}`
                     : ''}
@@ -2298,7 +2452,6 @@ const ScheduleScreen = () => {
                   return;
                 }
               }
-              // Ignore clicks on empty/non-available areas.
               return;
                 }}
                 startAccessor="start"
@@ -2394,22 +2547,6 @@ const ScheduleScreen = () => {
               />
             </div>
           </div>
-
-          <Stack className="appointments-legend" style={{ margin: '0.4%' }}>
-            {legendItems.map(({ label, color }) => (
-              <Stack style={{ marginRight: '36px' }} spacing={6} alignItems="center" key={label}>
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 12,
-                    backgroundColor: color
-                  }}
-                />
-                <span style={{ fontSize: '12px' }}>{label}</span>
-              </Stack>
-            ))}
-          </Stack>
         </Panel>
       </div>
 
@@ -2449,9 +2586,9 @@ const ScheduleScreen = () => {
         setOpen={nextOpen => {
           setBookPatientModalOpen(nextOpen);
           if (!nextOpen) {
+            setViewAppointmentData(null);
+            setSelectedEvent(null);
             if (bookPatientReadOnly) {
-              setViewAppointmentData(null);
-              setSelectedEvent(null);
               setAppointment(null as any);
             }
             setBookPatientReadOnly(false);
@@ -2547,25 +2684,6 @@ const ScheduleScreen = () => {
             </div>
           </Form>
         </Modal.Body>
-      </Modal>
-
-      <Modal open={confirmNewSlotOpen} onClose={handleConfirmNewSlotCancel} size="sm">
-        <Modal.Header>Available appointment</Modal.Header>
-        <Modal.Body>
-          <Text size="sm" style={{ color: 'var(--rs-text-secondary)' }}>
-            {isRequestPendingApproval(requestToApprove)
-              ? 'Approve the pending appointment request for this slot and open the appointment editor?'
-              : 'Open the appointment editor to complete booking for this slot?'}
-          </Text>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button appearance="subtle" onClick={handleConfirmNewSlotCancel} disabled={newSlotConfirmBusy}>
-            Cancel
-          </Button>
-          <Button appearance="primary" loading={newSlotConfirmBusy} onClick={() => void handleConfirmNewSlotOk()}>
-            Continue
-          </Button>
-        </Modal.Footer>
       </Modal>
 
       <DeletionConfirmationModal

@@ -266,9 +266,9 @@ const BookPatient = ({
   );
   const selectedSlotDisplay = useMemo(() => {
     const rawStart =
-      appointmentData?.startDatetime
+      appointmentData?.startDatetime 
     const rawEnd =
-      appointmentData?.endDatetime
+      appointmentData?.endDatetime 
     const start = formatDateTime(rawStart);
     const end = formatDateTime(rawEnd);
     const startTime =
