@@ -59,6 +59,7 @@ import BedAssignmentModal from '../../day-case/DayCaseList/BedAssignmentModal';
 import { useGetActiveAssignmentsByEncounterIdsQuery } from '@/services/patients/emergency/encounterAssignToBedService';
 import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
 import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
+import { useAppSelector } from '@/hooks';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -198,11 +199,13 @@ const TriageTimeCell = ({
 const AssignBedAction = ({
   rowData,
   isPendingPayment,
+  isReceptionist,
   setLocalEncounter,
   setOpenBedAssignmentModal
 }: {
   rowData: any;
   isPendingPayment: boolean;
+  isReceptionist: boolean;
   setLocalEncounter: (row: any) => void;
   setOpenBedAssignmentModal: (open: boolean) => void;
 }) => {
@@ -221,7 +224,7 @@ const AssignBedAction = ({
   const statusUpper = String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase();
   const isTriageStarted = statusUpper === 'TRIAGE_STARTED';
 
-  const disabled = isPendingPayment || !isTriageStarted || !emergencyLevel;
+  const disabled = isPendingPayment || !isTriageStarted || !emergencyLevel || isReceptionist;
 
   const speaker = isPendingPayment ? (
     <Tooltip>Please add payment first</Tooltip>
@@ -257,13 +260,15 @@ const EncounterPriorityAction = ({
   encounterPriorityEnumOptions,
   priorityDotColor,
   isPendingPayment,
-  onUpdatePriority
+  onUpdatePriority,
+  isReceptionist
 }: {
   rowData: any;
   encounterPriorityEnumOptions: any[];
   priorityDotColor: Map<string, string>;
   isPendingPayment: boolean;
   onUpdatePriority: (rowData: any, priorityCode: string) => Promise<boolean>;
+  isReceptionist: boolean;
 }) => {
   const whisperRef = useRef<any>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -401,7 +406,7 @@ const EncounterPriorityAction = ({
         }}
         style={{ display: 'inline-flex', alignItems: 'center' }}
       >
-        <MyButton size="small" disabled={false}>
+        <MyButton size="small" disabled={isReceptionist}>
           <FontAwesomeIcon icon={faCircleExclamation} />
         </MyButton>
       </div>
@@ -434,6 +439,9 @@ const UrgentCareTriage = () => {
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
+    const authSlice = useAppSelector(state => state.auth);
+    const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+    const isReceptionist = jobRole === 'RECEPTIONIST';
 
   const handlePrintWristband = async (rowData: any) => {
     try {
@@ -1430,7 +1438,7 @@ const UrgentCareTriage = () => {
                   size="small"
                   radius="6px"
                   backgroundColor="violet"
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment || isReceptionist}
                   onClick={() => {
                     const patientData = rowData?.patientObject;
 
@@ -1479,6 +1487,7 @@ const UrgentCareTriage = () => {
               priorityDotColor={priorityDotColor}
               isPendingPayment={isPendingPayment}
               onUpdatePriority={handleUpdateEncounterPriority}
+              isReceptionist={isReceptionist}
             />
 
             {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
@@ -1494,7 +1503,7 @@ const UrgentCareTriage = () => {
                       setLocalEncounter(rowData);
                       handleGoToViewTriage(rowData, patientData);
                     }}
-                    disabled={isPendingPayment}
+                    disabled={isPendingPayment || isReceptionist}
                   >
                     <FontAwesomeIcon icon={faCommentMedical} />
                   </MyButton>
@@ -1515,6 +1524,7 @@ const UrgentCareTriage = () => {
                       handleGoToVisit(rowData, rowData?.patientObject);
                     }}
                     disabled={
+                      isReceptionist ||
                       isPendingPayment ||
                       !['NEW', 'WAITING_TRIAGE', 'TRIAGE_STARTED'].includes(
                         String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
@@ -1542,7 +1552,7 @@ const UrgentCareTriage = () => {
                     setLocalEncounter(rowData);
                     handlePrintWristband(rowData);
                   }}
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment || isReceptionist}
                 >
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>
@@ -1554,6 +1564,7 @@ const UrgentCareTriage = () => {
               isPendingPayment={isPendingPayment}
               setLocalEncounter={setLocalEncounter}
               setOpenBedAssignmentModal={setOpenBedAssignmentModal}
+              isReceptionist={isReceptionist}
             />
 
             {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST', 'PENDING_PAYMENT'].includes(
@@ -1563,6 +1574,7 @@ const UrgentCareTriage = () => {
                 <div>
                   <MyButton
                     size="small"
+                    disabled={isReceptionist }
                     onClick={() => {
                       setLocalEncounter(rowData);
                       setOpen(true);

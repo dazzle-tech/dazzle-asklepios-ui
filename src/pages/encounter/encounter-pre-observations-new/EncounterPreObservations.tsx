@@ -136,7 +136,7 @@ const NurseStation = () => {
       navigate('/inpatient-encounters-list');
     } else if (completeEncounterMutation.status === 'fulfilled') {
       if (pageSource === 'Urgent_Care_List') {
-        navigate('/urgent-care-list');
+        navigate('/urgent-care-department-list');
       } else {
         navigate('/encounter-list');
       }
@@ -173,7 +173,7 @@ const NurseStation = () => {
 
   const handleGoBack = () => {
     if (pageSource === 'Urgent_Care_List') {
-      navigate('/urgent-care-list', {
+      navigate('/urgent-care-department-list', {
         state: {
           fromPage: 'NurseStation',
           patient: propsData?.patient,

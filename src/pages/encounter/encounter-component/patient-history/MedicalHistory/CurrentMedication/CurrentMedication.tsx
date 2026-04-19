@@ -13,9 +13,6 @@ import AddCurrentMedication from './AddCurrentMedication';
 const CurrentMedication = ({ patient, edit, toShowData = false }) => {
   const [open, setOpen] = useState(false);
   const [selectedMedication, setSelectedMedication] = useState<any>(null);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
-
   const [pagination, setPagination] = useState({
     page: 0,
     size: 15,
@@ -99,15 +96,6 @@ const CurrentMedication = ({ patient, edit, toShowData = false }) => {
                   onClick={() => handleEdit(row)}
                 />
 
-                <MdDelete
-                  className="icons-style"
-                  size={22}
-                  fill="var(--primary-pink)"
-                  onClick={() => {
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
-                  }}
-                />
               </div>
             )
           }
@@ -161,16 +149,6 @@ const CurrentMedication = ({ patient, edit, toShowData = false }) => {
               }}
             />
 
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Medication"
-              actionType="delete"
-              actionButtonFunction={() => {
-                setOpenDeleteModal(false);
-                setRowToDelete(null);
-              }}
-            />
           </>
         }
       />
