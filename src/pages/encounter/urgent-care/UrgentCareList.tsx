@@ -747,10 +747,10 @@ const UrgentCareList = () => {
   }, []);
 
   const handleGoToViewTriage = (encounterData: any, patientData: any) => {
-    navigate('/view-triage', {
+    navigate('/urgent-care-view-triage', {
       state: {
-        from: 'ER_Waiting_List',
-        info: 'toViewTriage',
+        from: 'Urgent_Care_List',
+        info: 'toUrgentCareViewTriage',
         patient: patientData,
         encounter: encounterData
       }
