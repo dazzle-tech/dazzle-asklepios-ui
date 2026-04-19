@@ -67,6 +67,7 @@ useEffect(() => {
   if (!activeIngredientIds.length) return;
   getActiveIngredientsByIds(activeIngredientIds);
 }, [activeIngredientIds, getActiveIngredientsByIds]);
+
 const activeIngredientsMap = useMemo(() => {
   return new Map(
     (activeIngredientsByIds ?? []).map((item) => [item.id, item])

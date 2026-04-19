@@ -2,11 +2,14 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useGetPatientPrescriptionMedicationsQuery } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
+import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
 import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
-import React, {  useState } from 'react';
+import {useLazyGetLovValuesBulkByKeysQuery} from '@/services/setupService';
+import React, {  useEffect, useMemo, useState } from 'react';
+import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 
 const PrescriptionDetails = ({ prescription }) => {
   const [paginationParams, setPaginationParams] = useState({
@@ -42,12 +45,112 @@ const PrescriptionDetails = ({ prescription }) => {
       : (undefined as any),
     { skip: !prescription?.id }
   );
-  const { data: customeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
+   const [
+    getActiveIngredientsByIds,
+    {
+      data: activeIngredientsByIds,
+      isLoading: isLoadingActiveIngredientsByIds,
+    },
+  ] = useGetActiveIngredientsByIdsMutation();
+  
+  const activeIngredientIds = useMemo(() => {
+    const medications = prescriptionMedicationsResponse?.data ?? [];
+  
+    const ids = medications.map((item) => {
+     
+      return item.activeIngredientId;
+    });
+  
+  
+    const filtered = ids.filter((id): id is number => id != null);
+  
+  
+    return filtered;
+  }, [prescriptionMedicationsResponse]);
+  
+  
+  useEffect(() => {
+    if (!activeIngredientIds.length) return;
+    getActiveIngredientsByIds(activeIngredientIds);
+  }, [activeIngredientIds, getActiveIngredientsByIds]);
+  const activeIngredientsMap = useMemo(() => {
+    return new Map(
+      (activeIngredientsByIds ?? []).map((item) => [item.id, item])
+    );
+  }, [activeIngredientsByIds]);
+
+const [
+  getLovValuesBulkByKeys,
+  { data: indicationUseLovResponse, isLoading: isLoadingIndicationUseLov }
+] = useLazyGetLovValuesBulkByKeysQuery();
+ const indicationUseKeys = useMemo(() => {
+  const medications = prescriptionMedicationsResponse?.data ?? [];
+  const keys = medications.map((item) => item.indicationUse).filter((id): id is string => !!id);
+
+  return keys;
+}, [prescriptionMedicationsResponse]);
+useEffect(() => {
+  if (!indicationUseKeys.length) return;
+  getLovValuesBulkByKeys(indicationUseKeys);
+}, [indicationUseKeys, getLovValuesBulkByKeys]);
+ 
+const indicationUseLovMap = useMemo(() => {
+  const map = new Map<string, string>();
+
+  const lovValues =
+    indicationUseLovResponse?.object ??
+    indicationUseLovResponse?.data ??
+    indicationUseLovResponse ??
+    [];
+
+  lovValues.forEach((item: any) => {
+    if (item?.key != null) {
+      map.set(String(item.key), item.lovDisplayVale ?? item.name ?? '');
+    }
+  });
+
+  return map;
+}, [indicationUseLovResponse]);
+
+  const [
+      fetchIcdByIds,
+      {
+        data: icdDiagnosesByIds,
+      },
+    ] = useLazyGetIcdDiagnosesByIdsQuery();
+
+    const icdIds = useMemo(() => {
+      const tests = prescriptionMedicationsResponse?.data  ?? [];
+
+      const ids = tests.map((item) => {
+
+        return item.indicationIcd;
+      });
+
+
+      const filtered = ids.filter((id): id is number => id != null);
+
+
+      return filtered;
+    }, [prescriptionMedicationsResponse?.data ]);
+
+
+    useEffect(() => {
+      if (!icdIds.length) return;
+      fetchIcdByIds({
+        ids: icdIds
+      });
+    }, [icdIds, fetchIcdByIds]);
+    const icdDiagnosesMap = useMemo(() => {
+      return new Map(
+        (icdDiagnosesByIds ?? []).map((item) => [item.id, item])
+      );
+    }, [icdDiagnosesByIds]);
+ const { data: customeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
     ...({} as any)
   });
 
   const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
-  const { data: unitLov } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   const { data: frequencyLov } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
 
   const totalCount = prescriptionMedicationsResponse?.totalCount ?? 0;
@@ -94,6 +197,17 @@ const PrescriptionDetails = ({ prescription }) => {
   const toStr = (v: any) => (v === null || v === undefined ? '' : String(v));
 
   const tableColumns = [
+    {
+        key: 'activeIngredientId',
+      
+        title: 'Active Ingredients',
+        flexGrow: 1,
+        render: (rowData: any) => {
+         const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
+          return ingredient?.name ? String(ingredient.name) : '-';
+        }
+  
+      },
     {
       key: 'medicationsId',
       dataKey: 'medicationsId',
@@ -181,12 +295,7 @@ const PrescriptionDetails = ({ prescription }) => {
         <span>{formatEnumString(rowData.instructionsType)}</span>
       ),
     },
-    {
-      key: 'validUtil',
-      dataKey: 'validUtil',
-      title: <Translate>Valid util</Translate>,
-      flexGrow: 1
-    },
+    
     {
       key: 'notes',
       dataKey: 'notes',
@@ -203,17 +312,22 @@ const PrescriptionDetails = ({ prescription }) => {
       key: 'indicationUse',
       title: <Translate>Indicated Use</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return rowData?.indicationUse ? formatEnumString(rowData.indicationUse) : '-';
-      }
+        render: (rowData: any) => {
+         const indication = indicationUseLovMap.get(rowData.indicationUse)
+          return indication ? String(indication) : '-';
+        }
     },
     {
       key: 'indication',
       title: <Translate>Indication</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => {
-        return joinValuesFromArray([rowData.indicationIcd, rowData.indicationManually]);
-      }
+       render: (rowData: any) => {
+          const diagnosis = icdDiagnosesMap.get(rowData.indicationIcd);
+          return diagnosis
+            ? `${diagnosis.icdCode ?? ''} - ${diagnosis.icdShortDescription ?? ''}`.replace(/^ - | - $/, '')
+            : '—';
+        }
+   
     },
     {
       key: 'chronicMedication',

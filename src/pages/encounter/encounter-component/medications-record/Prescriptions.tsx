@@ -26,7 +26,7 @@ const Prescriptions = ({ patient }) => {
         },
         { skip: !patientId }
     );
-
+  
     const isSelected = (rowData: PatientPrescription) => {
         if (rowData && prescription && rowData.id === prescription.id) {
             return "selected-row";
