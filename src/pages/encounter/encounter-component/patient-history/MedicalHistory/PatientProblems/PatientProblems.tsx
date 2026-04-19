@@ -4,7 +4,6 @@ import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
 import {
-  useDeletePatientProblemMutation,
   useGetPatientProblemsQuery
 } from '@/services/patients/patientProblemService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -24,9 +23,6 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
 
   const [open, setOpen] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState<any>(null);
-
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
 
   const [pagination, setPagination] = useState({
     page: 0,
@@ -58,27 +54,6 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
   console.log('PatientProblems pageData:', pageData);
   /* DELETE */
   console.log('Patient Obj ==>', patient);
-  const [deletePatientProblem] = useDeletePatientProblemMutation();
-
-  const handleDelete = async () => {
-    if (!rowToDelete?.id) return;
-
-    try {
-      await deletePatientProblem({ id: rowToDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Patient problem deleted successfully', sev: 'success' }));
-      setOpenDeleteModal(false);
-      setRowToDelete(null);
-    } catch (err: any) {
-      const data = err?.data;
-      const traceId = data?.traceId || data?.requestId;
-      dispatch(
-        notify({
-          msg: `Failed to delete patient problem${traceId ? `\nTrace ID: ${traceId}` : ''}`,
-          sev: 'error'
-        })
-      );
-    }
-  };
 
   /* HELPERS */
 
@@ -179,15 +154,6 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
                   style={{ cursor: 'pointer' }}
                   onClick={() => handleEdit(row)}
                 />
-                <MdDelete
-                  size={22}
-                  fill="var(--primary-pink)"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => {
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
-                  }}
-                />
               </div>
             )
           }
@@ -241,14 +207,6 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
                 setOpen(false);
                 setSelectedProblem(null);
               }}
-            />
-
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Patient Problem"
-              actionType="delete"
-              actionButtonFunction={handleDelete}
             />
           </>
         }

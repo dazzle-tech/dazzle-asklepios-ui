@@ -1444,7 +1444,10 @@ export interface ApEncounter {
 	discharge:boolean;
 	emergencyLevelLkey:string;
 	dischargeAt:number;
-} 
+	hasPrescription:boolean;
+	hasOrder:boolean;
+	isObserved:boolean;
+}
 
 export interface ApEncounterAppliedService { 
 	key:string;

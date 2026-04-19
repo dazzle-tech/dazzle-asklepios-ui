@@ -216,17 +216,18 @@ import OrganizationHolidays from './pages/system-configurations/organization-hol
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
 import PolicyDefinitions from './pages/setup/policy-definition';
-
 import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
 import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
 import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage';
 import UrgentCareList from './pages/encounter/urgent-care/UrgentCareList';
+import UrgentCareListMain from './pages/encounter/urgent-care/UrgentCateListMain';
+import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
 import NurseAssessment from './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment';
 import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
 import FavoriteTests from './pages/review-results';
-import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
-
+import PreviousMeasurementsMainScreen from './pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
+import UrgentCareViewTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareViewTriage';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -585,12 +586,13 @@ const App = () => {
               <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
               <Route path="ER-start-triage" element={<ERStartTriageNew />} />
               <Route path="urgent-care-start-triage" element={<UrgentCareStartTriage />} />
-              <Route path="urgent-care-department-list" element={<UrgentCareList />} />
+              <Route path="urgent-care-department-list" element={<UrgentCareListMain />} />
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
               <Route path="urgent-care-triage" element={<UrgentCareTriage />} />
               <Route path="view-triage" element={<ViewTriageNew />} />
+              <Route path="urgent-care-view-triage" element={<UrgentCareViewTriage />} />
               <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
               <Route path="country-setup" element={<CountrySetup />} />
@@ -616,7 +618,7 @@ const App = () => {
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
                 <Route path="observations" element={<Observations />} />
-                <Route path="previous-measurements" element={<PreviousMeasurements />} />
+                <Route path="previous-measurements" element={<PreviousMeasurementsMainScreen />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
@@ -690,7 +692,7 @@ const App = () => {
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
-                <Route path="previous-measurements" element={<PreviousMeasurements />} />
+                <Route path="previous-measurements" element={<PreviousMeasurementsMainScreen />} />
                 <Route
                   path="service-and-products"
                   element={<ServiceAndProductsTab {...({} as any)} />}

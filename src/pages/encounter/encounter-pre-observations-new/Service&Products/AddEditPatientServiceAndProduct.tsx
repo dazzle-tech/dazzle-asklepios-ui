@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { Form } from 'rsuite';
 import { useLocation } from 'react-router-dom';
 import MyInput from '@/components/MyInput';
@@ -40,7 +40,6 @@ const AddEditPatientServiceAndProduct = ({
   const authSlice = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const previousBillingTypeRef = useRef(patientServiceAndProduct?.billingItemType);
 
   const patient = location.state?.patient;
   const encounter = location.state?.encounter;
@@ -48,7 +47,9 @@ const AddEditPatientServiceAndProduct = ({
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-  const billingItemTypeOptions = useEnumOptions('BillingItemTypes');
+  const billingItemTypeOptions = useEnumOptions('BillingItemTypes',{   exclude: [
+      'PATHOLOGY',
+    ]});
 
   const {
     data: activeServicesResponse,
@@ -151,54 +152,6 @@ const AddEditPatientServiceAndProduct = ({
 
   const [updatePatientServiceAndProduct, { isLoading: isUpdating }] =
     useUpdatePatientServiceOrProductMutation();
-
-  useEffect(() => {
-    if (!open || !patientServiceAndProduct?.billingItemType) return;
-
-    const billingTypeChanged =
-      previousBillingTypeRef.current &&
-      previousBillingTypeRef.current !== patientServiceAndProduct.billingItemType;
-
-    if (!billingTypeChanged) {
-      previousBillingTypeRef.current = patientServiceAndProduct.billingItemType;
-      return;
-    }
-
-    setPatientServiceAndProduct({
-      ...patientServiceAndProduct,
-      brandMedicationId:
-        patientServiceAndProduct.billingItemType === 'MEDICATION'
-          ? patientServiceAndProduct.brandMedicationId
-          : undefined,
-      diagnosticTestId: ['LABORATORY', 'RADIOLOGY', 'PATHOLOGY'].includes(
-        patientServiceAndProduct.billingItemType
-      )
-        ? patientServiceAndProduct.diagnosticTestId
-        : undefined,
-      serviceId:
-        patientServiceAndProduct.billingItemType === 'SERVICE'
-          ? patientServiceAndProduct.serviceId
-          : undefined,
-      procedureId:
-        patientServiceAndProduct.billingItemType === 'PROCEDURE'
-          ? patientServiceAndProduct.procedureId
-          : undefined,
-      unitPrice: 0,
-      currency: '',
-    });
-
-    previousBillingTypeRef.current = patientServiceAndProduct.billingItemType;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [patientServiceAndProduct?.billingItemType, open]);
-
-  useEffect(() => {
-    if (!open) {
-      previousBillingTypeRef.current = undefined;
-      return;
-    }
-
-    previousBillingTypeRef.current = patientServiceAndProduct?.billingItemType;
-  }, [open, patientServiceAndProduct?.billingItemType]);
 
   const extractErrorMessage = (response: any) => {
     try {
@@ -478,7 +431,17 @@ const AddEditPatientServiceAndProduct = ({
         selectDataLabel="label"
         selectDataValue="value"
         record={patientServiceAndProduct}
-        setRecord={setPatientServiceAndProduct}
+        setRecord={(val) =>
+          setPatientServiceAndProduct({
+            ...val,
+            brandMedicationId: null,
+            diagnosticTestId: null,
+            serviceId: null,
+            procedureId: null,
+            unitPrice: 0,
+            currency: '',
+          })
+        }
         width="100%"
         searchable={false}
       />

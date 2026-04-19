@@ -36,7 +36,6 @@ import {
   faCircleCheck,
   faCirclePlus,
   faClock,
-  faPaperPlane,
   faPlus,
   faPrint,
   faStethoscope,
@@ -69,6 +68,7 @@ import { useSelector } from 'react-redux';
 import MyButton from '@/components/MyButton/MyButton';
 import SectionContainer from '@/components/SectionsoContainer';
 import MyModal from '@/components/MyModal/MyModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import ViewAppointmentRequests from './ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
 import { calculateAgeFormat } from '@/utils';
@@ -76,6 +76,14 @@ import { update } from 'lodash';
 import TodayAppointmentsList from './components/TodayAppointmentsList';
 import BookPatient from './components/BookPatient';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
+import ViewRequestsFloatingButton from './components/ViewRequestsFloatingButton';
+import ApproveRequestAgendaModal from './components/ApproveRequestAgendaModal';
+import { skipToken } from '@reduxjs/toolkit/query';
+import {
+  useApproveAppointmentRequestMutation,
+  useCancelAppointmentRequestMutation,
+  useGetAppointmentRequestsQuery
+} from '@/services/appointment/appointmentRequestService';
 
 /** Resolve numeric patient id from appointment payload (not nested patient object). */
 const getAppointmentPatientId = (appointment: any): number | null => {
@@ -89,9 +97,41 @@ const getAppointmentPatientId = (appointment: any): number | null => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
-/**
- * Legend colors (footer + event styling) + summary bar icon (expressive) + circle fill for white-icon contrast.
- */
+const isRequestPendingApproval = (req: any): boolean => {
+  if (!req) return false;
+  const s = String(req?.status ?? req?.requestStatus ?? '')
+    .toUpperCase()
+    .replace(/-/g, '_');
+  return s === 'REQUESTED' || s === 'PENDING';
+};
+
+const formatAppointmentRequestApproveError = (e: unknown): string => {
+  const err = e as any;
+  const data = err?.data ?? err?.error?.data;
+  if (typeof data === 'string' && data.trim()) return data.trim().slice(0, 500);
+  if (data && typeof data === 'object') {
+    if (typeof data.msg === 'string' && data.msg.trim()) return data.msg.trim().slice(0, 500);
+    if (typeof data.message === 'string' && data.message.trim()) return data.message.trim().slice(0, 500);
+    if (typeof data.detail === 'string' && data.detail.trim()) return data.detail.trim().slice(0, 500);
+    if (typeof data.title === 'string' && data.title.trim()) return data.title.trim().slice(0, 500);
+    if (Array.isArray(data.errors)) {
+      const parts = data.errors.map((x: any) => {
+        if (typeof x === 'string') return x;
+        return x?.defaultMessage || x?.message || x?.field || '';
+      });
+      const joined = parts.filter(Boolean).slice(0, 6).join('; ');
+      if (joined) return joined.slice(0, 500);
+    }
+  }
+  const status = err?.status ?? err?.originalStatus;
+  const stMsg = status ? ` (HTTP ${status})` : '';
+  if (typeof err?.error === 'string' && err.error !== 'TypeError') return `${err.error}${stMsg}`.slice(0, 500);
+  return `Could not approve the appointment request${stMsg}.`;
+};
+
+const APPOINTMENT_REQUEST_APPROVE_STATUS = 'APPROVED';
+
+
 const SCHEDULE_LEGEND_ITEMS: {
   label: string;
   color: string;
@@ -139,6 +179,8 @@ const ScheduleScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [viewAppointmentData, setViewAppointmentData] = useState(null);
   const isOpeningViewModalRef = useRef(false);
+  const pendingNewSlotEventRef = useRef<any>(null);
+  const pendingAgendaSlotRef = useRef<any>(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
@@ -146,6 +188,8 @@ const ScheduleScreen = () => {
   const dispatch = useAppDispatch();
 
   const [saveAppointment] = useSaveAppointmentMutation();
+  const [cancelAppointmentRequest] = useCancelAppointmentRequestMutation();
+  const [approveAppointmentRequest] = useApproveAppointmentRequestMutation();
   const [searchAppointments, { data: searchedAppointmentsResponse, isFetching: isSearchingAppointments }] =
     useLazySearchAppointmentsQuery();
   const [
@@ -155,6 +199,9 @@ const ScheduleScreen = () => {
 
   const [requestApproveModalOpen, setRequestApproveModalOpen] = useState(false);
   const [requestToApprove, setRequestToApprove] = useState<any>(null);
+  const [confirmNewSlotOpen, setConfirmNewSlotOpen] = useState(false);
+  const [newSlotConfirmBusy, setNewSlotConfirmBusy] = useState(false);
+  const [agendaSlotConfirmOpen, setAgendaSlotConfirmOpen] = useState(false);
 
   //Calendar Filters
   // NOTE: `MyInput`'s `setRecord` spreads `record` (`{ ...record, ... }`),
@@ -228,6 +275,13 @@ const ScheduleScreen = () => {
 
   const { data: resourcesWithAvailabilityResponse } =
     useGetResourcesWithAvailabilityQuery(listRequest);
+  const { data: appointmentRequestsResponse } = useGetAppointmentRequestsQuery(
+    selectedFacility?.id
+      ? {
+          facilityId: Number(selectedFacility.id)
+        }
+      : skipToken
+  );
 
   const { data: activeFacilitiesResponse = [] } = useGetActiveFacilitiesQuery({});
   const { data: appointableDepartmentsResponse } = useGetAppointableDepartmentsQuery(
@@ -307,8 +361,12 @@ const ScheduleScreen = () => {
     };
     collect(searchedAppointmentsResponse?.data ?? []);
     collect((todayAppointmentsResponse as any)?.data ?? []);
+    (appointmentRequestsResponse ?? []).forEach((req: any) => {
+      const id = Number(req?.patientId ?? req?.patient_id);
+      if (Number.isFinite(id) && id > 0) ids.add(id);
+    });
     return Array.from(ids).sort((a, b) => a - b);
-  }, [searchedAppointmentsResponse, todayAppointmentsResponse]);
+  }, [searchedAppointmentsResponse, todayAppointmentsResponse, appointmentRequestsResponse]);
 
   const { data: patientsByIdsData } = useGetPatientsByIdsQuery(
     { ids: appointmentPatientIdsForService },
@@ -570,7 +628,11 @@ const ScheduleScreen = () => {
 
   useEffect(() => {
     if (selectedSlot) {
-      setSelectedStartDate(selectedSlot?.slots[0]);
+      const firstSlotDate =
+        selectedSlot?.slots?.[0] ??
+        selectedSlot?.start ??
+        null;
+      setSelectedStartDate(firstSlotDate);
     }
   }, [selectedSlot]);
 
@@ -584,7 +646,9 @@ const ScheduleScreen = () => {
     setSelectedEvent(freshEvent);
 
     const status = String(
-      freshEvent?.appointmentData?.status ?? ''
+      freshEvent?.appointmentData?.appointmentStatus ??
+        freshEvent?.appointmentData?.status ??
+        ''
     ).toUpperCase();
     const isCanceled = status === 'CANCELLED' || status === 'CANCELED';
     const isNoShow = status === 'NOSHOW' || status === 'NO_SHOW' || status === 'NO-SHOW';
@@ -600,8 +664,10 @@ const ScheduleScreen = () => {
       return;
     }
 
-    // NEW slots are not booked yet; click should go straight to booking modal.
-    if (status === 'NEW') {
+    // NEW / template slots: confirm, then approve request (if any) and open AppointmentModal — not BookPatient.
+    const isNewUnbooked =
+      status === 'NEW' || status === 'NEW-APPOINTMENT' || status === 'NEW_APPOINTMENT';
+    if (isNewUnbooked) {
       const apptStart =
         freshEvent?.start instanceof Date ? freshEvent.start : new Date(freshEvent?.start as string | number);
       if (
@@ -616,11 +682,9 @@ const ScheduleScreen = () => {
         );
         return;
       }
-      setBookPatientReadOnly(false);
-      setViewAppointmentData(freshEvent?.appointmentData ?? null);
-      setShowAppointmentOnly(false);
+      pendingNewSlotEventRef.current = freshEvent;
       setActionsModalOpen(false);
-      setBookPatientModalOpen(true);
+      setConfirmNewSlotOpen(true);
       return;
     }
 
@@ -673,6 +737,246 @@ const ScheduleScreen = () => {
     selectedBookingMode?.bookingMode,
     recordSearchAppointment?.value
   ]);
+
+  const openEditorForNewAppointment = useCallback(
+    async ({
+      appointmentRaw,
+      request,
+      shouldApprove,
+      skipAppointmentModal = false
+    }: {
+      appointmentRaw: any;
+      request: any | null;
+      shouldApprove: boolean;
+      skipAppointmentModal?: boolean;
+    }): Promise<boolean> => {
+      const raw = appointmentRaw ?? {};
+      const startRaw =
+        raw?.appointmentStart ?? raw?.appointment_start ?? raw?.startDatetime ?? raw?.start_datetime;
+      const endRaw = raw?.appointmentEnd ?? raw?.appointment_end ?? raw?.endDatetime ?? raw?.end_datetime;
+      const departmentId =
+        raw?.departmentId ??
+        raw?.department_id ??
+        raw?.departmentKey ??
+        request?.departmentId ??
+        request?.department_id ??
+        request?.requestedResourceId;
+      const facilityId =
+        raw?.facilityId ??
+        raw?.facility_id ??
+        raw?.facilityKey ??
+        request?.facilityId ??
+        request?.facility_id ??
+        selectedFacility?.id;
+      const selectedSlotForModal = {
+        start: startRaw ? new Date(startRaw) : null,
+        end: endRaw ? new Date(endRaw) : null,
+        resourceId: departmentId != null ? String(departmentId) : null,
+        resourceKey: raw?.resourceKey ?? raw?.resourceId ?? raw?.requestedResourceId ?? null,
+        resourceTypeLkey: raw?.resourceTypeLkey ?? raw?.resourceType ?? 'DEPARTMENT',
+        facilityKey: facilityId
+      };
+
+      const slotPatientId = getAppointmentPatientId(raw);
+      const requestPatientId = Number(
+        request?.patientId ??
+          request?.patient_id ??
+          request?.patientKey ??
+          request?.patient_key ??
+          0
+      );
+      const effectivePatientId =
+        requestPatientId > 0 ? requestPatientId : slotPatientId != null ? slotPatientId : null;
+      const requestPatientName =
+        String(request?.patientName ?? request?.patient_name ?? '').trim() || '';
+      const lockPatient = Boolean(request && requestPatientId > 0);
+
+      if (shouldApprove && request) {
+        const requestId = Number(request?.id ?? request?.key);
+        const appointmentId = Number(
+          raw?.id ?? 0
+        );
+        const patientId = Number(
+          request?.patientId ??
+            0
+        );
+        const facId = Number(
+          request?.facilityId ??
+            0
+        );
+        const deptId = Number(
+            request?.requestedResourceId ??
+            0
+        );
+        const sourceEncounterId = Number(
+          request?.sourceEncounterId ??
+            NaN
+        );
+        const hasValidSourceEncounter = Number.isFinite(sourceEncounterId) && sourceEncounterId > 0;
+
+        const priorityRaw = String(
+          request?.priority ?? request?.priorityLkey ?? request?.priority_lkey ?? 'NORMAL'
+        ).trim();
+        const priorityForApprove = priorityRaw.length > 0 ? priorityRaw : 'NORMAL';
+
+        const missingApproveIds: string[] = [];
+        if (!Number.isFinite(requestId) || requestId <= 0) missingApproveIds.push('request id');
+        if (!Number.isFinite(appointmentId) || appointmentId <= 0) {
+          missingApproveIds.push('appointment id (slot id/key)');
+        }
+        if (!Number.isFinite(patientId) || patientId <= 0) missingApproveIds.push('patient id');
+        if (!Number.isFinite(facId) || facId <= 0) missingApproveIds.push('facility id');
+        if (!Number.isFinite(deptId) || deptId <= 0) {
+          missingApproveIds.push('department id (or requestedResourceId on request)');
+        }
+
+        if (missingApproveIds.length > 0) {
+          dispatch(
+            notify({
+              msg: `Cannot approve: invalid or missing — ${missingApproveIds.join('; ')}.`,
+              sev: 'warning'
+            })
+          );
+          return false;
+        }
+
+        if (!hasValidSourceEncounter) {
+          dispatch(
+            notify({
+              msg: 'This request has no source encounter id, so the approve API was skipped. Complete the appointment in the editor, or fix the request in the backend.',
+              sev: 'warning'
+            })
+          );
+          if (skipAppointmentModal) {
+            return false;
+          }
+        } else {
+        dispatch(showSystemLoader());
+        try {
+          const requestedResourceTypeRaw =
+            request?.requestedResourceType ?? null;
+          const requestedResourceIdRaw =
+            request?.requestedResourceId ?? null;
+          const approveBody: Record<string, unknown> = {
+            id: requestId,
+            patientId,
+            facilityId: facId,
+            departmentId: deptId,
+            sourceEncounterId,
+            appointmentId,
+            priority: priorityForApprove,
+            status: APPOINTMENT_REQUEST_APPROVE_STATUS
+          };
+          if (requestedResourceTypeRaw != null && String(requestedResourceTypeRaw).trim() !== '') {
+            approveBody.requestedResourceType = requestedResourceTypeRaw;
+          }
+          if (requestedResourceIdRaw != null && Number(requestedResourceIdRaw) > 0) {
+            approveBody.requestedResourceId = Number(requestedResourceIdRaw);
+          }
+          if (request?.reason != null && String(request.reason).trim() !== '') {
+            approveBody.reason = request.reason;
+          }
+          if (request?.note != null && String(request.note).trim() !== '') {
+            approveBody.note = request.note;
+          }
+
+          await approveAppointmentRequest(approveBody as any).unwrap();
+
+          dispatch(
+            notify({
+              msg: 'Appointment request approved.',
+              sev: 'success'
+            })
+          );
+          setRequestToApprove(null);
+          await handleSearchAppointmentsByCriteria();
+        } catch (approveErr) {
+          const ae = approveErr as any;
+          console.error(
+            'approveAppointmentRequest failed',
+            ae,
+            ae?.data != null ? JSON.stringify(ae.data) : ''
+          );
+          dispatch(
+            notify({
+              msg: formatAppointmentRequestApproveError(approveErr),
+              sev: 'error'
+            })
+          );
+          dispatch(hideSystemLoader());
+          return false;
+        }
+        dispatch(hideSystemLoader());
+        }
+      }
+
+      if (skipAppointmentModal) {
+        setRequestApproveModalOpen(false);
+        setAppRequestModalOpen(false);
+        return true;
+      }
+
+      const viewPayload = {
+        ...(raw ?? {}),
+        patientId: effectivePatientId,
+        patient:
+          effectivePatientId != null && effectivePatientId > 0
+            ? {
+                key: String(effectivePatientId),
+                id: effectivePatientId,
+                fullName:
+                  requestPatientName ||
+                  raw?.patient?.fullName ||
+                  raw?.patient?.full_name ||
+                  `Patient #${effectivePatientId}`
+              }
+            : raw?.patient,
+        lockPatient
+      };
+
+      setSelectedSlot(selectedSlotForModal as any);
+      setViewAppointmentData(viewPayload as any);
+      setShowAppointmentOnly(false);
+      setRequestApproveModalOpen(false);
+      setAppRequestModalOpen(false);
+      setBookPatientReadOnly(false);
+      setBookPatientModalOpen(false);
+      setActionsModalOpen(false);
+      setModalOpen(true);
+      return true;
+    },
+    [
+      approveAppointmentRequest,
+      dispatch,
+      handleSearchAppointmentsByCriteria,
+      selectedFacility?.id
+    ]
+  );
+
+  const handleConfirmNewSlotCancel = useCallback(() => {
+    setConfirmNewSlotOpen(false);
+    pendingNewSlotEventRef.current = null;
+  }, []);
+
+  const handleConfirmNewSlotOk = useCallback(async () => {
+    const freshEvent = pendingNewSlotEventRef.current;
+    if (!freshEvent?.appointmentData) {
+      handleConfirmNewSlotCancel();
+      return;
+    }
+    setNewSlotConfirmBusy(true);
+    try {
+      await openEditorForNewAppointment({
+        appointmentRaw: freshEvent.appointmentData,
+        request: requestToApprove,
+        shouldApprove: isRequestPendingApproval(requestToApprove)
+      });
+    } finally {
+      setNewSlotConfirmBusy(false);
+      setConfirmNewSlotOpen(false);
+      pendingNewSlotEventRef.current = null;
+    }
+  }, [handleConfirmNewSlotCancel, openEditorForNewAppointment, requestToApprove]);
 
   useEffect(() => {
     if (!selectedFacility?.id) return;
@@ -1592,111 +1896,121 @@ const ScheduleScreen = () => {
   };
 
   const requestsRows = useMemo(() => {
-    const list = searchedAppointmentsResponse?.data ?? [];
-    const resourcesList = resourcesWithAvailabilityResponse?.object ?? [];
+    const list = (appointmentRequestsResponse ?? []).filter((r: any) => {
+      const st = String(r?.status ?? '')
+        .toUpperCase()
+        .replace(/-/g, '_');
+      return st !== 'APPROVED';
+    });
+    return list.map((r: any) => {
+      const patientName = String(r?.patientName ?? '').trim() || 'Unknown';
+      const patientIdNum = Number(r?.patientId ?? 0);
+      const mrn = String(
+        r?.patientMrn ?? ''
+      ).trim();
+      const resourceType = r?.requestedResourceType ?? '-';
+      const resourceName =
+        String(r?.departmentName ?? '').trim() ||
+        (r?.requestedResourceId != null ? `Resource #${r.requestedResourceId}` : '-');
 
-    return list
-      .filter((a: any) => String(a?.visitTypeLkey) === String(FOLLOW_UP_VISIT_TYPE_LKEY))
-      .filter((a: any) => !a?.appointmentStart)
-      .map((a: any) => {
-        const patient = a?.patient || {};
-        const reqPid = getAppointmentPatientId(a);
-        const reqFromSvc = reqPid != null ? patientDisplayByPatientService.get(String(reqPid)) : undefined;
-
-        const patientName =
-          (reqFromSvc?.name && reqFromSvc.name.trim()) ||
-          patient?.full_name ||
-          patient?.fullName ||
-          (patient?.first_name && patient?.last_name
-            ? `${patient.first_name} ${patient.last_name}`.trim()
-            : patient?.first_name || patient?.last_name || 'Unknown');
-
-        const patientGender = patient?.genderLvalue?.lovDisplayVale || patient?.genderLkey || '';
-        const patientAge = patient?.dob ? calculateAgeFormat(patient.dob) : '';
-
-        const patientMrn =
-          (reqFromSvc?.mrn && reqFromSvc.mrn.trim()) || patient?.patient_mrn || '';
-
-        const resourceKey = a?.resourceKey ?? a?.resource_key ?? a?.resource?.key ?? null;
-
-        const resource =
-          resourceKey != null
-            ? resourcesList.find((r: any) => String(r.key) === String(resourceKey))
-            : null;
-
-        const resourceNameFromService = resourceKey != null ? resourceNameById.get(String(resourceKey)) : '';
-        const resourceName =
-          (resourceNameFromService && String(resourceNameFromService).trim()) ||
-          resource?.resourceName ||
-          resource?.name ||
-          a?.resourceName ||
-          a?.resource_name ||
-          '-';
-
-        const resourceType =
-          resource?.resource_type ||
-          resource?.resourceType ||
-          a?.resourceType ||
-          a?.resource_type ||
-          a?.resourceTypeLkey ||
-          a?.resource_type_key ||
-          '-';
-
-        return {
-          id: a.key,
-
-          patientName,
-          mrn: patientMrn,
-
-          ageText: patientAge,
-          genderText: patientGender,
-
-          facilityKey: a?.facilityKey ?? a?.facility_key ?? a?.facilityId ?? a?.facility_id ?? '',
-
-          createdBy: a?.createdBy ?? a?.created_by ?? '',
-          createdAt: a?.createdAt ?? a?.created_at ?? null,
-
-          status: a?.appointmentStatus ?? 'Pending',
-
-          resourceName,
-          resourceType,
-          resourceKey: resourceKey ?? '',
-          updatedBy: a?.updatedBy ?? a?.updated_by ?? '',
-          updatedAt: a?.updatedAt ?? a?.updated_at ?? null,
-
-          otherReason: a?.otherReason ?? '',
-
-          _raw: a
-        };
-      });
-  }, [
-    searchedAppointmentsResponse,
-    resourcesWithAvailabilityResponse?.object,
-    resourceNameById,
-    patientDisplayByPatientService
-  ]);
+      return {
+        id: String(r?.id ?? ''),
+        patientName,
+        mrn,
+        ageText: '',
+        genderText: '',
+        facilityKey: r?.facilityId ?? '',
+        createdBy: r?.requestedBy ?? r?.createdBy ?? '',
+        createdAt: r?.requestedDate ?? r?.createdDate ?? null,
+        status: r?.status ?? 'REQUESTED',
+        resourceName,
+        resourceType,
+        resourceKey: r?.requestedResourceId ?? '',
+        updatedBy: r?.lastModifiedBy ?? '',
+        updatedAt: r?.lastModifiedDate ?? r?.cancelledAt ?? r?.cancelled_at ?? null,
+        otherReason: r?.cancelReason ?? '',
+        _raw: { ...r, key: r?.id }
+      };
+    });
+  }, [appointmentRequestsResponse, patientDisplayByPatientService]);
 
   const handleApproveRequest = (row: any) => {
-    setRequestToApprove(row?._raw);
+    const raw = row?._raw ?? {};
+    const facilityId =
+      raw?.facilityId ??
+      raw?.facility_id ??
+      raw?.facilityKey ??
+      raw?.facility_key ??
+      null;
+    const departmentId =
+      raw?.departmentId ??
+      raw?.department_id ??
+      raw?.requestedResourceId ??
+      raw?.requested_resource_id ??
+      null;
+    if (!facilityId || !departmentId) {
+      dispatch(
+        notify({
+          msg: 'Request must include facility and requested department before approval.',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    // Keep ScheduleScreen UI untouched; agenda filtering/rendering happens inside approve modal only.
+    setAppRequestModalOpen(false);
+    setRequestToApprove(raw);
     setRequestApproveModalOpen(true);
   };
+
+  const handleAgendaSlotConfirmCancel = useCallback(() => {
+    setAgendaSlotConfirmOpen(false);
+    pendingAgendaSlotRef.current = null;
+  }, []);
+
+  const handleApproveAgendaSelectAppointment = (appointmentFromAgenda: any) => {
+    pendingAgendaSlotRef.current = appointmentFromAgenda;
+    setAgendaSlotConfirmOpen(true);
+  };
+
+  const handleAgendaSlotConfirmOk = useCallback(async () => {
+    const slot = pendingAgendaSlotRef.current;
+    if (!slot) {
+      handleAgendaSlotConfirmCancel();
+      return;
+    }
+    const success = await openEditorForNewAppointment({
+      appointmentRaw: slot,
+      request: requestToApprove,
+      shouldApprove: isRequestPendingApproval(requestToApprove),
+      skipAppointmentModal: true
+    });
+    if (success) {
+      setAgendaSlotConfirmOpen(false);
+      pendingAgendaSlotRef.current = null;
+    }
+  }, [handleAgendaSlotConfirmCancel, openEditorForNewAppointment, requestToApprove]);
 
   const handleRejectRequest = async (row: any, rejectReason: string) => {
     try {
       const raw = row?._raw;
-      if (!raw?.key) return;
+      const requestId = raw?.id ?? raw?.key;
+      if (!requestId) return;
 
-      await saveAppointment({
-        ...raw,
-        appointmentStatus: 'Rejected',
-        otherReason: rejectReason,
-        reasonValue: rejectReason,
-        appointmentStart: null,
-        appointmentEnd: null,
-        updatedBy: authSlice.user.username
+      await cancelAppointmentRequest({
+        id: requestId,
+        data: {
+          cancelReason: rejectReason
+        }
       }).unwrap();
 
-      await handleSearchAppointmentsByCriteria();
+      dispatch(
+        notify({
+          msg: 'Appointment request cancelled successfully.',
+          sev: 'success'
+        })
+      );
     } catch (e) {}
   };
 
@@ -2121,25 +2435,14 @@ const ScheduleScreen = () => {
           setFollowUpModalOpen(true);
         }}
       />
-      <AppointmentModal
-        from={'Schedule'}
-        isOpen={requestApproveModalOpen}
-        onClose={() => {
-          setRequestApproveModalOpen(false);
-          setRequestToApprove(null);
+      <ApproveRequestAgendaModal
+        open={requestApproveModalOpen}
+        setOpen={nextOpen => {
+          setRequestApproveModalOpen(nextOpen);
+          if (!nextOpen) setRequestToApprove(null);
         }}
-        appointmentData={requestToApprove}
-        resourceType={selectedResourceType}
-        facility={selectedFacility}
-        onSave={async () => {
-          await handleSearchAppointmentsByCriteria();
-          setRequestApproveModalOpen(false);
-          setRequestToApprove(null);
-          setAppRequestModalOpen(false);
-        }}
-        showOnly={false}
-        selectedSlot={null}
-        forceStatus="Confirmed"
+        request={requestToApprove}
+        onSelectAppointment={handleApproveAgendaSelectAppointment}
       />
       <BookPatient
         open={bookPatientModalOpen}
@@ -2246,6 +2549,38 @@ const ScheduleScreen = () => {
         </Modal.Body>
       </Modal>
 
+      <Modal open={confirmNewSlotOpen} onClose={handleConfirmNewSlotCancel} size="sm">
+        <Modal.Header>Available appointment</Modal.Header>
+        <Modal.Body>
+          <Text size="sm" style={{ color: 'var(--rs-text-secondary)' }}>
+            {isRequestPendingApproval(requestToApprove)
+              ? 'Approve the pending appointment request for this slot and open the appointment editor?'
+              : 'Open the appointment editor to complete booking for this slot?'}
+          </Text>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button appearance="subtle" onClick={handleConfirmNewSlotCancel} disabled={newSlotConfirmBusy}>
+            Cancel
+          </Button>
+          <Button appearance="primary" loading={newSlotConfirmBusy} onClick={() => void handleConfirmNewSlotOk()}>
+            Continue
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <DeletionConfirmationModal
+        open={agendaSlotConfirmOpen}
+        setOpen={nextOpen => {
+          setAgendaSlotConfirmOpen(nextOpen);
+          if (!nextOpen) pendingAgendaSlotRef.current = null;
+        }}
+        actionType="confirm"
+        confirmationQuestion="Approve the request and book this time slot?"
+        cancelButtonLabel="No"
+        actionButtonLabel="Yes"
+        actionButtonFunction={() => void handleAgendaSlotConfirmOk()}
+      />
+
       <MyModal
         open={appRequestModalOpen}
         setOpen={setAppRequestModalOpen}
@@ -2260,6 +2595,7 @@ const ScheduleScreen = () => {
           <ViewAppointmentRequests data={requestsRows} onApprove={handleApproveRequest} onReject={handleRejectRequest} />
         }
       ></MyModal>
+      <ViewRequestsFloatingButton onOpen={() => setAppRequestModalOpen(true)} />
     </div>
   );
 };

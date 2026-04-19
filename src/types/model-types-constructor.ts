@@ -1444,7 +1444,10 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	discharge:undefined,
 	emergencyLevelLkey:undefined,
 	dischargeAt:0,
-} 
+	hasPrescription:undefined,
+	hasOrder:undefined,
+	isObserved:undefined,
+}
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
 	key:undefined,

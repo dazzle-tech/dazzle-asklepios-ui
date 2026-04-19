@@ -118,7 +118,7 @@ const ERTriage = () => {
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isReceptionist = jobRole === 'RECEPTIONIST';
   const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
-
+  
 
   const toDateSafe = (value: any): Date | null => {
     if (!value && value !== 0) return null;

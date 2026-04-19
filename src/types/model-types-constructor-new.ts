@@ -1156,6 +1156,63 @@ export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFr
   patientId: null,
 };
 
+export const newAppointmentRequestResponseVM: modelTypes.AppointmentRequestResponseVM = {
+  id: null,
+  patientId: null,
+  patientName: null,
+  patientMrn: null,
+  facilityId: null,
+  facilityName: null,
+  departmentId: null,
+  departmentName: null,
+  sourceEncounterId: null,
+  appointmentId: null,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: null,
+  reason: null,
+  note: null,
+  status: null,
+  cancelledAt: null,
+  cancelReason: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newAppointmentRequestCreateDTO: modelTypes.AppointmentRequestCreateDTO = {
+  patientId: 0,
+  facilityId: 0,
+  departmentId: 0,
+  sourceEncounterId: 0,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: '',
+  reason: null,
+  note: null
+};
+
+export const newAppointmentRequestUpdateDTO: modelTypes.AppointmentRequestUpdateDTO = {
+  id: 0,
+  patientId: 0,
+  facilityId: 0,
+  departmentId: 0,
+  sourceEncounterId: 0,
+  appointmentId: null,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: '',
+  reason: null,
+  note: null,
+  status: '',
+  cancelReason: null
+};
+
+export const newAppointmentRequestCancelDTO: modelTypes.AppointmentRequestCancelDTO = {
+  cancelReason: ''
+};
+
 // ------------------- Price List -------------------
 export const newPriceList: modelTypes.PriceList = {
   id: undefined,
@@ -2156,7 +2213,8 @@ export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
   cancelledBy: undefined,
   undoAcceptReason: undefined,
   undoAcceptBy: undefined,
-  undoAcceptDate: undefined
+  undoAcceptDate: undefined,
+  icdDiagnosisId: undefined,
 };
 
 export const newDiagnosticOrderTestResultCreate: modelTypes.DiagnosticOrderTestResultCreateDTO = {
@@ -2399,6 +2457,13 @@ export const newPatientServiceAndProduct: modelTypes.PatientServiceAndProduct = 
   billingInvoiceId: undefined,
   billingInvoiceItemId: undefined,
 };
+export enum ServiceSource {
+  LABORATORY = 'LABORATORY',
+  RADIOLOGY = 'RADIOLOGY',
+  PROCEDURE = 'PROCEDURE',
+  CONSULTATION_PORTAL = 'CONSULTATION_PORTAL',
+  SERVICE_AND_PRODUCT = 'SERVICE_AND_PRODUCT',
+}
 
 export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProductCreateDTO = {
   patientId: undefined,
@@ -2409,10 +2474,13 @@ export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProduct
   diagnosticTestId: undefined,
   serviceId: undefined,
   procedureId: undefined,
-
+  
   quantity: 1,
   unitPrice: 0,
-  currency: ''};
+  currency: '',
+  serviceSource: ServiceSource.SERVICE_AND_PRODUCT,
+  SourceId: undefined
+};
 
 export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProductUpdateDTO = {
   id: undefined,

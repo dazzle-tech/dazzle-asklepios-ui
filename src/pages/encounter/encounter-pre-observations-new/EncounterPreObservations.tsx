@@ -34,19 +34,19 @@ const NurseStation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
+  const fromPage = propsData?.fromPage;
+  const pageSource = fromPage || sessionStorage.getItem('encounterPageSource');
 
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
   });
 
-const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
+  const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
 
-  // === LOVs ===
   const { data: bloodPressureMeasurementSiteLov } =
     useGetLovValuesByCodeQuery('BP_MEASURMENT_SITE');
   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
-  console.log('encounterPriorityLovQueryResponse', encounterPriorityLovQueryResponse);
-  // === Enums ===
+
   const patientConditions = useEnumOptions('Condition');
   const encounterTypeOptions = useEnumOptions('EncounterType');
   const EncounterReasonEnum = useEnumOptions('EncounterReason');
@@ -73,7 +73,6 @@ const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [triggerNurseSummaryReport] = useLazyGetNurseSummaryReportQuery();
 
-  // Nurse sheets
   const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(
     localEncounter?.departmentId
   );
@@ -89,37 +88,35 @@ const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
     );
   }, [allowedSheetCodes, searchTerm.term]);
 
-const headersMap = useMemo(() => {
-  const map: Record<string, string> = {};
+  const headersMap = useMemo(() => {
+    const map: Record<string, string> = {};
 
-  MedicalSheets.forEach(ms => {
-    const fullPath = ms.path.startsWith('/nurse-station')
-      ? ms.path
-      : `/nurse-station${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
+    MedicalSheets.forEach(ms => {
+      const fullPath = ms.path.startsWith('/nurse-station')
+        ? ms.path
+        : `/nurse-station${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
 
-    map[fullPath] = ms.name;
-  });
+      map[fullPath] = ms.name;
+    });
 
-  return map;
-}, []);
+    return map;
+  }, []);
 
-useEffect(() => {
-  setCurrentHeader(headersMap[location.pathname] || 'Nurse Dashboard');
-}, [location.pathname, headersMap]);
+  useEffect(() => {
+    setCurrentHeader(headersMap[location.pathname] || 'Nurse Dashboard');
+  }, [location.pathname, headersMap]);
 
+  const divContent = `Nurse Station > ${currentHeader}`;
 
-const divContent = `Nurse Station > ${currentHeader}`;
+  useEffect(() => {
+    dispatch(setPageCode('Nurse_Station'));
+    dispatch(setDivContent(divContent));
 
-useEffect(() => {
-  dispatch(setPageCode('Nurse_Station'));
-  dispatch(setDivContent(divContent));
-
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(''));
-  };
-}, [currentHeader, dispatch]);
-
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [currentHeader, dispatch, divContent]);
 
   useEffect(() => {
     if (!propsData?.encounter) {
@@ -127,20 +124,24 @@ useEffect(() => {
       return;
     }
     setEdit(propsData?.edit || localEncounter?.status === 'CLOSED');
-  }, [propsData, localEncounter]);
+  }, [propsData, localEncounter, navigate]);
 
-  // Complete encounter
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+
   useEffect(() => {
     if (
-      localEncounter?.encounterType == 'INPATIENT' &&
+      localEncounter?.encounterType === 'INPATIENT' &&
       completeEncounterMutation.status === 'fulfilled'
     ) {
       navigate('/inpatient-encounters-list');
     } else if (completeEncounterMutation.status === 'fulfilled') {
-      navigate('/encounter-list');
+      if (pageSource === 'Urgent_Care_List') {
+        navigate('/urgent-care-department-list');
+      } else {
+        navigate('/encounter-list');
+      }
     }
-  }, [completeEncounterMutation]);
+  }, [completeEncounterMutation.status, localEncounter?.encounterType, navigate, pageSource]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -171,6 +172,17 @@ useEffect(() => {
   };
 
   const handleGoBack = () => {
+    if (pageSource === 'Urgent_Care_List') {
+      navigate('/urgent-care-department-list', {
+        state: {
+          fromPage: 'NurseStation',
+          patient: propsData?.patient,
+          encounter: propsData?.encounter
+        }
+      });
+      return;
+    }
+
     navigate('/encounter-list');
   };
 
@@ -214,16 +226,17 @@ useEffect(() => {
 
   return (
     <div className="container">
-      {/* LEFT SIDE */}
       <div className="left-box">
         <Panel>
-          {/* TOP BAR */}
           <div className="container-bt">
             <div className="left">
-              <BackButton onClick={handleGoBack} text="To Encounters list" />
+              <BackButton
+                onClick={handleGoBack}
+                text={pageSource === 'Urgent_Care_List' ? 'To Urgent Care list' : 'To Encounters list'}
+              />
               <MyButton
                 backgroundColor={'var(--primary-gray)'}
-                onClick={() => navigate(-1)}
+                onClick={handleGoBack}
                 prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
               />
 
@@ -271,7 +284,6 @@ useEffect(() => {
 
           <Divider />
 
-          {/* DRAWER */}
           <Drawer
             open={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
@@ -299,6 +311,7 @@ useEffect(() => {
                   </Col>
                 </Row>
               </Form>
+
               <List hover className="drawer-list-style">
                 <List.Item
                   className="drawer-item return-button"
@@ -323,9 +336,10 @@ useEffect(() => {
                         setIsDrawerOpen(false);
                         navigate(fullPath, {
                           state: {
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit
+                            patient: propsData?.patient,
+                            encounter: propsData?.encounter,
+                            edit,
+                            fromPage: propsData?.fromPage
                           }
                         });
                       }}
@@ -333,9 +347,10 @@ useEffect(() => {
                       <Link
                         to={fullPath}
                         state={{
-                          patient: propsData.patient,
-                          encounter: propsData.encounter,
-                          edit
+                          patient: propsData?.patient,
+                          encounter: propsData?.encounter,
+                          edit,
+                          fromPage: propsData?.fromPage
                         }}
                         className="inherit-link"
                       >
@@ -351,7 +366,6 @@ useEffect(() => {
             </Drawer.Body>
           </Drawer>
 
-          {/* CONTENT */}
           <div className="content-with-sticky">
             <div className="main-content-area">
               <Outlet
@@ -367,7 +381,6 @@ useEffect(() => {
         </Panel>
       </div>
 
-      {/* RIGHT SIDE */}
       <div className="right-box">
         <PatientSide patient={propsData?.patient} encounter={propsData?.encounter} edit={edit} />
       </div>

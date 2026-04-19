@@ -1156,7 +1156,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                     <MyLabel label="Parameters to monitor" />
                     <MyTagInput tags={tags} setTags={setTags} />
 
-                    <div className="prescription-refills-blocks">
+                    {/* <div className="prescription-refills-blocks">
                       <MyInput
                         disabled={preKey == null}
                         width={140}
@@ -1189,7 +1189,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
                       />
-                    </div>
+                    </div> */}
                   </Form>
                 }
               />
