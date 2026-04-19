@@ -149,8 +149,10 @@ export const MedicalSheets: MedicalSheet[] = [
     code: 'PHYSICIAN_ASSESSMENT',
     icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
     path: '/physician-assessment'
-  }
+  },
 
+  { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' }
+  
 ];
 
 
@@ -389,7 +391,7 @@ export const MODULES: Module[] =
           description: "", icon: "FaList",
           viewOrder: 1, navPath: "encounter-list"
         },
-        { name: "Review Results", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
+        { name: "My Favorite Tests", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
 
       ],
     },

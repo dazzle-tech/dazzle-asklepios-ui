@@ -138,7 +138,7 @@ import Rad from './pages/rad-module/RadiologyMain';
 import Recovery from './pages/recovery';
 import ResetPassword from './pages/reset-password/ResetPassword';
 import CreatePassword from './pages/create-password/CreatePassword';
-import ReviewResults from './pages/review-results/ReviewResults';
+import Favoraite from './pages/review-results';
 import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
 import ApplyTemplateList from './pages/ApplyTemplate/ApplyTemplateList';
 import AccessRoles from './pages/setup/access-roles';
@@ -180,13 +180,10 @@ import Vaccine from './pages/setup/vaccine-setup';
 import VisitDurationSetup from './pages/setup/visit-duration-setup';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
-import { useLoadNavigationMapQuery } from './services/uiService';
-import { setScreenKey } from './utils/uiReducerActions';
 import NewDepartments from './pages/setup/departments-setup/Departments-new';
 import NeonatesPainAssessment from './pages/encounter/neonates-pain-assessment/NeonatesPainAssessment';
 import { MODULES } from '@/config/modules-config';
-import RoleManegment from './pages/setup/role-managemen';
-import { useGetMenuQuery } from './services/security/UserRoleService';
+
 import CallOverlay from './components/Overlay/CallOverlay';
 import LanguagesSetup from './pages/setup/language-setup/Language';
 import Pediatric from './pages/encounter/encounter-component/pediatric';
@@ -219,14 +216,17 @@ import OrganizationHolidays from './pages/system-configurations/organization-hol
 import { useLazyGetDepartmentByIdQuery } from './services/security/departmentService';
 import ErrorDepartmentTypePage from './pages/authentication/error-department-type';
 import PolicyDefinitions from './pages/setup/policy-definition';
-
 import AvailabilityTemplatePageNew from './pages/appointments-new/availability-template-new';
 import ServiceAndProductsTab from './pages/encounter/encounter-pre-observations-new/Service&Products/ServiceAndProducts';
 import UrgentCareTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareTriage';
 import UrgentCareStartTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareStartTriage';
 import UrgentCareList from './pages/encounter/urgent-care/UrgentCareList';
+import UrgentCareListMain from './pages/encounter/urgent-care/UrgentCateListMain';
+import UccMedicationOrder from './pages/encounter/encounter-component/ucc-medication-order';
 import NurseAssessment from './pages/encounter/encounter-pre-observations-new/observation-PMH-Progress/nurse-assessment';
 import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
+import FavoriteTests from './pages/review-results';
+import PreviousMeasurementsMainScreen from './pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
 
 const PUBLIC_PATHS = new Set([
   '/login',
@@ -586,7 +586,7 @@ const App = () => {
               <Route path="patient-old/patient-merge-files" element={<PatientMergeFilesLegacy />} />
               <Route path="ER-start-triage" element={<ERStartTriageNew />} />
               <Route path="urgent-care-start-triage" element={<UrgentCareStartTriage />} />
-              <Route path="urgent-care-department-list" element={<UrgentCareList />} />
+              <Route path="urgent-care-department-list" element={<UrgentCareListMain />} />
               <Route path="ER-triage" element={<ERTriageNew />} />
               <Route path="ER-dashboard" element={<ERDashboardsNew />} />
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
@@ -615,7 +615,7 @@ const App = () => {
                 <Route index element={<PatientSummary />} />
                 <Route path="clinical-visit" element={<SOAP />} />
                 <Route path="observations" element={<Observations />} />
-                <Route path="previous-measurements" element={<PreviousMeasurements />} />
+                <Route path="previous-measurements" element={<PreviousMeasurementsMainScreen />} />
                 <Route path="allergies" element={<Allergies />} />
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
@@ -634,6 +634,7 @@ const App = () => {
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
                 <Route path="dialysis-request" element={<DialysisRequest />} />
+                  <Route path="ucc-medication-order" element={<UccMedicationOrder />} />
                 <Route path="operation-request" element={<OperationRequestNew />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
@@ -688,7 +689,7 @@ const App = () => {
                   path="pressure-ulce-risk-assessment"
                   element={<PressureUlcerRiskAssessment />}
                 />
-                <Route path="previous-measurements" element={<PreviousMeasurements />} />
+                <Route path="previous-measurements" element={<PreviousMeasurementsMainScreen />} />
                 <Route
                   path="service-and-products"
                   element={<ServiceAndProductsTab {...({} as any)} />}
@@ -750,7 +751,7 @@ const App = () => {
                 <Route path="sliding-scale" element={<SlidingScale />} />
               </Route>
               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
-              <Route path="review-results" element={<ReviewResults />} />
+              <Route path="review-results" element={<FavoriteTests />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />

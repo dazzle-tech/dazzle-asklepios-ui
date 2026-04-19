@@ -1,6 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
@@ -25,6 +23,7 @@ type PatientDiagnosisTableProps = {
   onDiagnosisDeleted?: () => void;
   onSelectDiagnosis?: (ids: number[]) => void;
   selectMode?: boolean;
+  selectedDiagnosisId?: number | null;
 };
 
 const PatientDiagnosisTable: React.FC<PatientDiagnosisTableProps> = ({
@@ -33,7 +32,8 @@ const PatientDiagnosisTable: React.FC<PatientDiagnosisTableProps> = ({
   width = '100%',
   onDiagnosisDeleted,
   onSelectDiagnosis,
-  selectMode = false
+  selectMode = false,
+  selectedDiagnosisId
 }) => {
   const dispatch = useAppDispatch();
 
@@ -143,6 +143,14 @@ const PatientDiagnosisTable: React.FC<PatientDiagnosisTableProps> = ({
     };
   }, [pageDiagnosisIds, fetchIcdByIds, icdMap]);
 
+  useEffect(() => {
+    if (selectedDiagnosisId != null) {
+      setSelectedIds([Number(selectedDiagnosisId)]);
+    } else {
+      setSelectedIds([]);
+    }
+  }, [selectedDiagnosisId]);
+
   const handleOpenDeleteModal = (row: PatientDiagnosisType) => {
     setSelectedDiagnosisToDelete(row);
     setDeleteModalOpen(true);
@@ -172,94 +180,88 @@ const PatientDiagnosisTable: React.FC<PatientDiagnosisTableProps> = ({
     }
   };
 
-  const tableColumns = useMemo(() => [
-    {
-      key: 'select',
-      title: '',
-      width: 50,
-      align: 'center',
-      render: (row: any) => {
-        console.log('🧾 ROW DATA:', row);
+  const handleSelect = (icdId: number) => {
+    const isSame = selectedIds.includes(icdId);
+    const newSelected = isSame ? [] : [icdId];
 
-        return (
-          <input
-            type="checkbox"
-            checked={selectedIds.includes(row.diagnosisId)}
-            onChange={() => {
-              const icdId = row.diagnosisId;
-              const patientKey = row?.patient?.id;
-              const visitKey = row?.encounterId;
+    setSelectedIds(newSelected);
+    onSelectDiagnosis?.(newSelected);
+  };
 
-              console.log('🔥 SELECTED FULL DATA:', {
-                icdId,
-                patientKey,
-                visitKey
-              });
+  const tableColumns = useMemo(() => {
+    const cols: any[] = [];
 
-              setSelectedIds([icdId]);
+    if (selectMode) {
+      cols.push({
+        key: 'select',
+        title: '',
+        width: 50,
+        align: 'center',
+        render: (row: any) => {
+          const icdId = Number(row.diagnosisId);
 
-              if (selectMode && onSelectDiagnosis) {
-                onSelectDiagnosis([icdId]);
-              }
-
-              // 🔥 أهم خطوة
-              setPrescriptionMedications(prev => ({
-                ...prev,
-                indicationIcd: icdId,
-                patientKey: patientKey,
-                visitKey: visitKey
-              }));
-            }}
-          />
-        );
-      }
-    },
-    {
-      key: 'diagnosisId',
-      title: <Translate>Code</Translate>,
-      flexGrow: 2,
-      render: (row: any) => {
-        const id = Number(row?.diagnosisId);
-        const icd = id ? icdMap[id] : null;
-        return icd?.icdCode ?? '';
-      }
-    },
-    {
-      key: 'diagnosisDesc',
-      title: <Translate>Description</Translate>,
-      flexGrow: 6,
-      render: (row: any) => {
-        const id = Number(row?.diagnosisId);
-        const icd = id ? icdMap[id] : null;
-        return icd?.icdShortDescription || icd?.icdFullDescription || '';
-      }
-    },
-    {
-      key: 'type',
-      title: <Translate>Type</Translate>,
-      flexGrow: 2,
-      render: (row: any) => formatEnumString(row?.type ?? '')
-    },
-    {
-      key: 'suspected',
-      title: <Translate>Suspected</Translate>,
-      flexGrow: 2,
-      render: (row: any) => (row?.suspected ? 'Yes' : 'No')
-    },
-    {
-      key: 'major',
-      title: <Translate>Major</Translate>,
-      flexGrow: 2,
-      render: (row: any) => (row?.major ? 'Yes' : 'No')
-    },
-    {
-      key: 'created',
-      title: <Translate>Created</Translate>,
-      flexGrow: 2,
-      render: (row: any) =>
-        row.createdDate ? formatDateWithoutSeconds(row.createdDate) : ''
+          return (
+            <input
+              type="checkbox"
+              disabled={disabled}
+              checked={selectedIds.includes(icdId)}
+              onChange={() => handleSelect(icdId)}
+            />
+          );
+        }
+      });
     }
-  ], [icdMap, selectedIds]);
+
+    cols.push(
+      {
+        key: 'diagnosisId',
+        title: <Translate>Code</Translate>,
+        flexGrow: 2,
+        render: (row: any) => {
+          const id = Number(row?.diagnosisId);
+          const icd = id ? icdMap[id] : null;
+          return icd?.icdCode ?? '';
+        }
+      },
+      {
+        key: 'diagnosisDesc',
+        title: <Translate>Description</Translate>,
+        flexGrow: 6,
+        render: (row: any) => {
+          const id = Number(row?.diagnosisId);
+          const icd = id ? icdMap[id] : null;
+          return icd?.icdShortDescription || icd?.icdFullDescription || '';
+        }
+      },
+      {
+        key: 'type',
+        title: <Translate>Type</Translate>,
+        flexGrow: 2,
+        render: (row: any) => formatEnumString(row?.type ?? '')
+      },
+      {
+        key: 'suspected',
+        title: <Translate>Suspected</Translate>,
+        flexGrow: 2,
+        render: (row: any) => (row?.suspected ? 'Yes' : 'No')
+      },
+      {
+        key: 'major',
+        title: <Translate>Major</Translate>,
+        flexGrow: 2,
+        render: (row: any) => (row?.major ? 'Yes' : 'No')
+      },
+      {
+        key: 'created',
+        title: <Translate>Created</Translate>,
+        flexGrow: 2,
+        render: (row: any) =>
+          row.createdDate ? formatDateWithoutSeconds(row.createdDate) : ''
+      }
+    );
+
+    return cols;
+  }, [selectMode, disabled, selectedIds, icdMap]);
 
   const handlePageChange = (_: unknown, newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }));
@@ -270,13 +272,8 @@ const PatientDiagnosisTable: React.FC<PatientDiagnosisTableProps> = ({
     setPagination(prev => ({ ...prev, size: newSize, page: 0 }));
   };
 
-  useEffect(() => {
-    console.log('🧠 ICD MAP:', icdMap);
-  }, [icdMap]);
-
   return (
     <div style={width ? { width } : {}}>
-
       <MyTable
         data={tableData}
         totalCount={totalCount}

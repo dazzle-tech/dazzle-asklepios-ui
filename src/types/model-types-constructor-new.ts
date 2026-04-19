@@ -1,6 +1,7 @@
 import { tr } from 'date-fns/locale';
 import * as modelTypes from './model-types-new';
 // ------------------- ApUser -------------------
+
 export const newApUser: modelTypes.ApUser = {
   id: undefined,
   login: '',
@@ -462,7 +463,8 @@ export const newActiveIngredient: modelTypes.ActiveIngredient = {
   otc: false,
   hasSynonyms: false,
   antimicrobial: false,
-  highRiskMed: false,
+  highAlert: false,
+  isLookAlikeSoundAlike: false,
   abortiveMedication: false,
   laborInducingMed: false,
   isControlled: false,
@@ -974,6 +976,20 @@ export const newAvailabilityTemplateIntervalUpdateDTO: modelTypes.AvailabilityTe
   allowedServices: []
 };
 
+export const newAvailabilityTemplateIntervalBreakCreateDTO: modelTypes.AvailabilityTemplateIntervalBreakCreateDTO = {
+  intervalId: 0,
+  startTime: '',
+  endTime: ''
+};
+
+export const newAvailabilityTemplateIntervalBreakResponseVM: modelTypes.AvailabilityTemplateIntervalBreakResponseVM = {
+  id: null,
+  intervalId: null,
+  templateId: null,
+  startTime: null,
+  endTime: null
+};
+
 export const newAvailabilityTemplateCreateDTO: modelTypes.AvailabilityTemplateCreateDTO = {
   facilityId: undefined,
   departmentId: undefined,
@@ -1138,6 +1154,63 @@ export const newAppointmentFromTemplateSearchFilterDTO: modelTypes.AppointmentFr
   status: null,
   bookingMode: null,
   patientId: null,
+};
+
+export const newAppointmentRequestResponseVM: modelTypes.AppointmentRequestResponseVM = {
+  id: null,
+  patientId: null,
+  patientName: null,
+  patientMrn: null,
+  facilityId: null,
+  facilityName: null,
+  departmentId: null,
+  departmentName: null,
+  sourceEncounterId: null,
+  appointmentId: null,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: null,
+  reason: null,
+  note: null,
+  status: null,
+  cancelledAt: null,
+  cancelReason: null,
+  createdBy: null,
+  createdDate: null,
+  lastModifiedBy: null,
+  lastModifiedDate: null
+};
+
+export const newAppointmentRequestCreateDTO: modelTypes.AppointmentRequestCreateDTO = {
+  patientId: 0,
+  facilityId: 0,
+  departmentId: 0,
+  sourceEncounterId: 0,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: '',
+  reason: null,
+  note: null
+};
+
+export const newAppointmentRequestUpdateDTO: modelTypes.AppointmentRequestUpdateDTO = {
+  id: 0,
+  patientId: 0,
+  facilityId: 0,
+  departmentId: 0,
+  sourceEncounterId: 0,
+  appointmentId: null,
+  requestedResourceType: null,
+  requestedResourceId: null,
+  priority: '',
+  reason: null,
+  note: null,
+  status: '',
+  cancelReason: null
+};
+
+export const newAppointmentRequestCancelDTO: modelTypes.AppointmentRequestCancelDTO = {
+  cancelReason: ''
 };
 
 // ------------------- Price List -------------------
@@ -2020,6 +2093,7 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   id: undefined as any,
   prescriptionHeaderId: null as any,
   medicationsId: null as any,
+  activeIngredientId: null,
   instructionsType: null,
   instructions: null,
   dose: null,
@@ -2030,7 +2104,6 @@ export const newPatientPrescriptionMedication: modelTypes.PatientPrescriptionMed
   durationType: null,
   chronicMedication: false,
   maximumDose: null,
-  validUtil: null,
   allowedSubstitute: false,
   indicationManually: null,
   indicationUse: null,
@@ -2140,7 +2213,8 @@ export const newDiagnosticOrderTest: modelTypes.DiagnosticOrderTest = {
   cancelledBy: undefined,
   undoAcceptReason: undefined,
   undoAcceptBy: undefined,
-  undoAcceptDate: undefined
+  undoAcceptDate: undefined,
+  icdDiagnosisId: undefined,
 };
 
 export const newDiagnosticOrderTestResultCreate: modelTypes.DiagnosticOrderTestResultCreateDTO = {
@@ -2383,6 +2457,13 @@ export const newPatientServiceAndProduct: modelTypes.PatientServiceAndProduct = 
   billingInvoiceId: undefined,
   billingInvoiceItemId: undefined,
 };
+export enum ServiceSource {
+  LABORATORY = 'LABORATORY',
+  RADIOLOGY = 'RADIOLOGY',
+  PROCEDURE = 'PROCEDURE',
+  CONSULTATION_PORTAL = 'CONSULTATION_PORTAL',
+  SERVICE_AND_PRODUCT = 'SERVICE_AND_PRODUCT',
+}
 
 export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProductCreateDTO = {
   patientId: undefined,
@@ -2393,10 +2474,13 @@ export const newPatientServiceProductCreateDTO: modelTypes.PatientServiceProduct
   diagnosticTestId: undefined,
   serviceId: undefined,
   procedureId: undefined,
-
+  
   quantity: 1,
   unitPrice: 0,
-  currency: ''};
+  currency: '',
+  serviceSource: ServiceSource.SERVICE_AND_PRODUCT,
+  SourceId: undefined
+};
 
 export const newPatientServiceProductUpdateDTO: modelTypes.PatientServiceProductUpdateDTO = {
   id: undefined,
@@ -2555,7 +2639,8 @@ export const newEncounterPlan: modelTypes.EncounterPlan = {
   id: undefined,
   patientId: null,
   encounterId: null,
-  planInstructions: '',
+  goals: '',
+  treatmentPlan: '',
 
   createdBy: '',
   createdDate: null,
@@ -2847,4 +2932,43 @@ export const newPatientEncounterDischarge: modelTypes.PatientEncounterDischarge 
   encounterId: null,
   dischargeType: null,
   dischargeAt: null
+};
+
+
+export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder = {
+  id: undefined,
+
+  patientId: null,
+  encounterId: null,
+
+  activeIngredientId: null,
+
+  instructionType: 'MANUAL_INSTRUCTIONS',
+  instructionText: null,
+
+  dose: null,
+  doseUnit: null,
+  route: null,
+  frequency: null,
+
+  isHighAlert: false,
+
+  status: null,
+
+  submittedDate: null,
+  submittedBy: null,
+
+  administeredDate: null,
+  administeredBy: null,
+
+  doubleCheckedDate: null,
+  doubleCheckedBy: null,
+
+  discardedDate: null,
+  discardedBy: null,
+  discardReason: null,
+
+  cancelledDate: null,
+  cancelledBy: null,
+  cancellationReason: null,
 };

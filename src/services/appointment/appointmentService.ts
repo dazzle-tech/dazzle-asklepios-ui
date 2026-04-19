@@ -53,6 +53,9 @@ type AppointmentLog = {
   createdDate: string;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | null;
+  confirmedAt?: Date | null;
+  checkedInAt?: Date | null;
+
 };
 
 type LinkMap = {

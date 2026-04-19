@@ -46,11 +46,12 @@ import {
 import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 
-import { useGetBulkPatientBasicInfoMutation, useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
-
-import 'react-tabs/style/react-tabs.css';
-import './styles.less';
+import {
+  useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientByIdQuery
+} from '@/services/patient/patientService';
 import { skipToken } from '@tanstack/react-query';
+import { useSearchAppointmentsQuery } from '@/services/appointment/appointmentService';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -68,10 +69,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-    appliedSearch?.searchText ??
-    appliedSearch?.text ??
-    appliedSearch?.value ??
-    ''
+      appliedSearch?.searchText ??
+      appliedSearch?.text ??
+      appliedSearch?.value ??
+      ''
   ).trim();
 
   if (!raw)
@@ -183,7 +184,7 @@ const EncounterList = () => {
     discharge: false
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
-  // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
+  // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
@@ -216,8 +217,8 @@ const EncounterList = () => {
   const [pageSize, setPageSize] = useState(10);
   const DEFAULT_SORT = 'id,desc';
 
-  const today = useMemo(() => new Date(), []);
-  const todayStr = useMemo(() => formatDate(today), [today]);
+  const today = new Date();
+  const todayStr = formatDate(today);
 
   const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
 
@@ -304,6 +305,32 @@ const EncounterList = () => {
     refetch: refetchEncounters
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
 
+console.log('📊 Encounter List - Filter Params:', filterParams);
+
+const { data: appointmentsData } = useSearchAppointmentsQuery({
+  filter: {
+    facility: selectedDepartment?.facilityId,
+    department: departmentId
+  },
+  page: 0,
+  size: 50,
+  sort: 'id,desc'
+});
+
+  const appointmentsMap = useMemo(() => {
+    const map: any = {};
+
+    (appointmentsData?.data ?? []).forEach((appt: any) => {
+      const patientId = appt?.patient?.id;
+
+      if (patientId) {
+        map[patientId] = appt;
+      }
+    });
+
+    return map;
+  }, [appointmentsData]);
+
   const todayCountsSkip = !departmentId;
   const { data: totalPatientsCount } = useCountTodayDepartmentTotalPatientsQuery(
     { departmentId: String(departmentId ?? '') },
@@ -337,9 +364,7 @@ const EncounterList = () => {
     return Array.from(new Set(ids));
   }, [tableData]);
   useEffect(() => {
-    const pid =
-
-      encounter?.patient?.id;
+    const pid = encounter?.patient?.id;
 
     if (pid) triggerGetPatientById({ id: pid });
   }, [encounter?.patient?.id]);
@@ -349,7 +374,7 @@ const EncounterList = () => {
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => { });
+      .catch(() => {});
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
@@ -403,6 +428,8 @@ const EncounterList = () => {
     });
   }, [tableData, patientMap]);
 
+  console.log('🔥 RAW TABLE DATA:', tableData);
+
   const getEncounterId = (row: any) => row?.id ?? null;
 
   const startEncounterSafe = async (row: any) => {
@@ -426,7 +453,8 @@ const EncounterList = () => {
       return true;
     } catch (err: any) {
       const errorMap: Record<string, string> = {
-        'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.rule':
+          'Cancellation is not allowed for the current encounter status.',
         'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
       };
 
@@ -438,9 +466,7 @@ const EncounterList = () => {
     }
   };
   const fetchPatientForEncounter = async (enc: any) => {
-    const pid =
-      enc?.patient?.id ??
-      null;
+    const pid = enc?.patient?.id ?? null;
 
     if (!pid) return null;
 
@@ -467,7 +493,6 @@ const EncounterList = () => {
 
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
-
 
     const privatePatientPath = '/user-access-patient-private';
     const encounterPath = '/encounter';
@@ -551,6 +576,30 @@ const EncounterList = () => {
   const canSeeEMR = isAdmin || jobRole === 'PHYSICIAN';
   const canSeePrint = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
   const canSeeCancel = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
+
+  const safeFormatDate = (value: any) => {
+    if (!value) return '';
+
+    try {
+      const date = value instanceof Date ? value : new Date(value);
+
+      if (isNaN(date.getTime())) return '';
+
+      // 🟢 format Date + Time
+      const formattedDate = date.toLocaleDateString('en-GB'); // 12/04/2026
+      const formattedTime = date.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      return `${formattedDate} ${formattedTime}`;
+    } catch {
+      return '';
+    }
+  };
+
+  console.log('📅 FULL appointmentsData:', appointmentsData?.data);
+
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -627,6 +676,23 @@ const EncounterList = () => {
       key: 'encounterDate',
       title: 'DATE',
       render: (row: any) => row?.encounterDate ?? '-'
+    },
+    {
+      key: 'startedDate',
+      title: 'STARTED DATE',
+      expandable: true,
+      render: (row: any) => {
+        const raw = row?.startedDate;
+        if (!raw) return '-';
+        const d = new Date(raw);
+        return isNaN(d.getTime()) ? raw : d.toLocaleString();
+      }
+    },
+    {
+      key: 'startedBy',
+      title: 'STARTED BY',
+      expandable: true,
+      render: (row: any) => row?.startedBy ?? '-'
     },
     {
       key: 'status',
@@ -766,8 +832,38 @@ const EncounterList = () => {
         );
       },
       expandable: false
+    },
+    {
+      key: 'appointmentTime',
+      title: 'APPOINTMENT TIME',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.startDatetime)
+    },
+    {
+      key: 'confirmTime',
+      title: 'CONFIRM TIME',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.confirmedAt)
+    },
+    {
+      key: 'checkInTime',
+      title: 'CHECK-IN TIME',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.checkedInAt)
+    },
+    {
+      key: 'seenByPhysicianTime',
+      title: 'SEEN BY PHYSICIAN',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.lastModifiedBy)
     }
   ];
+
+  console.log('📅 appointments:', appointmentsData);
 
   const filters = () => (
     <>
@@ -880,7 +976,6 @@ const EncounterList = () => {
 
   const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
-
   useEffect(() => {
     if (tableLoading) dispatch(showSystemLoader());
     else dispatch(hideSystemLoader());
@@ -980,9 +1075,7 @@ const EncounterList = () => {
             open={openNurseAssessment}
             setOpen={setOpenNurseAssessment}
             actionButtonFunction={async () => {
-
               await handleGoToPreVisitObservations(encounter);
-
             }}
             actionType="confirm"
             confirmationQuestion="Do you want to start Nurse Assessment?"

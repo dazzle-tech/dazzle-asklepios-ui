@@ -50,6 +50,8 @@ import './styles.less';
 import type { PatientPrescription, PatientPrescriptionMedication } from '@/types/model-types-new';
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
 import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
+import { render } from 'react-dom';
 
 type Props = any;
 
@@ -81,6 +83,7 @@ const Prescription = (props: Props) => {
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] =
     useState<PatientPrescriptionMedication | null>(null);
+  const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<any>(null);
 
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [submitAssignModalOpen, setSubmitAssignModalOpen] = useState(false);
@@ -151,7 +154,7 @@ const Prescription = (props: Props) => {
     size: 1000,
     sort: 'id,asc'
   });
-
+  
   // Patient / encounter ids (prefer numeric id; fallback to key)
   const patientId = patient?.id ? Number(patient.id) : patient?.key ? Number(patient.key) : undefined;
   const encounterId = encounter?.id
@@ -313,6 +316,42 @@ const Prescription = (props: Props) => {
       : (undefined as any),
     { skip: !currentPrescription?.id }
   );
+  const [
+  getActiveIngredientsByIds,
+  {
+    data: activeIngredientsByIds,
+    isLoading: isLoadingActiveIngredientsByIds,
+  },
+] = useGetActiveIngredientsByIdsMutation();
+
+const activeIngredientIds = useMemo(() => {
+  const medications = patientPrescriptionMedicationsRaw?.data ?? [];
+
+  const ids = medications.map((item) => {
+    console.log('ID raw:', item.activeIngredientId);
+    console.log(typeof medications[0]?.activeIngredientId);
+    return item.activeIngredientId;
+  });
+
+  console.log('Mapped IDs:', ids);
+
+  const filtered = ids.filter((id): id is number => id != null);
+  console.log('Filtered IDs:', filtered);
+
+
+  return filtered;
+}, [patientPrescriptionMedicationsRaw]);
+
+
+useEffect(() => {
+  if (!activeIngredientIds.length) return;
+  getActiveIngredientsByIds(activeIngredientIds);
+}, [activeIngredientIds, getActiveIngredientsByIds]);
+const activeIngredientsMap = useMemo(() => {
+  return new Map(
+    (activeIngredientsByIds ?? []).map((item) => [item.id, item])
+  );
+}, [activeIngredientsByIds]);
 
   const patientPrescriptionMedications = asArray(
     patientPrescriptionMedicationsRaw
@@ -807,6 +846,17 @@ const Prescription = (props: Props) => {
           disabled={edit}
         />
       )
+    },
+    {
+      key: 'activeIngredientId',
+    
+      title: 'Active Ingredients',
+      flexGrow: 1,
+      render: (rowData: any) => {
+       const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
+        return ingredient?.name ? String(ingredient.name) : '-';
+      }
+
     },
     {
       key: 'medicationName',

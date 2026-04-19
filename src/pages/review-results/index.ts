@@ -1,2 +1,2 @@
-import ReviewResults from "./ReviewResults";
-export default ReviewResults;
+import FavoriteTests from "./FavoriteTests";
+export default FavoriteTests;

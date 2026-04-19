@@ -31,7 +31,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Checkbox, Form, Tooltip, Whisper } from 'rsuite';
-import AddReportModal from '../rad-module/radiologist-worklist/AddReportModal';
+import AddReportModal from './radiologist-worklist/AddReportModal';
 
 const startOfDay = (d: Date) => {
     const x = new Date(d);
