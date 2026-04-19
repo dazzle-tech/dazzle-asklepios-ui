@@ -227,7 +227,7 @@ import NurseAssessment from './pages/encounter/encounter-pre-observations-new/ob
 import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
 import FavoriteTests from './pages/review-results';
 import PreviousMeasurementsMainScreen from './pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
-
+import UrgentCareViewTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareViewTriage';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -592,6 +592,7 @@ const App = () => {
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
               <Route path="urgent-care-triage" element={<UrgentCareTriage />} />
               <Route path="view-triage" element={<ViewTriageNew />} />
+              <Route path="urgent-care-view-triage" element={<UrgentCareViewTriage />} />
               <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
               <Route path="country-setup" element={<CountrySetup />} />
@@ -601,6 +602,8 @@ const App = () => {
               <Route path="/patient-report" element={<StimulsoftReportViewer />} />
               <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>
+                <Route path="nurse-assessment" element={<NurseAssessment />} />
+                <Route path="physician-assessment" element={<PhysicianAssessment />} />
                 <Route path="progress-notes" element={<ProgressNotes />} />
 
                 <Route
@@ -634,7 +637,7 @@ const App = () => {
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
                 <Route path="dialysis-request" element={<DialysisRequest />} />
-                  <Route path="ucc-medication-order" element={<UccMedicationOrder />} />
+                <Route path="ucc-medication-order" element={<UccMedicationOrder />} />
                 <Route path="operation-request" element={<OperationRequestNew />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
