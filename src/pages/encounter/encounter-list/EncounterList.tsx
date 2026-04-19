@@ -69,10 +69,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw)
@@ -305,17 +305,17 @@ const EncounterList = () => {
     refetch: refetchEncounters
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
 
-console.log('📊 Encounter List - Filter Params:', filterParams);
+  console.log('📊 Encounter List - Filter Params:', filterParams);
 
-const { data: appointmentsData } = useSearchAppointmentsQuery({
-  filter: {
-    facility: selectedDepartment?.facilityId,
-    department: departmentId
-  },
-  page: 0,
-  size: 50,
-  sort: 'id,desc'
-});
+  const { data: appointmentsData } = useSearchAppointmentsQuery({
+    filter: {
+      facility: selectedDepartment?.facilityId,
+      department: departmentId
+    },
+    page: 0,
+    size: 50,
+    sort: 'id,desc'
+  });
 
   const appointmentsMap = useMemo(() => {
     const map: any = {};
@@ -374,7 +374,7 @@ const { data: appointmentsData } = useSearchAppointmentsQuery({
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
@@ -513,9 +513,11 @@ const { data: appointmentsData } = useSearchAppointmentsQuery({
   const handleGoToPreVisitObservations = async (encounterData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
+
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
+
     if (!fullPatient) {
       dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
       return;
@@ -523,15 +525,20 @@ const { data: appointmentsData } = useSearchAppointmentsQuery({
 
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
+
     const targetPath = fullPatient?.isPrivatePatient
       ? '/user-access-patient-private'
       : '/nurse-station';
+
+    sessionStorage.setItem('encounterPageSource', 'EncounterList');
+
     navigate(targetPath, {
       state: {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,
         encounter: encounterData,
-        edit: encounterData?.status?.toUpperCase() === 'CLOSED'
+        edit: encounterData?.status?.toUpperCase() === 'CLOSED',
+        fromPage: 'EncounterList'
       }
     });
   };
