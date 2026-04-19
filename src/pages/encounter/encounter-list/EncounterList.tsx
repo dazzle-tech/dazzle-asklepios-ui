@@ -184,7 +184,6 @@ const EncounterList = () => {
     discharge: false
   });
   const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
-  // getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
@@ -305,7 +304,6 @@ const EncounterList = () => {
     refetch: refetchEncounters
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
 
-  console.log('📊 Encounter List - Filter Params:', filterParams);
 
   const { data: appointmentsData } = useSearchAppointmentsQuery({
     filter: {
@@ -428,7 +426,6 @@ const EncounterList = () => {
     });
   }, [tableData, patientMap]);
 
-  console.log('🔥 RAW TABLE DATA:', tableData);
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
@@ -605,7 +602,6 @@ const EncounterList = () => {
     }
   };
 
-  console.log('📅 FULL appointmentsData:', appointmentsData?.data);
 
   const tableColumns = [
     {
@@ -869,8 +865,6 @@ const EncounterList = () => {
         safeFormatDate(appointmentsMap[row?.patient?.id]?.lastModifiedBy)
     }
   ];
-
-  console.log('📅 appointments:', appointmentsData);
 
   const filters = () => (
     <>
