@@ -26,10 +26,6 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
 
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
-
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
-
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
 
@@ -57,18 +53,6 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
     setOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (!rowToDelete?.id) return;
-
-    try {
-      await deleteHospitalization({ id: rowToDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-      setOpenDeleteModal(false);
-      setRowToDelete(null);
-    } catch {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
-    }
-  };
 
   /*  TABLE  */
 
@@ -129,15 +113,6 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
                   fill="var(--primary-gray)"
                   style={{ cursor: 'pointer' }}
                   onClick={() => handleEdit(row)}
-                />
-                <MdDelete
-                  size={22}
-                  fill="var(--primary-pink)"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => {
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
-                  }}
                 />
               </div>
             )
@@ -208,13 +183,6 @@ const Hospitalizations = ({ patient, edit, toShowData = false }) => {
               patient={patient}
             />
 
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Hospitalization"
-              actionType="delete"
-              actionButtonFunction={handleDelete}
-            />
           </>
         }
       />
