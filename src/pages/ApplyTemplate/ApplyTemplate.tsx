@@ -68,9 +68,9 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
       stepItems.map((item, idx) =>
         idx === 0
           ? {
-              ...item,
-              disabledNext: false,
-            }
+            ...item,
+            disabledNext: false,
+          }
           : item
       ),
     []
@@ -100,9 +100,35 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
     }
   }, [isControlled, modalSetOpen, navigate]);
 
+  // extract the error message from the bad request that coming from the backend
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
+
   const handleApplyTemplate = React.useCallback(async () => {
     const payload = buildApplyAvailabilityPayload(formState);
-    await applyAvailabilityTemplate(payload).unwrap();
+    await applyAvailabilityTemplate(payload).unwrap()
+      .then(() => {
+        dispatch(
+          notify({
+            msg: 'Applied Successfully',
+            sev: 'success'
+          })
+        );
+      })
+      .catch((e) => {
+        const errorMsg = extractErrorMessage(e) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+      });
     handleClose();
   }, [applyAvailabilityTemplate, formState, handleClose]);
 

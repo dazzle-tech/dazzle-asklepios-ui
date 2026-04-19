@@ -118,11 +118,6 @@ const AvailabilityTemplateSummaryCard: React.FC<DepartmentPoolCardProps> = ({
 
   }, [template]);
 
-  useEffect(() => {
-    console.log("departmentName: ", departmentName);
-    console.log("resourceName: ", resourceName);
-  },[departmentName, resourceName]);
-
   return (
     <div
       className="availability-template-summary-card"

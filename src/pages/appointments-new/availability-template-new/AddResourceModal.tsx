@@ -165,7 +165,6 @@ const AddResourceModal = ({
         setAllPractitionersFacility(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllPractitionersFacility([]);
     }
   };
@@ -193,7 +192,6 @@ const AddResourceModal = ({
         setAllDiagnosticTests(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllDiagnosticTests([]);
     }
   };
@@ -221,7 +219,6 @@ const AddResourceModal = ({
         setAllCatalogs(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllCatalogs([]);
     }
   };
@@ -249,7 +246,6 @@ const AddResourceModal = ({
         setAllServicesFacility(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllServicesFacility([]);
     }
   };
@@ -279,7 +275,6 @@ const AddResourceModal = ({
         setAllServicesDept(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllServicesDept([]);
     }
   };
@@ -309,7 +304,6 @@ const AddResourceModal = ({
         setAllPractitionersDept(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllPractitionersDept([]);
     }
   };
@@ -653,9 +647,6 @@ const AddResourceModal = ({
       setRecord(prev => ({ ...prev, resourceId: undefined }));
   }, [record?.templateType]);
 
-  useEffect(() => {
-    console.log("resource record: ", record);
-  }, [record]);
 
   const conjureFormContent = () => (
     <Form fluid>
@@ -1099,7 +1090,6 @@ const AddResourceModal = ({
       })
       .catch((e) => {
         dispatch(notify({ msg: 'Error', sev: 'warning' }));
-        console.log("error: ", e);
       });
   };
 
