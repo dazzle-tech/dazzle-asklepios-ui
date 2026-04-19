@@ -3559,6 +3559,8 @@ export type PatientServiceAndProduct = {
   isBilled: boolean;
   billingInvoiceId?: number | null;
   billingInvoiceItemId?: number | null;
+  serviceSource: ServiceSource;
+  SourceId?: number | null; 
 };
  
 export enum ServiceSource {
