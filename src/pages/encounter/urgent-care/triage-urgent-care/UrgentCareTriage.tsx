@@ -50,6 +50,7 @@ import {
 } from '@/services/encounters/er-triage/emergencyTriageService';
 import {
   useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientWristbandPdfQuery,
   useLazyGetPatientWristbandQuery
 } from '@/services/patient/patientService';
 import MyModal from '@/components/MyModal/MyModal';
@@ -434,6 +435,7 @@ const UrgentCareTriage = () => {
     useGetRoomsByIdsMutation();
   const [getBedsByIds, { data: bedsByIds = [], isLoading: isBedsByIdsLoading }] =
     useGetBedsByIdsMutation();
+    const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
 
   const navigate = useNavigate();
   const [openEMRModal, setOpenEMRModal] = useState(false);
@@ -443,26 +445,29 @@ const UrgentCareTriage = () => {
     const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
     const isReceptionist = jobRole === 'RECEPTIONIST';
 
-  const handlePrintWristband = async (rowData: any) => {
+
+ const handlePrintWristband = async (rowData: any) => {
     try {
-      const patientId = rowData?.patientObject?.id ?? rowData?.patientId ?? rowData?.patient?.id;
+      const blob = await triggerGetPatientWristbandPdf({
+        patientId: rowData.patientId
+      }).unwrap();
 
-      if (!patientId) return;
+      const fileURL = window.URL.createObjectURL(blob);
 
-      const res = await triggerWristband({ patientId }).unwrap();
-      await printPatientWristband(res);
-    } catch (err: any) {
-      console.error('Wristband print failed', err);
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `wristband-${rowData.patientId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-      dispatch(
-        notify({
-          msg: err?.data?.message || 'Failed to print wristband',
-          sev: 'error'
-        })
-      );
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download wristband pdf', error);
     }
   };
-
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
