@@ -684,26 +684,10 @@ const activeIngredientsMap = useMemo(() => {
 
   const handleConfirmSubmitPres = async () => {
     if (!currentPrescription?.id) return;
-    if (!submitAssignment.toFacilityId || !submitAssignment.toDepartmentId) {
-      dispatch(
-        notify({
-          msg: 'Please select To Facility and Department',
-          type: 'warning'
-        } as any)
-      );
-      return;
-    }
+   
 
     try {
-      await updatePrescription({
-        id: Number(currentPrescription.id),
-        body: {
-          toFacilityId: Number(submitAssignment.toFacilityId),
-          toDepartmentId: Number(submitAssignment.toDepartmentId),
-          lastModifiedBy: authSlice?.user?.login ?? 'system'
-        }
-      }).unwrap();
-
+     
       const nonCanceledMeds = (patientPrescriptionMedications ?? []).filter(
         (m: any) =>
           m?.id != null &&
@@ -1212,57 +1196,10 @@ const activeIngredientsMap = useMemo(() => {
         edit={edit}
         open={summaryModalOpen}
         setOpen={setSummaryModalOpen}
-        handleSave={handleSubmitPres}
+        handleSave={handleConfirmSubmitPres}
         medicationValidationPayload={payload}
       />
-      <MyModal
-        open={submitAssignModalOpen}
-        setOpen={setSubmitAssignModalOpen}
-        title="Submit Assignment"
-        actionButtonLabel="Save"
-        actionButtonFunction={handleConfirmSubmitPres}
-        content={
-          <Form fluid>
-            <MyInput
-              fieldName="toFacilityId"
-              fieldType="select"
-              fieldLabel="To Facility"
-              selectData={facilityListResponse ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={submitAssignment}
-              setRecord={(obj: any) =>
-                setSubmitAssignment(prev => ({
-                  ...prev,
-                  toFacilityId: obj?.toFacilityId ? Number(obj.toFacilityId) : null,
-                  toDepartmentId:
-                    Number(prev?.toFacilityId) === Number(obj?.toFacilityId)
-                      ? prev.toDepartmentId
-                      : null
-                }))
-              }
-              required
-            />
-            <MyInput
-              fieldName="toDepartmentId"
-              fieldType="select"
-              fieldLabel="To Department"
-              selectData={departmentOptions}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={submitAssignment}
-              setRecord={(obj: any) =>
-                setSubmitAssignment(prev => ({
-                  ...prev,
-                  toDepartmentId: obj?.toDepartmentId ? Number(obj.toDepartmentId) : null
-                }))
-              }
-              disabled={!submitAssignment?.toFacilityId}
-              required
-            />
-          </Form>
-        }
-      />
+    
 
       <MyModal
         open={attachmentsModalOpen}
