@@ -335,6 +335,28 @@ useEffect(() => {
 }, [location.state]);
 
 
+const whisperRef = useRef<any>(null);
+
+useEffect(() => {
+  if (quickPatientModalOpen || openScanDocumentModal) {
+    whisperRef.current?.close?.();
+  }
+}, [quickPatientModalOpen, openScanDocumentModal]);
+
+useEffect(() => {
+  const handleClick = (e: any) => {
+    if (e.target.closest('.rs-popover')) return;
+
+    setOpenMoreMenu(false);
+  };
+
+  document.addEventListener('mousedown', handleClick);
+
+  return () => {
+    document.removeEventListener('mousedown', handleClick);
+  };
+}, []);
+
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
@@ -498,9 +520,9 @@ useEffect(() => {
               />
 
               <Whisper
+                ref={whisperRef}
                 trigger="click"
                 placement={isRTL ? 'bottomStart' : 'bottomEnd'}
-                container={() => document.body}
                 preventOverflow
                 rootClose
                 open={openMoreMenu}

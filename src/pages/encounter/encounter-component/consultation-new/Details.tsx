@@ -761,7 +761,7 @@ const Details = ({
                     />
                     <MyInput
                       width={'12vw'}
-                      fieldType="number"
+                      fieldType="textnumber"
                       fieldLabel="Approval Number"
                       fieldName="approvalNumber"
                       record={formData}

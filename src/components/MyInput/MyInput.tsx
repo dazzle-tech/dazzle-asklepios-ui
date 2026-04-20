@@ -48,7 +48,7 @@ const focusNextField = (e: any) => {
 
 type MyInputProps = {
   fieldName: string;
-  fieldType?:
+fieldType?:
   | 'text'
   | 'password'
   | 'textarea'
@@ -61,7 +61,8 @@ type MyInputProps = {
   | 'checkPicker'
   | 'date'
   | 'number'
-  | 'check';
+  | 'check'
+  | 'textnumber';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -986,6 +987,33 @@ const MyInput = ({
             {props.label ? props.label : fieldLabel}
           </Checkbox>
         );
+
+      case 'textnumber': {
+  const defaultInputWidth = props?.width ?? 145;
+
+  return (
+    <Form.Control
+      style={{
+        width: defaultInputWidth,
+        height: props?.height ?? 30
+      }}
+      disabled={props.disabled}
+      name={fieldName}
+      type="text"
+      inputMode="numeric"
+      value={record?.[fieldName] ?? ''}
+      placeholder={props.placeholder}
+      onChange={(value: string) => {
+        const numericOnly = value.replace(/[^0-9]/g, '');
+        setRecord?.({
+          ...record,
+          [fieldName]: numericOnly
+        });
+      }}
+      onKeyDown={focusNextField}
+    />
+  );
+      }
 
       default: {
         const defaultInputWidth = props?.width ?? 145;

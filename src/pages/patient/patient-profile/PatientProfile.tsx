@@ -1972,7 +1972,7 @@ const isSelectedRelation = rowData => {
                   required
                   fieldName="phoneNumber"
                   fieldLabel="Primary Mobile Number"
-                  fieldType="number"
+                  fieldType="textnumber"
                   record={localPatient}
                   setRecord={setLocalPatient}
                   disabled={!editing}
@@ -2389,7 +2389,7 @@ const isSelectedRelation = rowData => {
                       vr={validationResult}
                       fieldLabel="Primary Mobile Number"
                       fieldName="phoneNumber"
-                      fieldType="number"
+                      fieldType="textnumber"
                       record={localPatient}
                       setRecord={setLocalPatient}
                       disabled={true}
