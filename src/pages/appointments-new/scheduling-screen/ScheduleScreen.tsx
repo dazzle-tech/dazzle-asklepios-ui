@@ -1,22 +1,20 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { Calendar as BigCalendar, Views, momentLocalizer } from 'react-big-calendar';
+import { momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Panel, Button, Form, Calendar as RsCalendar, Modal, Avatar, ButtonGroup, Text } from 'rsuite';
+import { Panel, Button, Form, Modal, Avatar } from 'rsuite';
 import './styles.less';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
-import { initialListRequest, ListRequest } from '@/types/types';
-import FollowupAppointmentModal from './FollowupAppointmentModal';
+import FollowupAppointmentModal from './components/FollowupAppointmentModal';
 import type { AppointmentFromTemplateSearchFilterDTO } from '@/types/model-types-new';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCalendarCheck, faCheckDouble, faCircleCheck, faCirclePlus, faStethoscope, faUserCheck, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentActionsModal from './components/AppointmentActionsModal';
-import { useGetResourcesWithAvailabilityQuery, useSaveAppointmentMutation } from '@/services/appointmentService';
 import { useLazySearchAppointmentsQuery } from '@/services/appointment/appointmentService';
 import { useGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import { useGetAppointablePractitionerByLoggedInFacilityQuery } from '@/services/setup/practitioner/PractitionerService';
@@ -30,10 +28,9 @@ import { useFetchAttachmentsListQuery } from '@/services/attachmentService';
 import { useSelector } from 'react-redux';
 import MyModal from '@/components/MyModal/MyModal';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import ViewAppointmentRequests from './ViewAppointmentRequests';
+import ViewAppointmentRequests from './components/ViewAppointmentRequests';
 import { useEnumOptions } from '@/services/enumsApi';
 import { calculateAgeFormat } from '@/utils';
-import TodayAppointmentsList from './components/TodayAppointmentsList';
 import BookPatient from './components/BookPatient';
 import { useGetPatientsByIdsQuery } from '@/services/patient/patientService';
 import ViewRequestsFloatingButton from './components/ViewRequestsFloatingButton';
@@ -42,6 +39,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useApproveAppointmentRequestMutation, useCancelAppointmentRequestMutation, useGetAppointmentRequestsQuery } from '@/services/appointment/appointmentRequestService';
 import ScheduleFiltersPanel from './components/ScheduleFiltersPanel';
 import ScheduleSummaryBar from './components/ScheduleSummaryBar';
+import ScheduleContentGrid from './components/ScheduleContentGrid';
 
 const getAppointmentPatientId = (appointment: any): number | null => {
   const raw =
@@ -104,7 +102,6 @@ const SCHEDULE_LEGEND_ITEMS: {
 
 const normLegendStr = (str: string) => String(str ?? '').toLowerCase().replace(/[-_]/g, ' ').trim();
 
-/** Collapses punctuation/spacing so enum and API values compare equal (e.g. NEW-APPOINTMENT vs NEW_APPOINTMENT). */
 const normalizeAppointmentStatusKey = (raw: unknown): string =>
   String(raw ?? '')
     .trim()
@@ -116,7 +113,6 @@ const appointmentStatusFromRecord = (appointmentData: any): string =>
     appointmentData?.status
   );
 
-/** Maps API appointment status to legend bucket key (aligned with eventPropGetter). */
 const appointmentStatusToLegendBucket = (rawStatus: string): string => {
   const s = normLegendStr(rawStatus);
   if (s.includes('cancel')) return 'cancel';
@@ -142,15 +138,12 @@ const ScheduleScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [viewAppointmentData, setViewAppointmentData] = useState(null);
   const isOpeningViewModalRef = useRef(false);
-  const pendingNewSlotEventRef = useRef<any>(null);
   const pendingAgendaSlotRef = useRef<any>(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [appRequestModalOpen, setAppRequestModalOpen] = useState(false);
   const FOLLOW_UP_VISIT_TYPE_LKEY = 'FOLLOW_UP';
   const dispatch = useAppDispatch();
 
-  const [saveAppointment] = useSaveAppointmentMutation();
   const [cancelAppointmentRequest] = useCancelAppointmentRequestMutation();
   const [approveAppointmentRequest] = useApproveAppointmentRequestMutation();
   const [searchAppointments, { data: searchedAppointmentsResponse, isFetching: isSearchingAppointments }] =
@@ -162,8 +155,6 @@ const ScheduleScreen = () => {
 
   const [requestApproveModalOpen, setRequestApproveModalOpen] = useState(false);
   const [requestToApprove, setRequestToApprove] = useState<any>(null);
-  const [confirmNewSlotOpen, setConfirmNewSlotOpen] = useState(false);
-  const [newSlotConfirmBusy, setNewSlotConfirmBusy] = useState(false);
   const [agendaSlotConfirmOpen, setAgendaSlotConfirmOpen] = useState(false);
 
   const [selectedFacility, setSelectedFacility] = useState<any>({});
@@ -188,7 +179,6 @@ const ScheduleScreen = () => {
   }>({
     bookingMode: ['QUICK', 'SLOT']
   });
-  const [listRequest] = useState<ListRequest>({ ...initialListRequest });
   const [appointmentsData, setAppointmentsData] = useState([]);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [filteredResourcesList, setFilteredResourcesList] = useState([]);
@@ -235,8 +225,6 @@ const ScheduleScreen = () => {
     setSelectedDepartment({ departmentId: null });
   }, [selectedFacility?.id]);
 
-  const { data: resourcesWithAvailabilityResponse } =
-    useGetResourcesWithAvailabilityQuery(listRequest);
   const { data: appointmentRequestsResponse } = useGetAppointmentRequestsQuery(
     selectedFacility?.id
       ? {
@@ -302,6 +290,14 @@ const ScheduleScreen = () => {
       if (id !== null && typeof id !== 'undefined') m.set(String(id), String(name || ''));
     });
     return m;
+  }, [allResourcesResponse]);
+  const resourcesWithAvailabilityResponse = useMemo(() => {
+    const object =
+      (allResourcesResponse as any)?.object ??
+      (allResourcesResponse as any)?.data ??
+      allResourcesResponse ??
+      [];
+    return { object: Array.isArray(object) ? object : [] };
   }, [allResourcesResponse]);
 
   const extractTimeFromTimestamp = timestamp => {
@@ -574,17 +570,6 @@ const ScheduleScreen = () => {
     setSelectedResources({ resourceKey: null });
   }, [selectedResourceTypeValue?.value, selectedFacility?.id, selectedDepartment?.departmentId]);
 
-  useEffect(() => {
-    if (selectedSlot) {
-      const firstSlotDate =
-        selectedSlot?.slots?.[0] ??
-        selectedSlot?.start ??
-        null;
-      setSelectedStartDate(firstSlotDate);
-    }
-  }, [selectedSlot]);
-
-
   const handleSelectEvent = event => {
     const freshEvent = finalAppointments?.find(e => e.id === event.id) || event;
 
@@ -627,7 +612,6 @@ const ScheduleScreen = () => {
         );
         return;
       }
-      pendingNewSlotEventRef.current = freshEvent;
       setActionsModalOpen(false);
 
       setBookPatientModalOpen(true);
@@ -870,31 +854,6 @@ const ScheduleScreen = () => {
       selectedFacility?.id
     ]
   );
-
-  const handleConfirmNewSlotCancel = useCallback(() => {
-    setConfirmNewSlotOpen(false);
-    pendingNewSlotEventRef.current = null;
-  }, []);
-
-  const handleConfirmNewSlotOk = useCallback(async () => {
-    const freshEvent = pendingNewSlotEventRef.current;
-    if (!freshEvent?.appointmentData) {
-      handleConfirmNewSlotCancel();
-      return;
-    }
-    setNewSlotConfirmBusy(true);
-    try {
-      await openEditorForNewAppointment({
-        appointmentRaw: freshEvent.appointmentData,
-        request: requestToApprove,
-        shouldApprove: isRequestPendingApproval(requestToApprove)
-      });
-    } finally {
-      setNewSlotConfirmBusy(false);
-      setConfirmNewSlotOpen(false);
-      pendingNewSlotEventRef.current = null;
-    }
-  }, [handleConfirmNewSlotCancel, openEditorForNewAppointment, requestToApprove]);
 
   useEffect(() => {
     if (!selectedFacility?.id) return;
@@ -1842,7 +1801,6 @@ const ScheduleScreen = () => {
           gap: 12
         }}
       >
-        {/* Top section: appointment search filters */}
         <ScheduleFiltersPanel
           filtersCollapsed={filtersCollapsed}
           setFiltersCollapsed={setFiltersCollapsed}
@@ -1869,7 +1827,6 @@ const ScheduleScreen = () => {
           setSelectedBookingMode={setSelectedBookingMode}
         />
 
-        {/* =================== Right Side ============= */}
         <Panel
           bordered
           className="right-section appointments-main-card"
@@ -1883,183 +1840,37 @@ const ScheduleScreen = () => {
             resourceNameById={resourceNameById}
             selectedResourceTypeValue={selectedResourceTypeValue}
           />
-          <div className="appointments-content-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 12, flex: 1 }}>
-            <div
-              className="appointments-calendar-pane"
-              style={{ minHeight: 0, height: '100%', overflowX: 'auto', overflowY: 'hidden' }}
-            >
-              <BigCalendar
-                key={calendarKey}
-                toolbar={false}
-                date={currentCalendarDate}
-                onNavigate={date => {
-                  setCalendarDate(date);
-                  setCurrentCalendarDate(date);
-                  setRightPanelDate(date);
-                }}
-                className={`my-calendar ${currentView}`}
-                style={{
-                  height: currentView === 'day' || currentView === 'week' ? 'max-content' : '100%',
-                  minWidth:
-                    currentView === 'day' || currentView === 'week'
-                      ? `${Math.max((visibleResources?.length || 1) * 300, 900)}px`
-                      : '100%'
-                }}
-                min={minTime}
-                {...(currentView === 'day' && {
-                  resources: visibleResources ?? [],
-                  resourceIdAccessor: 'key',
-                  resourceTitleAccessor: 'resourceName'
-                })}
-                formats={formats}
-                localizer={localizer}
-                events={finalAppointments ?? []}
-                step={60}
-                timeslots={1}
-                onSelectSlot={slotInfo => {
-                  if (moment(slotInfo.start).startOf('day').isBefore(moment().startOf('day'))) {
-                    dispatch(
-                      notify({
-                        msg: 'Previous days: available slots cannot be booked.',
-                        sev: 'warning'
-                      })
-                    );
-                    return;
-                  }
-                  if (slotInfo.resourceId) {
-                    const currentResource = resourcesWithAvailabilityResponse?.object.find(
-                      r => r.key === slotInfo.resourceId
-                    );
-
-                    if (currentResource && currentResource.availability) {
-                      const jsDay = slotInfo.start.getDay();
-                      const apiDay = jsDay;
-                      const currentMinutes = slotInfo.start.getHours() * 60 + slotInfo.start.getMinutes();
-
-                      const isAvailable =
-                        currentResource?.availability?.some(period => {
-                          const startMinutes = period.startHour * 60 + (period.startMinute || 0);
-                          const endMinutes = period.endHour * 60 + (period.endMinute || 0);
-
-                          return (
-                            period.dayOfWeek === apiDay &&
-                            currentMinutes >= startMinutes &&
-                            currentMinutes < endMinutes
-                          );
-                        }) || false;
-
-                      if (!isAvailable) {
-                        return;
-                      }
-
-                      const enhancedSlotInfo = {
-                        ...slotInfo,
-                        resourceKey: currentResource.resourceKey,
-                        resourceTypeLkey: currentResource.resourceTypeLkey,
-                        resourceName: currentResource.resourceName,
-                        facilityKey: currentResource.facilityKey
-                      };
-                      setSelectedSlot(enhancedSlotInfo);
-                      setBookPatientReadOnly(false);
-                      setBookPatientModalOpen(true);
-                      return;
-                    }
-                  }
-                  return;
-                }}
-                startAccessor="start"
-                endAccessor="end"
-                views={['month', 'week', 'day', 'agenda']}
-                defaultView={currentView}
-                selectable={true}
-                onSelectEvent={event => {
-                  handleSelectEvent(event);
-                }}
-                tooltipAccessor={event => getTooltipContent(event)}
-                onView={view => setCurrentView(view)}
-                eventPropGetter={eventPropGetter}
-                components={{
-                  resourceHeader: ResourceHeader,
-                  event: MyEvent
-                }}
-                slotPropGetter={currentView == 'day' ? slotPropGetter : null}
-              />
-            </div>
-
-            <div
-              className="appointments-right-pane"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-                height: '100%',
-                minHeight: 0
-              }}
-            >
-              <Panel bordered className="appointments-mini-panel" style={{ padding: 10, borderRadius: 12, flex: '0 0 auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-                  <ButtonGroup
-                    style={{ borderRadius: '5px', backgroundColor: 'var(--rs-border-primary)' }}
-                    size="xs"
-                  >
-                    <Button
-                      className="btn-scheduling"
-                      style={{ border: 'none', height: '30px' }}
-                      appearance={currentView === Views.WEEK ? 'primary' : 'subtle'}
-                      onClick={() => setCurrentView(Views.WEEK)}
-                    >
-                      <Text>Week</Text>
-                    </Button>
-                    <Button
-                      className="btn-scheduling"
-                      style={{ border: 'none', height: '30px' }}
-                      appearance={currentView === Views.DAY ? 'primary' : 'subtle'}
-                      onClick={() => setCurrentView(Views.DAY)}
-                    >
-                      <Text>Day</Text>
-                    </Button>
-                    <Button
-                      className="btn-scheduling"
-                      style={{ border: 'none', height: '30px' }}
-                      appearance={currentView === Views.MONTH ? 'primary' : 'subtle'}
-                      onClick={() => setCurrentView(Views.MONTH)}
-                    >
-                      <Text>Month</Text>
-                    </Button>
-                    <Button
-                      className="btn-scheduling"
-                      style={{ border: 'none', height: '30px' }}
-                      appearance={currentView === Views.AGENDA ? 'primary' : 'subtle'}
-                      onClick={() => setCurrentView(Views.AGENDA)}
-                    >
-                      <Text>Agenda</Text>
-                    </Button>
-                  </ButtonGroup>
-                </div>
-                <RsCalendar
-                  value={rightPanelDate}
-                  onChange={(d: Date | null) => {
-                    if (d) {
-                      setRightPanelDate(d);
-                      setCurrentCalendarDate(d);
-                      setCalendarDate(d);
-                    }
-                  }}
-                  compact
-                  style={{ width: '100%', height: 220, fontSize: 12 }}
-                />
-              </Panel>
-
-              <TodayAppointmentsList
-                selectedDate={rightPanelDate ?? currentCalendarDate}
-                todayAppointmentsList={todayAppointmentsList}
-                isFetchingTodayAppointments={isFetchingTodayAppointments}
-                rightPanelAppointmentRows={rightPanelAppointmentRows}
-                todayTimelineRows={todayTimelineRows}
-                onViewAppointment={handleViewAppointment}
-              />
-            </div>
-          </div>
+          <ScheduleContentGrid
+            calendarKey={calendarKey}
+            currentCalendarDate={currentCalendarDate}
+            setCalendarDate={setCalendarDate}
+            setCurrentCalendarDate={setCurrentCalendarDate}
+            setRightPanelDate={setRightPanelDate}
+            currentView={currentView}
+            visibleResources={visibleResources}
+            minTime={minTime}
+            formats={formats}
+            localizer={localizer}
+            finalAppointments={finalAppointments}
+            resourcesWithAvailabilityResponse={resourcesWithAvailabilityResponse}
+            setSelectedSlot={setSelectedSlot}
+            setBookPatientReadOnly={setBookPatientReadOnly}
+            setBookPatientModalOpen={setBookPatientModalOpen}
+            handleSelectEvent={handleSelectEvent}
+            getTooltipContent={getTooltipContent}
+            setCurrentView={setCurrentView}
+            eventPropGetter={eventPropGetter}
+            ResourceHeader={ResourceHeader}
+            MyEvent={MyEvent}
+            slotPropGetter={slotPropGetter}
+            rightPanelDate={rightPanelDate}
+            todayAppointmentsList={todayAppointmentsList}
+            isFetchingTodayAppointments={isFetchingTodayAppointments}
+            rightPanelAppointmentRows={rightPanelAppointmentRows}
+            todayTimelineRows={todayTimelineRows}
+            handleViewAppointment={handleViewAppointment}
+            dispatch={dispatch}
+          />
         </Panel>
       </div>
 

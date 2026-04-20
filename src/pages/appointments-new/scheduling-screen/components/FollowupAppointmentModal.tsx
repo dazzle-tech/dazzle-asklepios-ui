@@ -8,9 +8,9 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
 import {
   useGetResourcesAvailabilityQuery,
-  useGetResourceWithDetailsQuery,
-  useSaveAppointmentMutation
+  useGetResourceWithDetailsQuery
 } from '@/services/appointmentService';
+import { useCreateAppointmentRequestMutation } from '@/services/appointment/appointmentRequestService';
 import { useGetAllResourcesQuery, useGetResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { useGetPatientsQuery } from '@/services/patientService';
@@ -39,10 +39,10 @@ import {
   Panel,
   Placeholder
 } from 'rsuite';
-import './AppoitmentModal.less';
+import '../AppoitmentModal.less';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
-import PatientSearchBar from './PatientSearchBar';
+import PatientSearchBar from '../PatientSearchBar';
 
 const FOLLOW_UP_VISIT_TYPE = 'FOLLOW_UP';
 
@@ -234,7 +234,10 @@ const FollowupAppointmentModal = ({
   } = useGetResourceWithDetailsQuery(
     selectedSlot?.resourceKey || selectedSlot?.resourceId || appointment?.resourceKey || '',
     {
-      skip: !selectedSlot?.resourceKey && !selectedSlot?.resourceId && !appointment?.resourceKey
+      // In Encounter follow-up request flow, "Resource" is department-based; skip resource availability details APIs.
+      skip:
+        from === 'Encounter' ||
+        (!selectedSlot?.resourceKey && !selectedSlot?.resourceId && !appointment?.resourceKey)
     }
   );
 
@@ -302,7 +305,8 @@ const FollowupAppointmentModal = ({
       facility_id: appointment?.facilityKey || ''
     },
     {
-      skip: !appointment?.resourceKey
+      // In Encounter follow-up request flow, "Resource" is department-based; skip resource availability APIs.
+      skip: from === 'Encounter' || !appointment?.resourceKey || !appointment?.facilityKey
     }
   );
 
@@ -487,7 +491,7 @@ const FollowupAppointmentModal = ({
     };
   }, [appointment, departmentListResponse, dayCaseDepartmentListResponse]);
 
-  const [saveAppointment, saveAppointmentMutation] = useSaveAppointmentMutation();
+  const [createAppointmentRequest] = useCreateAppointmentRequestMutation();
 
   useEffect(() => {
     // When editing/viewing an existing appointment, localPatient should come from `appointmentData`.
@@ -508,9 +512,10 @@ const FollowupAppointmentModal = ({
     setLocalPatient(normalizePatient(slicePatient));
   }, [patientSlice, isEditingExistingAppointment, seedPatientRaw]);
 
-  const ResourceTypeEnum = useEnumOptions('ResourceType');
+  const TemplateTypeEnum = useEnumOptions('TemplateType');
+  const ResourceTypeEnum = TemplateTypeEnum;
 
-  const DEFAULT_RESOURCE_TYPE = 'CLINIC';
+  const DEFAULT_RESOURCE_TYPE = 'DEPARTMENT';
 
   const activeFilters = useMemo(() => {
     const filters = [];
@@ -892,6 +897,16 @@ const FollowupAppointmentModal = ({
     }
   }, [resourceType]);
 
+  // For follow-up requests, resource type must be DEPARTMENT from TemplateType.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (appointment?.resourceTypeLkey === DEFAULT_RESOURCE_TYPE) return;
+    setAppointment(prev => ({
+      ...prev,
+      resourceTypeLkey: DEFAULT_RESOURCE_TYPE
+    }));
+  }, [isOpen, appointment?.resourceTypeLkey]);
+
   // Set default resource type to CLINIC for new appointments
   useEffect(() => {
     // Skip if we have appointmentData (editing existing appointment)
@@ -1049,36 +1064,6 @@ const FollowupAppointmentModal = ({
     return baseDate;
   };
 
-  const normalizeToString = (v: any) => {
-    if (v === null || typeof v === 'undefined') return null;
-
-    if (typeof v === 'boolean') return v ? 'true' : 'false';
-
-    if (v instanceof Date) return v.toISOString();
-
-    return String(v);
-  };
-
-  const sanitizeAppointmentPayload = (payload: any) => ({
-    ...payload,
-
-    isReminder: normalizeToString(payload?.isReminder),
-    consentForm: normalizeToString(payload?.consentForm),
-
-    appointmentStart: normalizeToString(payload?.appointmentStart),
-    appointmentEnd: normalizeToString(payload?.appointmentEnd),
-
-    patientKey: normalizeToString(payload?.patientKey),
-    facilityKey: normalizeToString(payload?.facilityKey),
-    resourceKey: normalizeToString(payload?.resourceKey),
-    departmentKey: normalizeToString(payload?.departmentKey),
-
-    reminderLkey: normalizeToString(payload?.reminderLkey),
-    durationLkey: normalizeToString(payload?.durationLkey),
-    visitTypeLkey: normalizeToString(payload?.visitTypeLkey),
-    resourceTypeLkey: normalizeToString(payload?.resourceTypeLkey)
-  });
-
   const validateRequiredFields = () => {
     const missingFields: string[] = [];
 
@@ -1136,67 +1121,88 @@ const FollowupAppointmentModal = ({
     const hasDate = selectedDate || (selectedYear && selectedMonth !== null && selectedMonthDay);
     const hasTime = Boolean(selectedTime);
     const hasAnyScheduleSelection = Boolean(hasTimeSlices || hasDate || hasTime);
-
     const appointmentStart = hasAnyScheduleSelection ? calculateAppointmentDate(0, true) : null;
     const appointmentEnd = hasAnyScheduleSelection ? calculateAppointmentDate(selectedDuration, true) : null;
 
-    const isDepartmentBasedResource = ['CLINIC', 'INPATIENT_ADMISSION', 'DAY_CASE', 'EMERGENCY'].includes(appointment?.resourceTypeLkey);
+    if (!localPatient?.key) {
+      dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
+      return;
+    }
 
-    const departmentKeyToSave = isDepartmentBasedResource
-      ? finalResourceKey
-      : appointment.departmentKey;
+    const apptAny = appointment as any;
+    const sourceEncounterIdCandidate =
+      apptAny?.sourceEncounterId ??
+      apptAny?.followUpEncounterId ??
+      appointmentData?.sourceEncounterId ??
+      appointmentData?.followUpEncounterId ??
+      appointmentData?.encounterId;
+    const sourceEncounterId = Number(sourceEncounterIdCandidate);
+    if (!Number.isFinite(sourceEncounterId) || sourceEncounterId <= 0) {
+      dispatch(notify({ msg: 'Source encounter is required to create appointment request.', sev: 'warning' }));
+      return;
+    }
 
-    const appointmentToSave = {
-      ...appointment,
-      patientKey: localPatient.key,
-      createdBy:
-        (typeof appointment?.createdBy === 'string' && appointment.createdBy.trim()
-          ? appointment.createdBy
-          : appointment?.createdBy) ?? loggedInUsername,
-      createdAt:
-        typeof appointment?.createdAt !== 'undefined' && appointment?.createdAt !== null
-          ? appointment.createdAt
-          : new Date().toISOString(),
-      updatedBy:
-        (typeof appointment?.updatedBy === 'string' && appointment.updatedBy.trim()
-          ? appointment.updatedBy
-          : appointment?.updatedBy) ?? loggedInUsername,
-      updatedAt:
-        typeof appointment?.updatedAt !== 'undefined' && appointment?.updatedAt !== null
-          ? appointment.updatedAt
-          : new Date().toISOString(),
-      appointmentStart: appointmentStart,
-      appointmentEnd: appointmentEnd,
-      instructions: instructions,
-      appointmentStatus: appointment.appointmentStatus ? appointment.appointmentStatus : 'Pending',
-      selectedSlices: selectedSlices ?? [],
-      appointmentDate: hasAnyScheduleSelection ? selectedDate : null,
-      resourceKey: finalResourceKey,
-      departmentKey: departmentKeyToSave ? String(departmentKeyToSave) : departmentKeyToSave,
-      facilityKey: appointment.facilityKey ? String(appointment.facilityKey) : appointment.facilityKey
+    const patientId = Number(localPatient.key);
+    const facilityId = Number(appointment?.facilityKey);
+    const departmentId = Number(appointment?.departmentKey ?? finalResourceKey);
+    if (!Number.isFinite(patientId) || !Number.isFinite(facilityId) || !Number.isFinite(departmentId)) {
+      dispatch(notify({ msg: 'Patient, facility and department are required.', sev: 'warning' }));
+      return;
+    }
+
+    const preferredDate =
+      selectedDate instanceof Date && !Number.isNaN(selectedDate.getTime())
+        ? selectedDate.toISOString().slice(0, 10)
+        : appointmentStart instanceof Date && !Number.isNaN(appointmentStart.getTime())
+          ? appointmentStart.toISOString().slice(0, 10)
+          : null;
+
+    const requestPayload = {
+      patientId,
+      facilityId,
+      departmentId,
+      sourceEncounterId,
+      requestedResourceType: appointment?.resourceTypeLkey ?? null,
+      requestedResourceId: finalResourceKey != null ? Number(finalResourceKey) : null,
+      preferredDate,
+      preferredStartTime:
+        appointmentStart instanceof Date && !Number.isNaN(appointmentStart.getTime())
+          ? appointmentStart.toISOString()
+          : null,
+      preferredEndTime:
+        appointmentEnd instanceof Date && !Number.isNaN(appointmentEnd.getTime())
+          ? appointmentEnd.toISOString()
+          : null,
+      priority: String(apptAny?.priority ?? apptAny?.priorityLkey ?? 'NORMAL'),
+      reason: apptAny?.reason ?? null,
+      note: instructions || appointment?.notes || null,
+      requestedBy: loggedInUsername || String(authSlice?.user?.username ?? '')
     };
 
-    if (localPatient?.key) {
-      const sanitizedAppointmentToSave = sanitizeAppointmentPayload(appointmentToSave);
-
-      saveAppointment(sanitizedAppointmentToSave)
-        .unwrap()
-        .then(() => {
-          dispatch(notify({ msg: 'Appointment saved successfully', sev: 'success' }));
-          closeModal();
-          onSave();
-        })
-        .catch(e => {
-          const msg =
-            (e?.data && (e.data.msg || e.data.message)) ||
-            (typeof e?.data === 'string' ? e.data : null) ||
-            (Array.isArray(e?.data?.errors) ? e.data.errors.join('\n') : null) ||
-            `Failed to save appointment${e?.status ? ` (status ${e.status})` : ''}`;
-          dispatch(notify({ msg, sev: 'warn' }));
-        });
-    } else {
-      dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
-    }
+    createAppointmentRequest(requestPayload as any)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'Appointment request saved successfully', sev: 'success' }));
+        closeModal();
+        onSave();
+      })
+      .catch(e => {
+        if (e?.status === 405) {
+          dispatch(
+            notify({
+              msg: 'Appointment request create API is not enabled on backend (POST /api/patient/appointment-requests).',
+              sev: 'warn'
+            })
+          );
+          return;
+        }
+        const msg =
+          (e?.data && (e.data.msg || e.data.message)) ||
+          (typeof e?.data === 'string' ? e.data : null) ||
+          (Array.isArray(e?.data?.errors) ? e.data.errors.join('\n') : null) ||
+          `Failed to save appointment request${e?.status ? ` (status ${e.status})` : ''}`;
+        dispatch(notify({ msg, sev: 'warn' }));
+      });
   };
 
   const getAvailableDatesInMonth = (dayOfWeek, year, month) => {
@@ -1494,23 +1500,6 @@ const FollowupAppointmentModal = ({
                       <Form layout="inline" fluid>
                         <div className="show-grid">
                           <div className="flex-container">
-                            <div className="input-wrapper" style={{ flex: 2 }}>
-                              <MyInput
-                                disabled
-                                width={'100%'}
-                                vr={validationResult}
-                                column
-                                fieldLabel="City"
-                                fieldType="select"
-                                fieldName="durationLkey"
-                                selectData={[]}
-                                searchable={false}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={appointment}
-                                setRecord={setAppointment}
-                              />
-                            </div>
                             <div className="input-wrapper" style={{ flex: 3, minWidth: 260 }}>
                               <MyInput
                                 disabled
@@ -1528,11 +1517,6 @@ const FollowupAppointmentModal = ({
                                 required
                               />
                             </div>
-                          </div>
-                        </div>
-
-                        <div className="show-grid">
-                          <div className="flex-container">
                             <div className="input-wrapper" style={{ flex: 3 }}>
                               <MyInput
                                 disabled={showOnly || from === 'Encounter'}
@@ -1542,7 +1526,13 @@ const FollowupAppointmentModal = ({
                                 fieldLabel="Resource Type"
                                 fieldType="select"
                                 fieldName="resourceTypeLkey"
-                                selectData={ResourceTypeEnum ?? []}
+                                selectData={
+                                  (TemplateTypeEnum ?? []).filter(
+                                    (item: any) =>
+                                      String(item?.value ?? '').toUpperCase() === 'DEPARTMENT' ||
+                                      String(item?.label ?? '').toUpperCase() === 'DEPARTMENT'
+                                  )
+                                }
                                 selectDataLabel="label"
                                 selectDataValue="value"
                                 record={appointment}
@@ -1553,14 +1543,14 @@ const FollowupAppointmentModal = ({
                             </div>
                             <div className="input-wrapper" style={{ flex: 3 }}>
                               <MyInput
-                                disabled={showOnly || !appointment?.resourceTypeLkey}
+                                disabled={showOnly}
                                 width={'15vw'}
                                 column
-                                fieldLabel="Resources"
-                                selectData={resourcesWithNames}
+                                fieldLabel="Resource"
+                                selectData={departmentListResponse?.data ?? []}
                                 fieldType="select"
-                                selectDataLabel="resourceName"
-                                selectDataValue="resourceKey"
+                                selectDataLabel="name"
+                                selectDataValue="id"
                                 fieldName="resourceKey"
                                 record={appointment}
                                 setRecord={setAppointment}
