@@ -69,13 +69,13 @@ const Prescriptions = ({ patient }) => {
             key: "submittedBy",
             title: <Translate>Submitted By</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => rowData?.submittedBy ?? rowData?.lastModifiedBy ?? "",
+            render: (rowData: any) => rowData?.submittedBy  ?? "",
         },
         {
             key: "submittedAt",
             title: <Translate>Submitted at</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => formatDateWithoutSeconds(rowData?.submittedAt ?? rowData?.lastModifiedDate),
+            render: (rowData: any) => formatDateWithoutSeconds(rowData?.submittedDate),
         },
     ];
 
