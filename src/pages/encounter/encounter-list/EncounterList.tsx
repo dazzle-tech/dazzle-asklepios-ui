@@ -46,11 +46,12 @@ import {
 import { useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 
-import { useGetBulkPatientBasicInfoMutation, useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
-
-import 'react-tabs/style/react-tabs.css';
-import './styles.less';
+import {
+  useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientByIdQuery
+} from '@/services/patient/patientService';
 import { skipToken } from '@tanstack/react-query';
+import { useSearchAppointmentsQuery } from '@/services/appointment/appointmentService';
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -68,10 +69,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw)
@@ -85,7 +86,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'patient.notfound': 'Patient not found.',
   'patient.hasOngoing.notAllowed':
     'Patient already has an ongoing encounter. Starting another one is not allowed.',
-  'cancel.notAllowed.rule': 'Cancel is allowed only when status is NEW and isObserved is false.',
+  'cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
   'followUpEncounter.required.byReason':
     'Follow-up encounter is required when reason is FOLLOW_UP (and must be empty otherwise).',
   'followUpEncounter.notfound': 'Follow-up encounter not found.',
@@ -168,23 +169,21 @@ const EncounterList = () => {
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
 
- useEffect(() => {
-  dispatch(setPageCode('P_Encounters'));
-  dispatch(setDivContent('Patients Visit List'));
+  useEffect(() => {
+    dispatch(setPageCode('P_Encounters'));
+    dispatch(setDivContent('Patients Visit List'));
 
-  return () => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  };
-}, [dispatch]);
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(' '));
+    };
+  }, [dispatch]);
 
   const [encounter, setLocalEncounter] = useState<any>({
     ...newApEncounter,
     discharge: false
   });
-const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
-const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
-// getPatientByIdState: { data, isFetching, isLoading, error, ... }  console.log('Patient data for encounter:', patientData, 'Loading:', isPatientLoading);  
+  const [triggerGetPatientById, getPatientByIdState] = useLazyGetPatientByIdQuery();
   const [open, setOpen] = useState(false);
   const [openRefillModal, setOpenRefillModal] = useState(false);
   const [openPhysicianOrderSummaryModal, setOpenPhysicianOrderSummaryModal] = useState(false);
@@ -217,8 +216,8 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
   const [pageSize, setPageSize] = useState(10);
   const DEFAULT_SORT = 'id,desc';
 
-  const today = useMemo(() => new Date(), []);
-  const todayStr = useMemo(() => formatDate(today), [today]);
+  const today = new Date();
+  const todayStr = formatDate(today);
 
   const [dateFilter, setDateFilter] = useState({ fromDate: today, toDate: today });
 
@@ -262,7 +261,7 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
 
     return {
-      departmentId:departmentId,
+      departmentId: departmentId,
       fromDate,
       toDate,
       statusIn: normalizedStatusIn,
@@ -305,6 +304,31 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     refetch: refetchEncounters
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
 
+
+  const { data: appointmentsData } = useSearchAppointmentsQuery({
+    filter: {
+      facility: selectedDepartment?.facilityId,
+      department: departmentId
+    },
+    page: 0,
+    size: 50,
+    sort: 'id,desc'
+  });
+
+  const appointmentsMap = useMemo(() => {
+    const map: any = {};
+
+    (appointmentsData?.data ?? []).forEach((appt: any) => {
+      const patientId = appt?.patient?.id;
+
+      if (patientId) {
+        map[patientId] = appt;
+      }
+    });
+
+    return map;
+  }, [appointmentsData]);
+
   const todayCountsSkip = !departmentId;
   const { data: totalPatientsCount } = useCountTodayDepartmentTotalPatientsQuery(
     { departmentId: String(departmentId ?? '') },
@@ -338,19 +362,17 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     return Array.from(new Set(ids));
   }, [tableData]);
   useEffect(() => {
-  const pid =
-  
-    encounter?.patient?.id ;
+    const pid = encounter?.patient?.id;
 
-  if (pid) triggerGetPatientById({ id: pid });
-}, [encounter?.patient?.id]);
+    if (pid) triggerGetPatientById({ id: pid });
+  }, [encounter?.patient?.id]);
 
   useEffect(() => {
     if (patientIdsForBulk.length === 0) return;
     patientBulkIdsRef.current = patientIdsForBulk;
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo]);
 
   const patientMap = useMemo(() => {
@@ -404,6 +426,7 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
     });
   }, [tableData, patientMap]);
 
+
   const getEncounterId = (row: any) => row?.id ?? null;
 
   const startEncounterSafe = async (row: any) => {
@@ -425,81 +448,94 @@ const { data: patientById, isFetching, isLoading, error } = getPatientByIdState;
       await cancelEncounter({ id: encounterId }).unwrap();
       dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
       return true;
-    } catch (error: any) {
-      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.cancel.notAllowed.rule':
+          'Cancellation is not allowed for the current encounter status.',
+        'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
       return false;
     }
   };
   const fetchPatientForEncounter = async (enc: any) => {
-  const pid =
-    enc?.patient?.id ??
-    null;
+    const pid = enc?.patient?.id ?? null;
 
-  if (!pid) return null;
+    if (!pid) return null;
 
-  try {
-    const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
-    return fullPatient;
-  } catch (e) {
-    handleCrudError(e, dispatch, { 'patient.notfound': 'Patient not found.' });
-    return null;
-  }
-};
-const handleGoToVisit = async (encounterData: any) => {
-  const isStarted = await startEncounterSafe(encounterData);
-  if (!isStarted) return;
-
-  dispatch(showSystemLoader());
-  const fullPatient = await fetchPatientForEncounter(encounterData);
-  dispatch(hideSystemLoader());
-
-  if (!fullPatient) {
-    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
-    return;
-  }
-
-  dispatch(setEncounter(encounterData));
-  dispatch(setPatient(fullPatient));
-
-  
-  const privatePatientPath = '/user-access-patient-private';
-  const encounterPath = '/encounter';
-  const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
-
-  navigate(targetPath, {
-    state: {
-      info: 'toEncounter',
-      fromPage: 'EncounterList',
-      patient: fullPatient,
-      encounter: encounterData
+    try {
+      const fullPatient = await triggerGetPatientById({ id: pid }).unwrap();
+      return fullPatient;
+    } catch (e) {
+      handleCrudError(e, dispatch, { 'patient.notfound': 'Patient not found.' });
+      return null;
     }
-  });
+  };
+  const handleGoToVisit = async (encounterData: any) => {
+    const isStarted = await startEncounterSafe(encounterData);
+    if (!isStarted) return;
 
-  sessionStorage.setItem('encounterPageSource', 'EncounterList');
-};
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
+    const privatePatientPath = '/user-access-patient-private';
+    const encounterPath = '/encounter';
+    const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
+
+    navigate(targetPath, {
+      state: {
+        info: 'toEncounter',
+        fromPage: 'EncounterList',
+        patient: fullPatient,
+        encounter: encounterData
+      }
+    });
+
+    sessionStorage.setItem('encounterPageSource', 'EncounterList');
+  };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
     const isStarted = await startEncounterSafe(encounterData);
     if (!isStarted) return;
-      dispatch(showSystemLoader());
-  const fullPatient = await fetchPatientForEncounter(encounterData);
-  dispatch(hideSystemLoader());
-      if (!fullPatient) {
-    dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
-    return;
-  }
 
-  dispatch(setEncounter(encounterData));
-  dispatch(setPatient(fullPatient));
+    dispatch(showSystemLoader());
+    const fullPatient = await fetchPatientForEncounter(encounterData);
+    dispatch(hideSystemLoader());
+
+    if (!fullPatient) {
+      dispatch(notify({ msg: 'Failed to load patient data.', sev: 'error' }));
+      return;
+    }
+
+    dispatch(setEncounter(encounterData));
+    dispatch(setPatient(fullPatient));
+
     const targetPath = fullPatient?.isPrivatePatient
       ? '/user-access-patient-private'
       : '/nurse-station';
+
+    sessionStorage.setItem('encounterPageSource', 'EncounterList');
+
     navigate(targetPath, {
       state: {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,
         encounter: encounterData,
-        edit: encounterData?.status ?.toUpperCase() === 'CLOSED'
+        edit: encounterData?.status?.toUpperCase() === 'CLOSED',
+        fromPage: 'EncounterList'
       }
     });
   };
@@ -536,6 +572,36 @@ const handleGoToVisit = async (encounterData: any) => {
     setPage(0);
     setSearchTick(prev => prev + 1);
   };
+  const isAdmin = !!authSlice.user?.admin;
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+
+  const canSeeNurseStation = isAdmin || jobRole === 'NURSE';
+  const canSeeDoctorVisit = isAdmin || jobRole === 'PHYSICIAN';
+  const canSeeEMR = isAdmin || jobRole === 'PHYSICIAN';
+  const canSeePrint = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
+  const canSeeCancel = isAdmin || jobRole === 'PHYSICIAN' || jobRole === 'NURSE';
+
+  const safeFormatDate = (value: any) => {
+    if (!value) return '';
+
+    try {
+      const date = value instanceof Date ? value : new Date(value);
+
+      if (isNaN(date.getTime())) return '';
+
+      // 🟢 format Date + Time
+      const formattedDate = date.toLocaleDateString('en-GB'); // 12/04/2026
+      const formattedTime = date.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      return `${formattedDate} ${formattedTime}`;
+    } catch {
+      return '';
+    }
+  };
+
 
   const tableColumns = [
     {
@@ -615,6 +681,23 @@ const handleGoToVisit = async (encounterData: any) => {
       render: (row: any) => row?.encounterDate ?? '-'
     },
     {
+      key: 'startedDate',
+      title: 'STARTED DATE',
+      expandable: true,
+      render: (row: any) => {
+        const raw = row?.startedDate;
+        if (!raw) return '-';
+        const d = new Date(raw);
+        return isNaN(d.getTime()) ? raw : d.toLocaleString();
+      }
+    },
+    {
+      key: 'startedBy',
+      title: 'STARTED BY',
+      expandable: true,
+      render: (row: any) => row?.startedBy ?? '-'
+    },
+    {
       key: 'status',
       title: 'STATUS',
       render: (row: any) => {
@@ -661,59 +744,65 @@ const handleGoToVisit = async (encounterData: any) => {
 
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
-            <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="black"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    if (row?.isObserved) {
-                      handleGoToPreVisitObservations(row);
-                    } else {
-                      setOpenNurseAssessment(true);
-                    }
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserNurse} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {canSeeNurseStation && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="black"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      if (row?.isObserved) {
+                        handleGoToPreVisitObservations(row);
+                      } else {
+                        setOpenNurseAssessment(true);
+                      }
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserNurse} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
-              <div>
-                <MyButton
-                  size="small"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    handleGoToVisit(row);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faUserDoctor} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {canSeeDoctorVisit && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+                <div>
+                  <MyButton
+                    size="small"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      handleGoToVisit(row);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUserDoctor} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="violet"
-                  onClick={() => {
-                    setLocalEncounter(row);
-                    setEmrEncounter(row);
-                    setEmrPatient(row?.patientObject ?? null);
-                    dispatch(setEncounter(row));
-                    if (row?.patientObject) dispatch(setPatient(row.patientObject));
-                    setOpenEMRModal(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faFileWaveform} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {canSeeEMR && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="violet"
+                    onClick={() => {
+                      setLocalEncounter(row);
+                      setEmrEncounter(row);
+                      setEmrPatient(row?.patientObject ?? null);
+                      dispatch(setEncounter(row));
+                      if (row?.patientObject) dispatch(setPatient(row.patientObject));
+                      setOpenEMRModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faFileWaveform} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
 
-            {isNew && (
+            {canSeeCancel && isNew && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                 <div>
                   <MyButton
@@ -729,21 +818,51 @@ const handleGoToVisit = async (encounterData: any) => {
               </Whisper>
             )}
 
-            <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
-              <div>
-                <MyButton
-                  size="small"
-                  backgroundColor="light-blue"
-                  onClick={() => setLocalEncounter(row)}
-                >
-                  <FontAwesomeIcon icon={faPrint} />
-                </MyButton>
-              </div>
-            </Whisper>
+            {canSeePrint && (
+              <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
+                <div>
+                  <MyButton
+                    size="small"
+                    backgroundColor="light-blue"
+                    onClick={() => setLocalEncounter(row)}
+                  >
+                    <FontAwesomeIcon icon={faPrint} />
+                  </MyButton>
+                </div>
+              </Whisper>
+            )}
           </Form>
         );
       },
       expandable: false
+    },
+    {
+      key: 'appointmentTime',
+      title: 'APPOINTMENT TIME',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.startDatetime)
+    },
+    {
+      key: 'confirmTime',
+      title: 'CONFIRM TIME',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.confirmedAt)
+    },
+    {
+      key: 'checkInTime',
+      title: 'CHECK-IN TIME',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.checkedInAt)
+    },
+    {
+      key: 'seenByPhysicianTime',
+      title: 'SEEN BY PHYSICIAN',
+      expandable: true,
+      render: (row: any) =>
+        safeFormatDate(appointmentsMap[row?.patient?.id]?.lastModifiedBy)
     }
   ];
 
@@ -834,40 +953,6 @@ const handleGoToVisit = async (encounterData: any) => {
               />
 
               <MyInput
-                width={130}
-                fieldName="hasPrescription"
-                fieldType="checkbox"
-                record={{ hasPrescription: !!hasPrescription }}
-                setRecord={(v: any) => {
-                  setHasPrescription(!!v?.hasPrescription);
-                  setPage(0);
-                }}
-                label="Has Prescription"
-              />
-              <MyInput
-                width={110}
-                fieldName="hasOrder"
-                fieldType="checkbox"
-                record={{ hasOrder: !!hasOrder }}
-                setRecord={(v: any) => {
-                  setHasOrder(!!v?.hasOrder);
-                  setPage(0);
-                }}
-                label="Has Orders"
-              />
-              <MyInput
-                width={110}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={{ isObserved: !!isObserved }}
-                setRecord={(v: any) => {
-                  setIsObserved(!!v?.isObserved);
-                  setPage(0);
-                }}
-                label="Is Observed"
-              />
-
-              <MyInput
                 width={200}
                 fieldName="priorities"
                 fieldType="checkPicker"
@@ -892,11 +977,6 @@ const handleGoToVisit = async (encounterData: any) => {
 
   const tableLoading = isEncountersLoading || isEncountersFetching || patientsBulkLoading;
 
-  // useEffect(() => {
-  //   dispatch(setPageCode(''));
-  //   dispatch(setDivContent(' '));
-  // }, [location.pathname, dispatch]);
-
   useEffect(() => {
     if (tableLoading) dispatch(showSystemLoader());
     else dispatch(hideSystemLoader());
@@ -914,6 +994,9 @@ const handleGoToVisit = async (encounterData: any) => {
       </Panel>
     );
   }
+
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
   return (
     <>
@@ -951,97 +1034,95 @@ const handleGoToVisit = async (encounterData: any) => {
           width="15vw"
         />
       </div>
+      <div dir={isRTL ? 'rtl' : 'ltr'}>
+        <Panel>
+          <MyTable
+            filters={filters()}
+            height={600}
+            data={normalizedTableData}
+            columns={tableColumns}
+            rowClassName={(row: any) =>
+              row && encounter && row.id === encounter.id ? 'selected-row' : ''
+            }
+            loading={tableLoading}
+            onRowClick={(row: any) => setLocalEncounter(row)}
+            page={page}
+            rowsPerPage={pageSize}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+          />
+          <MyModal
+            open={openRefillModal}
+            setOpen={setOpenRefillModal}
+            title="Refill"
+            size="90vw"
+            content={<RefillModalComponent />}
+            hideActionBtn={true}
+            cancelButtonLabel="Close"
+          />
 
-      <Panel>
-        <MyTable
-          filters={filters()}
-          height={600}
-          data={normalizedTableData}
-          columns={tableColumns}
-          rowClassName={(row: any) =>
-            row && encounter && row.key === encounter.key ? 'selected-row' : ''
-          }
-          loading={tableLoading}
-          onRowClick={(row: any) => setLocalEncounter(row)}
-          page={page}
-          rowsPerPage={pageSize}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        />
+          <DeletionConfirmationModal
+            open={open}
+            setOpen={setOpen}
+            actionButtonFunction={handleCancelEncounter}
+            actionType="Deactivate"
+            confirmationQuestion="Do you want to cancel this Encounter?"
+            actionButtonLabel="Cancel"
+            cancelButtonLabel="Close"
+          />
 
-        <MyModal
-          open={openRefillModal}
-          setOpen={setOpenRefillModal}
-          title="Refill"
-          size="90vw"
-          content={<RefillModalComponent />}
-          hideActionBtn={true}
-          cancelButtonLabel="Close"
-        />
-
-        <DeletionConfirmationModal
-          open={open}
-          setOpen={setOpen}
-          actionButtonFunction={handleCancelEncounter}
-          actionType="Deactivate"
-          confirmationQuestion="Do you want to cancel this Encounter?"
-          actionButtonLabel="Cancel"
-          cancelButtonLabel="Close"
-        />
-
-        <DeletionConfirmationModal
-          open={openNurseAssessment}
-          setOpen={setOpenNurseAssessment}
-          actionButtonFunction={async () => {
-        
+          <DeletionConfirmationModal
+            open={openNurseAssessment}
+            setOpen={setOpenNurseAssessment}
+            actionButtonFunction={async () => {
               await handleGoToPreVisitObservations(encounter);
-            
-          }}
-          actionType="confirm"
-          confirmationQuestion="Do you want to start Nurse Assessment?"
-          actionButtonLabel="Start"
-          cancelButtonLabel="Close"
-        />
+            }}
+            actionType="confirm"
+            confirmationQuestion="Do you want to start Nurse Assessment?"
+            actionButtonLabel="Start"
+            cancelButtonLabel="Close"
+          />
 
-        <MyModal
-          open={openPhysicianOrderSummaryModal}
-          setOpen={setOpenPhysicianOrderSummaryModal}
-          title="Task Management"
-          size="90vw"
-          content={<PhysicianOrderSummaryModal />}
-          actionButtonLabel="Save"
-          cancelButtonLabel="Close"
-        />
+          <MyModal
+            open={openPhysicianOrderSummaryModal}
+            setOpen={setOpenPhysicianOrderSummaryModal}
+            title="Task Management"
+            size="90vw"
+            content={<PhysicianOrderSummaryModal />}
+            actionButtonLabel="Save"
+            cancelButtonLabel="Close"
+          />
 
-        <MyModal
-          open={openEncounterLogsModal}
-          setOpen={setOpenEncounterLogsModal}
-          title="Encounter Logs"
-          size="70vw"
-          content={<EncounterLogsTable />}
-          actionButtonLabel="Close"
-          actionButtonFunction={() => setOpenEncounterLogsModal(false)}
-          cancelButtonLabel="Cancel"
-        />
+          <MyModal
+            open={openEncounterLogsModal}
+            setOpen={setOpenEncounterLogsModal}
+            title="Encounter Logs"
+            size="70vw"
+            content={<EncounterLogsTable />}
+            actionButtonLabel="Close"
+            actionButtonFunction={() => setOpenEncounterLogsModal(false)}
+            cancelButtonLabel="Cancel"
+          />
 
-        <MyModal
-          open={openEMRModal}
-          setOpen={setOpenEMRModal}
-          title="Electronic Medical Record"
-          size="90vw"
-          content={
-            emrPatient && emrEncounter ? (
-              <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
-            ) : (
-              <div className="encounter-list__no-patient">No patient selected.</div>
-            )
-          }
-          actionButtonLabel="Close"
-          actionButtonFunction={() => setOpenEMRModal(false)}
-          cancelButtonLabel="Cancel"
-        />
-      </Panel>
+          <MyModal
+            open={openEMRModal}
+            setOpen={setOpenEMRModal}
+            title="Electronic Medical Record"
+            size="90vw"
+            content={
+              emrPatient && emrEncounter ? (
+                <PatientEMRModal patient={emrPatient} encounter={emrEncounter} />
+              ) : (
+                <div className="encounter-list__no-patient">No patient selected.</div>
+              )
+            }
+            actionButtonLabel="Close"
+            actionButtonFunction={() => setOpenEMRModal(false)}
+            cancelButtonLabel="Cancel"
+          />
+        </Panel>
+      </div>
     </>
   );
 };

@@ -31,6 +31,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         required
         fieldName="primaryMobileNumber"
         fieldLabel="Primary Mobile Number"
+        fieldType="number"
         record={localPatient}
         setRecord={setLocalPatient}
         width={170}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Col, Divider, Drawer, Form, List, Panel, Row } from 'rsuite';
@@ -21,9 +21,11 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetNurseMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 
+import { useEnumOptions } from '@/services/enumsApi';
+import { useLazyGetNurseSummaryReportQuery } from '@/services/observationServiceNew';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { printNurseSummaryReport } from '@/utils/printNurseSummaryReport';
 import './styles.less';
-import { useGenerateNurseSummaryReportMutation } from '@/services/observationService';
-import { ApPatient } from '@/types/model-types';
 
 const NurseStation = () => {
   const mode = useSelector((state: any) => state.ui.mode);
@@ -32,19 +34,48 @@ const NurseStation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
+  const fromPage = propsData?.fromPage;
+  const pageSource = fromPage || sessionStorage.getItem('encounterPageSource');
 
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
+  });
+
+  const [currentHeader, setCurrentHeader] = useState<string>('Nurse Dashboard');
+
+  const { data: bloodPressureMeasurementSiteLov } =
+    useGetLovValuesByCodeQuery('BP_MEASURMENT_SITE');
+  const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+
+  const patientConditions = useEnumOptions('Condition');
+  const encounterTypeOptions = useEnumOptions('EncounterType');
+  const EncounterReasonEnum = useEnumOptions('EncounterReason');
+  const ageGroupOptions = useEnumOptions('AgeGroupType');
+  const genderEnum = useEnumOptions('Gender');
+
+  const EncounterStatusEnum = useEnumOptions('EncounterStatus', {
+    exclude: [
+      'DISCHARGED',
+      'IN_OPERATION',
+      'CONFIRM_RETURN',
+      'TEMP_DC',
+      'TRIAGE_STARTED',
+      'SENT_TO_ER',
+      'WAITING_TRIAGE',
+      'WAITING_LIST',
+      'PENDING_PAYMENT'
+    ]
   });
 
   const [searchTerm, setSearchTerm] = useState({ term: '' });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [edit, setEdit] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [generateNurseReport] = useGenerateNurseSummaryReportMutation();
+  const [triggerNurseSummaryReport] = useLazyGetNurseSummaryReportQuery();
 
-  // Nurse sheets
-  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(localEncounter?.departmentId);
+  const { data: nurseSheets = [] } = useGetNurseMedicalSheetsByDepartmentQuery(
+    localEncounter?.departmentId
+  );
 
   const allowedSheetCodes = useMemo(
     () => new Set((nurseSheets ?? []).map((s: any) => s.medicalSheet)),
@@ -58,25 +89,34 @@ const NurseStation = () => {
   }, [allowedSheetCodes, searchTerm.term]);
 
   const headersMap = useMemo(() => {
-    const map: any = {};
+    const map: Record<string, string> = {};
+
     MedicalSheets.forEach(ms => {
-      const fullPath = `/nurse-station/${ms.path.startsWith('/') ? ms.path.slice(1) : ms.path}`;
+      const fullPath = ms.path.startsWith('/nurse-station')
+        ? ms.path
+        : `/nurse-station${ms.path.startsWith('/') ? ms.path : `/${ms.path}`}`;
+
       map[fullPath] = ms.name;
     });
+
     return map;
   }, []);
 
   useEffect(() => {
-    const header = headersMap[location.pathname] || 'Nurse Dashboard';
+    setCurrentHeader(headersMap[location.pathname] || 'Nurse Dashboard');
+  }, [location.pathname, headersMap]);
 
+  const divContent = `Nurse Station > ${currentHeader}`;
+
+  useEffect(() => {
     dispatch(setPageCode('Nurse_Station'));
-    dispatch(setDivContent(`Nurse Station > ${header}`));
+    dispatch(setDivContent(divContent));
 
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent(' '));
+      dispatch(setDivContent(''));
     };
-  }, [location.pathname, headersMap, dispatch]);
+  }, [currentHeader, dispatch, divContent]);
 
   useEffect(() => {
     if (!propsData?.encounter) {
@@ -84,20 +124,24 @@ const NurseStation = () => {
       return;
     }
     setEdit(propsData?.edit || localEncounter?.status === 'CLOSED');
-  }, [propsData, localEncounter]);
-  
-  // Complete encounter
-  const [completeEncounter,completeEncounterMutation] = useCompleteEncounterMutation();
-   useEffect(() => {
-      if (
-        localEncounter?.encounterType == 'INPATIENT' &&
-        completeEncounterMutation.status === 'fulfilled'
-      ) {
-        navigate('/inpatient-encounters-list');
-      } else if (completeEncounterMutation.status === 'fulfilled') {
+  }, [propsData, localEncounter, navigate]);
+
+  const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+
+  useEffect(() => {
+    if (
+      localEncounter?.encounterType === 'INPATIENT' &&
+      completeEncounterMutation.status === 'fulfilled'
+    ) {
+      navigate('/inpatient-encounters-list');
+    } else if (completeEncounterMutation.status === 'fulfilled') {
+      if (pageSource === 'Urgent_Care_List') {
+        navigate('/urgent-care-department-list');
+      } else {
         navigate('/encounter-list');
       }
-    }, [completeEncounterMutation]);
+    }
+  }, [completeEncounterMutation.status, localEncounter?.encounterType, navigate, pageSource]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -112,41 +156,67 @@ const NurseStation = () => {
           sev: 'success'
         })
       );
-    } catch (error) {
-      dispatch(
-        notify({
-          msg: 'An error occurred while completing the encounter',
-          sev: 'error'
-        })
-      );
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     } finally {
       dispatch(hideSystemLoader());
     }
   };
 
   const handleGoBack = () => {
+    if (pageSource === 'Urgent_Care_List') {
+      navigate('/urgent-care-department-list', {
+        state: {
+          fromPage: 'NurseStation',
+          patient: propsData?.patient,
+          encounter: propsData?.encounter
+        }
+      });
+      return;
+    }
+
     navigate('/encounter-list');
   };
 
   const handleGenerateReport = async (): Promise<void> => {
     try {
-      const blob = await generateNurseReport({
-        patient: localEncounter?.patientObject as ApPatient,
-        encounter: localEncounter
-      }).unwrap();
+      const encounterId = localEncounter?.id ?? localEncounter?.key;
 
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `nurse-summary-${localEncounter.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
+      if (!encounterId) {
+        dispatch(
+          notify({
+            msg: 'Encounter id is missing',
+            sev: 'error'
+          })
+        );
+        return;
+      }
+
+      const res = await triggerNurseSummaryReport({ encounterId }).unwrap();
+
+      await printNurseSummaryReport(
+        res,
+        bloodPressureMeasurementSiteLov?.object || [],
+        patientConditions || [],
+        encounterPriorityLovQueryResponse?.object,
+        EncounterReasonEnum,
+        encounterTypeOptions,
+        ageGroupOptions,
+        EncounterStatusEnum,
+        genderEnum
+      );
+    } catch (error: any) {
       dispatch(
         notify({
-          msg: 'Error while generating report',
+          msg: error?.data?.message || 'Error while generating report',
           sev: 'error'
         })
       );
@@ -156,16 +226,17 @@ const NurseStation = () => {
 
   return (
     <div className="container">
-      {/* LEFT SIDE */}
       <div className="left-box">
         <Panel>
-          {/* TOP BAR */}
           <div className="container-bt">
             <div className="left">
-              <BackButton onClick={handleGoBack} text="To Encounters list" />
+              <BackButton
+                onClick={handleGoBack}
+                text={pageSource === 'Urgent_Care_List' ? 'To Urgent Care list' : 'To Encounters list'}
+              />
               <MyButton
                 backgroundColor={'var(--primary-gray)'}
-                onClick={() => navigate(-1)}
+                 onClick={() => navigate(-1)}
                 prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
               />
 
@@ -200,23 +271,19 @@ const NurseStation = () => {
               >
                 Generate Report
               </MyButton>
-
-              {/* {propsData?.encounter?.editable && !propsData?.encounter?.discharge && ( */}
-                <MyButton
-                  disabled={edit}
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleCompleteEncounter}
-                  appearance="ghost"
-                >
-                  <Translate>Complete Visit</Translate>
-                </MyButton>
-              {/* )} */}
+              <MyButton
+                disabled={edit}
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                onClick={handleCompleteEncounter}
+                appearance="ghost"
+              >
+                <Translate>Complete Visit</Translate>
+              </MyButton>
             </div>
           </div>
 
           <Divider />
 
-          {/* DRAWER */}
           <Drawer
             open={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
@@ -244,9 +311,10 @@ const NurseStation = () => {
                   </Col>
                 </Row>
               </Form>
+
               <List hover className="drawer-list-style">
                 <List.Item
-                 className="drawer-item return-button"
+                  className="drawer-item return-button"
                   onClick={() => {
                     navigate('/nurse-station', { state: location.state });
                     setIsDrawerOpen(false);
@@ -261,15 +329,17 @@ const NurseStation = () => {
                   const fullPath = `/nurse-station/${clean}`;
 
                   return (
-                    <List.Item key={code}
+                    <List.Item
+                      key={code}
                       className="drawer-item"
                       onClick={() => {
                         setIsDrawerOpen(false);
                         navigate(fullPath, {
                           state: {
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit
+                            patient: propsData?.patient,
+                            encounter: propsData?.encounter,
+                            edit,
+                            fromPage: propsData?.fromPage
                           }
                         });
                       }}
@@ -277,9 +347,10 @@ const NurseStation = () => {
                       <Link
                         to={fullPath}
                         state={{
-                          patient: propsData.patient,
-                          encounter: propsData.encounter,
-                          edit
+                          patient: propsData?.patient,
+                          encounter: propsData?.encounter,
+                          edit,
+                          fromPage: propsData?.fromPage
                         }}
                         className="inherit-link"
                       >
@@ -295,7 +366,6 @@ const NurseStation = () => {
             </Drawer.Body>
           </Drawer>
 
-          {/* CONTENT */}
           <div className="content-with-sticky">
             <div className="main-content-area">
               <Outlet
@@ -311,7 +381,6 @@ const NurseStation = () => {
         </Panel>
       </div>
 
-      {/* RIGHT SIDE */}
       <div className="right-box">
         <PatientSide patient={propsData?.patient} encounter={propsData?.encounter} edit={edit} />
       </div>

@@ -28,10 +28,19 @@ const WaitingList = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const divContent = (
-           "Inpatient Waiting List"
+        "Inpatient Waiting List"
     );
+
+useEffect(() => {
     dispatch(setPageCode('Waiting_Patient_Encounters'));
     dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
     const [patientAdmissionModal, setPatientAdmissionModal] = useState(false);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
@@ -80,16 +89,20 @@ const WaitingList = () => {
                 dispatch(notify({ msg: 'Cancelled Successfully', sev: 'success' }));
                 setOpen(false);
             }
-        } catch (error) {
-            console.error("Encounter completion error:", error);
-            dispatch(notify({ msg: 'An error occurred while canceling the encounter', sev: 'error' }));
+        } catch (err: any) {
+            const errorMap: Record<string, string> = {
+                'error.cancel.notAllowed.rule': 'Cancellation is not allowed for the current encounter status.',
+                'error.cancel.notAllowed.hasObservation': 'Cannot cancel encounter with observations'
+            };
+
+            const backendMessage = err?.data?.message;
+            const msg = errorMap[backendMessage] || 'Error cancelling encounter';
+
+            dispatch(notify({ msg, sev: 'error' }));
         }
     };
     //useEffect
-    useEffect(() => {
-        dispatch(setPageCode(''));
-        dispatch(setDivContent(' '));
-    }, [location.pathname, dispatch, isLoading]);
+
     useEffect(() => {
         refetchEncounter();
     }, []);
@@ -236,10 +249,16 @@ const WaitingList = () => {
         });
     };
 
-    const filters =(<><AdvancedSearchFilters searchFilter={true}/></>)
+    const filters = (<><AdvancedSearchFilters searchFilter={true} /></>)
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
     return (
-        <Panel>
+        <Panel dir={dir}>
             <MyTable
                 height={600}
                 data={encounterListResponse?.object ?? []}

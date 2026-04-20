@@ -199,9 +199,14 @@ const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div>
+    <div dir={dir}>
             <div ref={tableRef}>
       <MyTable
         height={450}
@@ -234,7 +239,9 @@ const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
               <MyButton prefixIcon={() => <CloseOutline />}>
                 <Translate>Cancel</Translate>
               </MyButton>
-              <Checkbox>Show Cancelled</Checkbox>
+              <Checkbox>
+                <Translate>Show Cancelled</Translate>
+              </Checkbox>
             </div>
 
             <div className="bt-right-2">
@@ -251,7 +258,9 @@ const IVFluidOrder = ({ selectedOrder }: { selectedOrder: any }) => {
                 prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
                 width="100px"
               >
+                <Translate>
                 Submit
+                </Translate>
               </MyButton>
             </div>
           </div>

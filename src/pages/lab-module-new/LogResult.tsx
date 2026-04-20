@@ -70,8 +70,15 @@ const LogResult = ({ open, setOpen, result }: Props) => {
     }
   ];
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
+
+  <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -79,14 +86,17 @@ const LogResult = ({ open, setOpen, result }: Props) => {
       size="40vw"
       position='right'
       content={
+      <div dir={dir}>
         <MyTable
           height={400}
           loading={isFetching}
           data={logs ?? []}
           columns={columns}
         />
+      </div>
       }
     />
+  </div>
   );
 };
 

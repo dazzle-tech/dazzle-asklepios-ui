@@ -1,5 +1,5 @@
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaBedPulse } from 'react-icons/fa6';
 import { MdAttachFile, MdModeEdit } from 'react-icons/md';
@@ -47,13 +47,9 @@ const Referrals = (props: any) => {
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
-
-  const { data: proceduresDefinitions } = useGetAllProceduresQuery({
-    page: 0,
-    size: 10000,
-    sort: 'id,asc'
-  });
-
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+   const isNurse = jobRole === 'NURSE';
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -528,9 +524,16 @@ const Referrals = (props: any) => {
     }
   }, [openDetailsModal, procedure?.toFacilityId, getDepartmentsByFacility]);
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
-      <div ref={tableContainerRef}>
+    <div dir={dir}>
+      <div ref={tableContainerRef} >
         <MyTable
           columns={tableColumns}
           data={procedures}
@@ -575,7 +578,7 @@ const Referrals = (props: any) => {
               <div className="bt-left-2">
                 <MyButton
                   onClick={() => setOpenCancellationReasonModel(true)}
-                  disabled={edit ? true : procedure?.id ? procedure?.status === 'CANCELLED' : true}
+                  disabled={isNurse || (edit ? true : procedure?.id ? procedure?.status === 'CANCELLED' : true)}
                   prefixIcon={() => <BlockIcon />}
                 >
                   Cancel
@@ -587,11 +590,11 @@ const Referrals = (props: any) => {
                     if (!showCanceled) setEditing(true);
                   }}
                 >
-                  Show Cancelled
+                  <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>
               <div className="bt-right-2">
-                <MyButton disabled={edit} onClick={handelAddNew}>
+                <MyButton disabled={edit || isNurse} onClick={handelAddNew}>
                   Add Procedure
                 </MyButton>
               </div>
@@ -612,7 +615,7 @@ const Referrals = (props: any) => {
         title="Perform Details"
         actionButtonFunction={handleSave}
         size="full"
-        content={
+        content={<div dir={dir}>
           <Perform
             proRefetch={proRefetch}
             encounter={encounter}
@@ -620,7 +623,7 @@ const Referrals = (props: any) => {
             procedure={procedure}
             setProcedure={setProcedure}
             edit={edit}
-          />
+          /></div>
         }
       />
 
@@ -653,17 +656,17 @@ const Referrals = (props: any) => {
         title={`Attachments - ${procedure?.procedureName || 'Procedure'}`}
         size="lg"
         hideActionBtn={true}
-        content={
+        content={<div dir={dir}>
           <EncounterAttachment
             localEncounter={encounter}
             source="PROCEDURE_REQUEST_ATTACHMENT"
             sourceId={procedure?.id ? Number(procedure.id) : undefined}
             refetchAttachmentList={false}
             setRefetchAttachmentList={() => {}}
-          />
+          /> </div>
         }
       />
-    </>
+    </div>
   );
 };
 

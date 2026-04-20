@@ -102,8 +102,17 @@ const WarehouseItemsSetup = () => {
   const divContent = (
     "Warehouse Products"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Warehouse_Items_Setup'));
   dispatch(setDivContent(divContent));
+  
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && warehouse && warehouse.key === rowData.key) {
@@ -125,12 +134,6 @@ const WarehouseItemsSetup = () => {
     }
   }, [recordOfFilter]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   // handle click om edit  
   const handleEdit = () => {
@@ -288,8 +291,14 @@ const WarehouseItemsSetup = () => {
               Add New
             </MyButton>
           </div></>);
+
+                                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <Panel>
+    <Panel dir={dir}>
       <Row className='container-of-add-new-button'>
         <Col xs={24}>
           <MyTable

@@ -617,7 +617,7 @@ const ProcedureModule: React.FC = () => {
             object={record}
             setOpject={setRecord}
             fieldName="indication"
-            fieldLabel="Indication"
+            fieldLabel={<Translate>Indication</Translate>}
           />
         </div>
       </Form>
@@ -674,15 +674,23 @@ const ProcedureModule: React.FC = () => {
         <SearchPatientCriteria record={record} setRecord={setRecord} searchMarginTop={0}/>
 
         <Checkbox style={{marginTop:'1.2vw'}} checked={!showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-          Show Cancelled
+          <Translate>Show Cancelled</Translate>
         </Checkbox>
       </Form>
       <AdvancedSearchFilters searchFilter={true} content={contents} />
     </>
   );
 
+
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         filters={filters()}
         columns={tableColumns}
@@ -710,7 +718,7 @@ const ProcedureModule: React.FC = () => {
         title="Perform Details"
         hideActionBtn
         size="full"
-        content={
+        content={<div dir={dir}>
           <Perform
             proRefetch={proRefetch}
             encounter={encounter}
@@ -719,6 +727,7 @@ const ProcedureModule: React.FC = () => {
             setProcedure={setProcedure}
             edit={false}
           />
+          </div>
         }
       />
 
@@ -729,7 +738,7 @@ const ProcedureModule: React.FC = () => {
         size="90vw"
         content={
           patient && encounter ? (
-            <PatientEMRModal inModal patient={patient} encounter={encounter} />
+            <div dir={dir}><PatientEMRModal inModal patient={patient} encounter={encounter} /></div>
           ) : (
             <div style={{ padding: 16 }}>No patient selected.</div>
           )
@@ -738,7 +747,8 @@ const ProcedureModule: React.FC = () => {
         actionButtonFunction={() => setOpenEMRModal(false)}
         cancelButtonLabel="Cancel"
       />
-    </>
+
+    </div>
   );
 };
 

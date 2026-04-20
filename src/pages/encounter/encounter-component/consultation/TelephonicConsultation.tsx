@@ -9,6 +9,7 @@ import { MdModeEdit } from 'react-icons/md';
 import { Checkbox } from 'rsuite';
 import DetailsTele from './DetailsTele';
 import './styles.less';
+import Translate from '@/components/Translate';
 
 const TelephonicConsultation = () => {
   // Container that wraps ONLY the table; used to detect inside/outside clicks
@@ -177,7 +178,8 @@ const TelephonicConsultation = () => {
         <MyButton appearance="ghost" prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}>
           Print
         </MyButton>
-        <Checkbox>Show Cancelled</Checkbox>
+        <Checkbox><Translate>Show Cancelled</Translate>
+        </Checkbox>
       </div>
       <div className="bt-right">
         <MyButton onClick={() => setOpenDetailsModal(true)}>Add Consultation</MyButton>
@@ -226,7 +228,7 @@ const TelephonicConsultation = () => {
         setConsultationOrder={setConsultationOrder}
         open={openDetailsModal}
         setOpen={setOpenDetailsModal}
-        refetchCon={() => {}}
+        refetchCon={() => { }}
         editing={false}
         edit={false}
       />

@@ -411,7 +411,13 @@ console.log("department fetched by ID: ", referralDepartment);
     }));
   }, [allPrevEncounters]);
 
-  return (
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  return (<div dir={dir}>
     <Form fluid layout="inline" className="fields-container">
       <MyInput
         vr={validationResult}
@@ -512,7 +518,7 @@ console.log("department fetched by ID: ", referralDepartment);
         vr={validationResult}
         column
         fieldType="select"
-        fieldLabel="Reason"
+        fieldLabel="Service"
         fieldName="encounterReason"
         selectData={EncounterReasonEnum ?? []}
         selectDataLabel="label"
@@ -583,6 +589,15 @@ console.log("department fetched by ID: ", referralDepartment);
         disabled={isReadOnly}
         record={localEncounter}
       />
+       <MyInput
+        column
+        fieldType="textarea"
+        fieldLabel="Chief Complaint"
+        fieldName="chiefComplaint"
+        setRecord={setLocalEncounter}
+        disabled={isReadOnly}
+        record={localEncounter}
+      />
 
       <div className="encounter-info-wrapper">
         <div className="encounter-info-title">Encounter Information</div>
@@ -620,6 +635,7 @@ console.log("department fetched by ID: ", referralDepartment);
         </div>
       </div>
     </Form>
+  </div>
   );
 };
 

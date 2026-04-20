@@ -30,6 +30,7 @@ import ActiveIngrediantList from './ActiveIngredient';
 import Substitues from './Substitutes';
 import PlusIcon from '@rsuite/icons/Plus';
 import './styles.less';
+import Translate from '@/components/Translate';
 
 const DetailsModal = ({
   edit,
@@ -784,7 +785,7 @@ const DetailsModal = ({
 
                 <Row className="padding-16">
                   <SectionContainer
-                    title={<Text>Indication</Text>}
+                    title={<Text><Translate>Indication</Translate></Text>}
                     content={
                       <>
                         <Row>

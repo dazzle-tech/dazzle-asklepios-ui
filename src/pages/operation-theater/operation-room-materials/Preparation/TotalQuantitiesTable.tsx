@@ -1,6 +1,7 @@
 //Declares
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
 
 //Table Data
 const sampleData = [
@@ -76,13 +77,19 @@ const TotalQuantitiesTable = () => {
     return sortType === 'asc' ? (aVal > bVal ? 1 : -1) : aVal < bVal ? 1 : -1;
   });
 
-  const filters = (<><h5 className="total-quantities-table-header">Total Counts</h5>
+  const filters = (<><h5 className="total-quantities-table-header"><Translate>Total Counts</Translate></h5>
 
   </>);
 //Pagination
   const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+    
   return (
-    <div className="total-quantities-table-size">
+    <div className="total-quantities-table-size" dir={dir}>
       <MyTable
         data={paginatedData}
         columns={columns}

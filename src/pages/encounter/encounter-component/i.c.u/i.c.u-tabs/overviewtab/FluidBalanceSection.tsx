@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import MyModal from "@/components/MyModal/MyModal";
 import IntakeOutputBalanceConsultation from "@/pages/encounter/tele-consultation-screen/start-tele-consultation/in-take-out-put-balance-tele-consultation/IntakeOutputBalanceConsultation";
+import Translate from "@/components/Translate";
 
 const inVal = 2850;
 const outVal = 2100;
@@ -31,8 +32,9 @@ const FluidBalanceSection = () => {
               icon={faDroplet}
               className="title-icon-main-title"
             />
-
+            <Translate>
             Fluid Balance (24h)
+            </Translate>
           </span>
 
 

@@ -5,9 +5,9 @@ import { Form } from 'rsuite';
 import './styles.less';
 import { FaComment } from 'react-icons/fa';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useAppSelector } from '@/hooks';
-import { useLazyGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
+import { useLazyGetActiveAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 const AddEditReferralRequest = ({
@@ -24,7 +24,7 @@ const AddEditReferralRequest = ({
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const selectedDepartment = useAppSelector(state => state.auth?.selectedDepartment);
 
-  const { data: facilityResponse } = useGetAllFacilitiesQuery({});
+  const { data: facilityResponse } = useGetActiveFacilitiesQuery({});
 
   const facilityOptions =
     facilityResponse?.map(f => ({ label: f.name ?? '', value: f.id })) ?? [];
@@ -39,7 +39,7 @@ const AddEditReferralRequest = ({
   const [modalSession, setModalSession] = useState(0);
 
   const [triggerDepartments, { isFetching: isDeptLoading }] =
-    useLazyGetAppointableDepartmentsQuery();
+    useLazyGetActiveAppointableDepartmentsQuery();
 
   const prevToFacilityId = useRef(undefined);
 
@@ -262,18 +262,28 @@ const AddEditReferralRequest = ({
     </Form>
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={referral?.id ? 'Edit Referral Request' : 'New Referral Request'}
       position="right"
-      content={conjureFormContent}
+      content={    <div dir={dir}>
+        {conjureFormContent()}
+        </div>}
       actionButtonLabel={referral?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Referral Request Info', icon: <FaComment /> }]}
       size={width > 600 ? '36vw' : '70vw'}
     />
+    
   );
 };
 

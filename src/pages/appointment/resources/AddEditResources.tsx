@@ -15,6 +15,7 @@ type Resource = {
   id?: number;
   resourceType: string;
   resourceKey: string;
+  parallelCapacityValue?: number;
   isAllowParallel?: boolean;
   isActive?: boolean;
 };
@@ -48,6 +49,16 @@ const AddEditResources = ({
   const [resourceLabelField, setResourceLabelField] = useState<string>('id');
   const [isLoadingResources, setIsLoadingResources] = useState<boolean>(false);
   const prevResourceTypeRef = useRef<string>('');
+
+  useEffect(() => {
+    if (!open) return;
+    if (resource?.parallelCapacityValue != null && Number(resource.parallelCapacityValue) > 0) return;
+    setResource({
+      ...resource,
+      parallelCapacityValue: 1
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Set default resource type to CLINIC for new resources
   useEffect(() => {
@@ -292,9 +303,17 @@ useEffect(() => {
                       // The value passed is the selected ID (number)
                       // Convert it to string for storage in resourceKey
                       const selectedId = updated.resourceKey;
+                      const selectedResource = resourceOptions.find(
+                        (opt: any) => String(opt?.id) === String(selectedId)
+                      );
+                      const selectedParallelCapacity = Number(
+                        selectedResource?.parallelCapacityValue ?? 1
+                      );
                       setResource({
                         ...resource,
                         resourceKey: selectedId != null ? String(selectedId) : '',
+                        parallelCapacityValue:
+                          selectedId != null ? selectedParallelCapacity : Number(resource?.parallelCapacityValue ?? 1),
                       });
                     }}
                     menuMaxHeight={200}
@@ -313,6 +332,15 @@ useEffect(() => {
               fieldType="checkbox"
               record={resource}
               setRecord={setResource}
+            />
+            <MyInput
+              fieldLabel="Parallel Capacity Value"
+              fieldName="parallelCapacityValue"
+              fieldType="number"
+              record={resource}
+              setRecord={setResource}
+              min={1}
+              width={520}
             />
           </Form>
         );
@@ -336,6 +364,11 @@ useEffect(() => {
       handleAddNew(resourceName);
     }
   };
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -343,7 +376,11 @@ useEffect(() => {
       setOpen={setOpen}
       title={resource?.id ? 'Edit Resource' : 'New Resource'}
       position="right"
-      content={conjureFormContent}
+      content={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContent(stepNumber)}
+        </div>
+      )}
       actionButtonLabel={resource?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Resource Info', icon: <GrScheduleNew /> }]}

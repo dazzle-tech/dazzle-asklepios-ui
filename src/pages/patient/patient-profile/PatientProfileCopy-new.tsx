@@ -49,9 +49,18 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
       ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
       : '';
 
+  const dobError = fieldErrors.find((e: any) => e.field === 'dateOfBirth');
+  if (dobError) {
+    return dobError.message;
+  }
   /* =============== 1) Bean Validation Errors =============== */
 
   if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+    const dobError = fieldErrors.find((e: any) => e.field === 'dateOfBirth');
+    if (dobError) {
+      return 'Date of birth cannot be before 01-01-1900.';
+    }
+
     const lines = fieldErrors.map((e: any) => {
       const label = fieldLabels[e.field] || e.field;
       return `• ${label}: ${e.message}`;
@@ -82,6 +91,35 @@ const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {})
 };
 
 /* ========================================================= */
+/* ── Name-field trailing-character validation ──────────── */
+/* ========================================================= */
+
+const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'thirdName', label: 'Third Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'firstNameSecondaryLang', label: 'First Name (Sec. Lang)' },
+  { key: 'secondNameSecondaryLang', label: 'Second Name (Sec. Lang)' },
+  { key: 'thirdNameSecondaryLang', label: 'Third Name (Sec. Lang)' },
+  { key: 'lastNameSecondaryLang', label: 'Last Name (Sec. Lang)' }
+];
+
+// Rejects values that end with one or more spaces, hyphens, or hash signs
+const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
+
+const validatePatientNameFields = (patient: Patient): string | null => {
+  for (const { key, label } of NAME_FIELDS) {
+    const value = String((patient as any)[key] ?? '');
+    if (!value) continue;
+    if (INVALID_TRAILING_CHARS.test(value)) {
+      return `${label} must not end with a space, hyphen (-), or hash (#).`;
+    }
+  }
+  return null;
+};
+
+/* ========================================================= */
 /* ======================= Component ======================== */
 /* ========================================================= */
 
@@ -92,7 +130,7 @@ const PatientProfile = () => {
   const [windowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
   const [openReferralRequestModal, setOpenReferralRequestModal] = useState(false);
-
+const [eligibilityChecked, setEligibilityChecked] = useState(false);
   const [checkDuplication] = useGetDuplicationCandidatesMutation();
 
   const [localPatient, setLocalPatient] = useState<Patient>({ ...newPatient });
@@ -121,7 +159,6 @@ const PatientProfile = () => {
 
   const [patientList, setPatientList] = useState([]);
 
-  // ✅ NEW: trigger to force PatientVisitHistoryTable to refetch
   const [encounterRefetchTrigger, setEncounterRefetchTrigger] = useState(0);
 
   const divContent = 'Patient Registration';
@@ -142,12 +179,29 @@ const PatientProfile = () => {
   /* ========================================================= */
 
   const handleSave = async () => {
+    // ── Validate name fields for trailing spaces / hyphens / hashes ──
+    const nameError = validatePatientNameFields(localPatient);
+    if (nameError) {
+      dispatch(notify({ msg: nameError, sev: 'warning' }));
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────
+
     try {
-      // UPDATE flow (keep same logic + success messaging)
+      // ✅ Mandatory Eligibility Check
+
+
+      // =========================
+      // UPDATE FLOW
+      // =========================
       if (localPatient?.id) {
         const updated = await updatePatient({
           id: localPatient.id,
-          data: { ...localPatient, isCompletedPatient: true, isUnknown: false }
+          data: {
+            ...localPatient,
+            isCompletedPatient: true,
+            isUnknown: false
+          }
         }).unwrap();
 
         setLocalPatient(updated);
@@ -155,17 +209,25 @@ const PatientProfile = () => {
         setValidationResult(undefined);
         setRefetchData(true);
 
-        dispatch(notify({ msg: 'Patient Updated Successfully', sev: 'success' }));
+        dispatch(
+          notify({
+            msg: 'Patient Updated Successfully',
+            sev: 'success'
+          })
+        );
 
         if (searchRef.current) {
           setTimeout(() => {
             searchRef.current?.();
           }, 500);
         }
+
         return;
       }
 
-      // CREATE flow: duplication check
+      // =========================
+      // CREATE FLOW - DUPLICATION CHECK
+      // =========================
       const duplicationResponse = await checkDuplication({
         dto: {
           ruleId: selectedFacility?.ruleId,
@@ -188,7 +250,9 @@ const PatientProfile = () => {
         return;
       }
 
-      // CREATE flow: save
+      // =========================
+      // CREATE FLOW - SAVE
+      // =========================
       const saved = await addPatient({
         ...localPatient,
         isCompletedPatient: true,
@@ -200,7 +264,12 @@ const PatientProfile = () => {
       setValidationResult(undefined);
       setRefetchData(true);
 
-      dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+      dispatch(
+        notify({
+          msg: 'Patient Saved Successfully',
+          sev: 'success'
+        })
+      );
 
       if (searchRef.current) {
         setTimeout(() => {
@@ -217,7 +286,7 @@ const PatientProfile = () => {
         nationality: 'Nationality'
       });
 
-      dispatch(notify({ msg, sev: 'error' }));
+      dispatch(notify({ msg, sev: 'warning' }));
     }
   };
 
@@ -243,9 +312,9 @@ const PatientProfile = () => {
 
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
+      dispatch(setDivContent(''));
     };
-  }, [location.pathname, dispatch]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (propsData && propsData.patient) {
@@ -287,17 +356,14 @@ const PatientProfile = () => {
       dispatch(setPatient(fullPatient));
       setOpenPatientsDuplicateModal(false);
     } catch (err) {
-      dispatch(notify({ msg: 'Failed to load patient', sev: 'error' }));
+      dispatch(notify({ msg: 'Failed to load patient', sev: 'warning' }));
     }
   };
 
-  // ✅ NEW: callback passed to PatientQuickAppointment so the table refetches after save
   const handleEncounterSaved = () => {
     setEncounterRefetchTrigger(prev => prev + 1);
   };
 
-  // ✅ NEW: when the modal closes (from ProfileHeader's quick appointment),
-  //         also bump the trigger so the table always stays fresh
   const handleQuickAppointmentClose = (val: boolean) => {
     setQuickAppointmentModel(val);
     if (!val) setEncounterRefetchTrigger(prev => prev + 1);
@@ -307,8 +373,13 @@ const PatientProfile = () => {
   /* ========================= RENDER ========================= */
   /* ========================================================= */
 
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <div className="patient-profile-container">
         <Panel
           bordered
@@ -329,6 +400,8 @@ const PatientProfile = () => {
             setOpenRegistrationWarningsSummary={setOpenRegistrationWarningsSummary}
             setOpenBulkRegistrationModal={setOpenBulkRegistrationModal}
             setOpenReferralRequestModal={setOpenReferralRequestModal}
+            eligibilityChecked={eligibilityChecked}
+            setEligibilityChecked={setEligibilityChecked}
           />
 
           <div className="container-of-tabs-reg">
@@ -349,10 +422,7 @@ const PatientProfile = () => {
               <SectionContainer
                 title={<Translate>Visit history</Translate>}
                 content={
-                  // ✅ pass encounterRefetchTrigger so the table knows when to refetch
                   <PatientVisitHistoryTable
-                    quickAppointmentModel={quickAppointmentModel}
-                    setQuickAppointmentModel={setQuickAppointmentModel}
                     localPatient={localPatient}
                     encounterRefetchTrigger={encounterRefetchTrigger}
                   />
@@ -383,10 +453,8 @@ const PatientProfile = () => {
         <PatientQuickAppointment
           quickAppointmentModel={quickAppointmentModel}
           localPatient={localPatient}
-          // ✅ use the wrapper so closing also triggers a refetch
           setQuickAppointmentModel={handleQuickAppointmentClose}
           localVisit={localVisit}
-          // ✅ also trigger immediately when encounter is saved (before modal closes)
           onEncounterSaved={handleEncounterSaved}
         />
       )}
@@ -445,7 +513,7 @@ const PatientProfile = () => {
             })
         }
       />
-    </>
+    </div>
   );
 };
 

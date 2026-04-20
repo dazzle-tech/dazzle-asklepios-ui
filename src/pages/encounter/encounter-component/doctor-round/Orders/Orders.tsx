@@ -9,8 +9,15 @@ import IVFluidOrder from '../../iv-fluid-order';
 import OperationRequest from '../../operation-request/OperationRequest';
 import Referrals from '../../procedure';
 const Orders = ({ encounter, patient, edit }) => {
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <Row>
         <Col md={24}>
           <SectionContainer
@@ -61,7 +68,7 @@ const Orders = ({ encounter, patient, edit }) => {
           />
         </Col>
       </Row>
-    </>
+    </div>
   );
 };
 export default Orders;

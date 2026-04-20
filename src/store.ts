@@ -112,7 +112,7 @@ import { vaccineDosesIntervalService } from './services/vaccine/vaccineDosesInte
 import { MedicationCategoriesService } from '@/services/setup/medication-categories/MedicationCategoriesService';
 import { MedicationCategoriesClassService } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
 
-import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService ';
+import { BrandMedicationService } from './services/setup/brandmedication/BrandMedicationService';
 import { BrandMedicationSubstituteService } from '@/services/setup/brandmedication/BrandMedicationSubstituteService';
 import { BrandMedicationActiveIngredientService } from '@/services/setup/brandmedication/BrandMedicationActiveIngredientService';
 
@@ -200,8 +200,27 @@ import { patientPrescriptionMedicationService } from './services/patients/Prescr
 import { patientServicesAndProductsService } from './services/encounters/patientServicesAndProductsService';
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
-import {patientAdministrativeWarningsService} from './services/patient/patientAdministrativeWarningsService';
-import {radiologyReportService} from './services/reports/radiologyReportService';
+import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
+import { radiologyReportService } from './services/reports/radiologyReportService';
+import { observationServiceNew } from './services/observationServiceNew';
+import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
+import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
+import { availabilityTemplateService } from './services/appointment/availabilityTemplateService';
+import { availabilityGenerationBatchService } from './services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService';
+import { availabilityTemplateIntervalService } from './services/appointment/availabilityTemplate/availabilityTemplateInterval';
+import { availabilityTemplateIntervalBreakService } from './services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak';
+import { appointmentFromTemplateService } from './services/appointment/appointmentService';
+import { departmentServicesService } from './services/departmentServicesService';
+import { patientBillingInvoiceService } from './services/patient/patientBillingInvoiceService';
+import { patientBillingInvoiceItemService } from './services/patient/patientBillingInvoiceItemService';
+import { appointmentRequestService } from '@/services/appointment/appointmentRequestService';
+import { roomService } from './services/setup/room/roomService';
+import { bedService } from './services/setup/room/bedService';
+import { bedRoomService } from './services/setup/room/bedRoomService';
+import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
+import { currentMedicationService } from './services/patients/currentMedicationService';
+import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -230,6 +249,8 @@ export const store = configureStore({
 
     // setup
     [setupService.reducerPath]: setupService.reducer,
+
+    [PolicyDefinitionService.reducerPath]: PolicyDefinitionService.reducer,
 
     // inventory
     [inventoryService.reducerPath]: inventoryService.reducer,
@@ -301,6 +322,7 @@ export const store = configureStore({
     [roleService.reducerPath]: roleService.reducer,
     [userRoleService.reducerPath]: userRoleService.reducer,
     [organizationDefinitionService.reducerPath]: organizationDefinitionService.reducer,
+    [organizationHolidaysService.reducerPath]: organizationHolidaysService.reducer,
 
     [enumService.reducerPath]: enumService.reducer,
     [userDepartmentService.reducerPath]: userDepartmentService.reducer,
@@ -308,6 +330,8 @@ export const store = configureStore({
 
     // medical sheets
     [MedicalsheetsService.reducerPath]: MedicalsheetsService.reducer,
+
+    [departmentServicesService.reducerPath]: departmentServicesService.reducer,
 
     // services / language / translation
     [serviceService.reducerPath]: serviceService.reducer,
@@ -400,6 +424,11 @@ export const store = configureStore({
     [PriceListService.reducerPath]: PriceListService.reducer,
     [PriceListItemService.reducerPath]: PriceListItemService.reducer,
 
+    // patient billing (new endpoints)
+    [patientBillingInvoiceService.reducerPath]: patientBillingInvoiceService.reducer,
+    [patientBillingInvoiceItemService.reducerPath]: patientBillingInvoiceItemService.reducer,
+    [appointmentRequestService.reducerPath]: appointmentRequestService.reducer,
+
     // Templates
     // report templates
     [ReportTemplateService.reducerPath]: ReportTemplateService.reducer,
@@ -429,6 +458,12 @@ export const store = configureStore({
 
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
+
+    [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
+    [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
+    [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
+    [availabilityTemplateIntervalBreakService.reducerPath]: availabilityTemplateIntervalBreakService.reducer,
+    [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
     // AI Services
@@ -486,246 +521,336 @@ export const store = configureStore({
     [additionalMeasurementsService.reducerPath]: additionalMeasurementsService.reducer,
     [ReviewOfSystemService.reducerPath]: ReviewOfSystemService.reducer,
     [patientPrescriptionService.reducerPath]: patientPrescriptionService.reducer,
-    [patientPrescriptionMedicationService.reducerPath]: patientPrescriptionMedicationService.reducer,
+    [patientPrescriptionMedicationService.reducerPath]:
+      patientPrescriptionMedicationService.reducer,
     [patientServicesAndProductsService.reducerPath]: patientServicesAndProductsService.reducer,
     [NextOfKinService.reducerPath]: NextOfKinService.reducer,
     [RelationsMatrixService.reducerPath]: RelationsMatrixService.reducer,
-    [patientAdministrativeWarningsService.reducerPath]: patientAdministrativeWarningsService.reducer,
-    [radiologyReportService.reducerPath]: radiologyReportService.reducer,
+    [patientAdministrativeWarningsService.reducerPath]:
+      patientAdministrativeWarningsService.reducer,
+    [observationServiceNew.reducerPath]: observationServiceNew.reducer,
+
+    // setup - room and bed management
+    [roomService.reducerPath]: roomService.reducer,
+    [bedService.reducerPath]: bedService.reducer,
+    [bedRoomService.reducerPath]: bedRoomService.reducer,
+    [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
+    [currentMedicationService.reducerPath]: currentMedicationService.reducer,
+    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer
+
   },
 
   middleware: getDefaultMiddleware =>
-  (getDefaultMiddleware().concat(...[
-    // ai
-    idParsingService.middleware,
-    summarizationService.middleware,
+    getDefaultMiddleware().concat(
+      ...[
+        // ai
+        idParsingService.middleware,
+        summarizationService.middleware,
 
-    // ui
-    uiService.middleware,
+        // ui
+        uiService.middleware,
 
-    // auth / account
-    authService.middleware,
-    authServiceApi.middleware,
-    accountApi.middleware,
+        // auth / account
+        authService.middleware,
+        authServiceApi.middleware,
+        accountApi.middleware,
 
-    // patient
-    patientService.middleware,
-    newPatientService.middleware,
-    addressService.middleware,
-    hipaaService.middleware,
-    patientPreferredHealthProfessionalService.middleware,
-    patientDocumentsService.middleware,
+        // patient
+        patientService.middleware,
+        newPatientService.middleware,
+        addressService.middleware,
+        hipaaService.middleware,
+        patientPreferredHealthProfessionalService.middleware,
+        patientDocumentsService.middleware,
 
-    // inventory
-    inventoryService.middleware,
-    inventoryProductsService.middleware,
+        // inventory
+        inventoryService.middleware,
+        inventoryProductsService.middleware,
 
-    // setup
-    setupService.middleware,
+        // setup
+        setupService.middleware,
 
-    // medication / active ingredients
-    medicationsSetupService.middleware,
-    activeIngredientSynonymsService.middleware,
-    activeIngredientAdverseEffectService.middleware,
-    activeIngredientIndicationService.middleware,
-    activeIngredientSpecialPopulationService.middleware,
-    activeIngredientContraindicationService.middleware,
-    activeIngredientPreRequestedTestService.middleware,
-    activeIngredientDrugInteractionService.middleware,
-    activeIngredientFoodInteractionService.middleware,
-    activeIngredientsService.middleware,
+        // medication / active ingredients
+        medicationsSetupService.middleware,
+        activeIngredientSynonymsService.middleware,
+        activeIngredientAdverseEffectService.middleware,
+        activeIngredientIndicationService.middleware,
+        activeIngredientSpecialPopulationService.middleware,
+        activeIngredientContraindicationService.middleware,
+        activeIngredientPreRequestedTestService.middleware,
+        activeIngredientDrugInteractionService.middleware,
+        activeIngredientFoodInteractionService.middleware,
+        activeIngredientsService.middleware,
 
-    // appointment / clinical
-    appointmentService.middleware,
-    dvmService.middleware,
-    encounterService.middleware,
-    dentalService.middleware,
-    observationService.middleware,
+        // appointment / clinical
+        appointmentService.middleware,
+        dvmService.middleware,
+        encounterService.middleware,
+        dentalService.middleware,
+        observationService.middleware,
 
-    // attachments
-    attachmentService.middleware,
-    patientAttachmentService.middleware,
-    encounterAttachmentsService.middleware,
-    inventoryTransferAttachmentService.middleware,
-    inventoryTransactionAttachmentService.middleware,
+        // attachments
+        attachmentService.middleware,
+        patientAttachmentService.middleware,
+        encounterAttachmentsService.middleware,
+        inventoryTransferAttachmentService.middleware,
+        inventoryTransactionAttachmentService.middleware,
 
-    // lab / rad / procedure / operation
-    labService.middleware,
-    radService.middleware,
-    procedureService.middleware,
-    operationService.middleware,
+        // lab / rad / procedure / operation
+        labService.middleware,
+        radService.middleware,
+        procedureService.middleware,
+        operationService.middleware,
 
-    // recovery / user
-    recoveryService.middleware,
-    userService.middleware,
-    potintialService.middleware,
+        // recovery / user
+        recoveryService.middleware,
+        userService.middleware,
+        potintialService.middleware,
 
-    // enums / security
-    enumsApi.middleware,
-    facilityService.middleware,
-    departmentService.middleware,
-    organizationDefinitionService.middleware,
-    roleService.middleware,
-    userRoleService.middleware,
-    enumService.middleware,
-    userDepartmentService.middleware,
+        // enums / security
+        enumsApi.middleware,
+        facilityService.middleware,
+        departmentService.middleware,
+        organizationDefinitionService.middleware,
+        roleService.middleware,
+        userRoleService.middleware,
+        enumService.middleware,
+        userDepartmentService.middleware,
 
-    // medical sheets
-    MedicalsheetsService.middleware,
-    vitalSignsService.middleware,
+        // medical sheets
+        MedicalsheetsService.middleware,
+        vitalSignsService.middleware,
 
-    // services / language / translation
-    serviceService.middleware,
-    MedicationCategoriesService.middleware,
-    MedicationCategoriesClassService.middleware,
-    languageService.middleware,
-    translationService.middleware,
+        // services / language / translation
+        serviceService.middleware,
+        MedicationCategoriesService.middleware,
+        MedicationCategoriesClassService.middleware,
+        languageService.middleware,
+        translationService.middleware,
 
-    // practitioner
-    formTemplateService.middleware,
-    FormEntriesService.middleware,
-    PractitionerService.middleware,
-    PractitionerDepartmentService.middleware,
+        // practitioner
+        formTemplateService.middleware,
+        FormEntriesService.middleware,
+        PractitionerService.middleware,
+        PractitionerDepartmentService.middleware,
 
-    // misc setup
-    ResourceService.middleware,
-    ageGroupService.middleware,
-    Icd10Service.middleware,
-    allergensService.middleware,
+        // misc setup
+        ResourceService.middleware,
+        ageGroupService.middleware,
+        Icd10Service.middleware,
+        allergensService.middleware,
 
-    // diagnostic tests
-    diagnosticTestService.middleware,
-    cdtCodeService.middleware,
-    loincCodeService.middleware,
-    cptCodeService.middleware,
-    laboratoryService.middleware,
-    diagnosticTestProfileService.middleware,
-    diagnosticTestPathologyService.middleware,
-    radiologyService.middleware,
-    diagnosticTestNormalRangeService.middleware,
-    diagnosticTestCodingService.middleware,
+        // diagnostic tests
+        diagnosticTestService.middleware,
+        cdtCodeService.middleware,
+        loincCodeService.middleware,
+        cptCodeService.middleware,
+        laboratoryService.middleware,
+        diagnosticTestProfileService.middleware,
+        diagnosticTestPathologyService.middleware,
+        radiologyService.middleware,
+        diagnosticTestNormalRangeService.middleware,
+        diagnosticTestCodingService.middleware,
 
-    // dental actions
-    dentalActionService.middleware,
-    CdtDentalActionService.middleware,
+        // dental actions
+        dentalActionService.middleware,
+        CdtDentalActionService.middleware,
 
-    // vaccines
-    vaccineService.middleware,
-    vaccineBrandsService.middleware,
-    vaccineDosesService.middleware,
-    vaccineDosesIntervalService.middleware,
+        // vaccines
+        vaccineService.middleware,
+        vaccineBrandsService.middleware,
+        vaccineDosesService.middleware,
+        vaccineDosesIntervalService.middleware,
 
-    // brand medications
-    BrandMedicationService.middleware,
-    BrandMedicationSubstituteService.middleware,
-    BrandMedicationActiveIngredientService.middleware,
+        // brand medications
+        BrandMedicationService.middleware,
+        BrandMedicationSubstituteService.middleware,
+        BrandMedicationActiveIngredientService.middleware,
 
-    // prescription instruction
-    prescriptionInstructionService.middleware,
+        // prescription instruction
+        prescriptionInstructionService.middleware,
 
-    // uom
-    uomGroupService.middleware,
+        // uom
+        uomGroupService.middleware,
 
-    // geo
-    countryService.middleware,
-    countryDistrictService.middleware,
-    districtCommunityService.middleware,
-    communityAreaService.middleware,
+        // geo
+        countryService.middleware,
+        countryDistrictService.middleware,
+        districtCommunityService.middleware,
+        communityAreaService.middleware,
 
-    // discharge
-    dischargePService.middleware,
-    DischargePlanningService.middleware,
+        // discharge
+        dischargePService.middleware,
+        DischargePlanningService.middleware,
 
-    // reporting
-    resultReportApi.middleware,
-    invoiceReportApi.middleware,
+        // reporting
+        resultReportApi.middleware,
+        invoiceReportApi.middleware,
 
-    // visit duration
-    visitDurationService.middleware,
+        // visit duration
+        visitDurationService.middleware,
 
-    // catalog
-    catalogService.middleware,
-    catalogDiagnosticTestService.middleware,
+        // catalog
+        catalogService.middleware,
+        catalogDiagnosticTestService.middleware,
 
-    // billing / price list
-    BillingService.middleware,
-    PriceListService.middleware,
-    PriceListItemService.middleware,
+        // billing / price list
+        BillingService.middleware,
+        PriceListService.middleware,
+        PriceListItemService.middleware,
+        patientBillingInvoiceService.middleware,
+        patientBillingInvoiceItemService.middleware,
+        appointmentRequestService.middleware,
 
-    // report templates
-    ReportTemplateService.middleware,
-    DiagnosticTestTemplateService.middleware,
+        // report templates
+        ReportTemplateService.middleware,
+        DiagnosticTestTemplateService.middleware,
 
-    // sticky notes
-    userStickyNotesService.middleware,
+        // sticky notes
+        userStickyNotesService.middleware,
 
-    // referral
-    referralRequestService.middleware,
+        // referral
+        referralRequestService.middleware,
 
-    // payer
-    PayorService.middleware,
-    PayorPlanService.middleware,
+        // payer
+        PayorService.middleware,
+        PayorPlanService.middleware,
 
-    PatientRelationService.middleware,
-    patientInsurancesService.middleware,
-    patientInsuranceCoveragesService.middleware,
-    encounterVaccinationService.middleware,
-    patientEncounterService.middleware,
-    patientPaymentsService.middleware,
-    priceListAttributesService.middleware,
-    prescriptionPService.middleware,
-    radiologyReportApi.middleware,
-    clinicalSummaryService.middleware,
-    clinicalRecommendationsService.middleware,
-    medicationTestOrdersValidationService.middleware,
-    patientProblemService.middleware,
-    familyHistoryService.middleware,
-    hospitalizationService.middleware,
-    surgicalHistoryService.middleware,
-    socialHistoryService.middleware,
-    favoriteDiagnosticTestService.middleware,
-    diagnosticOrderTestService.middleware,
-    diagnosticOrderService.middleware,
-    diagnosticOrderTestCollectedSampleService.middleware,
-    diagnosticOrderTestTechnicianNoteService.middleware,
-    diagnosticTestRequestService.middleware,
-    externalTestService.middleware,
-    diagnosticOrderTestResultService.middleware,
-    diagnosticOrderTestResultTechnicianNoteService.middleware,
-    diagnosticOrderTestReportService.middleware,
-    diagnosticOrderTestReportCommentsService.middleware,
-    patientDiagnosticResultHistoryService.middleware,
-    patientReportService.middleware,
-    progressNoteService.middleware,
-    patientProcedureService.middleware,
-    consultationService.middleware,
-    portalService.middleware,
-    telephonicConsultationService.middleware,
-    ICDTreeService.middleware,
-    //er-triage
-    generalAssessmentService.middleware,
-    chiefComplainService.middleware,
-    emergencyTriageService.middleware,
-    encounterAssessmentService.middleware,
-    encounterPlanService.middleware,
-    patientDiagnosisService.middleware,
-    vitalSignsService.middleware,
-    bodyMeasurementsService.middleware,
-    patientObservationsComplaintsService.middleware,
-    painAssessmentService.middleware,
-    additionalMeasurementsService.middleware,
-    patientAllergiesService.middleware,
-    patientWarningsService.middleware,
-    procedureSetupService.middleware,
-    ReviewOfSystemService.middleware,
-    patientPrescriptionService.middleware,
-    patientPrescriptionMedicationService.middleware,
-    patientServicesAndProductsService.middleware,
-    NextOfKinService.middleware,
-    RelationsMatrixService.middleware,
-    patientAdministrativeWarningsService.middleware,
-    radiologyReportService.middleware,
-  ]) as any)
+
+        PatientRelationService.middleware,
+        patientInsurancesService.middleware,
+        patientInsuranceCoveragesService.middleware,
+        encounterVaccinationService.middleware,
+        patientEncounterService.middleware,
+        patientPaymentsService.middleware,
+        priceListAttributesService.middleware,
+        prescriptionPService.middleware,
+        radiologyReportApi.middleware,
+        clinicalSummaryService.middleware,
+        clinicalRecommendationsService.middleware,
+        medicationTestOrdersValidationService.middleware,
+        patientProblemService.middleware,
+        familyHistoryService.middleware,
+        hospitalizationService.middleware,
+        surgicalHistoryService.middleware,
+        socialHistoryService.middleware,
+        favoriteDiagnosticTestService.middleware,
+        diagnosticOrderTestService.middleware,
+        diagnosticOrderService.middleware,
+        diagnosticOrderTestCollectedSampleService.middleware,
+        diagnosticOrderTestTechnicianNoteService.middleware,
+        diagnosticTestRequestService.middleware,
+        externalTestService.middleware,
+        diagnosticOrderTestResultService.middleware,
+        diagnosticOrderTestResultTechnicianNoteService.middleware,
+        diagnosticOrderTestReportService.middleware,
+        diagnosticOrderTestReportCommentsService.middleware,
+        patientDiagnosticResultHistoryService.middleware,
+        patientReportService.middleware,
+        progressNoteService.middleware,
+        patientProcedureService.middleware,
+        consultationService.middleware,
+        portalService.middleware,
+        telephonicConsultationService.middleware,
+        ICDTreeService.middleware,
+        //er-triage
+        generalAssessmentService.middleware,
+        chiefComplainService.middleware,
+        emergencyTriageService.middleware,
+        encounterAssessmentService.middleware,
+        encounterPlanService.middleware,
+        patientDiagnosisService.middleware,
+        vitalSignsService.middleware,
+        bodyMeasurementsService.middleware,
+        patientObservationsComplaintsService.middleware,
+        painAssessmentService.middleware,
+        additionalMeasurementsService.middleware,
+        patientAllergiesService.middleware,
+        patientWarningsService.middleware,
+        procedureSetupService.middleware,
+        ReviewOfSystemService.middleware,
+        patientPrescriptionService.middleware,
+        patientPrescriptionMedicationService.middleware,
+        patientServicesAndProductsService.middleware,
+        NextOfKinService.middleware,
+        RelationsMatrixService.middleware,
+        patientAdministrativeWarningsService.middleware,
+        radiologyReportService.middleware,
+        PatientRelationService.middleware,
+        patientInsurancesService.middleware,
+        patientInsuranceCoveragesService.middleware,
+        encounterVaccinationService.middleware,
+        patientEncounterService.middleware,
+        patientPaymentsService.middleware,
+        priceListAttributesService.middleware,
+        prescriptionPService.middleware,
+        radiologyReportApi.middleware,
+        clinicalSummaryService.middleware,
+        clinicalRecommendationsService.middleware,
+        medicationTestOrdersValidationService.middleware,
+        patientProblemService.middleware,
+        familyHistoryService.middleware,
+        hospitalizationService.middleware,
+        surgicalHistoryService.middleware,
+        socialHistoryService.middleware,
+        favoriteDiagnosticTestService.middleware,
+        diagnosticOrderTestService.middleware,
+        diagnosticOrderService.middleware,
+        diagnosticOrderTestCollectedSampleService.middleware,
+        diagnosticOrderTestTechnicianNoteService.middleware,
+        diagnosticTestRequestService.middleware,
+        externalTestService.middleware,
+        diagnosticOrderTestResultService.middleware,
+        diagnosticOrderTestResultTechnicianNoteService.middleware,
+        diagnosticOrderTestReportService.middleware,
+        diagnosticOrderTestReportCommentsService.middleware,
+        patientDiagnosticResultHistoryService.middleware,
+        patientReportService.middleware,
+        progressNoteService.middleware,
+        patientProcedureService.middleware,
+        consultationService.middleware,
+        portalService.middleware,
+        telephonicConsultationService.middleware,
+        ICDTreeService.middleware,
+        //er-triage
+        generalAssessmentService.middleware,
+        chiefComplainService.middleware,
+        emergencyTriageService.middleware,
+        encounterAssessmentService.middleware,
+        encounterPlanService.middleware,
+        patientDiagnosisService.middleware,
+        vitalSignsService.middleware,
+        bodyMeasurementsService.middleware,
+        patientObservationsComplaintsService.middleware,
+        painAssessmentService.middleware,
+        additionalMeasurementsService.middleware,
+        patientAllergiesService.middleware,
+        patientWarningsService.middleware,
+        procedureSetupService.middleware,
+        ReviewOfSystemService.middleware,
+        patientPrescriptionService.middleware,
+        patientPrescriptionMedicationService.middleware,
+        patientServicesAndProductsService.middleware,
+        NextOfKinService.middleware,
+        RelationsMatrixService.middleware,
+        patientAdministrativeWarningsService.middleware,
+        observationServiceNew.middleware,
+        organizationHolidaysService.middleware,
+        PolicyDefinitionService.middleware,
+        availabilityTemplateService.middleware,
+        availabilityGenerationBatchService.middleware,
+        availabilityTemplateIntervalService.middleware,
+        availabilityTemplateIntervalBreakService.middleware,
+        appointmentFromTemplateService.middleware,
+        departmentServicesService.middleware,
+        roomService.middleware,
+        bedService.middleware,
+        bedRoomService.middleware,
+        encounterAssignToBedService.middleware,
+        currentMedicationService.middleware,
+        uccMedicationOrderService.middleware
+      ]
+    ) as any
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

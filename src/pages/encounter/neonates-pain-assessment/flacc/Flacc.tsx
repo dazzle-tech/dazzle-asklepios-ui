@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBan, faPlus } from '@fortawesome/free-solid-svg-icons';
 import NewFlacc from './NewFlacc';
 import '../style.less';
+import Translate from '@/components/Translate/Translate';
 
 const Flacc = () => {
   const [flaccData, setFlaccData] = useState<any[]>([]);
@@ -48,24 +49,32 @@ const Flacc = () => {
             setShowCanceled(!showCanceled);
           }}
         >
-          Show Cancelled
+          <Translate>Show Cancelled</Translate>
         </Checkbox>
       </div>
 
       <div className="bt-right">
         <MyButton onClick={() => setOpenFlaccModal(true)}>
-          <FontAwesomeIcon icon={faBan} /> Cancel
+          <FontAwesomeIcon icon={faBan} /> <Translate>Cancel</Translate>
         </MyButton>
         <MyButton onClick={() => setOpenFlaccModal(true)}>
           <FontAwesomeIcon icon={faPlus} />
-          Add
+          <Translate>Add</Translate>
         </MyButton>
       </div>
     </>
   );
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyTable
         data={showCanceled ? flaccData : flaccData.filter(r => !r.cancelledBy)}
         columns={flaccColumns}
@@ -80,7 +89,7 @@ const Flacc = () => {
         edit={false}
         refetch={null}
       />
-    </>
+    </div>
   );
 };
 

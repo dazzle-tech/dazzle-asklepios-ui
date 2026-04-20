@@ -63,8 +63,17 @@ const InpatientList = () => {
   const divContent = (
       "Inpatient Visit List"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('In_Patient_Encounters'));
   dispatch(setDivContent(divContent));
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
   const [open, setOpen] = useState(false);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
@@ -356,32 +365,37 @@ const InpatientList = () => {
       <div className="companion-wrist-icons-position-handles">
         <MyButton onClick={() => setOpenRefillModal(true)}>
           <FontAwesomeIcon icon={faBoxOpen} />
+        <Translate>
           Refill Stock
+        </Translate>
         </MyButton>
         <MyButton onClick={() => setOpenPhysicianOrderSummaryModal(true)}>
           {' '}
           <FontAwesomeIcon icon={faListCheck} />
+        <Translate>
           Task Management
+        </Translate>
         </MyButton>
 
         <MyButton onClick={() => setOpenEncounterLogsModal(true)}>
           <FontAwesomeIcon icon={faFile} />
+        <Translate>
           Encounter Logs
+        </Translate>
         </MyButton>
 
         <MyButton onClick={() => setOpenDischargeTracking(true)}>
           <FontAwesomeIcon icon={faRightFromBracket} />
+        <Translate>
           Discharge Tracking
+        </Translate>
         </MyButton>
       </div>
     </>
   );
 
   //useEffect
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
+
   useEffect(() => {
     refetchEncounter();
   }, []);
@@ -504,7 +518,7 @@ const InpatientList = () => {
     },
     {
       key: 'plannedStartDate',
-      title: <Translate>ADMISSION DATE</Translate>,
+      title: <Translate>Admission Date</Translate>,
       dataKey: 'plannedStartDate'
     },
     {
@@ -739,8 +753,14 @@ const InpatientList = () => {
     });
   };
 
+
+            // Direction handling for RTL/LTR
+      const direction = localStorage.getItem('direction') || 'LTR';
+      const isRTL = direction === 'RTL';
+
+      const dir = isRTL ? 'rtl' : 'ltr';
   return (
-    <Panel>
+    <Panel dir={dir}>
       <div className="inpatient-list-btns">
         <MyButton
           onClick={() => setOpenBedManagementModal(true)}
@@ -821,9 +841,9 @@ const InpatientList = () => {
         title="Refill"
         size="90vw"
         content={
-          <>
+          <div dir={dir}>
             <RefillModalComponent></RefillModalComponent>
-          </>
+          </div>
         }
         actionButtonLabel="Save"
         actionButtonFunction={() => {}}
@@ -837,7 +857,9 @@ const InpatientList = () => {
         size="55vw"
         content={
           <>
-            <DischargeTrackingModal />
+            <div dir={dir}>
+              <DischargeTrackingModal />
+            </div>
           </>
         }
         actionButtonLabel="Save"
@@ -852,7 +874,9 @@ const InpatientList = () => {
         size="90vw"
         content={
           <>
-            <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
+            <div dir={dir}>
+              <PhysicianOrderSummaryModal></PhysicianOrderSummaryModal>
+            </div>
           </>
         }
         actionButtonLabel="Save"
@@ -865,7 +889,7 @@ const InpatientList = () => {
         setOpen={setOpenEncounterLogsModal}
         title="Encounter Logs"
         size="70vw"
-        content={<EncounterLogsTable />}
+        content={<div dir={dir}><EncounterLogsTable /></div>}
         actionButtonLabel="Close"
         actionButtonFunction={() => setOpenEncounterLogsModal(false)}
         cancelButtonLabel="Cancel"

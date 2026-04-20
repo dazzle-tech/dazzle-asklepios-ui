@@ -42,10 +42,19 @@ const QuickVisit = ({ }) => {
     const [openDischargeModal, setOpenDischargeModal] = useState(false);
     // Page header setup
     const divContent = (
-            "Quick Visit"
+        "Quick Visit"
     );
+
+
+    useEffect(() => {
     dispatch(setPageCode('Quick_Visit'));
     dispatch(setDivContent(divContent));
+
+    return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+    };
+    }, [dispatch]);
 
     const handleCompleteEncounter = async () => {
         try {
@@ -54,20 +63,21 @@ const QuickVisit = ({ }) => {
                 dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
             }
             setReadOnly(true);
-        } catch (error) {
-            console.error("Encounter completion error:", error);
-            dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
+        } catch(err: any) {
+            const errorMap: Record<string, string> = {
+                'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+                'error.id.notfound': 'Encounter not found'
+            };
+
+            const backendMessage = err?.data?.message;
+            const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+            dispatch(notify({ msg, sev: 'error' }));
         }
     };
 
 
-    // Effects
-    useEffect(() => {
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent('  '));
-        };
-    }, [location.pathname, dispatch]);
+
     useEffect(() => {
         // TODO update status to be a LOV value
         if (localEncounter?.encounterStatusLkey === '91109811181900') {
@@ -101,16 +111,16 @@ const QuickVisit = ({ }) => {
                                     {/* TODO update status to be a LOV value */}
                                     {!localEncounter.discharge && localEncounter.status !== "CLOSED" && (<MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                                        onClick={()=>localEncounter?.encounterType == "EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
+                                        onClick={() => localEncounter?.encounterType == "EMERGENCY" ? setOpenDischargeModal(true) : handleCompleteEncounter()}
 
                                         appearance="ghost"
                                     >
-                                        <Translate>{localEncounter?.encounterType == "EMERGENCY" ? "Discharge" : "Complete Visit"}</Translate>
+                                        <Translate>{localEncounter?.encounterType == "EMERGENCY" ? "Disposition" : "Complete Visit"}</Translate>
                                     </MyButton>)}
                                     <Divider vertical />
                                     <MyButton
                                         prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
-                                        
+
                                     >
                                         <Translate>Print Visit Report </Translate>
                                     </MyButton>

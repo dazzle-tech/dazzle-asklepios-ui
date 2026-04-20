@@ -13,6 +13,7 @@ import { faPaperclip,faCheck } from '@fortawesome/free-solid-svg-icons';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import MyModal from '@/components/MyModal/MyModal';
 import DialysisRequestModal from './DialysisRequestModal';
+import Translate from '@/components/Translate';
 
 const initialDialysisData = [
   {
@@ -184,14 +185,17 @@ const DialysisRequest = () => {
         Cancel
       </MyButton>
 
-      <Checkbox>Show Cancelled</Checkbox>
+      <Checkbox><Translate>Show Cancelled</Translate>
+      </Checkbox>
     </div>
 
     <div className="right-group-buttons-dialysis-request">
 <MyButton
   color="green"
   prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}>
+  <Translate>
   Submit
+  </Translate>
 </MyButton>
 
 <MyButton
@@ -208,8 +212,16 @@ const DialysisRequest = () => {
     return rowData.id === selectedRowId ? 'selected-row' : '';
   };
 
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <MyTable
         data={paginatedData}
         columns={columns}

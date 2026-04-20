@@ -80,6 +80,26 @@ export const serviceService = createApi({
       providesTags: ['Service'],
     }),
 
+    // GET /api/setup/service/active/by-facility/{facilityId}
+    getActiveServicesByFacility: builder.query<PagedResult<any>, WithFacility & PagedParams>({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/service/active/by-facility/${encodeURIComponent(String(facilityId))}`,
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
+    // GET /api/setup/service/appointable/by-loggedIn-facility
+    getAppointableServicesByLoggedInFacility: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/service/appointable/by-loggedIn-facility',
+        params: { page, size, sort },
+      }),
+      transformResponse: mapPaged,
+      providesTags: ['Service'],
+    }),
+
     // GET /api/setup/service/by-category/{category}
     getServicesByCategory: builder.query<
       PagedResult<any>,
@@ -276,6 +296,10 @@ export const {
   useLazyGetServicesBulkByIdsQuery,
   useGetServicesQuery,
   useLazyGetServicesQuery,
+  useGetActiveServicesByFacilityQuery,
+  useLazyGetActiveServicesByFacilityQuery,
+  useGetAppointableServicesByLoggedInFacilityQuery,
+  useLazyGetAppointableServicesByLoggedInFacilityQuery,
   useGetServicesByCategoryQuery,
   useLazyGetServicesByCategoryQuery,
   useGetServicesByCodeQuery,
@@ -290,6 +314,7 @@ export const {
   useGetServiceItemsQuery,
   useGetServiceItemsByServiceQuery,
   useGetServiceItemByIdQuery,
+  useLazyGetServiceItemByIdQuery,
   useAddServiceItemMutation,
   useUpdateServiceItemMutation,
   useToggleServiceItemIsActiveMutation,

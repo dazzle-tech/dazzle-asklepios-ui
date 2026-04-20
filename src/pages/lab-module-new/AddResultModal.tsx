@@ -295,8 +295,14 @@ const AddResultModal = ({
     }
   }, [open]);
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
+  <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
@@ -307,7 +313,8 @@ const AddResultModal = ({
         { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
       ]}
       content={
-        <Form fluid>
+      <div dir={dir}>
+          <Form fluid>
           {acceptedTests.map(orderTest => {
             const profiles =
               (profilesByTestId[orderTest.testId] ?? []).filter(
@@ -338,8 +345,10 @@ const AddResultModal = ({
             );
           })}
         </Form>
+      </div>
       }
     />
+  </div>
   );
 };
 

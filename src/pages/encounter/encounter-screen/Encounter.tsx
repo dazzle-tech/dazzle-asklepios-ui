@@ -20,7 +20,7 @@ import {
   faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { FaArrowLeft } from 'react-icons/fa6';
 import { useSelector } from 'react-redux';
@@ -48,7 +48,7 @@ const Encounter = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const propsData = location.state;
+  const propsData = location.state || {};
 
   const isMedicalHistoryTab = location.pathname.includes('/encounter/patient-history');
 
@@ -87,7 +87,7 @@ const Encounter = () => {
   const [selectedResourceType, setSelectedResourceType] = useState(null);
   const [openDischargeModal, setOpenDischargeModal] = useState(false);
   const [edit, setEdit] = useState(false);
-  const [fromPage, setFromPage] = useState(savedState);
+  const [fromPage, setFromPage] = useState(propsData?.fromPage || savedState || '');
   const [patientSideRefreshKey, setPatientSideRefreshKey] = useState(0);
 
   const handlePatientDiagnosisSaved = () => {
@@ -117,7 +117,7 @@ const Encounter = () => {
 
   const aiButtonRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = e => {
+  const handleMouseDown = (e: any) => {
     setIsDragging(true);
     setHasMoved(false);
     setDragOffset({
@@ -127,7 +127,7 @@ const Encounter = () => {
     e.preventDefault();
   };
 
-  const handleMouseMove = e => {
+  const handleMouseMove = (e: any) => {
     if (!isDragging) return;
 
     if (!hasMoved) {
@@ -183,8 +183,9 @@ const Encounter = () => {
   const [openWarningModal, setOpenWarningModal] = useState(false);
 
   useEffect(() => {
-    if (location.state && location.state.fromPage) {
+    if (location.state?.fromPage) {
       setFromPage(location.state.fromPage);
+      sessionStorage.setItem('encounterPageSource', location.state.fromPage);
     }
   }, [location.state]);
 
@@ -197,22 +198,37 @@ const Encounter = () => {
     } else if (completeEncounterMutation.status === 'fulfilled') {
       navigate('/encounter-list');
     }
-  }, [completeEncounterMutation]);
+  }, [completeEncounterMutation, localEncounter?.encounterType, navigate]);
+
+  const currentFromPage = propsData?.fromPage || fromPage || savedState || '';
+
+  const sharedNavigationState = useMemo(
+    () => ({
+      patient: propsData?.patient,
+      encounter: propsData?.encounter,
+      edit,
+      fromPage: currentFromPage
+    }),
+    [propsData?.patient, propsData?.encounter, edit, currentFromPage]
+  );
 
   const handleGoBack = () => {
-    if (savedState === 'PatientEMR') {
+
+    if (currentFromPage === 'PatientEMR') {
       navigate('/patient-EMR', {
         state: {
-          localPatient: propsData.patient,
+          localPatient: propsData?.patient,
           fromPage: 'clinicalVisit'
         }
       });
     } else if (localEncounter?.encounterType == 'INPATIENT') {
       navigate('/inpatient-encounters-list');
-    } else if (propsData?.fromPage === 'DayCaseList') {
+    } else if (currentFromPage === 'DayCaseList') {
       navigate('/day-case-list');
-    } else if (propsData?.fromPage === 'ER_Department') {
+    } else if (currentFromPage === 'ER_Department') {
       navigate('/ER-department');
+    } else if (currentFromPage === 'Urgent_Care_List') {
+      navigate('/urgent-care-department-list');
     } else {
       navigate('/encounter-list');
     }
@@ -221,19 +237,27 @@ const Encounter = () => {
   const followUpDraftAppointmentData = React.useMemo(() => {
     if (!patientToSend) return null;
     return {
-      patientId: (patientToSend as any)?.id ?? (patientToSend as any)?.key ?? null
+      patientId: (patientToSend as any)?.id ?? (patientToSend as any)?.key ?? null,
+      sourceEncounterId: encounterId ?? null
     };
-  }, [patientToSend]);
+  }, [patientToSend, encounterId]);
 
   const handleCompleteEncounter = async () => {
     try {
-      if (propsData.encounter) {
+      if (propsData?.encounter) {
         await completeEncounter({ id: propsData.encounter.id }).unwrap();
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
-    } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
@@ -306,10 +330,16 @@ const Encounter = () => {
   const [currentHeader, setCurrentHeader] = useState<string>('Patient Dashboard');
 
   const divContent = `Patient Visit > ${currentHeader}`;
+
   useEffect(() => {
     dispatch(setPageCode('Patient_Visit'));
     dispatch(setDivContent(divContent));
-  }, [currentHeader, dispatch]);
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [currentHeader, dispatch, divContent]);
 
   useEffect(() => {
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard');
@@ -349,9 +379,7 @@ const Encounter = () => {
     if (!propsData?.encounter || !encounterDeptId || encounterDeptId !== selectedDeptId) {
       navigate('/encounter-list', { replace: true });
     }
-  }, [selectedDeptId, propsData?.encounter]);
-
-
+  }, [selectedDeptId, propsData?.encounter, location.pathname, navigate]);
 
   return (
     <ActionContext.Provider value={{ action, setAction }}>
@@ -439,6 +467,7 @@ const Encounter = () => {
                   />
                 </Form>
               </div>
+
               <div className="right">
                 {isMedicalHistoryTab && (
                   <MyButton
@@ -465,6 +494,11 @@ const Encounter = () => {
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={async () => {
                     try {
+                      if (localEncounter?.encounterType === 'EMERGENCY') {
+                        setOpenDischargeModal(true);
+                        return;
+                      }
+
                       if (!encounterId) {
                         dispatch(
                           notify({
@@ -498,10 +532,17 @@ const Encounter = () => {
                       );
                     }
                   }}
-                  disabled={!encounterId || isCheckingPatientDiagnosis}
+                  disabled={
+                    localEncounter?.encounterType !== 'EMERGENCY' &&
+                    (!encounterId || isCheckingPatientDiagnosis)
+                  }
                   appearance="ghost"
                 >
-                  <Translate>Complete Visit</Translate>
+                  <Translate>
+                    {localEncounter?.encounterType === 'EMERGENCY'
+                      ? 'Disposition'
+                      : 'Complete Visit'}
+                  </Translate>
                 </MyButton>
 
                 {location.pathname == '/encounter' && (
@@ -533,6 +574,7 @@ const Encounter = () => {
                 )}
               </div>
             </div>
+
             <Divider />
 
             <Drawer
@@ -545,6 +587,7 @@ const Encounter = () => {
               <Drawer.Header className="header-drawer">
                 <Drawer.Title className="title-drawer">Medical Sheets</Drawer.Title>
               </Drawer.Header>
+
               <Drawer.Body className="drawer-body">
                 <Form fluid>
                   <Row>
@@ -567,13 +610,14 @@ const Encounter = () => {
                     className="drawer-item return-button"
                     onClick={() => {
                       const basePath = location.pathname.split('/').slice(0, -1).join('/');
-                      navigate(basePath, { state: location.state });
+                      navigate(basePath, { state: sharedNavigationState });
                       setIsDrawerOpen(false);
                     }}
                   >
                     <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
                     <Translate>Dashboard</Translate>
                   </List.Item>
+
                   {visibleSheets.map(({ code, name, icon, path }) => {
                     const fullPath = `/encounter${path.startsWith('/') ? path : `/${path}`}`;
 
@@ -584,23 +628,11 @@ const Encounter = () => {
                         onClick={() => {
                           setIsDrawerOpen(false);
                           navigate(fullPath, {
-                            state: {
-                              patient: propsData.patient,
-                              encounter: propsData.encounter,
-                              edit
-                            }
+                            state: sharedNavigationState
                           });
                         }}
                       >
-                        <Link
-                          to={fullPath}
-                          state={{
-                            patient: propsData.patient,
-                            encounter: propsData.encounter,
-                            edit
-                          }}
-                          className="inherit-link"
-                        >
+                        <Link to={fullPath} state={sharedNavigationState} className="inherit-link">
                           {icon}
                           <span className="margin-left-10">
                             <Translate>{name}</Translate>
@@ -632,8 +664,8 @@ const Encounter = () => {
                     expand={expand}
                     setExpand={setExpand}
                     windowHeight={windowHeight}
-                    patient={propsData.patient}
-                    encounter={propsData.encounter}
+                    patient={propsData?.patient}
+                    encounter={propsData?.encounter}
                   />
                 </div>
               )}
@@ -654,7 +686,7 @@ const Encounter = () => {
       <AllergiesModal
         open={openAllargyModal}
         setOpen={setOpenAllargyModal}
-        patient={propsData?.patien}
+        patient={propsData?.patient}
       />
 
       <WarningiesModal
@@ -673,7 +705,8 @@ const Encounter = () => {
         from={'Encounter'}
         isOpen={modalOpen}
         onClose={() => {
-          setModalOpen(false), setShowAppointmentOnly(false);
+          setModalOpen(false);
+          setShowAppointmentOnly(false);
         }}
         patient={patientToSend}
         appointmentData={followUpDraftAppointmentData}

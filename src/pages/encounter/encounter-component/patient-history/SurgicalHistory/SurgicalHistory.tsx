@@ -29,9 +29,6 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
   const [open, setOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
 
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
-
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
 
@@ -50,18 +47,6 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
     setOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (!rowToDelete?.id) return;
-
-    try {
-      await deleteSurgicalHistory({ id: rowToDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-      setOpenDeleteModal(false);
-      setRowToDelete(null);
-    } catch {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
-    }
-  };
 
   const columns = [
     { key: 'surgery', title: 'SURGERY', flexGrow: 3 },
@@ -121,15 +106,6 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
                   className="pointer"
                   onClick={() => handleEdit(row)}
                 />
-                <MdDelete
-                  size={22}
-                  className="pointer"
-                  fill="var(--primary-pink)"
-                  onClick={() => {
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
-                  }}
-                />
               </div>
             )
           }
@@ -143,8 +119,15 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
     setPage(0);
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="medical-container-div">
+    <div className="medical-container-div" dir={dir}>
       <SectionContainer
         title="Surgical History"
         action={
@@ -183,14 +166,6 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
               }}
               initialData={selectedRow}
               patient={patient}
-            />
-
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Surgical History"
-              actionType="delete"
-              actionButtonFunction={handleDelete}
             />
           </>
         }

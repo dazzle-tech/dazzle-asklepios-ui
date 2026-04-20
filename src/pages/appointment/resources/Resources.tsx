@@ -32,6 +32,7 @@ type Resource = {
   id?: number;
   resourceType: string;
   resourceKey: string;
+  parallelCapacityValue?: number;
   isAllowParallel?: boolean;
   isActive?: boolean;
   resourceName?: string;
@@ -40,6 +41,7 @@ type Resource = {
 const newResource: Resource = {
   resourceType: "",
   resourceKey: "",
+  parallelCapacityValue: 1,
   isAllowParallel: true,
   isActive: true,
 };
@@ -274,6 +276,7 @@ const Resources = () => {
       const payload = {
         resourceType: resource.resourceType,
         resourceKey: resource.resourceKey,
+        parallelCapacityValue: Number(resource.parallelCapacityValue ?? 1),
         isAllowParallel: resource.isAllowParallel ?? true,
         isActive: resource.isActive ?? true,
         resourceName: resourceName
@@ -318,6 +321,7 @@ const Resources = () => {
       const payload = {
         resourceType: resource.resourceType,
         resourceKey: resource.resourceKey,
+        parallelCapacityValue: Number(resource.parallelCapacityValue ?? 1),
         isAllowParallel: resource.isAllowParallel ?? true,
         isActive: resource.isActive ?? true,
         resourceName: resourceName
@@ -554,9 +558,17 @@ const Resources = () => {
     </Form>
   );
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   // ──────────────────────────── RENDER ────────────────────────────
   return (
-    <Panel>
+    <Panel dir={dir}>
       <MyTable
         data={isFiltered ? filteredList : resourceListResponse?.data ?? []}
         totalCount={isFiltered ? filteredTotal : totalCount}

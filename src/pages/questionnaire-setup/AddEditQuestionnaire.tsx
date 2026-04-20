@@ -5,6 +5,7 @@ import { BiQuestionMark } from 'react-icons/bi';
 import MyModal from '@/components/MyModal/MyModal';
 import './styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import Translate from '@/components/Translate';
 const AddEditQuestionnaire = ({ open, setOpen, questionnaire, setQuestionnaire, width }) => {
   const { data: questionnaireTypeLovQueryResponse } =
     useGetLovValuesByCodeQuery('QUESTIONNAIRE_TYPE');
@@ -35,16 +36,23 @@ const AddEditQuestionnaire = ({ open, setOpen, questionnaire, setQuestionnaire, 
               record=""
               setRecord=""
             />
-            <label>Sequence Or Full View</label>
+            <Translate>Sequence Or Full View</Translate>
             <RadioGroup name="radio-group-inline" inline >
-              <Radio value="sequence">Sequence</Radio>
-              <Radio value="fv">Full View</Radio>
+              <Radio value="sequence"><Translate>Sequence</Translate></Radio>
+              <Radio value="fv"><Translate>Full View</Translate></Radio>
             </RadioGroup>
           </Form>
         );
     }
   };
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+  
   return (
     <MyModal
       actionButtonLabel={questionnaire?.key ? 'Save' : 'Create'}
@@ -52,7 +60,11 @@ const AddEditQuestionnaire = ({ open, setOpen, questionnaire, setQuestionnaire, 
       setOpen={setOpen}
       position="right"
       title={questionnaire?.key ? 'Edit Questionnaire' : 'New Questionnaire'}
-      content={conjureFormContentOfMainModal}
+      content={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContentOfMainModal(stepNumber)}
+        </div>
+      )}
       steps={[
         {
           title: 'Basic Info',

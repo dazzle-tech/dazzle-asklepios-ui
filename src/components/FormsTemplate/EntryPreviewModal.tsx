@@ -7,25 +7,42 @@ import { Survey } from 'survey-react-ui';
 
 const EntryPreviewModal = ({ open, setOpen, template, entry }: any) => {
     const printRef = useRef<HTMLDivElement | null>(null);
+const survey = useMemo(() => {
+    try {
+        const rawFormJson =
+            template?.formJson ??
+            template?.json ??
+            template?.schema ??
+            template?.form ??
+            null;
 
-    const survey = useMemo(() => {
-        if (!template?.formJson) return null;
-
-        try {
-            const formJson = JSON.parse(template.formJson);
-            const answers = entry?.dataJson ? JSON.parse(entry.dataJson) : {};
-
-            const s = new Model(formJson);
-            s.data = answers;
-            s.mode = 'display';
-            s.showNavigationButtons = false;
-            s.showCompletedPage = false;
-            return s;
-        } catch (e) {
-            console.error(e);
+        if (!rawFormJson) {
             return null;
         }
-    }, [template?.formJson, entry?.dataJson]);
+
+        const formJson =
+            typeof rawFormJson === 'string'
+                ? JSON.parse(rawFormJson)
+                : rawFormJson;
+
+        const rawAnswers = entry?.dataJson;
+        const answers =
+            typeof rawAnswers === 'string'
+                ? JSON.parse(rawAnswers)
+                : rawAnswers || {};
+
+        const s = new Model(formJson);
+        s.data = answers;
+        s.mode = 'display';
+        s.showNavigationButtons = false;
+        s.showCompletedPage = false;
+
+        return s;
+    } catch (e) {
+        console.error('survey error:', e);
+        return null;
+    }
+}, [template, entry?.dataJson]);
 
     // ✅ add print css once
     useEffect(() => {

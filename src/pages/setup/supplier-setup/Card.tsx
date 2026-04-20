@@ -56,7 +56,7 @@ const Card: React.FC<CardProps> = ({ record, setRecord }) => {
             <MyInput
               width={250}
               fieldType="text"
-              fieldLabel="Emargency Contact Name"
+              fieldLabel="Emergency Contact Name"
               fieldName={'emargencyContactName'}
               record={record}
               setRecord={setRecord}
@@ -64,7 +64,7 @@ const Card: React.FC<CardProps> = ({ record, setRecord }) => {
             <MyInput
               width={250}
               fieldType="text"
-              fieldLabel="Emargency Contact Phone"
+              fieldLabel="Emergency Contact Phone"
               fieldName={'emargencyContactPhone'}
               record={record}
               setRecord={setRecord}
@@ -226,8 +226,15 @@ const Card: React.FC<CardProps> = ({ record, setRecord }) => {
       )
     }
   ];
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <div className="modal-content">
+    <div className="modal-content" dir={dir}>
       {/* Vendor Type Selection */}
       <div className="vendor-type-selection">
         <div className="vendor-header">

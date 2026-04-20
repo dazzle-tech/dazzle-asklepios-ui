@@ -9,7 +9,8 @@ import {
   faCircleXmark,
   faFileLines,
   faFilePen,
-  faUpload
+  faUpload,
+  faPlus
 } from '@fortawesome/free-solid-svg-icons';
 import MyBadgeStatus from '../MyBadgeStatus/MyBadgeStatus';
 import MyButton from '../MyButton/MyButton';
@@ -46,8 +47,8 @@ import {
   calculateAgeFormat,
   formatEnumString
 } from '@/utils';
+import AddBulkServicesToConsultationModal from '@/pages/encounter/encounter-pre-observations-new/Service&Products/AddBulkServicesToConsultationModal';
 
-// ─── Helper: status color ───────────────────────────────────────────────────
 const getStatusColor = (status: string): string => {
   switch (status) {
     case 'REQUESTED':
@@ -65,7 +66,6 @@ const getStatusColor = (status: string): string => {
   }
 };
 
-// ─── Helper: priority color ──────────────────────────────────────────────────
 const getPriorityColor = (level: string): string => {
   switch (level) {
     case 'CRITICAL':
@@ -77,6 +77,30 @@ const getPriorityColor = (level: string): string => {
   }
 };
 
+const getLocalDateString = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const normalizeDateOnly = (value: Date | string) => {
+  if (value instanceof Date) {
+    return getLocalDateString(value);
+  }
+  return String(value).slice(0, 10);
+};
+
+const toUTCStartOfDay = (value: Date | string) => {
+  const raw = normalizeDateOnly(value);
+  return `${raw}T00:00:00.000Z`;
+};
+
+const toUTCEndOfDay = (value: Date | string) => {
+  const raw = normalizeDateOnly(value);
+  return `${raw}T23:59:59.999Z`;
+};
+
 const MyConsultations = () => {
   const dispatch = useDispatch();
   const authSlice = useAppSelector(state => state.auth);
@@ -85,19 +109,7 @@ const MyConsultations = () => {
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-  const todayString = new Date().toISOString().slice(0, 10);
-
-  const toISOStartOfDay = (value: Date | string) => {
-    const d = value instanceof Date ? new Date(value) : new Date(String(value));
-    d.setHours(0, 0, 0, 0);
-    return d.toISOString();
-  };
-
-  const toISOEndOfDay = (value: Date | string) => {
-    const d = value instanceof Date ? new Date(value) : new Date(String(value));
-    d.setHours(23, 59, 59, 999);
-    return d.toISOString();
-  };
+  const todayString = getLocalDateString();
 
   const formatDateTime = useCallback(
     (value?: string | number | Date | null) => (value ? formatDateWithoutSeconds(value) : ''),
@@ -112,10 +124,11 @@ const MyConsultations = () => {
     requestDateFrom: todayString,
     requestDateTo: todayString
   });
+
   const [showRejected, setShowRejected] = useState(false);
   const [openActionModal, setOpenActionModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
-  const [selectedRows, setSelectedRows] = useState([]);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
@@ -123,12 +136,17 @@ const MyConsultations = () => {
   const [selectedConsultation, setSelectedConsultation] = useState<any>(null);
   const [responseForm, setResponseForm] = useState({ responseText: '' });
   const [isResponseReadOnly, setIsResponseReadOnly] = useState(false);
+
   const [openRejectModal, setOpenRejectModal] = useState(false);
   const [rejectForm, setRejectForm] = useState({ reason: '' });
+
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
   const [emrEncounterKey, setEmrEncounterKey] = useState<string | null>(null);
+
+  const [openBulkServicesModal, setOpenBulkServicesModal] = useState(false);
+  const [selectedConsultationForServices, setSelectedConsultationForServices] = useState<any>(null);
 
   const emrPatientKeyRef = useRef<string | null>(null);
   const usersBulkIdsRef = useRef<number[]>([]);
@@ -140,11 +158,13 @@ const MyConsultations = () => {
   const [rejectConsultation] = useRejectConsultationMutation();
   const [submitConsultationResponse] = useSubmitConsultationResponseMutation();
   const [submitConsultations] = useSubmitConsultationsMutation();
+
   const [fetchPatientById, { data: emrPatientData }] = useLazyGetPatientByIdQuery();
   const [getBulkPatientBasicInfo, { data: patientsBasicInfo, isLoading: patientsBulkLoading }] =
     useGetBulkPatientBasicInfoMutation();
   const [getUsersBasicNamesBulk, { data: usersBasicNames, isLoading: usersBulkLoading }] =
     useGetUsersBasicNamesBulkMutation();
+
   const { data: emrEncounterData } = useGetEncounterByIdQuery(emrEncounterKey ?? '', {
     skip: !emrEncounterKey
   });
@@ -179,8 +199,8 @@ const MyConsultations = () => {
     const querySize = (page + 1) * pageSize;
 
     return {
-      fromDate: toISOStartOfDay(fromDateValue),
-      toDate: toISOEndOfDay(toDateValue),
+      fromDate: toUTCStartOfDay(fromDateValue),
+      toDate: toUTCEndOfDay(toDateValue),
       fromFacilityId: Number(fromFacilityId),
       practitionerId: practitionerIdNum,
       toDepartmentId: toDepartmentId ? Number(toDepartmentId) : undefined,
@@ -207,16 +227,13 @@ const MyConsultations = () => {
   const consultationResponse = searchResult.data;
   const consultationsLoading = searchResult.isFetching || searchResult.isLoading;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const refetchConsultations = useCallback(() => {
     if (lastSearchParamsRef.current) {
       triggerSearch(lastSearchParamsRef.current);
     }
   }, [triggerSearch]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const facilities = Array.isArray(facilityListResponse) ? facilityListResponse : [];
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const departments = Array.isArray(departmentListResponse) ? departmentListResponse : [];
 
   const pageIndex = page;
@@ -232,14 +249,12 @@ const MyConsultations = () => {
     setPage(0);
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const allConsultations = consultationResponse?.data ?? [];
   const visibleConsultations = useMemo(() => {
     const start = page * pageSize;
     return allConsultations.slice(start, start + pageSize);
   }, [allConsultations, page, pageSize]);
 
-  // ── Use only consultation.patientId (per review comment) ──
   const patientIdsForBulk = useMemo(
     () =>
       Array.from(
@@ -377,7 +392,7 @@ const MyConsultations = () => {
     if (loggedInUser?.id) {
       getPractitionerByUserId(loggedInUser.id);
     }
-  }, [getPractitionerByUserId, loggedInUser.id]);
+  }, [getPractitionerByUserId, loggedInUser?.id]);
 
   useEffect(() => {
     if (selectedFacilityId === null || selectedFacilityId === undefined) return;
@@ -408,7 +423,6 @@ const MyConsultations = () => {
     if (departmentIdsForBulk.length === 0) return;
     getDepartmentsBulk(departmentIdsForBulk)
       .unwrap()
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       .catch(() => { });
   }, [departmentIdsForBulk, getDepartmentsBulk]);
 
@@ -521,7 +535,7 @@ const MyConsultations = () => {
     selectedRow
   ]);
 
-  const toggleRowSelection = useCallback(rowData => {
+  const toggleRowSelection = useCallback((rowData: any) => {
     setSelectedRows(previousRows => {
       const alreadySelected = previousRows.some(
         item => String(item.id ?? item.key) === String(rowData.id ?? rowData.key)
@@ -635,6 +649,16 @@ const MyConsultations = () => {
     setSelectedRows(selectableRows);
   }, [allSelectableSelected, selectableRows]);
 
+  const handleOpenBulkServicesModal = useCallback((row: any) => {
+    setSelectedConsultationForServices(row);
+    setOpenBulkServicesModal(true);
+  }, []);
+
+  const handleCloseBulkServicesModal = useCallback(() => {
+    setOpenBulkServicesModal(false);
+    setSelectedConsultationForServices(null);
+  }, []);
+
   const tableColumns = useMemo(
     () => [
       {
@@ -647,7 +671,7 @@ const MyConsultations = () => {
           />
         ),
         width: 50,
-        render: row => {
+        render: (row: any) => {
           const isReady = String(row.status ?? '').toUpperCase() === 'READY';
 
           return (
@@ -665,20 +689,21 @@ const MyConsultations = () => {
         key: 'patientInfo',
         title: <Translate>Patient Name</Translate>,
         flexGrow: 4,
-        render: row => {
+        render: (row: any) => {
           const patientKey = row.patient?.id;
 
           const patient: any =
-            patientKey != null
-              ? patientMap.get(String(patientKey)) ?? row.patient
-              : null;
+            patientKey != null ? patientMap.get(String(patientKey)) ?? row.patient : null;
+
           const patientName = `${String(patient?.firstName ?? '').trim()} ${String(
             patient?.lastName ?? ''
           ).trim()}`.trim();
+
           const patientMedicalRecordNumber = patient?.medicalRecordNumber;
           const patientGender = formatEnumString(patient?.sexAtBirth) || '';
           const patientDob = patient?.dateOfBirth ?? patient?.dob;
           const patientAge = patientDob ? calculateAgeFormat(patientDob) : '';
+
           return (
             <Whisper
               trigger="hover"
@@ -714,7 +739,7 @@ const MyConsultations = () => {
         key: 'consultationLevel',
         title: <Translate>Priority</Translate>,
         flexGrow: 1,
-        render: row => (
+        render: (row: any) => (
           <MyBadgeStatus
             contant={row?.consultationLevel}
             color={getPriorityColor(row?.consultationLevel)}
@@ -735,7 +760,7 @@ const MyConsultations = () => {
         key: 'questionToConsultant',
         title: <Translate>Question To Consultant</Translate>,
         flexGrow: 4,
-        render: row => {
+        render: (row: any) => {
           const text = row.consultationContent || '';
           const MAX = 20;
           const isLong = text.length > MAX;
@@ -756,7 +781,7 @@ const MyConsultations = () => {
         key: 'department',
         title: <Translate>FROM Department</Translate>,
         flexGrow: 2,
-        render: row => {
+        render: (row: any) => {
           const deptId = row.fromDepartmentId;
           return conjureValueBasedOnIDFromList(
             departmentsBulk ?? departments,
@@ -770,7 +795,7 @@ const MyConsultations = () => {
         title: <Translate>Created By / At</Translate>,
         expandable: true,
         flexGrow: 2,
-        render: row => (
+        render: (row: any) => (
           <>
             {row.createdBy}
             <br />
@@ -784,7 +809,7 @@ const MyConsultations = () => {
         key: 'status',
         title: <Translate>Status</Translate>,
         flexGrow: 2,
-        render: row => {
+        render: (row: any) => {
           const status = String(row.status ?? '').toUpperCase();
           const statusDisplay = status ? status.replace(/_/g, ' ') : '';
           return <MyBadgeStatus contant={statusDisplay} color={getStatusColor(status)} />;
@@ -864,19 +889,30 @@ const MyConsultations = () => {
       {
         key: 'actions',
         title: <Translate>ACTIONS</Translate>,
-        flexGrow: 4,
-        render: row => {
+        flexGrow: 5,
+        render: (row: any) => {
           const status = String(row.status ?? '').toUpperCase();
+
           const disableActions = ['SUBMITTED', 'READY'].includes(status);
-          const disableConfirm = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
-          const disableReject = status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
+          const disableConfirm =
+            status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
+          const disableReject =
+            status === 'CONFIRMED' || status === 'REJECTED' || disableActions;
+
           const canOpenResponse = ['READY', 'CONFIRMED', 'SUBMITTED'].includes(status);
           const disableResponse = !canOpenResponse;
+
           const responseReadOnly = status === 'SUBMITTED';
-          const responseTooltipLabel = responseReadOnly ? 'View Response' : 'Add Response';
+          const responseTooltipLabel = responseReadOnly
+            ? 'View Response'
+            : 'Add Response';
+
+          // 👇 هون الشرط تبع Add Services
+          const canAddServices = status === 'SUBMITTED';
 
           return (
             <div className="actions-cell">
+              {/* Open EMR */}
               <Whisper trigger="hover" placement="top" speaker={<Tooltip>Open EMR</Tooltip>}>
                 <div>
                   <MyButton
@@ -884,7 +920,6 @@ const MyConsultations = () => {
                     radius="6px"
                     backgroundColor="violet"
                     onClick={() => {
-
                       const patientKey = row.patient?.id;
                       const encounterKey = row.encounter?.id;
 
@@ -908,7 +943,7 @@ const MyConsultations = () => {
 
                       if (encounterKey != null) {
                         setEmrEncounterKey(String(encounterKey));
-                        setEmrEncounter(row.encounter);      // ⭐ الحل
+                        setEmrEncounter(row.encounter);
                         dispatch(setEncounter(row.encounter));
                       }
 
@@ -919,6 +954,8 @@ const MyConsultations = () => {
                   </MyButton>
                 </div>
               </Whisper>
+
+              {/* Confirm */}
               <Whisper trigger="hover" placement="top" speaker={<Tooltip>Confirm</Tooltip>}>
                 <div>
                   <MyButton
@@ -935,6 +972,8 @@ const MyConsultations = () => {
                   </MyButton>
                 </div>
               </Whisper>
+
+              {/* Reject */}
               <Whisper trigger="hover" placement="top" speaker={<Tooltip>Reject</Tooltip>}>
                 <div>
                   <MyButton
@@ -952,6 +991,8 @@ const MyConsultations = () => {
                   </MyButton>
                 </div>
               </Whisper>
+
+              {/* Response */}
               <Whisper
                 trigger="hover"
                 placement="top"
@@ -969,6 +1010,33 @@ const MyConsultations = () => {
                   </MyButton>
                 </div>
               </Whisper>
+
+              {/* Add Services ✅ */}
+              <Whisper
+                trigger="hover"
+                placement="top"
+                speaker={
+                  <Tooltip>
+                    {canAddServices
+                      ? 'Add Services'
+                      : 'You can add services only after submitting response'}
+                  </Tooltip>
+                }
+              >
+                <div>
+                  <MyButton
+                    size="small"
+                    radius="6px"
+                    backgroundColor="green"
+                    disabled={!canAddServices}
+                    onClick={() => handleOpenBulkServicesModal(row)}
+                  >
+                    <FontAwesomeIcon icon={faPlus} color="white" />
+                  </MyButton>
+                </div>
+              </Whisper>
+
+              {/* Add Report */}
               <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Report</Tooltip>}>
                 <div>
                   <MyButton size="small" radius="6px" backgroundColor="black">
@@ -983,93 +1051,85 @@ const MyConsultations = () => {
     ],
     [
       allSelectableSelected,
-      handleOpenResponseModal,
-      handleSelectAll,
-      patientMap,
-      resolveUserName,
-      selectedRows,
-      toggleRowSelection,
-      isIndeterminate,
-      departmentsBulk,
       departments,
+      departmentsBulk,
       dispatch,
       fetchPatientById,
       formatDateTime,
-      setEmrEncounterKey,
-      setEmrPatient,
-      setSelectedRow,
-      setOpenActionModal,
-      setOpenEMRModal,
-      setOpenRejectModal,
-      setRejectForm
+      handleOpenBulkServicesModal,
+      handleOpenResponseModal,
+      handleSelectAll,
+      isIndeterminate,
+      patientMap,
+      resolveUserName,
+      selectedRows,
+      toggleRowSelection
     ]
   );
 
   const filters = useMemo(
     () => (
-      <>
-        <Form fluid>
-          <div className="filters-container">
-            <MyInput
-              fieldLabel="Request Date From"
-              fieldName="requestDateFrom"
-              fieldType="date"
-              width="10vw"
-              record={record}
-              setRecord={setRecord}
-            />
-            <MyInput
-              fieldLabel="Request Date To"
-              fieldName="requestDateTo"
-              fieldType="date"
-              width="10vw"
-              record={record}
-              setRecord={setRecord}
-            />
-            <MyInput
-              width="12vw"
-              fieldType="select"
-              fieldLabel="Facility"
-              fieldName="facilityId"
-              selectData={facilities}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={record}
-              setRecord={updated => {
-                setRecord(prev => {
-                  const facilityChanged =
-                    String(updated?.facilityId ?? '') !== String(prev?.facilityId ?? '');
-                  const next = {
-                    ...updated,
-                    departmentId: facilityChanged ? [] : updated?.departmentId
-                  };
-                  if (next.facilityId) {
-                    getDepartmentsByFacility({ facilityId: next.facilityId });
-                  }
-                  return next;
-                });
-              }}
-            />
-            <MyInput
-              width="12vw"
-              fieldType="checkPicker"
-              fieldLabel="Department"
-              fieldName="departmentId"
-              selectData={departments}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={record}
-              setRecord={setRecord}
-              disabled={departments.length === 0}
-            />
-            <div className="show-rejected-checkbox">
-              <Checkbox checked={showRejected} onChange={() => setShowRejected(!showRejected)}>
-                Show Rejected
-              </Checkbox>
-            </div>
+      <Form fluid>
+        <div className="filters-container">
+          <MyInput
+            fieldLabel="Request Date From"
+            fieldName="requestDateFrom"
+            fieldType="date"
+            width="10vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            fieldLabel="Request Date To"
+            fieldName="requestDateTo"
+            fieldType="date"
+            width="10vw"
+            record={record}
+            setRecord={setRecord}
+          />
+          <MyInput
+            width="12vw"
+            fieldType="select"
+            fieldLabel="Facility"
+            fieldName="facilityId"
+            selectData={facilities}
+            selectDataLabel="name"
+            selectDataValue="id"
+            record={record}
+            setRecord={updated => {
+              setRecord((prev: any) => {
+                const facilityChanged =
+                  String(updated?.facilityId ?? '') !== String(prev?.facilityId ?? '');
+                const next = {
+                  ...updated,
+                  departmentId: facilityChanged ? [] : updated?.departmentId
+                };
+                if (next.facilityId) {
+                  getDepartmentsByFacility({ facilityId: next.facilityId });
+                }
+                return next;
+              });
+            }}
+          />
+          <MyInput
+            width="12vw"
+            fieldType="checkPicker"
+            fieldLabel="Department"
+            fieldName="departmentId"
+            selectData={departments}
+            selectDataLabel="name"
+            selectDataValue="id"
+            record={record}
+            setRecord={setRecord}
+            disabled={departments.length === 0}
+          />
+          <div className="show-rejected-checkbox">
+            <Checkbox checked={showRejected} onChange={() => setShowRejected(!showRejected)}>
+              Show Rejected
+            </Checkbox>
           </div>
-        </Form>
-      </>
+        </div>
+      </Form>
     ),
     [departments, facilities, getDepartmentsByFacility, record, showRejected]
   );
@@ -1086,7 +1146,7 @@ const MyConsultations = () => {
             onClick={handleSubmit}
             disabled={selectedRows.length === 0}
           >
-            Submit
+            <Translate>Submit</Translate>
           </MyButton>
         </div>
       </div>
@@ -1163,7 +1223,10 @@ const MyConsultations = () => {
         actionButtonLabel="Reject"
         actionButtonFunction={handleRejectAction}
         isDisabledActionBtn={!String(rejectForm?.reason ?? '').trim()}
-        handleCancelFunction={() => setRejectForm({ reason: '' })}
+        handleCancelFunction={() => {
+          setRejectForm({ reason: '' });
+          setOpenRejectModal(false);
+        }}
         content={
           <Form fluid>
             <MyInput
@@ -1177,6 +1240,16 @@ const MyConsultations = () => {
             />
           </Form>
         }
+      />
+
+      <AddBulkServicesToConsultationModal
+        open={openBulkServicesModal}
+        setOpen={setOpenBulkServicesModal}
+        consultationRow={selectedConsultationForServices}
+        onSuccess={() => {
+          handleCloseBulkServicesModal();
+          refetchConsultations();
+        }}
       />
 
       <MyModal

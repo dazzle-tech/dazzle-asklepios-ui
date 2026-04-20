@@ -11,6 +11,7 @@ import {
   useGetLatestEncounterAssessmentQuery,
 } from '@/services/medicalsheetsEncounter/clinicalVisit/encounterAssessmentService';
 import type { EncounterAssessment, Patient } from '@/types/model-types-new';
+import Translate from '@/components/Translate';
 type EncounterAssessmentSectionProps = {
   patient: Patient;
   encounterId: number | string;
@@ -23,7 +24,7 @@ const EncounterAssessmentSection: React.FC<EncounterAssessmentSectionProps> = ({
   patient,
   encounterId,
   disabled = false,
-  title = <>Assessment</>,
+  title = <Translate>Assessment</Translate>,
   width = '100%',
 }) => {
   const dispatch = useAppDispatch();

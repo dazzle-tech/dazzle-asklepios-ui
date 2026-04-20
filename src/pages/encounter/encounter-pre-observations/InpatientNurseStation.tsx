@@ -34,7 +34,7 @@ import EncounterDischarge from '../encounter-component/encounter-discharge/Encou
 import PhysicianOrderSummary from '../encounter-component/physician-order-summary/physician-order-summary-component';
 import WoundCareDocumentation from '../encounter-component/wound-care-documentation';
 import MyTab from '@/components/MyTab';
-const InpatientNurseStation = ({}) => {
+const InpatientNurseStation = ({ }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = location.state;
@@ -48,8 +48,16 @@ const InpatientNurseStation = ({}) => {
   const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   // Page header setup
   const divContent = 'Nurse Anamnesis';
-  dispatch(setPageCode('Nurse_Station'));
-  dispatch(setDivContent(divContent));
+
+  useEffect(() => {
+    dispatch(setPageCode('Nurse_Station'));
+    dispatch(setDivContent(divContent));
+
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(''));
+    };
+  }, [dispatch]);
 
   const handleCompleteEncounter = async () => {
     try {
@@ -58,19 +66,21 @@ const InpatientNurseStation = ({}) => {
         dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
       }
       setReadOnly(true);
-    } catch (error) {
-      console.error('Encounter completion error:', error);
-      dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
+    } catch (err: any) {
+      const errorMap: Record<string, string> = {
+        'error.complete.notAllowed': 'Cannot complete unless status is ONGOING or TRIAGE STARTED',
+        'error.id.notfound': 'Encounter not found'
+      };
+
+      const backendMessage = err?.data?.message;
+      const msg = errorMap[backendMessage] || 'Error completing encounter';
+
+      dispatch(notify({ msg, sev: 'error' }));
     }
   };
 
   // Effects
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+
   useEffect(() => {
     // TODO update status to be a LOV value
     if (localEncounter?.encounterStatusLkey === '91109811181900') {

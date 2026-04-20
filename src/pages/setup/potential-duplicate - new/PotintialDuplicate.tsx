@@ -62,8 +62,17 @@ const PotintialDuplicate = () => {
   const divContent = (
     "Potential Duplicate"
   );
+
+
+useEffect(() => {
   dispatch(setPageCode('Potintial_Duplicate'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
 
   // class name for selected row
   const isSelected = rowData => {
@@ -265,12 +274,6 @@ const PotintialDuplicate = () => {
   };
 
   // Effects
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
 
   // change the width variable when the size of window is changed
   useEffect(() => {
@@ -298,8 +301,15 @@ const PotintialDuplicate = () => {
       </>
     );
   };
+
+              // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <Panel>
+    <Panel dir={dir}>
 
       <MyTable
         filters={filters()}

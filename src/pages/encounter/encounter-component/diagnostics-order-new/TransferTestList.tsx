@@ -214,7 +214,15 @@ const TransferTestList = ({
   }, [searchType?.type]);
 
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <Row>
       <Row>
         <Form fluid>
@@ -298,7 +306,7 @@ const TransferTestList = ({
             style={{
               display: 'flex',
               gap: '16px',
-              alignItems: 'stretch', // 👈 مهم
+              alignItems: 'stretch',
               height: '100%'
             }}
           >
@@ -327,6 +335,7 @@ const TransferTestList = ({
         <Col md={10}>{renderList(rightItems)}</Col>
       </Row>
     </Row>
+  </div>
   );
 };
 

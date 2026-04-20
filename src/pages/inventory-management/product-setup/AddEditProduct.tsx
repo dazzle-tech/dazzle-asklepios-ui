@@ -27,6 +27,7 @@ import MaintenanceInformation from "./MaintenanceInformation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDiceD6 } from "@fortawesome/free-solid-svg-icons";
 import SectionContainer from "@/components/SectionsoContainer";
+import Translate from "@/components/Translate";
 
 const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
   const dispatch = useAppDispatch();
@@ -215,7 +216,7 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
           <Col md={12}>
             <Row>
                 <SectionContainer 
-                  title="Maintenance Information" 
+                  title={<Translate>Maintenance Information</Translate>} 
                   content={<MaintenanceInformation product={product} setProduct={setProduct} disabled={false} />} 
               />
             </Row>
@@ -231,6 +232,13 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
       </Row>
     </>
   );
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
     open={open}
@@ -238,7 +246,7 @@ const AddEditProduct = ({ open, setOpen, product, setProduct }) => {
     title="Product Setup"
     size="lg"
     bodyheight="65vh"
-    content={content}
+    content={<div dir={dir}>{content()}</div>}
     hideBack={true}
     steps={[{ title: "Product Setup", icon: <FontAwesomeIcon icon={faDiceD6} /> }]}
     actionButtonLabel="Save"

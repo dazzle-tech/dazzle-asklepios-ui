@@ -165,10 +165,22 @@ const FullViewTable = ({
   sortColumn,
   sortType,
   handlePageChange,
-  handleSortChange
+  handleSortChange,
+  activeIngredientsMap
 }) => {
 
  const tableColumns = [
+    {
+      key: 'activeIngredientId',
+    
+      title: 'Active Ingredients',
+      flexGrow: 1,
+      render: (rowData: any) => {
+       const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
+        return ingredient?.name ? String(ingredient.name) : '-';
+      }
+
+    },
       {
         key: 'medicationsId',
         dataKey: 'medicationsId',
@@ -262,7 +274,7 @@ const FullViewTable = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="Patient Chronic Medication"
+      title={<Translate>Patient Chronic Medication</Translate>}
       content={
       <MyTable
                 columns={tableColumns}
@@ -292,7 +304,7 @@ const FullViewTable = ({
       hideBack={true}
       steps={[
         {
-          title: "Patient Chronic Medication",
+          title: <Translate>Patient Chronic Medication</Translate>,
           icon: <FontAwesomeIcon icon={faPills} />
         }
       ]}

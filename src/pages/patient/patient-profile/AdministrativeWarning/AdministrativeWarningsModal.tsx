@@ -24,7 +24,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Badge, Button, Form, Input, InputGroup } from 'rsuite';
 import './styles.less';
 
@@ -50,11 +50,14 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
 
   const { data: lovData } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
 
+  const filteredLovData = useMemo(() => {
+    return lovData?.object?.filter((lov: any) => lov.valueCode !== 'ADWR_DNR') ?? [];
+  }, [lovData]);
+
   const { data: warnings, isLoading } = useGetWarningsByPatientIdQuery(
     { patientId: localPatient.id! },
     { skip: !localPatient.id }
   );
-  console.log("warnings: ", warnings);
 
   const { data: searchedWarnings } = useSearchWarningsByPatientIdQuery(
     { patientId: localPatient.id!, searchText },
@@ -139,20 +142,13 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
     <div>
       <div className="search-in-list-cards">
         <InputGroup inside>
-          <Input
-            placeholder="Search"
-            value={searchText}
-            onChange={(value) => setSearchText(value)}
-          />
+          <Input placeholder="Search" value={searchText} onChange={value => setSearchText(value)} />
           <InputGroup.Button>
             <SearchIcon />
           </InputGroup.Button>
         </InputGroup>
 
-        <MyButton
-          prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
-          onClick={handleAddNew}
-        >
+        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={handleAddNew}>
           Add
         </MyButton>
       </div>
@@ -172,11 +168,8 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                       <Translate>Type</Translate>
                     </span>
                     <span className="custom-type-card-content">
-                      {
-                        lovData?.object?.find(
-                          (lov: any) => lov.key === warning.warningType
-                        )?.lovDisplayVale || warning.warningType
-                      }
+                      {lovData?.object?.find((lov: any) => lov.key === warning.warningType)
+                        ?.lovDisplayVale || warning.warningType}
                     </span>
                   </div>
                   <div className="status-card-content">
@@ -196,81 +189,73 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
                     <span>{warning.description}</span>
                   </div>
                 </div>
-                
-                  <div className="meta-section">
 
-                    <div className="meta-item">
-                      <span className="meta-label">
-                        <Translate>ADDITION BY/DATE</Translate>
-                      </span>
-                      <span className="meta-value">
-                        {warning.createdBy || 'By User'}
-                      </span>
-                      <span className="meta-date">
-                        {warning.createdDate
-                          ? new Date(warning.createdDate).toLocaleDateString('en-CA')
-                          : '-'}
-                      </span>
-                    </div>
-
-                    <div className="meta-item">
-                      <span className="meta-label">
-                        <Translate>RESOLVED BY/DATE</Translate>
-                      </span>
-                      <span className="meta-value">
-                        {warning.resolvedBy || '-'}
-                      </span>
-                      <span className="meta-date">
-                        {warning.resolvedDate
-                          ? new Date(warning.resolvedDate).toLocaleDateString('en-CA')
-                          : '-'}
-                      </span>
-                    </div>
-
-                    <div className="meta-item">
-                      <span className="meta-label">
-                        <Translate>RESOLUTION UNDO BY/DATE</Translate>
-                      </span>
-                      <span className="meta-value">
-                        {warning.undoResolvedBy || '-'}
-                      </span>
-                      <span className="meta-date">
-                        {warning.undoResolvedDate
-                          ? new Date(warning.undoResolvedDate).toLocaleDateString('en-CA')
-                          : '-'}
-                      </span>
-                    </div>
-
+                <div className="meta-section">
+                  <div className="meta-item">
+                    <span className="meta-label">
+                      <Translate>ADDITION BY/DATE</Translate>
+                    </span>
+                    <span className="meta-value">{warning.createdBy || 'By User'}</span>
+                    <span className="meta-date">
+                      {warning.createdDate
+                        ? new Date(warning.createdDate).toLocaleDateString('en-CA')
+                        : '-'}
+                    </span>
                   </div>
+
+                  <div className="meta-item">
+                    <span className="meta-label">
+                      <Translate>RESOLVED BY/DATE</Translate>
+                    </span>
+                    <span className="meta-value">{warning.resolvedBy || '-'}</span>
+                    <span className="meta-date">
+                      {warning.resolvedDate
+                        ? new Date(warning.resolvedDate).toLocaleDateString('en-CA')
+                        : '-'}
+                    </span>
+                  </div>
+
+                  <div className="meta-item">
+                    <span className="meta-label">
+                      <Translate>RESOLUTION UNDO BY/DATE</Translate>
+                    </span>
+                    <span className="meta-value">{warning.undoResolvedBy || '-'}</span>
+                    <span className="meta-date">
+                      {warning.undoResolvedDate
+                        ? new Date(warning.undoResolvedDate).toLocaleDateString('en-CA')
+                        : '-'}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-                <div className="right-side-card">
-                  <button
-                    className="action-btn accept-btn"
-                    disabled={warning.resolved}
-                    onClick={() => handleResolve(warning)}
-                  >
-                    <FontAwesomeIcon icon={faCircleCheck} />
-                  </button>
+              <div className="right-side-card">
+                <button
+                  className="action-btn accept-btn"
+                  disabled={warning.resolved}
+                  onClick={() => handleResolve(warning)}
+                >
+                  <FontAwesomeIcon icon={faCircleCheck} />
+                </button>
 
-                  <button
-                    className="action-btn undo-btn"
-                    disabled={!warning.resolved}
-                    onClick={() => handleUndoResolve(warning)}
-                  >
-                    <FontAwesomeIcon icon={faRotateLeft} />
-                  </button>
+                <button
+                  className="action-btn undo-btn"
+                  disabled={!warning.resolved}
+                  onClick={() => handleUndoResolve(warning)}
+                >
+                  <FontAwesomeIcon icon={faRotateLeft} />
+                </button>
 
-                  <button
-                    className="action-btn delete-btn"
-                    onClick={() => {
-                      setWarningToDelete(warning);
-                      setDeleteModalOpen(true);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faTrashCan} />
-                  </button>
-                </div>
+                <button
+                  className="action-btn delete-btn"
+                  onClick={() => {
+                    setWarningToDelete(warning);
+                    setDeleteModalOpen(true);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faTrashCan} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -286,7 +271,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         fieldLabel="Warning Type"
         fieldType="select"
         fieldName="warningType"
-        selectData={lovData?.object ?? []}
+        selectData={filteredLovData ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={{ warningType }}
@@ -307,8 +292,14 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
     </Form>
   );
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <MyButton
         appearance="ghost"
         disabled={!localPatient.id}
@@ -326,7 +317,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         title="Administrative Warnings"
         mainContent={mainContent}
         childTitle="Add New"
-        childContent={childContent}
+        childContent={<div dir={dir}>{childContent}</div>}
         childStep={[
           {
             title: 'Administrative Warning',
@@ -346,7 +337,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         actionType="delete"
         actionButtonFunction={handleDelete}
       />
-    </>
+    </div>
   );
 };
 

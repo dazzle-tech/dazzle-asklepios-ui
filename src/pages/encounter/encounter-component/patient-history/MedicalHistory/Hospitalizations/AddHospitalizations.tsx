@@ -13,6 +13,7 @@ import {
 import { newHospitalization } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import Translate from '@/components/Translate';
 
 /*  ERROR HANDLER  */
 
@@ -225,7 +226,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       <MyInput
         width={200}
         column
-        fieldLabel="Length of stay (days)"
+        fieldLabel={<span><Translate>Length of stay</Translate><Translate>(Days)</Translate></span>}
         fieldType="number"
         fieldName="lengthOfStayDays"
         record={formData}
@@ -254,6 +255,11 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
   );
 
   /*  MODAL  */
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -264,7 +270,7 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       actionButtonFunction={handleSave}
       position="right"
       size="33vw"
-      content={content}
+      content={<div dir={dir}>{content}</div>}
     />
   );
 };

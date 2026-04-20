@@ -102,6 +102,13 @@ const OrderModal: React.FC<OrderModalProps> = ({
     setEditingOrder(null);
   };
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -113,7 +120,7 @@ const OrderModal: React.FC<OrderModalProps> = ({
       actionButtonFunction={handleSave}
       steps={[{ title: 'Add New Rule', icon: <FontAwesomeIcon icon={faSave} /> }]}
       content={() => (
-        <Form fluid className="order-form">
+        <Form fluid className="order-form" dir={dir}>
           {/* Row 1 */}
           <div className="order-row">
             <div className="order-col">

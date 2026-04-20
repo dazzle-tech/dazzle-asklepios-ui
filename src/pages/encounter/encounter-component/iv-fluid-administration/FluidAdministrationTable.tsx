@@ -131,15 +131,23 @@ const FluidAdministrationTable: React.FC<Props> = ({ fluidOrder, setFluidOrder, 
     }
   ];
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <MyTable height={300} data={mockAdministrationData} columns={administrationColumns} />
 
       <div className="margin-top-but">
        <MyButton
-  color="green"
-  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-  onClick={() => {
+      color="green"
+      prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+      onClick={() => {
     if (fluidOrder?.status !== 'Completed') {
       setFluidOrder(prev => ({ ...prev, status: 'Completed' }));
       addLog('Complete');
@@ -148,7 +156,7 @@ const FluidAdministrationTable: React.FC<Props> = ({ fluidOrder, setFluidOrder, 
   disabled={fluidOrder?.status === 'Completed'}
 >
   Complete
-</MyButton>
+      </MyButton>
       </div>
 
       <MyModal
@@ -158,7 +166,7 @@ const FluidAdministrationTable: React.FC<Props> = ({ fluidOrder, setFluidOrder, 
         actionButtonLabel="Close"
         actionButtonFunction={() => setShowLogPopup(false)}
         isDisabledActionBtn={false}
-        content={() => (
+        content={() => (<div dir={dir}>
           <MyTable
             height={300}
             data={mockLogs}
@@ -167,7 +175,7 @@ const FluidAdministrationTable: React.FC<Props> = ({ fluidOrder, setFluidOrder, 
               { key: 'time', title: 'Time' },
               { key: 'doneBy', title: 'Done By' }
             ]}
-          />
+          /> </div>
         )}
         size="30vw"
         bodyheight="55vh"

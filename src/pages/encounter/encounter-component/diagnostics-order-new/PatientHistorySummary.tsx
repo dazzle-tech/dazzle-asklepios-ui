@@ -184,7 +184,15 @@ const PatientHistorySummary: React.FC<Props> = ({
     return { header, findings, alternatives };
   }, [aiState.data]);
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className="medical-container-div">
       <SectionContainer
         title={
@@ -333,6 +341,7 @@ const PatientHistorySummary: React.FC<Props> = ({
         }
       />
     </div>
+  </div>
   );
 };
 

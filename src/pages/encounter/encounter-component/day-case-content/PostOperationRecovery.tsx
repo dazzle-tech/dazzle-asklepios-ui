@@ -7,6 +7,7 @@ import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ApPostOperationRecovery } from '@/types/model-types';
 import { newApPostOperationRecovery } from '@/types/model-types-constructor';
+import Translate from '@/components/Translate';
 const PostOperationRecovery = () => {
     const [postOperationAssessment, setPostOperationAssessment] = useState<ApPostOperationRecovery>({ ...newApPostOperationRecovery });
 
@@ -26,15 +27,23 @@ const PostOperationRecovery = () => {
     const { data: circuLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_CIRCU');
     const { data: respirLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_RESPIR');
     const { data: activityLovQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_ACTIVITY');
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
-        <Panel>
+        <Panel dir={dir}>
             <Form fluid layout='inline'>
                 <Row className='pre-operation-container'>
                     <Col md={12}>
                         <Row>
                             <div className='container-form'>
                                 <div className='title-div'>
-                                    <Text>Post-Operation Recovery</Text>
+                                    <Text><Translate>Post-Operation Recovery</Translate></Text>
                                 </div>
                                 <Divider />
                                 <Form fluid layout='inline'  >
@@ -104,7 +113,7 @@ const PostOperationRecovery = () => {
                         <Row>
                             <div className='container-form'>
                                 <div className='title-div'>
-                                    <Text>Vitals on Admission</Text>
+                                    <Text><Translate>Vitals on Admission</Translate></Text>
                                 </div>
                                 <Divider />
                                 <VitalSigns object={vital} setObject={setVital} />
@@ -113,7 +122,7 @@ const PostOperationRecovery = () => {
                         <Row>
                             <div className='container-form'>
                                 <div className='title-div'>
-                                    <Text>Aldrete Score</Text>
+                                    <Text><Translate>Aldrete Score</Translate></Text>
                                 </div>
                                 <Divider />
                                 <Form fluid layout='inline'>
@@ -135,6 +144,7 @@ const PostOperationRecovery = () => {
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
                                         fieldType="select"
+                                        fieldLabel={<Translate>Consciousness</Translate>}
                                         fieldName={"consciousnessLkey"}
                                         record={postOperationAssessment}
                                         setRecord={setPostOperationAssessment} />
@@ -145,6 +155,7 @@ const PostOperationRecovery = () => {
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
                                         fieldType="select"
+                                        fieldLabel={<Translate>Circulation</Translate>}
                                         fieldName={"circulationLkey"}
                                         record={postOperationAssessment}
                                         setRecord={setPostOperationAssessment} />
@@ -155,6 +166,7 @@ const PostOperationRecovery = () => {
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
                                         fieldType="select"
+                                        fieldLabel={<Translate>Respiration</Translate>}
                                         fieldName={"respirationLkey"}
                                         record={postOperationAssessment}
                                         setRecord={setPostOperationAssessment} />

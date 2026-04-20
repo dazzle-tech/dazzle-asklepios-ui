@@ -153,6 +153,7 @@ const PatientSearch = ({
 
   const handleClose = () => {
     setSearchResultVisible(false);
+    setSelectedCriterion('fullName');
     setSearchKeyword('');
     setPatients([]);
     setPage(0);
@@ -192,9 +193,10 @@ const PatientSearch = ({
               selectDataValue="value"
               showLabel={false}
               record={{ searchCriteria: selectedCriterion }}
-              setRecord={record => setSelectedCriterion(record.searchCriteria)}
+              setRecord={record => setSelectedCriterion(record.searchCriteria || 'fullName')}
               placeholder="Select Search Criteria"
               searchable={false}
+              cleanable={false}
               width="auto"
             />
           </Form>
@@ -241,7 +243,7 @@ const PatientSearch = ({
                   handleSelectPatient(patient);
                   handleClose();
                 }}
-                
+
                 arrowDirection="right"
               />
             ))

@@ -185,20 +185,25 @@ const ProductCatalog = () => {
            "Product Catalog"
     );
     // page header setup
+
+
+
+useEffect(() => {
     dispatch(setPageCode('ProductCatalog'));
     dispatch(setDivContent(divContent));
 
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+                        // Direction handling for RTL/LTR
+        const direction = localStorage.getItem('direction') || 'LTR';
+        const isRTL = direction === 'RTL';
 
-    useEffect(() => {
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent('  '));
-        };
-    }, [location.pathname, dispatch]);
-
-
+        const dir = isRTL ? 'rtl' : 'ltr';
     return (
-         <div className='container-div'>
+         <div className='container-div' dir={dir}>
            <div className='field-btn-div'>                            
             
             <div className='product-catalog-filters-borders'>

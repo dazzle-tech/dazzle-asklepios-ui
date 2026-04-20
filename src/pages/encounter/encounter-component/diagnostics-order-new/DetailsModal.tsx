@@ -1,7 +1,7 @@
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
-import { useGetDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { useGetActiveDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { faVials } from '@fortawesome/free-solid-svg-icons';
@@ -11,6 +11,7 @@ import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import './styles.less';
+import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
 
 const DetailsModal = ({
   test,
@@ -20,15 +21,16 @@ const DetailsModal = ({
   orderTest,
   setOrderTest,
   order,
-  edit
+  edit,
+  patient
 }) => {
   const [actionType] = useState(null);
   const [requestedPatientAttacment] = useState();
   const [receivedType, setReceivedType] = useState('');
-
+  console.log("receivedType", receivedType);
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
   const [deptPage, setDeptPage] = useState(0);
-  const { data: receivedLabList } = useGetDepartmentByTypeQuery(
+  const { data: receivedLabList } = useGetActiveDepartmentByTypeQuery(
     receivedType
       ? {
         type: receivedType,
@@ -139,8 +141,15 @@ const DetailsModal = ({
     }
   }, [ReasonLovQueryResponse?.object]);
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <MyModal
         open={openDetailsModel}
         setOpen={setOpenDetailsModel}
@@ -192,20 +201,27 @@ const DetailsModal = ({
                   }}
                 />
               </div>
-              <MyInput
-                height={70}
-                width={'100%'}
-                fieldLabel="Notes"
-                fieldName={'notes'}
-                record={orderTest}
-                setRecord={setOrderTest}
+              <PatientDiagnosisTable
+                patient={patient}
+                disabled={!isEditable}
+                selectMode
+                selectedDiagnosisId={orderTest?.icdDiagnosisId}
+                onSelectDiagnosis={(ids) => {
+                  const selectedIcd = ids?.[0] ?? null;
+
+                  setOrderTest(prev => ({
+                    ...prev,
+                    icdDiagnosisId: selectedIcd
+                  }));
+                }}
               />
+
 
             </Form>
           </div>
         }
       />
-    </>
+    </div>
   );
 };
 

@@ -222,6 +222,11 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
 {' '}
     </Form>
   );
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -234,7 +239,7 @@ const JohnsHopkinsToolModal = ({ open, setOpen, onSave }) => {
       bodyheight='82vh'
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
-      content={ModalContent}
+      content={<div dir={dir}>{ModalContent}</div>}
     />
   );
 };

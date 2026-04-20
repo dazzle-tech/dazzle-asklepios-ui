@@ -15,7 +15,7 @@ import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment
 import MyInput from '@/components/MyInput';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
-import { useAppDispatch } from '@/hooks';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { conjureValueBasedOnIDFromList, formatEnumString, formatDateWithoutSeconds } from '@/utils';
 
@@ -85,7 +85,9 @@ const NormalConsultation = props => {
   const patient = props.patient || location.state?.patient;
   const encounter = props.encounter || location.state?.encounter;
   const edit = props.edit ?? location.state?.edit ?? false;
-
+  const authSlice = useAppSelector(state => state.auth);
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+   const isNurse = jobRole === 'NURSE';
   const [selectedRows, setSelectedRows] = useState<Consultation[]>([]);
   const [selectedRow, setSelectedRow] = useState<Consultation | null>(null);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -526,8 +528,16 @@ const NormalConsultation = props => {
 
   const pageIndex = page;
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div ref={tableContainerRef}>
         <MyTable
           columns={tableColumns}
@@ -555,6 +565,7 @@ const NormalConsultation = props => {
               <div className="bt-left-2">
                 <MyButton
                   disabled={
+                    isNurse ||
                     !selectedRow || String(selectedRow.status ?? '').toUpperCase() === 'CANCELLED'
                   }
                   onClick={() => setOpenConfirmCancelModel(true)}
@@ -568,11 +579,11 @@ const NormalConsultation = props => {
                 </MyButton>
 
                 <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-                  Show Cancelled
+                <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>
 
-              <div className={clsx('bt-right-2', { 'disabled-panel': edit })}>
+              <div className={clsx('bt-right-2', { 'disabled-panel': edit || isNurse })}>
                 <MyButton
                   onClick={() => {
                     handleClear();

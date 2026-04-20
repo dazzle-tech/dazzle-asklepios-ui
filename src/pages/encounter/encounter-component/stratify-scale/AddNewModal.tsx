@@ -6,6 +6,7 @@ import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import Translate from '@/components/Translate';
 const AddNewModal = ({
   open,
   setOpen,
@@ -71,7 +72,7 @@ const AddNewModal = ({
             <MyInput
               width="100%"
               fieldName="urinaryFrequencyOrUrgencyOrIncontinence"
-              fieldLabel="Urinary frequency, urgency or incontinence"
+              fieldLabel={<Translate>Urinary frequency, urgency or incontinence</Translate>}
               fieldType="select"
               selectData={booleanLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
@@ -173,13 +174,20 @@ const AddNewModal = ({
     }
   }, [recordOfScore]);
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title="New Assessment"
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
       steps={[{ title: 'Assessment', icon: <FontAwesomeIcon icon={faPersonFallingBurst} /> }]}

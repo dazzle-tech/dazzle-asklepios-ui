@@ -5,29 +5,17 @@ import './styles.less';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
+import { useEnumOptions } from '@/services/enumsApi';
 
 const OPTION_CUSTOM = 'CUSTOM_INSTRUCTIONS';
 const OPTION_PREDEFINED = 'PRE_DEFINED_INSTRUCTIONS';
 const OPTION_MANUAL = 'MANUAL_INSTRUCTIONS';
 
-type RoaOption = { label: string; value: string };
 
 /* ---------- helpers ---------- */
 const toTitleCase = (s: string) =>
   s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
-const formatRoaLabel = (code: string) => {
-  const cleaned = String(code ?? '').trim();
-  if (!cleaned) return '';
-
-  const parts = cleaned.split('_').filter(Boolean);
-
-  if (parts.length === 1) return toTitleCase(parts[0]);
-
-  const short = parts.pop()!;
-  const text = toTitleCase(parts.join(' '));
-  return short ? `${text} (${short})` : text;
-};
 
 const buildInstructionTitle = (inst?: any) =>
   !inst
@@ -57,21 +45,9 @@ const Instructions = ({
 
   const [selectedPreDefine, setSelectedPreDefine] = useState<any>(null);
   const [manual, setManual] = useState<string | null>(null);
-
+   
   /* ---------- ROA options ---------- */
-  const roaOptions: RoaOption[] = useMemo(() => {
-    const raw = String(selectedGeneric?.roa ?? '').trim();
-    if (!raw) return [];
-
-    return raw
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean)
-      .map(code => ({
-        label: formatRoaLabel(code),
-        value: code
-      }));
-  }, [selectedGeneric?.roa]);
+  const roaOptions= useEnumOptions("RouteOfAdministration");
 
   /* ---------- option change handling ---------- */
   useEffect(() => {
@@ -109,21 +85,29 @@ const Instructions = ({
     if (selectedOption === OPTION_PREDEFINED) setInst(selectedPreDefine?.id);
   }, [selectedPreDefine, selectedOption, setInst]);
 
-useEffect(() => {
-  if (selectedOption !== OPTION_CUSTOM) return;
+// useEffect(() => {
+//   if (selectedOption !== OPTION_CUSTOM) return;
 
-  if (!roaOptions.length) return;
+//   if (!roaOptions.length) return;
 
-  setCustomeinst((prev: any) => {
-    const current = String(prev?.roa ?? '').trim();
-    const stillValid = current && roaOptions.some(o => o.value === current);
-    if (stillValid) return prev;
+//   setCustomeinst((prev: any) => {
+//     const current = String(prev?.roa ?? '').trim();
+//     const stillValid = current && roaOptions.some(o => o.value === current);
+//     if (stillValid) return prev;
 
-    return { ...prev, roa: roaOptions[0].value };
-  });
-}, [selectedOption, roaOptions, setCustomeinst]);
+//     return { ...prev, roa: roaOptions };
+//   });
+// }, [selectedOption, roaOptions, setCustomeinst]);
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {/* -------- Custom Instruction -------- */}
       {selectedOption === OPTION_CUSTOM && (
         <Form fluid layout="inline">
@@ -231,7 +215,7 @@ useEffect(() => {
           />
         </Form>
       )}
-    </>
+    </div>
   );
 };
 

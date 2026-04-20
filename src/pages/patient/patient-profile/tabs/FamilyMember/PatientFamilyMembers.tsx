@@ -97,15 +97,22 @@ const PatientFamilyMembers = ({ localPatient }) => {
     setRelationModalOpen(true);
   };
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="tab-main-container">
+    <div className="tab-main-container" dir={dir}>
       <div className="tab-content-btns">
         <MyButton
           onClick={handleNewRelative}
           disabled={!localPatient?.id}
           prefixIcon={() => <PlusRound />}
         >
-          New Relative
+          <Translate>New Relative</Translate>
         </MyButton>
 
         <MyButton

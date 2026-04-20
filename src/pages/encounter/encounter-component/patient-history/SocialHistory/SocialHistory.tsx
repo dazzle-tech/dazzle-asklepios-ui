@@ -17,6 +17,7 @@ import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import '../styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import Translate from '@/components/Translate';
 
 const SocialHistory = ({ patient, edit, toShowData = false }) => {
   const dispatch = useAppDispatch();
@@ -24,9 +25,6 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
   const [open, setOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [previewRow, setPreviewRow] = useState<any>(null);
-
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
 
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
@@ -92,24 +90,6 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     setOpen(true);
   };
 
-  const handleDelete = async () => {
-    if (!rowToDelete?.id) return;
-
-    try {
-      await deleteSocialHistory({ id: rowToDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-
-      if (previewRow?.id === rowToDelete.id) {
-        setPreviewRow(null);
-      }
-
-      setOpenDeleteModal(false);
-      setRowToDelete(null);
-    } catch {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
-    }
-  };
-
   const columns = [
     {
       key: 'isCurrentSmoker',
@@ -146,7 +126,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
     },
     {
       key: 'createdDate',
-      title: 'CREATED AT / BY',
+      title: <Translate>CREATED AT / BY</Translate>,
       expandable: true,
       render: (row: any) =>
         row?.createdDate ? (
@@ -191,16 +171,6 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
                     handleEdit(row);
                   }}
                 />
-                <MdDelete
-                  size={22}
-                  fill="var(--primary-pink)"
-                  className="pointer"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
-                  }}
-                />
               </div>
             )
           }
@@ -208,8 +178,15 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
       : [])
   ];
 
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className="medical-container-div">
+    <div className="medical-container-div" dir={dir}>
       <SectionContainer
         title="Social History"
         action={
@@ -227,7 +204,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
           )
         }
         content={
-          <>
+          <div dir={dir}>
             <MyTable
               height={450}
               data={data?.data ?? []}
@@ -462,7 +439,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
                           width={220}
                           column
                           fieldType="text"
-                          fieldLabel="Created By / At"
+                          fieldLabel={<Translate>Created By / At</Translate>}
                           fieldName="createdBy"
                           record={{
                             createdBy: previewRow.createdDate
@@ -505,15 +482,7 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
               initialData={editData}
               patient={patient}
             />
-
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Social History"
-              actionType="delete"
-              actionButtonFunction={handleDelete}
-            />
-          </>
+          </div>
         }
       />
     </div>

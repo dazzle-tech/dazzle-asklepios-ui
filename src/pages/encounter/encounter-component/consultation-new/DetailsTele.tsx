@@ -20,11 +20,11 @@ import {
 
 import { newTelephonicConsultation, newPractitioner } from '@/types/model-types-constructor-new';
 
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { Practitioner, TelephonicConsultations } from '@/types/model-types-new';
 
 import {
-  useLazyGetPractitionersByFacilityQuery,
+  useLazyGetActivePractitionersByFacilityQuery,
   useLazyGetPractitionerByIdQuery
 } from '@/services/setup/practitioner/PractitionerService';
 
@@ -151,13 +151,13 @@ const DetailsTele = ({
   const pageSize = 5;
   const [allPractitioners, setAllPractitioners] = useState<any[]>([]);
 
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
 
   const [createConsultation] = useCreateMutation();
   const [updateConsultation] = useUpdateMutation();
 
   const [triggerGetPractitionersByFacility, practitionersResult] =
-    useLazyGetPractitionersByFacilityQuery();
+    useLazyGetActivePractitionersByFacilityQuery();
 
   const [triggerGetPractitionerById, { data: practitionerById, isSuccess: practitionerLoaded }] =
     useLazyGetPractitionerByIdQuery();
@@ -276,8 +276,15 @@ const DetailsTele = ({
     setShowAttachmentModal(true);
   };
 
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -433,7 +440,7 @@ const DetailsTele = ({
         source="TELEPHONIC_CONSULTATION_ORDER_ATTACHMENT"
         sourceId={(formData as any)?.id ?? 0}
       />
-    </>
+    </div>
   );
 };
 

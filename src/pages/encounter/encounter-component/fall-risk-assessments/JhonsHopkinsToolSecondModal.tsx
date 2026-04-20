@@ -69,8 +69,15 @@ const JhonsHopkinsToolSecondModal = ({
 </Form>
   );
 
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <MyModal
         open={open}
         setOpen={setOpen}
@@ -79,7 +86,7 @@ const JhonsHopkinsToolSecondModal = ({
         size="30vw"
         position="right"
         actionButtonLabel="Save"
-        content={ModalContent}
+        content={<div dir={dir}>{ModalContent}</div>}
       />
       <AttachmentModal
         isOpen={showAttachmentModal}
@@ -87,7 +94,7 @@ const JhonsHopkinsToolSecondModal = ({
         selectedPatientAttacment={null}
         setSelectedPatientAttacment={() => null}
       />
-    </>
+    </div>
   );
 };
 

@@ -589,6 +589,13 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
     });
   };
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <ChildModal
       open={open}
@@ -597,7 +604,7 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
       showChild={childStep == 1 ? openAddEditRelationPopup : openAddEditPopup}
       setShowChild={childStep == 1 ? setOpenAddEditRelationPopup : setOpenAddEditPopup}
       childTitle={childStep == 1 ? 'New/Edit UOM Relation' : 'New/Edit UOM Units'}
-      childContent={conjureFormChildContent}
+      childContent={<div dir={dir}>{conjureFormChildContent()}</div>}
       actionChildButtonFunction={childStep == 1 ? handleSaveRelation : handleSaveUnits}
       mainStep={[
         {
@@ -624,7 +631,11 @@ const AddEditUom = ({ open, setOpen, uom, setUom, refetchUomGroups }) => {
         },
         { title: 'UOM Conversion', icon: <FontAwesomeIcon icon={faBoxesPacking} /> }
       ]}
-      mainContent={conjureFormContent}
+      mainContent={(stepNumber) => (
+        <div dir={dir}>
+          {conjureFormContent(stepNumber)}
+        </div>
+      )}
       mainSize="40vw"
     />
   );

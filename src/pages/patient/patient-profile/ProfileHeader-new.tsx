@@ -26,15 +26,18 @@ import {
   faTriangleExclamation,
   faUsersLine
 } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState,useEffect } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import ScanDocumentModal from './ScanDocumentModal';
 import QuickPatient from '../facility-patient-list/QuickPatient';
+import { useLazyGetPatientInformationReportQuery } from '@/services/patient/patientService';
+import { printPatientInformationReport } from '@/utils/printPatientInformationReport';
 
 interface ProfileHeaderProps {
   localPatient: Patient;
@@ -49,6 +52,8 @@ interface ProfileHeaderProps {
   setOpenBulkRegistrationModal: (value: boolean) => void;
   setLocalPatient: (patient: Patient) => void;
   setOpenReferralRequestModal: (value: boolean) => void;
+  eligibilityChecked: boolean;
+  setEligibilityChecked: (val: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -65,6 +70,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   setLocalPatient,
   setOpenReferralRequestModal
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
   const [patientImage, setPatientImage] = useState<ApAttachment | undefined>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
@@ -72,11 +79,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-
   const [uploadAttachments] = useUploadAttachmentsMutation();
   const dispatch = useAppDispatch();
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+  const { data: relationshipLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
 
+  const [triggerPatientInformationReport] = useLazyGetPatientInformationReportQuery();
   const patientId = localPatient?.id ? Number(localPatient.id) : undefined;
 
   const {
@@ -88,8 +97,33 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     { skip: !patientId, refetchOnMountOrArgChange: true }
   );
 
+
+
+  const handlePrintInformation = async () => {
+    if (!localPatient?.id) return;
+
+    try {
+      const res = await triggerPatientInformationReport({
+        patientId: localPatient.id
+      }).unwrap();
+
+      await printPatientInformationReport(
+        res,
+        countryLovQueryResponse?.object || [],
+        relationshipLovQueryResponse?.object || []
+      );
+    } catch (err: any) {
+      dispatch(
+        notify({
+          msg: err?.data?.message || 'Print failed',
+          sev: 'error'
+        })
+      );
+    }
+  };
+
   const contentOfMoreIconMenu = (
-    <Popover full>
+    <Popover>
       <Dropdown.Menu>
         <Dropdown.Item
           disabled={localPatient.id === undefined}
@@ -186,9 +220,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   );
 
   const contentOfPrintIconMenu = (
-    <Popover full>
+    <Popover>
       <Dropdown.Menu>
-        <Dropdown.Item onClick={() => setOpenPrintMenu(false)}>
+        <Dropdown.Item
+          disabled={!localPatient?.id}
+          onClick={async () => {
+            setOpenPrintMenu(false);
+            await handlePrintInformation();
+          }}
+        >
           <div className="container-of-icon-and-key1">
             <Translate>Print Information</Translate>
           </div>
@@ -288,11 +328,24 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
 
+useEffect(() => {
+  if (location.state?.eligibilityDone) {
+    setEligibilityChecked(true);
+  }
+}, [location.state]);
+
+
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <Stack>
         <Stack.Item grow={1}>
-          <Form layout="inline" fluid className="profile-header">
+          <Form fluid className="profile-header">
             <AvatarGroup spacing={6} className="avatar-card-parent">
               <input
                 type="file"
@@ -374,93 +427,111 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     }
                   >
                     <div className="status-icon">
-                      {localPatient.isCompletedPatient && (
-                        <Icon color="green" as={VscUnverified} />
-                      )}
-                      {!localPatient.isCompletedPatient && (
-                        <Icon color="red" as={VscVerified} />
-                      )}
+                      {localPatient.isCompletedPatient && <Icon color="green" as={VscUnverified} />}
+                      {!localPatient.isCompletedPatient && <Icon color="red" as={VscVerified} />}
                     </div>
                   </Whisper>
                 )}
               </div>
             </AvatarGroup>
 
-            <div className="button-group-left-align">
-              <Form fluid layout="inline" className="registration-header-buttons-section">
-                <MyButton onClick={handleScanDocumentClick}>Scan Document</MyButton>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '15px'
+              }}
+            >
+              <AvatarGroup spacing={6}></AvatarGroup>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                justifyContent: 'flex-end'
+              }}
+            >
+              {/* <MyButton onClick={handleScanDocumentClick}>
+                <Translate>Scan Document</Translate>
+              </MyButton> */}
 
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  onClick={handleSave}
-                >
-                  {localPatient?.id ? 'Edit' : 'Save'}
-                </MyButton>
+              <MyButton
+                onClick={() => {
+                  setEligibilityChecked(true);
+                  navigate(`/patient-profile/${localPatient?.id}`);
+                }}
+              >
+                <Translate>Eligibility Check</Translate>
+              </MyButton>
 
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-                  onClick={handleClear}
-                >
-                  Clear
-                </MyButton>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                onClick={handleSave}
+              >
+                <Translate>{localPatient?.id ? 'Edit' : 'Save'}</Translate>
+              </MyButton>
 
-                <MyButton
-                  appearance="ghost"
-                  onClick={() => setQuickPatientModalOpen(true)}
-                  prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
-                >
-                  Quick Patient
-                </MyButton>
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                onClick={handleClear}
+              >
+                <Translate>Clear</Translate>
+              </MyButton>
 
-                <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
-                  Quick Appointment
-                </MyButton>
+              <MyButton
+                appearance="ghost"
+                onClick={() => setQuickPatientModalOpen(true)}
+                prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
+              >
+                <Translate>Quick Patient</Translate>
+              </MyButton>
 
-                <AdministrativeWarningsModal
-                  localPatient={localPatient}
-                  validationResult={validationResult}
-                />
+              <MyButton appearance="ghost" disabled={!localPatient.id} onClick={handleNewVisit}>
+                <Translate>Quick Appointment</Translate>
+              </MyButton>
 
-                <Whisper
-                  open={openMoreMenu}
-                  onClose={() => setOpenMoreMenu(false)}
-                  placement="bottom"
-                  speaker={contentOfMoreIconMenu}
-                >
-                  <span>
-                    <MyButton size="small" onClick={() => setOpenMoreMenu(true)}>
-                      <FontAwesomeIcon icon={faEllipsisVertical} />
-                    </MyButton>
-                  </span>
-                </Whisper>
+              <AdministrativeWarningsModal
+                localPatient={localPatient}
+                validationResult={validationResult}
+              />
 
-                <Whisper
-                  open={openPrintMenu}
-                  onClose={() => setOpenPrintMenu(false)}
-                  placement="bottom"
-                  speaker={contentOfPrintIconMenu}
-                >
-                  <span>
-                    <MyButton size="small" onClick={() => setOpenPrintMenu(true)}>
-                      <FontAwesomeIcon icon={faPrint} />
-                    </MyButton>
-                  </span>
-                </Whisper>
+              <Whisper
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                container={() => document.body}
+                preventOverflow
+                rootClose
+                open={openMoreMenu}
+                onOpen={() => setOpenMoreMenu(true)}
+                onClose={() => setOpenMoreMenu(false)}
+                speaker={contentOfMoreIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton
+                    size="small"
+                    onClick={() => setOpenMoreMenu(prev => !prev)}
+                  >
+                    <FontAwesomeIcon icon={faEllipsisVertical} />
+                  </MyButton>
+                </span>
+              </Whisper>
 
-                {(openMoreMenu || openPrintMenu) && (
-                  <div
-                    onClick={closeMenus}
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      zIndex: 1
-                    }}
-                  />
-                )}
-              </Form>
+              <Whisper
+                trigger="click"
+                placement={isRTL ? 'bottomStart' : 'bottomEnd'}
+                container={() => document.body}
+                preventOverflow
+                rootClose
+                speaker={contentOfPrintIconMenu}
+              >
+                <span style={{ display: 'inline-block' }}>
+                  <MyButton size="small">
+                    <FontAwesomeIcon icon={faPrint} />
+                  </MyButton>
+                </span>
+              </Whisper>
             </div>
           </Form>
         </Stack.Item>
@@ -481,7 +552,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         }}
         onIdParsed={handleIdParsed}
       />
-    </>
+    </div>
   );
 };
 

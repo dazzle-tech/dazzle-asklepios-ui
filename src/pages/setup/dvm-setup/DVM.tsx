@@ -67,8 +67,16 @@ const DVM = () => {
   const divContent = (
     "Data Validation Manager"
   );
+
+  useEffect(() => {
   dispatch(setPageCode('Data_Validation'));
   dispatch(setDivContent(divContent));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -138,12 +146,7 @@ const DVM = () => {
     }
   }, [recordOfScreenMetaData['screenMetadataKey']]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+ 
 
   // Handle click on Add New button
   const handleNew = () => {
@@ -411,8 +414,15 @@ const DVM = () => {
         {title: "Rule Combinations", content: <></>}
   ];
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <Panel>
+    <Panel dir={dir}>
       <small className="metadata-selection-title">
         <Translate>Specify screen metadata to configure validation rules</Translate>
       </small>

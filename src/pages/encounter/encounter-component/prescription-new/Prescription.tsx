@@ -8,16 +8,17 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useGeneratePrescriptionPdfMutation } from '@/services/setup/PrescriptionReportRequest';
-import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService ';
+import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import {
-   useCreateOrGetPatientPrescriptionMutation,
-   useGetPatientPrescriptionQuery,
-   useUpdatePatientPrescriptionMutation,
-   useSubmitPatientPrescriptionMutation
+  useCreateOrGetPatientPrescriptionMutation,
+  useGetPatientPrescriptionQuery,
+  useUpdatePatientPrescriptionMutation,
+  useSubmitPatientPrescriptionMutation,
+  useLazyGetPrescriptionPdfQuery
 } from '@/services/patients/Prescription/patientPrescriptionService';
 import {
   useGetPatientPrescriptionMedicationsQuery,
@@ -50,6 +51,8 @@ import './styles.less';
 import type { PatientPrescription, PatientPrescriptionMedication } from '@/types/model-types-new';
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
 import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
+import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
+import { render } from 'react-dom';
 
 type Props = any;
 
@@ -64,7 +67,8 @@ const Prescription = (props: Props) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
-
+  const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+  const isNurse = jobRole === 'NURSE';
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -80,6 +84,7 @@ const Prescription = (props: Props) => {
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] =
     useState<PatientPrescriptionMedication | null>(null);
+  const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<any>(null);
 
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [submitAssignModalOpen, setSubmitAssignModalOpen] = useState(false);
@@ -181,12 +186,12 @@ const Prescription = (props: Props) => {
   const patientPrescriptions = useMemo(() => {
     // If no patientId, return empty array (don't show prescriptions for unknown patient)
     if (!patientId) return [] as PatientPrescription[];
-    
+
     // If no prescriptions, return empty array
     if (!prescriptions.length) return [] as PatientPrescription[];
-    
+
     const targetPatientId = Number(patientId);
-    
+
     return (prescriptions as PatientPrescription[]).filter(p => {
       // Try direct patientId field (most common case) - handle both number and string
       const pPatientId = p.patientId;
@@ -194,7 +199,7 @@ const Prescription = (props: Props) => {
         const pIdNum = typeof pPatientId === 'string' ? Number(pPatientId) : pPatientId;
         if (!isNaN(pIdNum) && pIdNum === targetPatientId) return true;
       }
-      
+
       // Fallback: try patient object if it exists
       const patientObj = (p as any).patient;
       if (patientObj) {
@@ -207,7 +212,7 @@ const Prescription = (props: Props) => {
           if (!isNaN(objKey) && objKey === targetPatientId) return true;
         }
       }
-      
+
       // Additional fallback: if encounterId matches and we have encounterId, include it
       // This is a safety measure in case patientId is not populated but encounterId is
       if (encounterId != null && p.encounterId != null) {
@@ -215,7 +220,7 @@ const Prescription = (props: Props) => {
         const targetEncounterId = Number(encounterId);
         if (!isNaN(pEncounterId) && pEncounterId === targetEncounterId) return true;
       }
-      
+
       // If no patientId found on prescription, exclude it (safer than including all)
       return false;
     });
@@ -246,7 +251,7 @@ const Prescription = (props: Props) => {
           encounterId,
           fromFacilityId: authSlice?.tenant?.selectedFacility?.id ?? (null as any),
           fromDepartmentId: encounter?.departmentId ?? (null as any),
-          urgencyLevel: 'NORMAL' 
+          urgencyLevel: 'NORMAL'
         } as any).unwrap();
 
         setCurrentPrescription(result);
@@ -289,8 +294,8 @@ const Prescription = (props: Props) => {
       setCurrentPrescription(null);
       return;
     }
-   const selected = (patientPrescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey) ||
-                     (prescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey);
+    const selected = (patientPrescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey) ||
+      (prescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey);
     if (selected) setCurrentPrescription(selected);
   }, [preKeyRecord.preKey, patientPrescriptions, prescriptions]);
 
@@ -312,6 +317,42 @@ const Prescription = (props: Props) => {
       : (undefined as any),
     { skip: !currentPrescription?.id }
   );
+  const [
+    getActiveIngredientsByIds,
+    {
+      data: activeIngredientsByIds,
+      isLoading: isLoadingActiveIngredientsByIds,
+    },
+  ] = useGetActiveIngredientsByIdsMutation();
+
+  const activeIngredientIds = useMemo(() => {
+    const medications = patientPrescriptionMedicationsRaw?.data ?? [];
+
+    const ids = medications.map((item) => {
+      console.log('ID raw:', item.activeIngredientId);
+      console.log(typeof medications[0]?.activeIngredientId);
+      return item.activeIngredientId;
+    });
+
+    console.log('Mapped IDs:', ids);
+
+    const filtered = ids.filter((id): id is number => id != null);
+    console.log('Filtered IDs:', filtered);
+
+
+    return filtered;
+  }, [patientPrescriptionMedicationsRaw]);
+
+
+  useEffect(() => {
+    if (!activeIngredientIds.length) return;
+    getActiveIngredientsByIds(activeIngredientIds);
+  }, [activeIngredientIds, getActiveIngredientsByIds]);
+  const activeIngredientsMap = useMemo(() => {
+    return new Map(
+      (activeIngredientsByIds ?? []).map((item) => [item.id, item])
+    );
+  }, [activeIngredientsByIds]);
 
   const patientPrescriptionMedications = asArray(
     patientPrescriptionMedicationsRaw
@@ -332,10 +373,10 @@ const Prescription = (props: Props) => {
     if (!key && key !== 0) return '';
     const lovList = list ?? [];
     if (!lovList.length) return '';
-    
+
     const keyStr = String(key);
     const keyNum = Number(key);
-    
+
     for (const item of lovList) {
       if (String(item?.key) === keyStr || Number(item?.key) === keyNum) {
         const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
@@ -350,10 +391,10 @@ const Prescription = (props: Props) => {
         if (display) return String(display);
       }
     }
-    
+
     const fallback = conjureValueBasedOnKeyFromList(lovList, key, labelKey);
     if (fallback && fallback !== key) return String(fallback);
-    
+
     return '';
   };
 
@@ -410,19 +451,19 @@ const Prescription = (props: Props) => {
     }
 
     // Custom instructions: read directly from medication object
-    if (type === 'CUSTOM_INSTRUCTIONS' ) {
+    if (type === 'CUSTOM_INSTRUCTIONS') {
       // Try reading from medication object first (new API)
       if (row?.dose != null || row?.doesUnit || row?.frequency || row?.rout) {
         // Get LOV arrays - handle both object and direct array formats
         const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
         const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
-        
-        const unitDisplay = getLovDisplay(unitLovArray, row?.doesUnit) || 
-                            formatEnumString(row?.doesUnit) ||
-                            (row?.doesUnit ? String(row.doesUnit) : '');
-        const freqDisplay = getLovDisplay(freqLovArray, row?.frequency) || 
-                           formatEnumString(row?.frequency) ||
-                           (row?.frequency ? String(row.frequency) : '');
+
+        const unitDisplay = getLovDisplay(unitLovArray, row?.doesUnit) ||
+          formatEnumString(row?.doesUnit) ||
+          (row?.doesUnit ? String(row.doesUnit) : '');
+        const freqDisplay = getLovDisplay(freqLovArray, row?.frequency) ||
+          formatEnumString(row?.frequency) ||
+          (row?.frequency ? String(row.frequency) : '');
         return [
           toStr(row?.dose),
           unitDisplay,
@@ -433,7 +474,7 @@ const Prescription = (props: Props) => {
           .filter(Boolean)
           .join(', ');
       }
-      
+
       // Fallback to legacy custom instructions lookup
       const ci = customInstructions.find(
         (x: any) => String(x.prescriptionMedicationsKey) === String(row?.id ?? row?.key)
@@ -629,95 +670,44 @@ const Prescription = (props: Props) => {
     }
   };
 
-  const [updatePrescription] = useUpdatePatientPrescriptionMutation();
-  const [updateMedicationStatus] = useUpdatePatientPrescriptionMedicationMutation();
+
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
-    const [updateEncounter] = useUpdateEncounterMutation();
-
-  const handleSubmitPres = () => {
-    if (!currentPrescription?.id) return;
-    setSubmitAssignment({
-      toFacilityId: currentPrescription?.toFacilityId ?? selectedFacility?.id ?? null,
-      toDepartmentId: currentPrescription?.toDepartmentId ?? null
-    });
-    setSubmitAssignModalOpen(true);
-  };
-
-  const handleConfirmSubmitPres = async () => {
-    if (!currentPrescription?.id) return;
-    if (!submitAssignment.toFacilityId || !submitAssignment.toDepartmentId) {
-      dispatch(
-        notify({
-          msg: 'Please select To Facility and Department',
-          type: 'warning'
-        } as any)
-      );
-      return;
-    }
-
+  const [triggerGetPrescriptionPdf] = useLazyGetPrescriptionPdfQuery();
+   const handlePrintPrescriptionPdf = async (rowData: any) => {
     try {
-      await updatePrescription({
-        id: Number(currentPrescription.id),
-        body: {
-          toFacilityId: Number(submitAssignment.toFacilityId),
-          toDepartmentId: Number(submitAssignment.toDepartmentId),
-          lastModifiedBy: authSlice?.user?.login ?? 'system'
-        }
+      const blob = await triggerGetPrescriptionPdf({
+        prescriptionId: rowData.id
       }).unwrap();
 
-      const nonCanceledMeds = (patientPrescriptionMedications ?? []).filter(
-        (m: any) =>
-          m?.id != null &&
-          !isCanceledStatus(m?.status) &&
-          String(m?.status ?? '').toUpperCase() !== 'SUBMITTED'
-      );
+      const fileURL = window.URL.createObjectURL(blob);
 
-      await Promise.all(
-        nonCanceledMeds.map((m: any) =>
-          updateMedicationStatus({
-            id: Number(m.id),
-            body: {
-              status: 'SUBMITTED',
-              lastModifiedBy: authSlice?.user?.login ?? 'system'
-            } as any
-          }).unwrap()
-        )
-      );
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `prescription-${rowData.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download prescription pdf', error);
+    }
+  };
+  const handleConfirmSubmitPres = async () => {
+    if (!currentPrescription?.id) return;
+
+
+    try {
+
+
 
       await submitPrescription({
         id: currentPrescription.id,
-        lastModifiedBy: authSlice?.user?.login ?? 'system'
       }).unwrap();
       dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
-        if (encounter && !encounter.isObserved) {
-        const updated = await updateEncounter({
-          id: encounterId,
-          body: {
-            id: encounter?.id,
-            patientId: encounter?.patientId ?? encounter?.patient?.id ?? encounter?.patientObject?.id,
-            encounterNumber: encounter?.encounterNumber ?? null,
-            facilityId: encounter?.facilityId ?? null,
-            departmentId: encounter?.departmentId ?? null,
-            practitionerId: encounter?.practitionerId ?? null,
-            encounterType: encounter?.encounterType ?? null,
-            encounterReason: encounter?.encounterReason ?? null,
-            followUpEncounterId: encounter?.followUpEncounterId ?? null,
-            priorityLevel: encounter?.priorityLevel ?? null,
-            originType: encounter?.originType ?? null,
-            originName: encounter?.originName ?? null,
-            notes: encounter?.notes ?? null,
-            departmentDailySequenceNumber: encounter?.departmentDailySequenceNumber ?? null,
-            encounterDate: encounter?.encounterDate ?? null,
-            status: encounter?.status ?? null,
-            chiefComplaint: encounter?.chiefComplaint ?? null,
-            hasPrescription: true,
-            hasOrder: encounter?.hasOrder ?? false,
-            isObserved: encounter?.isObserved ?? false,
-          }
-        }).unwrap();
 
-        console.log('Encounter updated to observed:', updated);
-      }
 
       setSubmitAssignModalOpen(false);
       setSummaryModalOpen(false);
@@ -774,51 +764,11 @@ const Prescription = (props: Props) => {
       prescriptionHeaderId: currentPrescription.id
     } as any);
 
-      setOpenDetailsModal(true);
-      setOpenToAdd(true);
+    setOpenDetailsModal(true);
+    setOpenToAdd(true);
   };
 
-  const [generatePrescriptionPdf, { isLoading: isGeneratingPdf }] =
-    useGeneratePrescriptionPdfMutation();
-
-  const handleGeneratePrescriptionPdf = async () => {
-    try {
-      if (!patient || !encounter || !currentPrescription?.id) {
-        dispatch(notify({ msg: 'Missing patient, encounter or prescription', type: 'error' } as any));
-        return;
-      }
-
-      const blob = await generatePrescriptionPdf({
-        patient,
-        encounter,
-        prescriptionKey: currentPrescription.id,
-        genericMedicationList: genericMedicationListResponse?.data ?? [],
-        facilityName,
-        authenticatedUserName: `${authSlice?.user?.firstName} ${authSlice?.user?.lastName}`,
-        authenticatedUserEmail: authSlice?.user?.email,
-        predefinedInstructions: predefinedInstructionsListResponse?.data ?? [],
-        customInstructions: customeInstructions?.object ?? []
-      }).unwrap();
-
-      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-
-      link.href = url;
-      link.download = `Prescription_${currentPrescription.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.message || 'Failed to generate prescription PDF',
-          type: 'error'
-        } as any)
-      );
-    }
-  };
+ 
 
   // Table columns
   const tableColumns: any[] = [
@@ -835,6 +785,17 @@ const Prescription = (props: Props) => {
           disabled={edit}
         />
       )
+    },
+    {
+      key: 'activeIngredientId',
+
+      title: 'Active Ingredients',
+      flexGrow: 1,
+      render: (rowData: any) => {
+        const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
+        return ingredient?.name ? String(ingredient.name) : '-';
+      }
+
     },
     {
       key: 'medicationName',
@@ -883,13 +844,13 @@ const Prescription = (props: Props) => {
             // Get LOV arrays - handle both object and direct array formats
             const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
             const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
-            
-            const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) || 
-                                formatEnumString(rowData?.doesUnit) ||
-                                (rowData?.doesUnit ? String(rowData.doesUnit) : '');
-            const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) || 
-                               formatEnumString(rowData?.frequency) ||
-                               (rowData?.frequency ? String(rowData.frequency) : '');
+
+            const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) ||
+              formatEnumString(rowData?.doesUnit) ||
+              (rowData?.doesUnit ? String(rowData.doesUnit) : '');
+            const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) ||
+              formatEnumString(rowData?.frequency) ||
+              (rowData?.frequency ? String(rowData.frequency) : '');
             return cleanJoin([
               rowData?.dose,
               unitDisplay,
@@ -897,7 +858,7 @@ const Prescription = (props: Props) => {
               freqDisplay
             ]);
           }
-          
+
           // Fallback to legacy custom instructions lookup
           const custom = customeInstructions?.object?.find(
             (item: any) => String(item?.prescriptionMedicationsKey) === String(rowData.id)
@@ -933,7 +894,7 @@ const Prescription = (props: Props) => {
       dataKey: 'status',
       title: 'Status',
       flexGrow: 1,
-      render: (rowData: any) => ( rowData?.status? formatEnumString(rowData.status) : '')
+      render: (rowData: any) => (rowData?.status ? formatEnumString(rowData.status) : '')
     },
     {
       key: 'actions',
@@ -941,7 +902,7 @@ const Prescription = (props: Props) => {
       flexGrow: 1.5,
       render: (rowData: any) => {
         const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-        
+
 
         return (
           <div className="flex-c8">
@@ -1011,8 +972,15 @@ const Prescription = (props: Props) => {
     }
   ];
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
+    <div dir={dir}>
       {uniqueBrandIds.map((id: string) => (
         <BrandActivesPrefetcher key={id} brandId={id} onLoaded={onActivesLoaded} />
       ))}
@@ -1053,7 +1021,7 @@ const Prescription = (props: Props) => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => {}}
+              setRecord={() => { }}
               width={110}
             />
           </Form>
@@ -1062,14 +1030,14 @@ const Prescription = (props: Props) => {
         <div className={clsx('bt-right', { 'disabled-panel': edit })}>
           <UrgencyButton />
 
-          <MyButton loading={isLoadingPrescriptions}>Validate with Gallon Reasoner</MyButton>
+          <MyButton loading={isLoadingPrescriptions}><Translate>Validate with Gallon Reasoner</Translate></MyButton>
 
           <MyButton
             onClick={handleNewPrescriptionAndAddMedication}
             prefixIcon={() => <PlusIcon />}
             loading={isLoadingPrescriptions || isLoadingCreateOrGet}
             disabled={
-              edit || 
+              edit || isNurse ||
               !currentPrescription?.id ||
               String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
             }
@@ -1101,9 +1069,8 @@ const Prescription = (props: Props) => {
         </div>
 
         <MyButton
-          onClick={handleGeneratePrescriptionPdf}
-          loading={isGeneratingPdf}
-          disabled={!currentPrescription?.id}
+          onClick={() => handlePrintPrescriptionPdf(currentPrescription)}
+          disabled={!currentPrescription?.id || currentPrescription?.status !== 'SUBMITTED'}
           prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
         />
       </div>
@@ -1162,7 +1129,7 @@ const Prescription = (props: Props) => {
         preKey={currentPrescription?.id}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => {}}
+        setOrderMedication={() => { }}
         drugKey={null}
         editing={false}
       />
@@ -1183,70 +1150,22 @@ const Prescription = (props: Props) => {
         edit={edit}
         open={summaryModalOpen}
         setOpen={setSummaryModalOpen}
-        handleSave={handleSubmitPres}
+        handleSave={handleConfirmSubmitPres}
         medicationValidationPayload={payload}
       />
-      <MyModal
-        open={submitAssignModalOpen}
-        setOpen={setSubmitAssignModalOpen}
-        title="Submit Assignment"
-        actionButtonLabel="Save"
-        actionButtonFunction={handleConfirmSubmitPres}
-        content={
-          <Form fluid>
-            <MyInput
-              fieldName="toFacilityId"
-              fieldType="select"
-              fieldLabel="To Facility"
-              selectData={facilityListResponse ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={submitAssignment}
-              setRecord={(obj: any) =>
-                setSubmitAssignment(prev => ({
-                  ...prev,
-                  toFacilityId: obj?.toFacilityId ? Number(obj.toFacilityId) : null,
-                  toDepartmentId:
-                    Number(prev?.toFacilityId) === Number(obj?.toFacilityId)
-                      ? prev.toDepartmentId
-                      : null
-                }))
-              }
-              required
-            />
-            <MyInput
-              fieldName="toDepartmentId"
-              fieldType="select"
-              fieldLabel="To Department"
-              selectData={departmentOptions}
-              selectDataLabel="name"
-              selectDataValue="id"
-              record={submitAssignment}
-              setRecord={(obj: any) =>
-                setSubmitAssignment(prev => ({
-                  ...prev,
-                  toDepartmentId: obj?.toDepartmentId ? Number(obj.toDepartmentId) : null
-                }))
-              }
-              disabled={!submitAssignment?.toFacilityId}
-              required
-            />
-          </Form>
-        }
-      />
+
 
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${
-          selectedMedicationForAttachments
+        title={`Attachments - ${selectedMedicationForAttachments
             ? genericMedicationListResponse?.data?.find(
-                (item: any) =>
-                  String(item.id) ===
-                  String(
-                    (selectedMedicationForAttachments as any)?.medicationsId ??
-                      (selectedMedicationForAttachments as any)?.genericMedicationsId
-                  )
+              (item: any) =>
+                String(item.id) ===
+                String(
+                  (selectedMedicationForAttachments as any)?.medicationsId ??
+                  (selectedMedicationForAttachments as any)?.genericMedicationsId
+                )
             )?.name || 'Medication'
             : 'Medication'
           }`}
@@ -1258,13 +1177,13 @@ const Prescription = (props: Props) => {
             source="PRESCRIPTION_ORDER_ATTACHMENT"
             sourceId={selectedMedicationForAttachments?.id ?? undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />
 
       <AllergyFloatingButton patient={patient} />
-    </>
+    </div>
   );
 };
 

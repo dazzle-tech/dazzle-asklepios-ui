@@ -29,6 +29,7 @@ import { Checkbox } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import WarningDetailsSection from './WarningDetailsSection';
 import './styles.less';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 
 interface WarningProps {
   patient?: any;
@@ -323,8 +324,26 @@ const Warning = (props: WarningProps) => {
     });
   };
 
+useEffect(() => {
+  dispatch(setPageCode('medical_warnings'));
+  dispatch(setDivContent('Medical Warnings'));
+
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
+
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div>
+    <div dir={dir}>
       <div className="bt-div-2">
         <div className="bt-left-2">
           {showTableButtons && (
@@ -356,7 +375,7 @@ const Warning = (props: WarningProps) => {
           )}
 
           <Checkbox checked={showCanceled} onChange={() => setShowCanceled(!showCanceled)}>
-            Show Cancelled
+            <Translate>Show Cancelled</Translate>
           </Checkbox>
         </div>
 

@@ -546,7 +546,7 @@ const Referrals = (props: any) => {
                     if (showCanceled === false) setEditing(true);
                   }}
                 >
-                  Show Cancelled
+                  <Translate>Show Cancelled</Translate>
                 </Checkbox>
               </div>
 

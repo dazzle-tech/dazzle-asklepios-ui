@@ -52,9 +52,17 @@ const Modules = () => {
   const divContent = (
     "Modules"
   );
+
+
+  useEffect(() => {
   dispatch(setPageCode('Modules'));
   dispatch(setDivContent(divContent));
 
+  return () => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(''));
+  };
+}, [dispatch]);
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -66,12 +74,7 @@ const Modules = () => {
     handleFilterChange('name', recordOfSearch['name']);
   }, [recordOfSearch]);
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+ 
 
   // handling click on Add New Button
   const handleModuleNew = () => {
@@ -261,7 +264,16 @@ const Modules = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <Carousel className="carousel" autoplay={false} activeIndex={carouselActiveIndex}>
       <Panel>
         <MyTable
@@ -323,6 +335,7 @@ const Modules = () => {
       </Panel>
       {conjureSubViews()}
     </Carousel>
+  </div>
   );
 };
 export default Modules;

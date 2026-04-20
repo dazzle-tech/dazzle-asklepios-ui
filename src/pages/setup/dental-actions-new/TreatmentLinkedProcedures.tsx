@@ -138,7 +138,7 @@ const TreatmentLinkedProcedures = ({
       title: <Translate>CDT Code</Translate>,
       flexGrow: 3,
        render: (row) => {
-        return row?.cdtCode.code ?? '';
+        return row?.cdtCode?.code ?? '';
       },
     },
     {
@@ -146,7 +146,7 @@ const TreatmentLinkedProcedures = ({
       title: <Translate>Description</Translate>,
       flexGrow: 4,
       render: (row) => {
-        return row?.cdtCode.description ?? '';
+        return row?.cdtCode?.description ?? '';
       },
     },
     {
@@ -173,6 +173,13 @@ const TreatmentLinkedProcedures = ({
   // -----------------------------------------
   // 7) UI
   // -----------------------------------------
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
@@ -184,7 +191,7 @@ const TreatmentLinkedProcedures = ({
       actionButtonLabel="Close"
       actionButtonFunction={() => setOpen(false)}
       content={() => (
-        <Form fluid className="container-of-linked-procedures-dental">
+        <Form fluid className="container-of-linked-procedures-dental" dir={dir}>
           <Col>
 
             {/* CDT SELECT WITH SEARCH + PAGINATION */}

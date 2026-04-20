@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip, Typography } f
 import ArrowDownLineIcon from '@rsuite/icons/ArrowDownLine';
 import NoticeIcon from '@rsuite/icons/Notice';
 import { FaEarthAmericas } from 'react-icons/fa6';
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import ChatScreen from '../ChatScreen/ChatScreen';
 import './style.less';
@@ -41,8 +41,7 @@ import {
 import { openChangePassword, openEditProfile, notify } from '@/utils/uiReducerActions';
 import { useLogoutMutation } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
-import { setUser, setSelectedDepartment } from '@/reducers/authSlice';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { logout, setSelectedDepartment } from '@/reducers/authSlice';
 import { useAppSelector } from '@/hooks';
 import { useChangeLangMutation } from '@/services/uiService';
 import { setLang, setMode } from '@/reducers/uiSlice';
@@ -74,30 +73,37 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     },
     [dispatch]
   );
+
   const { data: departmentsResponse } = useGetDepartmentsQuery({ page: 0, size: 10000 });
   const departments = departmentsResponse?.data ?? [];
+
   const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
   const facilities = Array.isArray(facilitiesResponse) ? facilitiesResponse : [];
+
   const [showChatModal, setShowChatModal] = useState(false);
   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
-  const [width, setWidth] = useState<number>(window.innerWidth); // window width
+  const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
+
   const { data: langData } = useGetAllLanguagesQuery({});
   const navigate = useNavigate();
   const userId = authSlice.user?.id;
+
   type UserDepartmentWithNames = UserDepartment & {
     departmentName?: string | null;
     facilityName?: string | null;
   };
+
   const selectedDepartment = authSlice.selectedDepartment;
   const hasWarnedNoDepartmentRef = useRef(false);
+
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
   const facilityKey = selectedFacilityId ?? 'no-facility';
+
   const {
     data: activeDepartmentsResponse,
-    isLoading: isLoadingDepartments,
-    isFetching: isFetchingDepartments
+    isLoading: isLoadingDepartments
   } = useGetActiveUserDepartmentsByUserQuery(
     { userId: userId as number, facilityId: facilityKey },
     {
@@ -105,7 +111,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       refetchOnMountOrArgChange: true
     }
   );
+
   const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
+
   const storedDepartmentMatch =
     selectedDepartment &&
     activeDepartments.find(
@@ -113,6 +121,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         dept?.departmentId === selectedDepartment.departmentId &&
         dept?.facilityId === selectedDepartment.facilityId
     );
+
   const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
   const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
 
@@ -125,30 +134,35 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
   const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
-  const selectedDepartmentEffective =
-    storedDepartmentMatch ??
-    defaultDepartmentEntity ??
-    (activeDepartments.length > 0 ? activeDepartments[0] : null);
+
+  const selectedDepartmentEffective = useMemo(() => {
+    return (
+      storedDepartmentMatch ??
+      defaultDepartmentEntity ??
+      (activeDepartments.length > 0 ? activeDepartments[0] : null)
+    );
+  }, [storedDepartmentMatch, defaultDepartmentEntity, activeDepartments]);
 
   const resolveFacilityName = (facilityId?: string | number | null) => {
     if (facilityId != null) {
       const resolved =
         conjureValueBasedOnIDFromList(facilities as any[], facilityId, 'name') ??
         (facilityId ? `Facility #${facilityId}` : undefined);
-      if (resolved) {
-        return resolved;
-      }
+
+      if (resolved) return resolved;
     }
+
     const tenantFacility = authSlice?.tenant?.selectedFacility;
     return tenantFacility?.name ?? tenantFacility?.facilityName ?? undefined;
   };
 
   const resolveDepartmentName = (departmentId?: string | number | null) => {
     if (departmentId == null) return undefined;
-    const resolved =
+
+    return (
       conjureValueBasedOnIDFromList(departments as any[], departmentId, 'name') ??
-      (departmentId ? `Department #${departmentId}` : undefined);
-    return resolved;
+      (departmentId ? `Department #${departmentId}` : undefined)
+    );
   };
 
   useEffect(() => {
@@ -170,37 +184,38 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       return;
     }
 
-    const resolvedDepartmentName = resolveDepartmentName(selectedDepartmentEffective.departmentId);
-    const resolvedFacilityName = resolveFacilityName(selectedDepartmentEffective.facilityId);
+    const nextDepartmentId = selectedDepartmentEffective.departmentId;
+    const nextFacilityId = selectedDepartmentEffective.facilityId;
 
-    if (
-      !selectedDepartment ||
-      selectedDepartment?.departmentId !== selectedDepartmentEffective.departmentId ||
-      selectedDepartment?.facilityId !== selectedDepartmentEffective.facilityId ||
-      selectedDepartment?.departmentName !== resolvedDepartmentName ||
-      selectedDepartment?.facilityName !== resolvedFacilityName
-    ) {
-      dispatch(
-        setSelectedDepartment({
-          departmentId: selectedDepartmentEffective.departmentId,
-          facilityId: selectedDepartmentEffective.facilityId,
-          departmentName: resolvedDepartmentName,
-          facilityName: resolvedFacilityName
-        })
-      );
+    const sameSelection =
+      selectedDepartment?.departmentId === nextDepartmentId &&
+      selectedDepartment?.facilityId === nextFacilityId;
+
+    if (sameSelection) {
+      return;
     }
+
+    dispatch(
+      setSelectedDepartment({
+        departmentId: nextDepartmentId,
+        facilityId: nextFacilityId,
+        departmentName: resolveDepartmentName(nextDepartmentId),
+        facilityName: resolveFacilityName(nextFacilityId)
+      })
+    );
   }, [
-    selectedDepartment,
-    selectedDepartmentEffective,
-    activeDepartments,
-    departments,
-    facilities,
+    authSlice?.user?.id,
+    authSlice?.tenant?.selectedFacility?.id,
+    selectedDepartment?.departmentId,
+    selectedDepartment?.facilityId,
+    selectedDepartmentEffective?.departmentId,
+    selectedDepartmentEffective?.facilityId,
     isLoadingDepartments,
+    activeDepartments.length,
     dispatch,
     toast
   ]);
 
-  // container to choose action from more menu
   const contentOfMoreIconMenu = (
     <Popover full>
       <Dropdown.Menu>
@@ -210,6 +225,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
             Customize Form
           </div>
         </Dropdown.Item>
+
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faChartColumn} />
@@ -223,6 +239,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
             Announcements
           </div>
         </Dropdown.Item>
+
         <Dropdown.Item onClick={() => setOpenMoreMenu(false)}>
           <div className="container-of-icon-and-key1">
             <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faHeadset} />
@@ -249,11 +266,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
           <Dropdown.Item
             onClick={() => {
               setOpenMoreMenu(false);
-              if (mode === 'light') {
-                dispatch(setMode('dark'));
-              } else {
-                dispatch(setMode('light'));
-              }
+              dispatch(setMode(mode === 'light' ? 'dark' : 'light'));
             }}
           >
             <div className="container-of-icon-and-key1">
@@ -290,7 +303,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 <Stack spacing={4}>
                   <Badge /> <span style={{ color: '#57606a' }}>{time}</span>
                 </Stack>
-
                 <p>{content}</p>
               </List.Item>
             );
@@ -302,20 +314,11 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       </Popover>
     );
   };
+
   const uiSlice = useAppSelector(state => state.ui);
+
   const renderLangSpeaker = ({ onClose, left, top, className }: any, ref) => {
-    // const uiSlice = useAppSelector(state => state.ui);
-
-    const [
-      changeLang,
-      { isLoading: isChangingLang, data: changeLangResult, error: changeLangError }
-    ] = useChangeLangMutation();
-
-    const handleChangeLang = lang => {
-      changeLang(lang).unwrap();
-    };
-
-    const handleSelect = eventKey => {
+    const handleSelect = () => {
       onClose();
     };
 
@@ -324,9 +327,8 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         <Dropdown.Menu onSelect={handleSelect}>
           <Dropdown.Item divider />
           {langData?.map(lang => (
-            <>
+            <React.Fragment key={lang.langKey}>
               <Dropdown.Item
-                key={lang.langKey}
                 active={uiSlice?.lang === lang?.langKey}
                 onClick={() => {
                   dispatch(setLang(lang?.langKey));
@@ -338,48 +340,42 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 {lang.langName}
               </Dropdown.Item>
               <Dropdown.Item divider />
-            </>
+            </React.Fragment>
           ))}
         </Dropdown.Menu>
       </Popover>
     );
   };
 
-  const renderAdminSpeaker = ({ onClose, left, top, className, open }: any, ref) => {
+  const renderAdminSpeaker = ({ onClose, left, top, className }: any, ref) => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const [apiLogout, { isLoading: isLoggingOut }] = useLogoutMutation();
 
     const handleOpenChangePassword = () => {
       dispatch(openChangePassword());
     };
+
     const handleOpenShowEditProfile = () => {
       dispatch(openEditProfile());
     };
 
-    const [logout, { isLoading: isLoggingOut, data: logoutResult, error: logoutError }] =
-      useLogoutMutation();
-    const navigate = useNavigate();
-
-    const handleSelect = eventKey => {
+    const handleSelect = () => {
       onClose();
     };
 
-    const handleLogout = () => {
-      dispatch(setUser(null));
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(''));
+    const handleLogout = async () => {
+      try {
+        await apiLogout({}).unwrap();
+      } catch (e) {
+      }
 
-      localStorage.clear();
+      dispatch(logout());
 
-      dispatch({ type: 'auth/logout' });
+      localStorage.setItem('logout_event', Date.now().toString());
 
       navigate('/login', { replace: true });
     };
-
-    useEffect(() => {
-      if (logoutResult && !isLoggingOut && !authSlice.user) {
-        navigate('/login');
-      }
-    }, [isLoggingOut, authSlice.user]);
 
     return (
       <Popover ref={ref} className={className} style={{ left, top }} full>
@@ -390,17 +386,21 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               {authSlice.user?.firstName}-{authSlice.user?.lastName}
             </strong>
           </Dropdown.Item>
+
           <Dropdown.Item panel style={{ padding: 10, width: 160 }}>
             <p>Job Role</p>
             <strong>{formatEnumString(authSlice.user?.jobRole)}</strong>
           </Dropdown.Item>
+
           <Dropdown.Item divider />
           <Dropdown.Item onSelect={handleOpenShowEditProfile}>Edit Profile</Dropdown.Item>
           <Dropdown.Item eventKey="change-password" onSelect={handleOpenChangePassword}>
             Change Password
           </Dropdown.Item>
           <Dropdown.Item divider />
-          <Dropdown.Item onClick={handleLogout}>Sign out</Dropdown.Item>
+          <Dropdown.Item onClick={handleLogout} disabled={isLoggingOut}>
+            {isLoggingOut ? 'Signing out...' : 'Sign out'}
+          </Dropdown.Item>
         </Dropdown.Menu>
       </Popover>
     );
@@ -421,14 +421,16 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         {(selectedDepartment?.facilityName ||
           authSlice?.tenant?.selectedFacility?.name ||
           authSlice?.tenant?.selectedFacility?.facilityName) && (
-          <span style={{ fontSize: '12px', color: '#6c757d' }}>
-            {selectedDepartment?.facilityName ??
-              authSlice?.tenant?.selectedFacility?.name ??
-              authSlice?.tenant?.selectedFacility?.facilityName}
-          </span>
-        )}
+            <span style={{ fontSize: '12px', color: '#6c757d' }}>
+              {selectedDepartment?.facilityName ??
+                authSlice?.tenant?.selectedFacility?.name ??
+                authSlice?.tenant?.selectedFacility?.facilityName}
+            </span>
+          )}
       </div>
+
       <Divider style={{ margin: 0 }} />
+
       {isLoadingDepartments ? (
         <div style={{ padding: '12px' }}>Loading departments…</div>
       ) : activeDepartments.length === 0 ? (
@@ -440,10 +442,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
               defaultDepartmentEntity?.id != null
                 ? defaultDepartmentEntity.id === dept.id
                 : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                  defaultDepartmentEntity?.facilityId === dept.facilityId;
+                defaultDepartmentEntity?.facilityId === dept.facilityId;
+
             const isActive =
               selectedDepartment?.departmentId === dept.departmentId &&
               selectedDepartment?.facilityId === dept.facilityId;
+
             return (
               <List.Item key={dept.id ?? `${dept.userId}-${dept.departmentId}`}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -459,14 +463,12 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                         textAlign: 'left'
                       }}
                       onClick={() => {
-                        const resolvedDepartmentName = resolveDepartmentName(dept.departmentId);
-                        const resolvedFacilityName = resolveFacilityName(dept.facilityId);
                         dispatch(
                           setSelectedDepartment({
                             departmentId: dept.departmentId,
                             facilityId: dept.facilityId,
-                            departmentName: resolvedDepartmentName,
-                            facilityName: resolvedFacilityName
+                            departmentName: resolveDepartmentName(dept.departmentId),
+                            facilityName: resolveFacilityName(dept.facilityId)
                           })
                         );
                         window.location.reload();
@@ -475,6 +477,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                     >
                       {resolveDepartmentName(dept.departmentId)}
                     </button>
+
                     {isActive && (
                       <span
                         style={{
@@ -488,6 +491,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                         Current
                       </span>
                     )}
+
                     {isDefault && (
                       <span
                         style={{
@@ -502,7 +506,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                       </span>
                     )}
                   </div>
-                  {/* Facility name intentionally omitted here; shown under My Departments header */}
                 </div>
               </List.Item>
             );
@@ -516,7 +519,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     setOpenMoreMenu(false);
   }, []);
 
-  // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
@@ -532,16 +534,19 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
         {width >= 930 ? (
           <>
             <Tooltip title="Customize Form">
-              <IconButton size="small">
+              <IconButton
+                size="small"
+                onClick={() => {
+                  navigate('/form-template-use');
+                }}
+              >
                 <FontAwesomeIcon
                   className="header-screen-bar-icon-size-handle"
                   icon={faFileLines}
-                  onClick={() => {
-                    navigate('/form-template-use');
-                  }}
                 />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="Customize Dashboard">
               <IconButton size="small">
                 <FontAwesomeIcon
@@ -550,23 +555,8 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Tooltip>
-            {/* <Tooltip title="Secure Messaging">
-              <IconButton size="small" onClick={() => setShowChatModal(true)}>
-                <FontAwesomeIcon
-                  className="header-screen-bar-icon-size-handle"
-                  icon={faCommentDots}
-                />
-              </IconButton>
-            </Tooltip> */}
-            {/* <Tooltip title="My Appointments">
-              <IconButton size="small" onClick={() => setShowAppointmentsModal(true)}>
-                <FontAwesomeIcon
-                  className="header-screen-bar-icon-size-handle"
-                  icon={faCalendarDays}
-                />
-              </IconButton>
-            </Tooltip> */}
-            {authSlice.user?.admin && authSlice.user?.jobRole === 'PHYSICIAN' && (
+
+            {authSlice.user?.jobRole === 'PHYSICIAN' && (
               <Tooltip title="My Consultations">
                 <IconButton
                   size="small"
@@ -587,11 +577,13 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faBullhorn} />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="Help & Support">
               <IconButton size="small">
                 <FontAwesomeIcon className="header-screen-bar-icon-size-handle" icon={faHeadset} />
               </IconButton>
             </Tooltip>
+
             <Tooltip title="Sticky Notes">
               <IconButton size="small" onClick={() => setExpandNotes(!expandNotes)}>
                 <FontAwesomeIcon
@@ -600,7 +592,8 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Tooltip>
-            <Tooltip title="MedCare Incident Portal" className='hidden'>
+
+            <Tooltip title="MedCare Incident Portal" className="hidden">
               <IconButton
                 size="small"
                 onClick={() => {
@@ -628,6 +621,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </span>
             </Whisper>
+
             {openMoreMenu && (
               <div
                 onClick={closeMenus}
@@ -643,6 +637,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
             )}
           </>
         )}
+
         {(width > 500 || !displaySearch) && (
           <>
             <Whisper placement="bottomEnd" trigger="click" speaker={renderDepartmentsSpeaker}>
@@ -657,6 +652,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 </Tooltip>
               </span>
             </Whisper>
+
             <Whisper
               placement="bottomEnd"
               trigger="click"
@@ -667,6 +663,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 <FaEarthAmericas size={20} color={mode === 'light' ? '#333' : 'var(--white)'} />
               </IconButton>
             </Whisper>
+
             <Whisper
               placement="bottomEnd"
               trigger="click"
@@ -680,7 +677,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                 />
               </IconButton>
             </Whisper>
+
             <Divider style={{ height: '31px', fontSize: '4px' }} vertical />
+
             <Whisper
               placement="bottomEnd"
               trigger="click"
@@ -705,44 +704,18 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}></span>
                   <span style={{ color: '#9E9E9E', fontSize: '12px' }}></span>
                 </div>
-                <ArrowDownLineIcon style={{ marginLeft: 8 }} />
+                <ArrowDownLineIcon
+                  style={{
+                    marginInlineStart: 8,
+                    position: 'relative',
+                    zIndex: 10
+                  }}
+                />
               </div>
             </Whisper>
           </>
         )}
       </div>
-
-      {/* Chat Screen Modal */}
-      {/* <Dialog
-        open={showChatModal}
-        onClose={() => setShowChatModal(false)}
-        maxWidth="lg"
-        fullWidth
-        classes={{ paper: 'chat-modal-paper' }}
-      >
-        <DialogTitle className="chat-modal-title">
-          <div className="chat-modal-title-inner">
-            <Typography variant="h6">Secure Messaging</Typography>
-            <IconButton onClick={() => setShowChatModal(false)} size="small">
-              <CloseIcon />
-            </IconButton>
-          </div>
-        </DialogTitle>
-        <DialogContent className="chat-modal-content">
-          <ChatScreen />
-        </DialogContent>
-      </Dialog> */}
-
-      {/* <MyModal
-        open={showAppointmentsModal}
-        setOpen={setShowAppointmentsModal}
-        title="My Appointments"
-        size="70vw"
-        bodyheight="78vh"
-        content={<MyAppointmentScreen />}
-        hideBack={true}
-        actionButtonLabel="Save"
-      /> */}
     </>
   );
 };

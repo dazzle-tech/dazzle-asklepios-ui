@@ -75,7 +75,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = patient || enc ? undefined : (location.state as any);
-  console.log('PatientEMR propsData', propsData?.patient, propsData?.encounter);
   const [encounter, setLocalEncounter] = useState<any>(
     enc ?? propsData?.encounter ?? { ...newApEncounter, discharge: false }
   );
@@ -145,7 +144,15 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
     }
   }, [activeSectionCard]);
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+    
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
+  <div dir={dir}>
     <div className={`emr-container ${inModal ? 'emr-in-modal' : ''}`}>
       <div className="emr-content">
         <div className="emr-main-row-handle">
@@ -237,7 +244,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
             />
           </div>
 
-          <div className="animation-emr-card-patient-emr">
+          {/* <div className="animation-emr-card-patient-emr">
             <EMRCard
               number={3}
               footerText="Services"
@@ -250,7 +257,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               }
               active={activeSectionCard === 'services'}
             />
-          </div>
+          </div> */}
 
           <div className="animation-emr-card-patient-emr">
             <EMRCard
@@ -300,7 +307,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
           {activeSectionCard === 'visits' && (
             <div className="emr-main-row-handle">
               <div className="animation-emr-card-patient-emr">
-                <EMRCard
+                {/* <EMRCard
                   number={4}
                   footerText="Appointments"
                   icon={faCalendar}
@@ -311,7 +318,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                     setActiveCard(activeCard === 'appointments' ? null : 'appointments')
                   }
                   active={activeCard === 'appointments'}
-                />
+                /> */}
               </div>
 
               <div className="animation-emr-card-patient-emr">
@@ -330,7 +337,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               </div>
 
               <div className="animation-emr-card-patient-emr">
-                <EMRCard
+                {/* <EMRCard
                   number={3}
                   footerText="Inpatient"
                   icon={faBed}
@@ -339,24 +346,24 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'inpatient' ? null : 'inpatient')}
                   active={activeCard === 'inpatient'}
-                />
+                /> */}
               </div>
 
               <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={3}
-                  footerText="Emergency"
+                  footerText="Urgent Care"
                   icon={faTriangleExclamation}
                   backgroundColor="var(--card-blue)"
                   width={150}
                   height={100}
-                  active={activeCard === 'emergency'}
-                  onClick={() => setActiveCard(activeCard === 'emergency' ? null : 'emergency')}
+                  active={activeCard === 'Urgent Care'}
+                  onClick={() => setActiveCard(activeCard === 'Urgent Care' ? null : 'Urgent Care')}
                 />
               </div>
 
               <div className="animation-emr-card-patient-emr">
-                <EMRCard
+                {/* <EMRCard
                   number={3}
                   footerText="Day Case"
                   icon={faPersonShelter}
@@ -365,7 +372,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'daycase' ? null : 'daycase')}
                   active={activeCard === 'daycase'}
-                />
+                /> */}
               </div>
             </div>
           )}
@@ -416,7 +423,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               </div>
 
               <div className="animation-emr-card-patient-emr">
-                <EMRCard
+                {/* <EMRCard
                   number={3}
                   footerText="Operations"
                   icon={faBedPulse}
@@ -425,7 +432,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   height={100}
                   onClick={() => setActiveCard(activeCard === 'operations' ? null : 'operations')}
                   active={activeCard === 'operations'}
-                />
+                /> */}
               </div>
             </div>
           )}
@@ -458,7 +465,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                 />
               </div>
 
-              <div className="animation-emr-card-patient-emr">
+              {/* <div className="animation-emr-card-patient-emr">
                 <EMRCard
                   number={3}
                   footerText="Pathology"
@@ -469,7 +476,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
                   onClick={() => setActiveCard(activeCard === 'pathology' ? null : 'pathology')}
                   active={activeCard === 'pathology'}
                 />
-              </div>
+              </div> */}
             </div>
           )}
 
@@ -613,7 +620,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
               />
 
               <SectionContainer
-                title={<Translate>Emergency Visits</Translate>}
+                title={<Translate>Urgent Care</Translate>}
                 content={<VisitHistoryTable
                   localPatient={localPatient}
                   quickAppointmentModel={quickAppointmentModel}
@@ -706,7 +713,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
         )}
         {/* {activeCard === 'inpatient' && <InpatientTable />} */}
         {/* {activeCard === 'daycase' && <DayCaseTable />} */}
-        {activeCard === 'emergency' && (
+        {activeCard === 'Urgent Care' && (
           <VisitHistoryTable
             localPatient={localPatient}
             departmentType="EMERGENCY_ROOM"
@@ -718,7 +725,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
         {activeCard === 'consultations' && <ConsultationsTable patient={localPatient} />}
         {activeCard === 'laboratory' && <LaboratoryTable patient={localPatient} />}
         {activeCard === 'radiology' && <RadiologyTable patient={localPatient} />}
-        {/* {activeCard === 'pathology' && <PathologyTable />} */}
+      
         {activeCard === 'medications' && <CurrentMedicationsTable patient={localPatient} />}
         {activeCard === 'vaccines' && <VaccinationTable patient={localPatient} />}
         {activeCard === 'forms' && <ClinicalFormsTable />}
@@ -757,6 +764,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
         )}
       </div>
     </div>
+  </div>
   );
 };
 

@@ -16,16 +16,22 @@ import { useAppDispatch } from '@/hooks';
 import { resetRefetchEncounter, setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
 import clsx from 'clsx';
-import { useAddPatientAllergyMutation, useUpdatePatientAllergyMutation } from '@/services/encounters/patientAllergiesService';
-import { useEnumOptions } from '@/services/enumsApi';
 import {
-  useGetAllergensByTypewithoutPaginationQuery,
-
-} from '@/services/setup/allergensService';
+  useAddPatientAllergyMutation,
+  useUpdatePatientAllergyMutation
+} from '@/services/encounters/patientAllergiesService';
+import { useEnumOptions } from '@/services/enumsApi';
+import { useGetActiveAllergensQuery } from '@/services/setup/allergensService';
 import { useGetAllMedicationCategoriesClassesQuery } from '@/services/setup/medication-categories/MedicationCategoriesClassService';
-import { useGetActiveIngredientsByDrugClassQuery, useGetActiveIngredientsQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
+import {
+  useGetActiveIngredientsByDrugClassQuery,
+  useGetActiveIngredientsQuery
+} from '@/services/setup/activeIngredients/activeIngredientsService';
 import { PatientAllergiesCreateDTO, PatientAllergiesUpdateDTO } from '@/types/model-types-new';
-import { newPatientAllergiesCreateDTO, newPatientAllergiesUpdateDTO } from '@/types/model-types-constructor-new';
+import {
+  newPatientAllergiesCreateDTO,
+  newPatientAllergiesUpdateDTO
+} from '@/types/model-types-constructor-new';
 
 const DetailsModal = ({
   open,
@@ -39,12 +45,14 @@ const DetailsModal = ({
   openToAdd
 }) => {
   const dispatch = useAppDispatch();
-  const [patientAllergiesCreateDTO, setPatientAllergiesCreateDTO] = useState<PatientAllergiesCreateDTO>({
-    ...newPatientAllergiesCreateDTO
-  });
-  const [patientAllergiesUpdateDTO, setPatientAllergiesUpdateDTO] = useState<PatientAllergiesUpdateDTO>({
-    ...newPatientAllergiesUpdateDTO
-  });
+  const [patientAllergiesCreateDTO, setPatientAllergiesCreateDTO] =
+    useState<PatientAllergiesCreateDTO>({
+      ...newPatientAllergiesCreateDTO
+    });
+  const [patientAllergiesUpdateDTO, setPatientAllergiesUpdateDTO] =
+    useState<PatientAllergiesUpdateDTO>({
+      ...newPatientAllergiesUpdateDTO
+    });
   const [reactions, setReactions] = useState({ reactions: [] });
   const [showAllFields, setShowAllFields] = useState(false);
   // fetch data
@@ -54,36 +62,34 @@ const DetailsModal = ({
   const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: allgPropnLovQueryResponse } = useGetLovValuesByCodeQuery('ALLG_PROPN');
   const { data: criticalityLovQueryResponse } = useGetLovValuesByCodeQuery('CRITICALITY');
-  const { data: allergensListResponse } = useGetAllergensByTypewithoutPaginationQuery({
-    type: allerges?.id ? patientAllergiesUpdateDTO?.allergenType : patientAllergiesCreateDTO?.allergenType
+  const { data: allergensListResponse } = useGetActiveAllergensQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
   });
-  const {
-    data: medicationClassesListResponse,
-    isLoading: isMedicationClassesLoaded
-  } = useGetAllMedicationCategoriesClassesQuery({});
+  const { data: medicationClassesListResponse, isLoading: isMedicationClassesLoaded } =
+    useGetAllMedicationCategoriesClassesQuery({});
   // const {
   //   data: activeIngredientsAll,
   // } = useGetActiveIngredientsQuery({});
   const drugClassId = !allerges?.id
-  ? patientAllergiesCreateDTO.medicationClassId
-  : patientAllergiesUpdateDTO.medicationClassId;
+    ? patientAllergiesCreateDTO.medicationClassId
+    : patientAllergiesUpdateDTO.medicationClassId;
 
-const { data: activeIngredientsAll } =
-  useGetActiveIngredientsByDrugClassQuery(
+  const { data: activeIngredientsAll } = useGetActiveIngredientsByDrugClassQuery(
     { drugClassIds: drugClassId ? [drugClassId] : [] },
     { skip: !drugClassId }
   );
-  // fetch enum lists 
+  // fetch enum lists
   const allergyTypeEnumResponse = useEnumOptions('AllergenTypes');
   const severityEnumResponse = useEnumOptions('Severity');
   // actions
   const [addPatientAllergy] = useAddPatientAllergyMutation();
   const [updatePatientAllergy] = useUpdatePatientAllergyMutation();
   // allergen type
-  const isMedication =
-    allerges?.id
-      ? patientAllergiesUpdateDTO?.allergenType === 'MEDICATION'
-      : patientAllergiesCreateDTO?.allergenType === 'MEDICATION';
+  const isMedication = allerges?.id
+    ? patientAllergiesUpdateDTO?.allergenType === 'MEDICATION'
+    : patientAllergiesCreateDTO?.allergenType === 'MEDICATION';
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -95,15 +101,15 @@ const { data: activeIngredientsAll } =
               'disabled-panel': edit || allerges.statusLvalue?.valueCode === 'ARS_CANCEL'
             })}
           >
-            <Form fluid >
-              <Form fluid layout='inline'>
+            <Form fluid>
+              <Form fluid layout="inline">
                 <MyInput
                   fieldType="select"
                   fieldLabel="Allergy Type"
                   selectData={allergyTypeEnumResponse ?? []}
                   selectDataLabel="label"
                   selectDataValue="value"
-                  fieldName='allergenType'
+                  fieldName="allergenType"
                   record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
                   setRecord={
                     !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
@@ -119,7 +125,7 @@ const { data: activeIngredientsAll } =
                       selectData={medicationClassesListResponse ?? []}
                       selectDataLabel="name"
                       selectDataValue="id"
-                      fieldName='medicationClassId'
+                      fieldName="medicationClassId"
                       record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
                       setRecord={
                         !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
@@ -133,7 +139,7 @@ const { data: activeIngredientsAll } =
                       selectData={activeIngredientsAll?.data ?? []}
                       selectDataLabel="name"
                       selectDataValue="id"
-                      fieldName='activeIngredients'
+                      fieldName="activeIngredients"
                       record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
                       setRecord={
                         !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
@@ -141,30 +147,29 @@ const { data: activeIngredientsAll } =
                       loading={isMedicationClassesLoaded}
                     />
                   </>
-                ) :
-                  (
-                    <MyInput
-                      fieldType="select"
-                      fieldLabel="Allergen"
-                      selectData={allergensListResponse ?? []}
-                      selectDataLabel="name"
-                      selectDataValue="id"
-                      fieldName='allergenId'
-                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
-                      setRecord={
-                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
-                      }
-                      searchable={false}
-                      required
-                    />
-                  )}
+                ) : (
+                  <MyInput
+                    fieldType="select"
+                    fieldLabel="Allergen"
+                    selectData={allergensListResponse?.data ?? []}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    fieldName="allergenId"
+                    record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                    setRecord={
+                      !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                    }
+                    searchable={false}
+                    required
+                  />
+                )}
                 <MyInput
                   fieldType="select"
                   fieldLabel="Severity"
                   selectData={severityEnumResponse ?? []}
                   selectDataLabel="label"
                   selectDataValue="value"
-                  fieldName='severity'
+                  fieldName="severity"
                   record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
                   setRecord={
                     !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
@@ -199,10 +204,14 @@ const { data: activeIngredientsAll } =
                         selectData={criticalityLovQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        fieldName='criticality'
-                        record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                        fieldName="criticality"
+                        record={
+                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
+                        }
                         setRecord={
-                          !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                          !allerges?.id
+                            ? setPatientAllergiesCreateDTO
+                            : setPatientAllergiesUpdateDTO
                         }
                         searchable={false}
                       />
@@ -210,10 +219,14 @@ const { data: activeIngredientsAll } =
                     <Col md={8}>
                       <MyInput
                         width="100%"
-                        fieldName='certainty'
-                        record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                        fieldName="certainty"
+                        record={
+                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
+                        }
                         setRecord={
-                          !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                          !allerges?.id
+                            ? setPatientAllergiesCreateDTO
+                            : setPatientAllergiesUpdateDTO
                         }
                       />
                     </Col>
@@ -225,10 +238,14 @@ const { data: activeIngredientsAll } =
                         selectData={treatmentstrategyLovQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        fieldName='treatmentStrategy'
-                        record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                        fieldName="treatmentStrategy"
+                        record={
+                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
+                        }
                         setRecord={
-                          !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                          !allerges?.id
+                            ? setPatientAllergiesCreateDTO
+                            : setPatientAllergiesUpdateDTO
                         }
                         searchable={false}
                       />
@@ -243,10 +260,14 @@ const { data: activeIngredientsAll } =
                         selectData={onsetLovQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        fieldName='onset'
-                        record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                        fieldName="onset"
+                        record={
+                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
+                        }
                         setRecord={
-                          !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                          !allerges?.id
+                            ? setPatientAllergiesCreateDTO
+                            : setPatientAllergiesUpdateDTO
                         }
                         searchable={false}
                       />
@@ -256,11 +277,19 @@ const { data: activeIngredientsAll } =
                         width="100%"
                         fieldType="date"
                         fieldName="onsetDate"
-                        record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
-                        setRecord={
-                          !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                        record={
+                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
                         }
-                        disabled={!allerges?.id ? patientAllergiesCreateDTO?.onsetDateUndefined : patientAllergiesUpdateDTO?.onsetDateUndefined}
+                        setRecord={
+                          !allerges?.id
+                            ? setPatientAllergiesCreateDTO
+                            : setPatientAllergiesUpdateDTO
+                        }
+                        disabled={
+                          !allerges?.id
+                            ? patientAllergiesCreateDTO?.onsetDateUndefined
+                            : patientAllergiesUpdateDTO?.onsetDateUndefined
+                        }
                       />
                     </Col>
                     <Col md={8}>
@@ -269,9 +298,13 @@ const { data: activeIngredientsAll } =
                         fieldName="onsetDateUndefined"
                         width="100%"
                         fieldType="checkbox"
-                        record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                        record={
+                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
+                        }
                         setRecord={
-                          !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                          !allerges?.id
+                            ? setPatientAllergiesCreateDTO
+                            : setPatientAllergiesUpdateDTO
                         }
                       />
                     </Col>
@@ -285,10 +318,14 @@ const { data: activeIngredientsAll } =
                         selectData={allgPropnLovQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        fieldName='typeOfPropensity'
-                        record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                        fieldName="typeOfPropensity"
+                        record={
+                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
+                        }
                         setRecord={
-                          !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                          !allerges?.id
+                            ? setPatientAllergiesCreateDTO
+                            : setPatientAllergiesUpdateDTO
                         }
                         searchable={false}
                       />
@@ -296,17 +333,25 @@ const { data: activeIngredientsAll } =
                     <Col md={8}>
                       <Form fluid>
                         <MyInput
-                          disabled={!allerges?.id ? patientAllergiesCreateDTO?.byPatient : patientAllergiesUpdateDTO?.byPatient}
+                          disabled={
+                            !allerges?.id
+                              ? patientAllergiesCreateDTO?.byPatient
+                              : patientAllergiesUpdateDTO?.byPatient
+                          }
                           width="100%"
                           fieldType="select"
                           fieldLabel="Source of Information"
                           selectData={sourceofinformationLovQueryResponse?.object ?? []}
                           selectDataLabel="lovDisplayVale"
                           selectDataValue="key"
-                          fieldName='sourceOfInformation'
-                          record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                          fieldName="sourceOfInformation"
+                          record={
+                            !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
+                          }
                           setRecord={
-                            !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                            !allerges?.id
+                              ? setPatientAllergiesCreateDTO
+                              : setPatientAllergiesUpdateDTO
                           }
                         />
                       </Form>
@@ -318,9 +363,13 @@ const { data: activeIngredientsAll } =
                           fieldName="byPatient"
                           width="100%"
                           fieldType="checkbox"
-                          record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                          record={
+                            !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
+                          }
                           setRecord={
-                            !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                            !allerges?.id
+                              ? setPatientAllergiesCreateDTO
+                              : setPatientAllergiesUpdateDTO
                           }
                         />
                       </Form>
@@ -336,7 +385,7 @@ const { data: activeIngredientsAll } =
                           selectData={reactionLovQueryResponse?.object ?? []}
                           selectDataLabel="lovDisplayVale"
                           selectDataValue="key"
-                          fieldName='reactions'
+                          fieldName="reactions"
                           record={reactions}
                           setRecord={setReactions}
                         />
@@ -375,7 +424,7 @@ const { data: activeIngredientsAll } =
     }
   };
 
-  // handle clear data 
+  // handle clear data
   const handleClear = () => {
     setPatientAllergiesCreateDTO({
       ...newPatientAllergiesCreateDTO,
@@ -384,34 +433,28 @@ const { data: activeIngredientsAll } =
     setPatientAllergiesUpdateDTO({
       ...newPatientAllergiesUpdateDTO,
       allergenId: undefined
-    })
+    });
   };
 
   // handle Save patient allergy
   const handleSave = async () => {
     if (!allerges?.id) {
       try {
-        let errorMsg = "";
+        let errorMsg = '';
         if (!patientAllergiesCreateDTO.allergenType) {
-          if (!errorMsg)
-            errorMsg = errorMsg + "Allergen Type Can`t be empty"
-          else
-            errorMsg = errorMsg + ", Allergen Type Can`t be empty"
+          if (!errorMsg) errorMsg = errorMsg + 'Allergen Type Can`t be empty';
+          else errorMsg = errorMsg + ', Allergen Type Can`t be empty';
         }
         if (!patientAllergiesCreateDTO.severity) {
-          if (!errorMsg)
-            errorMsg = errorMsg + "Severity Can`t be empty"
-          else
-            errorMsg = errorMsg + ", Severity Can`t be empty"
+          if (!errorMsg) errorMsg = errorMsg + 'Severity Can`t be empty';
+          else errorMsg = errorMsg + ', Severity Can`t be empty';
         }
         if (
           patientAllergiesCreateDTO.onsetDate &&
           new Date(patientAllergiesCreateDTO.onsetDate) > new Date()
         ) {
-          if (!errorMsg)
-            errorMsg = errorMsg + "Onset Date can`t be in the future";
-          else
-            errorMsg = errorMsg + ", Onset Date can`t be in the future";
+          if (!errorMsg) errorMsg = errorMsg + 'Onset Date can`t be in the future';
+          else errorMsg = errorMsg + ', Onset Date can`t be in the future';
         }
 
         if (!errorMsg) {
@@ -420,8 +463,9 @@ const { data: activeIngredientsAll } =
             allergicReactions: reactions.reactions.join(', '),
             patientId: patient?.id,
             encounterId: encounter?.id,
-            onsetDate: patientAllergiesCreateDTO?.onsetDate ? new Date(patientAllergiesCreateDTO?.onsetDate).toISOString() : ''
-
+            onsetDate: patientAllergiesCreateDTO?.onsetDate
+              ? new Date(patientAllergiesCreateDTO?.onsetDate).toISOString()
+              : ''
           }).unwrap();
           dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
           setOpen(false);
@@ -429,60 +473,57 @@ const { data: activeIngredientsAll } =
           dispatch(resetRefetchEncounter());
           dispatch(setRefetchEncounter(true));
           await handleClear();
-        }
-        else {
+        } else {
           dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
       } catch (error) {
-        console.log("error: ", error);
+        console.log('error: ', error);
         const errorMsg = extractErrorMessage(error) || 'Save Failed';
         dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       }
     } else {
       try {
-        let errorMsg = "";
+        let errorMsg = '';
         if (!patientAllergiesUpdateDTO.allergenType) {
-          if (!errorMsg)
-            errorMsg = errorMsg + "Allergen Type Can`t be empty"
-          else
-            errorMsg = errorMsg + ", Allergen Type Can`t be empty"
+          if (!errorMsg) errorMsg = errorMsg + 'Allergen Type Can`t be empty';
+          else errorMsg = errorMsg + ', Allergen Type Can`t be empty';
         }
         if (!patientAllergiesUpdateDTO.severity) {
-          if (!errorMsg)
-            errorMsg = errorMsg + "Severity Can`t be empty"
-          else
-            errorMsg = errorMsg + ", Severity Can`t be empty"
+          if (!errorMsg) errorMsg = errorMsg + 'Severity Can`t be empty';
+          else errorMsg = errorMsg + ', Severity Can`t be empty';
         }
         if (
           patientAllergiesCreateDTO.onsetDate &&
           new Date(patientAllergiesCreateDTO.onsetDate) > new Date()
         ) {
-          if (!errorMsg)
-            errorMsg = errorMsg + "Onset Date can`t be in the future";
-          else
-            errorMsg = errorMsg + ", Onset Date can`t be in the future";
+          if (!errorMsg) errorMsg = errorMsg + 'Onset Date can`t be in the future';
+          else errorMsg = errorMsg + ', Onset Date can`t be in the future';
         }
         if (!errorMsg) {
-          const objToAdd = { ...patientAllergiesUpdateDTO, allergicReactions: reactions.reactions.join(', '), onsetDate: patientAllergiesUpdateDTO?.onsetDate ? new Date(patientAllergiesUpdateDTO?.onsetDate).toISOString() : '' }
-          await updatePatientAllergy({ id: allerges.id, dto: objToAdd })
-            .unwrap();
-          dispatch(notify({ msg: 'The patient Allergy has been updated successfully', sev: 'success' }));
+          const objToAdd = {
+            ...patientAllergiesUpdateDTO,
+            allergicReactions: reactions.reactions.join(', '),
+            onsetDate: patientAllergiesUpdateDTO?.onsetDate
+              ? new Date(patientAllergiesUpdateDTO?.onsetDate).toISOString()
+              : ''
+          };
+          await updatePatientAllergy({ id: allerges.id, dto: objToAdd }).unwrap();
+          dispatch(
+            notify({ msg: 'The patient Allergy has been updated successfully', sev: 'success' })
+          );
           setOpen(false);
           await fetchallerges();
           dispatch(resetRefetchEncounter());
           dispatch(setRefetchEncounter(true));
           await handleClear();
-        }
-        else {
+        } else {
           dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
-      }
-      catch (error) {
-         console.log("error: ", error);
+      } catch (error) {
+        console.log('error: ', error);
         const errorMsg = extractErrorMessage(error) || 'Save Failed';
         dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       }
-
     }
   };
 
@@ -508,8 +549,7 @@ const { data: activeIngredientsAll } =
         allergicReactions: allerges.allergicReactions,
         activeIngredients: allerges.activeIngredients?.map(ai => ai.activeIngredientId) || []
       });
-    else
-      setPatientAllergiesCreateDTO({ ...newPatientAllergiesCreateDTO })
+    else setPatientAllergiesCreateDTO({ ...newPatientAllergiesCreateDTO });
     setReactions({ reactions: [] });
   }, [allerges]);
 
@@ -540,7 +580,6 @@ const { data: activeIngredientsAll } =
           ...prev,
           medicationClassId: undefined,
           activeIngredients: []
-
         }));
       }
     } else {
@@ -557,36 +596,34 @@ const { data: activeIngredientsAll } =
         }));
       }
     }
-  }, [
-    patientAllergiesCreateDTO.allergenType,
-    patientAllergiesUpdateDTO.allergenType
-  ]);
+  }, [patientAllergiesCreateDTO.allergenType, patientAllergiesUpdateDTO.allergenType]);
 
   useEffect(() => {
     if (allerges?.id) {
       if (patientAllergiesUpdateDTO?.onsetDateUndefined) {
-        setPatientAllergiesUpdateDTO({ ...patientAllergiesUpdateDTO, onsetDate: null })
+        setPatientAllergiesUpdateDTO({ ...patientAllergiesUpdateDTO, onsetDate: null });
       }
-    }
-    else {
+    } else {
       if (patientAllergiesCreateDTO?.onsetDateUndefined) {
-        setPatientAllergiesCreateDTO({ ...patientAllergiesCreateDTO, onsetDate: null })
+        setPatientAllergiesCreateDTO({ ...patientAllergiesCreateDTO, onsetDate: null });
       }
     }
-  }, [patientAllergiesCreateDTO?.onsetDateUndefined, patientAllergiesUpdateDTO?.onsetDateUndefined]);
+  }, [
+    patientAllergiesCreateDTO?.onsetDateUndefined,
+    patientAllergiesUpdateDTO?.onsetDateUndefined
+  ]);
 
   useEffect(() => {
-     if (allerges?.id) {
-      if(patientAllergiesUpdateDTO.byPatient){
-        setPatientAllergiesUpdateDTO({...patientAllergiesUpdateDTO, sourceOfInformation: null})
+    if (allerges?.id) {
+      if (patientAllergiesUpdateDTO.byPatient) {
+        setPatientAllergiesUpdateDTO({ ...patientAllergiesUpdateDTO, sourceOfInformation: null });
       }
-     }
-     else{
-      if(patientAllergiesCreateDTO.byPatient){
-        setPatientAllergiesCreateDTO({...patientAllergiesCreateDTO, sourceOfInformation: null})
+    } else {
+      if (patientAllergiesCreateDTO.byPatient) {
+        setPatientAllergiesCreateDTO({ ...patientAllergiesCreateDTO, sourceOfInformation: null });
       }
-     }
-  },[patientAllergiesCreateDTO.byPatient, patientAllergiesUpdateDTO.byPatient]);
+    }
+  }, [patientAllergiesCreateDTO.byPatient, patientAllergiesUpdateDTO.byPatient]);
 
   useEffect(() => {
     if (openToAdd) {
@@ -594,11 +631,17 @@ const { data: activeIngredientsAll } =
     }
   }, [openToAdd]);
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={!allerges.id ? "Add Allergy" : "Edit Allergy"}
+      title={!allerges.id ? 'Add Allergy' : 'Edit Allergy'}
       actionButtonFunction={handleSave}
       isDisabledActionBtn={
         !edit ? (allerges.statusLvalue?.valueCode == 'ARS_CANCEL' ? true : false) : true
@@ -612,7 +655,7 @@ const { data: activeIngredientsAll } =
           footer: <MyButton onClick={handleClear}>Clear</MyButton>
         }
       ]}
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
     />
   );
 };

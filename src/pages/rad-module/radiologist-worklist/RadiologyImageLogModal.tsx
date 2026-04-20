@@ -44,22 +44,32 @@ const RadiologyImageLogModal = ({ open, setOpen, report }: Props) => {
     }
   ];
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
+
+  <div dir={dir}>
     <MyModal
       open={open}
       setOpen={setOpen}
       title="Image Status Logs"
       size="40vw"
       position="right"
-      content={
+      content={<div dir={dir}>
         <MyTable
           height={400}
           loading={isFetching}
           data={data ?? []}
           columns={columns}
         />
+        </div>
       }
     />
+  </div>
   );
 };
 

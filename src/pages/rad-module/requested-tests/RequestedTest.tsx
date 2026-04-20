@@ -199,7 +199,7 @@ const RequestedTestTable: React.FC<Props> = ({
       },
       {
         key: 'indication',
-        title: <Translate>Indication</Translate>,
+        title: <Translate>Request Reason</Translate>,
         flexGrow: 2
       },
       {
@@ -314,10 +314,16 @@ const RequestedTestTable: React.FC<Props> = ({
   );
 
 
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
     <>
+  <div dir={dir}>
       <MyTable
         columns={tableColumns}
         data={requestsResponse?.data || []}
@@ -393,7 +399,7 @@ const RequestedTestTable: React.FC<Props> = ({
           <DiagnosticsTest testRequest={test} />
         )}
       />
-
+  </div>
     </>
   );
 };

@@ -297,8 +297,16 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
     [activeIngredient, isExisting]
   );
 
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <Panel
+    dir={dir}
       header={
         <h3 className="title">
           <Translate>New/Edit Active Ingredient</Translate>
@@ -329,7 +337,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 name: '',
                 medicalCategoryId: null,
                 drugClassId: null,
-                atcCode: null,
+                atcCode: '',
                 isControlled: false,
                 controlled: null,
                 hasBlackBoxWarning: false,
@@ -433,7 +441,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 <Col md={6}>
                   <MyInput
                     width="100%"
-                    fieldName="highRiskMed"
+                    fieldName="highAlert"
                     fieldType="checkbox"
                     record={activeIngredient}
                     setRecord={setActiveIngredient}
@@ -488,6 +496,16 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                 <Col md={6}>
                   <MyInput
                     width="100%"
+                    fieldName="isLookAlikeSoundAlike"
+                    fieldType="checkbox"
+                    record={activeIngredient}
+                    setRecord={setActiveIngredient}
+                    fieldLabel="Is Look-Alike/Sound-Alike"
+                  />
+                </Col>
+                <Col md={6}>
+                  <MyInput
+                    width="100%"
                     fieldName="hasBlackBoxWarning"
                     fieldType="checkbox"
                     record={activeIngredient}
@@ -506,6 +524,7 @@ const controlledOptions = useEnumOptions('ActiveIngredientsControlled', {
                     />
                   )}
                 </Col>
+                
               </Row>
               <br />
             </Form>

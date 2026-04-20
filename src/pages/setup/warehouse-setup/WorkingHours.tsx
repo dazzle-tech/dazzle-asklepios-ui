@@ -121,14 +121,18 @@ const workingHoursToTime = toTimeStr
   };
   
      
+                      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
 
+    const dir = isRTL ? 'rtl' : 'ltr';
           return (
             <MyModal
               open={open}
               setOpen={setOpen}
               title={warehouse?.key ? 'Edit working hours' : 'New working hours'}
               position="right"
-              content={conjureFormContent}
+              content={<div dir={dir}>{conjureFormContent}</div>}
               actionButtonLabel={warehouse?.key ? 'Save' : 'Create'}
               actionButtonFunction={handleSave}
               steps={[{ title: 'Warehouse Working Hours', icon: <FaClock /> }]}

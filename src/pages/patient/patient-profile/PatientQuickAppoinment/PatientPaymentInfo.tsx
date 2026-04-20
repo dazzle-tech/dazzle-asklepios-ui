@@ -93,7 +93,9 @@ const PAYMENT_ERROR_MAP: Record<string, string> = {
   'id.notfound': 'Payment record not found.',
   notfound: 'Payment record not found.',
   duplicate: 'Duplicate record.',
-  'db.constraint': 'Database constraint violation while saving payment.'
+  'db.constraint': 'Database constraint violation while saving payment.',
+  'no.services': 'No services to pay for',
+  'http.400': 'Please review the payment data. Some required values are missing or invalid.'
 };
 
 const PAYMENT_FIELD_LABELS: Record<string, string> = {
@@ -158,12 +160,38 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
   }
 
   const messageProp: string = responseData?.message || '';
+  const detailProp: string = responseData?.detail || '';
+  const titleProp: string = responseData?.title || '';
+
   const errorKey =
     (messageProp && messageProp.startsWith('error.') ? messageProp.substring(6) : undefined) ||
     responseData?.errorKey;
 
+  if (errorKey && keyMap[errorKey]) {
+    dispatch(
+      notify({
+        msg: keyMap[errorKey] + traceSuffix,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
+  if (
+    messageProp === 'error.http.400' ||
+    detailProp.toLowerCase().includes('validation failure') ||
+    titleProp.toLowerCase() === 'bad request'
+  ) {
+    dispatch(
+      notify({
+        msg: 'Please review the payment form. Some values are missing or invalid.' + traceSuffix,
+        sev: 'warning'
+      })
+    );
+    return;
+  }
+
   const humanReadableMessage =
-    (errorKey && keyMap[errorKey]) ||
     responseData?.detail ||
     responseData?.title ||
     responseData?.message ||
@@ -171,7 +199,6 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
 
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
 };
-
 const toDateOnlyOrNull = (value: any) => {
   if (!value) return null;
   const dateObj = value instanceof Date ? value : new Date(value);
@@ -637,13 +664,6 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       const markRequired = (field: string, message = 'Required') => {
         validationErrors.details[field] = [{ validationType: 'REJECT', message }];
       };
-
-      if (!payment?.paymentTypes) markRequired('paymentTypes');
-      if (!payment?.paymentMethods) markRequired('paymentMethods');
-
-      if (payment?.amount == null || String(payment.amount).trim() === '') markRequired('amount');
-      if (!payment?.currency) markRequired('currency');
-
       if (isInsurancePlan) {
         if (!payment?.insuranceKey && !payment?.planId) markRequired('planId');
       }
@@ -814,76 +834,81 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       );
     };
 
-    const handleConfirm = async () => {
-      const paymentDto: modelTypes.PatientPaymentDTO = {
-        id: payment.id,
-        patientId: payment.patientId,
-        encounterId: payment.encounterId,
-        planId: payment.planId ?? null,
+const handleConfirm = async () => {
+  const hasBillableServices = uiDueAmount > 0;
 
-        paymentTypes: payment.paymentTypes,
-        paymentMethods: payment.paymentMethods,
+  const paymentDto: modelTypes.PatientPaymentDTO = {
+    id: payment.id,
+    patientId: payment.patientId,
+    encounterId: payment.encounterId,
+    planId: hasBillableServices ? (payment.planId ?? null) : null,
 
-        amount: Number(payment.amount ?? 0),
-        currency: String(payment.currency ?? payment.facilityDefaultCurrency ?? ''),
-        facilityDefaultCurrency: String(payment.facilityDefaultCurrency ?? ''),
-        exchangeRate: payment.exchangeRate ?? null,
-        amountInFacilityCurrency: payment.amountInFacilityCurrency ?? null,
+    paymentTypes: hasBillableServices ? payment.paymentTypes ?? null : null,
+    paymentMethods: hasBillableServices ? payment.paymentMethods ?? null : null,
 
-        addToFreeBalance: Boolean(payment.addToFreeBalance),
-        useBalanceToSettleDebts: Boolean(payment.useBalanceToSettleDebts),
+    amount: hasBillableServices
+      ? (payment.amount != null ? Number(payment.amount) : null)
+      : null,
 
-        cardNumber: payment.cardNumber ?? null,
-        cardHolderName: payment.cardHolderName ?? null,
-        cardValidUntil: toDateOnlyOrNull(payment.cardValidUntil),
+    currency: hasBillableServices ? (payment.currency ?? null) : null,
+    facilityDefaultCurrency: hasBillableServices ? (payment.facilityDefaultCurrency ?? null) : null,
+    exchangeRate: hasBillableServices ? (payment.exchangeRate ?? null) : null,
+    amountInFacilityCurrency: hasBillableServices ? (payment.amountInFacilityCurrency ?? null) : null,
 
-        chequeNumber: payment.chequeNumber ?? null,
-        chequeBankName: payment.chequeBankName ?? null,
-        chequeDueDate: toDateOnlyOrNull(payment.chequeDueDate),
+    addToFreeBalance: hasBillableServices ? payment.addToFreeBalance ?? false : null,
+    useBalanceToSettleDebts: hasBillableServices ? payment.useBalanceToSettleDebts ?? false : null,
 
-        transferNumber: payment.transferNumber ?? null,
-        transferBankName: payment.transferBankName ?? null,
-        transferDate: toDateOnlyOrNull(payment.transferDate),
+    cardNumber: hasBillableServices ? payment.cardNumber ?? null : null,
+    cardHolderName: hasBillableServices ? payment.cardHolderName ?? null : null,
+    cardValidUntil: hasBillableServices ? toDateOnlyOrNull(payment.cardValidUntil) : null,
 
-        services: (servicesRows ?? []).map(serviceRow => ({
-          serviceId: Number((serviceRow as any).serviceId ?? 0),
-          price: Number((serviceRow as any).price ?? 0),
-          isExempted: Boolean((serviceRow as any).isExempted)
-        }))
-      };
+    chequeNumber: hasBillableServices ? payment.chequeNumber ?? null : null,
+    chequeBankName: hasBillableServices ? payment.chequeBankName ?? null : null,
+    chequeDueDate: hasBillableServices ? toDateOnlyOrNull(payment.chequeDueDate) : null,
 
-      let paymentDetails: modelTypes.PatientPaymentDetails;
+    transferNumber: hasBillableServices ? payment.transferNumber ?? null : null,
+    transferBankName: hasBillableServices ? payment.transferBankName ?? null : null,
+    transferDate: hasBillableServices ? toDateOnlyOrNull(payment.transferDate) : null,
 
-      if (paymentDto.id) {
-        paymentDetails = await updatePayment({ id: paymentDto.id, body: paymentDto }).unwrap();
-      } else {
-        paymentDetails = await createPayment({ body: paymentDto }).unwrap();
-      }
+    services: (servicesRows ?? []).map(serviceRow => ({
+      serviceId: Number((serviceRow as any).serviceId ?? 0),
+      price: Number((serviceRow as any).price ?? 0),
+      isExempted: Boolean((serviceRow as any).isExempted)
+    }))
+  };
 
-      if (paymentDetails?.payment) {
-        const savedPayment: any = paymentDetails.payment;
+  let paymentDetails: modelTypes.PatientPaymentDetails;
 
-        setPayment((previousPayment: any) => ({
-          ...previousPayment,
-          ...savedPayment,
-          paidFromAmount: Number(savedPayment?.paidFromAmount ?? 0),
-          paidFromBalance: Number(savedPayment?.paidFromBalance ?? 0),
-          refunds: Number(savedPayment?.refunds ?? 0)
-        }));
-      }
+  if (paymentDto.id) {
+    paymentDetails = await updatePayment({ id: paymentDto.id, body: paymentDto }).unwrap();
+  } else {
+    paymentDetails = await createPayment({ body: paymentDto }).unwrap();
+  }
 
-      applySavedServicesToTable(paymentDetails);
+  if (paymentDetails?.payment) {
+    const savedPayment: any = paymentDetails.payment;
 
-      const departmentIdNum = Number(departmentId ?? 0);
-      if (departmentIdNum) {
-        const servicesResult: any = triggerGetServicesByDepartment(
-          { sourceId: departmentIdNum, page: 0, size: 200, sort: 'id,asc' },
-          true
-        );
-        if (servicesResult?.unwrap) await servicesResult.unwrap();
-        applySavedServicesToTable(paymentDetails);
-      }
-    };
+    setPayment((previousPayment: any) => ({
+      ...previousPayment,
+      ...savedPayment,
+      paidFromAmount: Number(savedPayment?.paidFromAmount ?? 0),
+      paidFromBalance: Number(savedPayment?.paidFromBalance ?? 0),
+      refunds: Number(savedPayment?.refunds ?? 0)
+    }));
+  }
+
+  applySavedServicesToTable(paymentDetails);
+
+  const departmentIdNum = Number(departmentId ?? 0);
+  if (departmentIdNum) {
+    const servicesResult: any = triggerGetServicesByDepartment(
+      { sourceId: departmentIdNum, page: 0, size: 200, sort: 'id,asc' },
+      true
+    );
+    if (servicesResult?.unwrap) await servicesResult.unwrap();
+    applySavedServicesToTable(paymentDetails);
+  }
+};
 
     const validateBeforeSave = () => {
       const validationDetails = validationResult?.details ?? {};
@@ -957,8 +982,14 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [servicesRows.length, rowsPerPage]);
 
+    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
-      <Form fluid layout="inline" className="fields-container">
+      <Form fluid layout="inline" className="fields-container" dir={dir}>
         <MyInput
           vr={validationResult}
           column

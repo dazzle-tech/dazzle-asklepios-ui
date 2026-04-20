@@ -23,10 +23,23 @@ const DiagnosticsResult = props => {
     }
   ];
 
+
+        // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <>
-      <MyTab data={tabData} />
-    </>
+    <div dir={dir}>
+      <MyTab
+        data={tabData.map(tab => ({
+          ...tab,
+          content: <div dir={dir}>{tab.content}</div>
+        }))}
+      />
+    </div>
   );
 };
 export default DiagnosticsResult;

@@ -74,13 +74,21 @@ const AddEditScreen = ({ open, setOpen, width, setLoad, screen, setScreen, refet
         );
     }
   };
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
     <MyModal
       open={open}
       setOpen={setOpen}
       title={screen?.key ? 'Edit Screen' : 'New Screen'}
       position="right"
-      content={conjureFormContent}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={screen?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleScreenSave}
       steps={[{ title: 'Screen Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}

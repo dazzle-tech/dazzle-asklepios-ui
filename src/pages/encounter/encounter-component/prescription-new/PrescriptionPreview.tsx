@@ -4,7 +4,7 @@ import MyInput from "@/components/MyInput";
 import MyTagInput from "@/components/MyTagInput/MyTagInput";
 import { Form, Input, Text } from "rsuite";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import { useGetBrandMedicationByIdQuery } from "@/services/setup/brandmedication/BrandMedicationService ";
+import { useGetBrandMedicationByIdQuery } from "@/services/setup/brandmedication/BrandMedicationService";
 import { useGetCustomeInstructionsQuery } from "@/services/encounterService";
 import { useGetAllPrescriptionInstructionsQuery } from "@/services/setup/prescription-instruction/prescriptionInstructionService";
 import { useEnumOptions } from "@/services/enumsApi";
@@ -165,9 +165,14 @@ const PrescriptionPreview = ({ orderMedication }) => {
     
     return "";
   };
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div className="prescription-preview-container">
+    <div className="prescription-preview-container" dir={dir}>
       <SectionContainer
         title={<Text className="font-style">Prescription Details</Text>}
         content={
@@ -374,7 +379,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
           <Form fluid>
             <MyTagInput tags={record.parametersToMonitor?.split(",") ?? []} setTags={noop} />
 
-            <div className="prescription-refills-blocks">
+            {/* <div className="prescription-refills-blocks">
               <MyInput
                 disabled
                 width={140}
@@ -409,7 +414,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
                 fieldName="refillIntervalUnitText"
                 setRecord={noop}
               />
-            </div>
+            </div> */}
           </Form>
         }
       />

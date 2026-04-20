@@ -417,7 +417,7 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
                   }
                 }}
               >
-                Show Cancelled
+                <Translate>Show Cancelled</Translate>
               </Checkbox>
               <Checkbox
                 onChange={(value, checked) => {
@@ -428,7 +428,7 @@ const TreadmillStress = ({ patient, encounter, edit }) => {
                   }
                 }}
               >
-                Show All
+                <Translate>Show All</Translate>
               </Checkbox>
             </div>
             <div className="bt-right-2">

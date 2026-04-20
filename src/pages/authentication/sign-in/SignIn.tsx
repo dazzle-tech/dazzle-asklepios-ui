@@ -10,7 +10,7 @@ import { setLang, setTranslations } from '@/reducers/uiSlice';
 import { useLazyGetAccountQuery } from '@/services/accountService';
 import { useLoginMutation } from '@/services/authServiceApi';
 import { enumsApi } from '@/services/enumsApi';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetMenuQuery } from '@/services/security/UserRoleService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 import { useLazyGetDictionaryQuery } from '@/services/setup/translationService';
@@ -21,12 +21,11 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Button, Form, Modal, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
-import Logo from '../../../images/Logo_BLUE_New.svg';
+import Logo from '../../../images/Logo_BLUE_New.png';
 import './styles.less';
 
 const SignIn = () => {
   const [getDictionary] = useLazyGetDictionaryQuery();
-  const [otpView, setOtpView] = useState(false);
   const [changePasswordView, setChangePasswordView] = useState(false);
   const [newPassword, setNewPassword] = useState<string | undefined>();
   const [newPasswordConfirm, setNewPasswordConfirm] = useState<string | undefined>();
@@ -41,8 +40,6 @@ const SignIn = () => {
     direction: ''
   });
 
-
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -51,20 +48,26 @@ const SignIn = () => {
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
-  const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
+  const result = useGetActiveFacilitiesQuery({});
+
   const {
     data: langData,
     isFetching: langsLoading,
     refetch: refetchLangs
   } = useGetAllLanguagesQuery({});
- 
+
   const [saveUser] = useSaveUserMutation();
   const [getMenuTrigger] = useLazyGetMenuQuery();
 
-  // Handle login 
+  // Handle login
   const handleLogin = async () => {
-    if (!credentials.username || !credentials.password || !credentials.orgKey || !credentials.language) {
+    if (
+      !credentials.username ||
+      !credentials.password ||
+      !credentials.orgKey ||
+      !credentials.language
+    ) {
       setErrText('Please fill all required fields.');
       return;
     }
@@ -103,8 +106,6 @@ const SignIn = () => {
 
       localStorage.setItem('language', credentials.language); // fixed key + value
 
-      
-
       const dict = await getDictionary(credentials.language).unwrap(); // { translation_key: value }
       // optional local cache:
       localStorage.setItem('language', credentials.language);
@@ -118,7 +119,6 @@ const SignIn = () => {
       setErrText(' ');
       navigate('/');
     } catch (err: any) {
-
       if (err?.status === 401 || err?.data?.detail === 'Invalid credentials') {
         setErrText('Invalid username or password.');
       } else if (err?.status === 'FETCH_ERROR') {
@@ -133,7 +133,7 @@ const SignIn = () => {
 
   const storedUser = JSON.parse(localStorage.getItem('user'));
 
-console.log(storedUser);
+  console.log(storedUser);
 
   // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
@@ -165,13 +165,10 @@ console.log(storedUser);
     setErrText(' ');
   }, [newPassword, newPasswordConfirm]);
 
-  useEffect(() =>{
-     const selectedObject = langData?.find(
-    item => item?.langKey === credentials?.language
-  );
-   localStorage.setItem('direction', selectedObject?.direction);
-  },[credentials.language]);
-
+  useEffect(() => {
+    const selectedObject = langData?.find(item => item?.langKey === credentials?.language);
+    localStorage.setItem('direction', selectedObject?.direction);
+  }, [credentials.language]);
 
   // useEffect(() => {
   //   dispatch(setLang(langRecord['lang']));
@@ -204,7 +201,7 @@ console.log(storedUser);
                   selectDataValue="langKey"
                   defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
                   record={credentials}
-                  setRecord={setCredentials}                  
+                  setRecord={setCredentials}
                   placeholder="Select Language"
                   showLabel={false}
                   searchable={false}

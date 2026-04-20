@@ -6,8 +6,15 @@ const MaintenanceInformation = ({ product, setProduct, disabled}) => {
 
     const timeUnit  = useEnumOptions('TimeUnit');
 
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
-        <>
+        <div dir={dir}>
             <Form fluid>
             <div className="flex-row-product-set-up-page">
                 <MyInput
@@ -84,7 +91,7 @@ const MaintenanceInformation = ({ product, setProduct, disabled}) => {
                 />
             </div>
             </Form>
-        </>
+        </div>
     )
 };
 

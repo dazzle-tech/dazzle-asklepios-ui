@@ -196,8 +196,15 @@
       });
     }, [orderTestId]);
     
+// Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+    
     return (
-      <>
+      <div dir={dir}>
         {/* ========= Icon ========= */}
         <Whisper
           placement="top"
@@ -256,6 +263,7 @@
             isLoading || isAlreadyExternal
           }
           content={
+          <div dir={dir}>
             <Form fluid>
               <div className="external-lab-modal-inputs-handle">
                 <MyInput
@@ -286,9 +294,10 @@
                 />
               </div>
             </Form>
+          </div>
           }
         />
-      </>
+      </div>
     );
   };
 

@@ -245,15 +245,17 @@ const inventoryTransfer = () => {
            "Transfer Product"
     );
     // page header setup
-    dispatch(setPageCode('Inventory_Transfer'));
-    dispatch(setDivContent(divContent));
+
 
     useEffect(() => {
-        return () => {
-            dispatch(setPageCode(''));
-            dispatch(setDivContent('  '));
-        };
-    }, [location.pathname, dispatch]);
+    dispatch(setPageCode('Inventory_Transfer'));
+    dispatch(setDivContent(divContent));
+    
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+      };
+    }, [dispatch]);
 
 const filters = (<>                <Form layout='inline' fluid>
                     <MyInput
@@ -302,8 +304,15 @@ const filters = (<>                <Form layout='inline' fluid>
 const tablebuttons = (<><div className='btns-group'>
                         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={() => setOpen(true)}>Initiate Transfer</MyButton>
                     </div></>);
-    return (<>
 
+                    // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+    return (
+    <div dir={dir}>
 
             <MyTable
                 data={inventoryTransListResponse?.object ?? []}
@@ -315,7 +324,7 @@ const tablebuttons = (<><div className='btns-group'>
             />
             <AddEditTransfer open={open} setOpen={setOpen} transfer={transfer} setTransfer={setTransfer} refetch={refetchTransProduct} />
 
-    </>);
+    </div>);
 };
 
 export default inventoryTransfer;

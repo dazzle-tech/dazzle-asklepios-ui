@@ -1117,10 +1117,15 @@ const isSelectedRelation = rowData => {
   }, [localPatient.key]);
 
 
+  // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-    <>
+    <div dir={dir}>
       <Panel
         header={
           <h3 className="title">
@@ -1791,7 +1796,7 @@ const isSelectedRelation = rowData => {
                 <Translate>Consent Forms</Translate>
               </Tab>
               <Tab>
-                <Translate>Preferred Health Professional</Translate>
+                <Translate>Primary Care Provider</Translate>
               </Tab>
               <Tab>
                 <Translate>Family Members</Translate>
@@ -1967,6 +1972,7 @@ const isSelectedRelation = rowData => {
                   required
                   fieldName="phoneNumber"
                   fieldLabel="Primary Mobile Number"
+                  fieldType="number"
                   record={localPatient}
                   setRecord={setLocalPatient}
                   disabled={!editing}
@@ -2383,6 +2389,7 @@ const isSelectedRelation = rowData => {
                       vr={validationResult}
                       fieldLabel="Primary Mobile Number"
                       fieldName="phoneNumber"
+                      fieldType="number"
                       record={localPatient}
                       setRecord={setLocalPatient}
                       disabled={true}
@@ -3491,7 +3498,7 @@ const isSelectedRelation = rowData => {
           </div>
         </Drawer.Body>
       </Drawer>
-    </>
+    </div>
   );
 };
 

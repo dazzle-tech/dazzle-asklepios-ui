@@ -59,6 +59,8 @@ export interface Module {
   icon: string;
   viewOrder: number;
   screens: Screen[];
+  departmentTypes?: string[];
+
 }
 
 export interface MedicalSheet {
@@ -134,7 +136,23 @@ export const MedicalSheets: MedicalSheet[] = [
   { name: "Wound Care Documentation", code: "WOUND_CARE_DOCUMENTATION", icon: <FontAwesomeIcon icon={faBandAid} className="icon" />, path: "/wound-care-documentation" },
   { name: "Physician Order Summary", code: "PHYSICIAN_ORDER_SUMMARY", icon: <FontAwesomeIcon icon={faFileMedical} className="icon" />, path: "/physician-order-summary" },
   { name: "Pediatric", code: "PEDIATRIC", icon: <FontAwesomeIcon icon={faChild} className="icon" />, path: '/pediatric', type: "Specialty" },
-  { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products' }
+  { name: "Service And Product", code: "SERVICEANDPRODUCTS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/service-and-products' },
+  { name: "Forms", code: "FORMS", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/form-template-use' },
+  {
+    name: 'Nurse Assessment',
+    code: 'NURSE_ASSESSMENT',
+    icon: <FontAwesomeIcon icon={faNotesMedical} className="icon" />,
+    path: '/nurse-assessment'
+  },
+  {
+    name: 'Physician Assessment',
+    code: 'PHYSICIAN_ASSESSMENT',
+    icon: <FontAwesomeIcon icon={faUserDoctor} className="icon" />,
+    path: '/physician-assessment'
+  },
+
+  { name: "UCC Medication Order", code: "UCC_MEDICATION_ORDER", icon: <FontAwesomeIcon icon={faBoxOpen} className="icon" />, path: '/ucc-medication-order' }
+  
 ];
 
 
@@ -148,15 +166,9 @@ export const MODULES: Module[] =
       screens: [
         { name: "Organization Definition", code: "ORGANIZATION_DEFINITION", description: "", icon: "FaBuilding", viewOrder: 0, navPath: "organization-definition" },
         // { name: "General Settings", code: "GENERAL_SETTINGS", description: "", icon: "FaGear", viewOrder: 1, navPath: "general-settings" },
-        { name: "Configurations", code: "CONFIGURATIONS", description: "", icon: "FaSliders", viewOrder: 2, navPath: "configurations" },
-        // { name: "Integration setup", code: "INTEGRATION_SETUP", description: "", icon: "FaPlug", viewOrder: 3, navPath: "integration-setup" },
-        { name: "Serial Setup", code: "SERIAL_SETUP", description: "", icon: "FaHashtag", viewOrder: 4, navPath: "serial-setup" },
-        { name: "Notification Management", code: "NOTIFICATION_MANAGEMENT", description: "", icon: "FaBell", viewOrder: 5, navPath: "notification-management" },
-        { name: "Email Management", code: "EMAIL_MANAGEMENT", description: "", icon: "FaEnvelope", viewOrder: 6, navPath: "email-management" },
-        { name: "Password Management", code: "PASSWORD_MANAGEMENT", description: "", icon: "FaLock", viewOrder: 7, navPath: "password-management" },
-        { name: "Data validation Management", code: "DATA_VALIDATION_MANAGEMENT", description: "", icon: "FaDatabase", viewOrder: 8, navPath: "data-validation-management" },
         { name: "User", code: "USER", description: "", icon: "FaPersonArrowDownToLine", viewOrder: 9, navPath: "users-new" },
         { name: "Facilities", code: "FACILITIES", description: "", icon: "FaBuilding", viewOrder: 10, navPath: "facilities" },
+        { name: "Organization Holidays", code: "ORGANIZATION_HOLIDAY", description: "", icon: "FaBuilding", viewOrder: 11, navPath: "organization-holidays" },
       ],
     },
     {
@@ -214,6 +226,7 @@ export const MODULES: Module[] =
           viewOrder: 0,
           navPath: "price-list",
         },
+        { name: "Policy Definition", code: "POLICY_DEFINITION", description: "Policy Definition", icon: "FaGlobe", viewOrder: 23, navPath: "policy-definition" },
       ],
     },
 
@@ -235,6 +248,7 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaRegIdBadge",
       viewOrder: 2,
+      departmentTypes: ["REGISTRATION"],
       screens: [
 
         { name: "Patient Registration", code: "PATIENT_REGISTRATION", description: "", icon: "FaFilePen", viewOrder: 1, navPath: "patient-profile" },
@@ -304,6 +318,8 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaCalendarDay",
       viewOrder: 3,
+      departmentTypes: ["REGISTRATION"],
+
       screens: [
         {
           name: "Scheduling Screen",
@@ -313,6 +329,21 @@ export const MODULES: Module[] =
           viewOrder: 0,
           navPath: "schedual-screen",
         },
+        {
+          name: "Availability Templates",
+          code: "AVAILABILITY_TEMPLATES_NEW",
+          description: "",
+          icon: "FaCalendarDays",
+          viewOrder: 1,
+          navPath: "availability-templates",
+        },{
+          name: "Apply Template",
+          code: "APPLY_TEMPLATE",
+          description: "",
+          icon: "FaCalendarCheck",
+          viewOrder: 1,
+          navPath: "apply-template",
+        }
       ],
     },
     {
@@ -334,6 +365,8 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaFileWaveform",
       viewOrder: 4,
+      departmentTypes: ["OUTPATIENT_CLINIC", "INPATIENT_WARD", "DAY_CASE", "EMERGENCY_ROOM"],
+
       screens: [
         {
           name: "Electronic Medical Records",
@@ -349,6 +382,7 @@ export const MODULES: Module[] =
       description: null,
       icon: "FaStethoscope",
       viewOrder: 4,
+      departmentTypes: ["OUTPATIENT_CLINIC"],
       screens: [
 
         {
@@ -357,7 +391,7 @@ export const MODULES: Module[] =
           description: "", icon: "FaList",
           viewOrder: 1, navPath: "encounter-list"
         },
-        { name: "Review Results", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
+        { name: "My Favorite Tests", code: "REVIEW_RESULTS", description: "", icon: "FaRegMessage", viewOrder: 3, navPath: "review-results" },
 
       ],
     },
@@ -397,6 +431,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaExplosion",
       viewOrder: 6,
+      departmentTypes: ["EMERGENCY_ROOM"],
       screens: [
         {
           name: "ER Triage",
@@ -407,6 +442,17 @@ export const MODULES: Module[] =
         { name: "Er Department", code: "ER_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 3, navPath: "ER-department" },
         { name: "Er Dashboard", code: "ER_DASHBOARD", description: "", icon: "FaChartBar", viewOrder: 0, navPath: "ER-dashboard" },
 
+      ],
+    },
+    {
+      name: "Urgent Care",
+      description: "",
+      icon: "FaNotesMedical",
+      viewOrder: 6,
+      departmentTypes: ["EMERGENCY_ROOM"],
+      screens: [
+        { name: "Urgent Care Triage",code: "URGENT_CARE_TRIAGE", description: "", icon: "FaCommentMedical", viewOrder: 1, navPath: "urgent-care-triage"},
+        { name: "Urgent Care Department", code: "URGENT_CARE_DEPARTMENT", description: "", icon: "FaBriefcaseMedical", viewOrder: 2, navPath: "urgent-care-department-list" },
       ],
     },
     {
@@ -443,11 +489,14 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaFlask",
       viewOrder: 9,
+      departmentTypes: ["LABORATORY"],
       screens: [{
         name: "Clinical Laboratory",
         code: "CLINICAL_LABORATORY",
         description: "", icon: "FaFlaskVial",
-        viewOrder: 0, navPath: "lab-module"
+        viewOrder: 0, navPath: "lab-module",
+
+
       }],
     },
     {
@@ -455,11 +504,13 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaXRay",
       viewOrder: 10,
+      departmentTypes: ["RADIOLOGY"],
       screens: [{
         name: "Imaging Radiology",
         code: "IMAGING_RADIOLOGY",
         description: "",
-        icon: "FaSkull", viewOrder: 0, navPath: "rad-module"
+        icon: "FaSkull", viewOrder: 0, navPath: "rad-module",
+
       }],
     },
     {
@@ -614,6 +665,7 @@ export const MODULES: Module[] =
       description: "",
       icon: "FaMoneyBill1",
       viewOrder: 12,
+      departmentTypes: ["REGISTRATION"],
       screens: [
         {
           name: "Ledger Account",

@@ -120,6 +120,27 @@ export const PractitionerService = createApi({
       providesTags: ['Practitioner']
     }),
 
+    // Get practitioners by department
+    getPractitionerByDepartment: builder.query<
+      PagedResult<any>,
+      { departmentId: number | string } & PagedParams
+    >({
+      query: ({ departmentId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/by-department',
+        method: 'GET',
+        params: { departmentId, page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
     // Get single practitioner
     getPractitionerById: builder.query<any, number | string>({
       query: id => ({
@@ -133,6 +154,24 @@ export const PractitionerService = createApi({
     getActiveAppointablePractitioners: builder.query<PagedResult<any>, PagedParams>({
       query: ({ page, size, sort = 'id,asc' }) => ({
         url: '/api/setup/practitioner/active-appointable',
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+
+    // Get appointable practitioners based on logged-in facility
+    getAppointablePractitionerByLoggedInFacility: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/appointable/by-loggedIn-facility',
         method: 'GET',
         params: { page, size, sort }
       }),
@@ -222,6 +261,43 @@ export const PractitionerService = createApi({
         };
       },
       providesTags: ['Practitioner']
+    }),
+
+    // Get all active practitioners
+    getAllActivePractitioners: builder.query<PagedResult<any>, PagedParams>({
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/practitioner/active',
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
+    }),
+    getActivePractitionersByFacility: builder.query<
+      PagedResult<any>,
+      { facilityId: number | string } & PagedParams
+    >({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: `/api/setup/practitioner/active/by-facility/${facilityId}`,
+        method: 'GET',
+        params: { page, size, sort }
+      }),
+      transformResponse: (response: any[], meta) => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Practitioner']
     })
   })
 });
@@ -236,10 +312,14 @@ export const {
   useLazyGetActivePractitionersBySubSpecialtyQuery,
   useGetPractitionerByNameQuery,
   useLazyGetPractitionerByNameQuery,
+  useGetPractitionerByDepartmentQuery,
+  useLazyGetPractitionerByDepartmentQuery,
   useGetPractitionerByIdQuery,
   useLazyGetPractitionerByIdQuery,
   useGetActiveAppointablePractitionersQuery,
   useLazyGetActiveAppointablePractitionersQuery,
+  useGetAppointablePractitionerByLoggedInFacilityQuery,
+  useLazyGetAppointablePractitionerByLoggedInFacilityQuery,
   useCreatePractitionerMutation,
   useUpdatePractitionerMutation,
   useTogglePractitionerActiveMutation,
@@ -249,5 +329,9 @@ export const {
   useExistsPractitionerByUserIdQuery,
   useLazyExistsPractitionerByUserIdQuery,
   useGetSpecialistPractitionersQuery,
-  useLazyGetSpecialistPractitionersQuery
+  useLazyGetSpecialistPractitionersQuery,
+  useGetAllActivePractitionersQuery,
+  useLazyGetAllActivePractitionersQuery,
+  useGetActivePractitionersByFacilityQuery,
+  useLazyGetActivePractitionersByFacilityQuery
 } = PractitionerService;

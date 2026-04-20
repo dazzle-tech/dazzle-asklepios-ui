@@ -177,7 +177,7 @@ const Preparation: React.FC = () => {
   const filterstable = (
     <>
       <Form fluid>
-        <h5 className="requested-procedures-table-header">Requested Operation</h5>
+        <h5 className="requested-procedures-table-header"><Translate>Requested Operation</Translate></h5>
         <div className="from-to-input-position">
           <MyInput
             width="100%"
@@ -201,8 +201,14 @@ const Preparation: React.FC = () => {
     </>
   );
 
+                // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
+  <div dir={dir}>
     <div className="Tables-gap-betwen-columns">
       <MyTable
         data={paginatedData}
@@ -224,7 +230,12 @@ const Preparation: React.FC = () => {
           setPage(0);
         }}
       />
+      </div>
+        
+    <div>
       <MaterialTable />
+    </div>
+    
     </div>
   );
 };

@@ -43,6 +43,7 @@ import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
 import { useNavigate } from 'react-router-dom';
 import { useLazyGetPatientByIdQuery } from '@/services/patient/patientService';
+
 const ERList = () => {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -275,30 +276,6 @@ const ERList = () => {
                 fieldLabel="Chief Complain"
               />
               <MyInput
-                width={110}
-                fieldName="hasPrescription"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Has Prescription"
-              />
-              <MyInput
-                width={80}
-                fieldName="hasOrder"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Has Order"
-              />
-              <MyInput
-                width={80}
-                fieldName="isObserved"
-                fieldType="checkbox"
-                record={record}
-                setRecord={setRecord}
-                label="Is Observed"
-              />
-              <MyInput
                 width={150}
                 fieldName="priority"
                 fieldType="select"
@@ -318,10 +295,6 @@ const ERList = () => {
     </>
   );
 
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
 
   useEffect(() => {
     refetchEncounter();

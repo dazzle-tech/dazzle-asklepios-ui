@@ -17,7 +17,7 @@ import { notify } from '@/utils/uiReducerActions';
 
 import { useCreateMutation, useUpdateMutation } from '@/services/consultation/consultationService';
 import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetSpecialtyConsultationMutation } from '@/services/ai-services/clinicalRecommendationsService';
 import { newConsultation } from '@/types/model-types-constructor-new';
@@ -222,7 +222,7 @@ const Details = ({
 
   const { data: consultantSpecialtyLovQueryResponse } =
     useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery(null);
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery(null);
   const [getDepartmentsByFacility, { data: departmentListResponse }] =
     useLazyGetActiveDepartmentByFacilityListQuery();
   const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
@@ -247,7 +247,7 @@ const Details = ({
   const hasPractitioners = practitionersResult?.data?.data?.totalElements
     ? practitionersResult.data.data.totalElements > allPractitioners.length
     : false;
-
+  console.log('practitionersResult====>', practitionersResult);
   useEffect(() => {
     if (!open) return;
 
@@ -417,8 +417,14 @@ const Details = ({
     }
   };
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
+
   return (
-    <>
+    <div dir={dir}>
       <AdvancedModal
         open={open}
         setOpen={setOpen}
@@ -803,7 +809,7 @@ const Details = ({
         source="CONSULTATION_ORDER_ATTACHMENT"
         sourceId={formData?.id ?? 0}
       />
-    </>
+    </div>
   );
 };
 

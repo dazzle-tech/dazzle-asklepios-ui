@@ -241,6 +241,13 @@ const ConfirmTransferPatientModal = ({ open, setOpen, localTransfer, refetchInpa
             handleClearField();
         }
     }, [open]);
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
     return (
         <MyModal
             open={open}
@@ -248,7 +255,7 @@ const ConfirmTransferPatientModal = ({ open, setOpen, localTransfer, refetchInpa
             title="Transfer Approval"
             size="60vw"
             bodyheight="70vh"
-            content={modalContent}
+            content={<div dir={dir}>{modalContent}</div>}
             hideCancel={false}
             hideBack={true}
             steps={[{ title: "Transfer Approval", icon: <FontAwesomeIcon icon={faCheckCircle} /> }]}

@@ -50,11 +50,20 @@ const AllergyDetailsSection = ({
                 .filter(Boolean)
         });
     }, [allerges]);
+
+      // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
     return (
         <SectionContainer
             title="Allergy Details"
             content={
                 <div
+                dir={dir}
                     className={clsx({
                         'disabled-panel': edit || allerges.statusLvalue?.valueCode === 'ARS_CANCEL'
                     })}

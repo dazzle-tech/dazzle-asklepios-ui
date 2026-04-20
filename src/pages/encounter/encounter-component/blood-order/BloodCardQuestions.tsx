@@ -1,13 +1,22 @@
 import React from 'react';
 import MyInput from '@/components/MyInput';
 import "./styles.less";
+import Translate from '@/components/Translate';
 const BloodCardQuestions = ({ bloodorder, setBloodOrder }) => {
+
+            // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
+
   return (
-    <div className='container-of-blood-card-questions'>
+    <div className='container-of-blood-card-questions' dir={dir}>
         <MyInput
           fieldName="scheduledTransfusion"
           fieldType="check"
-          fieldLabel="Is it a Scheduled Transfusion"
+          fieldLabel={<Translate>Is it a Scheduled Transfusion</Translate>}
           showLabel={false}
           record={bloodorder}
           setRecord={setBloodOrder}
@@ -15,7 +24,7 @@ const BloodCardQuestions = ({ bloodorder, setBloodOrder }) => {
         <MyInput
           fieldName="transfused"
           fieldType="check"
-          fieldLabel="Has been transfused in the past"
+          fieldLabel={<Translate>Has been transfused in the past</Translate>}
           showLabel={false}
           record={bloodorder}
           setRecord={setBloodOrder}
@@ -23,7 +32,7 @@ const BloodCardQuestions = ({ bloodorder, setBloodOrder }) => {
         <MyInput
           fieldName="historyOfTransplants"
           fieldType="check"
-          fieldLabel="Has a History of Transplants"
+          fieldLabel={<Translate>Has a History of Transplants</Translate>}
           showLabel={false}
           record={bloodorder}
           setRecord={setBloodOrder}
@@ -31,7 +40,7 @@ const BloodCardQuestions = ({ bloodorder, setBloodOrder }) => {
         <MyInput
           fieldName="haemolyticNeonatalDisease"
           fieldType="check"
-          fieldLabel="Has Haemolytic Neonatal Disease"
+          fieldLabel={<Translate>Has Haemolytic Neonatal Disease</Translate>}
           showLabel={false}
           record={bloodorder}
           setRecord={setBloodOrder}
@@ -39,7 +48,7 @@ const BloodCardQuestions = ({ bloodorder, setBloodOrder }) => {
         <MyInput
           fieldName="takingAntiRhesusGlobulin"
           fieldType="check"
-          fieldLabel="Is taking Anti-Rhesus Globulin"
+          fieldLabel={<Translate>Is taking Anti-Rhesus Globulin</Translate>}
           showLabel={false}
           record={bloodorder}
           setRecord={setBloodOrder}
@@ -47,7 +56,7 @@ const BloodCardQuestions = ({ bloodorder, setBloodOrder }) => {
         <MyInput
           fieldName="hadReactions"
           fieldType="check"
-          fieldLabel="Had Reactions"
+          fieldLabel={<Translate>Had Reactions</Translate>}
           showLabel={false}
           record={bloodorder}
           setRecord={setBloodOrder}

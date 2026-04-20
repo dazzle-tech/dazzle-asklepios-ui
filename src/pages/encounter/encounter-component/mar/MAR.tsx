@@ -57,12 +57,12 @@ const MAR = () => {
   const icons = [
     {
       key: '1',
-      title: 'Action',
+      title: <Translate>Action</Translate>,
       icon: <FontAwesomeIcon icon={faPills} title="Action" className="icons-style" />
     },
     {
       key: '8632641360936162',
-      title: 'On Hold',
+      title: <Translate>On Hold</Translate>,
       icon: (
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>On Hold</Tooltip>}>
           <FontAwesomeIcon
@@ -76,7 +76,7 @@ const MAR = () => {
     },
     {
       key: '8632624584925141',
-      title: 'Administered',
+      title: <Translate>Administered</Translate>,
       icon: (
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>Administered</Tooltip>}>
           <FontAwesomeIcon
@@ -90,7 +90,7 @@ const MAR = () => {
     },
     {
       key: '8632633074146151',
-      title: 'DC',
+      title: <Translate>DC</Translate>,
       icon: (
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>D\C</Tooltip>}>
           <FontAwesomeIcon
@@ -104,7 +104,7 @@ const MAR = () => {
     },
     {
       key: '8632651909869906',
-      title: 'Missed',
+      title: <Translate>Missed</Translate>,
       icon: (
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>Missed</Tooltip>}>
           <FontAwesomeIcon icon={faClock} title="Missed" className="icons-style" />
@@ -113,7 +113,7 @@ const MAR = () => {
     },
     {
       key: '8632666911581391',
-      title: 'Cancelled',
+      title: <Translate>Cancelled</Translate>,
       icon: (
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>Cancelled</Tooltip>}>
           <FontAwesomeIcon
@@ -127,7 +127,7 @@ const MAR = () => {
     },
     {
       key: '8632772055422992',
-      title: 'DiscardedReturned',
+      title: <Translate>Discarded\Returned</Translate>,
       icon: (
         <Whisper trigger="hover" placement="top" speaker={<Tooltip>Discarded\Returned</Tooltip>}>
           <FontAwesomeIcon
@@ -487,7 +487,7 @@ const MAR = () => {
         <MyInput
           column
           fieldName=""
-          fieldLabel="Show Cancelled"
+          fieldLabel={<Translate>Show Cancelled</Translate>}
           showLabel={false}
           fieldType="check"
           record={medication}
@@ -496,10 +496,10 @@ const MAR = () => {
       </div>
       <div className="container-of-select-type">
         <ButtonGroup size="md">
-          <Button>STAT</Button>
-          <Button>PRN</Button>
-          <Button>Scheduled</Button>
-          <Button>Continuous</Button>
+          <Button><Translate>STAT</Translate></Button>
+          <Button><Translate>PRN</Translate></Button>
+          <Button><Translate>Scheduled</Translate></Button>
+          <Button><Translate>Continuous</Translate></Button>
         </ButtonGroup>
       </div>
     </Form>
@@ -667,15 +667,25 @@ const MAR = () => {
   ];
 
   // Effects
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+      useEffect(() => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent(''));
+        };
+      }, [dispatch]);
+
+          // Direction handling for RTL/LTR
+    const direction = localStorage.getItem('direction') || 'LTR';
+    const isRTL = direction === 'RTL';
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+
 
   return (
-    <Panel>
+    <Panel dir={dir}>
       <br />
       <div className="container-of-icons-keys-mar1">
         {icons.map((item, index) => (

@@ -118,6 +118,10 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       )
     },
     {
+      title: 'Documents',
+      content: <SecondaryIDTab localPatient={localPatient} />
+    },
+    {
       title: 'Address',
       content: <AddressTab localPatient={localPatient} />
     },
@@ -147,7 +151,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       content: <ConsentFormTab patient={localPatient} isClick={!localPatient.id} />
     },
     {
-      title: 'Preferred Health Professional',
+      title: 'Primary Care Provider',
       content: <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
     },
     {
@@ -156,12 +160,9 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     },
     {
       title: 'Next of Kin',
-      content: <NextOfKin patient={localPatient} isClick={!localPatient.id}/>
+      content: <NextOfKin patient={localPatient} isClick={!localPatient.id} />
     },
-    {
-      title: 'Documents',
-      content: <SecondaryIDTab localPatient={localPatient} />
-    },
+
     {
       title: 'Attachments',
       content: (
@@ -173,17 +174,24 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       )
     }
   ];
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <Panel
-      header={
-        <h5 className="title">
-          <Translate>Details</Translate>
-        </h5>
-      }
-    >
-      <MyTab data={tabData} />
-    </Panel>
+    <div dir={dir}>
+      <Panel
+        header={
+          <h5 className="title">
+            <Translate>Details</Translate>
+          </h5>
+        }
+      >
+        <MyTab data={tabData} />
+      </Panel>
+    </div>
   );
 };
 
