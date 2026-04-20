@@ -54,6 +54,28 @@ const findOverlappingBreakEnd = (
   if (overlappingBreakEnds.length === 0) return null;
   return Math.max(...overlappingBreakEnds);
 };
+const findOverlappingBreakWindow = (
+  breaks: AvailabilityTemplateIntervalBreakResponseVM[],
+  slotStart: number,
+  slotEnd: number
+) => {
+  const overlapping = breaks
+    .map((intervalBreak) => {
+      const breakStart = parseHHmm(intervalBreak?.startTime as any);
+      const breakEnd = parseHHmm(intervalBreak?.endTime as any);
+      if (breakStart == null || breakEnd == null || breakEnd <= breakStart) return null;
+      const isOverlapping = slotStart < breakEnd && slotEnd > breakStart;
+      if (!isOverlapping) return null;
+      return { breakStart, breakEnd };
+    })
+    .filter((v): v is { breakStart: number; breakEnd: number } => v != null);
+
+  if (overlapping.length === 0) return null;
+  return {
+    start: Math.min(...overlapping.map((b) => b.breakStart)),
+    end: Math.max(...overlapping.map((b) => b.breakEnd)),
+  };
+};
 
 const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateResponseVM | null; dto?: AvailabilityGenerationBatchApplyDTO }> = ({ selectedTemplate, dto }) => {
   const selectedDepartment = useAppSelector((s) => (s as any)?.auth?.selectedDepartment);
@@ -77,6 +99,14 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
   const [generatedSlots, setGeneratedSlots] = React.useState<GeneratedSlot[]>(generatedSlotsMock);
   const totalSlotsToBeCreated = React.useMemo(
     () => generatedSlots.filter(slot => slot.tone === "created").length,
+    [generatedSlots]
+  );
+  const totalBufferSlotsToBeCreated = React.useMemo(
+    () => generatedSlots.filter(slot => slot.tone === "created" && slot.slotType === "Buffer").length,
+    [generatedSlots]
+  );
+  const totalPrimarySlotsToBeCreated = React.useMemo(
+    () => generatedSlots.filter(slot => slot.tone === "created" && slot.slotType === "Slot").length,
     [generatedSlots]
   );
   const exceptionCount = React.useMemo(() => {
@@ -108,6 +138,26 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
         title: "Time",
         width: 150,
         render: (row: GeneratedSlot) => <span className="text-sm text-slate-600">{row.time}</span>
+      },
+      {
+        key: "slotType",
+        title: "Type",
+        width: 140,
+        render: (row: GeneratedSlot) => (
+          <Pill
+            className={cn(
+              row.slotType === "Buffer"
+                ? "bg-violet-100 text-violet-700"
+                : row.slotType === "Break"
+                  ? "bg-rose-100 text-rose-700"
+                  : row.slotType === "Holiday"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-emerald-100 text-emerald-700"
+            )}
+          >
+            {row.slotType ?? "Slot"}
+          </Pill>
+        )
       },
       {
         key: "channel",
@@ -193,8 +243,19 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
       }
       const rows: GeneratedSlot[] = [];
       const duration = Number(effectiveTemplate?.durationMinutes ?? selectedTemplate?.durationMinutes ?? 30);
+      const slotBeforeMinutes = Math.max(
+        0,
+        Number(effectiveTemplate?.defaultBufferBeforeMinutes ?? selectedTemplate?.defaultBufferBeforeMinutes ?? 0)
+      );
+      const slotAfterMinutes = Math.max(
+        0,
+        Number(effectiveTemplate?.defaultBufferAfterMinutes ?? selectedTemplate?.defaultBufferAfterMinutes ?? 0)
+      );
       const channelLabel = String(effectiveTemplate?.templateType ?? selectedTemplate?.templateType ?? "TEMPLATE");
-      const templateCapacity = Number(effectiveTemplate?.parallelCapacityValue ?? selectedTemplate?.parallelCapacityValue ?? 1);
+      const rawTemplateCapacity = Number(
+        effectiveTemplate?.parallelCapacityValue ?? selectedTemplate?.parallelCapacityValue ?? 1
+      );
+      const templateCapacity = Number.isFinite(rawTemplateCapacity) && rawTemplateCapacity > 0 ? rawTemplateCapacity : 1;
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const dayKey = DAYS[(d.getDay() + 6) % 7];
         const key = format(d, "yyyy-MM-dd");
@@ -205,6 +266,7 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
           rows.push({
             date: format(d, "EEE, MMM dd"),
             time: "—",
+            slotType: "Holiday",
             channel: "Holiday",
             duration: "All day",
             capacity: "—",
@@ -229,11 +291,15 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
             const slotEnd = cursor + slotDuration;
             const overlappingBreakEnd = findOverlappingBreakEnd(breaks, slotStart, slotEnd);
             if (overlappingBreakEnd != null) {
-              const skippedDuration = Math.max(0, overlappingBreakEnd - slotStart);
+              const overlappingBreakWindow = findOverlappingBreakWindow(breaks, slotStart, slotEnd);
+              const skippedStart = overlappingBreakWindow?.start ?? slotStart;
+              const skippedEnd = overlappingBreakWindow?.end ?? overlappingBreakEnd;
+              const skippedDuration = Math.max(0, skippedEnd - skippedStart);
               rows.push({
                 date: format(d, "EEE, MMM dd"),
-                time: `${toHHmm(slotStart)} - ${toHHmm(overlappingBreakEnd)}`,
-                channel: "Interval Break",
+                time: `${toHHmm(skippedStart)} - ${toHHmm(skippedEnd)}`,
+                slotType: "Break",
+                channel: channelLabel,
                 duration: `${skippedDuration} min`,
                 capacity: "—",
                 status: "Will be skipped",
@@ -241,20 +307,56 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
                 checked: false,
                 alert: true,
               });
-              cursor = overlappingBreakEnd;
+              cursor = overlappingBreakEnd + slotBeforeMinutes;
               continue;
             }
-            rows.push({
-              date: format(d, "EEE, MMM dd"),
-              time: `${toHHmm(slotStart)} - ${toHHmm(slotEnd)}`,
-              channel: channelLabel,
-              duration: `${slotDuration} min`,
-              capacity: `${templateCapacity} slots`,
-              status: "Will be created",
-              tone: "created",
-              checked: true,
-            });
-            cursor = slotEnd;
+            const beforeBufferStart = slotStart - slotBeforeMinutes;
+            const beforeBufferEnd = slotStart;
+            const afterBufferStart = slotEnd;
+            const afterBufferEnd = slotEnd + slotAfterMinutes;
+
+            for (let capacityIndex = 0; capacityIndex < templateCapacity; capacityIndex += 1) {
+              if (slotBeforeMinutes > 0) {
+                rows.push({
+                  date: format(d, "EEE, MMM dd"),
+                  time: `${toHHmm(beforeBufferStart)} - ${toHHmm(beforeBufferEnd)}`,
+                  slotType: "Buffer",
+                  channel: channelLabel,
+                  duration: `${slotBeforeMinutes} min`,
+                  capacity: `${capacityIndex + 1}/${templateCapacity}`,
+                  status: "Will be created",
+                  tone: "created",
+                  checked: true,
+                });
+              }
+
+              rows.push({
+                date: format(d, "EEE, MMM dd"),
+                time: `${toHHmm(slotStart)} - ${toHHmm(slotEnd)}`,
+                slotType: "Slot",
+                channel: channelLabel,
+                duration: `${slotDuration} min`,
+                capacity: `${capacityIndex + 1}/${templateCapacity}`,
+                status: "Will be created",
+                tone: "created",
+                checked: true,
+              });
+
+              if (slotAfterMinutes > 0) {
+                rows.push({
+                  date: format(d, "EEE, MMM dd"),
+                  time: `${toHHmm(afterBufferStart)} - ${toHHmm(afterBufferEnd)}`,
+                  slotType: "Buffer",
+                  channel: channelLabel,
+                  duration: `${slotAfterMinutes} min`,
+                  capacity: `${capacityIndex + 1}/${templateCapacity}`,
+                  status: "Will be created",
+                  tone: "created",
+                  checked: true,
+                });
+              }
+            }
+            cursor = afterBufferEnd + slotBeforeMinutes;
           }
         }
       }
@@ -281,6 +383,8 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
           selectedTemplate={selectedTemplate}
           dto={dto}
           totalSlotsToBeCreated={totalSlotsToBeCreated}
+          totalPrimarySlotsToBeCreated={totalPrimarySlotsToBeCreated}
+          totalBufferSlotsToBeCreated={totalBufferSlotsToBeCreated}
           exceptionCount={exceptionCount}
         />
       </div>

@@ -4,6 +4,7 @@ import PreviewSummarySection from "./PreviewSummarySection";
 import { formatLocalDateForApi, parseApplyTemplateDateTime } from "../applyTemplateDateUtils";
 import { useLazyGetAppointmentsByDepartmentBetweenDatesQuery } from "@/services/appointment/appointmentService";
 import PreviewSlotsCardSection from "./PreviewSlotsCardSection";
+import { useGetAvailabilityTemplateQuery } from "@/services/appointment/availabilityTemplateService";
 
 const PreviewSlotsSection: React.FC<{
   templateId?: number | null;
@@ -18,6 +19,23 @@ const PreviewSlotsSection: React.FC<{
   void setDto;
 
   const [triggerAppointmentsByDepartment] = useLazyGetAppointmentsByDepartmentBetweenDatesQuery();
+  const scopeUpper = String((dto as any)?.scope ?? "").trim().toUpperCase();
+  const effectiveTemplateId = React.useMemo(
+    () =>
+      scopeUpper === "SPECIFIC_RESOURCE"
+        ? Number((dto as any)?.childTemplateId ?? 0)
+        : Number((dto as any)?.templateId ?? templateId ?? 0),
+    [scopeUpper, dto, templateId]
+  );
+  const { data: effectiveTemplateData } = useGetAvailabilityTemplateQuery(
+    { id: effectiveTemplateId },
+    { skip: !effectiveTemplateId }
+  );
+  const effectiveDepartmentId = Number((effectiveTemplateData as any)?.departmentId ?? departmentId ?? 0);
+  const effectiveResourceId = Number((effectiveTemplateData as any)?.resourceId ?? 0);
+  const effectiveTemplateDurationMinutes = Number(
+    (effectiveTemplateData as any)?.durationMinutes ?? templateDurationMinutes ?? 0
+  );
   const [matrix, setMatrix] = React.useState<
     Record<string, { count: number; statuses: Record<string, number> }>
   >({});
@@ -82,7 +100,7 @@ const PreviewSlotsSection: React.FC<{
   React.useEffect(() => {
     let mounted = true;
     const load = async () => {
-      const depId = Number(departmentId ?? 0);
+      const depId = effectiveDepartmentId;
       if (!depId || !startDate || !endDate || endDate < startDate) {
         if (mounted) {
           setMatrix({});
@@ -115,6 +133,14 @@ const PreviewSlotsSection: React.FC<{
 
           const rows = response?.data ?? [];
           rows.forEach((row: any) => {
+            if (scopeUpper === "SPECIFIC_RESOURCE" && effectiveResourceId > 0) {
+              const rowResourceId = Number(
+                row?.resourceId ??
+                row?.resource?.id ??
+                0
+              );
+              if (rowResourceId !== effectiveResourceId) return;
+            }
             const rawStart = row?.startDatetime ?? row?.appointmentDateTime;
             if (!rawStart) return;
             const d = new Date(rawStart);
@@ -156,7 +182,14 @@ const PreviewSlotsSection: React.FC<{
     return () => {
       mounted = false;
     };
-  }, [departmentId, startDate, endDate, triggerAppointmentsByDepartment]);
+  }, [
+    effectiveDepartmentId,
+    effectiveResourceId,
+    scopeUpper,
+    startDate,
+    endDate,
+    triggerAppointmentsByDepartment
+  ]);
 
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden">
@@ -175,8 +208,8 @@ const PreviewSlotsSection: React.FC<{
       />
 
       <PreviewSummarySection
-        templateId={templateId ?? null}
-        templateDurationMinutes={templateDurationMinutes ?? null}
+        templateId={effectiveTemplateId || null}
+        templateDurationMinutes={effectiveTemplateDurationMinutes || null}
         dto={dto}
       />
     </div>
