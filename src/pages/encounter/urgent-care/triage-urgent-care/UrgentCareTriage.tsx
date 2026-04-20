@@ -9,7 +9,6 @@ import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 import { Modal } from 'rsuite';
-
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import 'react-tabs/style/react-tabs.css';
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
@@ -1292,19 +1291,21 @@ const UrgentCareTriage = () => {
           </Tooltip>
         );
 
+        const patientName = (
+          <span className="patient-name-text">
+            {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
+          </span>
+        );
+
         return (
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
-            <div style={{ display: 'inline-block' }}>
+            <div className="patient-name-wrapper">
               {rowData?.patientObject?.privatePatient ? (
-                <Badge color="blue" content="Private">
-                  <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                  </p>
+                <Badge className="patient-badge" color="blue" content="Private">
+                  {patientName}
                 </Badge>
               ) : (
-                <p style={{ cursor: 'pointer' }}>
-                  {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                </p>
+                patientName
               )}
             </div>
           </Whisper>

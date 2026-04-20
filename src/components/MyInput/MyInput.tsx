@@ -1000,13 +1000,11 @@ const MyInput = ({
       disabled={props.disabled}
       name={fieldName}
       type="text"
-      inputMode="numeric" // 👈 يعطي كيبورد أرقام
+      inputMode="numeric"
       value={record?.[fieldName] ?? ''}
       placeholder={props.placeholder}
       onChange={(value: string) => {
-        // 👇 يسمح أرقام فقط
         const numericOnly = value.replace(/[^0-9]/g, '');
-
         setRecord?.({
           ...record,
           [fieldName]: numericOnly
