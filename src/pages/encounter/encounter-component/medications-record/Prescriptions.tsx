@@ -33,7 +33,6 @@ const Prescriptions = ({ patient }) => {
         }
         return "";
     };
-
     const tableColumns = [
         {
             key: "prescriptionId",
@@ -69,13 +68,13 @@ const Prescriptions = ({ patient }) => {
             key: "submittedBy",
             title: <Translate>Submitted By</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => rowData?.submittedBy  ?? "",
+            render: (rowData: any) => rowData?.submitedBy  ?? "",
         },
         {
             key: "submittedAt",
             title: <Translate>Submitted at</Translate>,
             flexGrow: 1,
-            render: (rowData: any) => formatDateWithoutSeconds(rowData?.submittedDate),
+            render: (rowData: any) => formatDateWithoutSeconds(rowData?.submitedDate) ?? "",
         },
     ];
 
