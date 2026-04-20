@@ -12,6 +12,8 @@ import {
   faCommentMedical,
   faUserNurse
 } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -60,6 +62,8 @@ import { Patient } from '@/types/model-types-new';
 
 import './styles.less';
 import 'react-tabs/style/react-tabs.css';
+
+dayjs.extend(duration);
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -757,6 +761,18 @@ const UrgentCareList = () => {
     });
   };
 
+  const calculateDoorToPhysician = (createdAt: string, startedDate: string) => {
+    if (!createdAt || !startedDate) return '-';
+
+    const diff = dayjs(startedDate).diff(dayjs(createdAt));
+    const dur = dayjs.duration(diff);
+
+    const minutes = Math.floor(dur.asMinutes());
+
+    return `${minutes} min`;
+  };
+
+
   const handleClearFilters = () => {
     const now = new Date();
     const lastWeekDate = new Date(now);
@@ -938,6 +954,13 @@ const UrgentCareList = () => {
       title: 'STARTED BY',
       expandable: true,
       render: (row: any) => row?.startedBy ?? '-'
+    },
+    {
+      key: 'doorToPhysician',
+      title: 'DOOR TO PHYSICIAN',
+      expandable: true,
+      render: (row: any) =>
+        calculateDoorToPhysician(row?.createdAt, row?.startedDate)
     },
     {
       key: 'status',
