@@ -238,8 +238,10 @@ const ScheduleScreen = () => {
   const [selectedAppointmentStatus, setSelectedAppointmentStatus] = useState<{ status: string | null }>({
     status: null
   });
-  const [selectedBookingMode, setSelectedBookingMode] = useState<{ bookingMode: string | null }>({
-    bookingMode: null
+  const [selectedBookingMode, setSelectedBookingMode] = useState<{
+    bookingMode: string | string[] | null;
+  }>({
+    bookingMode: ['QUICK', 'SLOT']
   });
   const [listRequest] = useState<ListRequest>({ ...initialListRequest });
   const [appointmentsData, setAppointmentsData] = useState([]);
@@ -270,7 +272,9 @@ const ScheduleScreen = () => {
   const authSlice = useAppSelector(state => state.auth);
   const TemplateTypeEnum = useEnumOptions('TemplateType');
   const AppointmentStatusEnum = useEnumOptions('AppointmentStatus');
-  const BookingModeEnum = useEnumOptions('BookingMode');
+  const BookingModeEnum = useEnumOptions('BookingMode',{
+    exclude: ['BUFFER']
+  });
 
   useEffect(() => {
     if (selectedFacility?.id) return;
@@ -446,8 +450,6 @@ const ScheduleScreen = () => {
 
         const departmentColumnId =
           appointment?.departmentId ??
-          appointment?.department_id ??
-          appointment?.department ??
           null;
         const normalizedDepartmentColumnId =
           departmentColumnId !== null && typeof departmentColumnId !== 'undefined'
@@ -455,10 +457,7 @@ const ScheduleScreen = () => {
             : '';
 
         const resourceKey =
-          appointment?.resourceKey ??
-          appointment?.resource_key ??
-          appointment?.resourceId ??
-          appointment?.resource_id;
+          appointment?.resourceId 
         const normalizedResourceKey =
           resourceKey !== null && typeof resourceKey !== 'undefined' ? String(resourceKey) : '';
 
@@ -473,8 +472,6 @@ const ScheduleScreen = () => {
           resourceNameFromService ||
           resource?.resourceName ||
           resource?.name ||
-          appointment?.resourceName ||
-          appointment?.resource_name ||
           '';
         const slotTitle = [patientFullName, patientMrn ? `MRN: ${patientMrn}` : '', resourceNameForTitle]
           .filter(Boolean)
@@ -719,6 +716,12 @@ const ScheduleScreen = () => {
         ? Number(rk)
         : null;
     const patientId = schedulePatientIdForSearch;
+    const rawBookingMode = selectedBookingMode?.bookingMode;
+    const bookingMode = Array.isArray(rawBookingMode)
+      ? rawBookingMode
+      : rawBookingMode
+        ? [rawBookingMode]
+        : ['QUICK', 'SLOT'];
 
     const filter: AppointmentFromTemplateSearchFilterDTO = {
       facility: selectedFacility?.id ? Number(selectedFacility.id) : null,
@@ -726,7 +729,7 @@ const ScheduleScreen = () => {
       resourceType: selectedResourceTypeValue?.value ?? null,
       resourceId: firstResourceId,
       status: selectedAppointmentStatus?.status ?? null,
-      bookingMode: selectedBookingMode?.bookingMode ?? null,
+      bookingMode: bookingMode as any,
       patientId
     };
 
@@ -1105,10 +1108,13 @@ const ScheduleScreen = () => {
     }
 
     if (selectedBookingMode?.bookingMode) {
-      const modeNeedle = String(selectedBookingMode.bookingMode).toUpperCase();
-      list = list.filter(event =>
-        String(event?.appointmentData?.bookingMode ?? '').toUpperCase() === modeNeedle
-      );
+      const selectedModes = Array.isArray(selectedBookingMode.bookingMode)
+        ? selectedBookingMode.bookingMode.map(v => String(v ?? '').trim().toUpperCase()).filter(Boolean)
+        : [String(selectedBookingMode.bookingMode ?? '').trim().toUpperCase()].filter(Boolean);
+      list = list.filter(event => {
+        const eventMode = String(event?.appointmentData?.bookingMode ?? '').trim().toUpperCase();
+        return selectedModes.includes(eventMode);
+      });
     }
 
     if (schedulePatientIdForSearch != null) {
