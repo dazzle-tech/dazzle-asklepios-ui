@@ -146,11 +146,32 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
   // Enums
   const depTypeOptions = useEnumOptions('DepartmentType');
   const encTypesEnum = useEnumOptions('EncounterType');
+  const DayOfWeek = useEnumOptions('DayOfWeek');
 
   const filterFields = [
     { label: 'Department Name', value: 'name' },
     { label: 'Department Type', value: 'departmentType' },
   ];
+
+  const buildWorkingDaysPayload = (workingDays: Department['workingDays']) => {
+    if (!DayOfWeek || DayOfWeek.length === 0) return workingDays ?? [];
+
+    const workingDaysMap: Record<string, boolean> = {};
+    DayOfWeek.forEach(day => {
+      workingDaysMap[day.value] = false;
+    });
+
+    (workingDays ?? []).forEach(day => {
+      if (day?.dayOfWeek) {
+        workingDaysMap[day.dayOfWeek] = day.isWorking !== false;
+      }
+    });
+
+    return DayOfWeek.map(day => ({
+      dayOfWeek: day.value,
+      isWorking: !!workingDaysMap[day.value],
+    }));
+  };
 
   // Effects
   useEffect(() => {
@@ -263,7 +284,8 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
       parallelCapacityEnabled: department?.parallelCapacityEnabled,
       requirePractitioner: department?.requirePractitioner,
       requireBilling: department?.requireBilling,
-      requirePreAssessment: department?.requirePreAssessment
+      requirePreAssessment: department?.requirePreAssessment,
+      workingDays: buildWorkingDaysPayload(department?.workingDays)
     });
 
     addDepartment(payload)
@@ -288,7 +310,11 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({ facility, width }) => {
     }
     setOpenForm(false);
     setLoad(true);
-    updateDepartment({...department, encounterType: department?.encounterType || undefined})
+    updateDepartment({
+      ...department,
+      encounterType: department?.encounterType || undefined,
+      workingDays: buildWorkingDaysPayload(department?.workingDays)
+    })
       .unwrap()
       .then(() => {
         dispatch(notify({ msg: 'Department updated successfully', sev: 'success' }));

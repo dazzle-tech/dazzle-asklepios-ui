@@ -1,15 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import clsx from 'clsx';
 import { Department } from '@/types/model-types-new';
 import { newDepartment } from '@/types/model-types-constructor-new';
+import Translate from '@/components/Translate';
+import { useEnumOptions } from '@/services/enumsApi';
 
 interface AddEditDepartmentInlineProps {
   width: number;
   department: Department;
-  setDepartment: (dept: Department) => void;
+  setDepartment: React.Dispatch<React.SetStateAction<Department>>;
   recordOfDepartmentCode: { departmentCode: string };
   setRecordOfDepartmentCode: (value: { departmentCode: string }) => void;
   depTypeOptions: any[];
@@ -34,6 +36,38 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
   const isRTL = direction === 'RTL';
 
   const dir = isRTL ? 'rtl' : 'ltr';
+  const DayOfWeek = useEnumOptions('DayOfWeek');
+
+  const workingDaysRecord = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    if (!DayOfWeek || DayOfWeek.length === 0) return map;
+
+    DayOfWeek.forEach(day => {
+      map[day.value] = false;
+    });
+
+    (department.workingDays ?? []).forEach(day => {
+      if (day?.dayOfWeek) {
+        map[day.dayOfWeek] = day.isWorking !== false;
+      }
+    });
+
+    return map;
+  }, [department.workingDays, DayOfWeek]);
+
+  const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
+    if (!DayOfWeek || DayOfWeek.length === 0) return;
+
+    const nextWorkingDays = DayOfWeek.map(day => ({
+      dayOfWeek: day.value,
+      isWorking: !!nextRecord[day.value],
+    }));
+
+    setDepartment(prev => ({
+      ...prev,
+      workingDays: nextWorkingDays,
+    }));
+  };
 
   useEffect(() => {
     if (!department?.appointable) {
@@ -231,6 +265,22 @@ const AddEditDepartmentInline: React.FC<AddEditDepartmentInlineProps> = ({
           />
         </>
       )}
+      <div style={{ width: '100%', marginTop: '12px' }}>
+        <Translate>Working Days</Translate>
+        <div className="facility-working-days">
+          {DayOfWeek?.map(day => (
+            <MyInput
+              key={day.value}
+              fieldType="check"
+              fieldName={day.value}
+              label={day.label}
+              record={workingDaysRecord}
+              setRecord={setWorkingDaysRecord}
+              showLabel={false}
+            />
+          ))}
+        </div>
+      </div>
       {/* Actions */}
       <div style={{ display: 'flex', alignItems: 'flex-end', marginLeft: '10px', marginTop: '20px' }}>
         <MyButton onClick={onSave} appearance="primary">

@@ -58,7 +58,8 @@ export const newDepartment: modelTypes.Department = {
   parallelCapacityEnabled: false,
   requirePractitioner: false,
   requireBilling: false,
-  requirePreAssessment: false
+  requirePreAssessment: false,
+  workingDays: []
 };
 // ------------------- Facility -------------------
 export const newFacility: modelTypes.Facility = {

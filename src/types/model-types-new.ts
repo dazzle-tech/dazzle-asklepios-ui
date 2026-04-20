@@ -65,7 +65,8 @@ export interface Department {
   parallelCapacityEnabled: boolean,
   requirePractitioner: boolean,
   requireBilling: boolean,
-  requirePreAssessment: boolean
+  requirePreAssessment: boolean,
+  workingDays?: OrganizationWorkingDay[];
 }
 export interface Facility {
   id?: string;

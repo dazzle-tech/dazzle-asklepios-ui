@@ -101,7 +101,7 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     { parentTemplateId: record?.id },
     { skip: !record?.id }
   );
-  const [getDepartment, { data, isLoading }] = useLazyGetDepartmentByIdQuery();
+  const [getDepartment, { data: selectedDepartmentFullObject, isLoading }] = useLazyGetDepartmentByIdQuery();
 
 
   const [create] = useCreateAvailabilityTemplateMutation();
@@ -241,27 +241,12 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       .filter(Boolean);
   };
 
-  const getWorkingDaysFromFacility = () => {
+  const hasAnyWorkingDayEnabled = (days: any) =>
+    Array.isArray(days) && days.some((d: any) => d?.isWorking !== false);
+
+  const normalizeWorkingDays = (source: any[]) => {
     if (!dayOptions || dayOptions.length === 0) return null;
-
-    const facilities = facilityListResponse ?? [];
-    const selectedFacilityData = facilities.find(
-      (f: any) => String(f?.id) === String(selectedFacility?.id)
-    );
-
-    const facilityWorkingDays =
-      selectedFacilityFullObject?.workingDays ??
-      selectedFacilityData?.workingDays ??
-      [];
-
-    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
-
-    const source =
-      facilityWorkingDays && facilityWorkingDays.length > 0
-        ? facilityWorkingDays
-        : organizationWorkingDays;
-
-    if (!source || source.length === 0) return null;
+    if (!Array.isArray(source) || source.length === 0) return null;
 
     return dayOptions.map(day => {
       const found = source.find(
@@ -272,6 +257,32 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
         isWorking: found ? found.isWorking !== false : false,
       };
     });
+  };
+
+  const getWorkingDaysFromHierarchy = () => {
+    const facilities = facilityListResponse ?? [];
+    const selectedFacilityData = facilities.find(
+      (f: any) => String(f?.id) === String(selectedFacility?.id)
+    );
+
+    const facilityWorkingDays =
+      selectedFacilityFullObject?.workingDays ??
+      selectedFacilityData?.workingDays ??
+      [];
+    const departmentWorkingDays =
+      String(selectedDepartmentFullObject?.id ?? '') === String(record?.departmentId ?? '')
+        ? selectedDepartmentFullObject?.workingDays ?? []
+        : [];
+    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
+
+    const source =
+      hasAnyWorkingDayEnabled(departmentWorkingDays)
+        ? departmentWorkingDays
+        : hasAnyWorkingDayEnabled(facilityWorkingDays)
+          ? facilityWorkingDays
+          : organizationWorkingDays;
+
+    return normalizeWorkingDays(source);
   };
 
   const getServicesFromDepartment = (services = departmentServices) => {
@@ -349,9 +360,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     if (isEditMode) return;
     if (userChangedWorkingDaysRef.current) return;
     if (!dayOptions || dayOptions.length === 0) return;
-    if (!selectedFacility?.id) return;
 
-    const workingDays = getWorkingDaysFromFacility();
+    const workingDays = getWorkingDaysFromHierarchy();
     if (!workingDays) return;
 
     setRecord(prev => ({ ...prev, workingDays }));
@@ -359,7 +369,9 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     openCount,
     selectedFacilityFullObject,
     facilityListResponse,
+    selectedDepartmentFullObject,
     organizationDefinitions,
+    record?.departmentId,
   ]);
 
 
