@@ -219,6 +219,7 @@ import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 import { currentMedicationService } from './services/patients/currentMedicationService';
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
+import { dentalProcedureService } from '@/services/dentalProcedureService';
 
 export const store = configureStore({
   reducer: {
@@ -461,7 +462,8 @@ export const store = configureStore({
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
     [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
     [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
-    [availabilityTemplateIntervalBreakService.reducerPath]: availabilityTemplateIntervalBreakService.reducer,
+    [availabilityTemplateIntervalBreakService.reducerPath]:
+      availabilityTemplateIntervalBreakService.reducer,
     [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
@@ -535,8 +537,8 @@ export const store = configureStore({
     [bedRoomService.reducerPath]: bedRoomService.reducer,
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
     [currentMedicationService.reducerPath]: currentMedicationService.reducer,
-    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer
-
+    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
+    [dentalProcedureService.reducerPath]: dentalProcedureService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -787,7 +789,8 @@ export const store = configureStore({
         bedRoomService.middleware,
         encounterAssignToBedService.middleware,
         currentMedicationService.middleware,
-        uccMedicationOrderService.middleware
+        uccMedicationOrderService.middleware,
+        dentalProcedureService.middleware
       ]
     ) as any
 });

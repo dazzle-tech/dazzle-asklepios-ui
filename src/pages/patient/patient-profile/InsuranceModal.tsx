@@ -284,7 +284,6 @@ const InsuranceModal = ({
       }
 
       setRelativePage(0);
-      setAllRelatives([]);
     }
   }, [open, editing]);
 
