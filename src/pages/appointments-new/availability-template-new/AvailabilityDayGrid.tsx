@@ -154,7 +154,6 @@ const AvailabilityDayGrid = ({
   ? [parentTemplate, ...normalizedTemplates]
   : [];
 
-   console.log("mergedArray: ", mergedArray);
 
     return (
         <>

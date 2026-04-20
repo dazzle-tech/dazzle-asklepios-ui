@@ -275,6 +275,13 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
         : [];
     const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
 
+    if (
+      record?.departmentId &&
+      String(selectedDepartmentFullObject?.id ?? '') !== String(record?.departmentId ?? '')
+    ) {
+      return null;
+    }
+
     const source =
       hasAnyWorkingDayEnabled(departmentWorkingDays)
         ? departmentWorkingDays

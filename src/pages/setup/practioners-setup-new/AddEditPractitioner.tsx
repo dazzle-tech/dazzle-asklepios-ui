@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Col, Form, Row } from 'rsuite';
@@ -98,6 +98,7 @@ const AddEditPractitioner = ({
   const specility = useEnumOptions('Specialty');
   const genders = useEnumOptions('Gender');
   const jobRoles = useEnumOptions('JobRole');
+  const dayOfWeekOptions = useEnumOptions('DayOfWeek');
 
 
   // Users
@@ -226,7 +227,7 @@ const AddEditPractitioner = ({
     setSearchResultVisible(true);
   };
 
- useEffect(() => {
+  useEffect(() => {
  
    if (!practitioner?.appointable) {
      
@@ -237,6 +238,37 @@ const AddEditPractitioner = ({
      
    }
  }, [practitioner?.appointable]);
+
+  const workingDaysRecord = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    if (!dayOfWeekOptions || dayOfWeekOptions.length === 0) return map;
+
+    dayOfWeekOptions.forEach((day) => {
+      map[day.value] = false;
+    });
+
+    (practitioner?.workingDays ?? []).forEach((day) => {
+      if (day?.dayOfWeek) {
+        map[day.dayOfWeek] = day.isWorking !== false;
+      }
+    });
+
+    return map;
+  }, [dayOfWeekOptions, practitioner?.workingDays]);
+
+  const setWorkingDaysRecord = (nextRecord: Record<string, boolean>) => {
+    if (!dayOfWeekOptions || dayOfWeekOptions.length === 0) return;
+
+    const nextWorkingDays = dayOfWeekOptions.map((day) => ({
+      dayOfWeek: day.value,
+      isWorking: !!nextRecord[day.value],
+    }));
+
+    setPractitioner((prev) => ({
+      ...prev,
+      workingDays: nextWorkingDays,
+    }));
+  };
   // Main modal content
   const conjureFormContentOfMainModal = (stepNumber) => {
     switch (stepNumber) {
@@ -507,6 +539,27 @@ const AddEditPractitioner = ({
                     </Row>
                     )}
                   </>
+                }
+              />
+
+              <SectionContainer
+                title="Working Days"
+                content={
+                  <div style={{ width: '100%', marginTop: '12px' }}>
+                    <div className="facility-working-days">
+                      {dayOfWeekOptions?.map((day) => (
+                        <MyInput
+                          key={day.value}
+                          fieldType="check"
+                          fieldName={day.value}
+                          label={day.label}
+                          record={workingDaysRecord}
+                          setRecord={setWorkingDaysRecord}
+                          showLabel={false}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 }
               />
             </div>
