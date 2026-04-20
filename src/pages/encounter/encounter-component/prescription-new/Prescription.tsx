@@ -14,10 +14,11 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
 import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import {
-   useCreateOrGetPatientPrescriptionMutation,
-   useGetPatientPrescriptionQuery,
-   useUpdatePatientPrescriptionMutation,
-   useSubmitPatientPrescriptionMutation
+  useCreateOrGetPatientPrescriptionMutation,
+  useGetPatientPrescriptionQuery,
+  useUpdatePatientPrescriptionMutation,
+  useSubmitPatientPrescriptionMutation,
+  useLazyGetPrescriptionPdfQuery
 } from '@/services/patients/Prescription/patientPrescriptionService';
 import {
   useGetPatientPrescriptionMedicationsQuery,
@@ -67,7 +68,7 @@ const Prescription = (props: Props) => {
   const authSlice = useAppSelector(state => state.auth);
   const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
-   const isNurse = jobRole === 'NURSE';
+  const isNurse = jobRole === 'NURSE';
   const [openToAdd, setOpenToAdd] = useState(true);
   const [openCancellation, setOpenCancellation] = useState(false);
   const [showCanceled, setShowCanceled] = useState(false);
@@ -154,7 +155,7 @@ const Prescription = (props: Props) => {
     size: 1000,
     sort: 'id,asc'
   });
-  
+
   // Patient / encounter ids (prefer numeric id; fallback to key)
   const patientId = patient?.id ? Number(patient.id) : patient?.key ? Number(patient.key) : undefined;
   const encounterId = encounter?.id
@@ -185,12 +186,12 @@ const Prescription = (props: Props) => {
   const patientPrescriptions = useMemo(() => {
     // If no patientId, return empty array (don't show prescriptions for unknown patient)
     if (!patientId) return [] as PatientPrescription[];
-    
+
     // If no prescriptions, return empty array
     if (!prescriptions.length) return [] as PatientPrescription[];
-    
+
     const targetPatientId = Number(patientId);
-    
+
     return (prescriptions as PatientPrescription[]).filter(p => {
       // Try direct patientId field (most common case) - handle both number and string
       const pPatientId = p.patientId;
@@ -198,7 +199,7 @@ const Prescription = (props: Props) => {
         const pIdNum = typeof pPatientId === 'string' ? Number(pPatientId) : pPatientId;
         if (!isNaN(pIdNum) && pIdNum === targetPatientId) return true;
       }
-      
+
       // Fallback: try patient object if it exists
       const patientObj = (p as any).patient;
       if (patientObj) {
@@ -211,7 +212,7 @@ const Prescription = (props: Props) => {
           if (!isNaN(objKey) && objKey === targetPatientId) return true;
         }
       }
-      
+
       // Additional fallback: if encounterId matches and we have encounterId, include it
       // This is a safety measure in case patientId is not populated but encounterId is
       if (encounterId != null && p.encounterId != null) {
@@ -219,7 +220,7 @@ const Prescription = (props: Props) => {
         const targetEncounterId = Number(encounterId);
         if (!isNaN(pEncounterId) && pEncounterId === targetEncounterId) return true;
       }
-      
+
       // If no patientId found on prescription, exclude it (safer than including all)
       return false;
     });
@@ -250,7 +251,7 @@ const Prescription = (props: Props) => {
           encounterId,
           fromFacilityId: authSlice?.tenant?.selectedFacility?.id ?? (null as any),
           fromDepartmentId: encounter?.departmentId ?? (null as any),
-          urgencyLevel: 'NORMAL' 
+          urgencyLevel: 'NORMAL'
         } as any).unwrap();
 
         setCurrentPrescription(result);
@@ -293,8 +294,8 @@ const Prescription = (props: Props) => {
       setCurrentPrescription(null);
       return;
     }
-   const selected = (patientPrescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey) ||
-                     (prescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey);
+    const selected = (patientPrescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey) ||
+      (prescriptions as PatientPrescription[]).find(p => p.id === preKeyRecord.preKey);
     if (selected) setCurrentPrescription(selected);
   }, [preKeyRecord.preKey, patientPrescriptions, prescriptions]);
 
@@ -317,41 +318,41 @@ const Prescription = (props: Props) => {
     { skip: !currentPrescription?.id }
   );
   const [
-  getActiveIngredientsByIds,
-  {
-    data: activeIngredientsByIds,
-    isLoading: isLoadingActiveIngredientsByIds,
-  },
-] = useGetActiveIngredientsByIdsMutation();
+    getActiveIngredientsByIds,
+    {
+      data: activeIngredientsByIds,
+      isLoading: isLoadingActiveIngredientsByIds,
+    },
+  ] = useGetActiveIngredientsByIdsMutation();
 
-const activeIngredientIds = useMemo(() => {
-  const medications = patientPrescriptionMedicationsRaw?.data ?? [];
+  const activeIngredientIds = useMemo(() => {
+    const medications = patientPrescriptionMedicationsRaw?.data ?? [];
 
-  const ids = medications.map((item) => {
-    console.log('ID raw:', item.activeIngredientId);
-    console.log(typeof medications[0]?.activeIngredientId);
-    return item.activeIngredientId;
-  });
+    const ids = medications.map((item) => {
+      console.log('ID raw:', item.activeIngredientId);
+      console.log(typeof medications[0]?.activeIngredientId);
+      return item.activeIngredientId;
+    });
 
-  console.log('Mapped IDs:', ids);
+    console.log('Mapped IDs:', ids);
 
-  const filtered = ids.filter((id): id is number => id != null);
-  console.log('Filtered IDs:', filtered);
-
-
-  return filtered;
-}, [patientPrescriptionMedicationsRaw]);
+    const filtered = ids.filter((id): id is number => id != null);
+    console.log('Filtered IDs:', filtered);
 
 
-useEffect(() => {
-  if (!activeIngredientIds.length) return;
-  getActiveIngredientsByIds(activeIngredientIds);
-}, [activeIngredientIds, getActiveIngredientsByIds]);
-const activeIngredientsMap = useMemo(() => {
-  return new Map(
-    (activeIngredientsByIds ?? []).map((item) => [item.id, item])
-  );
-}, [activeIngredientsByIds]);
+    return filtered;
+  }, [patientPrescriptionMedicationsRaw]);
+
+
+  useEffect(() => {
+    if (!activeIngredientIds.length) return;
+    getActiveIngredientsByIds(activeIngredientIds);
+  }, [activeIngredientIds, getActiveIngredientsByIds]);
+  const activeIngredientsMap = useMemo(() => {
+    return new Map(
+      (activeIngredientsByIds ?? []).map((item) => [item.id, item])
+    );
+  }, [activeIngredientsByIds]);
 
   const patientPrescriptionMedications = asArray(
     patientPrescriptionMedicationsRaw
@@ -372,10 +373,10 @@ const activeIngredientsMap = useMemo(() => {
     if (!key && key !== 0) return '';
     const lovList = list ?? [];
     if (!lovList.length) return '';
-    
+
     const keyStr = String(key);
     const keyNum = Number(key);
-    
+
     for (const item of lovList) {
       if (String(item?.key) === keyStr || Number(item?.key) === keyNum) {
         const display = item?.[labelKey] ?? item?.lovDisplayVale ?? item?.name ?? '';
@@ -390,10 +391,10 @@ const activeIngredientsMap = useMemo(() => {
         if (display) return String(display);
       }
     }
-    
+
     const fallback = conjureValueBasedOnKeyFromList(lovList, key, labelKey);
     if (fallback && fallback !== key) return String(fallback);
-    
+
     return '';
   };
 
@@ -450,19 +451,19 @@ const activeIngredientsMap = useMemo(() => {
     }
 
     // Custom instructions: read directly from medication object
-    if (type === 'CUSTOM_INSTRUCTIONS' ) {
+    if (type === 'CUSTOM_INSTRUCTIONS') {
       // Try reading from medication object first (new API)
       if (row?.dose != null || row?.doesUnit || row?.frequency || row?.rout) {
         // Get LOV arrays - handle both object and direct array formats
         const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
         const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
-        
-        const unitDisplay = getLovDisplay(unitLovArray, row?.doesUnit) || 
-                            formatEnumString(row?.doesUnit) ||
-                            (row?.doesUnit ? String(row.doesUnit) : '');
-        const freqDisplay = getLovDisplay(freqLovArray, row?.frequency) || 
-                           formatEnumString(row?.frequency) ||
-                           (row?.frequency ? String(row.frequency) : '');
+
+        const unitDisplay = getLovDisplay(unitLovArray, row?.doesUnit) ||
+          formatEnumString(row?.doesUnit) ||
+          (row?.doesUnit ? String(row.doesUnit) : '');
+        const freqDisplay = getLovDisplay(freqLovArray, row?.frequency) ||
+          formatEnumString(row?.frequency) ||
+          (row?.frequency ? String(row.frequency) : '');
         return [
           toStr(row?.dose),
           unitDisplay,
@@ -473,7 +474,7 @@ const activeIngredientsMap = useMemo(() => {
           .filter(Boolean)
           .join(', ');
       }
-      
+
       // Fallback to legacy custom instructions lookup
       const ci = customInstructions.find(
         (x: any) => String(x.prescriptionMedicationsKey) === String(row?.id ?? row?.key)
@@ -669,32 +670,44 @@ const activeIngredientsMap = useMemo(() => {
     }
   };
 
-  const [updatePrescription] = useUpdatePatientPrescriptionMutation();
-  const [updateMedicationStatus] = useUpdatePatientPrescriptionMedicationMutation();
+
   const [submitPrescription] = useSubmitPatientPrescriptionMutation();
+  const [triggerGetPrescriptionPdf] = useLazyGetPrescriptionPdfQuery();
+   const handlePrintPrescriptionPdf = async (rowData: any) => {
+    try {
+      const blob = await triggerGetPrescriptionPdf({
+        prescriptionId: rowData.id
+      }).unwrap();
 
-  const handleSubmitPres = () => {
-    if (!currentPrescription?.id) return;
-    setSubmitAssignment({
-      toFacilityId: currentPrescription?.toFacilityId ?? selectedFacility?.id ?? null,
-      toDepartmentId: currentPrescription?.toDepartmentId ?? null
-    });
-    setSubmitAssignModalOpen(true);
+      const fileURL = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `prescription-${rowData.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download prescription pdf', error);
+    }
   };
-
   const handleConfirmSubmitPres = async () => {
     if (!currentPrescription?.id) return;
-   
+
 
     try {
-     
-      
+
+
 
       await submitPrescription({
         id: currentPrescription.id,
       }).unwrap();
       dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
-   
+
 
       setSubmitAssignModalOpen(false);
       setSummaryModalOpen(false);
@@ -751,51 +764,11 @@ const activeIngredientsMap = useMemo(() => {
       prescriptionHeaderId: currentPrescription.id
     } as any);
 
-      setOpenDetailsModal(true);
-      setOpenToAdd(true);
+    setOpenDetailsModal(true);
+    setOpenToAdd(true);
   };
 
-  const [generatePrescriptionPdf, { isLoading: isGeneratingPdf }] =
-    useGeneratePrescriptionPdfMutation();
-
-  const handleGeneratePrescriptionPdf = async () => {
-    try {
-      if (!patient || !encounter || !currentPrescription?.id) {
-        dispatch(notify({ msg: 'Missing patient, encounter or prescription', type: 'error' } as any));
-        return;
-      }
-
-      const blob = await generatePrescriptionPdf({
-        patient,
-        encounter,
-        prescriptionKey: currentPrescription.id,
-        genericMedicationList: genericMedicationListResponse?.data ?? [],
-        facilityName,
-        authenticatedUserName: `${authSlice?.user?.firstName} ${authSlice?.user?.lastName}`,
-        authenticatedUserEmail: authSlice?.user?.email,
-        predefinedInstructions: predefinedInstructionsListResponse?.data ?? [],
-        customInstructions: customeInstructions?.object ?? []
-      }).unwrap();
-
-      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-
-      link.href = url;
-      link.download = `Prescription_${currentPrescription.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error: any) {
-      dispatch(
-        notify({
-          msg: error?.message || 'Failed to generate prescription PDF',
-          type: 'error'
-        } as any)
-      );
-    }
-  };
+ 
 
   // Table columns
   const tableColumns: any[] = [
@@ -815,11 +788,11 @@ const activeIngredientsMap = useMemo(() => {
     },
     {
       key: 'activeIngredientId',
-    
+
       title: 'Active Ingredients',
       flexGrow: 1,
       render: (rowData: any) => {
-       const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
+        const ingredient = activeIngredientsMap.get(rowData.activeIngredientId)
         return ingredient?.name ? String(ingredient.name) : '-';
       }
 
@@ -871,13 +844,13 @@ const activeIngredientsMap = useMemo(() => {
             // Get LOV arrays - handle both object and direct array formats
             const unitLovArray = Array.isArray(unitLovQueryResponse) ? unitLovQueryResponse : (unitLovQueryResponse?.object ?? []);
             const freqLovArray = Array.isArray(frequencyLov) ? frequencyLov : (frequencyLov?.object ?? []);
-            
-            const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) || 
-                                formatEnumString(rowData?.doesUnit) ||
-                                (rowData?.doesUnit ? String(rowData.doesUnit) : '');
-            const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) || 
-                               formatEnumString(rowData?.frequency) ||
-                               (rowData?.frequency ? String(rowData.frequency) : '');
+
+            const unitDisplay = getLovDisplay(unitLovArray, rowData?.doesUnit) ||
+              formatEnumString(rowData?.doesUnit) ||
+              (rowData?.doesUnit ? String(rowData.doesUnit) : '');
+            const freqDisplay = getLovDisplay(freqLovArray, rowData?.frequency) ||
+              formatEnumString(rowData?.frequency) ||
+              (rowData?.frequency ? String(rowData.frequency) : '');
             return cleanJoin([
               rowData?.dose,
               unitDisplay,
@@ -885,7 +858,7 @@ const activeIngredientsMap = useMemo(() => {
               freqDisplay
             ]);
           }
-          
+
           // Fallback to legacy custom instructions lookup
           const custom = customeInstructions?.object?.find(
             (item: any) => String(item?.prescriptionMedicationsKey) === String(rowData.id)
@@ -921,7 +894,7 @@ const activeIngredientsMap = useMemo(() => {
       dataKey: 'status',
       title: 'Status',
       flexGrow: 1,
-      render: (rowData: any) => ( rowData?.status? formatEnumString(rowData.status) : '')
+      render: (rowData: any) => (rowData?.status ? formatEnumString(rowData.status) : '')
     },
     {
       key: 'actions',
@@ -929,7 +902,7 @@ const activeIngredientsMap = useMemo(() => {
       flexGrow: 1.5,
       render: (rowData: any) => {
         const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-        
+
 
         return (
           <div className="flex-c8">
@@ -999,11 +972,11 @@ const activeIngredientsMap = useMemo(() => {
     }
   ];
 
-      // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
@@ -1048,7 +1021,7 @@ const activeIngredientsMap = useMemo(() => {
               selectDataLabel="label"
               selectDataValue="key"
               record={{}}
-              setRecord={() => {}}
+              setRecord={() => { }}
               width={110}
             />
           </Form>
@@ -1064,7 +1037,7 @@ const activeIngredientsMap = useMemo(() => {
             prefixIcon={() => <PlusIcon />}
             loading={isLoadingPrescriptions || isLoadingCreateOrGet}
             disabled={
-              edit ||  isNurse||
+              edit || isNurse ||
               !currentPrescription?.id ||
               String(currentPrescription?.status ?? '').toUpperCase() === 'SUBMITTED'
             }
@@ -1096,9 +1069,8 @@ const activeIngredientsMap = useMemo(() => {
         </div>
 
         <MyButton
-          onClick={handleGeneratePrescriptionPdf}
-          loading={isGeneratingPdf}
-          disabled={!currentPrescription?.id}
+          onClick={() => handlePrintPrescriptionPdf(currentPrescription)}
+          disabled={!currentPrescription?.id || currentPrescription?.status !== 'SUBMITTED'}
           prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
         />
       </div>
@@ -1157,7 +1129,7 @@ const activeIngredientsMap = useMemo(() => {
         preKey={currentPrescription?.id}
         openToAdd={openToAdd}
         medicRefetch={medicRefetch}
-        setOrderMedication={() => {}}
+        setOrderMedication={() => { }}
         drugKey={null}
         editing={false}
       />
@@ -1181,20 +1153,19 @@ const activeIngredientsMap = useMemo(() => {
         handleSave={handleConfirmSubmitPres}
         medicationValidationPayload={payload}
       />
-    
+
 
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${
-          selectedMedicationForAttachments
+        title={`Attachments - ${selectedMedicationForAttachments
             ? genericMedicationListResponse?.data?.find(
-                (item: any) =>
-                  String(item.id) ===
-                  String(
-                    (selectedMedicationForAttachments as any)?.medicationsId ??
-                      (selectedMedicationForAttachments as any)?.genericMedicationsId
-                  )
+              (item: any) =>
+                String(item.id) ===
+                String(
+                  (selectedMedicationForAttachments as any)?.medicationsId ??
+                  (selectedMedicationForAttachments as any)?.genericMedicationsId
+                )
             )?.name || 'Medication'
             : 'Medication'
           }`}
@@ -1206,7 +1177,7 @@ const activeIngredientsMap = useMemo(() => {
             source="PRESCRIPTION_ORDER_ATTACHMENT"
             sourceId={selectedMedicationForAttachments?.id ?? undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => {}}
+            setRefetchAttachmentList={() => { }}
           />
         }
       />

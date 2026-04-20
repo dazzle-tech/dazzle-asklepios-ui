@@ -51,30 +51,30 @@ export const patientPrescriptionService = createApi({
     }),
 
     // GET /api/patient/patient-prescriptions
-   getPatientPrescription: builder.query<
-  PagedResult<PatientPrescription>,
-  PatientPrescriptionListParams
->({
-  query: (params) => ({
-    url: `/api/patient/patient-prescriptions`,
-    params,
-  }),
+    getPatientPrescription: builder.query<
+      PagedResult<PatientPrescription>,
+      PatientPrescriptionListParams
+    >({
+      query: (params) => ({
+        url: `/api/patient/patient-prescriptions`,
+        params,
+      }),
 
-  transformResponse: (
-    response: PatientPrescription[],
-    meta
-  ): PagedResult<PatientPrescription> => {
-    const headers = meta?.response?.headers;
+      transformResponse: (
+        response: PatientPrescription[],
+        meta
+      ): PagedResult<PatientPrescription> => {
+        const headers = meta?.response?.headers;
 
-    return {
-      data: response,
-      totalCount: Number(headers?.get('X-Total-Count') ?? 0),
-      links: parseLinkHeader(headers?.get('Link')),
-    };
-  },
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link')),
+        };
+      },
 
-  providesTags: () => ['PatientPrescription'],
-}),
+      providesTags: () => ['PatientPrescription'],
+    }),
 
 
     // GET /api/patient/patient-prescriptions/{id}
@@ -123,20 +123,20 @@ export const patientPrescriptionService = createApi({
 
     // POST /api/patient/patient-prescriptions/{id}/submit
     submitPatientPrescription: builder.mutation<
-  PatientPrescription,
-  { id: number }
->({
-  query: ({ id }) => ({
-    url: `/api/patient/patient-prescriptions/${id}/submit`,
-    method: 'POST',
-  }),
-  onQueryStarted,
-  transformResponse: (response: any) => response,
-  invalidatesTags: (_res, _err, { id }) => [
-    { type: 'PatientPrescription', id },
-    'PatientPrescription',
-  ],
-}),
+      PatientPrescription,
+      { id: number }
+    >({
+      query: ({ id }) => ({
+        url: `/api/patient/patient-prescriptions/${id}/submit`,
+        method: 'POST',
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response,
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'PatientPrescription', id },
+        'PatientPrescription',
+      ],
+    }),
 
     // POST /api/patient/patient-prescriptions/{id}/cancel
     cancelPatientPrescription: builder.mutation<
@@ -154,6 +154,14 @@ export const patientPrescriptionService = createApi({
         'PatientPrescription',
       ],
     }),
+
+    getPrescriptionPdf: builder.query<Blob, { prescriptionId: number }>({
+      query: ({ prescriptionId }) => ({
+        url: `/api/analytics/prescriptions/${prescriptionId}/pdf`,
+        method: 'GET',
+        responseHandler: (response) => response.blob()
+      })
+    })
   }),
 });
 
@@ -165,4 +173,6 @@ export const {
   useUpdatePatientPrescriptionMutation,
   useSubmitPatientPrescriptionMutation,
   useCancelPatientPrescriptionMutation,
+  useGetPrescriptionPdfQuery,
+  useLazyGetPrescriptionPdfQuery
 } = patientPrescriptionService;
