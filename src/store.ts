@@ -155,7 +155,6 @@ import { DischargePlanningService } from '@/services/setup/DischargePlanningServ
 import { formTemplateService } from './services/setup/formTemplateService';
 import { FormEntriesService } from './services/setup/formEntriesService';
 import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
-import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
@@ -454,8 +453,7 @@ export const store = configureStore({
     [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
-    [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
-
+    [radiologyReportService.reducerPath]: radiologyReportService.reducer,
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
@@ -725,7 +723,6 @@ export const store = configureStore({
         patientPaymentsService.middleware,
         priceListAttributesService.middleware,
         prescriptionPService.middleware,
-        radiologyReportApi.middleware,
         clinicalSummaryService.middleware,
         clinicalRecommendationsService.middleware,
         medicationTestOrdersValidationService.middleware,
@@ -784,7 +781,6 @@ export const store = configureStore({
         patientPaymentsService.middleware,
         priceListAttributesService.middleware,
         prescriptionPService.middleware,
-        radiologyReportApi.middleware,
         clinicalSummaryService.middleware,
         clinicalRecommendationsService.middleware,
         medicationTestOrdersValidationService.middleware,

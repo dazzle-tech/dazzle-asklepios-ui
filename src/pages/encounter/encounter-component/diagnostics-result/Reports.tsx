@@ -7,8 +7,6 @@ import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportModal';
-import GenerateRadiologyReportButton from './GenerateRadiologyReportButton';
-import RadiologyPdfDocument from '@/reports/RadiologyPdfDocument';
 import {
   useLazyGetDiagnosticOrderByIdQuery,
   useFilterDiagnosticOrdersQuery
@@ -27,14 +25,14 @@ import {
 } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
-import { faComment, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faFileLines, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useMemo, useState } from 'react';
-import { pdf } from '@react-pdf/renderer';
 import { MdAttachFile } from 'react-icons/md';
 import { Form, HStack, Tooltip, Whisper } from 'rsuite';
-import { useLazyGetRadiologyReportByIdQuery } from '@/services/reports/radiologyReportService';
+import { useLazyGetRadiologyReportByIdQuery, useLazyGetRadiologyReportPdfQuery } from '@/services/reports/radiologyReportService';
+import MyButton from '@/components/MyButton/MyButton';
 
 const startOfDay = (d: Date) => {
   const x = new Date(d);
@@ -74,7 +72,7 @@ const Reports = ({ patient }) => {
   const [fetchOrderById] = useLazyGetDiagnosticOrderByIdQuery();
 
   const [fetchRadiologyReportPdfData, { isFetching: isGeneratingReport }] =
-    useLazyGetRadiologyReportByIdQuery();
+    useLazyGetRadiologyReportPdfQuery();
 
   const ordersQueryParams = useMemo(() => {
     if (!patientId) return skipToken;
@@ -162,41 +160,28 @@ const Reports = ({ patient }) => {
       : undefined
   );
 
-  const handleGenerateReport = async () => {
-    if (!selectedReport?.id) return;
-
+ 
+ const handleGenerateReport = async () => {
+   console.log('Generating report for selectedReport', selectedReport);
+   if (!selectedReport?.id) return;
     try {
-      const reportData = await fetchRadiologyReportPdfData(selectedReport.id).unwrap();
+      const blob = await fetchRadiologyReportPdfData({ reportId: selectedReport.id }).unwrap();
+      const fileURL = window.URL.createObjectURL(blob);
 
-      const blob = await pdf(
-        <RadiologyPdfDocument data={reportData} />
-      ).toBlob();
-
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `Radiology_Report_${selectedReport.id}.pdf`;
+      link.href = fileURL;
+      link.download = `Report-${selectedReport.id}.pdf`;
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      link.remove();
 
-      dispatch(
-        notify({
-          msg: 'Report generated successfully',
-          sev: 'success'
-        })
-      );
-    } catch {
-      dispatch(
-        notify({
-          msg: 'Failed to generate report',
-          sev: 'error'
-        })
-      );
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download report pdf', error);
     }
   };
-
   const reportColumns: ColumnConfig[] = [
     {
       key: 'orderId',
@@ -367,11 +352,19 @@ const Reports = ({ patient }) => {
   );
 
   const tableButtons = (
-    <GenerateRadiologyReportButton
-      disabled={!selectedReport}
-      loading={isGeneratingReport}
-      onClick={handleGenerateReport}
-    />
+   
+    <MyButton
+          onClick={handleGenerateReport}
+          // loading={loading}
+          // disabled={disabled}
+          appearance='ghost'
+          prefixIcon={() => (
+            <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />
+          )}
+          style={{ marginLeft: 'auto' }}
+        >
+          <Translate>Generate Report</Translate>
+        </MyButton>
   );
 
   const closeModal = () => {

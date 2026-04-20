@@ -41,6 +41,14 @@ export const radiologyReportService = createApi({
         { type: 'RadiologyReport', id: reportId },
       ],
     }),
+
+     getRadiologyReportPdf: builder.query<Blob, { reportId: number }>({
+      query: ({ reportId }) => ({
+        url: `/api/analytics/radiology-reports/${reportId}/pdf`,
+        method: 'GET',
+        responseHandler: (response) => response.blob()
+      })
+    })
   }),
 });
 
@@ -49,4 +57,6 @@ export const radiologyReportService = createApi({
 export const {
   useGetRadiologyReportByIdQuery,
   useLazyGetRadiologyReportByIdQuery,
+  useLazyGetRadiologyReportPdfQuery
+
 } = radiologyReportService;
