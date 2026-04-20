@@ -377,7 +377,7 @@ const InsuranceModal = ({
         <MyInput
           column
           required
-          fieldType="number"
+          fieldType="textnumber"
           fieldLabel="Policy Number"
           fieldName="policyNumber"
           record={patientInsurance}
@@ -386,7 +386,7 @@ const InsuranceModal = ({
         />
         <MyInput
           column
-          fieldType="number"
+          fieldType="textnumber"
           fieldLabel="Group Number"
           fieldName="groupNumber"
           record={patientInsurance}

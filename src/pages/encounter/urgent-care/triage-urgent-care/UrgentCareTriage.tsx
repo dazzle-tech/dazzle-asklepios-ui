@@ -585,7 +585,20 @@ const UrgentCareTriage = () => {
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams || !hasSearched });
 
   const emergencyLevelEnumOptions = useEnumOptions('EmergencyLevel');
-  const encounterStatusEnumOptions = useEnumOptions('EncounterStatus');
+  const encounterStatusEnumOptions = useEnumOptions('EncounterStatus', {
+    exclude: [
+      'NEW',
+      'ONGOING',
+      'CANCELLED',
+      'CLOSED',
+      'DISCHARGED',
+      'IN_OPERATION',
+      'CONFIRM_RETURN',
+      'TEMP_DC',
+      'SENT_TO_ER',
+      'WAITING_LIST'
+    ]
+  });
   const encounterPriorityEnumOptions = useEnumOptions('EncounterPriority');
 
   const encounterStatusLabelMap = useMemo(() => {

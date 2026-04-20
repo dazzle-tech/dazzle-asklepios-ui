@@ -389,7 +389,7 @@ const DetailsTele = ({
                 <MyInput
                   width="12vw"
                   fieldName="approvalNumber"
-                  fieldType="number"
+                  fieldType="textnumber"
                   fieldLabel="Approval Number"
                   record={formData}
                   setRecord={setFormData}
