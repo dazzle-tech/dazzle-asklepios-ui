@@ -592,6 +592,7 @@ export interface Practitioner {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
+  workingDays?: OrganizationWorkingDay[];
   createdBy?: string;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
