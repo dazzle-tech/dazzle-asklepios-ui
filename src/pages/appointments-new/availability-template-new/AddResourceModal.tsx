@@ -56,7 +56,7 @@ const AddResourceModal = ({
   const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
   const prevTemplateTypeRef = useRef<any>(record?.templateType);
 
- 
+ console.log("editRecord: ", editRecord);
   
   const [triggerPractitionersFacility, { isFetching: isPractitionerFacilityLoading }] =
     useLazyGetAppointablePractitionerByLoggedInFacilityQuery();
@@ -357,10 +357,11 @@ const AddResourceModal = ({
         : [];
       setRecord({
         ...editRecord,
+        resourceId: editRecord?.resourceId,
         allowedServices: normalizedAllowedServices,
         facilityId: selectedFacility?.id ?? editRecord?.facilityId,
         departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId,
-        workingDays: Array.isArray(editRecord?.workingDays) ? editRecord.workingDays : [],
+        workingDays: editRecordWorkingDays,
         parallelCapacityValue: Number(
           editRecord?.parallelCapacityValue ??
           mainTemplate?.parallelCapacityValue ??
@@ -379,7 +380,16 @@ const AddResourceModal = ({
       parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1)
     });
     applyWorkingDays(mainTemplate?.workingDays ?? []);
-  }, [open, editRecord?.id, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
+  }, [
+    open,
+    // editRecord?.id,
+    // editRecord?.resourceId,
+    // editRecord?.templateType,
+    editRecord,
+    mainTemplate?.id,
+    mainTemplate?.departmentId,
+    selectedFacility?.id
+  ]);
 
   const [currentColor, setCurrentColor] = useState(mainTemplate?.color || '#6982F0');
   useEffect(() => {
@@ -408,78 +418,7 @@ const AddResourceModal = ({
   const [getService] = useLazyGetServiceByIdQuery();
   const [getRoom] = useLazyGetRoomByIdQuery();
 
-  useEffect(() => {
-    if (!record?.resourceId) {
-      setRecord(prev => ({
-        ...prev,
-        durationMinutes: 0,
-        parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
-        defaultPractitionerId: undefined
-      }));
-      applyWorkingDays(mainTemplate?.workingDays ?? []);
-      return;
-    }
-
-    if (record?.templateType === "PRACTITIONER") {
-      getPractitioner(record.resourceId)
-        .unwrap()
-        .then(res => {
-          applyWorkingDays(res?.workingDays ?? mainTemplate?.workingDays ?? []);
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
-            defaultPractitionerId: res?.id
-          }));
-        })
-        .catch(() => {
-          applyWorkingDays(mainTemplate?.workingDays ?? []);
-        });
-    } else if (record?.templateType === 'DIAGNOSTIC_TEST') {
-      getDiagnosticTest(String(record.resourceId))
-        .unwrap()
-        .then(res => {
-          applyWorkingDays(mainTemplate?.workingDays ?? []);
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res?.data.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
-          }));
-        });
-    } else if (record?.templateType === 'CATALOG') {
-      getCatalog(record.resourceId)
-        .unwrap()
-        .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
-        });
-    } else if (record?.templateType === 'SERVICE') {
-      getService(record.resourceId)
-        .unwrap()
-        .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
-        });
-    }
-    else if (record?.templateType === 'ROOM') {
-      getRoom({ id: record.resourceId })
-        .unwrap()
-        .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
-        });
-    }
-
-  }, [record?.resourceId, record?.templateType, dayOptionsKey, mainTemplate?.workingDays]);
+  
 
   const { data: departmentServices = [] } =
     useGetDepartmentServicesQuery(
@@ -582,6 +521,24 @@ const AddResourceModal = ({
     });
   };
 
+  const isEditingRecord = Boolean(editRecord?.id);
+  const editRecordWorkingDays = useMemo(
+    () => (Array.isArray(editRecord?.workingDays) ? editRecord.workingDays : []),
+    [editRecord?.workingDays]
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    if (!dayOptions || dayOptions.length === 0) return;
+
+    if (isEditingRecord) {
+      applyWorkingDays(editRecordWorkingDays);
+      return;
+    }
+
+    applyWorkingDays(mainTemplate?.workingDays ?? []);
+  }, [open, dayOptionsKey, isEditingRecord, editRecordWorkingDays, mainTemplate?.workingDays]);
+
   const normalizeAllowedServices = (input: any) => {
     if (!Array.isArray(input)) return [];
     return input
@@ -676,6 +633,92 @@ const AddResourceModal = ({
   useEffect(() => {
    console.log("resource record: ", record);
   },[record])
+
+  useEffect(() => {
+    if (!record?.resourceId) {
+      if (isEditingRecord) return;
+      setRecord(prev => ({
+        ...prev,
+        durationMinutes: 0,
+        parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
+        defaultPractitionerId: undefined
+      }));
+      applyWorkingDays(isEditingRecord ? editRecordWorkingDays : (mainTemplate?.workingDays ?? []));
+      return;
+    }
+
+    if (record?.templateType === "PRACTITIONER") {
+      getPractitioner(record.resourceId)
+        .unwrap()
+        .then(res => {
+          applyWorkingDays(
+            isEditingRecord
+              ? editRecordWorkingDays
+              : (res?.workingDays ?? mainTemplate?.workingDays ?? [])
+          );
+          setRecord(prev => ({
+            ...prev,
+            durationMinutes: res.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
+            defaultPractitionerId: res?.id
+          }));
+        })
+        .catch(() => {
+          applyWorkingDays(isEditingRecord ? editRecordWorkingDays : (mainTemplate?.workingDays ?? []));
+        });
+    } else if (record?.templateType === 'DIAGNOSTIC_TEST') {
+      getDiagnosticTest(String(record.resourceId))
+        .unwrap()
+        .then(res => {
+          applyWorkingDays(isEditingRecord ? editRecordWorkingDays : (mainTemplate?.workingDays ?? []));
+          setRecord(prev => ({
+            ...prev,
+            durationMinutes: res?.data.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
+          }));
+        });
+    } else if (record?.templateType === 'CATALOG') {
+      getCatalog(record.resourceId)
+        .unwrap()
+        .then(res => {
+          setRecord(prev => ({
+            ...prev,
+            durationMinutes: res.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+          }));
+        });
+    } else if (record?.templateType === 'SERVICE') {
+      getService(record.resourceId)
+        .unwrap()
+        .then(res => {
+          setRecord(prev => ({
+            ...prev,
+            durationMinutes: res.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+          }));
+        });
+    }
+    else if (record?.templateType === 'ROOM') {
+      getRoom({ id: record.resourceId })
+        .unwrap()
+        .then(res => {
+          setRecord(prev => ({
+            ...prev,
+            durationMinutes: res.defaultDurationMinutes,
+            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+          }));
+        });
+    }
+
+  }, [
+    record?.resourceId,
+    record?.templateType,
+    dayOptionsKey,
+    mainTemplate?.workingDays,
+    editRecordWorkingDays,
+    isEditingRecord
+  ]);
+  
   const conjureFormContent = () => (
     <Form fluid>
       <Row>
@@ -828,7 +871,6 @@ const AddResourceModal = ({
                       : record.templateType === 'ROOM' ? (
                         <Col md={12}>
                           <MyInput
-                            key={`room-${record?.departmentId}`}
                             width="100%"
                             fieldType="selectPagination"
                             fieldLabel="Room"
