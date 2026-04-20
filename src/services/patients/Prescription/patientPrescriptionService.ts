@@ -123,21 +123,20 @@ export const patientPrescriptionService = createApi({
 
     // POST /api/patient/patient-prescriptions/{id}/submit
     submitPatientPrescription: builder.mutation<
-      PatientPrescription,
-      { id: number, lastModifiedBy: string }
-    >({
-      query: ({ id, lastModifiedBy }) => ({
-        url: `/api/patient/patient-prescriptions/${id}/submit`,
-        method: 'POST',
-        params: { lastModifiedBy }
-      }),
-      onQueryStarted,
-      transformResponse: (response: any) => response,
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PatientPrescription', id },
-        'PatientPrescription',
-      ],
-    }),
+  PatientPrescription,
+  { id: number }
+>({
+  query: ({ id }) => ({
+    url: `/api/patient/patient-prescriptions/${id}/submit`,
+    method: 'POST',
+  }),
+  onQueryStarted,
+  transformResponse: (response: any) => response,
+  invalidatesTags: (_res, _err, { id }) => [
+    { type: 'PatientPrescription', id },
+    'PatientPrescription',
+  ],
+}),
 
     // POST /api/patient/patient-prescriptions/{id}/cancel
     cancelPatientPrescription: builder.mutation<

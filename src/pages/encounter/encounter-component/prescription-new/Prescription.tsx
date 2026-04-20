@@ -688,28 +688,10 @@ const activeIngredientsMap = useMemo(() => {
 
     try {
      
-      const nonCanceledMeds = (patientPrescriptionMedications ?? []).filter(
-        (m: any) =>
-          m?.id != null &&
-          !isCanceledStatus(m?.status) &&
-          String(m?.status ?? '').toUpperCase() !== 'SUBMITTED'
-      );
-
-      await Promise.all(
-        nonCanceledMeds.map((m: any) =>
-          updateMedicationStatus({
-            id: Number(m.id),
-            body: {
-              status: 'SUBMITTED',
-              lastModifiedBy: authSlice?.user?.login ?? 'system'
-            } as any
-          }).unwrap()
-        )
-      );
+      
 
       await submitPrescription({
         id: currentPrescription.id,
-        lastModifiedBy: authSlice?.user?.login ?? 'system'
       }).unwrap();
       dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
    
