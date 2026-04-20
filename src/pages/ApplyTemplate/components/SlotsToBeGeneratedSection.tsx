@@ -22,7 +22,7 @@ const SlotsToBeGeneratedSection: React.FC<Props> = ({
   return (
     <SurfaceCard
       title="Slots to be Generated"
-      description={`${totalSlotsToBeCreated} free appointments`}
+      description={`${totalSlotsToBeCreated} generated appointments (slots + buffers)`}
       icon={CalendarDays}
     >
       <MyTable data={generatedSlots} columns={generatedSlotsColumns as any} height={420} />
