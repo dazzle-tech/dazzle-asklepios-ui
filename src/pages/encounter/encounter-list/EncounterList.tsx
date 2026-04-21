@@ -521,7 +521,6 @@ const startEncounterSafe = async (row: any) => {
       }
     });
 
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
@@ -543,8 +542,6 @@ const startEncounterSafe = async (row: any) => {
     const targetPath = fullPatient?.isPrivatePatient
       ? '/user-access-patient-private'
       : '/nurse-station';
-
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
 
     navigate(targetPath, {
       state: {
