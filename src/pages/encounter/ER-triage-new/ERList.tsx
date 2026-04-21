@@ -484,21 +484,21 @@ const ERList = () => {
       skip: !isEmergencyDepartment || encounterIdsForLocations.length === 0
     }
   );
-const calculateEncounterDuration = (createdAt: string, dischargeAt: string) => {
-  if (!createdAt || !dischargeAt) return '-';
+  const calculateEncounterDuration = (createdAt: string, dischargeAt: string) => {
+    if (!createdAt || !dischargeAt) return '-';
 
-  const start = dayjs(createdAt);
-  const end = dayjs(dischargeAt);
+    const start = dayjs(createdAt);
+    const end = dayjs(dischargeAt);
 
-  const diffMs = end.diff(start);
+    const diffMs = end.diff(start);
 
-  const dur = dayjs.duration(diffMs);
+    const dur = dayjs.duration(diffMs);
 
-  const hours = Math.floor(dur.asHours());
-  const minutes = dur.minutes();
+    const hours = Math.floor(dur.asHours());
+    const minutes = dur.minutes();
 
-  return `${hours}h ${minutes}m`;
-};
+    return `${hours}h ${minutes}m`;
+  };
   const roomIdsFromAssignments = useMemo(() => {
     return Array.from(
       new Set(
@@ -636,9 +636,23 @@ const calculateEncounterDuration = (createdAt: string, dischargeAt: string) => {
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
+  const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
+
   const startEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
     if (!encounterId) return false;
+
+    const statusUpper = String(row?.status ?? '').toUpperCase();
+
+    if (statusUpper === 'ONGOING') {
+      return true;
+    }
+
+    if (startingEncounterIdsRef.current.has(encounterId)) {
+      return false;
+    }
+
+    startingEncounterIdsRef.current.add(encounterId);
 
     try {
       await startEncounter({ id: encounterId }).unwrap();
@@ -646,6 +660,8 @@ const calculateEncounterDuration = (createdAt: string, dischargeAt: string) => {
     } catch (error: any) {
       handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
       return false;
+    } finally {
+      startingEncounterIdsRef.current.delete(encounterId);
     }
   };
 
@@ -930,11 +946,12 @@ const calculateEncounterDuration = (createdAt: string, dischargeAt: string) => {
       }
     },
     {
-  key: 'duration',
-  title: 'DURATION',
-  expandable:true,
-render: (row: any) =>
-  calculateEncounterDuration(row?.createdAt, row?.dischargeAt)},
+      key: 'duration',
+      title: 'DURATION',
+      expandable: true,
+      render: (row: any) =>
+        calculateEncounterDuration(row?.createdAt, row?.dischargeAt)
+    },
     {
       key: 'actions',
       title: ' ',
