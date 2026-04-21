@@ -1285,8 +1285,24 @@ const ScheduleScreen = () => {
   };
 
   const data = [];
-  const minTime = new Date();
-  minTime.setHours(8, 0, 0);
+  const minTime = useMemo(() => {
+    const candidateStartMinutes: number[] = [];
+
+    (finalAppointments ?? []).forEach((evt: any) => {
+      const start = new Date(evt?.start);
+      if (!Number.isNaN(start.getTime())) {
+        candidateStartMinutes.push(start.getHours() * 60 + start.getMinutes());
+      }
+    });
+
+    const fallbackStart = 8 * 60;
+    const earliest = candidateStartMinutes.length > 0 ? Math.min(...candidateStartMinutes) : fallbackStart;
+    const roundedStart = Math.max(0, Math.floor(earliest / 60) * 60);
+
+    const min = new Date();
+    min.setHours(Math.floor(roundedStart / 60), roundedStart % 60, 0, 0);
+    return min;
+  }, [finalAppointments]);
 
   const todayAppointmentsList = useMemo(() => {
     const rows = (todayAppointmentsResponse as any)?.data ?? [];

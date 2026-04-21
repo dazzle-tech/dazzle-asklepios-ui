@@ -68,6 +68,23 @@ const ScheduleContentGrid = ({
   handleViewAppointment,
   dispatch
 }: Props) => {
+  const maxTime = React.useMemo(() => {
+    const candidateEndMinutes: number[] = [];
+    (finalAppointments ?? []).forEach((evt: any) => {
+      const end = new Date(evt?.end);
+      if (!Number.isNaN(end.getTime())) {
+        candidateEndMinutes.push(end.getHours() * 60 + end.getMinutes());
+      }
+    });
+
+    const fallbackEnd = 23 * 60;
+    const latest = candidateEndMinutes.length > 0 ? Math.max(...candidateEndMinutes) : fallbackEnd;
+    const roundedEnd = Math.min(24 * 60 - 1, Math.ceil(latest / 60) * 60);
+    const value = new Date();
+    value.setHours(Math.floor(roundedEnd / 60), roundedEnd % 60, 0, 0);
+    return value;
+  }, [finalAppointments]);
+
   return (
     <div
       className="appointments-content-grid"
@@ -95,6 +112,7 @@ const ScheduleContentGrid = ({
                 : '100%'
           }}
           min={minTime}
+          max={maxTime}
           {...(currentView === 'day' && {
             resources: visibleResources ?? [],
             resourceIdAccessor: 'key',
