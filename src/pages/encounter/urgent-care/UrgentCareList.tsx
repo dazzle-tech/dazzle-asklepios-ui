@@ -713,7 +713,6 @@ const startEncounterSafe = async (row: any) => {
       }
     });
 
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
   const handleGoToNurseStation = async (encounterData: any) => {
@@ -731,7 +730,6 @@ const startEncounterSafe = async (row: any) => {
 
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
-    sessionStorage.setItem('encounterPageSource', 'Urgent_Care_List');
     const targetPath = fullPatient?.isPrivatePatient
       ? '/user-access-patient-private'
       : '/nurse-station';

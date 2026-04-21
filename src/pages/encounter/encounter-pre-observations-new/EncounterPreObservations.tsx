@@ -35,7 +35,7 @@ const NurseStation = () => {
   const location = useLocation();
   const propsData = location.state;
   const fromPage = propsData?.fromPage;
-  const pageSource = fromPage || sessionStorage.getItem('encounterPageSource');
+  const pageSource = fromPage || '';
 
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
