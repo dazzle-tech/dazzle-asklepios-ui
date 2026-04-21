@@ -31,7 +31,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         required
         fieldName="primaryMobileNumber"
         fieldLabel="Primary Mobile Number"
-        fieldType="number"
+        fieldType="textnumber"
         record={localPatient}
         setRecord={setLocalPatient}
         width={170}
@@ -49,6 +49,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
+        fieldType="textnumber"
         fieldLabel="Secondary Mobile Number"
         fieldName="secondMobileNumber"
         record={localPatient}

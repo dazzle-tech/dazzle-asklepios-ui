@@ -1964,6 +1964,7 @@ const isSelectedRelation = rowData => {
                   vr={validationResult}
                   column
                   required
+                  fieldType='textnumber'
                   fieldName="phoneNumber"
                   fieldLabel="Primary Mobile Number"
                   record={localPatient}
@@ -2380,6 +2381,7 @@ const isSelectedRelation = rowData => {
                   <Form fluid>
                     <MyInput
                       vr={validationResult}
+                      fieldType='textnumber'
                       fieldLabel="Primary Mobile Number"
                       fieldName="phoneNumber"
                       record={localPatient}

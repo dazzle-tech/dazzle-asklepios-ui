@@ -1295,7 +1295,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               width={200}
               column
               required
-              fieldType="number"
+              fieldType="textnumber"
               fieldName="primaryMobileNumber"
               fieldLabel="Primary Mobile Number"
               record={localPatient}
