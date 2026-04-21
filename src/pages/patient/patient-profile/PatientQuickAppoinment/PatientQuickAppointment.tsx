@@ -151,7 +151,7 @@ const PatientQuickAppointment = ({
   const isPaymentMode = initialStep === 1;
   const isLockedAfterPayment = Boolean(isPaymentSaved);
 
-  const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode);
+  const encounterReadOnly = Boolean(isReadOnly || isViewMode || isPaymentMode || isEncounterSaved);
   const paymentReadOnly = Boolean(isViewMode || isLockedAfterPayment);
 
   const [createQuickAppointment] = useCreateQuickAppointmentMutation();
