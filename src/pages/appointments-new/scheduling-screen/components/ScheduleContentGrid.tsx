@@ -68,68 +68,28 @@ const ScheduleContentGrid = ({
   handleViewAppointment,
   dispatch
 }: Props) => {
-  React.useEffect(() => {
-    const toLocalDateKey = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const toLocalDateKey = React.useCallback(
+    (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+    []
+  );
 
-    const dayStart = new Date(currentCalendarDate);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(currentCalendarDate);
-    dayEnd.setHours(23, 59, 59, 999);
-    const dayStartMs = dayStart.getTime();
-    const dayEndMs = dayEnd.getTime();
-    const selectedDateKey = toLocalDateKey(dayStart);
-
-    const rows = (finalAppointments ?? [])
-      .filter((appt: any) => {
-        const start = appt?.start ? new Date(appt.start) : null;
-        const end = appt?.end ? new Date(appt.end) : start;
-        if (!start || Number.isNaN(start.getTime())) return false;
-        const startMs = start.getTime();
-        let endMs = end && !Number.isNaN(end.getTime()) ? end.getTime() : startMs;
-        if (endMs < startMs) {
-          endMs += 24 * 60 * 60 * 1000;
-        }
-
-        const startsOnSelectedDate = toLocalDateKey(start) === selectedDateKey;
-        const overlapsSelectedDate = startMs <= dayEndMs && endMs >= dayStartMs;
-        return startsOnSelectedDate || overlapsSelectedDate;
-      })
-      .map((appt: any) => ({
-        id: appt?.id,
-        resourceId: appt?.resourceId,
-        filterResourceId: appt?.filterResourceId,
-        start: appt?.start ? new Date(appt.start).toISOString() : null,
-        end: appt?.end ? new Date(appt.end).toISOString() : null,
-        fromTo: appt?.fromTo ?? '',
-        title: appt?.title ?? ''
-      }));
-    // Debug log to verify selected-date appointments fed to calendar.
-    console.log('[ScheduleContentGrid] Selected date appointments list', {
-      selectedDate: currentCalendarDate,
-      selectedDateLocal: selectedDateKey,
-      count: rows.length,
-      rows
+  const calendarEvents = React.useMemo(() => {
+    if (currentView !== 'day') return finalAppointments ?? [];
+    const selectedDateKey = toLocalDateKey(currentCalendarDate);
+    return (finalAppointments ?? []).filter((appt: any) => {
+      const start = appt?.start ? new Date(appt.start) : null;
+      if (!start || Number.isNaN(start.getTime())) return false;
+      return toLocalDateKey(start) === selectedDateKey;
     });
-  }, [finalAppointments, currentCalendarDate]);
+  }, [finalAppointments, currentView, currentCalendarDate, toLocalDateKey]);
 
   const maxTime = React.useMemo(() => {
     const candidateEndMinutes: number[] = [];
-    (finalAppointments ?? []).forEach((evt: any) => {
-      const start = new Date(evt?.start);
+    (calendarEvents ?? []).forEach((evt: any) => {
       const end = new Date(evt?.end);
-      if (!Number.isNaN(start.getTime())) {
-        candidateEndMinutes.push(start.getHours() * 60 + start.getMinutes());
-      }
       if (!Number.isNaN(end.getTime())) {
-        const endMinutes = end.getHours() * 60 + end.getMinutes();
-        if (!Number.isNaN(start.getTime())) {
-          const startMinutes = start.getHours() * 60 + start.getMinutes();
-          // If end time passes midnight, keep it after start in comparison space.
-          candidateEndMinutes.push(endMinutes < startMinutes ? endMinutes + 24 * 60 : endMinutes);
-        } else {
-          candidateEndMinutes.push(endMinutes);
-        }
+        candidateEndMinutes.push(end.getHours() * 60 + end.getMinutes());
       }
     });
 
@@ -139,7 +99,7 @@ const ScheduleContentGrid = ({
     const value = new Date();
     value.setHours(Math.floor(roundedEnd / 60), roundedEnd % 60, 0, 0);
     return value;
-  }, [finalAppointments]);
+  }, [calendarEvents]);
 
   return (
     <div
@@ -169,6 +129,7 @@ const ScheduleContentGrid = ({
           }}
           min={minTime}
           max={maxTime}
+          showMultiDayTimes
           {...(currentView === 'day' && {
             resources: visibleResources ?? [],
             resourceIdAccessor: 'key',
@@ -176,8 +137,7 @@ const ScheduleContentGrid = ({
           })}
           formats={formats}
           localizer={localizer}
-          events={finalAppointments ?? []}
-          showMultiDayTimes
+          events={calendarEvents ?? []}
           step={60}
           timeslots={1}
           onSelectSlot={slotInfo => {
