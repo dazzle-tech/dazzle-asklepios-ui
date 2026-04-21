@@ -10,7 +10,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Divider, Form, Row } from "rsuite";
 import { useNavigate } from "react-router-dom";
 
-import ChiefComplainTriage from "./ChiefComplainTriage";
 import EmergencyLevelAssessment from "./EmergencyLevelAssessment";
 
 import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
@@ -19,12 +18,12 @@ import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 
 import {
-  useCompleteEncounterMutation,
   useGetEncounterByIdQuery,
   useUpdateEncounterMutation,
 } from "@/services/encounters/patientEncounterService";
 
 import {
+  useGetLatestEmergencyTriageByEncounterQuery,
   useUpdateEmergencyTriageLevelAssessmentMutation,
 } from "@/services/encounters/er-triage/emergencyTriageService";
 
@@ -41,25 +40,22 @@ type StartTriageProps = {
   emergencyTriageNew?: any;
 };
 
-const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: StartTriageProps) => {
+const StartTriage = ({
+  patient,
+  encounter,
+  sourcePage,
+  emergencyTriageNew,
+}: StartTriageProps) => {
   const navigate = useNavigate();
-  const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
-  const [updateLevelAssessment] = useUpdateEmergencyTriageLevelAssessmentMutation();
+  const [updateLevelAssessment] =
+    useUpdateEmergencyTriageLevelAssessmentMutation();
   const [updateEncounter] = useUpdateEncounterMutation();
   const dispatch = useAppDispatch();
 
-  const [triage, setTriage] = useState<any>(emergencyTriageNew ?? {});
-  const [localEncounter, setLocalEncounter] = useState<any>(encounter ?? {});
-
-  useEffect(() => {
-    if (emergencyTriageNew) setTriage(emergencyTriageNew);
-  }, [emergencyTriageNew]);
-
-  useEffect(() => {
-    if (encounter) setLocalEncounter(encounter);
-  }, [encounter]);
-
   const encounterId = encounter?.id ?? encounter?.encounterId ?? encounter?.key;
+
+  const [triage, setTriage] = useState<any>({});
+  const [localEncounter, setLocalEncounter] = useState<any>(encounter ?? {});
 
   const { data: encounterFromServer } = useGetEncounterByIdQuery(
     { id: encounterId },
@@ -70,10 +66,34 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
     }
   );
 
+  const {
+    data: latestTriageFromServer,
+    refetch: refetchLatestTriage,
+  } = useGetLatestEmergencyTriageByEncounterQuery(encounterId, {
+    skip: !encounterId,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  });
+
   const { data: nurseComplaints } = useGetLatestPatientObservationsComplaintsByEncounterIdQuery(
     { encounterId },
     { skip: !encounterId }
   );
+
+  useEffect(() => {
+    if (latestTriageFromServer) {
+      setTriage(latestTriageFromServer);
+      return;
+    }
+
+    if (emergencyTriageNew) {
+      setTriage(emergencyTriageNew);
+    }
+  }, [latestTriageFromServer, emergencyTriageNew]);
+
+  useEffect(() => {
+    if (encounter) setLocalEncounter(encounter);
+  }, [encounter]);
 
   useEffect(() => {
     if (encounterFromServer) {
@@ -185,7 +205,13 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
   );
 
   const encounterPriorityValue =
-    encounter?.priorityLevel ?? encounter?.encounterPriority ?? encounter?.encounterPriorityLkey ?? null;
+    localEncounter?.priorityLevel ??
+    localEncounter?.encounterPriority ??
+    localEncounter?.encounterPriorityLkey ??
+    encounter?.priorityLevel ??
+    encounter?.encounterPriority ??
+    encounter?.encounterPriorityLkey ??
+    null;
 
   const selectedEncounterPriority = encounterPriorityEnumOptions.find(
     (item: any) => String(item?.value) === String(encounterPriorityValue ?? "")
@@ -198,9 +224,9 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
   const encounterPriorityIsUrgent = useMemo(() => {
     const v = String(
       selectedEncounterPriority?.label ??
-      selectedEncounterPriority?.value ??
-      encounterPriorityValue ??
-      ""
+        selectedEncounterPriority?.value ??
+        encounterPriorityValue ??
+        ""
     ).toUpperCase();
 
     return (
@@ -214,9 +240,18 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
   const encounterPriorityColor = encounterPriorityIsUrgent ? "#dc2626" : "#16a34a";
 
   const handleSaveLevelAssessmentNew = async () => {
-    const triageId = emergencyTriageNew?.id;
+    const triageId =
+      triage?.id ??
+      latestTriageFromServer?.id ??
+      emergencyTriageNew?.id;
+
     if (!triageId) {
-      dispatch(notify({ msg: "Emergency triage record not found (missing id)", sev: "error" }));
+      dispatch(
+        notify({
+          msg: "Emergency triage record not found (missing id)",
+          sev: "error",
+        })
+      );
       return;
     }
 
@@ -237,6 +272,8 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
       }).unwrap();
 
       setTriage((prev: any) => ({ ...prev, ...updated }));
+      await refetchLatestTriage();
+
       dispatch(notify({ msg: "Emergency assessment saved", sev: "success" }));
     } catch (error) {
       console.error("Error saving emergency assessment", error);
@@ -325,7 +362,11 @@ const StartTriage = ({ patient, encounter, sourcePage, emergencyTriageNew }: Sta
             </Form>
           }
           action={
-            <MyButton size="small" onClick={saveChiefComplaint} disabled={!localEncounter?.chiefComplaint}>
+            <MyButton
+              size="small"
+              onClick={saveChiefComplaint}
+              disabled={!localEncounter?.chiefComplaint}
+            >
               Save
             </MyButton>
           }
