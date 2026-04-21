@@ -615,18 +615,34 @@ const UrgentCareList = () => {
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
-  const startEncounterSafe = async (row: any) => {
-    const encounterId = getEncounterId(row);
-    if (!encounterId) return false;
+ const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
 
-    try {
-      await startEncounter({ id: encounterId }).unwrap();
-      return true;
-    } catch (error: any) {
-      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
-      return false;
-    }
-  };
+const startEncounterSafe = async (row: any) => {
+  const encounterId = getEncounterId(row);
+  if (!encounterId) return false;
+
+  const statusUpper = String(row?.status ?? '').toUpperCase();
+
+  if (statusUpper === 'ONGOING') {
+    return true; 
+  }
+
+  if (startingEncounterIdsRef.current.has(encounterId)) {
+    return false;
+  }
+
+  startingEncounterIdsRef.current.add(encounterId);
+
+  try {
+    await startEncounter({ id: encounterId }).unwrap();
+    return true;
+  } catch (error: any) {
+    handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+    return false;
+  } finally {
+    startingEncounterIdsRef.current.delete(encounterId);
+  }
+};
 
   const cancelEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
