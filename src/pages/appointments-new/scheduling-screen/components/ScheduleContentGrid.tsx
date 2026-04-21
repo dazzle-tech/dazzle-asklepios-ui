@@ -68,9 +68,25 @@ const ScheduleContentGrid = ({
   handleViewAppointment,
   dispatch
 }: Props) => {
+  const toLocalDateKey = React.useCallback(
+    (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+    []
+  );
+
+  const calendarEvents = React.useMemo(() => {
+    if (currentView !== 'day') return finalAppointments ?? [];
+    const selectedDateKey = toLocalDateKey(currentCalendarDate);
+    return (finalAppointments ?? []).filter((appt: any) => {
+      const start = appt?.start ? new Date(appt.start) : null;
+      if (!start || Number.isNaN(start.getTime())) return false;
+      return toLocalDateKey(start) === selectedDateKey;
+    });
+  }, [finalAppointments, currentView, currentCalendarDate, toLocalDateKey]);
+
   const maxTime = React.useMemo(() => {
     const candidateEndMinutes: number[] = [];
-    (finalAppointments ?? []).forEach((evt: any) => {
+    (calendarEvents ?? []).forEach((evt: any) => {
       const end = new Date(evt?.end);
       if (!Number.isNaN(end.getTime())) {
         candidateEndMinutes.push(end.getHours() * 60 + end.getMinutes());
@@ -83,7 +99,7 @@ const ScheduleContentGrid = ({
     const value = new Date();
     value.setHours(Math.floor(roundedEnd / 60), roundedEnd % 60, 0, 0);
     return value;
-  }, [finalAppointments]);
+  }, [calendarEvents]);
 
   return (
     <div
@@ -113,6 +129,7 @@ const ScheduleContentGrid = ({
           }}
           min={minTime}
           max={maxTime}
+          showMultiDayTimes
           {...(currentView === 'day' && {
             resources: visibleResources ?? [],
             resourceIdAccessor: 'key',
@@ -120,7 +137,7 @@ const ScheduleContentGrid = ({
           })}
           formats={formats}
           localizer={localizer}
-          events={finalAppointments ?? []}
+          events={calendarEvents ?? []}
           step={60}
           timeslots={1}
           onSelectSlot={slotInfo => {

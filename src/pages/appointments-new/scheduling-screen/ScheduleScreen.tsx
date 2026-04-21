@@ -418,16 +418,17 @@ const ScheduleScreen = () => {
 
         const statusText = appointment?.appointmentStatus ?? appointment?.status ?? '';
         const isHidden = String(statusText).toUpperCase() === 'CANCELED';
+        const ageYears = isNaN(dob.getTime()) ? '' : `${today.getFullYear() - dob.getFullYear()}Y`;
+        const patientLabel = [patientFullName, ageYears].filter(Boolean).join(', ');
+        const fallbackTitle = [patientLabel, !(currentView === 'day' || currentView === 'week')
+          ? resource?.resourceName || 'Unknown Resource'
+          : ''
+        ]
+          .filter(Boolean)
+          .join(' | ');
         return {
           id: appointment?.key ?? appointment?.id,
-          title:
-            slotTitle ||
-            ` ${patientFullName}, ${isNaN(dob.getTime()) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
-            }Y  ${!(currentView === 'day' || currentView === 'week')
-              ? ', ' + (resource?.resourceName || 'Unknown Resource')
-              : ''
-            }
-`,
+          title: slotTitle || fallbackTitle || 'Appointment',
           start: startDate,
           end: endDate,
           text: appointment.notes || 'No additional details available',
