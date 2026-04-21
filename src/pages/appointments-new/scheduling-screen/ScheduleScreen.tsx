@@ -906,11 +906,7 @@ const ScheduleScreen = () => {
           await handleSearchAppointmentsByCriteria();
         } catch (approveErr) {
           const ae = approveErr as any;
-          console.error(
-            'approveAppointmentRequest failed',
-            ae,
-            ae?.data != null ? JSON.stringify(ae.data) : ''
-          );
+         
           dispatch(
             notify({
               msg: formatAppointmentRequestApproveError(approveErr),

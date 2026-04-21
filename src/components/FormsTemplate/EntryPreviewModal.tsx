@@ -39,7 +39,6 @@ const survey = useMemo(() => {
 
         return s;
     } catch (e) {
-        console.error('survey error:', e);
         return null;
     }
 }, [template, entry?.dataJson]);

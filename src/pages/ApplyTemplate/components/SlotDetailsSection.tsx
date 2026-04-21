@@ -85,7 +85,6 @@ const SlotDetailsSection: React.FC<{
   });
 
   const capacitySource = React.useMemo(() => {
-    console.log("capacitySource", selectedSlot, selectedCellSlots);
     return selectedSlot ?? selectedCellSlots?.[0] ?? null;
   }, [selectedSlot, selectedCellSlots]);
 
@@ -132,24 +131,9 @@ const SlotDetailsSection: React.FC<{
     return Number.isFinite(n) && n > 0 ? n : 0;
   }, [capacitySource, templateById]);
 
-  React.useEffect(() => {
-    console.log("SlotDetailsSection selectedSlot:", selectedSlot);
-  }, [selectedSlot]);
 
-  React.useEffect(() => {
-    console.log("SlotDetailsSection capacity source (85-96):", {
-      source: capacitySource,
-      availabilityGenerationBatchId,
-      generationBatchById,
-      templateIdFromBatch,
-      templateParallelCapacityValueFromApi: (templateById as any)?.parallelCapacityValue ?? null,
-      parallelCapacityValue: capacitySource?.parallelCapacityValue ?? null,
-      templateParallelCapacityValue: capacitySource?.templateParallelCapacityValue ?? null,
-      availabilityTemplateParallelCapacityValue: capacitySource?.availabilityTemplateParallelCapacityValue ?? null,
-      availabilityTemplateNestedParallelCapacityValue:
-        capacitySource?.availabilityTemplate?.parallelCapacityValue ?? null
-    });
-  }, [capacitySource, availabilityGenerationBatchId, generationBatchById, templateIdFromBatch, templateById]);
+
+
 
   const capacityIndex = React.useMemo(() => {
     const n = Number(selectedSlot?.capacityIndex ?? 0);

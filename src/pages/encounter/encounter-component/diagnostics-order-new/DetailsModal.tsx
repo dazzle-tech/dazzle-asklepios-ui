@@ -27,7 +27,6 @@ const DetailsModal = ({
   const [actionType] = useState(null);
   const [requestedPatientAttacment] = useState();
   const [receivedType, setReceivedType] = useState('');
-  console.log("receivedType", receivedType);
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
   const [deptPage, setDeptPage] = useState(0);
   const { data: receivedLabList } = useGetActiveDepartmentByTypeQuery(
