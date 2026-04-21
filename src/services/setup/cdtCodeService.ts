@@ -1,9 +1,14 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import { BaseQuery } from "@/newApi";
-import { parseLinkHeader } from "@/utils/paginationHelper";
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { BaseQuery } from '@/newApi';
+import { parseLinkHeader } from '@/utils/paginationHelper';
 
 type PagedParams = { page: number; size: number; sort?: string; timestamp?: number };
-type LinkMap = { next?: string | null; prev?: string | null; first?: string | null; last?: string | null };
+type LinkMap = {
+  next?: string | null;
+  prev?: string | null;
+  first?: string | null;
+  last?: string | null;
+};
 type PagedResult<T> = { data: T[]; totalCount: number; links?: LinkMap };
 
 export type CdtConflict = {
@@ -42,114 +47,140 @@ const mapPaged = <T>(response: T[], meta: any): PagedResult<T> => {
   const headers = meta?.response?.headers;
   return {
     data: response ?? [],
-    totalCount: Number(headers?.get("X-Total-Count") ?? 0),
-    links: parseLinkHeader(headers?.get("Link")),
+    totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+    links: parseLinkHeader(headers?.get('Link'))
   };
 };
 
 export const cdtCodeService = createApi({
-  reducerPath: "cdtApi",
+  reducerPath: 'cdtApi',
   baseQuery: BaseQuery,
-  tagTypes: ["CDT", "CDT_LINKS"],
+  tagTypes: ['CDT', 'CDT_LINKS'],
 
-  endpoints: (builder) => ({
+  endpoints: builder => ({
     getAllCdt: builder.query<PagedResult<any>, PagedParams>({
-      query: ({ page, size, sort = "id,asc" }) => ({
-        url: "/api/setup/cdt/all",
-        method: "GET",
-        params: { page, size, sort },
+      query: ({ page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/cdt/all',
+        method: 'GET',
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ["CDT"],
+      providesTags: ['CDT']
     }),
 
     getCdtByClass: builder.query<PagedResult<any>, { cdtClass: string } & PagedParams>({
-      query: ({ cdtClass, page, size, sort = "id,asc" }) => ({
+      query: ({ cdtClass, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/cdt/by-class/${encodeURIComponent(cdtClass)}`,
-        method: "GET",
-        params: { page, size, sort },
+        method: 'GET',
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ["CDT"],
+      providesTags: ['CDT']
     }),
 
     getCdtByActive: builder.query<PagedResult<any>, { active: boolean } & PagedParams>({
-      query: ({ active, page, size, sort = "id,asc" }) => ({
+      query: ({ active, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/cdt/by-active/${encodeURIComponent(String(active))}`,
-        method: "GET",
-        params: { page, size, sort },
+        method: 'GET',
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ["CDT"],
+      providesTags: ['CDT']
     }),
 
     getCdtByCode: builder.query<PagedResult<any>, { code: string } & PagedParams>({
-      query: ({ code, page, size, sort = "id,asc" }) => ({
+      query: ({ code, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/cdt/by-code/${encodeURIComponent(code)}`,
-        method: "GET",
-        params: { page, size, sort },
+        method: 'GET',
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ["CDT"],
+      providesTags: ['CDT']
     }),
 
     getCdtByDescription: builder.query<PagedResult<any>, { description: string } & PagedParams>({
-      query: ({ description, page, size, sort = "id,asc" }) => ({
+      query: ({ description, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/cdt/by-description/${encodeURIComponent(description)}`,
-        method: "GET",
-        params: { page, size, sort },
+        method: 'GET',
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged,
-      providesTags: ["CDT"],
+      providesTags: ['CDT']
     }),
 
     importCdt: builder.mutation<CdtImportResult, { file: File; overwrite?: boolean }>({
       query: ({ file, overwrite = false }) => {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append('file', file);
         return {
-          url: "/api/setup/cdt/import",
-          method: "POST",
+          url: '/api/setup/cdt/import',
+          method: 'POST',
           body: formData,
           formData: true,
           params: { overwrite },
-          validateStatus: (res) => res.status === 200 || res.status === 409,
+          validateStatus: res => res.status === 200 || res.status === 409
         };
       },
-      invalidatesTags: ["CDT"],
+      invalidatesTags: ['CDT']
     }),
 
     getLinkedServices: builder.query<number[], number>({
-      query: (cdtId) => ({
+      query: cdtId => ({
         url: `/api/setup/cdt/${cdtId}/services`,
-        method: "GET",
+        method: 'GET'
       }),
-      providesTags: (_res, _err, cdtId) => [{ type: "CDT_LINKS", id: cdtId }],
+      providesTags: (_res, _err, cdtId) => [{ type: 'CDT_LINKS', id: cdtId }]
     }),
 
-   
-    getLinkedServiceDetails: builder.query<PagedResult<ServiceSetup>, { cdtId: number } & PagedParams>({
-      query: ({ cdtId, page, size, sort = "id,asc" }) => ({
+    getLinkedServiceDetails: builder.query<
+      PagedResult<ServiceSetup>,
+      { cdtId: number } & PagedParams
+    >({
+      query: ({ cdtId, page, size, sort = 'id,asc' }) => ({
         url: `/api/setup/cdt/${cdtId}/services/details`,
-        method: "GET",
-        params: { page, size, sort },
+        method: 'GET',
+        params: { page, size, sort }
       }),
       transformResponse: mapPaged<ServiceSetup>,
-      providesTags: (_res, _err, { cdtId }) => [{ type: "CDT_LINKS", id: cdtId }],
+      providesTags: (_res, _err, { cdtId }) => [{ type: 'CDT_LINKS', id: cdtId }]
     }),
 
     syncLinkedServices: builder.mutation<CdtSyncResult, { cdtId: number; serviceIds: number[] }>({
       query: ({ cdtId, serviceIds }) => ({
         url: `/api/setup/cdt/${cdtId}/services`,
-        method: "PUT",
-        body: serviceIds ?? [],
+        method: 'PUT',
+        body: serviceIds ?? []
       }),
-      invalidatesTags: (_res, _err, { cdtId }) => [
-        { type: "CDT_LINKS", id: cdtId },
-        "CDT",
-      ],
+      invalidatesTags: (_res, _err, { cdtId }) => [{ type: 'CDT_LINKS', id: cdtId }, 'CDT']
     }),
-  }),
+
+    getCdtByKeyword: builder.query<
+      PagedResult<any>,
+      { keyword: string; page: number; size: number; timestamp?: number }
+    >({
+      query: ({ keyword, page, size }) => ({
+        url: `/api/setup/cdt/keyword/${encodeURIComponent(keyword)}`,
+        method: 'GET',
+        params: { page, size, sort: 'code,asc' }
+      }),
+      transformResponse: mapPaged
+    }),
+
+    getCdtById: builder.query<any, { id: number; timestamp?: number }>({
+      query: ({ id }) => ({
+        url: `/api/setup/cdt/${id}`,
+        method: 'GET'
+      })
+    }),
+
+    getCdtByIds: builder.query<any[], number[]>({
+      query: ids => ({
+        url: `/api/setup/cdt/by-ids`,
+        method: 'POST',
+        body: ids
+      })
+    })
+  })
 });
 
 export const {
@@ -166,4 +197,7 @@ export const {
   useGetLinkedServicesQuery,
   useGetLinkedServiceDetailsQuery,
   useSyncLinkedServicesMutation,
+  useLazyGetCdtByKeywordQuery,
+  useLazyGetCdtByIdQuery,
+  useGetCdtByIdsQuery
 } = cdtCodeService;

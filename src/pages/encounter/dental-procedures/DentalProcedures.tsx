@@ -1,48 +1,71 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, IconButton } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import CancelIcon from '@mui/icons-material/Cancel';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
-import { Checkbox, Form, Panel, Stack } from 'rsuite';
-// import { ItemDataType } from 'rsuite/esm/@types/common';
-import MyModal from '@/components/MyModal/MyModal';
+import { Checkbox, Col, Form, Row } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faPen } from '@fortawesome/free-solid-svg-icons';
+
 import MyButton from '@/components/MyButton/MyButton';
-import MyNestedTable from '@/components/MyNestedTable/MyNestedTable';
+import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import Translate from '@/components/Translate';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal/DeletionConfirmationModal';
-import { useGetLovValuesByCodeQuery, useGetCdtsQuery } from '@/services/setupService';
+import CancellationModal from '@/components/CancellationModal';
+import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
+import CdtCodeSearch from '@/components/CdtCodeSearch/CdtCodeSearch';
+
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { formatDateWithoutSeconds, conjureValueBasedOnKeyFromList } from '@/utils';
+
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetCdtByIdsQuery } from '@/services/setup/cdtCodeService';
 import { useGetServicesByCategoryQuery } from '@/services/setup/serviceService';
 import {
   useGetDentalProceduresByPatientQuery,
   useSaveDentalProcedureMutation,
+  useUpdateDentalProcedureMutation,
   useCancelDentalProcedureMutation
 } from '@/services/dentalProcedureService';
+
 import { newDentalProcedure } from '@/types/model-types-constructor-new';
-import { initialListRequest } from '@/types/types';
+import { DentalProcedureResponseVM } from '@/types/model-types-new';
 import './styles.less';
+import { useEnumOptions } from '@/services/enumsApi';
 
-const TOOTH_NUMBERS = Array.from({ length: 32 }, (_, i) => ({
-  value: `Tooth${i + 1}`,
-  label: String(i + 1)
-}));
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-const formatDateTime = (ts: string | null | undefined) => {
-  if (!ts) return '-';
-  return new Date(ts).toLocaleString();
-};
+const getStatusColor = (cancelled: boolean) => (cancelled ? '#D64545' : '#0DAA41');
 
-const DentalProcedures = () => {
+// ─── Component ───────────────────────────────────────────────────────────────
+
+type FormMode = 'add' | 'edit';
+
+const DentalProcedures = props => {
   const location = useLocation();
-  const { patient, encounter } = (location.state || {}) as any;
+  const dispatch = useAppDispatch();
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const patient = props.patient || location.state?.patient;
+  const encounter = props.encounter || location.state?.encounter;
+
+  const [selectedRow, setSelectedRow] = useState<DentalProcedureResponseVM | null>(null);
   const [showCancelled, setShowCancelled] = useState(false);
-  const [selectedProcedure, setSelectedProcedure] = useState<any>(null);
-  const [form, setForm] = useState({ ...newDentalProcedure });
 
+  // ── Single modal state ──
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [formMode, setFormMode] = useState<FormMode>('add');
+  const [form, setForm] = useState<any>({ ...newDentalProcedure });
+  const [modalKey, setModalKey] = useState(0);
+
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [cancelForm, setCancelForm] = useState<any>({ cancellationReason: '' });
+
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(20);
+
+  // ─── LOVs ────────────────────────────────────────────────────────────────
   const { data: toothSurfData } = useGetLovValuesByCodeQuery('TOOTH_SURF');
   const { data: valueUnitData } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   const { data: serviceList } = useGetServicesByCategoryQuery({
@@ -50,320 +73,538 @@ const DentalProcedures = () => {
     size: 1000,
     category: 'DENTAL'
   });
-  const cdtListRes = useGetCdtsQuery({ ...initialListRequest, pageSize: 1000 });
+  const ToothEnum = useEnumOptions('ToothNumber');
 
-  const {
-    data: proceduresData,
-    refetch,
-    isLoading
-  } = useGetDentalProceduresByPatientQuery(
-    { patientId: patient?.id ?? patient?.key, showCancelled },
+  // ─── Data ─────────────────────────────────────────────────────────────────
+  const { data: proceduresData, isLoading } = useGetDentalProceduresByPatientQuery(
+    { patientId: patient?.id ?? patient?.key, showCancelled, page, size },
     { skip: !patient?.id && !patient?.key }
   );
 
   const [saveProcedure, saveMutation] = useSaveDentalProcedureMutation();
+  const [updateProcedure, updateMutation] = useUpdateDentalProcedureMutation();
   const [cancelProcedure, cancelMutation] = useCancelDentalProcedureMutation();
 
+  const rows: DentalProcedureResponseVM[] = Array.isArray(proceduresData) ? proceduresData : [];
+  const totalCount = rows.length;
+
+  const cdtIds = useMemo(() => {
+    const ids: number[] = [];
+    const seen = new Set<number>();
+    for (const row of rows) {
+      if (row.cdtCodeId && typeof row.cdtCodeId === 'number' && !seen.has(row.cdtCodeId)) {
+        seen.add(row.cdtCodeId);
+        ids.push(row.cdtCodeId);
+      }
+    }
+    return ids;
+  }, [rows]);
+
+  const { data: cdtList = [] } = useGetCdtByIdsQuery(cdtIds, { skip: cdtIds.length === 0 });
+
+  const cdtMap = useMemo(
+    () => Object.fromEntries((cdtList as any[]).map(c => [c.id, c])),
+    [cdtList]
+  );
+
+  const sortedRows = useMemo(
+    () =>
+      [...rows].sort((a, b) => {
+        const aTime = a.createdDate ? new Date(a.createdDate).getTime() : -Infinity;
+        const bTime = b.createdDate ? new Date(b.createdDate).getTime() : -Infinity;
+        return bTime - aTime;
+      }),
+    [rows]
+  );
+
+  // ─── Effects ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (saveMutation.isSuccess) {
-      setAddModalOpen(false);
+      dispatch(notify({ msg: 'Dental procedure saved successfully', sev: 'success' }));
+      setFormModalOpen(false);
+      setForm({ ...newDentalProcedure });
+      setModalKey(prev => prev + 1);
+    }
+    if (saveMutation.isError) {
+      dispatch(notify({ msg: 'Failed to save dental procedure', sev: 'warning' }));
+    }
+  }, [saveMutation.isSuccess, saveMutation.isError]);
+
+  useEffect(() => {
+    if (updateMutation.isSuccess) {
+      dispatch(notify({ msg: 'Dental procedure updated successfully', sev: 'success' }));
+      setFormModalOpen(false);
       setForm({ ...newDentalProcedure });
     }
-  }, [saveMutation.isSuccess]);
+    if (updateMutation.isError) {
+      dispatch(notify({ msg: 'Failed to update dental procedure', sev: 'warning' }));
+    }
+  }, [updateMutation.isSuccess, updateMutation.isError]);
 
   useEffect(() => {
     if (cancelMutation.isSuccess) {
-      setCancelConfirmOpen(false);
-      setSelectedProcedure(null);
+      dispatch(notify({ msg: 'Dental procedure cancelled successfully', sev: 'success' }));
+      setCancelModalOpen(false);
+      setSelectedRow(null);
+      setCancelForm({ cancellationReason: '' });
     }
-  }, [cancelMutation.isSuccess]);
-
-  const procedures = useMemo(() => {
-    return proceduresData?.object ?? [];
-  }, [proceduresData]);
-
-  const columns = [
-    {
-      key: 'toothNumber',
-      title: <Translate>Tooth Number</Translate>,
-      render: (row: any) => row.toothNumber?.replace('Tooth', '') ?? '-'
-    },
-    {
-      key: 'surface',
-      title: <Translate>Surface</Translate>,
-      render: (row: any) => row.surface ?? '-'
-    },
-    {
-      key: 'procedure',
-      title: <Translate>Procedure</Translate>,
-      render: (row: any) => row.serviceId ?? '-'
-    },
-    {
-      key: 'createdByAt',
-      title: <Translate>Created By / At</Translate>,
-      render: (row: any) => `${row.createdBy ?? '-'} / ${formatDateTime(row.createdDate)}`
-    },
-    {
-      key: 'service',
-      title: <Translate>Service</Translate>,
-      render: (row: any) => row.serviceId ?? '-'
-    },
-    {
-      key: 'cdtCode',
-      title: <Translate>CDT Code</Translate>,
-      render: (row: any) => row.cdtCodeId ?? '-'
-    },
-    {
-      key: 'status',
-      title: <Translate>Status</Translate>,
-      render: (row: any) => (
-        <span style={{ color: row.cancelled ? 'var(--error-red, #d32f2f)' : 'inherit' }}>
-          {row.cancelled ? 'CANCELLED' : 'ACTIVE'}
-        </span>
-      )
-    },
-    {
-      key: 'actions',
-      title: <Translate>Actions</Translate>,
-      render: (row: any) =>
-        !row.cancelled ? (
-          <IconButton
-            color="error"
-            size="small"
-            title="Cancel Procedure"
-            onClick={e => {
-              e.stopPropagation();
-              setSelectedProcedure(row);
-              setCancelConfirmOpen(true);
-            }}
-          >
-            <CancelIcon fontSize="small" />
-          </IconButton>
-        ) : null
+    if (cancelMutation.isError) {
+      dispatch(notify({ msg: 'Failed to cancel dental procedure', sev: 'warning' }));
+      setCancelModalOpen(false);
     }
-  ];
+  }, [cancelMutation.isSuccess, cancelMutation.isError]);
 
-  const getNestedTable = (row: any) => ({
-    columns: [
+  useEffect(() => {
+    setPage(0);
+  }, [showCancelled]);
+
+  // ─── Deselect on outside click ────────────────────────────────────────────
+  const handleClearSelection = useCallback(() => {
+    setSelectedRow(null);
+  }, []);
+
+  useEffect(() => {
+    const handlePointer = (e: PointerEvent) => {
+      if (cancelModalOpen || formModalOpen || attachmentsModalOpen) return;
+      const target = e.target as HTMLElement;
+      if (!tableContainerRef.current?.contains(target)) {
+        handleClearSelection();
+      }
+    };
+    document.addEventListener('pointerdown', handlePointer, true);
+    return () => document.removeEventListener('pointerdown', handlePointer, true);
+  }, [handleClearSelection, cancelModalOpen, formModalOpen, attachmentsModalOpen]);
+
+  // ─── Helpers to open modal ────────────────────────────────────────────────
+  const openAddModal = () => {
+    setForm({ ...newDentalProcedure });
+    setFormMode('add');
+    setModalKey(prev => prev + 1);
+    setFormModalOpen(true);
+  };
+
+  const openEditModal = (row: DentalProcedureResponseVM) => {
+    setForm({ ...row });
+    setFormMode('edit');
+    setModalKey(prev => prev + 1);
+    setFormModalOpen(true);
+  };
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+  const handleSubmit = async () => {
+    if (formMode === 'add') {
+      try {
+        await saveProcedure({
+          ...form,
+          patientId: patient?.id ?? patient?.key,
+          encounterId: encounter?.id ?? encounter?.key
+        }).unwrap();
+      } catch {
+        dispatch(notify({ msg: 'Failed to save dental procedure', sev: 'warning' }));
+      }
+    } else {
+      if (!form?.id) return;
+      try {
+        const body = {
+          id: form.id,
+          toothNumber: form.toothNumber,
+          surface: form.surface,
+          anesthesiaUsed: form.anesthesiaUsed ?? null,
+          dose: form.dose ?? null,
+          unit: form.unit ?? null,
+          fillingMaterial: form.fillingMaterial ?? null,
+          serviceId: form.serviceId,
+          cdtCodeId: form.cdtCodeId ?? null,
+          notes: form.notes ?? null
+        };
+        await updateProcedure({ id: form.id, body }).unwrap();
+      } catch {
+        dispatch(notify({ msg: 'Failed to update dental procedure', sev: 'warning' }));
+      }
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!selectedRow?.id) return;
+    try {
+      await cancelProcedure({ id: selectedRow.id }).unwrap();
+    } catch {
+      dispatch(notify({ msg: 'Failed to cancel dental procedure', sev: 'warning' }));
+      setCancelModalOpen(false);
+    }
+  };
+
+  const isSelected = (row: DentalProcedureResponseVM) =>
+    row?.id === selectedRow?.id ? 'selected-row' : '';
+
+  const isMutating = formMode === 'add' ? saveMutation.isLoading : updateMutation.isLoading;
+
+  // ─── Columns ──────────────────────────────────────────────────────────────
+  const tableColumns = useMemo(
+    () => [
       {
-        key: 'anesthesia',
+        key: 'toothNumber',
+        title: <Translate>Tooth Number</Translate>,
+        flexGrow: 1,
+        render: (row: DentalProcedureResponseVM) =>
+          ToothEnum?.find((t: any) => t.value === row.toothNumber)?.label ?? row.toothNumber ?? '-'
+      },
+      {
+        key: 'surface',
+        title: <Translate>Surface</Translate>,
+        flexGrow: 1,
+        render: (row: DentalProcedureResponseVM) =>
+          conjureValueBasedOnKeyFromList(
+            toothSurfData?.object ?? [],
+            row.surface,
+            'lovDisplayVale'
+          ) ?? '-'
+      },
+      {
+        key: 'procedure',
+        title: <Translate>Procedure</Translate>,
+        flexGrow: 2,
+        render: (row: DentalProcedureResponseVM) => {
+          const service = (serviceList?.data ?? []).find((s: any) => s.id === row.serviceId);
+          return service?.name ?? row.serviceId ?? '-';
+        }
+      },
+      {
+        key: 'createdByAt',
+        title: <Translate>Created By / At</Translate>,
+        flexGrow: 2,
+        render: (row: DentalProcedureResponseVM) => (
+          <>
+            {row.createdBy ?? '-'}
+            <br />
+            <span className="date-table-style">{formatDateWithoutSeconds(row.createdDate)}</span>
+          </>
+        )
+      },
+
+      {
+        key: 'cdtCode',
+        title: <Translate>CDT Code</Translate>,
+        flexGrow: 2,
+        render: (row: DentalProcedureResponseVM) => {
+          const cdt = row.cdtCodeId ? cdtMap[row.cdtCodeId] : null;
+          return cdt ? `${cdt.code} – ${cdt.description}` : '-';
+        }
+      },
+      // ── Expandable fields ──────────────────────────────────────────────────
+      {
+        key: 'anesthesiaUsed',
         title: <Translate>Anesthesia Used</Translate>,
-        render: () => row.anesthesiaUsed || '-'
+        flexGrow: 1,
+        expandable: true,
+        render: (row: DentalProcedureResponseVM) => row.anesthesiaUsed ?? '-'
       },
       {
         key: 'doseUnit',
         title: <Translate>Dose / Unit</Translate>,
-        render: () => (row.dose != null ? `${row.dose} ${row.unit ?? ''}` : '-')
+        flexGrow: 1,
+        expandable: true,
+        render: (row: DentalProcedureResponseVM) => {
+          const unit =
+            conjureValueBasedOnKeyFromList(
+              valueUnitData?.object ?? [],
+              row.unit,
+              'lovDisplayVale'
+            ) ??
+            row.unit ??
+            '';
+          return row.dose != null ? `${row.dose}${unit ? ' ' + unit : ''}` : '-';
+        }
       },
       {
-        key: 'filling',
+        key: 'fillingMaterial',
         title: <Translate>Filling Material</Translate>,
-        render: () => row.fillingMaterial || '-'
+        flexGrow: 1,
+        expandable: true,
+        render: (row: DentalProcedureResponseVM) => row.fillingMaterial ?? '-'
       },
       {
         key: 'notes',
         title: <Translate>Notes</Translate>,
-        render: () => row.notes || '-'
+        flexGrow: 2,
+        expandable: true,
+        render: (row: DentalProcedureResponseVM) => row.notes ?? '-'
+      },
+      // ── End expandable fields ──────────────────────────────────────────────
+      {
+        key: 'status',
+        title: <Translate>Status</Translate>,
+        flexGrow: 1,
+        render: (row: DentalProcedureResponseVM) => (
+          <MyBadgeStatus
+            contant={row.cancelled ? 'Cancelled' : 'Active'}
+            color={getStatusColor(row.cancelled ?? false)}
+          />
+        )
+      },
+      {
+        key: 'actions',
+        title: <Translate>Actions</Translate>,
+        flexGrow: 1,
+        render: (row: DentalProcedureResponseVM) => (
+          <FontAwesomeIcon
+            icon={faPen}
+            style={{
+              cursor: row.cancelled ? 'not-allowed' : 'pointer',
+              color: row.cancelled ? '#ccc' : 'var(--primary-gray)'
+            }}
+            onClick={() => {
+              if (row.cancelled) return;
+              openEditModal(row);
+            }}
+          />
+        )
       }
     ],
-    data: [row]
-  });
+    [serviceList, toothSurfData, ToothEnum, cdtMap, valueUnitData]
+  );
 
-  const handleSave = () =>
-    saveProcedure({
-      ...form,
-      patientId: patient?.id ?? patient?.key,
-      encounterId: encounter?.id ?? encounter?.key
-    }).unwrap();
+  // ─── RTL/LTR ──────────────────────────────────────────────────────────────
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <Box className="dental-procedures-container">
-      <Panel
-        bordered
-        header={
-          <Stack justifyContent="space-between" alignItems="center">
-            <Stack spacing={8} alignItems="center">
-              <span className="sheet-title">
-                <Translate>Dental Procedures</Translate>
-              </span>
-              <Checkbox
-                checked={showCancelled}
-                onChange={(_, checked) => setShowCancelled(checked)}
-              >
-                <Translate>Show Cancelled</Translate>
-              </Checkbox>
-            </Stack>
-            <Stack spacing={8}>
-              <MyButton
-                onClick={() => {
-                  setForm({ ...newDentalProcedure });
-                  setAddModalOpen(true);
-                }}
-              >
-                <AddIcon style={{ fontSize: 16, marginRight: 4 }} />
-                <Translate>Add</Translate>
-              </MyButton>
-              <MyButton
-                appearance="ghost"
-                onClick={() => {
-                  if (selectedProcedure) setCancelConfirmOpen(true);
-                }}
-                disabled={!selectedProcedure || selectedProcedure?.cancelled}
-              >
-                <CancelIcon style={{ fontSize: 16, marginRight: 4 }} />
-                <Translate>Cancel</Translate>
-              </MyButton>
-              <MyButton appearance="ghost">
-                <AttachFileIcon style={{ fontSize: 16, marginRight: 4 }} />
-                <Translate>Attach</Translate>
-              </MyButton>
-            </Stack>
-          </Stack>
-        }
-      >
-        <MyNestedTable
-          data={procedures}
-          columns={columns}
+    <div dir={dir}>
+      <div ref={tableContainerRef}>
+        <MyTable
+          columns={tableColumns}
+          data={sortedRows}
           loading={isLoading}
-          getNestedTable={getNestedTable}
-          onRowClick={row =>
-            setSelectedProcedure((prev: any) => (prev?.id === row.id ? null : row))
-          }
-          rowClassName={row => (selectedProcedure?.id === row.id ? 'selected-row' : '')}
-          height="60vh"
-        />
-      </Panel>
+          page={page}
+          rowsPerPage={size}
+          totalCount={totalCount}
+          onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
+          onRowsPerPageChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setSize(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          onRowClick={(row: DentalProcedureResponseVM) => {
+            setSelectedRow(prev => (prev?.id === row.id ? null : row));
+          }}
+          rowClassName={isSelected}
+          tableButtons={
+            <div className="bt-div-2">
+              <div className="bt-left-2">
+                <MyButton
+                  disabled={!selectedRow || selectedRow?.cancelled}
+                  onClick={() => {
+                    setCancelForm({ cancellationReason: '' });
+                    setCancelModalOpen(true);
+                  }}
+                >
+                  <Translate>Cancel</Translate>
+                </MyButton>
 
+                <MyButton
+                  appearance="ghost"
+                  disabled={!selectedRow}
+                  onClick={() => setAttachmentsModalOpen(true)}
+                >
+                  <Translate>Attach</Translate>
+                </MyButton>
+
+                <Checkbox checked={showCancelled} onChange={() => setShowCancelled(prev => !prev)}>
+                  <Translate>Show Cancelled</Translate>
+                </Checkbox>
+              </div>
+
+              <div className="bt-right-2">
+                <MyButton
+                  onClick={openAddModal}
+                  prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+                >
+                  <Translate>Add Dental Procedure</Translate>
+                </MyButton>
+              </div>
+            </div>
+          }
+        />
+      </div>
+
+      {/* ── Add / Edit Modal ── */}
       <MyModal
-        open={addModalOpen}
-        setOpen={setAddModalOpen}
-        title="Add Dental Procedure"
+        key={modalKey}
+        open={formModalOpen}
+        setOpen={setFormModalOpen}
+        title={formMode === 'add' ? 'Add Dental Procedure' : 'Edit Dental Procedure'}
         size="500px"
         position="right"
         steps={[{ title: 'Procedure Details' }]}
-        actionButtonLabel="Save"
-        actionButtonFunction={handleSave}
-        isDisabledActionBtn={saveMutation.isLoading}
+        actionButtonLabel={formMode === 'add' ? 'Save' : 'Update'}
+        actionButtonFunction={handleSubmit}
+        isDisabledActionBtn={isMutating}
         content={() => (
-          <Form>
-            <MyInput
-              width={450}
-              fieldName="toothNumber"
-              fieldLabel="Tooth Number"
-              fieldType="select"
-              required
-              selectData={TOOTH_NUMBERS}
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={form}
-              setRecord={setForm}
-            />
-            <MyInput
-              width={450}
-              fieldName="surface"
-              fieldLabel="Surface"
-              fieldType="select"
-              required
-              selectData={toothSurfData?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={form}
-              setRecord={setForm}
-            />
-            <MyInput
-              width={450}
-              fieldName="anesthesiaUsed"
-              fieldLabel="Anesthesia Used"
-              fieldType="text"
-              record={form}
-              setRecord={setForm}
-            />
-            <MyInput
-              width={450}
-              fieldName="dose"
-              fieldLabel="Dose"
-              fieldType="number"
-              record={form}
-              setRecord={setForm}
-            />
-            <MyInput
-              width={450}
-              fieldName="unit"
-              fieldLabel="Unit"
-              fieldType="select"
-              selectData={valueUnitData?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={form}
-              setRecord={setForm}
-            />
-            <MyInput
-              width={450}
-              fieldName="fillingMaterial"
-              fieldLabel="Filling Material"
-              fieldType="text"
-              record={form}
-              setRecord={setForm}
-            />
-            <MyInput
-              width={450}
-              fieldName="serviceId"
-              fieldLabel="Service"
-              fieldType="select"
-              required
-              selectData={serviceList?.data ?? []}
-              selectDataLabel="name"
-              selectDataValue="id"
-              // searchBy={(keyword, _, item: ItemDataType) =>
-              //   (item as any).name?.toLowerCase().includes(keyword.toLowerCase())
-              // }
-              record={form}
-              setRecord={setForm}
-            />
-            <MyInput
-              width={450}
-              fieldName="cdtCodeId"
-              fieldLabel="CDT Code"
-              fieldType="select"
-              selectData={cdtListRes?.data?.object ?? []}
-              selectDataLabel="description"
-              selectDataValue="id"
-              renderMenuItem={(label, item) => (
-                <span>
-                  {(item as any).code} – {(item as any).description}
-                </span>
-              )}
-              // searchBy={(keyword, _, item: ItemDataType) =>
-              //   (item as any).code?.toLowerCase().includes(keyword.toLowerCase()) ||
-              //   (item as any).description?.toLowerCase().includes(keyword.toLowerCase())
-              // }
-              record={form}
-              setRecord={setForm}
-            />
-            <MyInput
-              width={450}
-              fieldName="notes"
-              fieldLabel="Note"
-              fieldType="textarea"
-              record={form}
-              setRecord={setForm}
-            />
+          <Form fluid className="fields-container">
+            <Row>
+              <Row>
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    column
+                    fieldName="toothNumber"
+                    fieldLabel="Tooth Number"
+                    fieldType="select"
+                    required
+                    selectData={ToothEnum}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={form}
+                    setRecord={setForm}
+                  />
+                </Col>
+
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    column
+                    fieldName="surface"
+                    fieldLabel="Surface"
+                    fieldType="select"
+                    required
+                    selectData={toothSurfData?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={form}
+                    setRecord={setForm}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    column
+                    fieldName="anesthesiaUsed"
+                    fieldLabel="Anesthesia Used"
+                    fieldType="text"
+                    record={form}
+                    setRecord={setForm}
+                  />
+                </Col>
+
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    column
+                    fieldName="dose"
+                    fieldLabel="Dose"
+                    fieldType="number"
+                    record={form}
+                    setRecord={setForm}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    column
+                    fieldName="unit"
+                    fieldLabel="Unit"
+                    fieldType="select"
+                    selectData={valueUnitData?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={form}
+                    setRecord={setForm}
+                  />
+                </Col>
+
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    column
+                    fieldName="fillingMaterial"
+                    fieldLabel="Filling Material"
+                    fieldType="text"
+                    record={form}
+                    setRecord={setForm}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    column
+                    fieldName="serviceId"
+                    fieldLabel="Procedure"
+                    fieldType="select"
+                    required
+                    selectData={serviceList?.data ?? []}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    record={form}
+                    setRecord={setForm}
+                  />
+                </Col>
+
+                <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    column
+                    fieldName="notes"
+                    fieldLabel="Note"
+                    fieldType="textarea"
+                    record={form}
+                    setRecord={setForm}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={16}>
+                  <CdtCodeSearch
+                    cdtCodeId={form.cdtCodeId}
+                    setCdtCodeId={id => setForm(prev => ({ ...prev, cdtCodeId: id }))}
+                  />
+                </Col>
+              </Row>
+            </Row>
           </Form>
         )}
       />
 
-      <DeletionConfirmationModal
-        open={cancelConfirmOpen}
-        setOpen={setCancelConfirmOpen}
-        itemToDelete="dental procedure"
-        actionType="cancel"
-        actionButtonFunction={() => {
-          if (selectedProcedure?.id) {
-            cancelProcedure({ id: selectedProcedure.id }).unwrap();
-          }
-        }}
+      {/* ── Cancel Modal ── */}
+      <CancellationModal
+        title="Cancel Dental Procedure"
+        fieldLabel="Cancellation Reason"
+        open={cancelModalOpen}
+        setOpen={setCancelModalOpen}
+        object={cancelForm}
+        setObject={setCancelForm}
+        handleCancle={handleCancel}
+        fieldName="cancellationReason"
+        required={false}
       />
-    </Box>
+
+      {/* ── Attachments Modal ── */}
+      <MyModal
+        open={attachmentsModalOpen}
+        setOpen={setAttachmentsModalOpen}
+        title="Attachments - Dental Procedure"
+        size="lg"
+        hideActionBtn={true}
+        content={
+          <EncounterAttachment
+            localEncounter={encounter}
+            source="DENTAL_PROCEDURE_ATTACHMENT"
+            sourceId={selectedRow?.id ? Number(selectedRow.id) : undefined}
+            refetchAttachmentList={false}
+            setRefetchAttachmentList={() => {}}
+          />
+        }
+      />
+    </div>
   );
 };
 

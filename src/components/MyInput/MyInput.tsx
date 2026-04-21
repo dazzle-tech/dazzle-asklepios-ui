@@ -61,7 +61,8 @@ type MyInputProps = {
   | 'checkPicker'
   | 'date'
   | 'number'
-  | 'check';
+  | 'check'
+  | 'textnumber';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -340,7 +341,9 @@ const MyInput = ({
 
   const conjureFormControl = () => {
     switch (fieldType) {
-      case 'textarea':
+      case 'textarea': 
+        const allowEnterNewLine = props.allowEnterNewLine ?? true;
+
         return (
           <InputGroup style={{ width: props?.width ?? 200 }}>
             <Form.Control
@@ -353,9 +356,7 @@ const MyInput = ({
               onChange={handleValueChange}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
-                  if (props.allowEnterNewLine) {
-                    return;
-                  }
+                  if (allowEnterNewLine) return;
                   focusNextField(e);
                 }
               }}
@@ -985,6 +986,32 @@ const MyInput = ({
           >
             {props.label ? props.label : fieldLabel}
           </Checkbox>
+        );
+
+      case 'textnumber': 
+        const defaultInputWidth = props?.width ?? 145;
+
+        return (
+          <Form.Control
+            style={{
+              width: defaultInputWidth,
+              height: props?.height ?? 30
+            }}
+            disabled={props.disabled}
+            name={fieldName}
+            type="text"
+            inputMode="numeric"
+            value={record?.[fieldName] ?? ''}
+            placeholder={props.placeholder}
+            onChange={(value: string) => {
+              const numericOnly = value.replace(/[^0-9]/g, '');
+              setRecord?.({
+                ...record,
+                [fieldName]: numericOnly
+              });
+            }}
+            onKeyDown={focusNextField}
+          />
         );
 
       default: {

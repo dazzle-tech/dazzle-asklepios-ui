@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { baseQuery, onQueryStarted } from '../api';
+import { BaseQuery as baseQuery, onQueryStarted } from '../newApi';
 
 import type { DentalProcedureCreateDTO, DentalProcedureUpdateDTO } from '@/types/model-types-new';
 
@@ -13,9 +13,9 @@ type GetDentalProceduresByPatientParams = {
 export const dentalProcedureService = createApi({
   reducerPath: 'dentalProcedureApi',
   baseQuery: baseQuery,
+  tagTypes: ['DentalProcedure'],
 
   endpoints: builder => ({
-    // ✅ GET
     getDentalProceduresByPatient: builder.query({
       query: ({
         patientId,
@@ -23,7 +23,7 @@ export const dentalProcedureService = createApi({
         page = 0,
         size = 50
       }: GetDentalProceduresByPatientParams) => ({
-        url: `/dental-procedures/by-patient/${patientId}`,
+        url: `/api/patient/dental-procedures/by-patient/${patientId}`,
         params: {
           showCancelled,
           page,
@@ -31,45 +31,43 @@ export const dentalProcedureService = createApi({
           sort: 'createdDate,desc'
         }
       }),
+      providesTags: ['DentalProcedure'],
       onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
       keepUnusedDataFor: 0
     }),
 
-    // ✅ CREATE
     saveDentalProcedure: builder.mutation({
       query: (body: DentalProcedureCreateDTO) => ({
-        url: `/dental-procedures`,
+        url: `/api/patient/dental-procedures`,
         method: 'POST',
         body
       }),
+      invalidatesTags: ['DentalProcedure'],
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       }
     }),
 
-    // ✅ UPDATE
     updateDentalProcedure: builder.mutation({
       query: ({ id, body }: { id: number; body: DentalProcedureUpdateDTO }) => ({
-        url: `/dental-procedures/${id}`,
+        url: `/api/patient/dental-procedures/${id}`,
         method: 'PUT',
         body
       }),
+      invalidatesTags: ['DentalProcedure'],
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       }
     }),
 
-    // ✅ CANCEL
     cancelDentalProcedure: builder.mutation({
       query: ({ id }: { id: number }) => ({
-        url: `/dental-procedures/${id}/cancel`,
+        url: `/api/patient/dental-procedures/${id}/cancel`,
         method: 'PUT'
       }),
+      invalidatesTags: ['DentalProcedure'],
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
