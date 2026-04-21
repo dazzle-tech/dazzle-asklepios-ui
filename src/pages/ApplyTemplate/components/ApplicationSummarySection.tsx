@@ -31,6 +31,8 @@ type ApplicationSummarySectionProps = {
   selectedTemplate?: AvailabilityTemplateResponseVM | null;
   dto?: AvailabilityGenerationBatchApplyDTO;
   totalSlotsToBeCreated: number;
+  totalPrimarySlotsToBeCreated: number;
+  totalBufferSlotsToBeCreated: number;
   exceptionCount: number;
 };
 
@@ -38,6 +40,8 @@ const ApplicationSummarySection: React.FC<ApplicationSummarySectionProps> = ({
   selectedTemplate,
   dto,
   totalSlotsToBeCreated,
+  totalPrimarySlotsToBeCreated,
+  totalBufferSlotsToBeCreated,
   exceptionCount,
 }) => {
   const scopeUpper = String((dto as any)?.scope ?? "").trim().toUpperCase();
@@ -118,8 +122,18 @@ const ApplicationSummarySection: React.FC<ApplicationSummarySectionProps> = ({
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-semibold text-slate-700">Total slots</span>
             <Pill className="bg-white text-emerald-700">
-              {totalSlotsToBeCreated} free {totalSlotsToBeCreated === 1 ? "appointment" : "appointments"}
+              {totalSlotsToBeCreated} {totalSlotsToBeCreated === 1 ? "appointment" : "appointments"}
             </Pill>
+          </div>
+          <div className="mt-3 space-y-2 text-sm text-slate-600">
+            <div className="flex items-center justify-between">
+              <span>Number of Slot </span>
+              <span>{totalPrimarySlotsToBeCreated}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Number of Buffer</span>
+              <span>{totalBufferSlotsToBeCreated}</span>
+            </div>
           </div>
           <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
             <span>Daily average</span>

@@ -487,7 +487,7 @@ export interface AppointmentFromTemplateSearchFilterDTO {
   resourceType?: TemplateType | null;
   resourceId?: number | null;
   status?: AppointmentStatus | null;
-  bookingMode?: BookingMode | null;
+  bookingMode?: BookingMode[] | null;
   patientId?: number | null;
 }
 

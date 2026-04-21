@@ -6,6 +6,7 @@ import { useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery } from "@/
 import {
   useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery,
 } from "@/services/appointment/availabilityTemplate/availabilityTemplateIntervalBreak";
+import { useGetAvailabilityTemplateQuery } from "@/services/appointment/availabilityTemplateService";
 import type {
   AvailabilityGenerationBatchApplyDTO,
   AvailabilityTemplateIntervalBreakResponseVM,
@@ -110,34 +111,53 @@ function countSlotsForInterval(interval: AvailabilityTemplateIntervalResponseVM,
 function countSlotsForIntervalWithBreaks(
   interval: AvailabilityTemplateIntervalResponseVM,
   templateDurationMinutes: number,
+  slotBeforeMinutes: number,
+  slotAfterMinutes: number,
+  parallelCapacity: number,
   breaks: AvailabilityTemplateIntervalBreakResponseVM[]
-): number {
+): { slotCount: number; bufferCount: number; totalCount: number } {
   const start = parseTimeToMinutes(interval?.startTime ?? interval?.fromTime ?? interval?.start);
   const end = parseTimeToMinutes(interval?.endTime ?? interval?.toTime ?? interval?.end);
-  if (start == null || end == null) return 0;
+  if (start == null || end == null) return { slotCount: 0, bufferCount: 0, totalCount: 0 };
   const intervalDuration = Number(interval?.slotDurationMinutes ?? templateDurationMinutes);
-  if (!Number.isFinite(intervalDuration) || intervalDuration <= 0) return 0;
+  if (!Number.isFinite(intervalDuration) || intervalDuration <= 0) {
+    return { slotCount: 0, bufferCount: 0, totalCount: 0 };
+  }
 
-  let slots = 0;
+  let slotCount = 0;
+  let bufferCount = 0;
   let cursor = start;
-  while (cursor + intervalDuration <= end) {
+  while (true) {
     const slotStart = cursor;
     const slotEnd = slotStart + intervalDuration;
+    if (slotEnd > end) break;
     const overlappingBreakEnd = findOverlappingBreakEnd(breaks, slotStart, slotEnd);
     if (overlappingBreakEnd != null) {
-      cursor = overlappingBreakEnd;
+      cursor = overlappingBreakEnd + slotBeforeMinutes;
       continue;
     }
-    slots += 1;
-    cursor = slotEnd;
+    const beforeCount = slotBeforeMinutes > 0 ? parallelCapacity : 0;
+    const afterCount = slotAfterMinutes > 0 ? parallelCapacity : 0;
+    slotCount += parallelCapacity;
+    bufferCount += beforeCount + afterCount;
+
+    const afterBufferEnd = slotEnd + slotAfterMinutes;
+    cursor = afterBufferEnd + slotBeforeMinutes;
   }
-  return slots;
+  return {
+    slotCount,
+    bufferCount,
+    totalCount: slotCount + bufferCount,
+  };
 }
 
 function computePreview(
   intervalsByDay: Record<string, AvailabilityTemplateIntervalResponseVM[]>,
   breaksByIntervalId: Record<number, AvailabilityTemplateIntervalBreakResponseVM[]>,
   templateDurationMinutes: number,
+  slotBeforeMinutes: number,
+  slotAfterMinutes: number,
+  parallelCapacity: number,
   dto: AvailabilityGenerationBatchApplyDTO | undefined,
   holidayDates: string[] = []
 ) {
@@ -146,13 +166,22 @@ function computePreview(
   const excludeHolidays = String((dto as any)?.holidayHandlingMode ?? "").toUpperCase() === "EXCLUDE_HOLIDAYS";
 
   if (!start || !end || end < start) {
-    return { totalSlots: 0, avgSlotsPerDay: 0, exceptions: 0, days: 0 };
+    return {
+      totalSlots: 0,
+      totalSlotTypeSlots: 0,
+      totalBufferTypeSlots: 0,
+      avgSlotsPerDay: 0,
+      exceptions: 0,
+      days: 0
+    };
   }
 
   const holidaysSet = new Set((holidayDates ?? []).filter(Boolean));
   const holidayCountInPeriod = holidaysSet.size;
 
   let totalSlots = 0;
+  let totalSlotTypeSlots = 0;
+  let totalBufferTypeSlots = 0;
   let includedDays = 0;
   let excludedHolidayDays = 0;
 
@@ -175,7 +204,17 @@ function computePreview(
     for (const interval of dayIntervals) {
       const intervalId = Number(interval?.id ?? 0);
       const intervalBreaks = intervalId ? breaksByIntervalId[intervalId] ?? [] : [];
-      totalSlots += countSlotsForIntervalWithBreaks(interval, templateDurationMinutes, intervalBreaks);
+      const counts = countSlotsForIntervalWithBreaks(
+        interval,
+        templateDurationMinutes,
+        slotBeforeMinutes,
+        slotAfterMinutes,
+        parallelCapacity,
+        intervalBreaks
+      );
+      totalSlots += counts.totalCount;
+      totalSlotTypeSlots += counts.slotCount;
+      totalBufferTypeSlots += counts.bufferCount;
     }
   }
 
@@ -184,7 +223,14 @@ function computePreview(
   // Exceptions should reflect holidays in selected period;
   // handling mode only controls whether holidays are excluded from generation.
   void excludedHolidayDays;
-  return { totalSlots, avgSlotsPerDay, exceptions: holidayCountInPeriod, days };
+  return {
+    totalSlots,
+    totalSlotTypeSlots,
+    totalBufferTypeSlots,
+    avgSlotsPerDay,
+    exceptions: holidayCountInPeriod,
+    days
+  };
 }
 
 const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMinutes, dto, holidayDates }) => {
@@ -236,6 +282,10 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
   const [breaksByIntervalId, setBreaksByIntervalId] = React.useState<Record<number, AvailabilityTemplateIntervalBreakResponseVM[]>>({});
   const [triggerIntervalsByDay] = useLazyGetAvailabilityTemplateIntervalsByTemplateAndDayQuery();
   const [triggerBreaksByInterval] = useLazyGetAvailabilityTemplateIntervalBreaksByIntervalQuery();
+  const { data: templateData } = useGetAvailabilityTemplateQuery(
+    { id: Number(templateId ?? 0) },
+    { skip: !templateId }
+  );
 
   React.useEffect(() => {
     let mounted = true;
@@ -294,16 +344,35 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
     };
   }, [dto?.startDate, dto?.endDate, templateId, triggerIntervalsByDay, triggerBreaksByInterval]);
 
-  const { totalSlots, avgSlotsPerDay, exceptions, days } = React.useMemo(
+  const effectiveDuration = Number((templateData as any)?.durationMinutes ?? templateDurationMinutes ?? 0);
+  const effectiveSlotBefore = Math.max(0, Number((templateData as any)?.defaultBufferBeforeMinutes ?? 0));
+  const effectiveSlotAfter = Math.max(0, Number((templateData as any)?.defaultBufferAfterMinutes ?? 0));
+  const rawParallelCapacity = Number((templateData as any)?.parallelCapacityValue ?? 1);
+  const effectiveParallelCapacity = Number.isFinite(rawParallelCapacity) && rawParallelCapacity > 0 ? rawParallelCapacity : 1;
+
+  const { totalSlotTypeSlots, totalBufferTypeSlots, avgSlotsPerDay, exceptions, days } = React.useMemo(
     () =>
       computePreview(
         intervalsByDay,
         breaksByIntervalId,
-        Number(templateDurationMinutes ?? 0),
+        effectiveDuration,
+        effectiveSlotBefore,
+        effectiveSlotAfter,
+        effectiveParallelCapacity,
         dto,
         holidayDates && holidayDates.length > 0 ? holidayDates : Array.from(holidayDateSet)
       ),
-    [intervalsByDay, breaksByIntervalId, templateDurationMinutes, dto, holidayDates, holidayDateSet],
+    [
+      intervalsByDay,
+      breaksByIntervalId,
+      effectiveDuration,
+      effectiveSlotBefore,
+      effectiveSlotAfter,
+      effectiveParallelCapacity,
+      dto,
+      holidayDates,
+      holidayDateSet,
+    ],
   );
 
   return (
@@ -315,9 +384,10 @@ const PreviewSummarySection: React.FC<Props> = ({ templateId, templateDurationMi
         </CardTitle>
       </CardHeader>
       <Separator />
-      <CardContent className="grid gap-3 px-5 pb-5 sm:grid-cols-2 xl:grid-cols-4">
+      <CardContent className="grid gap-3 px-5 pb-5 sm:grid-cols-2 xl:grid-cols-5">
         <MiniStat label="Slots/Day avg" value={days > 0 ? String(avgSlotsPerDay) : "-"} />
-        <MiniStat label="Total Slots" value={days > 0 ? String(totalSlots) : "-"} />
+        <MiniStat label="Slot count" value={days > 0 ? String(totalSlotTypeSlots) : "-"} />
+        <MiniStat label="Buffer count" value={days > 0 ? String(totalBufferTypeSlots) : "-"} />
         <MiniStat label="Exceptions" value={days > 0 ? String(exceptions) : "-"} />
         <MiniStat label="Date Range" value={formatDaysLabel(days)} />
       </CardContent>

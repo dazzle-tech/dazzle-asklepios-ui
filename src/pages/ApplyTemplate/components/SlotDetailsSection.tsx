@@ -131,10 +131,6 @@ const SlotDetailsSection: React.FC<{
     return Number.isFinite(n) && n > 0 ? n : 0;
   }, [capacitySource, templateById]);
 
-
-
-
-
   const capacityIndex = React.useMemo(() => {
     const n = Number(selectedSlot?.capacityIndex ?? 0);
     return Number.isFinite(n) && n >= 0 ? n : 0;
