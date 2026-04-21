@@ -70,7 +70,6 @@ const UseTemplateModal = ({ open, setOpen, templateRow, onSaved }: any) => {
         dispatch(notify({ msg: 'Form saved successfully', sev: 'success' }));
         setOpen(false);
     } catch (e) {
-        console.error(e);
         dispatch(notify({ msg: 'Failed to save form', sev: 'error' }));
     }
 };

@@ -36,11 +36,7 @@ const Billing = ({ data, patient, onCreateInvoice }: BillingProps) => {
 
   useEffect(() => {
     if (!patient?.id) return;
-    console.log('[Billing] rows received for selected patient', {
-      patientId: patient.id,
-      totalRows: data?.length ?? 0,
-      rows: data,
-    });
+  
   }, [patient?.id, data]);
 
   const handleCheckboxChange = (key: string) => {
@@ -158,7 +154,6 @@ const Billing = ({ data, patient, onCreateInvoice }: BillingProps) => {
 
       setSelectedRows([]);
     } catch (error: any) {
-      console.error('Error generating invoice:', error);
       toaster.push(
         <Message showIcon type="error" closable>
           Failed to generate invoice: {error?.message || 'Unknown error'}

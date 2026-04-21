@@ -673,9 +673,6 @@ const AddResourceModal = ({
     }));
   }, [record?.templateType]);
 
-  useEffect(() => {
-   console.log("resource record: ", record);
-  },[record])
   const conjureFormContent = () => (
     <Form fluid>
       <Row>
