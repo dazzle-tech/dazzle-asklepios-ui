@@ -19,7 +19,7 @@ interface AttachmentUploadModalProps {
   encounterId?: number;
   refetchData: () => void;
   source?: string;
-  sourceId?: number; 
+  sourceId?: number;
 }
 
 const AttachmentUploadModal = ({
@@ -39,12 +39,12 @@ const AttachmentUploadModal = ({
   // Use appropriate mutation based on whether patientId or encounterId is provided
   const [uploadPatientAttachments, { isLoading: isLoadingPatient }] = useUploadPatientAttachmentsMutation();
   const [uploadEncounterAttachment, { isLoading: isLoadingEncounter }] = useUploadEncounterAttachmentMutation();
-  
+
   const isLoading = isLoadingPatient || isLoadingEncounter;
-  
+
   // Fetch attachment types LOV
   const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
-  
+
   // Form fields state
   const [selectedAttachType, setSelectedAttachType] = useState<{ typeLkey: string }>({
     typeLkey: ''
@@ -101,7 +101,7 @@ const AttachmentUploadModal = ({
     try {
       if (encounterId) {
         // Upload encounter attachments one at a time (backend accepts single file)
-        const uploadPromises = selectedFiles.map(file => 
+        const uploadPromises = selectedFiles.map(file =>
           uploadEncounterAttachment({
             encounterId,
             file, // Single file
@@ -111,19 +111,19 @@ const AttachmentUploadModal = ({
             sourceId: sourceId || 0 // Use 0 as default for general attachments, actual ID for order-specific
           }).unwrap()
         );
-        
+
         await Promise.all(uploadPromises);
       } else if (patientId) {
-        const uploadPromises = selectedFiles.map(file => 
+        const uploadPromises = selectedFiles.map(file =>
           uploadPatientAttachments({
             patientId,
-            file, 
+            file,
             type: selectedAttachType.typeLkey || undefined,
             details: attachmentDetails.attachmentDetails || undefined,
             source: source
           }).unwrap()
         );
-        
+
         await Promise.all(uploadPromises);
       } else {
         dispatch(notify({ msg: 'Patient ID or Encounter ID is required', sev: 'error' }));
@@ -135,11 +135,45 @@ const AttachmentUploadModal = ({
       setIsOpen(false);
       refetchData();
     } catch (error: any) {
-    
-      dispatch(notify({ 
-        msg: error?.data?.message || error?.message || 'Failed to Upload Attachment', 
-        sev: 'error' 
-      }));
+      console.log('FULL ERROR:', error);
+
+      if (Array.isArray(error?.data?.fieldErrors)) {
+        const fieldErrors = error.data.fieldErrors
+          .map((e: any) => `• ${e.field}: ${e.message}`)
+          .join('\n');
+
+        dispatch(
+          notify({
+            msg: `Please fix the following:\n${fieldErrors}`,
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
+      const status = error?.status;
+
+      let message = '';
+
+      if (status === 413) {
+        message = 'File size exceeds the allowed limit (1MB).';
+      } else {
+        message =
+          error?.data?.message ||
+          error?.data?.detail ||
+          error?.data?.title ||
+          error?.data?.error ||
+          error?.error ||
+          error?.message ||
+          'Something went wrong';
+      }
+
+      dispatch(
+        notify({
+          msg: message,
+          sev: 'error'
+        })
+      );
     }
   };
 

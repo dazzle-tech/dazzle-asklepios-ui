@@ -858,11 +858,28 @@ const startEncounterSafe = async (row: any) => {
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      render: (row: any) => row?.chiefComplaint ?? '-'
+      render: (row: any) => {
+        const text = row?.chiefComplaint || '-';
+
+        const speaker = (
+          <Tooltip>
+            {text}
+          </Tooltip>
+        );
+
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <span className="chief-complaint-cell">
+              {text}
+            </span>
+          </Whisper>
+        );
+      }
     },
     {
       key: 'location',
       title: 'LOCATION',
+      expandable: true,
       render: (row: any) => {
         const statusUpper = String(row?.status ?? '').toUpperCase();
 
@@ -951,6 +968,7 @@ const startEncounterSafe = async (row: any) => {
     {
       key: 'encounterDate',
       title: 'DATE',
+      expandable: true,
       render: (row: any) => row?.encounterDate ?? row?.plannedStartDate ?? '-'
     },
     {
