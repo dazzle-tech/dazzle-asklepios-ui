@@ -12,6 +12,8 @@ import {
   faCommentMedical,
   faUserNurse
 } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
@@ -60,6 +62,8 @@ import { Patient } from '@/types/model-types-new';
 
 import './styles.less';
 import 'react-tabs/style/react-tabs.css';
+
+dayjs.extend(duration);
 
 const toISODate = (d: Date | string | null | undefined) => {
   if (!d) return undefined;
@@ -615,18 +619,34 @@ const UrgentCareList = () => {
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
-  const startEncounterSafe = async (row: any) => {
-    const encounterId = getEncounterId(row);
-    if (!encounterId) return false;
+ const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
 
-    try {
-      await startEncounter({ id: encounterId }).unwrap();
-      return true;
-    } catch (error: any) {
-      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
-      return false;
-    }
-  };
+const startEncounterSafe = async (row: any) => {
+  const encounterId = getEncounterId(row);
+  if (!encounterId) return false;
+
+  const statusUpper = String(row?.status ?? '').toUpperCase();
+
+  if (statusUpper === 'ONGOING') {
+    return true; 
+  }
+
+  if (startingEncounterIdsRef.current.has(encounterId)) {
+    return false;
+  }
+
+  startingEncounterIdsRef.current.add(encounterId);
+
+  try {
+    await startEncounter({ id: encounterId }).unwrap();
+    return true;
+  } catch (error: any) {
+    handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+    return false;
+  } finally {
+    startingEncounterIdsRef.current.delete(encounterId);
+  }
+};
 
   const cancelEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
@@ -757,6 +777,18 @@ const UrgentCareList = () => {
     });
   };
 
+  const calculateDoorToPhysician = (createdAt: string, startedDate: string) => {
+    if (!createdAt || !startedDate) return '-';
+
+    const diff = dayjs(startedDate).diff(dayjs(createdAt));
+    const dur = dayjs.duration(diff);
+
+    const minutes = Math.floor(dur.asMinutes());
+
+    return `${minutes} min`;
+  };
+
+
   const handleClearFilters = () => {
     const now = new Date();
     const lastWeekDate = new Date(now);
@@ -780,6 +812,7 @@ const UrgentCareList = () => {
     setSearchTick(prev => prev + 1);
   };
 
+  
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -826,11 +859,28 @@ const UrgentCareList = () => {
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      render: (row: any) => row?.chiefComplaint ?? '-'
+      render: (row: any) => {
+        const text = row?.chiefComplaint || '-';
+
+        const speaker = (
+          <Tooltip>
+            {text}
+          </Tooltip>
+        );
+
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <span className="chief-complaint-cell">
+              {text}
+            </span>
+          </Whisper>
+        );
+      }
     },
     {
       key: 'location',
       title: 'LOCATION',
+      expandable: true,
       render: (row: any) => {
         const statusUpper = String(row?.status ?? '').toUpperCase();
 
@@ -919,6 +969,7 @@ const UrgentCareList = () => {
     {
       key: 'encounterDate',
       title: 'DATE',
+      expandable: true,
       render: (row: any) => row?.encounterDate ?? row?.plannedStartDate ?? '-'
     },
     {
@@ -938,6 +989,13 @@ const UrgentCareList = () => {
       title: 'STARTED BY',
       expandable: true,
       render: (row: any) => row?.startedBy ?? '-'
+    },
+    {
+      key: 'doorToPhysician',
+      title: 'DOOR TO PHYSICIAN',
+      expandable: true,
+      render: (row: any) =>
+        calculateDoorToPhysician(row?.createdAt, row?.startedDate)
     },
     {
       key: 'status',

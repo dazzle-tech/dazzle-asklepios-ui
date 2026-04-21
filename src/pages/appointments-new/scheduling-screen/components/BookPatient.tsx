@@ -59,7 +59,6 @@ const BookPatient = ({
     if (!open) return;
     // Debug: inspect appointment payload when opening booking modal
     // eslint-disable-next-line no-console
-    console.log('BookPatient opened with appointmentData:', appointmentData, 'readOnly:', readOnly);
 
     const appointmentPriority =
       appointmentData?.priority ??

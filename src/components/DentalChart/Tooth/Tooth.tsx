@@ -29,7 +29,6 @@ const Tooth = ({ chartTooth }) => {
       const imageModule = context(imageName);
       return (imageModule as any).default || imageModule;
     } catch (error) {
-      console.warn(`Could not load image: ${imageName}`, error);
       return null;
     }
   }

@@ -6,7 +6,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import {
   useLazyGetAppointableServicesByLoggedInFacilityQuery,
   useLazyGetServicesByDepartmentQuery,
@@ -31,7 +31,6 @@ import {
   useLazyGetAppointableCatalogsByLoggedInFacilityQuery,
   useLazyGetCatalogByIdQuery
 } from '@/services/setup/catalog/catalogService';
-import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 import { formatEnumString } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useLazyGetActiveAppointableRoomsByDepartmentIdQuery, useLazyGetRoomByIdQuery } from '@/services/setup/room/roomService';
@@ -361,12 +360,14 @@ const AddResourceModal = ({
         allowedServices: normalizedAllowedServices,
         facilityId: selectedFacility?.id ?? editRecord?.facilityId,
         departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId,
+        workingDays: Array.isArray(editRecord?.workingDays) ? editRecord.workingDays : [],
         parallelCapacityValue: Number(
           editRecord?.parallelCapacityValue ??
           mainTemplate?.parallelCapacityValue ??
           1
         )
       });
+      workingDaysTouchedRef.current = false;
       return;
     }
     setRecord({
@@ -374,8 +375,10 @@ const AddResourceModal = ({
       parentTemplateId: mainTemplate?.id,
       facilityId: selectedFacility?.id,
       departmentId: mainTemplate?.departmentId,
+      workingDays: mainTemplate?.workingDays ?? [],
       parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1)
     });
+    applyWorkingDays(mainTemplate?.workingDays ?? []);
   }, [open, editRecord?.id, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
 
   const [currentColor, setCurrentColor] = useState(mainTemplate?.color || '#6982F0');
@@ -399,11 +402,6 @@ const AddResourceModal = ({
     isLoading: isGettingFacilities,
     isFetching: isFetchingFacilities
   } = useGetActiveFacilitiesQuery({});
-  const { data: organizationDefinitions } = useGetAllOrganizationDefinitionsQuery({});
-  const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
-    skip: !selectedFacility?.id
-  });
-
   const [getPractitioner] = useLazyGetPractitionerByIdQuery();
   const [getDiagnosticTest] = useLazyGetDiagnosticTestByIdQuery();
   const [getCatalog] = useLazyGetCatalogByIdQuery();
@@ -411,9 +409,6 @@ const AddResourceModal = ({
   const [getRoom] = useLazyGetRoomByIdQuery();
 
   useEffect(() => {
-    if (record?.id) {
-      return;
-    }
     if (!record?.resourceId) {
       setRecord(prev => ({
         ...prev,
@@ -421,6 +416,7 @@ const AddResourceModal = ({
         parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
         defaultPractitionerId: undefined
       }));
+      applyWorkingDays(mainTemplate?.workingDays ?? []);
       return;
     }
 
@@ -428,17 +424,22 @@ const AddResourceModal = ({
       getPractitioner(record.resourceId)
         .unwrap()
         .then(res => {
+          applyWorkingDays(res?.workingDays ?? mainTemplate?.workingDays ?? []);
           setRecord(prev => ({
             ...prev,
             durationMinutes: res.defaultDurationMinutes,
             parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
             defaultPractitionerId: res?.id
           }));
+        })
+        .catch(() => {
+          applyWorkingDays(mainTemplate?.workingDays ?? []);
         });
     } else if (record?.templateType === 'DIAGNOSTIC_TEST') {
       getDiagnosticTest(String(record.resourceId))
         .unwrap()
         .then(res => {
+          applyWorkingDays(mainTemplate?.workingDays ?? []);
           setRecord(prev => ({
             ...prev,
             durationMinutes: res?.data.defaultDurationMinutes,
@@ -478,7 +479,7 @@ const AddResourceModal = ({
         });
     }
 
-  }, [record?.resourceId]);
+  }, [record?.resourceId, record?.templateType, dayOptionsKey, mainTemplate?.workingDays]);
 
   const { data: departmentServices = [] } =
     useGetDepartmentServicesQuery(
@@ -505,6 +506,11 @@ const AddResourceModal = ({
     if (!open) return;
     allowedServicesTouchedRef.current = false;
     workingDaysTouchedRef.current = false;
+    if (editRecord?.id) {
+      applyWorkingDays(editRecord?.workingDays ?? []);
+    } else {
+      applyWorkingDays(mainTemplate?.workingDays ?? []);
+    }
   }, [open]);
 
   const workingDaysRecord = useMemo(() => {
@@ -537,6 +543,43 @@ const AddResourceModal = ({
       ...prev,
       workingDays: nextWorkingDays,
     }));
+  };
+
+  const normalizeWorkingDays = (sourceWorkingDays: any[] = []) => {
+    if (!dayOptions || dayOptions.length === 0) return [];
+
+    return dayOptions.map(day => {
+      const found = sourceWorkingDays.find(
+        (d: any) => String(d?.dayOfWeek) === String(day.value)
+      );
+
+      return {
+        dayOfWeek: day.value,
+        isWorking: found ? found.isWorking !== false : false,
+      };
+    });
+  };
+
+  const applyWorkingDays = (sourceWorkingDays: any[] = []) => {
+    if (!dayOptions || dayOptions.length === 0) return;
+
+    const normalizedWorkingDays = normalizeWorkingDays(sourceWorkingDays);
+
+    workingDaysTouchedRef.current = false;
+    setRecord(prev => {
+      const prevDays = prev?.workingDays ?? [];
+      const same =
+        prevDays.length === normalizedWorkingDays.length &&
+        prevDays.every((d, i) =>
+          d.dayOfWeek === normalizedWorkingDays[i].dayOfWeek &&
+          d.isWorking === normalizedWorkingDays[i].isWorking
+        );
+      if (same) return prev;
+      return {
+        ...prev,
+        workingDays: normalizedWorkingDays,
+      };
+    });
   };
 
   const normalizeAllowedServices = (input: any) => {
@@ -614,73 +657,20 @@ const AddResourceModal = ({
   }, [open, parentTemplateAllowedServices]);
 
   useEffect(() => {
-    if (!dayOptions || dayOptions.length === 0) return;
-    if (!record?.facilityId) return;
-    if (workingDaysTouchedRef.current) return;
-    const hasWorkingDays =
-      Array.isArray(record?.workingDays) && record.workingDays.length > 0;
-    if (hasWorkingDays) return;
-
-    const facilities = facilityListResponse ?? [];
-    const selectedFacilityData = facilities.find(
-      (f: any) => String(f?.id) === String(record.facilityId)
-    );
-
-    const facilityWorkingDays =
-      selectedFacilityFullObject?.workingDays ??
-      selectedFacilityData?.workingDays ??
-      [];
-
-    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
-
-    const sourceWorkingDays =
-      facilityWorkingDays && facilityWorkingDays.length > 0
-        ? facilityWorkingDays
-        : organizationWorkingDays;
-
-    if (!sourceWorkingDays || sourceWorkingDays.length === 0) return;
-
-    const normalizedWorkingDays = dayOptions.map(day => {
-      const found = sourceWorkingDays.find(
-        (d: any) => String(d?.dayOfWeek) === String(day.value)
-      );
-      return {
-        dayOfWeek: day.value,
-        isWorking: found ? found.isWorking !== false : false,
-      };
-    });
-
-    setRecord(prev => {
-      const prevDays = prev?.workingDays ?? [];
-      const same =
-        prevDays.length === normalizedWorkingDays.length &&
-        prevDays.every((d, i) =>
-          d.dayOfWeek === normalizedWorkingDays[i].dayOfWeek &&
-          d.isWorking === normalizedWorkingDays[i].isWorking
-        );
-      if (same) return prev;
-      return {
-        ...prev,
-        workingDays: normalizedWorkingDays,
-      };
-    });
-  }, [
-    record?.facilityId,
-    facilityListResponse,
-    selectedFacilityFullObject,
-    organizationDefinitions,
-    dayOptionsKey,
-    record?.workingDays,
-  ]);
-
-  useEffect(() => {
     if (prevTemplateTypeRef.current === record?.templateType) return;
     if (!prevTemplateTypeRef.current) {
       prevTemplateTypeRef.current = record?.templateType;
       return;
     }
     prevTemplateTypeRef.current = record?.templateType;
-      setRecord(prev => ({ ...prev, resourceId: undefined, requirePractitioner: record?.templateType === 'PRACTITIONER' ? true : false}));
+    workingDaysTouchedRef.current = false;
+    setRecord(prev => ({
+      ...prev,
+      resourceId: undefined,
+      defaultPractitionerId: undefined,
+      workingDays: normalizeWorkingDays(mainTemplate?.workingDays ?? []),
+      requirePractitioner: record?.templateType === 'PRACTITIONER' ? true : false
+    }));
   }, [record?.templateType]);
 
   const conjureFormContent = () => (

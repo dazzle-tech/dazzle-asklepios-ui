@@ -100,10 +100,8 @@ const FormTemplatesUseScreen = () => {
         sort: params.sort,
         timestamp: Date.now()
       }).unwrap();
-      console.log('fetchEntries resp =', resp);
       setEntriesResp(resp ?? EMPTY_PAGED_RESULT);
     } catch (e) {
-      console.error(e);
       setEntriesResp(EMPTY_PAGED_RESULT);
       dispatch(notify({ msg: 'Failed to load saved forms', sev: 'error' }));
     }
@@ -164,7 +162,6 @@ const FormTemplatesUseScreen = () => {
       setPreviewEntry(entryRow);
       setPreviewOpen(true);
     } catch (e) {
-      console.error(e);
       dispatch(notify({ msg: 'Failed to open preview', sev: 'error' }));
     }
   };
@@ -182,7 +179,6 @@ const FormTemplatesUseScreen = () => {
       setEditEntry(entryRow);
       setEditOpen(true);
     } catch (e) {
-      console.error(e);
       dispatch(notify({ msg: 'Failed to open edit', sev: 'error' }));
     }
   };

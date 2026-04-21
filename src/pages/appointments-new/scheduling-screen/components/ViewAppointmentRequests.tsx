@@ -217,7 +217,7 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
     const [rejectReason, setRejectReason] = useState('');
     const [pendingRejectRow, setPendingRejectRow] = useState<Row | null>(null);
 
-    // ✅ ensure modal never receives null object
+    // ensure modal never receives null object
     const rejectObject = pendingRejectRow ?? ({ rejectReason: '' } as any);
 
     const filteredData = useMemo(() => applyDateStatusAndRejectedGate(data ?? [], filters), [data, filters]);
@@ -333,7 +333,6 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
 
                 return (
                     <>
-                        {/* Approve: only if not rejected & not confirmed & not approved */}
                         <FontAwesomeIcon
                             icon={faCircleCheck}
                             style={{
@@ -348,7 +347,6 @@ const ViewAppointmentRequests = ({ data, onApprove, onReject }: Props) => {
                             title="Approve"
                         />
 
-                        {/* Cancel: only if not cancelled & not confirmed & not approved */}
                         <FontAwesomeIcon
                             icon={faCircleXmark}
                             style={{

@@ -36,59 +36,80 @@ const { getHeight } = DOMHelper;
 /* ========================================================= */
 /* =============== Helper Functions ======================== */
 
-const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
-  const data = err?.data ?? {};
-  const errorKey = data?.errorKey;
-  const title = data?.title || '';
-  const detail = data?.detail || '';
-  const message = data?.message || '';
-  const fieldErrors = data?.fieldErrors;
+  const toHumanBackendError = (err: any, fieldLabels: Record<string, string> = {}): string => {
+    const data = err?.data ?? {};
+    const errorKey = data?.errorKey;
+    const title = data?.title || '';
+    const detail = data?.detail || '';
+    const message = data?.message || '';
+    const rawFieldErrors = data?.fieldErrors;
 
-  const traceId =
-    data?.traceId || data?.correlationId
-      ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
-      : '';
+    const fieldErrors = Array.isArray(rawFieldErrors)
+      ? rawFieldErrors
+      : rawFieldErrors && typeof rawFieldErrors === 'object'
+        ? Object.entries(rawFieldErrors).flatMap(([field, value]) => {
+            if (Array.isArray(value)) {
+              return value.map(v => ({
+                field,
+                message:
+                  typeof v === 'string'
+                    ? v
+                    : v?.message || v?.defaultMessage || 'Invalid value'
+              }));
+            }
 
-  const dobError = fieldErrors.find((e: any) => e.field === 'dateOfBirth');
-  if (dobError) {
-    return dobError.message;
-  }
-  /* =============== 1) Bean Validation Errors =============== */
+            return [
+              {
+                field,
+                message:
+                  typeof value === 'string'
+                    ? value
+                    : value?.message || value?.defaultMessage || 'Invalid value'
+              }
+            ];
+          })
+        : [];
 
-  if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
-    const dobError = fieldErrors.find((e: any) => e.field === 'dateOfBirth');
-    if (dobError) {
-      return 'Date of birth cannot be before 01-01-1900.';
+    const traceId =
+      data?.traceId || data?.correlationId
+        ? `\nTrace ID: ${data?.traceId || data?.correlationId}`
+        : '';
+
+    if (fieldErrors.length > 0) {
+      const normalizedLines = fieldErrors.map((e: any) => {
+        const rawField = e?.field || e?.path || 'Field';
+        const label = fieldLabels[rawField] || rawField;
+        const rawMessage = e?.message || e?.defaultMessage || 'Invalid value';
+
+        let finalMessage = rawMessage;
+
+        if (
+          rawMessage === 'must not be null' ||
+          rawMessage === 'must not be blank' ||
+          rawMessage === 'must not be empty'
+        ) {
+          finalMessage = `${label} ${rawMessage}`;
+        } else if (!rawMessage.toLowerCase().includes(String(label).toLowerCase())) {
+          finalMessage = `${label}: ${rawMessage}`;
+        }
+
+        return `• ${finalMessage}`;
+      });
+
+      return `Please fix the following fields:\n${normalizedLines.join('\n')}${traceId}`;
     }
 
-    const lines = fieldErrors.map((e: any) => {
-      const label = fieldLabels[e.field] || e.field;
-      return `• ${label}: ${e.message}`;
-    });
+    if (errorKey === 'payload.required') return 'Patient payload is required.' + traceId;
+    if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
+    if (errorKey === 'unique.medical_record_number') {
+      return 'A patient with the same medical record number already exists.' + traceId;
+    }
+    if (errorKey === 'db.constraint') {
+      return (detail || 'Database constraint violated while saving or updating patient.') + traceId;
+    }
 
-    return `Please fix the following fields:\n${lines.join('\n')}${traceId}`;
-  }
-
-  /* ========================================================= */
-  /* =============== 2) Specific Custom Errors ============== */
-  /* ========================================================= */
-
-  if (errorKey === 'payload.required') return 'Patient payload is required.' + traceId;
-
-  if (errorKey === 'notfound') return (detail || 'Patient not found.') + traceId;
-
-  if (errorKey === 'unique.medical_record_number')
-    return 'A patient with the same medical record number already exists.' + traceId;
-
-  if (errorKey === 'db.constraint')
-    return detail || 'Database constraint violated while saving or updating patient.' + traceId;
-
-  /* ========================================================= */
-  /* =============== 3) Generic unknown error ================ */
-  /* ========================================================= */
-
-  return detail || title || message || 'Unexpected server error occurred.' + traceId;
-};
+    return detail || title || message || 'Unexpected server error occurred.' + traceId;
+  };
 
 /* ========================================================= */
 /* ── Name-field trailing-character validation ──────────── */
@@ -279,11 +300,18 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
     } catch (err: any) {
       const msg = toHumanBackendError(err, {
         firstName: 'First Name',
+        secondName: 'Second Name',
+        thirdName: 'Third Name',
         lastName: 'Last Name',
+        firstNameSecondaryLang: 'First Name (Secondary Language)',
+        secondNameSecondaryLang: 'Second Name (Secondary Language)',
+        thirdNameSecondaryLang: 'Third Name (Secondary Language)',
+        lastNameSecondaryLang: 'Last Name (Secondary Language)',
         dateOfBirth: 'Date of Birth',
         primaryMobileNumber: 'Primary Mobile Number',
         sexAtBirth: 'Sex At Birth',
-        nationality: 'Nationality'
+        nationality: 'Nationality',
+        medicalRecordNumber: 'Medical Record Number'
       });
 
       dispatch(notify({ msg, sev: 'warning' }));
@@ -405,13 +433,14 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
           />
 
           <div className="container-of-tabs-reg">
-            <ProfileTabs
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-              setRefetchAttachmentList={setRefetchAttachmentList}
-              refetchAttachmentList={refetchAttachmentList}
-            />
+<ProfileTabs
+  key={localPatient?.id || 'new'}
+  localPatient={localPatient}
+  setLocalPatient={setLocalPatient}
+  validationResult={validationResult}
+  setRefetchAttachmentList={setRefetchAttachmentList}
+  refetchAttachmentList={refetchAttachmentList}
+/>
           </div>
 
           <br />

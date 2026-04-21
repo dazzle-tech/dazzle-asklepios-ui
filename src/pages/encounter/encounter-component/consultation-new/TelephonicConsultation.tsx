@@ -235,18 +235,27 @@ const TelephonicConsultation = props => {
       key: 'edit',
       title: '',
       flexGrow: 1,
-      render: (row: TelephonicConsultations) => (
-        <MdModeEdit
-          size={22}
-          fill="var(--primary-gray)"
-          style={{ cursor: 'pointer' }}
-          onClick={() => {
-            setActiveConsultation(row);
-            setConsultationFormData(row);
-            setIsDetailsModalOpen(true);
-          }}
-        />
-      )
+      render: (row: TelephonicConsultations) => {
+        const status = String(row?.status ?? '').toUpperCase();
+        const editDisabled = status === 'CANCELLED';
+
+        return (
+          <MdModeEdit
+            size={22}
+            fill={editDisabled ? '#ccc' : 'var(--primary-gray)'}
+            title={editDisabled ? 'Edit not allowed for cancelled consultation' : 'Edit'}
+            style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
+            className={clsx({ 'not-allowed-cell': editDisabled })}
+            onClick={() => {
+              if (editDisabled) return;
+
+              setActiveConsultation(row);
+              setConsultationFormData(row);
+              setIsDetailsModalOpen(true);
+            }}
+          />
+        );
+      }
     },
     {
       key: 'createdAt',
@@ -309,11 +318,14 @@ const TelephonicConsultation = props => {
           prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
           onClick={() => {
             setActiveConsultation(null);
+
             setConsultationFormData({
               ...newTelephonicConsultation,
               encounterId: currentEncounter?.id,
-              patientId: currentPatient?.id
+              patientId: currentPatient?.id,
+              practitionerId: null
             });
+
             setIsDetailsModalOpen(true);
           }}
         >
@@ -357,8 +369,11 @@ const TelephonicConsultation = props => {
         consultationOrders={consultationFormData}
         open={isDetailsModalOpen}
         setOpen={setIsDetailsModalOpen}
-        editing={false}
-        edit={isEditMode}
+        editing={String(consultationFormData?.status ?? '').toUpperCase() !== 'NEW'}
+        edit={
+          isEditMode ||
+          String(consultationFormData?.status ?? '').toUpperCase() === 'CANCELLED'
+        }
         refetchCon={refetch}
       />
 

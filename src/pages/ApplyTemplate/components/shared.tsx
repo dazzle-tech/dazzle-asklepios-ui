@@ -34,6 +34,7 @@ export type SlotCell = {
 export type GeneratedSlot = {
   date: string;
   time: string;
+  slotType?: string;
   channel: string;
   duration: string;
   capacity: string;

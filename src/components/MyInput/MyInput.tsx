@@ -48,7 +48,7 @@ const focusNextField = (e: any) => {
 
 type MyInputProps = {
   fieldName: string;
-  fieldType?:
+fieldType?:
   | 'text'
   | 'password'
   | 'textarea'

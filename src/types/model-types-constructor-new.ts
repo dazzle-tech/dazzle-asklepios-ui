@@ -243,6 +243,7 @@ export const newPractitioner: modelTypes.Practitioner = {
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
+  workingDays: [],
 };
 
 // ------------------- Language Translation -------------------

@@ -47,7 +47,6 @@ const fetchedServicesMap = useMemo(() => {
     return acc;
   }, {});
 }, [servicesBulkRes.data]);
-console.log("fetchedServicesMap", fetchedServicesMap);
 const columns = [
   {
     key: 'service',

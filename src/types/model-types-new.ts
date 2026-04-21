@@ -487,7 +487,7 @@ export interface AppointmentFromTemplateSearchFilterDTO {
   resourceType?: TemplateType | null;
   resourceId?: number | null;
   status?: AppointmentStatus | null;
-  bookingMode?: BookingMode | null;
+  bookingMode?: BookingMode[] | null;
   patientId?: number | null;
 }
 
@@ -592,6 +592,7 @@ export interface Practitioner {
   defaultDurationMinutes?: number,
   defaultBufferBeforeMinutes: number,
   defaultBufferAfterMinutes: number,
+  workingDays?: OrganizationWorkingDay[];
   createdBy?: string;
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
