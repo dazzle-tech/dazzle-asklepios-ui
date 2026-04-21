@@ -784,24 +784,26 @@ const ScheduleScreen = () => {
             }
 
             await approveAppointmentRequest(approveBody as any).unwrap();
-            dispatch(
-              notify({
-                msg: 'Appointment request approved.',
-                sev: 'success'
-              })
-            );
-            setRequestToApprove(null);
-            await handleSearchAppointmentsByCriteria();
-          } catch (approveErr) {
-            dispatch(
-              notify({
-                msg: formatAppointmentRequestApproveError(approveErr),
-                sev: 'error'
-              })
-            );
-          } finally {
-            dispatch(hideSystemLoader());
-          }
+
+
+          dispatch(
+            notify({
+              msg: 'Appointment request approved.',
+              sev: 'success'
+            })
+          );
+          setRequestToApprove(null);
+          await handleSearchAppointmentsByCriteria();
+        } catch (approveErr) {
+          const ae = approveErr as any;
+         
+          dispatch(
+            notify({
+              msg: formatAppointmentRequestApproveError(approveErr),
+              sev: 'error'
+            })
+          );
+          dispatch(hideSystemLoader());
         }
       }
 
