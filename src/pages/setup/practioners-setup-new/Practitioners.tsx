@@ -440,6 +440,7 @@ if (!backendKey && typeof error === "string") {
         const matched = list.find((x) => x.key === rowData?.subSpecialty);
         const subSpecName = matched?.lovDisplayVale ?? "No Sub Specialty";
 
+        
         return (
           <div style={{ display: "inline-block", position: "relative" }}>
             <Whisper

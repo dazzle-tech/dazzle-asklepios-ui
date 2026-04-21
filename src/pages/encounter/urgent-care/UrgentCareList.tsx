@@ -812,6 +812,7 @@ const startEncounterSafe = async (row: any) => {
     setSearchTick(prev => prev + 1);
   };
 
+  
   const tableColumns = [
     {
       key: 'encounterNumber',

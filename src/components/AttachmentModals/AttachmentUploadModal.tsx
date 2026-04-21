@@ -42,6 +42,7 @@ const AttachmentUploadModal = ({
 
   const isLoading = isLoadingPatient || isLoadingEncounter;
 
+  
   // Fetch attachment types LOV
   const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
 
