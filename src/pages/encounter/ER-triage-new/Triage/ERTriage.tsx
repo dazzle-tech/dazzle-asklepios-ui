@@ -1037,21 +1037,21 @@ const ERTriage = () => {
           </Tooltip>
         );
 
+        const patientName = (
+          <span className="patient-name-text">
+            {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
+          </span>
+        );
+
         return (
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
-            <div style={{ display: 'inline-block' }}>
+            <div className="patient-name-wrapper">
               {rowData?.patientObject?.privatePatient ? (
-                <Badge color="blue" content="Private">
-                  <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                  </p>
+                <Badge className="patient-badge" color="blue" content="Private">
+                  {patientName}
                 </Badge>
               ) : (
-                <>
-                  <p style={{ cursor: 'pointer' }}>
-                    {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                  </p>
-                </>
+                patientName
               )}
             </div>
           </Whisper>

@@ -77,7 +77,6 @@ const EditModal: React.FC<EditModalProps> = ({
             onUpdateSuccess();
             handleClose();
         } catch (error: any) {
-            console.error('Update error:', error);
             dispatch(notify({ 
                 msg: error?.data?.message || 'Failed to Update Attachment', 
                 sev: 'error' 

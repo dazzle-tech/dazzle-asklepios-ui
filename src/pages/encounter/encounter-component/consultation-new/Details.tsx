@@ -247,7 +247,6 @@ const Details = ({
   const hasPractitioners = practitionersResult?.data?.data?.totalElements
     ? practitionersResult.data.data.totalElements > allPractitioners.length
     : false;
-  console.log('practitionersResult====>', practitionersResult);
   useEffect(() => {
     if (!open) return;
 
@@ -761,7 +760,7 @@ const Details = ({
                     />
                     <MyInput
                       width={'12vw'}
-                      fieldType="number"
+                      fieldType="textnumber"
                       fieldLabel="Approval Number"
                       fieldName="approvalNumber"
                       record={formData}

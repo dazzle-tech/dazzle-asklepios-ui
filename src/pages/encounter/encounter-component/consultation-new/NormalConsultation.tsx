@@ -107,7 +107,6 @@ const NormalConsultation = props => {
     encounterId: encounter?.id
   });
 
-  console.log(consultation);
   const [modalKey, setModalKey] = useState(0);
 
   const [dateFilter, setDateFilter] = useState<{

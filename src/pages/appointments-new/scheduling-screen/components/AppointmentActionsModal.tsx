@@ -269,7 +269,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         if (!isActionsModalOpen) return;
         // Debug: inspect appointment payload when opening actions modal
         // eslint-disable-next-line no-console
-        console.log('AppointmentActionsModal opened with appointment:', appointment);
     }, [isActionsModalOpen, appointment]);
 
     // Set encounter when fetched for confirmed appointment

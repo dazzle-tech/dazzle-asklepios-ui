@@ -54,6 +54,7 @@ const AddVerification = ({ localPatient, setLocalPatient, validationResult, open
           vr={validationResult}
           fieldLabel="Primary Mobile Number"
           fieldName="phoneNumber"
+          fieldType='textnumber'
           record={localPatient}
           setRecord={setLocalPatient}
           disabled={true}

@@ -201,6 +201,7 @@ const Practitioners = () => {
         defaultDurationMinutes: practitioner?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
+        workingDays: practitioner.workingDays ?? [],
       };
 
       const Response = await createPractitioner(payload).unwrap();
@@ -251,10 +252,11 @@ const Practitioners = () => {
         jobRole: practitioner.jobRole || null,
         gender: practitioner.gender || null,
         isActive: practitioner.isActive,
-         parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
+        parallelCapacityValue: practitioner.parallelCapacityValue ?? 1,
         defaultDurationMinutes: practitioner?.defaultDurationMinutes,
         defaultBufferBeforeMinutes: practitioner.defaultBufferBeforeMinutes ?? 0,
         defaultBufferAfterMinutes: practitioner.defaultBufferAfterMinutes ?? 0,
+        workingDays: practitioner.workingDays ?? [],
       };
 
       await updatePractitioner(payload).unwrap();

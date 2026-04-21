@@ -50,7 +50,6 @@ const SignIn = () => {
   const [getAccount] = useLazyGetAccountQuery();
   const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
   const result = useGetActiveFacilitiesQuery({});
-
   const {
     data: langData,
     isFetching: langsLoading,
@@ -133,7 +132,6 @@ const SignIn = () => {
 
   const storedUser = JSON.parse(localStorage.getItem('user'));
 
-  console.log(storedUser);
 
   // Submit on Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {

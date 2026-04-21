@@ -135,13 +135,7 @@ const AttachmentUploadModal = ({
       setIsOpen(false);
       refetchData();
     } catch (error: any) {
-      console.error('Upload error details:', {
-        error,
-        errorData: error?.data,
-        errorMessage: error?.data?.message,
-        errorStatus: error?.status,
-        fullError: JSON.stringify(error, null, 2)
-      });
+    
       dispatch(notify({ 
         msg: error?.data?.message || error?.message || 'Failed to Upload Attachment', 
         sev: 'error' 
