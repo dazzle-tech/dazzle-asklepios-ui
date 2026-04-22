@@ -788,6 +788,7 @@ export interface DiagnosticOrderTestCollectedSampleBulkSameDTO {
   unit: string;
   quantity: number | string;
   collectedAt: Date | string;
+  expiryDate: Date | string;
   sourceOfSample: string;
 }
 
