@@ -56,13 +56,8 @@ const AddResourceModal = ({
   const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
   const prevTemplateTypeRef = useRef<any>(record?.templateType);
 
-  // ✅ ref لتتبع إذا الـ modal فتح للتو (لأول مرة بالـ edit)
   const justOpenedRef = useRef(false);
 
-  console.log("editRecord: ", editRecord);
-
-  const [triggerPractitionersFacility, { isFetching: isPractitionerFacilityLoading }] =
-    useLazyGetAppointablePractitionerByLoggedInFacilityQuery();
 
   // ─── Diagnostic Tests Pagination State ────────────────────────────────────
   const diagnosticTestSize = 20;
@@ -614,6 +609,8 @@ const AddResourceModal = ({
       setRecord(prev => ({
         ...prev,
         durationMinutes: 0,
+        defaultBufferBeforeMinutes: 0,
+        defaultBufferAfterMinutes: 0,
         parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
         defaultPractitionerId: undefined
       }));
@@ -636,13 +633,9 @@ const AddResourceModal = ({
             ? practitionerDays
             : (mainTemplate?.workingDays ?? []);
 
-          // ✅ الحل:
-          // - أول مرة بتفتح الـ modal بالـ edit (justOpenedRef = true) → حط أيام الـ record المحفوظ
-          // - لما تغير الـ practitioner وأنت بالـ edit              → حط أيام الـ practitioner الجديد
-          // - بالـ add دايماً                                        → حط أيام الـ practitioner
           if (isEditingRecord && justOpenedRef.current) {
             applyWorkingDays(editRecordWorkingDays);
-            justOpenedRef.current = false; // ← خلّص العلامة بعد أول مرة
+            justOpenedRef.current = false; 
           } else {
             applyWorkingDays(finalWorkingDays);
           }
@@ -650,6 +643,8 @@ const AddResourceModal = ({
           setRecord(prev => ({
             ...prev,
             durationMinutes: res?.defaultDurationMinutes,
+            defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+            defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
             parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
             defaultPractitionerId: res?.id
           }));
@@ -668,7 +663,9 @@ const AddResourceModal = ({
         .then(res => {
           setRecord(prev => ({
             ...prev,
-            durationMinutes: res.defaultDurationMinutes,
+            durationMinutes: res?.defaultDurationMinutes,
+            defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+            defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
             parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
           }));
 
@@ -686,7 +683,9 @@ const AddResourceModal = ({
         .then(res => {
           setRecord(prev => ({
             ...prev,
-            durationMinutes: res.defaultDurationMinutes,
+            durationMinutes: res?.defaultDurationMinutes,
+            defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+            defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
             parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
           }));
 
@@ -697,7 +696,44 @@ const AddResourceModal = ({
           justOpenedRef.current = false;
         });
     }
+    else if (record?.templateType === 'DIAGNOSTIC_TEST') {
+      getDiagnosticTest(String(record.resourceId))
+        .unwrap()
+        .then(res => {
+          setRecord(prev => ({
+            ...prev,
+            durationMinutes: res?.data?.defaultDurationMinutes,
+            defaultBufferBeforeMinutes: res?.data?.defaultBufferBeforeMinutes,
+            defaultBufferAfterMinutes: res?.data?.defaultBufferAfterMinutes,
+            parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
+          }));
 
+          if (!isEditingRecord) {
+            applyWorkingDays(mainTemplate?.workingDays ?? []);
+          }
+
+          justOpenedRef.current = false;
+        });
+    }
+    else if (record?.templateType === 'CATALOG') {
+      getCatalog(record.resourceId)
+        .unwrap()
+        .then(res => {
+          setRecord(prev => ({
+            ...prev,
+            durationMinutes: res?.defaultDurationMinutes,
+            defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+            defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+          }));
+
+          if (!isEditingRecord) {
+            applyWorkingDays(mainTemplate?.workingDays ?? []);
+          }
+
+          justOpenedRef.current = false;
+        });
+    }
   }, [
     record?.resourceId,
     record?.templateType,
@@ -963,6 +999,28 @@ const AddResourceModal = ({
                       />
                     </Col>
                   </Row>
+                  <Row>
+                    <Col md={12}>
+                      <MyInput
+                        fieldName="defaultBufferBeforeMinutes"
+                        fieldLabel='Slot Befor'
+                        fieldType="number"
+                        record={record}
+                        setRecord={setRecord}
+                        width="100%"
+                      />
+                    </Col>
+                    <Col md={12}>
+                      <MyInput
+                        fieldLabel='Slot After'
+                        fieldName="defaultBufferAfterMinutes"
+                        fieldType="number"
+                        record={record}
+                        setRecord={setRecord}
+                        width="100%"
+                      />
+                    </Col>
+                  </Row>
                 </Form>
               </>
             }
@@ -1189,6 +1247,8 @@ const AddResourceModal = ({
       ...record,
       numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
       durationMinutes: Number(record?.durationMinutes),
+      defaultBufferBeforeMinutes: Number(record?.defaultBufferBeforeMinutes),
+      defaultBufferAfterMinutes: Number(record?.defaultBufferAfterMinutes),
       parallelCapacityValue: Number(record?.parallelCapacityValue ?? 1),
       allowedServices: Array.isArray(record?.allowedServices)
         ? record.allowedServices
