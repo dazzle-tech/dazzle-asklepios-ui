@@ -66,14 +66,14 @@ const ChooseDashboardSections = ({
                 setRecord={setSelectedAll}
                 showLabel={false}
               />
-              <MyInput
+              {/* <MyInput
                 fieldType="check"
                 fieldName="c1"
                 fieldLabel={<Translate>Body Diagram</Translate>}
                 record={displays}
                 setRecord={setDisplays}
                 showLabel={false}
-              />
+              /> */}
               <MyInput
                 fieldType="check"
                 fieldName="c2"

@@ -152,7 +152,7 @@ const DocumentInfo = ({
             vr={validationResult}
             column
             fieldLabel="Document Number"
-            fieldName="number"
+            fieldName="textnumber"
             record={doc}
             setRecord={setDoc}
             disabled={doc.type === 'NO_DOC'}

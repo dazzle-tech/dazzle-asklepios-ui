@@ -1362,16 +1362,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 />
               </>
             )}
-
-            <MyInput
-              width={200}
-              column
-              fieldType="checkbox"
-              fieldName="isPrivatePatient"
-              fieldLabel="Private Patient"
-              record={localPatient}
-              setRecord={setLocalPatient}
-            />
           </Form>
         );
 
@@ -1439,7 +1429,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 required
                 column
                 width={300}
-                fieldType="number"
+                fieldType="textnumber"
                 fieldLabel="Document Number"
                 fieldName="number"
                 record={secondaryDocument}
@@ -1814,7 +1804,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               column
               width={200}
               required
-              fieldType="number"
+              fieldType="textnumber"
               fieldLabel="Policy Number"
               fieldName="policyNumber"
               record={patientInsurance}
@@ -1824,7 +1814,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               column
               width={200}
-              fieldType="number"
+              fieldType="textnumber"
               fieldLabel="Group Number"
               fieldName="groupNumber"
               record={patientInsurance}

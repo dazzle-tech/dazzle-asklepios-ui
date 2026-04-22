@@ -100,6 +100,13 @@ const BookPatient = ({
       return;
     }
 
+    const rawPatientOnAppointment =
+      appointmentData?.patientId ??
+      (typeof appointmentData?.patient === 'object'
+        ? appointmentData?.patient?.id ?? appointmentData?.patient?.key
+        : appointmentData?.patient);
+    const hasPatientOnAppointment = rawPatientOnAppointment != null && String(rawPatientOnAppointment) !== '';
+
     const appointmentDefaultPractitioner = appointmentData?.defaultPractitionerId || null;
     const appointmentDefaultService = appointmentData?.defaultServiceId || null;
     const appointmentReason = appointmentData?.reason || null;
@@ -111,6 +118,8 @@ const BookPatient = ({
 
     setRecord(prev => ({
       ...prev,
+      // Opening a free slot must start with no patient selected.
+      patientId: hasPatientOnAppointment ? prev.patientId : null,
       defaultPractitioner: appointmentDefaultPractitioner ?? prev.defaultPractitioner ?? null,
       defaultService: appointmentDefaultService ?? prev.defaultService ?? null,
       reason: appointmentReason ?? prev.reason ?? '',
@@ -126,6 +135,13 @@ const BookPatient = ({
             null
           : null
     }));
+
+    if (!hasPatientOnAppointment) {
+      setSelectedPatient(null);
+      setPatientAction('select');
+      setQuickPatientModalOpen(false);
+      setPatientSidebarOpen(false);
+    }
   }, [open, appointmentData, readOnly]);
 
   const viewPatientId = useMemo(() => {

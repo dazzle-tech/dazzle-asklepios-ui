@@ -2974,3 +2974,18 @@ export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder 
   cancelledBy: null,
   cancellationReason: null,
 };
+
+
+export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,
+  toothNumber: undefined,
+  surface: '',
+  anesthesiaUsed: null,
+  dose: null,
+  unit: null,
+  fillingMaterial: null,
+  serviceId: undefined,
+  cdtCodeId: null,
+  notes: null,
+};

@@ -46,7 +46,6 @@ import { encounterAttachmentsService } from './services/encounters/attachmentsSe
 import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
 import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
 
-import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
 
 import { labService } from './services/labService';
@@ -79,7 +78,6 @@ import { PractitionerService } from './services/setup/practitioner/PractitionerS
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
 
 import { Icd10Service } from './services/setup/icd10service';
-import { ResourceService } from './services/setup/resource/ResourceService';
 
 import { ageGroupService } from './services/setup/ageGroupService';
 import { potintialService } from '@/services/potintialDuplicateService';
@@ -219,7 +217,9 @@ import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 import { currentMedicationService } from './services/patients/currentMedicationService';
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
+import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -276,9 +276,7 @@ export const store = configureStore({
     // account / billing base
     [accountApi.reducerPath]: accountApi.reducer,
 
-    // appointment
-    [appointmentService.reducerPath]: appointmentService.reducer,
-
+  
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
@@ -356,7 +354,6 @@ export const store = configureStore({
     // age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
-    [ResourceService.reducerPath]: ResourceService.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
 
     // diagnostic tests
@@ -460,7 +457,8 @@ export const store = configureStore({
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
     [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
     [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
-    [availabilityTemplateIntervalBreakService.reducerPath]: availabilityTemplateIntervalBreakService.reducer,
+    [availabilityTemplateIntervalBreakService.reducerPath]:
+      availabilityTemplateIntervalBreakService.reducer,
     [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
@@ -535,8 +533,8 @@ export const store = configureStore({
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
     [currentMedicationService.reducerPath]: currentMedicationService.reducer,
     [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
-    [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
-
+    [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
+    [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -581,8 +579,8 @@ export const store = configureStore({
         activeIngredientFoodInteractionService.middleware,
         activeIngredientsService.middleware,
 
-        // appointment / clinical
-        appointmentService.middleware,
+        //  clinical
+  
         dvmService.middleware,
         encounterService.middleware,
         dentalService.middleware,
@@ -634,7 +632,6 @@ export const store = configureStore({
         PractitionerDepartmentService.middleware,
 
         // misc setup
-        ResourceService.middleware,
         ageGroupService.middleware,
         Icd10Service.middleware,
         allergensService.middleware,
@@ -714,7 +711,6 @@ export const store = configureStore({
         // payer
         PayorService.middleware,
         PayorPlanService.middleware,
-
 
         PatientRelationService.middleware,
         patientInsurancesService.middleware,
@@ -846,7 +842,8 @@ export const store = configureStore({
         encounterAssignToBedService.middleware,
         currentMedicationService.middleware,
         uccMedicationOrderService.middleware,
-        laboratoryReportsService.middleware,
+        dentalProcedureService.middleware,
+        laboratoryReportsService.middleware
       ]
     ) as any
 });

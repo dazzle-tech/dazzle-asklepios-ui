@@ -788,6 +788,7 @@ export interface DiagnosticOrderTestCollectedSampleBulkSameDTO {
   unit: string;
   quantity: number | string;
   collectedAt: Date | string;
+  expiryDate: Date | string;
   sourceOfSample: string;
 }
 
@@ -4442,4 +4443,59 @@ export interface PatientUccMedicationOrder {
   createdDate?: string | Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: string | Date | null;
+}
+
+// ------------------- Dental Procedures -------------------
+
+export type ToothNumber =
+  | 'Tooth1' | 'Tooth2' | 'Tooth3' | 'Tooth4' | 'Tooth5' | 'Tooth6' | 'Tooth7' | 'Tooth8'
+  | 'Tooth9' | 'Tooth10' | 'Tooth11' | 'Tooth12' | 'Tooth13' | 'Tooth14' | 'Tooth15' | 'Tooth16'
+  | 'Tooth17' | 'Tooth18' | 'Tooth19' | 'Tooth20' | 'Tooth21' | 'Tooth22' | 'Tooth23' | 'Tooth24'
+  | 'Tooth25' | 'Tooth26' | 'Tooth27' | 'Tooth28' | 'Tooth29' | 'Tooth30' | 'Tooth31' | 'Tooth32';
+
+export interface DentalProcedureResponseVM {
+  id?: number;
+  patientId?: number;
+  encounterId?: number;
+  toothNumber?: ToothNumber;
+  surface?: string;
+  anesthesiaUsed?: string | null;
+  dose?: number | null;
+  unit?: string | null;
+  fillingMaterial?: string | null;
+  serviceId?: number;
+  cdtCodeId?: number | null;
+  notes?: string | null;
+  cancelled?: boolean;
+  createdBy?: string | null;
+  createdDate?: string | null;
+  lastModifiedBy?: string | null;
+  lastModifiedDate?: string | null;
+}
+
+export interface DentalProcedureCreateDTO {
+  patientId: number;
+  encounterId: number;
+  toothNumber: ToothNumber;
+  surface: string;
+  anesthesiaUsed?: string | null;
+  dose?: number | null;
+  unit?: string | null;
+  fillingMaterial?: string | null;
+  serviceId: number;
+  cdtCodeId?: number | null;
+  notes?: string | null;
+}
+
+export interface DentalProcedureUpdateDTO {
+  id: number;
+  toothNumber: ToothNumber;
+  surface: string;
+  anesthesiaUsed?: string | null;
+  dose?: number | null;
+  unit?: string | null;
+  fillingMaterial?: string | null;
+  serviceId: number;
+  cdtCodeId?: number | null;
+  notes?: string | null;
 }

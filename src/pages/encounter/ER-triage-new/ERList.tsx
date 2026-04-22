@@ -730,7 +730,6 @@ const ERList = () => {
       }
     });
 
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
   const handleCancelEncounter = async () => {

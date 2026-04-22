@@ -19,7 +19,6 @@ import Translate from './components/Translate';
 import { useAppDispatch, useAppSelector } from './hooks';
 import NetworkErrorImg from './images/network-error.png';
 import locales from './locales';
-import Resources from './pages/appointment/resources';
 import Error403Page from './pages/authentication/403';
 import Error404Page from './pages/authentication/404';
 import Error500Page from './pages/authentication/500';
@@ -30,6 +29,7 @@ import Dashboard from './pages/dashboard';
 import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
 import DayCaseList from './pages/encounter/day-case/DayCaseList/DayCaseList';
 import Dental from './pages/encounter/dental-screen';
+import DentalProcedures from './pages/encounter/dental-procedures/DentalProcedures';
 import ReferralRequest from './pages/encounter/encounter-component/add-referral-request';
 import AudiometryPuretone from './pages/encounter/encounter-component/audiometry-puretone';
 import BedsideProceduresRequests from './pages/encounter/encounter-component/bedside-procedures-requests';
@@ -623,6 +623,7 @@ const App = () => {
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
+                <Route path="dental-procedures" element={<DentalProcedures />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
@@ -709,6 +710,7 @@ const App = () => {
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
+                <Route path="dental-procedures" element={<DentalProcedures />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
@@ -778,7 +780,6 @@ const App = () => {
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
               <Route path="departments" element={<NewDepartments />} />
-              <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="policy-definition" element={<PolicyDefinitions />} />

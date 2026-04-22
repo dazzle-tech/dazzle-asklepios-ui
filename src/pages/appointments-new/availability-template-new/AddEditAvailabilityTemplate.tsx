@@ -35,7 +35,7 @@ type AddEditAvailabilityTemplateProps = {
   setTemplate: (t: AvailabilityTemplateResponseVM) => void;
 };
 
-const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template, setTemplate}) => {
+const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = ({ open, setOpen, template, setTemplate }) => {
   const dispatch = useAppDispatch();
   const tenant = JSON.parse(localStorage.getItem('tenant') || 'null');
   const selectedFacility = tenant?.selectedFacility || null;
@@ -161,7 +161,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
         setAllDepartments(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllDepartments([]);
     }
   };
@@ -193,7 +192,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       }
 
     } catch (e) {
-      console.error(e);
       setAllServices([]);
     }
   };
@@ -225,7 +223,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       }
 
     } catch (e) {
-      console.error(e);
       setAllPractitioners([]);
     }
   };
@@ -344,6 +341,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       setRecord(prev => ({
         ...prev,
         durationMinutes: 0,
+        defaultBufferBeforeMinutes: 0,
+        defaultBufferAfterMinutes: 0,
         parallelCapacityValue: 1
       }));
       return;
@@ -354,7 +353,9 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       .then(res => {
         setRecord(prev => ({
           ...prev,
-          durationMinutes: res.defaultDurationMinutes,
+          durationMinutes: res?.defaultDurationMinutes,
+          defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+          defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
           parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
         }));
       });
@@ -516,6 +517,8 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       resourceId: record?.departmentId,
       numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
       durationMinutes: Number(record?.durationMinutes),
+      defaultBufferBeforeMinutes: Number(record?.defaultBufferBeforeMinutes),
+      defaultBufferAfterMinutes: Number(record?.defaultBufferAfterMinutes),
       parallelCapacityValue: Number(record?.parallelCapacityValue ?? 1),
       allowedServices: Array.isArray(record?.allowedServices) ? record.allowedServices : [],
     };
@@ -523,12 +526,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     try {
       if (template?.id) {
         const updated = await update({ id: template.id, ...payload }).unwrap();
-        // setRecord(updated);
         setTemplate(updated)
         dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       } else {
         const created = await create(payload).unwrap();
-        // setRecord(created);
         setTemplate(created)
         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       }
@@ -697,6 +698,28 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
                             setRecord={setRecord}
                             width="100%"
                             min={1}
+                          />
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <MyInput
+                            fieldName="defaultBufferBeforeMinutes"
+                            fieldLabel='Slot Befor'
+                            fieldType="number"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
+                          />
+                        </Col>
+                         <Col md={12}>
+                          <MyInput
+                            fieldLabel='Slot After'
+                            fieldName="defaultBufferAfterMinutes"
+                            fieldType="number"
+                            record={record}
+                            setRecord={setRecord}
+                            width="100%"
                           />
                         </Col>
                       </Row>

@@ -159,15 +159,13 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
   } = props;
 
   // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-        <div dir={dir}>
-
+    <div dir={dir}>
       <DetailsModal
         order={orders}
         test={test}
@@ -178,9 +176,8 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         handleSaveTest={handleSaveTest}
         edit={edit}
         patient={encounter?.patient}
-
+        facilityId={encounter?.facilityId}
       />
-
 
       <CancellationModal
         open={openConfirmDeleteModel}
@@ -205,7 +202,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
             source="DIAGNOSTIC_ORDER_ATTACHMENT"
             sourceId={test?.id ? Number(test.id) : undefined}
             refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
+            setRefetchAttachmentList={() => {}}
           />
         }
       />
@@ -217,20 +214,20 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         actionButtonFunction={handleSaveTests}
         size="50vw"
         content={
-        <div dir={dir}>
-          <TransferList
-            open={openTestsModal}
-            leftItems={leftItems}
-            rightItems={rightItems}
-            setLeftItems={setLeftItems}
-            setRightItems={setRightItems}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            searchType={searchType}
-            setSearchType={setSearchType}
-            isFetching={isFetching}
-          />
-        </div>
+          <div dir={dir}>
+            <TransferList
+              open={openTestsModal}
+              leftItems={leftItems}
+              rightItems={rightItems}
+              setLeftItems={setLeftItems}
+              setRightItems={setRightItems}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              searchType={searchType}
+              setSearchType={setSearchType}
+              isFetching={isFetching}
+            />
+          </div>
         }
       />
 
@@ -251,7 +248,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         setOpen={setOpenRequestTestModal}
         fromDepartmentId={resolveFromDepartmentId()}
         fromFacilityId={selectedDepartment?.facilityId}
-        onSuccess={() => { }}
+        onSuccess={() => {}}
       />
 
       <MyModal
@@ -262,10 +259,10 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         position="center"
         steps={[{ title: '', icon: <FontAwesomeIcon icon={faCreditCard} /> }]}
         content={
-            <div dir={dir}>
-              <TestCardModal orderTest={orderTest} test={test} />
-            </div>
-          }
+          <div dir={dir}>
+            <TestCardModal orderTest={orderTest} test={test} />
+          </div>
+        }
       />
 
       <BulkAssignDepartmentModal
@@ -277,6 +274,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
           orderTestRefetch();
           setSelectedRows([]);
         }}
+        facilityId={encounter?.facilityId}
       />
 
       <RecallFavoriteDiagnosticOrdersModal
