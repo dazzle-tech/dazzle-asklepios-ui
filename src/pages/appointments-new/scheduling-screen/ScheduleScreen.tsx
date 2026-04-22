@@ -22,7 +22,6 @@ import { useGetAppointableCatalogsByLoggedInFacilityQuery } from '@/services/set
 import { useGetAllActiveAppointableDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 import { useGetAppointableServicesByLoggedInFacilityQuery } from '@/services/setup/serviceService';
 import { useLazyGetAppointmentsByStatusBetweenDatesQuery } from '@/services/appointment/appointmentService';
-import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
 import MyInput from '@/components/MyInput';
 import { useFetchAttachmentsListQuery } from '@/services/attachmentService';
 import { useSelector } from 'react-redux';
@@ -270,35 +269,58 @@ const ScheduleScreen = () => {
     }
   }, [activeFacilitiesResponse, selectedFacility]);
 
-  // Used for mapping resourceKey -> resource name (per requirement: use ResourceService)
-  const { data: allResourcesResponse } = useGetAllResourcesQuery({
-    page: 0,
-    size: 5000,
-    sort: 'id,asc'
-  });
+  const resourcesWithAvailabilityResponse = useMemo(() => {
+    const selectedType = String(selectedResourceTypeValue?.value ?? '').toUpperCase();
+    let rows: any[] = [];
+
+    if (selectedType === 'DEPARTMENT') {
+      rows = (appointableDepartmentsResponse as any)?.data ?? [];
+    } else if (selectedType === 'PRACTITIONER') {
+      rows = (appointablePractitionersResponse as any)?.data ?? [];
+    } else if (selectedType === 'CATALOG') {
+      rows = (appointableCatalogsResponse as any)?.data ?? [];
+    } else if (selectedType === 'DIAGNOSTIC_TEST') {
+      rows = (appointableDiagnosticTestsResponse as any)?.data ?? [];
+    } else if (selectedType === 'SERVICE') {
+      rows = (appointableServicesResponse as any)?.data ?? [];
+    }
+
+    const object = rows.map((r: any) => {
+      const key = r?.id ?? r?.key ?? '';
+      const resourceName =
+        r?.resourceName ??
+        r?.name ??
+        r?.resource_name ??
+        r?.departmentName ??
+        r?.fullName ??
+        r?.catalogName ??
+        r?.testName ??
+        r?.serviceName ??
+        '';
+      return {
+        key: String(key),
+        resourceName: String(resourceName || '')
+      };
+    });
+
+    return { object };
+  }, [
+    selectedResourceTypeValue?.value,
+    appointableDepartmentsResponse,
+    appointablePractitionersResponse,
+    appointableCatalogsResponse,
+    appointableDiagnosticTestsResponse,
+    appointableServicesResponse
+  ]);
   const resourceNameById = useMemo(() => {
-    const list =
-      (allResourcesResponse as any)?.data ??
-      (allResourcesResponse as any)?.object ??
-      allResourcesResponse ??
-      [];
-    const arr = Array.isArray(list) ? list : [];
     const m = new Map<string, string>();
-    arr.forEach((r: any) => {
+    (resourcesWithAvailabilityResponse?.object ?? []).forEach((r: any) => {
       const id = r?.id ?? r?.key;
       const name = r?.resourceName ?? r?.name ?? r?.resource_name ?? '';
       if (id !== null && typeof id !== 'undefined') m.set(String(id), String(name || ''));
     });
     return m;
-  }, [allResourcesResponse]);
-  const resourcesWithAvailabilityResponse = useMemo(() => {
-    const object =
-      (allResourcesResponse as any)?.object ??
-      (allResourcesResponse as any)?.data ??
-      allResourcesResponse ??
-      [];
-    return { object: Array.isArray(object) ? object : [] };
-  }, [allResourcesResponse]);
+  }, [resourcesWithAvailabilityResponse]);
 
   const extractTimeFromTimestamp = timestamp => {
     const date = new Date(timestamp);
@@ -410,7 +432,6 @@ const ScheduleScreen = () => {
         const resourceNameForTitle =
           resourceNameFromService ||
           resource?.resourceName ||
-          resource?.name ||
           '';
         const slotTitle = [patientFullName, patientMrn ? `MRN: ${patientMrn}` : '', resourceNameForTitle]
           .filter(Boolean)
@@ -1096,7 +1117,7 @@ const ScheduleScreen = () => {
   const availabilityResourceKeys = useMemo(() => {
     return new Set(
       (finalResourceLit ?? [])
-        .filter(r => r.availability?.some(a => a.dayOfWeek === dayIndex))
+        .filter((r: any) => r?.availability?.some((a: any) => a?.dayOfWeek === dayIndex))
         .map(r => r.key)
     );
   }, [finalResourceLit, dayIndex]);
@@ -1480,59 +1501,7 @@ const ScheduleScreen = () => {
         event?.end instanceof Date && !Number.isNaN(event.end.getTime())
           ? event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : '--:--';
-      const resourceTypeKey = normalizeResourceTypeKey(
-        appointment?.resourceTypeLkey ??
-        appointment?.resourceType ??
-        appointment?.resource_type ??
-        appointment?.templateType ??
-        appointment?.template_type
-      );
-      const idsToTry = [
-        appointment?.resourceKey,
-        appointment?.resource_key,
-        appointment?.resourceId,
-        appointment?.resource_id,
-        appointment?.requestedResourceId,
-        appointment?.requested_resource_id,
-        appointment?.departmentId,
-        appointment?.department_id,
-        appointment?.practitionerId,
-        appointment?.practitioner_id,
-        appointment?.practitionerKey,
-        appointment?.practitioner_key,
-        appointment?.catalogId,
-        appointment?.catalog_id,
-        appointment?.diagnosticTestId,
-        appointment?.diagnostic_test_id,
-        appointment?.serviceId,
-        appointment?.service_id,
-        appointment?.resource?.key,
-        event?.filterResourceId
-      ]
-        .filter((v: any) => v !== null && typeof v !== 'undefined')
-        .map((v: any) => String(v));
-
-      const byTypeMap =
-        (resourceNameByTypeAndId as any)[resourceTypeKey] ??
-        (resourceTypeKey === 'DIAGNOSTIC TEST'
-          ? (resourceNameByTypeAndId as any).DIAGNOSTIC_TEST
-          : undefined);
-      const resourceNameFromTypeMap =
-        byTypeMap instanceof Map ? idsToTry.map((id: string) => byTypeMap.get(id)).find(Boolean) : '';
-      const resourceNameFromServiceMap = idsToTry.map((id: string) => resourceNameById.get(id)).find(Boolean);
-      const resourceNameFromAvailability =
-        (resourcesWithAvailabilityResponse?.object ?? [])
-          .find((r: any) => idsToTry.includes(String(r?.key)))
-          ?.resourceName ?? '';
-
-      const resourceText =
-        resourceNameFromTypeMap ||
-        resourceNameFromServiceMap ||
-        resourceNameFromAvailability ||
-        appointment?.resourceName ||
-        appointment?.resource_name ||
-        event?.resource?.resourceName ||
-        'Unknown Resource';
+      const resourceText = getTooltipResourceDisplay(event) || 'Unknown Resource';
       return (
         <div className="available-slot-card" title={getTooltipContent(event)}>
           <div className="available-slot-title">{startLabel} - {endLabel}</div>
@@ -1649,14 +1618,17 @@ const ScheduleScreen = () => {
       color: '#d5dbe5'
     };
 
-    const currentResource = resourcesWithAvailabilityResponse?.object.find(r => r.key === resourceId);
+    const currentResource = (resourcesWithAvailabilityResponse?.object ?? []).find(
+      (r: any) => r?.key === resourceId
+    ) as any;
 
-    if (currentResource && currentResource.availability) {
+    const currentResourceAvailability = (currentResource as any)?.['availability'] as any[] | undefined;
+    if (currentResource && currentResourceAvailability) {
       const jsDay = date.getDay();
       const apiDay = jsDay;
       const currentMinutes = date.getHours() * 60 + date.getMinutes();
       const isAvailable =
-        currentResource?.availability?.some(period => {
+        currentResourceAvailability.some((period: any) => {
           const startMinutes = period.startHour * 60 + (period.startMinute || 0);
           const endMinutes = period.endHour * 60 + (period.endMinute || 0);
           const match =
