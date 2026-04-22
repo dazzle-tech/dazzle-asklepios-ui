@@ -115,6 +115,7 @@ const ProgressNoteLogsModal: React.FC<Props> = ({ open, setOpen, progressNoteId 
       title="Progress Note History"
       size="35vw"
       position="center"
+      hideActionBtn={true}
       content={
         <div dir={dir}>
           <MyTable
@@ -123,7 +124,7 @@ const ProgressNoteLogsModal: React.FC<Props> = ({ open, setOpen, progressNoteId 
             height={400}
             loading={isLoading}
             rowClassName={(row: ProgressNoteLogVM) => (row.action === 'UPDATE' ? 'edited-row' : '')}
-          />{' '}
+          />
         </div>
       }
     />

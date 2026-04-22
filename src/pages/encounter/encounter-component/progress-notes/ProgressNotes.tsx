@@ -168,10 +168,16 @@ const ProgressNotes: React.FC = () => {
               <MdModeEdit
                 size={22}
                 onClick={() => {
+                  if (row.cancelledDate) return;
+
                   setSelectedNote(row);
                   setOpenAddModal(true);
                 }}
-                style={{ cursor: 'pointer', color: 'gray' }}
+                style={{
+                  cursor: row.cancelledDate ? 'not-allowed' : 'pointer',
+                  color: row.cancelledDate ? '#ccc' : 'gray',
+                  opacity: row.cancelledDate ? 0.5 : 1
+                }}
               />
 
               <MdHistory

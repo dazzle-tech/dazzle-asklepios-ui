@@ -219,7 +219,9 @@ import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 import { currentMedicationService } from './services/patients/currentMedicationService';
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
+import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -460,7 +462,8 @@ export const store = configureStore({
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
     [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
     [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
-    [availabilityTemplateIntervalBreakService.reducerPath]: availabilityTemplateIntervalBreakService.reducer,
+    [availabilityTemplateIntervalBreakService.reducerPath]:
+      availabilityTemplateIntervalBreakService.reducer,
     [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
@@ -535,8 +538,8 @@ export const store = configureStore({
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
     [currentMedicationService.reducerPath]: currentMedicationService.reducer,
     [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
-    [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
-
+    [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
+    [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -715,7 +718,6 @@ export const store = configureStore({
         PayorService.middleware,
         PayorPlanService.middleware,
 
-
         PatientRelationService.middleware,
         patientInsurancesService.middleware,
         patientInsuranceCoveragesService.middleware,
@@ -846,7 +848,8 @@ export const store = configureStore({
         encounterAssignToBedService.middleware,
         currentMedicationService.middleware,
         uccMedicationOrderService.middleware,
-        laboratoryReportsService.middleware,
+        dentalProcedureService.middleware,
+        laboratoryReportsService.middleware
       ]
     ) as any
 });
