@@ -632,6 +632,7 @@ const AddResourceModal = ({
           const finalWorkingDays = hasWorkingDays
             ? practitionerDays
             : (mainTemplate?.workingDays ?? []);
+          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
 
           if (isEditingRecord && justOpenedRef.current) {
             applyWorkingDays(editRecordWorkingDays);
@@ -640,14 +641,16 @@ const AddResourceModal = ({
             applyWorkingDays(finalWorkingDays);
           }
 
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res?.defaultDurationMinutes,
-            defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
-            defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
-            defaultPractitionerId: res?.id
-          }));
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
+              defaultPractitionerId: res?.id
+            }));
+          }
         })
         .catch(() => {
           if (!isEditingRecord) {
@@ -661,13 +664,17 @@ const AddResourceModal = ({
       getService(record.resourceId)
         .unwrap()
         .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res?.defaultDurationMinutes,
-            defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
-            defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
+          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+            }));
+          }
 
           if (!isEditingRecord) {
             applyWorkingDays(mainTemplate?.workingDays ?? []);
@@ -681,13 +688,17 @@ const AddResourceModal = ({
       getRoom({ id: record.resourceId })
         .unwrap()
         .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res?.defaultDurationMinutes,
-            defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
-            defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
+          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+            }));
+          }
 
           if (!isEditingRecord) {
             applyWorkingDays(mainTemplate?.workingDays ?? []);
@@ -700,13 +711,17 @@ const AddResourceModal = ({
       getDiagnosticTest(String(record.resourceId))
         .unwrap()
         .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res?.data?.defaultDurationMinutes,
-            defaultBufferBeforeMinutes: res?.data?.defaultBufferBeforeMinutes,
-            defaultBufferAfterMinutes: res?.data?.defaultBufferAfterMinutes,
-            parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
-          }));
+          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.data?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.data?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.data?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
+            }));
+          }
 
           if (!isEditingRecord) {
             applyWorkingDays(mainTemplate?.workingDays ?? []);
@@ -719,13 +734,17 @@ const AddResourceModal = ({
       getCatalog(record.resourceId)
         .unwrap()
         .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res?.defaultDurationMinutes,
-            defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
-            defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
+          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+            }));
+          }
 
           if (!isEditingRecord) {
             applyWorkingDays(mainTemplate?.workingDays ?? []);
