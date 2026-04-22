@@ -85,8 +85,8 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
       return {
         ...prev,
         templateId: nextId,
-        startDate: "",
-        endDate: "",
+        startDate: new Date(),
+        endDate: new Date(),
         scope: "DEPARTMENT" as any,
         childTemplateId: null as any,
         holidayHandlingMode: null,
@@ -98,6 +98,13 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
     () => validateDateRange(formState.startDate, formState.endDate),
     [formState.startDate, formState.endDate]
   );
+
+  React.useEffect(() => {
+    console.log("[ApplyTemplateStepOne] start - end time", {
+      startTime: formState.startDate,
+      endTime: formState.endDate,
+    });
+  }, [formState.startDate, formState.endDate]);
 
   const facilityIdForHolidays =
     facilityId != null && Number(facilityId) > 0
