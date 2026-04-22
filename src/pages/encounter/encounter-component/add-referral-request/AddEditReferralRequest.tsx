@@ -7,17 +7,10 @@ import { FaComment } from 'react-icons/fa';
 import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useAppSelector } from '@/hooks';
-import { useLazyGetActiveAppointableDepartmentsQuery } from '@/services/security/departmentService';
+import { useLazyGetAppointableDepartmentsQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
-const AddEditReferralRequest = ({
-  open,
-  setOpen,
-  width,
-  referral,
-  setReferral,
-  handleSave
-}) => {
+const AddEditReferralRequest = ({ open, setOpen, width, referral, setReferral, handleSave }) => {
   const referralTypeOptions = useEnumOptions('ReferralType');
   const priorityOptions = useEnumOptions('ReferralPriority');
 
@@ -26,8 +19,7 @@ const AddEditReferralRequest = ({
 
   const { data: facilityResponse } = useGetActiveFacilitiesQuery({});
 
-  const facilityOptions =
-    facilityResponse?.map(f => ({ label: f.name ?? '', value: f.id })) ?? [];
+  const facilityOptions = facilityResponse?.map(f => ({ label: f.name ?? '', value: f.id })) ?? [];
 
   // ─── Departments ────────────────────────────────────────────────────────────
 
@@ -39,7 +31,7 @@ const AddEditReferralRequest = ({
   const [modalSession, setModalSession] = useState(0);
 
   const [triggerDepartments, { isFetching: isDeptLoading }] =
-    useLazyGetActiveAppointableDepartmentsQuery();
+    useLazyGetAppointableDepartmentsQuery();
 
   const prevToFacilityId = useRef(undefined);
 
@@ -102,9 +94,7 @@ const AddEditReferralRequest = ({
       fromFacilityId: Number(selectedFacility.id),
       fromDepartmentId: selectedDepartment?.departmentId ?? null,
       toFacilityId:
-        prev?.referralType === 'INTERNAL'
-          ? Number(selectedFacility.id)
-          : prev?.toFacilityId ?? null
+        prev?.referralType === 'INTERNAL' ? Number(selectedFacility.id) : prev?.toFacilityId ?? null
     }));
   }, [
     open,
@@ -262,12 +252,11 @@ const AddEditReferralRequest = ({
     </Form>
   );
 
-            // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
@@ -275,15 +264,12 @@ const AddEditReferralRequest = ({
       setOpen={setOpen}
       title={referral?.id ? 'Edit Referral Request' : 'New Referral Request'}
       position="right"
-      content={    <div dir={dir}>
-        {conjureFormContent()}
-        </div>}
+      content={<div dir={dir}>{conjureFormContent()}</div>}
       actionButtonLabel={referral?.id ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Referral Request Info', icon: <FaComment /> }]}
       size={width > 600 ? '36vw' : '70vw'}
     />
-    
   );
 };
 

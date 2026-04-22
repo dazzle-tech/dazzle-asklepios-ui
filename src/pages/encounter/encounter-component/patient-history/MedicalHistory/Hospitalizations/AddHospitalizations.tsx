@@ -220,13 +220,19 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
         fieldName="dateOfAdmission"
         record={formData}
         setRecord={setFormData}
+        disableFutureDates
         required
       />
 
       <MyInput
         width={200}
         column
-        fieldLabel={<span><Translate>Length of stay</Translate><Translate>(Days)</Translate></span>}
+        fieldLabel={
+          <span>
+            <Translate>Length of stay</Translate>
+            <Translate>(Days)</Translate>
+          </span>
+        }
         fieldType="number"
         fieldName="lengthOfStayDays"
         record={formData}
@@ -254,12 +260,10 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
     </Form>
   );
 
-  /*  MODAL  */
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal
