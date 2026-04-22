@@ -248,7 +248,6 @@ const AddResourceModal = ({
       }
 
     } catch (e) {
-      console.error(e);
       setAllRooms([]);
     }
   };
@@ -363,7 +362,6 @@ const AddResourceModal = ({
   useEffect(() => {
     if (!open) return;
 
-    // ✅ علّم إنه فتح للتو — بيستخدمه الـ resourceId effect
     justOpenedRef.current = true;
 
     if (editRecord?.id) {
@@ -618,9 +616,7 @@ const AddResourceModal = ({
     });
   }, [open, parentTemplateAllowedServices]);
 
-  useEffect(() => {
-    console.log("resource record: ", record);
-  }, [record]);
+ 
 
   useEffect(() => {
     if (!record?.resourceId) {
@@ -825,7 +821,6 @@ const AddResourceModal = ({
                         record={record}
                         setRecord={(next) => {
                           workingDaysTouchedRef.current = false;
-                          // ✅ لما يغير الـ type، نعيد العلامة لـ false لأنه مش أول فتح
                           justOpenedRef.current = false;
 
                           setRecord(prev => ({

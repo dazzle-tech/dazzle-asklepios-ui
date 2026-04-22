@@ -161,7 +161,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
         setAllDepartments(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllDepartments([]);
     }
   };
@@ -193,7 +192,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       }
 
     } catch (e) {
-      console.error(e);
       setAllServices([]);
     }
   };
@@ -225,7 +223,6 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
       }
 
     } catch (e) {
-      console.error(e);
       setAllPractitioners([]);
     }
   };
@@ -529,12 +526,10 @@ const AddEditAvailabilityTemplate: React.FC<AddEditAvailabilityTemplateProps> = 
     try {
       if (template?.id) {
         const updated = await update({ id: template.id, ...payload }).unwrap();
-        // setRecord(updated);
         setTemplate(updated)
         dispatch(notify({ msg: 'Updated Successfully', sev: 'success' }));
       } else {
         const created = await create(payload).unwrap();
-        // setRecord(created);
         setTemplate(created)
         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       }
