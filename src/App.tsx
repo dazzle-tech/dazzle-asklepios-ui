@@ -19,7 +19,6 @@ import Translate from './components/Translate';
 import { useAppDispatch, useAppSelector } from './hooks';
 import NetworkErrorImg from './images/network-error.png';
 import locales from './locales';
-import Resources from './pages/appointment/resources';
 import Error403Page from './pages/authentication/403';
 import Error404Page from './pages/authentication/404';
 import Error500Page from './pages/authentication/500';
@@ -781,7 +780,6 @@ const App = () => {
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
               <Route path="departments" element={<NewDepartments />} />
-              <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="policy-definition" element={<PolicyDefinitions />} />

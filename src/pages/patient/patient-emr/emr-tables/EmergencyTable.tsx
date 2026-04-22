@@ -8,7 +8,6 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
-import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
 
 const EmergencyTable = ({ patient }) => {
@@ -66,11 +65,7 @@ const EmergencyTable = ({ patient }) => {
   });
 
   // Fetch all resources for lookup
-  const { data: resourcesResponse } = useGetAllResourcesQuery({
-    page: 0,
-    size: 1000, // Fetch a large number to get all resources
-    sort: 'id,asc'
-  });
+  const { data: resourcesResponse } = { data: { data: [] as unknown[] } };
 
   // Fetch all diagnostic tests for lookup
   const { data: diagnosticTestsResponse } = useGetAllDiagnosticTestsQuery({
