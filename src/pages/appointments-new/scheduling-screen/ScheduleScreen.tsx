@@ -355,44 +355,14 @@ const ScheduleScreen = () => {
     if (sourceAppointments && resourcesWithAvailabilityResponse?.object) {
       const today = new Date();
 
-      const formattedAppointments = sourceAppointments
-        .map((appointment: any) => {
-          const startRaw =
-            appointment?.startDatetime ??
-            appointment?.startDateTime ??
-            appointment?.appointmentStart ??
-            appointment?.appointment_start ??
-            appointment?.appointmentDateTime;
-          const endRaw =
-            appointment?.endDatetime ??
-            appointment?.endDateTime ??
-            appointment?.appointmentEnd ??
-            appointment?.appointment_end;
+      const formattedAppointments = sourceAppointments.map((appointment: any) => {
+        const startRaw =
+          appointment?.startDatetime
+        const endRaw =
+          appointment?.endDatetime
 
-          const startDate = convertDate(startRaw);
-          const rawEndDate =
-            convertDate(endRaw) ?? (startDate ? new Date(startDate.getTime() + 60 * 60000) : null);
-          if (!startDate || !rawEndDate) return null;
-          // Keep event rendering anchored to start time; if end is not after start,
-          // treat it as crossing midnight so react-big-calendar can render it.
-          const endDate =
-            rawEndDate.getTime() <= startDate.getTime()
-              ? new Date(rawEndDate.getTime() + 24 * 60 * 60 * 1000)
-              : rawEndDate;
-          const displayEndDate =
-            endDate.getFullYear() !== startDate.getFullYear() ||
-            endDate.getMonth() !== startDate.getMonth() ||
-            endDate.getDate() !== startDate.getDate()
-              ? new Date(
-                startDate.getFullYear(),
-                startDate.getMonth(),
-                startDate.getDate(),
-                23,
-                59,
-                59,
-                999
-              )
-              : endDate;
+        const startDate = convertDate(startRaw);
+        const endDate = convertDate(endRaw);
         const dob = new Date(appointment?.patient?.dob);
         const patientIdNum = getAppointmentPatientId(appointment);
         const fromPatientService =
@@ -448,32 +418,32 @@ const ScheduleScreen = () => {
 
         const statusText = appointment?.appointmentStatus ?? appointment?.status ?? '';
         const isHidden = String(statusText).toUpperCase() === 'CANCELED';
-          return {
-            id: appointment?.key ?? appointment?.id,
-            title:
-              slotTitle ||
-              ` ${patientFullName}, ${isNaN(dob.getTime()) ? 'Unknown' : today.getFullYear() - dob.getFullYear()
-              }Y  ${!(currentView === 'day' || currentView === 'week')
-                ? ', ' + (resource?.resourceName || 'Unknown Resource')
-                : ''
-              }
-`,
-            start: startDate,
-            end: displayEndDate,
-            text: appointment.notes || 'No additional details available',
-            appointmentData: appointment,
-            hidden: isHidden,
-            // Calendar columns are departments; bind events by department id.
-            resourceId: normalizedDepartmentColumnId,
-            // Keep actual resource id for resource-type/resource filtering logic.
-            filterResourceId: normalizedResourceKey,
-            tooltipResourceName: resourceNameForTitle,
-            fromTo: `${extractTimeFromTimestamp(
-              startRaw
-            )} - ${extractTimeFromTimestamp(endRaw)}`
-          };
-        })
-        .filter(Boolean);
+        const ageYears = isNaN(dob.getTime()) ? '' : `${today.getFullYear() - dob.getFullYear()}Y`;
+        const patientLabel = [patientFullName, ageYears].filter(Boolean).join(', ');
+        const fallbackTitle = [patientLabel, !(currentView === 'day' || currentView === 'week')
+          ? resource?.resourceName || 'Unknown Resource'
+          : ''
+        ]
+          .filter(Boolean)
+          .join(' | ');
+        return {
+          id: appointment?.key ?? appointment?.id,
+          title: slotTitle || fallbackTitle || 'Appointment',
+          start: startDate,
+          end: endDate,
+          text: appointment.notes || 'No additional details available',
+          appointmentData: appointment,
+          hidden: isHidden,
+          // Calendar columns are departments; bind events by department id.
+          resourceId: normalizedDepartmentColumnId,
+          // Keep actual resource id for resource-type/resource filtering logic.
+          filterResourceId: normalizedResourceKey,
+          tooltipResourceName: resourceNameForTitle,
+          fromTo: `${extractTimeFromTimestamp(
+            startRaw
+          )} - ${extractTimeFromTimestamp(endRaw)}`
+        };
+      });
       setAppointmentsData(formattedAppointments);
     }
   }, [
@@ -653,9 +623,7 @@ const ScheduleScreen = () => {
   };
 
   const convertDate = appointmentTime => {
-    if (!appointmentTime) return null;
-    const dt = new Date(appointmentTime);
-    return Number.isNaN(dt.getTime()) ? null : dt;
+    return new Date(appointmentTime);
   };
 
   const schedulePatientIdForSearch = useMemo(() => {

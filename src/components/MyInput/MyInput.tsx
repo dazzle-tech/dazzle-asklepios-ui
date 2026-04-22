@@ -22,6 +22,25 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
 
+const useSmartPlacement = () => {
+  const ref = React.useRef<any>(null);
+
+  const getPlacement = () => {
+    if (!ref.current) return 'bottomStart';
+
+    const rect = ref.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    if (spaceBelow > 260) return 'bottomStart';
+    if (spaceAbove > spaceBelow) return 'topStart';
+
+    return 'bottomStart';
+  };
+
+  return { ref, getPlacement };
+};
+
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -48,21 +67,21 @@ const focusNextField = (e: any) => {
 
 type MyInputProps = {
   fieldName: string;
-fieldType?:
-  | 'text'
-  | 'password'
-  | 'textarea'
-  | 'checkbox'
-  | 'datetime'
-  | 'time'
-  | 'select'
-  | 'selectPagination'
-  | 'multyPicker'
-  | 'checkPicker'
-  | 'date'
-  | 'number'
-  | 'check'
-  | 'textnumber';
+  fieldType?:
+    | 'text'
+    | 'password'
+    | 'textarea'
+    | 'checkbox'
+    | 'datetime'
+    | 'time'
+    | 'select'
+    | 'selectPagination'
+    | 'multyPicker'
+    | 'checkPicker'
+    | 'date'
+    | 'number'
+    | 'check'
+    | 'textnumber';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -158,6 +177,8 @@ const MyInput = ({
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const { ref: pickerRef, getPlacement } = useSmartPlacement();
+
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
@@ -249,8 +270,8 @@ const MyInput = ({
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
 
   // Default placement/preventOverflow for ALL pickers (can be overridden via props)
-  const pickerPlacement = props.placement ?? 'bottomStart';
-  const pickerPreventOverflow = props.preventOverflow ?? false;
+  const pickerPlacement = props.placement ?? getPlacement();
+  const pickerPreventOverflow = props.preventOverflow ?? true;
 
   const getDynamicMenuMaxHeight = (dataList?: any[]) => {
     if (props?.menuMaxHeight !== undefined && props?.menuMaxHeight !== null) {
@@ -311,23 +332,7 @@ const MyInput = ({
   };
 
   // Resolve a good container for popups (modal-aware), with user override
-  const resolveContainer = () =>
-    props.container ??
-    (() => {
-      const subChildModal = document.querySelector(
-        '.sub-child-right-modal .rs-modal-body'
-      ) as HTMLElement;
-      if (subChildModal) return subChildModal;
-
-      const childModal = document.querySelector('.child-right-modal .rs-modal-body') as HTMLElement;
-      if (childModal) return childModal;
-
-      const allModalBodies = document.querySelectorAll('.rs-modal-body');
-      if (allModalBodies.length > 0) {
-        return allModalBodies[allModalBodies.length - 1] as HTMLElement;
-      }
-      return document.body;
-    });
+  const resolveContainer = () => document.body;
 
   // helper: build label from single أو multiple keys
   const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
@@ -341,9 +346,7 @@ const MyInput = ({
 
   const conjureFormControl = () => {
     switch (fieldType) {
-      case 'textarea': 
-        const allowEnterNewLine = props.allowEnterNewLine ?? true;
-
+      case 'textarea':
         return (
           <InputGroup style={{ width: props?.width ?? 200 }}>
             <Form.Control
@@ -356,7 +359,9 @@ const MyInput = ({
               onChange={handleValueChange}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
-                  if (allowEnterNewLine) return;
+                  if (props.allowEnterNewLine) {
+                    return;
+                  }
                   focusNextField(e);
                 }
               }}
@@ -376,6 +381,7 @@ const MyInput = ({
       case 'checkbox':
         return (
           <Toggle
+            ref={pickerRef}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             checkedChildren={props.checkedLabel || 'Yes'}
             unCheckedChildren={props.unCheckedLabel || 'No'}
@@ -390,6 +396,7 @@ const MyInput = ({
       case 'datetime':
         return (
           <Form.Control
+            ref={pickerRef}
             className="custom-date-input"
             style={
               {
@@ -416,6 +423,7 @@ const MyInput = ({
       case 'time':
         return (
           <Form.Control
+            ref={pickerRef}
             className="custom-date-input"
             style={
               {
@@ -426,11 +434,15 @@ const MyInput = ({
             disabled={props.disabled}
             name={fieldName}
             accepter={TimePicker}
-            value={record[fieldName] ? (() => {
-              const [h, m, s] = record[fieldName].split(':').map(Number);
-              const d = new Date(1970, 0, 1, h, m, s ?? 0);
-              return d;
-            })() : null}
+            value={
+              record[fieldName]
+                ? (() => {
+                    const [h, m, s] = record[fieldName].split(':').map(Number);
+                    const d = new Date(1970, 0, 1, h, m, s ?? 0);
+                    return d;
+                  })()
+                : null
+            }
             onChange={(value: Date | null) => {
               if (!value) {
                 setRecord?.({ ...record, [fieldName]: null });
@@ -465,6 +477,7 @@ const MyInput = ({
 
         return (
           <Form.Control
+            ref={pickerRef}
             style={{ width: styleWidth, height: props?.height ?? 30 }}
             className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
             block
@@ -475,8 +488,8 @@ const MyInput = ({
               (isArrayLabel
                 ? (label: any, item: any) => buildCombinedLabel(item, labelKeys, label)
                 : props.isEnum
-                  ? (label: any) => formatEnumString(String(label))
-                  : undefined)
+                ? (label: any) => formatEnumString(String(label))
+                : undefined)
             }
             searchBy={props.searchBy}
             container={resolveContainer()}
@@ -490,7 +503,7 @@ const MyInput = ({
             labelKey={primaryLabelKey}
             valueKey={valueKey}
             value={record ? record[fieldName] : ''}
-            onChange={(value) => {
+            onChange={value => {
               handleValueChange(value);
 
               if (props.onSelectItem) {
@@ -517,20 +530,18 @@ const MyInput = ({
             renderValue={
               isArrayLabel
                 ? (value, item, selectedElement) => {
-                  if (!item) return selectedElement;
-                  return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
-                }
+                    if (!item) return selectedElement;
+                    return <span>{buildCombinedLabel(item, labelKeys, selectedElement)}</span>;
+                  }
                 : props.isEnum
-                  ? (value, item, selectedElement) => {
+                ? (value, item, selectedElement) => {
                     const base = (item && item[primaryLabelKey]) || selectedElement || value || '';
                     return <span>{formatEnumString(String(base))}</span>;
                   }
-                  : undefined
+                : undefined
             }
             disabledItemValues={
-              props.disabledItemValues
-                ? dataList.map(item => item[valueKey])
-                : []
+              props.disabledItemValues ? dataList.map(item => item[valueKey]) : []
             }
           />
         );
@@ -547,6 +558,7 @@ const MyInput = ({
 
         return (
           <Form.Control
+            ref={pickerRef}
             name={fieldName}
             style={{ width: styleWidth, height: props?.height ?? 30 }}
             className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
@@ -561,12 +573,12 @@ const MyInput = ({
               ...(props.selectData ?? []),
               ...(props.hasMore
                 ? [
-                  {
-                    [valueKey]: '__load_more__',
-                    [labelKey]: 'Load more...',
-                    isLoadMore: true
-                  }
-                ]
+                    {
+                      [valueKey]: '__load_more__',
+                      [labelKey]: 'Load more...',
+                      isLoadMore: true
+                    }
+                  ]
                 : [])
             ]}
             labelKey={labelKey}
@@ -668,6 +680,7 @@ const MyInput = ({
       case 'multyPicker':
         return (
           <Form.Control
+            ref={pickerRef}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             block
             disabled={props.disabled}
@@ -701,6 +714,7 @@ const MyInput = ({
       case 'checkPicker':
         return (
           <Form.Control
+            ref={pickerRef}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             block
             disabled={props.disabled}
@@ -713,7 +727,7 @@ const MyInput = ({
             labelKey={props?.selectDataLabel ?? ''}
             valueKey={props?.selectDataValue ?? ''}
             value={record ? record[fieldName] : []}
-            onChange={(value) => {
+            onChange={value => {
               handleValueChange(value);
 
               if (props.onSelectItem) {
@@ -740,9 +754,11 @@ const MyInput = ({
             }
           />
         );
+
       case 'date':
         return (
           <Form.Control
+            ref={pickerRef}
             className="custom-date-input"
             style={
               {
@@ -806,6 +822,7 @@ const MyInput = ({
             }}
           />
         );
+
       case 'number': {
         const numInputWidth = props?.width ?? 145;
         const addonWidth = 40;
@@ -835,8 +852,8 @@ const MyInput = ({
               ? '0'
               : ''
             : record?.[fieldName] !== null && record?.[fieldName] !== undefined
-              ? String(record[fieldName])
-              : '';
+            ? String(record[fieldName])
+            : '';
 
         const inputControl = props.allowDecimal ? (
           <Form.Control
@@ -913,7 +930,7 @@ const MyInput = ({
             step={props.step ?? 1}
             accepter={InputNumber}
             value={record?.[fieldName] ?? null}
-            onChange={(value) => {
+            onChange={value => {
               if (value === '' || value === null || value === undefined) {
                 setRecord?.({ ...record, [fieldName]: null });
                 return;
@@ -977,6 +994,7 @@ const MyInput = ({
 
         return inputControl;
       }
+
       case 'check':
         return (
           <Checkbox
@@ -988,7 +1006,7 @@ const MyInput = ({
           </Checkbox>
         );
 
-      case 'textnumber': 
+      case 'textnumber': {
         const defaultInputWidth = props?.width ?? 145;
 
         return (
@@ -1013,6 +1031,7 @@ const MyInput = ({
             onKeyDown={focusNextField}
           />
         );
+      }
 
       default: {
         const defaultInputWidth = props?.width ?? 145;
@@ -1150,11 +1169,7 @@ const MyInput = ({
         {showLabel && (
           <MyLabel
             label={
-              typeof fieldLabel === 'string' ? (
-                <Translate>{fieldLabel}</Translate>
-              ) : (
-                fieldLabel
-              )
+              typeof fieldLabel === 'string' ? <Translate>{fieldLabel}</Translate> : fieldLabel
             }
             error={validationResult}
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}

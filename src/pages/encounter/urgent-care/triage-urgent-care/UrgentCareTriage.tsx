@@ -1040,8 +1040,6 @@ const UrgentCareTriage = () => {
 
       const targetPath = '/urgent-care-start-triage';
 
-      sessionStorage.setItem('encounterPageSource', 'EncounterList');
-
       if (!emergencyTriageNew) {
         console.warn(
           '[ER Triage] Could not create/get emergency triage record: missing numeric patientId/encounterId',

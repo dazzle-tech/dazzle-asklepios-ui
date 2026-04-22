@@ -278,7 +278,8 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
           const isOutpatient = departmentType === 'OUTPATIENT_CLINIC';
           const isEmergency =
             departmentType === 'EMERGENCY' || departmentType === 'EMERGENCY_ROOM';
-
+          const Radiology = departmentType === 'RADIOLOGY';
+          const Laboratory = departmentType === 'LABORATORY';
           const hasDiagnosis = diagnosisMap[row.id] ?? false;
 
           return (
@@ -304,7 +305,7 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
                 </Whisper>
               )}
 
-              {isOngoing && isOutpatient && hasDiagnosis && (
+              {((isOngoing && isOutpatient && hasDiagnosis)||(Radiology||Laboratory)) && (
                 <Whisper
                   placement="top"
                   speaker={<Tooltip>Complete</Tooltip>}
@@ -371,7 +372,6 @@ const PatientVisitHistoryTable = ({ localPatient, encounterRefetchTrigger }: any
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
-
   return (
     <div dir={dir}>
       <div ref={tooltipContainerRef} className="visit-history__wrapper">
