@@ -300,8 +300,7 @@ const AddIntervalModal = ({
     const handleSave = async () => {
 
         const errors = [];
-        console.log("start: ", record?.startTime);
-        console.log("end: ", record?.endTime);
+      
         if (!record?.startTime) {
             errors.push('Start Time is required');
         }
@@ -390,7 +389,6 @@ const AddIntervalModal = ({
             dayOfWeek: day,
             slotDurationMinutes: Number(record?.slotDurationMinutes)
         };
-        console.log("internalToAdd: ", payload);
         await createAvailabilityTemplateInterval(payload)
             .unwrap()
             .then(() => {

@@ -146,7 +146,7 @@ const SOAP = props => {
         <div className={clsx('column-container', { 'disabled-panel': edit })}>
           <div className="top-section">
             <SectionContainer
-              title={<Translate>Chief </Translate>}
+              title={<Translate>Chief Complain</Translate>}
               content={
                 <Form fluid>
                   <MyInput

@@ -153,7 +153,6 @@ import { DischargePlanningService } from '@/services/setup/DischargePlanningServ
 import { formTemplateService } from './services/setup/formTemplateService';
 import { FormEntriesService } from './services/setup/formEntriesService';
 import { prescriptionPService } from './services/setup/PrescriptionReportRequest';
-import { radiologyReportApi } from './services/setup/RadiologyReportRequest';
 import { clinicalSummaryService } from './services/ai-services/clinicalSummaryService';
 import { clinicalRecommendationsService } from './services/ai-services/clinicalRecommendationsService';
 import { medicationTestOrdersValidationService } from './services/ai-services/medicationTestOrdersValidationService';
@@ -199,6 +198,7 @@ import { patientServicesAndProductsService } from './services/encounters/patient
 import { NextOfKinService } from './services/patients/NextOfKinService';
 import { RelationsMatrixService } from './services/patients/RelationsMatrixService';
 import { patientAdministrativeWarningsService } from './services/patient/patientAdministrativeWarningsService';
+import { radiologyReportService } from './services/reports/radiologyReportService';
 import { observationServiceNew } from './services/observationServiceNew';
 import { organizationHolidaysService } from './services/system-configurations/organizationHolidaysService';
 import { PolicyDefinitionService } from './services/setup/policyDefinition/policyDefinitionService';
@@ -217,6 +217,8 @@ import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 import { currentMedicationService } from './services/patients/currentMedicationService';
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
+import { dentalProcedureService } from '@/services/dentalProcedureService';
+import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 
 export const store = configureStore({
   reducer: {
@@ -448,15 +450,15 @@ export const store = configureStore({
     [priceListAttributesService.reducerPath]: priceListAttributesService.reducer,
 
     [prescriptionPService.reducerPath]: prescriptionPService.reducer,
-    [radiologyReportApi.reducerPath]: radiologyReportApi.reducer,
-
+    [radiologyReportService.reducerPath]: radiologyReportService.reducer,
     [patientAllergiesService.reducerPath]: patientAllergiesService.reducer,
     [patientWarningsService.reducerPath]: patientWarningsService.reducer,
 
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
     [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
     [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
-    [availabilityTemplateIntervalBreakService.reducerPath]: availabilityTemplateIntervalBreakService.reducer,
+    [availabilityTemplateIntervalBreakService.reducerPath]:
+      availabilityTemplateIntervalBreakService.reducer,
     [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
@@ -530,8 +532,9 @@ export const store = configureStore({
     [bedRoomService.reducerPath]: bedRoomService.reducer,
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
     [currentMedicationService.reducerPath]: currentMedicationService.reducer,
-    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer
-
+    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
+    [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
+    [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer
   },
 
   middleware: getDefaultMiddleware =>
@@ -717,7 +720,64 @@ export const store = configureStore({
         patientPaymentsService.middleware,
         priceListAttributesService.middleware,
         prescriptionPService.middleware,
-        radiologyReportApi.middleware,
+        clinicalSummaryService.middleware,
+        clinicalRecommendationsService.middleware,
+        medicationTestOrdersValidationService.middleware,
+        patientProblemService.middleware,
+        familyHistoryService.middleware,
+        hospitalizationService.middleware,
+        surgicalHistoryService.middleware,
+        socialHistoryService.middleware,
+        favoriteDiagnosticTestService.middleware,
+        diagnosticOrderTestService.middleware,
+        diagnosticOrderService.middleware,
+        diagnosticOrderTestCollectedSampleService.middleware,
+        diagnosticOrderTestTechnicianNoteService.middleware,
+        diagnosticTestRequestService.middleware,
+        externalTestService.middleware,
+        diagnosticOrderTestResultService.middleware,
+        diagnosticOrderTestResultTechnicianNoteService.middleware,
+        diagnosticOrderTestReportService.middleware,
+        diagnosticOrderTestReportCommentsService.middleware,
+        patientDiagnosticResultHistoryService.middleware,
+        patientReportService.middleware,
+        progressNoteService.middleware,
+        patientProcedureService.middleware,
+        consultationService.middleware,
+        portalService.middleware,
+        telephonicConsultationService.middleware,
+        ICDTreeService.middleware,
+        //er-triage
+        generalAssessmentService.middleware,
+        chiefComplainService.middleware,
+        emergencyTriageService.middleware,
+        encounterAssessmentService.middleware,
+        encounterPlanService.middleware,
+        patientDiagnosisService.middleware,
+        vitalSignsService.middleware,
+        bodyMeasurementsService.middleware,
+        patientObservationsComplaintsService.middleware,
+        painAssessmentService.middleware,
+        additionalMeasurementsService.middleware,
+        patientAllergiesService.middleware,
+        patientWarningsService.middleware,
+        procedureSetupService.middleware,
+        ReviewOfSystemService.middleware,
+        patientPrescriptionService.middleware,
+        patientPrescriptionMedicationService.middleware,
+        patientServicesAndProductsService.middleware,
+        NextOfKinService.middleware,
+        RelationsMatrixService.middleware,
+        patientAdministrativeWarningsService.middleware,
+        radiologyReportService.middleware,
+        PatientRelationService.middleware,
+        patientInsurancesService.middleware,
+        patientInsuranceCoveragesService.middleware,
+        encounterVaccinationService.middleware,
+        patientEncounterService.middleware,
+        patientPaymentsService.middleware,
+        priceListAttributesService.middleware,
+        prescriptionPService.middleware,
         clinicalSummaryService.middleware,
         clinicalRecommendationsService.middleware,
         medicationTestOrdersValidationService.middleware,
@@ -781,7 +841,9 @@ export const store = configureStore({
         bedRoomService.middleware,
         encounterAssignToBedService.middleware,
         currentMedicationService.middleware,
-        uccMedicationOrderService.middleware
+        uccMedicationOrderService.middleware,
+        dentalProcedureService.middleware,
+        laboratoryReportsService.middleware
       ]
     ) as any
 });

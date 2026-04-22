@@ -126,16 +126,6 @@ const BasicInfo = ({
       ) : null}
       <MyInput
         vr={validationResult}
-        column
-        fieldLabel="Private Patient"
-        fieldType="checkbox"
-        fieldName="isPrivatePatient"
-        record={localPatient}
-        setRecord={setLocalPatient}
-        width={170}
-      />
-      <MyInput
-        vr={validationResult}
         width={170}
         column
         fieldLabel="First Name (Sec. Lang)"

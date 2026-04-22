@@ -35,7 +35,7 @@ const NurseStation = () => {
   const location = useLocation();
   const propsData = location.state;
   const fromPage = propsData?.fromPage;
-  const pageSource = fromPage || sessionStorage.getItem('encounterPageSource');
+  const pageSource = fromPage || '';
 
   const [localEncounter, setLocalEncounter] = useState<any>({
     ...propsData?.encounter
@@ -136,7 +136,7 @@ const NurseStation = () => {
       navigate('/inpatient-encounters-list');
     } else if (completeEncounterMutation.status === 'fulfilled') {
       if (pageSource === 'Urgent_Care_List') {
-        navigate('/urgent-care-list');
+        navigate('/urgent-care-department-list');
       } else {
         navigate('/encounter-list');
       }
@@ -173,7 +173,7 @@ const NurseStation = () => {
 
   const handleGoBack = () => {
     if (pageSource === 'Urgent_Care_List') {
-      navigate('/urgent-care-list', {
+      navigate('/urgent-care-department-list', {
         state: {
           fromPage: 'NurseStation',
           patient: propsData?.patient,
@@ -236,7 +236,7 @@ const NurseStation = () => {
               />
               <MyButton
                 backgroundColor={'var(--primary-gray)'}
-                onClick={handleGoBack}
+                 onClick={() => navigate(-1)}
                 prefixIcon={() => <FontAwesomeIcon icon={faArrowLeft} />}
               />
 

@@ -6,7 +6,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import Translate from '@/components/Translate';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
-import { useGetActiveFacilitiesQuery, useGetFacilityByIdQuery } from '@/services/security/facilityService';
+import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import {
   useLazyGetAppointableServicesByLoggedInFacilityQuery,
   useLazyGetServicesByDepartmentQuery,
@@ -31,7 +31,6 @@ import {
   useLazyGetAppointableCatalogsByLoggedInFacilityQuery,
   useLazyGetCatalogByIdQuery
 } from '@/services/setup/catalog/catalogService';
-import { useGetAllOrganizationDefinitionsQuery } from '@/services/system-configurations/organizationDefinitionService';
 import { formatEnumString } from '@/utils';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { useLazyGetActiveAppointableRoomsByDepartmentIdQuery, useLazyGetRoomByIdQuery } from '@/services/setup/room/roomService';
@@ -57,10 +56,8 @@ const AddResourceModal = ({
   const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
   const prevTemplateTypeRef = useRef<any>(record?.templateType);
 
- 
-  
-  const [triggerPractitionersFacility, { isFetching: isPractitionerFacilityLoading }] =
-    useLazyGetAppointablePractitionerByLoggedInFacilityQuery();
+  const justOpenedRef = useRef(false);
+
 
   // ─── Diagnostic Tests Pagination State ────────────────────────────────────
   const diagnosticTestSize = 20;
@@ -116,7 +113,7 @@ const AddResourceModal = ({
   const [triggerPractitionersDept, { isFetching: isPractitionerDeptLoading }] =
     useLazyGetPractitionerByDepartmentQuery();
 
-  
+
   const diagnosticTestOptions = allDiagnosticTests.map(d => ({
     label: d.name,
     value: d.id
@@ -147,6 +144,28 @@ const AddResourceModal = ({
     value: r.id
   }));
 
+  const getEditTimingValues = (source: any) => ({
+    durationMinutes: Number(
+      source?.durationMinutes ??
+      source?.slotDurationMinutes ??
+      0
+    ),
+    defaultBufferBeforeMinutes: Number(
+      source?.defaultBufferBeforeMinutes ??
+      source?.slotBeforeMinutes ??
+      0
+    ),
+    defaultBufferAfterMinutes: Number(
+      source?.defaultBufferAfterMinutes ??
+      source?.slotAfterMinutes ??
+      0
+    ),
+    parallelCapacityValue: Number(
+      source?.parallelCapacityValue ??
+      1
+    )
+  });
+
 
   const loadDiagnosticTests = async ({ page = 0, append = false }) => {
     try {
@@ -171,7 +190,6 @@ const AddResourceModal = ({
         setAllDiagnosticTests(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllDiagnosticTests([]);
     }
   };
@@ -199,7 +217,6 @@ const AddResourceModal = ({
         setAllCatalogs(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllCatalogs([]);
     }
   };
@@ -231,7 +248,6 @@ const AddResourceModal = ({
       }
 
     } catch (e) {
-      console.error(e);
       setAllRooms([]);
     }
   };
@@ -259,7 +275,6 @@ const AddResourceModal = ({
         setAllServicesFacility(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllServicesFacility([]);
     }
   };
@@ -289,7 +304,6 @@ const AddResourceModal = ({
         setAllServicesDept(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllServicesDept([]);
     }
   };
@@ -319,7 +333,6 @@ const AddResourceModal = ({
         setAllPractitionersDept(rows);
       }
     } catch (e) {
-      console.error(e);
       setAllPractitionersDept([]);
     }
   };
@@ -348,6 +361,9 @@ const AddResourceModal = ({
 
   useEffect(() => {
     if (!open) return;
+
+    justOpenedRef.current = true;
+
     if (editRecord?.id) {
       const rawAllowed = editRecord?.allowedServices;
       const normalizedAllowedServices = Array.isArray(rawAllowed)
@@ -363,15 +379,14 @@ const AddResourceModal = ({
         : [];
       setRecord({
         ...editRecord,
+        resourceId: editRecord?.resourceId,
         allowedServices: normalizedAllowedServices,
         facilityId: selectedFacility?.id ?? editRecord?.facilityId,
         departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId,
-        parallelCapacityValue: Number(
-          editRecord?.parallelCapacityValue ??
-          mainTemplate?.parallelCapacityValue ??
-          1
-        )
+        workingDays: editRecordWorkingDays,
+        ...getEditTimingValues(editRecord)
       });
+      workingDaysTouchedRef.current = false;
       return;
     }
     setRecord({
@@ -379,9 +394,17 @@ const AddResourceModal = ({
       parentTemplateId: mainTemplate?.id,
       facilityId: selectedFacility?.id,
       departmentId: mainTemplate?.departmentId,
+      workingDays: mainTemplate?.workingDays ?? [],
       parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1)
     });
-  }, [open, editRecord?.id, mainTemplate?.id, mainTemplate?.departmentId, selectedFacility?.id]);
+    applyWorkingDays(mainTemplate?.workingDays ?? []);
+  }, [
+    open,
+    editRecord,
+    mainTemplate?.id,
+    mainTemplate?.departmentId,
+    selectedFacility?.id
+  ]);
 
   const [currentColor, setCurrentColor] = useState(mainTemplate?.color || '#6982F0');
   useEffect(() => {
@@ -404,86 +427,13 @@ const AddResourceModal = ({
     isLoading: isGettingFacilities,
     isFetching: isFetchingFacilities
   } = useGetActiveFacilitiesQuery({});
-  const { data: organizationDefinitions } = useGetAllOrganizationDefinitionsQuery({});
-  const { data: selectedFacilityFullObject } = useGetFacilityByIdQuery(selectedFacility?.id, {
-    skip: !selectedFacility?.id
-  });
-
   const [getPractitioner] = useLazyGetPractitionerByIdQuery();
   const [getDiagnosticTest] = useLazyGetDiagnosticTestByIdQuery();
   const [getCatalog] = useLazyGetCatalogByIdQuery();
   const [getService] = useLazyGetServiceByIdQuery();
   const [getRoom] = useLazyGetRoomByIdQuery();
 
-  useEffect(() => {
-    if (record?.id) {
-      return;
-    }
-    if (!record?.resourceId) {
-      setRecord(prev => ({
-        ...prev,
-        durationMinutes: 0,
-        parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
-        defaultPractitionerId: undefined
-      }));
-      return;
-    }
 
-    if (record?.templateType === "PRACTITIONER") {
-      getPractitioner(record.resourceId)
-        .unwrap()
-        .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
-            defaultPractitionerId: res?.id
-          }));
-        });
-    } else if (record?.templateType === 'DIAGNOSTIC_TEST') {
-      getDiagnosticTest(String(record.resourceId))
-        .unwrap()
-        .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res?.data.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
-          }));
-        });
-    } else if (record?.templateType === 'CATALOG') {
-      getCatalog(record.resourceId)
-        .unwrap()
-        .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
-        });
-    } else if (record?.templateType === 'SERVICE') {
-      getService(record.resourceId)
-        .unwrap()
-        .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
-        });
-    }
-    else if (record?.templateType === 'ROOM') {
-      getRoom({ id: record.resourceId })
-        .unwrap()
-        .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
-        });
-    }
-
-  }, [record?.resourceId]);
 
   const { data: departmentServices = [] } =
     useGetDepartmentServicesQuery(
@@ -510,6 +460,11 @@ const AddResourceModal = ({
     if (!open) return;
     allowedServicesTouchedRef.current = false;
     workingDaysTouchedRef.current = false;
+    if (editRecord?.id) {
+      applyWorkingDays(editRecord?.workingDays ?? []);
+    } else {
+      applyWorkingDays(mainTemplate?.workingDays ?? []);
+    }
   }, [open]);
 
   const workingDaysRecord = useMemo(() => {
@@ -543,6 +498,49 @@ const AddResourceModal = ({
       workingDays: nextWorkingDays,
     }));
   };
+
+  const normalizeWorkingDays = (sourceWorkingDays: any[] = []) => {
+    if (!dayOptions || dayOptions.length === 0) return [];
+
+    return dayOptions.map(day => {
+      const found = sourceWorkingDays.find(
+        (d: any) => String(d?.dayOfWeek) === String(day.value)
+      );
+
+      return {
+        dayOfWeek: day.value,
+        isWorking: found ? found.isWorking !== false : false,
+      };
+    });
+  };
+
+  const applyWorkingDays = (sourceWorkingDays: any[] = []) => {
+    if (!dayOptions || dayOptions.length === 0) return;
+
+    const normalizedWorkingDays = normalizeWorkingDays(sourceWorkingDays);
+
+    workingDaysTouchedRef.current = false;
+    setRecord(prev => {
+      const prevDays = prev?.workingDays ?? [];
+      const same =
+        prevDays.length === normalizedWorkingDays.length &&
+        prevDays.every((d, i) =>
+          d.dayOfWeek === normalizedWorkingDays[i].dayOfWeek &&
+          d.isWorking === normalizedWorkingDays[i].isWorking
+        );
+      if (same) return prev;
+      return {
+        ...prev,
+        workingDays: normalizedWorkingDays,
+      };
+    });
+  };
+
+  const isEditingRecord = Boolean(editRecord?.id);
+  const editRecordWorkingDays = useMemo(
+    () => (Array.isArray(editRecord?.workingDays) ? editRecord.workingDays : []),
+    [editRecord?.workingDays]
+  );
 
   const normalizeAllowedServices = (input: any) => {
     if (!Array.isArray(input)) return [];
@@ -618,78 +616,166 @@ const AddResourceModal = ({
     });
   }, [open, parentTemplateAllowedServices]);
 
+ 
+
   useEffect(() => {
-    if (!dayOptions || dayOptions.length === 0) return;
-    if (!record?.facilityId) return;
-    if (workingDaysTouchedRef.current) return;
-    const hasWorkingDays =
-      Array.isArray(record?.workingDays) && record.workingDays.length > 0;
-    if (hasWorkingDays) return;
-
-    const facilities = facilityListResponse ?? [];
-    const selectedFacilityData = facilities.find(
-      (f: any) => String(f?.id) === String(record.facilityId)
-    );
-
-    const facilityWorkingDays =
-      selectedFacilityFullObject?.workingDays ??
-      selectedFacilityData?.workingDays ??
-      [];
-
-    const organizationWorkingDays = organizationDefinitions?.[0]?.workingDays ?? [];
-
-    const sourceWorkingDays =
-      facilityWorkingDays && facilityWorkingDays.length > 0
-        ? facilityWorkingDays
-        : organizationWorkingDays;
-
-    if (!sourceWorkingDays || sourceWorkingDays.length === 0) return;
-
-    const normalizedWorkingDays = dayOptions.map(day => {
-      const found = sourceWorkingDays.find(
-        (d: any) => String(d?.dayOfWeek) === String(day.value)
-      );
-      return {
-        dayOfWeek: day.value,
-        isWorking: found ? found.isWorking !== false : false,
-      };
-    });
-
-    setRecord(prev => {
-      const prevDays = prev?.workingDays ?? [];
-      const same =
-        prevDays.length === normalizedWorkingDays.length &&
-        prevDays.every((d, i) =>
-          d.dayOfWeek === normalizedWorkingDays[i].dayOfWeek &&
-          d.isWorking === normalizedWorkingDays[i].isWorking
-        );
-      if (same) return prev;
-      return {
+    if (!record?.resourceId) {
+      if (isEditingRecord) {
+        return;
+      }
+      setRecord(prev => ({
         ...prev,
-        workingDays: normalizedWorkingDays,
-      };
-    });
-  }, [
-    record?.facilityId,
-    facilityListResponse,
-    selectedFacilityFullObject,
-    organizationDefinitions,
-    dayOptionsKey,
-    record?.workingDays,
-  ]);
+        durationMinutes: 0,
+        defaultBufferBeforeMinutes: 0,
+        defaultBufferAfterMinutes: 0,
+        parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
+        defaultPractitionerId: undefined
+      }));
 
-  useEffect(() => {
-    if (prevTemplateTypeRef.current === record?.templateType) return;
-    if (!prevTemplateTypeRef.current) {
-      prevTemplateTypeRef.current = record?.templateType;
+      if (!isEditingRecord) {
+        applyWorkingDays(mainTemplate?.workingDays ?? []);
+      }
+
       return;
     }
-    prevTemplateTypeRef.current = record?.templateType;
-      setRecord(prev => ({ ...prev, resourceId: undefined, requirePractitioner: record?.templateType === 'PRACTITIONER' ? true : false}));
-  }, [record?.templateType]);
-  useEffect(() => {
-     console.log("record resource: ", record)
-  },[record]);
+
+    if (record?.templateType === "PRACTITIONER") {
+      getPractitioner(record.resourceId)
+        .unwrap()
+        .then(res => {
+          const practitionerDays = res?.workingDays ?? [];
+          const hasWorkingDays = practitionerDays.some((d: any) => d?.isWorking);
+
+          const finalWorkingDays = hasWorkingDays
+            ? practitionerDays
+            : (mainTemplate?.workingDays ?? []);
+          const shouldApplyResourceDefaults = !isEditingRecord;
+
+          if (isEditingRecord && justOpenedRef.current) {
+            applyWorkingDays(editRecordWorkingDays);
+            justOpenedRef.current = false; 
+          } else {
+            applyWorkingDays(finalWorkingDays);
+          }
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
+              defaultPractitionerId: res?.id
+            }));
+          }
+        })
+        .catch(() => {
+          if (!isEditingRecord) {
+            applyWorkingDays(mainTemplate?.workingDays ?? []);
+          }
+          justOpenedRef.current = false;
+        });
+    }
+
+    else if (record?.templateType === 'SERVICE') {
+      getService(record.resourceId)
+        .unwrap()
+        .then(res => {
+          const shouldApplyResourceDefaults = !isEditingRecord;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+            }));
+          }
+
+          if (!isEditingRecord) {
+            applyWorkingDays(mainTemplate?.workingDays ?? []);
+          }
+
+          justOpenedRef.current = false;
+        });
+    }
+
+    else if (record?.templateType === 'ROOM') {
+      getRoom({ id: record.resourceId })
+        .unwrap()
+        .then(res => {
+          const shouldApplyResourceDefaults = !isEditingRecord;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+            }));
+          }
+
+          if (!isEditingRecord) {
+            applyWorkingDays(mainTemplate?.workingDays ?? []);
+          }
+
+          justOpenedRef.current = false;
+        });
+    }
+    else if (record?.templateType === 'DIAGNOSTIC_TEST') {
+      getDiagnosticTest(String(record.resourceId))
+        .unwrap()
+        .then(res => {
+          const shouldApplyResourceDefaults = !isEditingRecord;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.data?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.data?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.data?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
+            }));
+          }
+
+          if (!isEditingRecord) {
+            applyWorkingDays(mainTemplate?.workingDays ?? []);
+          }
+
+          justOpenedRef.current = false;
+        });
+    }
+    else if (record?.templateType === 'CATALOG') {
+      getCatalog(record.resourceId)
+        .unwrap()
+        .then(res => {
+          const shouldApplyResourceDefaults = !isEditingRecord;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+            }));
+          }
+
+          if (!isEditingRecord) {
+            applyWorkingDays(mainTemplate?.workingDays ?? []);
+          }
+
+          justOpenedRef.current = false;
+        });
+    }
+  }, [
+    record?.resourceId,
+    record?.templateType,
+    isEditingRecord,
+    editRecordWorkingDays
+  ]);
 
   const conjureFormContent = () => (
     <Form fluid>
@@ -733,7 +819,19 @@ const AddResourceModal = ({
                       <MyInput
                         fieldName="templateType"
                         record={record}
-                        setRecord={setRecord}
+                        setRecord={(next) => {
+                          workingDaysTouchedRef.current = false;
+                          justOpenedRef.current = false;
+
+                          setRecord(prev => ({
+                            ...prev,
+                            ...next,
+                            resourceId: undefined,
+                            defaultPractitionerId: undefined,
+                            workingDays: normalizeWorkingDays(mainTemplate?.workingDays ?? []),
+                            requirePractitioner: next?.templateType === 'PRACTITIONER'
+                          }));
+                        }}
                         fieldType='select'
                         selectData={filteredtemplateTypeEnum ?? []}
                         selectDataLabel="label"
@@ -745,10 +843,10 @@ const AddResourceModal = ({
                     </Col>
                     {record.templateType === 'PRACTITIONER' ? (
                       <Col md={12}>
-                         <MyInput
+                        <MyInput
                           width="100%"
                           fieldType="selectPagination"
-                         fieldName="resourceId"
+                          fieldName="resourceId"
                           fieldLabel="Practitioner"
                           selectData={practitionerDeptOptions}
                           selectDataLabel="label"
@@ -762,7 +860,7 @@ const AddResourceModal = ({
                             const { page } = extractPaginationFromLink(practitionerDeptNextLink);
                             await loadPractitionersDept({ page, append: true });
                           }}
-                           menuMaxHeight={200}
+                          menuMaxHeight={200}
                           disabled={props?.readOnly}
                           required
                         />
@@ -839,35 +937,31 @@ const AddResourceModal = ({
                           disabled={props?.readOnly}
                         />
                       </Col>
-                    )
-                      : record.templateType === 'ROOM' ? (
-                        <Col md={12}>
-                          <MyInput
-                            key={`room-${record?.departmentId}`}
-                            width="100%"
-                            fieldType="selectPagination"
-                            fieldLabel="Room"
-                            fieldName="resourceId"
-                            selectData={roomOptions}
-                            selectDataLabel="label"
-                            selectDataValue="value"
-                            record={record}
-                            setRecord={setRecord}
-                            loading={isRoomLoading}
-                            hasMore={roomHasMore}
-                            onFetchMore={async () => {
-                              if (!roomNextLink) return;
-
-                              const { page } = extractPaginationFromLink(roomNextLink);
-                              setRoomPage(page);
-
-                              await loadRooms({ page, append: true });
-                            }}
-                          />
-                        </Col>
-                      ) : (
-                        <></>
-                      )}
+                    ) : record.templateType === 'ROOM' ? (
+                      <Col md={12}>
+                        <MyInput
+                          width="100%"
+                          fieldType="selectPagination"
+                          fieldLabel="Room"
+                          fieldName="resourceId"
+                          selectData={roomOptions}
+                          selectDataLabel="label"
+                          selectDataValue="value"
+                          record={record}
+                          setRecord={setRecord}
+                          loading={isRoomLoading}
+                          hasMore={roomHasMore}
+                          onFetchMore={async () => {
+                            if (!roomNextLink) return;
+                            const { page } = extractPaginationFromLink(roomNextLink);
+                            setRoomPage(page);
+                            await loadRooms({ page, append: true });
+                          }}
+                        />
+                      </Col>
+                    ) : (
+                      <></>
+                    )}
                   </Row>
 
                   <Row>
@@ -937,6 +1031,28 @@ const AddResourceModal = ({
                         setRecord={setRecord}
                         width="100%"
                         disabled
+                      />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={12}>
+                      <MyInput
+                        fieldName="defaultBufferBeforeMinutes"
+                        fieldLabel='Slot Befor'
+                        fieldType="number"
+                        record={record}
+                        setRecord={setRecord}
+                        width="100%"
+                      />
+                    </Col>
+                    <Col md={12}>
+                      <MyInput
+                        fieldLabel='Slot After'
+                        fieldName="defaultBufferAfterMinutes"
+                        fieldType="number"
+                        record={record}
+                        setRecord={setRecord}
+                        width="100%"
                       />
                     </Col>
                   </Row>
@@ -1124,7 +1240,6 @@ const AddResourceModal = ({
   const [create] = useCreateAvailabilityTemplateMutation();
   const [update] = useUpdateAvailabilityTemplateMutation();
 
-  // extract the error message from the bad request that coming from the backend
   const extractErrorMessage = (response: any): string => {
     try {
       const msg = response?.data?.message;
@@ -1167,6 +1282,8 @@ const AddResourceModal = ({
       ...record,
       numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
       durationMinutes: Number(record?.durationMinutes),
+      defaultBufferBeforeMinutes: Number(record?.defaultBufferBeforeMinutes),
+      defaultBufferAfterMinutes: Number(record?.defaultBufferAfterMinutes),
       parallelCapacityValue: Number(record?.parallelCapacityValue ?? 1),
       allowedServices: Array.isArray(record?.allowedServices)
         ? record.allowedServices

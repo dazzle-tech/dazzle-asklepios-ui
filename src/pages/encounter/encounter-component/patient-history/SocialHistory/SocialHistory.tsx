@@ -26,9 +26,6 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
   const [editData, setEditData] = useState<any>(null);
   const [previewRow, setPreviewRow] = useState<any>(null);
 
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<any>(null);
-
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(15);
 
@@ -91,24 +88,6 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
 
     setEditData(formData);
     setOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (!rowToDelete?.id) return;
-
-    try {
-      await deleteSocialHistory({ id: rowToDelete.id }).unwrap();
-      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
-
-      if (previewRow?.id === rowToDelete.id) {
-        setPreviewRow(null);
-      }
-
-      setOpenDeleteModal(false);
-      setRowToDelete(null);
-    } catch {
-      dispatch(notify({ msg: 'Delete failed', sev: 'error' }));
-    }
   };
 
   const columns = [
@@ -190,16 +169,6 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
                   onClick={e => {
                     e.stopPropagation();
                     handleEdit(row);
-                  }}
-                />
-                <MdDelete
-                  size={22}
-                  fill="var(--primary-pink)"
-                  className="pointer"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setRowToDelete(row);
-                    setOpenDeleteModal(true);
                   }}
                 />
               </div>
@@ -512,14 +481,6 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
               }}
               initialData={editData}
               patient={patient}
-            />
-
-            <DeletionConfirmationModal
-              open={openDeleteModal}
-              setOpen={setOpenDeleteModal}
-              itemToDelete="Social History"
-              actionType="delete"
-              actionButtonFunction={handleDelete}
             />
           </div>
         }

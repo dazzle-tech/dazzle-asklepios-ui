@@ -379,7 +379,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
           <Form fluid>
             <MyTagInput tags={record.parametersToMonitor?.split(",") ?? []} setTags={noop} />
 
-            <div className="prescription-refills-blocks">
+            {/* <div className="prescription-refills-blocks">
               <MyInput
                 disabled
                 width={140}
@@ -414,7 +414,7 @@ const PrescriptionPreview = ({ orderMedication }) => {
                 fieldName="refillIntervalUnitText"
                 setRecord={noop}
               />
-            </div>
+            </div> */}
           </Form>
         }
       />

@@ -46,6 +46,8 @@ type PatientSearchProps = {
    * Default: full set of supported criteria.
    */
   criteriaOptions?: PatientSearchCriterion[];
+  /** Min width of the outer wrapper; lower (e.g. 0) for dense filter toolbars. @default 320 */
+  containerMinWidth?: number | string;
 };
 
 const PatientSearch: React.FC<PatientSearchProps> = ({
@@ -60,7 +62,8 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
   showLabel = true,
   showClear = true,
   resetToken = 0,
-  criteriaOptions
+  criteriaOptions,
+  containerMinWidth = 320
 }) => {
   const mode = useSelector((state: any) => state.ui.mode);
   // Default should be the first option in the allowed criteria; if none exist, keep it empty.
@@ -276,16 +279,16 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
   return (
     <Form.Group
       className={`my-input-container patient-search ${mode === 'light' ? 'light' : 'dark'}`}
-      style={{ position: 'relative', width, minWidth: 320 }}
+      style={{ position: 'relative', width, minWidth: containerMinWidth }}
     >
-      <Form.ControlLabel style={{ marginBottom: 2 }}>
-        {showLabel && (
+      {showLabel ? (
+        <Form.ControlLabel style={{ marginBottom: 2 }}>
           <MyLabel
             label={fieldLabel}
             color={mode === 'light' ? 'var(--black)' : 'var(--white)'}
           />
-        )}
-      </Form.ControlLabel>
+        </Form.ControlLabel>
+      ) : null}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'nowrap' }}>
         <div style={{ flex: `0 0 ${criteriaWidthPx}px`, minWidth: criteriaWidthPx }}>
           <MyInput

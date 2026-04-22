@@ -118,7 +118,7 @@ const ERTriage = () => {
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isReceptionist = jobRole === 'RECEPTIONIST';
   const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
-
+  
 
   const toDateSafe = (value: any): Date | null => {
     if (!value && value !== 0) return null;
@@ -793,8 +793,6 @@ const ERTriage = () => {
 
       const targetPath = '/ER-start-triage';
 
-      sessionStorage.setItem('encounterPageSource', 'EncounterList');
-
       if (!emergencyTriageNew) {
         console.warn(
           '[ER Triage] Could not create/get emergency triage record: missing numeric patientId/encounterId',
@@ -1037,21 +1035,21 @@ const ERTriage = () => {
           </Tooltip>
         );
 
+        const patientName = (
+          <span className="patient-name-text">
+            {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
+          </span>
+        );
+
         return (
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
-            <div style={{ display: 'inline-block' }}>
+            <div className="patient-name-wrapper">
               {rowData?.patientObject?.privatePatient ? (
-                <Badge color="blue" content="Private">
-                  <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                  </p>
+                <Badge className="patient-badge" color="blue" content="Private">
+                  {patientName}
                 </Badge>
               ) : (
-                <>
-                  <p style={{ cursor: 'pointer' }}>
-                    {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                  </p>
-                </>
+                patientName
               )}
             </div>
           </Whisper>

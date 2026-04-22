@@ -58,7 +58,8 @@ export const newDepartment: modelTypes.Department = {
   parallelCapacityEnabled: false,
   requirePractitioner: false,
   requireBilling: false,
-  requirePreAssessment: false
+  requirePreAssessment: false,
+  workingDays: []
 };
 // ------------------- Facility -------------------
 export const newFacility: modelTypes.Facility = {
@@ -242,6 +243,7 @@ export const newPractitioner: modelTypes.Practitioner = {
   defaultDurationMinutes: undefined,
   defaultBufferBeforeMinutes: 0,
   defaultBufferAfterMinutes: 0,
+  workingDays: [],
 };
 
 // ------------------- Language Translation -------------------
@@ -2971,4 +2973,19 @@ export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder 
   cancelledDate: null,
   cancelledBy: null,
   cancellationReason: null,
+};
+
+
+export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,
+  toothNumber: undefined,
+  surface: '',
+  anesthesiaUsed: null,
+  dose: null,
+  unit: null,
+  fillingMaterial: null,
+  serviceId: undefined,
+  cdtCodeId: null,
+  notes: null,
 };

@@ -170,7 +170,6 @@ useEffect(() => {
         }
       });
     }
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
   // handle go to preVisitObservations (nurse station) function
   const handleGoToPreVisitObservations = async (encounterData, patientData) => {

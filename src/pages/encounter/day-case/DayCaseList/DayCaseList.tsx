@@ -163,7 +163,6 @@ const   DayCaseList = () => {
         }
       });
     }
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
   // table columns

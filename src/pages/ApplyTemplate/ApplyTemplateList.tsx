@@ -31,6 +31,12 @@ const ApplyTemplateList = () => {
   const [recordOfSearch, setRecordOfSearch] = useState({ templateName: '' });
   const [selectedTemplate, setSelectedTemplate] = useState<AvailabilityTemplateResponseVM | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
+  const [templatePaginationParams, setTemplatePaginationParams] = useState({
+    page: 0,
+    size: 15
+  });
+  const [templateSortColumn, setTemplateSortColumn] = useState('templateName');
+  const [templateSortType, setTemplateSortType] = useState<'asc' | 'desc'>('asc');
   const [batchPaginationParams, setBatchPaginationParams] = useState({
     page: 0,
     size: 15,
@@ -136,6 +142,42 @@ const ApplyTemplateList = () => {
     return search && search.length >= 3 ? searchedTemplates : templatesResponse;
   }, [recordOfSearch.templateName, searchedTemplates, templatesResponse]);
 
+  const sortedTemplates = useMemo(() => {
+    const rows = [...(tableData ?? [])];
+    const direction = templateSortType === 'desc' ? -1 : 1;
+    const getSortValue = (row: AvailabilityTemplateResponseVM) => {
+      switch (templateSortColumn) {
+        case 'templateName':
+          return String(row?.templateName ?? '').toLowerCase();
+        case 'templateType':
+          return String(formatEnumString(row?.templateType ?? '')).toLowerCase();
+        case 'facilityId':
+          return String(facilityNameById.get(row?.facilityId) ?? '').toLowerCase();
+        case 'departmentId':
+          return String(departmentNameById.get(row?.departmentId) ?? '').toLowerCase();
+        case 'status':
+          return String(row?.status ?? '').toLowerCase();
+        default:
+          return String((row as any)?.[templateSortColumn] ?? '').toLowerCase();
+      }
+    };
+
+    rows.sort((a, b) => {
+      const av = getSortValue(a);
+      const bv = getSortValue(b);
+      if (av === bv) return 0;
+      return av > bv ? direction : -direction;
+    });
+
+    return rows;
+  }, [tableData, templateSortColumn, templateSortType, facilityNameById, departmentNameById]);
+
+  const templateTotalCount = sortedTemplates.length;
+  const pagedTemplates = useMemo(() => {
+    const start = templatePaginationParams.page * templatePaginationParams.size;
+    return sortedTemplates.slice(start, start + templatePaginationParams.size);
+  }, [sortedTemplates, templatePaginationParams.page, templatePaginationParams.size]);
+
   const facilityNameById = useMemo(() => {
     return new Map(
       (facilitiesResponse ?? []).map((facility: any) => [
@@ -190,6 +232,21 @@ const ApplyTemplateList = () => {
   const batchTotalCount = generationBatchesResponse?.totalCount ?? 0;
   const appointmentsByBatch = appointmentsByBatchResponse?.data ?? [];
   const appointmentTotalCount = appointmentsByBatchResponse?.totalCount ?? 0;
+
+  useEffect(() => {
+    setTemplatePaginationParams(prev => ({ ...prev, page: 0 }));
+  }, [recordOfSearch.templateName]);
+
+  const handleTemplateSortChange = (sortColumn: string, sortType: 'asc' | 'desc') => {
+    setTemplateSortColumn(sortColumn);
+    setTemplateSortType(sortType);
+    setTemplatePaginationParams(prev => ({ ...prev, page: 0 }));
+  };
+
+  const handleTemplatePageChange = (_event: unknown, newPage: number) => {
+    const maxPage = Math.max(0, Math.ceil(templateTotalCount / templatePaginationParams.size) - 1);
+    setTemplatePaginationParams(prev => ({ ...prev, page: Math.min(newPage, maxPage) }));
+  };
 
   const handleBatchSortChange = (sortColumn: string, sortType: 'asc' | 'desc') => {
     setBatchSortColumn(sortColumn);
@@ -460,7 +517,7 @@ const ApplyTemplateList = () => {
       <Panel>
         <MyTable
           height={450}
-          data={tableData}
+          data={pagedTemplates}
           loading={
             isFetching || ((recordOfSearch.templateName?.trim().length ?? 0) >= 3 && isSearchingByName)
           }
@@ -483,7 +540,20 @@ const ApplyTemplateList = () => {
               </Form>
             </div>
           }
-         
+          page={templatePaginationParams.page}
+          rowsPerPage={templatePaginationParams.size}
+          totalCount={templateTotalCount}
+          onPageChange={handleTemplatePageChange}
+          onRowsPerPageChange={e => {
+            const newSize = Number(e.target.value);
+            setTemplatePaginationParams({
+              page: 0,
+              size: newSize
+            });
+          }}
+          sortColumn={templateSortColumn}
+          sortType={templateSortType}
+          onSortChange={handleTemplateSortChange}
         />
 
         {popupOpen && (

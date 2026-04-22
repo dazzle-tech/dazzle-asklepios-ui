@@ -29,6 +29,7 @@ import Dashboard from './pages/dashboard';
 import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
 import DayCaseList from './pages/encounter/day-case/DayCaseList/DayCaseList';
 import Dental from './pages/encounter/dental-screen';
+import DentalProcedures from './pages/encounter/dental-procedures/DentalProcedures';
 import ReferralRequest from './pages/encounter/encounter-component/add-referral-request';
 import AudiometryPuretone from './pages/encounter/encounter-component/audiometry-puretone';
 import BedsideProceduresRequests from './pages/encounter/encounter-component/bedside-procedures-requests';
@@ -226,7 +227,7 @@ import NurseAssessment from './pages/encounter/encounter-pre-observations-new/ob
 import PhysicianAssessment from './pages/encounter/encounter-pre-observations-new/physician-assessment/physician-assessment';
 import FavoriteTests from './pages/review-results';
 import PreviousMeasurementsMainScreen from './pages/encounter/encounter-pre-observations-new/previous-measurements/PreviousMeasurementsMainScreen';
-
+import UrgentCareViewTriage from './pages/encounter/urgent-care/triage-urgent-care/UrgentCareViewTriage';
 const PUBLIC_PATHS = new Set([
   '/login',
   '/reset-password',
@@ -591,6 +592,7 @@ const App = () => {
               <Route path="ER-department" element={<ERTabsDepartmentAndWaitingListNew />} />
               <Route path="urgent-care-triage" element={<UrgentCareTriage />} />
               <Route path="view-triage" element={<ViewTriageNew />} />
+              <Route path="urgent-care-view-triage" element={<UrgentCareViewTriage />} />
               <Route path="quick-visit" element={<QuickVisitNew />} />
               <Route path="report-result-template" element={<ReportResultTemplate />} />
               <Route path="country-setup" element={<CountrySetup />} />
@@ -600,6 +602,8 @@ const App = () => {
               <Route path="/patient-report" element={<StimulsoftReportViewer />} />
               <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>
+                <Route path="nurse-assessment" element={<NurseAssessment />} />
+                <Route path="physician-assessment" element={<PhysicianAssessment />} />
                 <Route path="progress-notes" element={<ProgressNotes />} />
 
                 <Route
@@ -619,6 +623,7 @@ const App = () => {
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
+                <Route path="dental-procedures" element={<DentalProcedures />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
@@ -633,7 +638,7 @@ const App = () => {
                 <Route path="vaccine-record" element={<VaccineReccord />} />
                 <Route path="diagnostics-result" element={<DiagnosticsResult />} />
                 <Route path="dialysis-request" element={<DialysisRequest />} />
-                  <Route path="ucc-medication-order" element={<UccMedicationOrder />} />
+                <Route path="ucc-medication-order" element={<UccMedicationOrder />} />
                 <Route path="operation-request" element={<OperationRequestNew />} />
                 <Route path="doctor-round" element={<DoctorRound />} />
                 <Route path="icu" element={<ICU />} />
@@ -705,6 +710,7 @@ const App = () => {
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
+                <Route path="dental-procedures" element={<DentalProcedures />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />

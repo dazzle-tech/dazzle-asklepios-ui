@@ -54,7 +54,10 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useGetActiveDistrictsQuery } from '@/services/setup/country/countryDistrictService';
 import { useGetActiveCommunitiesQuery } from '@/services/setup/country/districtCommunityService';
 import { useGetActiveAreasQuery } from '@/services/setup/country/communityAreaService';
-import { useCreateAddressMutation, useUpdateAddressMutation } from '@/services/patients/AddressService';
+import {
+  useCreateAddressMutation,
+  useUpdateAddressMutation
+} from '@/services/patients/AddressService';
 import { useGetActiveCountriesQuery } from '@/services/setup/country/countryService';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
 
@@ -65,6 +68,8 @@ import {
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import { useGetRelativePatientsByCategoryQuery } from '@/services/patients/PatientRelationService';
+
+const SAUDI_ARABIA_LOV_NAME = '1216848210951800';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Encounter data is required.',
@@ -83,8 +88,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
     'This patient already has an encounter in this department on the selected date.',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
-  'patient.emergency.notAllowed.withOngoing':
-    'Patient currently treated by another doctor',
+  'patient.emergency.notAllowed.withOngoing': 'Patient currently treated by another doctor',
   duplicate: 'Duplicate record.',
   'facility.invalid': 'Invalid facility id.',
   'department.invalid': 'Invalid department id.',
@@ -377,16 +381,14 @@ const normalizeInsuranceFieldErrorMessage = (message: string): string => {
   return message || 'invalid value';
 };
 
-const getInsuranceFieldLabel = (field: string): string =>
-  INSURANCE_FIELD_LABELS[field] ?? field;
+const getInsuranceFieldLabel = (field: string): string => INSURANCE_FIELD_LABELS[field] ?? field;
 
 const toHumanInsuranceError = (
   error: any,
   keyMap: Record<string, string> = INSURANCE_ERROR_MAP
 ): string => {
   const responseData = error?.data ?? {};
-  const traceId =
-    responseData?.traceId || responseData?.requestId || responseData?.correlationId;
+  const traceId = responseData?.traceId || responseData?.requestId || responseData?.correlationId;
   const traceSuffix = traceId ? `\nTrace ID: ${traceId}` : '';
 
   if (Array.isArray(responseData?.fieldErrors) && responseData.fieldErrors.length > 0) {
@@ -414,6 +416,30 @@ const toHumanInsuranceError = (
   );
 };
 
+const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'thirdName', label: 'Third Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'firstNameSecondaryLang', label: 'First Name (Sec. Lang)' },
+  { key: 'secondNameSecondaryLang', label: 'Second Name (Sec. Lang)' },
+  { key: 'thirdNameSecondaryLang', label: 'Third Name (Sec. Lang)' },
+  { key: 'lastNameSecondaryLang', label: 'Last Name (Sec. Lang)' }
+];
+
+const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
+
+const validatePatientNameFields = (patient: Patient): string | null => {
+  for (const { key, label } of NAME_FIELDS) {
+    const value = String((patient as any)[key] ?? '');
+    if (!value) continue;
+    if (INVALID_TRAILING_CHARS.test(value)) {
+      return `${label} must not end with a space, hyphen (-), or hash (#).`;
+    }
+  }
+  return null;
+};
+
 const CreateNewPatient = ({ open, setOpen }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -438,7 +464,11 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
   const { data: countryLov } = useGetLovValuesByCodeQuery('CNTRY');
-  const patientDocumentEnum = useEnumOptions('DocumentType');
+
+  const patientDocumentEnum = useEnumOptions('DocumentType', {
+    exclude: ['NO_DOCUMENT', 'PASSPORT', 'DRIVING_LICENSE', 'BORDER_NUMBER', 'SOCIAL_CARD']
+  });
+
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
   const genderEnum = useEnumOptions('Gender');
 
@@ -602,9 +632,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
   }, [payorSearchKeyword]);
 
   useEffect(() => {
-    const currentPayorId = patientInsurance?.payorId
-      ? Number(patientInsurance.payorId)
-      : undefined;
+    const currentPayorId = patientInsurance?.payorId ? Number(patientInsurance.payorId) : undefined;
 
     if (currentPayorId === prevPayorId) return;
 
@@ -651,8 +679,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
   const [docCountryPage, setDocCountryPage] = useState(0);
   const [docCountrySearch, setDocCountrySearch] = useState('');
   const [docHasMoreCountries, setDocHasMoreCountries] = useState(true);
-  const [, setDocCountryOpen] = useState(false);
+  const [docCountryOpen, setDocCountryOpen] = useState(false);
   const [docPaginationLoading, setDocPaginationLoading] = useState(false);
+
+  const [saudiCountryId, setSaudiCountryId] = useState<number | null>(null);
 
   const { data: docCountriesData } = useGetActiveCountriesQuery({
     page: docCountryPage,
@@ -667,24 +697,77 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const mapped = docCountriesData.data.map((c: any) => ({
       ...c,
       displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') ||
-        c.name
+        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
     }));
 
-    if (docCountryPage === 0) {
-      setDocCountryCache(mapped);
-    } else {
-      setDocCountryCache(prev => [...prev, ...mapped]);
-    }
-
-    setDocHasMoreCountries(!!docCountriesData.links?.next);
+    setDocCountryCache(prev => (docCountryPage === 0 ? mapped : [...prev, ...mapped]));
+    setDocHasMoreCountries(docCountriesData.last === false);
     setDocPaginationLoading(false);
+
+    const saudi = mapped.find((c: any) => c.name === SAUDI_ARABIA_LOV_NAME);
+    if (saudi) {
+      setSaudiCountryId(saudi.id);
+    }
   }, [docCountriesData, docCountryPage, countryLov]);
 
+  useEffect(() => {
+    if (open && !secondaryDocument.id) {
+      setSecondaryDocument(prev => ({
+        ...prev,
+        type: prev.type || 'NATIONAL_ID',
+        countryId: prev.countryId || saudiCountryId || null
+      }));
+    }
+  }, [open, saudiCountryId]);
+
+  useEffect(() => {
+    if (open && !secondaryDocument.id && saudiCountryId && !secondaryDocument.countryId) {
+      setSecondaryDocument(prev => ({ ...prev, countryId: saudiCountryId }));
+    }
+  }, [saudiCountryId]);
+
   const loadMoreDocCountries = () => {
-    if (!docHasMoreCountries) return;
+    if (!docHasMoreCountries || docPaginationLoading) return;
     setDocPaginationLoading(true);
-    setDocCountryPage(prev => prev + 1);
+    setDocCountryPage(p => p + 1);
+  };
+
+  const isSaudiCountry = () => {
+    if (!secondaryDocument.countryId) return false;
+    const selected = docCountryCache.find((c: any) => c.id === secondaryDocument.countryId);
+    return selected?.name === SAUDI_ARABIA_LOV_NAME;
+  };
+
+  const validateDocument = () => {
+    const { type, number } = secondaryDocument;
+    const numberStr = String(number ?? '').trim();
+    const saudi = isSaudiCountry();
+
+    if (!saudi) return true;
+
+    if (type === 'NATIONAL_ID') {
+      if (!numberStr.startsWith('1')) {
+        dispatch(notify({ msg: 'Saudi National ID number must start with 1.', sev: 'warning' }));
+        return false;
+      }
+      if (numberStr.length < 10) {
+        dispatch(notify({ msg: 'ID number should not be less than 10 digits.', sev: 'warning' }));
+        return false;
+      }
+    }
+
+    if (type === 'IQAMA' || type === 'BORDER_NUMBER') {
+      if (!numberStr.startsWith('2')) {
+        dispatch(notify({ msg: `Saudi ${type} number must start with 2.`, sev: 'warning' }));
+        return false;
+      }
+      if (numberStr.length < 10) {
+        dispatch(notify({ msg: 'ID number should not be less than 10 digits.', sev: 'warning' }));
+        return false;
+      }
+    }
+
+    return true;
   };
 
   type ExtendedAddress = Address & {
@@ -816,8 +899,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const mapped = addrCountriesResponse.data.map((c: any) => ({
       ...c,
       displayName:
-        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') ||
-        c.name
+        conjureValueBasedOnKeyFromList(countryLov?.object ?? [], c.name, 'lovDisplayVale') || c.name
     }));
 
     setAddrCountryCache(prev => (addrCountryPage === 0 ? mapped : [...prev, ...mapped]));
@@ -895,6 +977,12 @@ const CreateNewPatient = ({ open, setOpen }) => {
   };
 
   const handleSave = async (): Promise<Patient | null> => {
+    const nameError = validatePatientNameFields(localPatient);
+    if (nameError) {
+      dispatch(notify({ msg: nameError, sev: 'warning' }));
+      return null;
+    }
+
     try {
       const saved = localPatient?.id
         ? await updatePatient({
@@ -945,6 +1033,12 @@ const CreateNewPatient = ({ open, setOpen }) => {
       return;
     }
 
+    const nameError = validatePatientNameFields(localPatient);
+    if (nameError) {
+      dispatch(notify({ msg: nameError, sev: 'warning' }));
+      return;
+    }
+
     try {
       const saved = localPatient?.id
         ? await updatePatient({
@@ -965,7 +1059,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
       const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
         facilityId: Number(facilityId),
         departmentId: Number(departmentId),
-        resourceType: (practitionerId > 0 ? 'PRACTITIONER' : 'DEPARTMENT') as modelTypes.TemplateType,
+        resourceType: (practitionerId > 0
+          ? 'PRACTITIONER'
+          : 'DEPARTMENT') as modelTypes.TemplateType,
         resourceId: practitionerId > 0 ? practitionerId : Number(departmentId),
         patientId: Number(saved?.id ?? 0),
         service: 'URGENT_VISIT' as modelTypes.EncounterReason,
@@ -1020,6 +1116,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const isNoDocument =
       secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT';
 
+    if (!isNoDocument && !validateDocument()) {
+      return;
+    }
+
     if (isNoDocument) {
       try {
         await addNoDocument({
@@ -1042,7 +1142,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
       ...secondaryDocument,
       patientId: localPatient.id,
       isPrimary: secondaryDocument.isPrimary ?? false,
-      number: secondaryDocument.number
+      number: String(secondaryDocument.number ?? '').trim()
     };
 
     try {
@@ -1119,7 +1219,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
       setPlanPage(0);
       setRelativePage(0);
       setAllRelatives([]);
+
       setDocCountryOpen(false);
+      setDocCountrySearch('');
+      setDocCountryPage(0);
     }
   }, [open]);
 
@@ -1192,6 +1295,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               width={200}
               column
               required
+              fieldType="textnumber"
               fieldName="primaryMobileNumber"
               fieldLabel="Primary Mobile Number"
               record={localPatient}
@@ -1258,43 +1362,34 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 />
               </>
             )}
-
-            <MyInput
-              width={200}
-              column
-              fieldType="checkbox"
-              fieldName="isPrivatePatient"
-              fieldLabel="Private Patient"
-              record={localPatient}
-              setRecord={setLocalPatient}
-            />
           </Form>
         );
 
       case 1:
         return (
-          <Form fluid layout="inline">
+          <Form layout="inline" fluid className="patient-doc-secondary-container">
             <span className="custom-text">Patient Document</span>
 
             <MyInput
-              width={200}
               required
               column
+              width={300}
               fieldLabel="Document Type"
               fieldType="select"
               fieldName="type"
               selectData={patientDocumentEnum ?? []}
               selectDataLabel="label"
               selectDataValue="value"
+              searchable={false}
               record={secondaryDocument}
-              setRecord={setSecondaryDocument}
+              setRecord={r => setSecondaryDocument(prev => ({ ...prev, ...r }))}
             />
 
-            {secondaryDocument.type !== 'NO_DOC' && secondaryDocument.type !== 'NO_DOCUMENT' && (
+            {secondaryDocument.type !== 'NO_DOCUMENT' && (
               <MyInput
                 required
                 column
-                width={200}
+                width={300}
                 fieldLabel="Document Country"
                 fieldType="selectPagination"
                 fieldName="countryId"
@@ -1302,57 +1397,55 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 selectDataLabel="displayName"
                 selectDataValue="id"
                 searchKeyWard={docCountrySearch}
-                setSearchKeyWard={setDocCountrySearch}
+                setSearchKeyWard={v => {
+                  setDocCountrySearch(v);
+                  setDocCountryPage(0);
+                }}
                 hasMore={docHasMoreCountries}
                 onFetchMore={loadMoreDocCountries}
                 loading={docPaginationLoading}
+                open={docCountryOpen}
+                onOpen={() => setDocCountryOpen(true)}
+                onClose={() => setDocCountryOpen(false)}
                 onSelectItem={(item: any) => {
                   setSecondaryDocument(prev => ({
                     ...prev,
-                    countryId: item.id
+                    countryId: item ? item.id : null
                   }));
+
+                  if (!item) {
+                    setDocCountrySearch('');
+                    setDocCountryPage(0);
+                  }
+
+                  setDocCountryOpen(false);
                 }}
                 record={secondaryDocument}
               />
             )}
 
-            {secondaryDocument.type !== 'NO_DOC' && secondaryDocument.type !== 'NO_DOCUMENT' && (
+            {secondaryDocument.type !== 'NO_DOCUMENT' && (
               <MyInput
-                width={200}
                 required
                 column
+                width={300}
+                fieldType="textnumber"
                 fieldLabel="Document Number"
                 fieldName="number"
-                disabled={
-                  secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'
-                }
                 record={secondaryDocument}
-                setRecord={newRecord => {
-                  setSecondaryDocument({
-                    ...secondaryDocument,
-                    ...newRecord,
+                setRecord={r =>
+                  setSecondaryDocument(prev => ({
+                    ...prev,
                     number:
-                      secondaryDocument.type === 'NO_DOC' ||
-                      secondaryDocument.type === 'NO_DOCUMENT'
+                      prev.type === 'NO_DOC' || prev.type === 'NO_DOCUMENT'
                         ? 'NO_DOCUMENT'
-                        : newRecord.number
-                  });
-                }}
+                        : String(r.number ?? '')
+                  }))
+                }
               />
             )}
 
-            <MyInput
-              width={200}
-              column
-              fieldLabel="Primary Document"
-              fieldType="checkbox"
-              fieldName="isPrimary"
-              disabled={
-                secondaryDocument.type === 'NO_DOC' || secondaryDocument.type === 'NO_DOCUMENT'
-              }
-              record={secondaryDocument}
-              setRecord={setSecondaryDocument}
-            />
+            {/* ✅ Primary Document checkbox removed — isPrimary is set automatically */}
           </Form>
         );
 
@@ -1544,7 +1637,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
                   disabled={!address.districtId}
                   onFetchMore={() => {
                     if (addrCommunitiesResponse?.links?.next) {
-                      const { page } = extractPaginationFromLink(addrCommunitiesResponse.links.next);
+                      const { page } = extractPaginationFromLink(
+                        addrCommunitiesResponse.links.next
+                      );
                       setAddrCommunityPage(page);
                     }
                   }}
@@ -1709,7 +1804,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
               column
               width={200}
               required
-              fieldType="number"
+              fieldType="textnumber"
               fieldLabel="Policy Number"
               fieldName="policyNumber"
               record={patientInsurance}
@@ -1719,7 +1814,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
             <MyInput
               column
               width={200}
-              fieldType="number"
+              fieldType="textnumber"
               fieldLabel="Group Number"
               fieldName="groupNumber"
               record={patientInsurance}

@@ -175,21 +175,27 @@ const DetailsTele = ({
       setFormData({
         ...newTelephonicConsultation,
         patientId: patient?.id,
-        encounterId: encounter?.id
+        encounterId: encounter?.id,
+        practitionerId: null
       });
+
       setPractitioner({ ...newPractitioner });
       setAllPractitioners([]);
       setPractitionerPage(0);
     }
-  }, [open, consultationOrders, patient?.id, encounter?.id]);
+  }, [open, consultationOrders?.id]);
 
   useEffect(() => {
-    if (!open || !consultationOrders?.practitionerId) return;
+    if (!open || !consultationOrders?.id) return;
+    if (!consultationOrders?.practitionerId) return;
+
     triggerGetPractitionerById(consultationOrders.practitionerId);
-  }, [open, consultationOrders?.practitionerId]);
+  }, [open, consultationOrders?.id]);
 
   useEffect(() => {
-    if (!open || !practitionerLoaded || !practitionerById) return;
+    if (!open || !consultationOrders?.id) return;
+
+    if (!practitionerLoaded || !practitionerById) return;
 
     setPractitioner({
       ...newPractitioner,
@@ -204,15 +210,13 @@ const DetailsTele = ({
       page: 0,
       size: pageSize,
       sort: 'id,asc'
-    }).catch(err => {
-      handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
     });
 
     setFormData(prev => ({
       ...prev,
       practitionerId: practitionerById.id
     }));
-  }, [open, practitionerLoaded, practitionerById]);
+  }, [open, consultationOrders?.id, practitionerLoaded]);
 
   useEffect(() => {
     if (!practitionersResult?.data?.data) return;
@@ -389,7 +393,7 @@ const DetailsTele = ({
                 <MyInput
                   width="12vw"
                   fieldName="approvalNumber"
-                  fieldType="number"
+                  fieldType="textnumber"
                   fieldLabel="Approval Number"
                   record={formData}
                   setRecord={setFormData}

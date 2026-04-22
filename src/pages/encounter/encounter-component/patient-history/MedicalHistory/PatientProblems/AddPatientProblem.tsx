@@ -151,163 +151,143 @@ const AddPatientProblem = ({ open, setOpen, initialData, patient }) => {
       sourceOfInformation: formData.byPatient ? null : formData.sourceOfInformation
     };
 
-    let errorMsg = "";
-    if (!payload.condition) {
-      if (!errorMsg)
-        errorMsg = errorMsg + "Condition Can`t be empty"
-      else
-        errorMsg = errorMsg + ", Condition Can`t be empty"
-    }
-    if (!payload.dateOfDiagnosis) {
-      if (!errorMsg)
-        errorMsg = errorMsg + "Date Of Diagnosis Can`t be empty"
-      else
-        errorMsg = errorMsg + ", Date Of Diagnosis Can`t be empty"
-    }
-    if (!payload.status) {
-      if (!errorMsg)
-        errorMsg = errorMsg + "Status Can`t be empty"
-      else
-        errorMsg = errorMsg + ", Status Can`t be empty"
-    }
-    if (!payload.type) {
-      if (!errorMsg)
-        errorMsg = errorMsg + "Type Can`t be empty"
-      else
-        errorMsg = errorMsg + ", Type Can`t be empty"
-    }
-    
+    const errors: string[] = [];
+    if (!payload.condition) errors.push('Condition is required');
+    if (!payload.dateOfDiagnosis) errors.push('Date of Diagnosis is required');
+    if (!payload.status) errors.push('Status is required');
+    if (!payload.type) errors.push('Type is required');
+    const errorMsg = errors.join(', ');
+
     if (!errorMsg) {
+      try {
+        if (formData.id) {
+          await updatePatientProblem(payload).unwrap();
+          dispatch(notify({ msg: 'Patient problem updated successfully', sev: 'success' }));
+        } else {
+          await addPatientProblem(payload).unwrap();
+          dispatch(notify({ msg: 'Patient problem added successfully', sev: 'success' }));
+        }
 
-    try {
-      if (formData.id) {
-        await updatePatientProblem(payload).unwrap();
-        dispatch(notify({ msg: 'Patient problem updated successfully', sev: 'success' }));
-      } else {
-        await addPatientProblem(payload).unwrap();
-        dispatch(notify({ msg: 'Patient problem added successfully', sev: 'success' }));
+        setOpen(false);
+      } catch (err: any) {
+        handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
       }
-
-      setOpen(false);
-    } catch (err: any) {
-      handleCrudError(err, dispatch, PATIENT_PROBLEM_ERROR_MAP);
-    }
-  }
-  else {
-      dispatch(notify({ msg: errorMsg, sev: "warning" }));
+    } else {
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
   };
 
   const content = (
     <Form fluid className="fields-container">
       <Row>
-      <Row>
-        <Col md={12}>
-      <MyInput
-       width='100%'
-        column
-        fieldLabel="Condition"
-        fieldName="condition"
-        record={formData}
-        setRecord={setFormData}
-        required
-      />
-        </Col>
-        <Col md={12}>
-      <MyInput
-       width='100%'
-        column
-        fieldLabel="Date of diagnosis"
-        fieldType="date"
-        fieldName="dateOfDiagnosis"
-        record={formData}
-        setRecord={setFormData}
-        required
-      />
-      </Col>
+        <Row>
+          <Col md={12}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Condition"
+              fieldName="condition"
+              record={formData}
+              setRecord={setFormData}
+              required
+            />
+          </Col>
+          <Col md={12}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Date of diagnosis"
+              fieldType="date"
+              fieldName="dateOfDiagnosis"
+              record={formData}
+              setRecord={setFormData}
+              disableFutureDates
+              required
+            />
+          </Col>
         </Row>
         <Row>
           <Col md={12}>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="Status"
-        fieldType="select"
-        fieldName="status"
-        selectData={statusOptions ?? []}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={formData}
-        setRecord={setFormData}
-        searchable={false}
-        required
-      />
-       </Col>
-       <Col md={12}>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="Type"
-        fieldType="select"
-        fieldName="type"
-        selectData={typeLov?.object ?? []}
-        selectDataValue="key"
-        selectDataLabel="lovDisplayVale"
-        record={formData}
-        setRecord={setFormData}
-        searchable={false}
-        required
-      />
-      </Col>
-      </Row>
-      <Row>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="Date of resolution"
-        fieldType="date"
-        fieldName="dateOfResolution"
-        record={formData}
-        setRecord={setFormData}
-      />
-      </Row>
-       <Row>
-        <Col md={12}>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="By Patient"
-        fieldType="checkbox"
-        fieldName="byPatient"
-        record={formData}
-        setRecord={setFormData}
-      />
-      </Col>
-      <Col md={12}>
-      <MyInput
-        width='100%'
-        column
-        fieldLabel="Source of information"
-        fieldType="select"
-        fieldName="sourceOfInformation"
-        selectData={sourceLov?.object ?? []}
-        selectDataValue="key"
-        selectDataLabel="lovDisplayVale"
-        record={formData}
-        setRecord={setFormData}
-        searchable={false}
-        disabled={formData.byPatient === true}
-      />
-      </Col>
-      </Row>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Status"
+              fieldType="select"
+              fieldName="status"
+              selectData={statusOptions ?? []}
+              selectDataLabel="label"
+              selectDataValue="value"
+              record={formData}
+              setRecord={setFormData}
+              searchable={false}
+              required
+            />
+          </Col>
+          <Col md={12}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Type"
+              fieldType="select"
+              fieldName="type"
+              selectData={typeLov?.object ?? []}
+              selectDataValue="key"
+              selectDataLabel="lovDisplayVale"
+              record={formData}
+              setRecord={setFormData}
+              searchable={false}
+              required
+            />
+          </Col>
+        </Row>
+        <Row>
+          <MyInput
+            width="100%"
+            column
+            fieldLabel="Date of resolution"
+            fieldType="date"
+            fieldName="dateOfResolution"
+            record={formData}
+            setRecord={setFormData}
+          />
+        </Row>
+        <Row>
+          <Col md={12}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="By Patient"
+              fieldType="checkbox"
+              fieldName="byPatient"
+              record={formData}
+              setRecord={setFormData}
+            />
+          </Col>
+          <Col md={12}>
+            <MyInput
+              width="100%"
+              column
+              fieldLabel="Source of information"
+              fieldType="select"
+              fieldName="sourceOfInformation"
+              selectData={sourceLov?.object ?? []}
+              selectDataValue="key"
+              selectDataLabel="lovDisplayVale"
+              record={formData}
+              setRecord={setFormData}
+              searchable={false}
+              disabled={formData.byPatient === true}
+            />
+          </Col>
+        </Row>
       </Row>
     </Form>
   );
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <MyModal

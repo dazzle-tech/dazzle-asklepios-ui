@@ -186,7 +186,6 @@ const Frame = (props: FrameProps) => {
       try {
         localStorage.setItem(SELECTED_DEPARTMENT_STORAGE_KEY, JSON.stringify(nextDepartment));
       } catch (error) {
-        console.error('Failed to persist selected department to localStorage', error);
       }
 
       try {
@@ -403,6 +402,7 @@ const Frame = (props: FrameProps) => {
         }
       };
     } catch (error) {
+      
       console.error('Failed to initialize BroadcastChannel', error);
     }
 

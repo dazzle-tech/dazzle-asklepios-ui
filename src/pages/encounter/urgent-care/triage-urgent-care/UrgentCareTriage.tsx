@@ -9,7 +9,6 @@ import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
 import { Modal } from 'rsuite';
-
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import 'react-tabs/style/react-tabs.css';
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
@@ -50,6 +49,7 @@ import {
 } from '@/services/encounters/er-triage/emergencyTriageService';
 import {
   useGetBulkPatientBasicInfoMutation,
+  useLazyGetPatientWristbandPdfQuery,
   useLazyGetPatientWristbandQuery
 } from '@/services/patient/patientService';
 import MyModal from '@/components/MyModal/MyModal';
@@ -59,6 +59,7 @@ import BedAssignmentModal from '../../day-case/DayCaseList/BedAssignmentModal';
 import { useGetActiveAssignmentsByEncounterIdsQuery } from '@/services/patients/emergency/encounterAssignToBedService';
 import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
 import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
+import { useAppSelector } from '@/hooks';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -198,11 +199,13 @@ const TriageTimeCell = ({
 const AssignBedAction = ({
   rowData,
   isPendingPayment,
+  isReceptionist,
   setLocalEncounter,
   setOpenBedAssignmentModal
 }: {
   rowData: any;
   isPendingPayment: boolean;
+  isReceptionist: boolean;
   setLocalEncounter: (row: any) => void;
   setOpenBedAssignmentModal: (open: boolean) => void;
 }) => {
@@ -221,7 +224,7 @@ const AssignBedAction = ({
   const statusUpper = String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase();
   const isTriageStarted = statusUpper === 'TRIAGE_STARTED';
 
-  const disabled = isPendingPayment || !isTriageStarted || !emergencyLevel;
+  const disabled = isPendingPayment || !isTriageStarted || !emergencyLevel || isReceptionist;
 
   const speaker = isPendingPayment ? (
     <Tooltip>Please add payment first</Tooltip>
@@ -257,13 +260,15 @@ const EncounterPriorityAction = ({
   encounterPriorityEnumOptions,
   priorityDotColor,
   isPendingPayment,
-  onUpdatePriority
+  onUpdatePriority,
+  isReceptionist
 }: {
   rowData: any;
   encounterPriorityEnumOptions: any[];
   priorityDotColor: Map<string, string>;
   isPendingPayment: boolean;
   onUpdatePriority: (rowData: any, priorityCode: string) => Promise<boolean>;
+  isReceptionist: boolean;
 }) => {
   const whisperRef = useRef<any>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -401,7 +406,7 @@ const EncounterPriorityAction = ({
         }}
         style={{ display: 'inline-flex', alignItems: 'center' }}
       >
-        <MyButton size="small" disabled={false}>
+        <MyButton size="small" disabled={isReceptionist}>
           <FontAwesomeIcon icon={faCircleExclamation} />
         </MyButton>
       </div>
@@ -429,32 +434,39 @@ const UrgentCareTriage = () => {
     useGetRoomsByIdsMutation();
   const [getBedsByIds, { data: bedsByIds = [], isLoading: isBedsByIdsLoading }] =
     useGetBedsByIdsMutation();
+    const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
 
   const navigate = useNavigate();
   const [openEMRModal, setOpenEMRModal] = useState(false);
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
+    const authSlice = useAppSelector(state => state.auth);
+    const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
+    const isReceptionist = jobRole === 'RECEPTIONIST';
 
-  const handlePrintWristband = async (rowData: any) => {
+
+ const handlePrintWristband = async (rowData: any) => {
     try {
-      const patientId = rowData?.patientObject?.id ?? rowData?.patientId ?? rowData?.patient?.id;
+      const blob = await triggerGetPatientWristbandPdf({
+        patientId: rowData.patientId
+      }).unwrap();
 
-      if (!patientId) return;
+      const fileURL = window.URL.createObjectURL(blob);
 
-      const res = await triggerWristband({ patientId }).unwrap();
-      await printPatientWristband(res);
-    } catch (err: any) {
-      console.error('Wristband print failed', err);
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `wristband-${rowData.patientId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-      dispatch(
-        notify({
-          msg: err?.data?.message || 'Failed to print wristband',
-          sev: 'error'
-        })
-      );
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to download wristband pdf', error);
     }
   };
-
   const selectedDepartment = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('selectedDepartment') || 'null');
@@ -572,7 +584,20 @@ const UrgentCareTriage = () => {
   } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams || !hasSearched });
 
   const emergencyLevelEnumOptions = useEnumOptions('EmergencyLevel');
-  const encounterStatusEnumOptions = useEnumOptions('EncounterStatus');
+  const encounterStatusEnumOptions = useEnumOptions('EncounterStatus', {
+    exclude: [
+      'NEW',
+      'ONGOING',
+      'CANCELLED',
+      'CLOSED',
+      'DISCHARGED',
+      'IN_OPERATION',
+      'CONFIRM_RETURN',
+      'TEMP_DC',
+      'SENT_TO_ER',
+      'WAITING_LIST'
+    ]
+  });
   const encounterPriorityEnumOptions = useEnumOptions('EncounterPriority');
 
   const encounterStatusLabelMap = useMemo(() => {
@@ -1015,8 +1040,6 @@ const UrgentCareTriage = () => {
 
       const targetPath = '/urgent-care-start-triage';
 
-      sessionStorage.setItem('encounterPageSource', 'EncounterList');
-
       if (!emergencyTriageNew) {
         console.warn(
           '[ER Triage] Could not create/get emergency triage record: missing numeric patientId/encounterId',
@@ -1266,19 +1289,21 @@ const UrgentCareTriage = () => {
           </Tooltip>
         );
 
+        const patientName = (
+          <span className="patient-name-text">
+            {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
+          </span>
+        );
+
         return (
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
-            <div style={{ display: 'inline-block' }}>
+            <div className="patient-name-wrapper">
               {rowData?.patientObject?.privatePatient ? (
-                <Badge color="blue" content="Private">
-                  <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                    {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                  </p>
+                <Badge className="patient-badge" color="blue" content="Private">
+                  {patientName}
                 </Badge>
               ) : (
-                <p style={{ cursor: 'pointer' }}>
-                  {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
-                </p>
+                patientName
               )}
             </div>
           </Whisper>
@@ -1430,7 +1455,7 @@ const UrgentCareTriage = () => {
                   size="small"
                   radius="6px"
                   backgroundColor="violet"
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment || isReceptionist}
                   onClick={() => {
                     const patientData = rowData?.patientObject;
 
@@ -1479,6 +1504,7 @@ const UrgentCareTriage = () => {
               priorityDotColor={priorityDotColor}
               isPendingPayment={isPendingPayment}
               onUpdatePriority={handleUpdateEncounterPriority}
+              isReceptionist={isReceptionist}
             />
 
             {String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase() ===
@@ -1494,7 +1520,7 @@ const UrgentCareTriage = () => {
                       setLocalEncounter(rowData);
                       handleGoToViewTriage(rowData, patientData);
                     }}
-                    disabled={isPendingPayment}
+                    disabled={isPendingPayment || isReceptionist}
                   >
                     <FontAwesomeIcon icon={faCommentMedical} />
                   </MyButton>
@@ -1515,6 +1541,7 @@ const UrgentCareTriage = () => {
                       handleGoToVisit(rowData, rowData?.patientObject);
                     }}
                     disabled={
+                      isReceptionist ||
                       isPendingPayment ||
                       !['NEW', 'WAITING_TRIAGE', 'TRIAGE_STARTED'].includes(
                         String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
@@ -1542,7 +1569,7 @@ const UrgentCareTriage = () => {
                     setLocalEncounter(rowData);
                     handlePrintWristband(rowData);
                   }}
-                  disabled={isPendingPayment}
+                  disabled={isPendingPayment || isReceptionist}
                 >
                   <FontAwesomeIcon icon={faBarcode} />
                 </MyButton>
@@ -1554,6 +1581,7 @@ const UrgentCareTriage = () => {
               isPendingPayment={isPendingPayment}
               setLocalEncounter={setLocalEncounter}
               setOpenBedAssignmentModal={setOpenBedAssignmentModal}
+              isReceptionist={isReceptionist}
             />
 
             {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST', 'PENDING_PAYMENT'].includes(
@@ -1563,6 +1591,7 @@ const UrgentCareTriage = () => {
                 <div>
                   <MyButton
                     size="small"
+                    disabled={isReceptionist }
                     onClick={() => {
                       setLocalEncounter(rowData);
                       setOpen(true);

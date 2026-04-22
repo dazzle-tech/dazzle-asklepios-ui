@@ -143,23 +143,23 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
       <MyInput
         required
         column
-        fieldType="number"
+        fieldType="textnumber"
         fieldName="mobileNumber"
         record={nextOfKin}
         setRecord={setNextOfKin}
       />
 
-      <MyInput column fieldType="number" fieldName="telephone" record={nextOfKin} setRecord={setNextOfKin} />
+      <MyInput column fieldType="textnumber" fieldName="telephone" record={nextOfKin} setRecord={setNextOfKin} />
       <MyInput
         column
-        fieldType="number"
+        fieldType="textnumber"
         fieldName="internationalNumber"
         record={nextOfKin}
         setRecord={setNextOfKin}
       />
       <MyInput
         column
-        fieldType="number"
+        fieldType="textnumber"
         fieldName="landlineNumber"
         record={nextOfKin}
         setRecord={setNextOfKin}

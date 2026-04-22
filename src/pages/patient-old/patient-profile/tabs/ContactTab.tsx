@@ -28,6 +28,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         required
         fieldName="phoneNumber"
         fieldLabel="Primary Mobile Number"
+        fieldType='textnumber'
         record={localPatient}
         setRecord={setLocalPatient}
       />
