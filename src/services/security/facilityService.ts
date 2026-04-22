@@ -49,19 +49,16 @@ export const facilityService = createApi({
 
    getActiveFacilities: builder.query({
   query: () => {
-    console.log('🚀 [facilityService] getActiveFacilities query called');
     return {
       url: '/api/setup/facility/active',
       method: 'GET'
     };
   },
   transformResponse: (response: any) => {
-    console.log('✅ [facilityService] getActiveFacilities raw response =>', response);
-    console.log('✅ [facilityService] getActiveFacilities raw response isArray =>', Array.isArray(response));
+
     return response?.data || response;
   },
 transformErrorResponse: (error: any) => {
-  console.log('❌ [facilityService] getActiveFacilities error =>', error);
   return error;
 },
   // onQueryStarted: onQueryStarted,
