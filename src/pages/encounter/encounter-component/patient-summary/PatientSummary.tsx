@@ -6,7 +6,7 @@ import ActiveAllergies from './ActiveAllergies/ActiveAllergies';
 import MedicalWarnings from './MedicalWarnings/MedicalWarnings';
 import RecentTestResults from './RecentTestResults/RecentTestResults';
 import PreviuosVisitData from './PreviuosVisitData';
-import BodyDiagram from './BodyDiagram/BodyDiagram';
+// import BodyDiagram from './BodyDiagram/BodyDiagram';
 import { useLocation } from 'react-router-dom';
 import PreObservation from './PreObservation/PreObservation';
 import Procedures from './Procedures/Procedures';
@@ -52,7 +52,7 @@ const PatientSummary = () => {
 
   const [columns, setColumns] = useState({
     col1: [
-      { id: 'c1', content: <BodyDiagram patient={patient} />, display: false },
+      // { id: 'c1', content: <BodyDiagram patient={patient} />, display: false },
       {
         id: 'c2',
         content: <PreviuosVisitData patient={patient} encounter={encounter} />,

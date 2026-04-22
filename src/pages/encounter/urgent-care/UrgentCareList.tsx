@@ -81,10 +81,10 @@ const derivePatientFilters = (appliedSearch: any) => {
   const searchByField = String(appliedSearch?.searchByField ?? 'fullName');
   const raw = String(
     appliedSearch?.patientName ??
-      appliedSearch?.searchText ??
-      appliedSearch?.text ??
-      appliedSearch?.value ??
-      ''
+    appliedSearch?.searchText ??
+    appliedSearch?.text ??
+    appliedSearch?.value ??
+    ''
   ).trim();
 
   if (!raw) {
@@ -187,6 +187,7 @@ const UrgentCareList = () => {
   const selectedDepartment = authSlice.selectedDepartment;
   const departmentId = selectedDepartment?.departmentId ?? selectedDepartment?.id;
 
+
   useEffect(() => {
     dispatch(setPageCode('Urgent_Care_List'));
     dispatch(setDivContent('Urgent Care Department'));
@@ -222,6 +223,14 @@ const UrgentCareList = () => {
   const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
   const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
   const [openNurseAssessment, setOpenNurseAssessment] = useState(false);
+  
+  
+  const [filtersKey, setFiltersKey] = useState(0);
+  const [appliedFilters, setAppliedFilters] = useState<any>(null);
+
+  const [isSearchTriggered, setIsSearchTriggered] = useState(false);
+
+
 
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
@@ -248,16 +257,20 @@ const UrgentCareList = () => {
   const [pageSize, setPageSize] = useState(10);
   const DEFAULT_SORT = 'id,desc';
 
-  const today = useMemo(() => new Date(), []);
-  const todayStr = useMemo(() => formatDate(today), [today]);
+  const getDefaultDates = () => {
+  const now = new Date();
+  const lastWeek = new Date(now);
+  lastWeek.setDate(lastWeek.getDate() - 7);
 
-  const lastWeek = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 7);
-    return d;
-  }, []);
+  return { now, lastWeek };
+};
 
-  const [dateFilter, setDateFilter] = useState({ fromDate: lastWeek, toDate: today });
+const { now: initialNow, lastWeek: initialLastWeek } = getDefaultDates();
+
+const [dateFilter, setDateFilter] = useState({
+  fromDate: initialLastWeek,
+  toDate: initialNow
+});
 
   const DEFAULT_STATUS = useMemo(() => ['NEW', 'ONGOING'], []);
   const [statusIn, setStatusIn] = useState<string[]>(DEFAULT_STATUS);
@@ -277,11 +290,10 @@ const UrgentCareList = () => {
   });
   const [searchTick, setSearchTick] = useState(0);
   const [record, setRecord] = useState<any>({});
-  const [filterLoading, setFilterLoading] = useState(false);
 
   useEffect(() => {
     if (!departmentId) return;
-    triggerGetDepartmentById(Number(departmentId)).catch(() => {});
+    triggerGetDepartmentById(Number(departmentId)).catch(() => { });
   }, [departmentId, triggerGetDepartmentById]);
 
   const isEmergencyDepartment = useMemo(() => {
@@ -289,88 +301,53 @@ const UrgentCareList = () => {
   }, [departmentData]);
 
   const handlePatientSearchClick = useCallback(() => {
-    setFilterLoading(true);
     setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
     setPage(0);
-    setSearchTick(prev => prev + 1);
   }, [patientSearchDraft]);
 
-  const filterParams = useMemo(() => {
-    if (!departmentId || !isEmergencyDepartment) return null;
-
-    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
-    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
-    const chiefComplaint =
-      String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
-    const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
-    const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
-    const normalizedPriorities =
-      uniqueNonEmpty(priorities) ??
-      uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
-    const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
-
-    return {
-      departmentId: String(departmentId),
-      fromDate,
-      toDate,
-      statusIn: normalizedStatusIn,
-      patientName,
-      mrn,
-      encounterReasons: normalizedEncounterReasons,
-      chiefComplaint,
-      priorities: normalizedPriorities,
-      hasPrescription,
-      hasOrder,
-      isObserved,
-      page,
-      size: pageSize,
-      sort: DEFAULT_SORT,
-      timestamp: searchTick
-    };
-  }, [
-    DEFAULT_STATUS,
-    dateFilter.fromDate,
-    dateFilter.toDate,
-    departmentId,
-    encounterReasons,
-    hasOrder,
-    isObserved,
-    page,
-    pageSize,
-    priorities,
-    record,
-    statusIn,
-    todayStr,
-    hasPrescription,
-    patientSearchApplied,
-    searchTick,
-    isEmergencyDepartment
-  ]);
+  const filterParams = appliedFilters;
 
   const {
     data: encountersPaged,
-    isFetching: isEncountersFetching,
-    isLoading: isEncountersLoading,
-    refetch: refetchEncounters
-  } = useFilterEncountersQuery(filterParams as any, {
-    skip: !filterParams
+    isFetching,
+    isLoading,
+    refetch
+  } = useFilterEncountersQuery(appliedFilters, {
+    skip: !appliedFilters
   });
 
-  useEffect(() => {
-    if (!isEncountersFetching) {
-      setFilterLoading(false);
-    }
-  }, [isEncountersFetching]);
+useEffect(() => {
+  if (!isFetching && isSearchTriggered) {
+    setIsSearchTriggered(false);
+  }
+}, [isFetching, isSearchTriggered]);
+
+useEffect(() => {
+  if (!filterParams && departmentId && isEmergencyDepartment) {
+    const fromDate = toISODate(dateFilter.fromDate);
+    const toDate = toISODate(dateFilter.toDate);
+
+    setAppliedFilters({
+      departmentId: String(departmentId),
+      fromDate,
+      toDate,
+      statusIn: DEFAULT_STATUS,
+      page: 0,
+      size: pageSize,
+      sort: DEFAULT_SORT
+    });
+  }
+}, [departmentId, isEmergencyDepartment]);
 
   const dateRangeCountsSkip = !departmentId || !isEmergencyDepartment;
 
   const dateRangeCountParams = useMemo(
     () => ({
       departmentId: String(departmentId ?? ''),
-      fromDate: toISODate(dateFilter.fromDate) ?? todayStr,
-      toDate: toISODate(dateFilter.toDate) ?? todayStr
+      fromDate: toISODate(dateFilter.fromDate),
+      toDate: toISODate(dateFilter.toDate)
     }),
-    [departmentId, dateFilter.fromDate, dateFilter.toDate, todayStr]
+    [departmentId, dateFilter.fromDate, dateFilter.toDate]
   );
 
   const { data: totalErPatientsCount } = useCountDepartmentTotalByDateRangeQuery(
@@ -413,7 +390,7 @@ const UrgentCareList = () => {
 
     getBulkPatientBasicInfo(patientIdsForBulk as any)
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   }, [patientIdsForBulk, getBulkPatientBasicInfo, isEmergencyDepartment]);
 
   const patientMap = useMemo(() => {
@@ -510,12 +487,12 @@ const UrgentCareList = () => {
 
   useEffect(() => {
     if (!isEmergencyDepartment || roomIdsFromAssignments.length === 0) return;
-    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => {});
+    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => { });
   }, [isEmergencyDepartment, roomIdsFromAssignments, getRoomsByIds]);
 
   useEffect(() => {
     if (!isEmergencyDepartment || bedIdsFromAssignments.length === 0) return;
-    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => {});
+    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => { });
   }, [isEmergencyDepartment, bedIdsFromAssignments, getBedsByIds]);
 
   const roomsMap = useMemo(() => {
@@ -570,24 +547,24 @@ const UrgentCareList = () => {
         resolvedBed: bedFromApi,
         apRoom: roomFromApi?.name
           ? {
-              ...(row?.apRoom ?? {}),
-              key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
-              name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
-            }
+            ...(row?.apRoom ?? {}),
+            key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
+            name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
+          }
           : row?.apRoom,
         apBed: bedFromApi?.name
           ? {
-              ...(row?.apBed ?? {}),
-              key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
-              name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
-            }
+            ...(row?.apBed ?? {}),
+            key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
+            name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
+          }
           : row?.apBed
       };
     });
   }, [normalizedTableData, activeAssignmentsMap, roomsMap, bedsMap]);
 
   const handleRefreshAfterBedChange = useCallback(async () => {
-    await refetchEncounters();
+    await refetch();
 
     const refreshedAssignmentsResult = await refetchActiveAssignments();
     const refreshedAssignments = refreshedAssignmentsResult?.data ?? activeAssignments ?? [];
@@ -615,38 +592,38 @@ const UrgentCareList = () => {
     if (refreshedBedIds.length > 0) {
       await getBedsByIds({ ids: refreshedBedIds }).unwrap();
     }
-  }, [refetchEncounters, refetchActiveAssignments, getRoomsByIds, getBedsByIds, activeAssignments]);
+  }, [refetch, refetchActiveAssignments, getRoomsByIds, getBedsByIds, activeAssignments]);
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
- const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
+  const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
 
-const startEncounterSafe = async (row: any) => {
-  const encounterId = getEncounterId(row);
-  if (!encounterId) return false;
+  const startEncounterSafe = async (row: any) => {
+    const encounterId = getEncounterId(row);
+    if (!encounterId) return false;
 
-  const statusUpper = String(row?.status ?? '').toUpperCase();
+    const statusUpper = String(row?.status ?? '').toUpperCase();
 
-  if (statusUpper === 'ONGOING') {
-    return true; 
-  }
+    if (statusUpper === 'ONGOING') {
+      return true;
+    }
 
-  if (startingEncounterIdsRef.current.has(encounterId)) {
-    return false;
-  }
+    if (startingEncounterIdsRef.current.has(encounterId)) {
+      return false;
+    }
 
-  startingEncounterIdsRef.current.add(encounterId);
+    startingEncounterIdsRef.current.add(encounterId);
 
-  try {
-    await startEncounter({ id: encounterId }).unwrap();
-    return true;
-  } catch (error: any) {
-    handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
-    return false;
-  } finally {
-    startingEncounterIdsRef.current.delete(encounterId);
-  }
-};
+    try {
+      await startEncounter({ id: encounterId }).unwrap();
+      return true;
+    } catch (error: any) {
+      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+      return false;
+    } finally {
+      startingEncounterIdsRef.current.delete(encounterId);
+    }
+  };
 
   const cancelEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
@@ -751,7 +728,7 @@ const startEncounterSafe = async (row: any) => {
     const isCancelled = await cancelEncounterSafe(encounter);
     if (!isCancelled) return;
 
-    refetchEncounters();
+    refetch();
     setOpen(false);
   };
 
@@ -786,16 +763,24 @@ const startEncounterSafe = async (row: any) => {
     return `${minutes} min`;
   };
 
-
   const handleClearFilters = () => {
     const now = new Date();
-    const lastWeekDate = new Date(now);
-    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+    const lastWeek = new Date(now);
+    lastWeek.setDate(lastWeek.getDate() - 7);
 
-    setFilterLoading(true);
-    setRecord({});
-    setDateFilter({ fromDate: lastWeekDate, toDate: now });
-    setStatusIn(DEFAULT_STATUS);
+    const clearedDateFilter = {
+      fromDate: new Date(lastWeek.getTime()),
+      toDate: new Date(now.getTime() + 1000)
+    };
+
+    const fromDate = toISODate(clearedDateFilter.fromDate);
+    const toDate = toISODate(clearedDateFilter.toDate);
+
+    setRecord({ chiefComplain: '' });
+
+    setDateFilter({ ...clearedDateFilter });
+
+    setStatusIn([...DEFAULT_STATUS]);
     setEncounterReasons([]);
     setPriorities([]);
     setHasPrescription(undefined);
@@ -803,14 +788,25 @@ const startEncounterSafe = async (row: any) => {
     setIsObserved(undefined);
 
     const clearedSearch = { searchByField: 'fullName', patientName: '' };
-    setPatientSearchDraft(clearedSearch);
-    setPatientSearchApplied(clearedSearch);
+    setPatientSearchDraft({ ...clearedSearch });
+    setPatientSearchApplied({ ...clearedSearch });
 
     setPage(0);
-    setSearchTick(prev => prev + 1);
+    setIsSearchTriggered(false);
+
+    setAppliedFilters({
+      departmentId: String(departmentId),
+      fromDate,
+      toDate,
+      statusIn: [...DEFAULT_STATUS],
+      page: 0,
+      size: pageSize,
+      sort: DEFAULT_SORT
+    });
+
+    setFiltersKey(prev => prev + 1);
   };
 
-  
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -1142,65 +1138,93 @@ const startEncounterSafe = async (row: any) => {
 
   const filters = () => (
     <>
-      <Form layout="inline" fluid className="date-filter-form">
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="From Date"
-          fieldName="fromDate"
-          record={dateFilter}
-          setRecord={v => {
-            setFilterLoading(true);
-            setDateFilter(v);
-            setPage(0);
-          }}
-        />
+      <div key={filtersKey}>
+        
+        <Form layout="inline" fluid className="date-filter-form">
 
-        <MyInput
-          column
-          width={180}
-          fieldType="date"
-          fieldLabel="To Date"
-          fieldName="toDate"
-          record={dateFilter}
-          setRecord={v => {
-            setFilterLoading(true);
-            setDateFilter(v);
-            setPage(0);
-          }}
-        />
+          <MyInput
+            column
+            width={180}
+            fieldType="date"
+            fieldLabel="From Date"
+            fieldName="fromDate"
+            record={dateFilter}
+            setRecord={v => {
+              setDateFilter(v);
+              setPage(0);
+            }}
+          />
 
-        <SearchPatientCriteria
-          record={patientSearchDraft}
-          setRecord={setPatientSearchDraft}
-          onSearchClick={handlePatientSearchClick}
-        />
+          <MyInput
+            column
+            width={180}
+            fieldType="date"
+            fieldLabel="To Date"
+            fieldName="toDate"
+            record={dateFilter}
+            setRecord={v => {
+              setDateFilter(v);
+              setPage(0);
+            }}
+          />
 
-        <MyInput
-          column
-          width={260}
-          fieldType="checkPicker"
-          fieldLabel="Encounter Status"
-          fieldName="statusIn"
-          selectData={EncounterStatusEnum}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={{ statusIn }}
-          setRecord={(v: any) => {
-            setFilterLoading(true);
-            setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
-            setPage(0);
-          }}
-        />
-      </Form>
+          <SearchPatientCriteria
+            record={patientSearchDraft}
+            setRecord={setPatientSearchDraft}
+            onSearchClick={handlePatientSearchClick}
+          />
+
+          <MyInput
+            column
+            width={260}
+            fieldType="checkPicker"
+            fieldLabel="Encounter Status"
+            fieldName="statusIn"
+            selectData={EncounterStatusEnum}
+            selectDataLabel="label"
+            selectDataValue="value"
+            record={{ statusIn }}
+            setRecord={(v: any) => {
+              setStatusIn(Array.isArray(v?.statusIn) ? v.statusIn : []);
+              setPage(0);
+            }}
+          />
+
+        </Form>
+
+      </div>
 
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
+        searchOnClick={() => {
+          const fromDate = toISODate(dateFilter.fromDate);
+          const toDate = toISODate(dateFilter.toDate);
+
+          const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+
+          setAppliedFilters({
+            departmentId: String(departmentId),
+            fromDate,
+            toDate,
+            statusIn: uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS,
+            patientName,
+            mrn,
+            encounterReasons: uniqueNonEmpty(encounterReasons),
+            chiefComplaint: record?.chiefComplain || undefined,
+            priorities: uniqueNonEmpty(priorities),
+            hasPrescription,
+            hasOrder,
+            isObserved,
+            page,
+            size: pageSize,
+            sort: DEFAULT_SORT
+          });
+        }}
         content={
           <div className="advanced-filters">
-            <Form key={JSON.stringify(record)} fluid className="dissss">
+            <Form fluid className="dissss">
+
               <MyInput
                 fieldName="encounterReasons"
                 fieldType="checkPicker"
@@ -1210,9 +1234,10 @@ const startEncounterSafe = async (row: any) => {
                 fieldLabel="Encounter Reason"
                 record={{ encounterReasons }}
                 setRecord={(v: any) => {
-                  setFilterLoading(true);
                   const raw = Array.isArray(v) ? v : v?.encounterReasons;
-                  setEncounterReasons(Array.isArray(raw) ? raw.map(String).filter(Boolean) : []);
+                  setEncounterReasons(
+                    Array.isArray(raw) ? raw.map(String).filter(Boolean) : []
+                  );
                   setPage(0);
                 }}
                 searchable
@@ -1224,11 +1249,7 @@ const startEncounterSafe = async (row: any) => {
                 fieldName="chiefComplain"
                 fieldType="text"
                 record={record}
-                setRecord={v => {
-                  setFilterLoading(true);
-                  setRecord(v);
-                  setPage(0);
-                }}
+                setRecord={setRecord}
                 fieldLabel="Chief Complain"
               />
 
@@ -1238,7 +1259,6 @@ const startEncounterSafe = async (row: any) => {
                 fieldType="checkPicker"
                 record={{ priorities }}
                 setRecord={(v: any) => {
-                  setFilterLoading(true);
                   setPriorities(Array.isArray(v?.priorities) ? v.priorities : []);
                   setPage(0);
                 }}
@@ -1249,6 +1269,7 @@ const startEncounterSafe = async (row: any) => {
                 fieldLabel="Priority"
                 searchable={true}
               />
+
             </Form>
           </div>
         }
@@ -1256,17 +1277,16 @@ const startEncounterSafe = async (row: any) => {
     </>
   );
 
-  const tableLoading =
-    filterLoading ||
-    isDepartmentFetching ||
-    isEncountersLoading ||
-    isEncountersFetching ||
-    patientsBulkLoading ||
-    isAssignmentsLoading ||
-    isAssignmentsFetching ||
-    isRoomsByIdsLoading ||
-    isBedsByIdsLoading;
-
+const tableLoading =
+  isDepartmentFetching ||
+  isLoading ||
+  isFetching ||
+  patientsBulkLoading ||
+  isAssignmentsLoading ||
+  isAssignmentsFetching ||
+  isRoomsByIdsLoading ||
+  isBedsByIdsLoading;
+  
   if (!departmentId) {
     return (
       <Panel>
@@ -1378,7 +1398,7 @@ const startEncounterSafe = async (row: any) => {
         open={openTransferPatientModal}
         setOpen={setOpenTransferPatientModal}
         localEncounter={encounter}
-        refetchInpatientList={refetchEncounters}
+        refetchInpatientList={refetch}
       />
 
       <MyModal
