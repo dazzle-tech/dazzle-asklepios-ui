@@ -56,13 +56,8 @@ const AddResourceModal = ({
   const [record, setRecord] = useState({ ...newAvailabilityTemplateCreateDTO });
   const prevTemplateTypeRef = useRef<any>(record?.templateType);
 
-  // ✅ ref لتتبع إذا الـ modal فتح للتو (لأول مرة بالـ edit)
   const justOpenedRef = useRef(false);
 
-  console.log("editRecord: ", editRecord);
-
-  const [triggerPractitionersFacility, { isFetching: isPractitionerFacilityLoading }] =
-    useLazyGetAppointablePractitionerByLoggedInFacilityQuery();
 
   // ─── Diagnostic Tests Pagination State ────────────────────────────────────
   const diagnosticTestSize = 20;
@@ -149,6 +144,28 @@ const AddResourceModal = ({
     value: r.id
   }));
 
+  const getEditTimingValues = (source: any) => ({
+    durationMinutes: Number(
+      source?.durationMinutes ??
+      source?.slotDurationMinutes ??
+      0
+    ),
+    defaultBufferBeforeMinutes: Number(
+      source?.defaultBufferBeforeMinutes ??
+      source?.slotBeforeMinutes ??
+      0
+    ),
+    defaultBufferAfterMinutes: Number(
+      source?.defaultBufferAfterMinutes ??
+      source?.slotAfterMinutes ??
+      0
+    ),
+    parallelCapacityValue: Number(
+      source?.parallelCapacityValue ??
+      1
+    )
+  });
+
 
   const loadDiagnosticTests = async ({ page = 0, append = false }) => {
     try {
@@ -231,7 +248,6 @@ const AddResourceModal = ({
       }
 
     } catch (e) {
-      console.error(e);
       setAllRooms([]);
     }
   };
@@ -346,7 +362,6 @@ const AddResourceModal = ({
   useEffect(() => {
     if (!open) return;
 
-    // ✅ علّم إنه فتح للتو — بيستخدمه الـ resourceId effect
     justOpenedRef.current = true;
 
     if (editRecord?.id) {
@@ -369,11 +384,7 @@ const AddResourceModal = ({
         facilityId: selectedFacility?.id ?? editRecord?.facilityId,
         departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId,
         workingDays: editRecordWorkingDays,
-        parallelCapacityValue: Number(
-          editRecord?.parallelCapacityValue ??
-          mainTemplate?.parallelCapacityValue ??
-          1
-        )
+        ...getEditTimingValues(editRecord)
       });
       workingDaysTouchedRef.current = false;
       return;
@@ -605,15 +616,18 @@ const AddResourceModal = ({
     });
   }, [open, parentTemplateAllowedServices]);
 
-  useEffect(() => {
-    console.log("resource record: ", record);
-  }, [record]);
+ 
 
   useEffect(() => {
     if (!record?.resourceId) {
+      if (isEditingRecord) {
+        return;
+      }
       setRecord(prev => ({
         ...prev,
         durationMinutes: 0,
+        defaultBufferBeforeMinutes: 0,
+        defaultBufferAfterMinutes: 0,
         parallelCapacityValue: Number(mainTemplate?.parallelCapacityValue ?? 1),
         defaultPractitionerId: undefined
       }));
@@ -635,24 +649,25 @@ const AddResourceModal = ({
           const finalWorkingDays = hasWorkingDays
             ? practitionerDays
             : (mainTemplate?.workingDays ?? []);
+          const shouldApplyResourceDefaults = !isEditingRecord;
 
-          // ✅ الحل:
-          // - أول مرة بتفتح الـ modal بالـ edit (justOpenedRef = true) → حط أيام الـ record المحفوظ
-          // - لما تغير الـ practitioner وأنت بالـ edit              → حط أيام الـ practitioner الجديد
-          // - بالـ add دايماً                                        → حط أيام الـ practitioner
           if (isEditingRecord && justOpenedRef.current) {
             applyWorkingDays(editRecordWorkingDays);
-            justOpenedRef.current = false; // ← خلّص العلامة بعد أول مرة
+            justOpenedRef.current = false; 
           } else {
             applyWorkingDays(finalWorkingDays);
           }
 
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res?.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
-            defaultPractitionerId: res?.id
-          }));
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1),
+              defaultPractitionerId: res?.id
+            }));
+          }
         })
         .catch(() => {
           if (!isEditingRecord) {
@@ -666,11 +681,17 @@ const AddResourceModal = ({
       getService(record.resourceId)
         .unwrap()
         .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
+          const shouldApplyResourceDefaults = !isEditingRecord;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+            }));
+          }
 
           if (!isEditingRecord) {
             applyWorkingDays(mainTemplate?.workingDays ?? []);
@@ -684,11 +705,17 @@ const AddResourceModal = ({
       getRoom({ id: record.resourceId })
         .unwrap()
         .then(res => {
-          setRecord(prev => ({
-            ...prev,
-            durationMinutes: res.defaultDurationMinutes,
-            parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
-          }));
+          const shouldApplyResourceDefaults = !isEditingRecord;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+            }));
+          }
 
           if (!isEditingRecord) {
             applyWorkingDays(mainTemplate?.workingDays ?? []);
@@ -697,7 +724,52 @@ const AddResourceModal = ({
           justOpenedRef.current = false;
         });
     }
+    else if (record?.templateType === 'DIAGNOSTIC_TEST') {
+      getDiagnosticTest(String(record.resourceId))
+        .unwrap()
+        .then(res => {
+          const shouldApplyResourceDefaults = !isEditingRecord;
 
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.data?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.data?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.data?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.data?.parallelCapacityValue ?? 1)
+            }));
+          }
+
+          if (!isEditingRecord) {
+            applyWorkingDays(mainTemplate?.workingDays ?? []);
+          }
+
+          justOpenedRef.current = false;
+        });
+    }
+    else if (record?.templateType === 'CATALOG') {
+      getCatalog(record.resourceId)
+        .unwrap()
+        .then(res => {
+          const shouldApplyResourceDefaults = !isEditingRecord;
+
+          if (shouldApplyResourceDefaults) {
+            setRecord(prev => ({
+              ...prev,
+              durationMinutes: res?.defaultDurationMinutes,
+              defaultBufferBeforeMinutes: res?.defaultBufferBeforeMinutes,
+              defaultBufferAfterMinutes: res?.defaultBufferAfterMinutes,
+              parallelCapacityValue: Number(res?.parallelCapacityValue ?? 1)
+            }));
+          }
+
+          if (!isEditingRecord) {
+            applyWorkingDays(mainTemplate?.workingDays ?? []);
+          }
+
+          justOpenedRef.current = false;
+        });
+    }
   }, [
     record?.resourceId,
     record?.templateType,
@@ -749,7 +821,6 @@ const AddResourceModal = ({
                         record={record}
                         setRecord={(next) => {
                           workingDaysTouchedRef.current = false;
-                          // ✅ لما يغير الـ type، نعيد العلامة لـ false لأنه مش أول فتح
                           justOpenedRef.current = false;
 
                           setRecord(prev => ({
@@ -960,6 +1031,28 @@ const AddResourceModal = ({
                         setRecord={setRecord}
                         width="100%"
                         disabled
+                      />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={12}>
+                      <MyInput
+                        fieldName="defaultBufferBeforeMinutes"
+                        fieldLabel='Slot Befor'
+                        fieldType="number"
+                        record={record}
+                        setRecord={setRecord}
+                        width="100%"
+                      />
+                    </Col>
+                    <Col md={12}>
+                      <MyInput
+                        fieldLabel='Slot After'
+                        fieldName="defaultBufferAfterMinutes"
+                        fieldType="number"
+                        record={record}
+                        setRecord={setRecord}
+                        width="100%"
                       />
                     </Col>
                   </Row>
@@ -1189,6 +1282,8 @@ const AddResourceModal = ({
       ...record,
       numberOfResourcesExpected: Number(record.numberOfResourcesExpected),
       durationMinutes: Number(record?.durationMinutes),
+      defaultBufferBeforeMinutes: Number(record?.defaultBufferBeforeMinutes),
+      defaultBufferAfterMinutes: Number(record?.defaultBufferAfterMinutes),
       parallelCapacityValue: Number(record?.parallelCapacityValue ?? 1),
       allowedServices: Array.isArray(record?.allowedServices)
         ? record.allowedServices
