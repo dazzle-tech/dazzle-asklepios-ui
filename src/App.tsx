@@ -163,8 +163,6 @@ import Metadata from './pages/setup/metadata-view';
 import Modules from './pages/setup/modules-setup';
 import OperationSetup from './pages/setup/operation-setup';
 import Checklist from './pages/setup/operations/checklist';
-import StimulsoftReportViewer from './StimulsoftReportViewer';
-import ReportDesigner from './StimulsoftDesigner';
 import Practitioners from './pages/setup/practioners-setup-new';
 import PotintialDuplicate from './pages/setup/potential-duplicate - new';
 import ProcedureSetup from './pages/setup/procedure-setup';
@@ -600,8 +598,6 @@ const App = () => {
               <Route path="/district-country/:countryId" element={<CountryDistrictPage />} />
               <Route path="organization-definition" element={<OrganizationDefinition />} />
               <Route path="organization-holidays" element={<OrganizationHolidays />} />
-              <Route path="/patient-report" element={<StimulsoftReportViewer />} />
-              <Route path="/patient-report-designer" element={<ReportDesigner />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="nurse-assessment" element={<NurseAssessment />} />
                 <Route path="physician-assessment" element={<PhysicianAssessment />} />

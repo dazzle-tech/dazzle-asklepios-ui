@@ -1,7 +1,6 @@
 import MyInput from '@/components/MyInput';
 import {
   useGetLovDefultByCodeQuery,
-  useGetLovValuesByCodeQuery,
   useSaveUserMutation
 } from '@/services/setupService';
 
@@ -15,7 +14,6 @@ import { useLazyGetMenuQuery } from '@/services/security/UserRoleService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 import { useLazyGetDictionaryQuery } from '@/services/setup/translationService';
 import { store } from '@/store';
-import RemindIcon from '@rsuite/icons/legacy/Remind';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -26,11 +24,7 @@ import './styles.less';
 
 const SignIn = () => {
   const [getDictionary] = useLazyGetDictionaryQuery();
-  const [changePasswordView, setChangePasswordView] = useState(false);
-  const [newPassword, setNewPassword] = useState<string | undefined>();
-  const [newPasswordConfirm, setNewPasswordConfirm] = useState<string | undefined>();
   const [errText, setErrText] = useState(' ');
-  const [resetPasswordView, setResetPasswordView] = useState(false);
   const { data: langdefult } = useGetLovDefultByCodeQuery('SYSTEM_LANG');
   const [credentials, setCredentials] = useState({
     username: '',
@@ -141,27 +135,6 @@ const SignIn = () => {
     }
   };
 
-  // Handle saving new password
-  const handleSaveNewPassword = () => {
-    if (changePasswordView) {
-      if (!newPassword || newPassword === '') {
-        setErrText('Please ensure both fields are filled.');
-      } else {
-        if (newPassword === newPasswordConfirm) {
-          saveUser({ password: newPassword, mustChangePassword: false })
-            .unwrap()
-            .then(() => {
-              navigate('/');
-            });
-        } else setErrText('Please ensure both fields have the same password.');
-      }
-    }
-  };
-
-  // Effect to clear error text when password fields change
-  useEffect(() => {
-    setErrText(' ');
-  }, [newPassword, newPasswordConfirm]);
 
   useEffect(() => {
     const selectedObject = langData?.find(item => item?.langKey === credentials?.language);
@@ -187,7 +160,7 @@ const SignIn = () => {
             <img src={Logo} alt="Tenant Logo" />
           </Panel>
 
-          {!resetPasswordView && (
+      
             <Panel className="sign-in-panel ">
               <Form fluid onKeyPress={handleKeyPress}>
                 <MyInput
@@ -257,41 +230,10 @@ const SignIn = () => {
                 </Form.Group>
               </Form>
             </Panel>
-          )}
+       
         </div>
 
-        {/* Modal for Password Change */}
-        <Modal backdrop="static" role="alertdialog" open={changePasswordView} size="xs">
-          <Modal.Body>
-            <RemindIcon className="remind-icon" />
-            {'New password required!'}
-            <Form fluid>
-              <Form.Group>
-                <Form.ControlLabel>New Password</Form.ControlLabel>
-                <Form.Control
-                  name="New Password"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e)}
-                />
-              </Form.Group>
-              <Form.Group>
-                <Form.ControlLabel>Password Confirm</Form.ControlLabel>
-                <Form.Control
-                  name="Password Confirm"
-                  value={newPasswordConfirm}
-                  onChange={e => setNewPasswordConfirm(e)}
-                />
-              </Form.Group>
-            </Form>
-            <p className="error-text"> {errText}</p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={handleSaveNewPassword} appearance="primary">
-              Ok
-            </Button>
-            <Button appearance="subtle">Cancel</Button>
-          </Modal.Footer>
-        </Modal>
+    
       </Panel>
     </Panel>
   );
