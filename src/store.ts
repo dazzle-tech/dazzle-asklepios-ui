@@ -46,7 +46,6 @@ import { encounterAttachmentsService } from './services/encounters/attachmentsSe
 import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
 import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
 
-import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
 
 import { labService } from './services/labService';
@@ -79,7 +78,6 @@ import { PractitionerService } from './services/setup/practitioner/PractitionerS
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
 
 import { Icd10Service } from './services/setup/icd10service';
-import { ResourceService } from './services/setup/resource/ResourceService';
 
 import { ageGroupService } from './services/setup/ageGroupService';
 import { potintialService } from '@/services/potintialDuplicateService';
@@ -278,9 +276,7 @@ export const store = configureStore({
     // account / billing base
     [accountApi.reducerPath]: accountApi.reducer,
 
-    // appointment
-    [appointmentService.reducerPath]: appointmentService.reducer,
-
+  
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
@@ -358,7 +354,6 @@ export const store = configureStore({
     // age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
-    [ResourceService.reducerPath]: ResourceService.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
 
     // diagnostic tests
@@ -584,8 +579,8 @@ export const store = configureStore({
         activeIngredientFoodInteractionService.middleware,
         activeIngredientsService.middleware,
 
-        // appointment / clinical
-        appointmentService.middleware,
+        //  clinical
+  
         dvmService.middleware,
         encounterService.middleware,
         dentalService.middleware,
@@ -637,7 +632,6 @@ export const store = configureStore({
         PractitionerDepartmentService.middleware,
 
         // misc setup
-        ResourceService.middleware,
         ageGroupService.middleware,
         Icd10Service.middleware,
         allergensService.middleware,

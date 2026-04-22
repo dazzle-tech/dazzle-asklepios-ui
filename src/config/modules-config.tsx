@@ -192,7 +192,6 @@ export const MODULES: Module[] =
         { name: "Practitioners", code: "PRACTITIONERS", description: "", icon: "FaBriefcaseMedical", viewOrder: 5, navPath: "practitioners" },
         { name: "Active Ingredients", code: "ACTIVE_INGREDIENTS", description: "", icon: "FaPills", viewOrder: 7, navPath: "active-ingredients" },
         { name: "Metadata", code: "METADATA", description: "", icon: "FaTags", viewOrder: 0, navPath: "metadata" },
-        { name: "Resources", code: "RESOURCES", description: "Resources setup", icon: "FaBilibili", viewOrder: 6, navPath: "resources" },
         { name: "Dental Actions", code: "DENTAL_ACTIONS", description: "", icon: "FaTeeth", viewOrder: 9, navPath: "dental-actions" },
         { name: "Users", code: "USERS", description: "", icon: "FaUsers", viewOrder: 4, navPath: "users" },
         { name: "Catalog Setup", code: "CATALOG_SETUP", description: "Diagnostic tests catalog", icon: "FaBook", viewOrder: 14, navPath: "catalog" },

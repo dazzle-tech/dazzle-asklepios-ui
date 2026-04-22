@@ -22,7 +22,6 @@ import EncounterDischarge from '@/pages/encounter/encounter-component/encounter-
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';
 import { useGetAllPractitionersQuery } from '@/services/setup/practitioner/PractitionerService';
-import { useGetAllResourcesQuery } from '@/services/setup/resource/ResourceService';
 import { useGetAllDiagnosticTestsQuery } from '@/services/setup/diagnosticTest/diagnosticTestService';
 
 const PatientVisitHistoryTable = ({
@@ -73,11 +72,7 @@ const PatientVisitHistoryTable = ({
   });
 
   // Fetch all resources for lookup
-  const { data: resourcesResponse } = useGetAllResourcesQuery({
-    page: 0,
-    size: 1000, // Fetch a large number to get all resources
-    sort: 'id,asc'
-  });
+  const { data: resourcesResponse } = { data: { data: [] as unknown[] } };
 
   // Fetch all diagnostic tests for lookup
   const { data: diagnosticTestsResponse } = useGetAllDiagnosticTestsQuery({
