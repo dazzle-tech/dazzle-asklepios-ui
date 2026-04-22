@@ -1,7 +1,7 @@
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
-import { useGetActiveDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { useGetDepartmentByTypeAndFacilityAndActiveQuery } from '@/services/security/departmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { faVials } from '@fortawesome/free-solid-svg-icons';
@@ -22,30 +22,29 @@ const DetailsModal = ({
   setOrderTest,
   order,
   edit,
-  patient
+  patient,
+  facilityId
 }) => {
   const [actionType] = useState(null);
   const [requestedPatientAttacment] = useState();
   const [receivedType, setReceivedType] = useState('');
+
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
   const [deptPage, setDeptPage] = useState(0);
-  const { data: receivedLabList } = useGetActiveDepartmentByTypeQuery(
-    receivedType
+  const { data: receivedLabList } = useGetDepartmentByTypeAndFacilityAndActiveQuery(
+    receivedType && facilityId
       ? {
-        type: receivedType,
-        page: deptPage,
-        size: 3
-      }
+          type: receivedType,
+          facilityId: facilityId,
+          page: deptPage,
+          size: 3
+        }
       : skipToken
   );
 
   const {
     data: fetchAttachmentByKeyResponce,
-    error,
-    isLoading,
-    isFetching,
     isSuccess,
-    refetch
   } = useFetchAttachmentByKeyQuery(
     { key: requestedPatientAttacment },
     { skip: !requestedPatientAttacment || (!order?.id && !order?.key) }
@@ -68,7 +67,7 @@ const DetailsModal = ({
 
   useEffect(() => {
     if (receivedLabList?.data) {
-      setAllDepartments((prev) =>
+      setAllDepartments(prev =>
         deptPage === 0 ? receivedLabList.data : [...prev, ...receivedLabList.data]
       );
     }
@@ -116,36 +115,26 @@ const DetailsModal = ({
 
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const statusValue =
     orderTest?.status ?? orderTest?.statusLkey ?? orderTest?.statusLvalue?.valueCode;
-  const isEditable =
-    !edit && (statusValue === 'NEW' || statusValue === 'DIAG_ORDER_STAT_NEW');
+  const isEditable = !edit && (statusValue === 'NEW' || statusValue === 'DIAG_ORDER_STAT_NEW');
 
   const testTypeLabel =
     test?.testTypeLvalue?.lovDisplayVale ?? test?.type ?? test?.testTypeLkey ?? '';
   const testNameLabel = test?.testName ?? test?.name ?? '';
 
   useEffect(() => {
-    if (
-      openDetailsModel &&
-      orderTest?.reasonLkey &&
-      ReasonLovQueryResponse?.object?.length
-    ) {
+    if (openDetailsModel && orderTest?.reasonLkey && ReasonLovQueryResponse?.object?.length) {
       setOrderTest(prev => ({ ...prev }));
     }
   }, [ReasonLovQueryResponse?.object]);
 
-  // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
-
   const dir = isRTL ? 'rtl' : 'ltr';
-
 
   return (
     <div dir={dir}>
@@ -167,7 +156,7 @@ const DetailsModal = ({
         content={
           <div className={clsx('', { 'disabled-panel': edit })}>
             <Form fluid>
-              <div className='details-modal-diagnostic-order-inputs'>
+              <div className="details-modal-diagnostic-order-inputs">
                 <MyInput
                   fieldType="select"
                   fieldLabel="Reason"
@@ -177,7 +166,7 @@ const DetailsModal = ({
                   fieldName={'reasonLkey'}
                   record={orderTest}
                   setRecord={setOrderTest}
-                  width={"12vw"}
+                  width={'12vw'}
                 />
 
                 <MyInput
@@ -190,7 +179,7 @@ const DetailsModal = ({
                   record={orderTest}
                   setRecord={setOrderTest}
                   searchable
-                  width={"12vw"}
+                  width={'12vw'}
                   hasMore={receivedLabList?.links?.next ? true : false}
                   onFetchMore={() => {
                     if (receivedLabList?.links?.next) {
@@ -200,22 +189,29 @@ const DetailsModal = ({
                   }}
                 />
               </div>
+
+              <MyInput
+                height={70}
+                width={'100%'}
+                fieldLabel="Notes"
+                fieldName={'notes'}
+                record={orderTest}
+                setRecord={setOrderTest}
+              />
+
               <PatientDiagnosisTable
                 patient={patient}
                 disabled={!isEditable}
                 selectMode
                 selectedDiagnosisId={orderTest?.icdDiagnosisId}
-                onSelectDiagnosis={(ids) => {
+                onSelectDiagnosis={ids => {
                   const selectedIcd = ids?.[0] ?? null;
-
                   setOrderTest(prev => ({
                     ...prev,
                     icdDiagnosisId: selectedIcd
                   }));
                 }}
               />
-
-
             </Form>
           </div>
         }
