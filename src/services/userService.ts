@@ -218,6 +218,12 @@ export const userService = createApi({
         method: 'PUT',
       }),
     }),
+    resendCreatePasswordEmail: builder.mutation<void, string>({
+  query: (login) => ({
+    url: `/api/admin/users/${encodeURIComponent(login)}/resend-create-password-email`,
+    method: 'POST',
+  }),
+}),
   }),
 
 });
@@ -245,4 +251,5 @@ export const {
   useValidateCreatePasswordKeyQuery,
   useLazyValidateCreatePasswordKeyQuery,
   useGetUserFullNameByLoginQuery,
+  useResendCreatePasswordEmailMutation,
 } = userService;
