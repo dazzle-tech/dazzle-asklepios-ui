@@ -162,7 +162,6 @@ const Reports = ({ patient }) => {
 
  
  const handleGenerateReport = async () => {
-   console.log('Generating report for selectedReport', selectedReport);
    if (!selectedReport?.id) return;
     try {
       const blob = await fetchRadiologyReportPdfData({ reportId: selectedReport.id }).unwrap();
@@ -355,8 +354,8 @@ const Reports = ({ patient }) => {
    
     <MyButton
           onClick={handleGenerateReport}
-          // loading={loading}
-          // disabled={disabled}
+          loading={isGeneratingReport}
+          disabled={selectedReport?.id ? false : true}
           appearance='ghost'
           prefixIcon={() => (
             <FontAwesomeIcon icon={faPrint} style={{ marginRight: 8 }} />

@@ -225,9 +225,6 @@ useEffect(() => {
 
     const targetPath = '/ER-start-triage';
 
-    // Save source in sessionStorage before navigating
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
-
     navigate(targetPath, {
       state: {
         info: 'to_Start_Triage',

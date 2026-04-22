@@ -207,8 +207,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({ inModal = false, patient, encou
       encounter: rowData
     };
 
-    sessionStorage.setItem('encounterPageSource', inModal ? 'PatientEMRModal' : 'PatientEMR');
-
     navigate(targetPath, { state: stateData });
   };
 

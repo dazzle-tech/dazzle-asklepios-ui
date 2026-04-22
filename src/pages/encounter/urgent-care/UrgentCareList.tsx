@@ -619,18 +619,34 @@ const UrgentCareList = () => {
 
   const getEncounterId = (row: any) => row?.id ?? null;
 
-  const startEncounterSafe = async (row: any) => {
-    const encounterId = getEncounterId(row);
-    if (!encounterId) return false;
+ const startingEncounterIdsRef = useRef<Set<string | number>>(new Set());
 
-    try {
-      await startEncounter({ id: encounterId }).unwrap();
-      return true;
-    } catch (error: any) {
-      handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
-      return false;
-    }
-  };
+const startEncounterSafe = async (row: any) => {
+  const encounterId = getEncounterId(row);
+  if (!encounterId) return false;
+
+  const statusUpper = String(row?.status ?? '').toUpperCase();
+
+  if (statusUpper === 'ONGOING') {
+    return true; 
+  }
+
+  if (startingEncounterIdsRef.current.has(encounterId)) {
+    return false;
+  }
+
+  startingEncounterIdsRef.current.add(encounterId);
+
+  try {
+    await startEncounter({ id: encounterId }).unwrap();
+    return true;
+  } catch (error: any) {
+    handleCrudError(error, dispatch, ENCOUNTER_ERROR_MAP);
+    return false;
+  } finally {
+    startingEncounterIdsRef.current.delete(encounterId);
+  }
+};
 
   const cancelEncounterSafe = async (row: any) => {
     const encounterId = getEncounterId(row);
@@ -697,7 +713,6 @@ const UrgentCareList = () => {
       }
     });
 
-    sessionStorage.setItem('encounterPageSource', 'EncounterList');
   };
 
   const handleGoToNurseStation = async (encounterData: any) => {
@@ -715,7 +730,6 @@ const UrgentCareList = () => {
 
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
-    sessionStorage.setItem('encounterPageSource', 'Urgent_Care_List');
     const targetPath = fullPatient?.isPrivatePatient
       ? '/user-access-patient-private'
       : '/nurse-station';
@@ -796,6 +810,7 @@ const UrgentCareList = () => {
     setSearchTick(prev => prev + 1);
   };
 
+  
   const tableColumns = [
     {
       key: 'encounterNumber',
@@ -842,11 +857,28 @@ const UrgentCareList = () => {
     {
       key: 'chiefComplaint',
       title: 'CHIEF COMPLAIN',
-      render: (row: any) => row?.chiefComplaint ?? '-'
+      render: (row: any) => {
+        const text = row?.chiefComplaint || '-';
+
+        const speaker = (
+          <Tooltip>
+            {text}
+          </Tooltip>
+        );
+
+        return (
+          <Whisper trigger="hover" placement="top" speaker={speaker}>
+            <span className="chief-complaint-cell">
+              {text}
+            </span>
+          </Whisper>
+        );
+      }
     },
     {
       key: 'location',
       title: 'LOCATION',
+      expandable: true,
       render: (row: any) => {
         const statusUpper = String(row?.status ?? '').toUpperCase();
 
@@ -935,6 +967,7 @@ const UrgentCareList = () => {
     {
       key: 'encounterDate',
       title: 'DATE',
+      expandable: true,
       render: (row: any) => row?.encounterDate ?? row?.plannedStartDate ?? '-'
     },
     {

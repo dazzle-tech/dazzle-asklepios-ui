@@ -107,7 +107,6 @@ const NormalConsultation = props => {
     encounterId: encounter?.id
   });
 
-  console.log(consultation);
   const [modalKey, setModalKey] = useState(0);
 
   const [dateFilter, setDateFilter] = useState<{
@@ -463,29 +462,39 @@ const NormalConsultation = props => {
         title: <Translate>ACTIONS</Translate>,
         flexGrow: 1,
         render: (rowData: Consultation) => {
-          const status = String(rowData.status ?? '').toUpperCase();
-          const editDisabled = edit || status === 'CONFIRMED';
+const status = String(rowData.status ?? '').toUpperCase();
 
-          return (
-            <MdModeEdit
-              size={22}
-              fill={editDisabled ? '#ccc' : 'var(--primary-gray)'}
-              title={editDisabled ? 'Edit not allowed for confirmed consultation' : 'Edit'}
-              onClick={() => {
-                if (editDisabled) return;
-                if (rowData.toFacilityId) {
-                  getDepartmentsByFacility({ facilityId: rowData.toFacilityId });
-                }
-                setConsultation(rowData);
-                setSelectedRow(rowData);
-                setEditing(status !== 'NEW');
-                setModalKey(prev => prev + 1);
-                setOpenDetailsModal(true);
-              }}
-              className={clsx('icon-button', { 'not-allowed-cell': editDisabled })}
-              style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
-            />
-          );
+const editDisabled =
+  edit ||
+  status === 'CONFIRMED' ||
+  status === 'CANCELLED';
+
+return (
+  <MdModeEdit
+    size={22}
+    fill={editDisabled ? '#ccc' : 'var(--primary-gray)'}
+    title={
+      editDisabled
+        ? 'Edit not allowed for cancelled or confirmed consultation'
+        : 'Edit'
+    }
+    onClick={() => {
+      if (editDisabled) return;
+
+      if (rowData.toFacilityId) {
+        getDepartmentsByFacility({ facilityId: rowData.toFacilityId });
+      }
+
+      setConsultation(rowData);
+      setSelectedRow(rowData);
+      setEditing(status !== 'NEW');
+      setModalKey(prev => prev + 1);
+      setOpenDetailsModal(true);
+    }}
+    className={clsx('icon-button', { 'not-allowed-cell': editDisabled })}
+    style={{ cursor: editDisabled ? 'not-allowed' : 'pointer' }}
+  />
+);
         }
       }
     ],

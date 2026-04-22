@@ -219,7 +219,7 @@ import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 import { currentMedicationService } from './services/patients/currentMedicationService';
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
-
+import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -534,7 +534,8 @@ export const store = configureStore({
     [bedRoomService.reducerPath]: bedRoomService.reducer,
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
     [currentMedicationService.reducerPath]: currentMedicationService.reducer,
-    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer
+    [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
+    [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
 
   },
 
@@ -844,7 +845,8 @@ export const store = configureStore({
         bedRoomService.middleware,
         encounterAssignToBedService.middleware,
         currentMedicationService.middleware,
-        uccMedicationOrderService.middleware
+        uccMedicationOrderService.middleware,
+        laboratoryReportsService.middleware,
       ]
     ) as any
 });

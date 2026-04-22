@@ -247,7 +247,6 @@ const Details = ({
   const hasPractitioners = practitionersResult?.data?.data?.totalElements
     ? practitionersResult.data.data.totalElements > allPractitioners.length
     : false;
-  console.log('practitionersResult====>', practitionersResult);
   useEffect(() => {
     if (!open) return;
 
