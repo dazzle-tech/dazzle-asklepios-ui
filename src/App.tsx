@@ -30,6 +30,7 @@ import Dashboard from './pages/dashboard';
 import ContinuousObservations from './pages/encounter/continuous-observations/ContinuousObservations';
 import DayCaseList from './pages/encounter/day-case/DayCaseList/DayCaseList';
 import Dental from './pages/encounter/dental-screen';
+import DentalProcedures from './pages/encounter/dental-procedures/DentalProcedures';
 import ReferralRequest from './pages/encounter/encounter-component/add-referral-request';
 import AudiometryPuretone from './pages/encounter/encounter-component/audiometry-puretone';
 import BedsideProceduresRequests from './pages/encounter/encounter-component/bedside-procedures-requests';
@@ -623,6 +624,7 @@ const App = () => {
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
+                <Route path="dental-procedures" element={<DentalProcedures />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
@@ -709,6 +711,7 @@ const App = () => {
                 <Route path="medical-warnings" element={<Warning />} />
                 <Route path="cardiology" element={<Cardiology />} />
                 <Route path="dental-care" element={<Dental />} />
+                <Route path="dental-procedures" element={<DentalProcedures />} />
                 <Route path="optometric-exam" element={<OptometricExam />} />
                 <Route path="johns-hopkins-tool" element={<JohnsHopkinsTool />} />
                 <Route path="audiometry" element={<AudiometryPuretone />} />
