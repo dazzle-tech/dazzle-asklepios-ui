@@ -144,6 +144,28 @@ const AddResourceModal = ({
     value: r.id
   }));
 
+  const getEditTimingValues = (source: any) => ({
+    durationMinutes: Number(
+      source?.durationMinutes ??
+      source?.slotDurationMinutes ??
+      0
+    ),
+    defaultBufferBeforeMinutes: Number(
+      source?.defaultBufferBeforeMinutes ??
+      source?.slotBeforeMinutes ??
+      0
+    ),
+    defaultBufferAfterMinutes: Number(
+      source?.defaultBufferAfterMinutes ??
+      source?.slotAfterMinutes ??
+      0
+    ),
+    parallelCapacityValue: Number(
+      source?.parallelCapacityValue ??
+      1
+    )
+  });
+
 
   const loadDiagnosticTests = async ({ page = 0, append = false }) => {
     try {
@@ -364,11 +386,7 @@ const AddResourceModal = ({
         facilityId: selectedFacility?.id ?? editRecord?.facilityId,
         departmentId: editRecord?.departmentId ?? mainTemplate?.departmentId,
         workingDays: editRecordWorkingDays,
-        parallelCapacityValue: Number(
-          editRecord?.parallelCapacityValue ??
-          mainTemplate?.parallelCapacityValue ??
-          1
-        )
+        ...getEditTimingValues(editRecord)
       });
       workingDaysTouchedRef.current = false;
       return;
@@ -606,6 +624,9 @@ const AddResourceModal = ({
 
   useEffect(() => {
     if (!record?.resourceId) {
+      if (isEditingRecord) {
+        return;
+      }
       setRecord(prev => ({
         ...prev,
         durationMinutes: 0,
@@ -632,7 +653,7 @@ const AddResourceModal = ({
           const finalWorkingDays = hasWorkingDays
             ? practitionerDays
             : (mainTemplate?.workingDays ?? []);
-          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
+          const shouldApplyResourceDefaults = !isEditingRecord;
 
           if (isEditingRecord && justOpenedRef.current) {
             applyWorkingDays(editRecordWorkingDays);
@@ -664,7 +685,7 @@ const AddResourceModal = ({
       getService(record.resourceId)
         .unwrap()
         .then(res => {
-          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
+          const shouldApplyResourceDefaults = !isEditingRecord;
 
           if (shouldApplyResourceDefaults) {
             setRecord(prev => ({
@@ -688,7 +709,7 @@ const AddResourceModal = ({
       getRoom({ id: record.resourceId })
         .unwrap()
         .then(res => {
-          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
+          const shouldApplyResourceDefaults = !isEditingRecord;
 
           if (shouldApplyResourceDefaults) {
             setRecord(prev => ({
@@ -711,7 +732,7 @@ const AddResourceModal = ({
       getDiagnosticTest(String(record.resourceId))
         .unwrap()
         .then(res => {
-          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
+          const shouldApplyResourceDefaults = !isEditingRecord;
 
           if (shouldApplyResourceDefaults) {
             setRecord(prev => ({
@@ -734,7 +755,7 @@ const AddResourceModal = ({
       getCatalog(record.resourceId)
         .unwrap()
         .then(res => {
-          const shouldApplyResourceDefaults = !isEditingRecord || !justOpenedRef.current;
+          const shouldApplyResourceDefaults = !isEditingRecord;
 
           if (shouldApplyResourceDefaults) {
             setRecord(prev => ({
