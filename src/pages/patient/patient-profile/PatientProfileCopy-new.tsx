@@ -64,7 +64,7 @@ const { getHeight } = DOMHelper;
                 message:
                   typeof value === 'string'
                     ? value
-                    : value?.message || value?.defaultMessage || 'Invalid value'
+                      : (value as any)?.message || (value as any)?.defaultMessage || 'Invalid value'
               }
             ];
           })
@@ -489,10 +489,8 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
       {visitHistoryModel && (
         <PatientVisitHistory
           visitHistoryModel={visitHistoryModel}
-          quickAppointmentModel={quickAppointmentModel}
           localPatient={localPatient}
           setVisitHistoryModel={setVisitHistoryModel}
-          setQuickAppointmentModel={setQuickAppointmentModel}
         />
       )}
 

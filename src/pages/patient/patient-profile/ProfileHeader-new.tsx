@@ -6,30 +6,26 @@ import {
   useUploadAttachmentsMutation
 } from '@/services/patients/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import type { ApAttachment } from '@/types/model-types';
 import { Patient } from '@/types/model-types-new';
 import { calculateAgeFormat } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import {
-  faBars,
   faBolt,
   faBroom,
   faCalendarCheck,
-  faCalendarDay,
   faCheckDouble,
   faEllipsisVertical,
   faHandHoldingDollar,
   faPersonCircleQuestion,
   faPrint,
   faShareNodes,
-  faThumbsUp,
   faTriangleExclamation,
   faUsersLine
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Icon } from '@rsuite/icons';
-import React, { useCallback, useRef, useState,useEffect } from 'react';
+import React, { useRef, useState,useEffect } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import { Avatar, AvatarGroup, Dropdown, Form, Popover, Stack, Tooltip, Whisper } from 'rsuite';
@@ -73,10 +69,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const profileImageFileInputRef = useRef<HTMLInputElement | null>(null);
-  const [patientImage, setPatientImage] = useState<ApAttachment | undefined>(undefined);
   const [patientImageUrl, setPatientImageUrl] = useState<string>('');
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
-  const [openPrintMenu, setOpenPrintMenu] = useState<boolean>(false);
   const [openScanDocumentModal, setOpenScanDocumentModal] = useState<boolean>(false);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [uploadAttachments] = useUploadAttachmentsMutation();
@@ -90,7 +84,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   const {
     data: profilePictureTicket,
-    refetch: refetchProfilePicture,
     isError
   } = useGetPatientProfilePictureQuery(
     { patientId: patientId! },
@@ -275,10 +268,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     setQuickAppointmentModel(true);
   };
 
-  const handleScanDocumentClick = () => {
-    setOpenScanDocumentModal(true);
-  };
-
   const handleIdParsed = (parsedData: any) => {
     const updatedPatient: Partial<Patient> = {
       ...localPatient
@@ -304,28 +293,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     );
   };
 
-  const closeMenus = useCallback(() => {
-    setOpenMoreMenu(false);
-    setOpenPrintMenu(false);
-  }, []);
-
   React.useEffect(() => {
     const patientWithUrl = localPatient as any;
 
     if (patientWithUrl?.profilePictureUrl) {
       setPatientImageUrl(patientWithUrl.profilePictureUrl);
-      setPatientImage({ url: patientWithUrl.profilePictureUrl } as any);
       return;
     }
 
     if (profilePictureTicket && profilePictureTicket.url && !isError) {
       setPatientImageUrl(profilePictureTicket.url);
-      setPatientImage({ url: profilePictureTicket.url } as any);
       return;
     }
 
     setPatientImageUrl('');
-    setPatientImage(undefined);
   }, [localPatient, profilePictureTicket, isError]);
 
 useEffect(() => {

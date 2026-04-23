@@ -98,7 +98,6 @@ const InsuranceModal = ({
   refetchInsurance,
   editing,
   insuranceBrowsing,
-  relations,
   hideSaveBtn = false
 }) => {
   const dispatch = useAppDispatch();
@@ -110,7 +109,6 @@ const InsuranceModal = ({
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
-  const [relationsList, setRelationsList] = useState<any[]>();
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>();
 
   const [payorPage, setPayorPage] = useState(0);
@@ -256,15 +254,6 @@ const InsuranceModal = ({
     setAllRelatives([]);
     onClose();
   };
-
-  useEffect(() => {
-    const namesAndIds =
-      relations?.map(relation => ({
-        name: `${relation.relativePatientObject.firstName} ${relation.relativePatientObject.lastName}`,
-        id: relation.id
-      })) || [];
-    setRelationsList(namesAndIds);
-  }, [relations]);
 
   useEffect(() => {
     if (open) {
