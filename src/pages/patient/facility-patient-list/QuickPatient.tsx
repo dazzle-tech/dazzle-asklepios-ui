@@ -70,6 +70,16 @@ const ENCOUNTER_FIELD_LABELS: Record<string, string> = {
   departmentDailySequenceNumber: 'Department Daily Sequence'
 };
 
+const QUICK_PATIENT_REQUIRED_FIELDS: Array<{ key: keyof Patient; label: string }> = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'sexAtBirth', label: 'Gender' },
+  { key: 'primaryMobileNumber', label: 'Primary Mobile Number' },
+  { key: 'email', label: 'Email' },
+  { key: 'dateOfBirth', label: 'DOB' }
+];
+
 const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>) => {
   const data = err?.data ?? err ?? {};
   const traceId = data?.traceId || data?.requestId || data?.correlationId;
@@ -265,6 +275,19 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
 
         return merged;
       });
+
+      if (page === 0) {
+        setSelectedDepartmentId(prevSelectedDepartmentId => {
+          if (prevSelectedDepartmentId !== null && prevSelectedDepartmentId !== undefined) {
+            return prevSelectedDepartmentId;
+          }
+
+          const firstDepartmentId = rows?.[0]?.id;
+          return firstDepartmentId !== undefined && firstDepartmentId !== null
+            ? Number(firstDepartmentId)
+            : null;
+        });
+      }
     } catch (error) {
       console.error('fetchDepartments error:', error);
 
@@ -309,7 +332,46 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
     }
   }, [open]);
 
+  const validateMandatoryFields = () => {
+    if (isUnknown) return true;
+
+    const missingFields = QUICK_PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
+      const value = (localPatient as any)?.[key];
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string' && value.trim() === '') return true;
+      return false;
+    }).map(({ label }) => label);
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill all mandatory fields: ${missingFields.join(', ')}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
+    if (!validateMandatoryFields()) {
+      return;
+    }
+
+    if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
+      if (!selectedFacilityId || !selectedDepartmentId) {
+        dispatch(
+          notify({
+            msg: 'Please select a department before saving.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+    }
+
     try {
       let savedPatient: Patient;
 
@@ -345,16 +407,6 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
       if (pageCode === 'ER_Triage' || pageCode === 'Urgent_Care_Triage') {
         const facilityId = selectedFacilityId;
         const departmentId = selectedDepartmentId;
-
-        if (!departmentId || !facilityId) {
-          dispatch(
-            notify({
-              msg: 'Please select a department before saving.',
-              sev: 'warning'
-            })
-          );
-          return;
-        }
 
         const practitionerId = 0;
 
@@ -476,6 +528,7 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           required
           vr={validationResult}
           column
+          fieldType="textnumber"
           fieldName="primaryMobileNumber"
           record={localPatient}
           setRecord={setLocalPatient}
@@ -502,6 +555,8 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           fieldName="dateOfBirth"
           record={localPatient}
           setRecord={setLocalPatient}
+          disableFutureDates
+          showWarningIfBeforeYear1900
           disabled={isUnknown}
           width={200}
         />
