@@ -1058,8 +1058,8 @@ export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateR
 
 export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGenerationBatchApplyDTO = {
   templateId: 0,
-  startDate: '',
-  endDate: '',
+  startDate: null,
+  endDate: null,
   deferred: false,
   deferredAt: null,
   scope: '',

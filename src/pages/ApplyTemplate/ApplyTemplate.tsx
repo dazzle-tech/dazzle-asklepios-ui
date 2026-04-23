@@ -3,23 +3,24 @@ import MyModal from "@/components/MyModal/MyModal";
 import { useNavigate } from "react-router-dom";
 import type { AvailabilityGenerationBatchApplyDTO, AvailabilityTemplateResponseVM } from "@/types/model-types-new";
 import { useApplyAvailabilityTemplateMutation } from "@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService";
+import type { ApplyAvailabilityTemplateRequest } from "@/services/appointment/availabilityGenerationBatchService/availabilityGenerationBatchService";
 import ApplyTemplateStepOne, { type ApplyTemplateStepOneHandle } from "./components/ApplyTemplateStepOne";
 import ApplyTemplateStepTwo from "./components/ApplyTemplateStepTwo";
-import { formatLocalDateTimeForApi } from "./applyTemplateDateUtils";
+import { formatInstantForApi } from "./applyTemplateDateUtils";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
 
-function buildApplyAvailabilityPayload(dto: AvailabilityGenerationBatchApplyDTO): AvailabilityGenerationBatchApplyDTO {
+function buildApplyAvailabilityPayload(dto: AvailabilityGenerationBatchApplyDTO): ApplyAvailabilityTemplateRequest {
   const scope = String((dto as any)?.scope ?? "").trim().toUpperCase();
   const childId = Number((dto as any)?.childTemplateId ?? 0);
   const effectiveTemplateId =
     scope === "SPECIFIC_RESOURCE" && childId > 0 ? childId : Number(dto.templateId ?? 0);
   return {
     templateId: effectiveTemplateId,
-    startDate: formatLocalDateTimeForApi(dto.startDate),
-    endDate: formatLocalDateTimeForApi(dto.endDate),
+    startDate: formatInstantForApi(dto.startDate),
+    endDate: formatInstantForApi(dto.endDate),
     deferred: dto.deferred,
-    deferredAt: dto.deferredAt ?? null,
+    deferredAt: dto.deferredAt ? formatInstantForApi(dto.deferredAt) : null,
     scope: dto.scope,
     holidayHandlingMode: dto.holidayHandlingMode ?? null,
   };
@@ -52,8 +53,8 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
   const [internalOpen, setInternalOpen] = React.useState(true);
   const [formState, setFormState] = React.useState<AvailabilityGenerationBatchApplyDTO>({
     templateId: selectedTemplate?.id ?? 0,
-    startDate: "",
-    endDate: "",
+    startDate: null as any,
+    endDate: null as any,
     deferred: false,
     deferredAt: null,
     scope: "DEPARTMENT",
@@ -136,8 +137,8 @@ const ApplyTemplate: React.FC<ApplyTemplateProps> = ({ open, setOpen, selectedTe
     setFormState(prev => ({
       ...prev,
       templateId: selectedTemplate?.id ?? 0,
-      startDate: "",
-      endDate: "",
+      startDate: null as any,
+      endDate: null as any,
       childTemplateId: null as any,
       scope: "DEPARTMENT",
       holidayHandlingMode: null,

@@ -38,3 +38,9 @@ export function formatLocalDateTimeForApi(value: unknown): string {
   const d = parseApplyTemplateDateTime(value);
   return d ? format(d, "yyyy-MM-dd'T'HH:mm:ss") : "";
 }
+
+/** For JSON Instant fields on backend (must include timezone/offset) */
+export function formatInstantForApi(value: unknown): string {
+  const d = parseApplyTemplateDateTime(value);
+  return d ? d.toISOString() : "";
+}

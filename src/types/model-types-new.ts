@@ -379,8 +379,8 @@ export interface AvailabilityTemplateUpdateDTO extends AvailabilityTemplateCreat
 
 export interface AvailabilityGenerationBatchApplyDTO {
   templateId: number;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   deferred: boolean;
   deferredAt?: string | null;
   scope: string;
