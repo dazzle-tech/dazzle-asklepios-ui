@@ -165,7 +165,7 @@ const ScanDocumentModal: React.FC<ScanDocumentModalProps> = ({
         source: 'PATIENT_DOCUMENT'
       };
 
-      const result = await uploadAttachments(uploadParams).unwrap();
+      await uploadAttachments(uploadParams).unwrap();
 
       dispatch(
         notify({

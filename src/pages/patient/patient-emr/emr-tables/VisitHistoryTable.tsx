@@ -4,8 +4,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useCancelEncounterMutation,
-  useCompleteEncounterMutation,
-  useDischargeEncounterMutation,
   useGetEncountersByPatientQuery
 } from '@/services/encounters/patientEncounterService';
 
@@ -69,9 +67,6 @@ const PatientVisitHistoryTable: React.FC<Props> = ({ localPatient, departmentTyp
   }, [encountersRaw, departmentsMap, departmentType]);
 
   const [cancelEncounter] = useCancelEncounterMutation();
-  const [completeEncounter] = useCompleteEncounterMutation();
-  const [dischargeEncounter] = useDischargeEncounterMutation();
-
   const handleCancel = async () => {
     if (!selectedVisit) return;
 

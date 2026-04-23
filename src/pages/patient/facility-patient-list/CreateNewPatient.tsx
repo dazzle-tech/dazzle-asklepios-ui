@@ -491,7 +491,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
-  const [deptPage, setDeptPage] = useState(0);
+  const [, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
   const EncounterTypeEnum = useEnumOptions('EncounterType');
@@ -575,7 +575,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
     if (!selectedFacilityId) return;
 
     try {
-
       const result = await triggerDepartments({
         facilityId: selectedFacilityId,
         encounterType: 'EMERGENCY',

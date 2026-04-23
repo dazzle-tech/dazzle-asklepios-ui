@@ -34,19 +34,19 @@ const MainScreenBarFilters: React.FC<MainScreenBarFiltersProps> = ({
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const isLightMode = mode === 'light';
 
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+useEffect(() => {
+  const handleResize = () => setWidth(window.innerWidth);
+  window.addEventListener('resize', handleResize);
+  handleResize();
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
 
-  useEffect(() => {
-    if (width > 800) {
-      setDisplaySearch(true);
-    } else {
-      setDisplaySearch(false);
-    }
-  }, [width, setDisplaySearch]);
+useEffect(() => {
+  const nextValue = width > 800;
+  if (displaySearch !== nextValue) {
+    setDisplaySearch(nextValue);
+  }
+}, [width, displaySearch, setDisplaySearch]);
 
   useEffect(() => {
   if (!record.eventKey) return;

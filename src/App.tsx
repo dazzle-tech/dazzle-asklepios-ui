@@ -117,7 +117,6 @@ import PatientChart from './pages/patient/patient-chart';
 import PatientEMR from './pages/patient/patient-emr';
 import PatientList from './pages/patient/patient-list';
 import PatientMergeFiles from './pages/patient/patient-merge-files';
-import PatientProfile from './pages/patient/patient-profile';
 import PatientProfileNew from './pages/patient/patient-profile/PatientProfileCopy-new';
 import PatientProfileOLD from './pages/patient-old/patient-profile/PatientProfileCopy-new';
 import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
@@ -140,7 +139,7 @@ import ResetPassword from './pages/reset-password/ResetPassword';
 import CreatePassword from './pages/create-password/CreatePassword';
 import Favoraite from './pages/review-results';
 import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
-import ApplyTemplateList from './pages/ApplyTemplate/ApplyTemplateList';
+import ApplyTemplateList from './pages/appointments-new/ApplyTemplate/ApplyTemplateList';
 import AccessRoles from './pages/setup/access-roles';
 import AgeGroupSetup from './pages/setup/age-group';
 import Allergens from './pages/setup/allergens-setup';
@@ -561,7 +560,6 @@ const App = () => {
               <Route index element={<Dashboard />} />
               <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="my-consultations" element={<MyConsultations />} />
-              <Route path="patient-profile-old" element={<PatientProfile />} />
               <Route
                 path="patient-quick-appointment"
                 element={<PatientQuickAppointment {...({} as any)} />}

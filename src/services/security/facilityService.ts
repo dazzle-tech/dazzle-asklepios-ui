@@ -72,6 +72,7 @@ export const {
   useUpdateFacilityMutation,
   useGetAllFacilitiesQuery,
   useGetFacilityByIdQuery,
+  useLazyGetFacilityByIdQuery,
   useGetFacilityTypesQuery,
   useGetActiveFacilitiesQuery
 } = facilityService;

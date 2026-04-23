@@ -4061,14 +4061,6 @@ export interface PatientAdministrativeWarningsCreateDTO {
   warningType: string;
   description?: string;
 }
-
-export interface PatientAdministrativeWarningsResolveDTO {
-  id: number;
-}
-
-export interface PatientAdministrativeWarningsUndoResolveDTO {
-  id: number;
-}
 export interface ReferralRequest {
   id: number | undefined;
 

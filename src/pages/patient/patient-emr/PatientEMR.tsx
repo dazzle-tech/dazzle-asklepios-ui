@@ -12,12 +12,9 @@ import { Patient } from '@/types/model-types-new';
 import {
   faBarsProgress,
   faBed,
-  faBedPulse,
-  faCalendar,
   faConciergeBell,
   faFileInvoice,
   faHouseChimneyMedical,
-  faMicroscope,
   faMoneyBillTransfer,
   faPaperclip,
   faPersonShelter,
@@ -33,7 +30,7 @@ import {
   faXRay
 } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import 'react-tabs/style/react-tabs.css';
 import { DOMHelper } from 'rsuite';
 import ProfileSidebar from '../patient-profile/ProfileSidebar-new';
@@ -53,7 +50,6 @@ import RadiologyTable from './emr-tables/RadiologyTable';
 import VaccinationTable from './emr-tables/VaccinationTable';
 import VisitHistoryTable from './emr-tables/VisitHistoryTable';
 import './styles.less';
-import { set } from 'lodash';
 
 const { getHeight } = DOMHelper;
 
@@ -71,7 +67,6 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
   hideProfileSidebar
 }) => {
   const [expand, setExpand] = useState(false);
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = patient || enc ? undefined : (location.state as any);
@@ -92,7 +87,7 @@ const PatientEMR: React.FC<PatientEMRProps> = ({
 
   const [refetchData, setRefetchData] = useState(false);
 
-  const [windowHeight, setWindowHeight] = useState(getHeight(window));
+  const [windowHeight] = useState(getHeight(window));
 
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const [activeSectionCard, setActiveSectionCard] = useState<string | null>(null);

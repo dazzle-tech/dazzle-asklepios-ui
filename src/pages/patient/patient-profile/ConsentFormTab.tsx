@@ -3,6 +3,8 @@ import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 
 const ConsentFormTab = ({ patient, isClick }) => {
+  void patient;
+  void isClick;
   //Table Columns Content
   const columns = [
     {
