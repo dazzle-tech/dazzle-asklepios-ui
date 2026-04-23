@@ -1,31 +1,23 @@
 import {
   faBullhorn,
-  faCalendarDays,
   faChartColumn,
-  faCommentDots,
-  faFile,
   faFileLines,
   faHeadset,
+  faHospital,
   faNoteSticky,
   faRepeat,
-  faStethoscope,
-  faUserDoctor
+  faUserDoctor,
+  faSun,
+  faMoon,
+  faEllipsisVertical
 } from '@fortawesome/free-solid-svg-icons';
-import { faSun } from '@fortawesome/free-solid-svg-icons';
-import { faMoon } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Close as CloseIcon } from '@mui/icons-material';
-import { Dialog, DialogContent, DialogTitle, IconButton, Tooltip, Typography } from '@mui/material';
 import ArrowDownLineIcon from '@rsuite/icons/ArrowDownLine';
 import NoticeIcon from '@rsuite/icons/Notice';
 import { FaEarthAmericas } from 'react-icons/fa6';
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import ChatScreen from '../ChatScreen/ChatScreen';
 import './style.less';
-import MyAppointmentScreen from '../MyAppointmentScreen/MyAppointmentScreen';
-import MyModal from '../MyModal/MyModal';
-import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons';
 import {
   Avatar,
   Badge,
@@ -38,184 +30,68 @@ import {
   Whisper,
   WhisperInstance
 } from 'rsuite';
-import { openChangePassword, openEditProfile, notify } from '@/utils/uiReducerActions';
+import { openChangePassword, openEditProfile } from '@/utils/uiReducerActions';
 import { useLogoutMutation } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
-import { logout, setSelectedDepartment } from '@/reducers/authSlice';
+import { logout } from '@/reducers/authSlice';
 import { useAppSelector } from '@/hooks';
-import { useChangeLangMutation } from '@/services/uiService';
-import { setLang, setMode } from '@/reducers/uiSlice';
-import { faHospital } from '@fortawesome/free-solid-svg-icons';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
-import { formatEnumString, conjureValueBasedOnIDFromList } from '@/utils';
-import {
-  useGetActiveUserDepartmentsByUserQuery,
-  useGetDefaultUserDepartmentByUserQuery
-} from '@/services/security/userDepartmentsService';
-import { UserDepartment } from '@/types/model-types-new';
-import { useGetDepartmentsQuery } from '@/services/security/departmentService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-
+import { formatEnumString } from '@/utils';
+import { setLang, setMode } from '@/reducers/uiSlice';
+import { Tooltip, IconButton } from '@mui/material';
+import DepartmentSwitcher from '../DepartmentSwitcher/DepartmentSwitcher';
+import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
+import {  useLazyGetFacilityByIdQuery } from '@/services/security/facilityService';
 const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expandNotes }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const mode = useAppSelector(state => state.ui.mode);
+  const uiSlice = useAppSelector(state => state.ui);
+  const authSlice = useAppSelector(state => state.auth);
+
   const trigger = useRef<WhisperInstance>(null);
   const direction = localStorage.getItem('direction');
-  const authSlice = useAppSelector(state => state.auth);
-  const toast = useCallback(
-    (msg: string) => {
-      dispatch(
-        notify({
-          msg,
-          sev: 'warning'
-        })
-      );
-    },
-    [dispatch]
-  );
 
-  const { data: departmentsResponse } = useGetDepartmentsQuery({ page: 0, size: 10000 });
-  const departments = departmentsResponse?.data ?? [];
-
-  const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
-  const facilities = Array.isArray(facilitiesResponse) ? facilitiesResponse : [];
-
-  const [showChatModal, setShowChatModal] = useState(false);
-  const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
+  const [apiLogout, { isLoading: isLoggingOut }] = useLogoutMutation();
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
-
+const authAlice = useAppSelector(state => state.auth);
+  const selectedDepartmentId = authAlice.selectedDepartment?.departmentId || '';
+  const selectedFacilityId = authAlice.selectedDepartment?.facilityId || '';
   const { data: langData } = useGetAllLanguagesQuery({});
-  const navigate = useNavigate();
-  const userId = authSlice.user?.id;
 
-  type UserDepartmentWithNames = UserDepartment & {
-    departmentName?: string | null;
-    facilityName?: string | null;
+  const closeMenus = useCallback(() => {
+    setOpenMoreMenu(false);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await apiLogout({}).unwrap();
+    } catch (e) { }
+
+    dispatch(logout());
+    localStorage.setItem('logout_event', Date.now().toString());
+    navigate('/login', { replace: true });
   };
+ const [getFacilityById, { data: facility }] = useLazyGetFacilityByIdQuery();
+  
+  const [getDepartmentById, { data: department, isLoading, isFetching, error }] =
+    useLazyGetDepartmentByIdQuery();
 
-  const selectedDepartment = authSlice.selectedDepartment;
-  const hasWarnedNoDepartmentRef = useRef(false);
 
-  const selectedFacilityId =
-    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
-  const facilityKey = selectedFacilityId ?? 'no-facility';
+     useEffect(() => {
+        if (!selectedDepartmentId) return;
+    
+        getDepartmentById(selectedDepartmentId, true);
+      }, [ selectedDepartmentId, getDepartmentById]);
 
-  const {
-    data: activeDepartmentsResponse,
-    isLoading: isLoadingDepartments
-  } = useGetActiveUserDepartmentsByUserQuery(
-    { userId: userId as number, facilityId: facilityKey },
-    {
-      skip: !userId,
-      refetchOnMountOrArgChange: true
-    }
-  );
-
-  const activeDepartments = (activeDepartmentsResponse ?? []) as UserDepartmentWithNames[];
-
-  const storedDepartmentMatch =
-    selectedDepartment &&
-    activeDepartments.find(
-      dept =>
-        dept?.departmentId === selectedDepartment.departmentId &&
-        dept?.facilityId === selectedDepartment.facilityId
-    );
-
-  const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
-  const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
-
-  const { data: defaultDepartmentResponse } = useGetDefaultUserDepartmentByUserQuery(
-    userId as number,
-    {
-      skip: !shouldFetchDefault
-    }
-  );
-
-  const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
-  const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
-
-  const selectedDepartmentEffective = useMemo(() => {
-    return (
-      storedDepartmentMatch ??
-      defaultDepartmentEntity ??
-      (activeDepartments.length > 0 ? activeDepartments[0] : null)
-    );
-  }, [storedDepartmentMatch, defaultDepartmentEntity, activeDepartments]);
-
-  const resolveFacilityName = (facilityId?: string | number | null) => {
-    if (facilityId != null) {
-      const resolved =
-        conjureValueBasedOnIDFromList(facilities as any[], facilityId, 'name') ??
-        (facilityId ? `Facility #${facilityId}` : undefined);
-
-      if (resolved) return resolved;
-    }
-
-    const tenantFacility = authSlice?.tenant?.selectedFacility;
-    return tenantFacility?.name ?? tenantFacility?.facilityName ?? undefined;
-  };
-
-  const resolveDepartmentName = (departmentId?: string | number | null) => {
-    if (departmentId == null) return undefined;
-
-    return (
-      conjureValueBasedOnIDFromList(departments as any[], departmentId, 'name') ??
-      (departmentId ? `Department #${departmentId}` : undefined)
-    );
-  };
-
-  useEffect(() => {
-    if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
-      return;
-    }
-
-    if (activeDepartments.length === 0 && !isLoadingDepartments && !selectedDepartment) {
-      if (!hasWarnedNoDepartmentRef.current) {
-        toast(
-          'No departments are assigned to your user. Please contact the administrator to configure departments.'
-        );
-        hasWarnedNoDepartmentRef.current = true;
-      }
-      return;
-    }
-
-    if (!selectedDepartmentEffective) {
-      return;
-    }
-
-    const nextDepartmentId = selectedDepartmentEffective.departmentId;
-    const nextFacilityId = selectedDepartmentEffective.facilityId;
-
-    const sameSelection =
-      selectedDepartment?.departmentId === nextDepartmentId &&
-      selectedDepartment?.facilityId === nextFacilityId;
-
-    if (sameSelection) {
-      return;
-    }
-
-    dispatch(
-      setSelectedDepartment({
-        departmentId: nextDepartmentId,
-        facilityId: nextFacilityId,
-        departmentName: resolveDepartmentName(nextDepartmentId),
-        facilityName: resolveFacilityName(nextFacilityId)
-      })
-    );
-  }, [
-    authSlice?.user?.id,
-    authSlice?.tenant?.selectedFacility?.id,
-    selectedDepartment?.departmentId,
-    selectedDepartment?.facilityId,
-    selectedDepartmentEffective?.departmentId,
-    selectedDepartmentEffective?.facilityId,
-    isLoadingDepartments,
-    activeDepartments.length,
-    dispatch,
-    toast
-  ]);
-
+      
+     useEffect(() => {
+        if (!selectedFacilityId) return;
+    
+        getFacilityById(selectedFacilityId, true);
+      }, [ selectedFacilityId, getFacilityById]);
   const contentOfMoreIconMenu = (
     <Popover full>
       <Dropdown.Menu>
@@ -315,8 +191,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
     );
   };
 
-  const uiSlice = useAppSelector(state => state.ui);
-
   const renderLangSpeaker = ({ onClose, left, top, className }: any, ref) => {
     const handleSelect = () => {
       onClose();
@@ -348,10 +222,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   };
 
   const renderAdminSpeaker = ({ onClose, left, top, className }: any, ref) => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const [apiLogout, { isLoading: isLoggingOut }] = useLogoutMutation();
-
     const handleOpenChangePassword = () => {
       dispatch(openChangePassword());
     };
@@ -362,19 +232,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
     const handleSelect = () => {
       onClose();
-    };
-
-    const handleLogout = async () => {
-      try {
-        await apiLogout({}).unwrap();
-      } catch (e) {
-      }
-
-      dispatch(logout());
-
-      localStorage.setItem('logout_event', Date.now().toString());
-
-      navigate('/login', { replace: true });
     };
 
     return (
@@ -405,119 +262,6 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
       </Popover>
     );
   };
-
-  const renderDepartmentsSpeaker = ({ onClose, left, top, className }: any, ref) => (
-    <Popover ref={ref} className={className} style={{ left, top, width: 320 }} full>
-      <div
-        style={{
-          padding: '8px 12px',
-          fontWeight: 600,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4
-        }}
-      >
-        <span>My Departments</span>
-        {(selectedDepartment?.facilityName ||
-          authSlice?.tenant?.selectedFacility?.name ||
-          authSlice?.tenant?.selectedFacility?.facilityName) && (
-            <span style={{ fontSize: '12px', color: '#6c757d' }}>
-              {selectedDepartment?.facilityName ??
-                authSlice?.tenant?.selectedFacility?.name ??
-                authSlice?.tenant?.selectedFacility?.facilityName}
-            </span>
-          )}
-      </div>
-
-      <Divider style={{ margin: 0 }} />
-
-      {isLoadingDepartments ? (
-        <div style={{ padding: '12px' }}>Loading departments…</div>
-      ) : activeDepartments.length === 0 ? (
-        <div style={{ padding: '12px' }}>No active departments found.</div>
-      ) : (
-        <List bordered style={{ maxHeight: 240, overflowY: 'auto', margin: '8px 12px' }}>
-          {activeDepartments.map(dept => {
-            const isDefault =
-              defaultDepartmentEntity?.id != null
-                ? defaultDepartmentEntity.id === dept.id
-                : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                defaultDepartmentEntity?.facilityId === dept.facilityId;
-
-            const isActive =
-              selectedDepartment?.departmentId === dept.departmentId &&
-              selectedDepartment?.facilityId === dept.facilityId;
-
-            return (
-              <List.Item key={dept.id ?? `${dept.userId}-${dept.departmentId}`}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button
-                      type="button"
-                      style={{
-                        fontWeight: 600,
-                        border: 'none',
-                        background: 'transparent',
-                        padding: 0,
-                        cursor: 'pointer',
-                        textAlign: 'left'
-                      }}
-                      onClick={() => {
-                        dispatch(
-                          setSelectedDepartment({
-                            departmentId: dept.departmentId,
-                            facilityId: dept.facilityId,
-                            departmentName: resolveDepartmentName(dept.departmentId),
-                            facilityName: resolveFacilityName(dept.facilityId)
-                          })
-                        );
-                        window.location.reload();
-                        onClose?.();
-                      }}
-                    >
-                      {resolveDepartmentName(dept.departmentId)}
-                    </button>
-
-                    {isActive && (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          background: '#facc15',
-                          color: '#1f2937',
-                          padding: '1px 6px',
-                          borderRadius: 999
-                        }}
-                      >
-                        Current
-                      </span>
-                    )}
-
-                    {isDefault && (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          background: 'var(--deep-blue)',
-                          color: 'var(--white)',
-                          padding: '1px 6px',
-                          borderRadius: 999
-                        }}
-                      >
-                        Default
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </List.Item>
-            );
-          })}
-        </List>
-      )}
-    </Popover>
-  );
-
-  const closeMenus = useCallback(() => {
-    setOpenMoreMenu(false);
-  }, []);
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -640,8 +384,15 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
         {(width > 500 || !displaySearch) && (
           <>
-            <Whisper placement="bottomEnd" trigger="click" speaker={renderDepartmentsSpeaker}>
-              <span>
+            <DepartmentSwitcher placement="bottomEnd" reloadOnSelect>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer'
+                }}
+              >
                 <Tooltip title="Switch Department">
                   <IconButton size="small">
                     <FontAwesomeIcon
@@ -650,9 +401,24 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
                     />
                   </IconButton>
                 </Tooltip>
-              </span>
-            </Whisper>
 
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: direction === 'LTR' ? 'flex-start' : 'flex-end',
+                    lineHeight: 1.1
+                  }}
+                >
+                  <span style={{ fontWeight: 600, fontSize: '12px' }}>
+                    {facility?.name}
+                  </span>
+                  <span style={{ color: '#9E9E9E', fontSize: '11px' }}>
+                    {department?.name}
+                  </span>
+                </div>
+              </div>
+            </DepartmentSwitcher>
             <Whisper
               placement="bottomEnd"
               trigger="click"
