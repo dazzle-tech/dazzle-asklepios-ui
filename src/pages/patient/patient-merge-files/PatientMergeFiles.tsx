@@ -11,7 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Col, Grid, Panel, Row } from 'rsuite';
 import { getHeight } from 'rsuite/esm/DOMHelper';
-import ProfileSidebar from '../patient-profile/ProfileSidebar';
+import ProfileSidebar from '../patient-profile/ProfileSidebar-new';
 
 const PatientMergeFiles: React.FC = () => {
   const [, setExpand] = useState(false);

@@ -117,7 +117,6 @@ import PatientChart from './pages/patient/patient-chart';
 import PatientEMR from './pages/patient/patient-emr';
 import PatientList from './pages/patient/patient-list';
 import PatientMergeFiles from './pages/patient/patient-merge-files';
-import PatientProfile from './pages/patient/patient-profile';
 import PatientProfileNew from './pages/patient/patient-profile/PatientProfileCopy-new';
 import PatientProfileOLD from './pages/patient-old/patient-profile/PatientProfileCopy-new';
 import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
@@ -561,7 +560,6 @@ const App = () => {
               <Route index element={<Dashboard />} />
               <Route path="incident-portal" element={<IncidentPortal />} />
               <Route path="my-consultations" element={<MyConsultations />} />
-              <Route path="patient-profile-old" element={<PatientProfile />} />
               <Route
                 path="patient-quick-appointment"
                 element={<PatientQuickAppointment {...({} as any)} />}
