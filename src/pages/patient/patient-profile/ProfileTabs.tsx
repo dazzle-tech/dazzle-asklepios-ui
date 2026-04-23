@@ -137,10 +137,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     }
   }, [patientAgeGroupResponse]);
 
-  console.log('ageGroupValue in ProfileTabs-new:', ageGroupValue);
-  console.log('dateOfBirth in ProfileTabs-new:', localPatient?.dateOfBirth);
-  console.log('patientAgeGroupResponse in ProfileTabs-new:', patientAgeGroupResponse);
-
   // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';

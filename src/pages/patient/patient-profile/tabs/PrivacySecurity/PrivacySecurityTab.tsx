@@ -1,6 +1,5 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { Patient, PatientHIPAA } from '@/types/model-types-new';
 import { PlusRound, CheckRound } from '@rsuite/icons';
 import React, { useEffect, useState } from 'react';
@@ -96,7 +95,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
       }
       dispatch(notify({ msg: 'HIPAA saved successfully', sev: 'success' }));
     } catch (err) {
-      console.log(err);
       dispatch(notify({ msg: err, sev: 'error' }));
     }
   };

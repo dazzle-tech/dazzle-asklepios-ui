@@ -31,8 +31,6 @@ const IDTab = ({ localPatient }) => {
   });
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
 
-  console.log('countryLovQueryResponse', countryLovQueryResponse);
-
   const [deletePatientDocument] = useDeletePatientDocumentMutation();
 
   // Pagination

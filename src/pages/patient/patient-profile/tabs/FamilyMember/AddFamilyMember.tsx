@@ -5,7 +5,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { InputGroup, Form, Input } from 'rsuite';
 import { notify } from '@/utils/uiReducerActions';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SearchIcon from '@rsuite/icons/Search';
 import { faPeopleRoof } from '@fortawesome/free-solid-svg-icons';
 import { useAppDispatch } from '@/hooks';
@@ -44,7 +44,6 @@ const AddFamilyMember = ({
 
   const isEditMode = !!selectedPatientRelation?.id;
   const [allowedSecondGenders, setAllowedSecondGenders] = useState<string[] | null>(null);
-console.log('allowedSecondGenders:', allowedSecondGenders);
   const [fetchMatrixByFirstGender] = useLazyGetByFirstGenderQuery();
 
   const firstGender = localPatient?.sexAtBirth || localPatient?.gender; 

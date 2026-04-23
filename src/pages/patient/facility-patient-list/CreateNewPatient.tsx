@@ -481,7 +481,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
-  const [deptPage, setDeptPage] = useState(0);
+  const [deptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
   const EncounterTypeEnum = useEnumOptions('EncounterType');
@@ -565,13 +565,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
     if (!selectedFacilityId) return;
 
     try {
-      console.log('[TRACE] fetchDepartments:start', {
-        facilityId: selectedFacilityId,
-        encounterType: 'EMERGENCY',
-        page,
-        size: deptSize
-      });
-
       const result = await triggerDepartments({
         facilityId: selectedFacilityId,
         encounterType: 'EMERGENCY',
@@ -581,13 +574,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
       }).unwrap();
 
       const rows = result?.data ?? [];
-
-      console.log('[TRACE] fetchDepartments:success', {
-        page,
-        count: rows.length,
-        rows,
-        links: result?.links
-      });
 
       setAllDepartments(prev => {
         if (page === 0) return rows;

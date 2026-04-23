@@ -46,7 +46,6 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
       </Whisper>
     </div>
   );
-console.log("patientListResponse in bedside reg modal", patientListResponse);
 
   // Table columns
   const tableColumns = [

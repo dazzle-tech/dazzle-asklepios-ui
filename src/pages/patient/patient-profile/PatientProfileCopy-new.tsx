@@ -189,8 +189,6 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-  console.log('SELECTED FACILITY', selectedFacilityId);
-
   const { data: selectedFacility } = useGetFacilityByIdQuery(selectedFacilityId, {
     skip: !selectedFacilityId
   });
