@@ -61,7 +61,7 @@ const AppointmentsTable = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [tableData, setTableData] = useState(sampleAppointments);
+  const [tableData] = useState(sampleAppointments);
 
   const sortedData = [...tableData].sort((a, b) => {
     const aValue = a[sortColumn];

@@ -481,7 +481,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
-  const [deptPage] = useState(0);
+  const [, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
   const EncounterTypeEnum = useEnumOptions('EncounterType');

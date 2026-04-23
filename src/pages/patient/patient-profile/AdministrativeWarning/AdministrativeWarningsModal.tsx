@@ -25,7 +25,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
 import React, { useMemo, useState } from 'react';
-import { Badge, Button, Form, Input, InputGroup } from 'rsuite';
+import { Badge, Form, Input, InputGroup } from 'rsuite';
 import './styles.less';
 
 interface AdministrativeWarningsModalProps {

@@ -1,12 +1,9 @@
 import Translate from '@/components/Translate';
-import { notify } from '@/reducers/uiSlice';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { fromCamelCaseToDBName } from '@/utils';
-import WavePoint from '@rsuite/icons/lib/icons/WavePoint';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { IconButton, Input, Pagination, Panel, Table } from 'rsuite';
+import { Input, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetPatientsQuery } from '@/services/patientService';
 import { setPatient } from '@/reducers/patientSlice';
@@ -17,14 +14,7 @@ const PatientList = () => {
 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
-  const {
-    data: patientListResponse,
-    isLoading: isGettingPatients,
-    isFetching: isFetchingPatients
-  } = useGetPatientsQuery(listRequest);
-
-  const [sortColumn, setSortColumn] = useState();
-  const [sortType, setSortType] = useState();
+  const { data: patientListResponse } = useGetPatientsQuery(listRequest);
 
   return (
     <Panel

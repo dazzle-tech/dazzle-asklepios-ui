@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MyTable from '@/components/MyTable';
-import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import Translate from '@/components/Translate';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { useGetAllDepartmentsWithoutPaginationQuery } from '@/services/security/departmentService';

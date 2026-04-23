@@ -24,13 +24,12 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest } from '@/utils';
 import '../styles.less';
 import CompanionCardModal from './CompanionCardModal';
-import Translate from '@/components/Translate';
 
 const InformationDesk: React.FC = () => {
   const dispatch = useDispatch();
   const { pathname } = useLocation();
 
-  const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({
+  const [insurancePatient] = useState<ApPatientInsurance>({
     ...newApPatientInsurance
   });
   const [dateFilter, setDateFilter] = useState<{ fromDate: string | Date; toDate: string | Date }>({
@@ -42,7 +41,7 @@ const InformationDesk: React.FC = () => {
     ...initialListRequest,
     filters: []
   });
-  const [bedListRequest, setBedListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const [bedListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
 
