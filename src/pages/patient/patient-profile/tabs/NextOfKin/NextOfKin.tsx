@@ -39,7 +39,7 @@ const NextOfKin = ({ patient, isClick }) => {
   );
 
   // ✅ delete mutation
-  const [deleteNextOfKin, { isLoading: isDeleting }] = useDeleteNextOfKinMutation();
+  const [deleteNextOfKin] = useDeleteNextOfKinMutation();
 
   const iconsForActions = rowData => (
     <div className="container-of-icons">

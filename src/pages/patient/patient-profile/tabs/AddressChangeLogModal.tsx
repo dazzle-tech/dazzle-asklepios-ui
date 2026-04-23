@@ -28,7 +28,7 @@ const AddressChangeLogModal: React.FC<AddressChangeLogModalProps> = ({
     { skip: !patientId || !open }
   );
 
-  const { data: countryListResponse, isLoading: isCountriesLoading } = useGetCountriesQuery(
+  const { isLoading: isCountriesLoading } = useGetCountriesQuery(
     undefined,
     { skip: !open }
   );

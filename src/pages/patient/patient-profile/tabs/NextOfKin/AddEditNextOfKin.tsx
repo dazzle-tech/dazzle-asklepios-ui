@@ -18,10 +18,9 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
 
   const relationships = useEnumOptions('RelationType');
 
-  const [addNextOfKin, { isLoading: isCreating }] = useAddNextOfKinMutation();
-  const [updateNextOfKin, { isLoading: isUpdating }] = useUpdateNextOfKinMutation();
+  const [addNextOfKin] = useAddNextOfKinMutation();
+  const [updateNextOfKin] = useUpdateNextOfKinMutation();
 
-  const isSaving = isCreating || isUpdating;
   const getDigits = value => String(value ?? '').replace(/\D/g, '');
   const validateNumberLengths = (nok) => {
     const maxDigits = 10;
@@ -98,7 +97,7 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
           data: { ...toUpdateDto(nextOfKin) }
         }).unwrap();
       } else {
-        const { id, ...rest } = nextOfKin || {};
+        const { ...rest } = nextOfKin || {};
         await addNextOfKin({
           ...rest,
           patientId

@@ -16,8 +16,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
   validationResult
 }) => {
   // Fetch LOV data for various fields
-  const { data: preferredWayOfContactLovQueryResponse } =
-    useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
+  useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
   const preferredWayOfContactEnum = useEnumOptions('PreferredWayOfContact');
   const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
