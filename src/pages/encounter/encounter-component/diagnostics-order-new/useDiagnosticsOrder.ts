@@ -104,12 +104,14 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const [bulkDepartmentModalOpen, setBulkDepartmentModalOpen] = useState(false);
 
-  const [paginationParams] = useState({
+  const [paginationParams, setPaginationParams] = useState({
     page: 0,
-    size: 15,
+    size: 5,
     sort: 'id,asc',
-    timestamp: Date.now()
+    // timestamp: Date.now()
+
   });
+
 
   const [filters, setFilters] = useState({
     testName: '',
@@ -156,16 +158,40 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
     return toNumericId(match?.id ?? match?.departmentId ?? match?.key ?? match?.departmentKey);
   };
 
-const { data: testsResponse, isFetching } = useGetAllActiveDiagnosticTestsQuery(paginationParams);
-const testsList = testsResponse?.data ?? [];
+  const [allTests, setAllTests] = useState<any[]>([]);
 
-const { data: ageGroupsResponse } = useGetAgeGroupsQuery({
-  page: 0,
-  size: 1000,
-  sort: 'id,asc'
-});
 
-const ageGroupsList = ageGroupsResponse?.data ?? [];
+
+  const { data: testsResponse, isFetching } = useGetAllActiveDiagnosticTestsQuery(paginationParams);
+
+  const testsList = allTests;
+
+  useEffect(() => {
+    if (!testsResponse?.data) return;
+
+    setAllTests(prev => {
+      const existingIds = new Set(prev.map(x => x.id));
+      const newData = testsResponse.data.filter(x => !existingIds.has(x.id));
+      return [...prev, ...newData];
+    });
+  }, [testsResponse]);
+
+  const { data: ageGroupsResponse } = useGetAgeGroupsQuery({
+    page: 0,
+    size: 1000,
+    sort: 'id,asc'
+  });
+
+
+  const handleLoadMore = () => {
+    console.log("LOAD MORE CLICKED 🔥");
+    setPaginationParams(prev => ({
+      ...prev,
+      page: prev.page + 1
+    }));
+  };
+
+  const ageGroupsList = ageGroupsResponse?.data ?? [];
 
   // Transfer list state
   const [selectedTestsList, setSelectedTestsList] = useState<any[]>([]);
@@ -242,6 +268,25 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
 
   const favoriteTestIds = useMemo(() => favoriteLinks?.map((f: any) => f.testId) ?? [], [favoriteLinks]);
 
+  const orderTestIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (orderTestList ?? [])
+            .map((ot: any) => ot.testId)
+            .filter(Boolean)
+        )
+      ),
+    [orderTestList]
+  );
+
+  const { data: diagnosticTestsByIdsResponse } = useGetDiagnosticTestsByIdsQuery(
+    orderTestIds.length ? { ids: orderTestIds } : skipToken
+  );
+
+
+
+  
   const { data: favoriteTests, isFetching: loadingFavorites } = useGetDiagnosticTestsByIdsQuery(
     favoriteTestIds.length ? { ids: favoriteTestIds } : skipToken
   );
@@ -321,7 +366,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
           reason: orderTest?.reasonLkey,
           notes: orderTest?.notes,
           orderType: resolveOrderType(test),
-           icdDiagnosisId: orderTest?.icdDiagnosisId,
+          icdDiagnosisId: orderTest?.icdDiagnosisId,
         };
 
         await createOrderTest(createPayload).unwrap();
@@ -334,7 +379,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
           reason: orderTest?.reasonLkey,
           notes: orderTest?.notes,
           icdDiagnosisId: orderTest?.icdDiagnosisId,
-          
+
         };
 
         await updateOrderTest({ id: orderTestId, body: updatePayload }).unwrap();
@@ -474,7 +519,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
       ).toUpperCase();
 
       if (patientGender && testGender !== patientGender) {
-      warnings.push(`${testName}: Only for ${formatEnumString(String(test.gender))}`);
+        warnings.push(`${testName}: Only for ${formatEnumString(String(test.gender))}`);
       }
     }
 
@@ -560,9 +605,24 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
         pickTestId(item)
       );
 
+      const existingTestIds = new Set(
+        orderTestList
+          .filter(t => t.status !== DiagnosticOrderTestStatus.CANCELLED)
+          .map(t => String(t.testId))
+      );
+
+      let added: string[] = [];
+      let duplicates: string[] = [];
+
       await Promise.all(
         validTests.map(async item => {
           const testId = pickTestId(item);
+          const testName = item.name || item.testName || 'Test';
+
+          if (existingTestIds.has(String(testId))) {
+            duplicates.push(testName);
+            return;
+          }
 
           try {
             await createOrderTest({
@@ -570,13 +630,31 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
               testId,
               orderType: item.type || 'LABORATORY'
             }).unwrap();
+
+            added.push(testName);
           } catch (e) {
             console.warn('❌ Failed test:', testId, e);
           }
         })
       );
 
-      dispatch(notify({ msg: 'All Tests Saved Successfully', sev: 'success' }));
+      if (added.length) {
+        dispatch(
+          notify({
+            msg: `✅ ${added.join(', ')} added successfully`,
+            sev: 'success'
+          })
+        );
+      }
+
+      if (duplicates.length) {
+        dispatch(
+          notify({
+            msg: `⚠ ${duplicates.join(', ')} already added`,
+            sev: 'warning'
+          })
+        );
+      }
 
       await orderTestRefetch();
 
@@ -656,7 +734,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
 
       await ordersRefetch();
       await orderTestRefetch();
-     
+
       setOrders({ ...newDiagnosticOrder });
       handleClearDiagnostics();
     } catch (error) {
@@ -705,8 +783,17 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
     }
   };
 
+
+  console.log("diagnosticTestsByIdsResponse", diagnosticTestsByIdsResponse);
+
   // Normalization + sorting
-  const testsMap = useMemo(() => new Map((testsList ?? []).map((t: any) => [t.id, t])), [testsList]);
+    const diagnosticTestsByIds = diagnosticTestsByIdsResponse ?? [];
+
+    const testsMap = useMemo(
+      () => new Map((diagnosticTestsByIds ?? []).map((t: any) => [t.id, t])),
+      [diagnosticTestsByIds]
+    );
+
 
   const STATUS_PRIORITY: Record<string, number> = {
     NEW: 1,
@@ -728,6 +815,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
         return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
       });
   }, [orderTestList, testsMap]);
+
 
   const selectableRowIds = useMemo(() => {
     return normalizedOrderTestList
@@ -867,6 +955,7 @@ const ageGroupsList = ageGroupsResponse?.data ?? [];
 
     // refetch
     ordersRefetch,
-    orderTestRefetch
+    orderTestRefetch,
+    handleLoadMore
   };
 };

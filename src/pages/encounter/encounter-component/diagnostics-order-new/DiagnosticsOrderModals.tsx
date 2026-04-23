@@ -86,6 +86,8 @@ type Props = {
   setSelectedRows: (v: number[]) => void;
 
   handleRecallFavoriteTest: (t: any) => Promise<void> | void;
+
+  handleLoadMore: () => void;
 };
 
 const DiagnosticsOrderModals: React.FC<Props> = props => {
@@ -154,7 +156,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
 
     orderTestRefetch,
     setSelectedRows,
-
+    handleLoadMore,
     handleRecallFavoriteTest
   } = props;
 
@@ -188,12 +190,13 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         fieldName="cancellationReason"
         fieldLabel={'Cancellation Reason'}
         title={'Cancellation'}
+        required={true}
       />
 
       <MyModal
         open={attachmentsModalOpen}
         setOpen={setAttachmentsModalOpen}
-        title={`Attachments - ${test?.test?.testName ?? test?.testName ?? ''}`}
+        title={`Attachments - ${test?.testName ?? test?.name ?? ''}`}
         size="lg"
         hideActionBtn
         content={
@@ -226,6 +229,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
               searchType={searchType}
               setSearchType={setSearchType}
               isFetching={isFetching}
+              onLoadMore={handleLoadMore}
             />
           </div>
         }
@@ -257,6 +261,7 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         title="Test Card"
         size="42vw"
         position="center"
+        hideActionBtn={true}
         steps={[{ title: '', icon: <FontAwesomeIcon icon={faCreditCard} /> }]}
         content={
           <div dir={dir}>

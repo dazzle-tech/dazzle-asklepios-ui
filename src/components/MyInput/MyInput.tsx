@@ -22,25 +22,6 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import dayjs from 'dayjs';
 
-const useSmartPlacement = () => {
-  const ref = React.useRef<any>(null);
-
-  const getPlacement = () => {
-    if (!ref.current) return 'bottomStart';
-
-    const rect = ref.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-
-    if (spaceBelow > 260) return 'bottomStart';
-    if (spaceAbove > spaceBelow) return 'topStart';
-
-    return 'bottomStart';
-  };
-
-  return { ref, getPlacement };
-};
-
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -67,21 +48,21 @@ const focusNextField = (e: any) => {
 
 type MyInputProps = {
   fieldName: string;
-  fieldType?:
-    | 'text'
-    | 'password'
-    | 'textarea'
-    | 'checkbox'
-    | 'datetime'
-    | 'time'
-    | 'select'
-    | 'selectPagination'
-    | 'multyPicker'
-    | 'checkPicker'
-    | 'date'
-    | 'number'
-    | 'check'
-    | 'textnumber';
+fieldType?:
+  | 'text'
+  | 'password'
+  | 'textarea'
+  | 'checkbox'
+  | 'datetime'
+  | 'time'
+  | 'select'
+  | 'selectPagination'
+  | 'multyPicker'
+  | 'checkPicker'
+  | 'date'
+  | 'number'
+  | 'check'
+  | 'textnumber';
   record: any;
   rightAddonwidth?: number | 'auto' | null;
   rightAddon?: React.ReactNode | null;
@@ -177,8 +158,6 @@ const MyInput = ({
   const [isCheckPickerOpen, setIsCheckPickerOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const { ref: pickerRef, getPlacement } = useSmartPlacement();
-
   useEffect(() => {
     const handleScroll = event => {
       const path = event.composedPath ? event.composedPath() : [];
@@ -270,8 +249,9 @@ const MyInput = ({
   const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
 
   // Default placement/preventOverflow for ALL pickers (can be overridden via props)
-  const pickerPlacement = props.placement ?? getPlacement();
-  const pickerPreventOverflow = props.preventOverflow ?? true;
+  const pickerPlacement = props.placement ?? 'autoVerticalStart';
+
+const pickerPreventOverflow = props.preventOverflow ?? true;
 
   const getDynamicMenuMaxHeight = (dataList?: any[]) => {
     if (props?.menuMaxHeight !== undefined && props?.menuMaxHeight !== null) {
@@ -331,9 +311,26 @@ const MyInput = ({
     }
   };
 
-  // Resolve a good container for popups (modal-aware), with user override
-  const resolveContainer = () => document.body;
 
+const [placement, setPlacement] = useState<'topStart' | 'bottomStart'>('bottomStart');
+
+  // Resolve a good container for popups (modal-aware), with user override
+const pickerRef = useRef<any>(null);
+
+const calculatePlacement = () => {
+  if (!pickerRef.current) return 'bottomStart';
+
+  const rect = pickerRef.current.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const spaceAbove = rect.top;
+
+  return spaceBelow > 250 ? 'bottomStart' : 'topStart';
+};
+
+
+  const resolveContainer = () => {
+    return document.querySelector('.rs-content') || document.body;
+  };
   // helper: build label from single أو multiple keys
   const buildCombinedLabel = (item: any, labelKeys: string[], fallback: any) => {
     if (!item || !labelKeys?.length) return fallback;
@@ -381,7 +378,6 @@ const MyInput = ({
       case 'checkbox':
         return (
           <Toggle
-            ref={pickerRef}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             checkedChildren={props.checkedLabel || 'Yes'}
             unCheckedChildren={props.unCheckedLabel || 'No'}
@@ -396,7 +392,6 @@ const MyInput = ({
       case 'datetime':
         return (
           <Form.Control
-            ref={pickerRef}
             className="custom-date-input"
             style={
               {
@@ -412,9 +407,12 @@ const MyInput = ({
             placeholder={props.placeholder}
             onKeyDown={focusNextField}
             open={isDateTimeOpen}
-            onOpen={() => setIsDateTimeOpen(true)}
+            onOpen={() => {
+              setPlacement(calculatePlacement());
+              setIsDateTimeOpen(true);
+            }}
             onClose={() => setIsDateTimeOpen(false)}
-            placement={pickerPlacement}
+            placement={placement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
           />
@@ -423,7 +421,6 @@ const MyInput = ({
       case 'time':
         return (
           <Form.Control
-            ref={pickerRef}
             className="custom-date-input"
             style={
               {
@@ -458,9 +455,11 @@ const MyInput = ({
             cleanable={false}
             onKeyDown={focusNextField}
             open={isTimeOpen}
-            onOpen={() => setIsTimeOpen(true)}
+            onOpen={() => {
+            setPlacement(calculatePlacement());
+            setIsTimeOpen(true);}}
             onClose={() => setIsTimeOpen(false)}
-            placement={pickerPlacement}
+            placement={placement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
           />
@@ -476,8 +475,8 @@ const MyInput = ({
         const dataList = props?.selectData ?? [];
 
         return (
+          <div ref={pickerRef}>
           <Form.Control
-            ref={pickerRef}
             style={{ width: styleWidth, height: props?.height ?? 30 }}
             className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
             block
@@ -493,7 +492,7 @@ const MyInput = ({
             }
             searchBy={props.searchBy}
             container={resolveContainer()}
-            placement={pickerPlacement}
+            placement={placement}
             preventOverflow={pickerPreventOverflow}
             searchable={props.searchable !== undefined ? props.searchable : true}
             cleanable={props.cleanable !== undefined ? props.cleanable : true}
@@ -524,7 +523,9 @@ const MyInput = ({
             onKeyDown={focusNextField}
             loading={props?.loading ?? false}
             open={isSelectOpen}
-            onOpen={() => setIsSelectOpen(true)}
+            onOpen={() => {
+            setPlacement(calculatePlacement());
+            setIsSelectOpen(true);}}
             onClose={() => setIsSelectOpen(false)}
             virtualized={props?.virtualized ?? true}
             renderValue={
@@ -543,7 +544,7 @@ const MyInput = ({
             disabledItemValues={
               props.disabledItemValues ? dataList.map(item => item[valueKey]) : []
             }
-          />
+          /></div>
         );
       }
 
@@ -557,8 +558,8 @@ const MyInput = ({
         const pickerValue = record?.[fieldName] ?? '';
 
         return (
+          <div ref={pickerRef}>
           <Form.Control
-            ref={pickerRef}
             name={fieldName}
             style={{ width: styleWidth, height: props?.height ?? 30 }}
             className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
@@ -662,9 +663,11 @@ const MyInput = ({
             loading={props.loading ?? false}
             menuMaxHeight={props.menuMaxHeight ?? 240}
             open={isSelectOpen}
-            onOpen={() => setIsSelectOpen(true)}
+            onOpen={() => {
+            setPlacement(calculatePlacement());
+            setIsSelectOpen(true);}}
             onClose={() => setIsSelectOpen(false)}
-            placement={pickerPlacement}
+            placement={placement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
             disabledItemValues={
@@ -672,20 +675,20 @@ const MyInput = ({
                 ? (props?.selectData ?? []).map(item => item[props?.selectDataValue])
                 : []
             }
-          />
+          /></div>
         );
       }
 
       case 'multyPicker':
         return (
+        <div ref={pickerRef}>
           <Form.Control
-            ref={pickerRef}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             block
             disabled={props.disabled}
             accepter={TagPicker}
             container={resolveContainer()}
-            placement={pickerPlacement}
+            placement={placement}
             preventOverflow={pickerPreventOverflow}
             name={fieldName}
             data={props?.selectData ?? []}
@@ -700,7 +703,9 @@ const MyInput = ({
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isMultyPickerOpen}
-            onOpen={() => setIsMultyPickerOpen(true)}
+            onOpen={() => {
+            setPlacement(calculatePlacement());
+            setIsMultyPickerOpen(true);}}
             onClose={() => setIsMultyPickerOpen(false)}
             disabledItemValues={
               props.disabledItemValues
@@ -708,18 +713,19 @@ const MyInput = ({
                 : []
             }
           />
+        </div>
         );
 
       case 'checkPicker':
         return (
+        <div ref={pickerRef}>
           <Form.Control
-            ref={pickerRef}
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             block
             disabled={props.disabled}
             accepter={CheckPicker}
             container={resolveContainer()}
-            placement={pickerPlacement}
+            placement={placement}
             preventOverflow={pickerPreventOverflow}
             name={fieldName}
             data={props?.selectData ?? []}
@@ -744,7 +750,9 @@ const MyInput = ({
             menuMaxHeight={getDynamicMenuMaxHeight(props?.selectData)}
             onKeyDown={focusNextField}
             open={isCheckPickerOpen}
-            onOpen={() => setIsCheckPickerOpen(true)}
+            onOpen={() => {
+            setPlacement(calculatePlacement());
+            setIsCheckPickerOpen(true);}}
             onClose={() => setIsCheckPickerOpen(false)}
             disabledItemValues={
               props.disabledItemValues
@@ -752,12 +760,13 @@ const MyInput = ({
                 : []
             }
           />
+        </div>
         );
 
       case 'date':
         return (
+          <div ref={pickerRef}>
           <Form.Control
-            ref={pickerRef}
             className="custom-date-input"
             style={
               {
@@ -806,9 +815,11 @@ const MyInput = ({
               focusNextField(e);
             }}
             open={isDateOpen}
-            onOpen={() => setIsDateOpen(true)}
+            onOpen={() => {
+            setPlacement(calculatePlacement());
+            setIsDateOpen(true);}}
             onClose={() => setIsDateOpen(false)}
-            placement={pickerPlacement}
+            placement={placement}
             preventOverflow={pickerPreventOverflow}
             container={resolveContainer()}
             shouldDisableDate={(date: Date) => {
@@ -819,7 +830,7 @@ const MyInput = ({
               if (props.disableFutureDates) return date > today;
               return false;
             }}
-          />
+          /></div>
         );
 
       case 'number': {
@@ -1006,30 +1017,30 @@ const MyInput = ({
         );
 
       case 'textnumber': {
-        const defaultInputWidth = props?.width ?? 145;
+  const defaultInputWidth = props?.width ?? 145;
 
-        return (
-          <Form.Control
-            style={{
-              width: defaultInputWidth,
-              height: props?.height ?? 30
-            }}
-            disabled={props.disabled}
-            name={fieldName}
-            type="text"
-            inputMode="numeric"
-            value={record?.[fieldName] ?? ''}
-            placeholder={props.placeholder}
-            onChange={(value: string) => {
-              const numericOnly = value.replace(/[^0-9]/g, '');
-              setRecord?.({
-                ...record,
-                [fieldName]: numericOnly
-              });
-            }}
-            onKeyDown={focusNextField}
-          />
-        );
+  return (
+    <Form.Control
+      style={{
+        width: defaultInputWidth,
+        height: props?.height ?? 30
+      }}
+      disabled={props.disabled}
+      name={fieldName}
+      type="text"
+      inputMode="numeric"
+      value={record?.[fieldName] ?? ''}
+      placeholder={props.placeholder}
+      onChange={(value: string) => {
+        const numericOnly = value.replace(/[^0-9]/g, '');
+        setRecord?.({
+          ...record,
+          [fieldName]: numericOnly
+        });
+      }}
+      onKeyDown={focusNextField}
+    />
+  );
       }
 
       default: {

@@ -125,7 +125,6 @@ const getDepartmentName = (id?: number) =>
       render: (rowData: any) => {
         const rowId = Number(rowData.id);
         const isDisabled = rowData.status !== 'NEW';
-        console.log(rowData, "Row Data");
         return (
           <Checkbox
             checked={selectedRows.includes(rowId)}
@@ -147,7 +146,8 @@ const getDepartmentName = (id?: number) =>
       title: <Translate>TEST NAME</Translate>,
       flexGrow: 2,
       fullText: true,
-      render: (rowData: any) => rowData.test?.testName ?? rowData.test?.name ?? rowData.testName ?? ''
+      render: (rowData: any) =>
+        rowData.test?.testName ?? rowData.test?.name ?? rowData.testName ?? ''
     },
     {
       key: 'internalCode',
@@ -168,7 +168,7 @@ const getDepartmentName = (id?: number) =>
     {
       key: 'receivedDepartmentId',
       dataKey: 'receivedDepartmentId',
-      title: <Translate>RECEIVED LAB</Translate>,
+      title: <Translate>RECEIVED Department</Translate>,
       fullText: true,
       flexGrow: 1,
       render: (rowData: any) => {
@@ -254,7 +254,7 @@ const getDepartmentName = (id?: number) =>
       }
     },
     {
-      key: '',
+      key: 'createdAtBy',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
@@ -266,26 +266,30 @@ const getDepartmentName = (id?: number) =>
       )
     },
     {
-      key: '',
+      key: 'updatedAtBy',
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
         <>
-          <span>{rowData.updatedBy}</span>
+          <span>{rowData.lastModifiedBy}</span>
           <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.updatedAt)}</span>
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(rowData.lastModifiedDate)}
+          </span>
         </>
       )
     },
     {
-      key: '',
+      key: 'cancelledAtBy',
       title: <Translate>Cancelled At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
         <>
-          <span>{rowData.deletedBy}</span>
+          <span>{rowData.cancelledBy}</span>
           <br />
-          <span className="date-table-style">{formatDateWithoutSeconds(rowData.deletedAt)}</span>
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(rowData.cancelledDate)}
+          </span>
         </>
       )
     },
@@ -314,6 +318,10 @@ const getDepartmentName = (id?: number) =>
           loading={loadTests}
           data={orderId ? normalizedOrderTestList : []}
           onRowClick={(rowData: any) => {
+            const rowId = Number(rowData.id);
+            if (rowData.status === 'NEW') {
+              handleCheckboxChange(rowId);
+            }
             setOrderTest(normalizeOrderTest(rowData));
             setTest(rowData.test ?? {});
             setPreviewDiagnosticsOrder(rowData);

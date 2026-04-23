@@ -300,6 +300,38 @@ export const departmentService = createApi({
         };
       },
       providesTags: ['Department']
+    }),
+
+
+    // GET /api/setup/department/active/by-type-and-facility/{type}/{facilityId}
+    // This endpoint returns a plain list WITHOUT pagination
+    getActiveDepartmentByTypeAndFacility: builder.query<
+      any[],
+      { type: string; facilityId: number | string }
+    >({
+      query: ({ type, facilityId }) => ({
+        url: `/api/setup/department/active/by-type-and-facility/${type}/${facilityId}`
+      }),
+      providesTags: ['Department']
+    }),
+
+    getActiveAppointableDepartments: builder.query<
+      PagedResult<any>,
+      { facilityId: number } & PagedParams
+    >({
+      query: ({ facilityId, page, size, sort = 'id,asc' }) => ({
+        url: '/api/setup/department/appointable/active',
+        params: { facilityId, page, size, sort }
+      }),
+      transformResponse: (response: any[], meta): PagedResult<any> => {
+        const headers = meta?.response?.headers;
+        return {
+          data: response,
+          totalCount: Number(headers?.get('X-Total-Count') ?? 0),
+          links: parseLinkHeader(headers?.get('Link'))
+        };
+      },
+      providesTags: ['Department']
     })
   })
 });
@@ -338,5 +370,7 @@ export const {
   useGetActiveDepartmentsQuery,
   useLazyGetActiveDepartmentsQuery,
   useGetActiveDepartmentByTypeQuery,
+  useGetActiveDepartmentByTypeAndFacilityQuery,
+  useLazyGetActiveDepartmentByTypeAndFacilityQuery,
   useLazyGetActiveDepartmentByTypeQuery
 } = departmentService;

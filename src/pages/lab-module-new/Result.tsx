@@ -338,24 +338,60 @@ const Result = forwardRef<any, Props>(
     };
     // ─────────────────────────────────────────────────────────────────────────
 
+    const isResultEmpty = (row: any) => {
+      return (
+        row.resultValueNumber === null ||
+        row.resultValueNumber === undefined
+      ) &&
+      (
+        row.resultValueText === null ||
+        row.resultValueText === undefined ||
+        row.resultValueText === ''
+      );
+    };
+
     const handleApprove = (row: any) => {
+
+      if (isResultEmpty(row)) {
+        dispatch(
+          notify({
+            msg: 'Cannot approve. Result value is missing.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
       if (isCriticalResult(row)) {
-        // Show confirmation modal only for critical results
         setPendingApproveRow(row);
         setIsBulkCriticalApprove(false);
         setOpenCriticalConfirmModal(true);
       } else {
-        // Approve directly for non-critical results
         doApprove(row);
       }
     };
 
     const handleBulkApprove = () => {
       if (!selectedResultIds.length) return;
-      // Check if any selected result is critical
+
+      const emptyResults = normalizedResults.filter(
+        r => selectedResultIds.includes(r.id) && isResultEmpty(r)
+      );
+
+      if (emptyResults.length > 0) {
+        dispatch(
+          notify({
+            msg: 'Some selected results are empty. Please fill them before approval.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
       const hasCritical = normalizedResults.some(
         r => selectedResultIds.includes(r.id) && isCriticalResult(r)
       );
+
       if (hasCritical) {
         setIsBulkCriticalApprove(true);
         setPendingApproveRow(null);
@@ -836,6 +872,8 @@ const Result = forwardRef<any, Props>(
       const currentIds = normalizedResults.map(r => r.id);
       setSelectedResultIds(prev => prev.filter(id => currentIds.includes(id)));
     }, [normalizedResults]);
+
+
 
 // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
