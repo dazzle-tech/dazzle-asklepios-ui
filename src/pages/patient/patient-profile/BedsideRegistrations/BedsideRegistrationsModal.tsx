@@ -13,7 +13,6 @@ import { formatEnumString } from '@/utils';
 
 const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
   const [openMergePatient, setOpenMergePatient] = useState<boolean>(false);
-  const [patient, setPatient] = useState({});
 
   const { data: patientListResponse, isFetching } = useGetUnknownPatientsQuery({
     page: 0,
@@ -29,7 +28,6 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
           className="icons-style"
           onClick={() => {
             setOpenMergePatient(true);
-            setPatient(rowData);
           }}
         />
       </Whisper>
@@ -46,7 +44,6 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
       </Whisper>
     </div>
   );
-console.log("patientListResponse in bedside reg modal", patientListResponse);
 
   // Table columns
   const tableColumns = [
@@ -80,7 +77,7 @@ console.log("patientListResponse in bedside reg modal", patientListResponse);
           height={580}
           loading={isFetching}
         />
-        <MergePatient open={openMergePatient} setOpen={setOpenMergePatient} patient={patient} />
+        <MergePatient open={openMergePatient} setOpen={setOpenMergePatient} />
       </>
     );
   };

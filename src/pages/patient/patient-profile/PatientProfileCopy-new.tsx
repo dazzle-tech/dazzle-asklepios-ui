@@ -64,7 +64,7 @@ const { getHeight } = DOMHelper;
                 message:
                   typeof value === 'string'
                     ? value
-                    : value?.message || value?.defaultMessage || 'Invalid value'
+                      : (value as any)?.message || (value as any)?.defaultMessage || 'Invalid value'
               }
             ];
           })
@@ -186,10 +186,12 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
 
   const searchRef = useRef<(() => void) | null>(null);
 
-  const selectedFacilityId =
+  const selectedFacilityIdRaw =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
-
-  console.log('SELECTED FACILITY', selectedFacilityId);
+  const selectedFacilityId =
+    typeof selectedFacilityIdRaw === 'object'
+      ? (selectedFacilityIdRaw as any)?.id
+      : selectedFacilityIdRaw;
 
   const { data: selectedFacility } = useGetFacilityByIdQuery(selectedFacilityId, {
     skip: !selectedFacilityId
@@ -491,10 +493,8 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
       {visitHistoryModel && (
         <PatientVisitHistory
           visitHistoryModel={visitHistoryModel}
-          quickAppointmentModel={quickAppointmentModel}
           localPatient={localPatient}
           setVisitHistoryModel={setVisitHistoryModel}
-          setQuickAppointmentModel={setQuickAppointmentModel}
         />
       )}
 

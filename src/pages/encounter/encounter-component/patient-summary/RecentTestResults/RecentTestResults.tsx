@@ -73,7 +73,8 @@ const renderMarker = (marker?: string) => {
   }
 };
 
-const RecentTestResults = forwardRef<any, Props>(({ patient }) => {
+const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
+  void ref;
 
  
   const [pageIndex, setPageIndex] = useState(0);

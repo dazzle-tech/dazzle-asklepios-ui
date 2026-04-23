@@ -55,7 +55,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const tooltipContainerRef = useRef<HTMLDivElement | null>(null);
   const [triggerCoveragesCount] = useLazyGetInsuranceCoveragesCountQuery();
 
-const patientId = localPatient?.id;
+const patientId = Number(localPatient?.id);
 
 const patientInsuranceResponse = useGetInsurancesByPatientQuery(
   {
@@ -65,7 +65,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
     sort: 'id,desc'
   },
   {
-    skip: !patientId
+    skip: !Number.isFinite(patientId) || patientId <= 0
   }
 );
   const { data: payorListResponse, isFetching: payorFetching } = useGetAllPayorsQuery({
@@ -350,7 +350,7 @@ const patientInsuranceResponse = useGetInsurancesByPatientQuery(
         relations={[]}
         editing={selectedInsurance}
         refetchInsurance={patientInsuranceResponse.refetch}
-        patientKey={localPatient}
+        patientKey={Number.isFinite(patientId) && patientId > 0 ? patientId : undefined}
         open={InsuranceModalOpen}
         setOpen={setInsuranceModalOpen}
         insuranceBrowsing={insuranceBrowsing}

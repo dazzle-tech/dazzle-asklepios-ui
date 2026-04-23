@@ -10,7 +10,6 @@ import { useGetIcdDiagnosesByIdsQuery } from "@/services/setup/icdTreeService";
 import { useNavigate } from "react-router-dom";
 
 const ProceduresTable = ({ patient}) => {
- console.log("ProceduresTable ==> ", { patient});
   const navigate = useNavigate();
 
   const [page, setPage] = useState(0);

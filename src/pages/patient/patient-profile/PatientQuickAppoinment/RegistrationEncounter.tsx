@@ -41,7 +41,6 @@ const RegistrationEncounter = ({
   openedFromReferral?: boolean;
 }) => {
   const authSlice = useSelector((state: any) => state.auth);
-console.log("localReferral in RegistrationEncounter: ", localReferral); 
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
@@ -129,7 +128,6 @@ useEffect(() => {
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openedFromReferral, referralDepartment, localReferral?.toFacilityId, selectedFacilityId]);
-console.log("department fetched by ID: ", referralDepartment);
   useEffect(() => {
     if (!openedFromReferral) return;
     if (!referralDepartment?.id) return;

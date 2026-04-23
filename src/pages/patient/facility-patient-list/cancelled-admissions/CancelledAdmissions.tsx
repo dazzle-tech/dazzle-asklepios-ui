@@ -6,11 +6,10 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import '../styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetDepartmentsQuery } from '@/services/setupService';
-import MyButton from '@/components/MyButton/MyButton';
 import SearchPatientCriteria from '@/components/SearchPatientCriteria';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { ApPatient, ApPatientInsurance } from '@/types/model-types';
-import { newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
+import { initialListRequest } from '@/types/types';
+import { ApPatient } from '@/types/model-types';
+import { newApPatient } from '@/types/model-types-constructor';
 
 
 

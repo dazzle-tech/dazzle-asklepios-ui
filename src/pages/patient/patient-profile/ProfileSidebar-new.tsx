@@ -232,7 +232,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                             width={300}
                             record={{ dob: searchKeyword }}
                             setRecord={r => {
-                              console.log('DOB raw value:', r.dob, typeof r.dob);
                               setSearchKeyword(r.dob || null);
                             }}
                           />

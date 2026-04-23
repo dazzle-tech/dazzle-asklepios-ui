@@ -8,7 +8,7 @@ import { useFindConsultationByPatientQuery } from "@/services/consultation/consu
 import { useFindByPatientQuery } from "@/services/patients/telephonicConsultationService";
 import { useGetAllPractitionersQuery } from "@/services/setup/practitioner/PractitionerService";
 
-const ClinicalConsultationsTables = ({ patient, encounter }) => {
+const ClinicalConsultationsTables = ({ patient }) => {
 
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);

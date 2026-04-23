@@ -5,7 +5,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { InputGroup, Form, Input } from 'rsuite';
 import { notify } from '@/utils/uiReducerActions';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SearchIcon from '@rsuite/icons/Search';
 import { faPeopleRoof } from '@fortawesome/free-solid-svg-icons';
 import { useAppDispatch } from '@/hooks';
@@ -44,7 +44,6 @@ const AddFamilyMember = ({
 
   const isEditMode = !!selectedPatientRelation?.id;
   const [allowedSecondGenders, setAllowedSecondGenders] = useState<string[] | null>(null);
-console.log('allowedSecondGenders:', allowedSecondGenders);
   const [fetchMatrixByFirstGender] = useLazyGetByFirstGenderQuery();
 
   const firstGender = localPatient?.sexAtBirth || localPatient?.gender; 
@@ -58,7 +57,6 @@ console.log('allowedSecondGenders:', allowedSecondGenders);
       }
 
       try {
-        // نجيب كل matrix للـ firstGender
         const res = await fetchMatrixByFirstGender({
           gender: firstGender,
           page: 0,
@@ -87,9 +85,21 @@ console.log('allowedSecondGenders:', allowedSecondGenders);
     loadAllowedGenders();
   }, [firstGender, relationType]);
 
-  const search = (target) => {
+  const search = target => {
     setPatientSearchTarget(target);
     setSearchResultVisible(true);
+  };
+
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
   };
 
   const handleSaveFamilyMembers = async () => {
@@ -105,12 +115,12 @@ console.log('allowedSecondGenders:', allowedSecondGenders);
       dispatch(notify({ msg: 'Relative patient is required', sev: 'error' }));
       return;
     }
+    if (!selectedPatientRelation?.categoryType) {
+      dispatch(notify({ msg: 'Category is required', sev: 'error' }));
+      return;
+    }
 
     try {
-      // payload matches backend VM:
-      // create: { patientId, relativePatientId, relationType, categoryType }
-      // update: {patientId, relativePatientId, relationType, categoryType }
-    
       if (isEditMode) {
         const id = selectedPatientRelation.id;
 
@@ -141,16 +151,8 @@ console.log('allowedSecondGenders:', allowedSecondGenders);
       setSelectedPatientRelation(null);
     } catch (e: any) {
       console.error('Failed to save relation:', e);
-
-      const msg =
-        e?.data?.message ||
-        e?.data?.properties?.message ||
-        (typeof e?.data?.properties === 'string' ? e.data.properties : null) ||
-        e?.data?.title ||
-        e?.data?.detail ||
-        'Failed to save relation';
-
-      dispatch(notify({ msg, sev: 'error' }));
+      const errorMsg = extractErrorMessage(e) || 'Failed to save relation';
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
   };
 
@@ -222,9 +224,9 @@ console.log('allowedSecondGenders:', allowedSecondGenders);
     <div dir={dir}>
       <PatientSearch
         selectedPatientRelation={selectedPatientRelation}
-        setSelectedPatientRelation={(rec) => {
+        setSelectedPatientRelation={rec => {
           // PatientSearch fills: relativePatientId + relativePatient
-          setSelectedPatientRelation((prev) => ({
+          setSelectedPatientRelation(prev => ({
             ...(prev ?? {}),
             ...rec,
           }));
