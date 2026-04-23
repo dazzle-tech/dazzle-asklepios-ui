@@ -82,78 +82,97 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
   const handleSaveSample = async () => {
     const status = orderTest?.processingStatus;
 
+    // 🚫 Status validation
     switch (status) {
       case DiagnosticOrderTestStatus.RESULT_READY:
-        dispatch(
-          notify({
-            msg: 'Cannot collect sample. The result is already marked as Ready.',
-            sev: 'warning'
-          })
-        );
+        dispatch(notify({ msg: 'Cannot collect sample. The result is already marked as Ready.', sev: 'warning' }));
         return;
 
       case DiagnosticOrderTestStatus.RESULT_APPROVED:
-        dispatch(
-          notify({
-            msg: 'Cannot collect sample. The result has already been Approved.',
-            sev: 'warning'
-          })
-        );
+        dispatch(notify({ msg: 'Cannot collect sample. The result has already been Approved.', sev: 'warning' }));
         return;
 
       case DiagnosticOrderTestStatus.ACCEPTED:
-        dispatch(
-          notify({
-            msg: 'Cannot collect sample. This test is already Accepted.',
-            sev: 'warning'
-          })
-        );
+        dispatch(notify({ msg: 'Cannot collect sample. This test is already Accepted.', sev: 'warning' }));
         return;
 
       case DiagnosticOrderTestStatus.REJECTED:
-        dispatch(
-          notify({
-            msg: 'Cannot collect sample. This test has been Rejected.',
-            sev: 'warning'
-          })
-        );
+        dispatch(notify({ msg: 'Cannot collect sample. This test has been Rejected.', sev: 'warning' }));
         return;
 
       default:
         break;
     }
 
+    if (
+      selectedExpiryDate?.dateTime &&
+      selectedSampleDate?.dateTime &&
+      selectedExpiryDate.dateTime < selectedSampleDate.dateTime
+    ) {
+      dispatch(
+        notify({
+          msg: 'Expiry Date cannot be before Sample Collected',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
+    if (!sample.quantity || sample.quantity <= 0) {
+      dispatch(notify({ msg: 'Actual Sample Quantity is required', sev: 'warning' }));
+      return;
+    }
+
+    if (!sample.unitLkey) {
+      dispatch(notify({ msg: 'Unit is required', sev: 'warning' }));
+      return;
+    }
+
+    if (!selectedSampleDate?.dateTime) {
+      dispatch(notify({ msg: 'Sample Collected is required', sev: 'warning' }));
+      return;
+    }
+
+    if (!selectedExpiryDate?.dateTime) {
+      dispatch(notify({ msg: 'Expiry Date is required', sev: 'warning' }));
+      return;
+    }
+
+    if (!sample.sourceOfSample) {
+      dispatch(notify({ msg: 'Source of Sample is required', sev: 'warning' }));
+      return;
+    }
+
+
     try {
       const unitText = valueUnitLov?.object?.find(
         u => String(u.key) === String(sample.unitLkey)
       )?.lovDisplayVale;
-
-      if (!unitText) {
-        dispatch(notify({ msg: 'Unit is required', sev: 'warning' }));
-        return;
-      }
 
       await createCollectedSample({
         orderId: orderTest.orderId,
         orderTestId: orderTest.id,
         quantity: sample.quantity,
         unit: unitText,
-        collectedAt: selectedSampleDate.dateTime?.toISOString() ?? null,
-        expiryDate: selectedExpiryDate.dateTime?.toISOString() ?? null,
-        sourceOfSample: sample.sourceOfSample // ✅ أضف هذا
+        collectedAt: selectedSampleDate.dateTime.toISOString(),
+        expiryDate: selectedExpiryDate.dateTime.toISOString(),
+        sourceOfSample: sample.sourceOfSample
       }).unwrap();
 
       dispatch(notify({ msg: 'Sample collected successfully', sev: 'success' }));
+
+      await refetchSamples();
+      onSuccess?.();
+      setOpen(false);
+
     } catch (e: any) {
-      const backendMsg = e?.data?.message || e?.data?.detail || 'Unable to collect sample.';
+      const backendMsg =
+        e?.data?.message ||
+        e?.data?.detail ||
+        'Unable to collect sample.';
 
       dispatch(notify({ msg: backendMsg, sev: 'error' }));
-      return;
     }
-
-    await refetchSamples();
-    onSuccess?.();
-    setOpen(false);
   };
 
   const tableColumns = [
@@ -270,7 +289,7 @@ const SampleModal = ({ open, setOpen, orderTest, onSuccess }: SampleModalProps) 
                     required
                   />
 
-                 
+
                   <MyInput
                     column
                     fieldLabel="Source of Sample"

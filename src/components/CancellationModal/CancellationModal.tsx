@@ -33,19 +33,14 @@ const CancellationModal = ({
                 object?.[statusField] === statusKey ||
                 (required && !object?.[fieldName])
             }
-
             steps={[
                 { title, icon: <FontAwesomeIcon icon={faBan} /> },
             ]}
-
             content={() =>
                 withReason ? (
-                    <Form layout="inline" fluid>
-                        <Form.Group style={{ width: "100%" }}>
-
+                    <Form fluid style={{ width: "100%" }}>
                             <MyInput
-                                width={"400px"}
-                                column
+                                width="100%"
                                 fieldType="textarea"
                                 fieldLabel={fieldLabel}
                                 fieldName={fieldName}
@@ -55,14 +50,11 @@ const CancellationModal = ({
                                 disabled={object?.[statusField] === statusKey}
                                 required={required}
                             />
-
-                        </Form.Group>
                     </Form>
                 ) : (
                     <></>
                 )
             }
-
             size="30vw"
             bodyheight="55vh"
             cancelButtonLabel="Close"

@@ -1,272 +1,234 @@
 import MyInput from '@/components/MyInput';
 import SectionContainer from '@/components/SectionsoContainer';
-import { useGetDepartmentByIdQuery } from '@/services/security/departmentService';
 import { skipToken } from '@reduxjs/toolkit/query';
 import React, { useEffect, useState } from 'react';
 import { Col, Form, Panel, Row } from 'rsuite';
 import './styles.less';
+import { useGetDiagnosticOrderTestByIdQuery } from '@/services/diagnosic-order/diagnosticOrderTestService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 interface PreviewDiagnosticsOrderProps {
-    open: boolean;
-    orderTest: any;
+  open: boolean;
+  orderTest: any;
 }
 
 const PreviewDiagnosticsOrder: React.FC<PreviewDiagnosticsOrderProps> = ({
-    open,
-    orderTest
+  open,
+  orderTest
 }) => {
-    const [previewData, setPreviewData] = useState<any>({
-        testName: '',
-        orderType: '',
-        repeatEveryNumber: '',
-        repeatEveryUnit: '',
-        periodNumber: '',
-        periodUnit: '',
-        firstOccurrenceDateTime: '',
-        notes: '',
-        isRepeat: false,
-        reason: '',
-        receivedLab: ''
-    });
 
+  const [previewData, setPreviewData] = useState<any>({
+    testName: '',
+    orderType: '',
+    repeatEveryNumber: '',
+    repeatEveryUnit: '',
+    periodNumber: '',
+    periodUnit: '',
+    firstOccurrenceDateTime: '',
+    notes: '',
+    isRepeat: false,
+    reason: '',
+    receivedLab: ''
+  });
 
+  // ✅ مهم: هذا ID الصح
+  const testId = orderTest?.id;
 
-    const labDepartmentId =
-        (orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId) &&
-            (orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId) !== 0
-            ? orderTest?.receivedDepartmentId ?? orderTest?.receivedLabId
-            : null;
+    const { data: reasonLov } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
 
+  const {
+    data: fullOrderTest,
+    isFetching,
+    isError,
+    error
+  } = useGetDiagnosticOrderTestByIdQuery(
+    testId ? testId : skipToken
+  );
 
-    const {
-        data: receivedDepartment,
-        isFetching: isFetchingDepartment
-    } = useGetDepartmentByIdQuery(
-        labDepartmentId ?? skipToken
-    );
+const resolveReason = (key: any) => {
+  if (!key) return null;
 
+  const found = reasonLov?.object?.find(
+    (x: any) => String(x.key) === String(key)
+  );
 
-    useEffect(() => {
-        if (!orderTest) return;
+  return found?.lovDisplayVale ?? null;
+};
 
-        setPreviewData(prev => ({
-            ...prev,
-            testName: orderTest.test?.testName ?? orderTest.test?.name ?? '-',
-            orderType:
-                orderTest.orderTypeLvalue?.lovDisplayVale ??
-                orderTest.orderType ??
-                orderTest.test?.type ??
-                '-',
-            repeatEveryNumber: orderTest.repeatEveryNumber ?? '',
-            repeatEveryUnit: orderTest.repeatEveryUnit ?? '',
-            periodNumber: orderTest.periodNumber ?? '',
-            periodUnit: orderTest.periodUnit ?? '',
-            firstOccurrenceDateTime: orderTest.firstOccurrenceDateTime ?? '',
-            notes: orderTest.notes ?? '',
-            isRepeat: Boolean(orderTest.isRepeat),
-            reason:
-                orderTest.reasonLvalue?.lovDisplayVale ??
-                orderTest.reason ??
-                '-'
-        }));
-    }, [orderTest]);
+  useEffect(() => {
+    if (!fullOrderTest) return;
 
-    useEffect(() => {
-        if (!labDepartmentId) {
-            setPreviewData(prev => ({ ...prev, receivedLab: '-' }));
-            return;
-        }
+    const data = fullOrderTest as any;
 
-        if (isFetchingDepartment) {
-            setPreviewData(prev => ({ ...prev, receivedLab: 'Loading...' }));
-            return;
-        }
+    const mapped = {
+    testName:
+        data?.test?.name ??
+        orderTest?.test?.name ??
+        '-',
 
-        setPreviewData(prev => ({
-            ...prev,
-            receivedLab:
-                receivedDepartment?.name ??
-                receivedDepartment?.translatedObject?.name ??
-                '-'
-        }));
-    }, [labDepartmentId, receivedDepartment, isFetchingDepartment]);
+    orderType:
+        data?.orderTypeLvalue?.lovDisplayVale ??
+        data?.orderType ??
+        data?.test?.type ??
+        orderTest?.test?.type ??
+        '-',
 
+    notes: data?.notes ?? orderTest?.notes ?? '',
 
+reason:
+  data?.reasonLvalue?.lovDisplayVale ||
+  resolveReason(data?.reasonLkey ?? data?.reason) ||
+  '-',
 
-    if (!orderTest) return null;
+    receivedLab:
+        data?.receivedDepartment?.name ??
+        data?.receivedDepartment?.translatedObject?.name ??
+        '-'
+    };
+    setPreviewData(mapped);
 
+  }, [fullOrderTest]);
 
+  if (!open) return null;
 
+  // 🔄 Loading
+  if (isFetching) {
+    return <div style={{ padding: 20 }}>Loading...</div>;
+  }
 
+  // ❌ Error
+  if (isError) {
+    return <div style={{ padding: 20 }}>Error loading data</div>;
+  }
 
-    return (
-        <>
-            {open && (
-                <Panel
-                    bordered
-                    className="preview-request"
-                    header={
-                        <div className="preview-header">
-                            <span>Diagnostics Order Preview</span>
-                        </div>
-                    }
-                >
-                    <Form fluid>
-                        <div className="main-sections-preview-request-container">
-                            {/* Basic Info */}
-                            <SectionContainer
-                                title="Basic Info"
-                                content={
-                                    <Row gutter={16}>
-                                        <Col md={8}>
-                                            <MyInput
-                                                fieldType="text"
-                                                fieldLabel="Test Name"
-                                                record={previewData}
-                                                fieldName="testName"
-                                                disabled
-                                            />
-                                        </Col>
-                                        <Col md={8}>
-                                            <MyInput
-                                                fieldType="text"
-                                                fieldLabel="Test Type"
-                                                record={previewData}
-                                                fieldName="orderType"
-                                                disabled
-                                            />
-                                        </Col>
-                                        <Col md={8}>
-                                            <MyInput
-                                                fieldType="text"
-                                                fieldLabel="Reason"
-                                                record={previewData}
-                                                fieldName="reason"
-                                                disabled
-                                            />
-                                        </Col>
-                                        <Col md={8}>
-                                            <MyInput
-                                                fieldType="text"
-                                                fieldLabel="Received Lab"
-                                                record={previewData}
-                                                fieldName="receivedLab"
-                                                disabled
-                                            />
-                                        </Col>
-                                    </Row>
-                                }
-                            />
+  return (
+    <Panel
+      key={testId} // 🔥 مهم لإعادة التحديث
+      bordered
+      className="preview-request"
+      header={
+        <div className="preview-header">
+          <span>Diagnostics Order Preview</span>
+        </div>
+      }
+    >
+        <div className="main-sections-preview-request-container">
 
-                            {previewData.isRepeat && (
-                                <SectionContainer
-                                    title="Repeat Details"
-                                    content={
-                                        <Row gutter={16}>
-                                            <Col md={8}>
-                                                <MyInput
-                                                    fieldType="text"
-                                                    fieldLabel="Repeat Every"
-                                                    record={previewData}
-                                                    fieldName="repeatEveryNumber"
-                                                    disabled
-                                                />
-                                            </Col>
+          {/* ✅ Basic Info */}
+          <SectionContainer
+            title="Basic Info"
+            content={
+                <Form>
+              <Row gutter={16}>
+                <Col md={8}>
+                  <MyInput
+                    fieldType="text"
+                    fieldLabel="Test Name"
+                    record={previewData}
+                    fieldName="testName"
+                    disabled
+                  />
+                </Col>
 
-                                            <Col md={8}>
-                                                <MyInput
-                                                    fieldType="text"
-                                                    fieldLabel="For Period"
-                                                    record={previewData}
-                                                    fieldName="periodNumber"
-                                                    disabled
-                                                />
-                                            </Col>
+                <Col md={8}>
+                  <MyInput
+                    fieldType="text"
+                    fieldLabel="Test Type"
+                    record={previewData}
+                    fieldName="orderType"
+                    disabled
+                  />
+                </Col>
 
-                                            <Col md={8}>
-                                                <MyInput
-                                                    fieldType="datetime"
-                                                    fieldLabel="First Occurrence"
-                                                    record={previewData}
-                                                    fieldName="firstOccurrenceDateTime"
-                                                    disabled
-                                                />
-                                            </Col>
-                                        </Row>
-                                    }
-                                />
-                            )}
+                <Col md={8}>
+                  <MyInput
+                    fieldType="text"
+                    fieldLabel="Reason"
+                    record={previewData}
+                    fieldName="reason"
+                    disabled
+                  />
+                </Col>
 
+                <Col md={8}>
+                  <MyInput
+                    fieldType="text"
+                    fieldLabel="Received Lab"
+                    record={previewData}
+                    fieldName="receivedLab"
+                    disabled
+                  />
+                </Col>
+              </Row>
+              </Form>
+            }
+          />
 
-                            {/* Notes */}
-                            <SectionContainer
-                                title="Notes"
-                                content={
-                                    <Row>
-                                        <Col md={24}>
-                                            <MyInput
-                                                fieldType="textarea"
-                                                fieldLabel="Notes"
-                                                record={previewData}
-                                                fieldName="notes"
-                                                disabled
-                                            />
-                                        </Col>
-                                    </Row>
-                                }
-                            />
-                            <SectionContainer
-                                title="Repeat Details"
-                                content={
-                                    <>
-                                        <Row>
-                                            <Col md={8}>
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldType="text"
-                                                    fieldLabel="Repeat Every"
-                                                    record={previewData}
-                                                    fieldName="repeatEveryNumber"
-                                                    disabled
-                                                />
-                                            </Col>
-                                        </Row>
+          {/* 🔁 Repeat */}
+          {previewData.isRepeat && (
+            <SectionContainer
+              title="Repeat Details"
+              content={
+                <Form>
+                <Row gutter={16}>
+                  <Col md={8}>
+                    <MyInput
+                      fieldType="text"
+                      fieldLabel="Repeat Every"
+                      record={previewData}
+                      fieldName="repeatEveryNumber"
+                      disabled
+                    />
+                  </Col>
 
-                                        <Row>
-                                            <Col md={8}>
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldType="text"
-                                                    fieldLabel="For period of"
-                                                    record={previewData}
-                                                    fieldName="periodNumber"
-                                                    disabled
-                                                />
-                                            </Col>
-                                        </Row>
+                  <Col md={8}>
+                    <MyInput
+                      fieldType="text"
+                      fieldLabel="For Period"
+                      record={previewData}
+                      fieldName="periodNumber"
+                      disabled
+                    />
+                  </Col>
 
-                                        <Row>
-                                            <Col md={16}>
-                                                <MyInput
-                                                    width="100%"
-                                                    fieldType="datetime"
-                                                    fieldLabel="First Occurrence Time"
-                                                    record={previewData}
-                                                    fieldName="firstOccurrenceDateTime"
-                                                    disabled
-                                                />
-                                            </Col>
-                                        </Row>
-                                    </>
-                                }
-                            />
+                  <Col md={8}>
+                    <MyInput
+                      fieldType="datetime"
+                      fieldLabel="First Occurrence"
+                      record={previewData}
+                      fieldName="firstOccurrenceDateTime"
+                      disabled
+                    />
+                  </Col>
+                </Row>
+                </Form>
+              }
+            />
+          )}
 
-                        </div>
-                    </Form>
-                </Panel>
-            )}
-        </>
-    );
+          {/* 📝 Notes */}
+          <SectionContainer
+            title="Notes"
+            content={
+            <Form>
+              <Row>
+                <Col md={24}>
+                  <MyInput
+                    fieldType="textarea"
+                    fieldLabel="Notes"
+                    record={previewData}
+                    fieldName="notes"
+                    disabled
+                  />
+                </Col>
+              </Row>
+              </Form>
+            }
+          />
+
+        </div>
+    </Panel>
+  );
 };
 
 export default PreviewDiagnosticsOrder;

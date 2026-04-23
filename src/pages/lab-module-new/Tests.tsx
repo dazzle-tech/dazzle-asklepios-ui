@@ -880,9 +880,20 @@ const Tests = forwardRef<any, Props>(
               onRowsPerPageChange={e =>
                 setPaginationParams(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))
               }
-              onSortChange={(column, type) =>
-                setPaginationParams(prev => ({ ...prev, sort: `${column},${type}`, page: 0 }))
-              }
+              
+              onSortChange={(column, type) => {
+                const invalidSortFields = ['action', 'check', 'collectsample', 'print'];
+
+                if (invalidSortFields.includes(column)) {
+                  return; // ignore
+                }
+
+                setPaginationParams(prev => ({
+                  ...prev,
+                  sort: `${column},${type}`,
+                  page: 0
+                }));
+              }}
             />
           </div>
 
