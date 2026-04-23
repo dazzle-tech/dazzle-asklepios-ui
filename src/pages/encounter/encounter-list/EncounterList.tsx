@@ -461,11 +461,7 @@ const startEncounterSafe = async (row: any) => {
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
 
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
-
-    navigate(targetPath, {
+    navigate('/encounter', {
       state: {
         info: 'toEncounter',
         fromPage: 'EncounterList',
@@ -492,11 +488,7 @@ const startEncounterSafe = async (row: any) => {
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
 
-    const targetPath = fullPatient?.isPrivatePatient
-      ? '/user-access-patient-private'
-      : '/nurse-station';
-
-    navigate(targetPath, {
+    navigate('/nurse-station', {
       state: {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,

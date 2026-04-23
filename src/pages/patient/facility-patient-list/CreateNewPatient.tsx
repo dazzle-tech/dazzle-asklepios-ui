@@ -1360,6 +1360,15 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     }
                   }}
                 />
+            <MyInput
+              width={200}
+              column
+              fieldType="checkbox"
+              fieldName="isPrivatePatient"
+              fieldLabel="Private Patient"
+              record={localPatient}
+              setRecord={setLocalPatient}
+            />
               </>
             )}
           </Form>

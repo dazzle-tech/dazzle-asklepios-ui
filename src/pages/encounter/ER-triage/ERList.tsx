@@ -131,36 +131,6 @@ const ERList = () => {
     return '';
   };
 
-  const handleGoToVisit = async (encounterData, patientData) => {
-    await startEncounter(encounterData).unwrap();
-    if (encounterData && encounterData.key) {
-      dispatch(setEncounter(encounterData));
-      dispatch(setPatient(encounterData['patientObject']));
-    }
-      const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
-    if (patientData.privatePatient) {
-      navigate(targetPath, {
-        state: {
-          info: 'toEncounter',
-          fromPage: 'ER_Department',
-          patient: patientData,
-          encounter: encounterData
-        }
-      });
-    } else {
-      navigate(targetPath, {
-        state: {
-          info: 'toEncounter',
-          fromPage: 'ER_Department',
-          patient: patientData,
-          encounter: encounterData
-        }
-      });
-    }
-  };
-
   const handleCancelEncounter = async () => {
     try {
       if (encounter) {
