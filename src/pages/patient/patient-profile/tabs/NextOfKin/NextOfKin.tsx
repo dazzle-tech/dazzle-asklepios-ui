@@ -9,12 +9,7 @@ import { MdModeEdit, MdDelete } from 'react-icons/md';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddEditNextOfKin from './AddEditNextOfKin';
-
-// ✅ hooks من RTK Query service
-import {
-  useGetNextOfKinByPatientQuery,
-  useDeleteNextOfKinMutation
-} from '@/services/patients/NextOfKinService'; 
+import {  useGetNextOfKinByPatientQuery,  useDeleteNextOfKinMutation} from '@/services/patients/NextOfKinService'; 
 import { newNextOfKin } from '@/types/model-types-constructor-new';
 
 const NextOfKin = ({ patient, isClick }) => {
@@ -95,6 +90,16 @@ const NextOfKin = ({ patient, isClick }) => {
 
   // Add new
   const handleNewNextOfKin = () => {
+    if (patient?.isUnknown) {
+      dispatch(
+        notify({
+          msg: "This Patient in unkown , you can't add next of kin for unkown patient",
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     setNextOfKin({...newNextOfKin}); // reset form
     setOpen(true);
   };

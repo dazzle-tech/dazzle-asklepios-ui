@@ -22,7 +22,7 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
   const [updateNextOfKin] = useUpdateNextOfKinMutation();
 
   const getDigits = value => String(value ?? '').replace(/\D/g, '');
-  const validateNumberLengths = (nok) => {
+  const validateNumberLengths = nok => {
     const maxDigits = 10;
     const fields = [
       { key: 'mobileNumber', label: 'Mobile Number', required: true },
@@ -62,7 +62,7 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
       message: lines.length ? lines.join('\n') : (data?.detail ?? 'Save failed')
     };
   };
-   const toUpdateDto = (nok) => ({
+   const toUpdateDto = nok => ({
           name: nok?.name ?? '',
           relationship: nok?.relationship ?? null,
           address: nok?.address ?? '',
@@ -75,6 +75,25 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
   const handleSave = async () => {
     if (!patientId) {
       dispatch(notify({ msg: 'Missing patientId', sev: 'error' }));
+      return;
+    }
+
+    const requiredFieldErrors: string[] = [];
+    if (!String(nextOfKin?.name ?? '').trim()) requiredFieldErrors.push('Name is required');
+    if (!nextOfKin?.relationship) requiredFieldErrors.push('Relationship is required');
+    if (!String(nextOfKin?.address ?? '').trim()) requiredFieldErrors.push('Address is required');
+    if (!String(nextOfKin?.email ?? '').trim()) requiredFieldErrors.push('Email is required');
+    if (!String(nextOfKin?.mobileNumber ?? '').trim()) {
+      requiredFieldErrors.push('Mobile Number is required');
+    }
+
+    if (requiredFieldErrors.length) {
+      dispatch(
+        notify({
+          msg: requiredFieldErrors.join('\n'),
+          sev: 'error'
+        })
+      );
       return;
     }
 

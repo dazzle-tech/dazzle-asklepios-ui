@@ -57,7 +57,6 @@ const AddFamilyMember = ({
       }
 
       try {
-        // نجيب كل matrix للـ firstGender
         const res = await fetchMatrixByFirstGender({
           gender: firstGender,
           page: 0,
@@ -86,9 +85,21 @@ const AddFamilyMember = ({
     loadAllowedGenders();
   }, [firstGender, relationType]);
 
-  const search = (target) => {
+  const search = target => {
     setPatientSearchTarget(target);
     setSearchResultVisible(true);
+  };
+
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
   };
 
   const handleSaveFamilyMembers = async () => {
@@ -104,12 +115,12 @@ const AddFamilyMember = ({
       dispatch(notify({ msg: 'Relative patient is required', sev: 'error' }));
       return;
     }
+    if (!selectedPatientRelation?.categoryType) {
+      dispatch(notify({ msg: 'Category is required', sev: 'error' }));
+      return;
+    }
 
     try {
-      // payload matches backend VM:
-      // create: { patientId, relativePatientId, relationType, categoryType }
-      // update: {patientId, relativePatientId, relationType, categoryType }
-    
       if (isEditMode) {
         const id = selectedPatientRelation.id;
 
@@ -140,16 +151,8 @@ const AddFamilyMember = ({
       setSelectedPatientRelation(null);
     } catch (e: any) {
       console.error('Failed to save relation:', e);
-
-      const msg =
-        e?.data?.message ||
-        e?.data?.properties?.message ||
-        (typeof e?.data?.properties === 'string' ? e.data.properties : null) ||
-        e?.data?.title ||
-        e?.data?.detail ||
-        'Failed to save relation';
-
-      dispatch(notify({ msg, sev: 'error' }));
+      const errorMsg = extractErrorMessage(e) || 'Failed to save relation';
+      dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     }
   };
 
@@ -221,9 +224,9 @@ const AddFamilyMember = ({
     <div dir={dir}>
       <PatientSearch
         selectedPatientRelation={selectedPatientRelation}
-        setSelectedPatientRelation={(rec) => {
+        setSelectedPatientRelation={rec => {
           // PatientSearch fills: relativePatientId + relativePatient
-          setSelectedPatientRelation((prev) => ({
+          setSelectedPatientRelation(prev => ({
             ...(prev ?? {}),
             ...rec,
           }));

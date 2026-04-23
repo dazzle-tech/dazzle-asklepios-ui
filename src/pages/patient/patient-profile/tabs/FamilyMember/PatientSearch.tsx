@@ -62,8 +62,9 @@ const PatientSearch = ({
   ];
 
   const filteredPatients = useMemo(() => {
-    if (!allowedSecondGenders || allowedSecondGenders.length === 0) return patients;
-    return patients.filter(p => allowedSecondGenders.includes(p.sexAtBirth));
+    const knownPatientsOnly = patients.filter(p => !p?.isUnknown);
+    if (!allowedSecondGenders || allowedSecondGenders.length === 0) return knownPatientsOnly;
+    return knownPatientsOnly.filter(p => allowedSecondGenders.includes(p.sexAtBirth));
   }, [patients, allowedSecondGenders]);
 
   const prepareTrigger = () => {
