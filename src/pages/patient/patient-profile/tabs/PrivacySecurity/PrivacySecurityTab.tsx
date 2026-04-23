@@ -1,9 +1,11 @@
 import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
+import SectionContainer from '@/components/SectionsoContainer';
+import Translate from '@/components/Translate';
 import { Patient, PatientHIPAA } from '@/types/model-types-new';
 import { PlusRound, CheckRound } from '@rsuite/icons';
 import React, { useEffect, useState } from 'react';
-import { Divider, Form, Loader, Message, useToaster } from 'rsuite';
+import { Divider, Form, Loader, Message, useToaster, Col, Row, Stack } from 'rsuite';
 import '../styles.less';
 import AddVerification from './AddVerification';
 import {
@@ -99,11 +101,11 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
     }
   };
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
@@ -116,94 +118,121 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         validationResult={validationResult}
       />
 
-      {/* Security Access Level */}
-      <Form layout="inline" className="btn-fileds-style">
-        <MyInput
-          vr={validationResult}
-          column
-          fieldLabel="Security Access Level"
-          fieldType="select"
-          fieldName="securityAccessLevel"
-          selectData={SecurityLevel ?? []}
-          selectDataLabel="label"
-          selectDataValue="value"
-          record={localPatient}
-          setRecord={setLocalPatient}
-        />
+      <Stack>
+        <Stack.Item grow={1}></Stack.Item>
+        <Stack.Item grow={15}>
+          <Row gutter={15} className="d">
+            <Col md={12}>
+              <Row>
+              <SectionContainer
+                  title={<Translate>Security Access Level</Translate>}
+                  content={
+                    <Form layout="inline" className="btn-fileds-style">
+                      <MyInput
+                        vr={validationResult}
+                        showLabel={false}
+                        fieldType="select"
+                        fieldName="securityAccessLevel"
+                        selectData={SecurityLevel ?? []}
+                        selectDataLabel="label"
+                        selectDataValue="value"
+                        record={localPatient}
+                        setRecord={setLocalPatient}
+                      />
+                    </Form>
+                  }
+                />
+              </Row>
+            </Col>
+            <Col md={12}>
+              <Row>
+                <SectionContainer
+                  title={<Translate>Verification</Translate>}
+                  content={
+                    <Form layout="inline" className="btn-fileds-style">
+                      <MyButton
+                        onClick={() => setVerificationModalOpen(true)}
+                        disabled={!localPatient.id}
+                        prefixIcon={() => <PlusRound />}
+                      >
+                        Patient Verification
+                      </MyButton>
+                    </Form>
+                  }
+                />
+              </Row>
+            </Col>
+          </Row>
 
-        <MyButton
-          onClick={() => setVerificationModalOpen(true)}
-          disabled={!localPatient.id}
-          prefixIcon={() => <PlusRound />}
-        >
-          Patient Verification
-        </MyButton>
-      </Form>
+          <Row style={{ marginTop: '10px' }}>
+            <SectionContainer
+              title={<Translate><span>HIPAA</span></Translate>}
+              content={
+                <Form layout="inline" fluid>
+                  {hipaaLoading && (
+                    <div className="loader">
+                      <Loader content=" Loading HIPAA data..." />
+                    </div>
+                  )}
 
-      {/* HIPAA */}
-      <Form layout="inline" fluid>
-        <h5 className="border-top">HIPAA</h5>
+                  <div className="covg-content">
+                    <MyInput
+                      column
+                      vr={validationResult}
+                      fieldType="checkbox"
+                      fieldLabel="Notice of Privacy Practices"
+                      fieldName="noticeOfPrivacyPractice"
+                      record={hippa}
+                      setRecord={setHippa}
+                    />
+                    <MyInput
+                      column
+                      vr={validationResult}
+                      fieldType="date"
+                      showLabel={false}
+                      fieldName="noticeOfPrivacyPracticeDate"
+                      record={hippa}
+                      setRecord={setHippa}
+                    />
 
-        {hipaaLoading && (
-          <div className="loader">
-            <Loader content=" Loading HIPAA data..." />
-          </div>
-        )}
+                    <Divider className="divider-line-vertical" vertical />
 
-        <div className="covg-content">
-          <MyInput
-            column
-            vr={validationResult}
-            fieldType="checkbox"
-            fieldLabel="Notice of Privacy Practices"
-            fieldName="noticeOfPrivacyPractice"
-            record={hippa}
-            setRecord={setHippa}
-          />
-          <MyInput
-            column
-            vr={validationResult}
-            fieldType="date"
-            showLabel={false}
-            fieldName="noticeOfPrivacyPracticeDate"
-            record={hippa}
-            setRecord={setHippa}
-          />
+                    <MyInput
+                      column
+                      vr={validationResult}
+                      fieldType="checkbox"
+                      fieldLabel="Privacy Authorization"
+                      fieldName="privacyAuthorization"
+                      record={hippa}
+                      setRecord={setHippa}
+                    />
+                    <MyInput
+                      column
+                      vr={validationResult}
+                      fieldType="date"
+                      showLabel={false}
+                      fieldName="privacyAuthorizationDate"
+                      record={hippa}
+                      setRecord={setHippa}
+                    />
 
-          <Divider className="divider-line-vertical" vertical />
-
-          <MyInput
-            column
-            vr={validationResult}
-            fieldType="checkbox"
-            fieldLabel="Privacy Authorization"
-            fieldName="privacyAuthorization"
-            record={hippa}
-            setRecord={setHippa}
-          />
-          <MyInput
-            column
-            vr={validationResult}
-            fieldType="date"
-            showLabel={false}
-            fieldName="privacyAuthorizationDate"
-            record={hippa}
-            setRecord={setHippa}
-          />
-
-          {/* ======== SAVE HIPAA BUTTON ======== */}
-          <div className='privacy-security-tab-save-button'>
-          <MyButton
-            appearance="primary"
-            loading={creating || updating}
-            prefixIcon={() => <CheckRound />}
-            onClick={handleSaveHIPAA}
-          >
-            Save HIPAA
-          </MyButton>
-          </div>
-        </div>
-      </Form>
+                    <div className="privacy-security-tab-save-button">
+                      <MyButton
+                        appearance="primary"
+                        loading={creating || updating}
+                        prefixIcon={() => <CheckRound />}
+                        onClick={handleSaveHIPAA}
+                      >
+                        Save HIPAA
+                      </MyButton>
+                    </div>
+                  </div>
+                </Form>
+              }
+            />
+          </Row>
+        </Stack.Item>
+      </Stack>
     </div>
   );
 };

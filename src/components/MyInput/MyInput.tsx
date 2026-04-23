@@ -565,7 +565,6 @@ const MyInput = ({
             block
             disabled={props.disabled}
             accepter={SelectPicker}
-            searchKeyWard={props?.searchKeyWard}
             onSearch={searchText => {
               props.setSearchKeyWard?.(searchText);
             }}

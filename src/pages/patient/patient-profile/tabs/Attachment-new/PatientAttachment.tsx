@@ -69,9 +69,9 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
         isUninitialized: isPatientAttachmentsUninitialized
     } = useGetPatientAttachmentsQuery(
         {
-            patientId: localPatient?.id || localPatient?.key
+            patientId: patientIdNum as any
         },
-        { skip: !localPatient?.id && !localPatient?.key }
+        { skip: !Number.isFinite(patientIdNum) || patientIdNum <= 0 }
     );
 
     // Fetch encounter attachments for all patient encounters using the new endpoint
@@ -126,7 +126,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             if (attachmentType === 'patient') {
                 await deletePatientAttachment({
                     id: selectedAttachment.id,
-                    patientId: localPatient?.id || localPatient?.key
+                    patientId: patientIdNum as any
                 }).unwrap();
             } else if (attachmentType === 'encounter') {
                 const encounterAtt = selectedAttachment as any as EncounterAttachment;
@@ -394,7 +394,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
             <AttachmentUploadModal
                 isOpen={attachmentsModalOpen}
                 setIsOpen={setAttachmentsModalOpen}
-                patientId={localPatient?.id || localPatient?.key}
+                patientId={patientIdNum as any}
                 refetchData={refetchAllAttachments}
                 source='PATIENT_PROFILE_ATTACHMENT'
             />
@@ -424,7 +424,7 @@ const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAtta
                 open={editModalOpen}
                 onClose={handleCloseEditModal}
                 selectedAttachment={selectedAttachment}
-                patientId={localPatient?.id || localPatient?.key}
+                patientId={patientIdNum as any}
                 attachmentTypesLov={attachmentTypesLov}
                 onUpdateSuccess={refetchAllAttachments}
             />

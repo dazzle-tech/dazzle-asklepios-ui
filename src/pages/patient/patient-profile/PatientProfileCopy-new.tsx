@@ -186,8 +186,12 @@ const [eligibilityChecked, setEligibilityChecked] = useState(false);
 
   const searchRef = useRef<(() => void) | null>(null);
 
-  const selectedFacilityId =
+  const selectedFacilityIdRaw =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
+  const selectedFacilityId =
+    typeof selectedFacilityIdRaw === 'object'
+      ? (selectedFacilityIdRaw as any)?.id
+      : selectedFacilityIdRaw;
 
   const { data: selectedFacility } = useGetFacilityByIdQuery(selectedFacilityId, {
     skip: !selectedFacilityId

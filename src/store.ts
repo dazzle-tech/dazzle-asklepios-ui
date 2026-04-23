@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, Middleware } from '@reduxjs/toolkit';
 
 import { idParsingService } from '@/services/idParsingService';
 import { summarizationService } from '@/services/summarizationService';
@@ -219,6 +219,41 @@ import { currentMedicationService } from './services/patients/currentMedicationS
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
 import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
+
+const rtkDispatchLoopGuard: Middleware = () => {
+  let depth = 0;
+  let lastType = '';
+  let sameTypeCount = 0;
+
+  return next => action => {
+    const type = typeof (action as any)?.type === 'string' ? (action as any).type : '<non-string>';
+    if (type === lastType) {
+      sameTypeCount += 1;
+    } else {
+      lastType = type;
+      sameTypeCount = 1;
+    }
+
+    depth += 1;
+    // Defensive guard: prevents runaway sync dispatch recursion from crashing the app.
+    if (depth > 300 || sameTypeCount > 300) {
+      // eslint-disable-next-line no-console
+      console.error('[RTK loop guard] blocked recursive dispatch', {
+        type,
+        depth,
+        sameTypeCount
+      });
+      depth -= 1;
+      return action;
+    }
+
+    try {
+      return next(action);
+    } finally {
+      depth -= 1;
+    }
+  };
+};
 
 export const store = configureStore({
   reducer: {
@@ -538,7 +573,13 @@ export const store = configureStore({
   },
 
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware().concat(
+    getDefaultMiddleware({
+      // The app has a very large reducer tree; these dev checks are too expensive/noisy here.
+      immutableCheck: false,
+      serializableCheck: false
+    })
+      .prepend(rtkDispatchLoopGuard)
+      .concat(
       ...[
         // ai
         idParsingService.middleware,

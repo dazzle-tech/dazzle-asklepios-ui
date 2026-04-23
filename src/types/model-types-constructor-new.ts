@@ -2808,15 +2808,6 @@ export const newPatientAdministrativeWarningCreateDTO: modelTypes.PatientAdminis
     description: ''
   };
 
-export const newPatientAdministrativeWarningResolveDTO: modelTypes.PatientAdministrativeWarningsResolveDTO =
-  {
-    id: undefined
-  };
-
-export const newPatientAdministrativeWarningUndoResolveDTO: modelTypes.PatientAdministrativeWarningsUndoResolveDTO =
-  {
-    id: undefined
-  };
 export const newReferralRequest: modelTypes.ReferralRequest = {
   id: undefined,
 

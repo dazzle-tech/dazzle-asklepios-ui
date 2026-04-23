@@ -101,6 +101,8 @@ const InsuranceModal = ({
   hideSaveBtn = false
 }) => {
   const dispatch = useAppDispatch();
+  const resolvedPatientId =
+    typeof patientKey === 'object' ? Number(patientKey?.id) : Number(patientKey);
 
   const [patientInsurance, setPatientInsurance] = useState<PatientInsurance>({
     ...newPatientInsurance
@@ -119,7 +121,7 @@ const InsuranceModal = ({
   const [relativePage, setRelativePage] = useState(0);
   const [allRelatives, setAllRelatives] = useState<any[]>([]);
 
-  // بعد
+
   const {
     data: payorResponse,
     isLoading: payorLoading,
@@ -150,12 +152,12 @@ const InsuranceModal = ({
     isFetching: relativesFetching
   } = useGetRelativePatientsByCategoryQuery(
     {
-      patientId: patientKey?.id,
+      patientId: resolvedPatientId,
       categoryType: 'ADULT',
       page: relativePage,
       size: 5
     },
-    { skip: !patientKey?.id || !open }
+    { skip: !resolvedPatientId || !open }
   );
 
   useEffect(() => {
@@ -225,7 +227,7 @@ const InsuranceModal = ({
   const handleSave = async () => {
     const insuranceBody: PatientInsurance = {
       ...patientInsurance,
-      patientId: patientKey.id
+      patientId: resolvedPatientId
     };
 
     try {
