@@ -140,7 +140,7 @@ import ResetPassword from './pages/reset-password/ResetPassword';
 import CreatePassword from './pages/create-password/CreatePassword';
 import Favoraite from './pages/review-results';
 import ScheduleScreen from './pages/appointments-new/scheduling-screen/ScheduleScreen';
-import ApplyTemplateList from './pages/ApplyTemplate/ApplyTemplateList';
+import ApplyTemplateList from './pages/appointments-new/ApplyTemplate/ApplyTemplateList';
 import AccessRoles from './pages/setup/access-roles';
 import AgeGroupSetup from './pages/setup/age-group';
 import Allergens from './pages/setup/allergens-setup';

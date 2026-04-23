@@ -34,7 +34,7 @@ import {
   Panel,
   Placeholder
 } from 'rsuite';
-import '../AppoitmentModal.less';
+import '../styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
 import PatientSearchBar from '../PatientSearchBar';
