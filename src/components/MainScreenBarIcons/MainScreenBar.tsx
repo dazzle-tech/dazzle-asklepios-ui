@@ -51,7 +51,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const trigger = useRef<WhisperInstance>(null);
   const direction = localStorage.getItem('direction');
 
-  const [apiLogout, { isLoading: isLoggingOut }] = useLogoutMutation();
+  // const [apiLogout, { isLoading: isLoggingOut }] = useLogoutMutation();
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
   const authAlice = useAppSelector(state => state.auth);
@@ -65,7 +65,7 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
 
   const handleLogout = async () => {
     try {
-      await apiLogout({}).unwrap();
+      // await apiLogout({}).unwrap();
     } catch (e) { }
 
     dispatch(logout());
@@ -236,8 +236,8 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
             Change Password
           </Dropdown.Item>
           <Dropdown.Item divider />
-          <Dropdown.Item onClick={handleLogout} disabled={isLoggingOut}>
-            {isLoggingOut ? 'Signing out...' : 'Sign out'}
+          <Dropdown.Item onClick={handleLogout}>
+            { 'Sign out'}
           </Dropdown.Item>
         </Dropdown.Menu>
       </Popover>

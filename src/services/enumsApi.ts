@@ -97,7 +97,12 @@ export const { useGetAllEnumsQuery } = enumsApi;
 /* -------------------------------- Hooks -------------------------------- */
 
 export function useEnumByName(name: string): string[] {
-  const { data: allEnums = {} } = useGetAllEnumsQuery();
+  const token = localStorage.getItem('id_token');
+
+  const { data: allEnums = {} } = useGetAllEnumsQuery(undefined, {
+    skip: !token,
+  });
+
   return allEnums[name] ?? [];
 }
 

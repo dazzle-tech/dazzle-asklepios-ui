@@ -46,7 +46,7 @@ const SignIn = () => {
   const [getDictionary] = useLazyGetDictionaryQuery();
   const [errText, setErrText] = useState(' ');
 
-  const { data: langdefult } = useGetLovDefultByCodeQuery('SYSTEM_LANG');
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
 
   const [credentials, setCredentials] = useState({
     username: '',
@@ -58,13 +58,13 @@ const SignIn = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { data: langdefult } = useGetLovDefultByCodeQuery('SYSTEM_LANG');
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
   const [getDefaultUserDepartmentByUser] = useLazyGetDefaultUserDepartmentByUserQuery();
   const [getMenuTrigger] = useLazyGetMenuQuery();
 
-  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
   const result = useGetActiveFacilitiesQuery({});;
   const { data: langData } = useGetAllLanguagesQuery({});
 
@@ -143,8 +143,7 @@ const SignIn = () => {
       store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
       setErrText(' ');
-      navigate('/');
-    } catch (err: any) {
+navigate('/', { replace: true });    } catch (err: any) {
       if (err?.status === 401 || err?.data?.detail === 'Invalid credentials') {
         setErrText('Invalid username or password.');
       } else if (err?.status === 'FETCH_ERROR') {
@@ -157,12 +156,6 @@ const SignIn = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleLogin();
-    }
-  };
 
   useEffect(() => {
     const selectedObject = langData?.find(item => item?.langKey === credentials?.language);
@@ -188,7 +181,7 @@ const SignIn = () => {
           </Panel>
 
           <Panel className="sign-in-panel ">
-            <Form fluid onKeyPress={handleKeyPress}>
+            <Form fluid >
               <MyInput
                 width="100%"
                 fieldName="language"
@@ -196,7 +189,7 @@ const SignIn = () => {
                 selectData={langData}
                 selectDataLabel="langName"
                 selectDataValue="langKey"
-                defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
+                defaultSelectValue={langData?.[0]?.langKey || ''}
                 record={credentials}
                 setRecord={setCredentials}
                 placeholder="Select Language"
@@ -245,7 +238,7 @@ const SignIn = () => {
               <MyButton 
               onClick={handleLogin}
               loading={isLoggingIn}
-              width={"27vw"}
+              width={"26vw"}
               radius={'5px'}
               >Sign in</MyButton>
              
