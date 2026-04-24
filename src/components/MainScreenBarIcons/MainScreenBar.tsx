@@ -40,8 +40,6 @@ import { formatEnumString } from '@/utils';
 import { setLang, setMode } from '@/reducers/uiSlice';
 import { Tooltip, IconButton } from '@mui/material';
 import DepartmentSwitcher from '../DepartmentSwitcher/DepartmentSwitcher';
-import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
-import {  useLazyGetFacilityByIdQuery } from '@/services/security/facilityService';
 const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expandNotes }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -56,9 +54,9 @@ const MainScreenBar = ({ setExpandNotes, displaySearch, setDisplaySearch, expand
   const [apiLogout, { isLoading: isLoggingOut }] = useLogoutMutation();
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openMoreMenu, setOpenMoreMenu] = useState<boolean>(false);
-const authAlice = useAppSelector(state => state.auth);
-  const selectedDepartmentId = authAlice.selectedDepartment?.departmentId || '';
-  const selectedFacilityId = authAlice.selectedDepartment?.facilityId || '';
+  const authAlice = useAppSelector(state => state.auth);
+  const selectedDepartment = authAlice.selectedDepartment;
+
   const { data: langData } = useGetAllLanguagesQuery({});
 
   const closeMenus = useCallback(() => {
@@ -74,24 +72,7 @@ const authAlice = useAppSelector(state => state.auth);
     localStorage.setItem('logout_event', Date.now().toString());
     navigate('/login', { replace: true });
   };
- const [getFacilityById, { data: facility }] = useLazyGetFacilityByIdQuery();
-  
-  const [getDepartmentById, { data: department, isLoading, isFetching, error }] =
-    useLazyGetDepartmentByIdQuery();
 
-
-     useEffect(() => {
-        if (!selectedDepartmentId) return;
-    
-        getDepartmentById(selectedDepartmentId, true);
-      }, [ selectedDepartmentId, getDepartmentById]);
-
-      
-     useEffect(() => {
-        if (!selectedFacilityId) return;
-    
-        getFacilityById(selectedFacilityId, true);
-      }, [ selectedFacilityId, getFacilityById]);
   const contentOfMoreIconMenu = (
     <Popover full>
       <Dropdown.Menu>
@@ -384,41 +365,72 @@ const authAlice = useAppSelector(state => state.auth);
 
         {(width > 500 || !displaySearch) && (
           <>
-            <DepartmentSwitcher placement="bottomEnd" reloadOnSelect>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  cursor: 'pointer'
-                }}
-              >
-                <Tooltip title="Switch Department">
-                  <IconButton size="small">
-                    <FontAwesomeIcon
-                      className="header-screen-bar-icon-size-handle"
-                      icon={faRepeat}
-                    />
-                  </IconButton>
-                </Tooltip>
+            <React.Suspense
+              fallback={
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Tooltip title="Switch Department">
+                    <IconButton size="small">
+                      <FontAwesomeIcon
+                        className="header-screen-bar-icon-size-handle"
+                        icon={faRepeat}
+                      />
+                    </IconButton>
+                  </Tooltip>
 
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: direction === 'LTR' ? 'flex-start' : 'flex-end',
+                      lineHeight: 1.1
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, fontSize: '12px' }}>
+                      {selectedDepartment?.facilityName ?? '-'}
+                    </span>
+                    <span style={{ color: '#9E9E9E', fontSize: '11px' }}>
+                      {selectedDepartment?.departmentName ?? '-'}
+                    </span>
+                  </div>
+                </div>
+              }
+            >
+              <DepartmentSwitcher placement="bottomEnd" reloadOnSelect>
                 <div
                   style={{
                     display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: direction === 'LTR' ? 'flex-start' : 'flex-end',
-                    lineHeight: 1.1
+                    alignItems: 'center',
+                    gap: 8,
+                    cursor: 'pointer'
                   }}
                 >
-                  <span style={{ fontWeight: 600, fontSize: '12px' }}>
-                    {facility?.name}
-                  </span>
-                  <span style={{ color: '#9E9E9E', fontSize: '11px' }}>
-                    {department?.name}
-                  </span>
+                  <Tooltip title="Switch Department">
+                    <IconButton size="small">
+                      <FontAwesomeIcon
+                        className="header-screen-bar-icon-size-handle"
+                        icon={faRepeat}
+                      />
+                    </IconButton>
+                  </Tooltip>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: direction === 'LTR' ? 'flex-start' : 'flex-end',
+                      lineHeight: 1.1
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, fontSize: '12px' }}>
+                      {selectedDepartment?.facilityName ?? '-'}
+                    </span>
+                    <span style={{ color: '#9E9E9E', fontSize: '11px' }}>
+                      {selectedDepartment?.departmentName ?? '-'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </DepartmentSwitcher>
+              </DepartmentSwitcher>
+            </React.Suspense>
             <Whisper
               placement="bottomEnd"
               trigger="click"
