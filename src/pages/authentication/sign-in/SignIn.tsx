@@ -26,6 +26,7 @@ import { Button, Form, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New.png';
 import './styles.less';
+import MyButton from '@/components/MyButton/MyButton';
 
 const mapDefaultDepartmentToSelectedDepartment = (
   defaultDepartment: any,
@@ -227,32 +228,27 @@ const SignIn = () => {
                 setRecord={setCredentials}
                 showLabel={false}
               />
+               <MyInput
+                width="100%"
+                placeholder="Enter Password"
+                fieldLabel="Password"
+                fieldName="password"
+                fieldType="password"
+                record={credentials}
+                setRecord={setCredentials}
+                showLabel={false}
+              />
+            
 
-              <Form.Group>
-                <Form.Control
-                  placeholder="Enter Password"
-                  name="password"
-                  type="password"
-                  value={credentials.password}
-                  onChange={e => setCredentials({ ...credentials, password: e })}
-                />
-              </Form.Group>
-
-              <a className="forgot-password">Forgot password?</a>
 
               <p style={{ color: 'red', marginBottom: 10 }}>{errText}</p>
-
-              <Form.Group>
-                <Button
-                  style={{ backgroundColor: 'var(--primary-blue)' }}
-                  appearance="primary"
-                  onClick={handleLogin}
-                  loading={isLoggingIn}
-                  className="submit-button"
-                >
-                  Sign in
-                </Button>
-              </Form.Group>
+              <MyButton 
+              onClick={handleLogin}
+              loading={isLoggingIn}
+              width={"27vw"}
+              radius={'5px'}
+              >Sign in</MyButton>
+             
             </Form>
           </Panel>
         </div>
