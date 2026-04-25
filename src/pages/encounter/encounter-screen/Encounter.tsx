@@ -6,7 +6,6 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-// import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';
@@ -101,12 +100,12 @@ const Encounter = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
-  const buttonRef = useRef<HTMLDivElement>(null);
+  // const buttonRef = useRef<HTMLDivElement>(null);
 
   const [openAiPopup, setOpenAiPopup] = useState<boolean>(false);
 
   const [aiButtonPosition, setAiButtonPosition] = useState({
-    x: typeof window !== 'undefined' ? window.innerWidth - 180 : 180,
+    x: typeof window !== 'undefined' ? window.innerWidth - 95 : 95,
     y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
   });
 
@@ -116,15 +115,15 @@ const Encounter = () => {
 
   const aiButtonRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = (e: any) => {
-    setIsDragging(true);
-    setHasMoved(false);
-    setDragOffset({
-      x: e.clientX - buttonPosition.x,
-      y: e.clientY - buttonPosition.y
-    });
-    e.preventDefault();
-  };
+  // const handleMouseDown = (e: any) => {
+  //   setIsDragging(true);
+  //   setHasMoved(false);
+  //   setDragOffset({
+  //     x: e.clientX - buttonPosition.x,
+  //     y: e.clientY - buttonPosition.y
+  //   });
+  //   e.preventDefault();
+  // };
 
   const handleMouseMove = (e: any) => {
     if (!isDragging) return;
@@ -382,7 +381,7 @@ const Encounter = () => {
   return (
     <ActionContext.Provider value={{ action, setAction }}>
       <div className="container">
-        <div
+        {/* <div
           ref={buttonRef}
           className={`draggable-container ${isDragging ? 'grabbing' : 'grab'}`}
           style={{ left: `${buttonPosition.x}px`, top: `${buttonPosition.y}px` }}
@@ -414,7 +413,7 @@ const Encounter = () => {
           </button>
 
           {!isDragging && <div className="draggable-pulse" />}
-        </div>
+        </div> */}
 
         <div
           ref={aiButtonRef}

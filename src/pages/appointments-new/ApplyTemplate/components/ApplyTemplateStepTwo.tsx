@@ -37,6 +37,8 @@ const toHHmm = (mins: number) => {
   const m = mins % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 };
+const toDayStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const toMinutesOfDay = (d: Date) => d.getHours() * 60 + d.getMinutes();
 const findOverlappingBreakEnd = (
   breaks: AvailabilityTemplateIntervalBreakResponseVM[],
   slotStart: number,
@@ -256,7 +258,14 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
         effectiveTemplate?.parallelCapacityValue ?? selectedTemplate?.parallelCapacityValue ?? 1
       );
       const templateCapacity = Number.isFinite(rawTemplateCapacity) && rawTemplateCapacity > 0 ? rawTemplateCapacity : 1;
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const startDay = toDayStart(startDate);
+      const endDay = toDayStart(endDate);
+      const applyStartDayKey = format(startDate, "yyyy-MM-dd");
+      const applyEndDayKey = format(endDate, "yyyy-MM-dd");
+      const applyStartMinutes = toMinutesOfDay(startDate);
+      const applyEndMinutes = toMinutesOfDay(endDate);
+
+      for (let d = new Date(startDay); d <= endDay; d.setDate(d.getDate() + 1)) {
         const dayKey = DAYS[(d.getDay() + 6) % 7];
         const key = format(d, "yyyy-MM-dd");
         const isHoliday = holidaySet.has(key);
@@ -286,9 +295,25 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
           if (startMins == null || endMins == null || !slotDuration || slotDuration <= 0 || endMins <= startMins) {
             continue;
           }
-          for (let cursor = startMins; cursor + slotDuration <= endMins;) {
+
+          let effectiveStart = startMins;
+          let effectiveEnd = endMins;
+          if (key === applyStartDayKey && applyStartMinutes > effectiveStart) {
+            effectiveStart = applyStartMinutes;
+          }
+          if (key === applyEndDayKey && applyEndMinutes < effectiveEnd) {
+            effectiveEnd = applyEndMinutes;
+          }
+          if (effectiveStart >= effectiveEnd) {
+            continue;
+          }
+
+          for (let cursor = effectiveStart; ;) {
             const slotStart = cursor;
             const slotEnd = cursor + slotDuration;
+            if (slotEnd > effectiveEnd) {
+              break;
+            }
             const overlappingBreakEnd = findOverlappingBreakEnd(breaks, slotStart, slotEnd);
             if (overlappingBreakEnd != null) {
               const overlappingBreakWindow = findOverlappingBreakWindow(breaks, slotStart, slotEnd);
@@ -366,7 +391,25 @@ const ApplyTemplateStepTwo: React.FC<{ selectedTemplate?: AvailabilityTemplateRe
     return () => {
       mounted = false;
     };
-  }, [effectiveTemplateId, fromDate, toDateStr, selectedTemplate?.durationMinutes, (dto as any)?.scope, (dto as any)?.holidayHandlingMode, loadByDay, loadBreaksByInterval, holidays]);
+  }, [
+    effectiveTemplateId,
+    startDate?.getTime(),
+    endDate?.getTime(),
+    fromDate,
+    toDateStr,
+    selectedTemplate?.durationMinutes,
+    selectedTemplate?.defaultBufferBeforeMinutes,
+    selectedTemplate?.defaultBufferAfterMinutes,
+    selectedTemplate?.parallelCapacityValue,
+    selectedTemplate?.templateType,
+    selectedTemplate?.id,
+    (dto as any)?.scope,
+    (dto as any)?.holidayHandlingMode,
+    loadByDay,
+    loadBreaksByInterval,
+    loadTemplateById,
+    holidays,
+  ]);
 
   return (
     <>

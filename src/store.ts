@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, Middleware } from '@reduxjs/toolkit';
 
 import { idParsingService } from '@/services/idParsingService';
 import { summarizationService } from '@/services/summarizationService';
@@ -46,7 +46,6 @@ import { encounterAttachmentsService } from './services/encounters/attachmentsSe
 import { inventoryTransferAttachmentService } from './services/inventory/inventory-transfer/attachmentService';
 import { inventoryTransactionAttachmentService } from './services/inventory/inventory-transaction/attachmentService';
 
-import { appointmentService } from './services/appointmentService';
 import { userService } from '@/services/userService';
 
 import { labService } from './services/labService';
@@ -79,7 +78,6 @@ import { PractitionerService } from './services/setup/practitioner/PractitionerS
 import { PractitionerDepartmentService } from './services/setup/practitioner/PractitionerDepartmentService';
 
 import { Icd10Service } from './services/setup/icd10service';
-import { ResourceService } from './services/setup/resource/ResourceService';
 
 import { ageGroupService } from './services/setup/ageGroupService';
 import { potintialService } from '@/services/potintialDuplicateService';
@@ -219,7 +217,44 @@ import { bedRoomService } from './services/setup/room/bedRoomService';
 import { encounterAssignToBedService } from './services/patients/emergency/encounterAssignToBedService';
 import { currentMedicationService } from './services/patients/currentMedicationService';
 import { uccMedicationOrderService } from './services/medicalsheetsEncounter/uccMedicationOrder/uccMedicationOrderService';
+import { dentalProcedureService } from '@/services/dentalProcedureService';
 import { laboratoryReportsService } from './services/reports/laboratoryReportsService';
+
+const rtkDispatchLoopGuard: Middleware = () => {
+  let depth = 0;
+  let lastType = '';
+  let sameTypeCount = 0;
+
+  return next => action => {
+    const type = typeof (action as any)?.type === 'string' ? (action as any).type : '<non-string>';
+    if (type === lastType) {
+      sameTypeCount += 1;
+    } else {
+      lastType = type;
+      sameTypeCount = 1;
+    }
+
+    depth += 1;
+    // Defensive guard: prevents runaway sync dispatch recursion from crashing the app.
+    if (depth > 300 || sameTypeCount > 300) {
+      // eslint-disable-next-line no-console
+      console.error('[RTK loop guard] blocked recursive dispatch', {
+        type,
+        depth,
+        sameTypeCount
+      });
+      depth -= 1;
+      return action;
+    }
+
+    try {
+      return next(action);
+    } finally {
+      depth -= 1;
+    }
+  };
+};
+
 export const store = configureStore({
   reducer: {
     // ai parsing and summarization
@@ -276,9 +311,7 @@ export const store = configureStore({
     // account / billing base
     [accountApi.reducerPath]: accountApi.reducer,
 
-    // appointment
-    [appointmentService.reducerPath]: appointmentService.reducer,
-
+  
     // dvm / encounter / clinical
     [dvmService.reducerPath]: dvmService.reducer,
     [encounterService.reducerPath]: encounterService.reducer,
@@ -356,7 +389,6 @@ export const store = configureStore({
     // age group
     [ageGroupService.reducerPath]: ageGroupService.reducer,
     [Icd10Service.reducerPath]: Icd10Service.reducer,
-    [ResourceService.reducerPath]: ResourceService.reducer,
     [allergensService.reducerPath]: allergensService.reducer,
 
     // diagnostic tests
@@ -460,7 +492,8 @@ export const store = configureStore({
     [availabilityTemplateService.reducerPath]: availabilityTemplateService.reducer,
     [availabilityGenerationBatchService.reducerPath]: availabilityGenerationBatchService.reducer,
     [availabilityTemplateIntervalService.reducerPath]: availabilityTemplateIntervalService.reducer,
-    [availabilityTemplateIntervalBreakService.reducerPath]: availabilityTemplateIntervalBreakService.reducer,
+    [availabilityTemplateIntervalBreakService.reducerPath]:
+      availabilityTemplateIntervalBreakService.reducer,
     [appointmentFromTemplateService.reducerPath]: appointmentFromTemplateService.reducer,
 
     //AI Services
@@ -535,12 +568,18 @@ export const store = configureStore({
     [encounterAssignToBedService.reducerPath]: encounterAssignToBedService.reducer,
     [currentMedicationService.reducerPath]: currentMedicationService.reducer,
     [uccMedicationOrderService.reducerPath]: uccMedicationOrderService.reducer,
-    [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer,
-
+    [dentalProcedureService.reducerPath]: dentalProcedureService.reducer,
+    [laboratoryReportsService.reducerPath]: laboratoryReportsService.reducer
   },
 
   middleware: getDefaultMiddleware =>
-    getDefaultMiddleware().concat(
+    getDefaultMiddleware({
+      // The app has a very large reducer tree; these dev checks are too expensive/noisy here.
+      immutableCheck: false,
+      serializableCheck: false
+    })
+      .prepend(rtkDispatchLoopGuard)
+      .concat(
       ...[
         // ai
         idParsingService.middleware,
@@ -581,8 +620,8 @@ export const store = configureStore({
         activeIngredientFoodInteractionService.middleware,
         activeIngredientsService.middleware,
 
-        // appointment / clinical
-        appointmentService.middleware,
+        //  clinical
+  
         dvmService.middleware,
         encounterService.middleware,
         dentalService.middleware,
@@ -634,7 +673,6 @@ export const store = configureStore({
         PractitionerDepartmentService.middleware,
 
         // misc setup
-        ResourceService.middleware,
         ageGroupService.middleware,
         Icd10Service.middleware,
         allergensService.middleware,
@@ -715,7 +753,6 @@ export const store = configureStore({
         PayorService.middleware,
         PayorPlanService.middleware,
 
-
         PatientRelationService.middleware,
         patientInsurancesService.middleware,
         patientInsuranceCoveragesService.middleware,
@@ -751,14 +788,14 @@ export const store = configureStore({
         portalService.middleware,
         telephonicConsultationService.middleware,
         ICDTreeService.middleware,
-        //er-triage
+
+        // er-triage
         generalAssessmentService.middleware,
         chiefComplainService.middleware,
         emergencyTriageService.middleware,
         encounterAssessmentService.middleware,
         encounterPlanService.middleware,
         patientDiagnosisService.middleware,
-        vitalSignsService.middleware,
         bodyMeasurementsService.middleware,
         patientObservationsComplaintsService.middleware,
         painAssessmentService.middleware,
@@ -774,63 +811,6 @@ export const store = configureStore({
         RelationsMatrixService.middleware,
         patientAdministrativeWarningsService.middleware,
         radiologyReportService.middleware,
-        PatientRelationService.middleware,
-        patientInsurancesService.middleware,
-        patientInsuranceCoveragesService.middleware,
-        encounterVaccinationService.middleware,
-        patientEncounterService.middleware,
-        patientPaymentsService.middleware,
-        priceListAttributesService.middleware,
-        prescriptionPService.middleware,
-        clinicalSummaryService.middleware,
-        clinicalRecommendationsService.middleware,
-        medicationTestOrdersValidationService.middleware,
-        patientProblemService.middleware,
-        familyHistoryService.middleware,
-        hospitalizationService.middleware,
-        surgicalHistoryService.middleware,
-        socialHistoryService.middleware,
-        favoriteDiagnosticTestService.middleware,
-        diagnosticOrderTestService.middleware,
-        diagnosticOrderService.middleware,
-        diagnosticOrderTestCollectedSampleService.middleware,
-        diagnosticOrderTestTechnicianNoteService.middleware,
-        diagnosticTestRequestService.middleware,
-        externalTestService.middleware,
-        diagnosticOrderTestResultService.middleware,
-        diagnosticOrderTestResultTechnicianNoteService.middleware,
-        diagnosticOrderTestReportService.middleware,
-        diagnosticOrderTestReportCommentsService.middleware,
-        patientDiagnosticResultHistoryService.middleware,
-        patientReportService.middleware,
-        progressNoteService.middleware,
-        patientProcedureService.middleware,
-        consultationService.middleware,
-        portalService.middleware,
-        telephonicConsultationService.middleware,
-        ICDTreeService.middleware,
-        //er-triage
-        generalAssessmentService.middleware,
-        chiefComplainService.middleware,
-        emergencyTriageService.middleware,
-        encounterAssessmentService.middleware,
-        encounterPlanService.middleware,
-        patientDiagnosisService.middleware,
-        vitalSignsService.middleware,
-        bodyMeasurementsService.middleware,
-        patientObservationsComplaintsService.middleware,
-        painAssessmentService.middleware,
-        additionalMeasurementsService.middleware,
-        patientAllergiesService.middleware,
-        patientWarningsService.middleware,
-        procedureSetupService.middleware,
-        ReviewOfSystemService.middleware,
-        patientPrescriptionService.middleware,
-        patientPrescriptionMedicationService.middleware,
-        patientServicesAndProductsService.middleware,
-        NextOfKinService.middleware,
-        RelationsMatrixService.middleware,
-        patientAdministrativeWarningsService.middleware,
         observationServiceNew.middleware,
         organizationHolidaysService.middleware,
         PolicyDefinitionService.middleware,
@@ -846,7 +826,8 @@ export const store = configureStore({
         encounterAssignToBedService.middleware,
         currentMedicationService.middleware,
         uccMedicationOrderService.middleware,
-        laboratoryReportsService.middleware,
+        dentalProcedureService.middleware,
+        laboratoryReportsService.middleware
       ]
     ) as any
 });

@@ -717,11 +717,7 @@ const ERList = () => {
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
 
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
-
-    navigate(targetPath, {
+    navigate('/encounter', {
       state: {
         info: 'toEncounter',
         fromPage: 'ER_Department',

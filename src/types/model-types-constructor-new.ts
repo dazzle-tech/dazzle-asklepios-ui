@@ -1058,8 +1058,8 @@ export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateR
 
 export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGenerationBatchApplyDTO = {
   templateId: 0,
-  startDate: '',
-  endDate: '',
+  startDate: null,
+  endDate: null,
   deferred: false,
   deferredAt: null,
   scope: '',
@@ -2808,15 +2808,6 @@ export const newPatientAdministrativeWarningCreateDTO: modelTypes.PatientAdminis
     description: ''
   };
 
-export const newPatientAdministrativeWarningResolveDTO: modelTypes.PatientAdministrativeWarningsResolveDTO =
-  {
-    id: undefined
-  };
-
-export const newPatientAdministrativeWarningUndoResolveDTO: modelTypes.PatientAdministrativeWarningsUndoResolveDTO =
-  {
-    id: undefined
-  };
 export const newReferralRequest: modelTypes.ReferralRequest = {
   id: undefined,
 
@@ -2973,4 +2964,19 @@ export const newPatientUccMedicationOrder: modelTypes.PatientUccMedicationOrder 
   cancelledDate: null,
   cancelledBy: null,
   cancellationReason: null,
+};
+
+
+export const newDentalProcedure: modelTypes.DentalProcedureCreateDTO = {
+  patientId: undefined,
+  encounterId: undefined,
+  toothNumber: undefined,
+  surface: '',
+  anesthesiaUsed: null,
+  dose: null,
+  unit: null,
+  fillingMaterial: null,
+  serviceId: undefined,
+  cdtCodeId: null,
+  notes: null,
 };

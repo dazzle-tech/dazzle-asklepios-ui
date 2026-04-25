@@ -223,13 +223,13 @@ const Details = ({
   // ✅ لما يتغير الـ currentDepartment
   useEffect(() => {
     if (procedure.currentDepartment) {
-      setProcedure({
-        ...procedure,
+      setProcedure(prev => ({
+        ...prev,
         toDepartmentId: null,
         toFacilityId: authSlice?.selectedDepartment?.facilityId
-      });
+      }));
     }
-  }, [procedure.currentDepartment]);
+  }, [procedure.currentDepartment, authSlice?.selectedDepartment?.facilityId]);
 
   // ✅ تصفير الـ department لما يُمسح الـ facility
   useEffect(() => {
@@ -299,10 +299,12 @@ const Details = ({
         await updateProcedure({
           id: procedure.id,
           procedureId: procedure.procedureId,
-          indicationId: procedure.indicationId,
+          indicationId: Array.isArray(procedure.indicationId)
+            ? procedure.indicationId[0]
+            : procedure.indicationId,
           procedureLevel: procedure.procedureLevel,
           priority: procedure.priority,
-          bodyPart: procedure.bodyPart,
+          bodyPart: procedure.bodyPart || '',
           side: procedure.side,
           toFacilityId: procedure.currentDepartment
             ? authSlice?.selectedDepartment?.facilityId
@@ -318,9 +320,9 @@ const Details = ({
         await createProcedure(procedureData).unwrap();
       }
 
-      proRefetch();
       setOpenDetailsModal(false);
       handleClear();
+      proRefetch();
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
       handleProcedureCrudError(error, dispatch, PROCEDURE_ERROR_MAP, procedure);

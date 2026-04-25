@@ -88,6 +88,16 @@ const PatientFamilyMembers = ({ localPatient }) => {
   };
 
   const handleNewRelative = () => {
+    if (localPatient?.isUnknown) {
+      dispatch(
+        notify({
+          msg: "This Patient in unkown , you can't add relative for unkown patient",
+          sev: 'warning'
+        })
+      );
+      return;
+    }
+
     setSelectedPatientRelation(null);
     setRelationModalOpen(true);
   };

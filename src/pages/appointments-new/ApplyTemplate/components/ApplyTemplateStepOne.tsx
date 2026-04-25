@@ -66,8 +66,8 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
 
   const [internalFormState, setInternalFormState] = React.useState<AvailabilityGenerationBatchApplyDTO>({
     templateId: selectedTemplate?.id ?? 0,
-    startDate: "",
-    endDate: "",
+    startDate: null as any,
+    endDate: null as any,
     deferred: false,
     deferredAt: null,
     scope: "DEPARTMENT",
@@ -85,8 +85,8 @@ const ApplyTemplateStepOne = React.forwardRef(function ApplyTemplateStepOne(
       return {
         ...prev,
         templateId: nextId,
-        startDate: "",
-        endDate: "",
+        startDate: null as any,
+        endDate: null as any,
         scope: "DEPARTMENT" as any,
         childTemplateId: null as any,
         holidayHandlingMode: null,

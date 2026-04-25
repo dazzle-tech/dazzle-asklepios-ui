@@ -33,21 +33,7 @@ import AddReportModal from '@/pages/rad-module/radiologist-worklist/AddReportMod
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetAllRadiologiesQuery } from '@/services/setup/diagnosticTest/radiologyTestService';
 
-const startOfDay = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-};
-
-const endOfDay = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
-};
-
 const RadiologyReportsTable = ({ patient, setEncounter, setPatient }) => {
-
-  const today = new Date();
 
     const [page, setPage] = useState(0);
   

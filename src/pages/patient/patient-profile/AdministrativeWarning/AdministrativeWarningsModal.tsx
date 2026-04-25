@@ -25,7 +25,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchIcon from '@rsuite/icons/Search';
 import React, { useMemo, useState } from 'react';
-import { Badge, Button, Form, Input, InputGroup } from 'rsuite';
+import { Badge, Form, Input, InputGroup } from 'rsuite';
 import './styles.less';
 
 interface AdministrativeWarningsModalProps {
@@ -98,24 +98,22 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
   const handleResolve = async (warning: any) => {
     try {
       await resolveWarning({
-        id: warning.id,
-        body: { id: warning.id, resolved: true }
+        id: warning.id
       }).unwrap();
 
-      dispatch(notify({ msg: 'Accepted Successfully', sev: 'success' }));
+      dispatch(notify({ msg: 'Resolved Successfully', sev: 'success' }));
     } catch {
-      dispatch(notify({ msg: 'Accept Failed', sev: 'error' }));
+      dispatch(notify({ msg: 'Resolve Failed', sev: 'error' }));
     }
   };
 
   const handleUndoResolve = async (warning: any) => {
     try {
       await undoResolveWarning({
-        id: warning.id,
-        body: { id: warning.id, resolved: false }
+        id: warning.id
       }).unwrap();
 
-      dispatch(notify({ msg: 'Undo Accept Successfully', sev: 'success' }));
+      dispatch(notify({ msg: 'Undo Resolve Successfully', sev: 'success' }));
     } catch {
       dispatch(notify({ msg: 'Undo Failed', sev: 'error' }));
     }

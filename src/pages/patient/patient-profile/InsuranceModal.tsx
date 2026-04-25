@@ -98,10 +98,11 @@ const InsuranceModal = ({
   refetchInsurance,
   editing,
   insuranceBrowsing,
-  relations,
   hideSaveBtn = false
 }) => {
   const dispatch = useAppDispatch();
+  const resolvedPatientId =
+    typeof patientKey === 'object' ? Number(patientKey?.id) : Number(patientKey);
 
   const [patientInsurance, setPatientInsurance] = useState<PatientInsurance>({
     ...newPatientInsurance
@@ -110,7 +111,6 @@ const InsuranceModal = ({
   const [addPatientInsurance] = useAddPatientInsuranceMutation();
   const [updatePatientInsurance] = useUpdatePatientInsuranceMutation();
 
-  const [relationsList, setRelationsList] = useState<any[]>();
   const [prevPayorId, setPrevPayorId] = useState<number | undefined>();
 
   const [payorPage, setPayorPage] = useState(0);
@@ -121,7 +121,7 @@ const InsuranceModal = ({
   const [relativePage, setRelativePage] = useState(0);
   const [allRelatives, setAllRelatives] = useState<any[]>([]);
 
-  // بعد
+
   const {
     data: payorResponse,
     isLoading: payorLoading,
@@ -152,12 +152,12 @@ const InsuranceModal = ({
     isFetching: relativesFetching
   } = useGetRelativePatientsByCategoryQuery(
     {
-      patientId: patientKey?.id,
+      patientId: resolvedPatientId,
       categoryType: 'ADULT',
       page: relativePage,
       size: 5
     },
-    { skip: !patientKey?.id || !open }
+    { skip: !resolvedPatientId || !open }
   );
 
   useEffect(() => {
@@ -227,7 +227,7 @@ const InsuranceModal = ({
   const handleSave = async () => {
     const insuranceBody: PatientInsurance = {
       ...patientInsurance,
-      patientId: patientKey.id
+      patientId: resolvedPatientId
     };
 
     try {
@@ -258,15 +258,6 @@ const InsuranceModal = ({
   };
 
   useEffect(() => {
-    const namesAndIds =
-      relations?.map(relation => ({
-        name: `${relation.relativePatientObject.firstName} ${relation.relativePatientObject.lastName}`,
-        id: relation.id
-      })) || [];
-    setRelationsList(namesAndIds);
-  }, [relations]);
-
-  useEffect(() => {
     if (open) {
       if (editing && editing.id) {
         setPatientInsurance({
@@ -284,7 +275,6 @@ const InsuranceModal = ({
       }
 
       setRelativePage(0);
-      setAllRelatives([]);
     }
   }, [open, editing]);
 

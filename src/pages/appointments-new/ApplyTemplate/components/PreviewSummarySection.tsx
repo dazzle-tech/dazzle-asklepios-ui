@@ -66,6 +66,10 @@ function parseTimeToMinutes(value: unknown): number | null {
   return null;
 }
 
+function toMinutesOfDay(value: Date): number {
+  return value.getHours() * 60 + value.getMinutes();
+}
+
 function findOverlappingBreakEnd(
   breaks: AvailabilityTemplateIntervalBreakResponseVM[],
   slotStart: number,
@@ -85,8 +89,8 @@ function findOverlappingBreakEnd(
 }
 
 function countSlotsForInterval(interval: AvailabilityTemplateIntervalResponseVM, templateDurationMinutes: number): number {
-  const start = parseTimeToMinutes(interval?.startTime ?? interval?.fromTime ?? interval?.start);
-  const end = parseTimeToMinutes(interval?.endTime ?? interval?.toTime ?? interval?.end);
+  const start = parseTimeToMinutes((interval as any)?.startTime ?? (interval as any)?.fromTime ?? (interval as any)?.start);
+  const end = parseTimeToMinutes((interval as any)?.endTime ?? (interval as any)?.toTime ?? (interval as any)?.end);
   if (start == null || end == null) return 0;
   const intervalDuration = Number(interval?.slotDurationMinutes ?? templateDurationMinutes);
   if (!Number.isFinite(intervalDuration) || intervalDuration <= 0) return 0;
@@ -114,23 +118,37 @@ function countSlotsForIntervalWithBreaks(
   slotBeforeMinutes: number,
   slotAfterMinutes: number,
   parallelCapacity: number,
-  breaks: AvailabilityTemplateIntervalBreakResponseVM[]
+  breaks: AvailabilityTemplateIntervalBreakResponseVM[],
+  effectiveStartBound?: number | null,
+  effectiveEndBound?: number | null
 ): { slotCount: number; bufferCount: number; totalCount: number } {
-  const start = parseTimeToMinutes(interval?.startTime ?? interval?.fromTime ?? interval?.start);
-  const end = parseTimeToMinutes(interval?.endTime ?? interval?.toTime ?? interval?.end);
+  const start = parseTimeToMinutes((interval as any)?.startTime ?? (interval as any)?.fromTime ?? (interval as any)?.start);
+  const end = parseTimeToMinutes((interval as any)?.endTime ?? (interval as any)?.toTime ?? (interval as any)?.end);
   if (start == null || end == null) return { slotCount: 0, bufferCount: 0, totalCount: 0 };
   const intervalDuration = Number(interval?.slotDurationMinutes ?? templateDurationMinutes);
   if (!Number.isFinite(intervalDuration) || intervalDuration <= 0) {
     return { slotCount: 0, bufferCount: 0, totalCount: 0 };
   }
 
+  let effectiveStart = start;
+  let effectiveEnd = end;
+  if (effectiveStartBound != null && effectiveStartBound > effectiveStart) {
+    effectiveStart = effectiveStartBound;
+  }
+  if (effectiveEndBound != null && effectiveEndBound < effectiveEnd) {
+    effectiveEnd = effectiveEndBound;
+  }
+  if (effectiveStart >= effectiveEnd) {
+    return { slotCount: 0, bufferCount: 0, totalCount: 0 };
+  }
+
   let slotCount = 0;
   let bufferCount = 0;
-  let cursor = start;
+  let cursor = effectiveStart;
   while (true) {
     const slotStart = cursor;
     const slotEnd = slotStart + intervalDuration;
-    if (slotEnd > end) break;
+    if (slotEnd > effectiveEnd) break;
     const overlappingBreakEnd = findOverlappingBreakEnd(breaks, slotStart, slotEnd);
     if (overlappingBreakEnd != null) {
       cursor = overlappingBreakEnd + slotBeforeMinutes;
@@ -161,11 +179,13 @@ function computePreview(
   dto: AvailabilityGenerationBatchApplyDTO | undefined,
   holidayDates: string[] = []
 ) {
-  const start = toDateOnly((dto as any)?.startDate);
-  const end = toDateOnly((dto as any)?.endDate);
+  const startDateTime = parseApplyTemplateDateTime((dto as any)?.startDate);
+  const endDateTime = parseApplyTemplateDateTime((dto as any)?.endDate);
+  const start = toDateOnly(startDateTime);
+  const end = toDateOnly(endDateTime);
   const excludeHolidays = String((dto as any)?.holidayHandlingMode ?? "").toUpperCase() === "EXCLUDE_HOLIDAYS";
 
-  if (!start || !end || end < start) {
+  if (!start || !end || !startDateTime || !endDateTime || end < start) {
     return {
       totalSlots: 0,
       totalSlotTypeSlots: 0,
@@ -178,6 +198,10 @@ function computePreview(
 
   const holidaysSet = new Set((holidayDates ?? []).filter(Boolean));
   const holidayCountInPeriod = holidaysSet.size;
+  const applyStartDayKey = `${startDateTime.getFullYear()}-${String(startDateTime.getMonth() + 1).padStart(2, "0")}-${String(startDateTime.getDate()).padStart(2, "0")}`;
+  const applyEndDayKey = `${endDateTime.getFullYear()}-${String(endDateTime.getMonth() + 1).padStart(2, "0")}-${String(endDateTime.getDate()).padStart(2, "0")}`;
+  const applyStartMinutes = toMinutesOfDay(startDateTime);
+  const applyEndMinutes = toMinutesOfDay(endDateTime);
 
   let totalSlots = 0;
   let totalSlotTypeSlots = 0;
@@ -204,13 +228,17 @@ function computePreview(
     for (const interval of dayIntervals) {
       const intervalId = Number(interval?.id ?? 0);
       const intervalBreaks = intervalId ? breaksByIntervalId[intervalId] ?? [] : [];
+      const dayEffectiveStart = key === applyStartDayKey ? applyStartMinutes : null;
+      const dayEffectiveEnd = key === applyEndDayKey ? applyEndMinutes : null;
       const counts = countSlotsForIntervalWithBreaks(
         interval,
         templateDurationMinutes,
         slotBeforeMinutes,
         slotAfterMinutes,
         parallelCapacity,
-        intervalBreaks
+        intervalBreaks,
+        dayEffectiveStart,
+        dayEffectiveEnd
       );
       totalSlots += counts.totalCount;
       totalSlotTypeSlots += counts.slotCount;

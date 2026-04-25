@@ -98,7 +98,9 @@ const handleCrudError = (err: any, dispatch: any, keyMap: Record<string, string>
 const SpecificCoverageModal: React.FC<Props> = ({ open, setOpen, insurance }) => {
   const dispatch = useAppDispatch();
 
-  const itemTypes = useEnumOptions('BillingItemTypes');
+  const itemTypes = useEnumOptions('BillingItemTypes', {
+    exclude: ['PATHOLOGY']
+  });
   const coverageTypes = useEnumOptions('InsuranceCoverageType');
 
   const [page, setPage] = useState<number>(0);

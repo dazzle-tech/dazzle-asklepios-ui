@@ -6,12 +6,7 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
-import {
-  useGetResourcesAvailabilityQuery,
-  useGetResourceWithDetailsQuery
-} from '@/services/appointmentService';
 import { useCreateAppointmentRequestMutation } from '@/services/appointment/appointmentRequestService';
-import { useGetAllResourcesQuery, useGetResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import { useFetchAttachmentQuery } from '@/services/attachmentService';
 import { useGetPatientsQuery } from '@/services/patientService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -39,7 +34,7 @@ import {
   Panel,
   Placeholder
 } from 'rsuite';
-import '../AppoitmentModal.less';
+import '../styles.less';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useEnumOptions } from '@/services/enumsApi';
 import PatientSearchBar from '../PatientSearchBar';
@@ -59,14 +54,6 @@ const FollowupAppointmentModal = ({
   from,
   selectedSlot
 }) => {
-  const [resourcesPaginationParams] = useState({
-    page: 0,
-    size: 100,
-    sort: 'id,asc'
-  } as { page: number; size: number; sort: string });
-
-  const { data: resourcesListResponse } = useGetAllResourcesQuery(resourcesPaginationParams);
-
   const [selectedSlices, setSelectedSlices] = useState([]);
 
   const patientSlice = useAppSelector(state => state.patient);
@@ -78,7 +65,7 @@ const FollowupAppointmentModal = ({
     if (authSlice?.tenant?.selectedFacility) {
       return authSlice.tenant.selectedFacility;
     }
-    
+
     // Fallback to localStorage
     try {
       const raw = localStorage.getItem('tenant');
@@ -88,8 +75,8 @@ const FollowupAppointmentModal = ({
           return tenant.selectedFacility;
         }
       }
-    } catch (e) {}
-    
+    } catch (e) { }
+
     return null;
   }, [authSlice?.tenant?.selectedFacility]);
 
@@ -98,12 +85,12 @@ const FollowupAppointmentModal = ({
     if (!a) return false;
     return Boolean(
       a?.id ||
-        a?.key ||
-        a?.appointmentStart ||
-        a?.appointmentEnd ||
-        a?.resourceKey ||
-        a?.resourceTypeLkey ||
-        a?.facilityKey
+      a?.key ||
+      a?.appointmentStart ||
+      a?.appointmentEnd ||
+      a?.resourceKey ||
+      a?.resourceTypeLkey ||
+      a?.facilityKey
     );
   }, [appointmentData]);
 
@@ -132,8 +119,8 @@ const FollowupAppointmentModal = ({
       setLocalPatient((appointmentData as any)?.patient ? normalizePatient((appointmentData as any).patient) : newApPatient);
     } else {
       const initialFacilityKey = currentLoggedInFacility?.id || currentLoggedInFacility?.facilityKey;
-      setAppointment({ 
-        ...newApAppointment, 
+      setAppointment({
+        ...newApAppointment,
         visitTypeLkey: FOLLOW_UP_VISIT_TYPE,
         patientKey: seedPatient?.key ?? null,
         facilityKey: initialFacilityKey || null
@@ -171,15 +158,11 @@ const FollowupAppointmentModal = ({
         facilityKey: selectedSlot.facilityKey || facility?.id || facility?.facilityKey || null
       }));
     } else if (selectedSlot?.resourceId) {
-      const resource = resourcesListResponse?.data?.find(r => r.key === selectedSlot.resourceId);
-      if (resource) {
-        setAppointment(prev => ({
-          ...prev,
-          resourceKey: resource.key,
-          resourceTypeLkey: resource.resourceTypeLkey,
-          facilityKey: facility?.id || facility?.facilityKey || null
-        }));
-      }
+      setAppointment(prev => ({
+        ...prev,
+        resourceKey: selectedSlot.resourceId,
+        facilityKey: facility?.id || null
+      }));
     } else if (!isEditingExistingAppointment) {
       // Only clear if we don't have appointmentData (i.e., creating new appointment)
       // Don't clear resourceTypeLkey - let the default useEffect set it to CLINIC
@@ -191,7 +174,7 @@ const FollowupAppointmentModal = ({
         // Don't touch resourceTypeLkey - let the default useEffect handle it
       }));
     }
-  }, [selectedSlot, resourcesListResponse, facility, isEditingExistingAppointment, showOnly]);
+  }, [selectedSlot, facility, isEditingExistingAppointment, showOnly]);
 
   useEffect(() => {
     if (selectedSlot?.start) {
@@ -229,28 +212,6 @@ const FollowupAppointmentModal = ({
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
 
-  const {
-    data: resourceAvailabilityDetails
-  } = useGetResourceWithDetailsQuery(
-    selectedSlot?.resourceKey || selectedSlot?.resourceId || appointment?.resourceKey || '',
-    {
-      // In Encounter follow-up request flow, "Resource" is department-based; skip resource availability details APIs.
-      skip:
-        from === 'Encounter' ||
-        (!selectedSlot?.resourceKey && !selectedSlot?.resourceId && !appointment?.resourceKey)
-    }
-  );
-
-  const { data: resourcesByTypeResponse } = useGetResourcesByTypeQuery(
-    {
-      resourceType: appointment?.resourceTypeLkey,
-      page: 0,
-      size: 100
-    },
-    {
-      skip: !appointment?.resourceTypeLkey
-    }
-  );
   const dispatch = useAppDispatch();
 
   const [validationResult, setValidationResult] = useState({});
@@ -299,17 +260,6 @@ const FollowupAppointmentModal = ({
     }
   }, [fetchPatientImageResponse]);
 
-  const { data: resourcesAvailability } = useGetResourcesAvailabilityQuery(
-    {
-      resource_key: appointment?.resourceKey || '',
-      facility_id: appointment?.facilityKey || ''
-    },
-    {
-      // In Encounter follow-up request flow, "Resource" is department-based; skip resource availability APIs.
-      skip: from === 'Encounter' || !appointment?.resourceKey || !appointment?.facilityKey
-    }
-  );
-
   useEffect(() => {
     if (appointmentData?.appointmentStart) {
       const date = new Date(appointmentData?.appointmentStart);
@@ -326,8 +276,8 @@ const FollowupAppointmentModal = ({
   }, [appointmentData?.appointmentStart]);
 
   useEffect(() => {
-    setRowPeriods(resourcesAvailability?.object);
-  }, [resourcesAvailability?.object, appointment?.resourceKey]);
+    setRowPeriods([]);
+  }, [appointment?.resourceKey]);
 
   useEffect(() => {
     if (!appointment?.resourceKey && !selectedSlot?.resourceKey && !selectedSlot?.resourceId) {
@@ -344,7 +294,7 @@ const FollowupAppointmentModal = ({
 
     const loadedSlices = {};
 
-    const availability = resourcesAvailability?.object ?? [];
+    const availability: any[] = [];
     availability.forEach((slice, originalIndex) => {
       const day = String(slice.dayLkey || slice.dayOfWeek);
 
@@ -384,8 +334,6 @@ const FollowupAppointmentModal = ({
   }, [
     appointment?.facilityKey,
     appointment?.resourceKey,
-    resourceAvailabilityDetails,
-    resourcesAvailability,
     selectedSlot?.resourceKey,
     selectedSlot?.resourceId
   ]);
@@ -398,32 +346,6 @@ const FollowupAppointmentModal = ({
     label: item.day,
     value: item.day
   }));
-
-  useEffect(() => {
-    if (appointment?.resourceTypeLkey && resourcesByTypeResponse?.data) {
-      setFilteredResourcesList(resourcesByTypeResponse.data);
-    } else if (!appointment?.resourceTypeLkey) {
-      setFilteredResourcesList([]);
-    }
-  }, [resourcesByTypeResponse, appointment?.resourceTypeLkey]);
-
-  const resourcesWithNames = useMemo(() => {
-    const resources = appointment?.resourceTypeLkey ? resourcesByTypeResponse?.data ?? filteredResourcesList : resourcesListResponse?.data ?? [];
-
-    return resources.map((resource: any) => ({
-      ...resource,
-      resourceName: resource.resourceName || resource.resourceKey || resource.key,
-      resourceKey: resource.resourceKey || resource.key,
-      key: resource.resourceKey || resource.key
-    }));
-  }, [resourcesByTypeResponse?.data, filteredResourcesList, resourcesListResponse?.data, appointment?.resourceTypeLkey]);
-
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    ignore: !searchKeyword || searchKeyword.length < 3
-  });
-
-  const { data: facilityListResponse, isLoading: isGettingFacilities, isFetching: isFetchingFacilities } = useGetAllFacilitiesQuery({});
 
   const { data: departmentListResponse } = useGetAppointableDepartmentsQuery({
     facilityId: appointment?.facilityKey,
@@ -443,6 +365,49 @@ const FollowupAppointmentModal = ({
   }, {
     skip: !appointment?.facilityKey
   });
+  
+  useEffect(() => {
+    const selectedType = String(appointment?.resourceTypeLkey ?? '').toUpperCase();
+    if (!selectedType) {
+      setFilteredResourcesList([]);
+      return;
+    }
+    if (selectedType === 'DEPARTMENT' || selectedType === 'DAY_CASE') {
+      const list =
+        selectedType === 'DAY_CASE'
+          ? (dayCaseDepartmentListResponse as any)?.data ?? []
+          : (departmentListResponse as any)?.data ?? [];
+      setFilteredResourcesList(
+        list.map((d: any) => ({
+          ...d,
+          key: String(d?.id ?? d?.key ?? ''),
+          resourceKey: String(d?.id ?? d?.key ?? ''),
+          resourceName: d?.name ?? d?.departmentName ?? `Department #${d?.id ?? ''}`
+        }))
+      );
+      return;
+    }
+    setFilteredResourcesList([]);
+  }, [appointment?.resourceTypeLkey, departmentListResponse, dayCaseDepartmentListResponse]);
+
+  const resourcesWithNames = useMemo(() => {
+    const resources = filteredResourcesList ?? [];
+
+    return resources.map((resource: any) => ({
+      ...resource,
+      resourceName: resource.resourceName || resource.resourceKey || resource.key,
+      resourceKey: resource.resourceKey || resource.key,
+      key: resource.resourceKey || resource.key
+    }));
+  }, [filteredResourcesList]);
+
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    ignore: !searchKeyword || searchKeyword.length < 3
+  });
+
+  const { data: facilityListResponse, isLoading: isGettingFacilities, isFetching: isFetchingFacilities } = useGetAllFacilitiesQuery({});
+
 
   const normalizedAppointment = useMemo(() => {
     if (!appointment) return appointment;
@@ -532,9 +497,9 @@ const FollowupAppointmentModal = ({
     }
 
     if (appointment?.resourceKey) {
-      const selectedResource =
-        resourcesByTypeResponse?.data?.find(r => r.id === appointment.resourceKey) ||
-        resourcesListResponse?.data?.find(r => r.key === appointment.resourceKey);
+      const selectedResource = resourcesWithNames?.find(
+        (r: any) => String(r?.resourceKey ?? r?.key ?? r?.id) === String(appointment.resourceKey)
+      );
       if (selectedResource) {
         const resourceName = selectedResource.resourceName || selectedResource.resourceKey || selectedResource.key;
         filters.push({
@@ -547,7 +512,7 @@ const FollowupAppointmentModal = ({
     }
 
     return filters;
-  }, [appointment?.resourceTypeLkey, appointment?.resourceKey, ResourceTypeEnum, resourcesByTypeResponse, resourcesListResponse]);
+  }, [appointment?.resourceTypeLkey, appointment?.resourceKey, ResourceTypeEnum, resourcesWithNames]);
 
   const handleRemoveFilter = (filterType: string) => {
     if (filterType === 'resourceType') {
@@ -660,14 +625,14 @@ const FollowupAppointmentModal = ({
 
     const hasNewServiceFields = Boolean(
       raw?.medicalRecordNumber ||
-        raw?.medical_record_number ||
-        raw?.primaryMobileNumber ||
-        raw?.sexAtBirth ||
-        raw?.dateOfBirth ||
-        raw?.firstName ||
-        raw?.secondName ||
-        raw?.thirdName ||
-        raw?.lastName
+      raw?.medical_record_number ||
+      raw?.primaryMobileNumber ||
+      raw?.sexAtBirth ||
+      raw?.dateOfBirth ||
+      raw?.firstName ||
+      raw?.secondName ||
+      raw?.thirdName ||
+      raw?.lastName
     );
 
     if (hasNewServiceFields) {
@@ -722,7 +687,7 @@ const FollowupAppointmentModal = ({
   }, [patientDocumentsResponse]);
 
   const EncounterReasonEnum = useEnumOptions('EncounterReason');
-  
+
   // Ensure Visit Type is always set to FOLLOW_UP for this modal
   useEffect(() => {
     if (appointment?.visitTypeLkey === 'FOLLOW_UP') return;
@@ -950,7 +915,7 @@ const FollowupAppointmentModal = ({
           return;
         }
       }
-      
+
       // Fallback: use DEFAULT_RESOURCE_TYPE directly (works even if enum not loaded yet)
       setAppointment(prev => ({
         ...prev,
@@ -965,12 +930,12 @@ const FollowupAppointmentModal = ({
       setAppointment(prev => ({ ...prev, facilityKey: facility?.id || facility?.facilityKey }));
       return;
     }
-    
+
     // Otherwise, use current logged-in facility if no facility is set
     if (!appointment?.facilityKey && currentLoggedInFacility) {
-      setAppointment(prev => ({ 
-        ...prev, 
-        facilityKey: currentLoggedInFacility?.id || currentLoggedInFacility?.facilityKey 
+      setAppointment(prev => ({
+        ...prev,
+        facilityKey: currentLoggedInFacility?.id || currentLoggedInFacility?.facilityKey
       }));
     }
   }, [facility, currentLoggedInFacility, appointment?.facilityKey]);
@@ -1449,10 +1414,10 @@ const FollowupAppointmentModal = ({
                                   (localPatient as any)?.document_type_lkey || localPatient?.documentTypeLkey;
                                 return docTypeKey && docTypeLovQueryResponse?.object
                                   ? conjureValueBasedOnKeyFromListOfValues(
-                                      docTypeLovQueryResponse.object,
-                                      docTypeKey,
-                                      'lovDisplayVale'
-                                    ) || '-'
+                                    docTypeLovQueryResponse.object,
+                                    docTypeKey,
+                                    'lovDisplayVale'
+                                  ) || '-'
                                   : '-';
                               })()}
                             </div>

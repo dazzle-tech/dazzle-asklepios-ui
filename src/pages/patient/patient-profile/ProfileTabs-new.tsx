@@ -8,7 +8,6 @@ import { calculateAgeFormat } from '@/utils';
 import dayjs from 'dayjs';
 import React, { useEffect, useRef, useState } from 'react';
 import { Panel } from 'rsuite';
-import ConsentFormTab from './ConsentFormTab';
 import AddressTab from './tabs/AddressTab';
 import PatientAttachment from './tabs/Attachment-new/PatientAttachment';
 import DemographicsTab from './tabs/DemographicsTab';
@@ -35,6 +34,9 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   refetchAttachmentList,
   setRefetchAttachmentList
 }) => {
+  const [activeTab, setActiveTab] = useState<string>('1');
+  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set(['1']));
+
   const [ageGroupValue, setAgeGroupValue] = useState<{ ageGroup: string }>({
     ageGroup: ''
   });
@@ -53,6 +55,14 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
 
   const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
+
+  useEffect(() => {
+    setLoadedTabs(prev => {
+      const next = new Set(prev);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
 
   useEffect(() => {
     const dob = localPatient?.dateOfBirth;
@@ -100,10 +110,12 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       });
   }, [localPatient?.id, localPatient?.dateOfBirth]);
 
+  const isTabLoaded = (tabKey: string) => loadedTabs.has(tabKey);
+
   const tabData = [
     {
       title: 'Demographics',
-      content: (
+      content: isTabLoaded('1') ? (
         <DemographicsTab
           localPatient={localPatient}
           setLocalPatient={setLocalPatient}
@@ -115,62 +127,73 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           ageFormatType={ageFormatType}
           ageGroupValue={ageGroupValue}
         />
+      ) : (
+        <></>
       )
     },
     {
       title: 'Documents',
-      content: <SecondaryIDTab localPatient={localPatient} />
+      content: isTabLoaded('2') ? <SecondaryIDTab localPatient={localPatient} /> : <></>
     },
     {
       title: 'Address',
-      content: <AddressTab localPatient={localPatient} />
+      content: isTabLoaded('3') ? <AddressTab localPatient={localPatient} /> : <></>
     },
     {
       title: 'Extra Details',
-      content: (
+      content: isTabLoaded('4') ? (
         <ExtraDetailsTab
           localPatient={localPatient}
           setLocalPatient={setLocalPatient}
           validationResult={validationResult}
         />
+      ) : (
+        <></>
       )
     },
-    { title: 'Insurance', content: <InsuranceTab localPatient={localPatient} /> },
+    {
+      title: 'Insurance',
+      content: isTabLoaded('5') ? <InsuranceTab localPatient={localPatient} /> : <></>
+    },
     {
       title: 'Privacy & Security',
-      content: (
+      content: isTabLoaded('6') ? (
         <PrivacySecurityTab
           localPatient={localPatient}
           setLocalPatient={setLocalPatient}
           validationResult={validationResult}
         />
+      ) : (
+        <></>
       )
     },
     {
-      title: 'Consent Forms',
-      content: <ConsentFormTab patient={localPatient} isClick={!localPatient.id} />
-    },
-    {
       title: 'Primary Care Provider',
-      content: <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
+      content: isTabLoaded('7') ? (
+        <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
+      ) : (
+        <></>
+      )
     },
     {
       title: 'Family Members',
-      content: <PatientFamilyMembers localPatient={localPatient} />
+      content: isTabLoaded('8') ? <PatientFamilyMembers localPatient={localPatient} /> : <></>
     },
     {
       title: 'Next of Kin',
-      content: <NextOfKin patient={localPatient} isClick={!localPatient.id} />
+      content: isTabLoaded('9') ? <NextOfKin patient={localPatient} isClick={!localPatient.id} /> : <></>
     },
 
     {
       title: 'Attachments',
-      content: (
+      content: isTabLoaded('10') ? (
         <PatientAttachment
           localPatient={localPatient}
           setRefetchAttachmentList={setRefetchAttachmentList}
           refetchAttachmentList={refetchAttachmentList}
         />
+      ) : (
+        <></>
       )
     }
   ];
@@ -184,12 +207,12 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
     <div dir={dir}>
       <Panel
         header={
-          <h5 className="title">
+          <div className="title">
             <Translate>Details</Translate>
-          </h5>
+          </div>
         }
       >
-        <MyTab data={tabData} />
+        <MyTab data={tabData} activeTab={activeTab} setActiveTab={key => setActiveTab(String(key))} />
       </Panel>
     </div>
   );

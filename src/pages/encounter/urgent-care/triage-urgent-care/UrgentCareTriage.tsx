@@ -8,7 +8,6 @@ import { faUserPlus, faBolt } from '@fortawesome/free-solid-svg-icons';
 import { faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Popover, Tooltip, Whisper } from 'rsuite';
-import { Modal } from 'rsuite';
 import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import 'react-tabs/style/react-tabs.css';
 import { calculateAgeFormat, formatDate, formatEnumString } from '@/utils';
@@ -39,9 +38,6 @@ import ProfileSidebarNew from '@/pages/patient/patient-profile/ProfileSidebar-ne
 import CreateNewPatient from '@/pages/patient/facility-patient-list/CreateNewPatient';
 import QuickPatient from '@/pages/patient/facility-patient-list/QuickPatient';
 import '../styles.less';
-import PatientPaymentInfo, {
-  PatientPaymentInfoHandle
-} from '@/pages/patient/patient-profile/PatientQuickAppoinment/PatientPaymentInfo';
 import { newPatientInsurance, newPatientPayments } from '@/types/model-types-constructor-new';
 import {
   useCreateOrGetEmergencyTriageMutation,
@@ -56,10 +52,8 @@ import MyModal from '@/components/MyModal/MyModal';
 import PatientEMRModal from '@/pages/patient/patient-emr/PatientEMRModal';
 import { printPatientWristband } from '@/utils/printPatientWristband';
 import BedAssignmentModal from '../../day-case/DayCaseList/BedAssignmentModal';
-import { useGetActiveAssignmentsByEncounterIdsQuery } from '@/services/patients/emergency/encounterAssignToBedService';
-import { useGetRoomsByIdsMutation } from '@/services/setup/room/roomService';
-import { useGetBedsByIdsMutation } from '@/services/setup/room/bedService';
 import { useAppSelector } from '@/hooks';
+import AddPaymentModal from './component/AddPaymentModal';
 
 const DEFAULT_ENCOUNTER_STATUS_CODES = [
   'WAITING_TRIAGE',
@@ -430,11 +424,7 @@ const UrgentCareTriage = () => {
     codes: [...DEFAULT_ENCOUNTER_STATUS_CODES]
   }));
   const [createOrGetEmergencyTriage] = useCreateOrGetEmergencyTriageMutation();
-  const [getRoomsByIds, { data: roomsByIds = [], isLoading: isRoomsByIdsLoading }] =
-    useGetRoomsByIdsMutation();
-  const [getBedsByIds, { data: bedsByIds = [], isLoading: isBedsByIdsLoading }] =
-    useGetBedsByIdsMutation();
-    const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
+  const [triggerGetPatientWristbandPdf] = useLazyGetPatientWristbandPdfQuery();
 
   const navigate = useNavigate();
   const [openEMRModal, setOpenEMRModal] = useState(false);
@@ -500,7 +490,6 @@ const UrgentCareTriage = () => {
   const [paymentRow, setPaymentRow] = useState<any>(null);
   const [payment, setPayment] = useState<any>({ ...newPatientPayments });
   const [patientInsurance, setPatientInsurance] = useState<any>({ ...newPatientInsurance });
-  const paymentInfoRef = useRef<PatientPaymentInfoHandle>(null);
 
   const dateFilterRef = useRef(dateFilter);
   const encounterStatusRef = useRef(encounterStatus);
@@ -764,124 +753,7 @@ const UrgentCareTriage = () => {
     return copied;
   }, [normalizedRows, priorityOrderMap]);
 
-  const encounterIdsForLocations = useMemo(() => {
-    return Array.from(
-      new Set(
-        (sortedTableData ?? [])
-          .map((row: any) => row?.id)
-          .filter((value: any) => value !== null && value !== undefined)
-      )
-    );
-  }, [sortedTableData]);
-
-  const {
-    data: activeAssignments = [],
-    isLoading: isAssignmentsLoading,
-    isFetching: isAssignmentsFetching
-  } = useGetActiveAssignmentsByEncounterIdsQuery(
-    { encounterIds: encounterIdsForLocations },
-    {
-      skip: encounterIdsForLocations.length === 0
-    }
-  );
-
-  const roomIdsFromAssignments = useMemo(() => {
-    return Array.from(
-      new Set(
-        (activeAssignments ?? [])
-          .map((assignment: any) => assignment?.room?.id ?? assignment?.roomId ?? null)
-          .filter((value: any) => value !== null && value !== undefined)
-      )
-    );
-  }, [activeAssignments]);
-
-  const bedIdsFromAssignments = useMemo(() => {
-    return Array.from(
-      new Set(
-        (activeAssignments ?? [])
-          .map((assignment: any) => assignment?.bed?.id ?? assignment?.bedId ?? null)
-          .filter((value: any) => value !== null && value !== undefined)
-      )
-    );
-  }, [activeAssignments]);
-
-  useEffect(() => {
-    if (roomIdsFromAssignments.length === 0) return;
-    getRoomsByIds({ ids: roomIdsFromAssignments }).catch(() => {});
-  }, [roomIdsFromAssignments, getRoomsByIds]);
-
-  useEffect(() => {
-    if (bedIdsFromAssignments.length === 0) return;
-    getBedsByIds({ ids: bedIdsFromAssignments }).catch(() => {});
-  }, [bedIdsFromAssignments, getBedsByIds]);
-
-  const roomsMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (roomsByIds ?? []).forEach((room: any) => {
-      if (!room?.id) return;
-      map.set(String(room.id), room);
-    });
-    return map;
-  }, [roomsByIds]);
-
-  const bedsMap = useMemo(() => {
-    const map = new Map<string, any>();
-    (bedsByIds ?? []).forEach((bed: any) => {
-      if (!bed?.id) return;
-      map.set(String(bed.id), bed);
-    });
-    return map;
-  }, [bedsByIds]);
-
-  const activeAssignmentsMap = useMemo(() => {
-    const map = new Map<string, any[]>();
-
-    (activeAssignments ?? []).forEach((assignment: any) => {
-      const encounterId = assignment?.encounter?.id ?? assignment?.encounterId;
-      if (!encounterId) return;
-
-      const key = String(encounterId);
-      const currentList = map.get(key) ?? [];
-      currentList.push(assignment);
-      map.set(key, currentList);
-    });
-
-    return map;
-  }, [activeAssignments]);
-
-  const tableData = useMemo(() => {
-    return (sortedTableData ?? []).map((row: any) => {
-      const activeAssignmentsForEncounter = activeAssignmentsMap.get(String(row?.id)) ?? [];
-
-      const firstAssignment = activeAssignmentsForEncounter[0] ?? null;
-      const roomId = firstAssignment?.room?.id ?? firstAssignment?.roomId ?? null;
-      const bedId = firstAssignment?.bed?.id ?? firstAssignment?.bedId ?? null;
-
-      const roomFromApi = roomId != null ? roomsMap.get(String(roomId)) : null;
-      const bedFromApi = bedId != null ? bedsMap.get(String(bedId)) : null;
-
-      return {
-        ...row,
-        activeAssignmentsForEncounter,
-        resolvedRoom: roomFromApi,
-        resolvedBed: bedFromApi,
-        apRoom: roomFromApi?.name
-          ? {
-              ...(row?.apRoom ?? {}),
-              key: roomFromApi?.id ?? row?.apRoom?.key ?? row?.room?.key ?? null,
-              name: roomFromApi?.name ?? row?.apRoom?.name ?? row?.room?.name ?? null
-            }
-          : row?.apRoom,
-        apBed: bedFromApi?.name
-          ? {
-              ...(row?.apBed ?? {}),
-              key: bedFromApi?.id ?? row?.apBed?.key ?? row?.bed?.key ?? null,
-              name: bedFromApi?.name ?? row?.apBed?.name ?? row?.bed?.name ?? null
-            }
-          : row?.apBed
-      };
-    });
-  }, [sortedTableData, activeAssignmentsMap, roomsMap, bedsMap]);
+  const tableData = useMemo(() => sortedTableData ?? [], [sortedTableData]);
 
   const isSelected = (rowData: any) => {
     if (
@@ -973,6 +845,39 @@ const UrgentCareTriage = () => {
     setPatientInsurance({ ...newPatientInsurance });
     setPaymentModalOpen(true);
     return true;
+  };
+
+  const handleSetPaymentModalOpen = (open: boolean) => {
+    setPaymentModalOpen(open);
+    if (!open) {
+      setPaymentRow(null);
+    }
+  };
+
+  const handleSavePayment = async () => {
+    try {
+      const encounterId = paymentRow?.id ?? null;
+      if (encounterId) {
+        await updateEncounter({
+          id: encounterId,
+          body: buildEncounterUpdateBody(paymentRow, { status: 'WAITING_TRIAGE' })
+        }).unwrap();
+      }
+
+      dispatch(notify({ msg: 'Payment saved', sev: 'success' }));
+      refetchEncounter();
+      handleSetPaymentModalOpen(false);
+    } catch (e: any) {
+      dispatch(
+        notify({
+          msg:
+            e?.data?.message ||
+            e?.message ||
+            'Payment saved, but failed to update encounter status',
+          sev: 'error'
+        })
+      );
+    }
   };
 
   const handleUpdateEncounterPriority = useCallback(
@@ -1091,14 +996,7 @@ const UrgentCareTriage = () => {
   }, [isFetching, manualSearchTriggered]);
 
   useEffect(() => {
-    if (
-      isLoading ||
-      isFetching ||
-      isAssignmentsLoading ||
-      isAssignmentsFetching ||
-      isRoomsByIdsLoading ||
-      isBedsByIdsLoading
-    ) {
+    if (isLoading || isFetching) {
       dispatch(showSystemLoader());
     } else {
       dispatch(hideSystemLoader());
@@ -1110,10 +1008,6 @@ const UrgentCareTriage = () => {
   }, [
     isLoading,
     isFetching,
-    isAssignmentsLoading,
-    isAssignmentsFetching,
-    isRoomsByIdsLoading,
-    isBedsByIdsLoading,
     dispatch
   ]);
 
@@ -1341,69 +1235,6 @@ const UrgentCareTriage = () => {
       key: 'plannedStartDate',
       title: <Translate>DATE</Translate>,
       dataKey: 'plannedStartDate'
-    },
-    {
-      key: 'location',
-      title: 'Location',
-      render: (row: any) => {
-        const statusUpper = String(row?.status ?? '').toUpperCase();
-
-        if (statusUpper === 'DISCHARGED') {
-          return <span className="location-table-style">Discharged</span>;
-        }
-
-        if (statusUpper === 'CLOSED') {
-          return <span className="location-table-style">Closed</span>;
-        }
-
-        const assignments = row?.activeAssignmentsForEncounter ?? [];
-
-        const speaker = (
-          <Tooltip>
-            {assignments.length > 0 ? (
-              assignments.map((assignment: any, index: number) => {
-                const roomId = assignment?.room?.id ?? assignment?.roomId ?? null;
-                const bedId = assignment?.bed?.id ?? assignment?.bedId ?? null;
-
-                const room = roomId != null ? roomsMap.get(String(roomId)) : null;
-                const bed = bedId != null ? bedsMap.get(String(bedId)) : null;
-
-                return (
-                  <div key={assignment?.id ?? index}>
-                    Room {assignments.length > 1 ? index + 1 : ''}:{' '}
-                    {room?.name ?? assignment?.room?.name ?? '-'}
-                    <br />
-                    Bed {assignments.length > 1 ? index + 1 : ''}:{' '}
-                    {bed?.name ?? assignment?.bed?.name ?? '-'}
-                    <br />
-                    Admission Reason {assignments.length > 1 ? index + 1 : ''}:{' '}
-                    {assignment?.admissionReason ?? '-'}
-                  </div>
-                );
-              })
-            ) : (
-              <div>Admission Reason: -</div>
-            )}
-          </Tooltip>
-        );
-
-        const firstAssignment = assignments[0] ?? null;
-        const firstRoomId = firstAssignment?.room?.id ?? firstAssignment?.roomId ?? null;
-        const firstBedId = firstAssignment?.bed?.id ?? firstAssignment?.bedId ?? null;
-
-        const firstRoom = firstRoomId != null ? roomsMap.get(String(firstRoomId)) : null;
-        const firstBed = firstBedId != null ? bedsMap.get(String(firstBedId)) : null;
-
-        return (
-          <Whisper trigger="hover" placement="top" speaker={speaker}>
-            <span className="location-table-style">
-              {firstRoom?.name ?? row?.apRoom?.name ?? row?.room?.name ?? '-'}
-              <br />
-              {firstBed?.name ?? row?.apBed?.name ?? row?.bed?.name ?? '-'}
-            </span>
-          </Whisper>
-        );
-      }
     },
     {
       key: 'status',
@@ -1724,12 +1555,7 @@ const UrgentCareTriage = () => {
           columns={tableColumns}
           rowClassName={isSelected}
           loading={
-            isLoading ||
-            (manualSearchTriggered && isFetching) ||
-            isAssignmentsLoading ||
-            isAssignmentsFetching ||
-            isRoomsByIdsLoading ||
-            isBedsByIdsLoading
+            isLoading || (manualSearchTriggered && isFetching)
           }
           onRowClick={rowData => {
             setLocalEncounter(rowData);
@@ -1763,76 +1589,16 @@ const UrgentCareTriage = () => {
         <QuickPatient open={openQuickPatient} setOpen={setOpenQuickPatient} />
       </Panel>
 
-      <Modal
-        size="80vw"
+      <AddPaymentModal
         open={paymentModalOpen}
-        onClose={() => {
-          setPaymentModalOpen(false);
-          setPaymentRow(null);
-        }}
-      >
-        <Modal.Header>
-          <Modal.Title>Add Payment</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ maxHeight: '75vh', overflow: 'auto' }}>
-          <PatientPaymentInfo
-            ref={paymentInfoRef}
-            localPatient={paymentRow?.patientObject ?? null}
-            localEncounter={paymentRow ?? null}
-            isReadOnly={false}
-            showInternalButtons={false}
-            payment={payment}
-            setPayment={setPayment}
-            patientInsurance={patientInsurance}
-            setPatientInsurance={setPatientInsurance}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <MyButton
-            appearance="ghost"
-            onClick={() => {
-              setPaymentModalOpen(false);
-              setPaymentRow(null);
-            }}
-          >
-            Close
-          </MyButton>
-          <MyButton
-            appearance="primary"
-            onClick={async () => {
-              const ok = await paymentInfoRef.current?.confirm?.();
-              if (!ok) return;
-
-              try {
-                const encounterId = paymentRow?.id ?? null;
-                if (encounterId) {
-                  await updateEncounter({
-                    id: encounterId,
-                    body: buildEncounterUpdateBody(paymentRow, { status: 'WAITING_TRIAGE' })
-                  }).unwrap();
-                }
-
-                dispatch(notify({ msg: 'Payment saved', sev: 'success' }));
-                refetchEncounter();
-                setPaymentModalOpen(false);
-                setPaymentRow(null);
-              } catch (e: any) {
-                dispatch(
-                  notify({
-                    msg:
-                      e?.data?.message ||
-                      e?.message ||
-                      'Payment saved, but failed to update encounter status',
-                    sev: 'error'
-                  })
-                );
-              }
-            }}
-          >
-            Save
-          </MyButton>
-        </Modal.Footer>
-      </Modal>
+        setOpen={handleSetPaymentModalOpen}
+        paymentRow={paymentRow}
+        payment={payment}
+        setPayment={setPayment}
+        patientInsurance={patientInsurance}
+        setPatientInsurance={setPatientInsurance}
+        onSave={handleSavePayment}
+      />
 
       <MyModal
         open={openEMRModal}

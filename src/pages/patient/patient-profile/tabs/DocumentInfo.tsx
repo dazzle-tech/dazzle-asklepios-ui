@@ -67,7 +67,7 @@ const DocumentInfo = ({
 
   // Helper: remove undefined
   const stripUndefined = obj =>
-    Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
+    Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
 
 
   const handleSave = async () => {
@@ -152,7 +152,7 @@ const DocumentInfo = ({
             vr={validationResult}
             column
             fieldLabel="Document Number"
-            fieldName="number"
+            fieldName="textnumber"
             record={doc}
             setRecord={setDoc}
             disabled={doc.type === 'NO_DOC'}

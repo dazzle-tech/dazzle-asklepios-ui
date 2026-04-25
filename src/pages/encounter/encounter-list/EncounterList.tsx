@@ -193,6 +193,10 @@ const EncounterList = () => {
   const [emrPatient, setEmrPatient] = useState<any>(null);
   const [emrEncounter, setEmrEncounter] = useState<any>(null);
 
+
+  const [filtersKey, setFiltersKey] = useState(0);
+  const [appliedFilters, setAppliedFilters] = useState<any>(null);
+
   const [startEncounter] = useStartEncounterMutation();
   const [cancelEncounter] = useCancelEncounterMutation();
 
@@ -237,72 +241,21 @@ const EncounterList = () => {
     searchByField: 'fullName',
     patientName: ''
   });
-  const [searchTick, setSearchTick] = useState(0);
   const [record, setRecord] = useState<any>({});
 
-  const handlePatientSearchClick = useCallback(() => {
-    setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
-    setPage(0);
-    setSearchTick(prev => prev + 1);
-  }, [patientSearchDraft]);
+    const handlePatientSearchClick = useCallback(() => {
+      setPatientSearchApplied((prev: any) => ({ ...prev, ...(patientSearchDraft ?? {}) }));
+      setPage(0);
+    }, [patientSearchDraft]);
 
-  const filterParams = useMemo(() => {
-    if (!departmentId) return null;
-
-    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
-    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
-    const chiefComplaint =
-      String(record?.chiefComplain ?? record?.chiefComplaint ?? '').trim() || undefined;
-    const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
-    const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
-    const normalizedPriorities =
-      uniqueNonEmpty(priorities) ??
-      uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
-    const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
-
-    return {
-      departmentId: departmentId,
-      fromDate,
-      toDate,
-      statusIn: normalizedStatusIn,
-      patientName,
-      mrn,
-      encounterReasons: normalizedEncounterReasons,
-      chiefComplaint,
-      priorities: normalizedPriorities,
-      hasPrescription,
-      hasOrder,
-      isObserved,
-      page,
-      size: pageSize,
-      sort: DEFAULT_SORT,
-      timestamp: searchTick
-    };
-  }, [
-    DEFAULT_STATUS,
-    dateFilter.fromDate,
-    dateFilter.toDate,
-    departmentId,
-    encounterReasons,
-    hasOrder,
-    isObserved,
-    page,
-    pageSize,
-    priorities,
-    record,
-    statusIn,
-    todayStr,
-    hasPrescription,
-    patientSearchApplied,
-    searchTick
-  ]);
-
-  const {
-    data: encountersPaged,
-    isFetching: isEncountersFetching,
-    isLoading: isEncountersLoading,
-    refetch: refetchEncounters
-  } = useFilterEncountersQuery(filterParams as any, { skip: !filterParams });
+    const {
+      data: encountersPaged,
+      isFetching: isEncountersFetching,
+      isLoading: isEncountersLoading,
+      refetch: refetchEncounters
+    } = useFilterEncountersQuery(appliedFilters as any, {
+      skip: !appliedFilters
+    });
 
 
   const { data: appointmentsData } = useSearchAppointmentsQuery({
@@ -508,11 +461,7 @@ const startEncounterSafe = async (row: any) => {
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
 
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = fullPatient.isPrivatePatient ? privatePatientPath : encounterPath;
-
-    navigate(targetPath, {
+    navigate('/encounter', {
       state: {
         info: 'toEncounter',
         fromPage: 'EncounterList',
@@ -539,11 +488,7 @@ const startEncounterSafe = async (row: any) => {
     dispatch(setEncounter(encounterData));
     dispatch(setPatient(fullPatient));
 
-    const targetPath = fullPatient?.isPrivatePatient
-      ? '/user-access-patient-private'
-      : '/nurse-station';
-
-    navigate(targetPath, {
+    navigate('/nurse-station', {
       state: {
         info: fullPatient?.isPrivatePatient ? 'toNurse' : undefined,
         patient: fullPatient,
@@ -562,30 +507,92 @@ const startEncounterSafe = async (row: any) => {
     setOpen(false);
   };
 
-  const handlePageChange = useCallback((_: unknown, newPage: number) => {
-    setPage(newPage);
-  }, []);
-  const handleRowsPerPageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setPageSize(parseInt(event.target.value, 10));
-    setPage(0);
-  }, []);
+  const handleRowsPerPageChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const newSize = parseInt(event.target.value, 10);
+      setPageSize(newSize);
+      setPage(0);
 
-  const handleClearFilters = () => {
-    const now = new Date();
-    setRecord({});
-    setDateFilter({ fromDate: now, toDate: now });
-    setStatusIn(DEFAULT_STATUS);
-    setEncounterReasons([]);
-    setPriorities([]);
-    setHasPrescription(undefined);
-    setHasOrder(undefined);
-    setIsObserved(undefined);
-    const clearedSearch = { searchByField: 'fullName', patientName: '' };
-    setPatientSearchDraft(clearedSearch);
-    setPatientSearchApplied(clearedSearch);
-    setPage(0);
-    setSearchTick(prev => prev + 1);
-  };
+      setAppliedFilters((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              page: 0,
+              size: newSize
+            }
+          : prev
+      );
+    },
+    []
+  );
+
+    const handlePageChange = useCallback((_: unknown, newPage: number) => {
+      setPage(newPage);
+
+      setAppliedFilters((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              page: newPage,
+              size: pageSize
+            }
+          : prev
+      );
+    }, [pageSize]);
+
+    const handleClearFilters = () => {
+      const now = new Date();
+
+      // 🔥 فرق وقت عشان نكسر caching تبع DatePicker
+      const clearedDateFilter = {
+        fromDate: new Date(now.getTime()),
+        toDate: new Date(now.getTime() + 1000)
+      };
+
+      // 🔥 reset inputs
+      setRecord({ chiefComplain: '' });
+
+      // 🔥 مهم: خلي reference جديد 100%
+      setDateFilter({ ...clearedDateFilter });
+
+      setStatusIn([...DEFAULT_STATUS]);
+      setEncounterReasons([]);
+      setPriorities([]);
+      setHasPrescription(undefined);
+      setHasOrder(undefined);
+      setIsObserved(undefined);
+
+      const clearedSearch = {
+        searchByField: 'fullName',
+        patientName: ''
+      };
+
+      setPatientSearchDraft({ ...clearedSearch });
+      setPatientSearchApplied({ ...clearedSearch });
+
+      setPage(0);
+
+      // 🔥 update API filters
+      setAppliedFilters({
+        departmentId,
+        fromDate: toISODate(clearedDateFilter.fromDate) ?? todayStr,
+        toDate: toISODate(clearedDateFilter.toDate) ?? todayStr,
+        statusIn: [...DEFAULT_STATUS],
+        patientName: undefined,
+        mrn: undefined,
+        encounterReasons: undefined,
+        chiefComplaint: undefined,
+        priorities: undefined,
+        hasPrescription: undefined,
+        hasOrder: undefined,
+        isObserved: undefined,
+        page: 0,
+        size: pageSize,
+        sort: DEFAULT_SORT
+      });
+      setFiltersKey(prev => prev + 1);
+    };
+
   const isAdmin = !!authSlice.user?.admin;
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
 
@@ -882,6 +889,7 @@ const startEncounterSafe = async (row: any) => {
 
   const filters = () => (
     <>
+    <div key={filtersKey}>
       <Form layout="inline" fluid className="date-filter-form">
         <MyInput
           column
@@ -890,11 +898,9 @@ const startEncounterSafe = async (row: any) => {
           fieldLabel="From Date"
           fieldName="fromDate"
           record={dateFilter}
-          setRecord={v => {
-            setDateFilter(v);
-            setPage(0);
-          }}
+          setRecord={setDateFilter}
         />
+
         <MyInput
           column
           width={180}
@@ -902,10 +908,7 @@ const startEncounterSafe = async (row: any) => {
           fieldLabel="To Date"
           fieldName="toDate"
           record={dateFilter}
-          setRecord={v => {
-            setDateFilter(v);
-            setPage(0);
-          }}
+          setRecord={setDateFilter}
         />
 
         <SearchPatientCriteria
@@ -930,13 +933,45 @@ const startEncounterSafe = async (row: any) => {
           }}
         />
       </Form>
-
+    </div>
       <AdvancedSearchFilters
         searchFilter={true}
         clearOnClick={handleClearFilters}
+        searchOnClick={() => {
+          const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+          const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+          const chiefComplaint =
+            record?.chiefComplain?.trim() ? record.chiefComplain.trim() : undefined;
+          const normalizedStatusIn = uniqueNonEmpty(statusIn) ?? DEFAULT_STATUS;
+          const normalizedEncounterReasons = uniqueNonEmpty(encounterReasons);
+          const normalizedPriorities =
+            uniqueNonEmpty(priorities) ??
+            uniqueNonEmpty(record?.priority ? [record.priority] : undefined);
+          const { patientName, mrn } = derivePatientFilters(patientSearchApplied);
+
+          setPage(0);
+
+          setAppliedFilters({
+            departmentId,
+            fromDate,
+            toDate,
+            statusIn: normalizedStatusIn,
+            patientName,
+            mrn,
+            encounterReasons: normalizedEncounterReasons,
+            chiefComplaint,
+            priorities: normalizedPriorities,
+            hasPrescription,
+            hasOrder,
+            isObserved,
+            page: 0,
+            size: pageSize,
+            sort: DEFAULT_SORT
+          });
+        }}
         content={
           <div className="advanced-filters">
-            <Form key={JSON.stringify(record)} fluid className="dissss">
+            <Form fluid className="dissss">
               <MyInput
                 fieldName="encounterReasons"
                 fieldType="checkPicker"
@@ -959,10 +994,7 @@ const startEncounterSafe = async (row: any) => {
                 fieldName="chiefComplain"
                 fieldType="text"
                 record={record}
-                setRecord={v => {
-                  setRecord(v);
-                  setPage(0);
-                }}
+                setRecord={setRecord}
                 fieldLabel="Chief Complain"
               />
 
@@ -999,15 +1031,31 @@ const startEncounterSafe = async (row: any) => {
     };
   }, [dispatch, tableLoading]);
 
-  if (!departmentId) {
-    return (
-      <Panel>
-        <div className="encounter-list__no-department">
-          <p>Please select a department to view encounters.</p>
-        </div>
-      </Panel>
-    );
-  }
+
+  useEffect(() => {
+    if (!departmentId || appliedFilters) return;
+
+    const fromDate = toISODate(dateFilter.fromDate) ?? todayStr;
+    const toDate = toISODate(dateFilter.toDate) ?? todayStr;
+
+    setAppliedFilters({
+      departmentId,
+      fromDate,
+      toDate,
+      statusIn: DEFAULT_STATUS,
+      patientName: undefined,
+      mrn: undefined,
+      encounterReasons: undefined,
+      chiefComplaint: undefined,
+      priorities: undefined,
+      hasPrescription: undefined,
+      hasOrder: undefined,
+      isObserved: undefined,
+      page: 0,
+      size: pageSize,
+      sort: DEFAULT_SORT
+    });
+  }, [departmentId, appliedFilters, dateFilter.fromDate, dateFilter.toDate, todayStr, DEFAULT_STATUS, pageSize]);
 
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';

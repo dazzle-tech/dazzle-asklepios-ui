@@ -9,7 +9,6 @@ import AdvancedSearchFilters from '@/components/AdvancedSearchFilters';
 import { faBoxOpen, faFile, faListCheck, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
-import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
   useGetDayCaseEncountersQuery,
@@ -94,13 +93,7 @@ const   DayCaseList = () => {
     ]
   });
 
-  // Fetch department list response
-  const { data: departmentListResponse } = useGetActiveResourcesByTypeQuery({
-    resourceType: 'DAY_CASE',
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  });
+  const { data: departmentListResponse } = { data: { data: [] as unknown[] } };
   // Fetch lovs
   const { data: encounterStatusLov } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: EncPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');

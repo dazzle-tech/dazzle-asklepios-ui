@@ -5,7 +5,6 @@ import PatientCardWithPicture from '@/components/PatientCard/PatientCardWithPict
 import Translate from '@/components/Translate';
 
 import {
-  useLazyGetPatientsQuery,
   useLazyGetPatientsByDocumentNumberQuery,
   useLazyGetPatientsByArchivingNumberQuery,
   useLazyGetPatientsByPrimaryPhoneQuery,
@@ -19,7 +18,6 @@ import { Drawer, Form, Input, InputGroup, Button } from 'rsuite';
 import SearchIcon from '@rsuite/icons/Search';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
-import { FaEllipsis } from 'react-icons/fa6';
 
 import './style.less';
 
@@ -47,7 +45,6 @@ const PatientSearch = ({
   const [isLoadingPatients, setIsLoadingPatients] = useState(false);
 
   // lazy endpoints
-  const [fetchPatients] = useLazyGetPatientsQuery();
   const [fetchByMrn] = useLazyGetPatientsByDocumentNumberQuery();
   const [fetchByArchiving] = useLazyGetPatientsByArchivingNumberQuery();
   const [fetchByPrimaryPhone] = useLazyGetPatientsByPrimaryPhoneQuery();
@@ -65,8 +62,9 @@ const PatientSearch = ({
   ];
 
   const filteredPatients = useMemo(() => {
-    if (!allowedSecondGenders || allowedSecondGenders.length === 0) return patients;
-    return patients.filter(p => allowedSecondGenders.includes(p.sexAtBirth));
+    const knownPatientsOnly = patients.filter(p => !p?.isUnknown);
+    if (!allowedSecondGenders || allowedSecondGenders.length === 0) return knownPatientsOnly;
+    return knownPatientsOnly.filter(p => allowedSecondGenders.includes(p.sexAtBirth));
   }, [patients, allowedSecondGenders]);
 
   const prepareTrigger = () => {
