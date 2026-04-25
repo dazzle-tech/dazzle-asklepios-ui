@@ -406,7 +406,8 @@ const Resources = () => {
           setOpenAddEditResource(true);
         }}
       />
-      {rowData?.isActive ? (
+      {rowData?.isActive ?
+       (
         <MdDelete
           title="Deactivate"
           size={24}
@@ -430,7 +431,8 @@ const Resources = () => {
             setOpenConfirmDeleteResourceModal(true);
           }}
         />
-      )}
+      )
+      }
     </div>
   );
 

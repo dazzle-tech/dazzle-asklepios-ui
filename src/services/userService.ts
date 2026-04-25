@@ -219,11 +219,17 @@ export const userService = createApi({
       }),
     }),
     resendCreatePasswordEmail: builder.mutation<void, string>({
-  query: (login) => ({
-    url: `/api/admin/users/${encodeURIComponent(login)}/resend-create-password-email`,
-    method: 'POST',
-  }),
-}),
+      query: (login) => ({
+        url: `/api/admin/users/resend-create-password-email/${encodeURIComponent(login)}`,
+        method: 'POST',
+      }),
+    }),
+    toggleUserActivation: builder.mutation<void, string>({
+      query: login => ({
+        url: `/api/admin/users/${encodeURIComponent(login)}/toggle-activation`,
+        method: 'POST',
+      }),
+    }),
   }),
 
 });
@@ -252,4 +258,6 @@ export const {
   useLazyValidateCreatePasswordKeyQuery,
   useGetUserFullNameByLoginQuery,
   useResendCreatePasswordEmailMutation,
+  useToggleUserActivationMutation,
+
 } = userService;
