@@ -129,7 +129,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
   const normalizeOrderTest = (rowData: any) => ({
     ...rowData,
-    reasonLkey: rowData.reasonLkey ?? rowData.reason
+    reason: rowData.reason
   });
 
   // Lookups
@@ -184,7 +184,6 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
 
 
   const handleLoadMore = () => {
-    console.log("LOAD MORE CLICKED 🔥");
     setPaginationParams(prev => ({
       ...prev,
       page: prev.page + 1
@@ -363,7 +362,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
           orderId: _orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reasonLkey,
+          reason: orderTest?.reason,
           notes: orderTest?.notes,
           orderType: resolveOrderType(test),
           icdDiagnosisId: orderTest?.icdDiagnosisId,
@@ -376,7 +375,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
           orderId: _orderId,
           testId,
           receivedDepartmentId: toNumericId(receivedDepartmentId),
-          reason: orderTest?.reasonLkey,
+          reason: orderTest?.reason,
           notes: orderTest?.notes,
           icdDiagnosisId: orderTest?.icdDiagnosisId,
 
@@ -746,7 +745,7 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   const handleEdit = (rowData: any) => {
     setOrderTest({
       ...rowData,
-      reasonLkey: rowData.reasonLkey ?? rowData.reason
+      reason: rowData.reason ?? rowData.reason
     });
 
     if (!ReasonLovQueryResponse?.object?.length) return;
@@ -784,7 +783,6 @@ export const useDiagnosticsOrder = ({ patient, encounter, edit }: UseDiagnostics
   };
 
 
-  console.log("diagnosticTestsByIdsResponse", diagnosticTestsByIdsResponse);
 
   // Normalization + sorting
     const diagnosticTestsByIds = diagnosticTestsByIdsResponse ?? [];

@@ -383,6 +383,7 @@ const RequestedTestTable: React.FC<Props> = ({
           setObject={setTest}
           fieldLabel="Reject Reason"
           title="Reject"
+          required
         />
       )}
 

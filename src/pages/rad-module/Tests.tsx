@@ -83,6 +83,10 @@ const Tests = forwardRef<any, Props>(
     const [openArrivalModal, setOpenArrivalModal] = useState(false);
     const [reportsByTestId, setReportsByTestId] = useState<Record<number, any>>({});
 
+    const [openUndoAcceptModal, setOpenUndoAcceptModal] = useState(false);
+    const [undoAcceptReason, setUndoAcceptReason] = useState('');
+    const [undoAcceptTargetId, setUndoAcceptTargetId] = useState<number | null>(null);
+
     const notifyFromApiError = (e: any) => {
       const status = e?.status || e?.originalStatus;
 
@@ -248,19 +252,21 @@ const Tests = forwardRef<any, Props>(
     }, [allRadiologies]);
 
     const normalizedOrderTests = useMemo(() => {
-      return orderTests.map(orderTest => {
-        const test = testsMap.get(orderTest.testId);
-        const radiology = radiologyByTestIdMap.get(orderTest.testId);
-        const report = reportsByTestId[orderTest.id];
+      return (orderTests ?? [])
+        .filter(t => t && t.id) // ✅ أهم سطر
+        .map(orderTest => {
+          const test = testsMap.get(orderTest.testId);
+          const radiology = radiologyByTestIdMap.get(orderTest.testId);
+          const report = reportsByTestId[orderTest.id];
 
-        return {
-          ...orderTest,
-          test,
-          radiology,
-          imageStatus: report?.imageStatus,
-          orderType: orderTest.orderType ?? test?.type
-        };
-      });
+          return {
+            ...orderTest,
+            test,
+            radiology,
+            imageStatus: report?.imageStatus,
+            orderType: orderTest.orderType ?? test?.type
+          };
+        });
     }, [orderTests, testsMap, radiologyByTestIdMap, reportsByTestId]);
 
     const [
@@ -337,7 +343,10 @@ const Tests = forwardRef<any, Props>(
     const pagedData = useMemo(() => {
       const start = pageIndex * rowsPerPage;
       const end = start + rowsPerPage;
-      return filteredTests.slice(start, end);
+
+      return filteredTests
+        .filter(r => r && r.id)
+        .slice(start, end);
     }, [filteredTests, pageIndex, rowsPerPage]);
 
     const effectiveTotalCount = filteredTests.length;
@@ -410,6 +419,68 @@ const Tests = forwardRef<any, Props>(
         dispatch(notify({ msg: backendMessage, sev: 'error' }));
       }
     };
+
+
+    const handleUndoAcceptClick = (rowData: any) => {
+      setUndoAcceptTargetId(rowData.id);
+      setTest(rowData);
+      setUndoAcceptReason('');
+      setOpenUndoAcceptModal(true);
+    };
+
+
+
+    const handleUndoAcceptConfirm = async () => {
+      if (!undoAcceptTargetId) return;
+
+      if (!undoAcceptReason?.trim()) {
+        dispatch(notify({ msg: 'Please enter undo accept reason', sev: 'warning' }));
+        return;
+      }
+
+      try {
+        await undoAcceptTest({
+          id: undoAcceptTargetId,
+          undoAcceptReason
+        }).unwrap();
+
+        dispatch(
+          notify({
+            msg: 'Undo accept successful',
+            sev: 'success'
+          })
+        );
+
+        setOpenUndoAcceptModal(false);
+        setUndoAcceptReason('');
+        setUndoAcceptTargetId(null);
+
+        await refetchAllRadData();
+
+      } catch (e: any) {
+        const errorKey = e?.data?.errorKey || e?.data?.message || e?.error;
+        const errorMessage = e?.data?.message || e?.data?.detail || '';
+
+        let msg = 'Undo accept failed';
+
+        if (
+          errorKey === 'billed_item_cannot_undo_accept' ||
+          errorMessage.includes('already billed')
+        ) {
+          msg = 'Cannot undo accept because this test is already billed';
+        } else if (
+          errorKey === 'invalid_transition' ||
+          errorMessage.includes('Undo accept is allowed only from ACCEPTED')
+        ) {
+          msg = 'Undo accept is allowed only for accepted tests';
+        } else if (errorMessage) {
+          msg = errorMessage;
+        }
+
+        dispatch(notify({ msg, sev: 'error' }));
+      }
+    };
+
 
     const { data: ReasonLovQueryResponse } =
       useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
@@ -834,48 +905,10 @@ const Tests = forwardRef<any, Props>(
                       opacity: canUndoAccept ? 1 : 0.4,
                       color: canUndoAccept ? '#1675e0' : 'gray'
                     }}
-                    onClick={async () => {
-                      if (!canUndoAccept) return;
-
-                      try {
-                        await undoAcceptTest(rowData.id).unwrap();
-
-                        dispatch(
-                          notify({
-                            msg: 'Undo accept successful',
-                            sev: 'success'
-                          })
-                        );
-
-                        await refetchAllRadData();
-                      } catch (e: any) {
-                        const errorKey = e?.data?.errorKey || e?.data?.message || e?.error;
-                        const errorMessage = e?.data?.message || e?.data?.detail || '';
-
-                        let msg = 'Undo accept failed';
-
-                        if (
-                          errorKey === 'billed_item_cannot_undo_accept' ||
-                          errorMessage.includes('already billed')
-                        ) {
-                          msg = 'Cannot undo accept because this test is already billed';
-                        } else if (
-                          errorKey === 'invalid_transition' ||
-                          errorMessage.includes('Undo accept is allowed only from ACCEPTED')
-                        ) {
-                          msg = 'Undo accept is allowed only for accepted tests';
-                        } else if (errorMessage) {
-                          msg = errorMessage;
-                        }
-
-                        dispatch(
-                          notify({
-                            msg,
-                            sev: 'error'
-                          })
-                        );
-                      }
-                    }}
+                      onClick={() => {
+                        if (!canUndoAccept) return;
+                        handleUndoAcceptClick(rowData);
+                      }}
                   />
                 </span>
               </Whisper>
@@ -1023,6 +1056,7 @@ const Tests = forwardRef<any, Props>(
       }
     }, [orderTests, refetchAllRadData]);
 
+
     // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -1064,6 +1098,7 @@ const Tests = forwardRef<any, Props>(
             setObject={setTest}
             fieldLabel="Reject Reason"
             title="Reject"
+            required
           />
 
           <ChatModal
@@ -1093,9 +1128,20 @@ const Tests = forwardRef<any, Props>(
             setObject={(obj: any) => setBulkRejectReason(obj.rejectedReason)}
             fieldLabel="Reject Reason"
             title="Bulk Reject"
-            required={true}
+            required          
           />
 
+          <CancellationModal
+            open={openUndoAcceptModal}
+            setOpen={setOpenUndoAcceptModal}
+            fieldName="undoAcceptReason"
+            handleCancle={handleUndoAcceptConfirm}
+            object={{ undoAcceptReason }}
+            setObject={(obj: any) => setUndoAcceptReason(obj.undoAcceptReason)}
+            fieldLabel="Undo Accept Reason"
+            title="Undo Accept"
+            required
+          />
 
         </Panel>
       </div>

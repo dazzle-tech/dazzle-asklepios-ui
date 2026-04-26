@@ -16,15 +16,14 @@ type Props = {
 
 const NormalRangeModal = ({ open, setOpen, ranges, profileTestId }: Props) => {
 
-const [getProfilesByIds, { data: profileTests, isLoading }] =
-  useGetDiagnosticTestProfilesByIdsMutation();
+  const [getProfilesByIds, { data: profileTests, isLoading }] =
+    useGetDiagnosticTestProfilesByIdsMutation();
   useEffect(() => {
-  if (profileTestId) {
-    getProfilesByIds([profileTestId]);
-  }
-}, [profileTestId]);
-    const profileTest = profileTests?.[0];
-  console.log("Profile Test Details:", profileTest);
+    if (profileTestId) {
+      getProfilesByIds([profileTestId]);
+    }
+  }, [profileTestId]);
+  const profileTest = profileTests?.[0];
   // list of value new function
   const { data: allLovValues } =
     useGetLovAllValuesQuery({ ...initialListRequestAllValues });
@@ -127,6 +126,7 @@ const [getProfilesByIds, { data: profileTests, isLoading }] =
         position='center'
         size="40vw"
         bodyheight='auto'
+        hideActionBtn
         content={
           <div dir={dir}>
             <MyTable

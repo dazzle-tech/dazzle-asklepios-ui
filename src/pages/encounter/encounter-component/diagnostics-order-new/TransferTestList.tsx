@@ -312,7 +312,6 @@ const TransferTestList = ({
                 <MyButton
                   appearance="ghost"
                   onClick={() => {
-                    console.log("CLICKED BUTTON 🔥");
                     onLoadMore?.();
                   }}
                   disabled={isFetching}

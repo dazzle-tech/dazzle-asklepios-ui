@@ -261,99 +261,103 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
 
 
 
-  const departmentIds = useMemo(
-    () =>
-      Object.values(ordersMap)
-        .map((order: any) => order?.fromDepartmentId)
-        .filter(Boolean)
-        .map(String)
-        .filter((id, i, arr) => arr.indexOf(id) === i),
-    [ordersMap]
+ const uniqueNumbers = (ids: any[] = []): number[] => {
+  return Array.from(
+    new Set(
+      ids
+        .map(id => Number(id))
+        .filter(id => Number.isFinite(id) && id > 0)
+    )
   );
+};
 
-
-
-
-
-  const orderTestIds = useMemo(
-    () =>
-      tableData
-        .map(r => r?.orderTestId)
-        .filter(Boolean)
-        .map(String)
-        .filter((id, i, arr) => arr.indexOf(id) === i),
-    [tableData]
+const departmentIds = useMemo<number[]>(() => {
+  return uniqueNumbers(
+    Object.values(ordersMap ?? {}).map((order: any) => order?.fromDepartmentId)
   );
+}, [ordersMap]);
 
-  const orderIds = useMemo(
-    () =>
-      Object.values(orderTestsMap)
-        .map((ot: any) => ot.orderId)
-        .filter(Boolean)
-        .map(String)
-        .filter((id, i, arr) => arr.indexOf(id) === i),
-    [orderTestsMap]
+const orderTestIds = useMemo<number[]>(() => {
+  return uniqueNumbers(
+    (tableData ?? []).map((r: any) => r?.orderTestId)
   );
-  const patientIds = useMemo(
-    () =>
-      Object.values(ordersMap)
-        .map((o: any) => o.patientId)
-        .filter(Boolean)
-        .map(String)
-        .filter((id, i, arr) => arr.indexOf(id) === i),
-    [ordersMap]
+}, [tableData]);
+
+const orderIds = useMemo<number[]>(() => {
+  return uniqueNumbers(
+    Object.values(orderTestsMap ?? {}).map((ot: any) => ot?.orderId)
   );
+}, [orderTestsMap]);
 
-  useEffect(() => {
-    orderTestIds.forEach(id => {
-      if (orderTestsMap[id]) return;
+const patientIds = useMemo<number[]>(() => {
+  return uniqueNumbers(
+    Object.values(ordersMap ?? {}).map((o: any) => o?.patientId)
+  );
+}, [ordersMap]);
 
-      fetchOrderTestById(Number(id))
-        .unwrap()
-        .then(ot => {
-          if (!ot) return;
-          setOrderTestsMap(prev => ({ ...prev, [id]: ot }));
-        })
-        .catch(() => { });
-    });
-  }, [orderTestIds, fetchOrderTestById, orderTestsMap]);
+useEffect(() => {
+  if (!orderTestIds.length) return;
 
-  useEffect(() => {
-    orderIds.forEach(id => {
-      if (ordersMap[id]) return;
+  orderTestIds.forEach((id: number) => {
+    if (orderTestsMap?.[id]) return;
 
-      fetchOrderById(Number(id))
-        .unwrap()
-        .then(order => {
-          if (!order) return;
-          setOrdersMap(prev => ({ ...prev, [id]: order }));
-        })
-        .catch(() => { });
-    });
-  }, [orderIds, fetchOrderById, ordersMap]);
-
-  useEffect(() => {
-    if (!patientIds.length) return;
-
-    const numericIds = patientIds.map(id => Number(id));
-
-    getBulkPatientBasicInfo(numericIds)
+    fetchOrderTestById(id)
       .unwrap()
-      .then((res: any[]) => {
-        const map: Record<string, any> = {};
+      .then(ot => {
+        if (!ot) return;
 
-        res.forEach((p: any, index: number) => {
-          const originalId = numericIds[index];
-          map[String(originalId)] = p;
-        });
-
-        setPatientsMap(map);
+        setOrderTestsMap(prev => ({
+          ...prev,
+          [id]: ot,
+        }));
       })
-      .catch(err => {
-        console.error("❌ Bulk patient error:", err);
+      .catch(() => {});
+  });
+}, [orderTestIds, fetchOrderTestById, orderTestsMap]);
+
+useEffect(() => {
+  if (!orderIds.length) return;
+
+  orderIds.forEach((id: number) => {
+    if (ordersMap?.[id]) return;
+
+    fetchOrderById(id)
+      .unwrap()
+      .then(order => {
+        if (!order) return;
+
+        setOrdersMap(prev => ({
+          ...prev,
+          [id]: order,
+        }));
+      })
+      .catch(() => {});
+  });
+}, [orderIds, fetchOrderById, ordersMap]);
+
+useEffect(() => {
+  if (!patientIds.length) {
+    setPatientsMap({});
+    return;
+  }
+
+  getBulkPatientBasicInfo(patientIds)
+    .unwrap()
+    .then((res: any[]) => {
+      const map: Record<number, any> = {};
+
+      res.forEach((p: any) => {
+        if (!p?.id) return;
+
+        map[p.id] = p;
       });
 
-  }, [patientIds]);
+      setPatientsMap(map);
+    })
+    .catch(err => {
+      console.error("❌ Bulk patient error:", err);
+    });
+}, [patientIds, getBulkPatientBasicInfo]);
 
   const FilterModel = (
     <Form fluid className="table-header-content">
@@ -496,45 +500,56 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
 
   const columns: ColumnConfig[] = useMemo(() => [
     {
+      key: 'id',
+      title: 'ID',
+      width: 80,
+      render: row => (
+        <span style={{ fontWeight: 'bold' }}>{row.id}</span>
+        )
+
+
+    },
+
+    {
       key: 'department',
       title: 'Department',
       width: 160,
       render: row => {
-        const ot = orderTestsMap[String(row.orderTestId)];
-        const order = ordersMap[String(ot?.orderId)];
-        const department = departmentsMap[String(order?.fromDepartmentId)];
+        const orderTestId = Number(row?.orderTestId);
+        const ot = orderTestsMap?.[orderTestId];
+        const order = ordersMap?.[ot?.orderId];
+        const department = departmentsMap?.[order?.fromDepartmentId];
 
         return department?.name ?? ' ';
       }
-
     },
     {
       key: 'patientName',
       title: 'Patient Name',
       width: 180,
       render: row => {
-        const ot = orderTestsMap[String(row.orderTestId)];
-        const order = ordersMap[String(ot?.orderId)];
-        const patient = patientsMap[String(order?.patientId)];
-          return patient
-            ? (patient.fullName ||
-              `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim())
-            : ' ';
-                }
+        const orderTestId = Number(row?.orderTestId);
+        const ot = orderTestsMap?.[orderTestId];
+        const order = ordersMap?.[ot?.orderId];
+        const patient = patientsMap?.[order?.patientId];
+
+        return patient
+          ? patient.fullName ||
+          `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim()
+          : ' ';
+      }
     },
     {
       key: 'mrn',
       title: 'MRN',
       width: 120,
       render: row => {
-        const ot = orderTestsMap[String(row.orderTestId)];
-        const order = ordersMap[String(ot?.orderId)];
-        const patient = patientsMap[String(order?.patientId)];
+        const orderTestId = Number(row?.orderTestId);
+        const ot = orderTestsMap?.[orderTestId];
+        const order = ordersMap?.[ot?.orderId];
+        const patient = patientsMap?.[order?.patientId];
 
-        return (
-          patient?.medicalRecordNumber ??
-          ' '
-        );
+        return patient?.medicalRecordNumber ?? ' ';
       }
     },
     {
@@ -542,8 +557,11 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
       title: 'Test Name',
       width: 200,
       render: row => {
-        const ot = orderTestsMap[String(row.orderTestId)];
-        const test = testsMap[ot?.testId];
+        const orderTestId = Number(row?.orderTestId);
+        const ot = orderTestsMap?.[orderTestId];
+        const test = testsMap?.[ot?.testId];
+
+
         return test?.name ?? ' ';
       }
     },
@@ -776,7 +794,16 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
         );
       }
     }
-  ], [orderTestsMap, ordersMap, patientsMap, localHasCommentIds]);
+], [
+  orderTestsMap,
+  ordersMap,
+  patientsMap,
+  departmentsMap,
+  testsMap,
+  localHasCommentIds,
+  approving,
+  secondApproving
+]);
 
   useEffect(() => {
     departmentIds.forEach(id => {
@@ -836,94 +863,94 @@ const RadiologyImageList = ({ refetchAllRadData }: Props) => {
     });
   }, [orderTestsMap]);
 
-// Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
 
   return (
-  <div dir={dir}>
-    <MyTable
-      data={tableData}
-      columns={columns}
-      loading={isFetching}
-      filters={FilterModel}
-      page={page}
-      rowsPerPage={rowsPerPage}
-      totalCount={totalCount}
-      sortColumn={sortColumn}
-      sortType={sortType}
-      onRowClick={(rowData) => {
-        setSelectedReportRow(rowData);
-        setOrderTestReport({
-          ...newDiagnosticOrderTestReportResponseVM,
-          ...rowData
-        });
-      }}
-      onSortChange={(col, type) => {
-        setSortColumn(col);
-        setSortType(type);
-      }}
-      onPageChange={(_, newPage) => setPage(newPage)}
-      onRowsPerPageChange={e => {
-        setRowsPerPage(Number(e.target.value));
-        setPage(0);
-      }}
-    />
-
-    {openReportEditor && (
-      <AddReportModal
-        open={openReportEditor}
-        setOpen={setOpenReportEditor}
-        report={orderTestReport}
-        orderTest={selectedOrderTest}
-        order={selectedOrder}
-        setReport={setOrderTestReport}
-        resultFetch={refetchAllRadData}
-        attachmentRefetch={refetchAllRadData}
+    <div dir={dir}>
+      <MyTable
+        data={tableData}
+        columns={columns}
+        loading={isFetching}
+        filters={FilterModel}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        sortColumn={sortColumn}
+        sortType={sortType}
+        onRowClick={(rowData) => {
+          setSelectedReportRow(rowData);
+          setOrderTestReport({
+            ...newDiagnosticOrderTestReportResponseVM,
+            ...rowData
+          });
+        }}
+        onSortChange={(col, type) => {
+          setSortColumn(col);
+          setSortType(type);
+        }}
+        onPageChange={(_, newPage) => setPage(newPage)}
+        onRowsPerPageChange={e => {
+          setRowsPerPage(Number(e.target.value));
+          setPage(0);
+        }}
       />
-    )}
+
+      {openReportEditor && (
+        <AddReportModal
+          open={openReportEditor}
+          setOpen={setOpenReportEditor}
+          report={orderTestReport}
+          orderTest={selectedOrderTest}
+          order={selectedOrder}
+          setReport={setOrderTestReport}
+          resultFetch={refetchAllRadData}
+          attachmentRefetch={refetchAllRadData}
+        />
+      )}
 
 
-    <ChatModal
-      open={openComments}
-      setOpen={setOpenComments}
-      title="Report Comments"
-      list={commentsResponse ?? []}
-      fieldShowName="note"
-      handleSendMessage={handleSendComment}
-    />
+      <ChatModal
+        open={openComments}
+        setOpen={setOpenComments}
+        title="Report Comments"
+        list={commentsResponse ?? []}
+        fieldShowName="note"
+        handleSendMessage={handleSendComment}
+      />
 
-    <RadiologyImageLogModal
-      open={openLogsModal}
-      setOpen={setOpenLogsModal}
-      report={selectedReportForLogs}
-    />
+      <RadiologyImageLogModal
+        open={openLogsModal}
+        setOpen={setOpenLogsModal}
+        report={selectedReportForLogs}
+      />
 
-    <MyModal
-      open={attachmentsModalOpen && !!selectedEncounter}
-      setOpen={setAttachmentsModalOpen}
-      title="Attachments - Report"
-      size="lg"
-      hideActionBtn
-      content={
-        selectedEncounter && (
-        <div dir={dir}>
-          <EncounterAttachment
-            localEncounter={selectedEncounter}
-            source="RADIOLOGIST_WORKLIST_ATTACHMENT"
-            sourceId={Number(selectedReportForAttachments?.id)}
-            refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
-          />
-        </div>
-        )
-      }
-    />
+      <MyModal
+        open={attachmentsModalOpen && !!selectedEncounter}
+        setOpen={setAttachmentsModalOpen}
+        title="Attachments - Report"
+        size="lg"
+        hideActionBtn
+        content={
+          selectedEncounter && (
+            <div dir={dir}>
+              <EncounterAttachment
+                localEncounter={selectedEncounter}
+                source="RADIOLOGIST_WORKLIST_ATTACHMENT"
+                sourceId={Number(selectedReportForAttachments?.id)}
+                refetchAttachmentList={false}
+                setRefetchAttachmentList={() => { }}
+              />
+            </div>
+          )
+        }
+      />
 
-  </div>);
+    </div>);
 };
 
 export default RadiologyImageList;

@@ -133,6 +133,9 @@ const ReviewResults = forwardRef<any, any>(
     const [ordersMap, setOrdersMap] = useState<Record<string, any>>({});
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    const [filtersKey, setFiltersKey] = useState(0);
+
+
     const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
     const [patientsMap, setPatientsMap] = useState<Record<string, any>>({});
 
@@ -364,19 +367,24 @@ const ReviewResults = forwardRef<any, any>(
     };
 
     const resetFilters = () => {
-      const today = new Date();
+      const now = new Date();
+
       setApprovalDate({
-        fromDate: today,
-        toDate: today
+        fromDate: new Date(now),
+        toDate: new Date(now)
       });
+
       setOrderDate({
         fromDate: null,
         toDate: null
       });
+
       setShowReview(false);
       setShowAbnormal(false);
       setOrderIdIn(null);
       setPage(0);
+
+      setFiltersKey(prev => prev + 1);
     };
 
     const columns: ColumnConfig[] = useMemo(
@@ -531,64 +539,49 @@ const ReviewResults = forwardRef<any, any>(
       [patientsMap, normalizedResults]
     );
 
-    const filters = () => (
-      <Form fluid>
-        <div className="results-table-filters-review-results-main-container">
-          <MyInput
-            fieldType="date"
-            fieldLabel="Approval From Date"
-            fieldName="fromDate"
-            record={approvalDate}
-            setRecord={setApprovalDate}
-          />
-          <MyInput
-            fieldType="date"
-            fieldLabel="Approval To Date"
-            fieldName="toDate"
-            record={approvalDate}
-            setRecord={setApprovalDate}
-          />
-          <MyInput
-            fieldType="date"
-            fieldLabel="Order From Date"
-            fieldName="fromDate"
-            record={orderDate}
-            setRecord={setOrderDate}
-          />
-          <MyInput
-            fieldType="date"
-            fieldLabel="Order To Date"
-            fieldName="toDate"
-            record={orderDate}
-            setRecord={setOrderDate}
-          />
-          <div className="results-table-filters-checkboxes-review-results-main-container">
-            <Checkbox
-              checked={showReview}
-              onChange={(_, checked) => setShowReview(checked)}
-            >
-              <Translate>
-                Show Review Result
-              </Translate>
-            </Checkbox>
-            <Checkbox
-              checked={showAbnormal}
-              onChange={(_, checked) => setShowAbnormal(checked)}
-            >
-              <Translate>
-                Show Abnormal Result
-              </Translate>
-            </Checkbox>
-          </div>
-        </div>
-
-        <AdvancedSearchFilters
-          searchFilter={false}
-          showAdvancedButton={false}
-          clearOnClick={resetFilters}
+  const filters = () => (
+    <Form fluid key={filtersKey}>
+      <div className="results-table-filters-review-results-main-container">
+        <MyInput
+          fieldType="date"
+          fieldLabel="Approval From Date"
+          fieldName="fromDate"
+          record={approvalDate}
+          setRecord={setApprovalDate}
         />
-      </Form>
-    );
+
+        <MyInput
+          fieldType="date"
+          fieldLabel="Approval To Date"
+          fieldName="toDate"
+          record={approvalDate}
+          setRecord={setApprovalDate}
+        />
+
+        <MyInput
+          fieldType="date"
+          fieldLabel="Order From Date"
+          fieldName="fromDate"
+          record={orderDate}
+          setRecord={setOrderDate}
+        />
+
+        <MyInput
+          fieldType="date"
+          fieldLabel="Order To Date"
+          fieldName="toDate"
+          record={orderDate}
+          setRecord={setOrderDate}
+        />
+      </div>
+
+      <AdvancedSearchFilters
+        searchFilter={false}
+        showAdvancedButton={false}
+        clearOnClick={resetFilters}
+      />
+    </Form>
+  );
 
     const isSelected = (rowData: any) =>
       selectedResultId === rowData.id ? 'selected-row' : '';

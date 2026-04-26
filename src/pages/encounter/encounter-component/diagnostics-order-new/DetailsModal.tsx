@@ -30,8 +30,6 @@ const DetailsModal = ({
 
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
 
-  const facilityId = order?.facilityId;
-
   // ✅ NEW ENDPOINT (NO PAGINATION)
   const { data: receivedLabList } = useGetActiveDepartmentByTypeAndFacilityQuery(
     receivedType && facilityId
@@ -147,7 +145,7 @@ const DetailsModal = ({
                   selectData={ReasonLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
-                  fieldName="reasonLkey"
+                  fieldName="reason"
                   record={orderTest}
                   setRecord={setOrderTest}
                   width="12vw"
