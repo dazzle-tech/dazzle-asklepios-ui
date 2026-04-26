@@ -1,16 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Divider, Popover, Whisper } from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setSelectedDepartment } from '@/reducers/authSlice';
-import {
-  useGetActiveUserDepartmentsByUserQuery,
-  useGetDefaultUserDepartmentByUserQuery
-} from '@/services/security/userDepartmentsService';
-import { useGetDepartmentsQuery } from '@/services/security/departmentService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { UserDepartment } from '@/types/model-types-new';
-import { conjureValueBasedOnIDFromList } from '@/utils';
-import { notify } from '@/utils/uiReducerActions';
+import { useGetActiveUserDepartmentsByUserQuery } from '@/services/security/userDepartmentsService';
 
 export type SyncedDepartment = {
   departmentId?: string | number | null;
@@ -19,13 +11,15 @@ export type SyncedDepartment = {
   facilityName?: string | null;
 };
 
-type UserDepartmentWithNames = UserDepartment & {
+type UserDepartmentWithNames = {
+  id?: string | number;
+  userId?: string | number;
+  departmentId?: string | number | null;
+  facilityId?: string | number | null;
   departmentName?: string | null;
   facilityName?: string | null;
+  isDefault?: boolean;
 };
-
-const SELECTED_DEPARTMENT_STORAGE_KEY = 'selectedDepartment';
-const DEPARTMENT_CHANNEL_NAME = 'department_channel';
 
 interface DepartmentSwitcherProps {
   children: React.ReactElement;
@@ -51,7 +45,6 @@ interface DepartmentSwitcherProps {
   maxHeight?: number;
   showFacilityNameInHeader?: boolean;
   reloadOnSelect?: boolean;
-  enableCrossTabSync?: boolean;
   afterSelect?: () => void;
   beforeSelect?: (nextDepartment: SyncedDepartment) => void;
 }
@@ -68,43 +61,31 @@ const DepartmentSwitcher = ({
   maxHeight = 240,
   showFacilityNameInHeader = true,
   reloadOnSelect = false,
-  enableCrossTabSync = false,
   afterSelect,
   beforeSelect
 }: DepartmentSwitcherProps) => {
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
 
-  const { data: departmentsResponse } = useGetDepartmentsQuery({ page: 0, size: 10000 });
-  const departments = departmentsResponse?.data ?? [];
-
-  const { data: facilitiesResponse } = useGetAllFacilitiesQuery({});
-  const facilities = Array.isArray(facilitiesResponse) ? facilitiesResponse : [];
-
-  const didNotifyNoDepartmentsRef = useRef(false);
+  const [openedOnce, setOpenedOnce] = useState(false);
 
   const userId = authSlice.user?.id;
   const selectedDepartment = authSlice.selectedDepartment;
 
   const selectedFacilityId =
-    authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
-
-  const selectedFacilityName =
-    authSlice?.tenant?.selectedFacility?.name ??
-    authSlice?.tenant?.selectedFacility?.facilityName ??
-    null;
+    selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
   const facilityKey = selectedFacilityId ?? 'no-facility';
 
   const {
     data: activeDepartmentsResponse,
-    isLoading: isLoadingActiveDepartments,
-    isFetching: isFetchingActiveDepartments
+    isLoading,
+    isFetching
   } = useGetActiveUserDepartmentsByUserQuery(
     { userId: userId as number, facilityId: facilityKey },
     {
-      skip: !userId,
-      refetchOnMountOrArgChange: true
+      skip: !openedOnce || !userId || !selectedFacilityId,
+      refetchOnMountOrArgChange: false
     }
   );
 
@@ -113,165 +94,38 @@ const DepartmentSwitcher = ({
     [activeDepartmentsResponse]
   );
 
-  const storedDepartmentMatch =
-    selectedDepartment &&
-    activeDepartments.find(
-      dept =>
-        dept?.departmentId === selectedDepartment.departmentId &&
-        dept?.facilityId === selectedDepartment.facilityId
-    );
+  const headerFacilityName =
+    selectedDepartment?.facilityName ??
+    authSlice?.tenant?.selectedFacility?.name ??
+    authSlice?.tenant?.selectedFacility?.facilityName ??
+    '-';
 
-  const defaultDepartmentLocal = activeDepartments.find(dept => dept?.isDefault) ?? null;
-  const shouldFetchDefault = !defaultDepartmentLocal && Boolean(userId);
-
-  const { data: defaultDepartmentResponse } = useGetDefaultUserDepartmentByUserQuery(
-    userId as number,
-    {
-      skip: !shouldFetchDefault
-    }
-  );
-
-  const defaultDepartment = (defaultDepartmentResponse ?? null) as UserDepartmentWithNames | null;
-  const defaultDepartmentEntity = defaultDepartmentLocal ?? defaultDepartment ?? null;
-
-  const selectedDepartmentEffective = useMemo(() => {
-    return (
-      storedDepartmentMatch ??
-      defaultDepartmentEntity ??
-      (activeDepartments.length > 0 ? activeDepartments[0] : null)
-    );
-  }, [storedDepartmentMatch, defaultDepartmentEntity, activeDepartments]);
-
-  const resolveFacilityName = useCallback(
-    (facilityId?: string | number | null) => {
-      if (facilityId != null) {
-        const resolved =
-          conjureValueBasedOnIDFromList(facilities as any[], facilityId, 'name') ??
-          (facilityId ? `Facility #${facilityId}` : undefined);
-
-        if (resolved) return resolved;
-      }
-
-      const tenantFacility = authSlice?.tenant?.selectedFacility;
-      return tenantFacility?.name ?? tenantFacility?.facilityName ?? undefined;
-    },
-    [facilities, authSlice?.tenant?.selectedFacility]
-  );
-
-  const resolveDepartmentName = useCallback(
-    (departmentId?: string | number | null) => {
-      if (departmentId == null) return undefined;
-
-      return (
-        conjureValueBasedOnIDFromList(departments as any[], departmentId, 'name') ??
-        (departmentId ? `Department #${departmentId}` : undefined)
-      );
-    },
-    [departments]
-  );
-
-  useEffect(() => {
-    if (!authSlice?.user?.id || !authSlice?.tenant?.selectedFacility) {
-      return;
-    }
-
-    if (
-      activeDepartments.length === 0 &&
-      !isLoadingActiveDepartments &&
-      !isFetchingActiveDepartments &&
-      !selectedDepartment
-    ) {
-      if (!didNotifyNoDepartmentsRef.current) {
-        dispatch(
-          notify({
-            type: 'warning',
-            message:
-              'No departments are assigned to your user. Please contact the administrator to configure departments.'
-          })
-        );
-        didNotifyNoDepartmentsRef.current = true;
-      }
-      return;
-    }
-
-    if (!selectedDepartmentEffective) {
-      return;
-    }
-
-    const nextDepartmentId = selectedDepartmentEffective.departmentId;
-    const nextFacilityId = selectedDepartmentEffective.facilityId;
-
-    const isSameDepartment =
-      String(selectedDepartment?.departmentId ?? '') === String(nextDepartmentId ?? '') &&
-      String(selectedDepartment?.facilityId ?? '') === String(nextFacilityId ?? '');
-
-    if (isSameDepartment) {
-      return;
-    }
-
-    dispatch(
-      setSelectedDepartment({
-        departmentId: nextDepartmentId,
-        facilityId: nextFacilityId,
-        departmentName: resolveDepartmentName(nextDepartmentId) ?? null,
-        facilityName: resolveFacilityName(nextFacilityId) ?? null
-      })
-    );
-  }, [
-    authSlice?.user?.id,
-    authSlice?.tenant?.selectedFacility?.id,
-    activeDepartments.length,
-    isLoadingActiveDepartments,
-    isFetchingActiveDepartments,
-    selectedDepartment,
-    selectedDepartment?.departmentId,
-    selectedDepartment?.facilityId,
-    selectedDepartmentEffective,
-    selectedDepartmentEffective?.departmentId,
-    selectedDepartmentEffective?.facilityId,
-    resolveDepartmentName,
-    resolveFacilityName,
-    dispatch
-  ]);
+  const headerDepartmentName = selectedDepartment?.departmentName ?? '-';
 
   const selectDepartment = useCallback(
-    (dept: UserDepartmentWithNames) => {
+    (dept: UserDepartmentWithNames, closePopover?: () => void) => {
       const nextDepartment: SyncedDepartment = {
-        departmentId: dept.departmentId,
-        facilityId: dept.facilityId,
-        departmentName: dept.departmentName ?? resolveDepartmentName(dept.departmentId) ?? null,
-        facilityName: dept.facilityName ?? resolveFacilityName(dept.facilityId) ?? null
+        departmentId: dept.departmentId ?? null,
+        facilityId: dept.facilityId ?? null,
+        departmentName: dept.departmentName ?? null,
+        facilityName: dept.facilityName ?? null
       };
 
       const isSameDepartment =
-        String(selectedDepartment?.departmentId ?? '') === String(nextDepartment.departmentId ?? '') &&
+        String(selectedDepartment?.departmentId ?? '') ===
+          String(nextDepartment.departmentId ?? '') &&
         String(selectedDepartment?.facilityId ?? '') === String(nextDepartment.facilityId ?? '');
 
+      closePopover?.();
+      onClose?.();
+
       if (isSameDepartment) {
-        onClose?.();
         afterSelect?.();
         return;
       }
 
       beforeSelect?.(nextDepartment);
       dispatch(setSelectedDepartment(nextDepartment));
-
-      if (enableCrossTabSync) {
-        try {
-          localStorage.setItem(SELECTED_DEPARTMENT_STORAGE_KEY, JSON.stringify(nextDepartment));
-        } catch {}
-
-        try {
-          const channel = new BroadcastChannel(DEPARTMENT_CHANNEL_NAME);
-          channel.postMessage({
-            type: 'DEPARTMENT_CHANGED',
-            payload: nextDepartment
-          });
-          channel.close();
-        } catch (error) {
-          console.error('BroadcastChannel is not available', error);
-        }
-      }
 
       if (reloadOnSelect) {
         setTimeout(() => {
@@ -283,160 +137,135 @@ const DepartmentSwitcher = ({
       afterSelect?.();
     },
     [
-      afterSelect,
-      beforeSelect,
-      dispatch,
-      enableCrossTabSync,
-      reloadOnSelect,
-      resolveDepartmentName,
-      resolveFacilityName,
       selectedDepartment?.departmentId,
       selectedDepartment?.facilityId,
+      beforeSelect,
+      afterSelect,
+      dispatch,
+      reloadOnSelect,
       onClose
     ]
   );
 
-  const hasDepartments = activeDepartments.length > 0;
-  const showLoading = !hasDepartments && (isLoadingActiveDepartments || isFetchingActiveDepartments);
-  const headerFacilityName =
-    selectedDepartment?.facilityName ?? selectedFacilityName ?? '-';
-  const headerDepartmentName =
-    selectedDepartment?.departmentName ??
-    resolveDepartmentName(selectedDepartment?.departmentId) ??
-    '-';
-
   const renderSpeaker = useCallback(
-    ({ onClose: rsuiteOnClose, left, top, className }: any, ref: React.Ref<any>) => (
-      <Popover ref={ref} className={className} style={{ left, top, width }} full>
-        <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontWeight: 600 }}>My Departments</span>
+    ({ onClose: rsuiteOnClose, left, top, className }: any, ref: React.Ref<any>) => {
+      const showLoading = isLoading || isFetching;
 
-          {showFacilityNameInHeader && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>
-                {headerFacilityName}
-              </span>
-              <span style={{ fontSize: '11px', color: '#6c757d' }}>
-                {headerDepartmentName}
-              </span>
+      return (
+        <Popover ref={ref} className={className} style={{ left, top, width }} full>
+          <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontWeight: 600 }}>My Departments</span>
+
+            {showFacilityNameInHeader && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>
+                  {headerFacilityName}
+                </span>
+                <span style={{ fontSize: '11px', color: '#6c757d' }}>
+                  {headerDepartmentName}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <Divider style={{ margin: 0 }} />
+
+          {showLoading ? (
+            <div style={{ padding: '12px' }}>Loading departments...</div>
+          ) : activeDepartments.length === 0 ? (
+            <div style={{ padding: '12px' }}>No active departments found.</div>
+          ) : (
+            <div
+              style={{
+                maxHeight,
+                overflowY: 'auto',
+                margin: '8px 12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8
+              }}
+            >
+              {activeDepartments.map(dept => {
+                const isActive =
+                  String(selectedDepartment?.departmentId ?? '') ===
+                    String(dept.departmentId ?? '') &&
+                  String(selectedDepartment?.facilityId ?? '') === String(dept.facilityId ?? '');
+
+                const departmentDisplayName = dept.departmentName ?? 'Unnamed Department';
+                const facilityDisplayName = dept.facilityName ?? '';
+
+                return (
+                  <div
+                    key={dept.id ?? `${dept.userId}-${dept.departmentId}-${dept.facilityId}`}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                      border: '1px solid var(--border-color-light, #e5e7eb)',
+                      borderRadius: 8,
+                      padding: '8px 12px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => selectDepartment(dept, rsuiteOnClose)}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontWeight: 600, flex: '1 1 auto' }}>
+                        {departmentDisplayName}
+                      </span>
+
+                      {isActive && (
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            background: '#facc15',
+                            color: '#1f2937',
+                            padding: '1px 6px',
+                            borderRadius: 999
+                          }}
+                        >
+                          Current
+                        </span>
+                      )}
+
+                      {dept.isDefault && (
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            background: 'var(--deep-blue)',
+                            color: 'var(--white)',
+                            padding: '1px 6px',
+                            borderRadius: 999
+                          }}
+                        >
+                          Default
+                        </span>
+                      )}
+                    </div>
+
+                    {/* {facilityDisplayName && (
+                      <span style={{ fontSize: '11px', color: '#6c757d' }}>
+                        {facilityDisplayName}
+                      </span>
+                    )} */}
+                  </div>
+                );
+              })}
             </div>
           )}
-        </div>
-
-        <Divider style={{ margin: 0 }} />
-
-        {showLoading ? (
-          <div style={{ padding: '12px' }}>Loading departments...</div>
-        ) : activeDepartments.length === 0 ? (
-          <div style={{ padding: '12px' }}>No active departments found.</div>
-        ) : (
-          <div
-            style={{
-              maxHeight,
-              overflowY: 'auto',
-              margin: '8px 12px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8
-            }}
-          >
-            {activeDepartments.map(dept => {
-              const isDefault =
-                defaultDepartmentEntity?.id != null
-                  ? defaultDepartmentEntity.id === dept.id
-                  : defaultDepartmentEntity?.departmentId === dept.departmentId &&
-                    defaultDepartmentEntity?.facilityId === dept.facilityId;
-
-              const isActive =
-                String(selectedDepartment?.departmentId ?? '') === String(dept.departmentId ?? '') &&
-                String(selectedDepartment?.facilityId ?? '') === String(dept.facilityId ?? '');
-
-              const departmentDisplayName =
-                dept.departmentName ??
-                resolveDepartmentName(dept.departmentId) ??
-                'Unnamed Department';
-
-              return (
-                <div
-                  key={dept.id ?? `${dept.userId}-${dept.departmentId}-${dept.facilityId}`}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                    border: '1px solid var(--border-color-light, #e5e7eb)',
-                    borderRadius: 8,
-                    padding: '8px 12px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button
-                      type="button"
-                      style={{
-                        fontWeight: 600,
-                        border: 'none',
-                        background: 'transparent',
-                        padding: 0,
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        flex: '1 1 auto'
-                      }}
-                      onClick={() => {
-                        selectDepartment(dept);
-                        onClose?.();
-                        rsuiteOnClose?.();
-                      }}
-                    >
-                      {departmentDisplayName}
-                    </button>
-
-                    {isActive && (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          background: '#facc15',
-                          color: '#1f2937',
-                          padding: '1px 6px',
-                          borderRadius: 999
-                        }}
-                      >
-                        Current
-                      </span>
-                    )}
-
-                    {isDefault && (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          background: 'var(--deep-blue)',
-                          color: 'var(--white)',
-                          padding: '1px 6px',
-                          borderRadius: 999
-                        }}
-                      >
-                        Default
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Popover>
-    ),
+        </Popover>
+      );
+    },
     [
       width,
+      maxHeight,
+      isLoading,
+      isFetching,
+      activeDepartments,
+      selectedDepartment?.departmentId,
+      selectedDepartment?.facilityId,
       showFacilityNameInHeader,
       headerFacilityName,
       headerDepartmentName,
-      showLoading,
-      activeDepartments,
-      defaultDepartmentEntity,
-      selectedDepartment?.departmentId,
-      selectedDepartment?.facilityId,
-      maxHeight,
-      onClose,
-      resolveDepartmentName,
       selectDepartment
     ]
   );
@@ -446,7 +275,10 @@ const DepartmentSwitcher = ({
       placement={placement}
       trigger={trigger}
       open={controlled ? open : undefined}
-      onOpen={onOpen}
+      onOpen={() => {
+        setOpenedOnce(true);
+        onOpen?.();
+      }}
       onClose={onClose}
       speaker={renderSpeaker}
     >

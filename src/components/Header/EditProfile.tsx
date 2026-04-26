@@ -21,12 +21,8 @@ const EditProfile: React.FC<EditProfileProps> = ({ open, onClose }) => {
     const dispatch = useDispatch();
 
      const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-    const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
-    const { data: facilityListResponse } = useGetFacilitiesQuery({ ...initialListRequest, pageSize: 1000 });
-    const { data: accessRoleListResponse } = useGetAccessRolesQuery({ ...initialListRequest, pageSize: 1000 });
 
      const [user, setUser] = useState<ApUser>({ ...newApUser });
-    const [readyUser, setReadyUser] = useState<Partial<ApUser>>({});
 
      useEffect(() => {
         if (authSlice.user) {

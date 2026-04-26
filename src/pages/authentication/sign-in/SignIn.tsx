@@ -1,31 +1,53 @@
 import MyInput from '@/components/MyInput';
-import {
-  useGetLovDefultByCodeQuery,
-  useSaveUserMutation
-} from '@/services/setupService';
+import { useGetLovDefultByCodeQuery } from '@/services/setupService';
 
-import { setMenu, setTenant, setToken, setUser } from '@/reducers/authSlice';
+import {
+  setMenu,
+  setSelectedDepartment,
+  setTenant,
+  setToken,
+  setUser
+} from '@/reducers/authSlice';
+
 import { setLang, setTranslations } from '@/reducers/uiSlice';
 import { useLazyGetAccountQuery } from '@/services/accountService';
 import { useLoginMutation } from '@/services/authServiceApi';
 import { enumsApi } from '@/services/enumsApi';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
 import { useLazyGetMenuQuery } from '@/services/security/UserRoleService';
+import { useLazyGetDefaultUserDepartmentByUserQuery } from '@/services/security/userDepartmentsService';
 import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 import { useLazyGetDictionaryQuery } from '@/services/setup/translationService';
 import { store } from '@/store';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Button, Form, Modal, Panel } from 'rsuite';
+import { Button, Form, Panel } from 'rsuite';
 import Background from '../../../images/auth-bg.png';
 import Logo from '../../../images/Logo_BLUE_New.png';
 import './styles.less';
+import MyButton from '@/components/MyButton/MyButton';
+
+const mapDefaultDepartmentToSelectedDepartment = (
+  defaultDepartment: any,
+  selectedFacility: any
+) => ({
+  departmentId: defaultDepartment?.departmentId ?? defaultDepartment?.id ?? null,
+  facilityId: defaultDepartment?.facilityId ?? selectedFacility?.id ?? null,
+  departmentName: defaultDepartment?.departmentName ?? defaultDepartment?.name ?? null,
+  facilityName:
+    defaultDepartment?.facilityName ??
+    selectedFacility?.facilityName ??
+    selectedFacility?.name ??
+    null
+});
 
 const SignIn = () => {
   const [getDictionary] = useLazyGetDictionaryQuery();
   const [errText, setErrText] = useState(' ');
-  const { data: langdefult } = useGetLovDefultByCodeQuery('SYSTEM_LANG');
+
+  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
+
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
@@ -36,24 +58,16 @@ const SignIn = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  // const uiSlice = useAppSelector(state => state.ui);
-  // const [langRecord, setLangRecord] = useState({ lang: uiSlice.lang });
+  const { data: langdefult } = useGetLovDefultByCodeQuery('SYSTEM_LANG');
 
   const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const [getAccount] = useLazyGetAccountQuery();
-  const { data: facilityListResponse } = useGetActiveFacilitiesQuery({});
-  const result = useGetActiveFacilitiesQuery({});
-  const {
-    data: langData,
-    isFetching: langsLoading,
-    refetch: refetchLangs
-  } = useGetAllLanguagesQuery({});
-
-  const [saveUser] = useSaveUserMutation();
+  const [getDefaultUserDepartmentByUser] = useLazyGetDefaultUserDepartmentByUserQuery();
   const [getMenuTrigger] = useLazyGetMenuQuery();
 
-  // Handle login
+  const result = useGetActiveFacilitiesQuery({});;
+  const { data: langData } = useGetAllLanguagesQuery({});
+
   const handleLogin = async () => {
     if (
       !credentials.username ||
@@ -75,6 +89,7 @@ const SignIn = () => {
       }).unwrap();
 
       dispatch(setToken(resp.id_token));
+      localStorage.setItem('id_token', resp.id_token);
 
       const userResp = await getAccount().unwrap();
       dispatch(setUser(userResp));
@@ -82,10 +97,29 @@ const SignIn = () => {
       dispatch(setLang(credentials.language));
 
       const selectedFacility =
-        (facilityListResponse ?? []).find((f: any) => f.id === Number(credentials.orgKey)) || null;
+        (facilityListResponse ?? []).find((f: any) => f.id === Number(credentials.orgKey)) ||
+        null;
 
       const existingTenant = JSON.parse(localStorage.getItem('tenant') || 'null') || {};
       dispatch(setTenant({ ...existingTenant, selectedFacility }));
+
+      if (userResp?.id) {
+        try {
+          const defaultDepartment = await getDefaultUserDepartmentByUser(
+            userResp.id,
+            false
+          ).unwrap();
+
+          dispatch(
+            setSelectedDepartment(
+              mapDefaultDepartmentToSelectedDepartment(defaultDepartment, selectedFacility)
+            )
+          );
+        } catch (departmentError) {
+          console.error('Failed to load default department:', departmentError);
+          dispatch(setSelectedDepartment(null));
+        }
+      }
 
       if (userResp?.id && selectedFacility?.id) {
         const menuResponse = await getMenuTrigger({
@@ -97,21 +131,19 @@ const SignIn = () => {
         localStorage.setItem('menu', JSON.stringify(menuResponse));
       }
 
-      localStorage.setItem('language', credentials.language); // fixed key + value
+      const dict = await getDictionary(credentials.language).unwrap();
 
-      const dict = await getDictionary(credentials.language).unwrap(); // { translation_key: value }
-      // optional local cache:
       localStorage.setItem('language', credentials.language);
-      dispatch(setLang(credentials.language));
       localStorage.setItem('dict', JSON.stringify(dict));
-      dispatch(setTranslations(dict));
-      localStorage.setItem('id_token', resp.id_token);
       localStorage.setItem('user', JSON.stringify(userResp));
+
+      dispatch(setLang(credentials.language));
+      dispatch(setTranslations(dict));
+
       store.dispatch(enumsApi.util.prefetch('getAllEnums', undefined, { force: true }));
 
       setErrText(' ');
-      navigate('/');
-    } catch (err: any) {
+navigate('/', { replace: true });    } catch (err: any) {
       if (err?.status === 401 || err?.data?.detail === 'Invalid credentials') {
         setErrText('Invalid username or password.');
       } else if (err?.status === 'FETCH_ERROR') {
@@ -124,26 +156,14 @@ const SignIn = () => {
     }
   };
 
-  const storedUser = JSON.parse(localStorage.getItem('user'));
-
-
-  // Submit on Enter key
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleLogin();
-    }
-  };
-
 
   useEffect(() => {
     const selectedObject = langData?.find(item => item?.langKey === credentials?.language);
-    localStorage.setItem('direction', selectedObject?.direction);
-  }, [credentials.language]);
 
-  // useEffect(() => {
-  //   dispatch(setLang(langRecord['lang']));
-  // }, [langRecord]);
+    if (selectedObject?.direction) {
+      localStorage.setItem('direction', selectedObject.direction);
+    }
+  }, [credentials.language, langData]);
 
   return (
     <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
@@ -160,80 +180,71 @@ const SignIn = () => {
             <img src={Logo} alt="Tenant Logo" />
           </Panel>
 
-      
-            <Panel className="sign-in-panel ">
-              <Form fluid onKeyPress={handleKeyPress}>
-                <MyInput
-                  width="100%"
-                  fieldName="language"
-                  fieldType="select"
-                  selectData={langData}
-                  selectDataLabel="langName"
-                  selectDataValue="langKey"
-                  defaultSelectValue={langdefult?.object?.key?.toString() ?? ''}
-                  record={credentials}
-                  setRecord={setCredentials}
-                  placeholder="Select Language"
-                  showLabel={false}
-                  searchable={false}
-                />
+          <Panel className="sign-in-panel ">
+            <Form fluid >
+              <MyInput
+                width="100%"
+                fieldName="language"
+                fieldType="select"
+                selectData={langData}
+                selectDataLabel="langName"
+                selectDataValue="langKey"
+                defaultSelectValue={langData?.[0]?.langKey || ''}
+                record={credentials}
+                setRecord={setCredentials}
+                placeholder="Select Language"
+                showLabel={false}
+                searchable={false}
+              />
 
-                <MyInput
-                  placeholder="Select Facility"
-                  width="100%"
-                  fieldType="select"
-                  fieldLabel="Facility"
-                  selectData={facilityListResponse ?? []}
-                  selectDataLabel="name"
-                  selectDataValue="id"
-                  fieldName="orgKey"
-                  record={credentials}
-                  setRecord={setCredentials}
-                  showLabel={false}
-                  searchable={false}
-                />
+              <MyInput
+                placeholder="Select Facility"
+                width="100%"
+                fieldType="select"
+                fieldLabel="Facility"
+                selectData={facilityListResponse ?? []}
+                selectDataLabel="name"
+                selectDataValue="id"
+                fieldName="orgKey"
+                record={credentials}
+                setRecord={setCredentials}
+                showLabel={false}
+                searchable={false}
+              />
 
-                <MyInput
-                  width="100%"
-                  placeholder="Enter User Name"
-                  fieldLabel="User Name"
-                  fieldName="username"
-                  record={credentials}
-                  setRecord={setCredentials}
-                  showLabel={false}
-                />
+              <MyInput
+                width="100%"
+                placeholder="Enter User Name"
+                fieldLabel="User Name"
+                fieldName="username"
+                record={credentials}
+                setRecord={setCredentials}
+                showLabel={false}
+              />
+               <MyInput
+                width="100%"
+                placeholder="Enter Password"
+                fieldLabel="Password"
+                fieldName="password"
+                fieldType="password"
+                record={credentials}
+                setRecord={setCredentials}
+                showLabel={false}
+              />
+            
 
-                <Form.Group>
-                  <Form.Control
-                    placeholder="Enter Password"
-                    name="password"
-                    type="password"
-                    value={credentials.password}
-                    onChange={e => setCredentials({ ...credentials, password: e })}
-                  />
-                </Form.Group>
 
-                <a className="forgot-password">Forgot password?</a>
-
-                <p style={{ color: 'red', marginBottom: 10 }}>{errText}</p>
-
-                <Form.Group>
-                  <Button
-                    style={{ backgroundColor: 'var(--primary-blue)' }}
-                    appearance="primary"
-                    onClick={handleLogin}
-                    loading={isLoggingIn}
-                    className="submit-button"
-                  >
-                    Sign in
-                  </Button>
-                </Form.Group>
-              </Form>
-            </Panel>
-       
+              <p style={{ color: 'red', marginBottom: 10 }}>{errText}</p>
+              <MyButton 
+              onClick={handleLogin}
+              loading={isLoggingIn}
+              width={"26vw"}
+              radius={'5px'}
+              >Sign in</MyButton>
+             
+            </Form>
+          </Panel>
         </div>
-
-    
       </Panel>
     </Panel>
   );

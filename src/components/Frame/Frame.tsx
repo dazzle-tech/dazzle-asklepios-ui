@@ -47,8 +47,7 @@ import MyButton from '../MyButton/MyButton';
 
 import Translate from '../Translate';
 import DepartmentSwitcher from '@/components/DepartmentSwitcher/DepartmentSwitcher';
-import { useLazyGetDepartmentByIdQuery } from '@/services/security/departmentService';
-import {  useLazyGetFacilityByIdQuery } from '@/services/security/facilityService';
+
 
 const { getHeight, on } = DOMHelper;
 
@@ -82,9 +81,9 @@ const collapsedWidth = 60;
 const Frame = (props: FrameProps) => {
   const { navs, mode } = props;
   const direction = localStorage.getItem('direction');
-const authAlice = useAppSelector(state => state.auth);
-  const selectedDepartmentId = authAlice.selectedDepartment?.departmentId || '';
-  const selectedFacilityId = authAlice.selectedDepartment?.facilityId || '';
+  const authAlice = useAppSelector(state => state.auth);
+    const selectedDepartment = authAlice.selectedDepartment;
+
   const [expand, setExpand] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState<string | null>(null);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
@@ -123,24 +122,7 @@ const authAlice = useAppSelector(state => state.auth);
   const containerClasses = classNames('page-container', {
     'container-full': !expand
   });
-  const [getFacilityById, { data: facility }] = useLazyGetFacilityByIdQuery();
-  
-  const [getDepartmentById, { data: department, isLoading, isFetching, error }] =
-    useLazyGetDepartmentByIdQuery();
-
-
-     useEffect(() => {
-        if (!selectedDepartmentId) return;
-    
-        getDepartmentById(selectedDepartmentId, true);
-      }, [ selectedDepartmentId, getDepartmentById]);
-
-      
-     useEffect(() => {
-        if (!selectedFacilityId) return;
-    
-        getFacilityById(selectedFacilityId, true);
-      }, [ selectedFacilityId, getFacilityById]);
+ 
   const handleSubmenuToggle = (menu: string) => {
     setSubmenuOpen(submenuOpen === menu ? null : menu);
   };
@@ -250,45 +232,51 @@ const authAlice = useAppSelector(state => state.auth);
             })}
           >
             {expand && (
-              <DepartmentSwitcher
-                placement="bottomStart"
-                controlled
-                open={departmentPopoverOpen}
-                onOpen={() => setDepartmentPopoverOpen(true)}
-                onClose={() => setDepartmentPopoverOpen(false)}
-                enableCrossTabSync
-                afterSelect={() => setDepartmentPopoverOpen(false)}
-                reloadOnSelect
-
-              >
-                <div
-                  className="container-of-organization-info"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setDepartmentPopoverOpen(open => !open)}
-                  onKeyDown={event => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      setDepartmentPopoverOpen(open => !open);
-                    }
-                  }}
-                  style={{
-                    cursor: 'pointer',
-                    flexDirection: direction === 'LTR' ? 'row' : 'row-reverse'
-                  }}
+              <React.Suspense fallback={null}>
+                <DepartmentSwitcher
+                  placement="bottomStart"
+                  controlled
+                  open={departmentPopoverOpen}
+                  onOpen={() => setDepartmentPopoverOpen(true)}
+                  onClose={() => setDepartmentPopoverOpen(false)}
+                  afterSelect={() => setDepartmentPopoverOpen(false)}
+                  reloadOnSelect
                 >
-                  <FontAwesomeIcon className="organization-img" icon={faHospital} size="lg" />
-                  <div>
-                    <div className="name">
-                      <Translate>{facility?.name}</Translate>
-                    </div>
-                    <div className="location">
-                      <Translate>{department?.name}</Translate>
-                    </div>                  </div>
-                </div>
-              </DepartmentSwitcher>
-            )}
+                  <div
+                    className="container-of-organization-info"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setDepartmentPopoverOpen(open => !open)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setDepartmentPopoverOpen(open => !open);
+                      }
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      flexDirection: direction === 'LTR' ? 'row' : 'row-reverse'
+                    }}
+                  >
+                    <FontAwesomeIcon className="organization-img" icon={faHospital} size="lg" />
 
+                    <div>
+                      <div className="name">
+                        <Translate>
+                          {selectedDepartment?.facilityName ?? '-'}
+                        </Translate>
+                      </div>
+
+                      <div className="location">
+                        <Translate>
+                          {selectedDepartment?.departmentName ?? '-'}
+                        </Translate>
+                      </div>
+                    </div>
+                  </div>
+                </DepartmentSwitcher>
+              </React.Suspense>
+            )}
             {expand && (
               <Form
                 className="search-field search-form"
