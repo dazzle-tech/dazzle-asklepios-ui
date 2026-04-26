@@ -110,22 +110,19 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         payorName: '',
         planName: ''
     });
-    const getApiErrorMessage = (error: any, fallback: string) => {
-      const raw =
-        error?.data?.message ||
-        error?.data?.detail ||
-        error?.data?.errorKey ||
-        error?.message ||
-        fallback;
-      const text = String(raw || fallback).trim();
-      if (text.includes('error.alreadycancelled')) return 'Appointment is already canceled.';
-      if (text.includes('error.alreadyconfirmed')) return 'Appointment is already confirmed.';
-      if (text.includes('error.alreadynoshow')) return 'Appointment is already marked as no-show.';
-      if (text.includes('error.alreadycheckedin')) return 'Appointment is already checked-in.';
-      return text;
-    };
 
     // Get current logged-in facility from localStorage or auth slice
+     const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
     const currentLoggedInFacility = useMemo(() => {
         // Try to get from auth slice first
         if (authSlice?.tenant?.selectedFacility) {
@@ -176,8 +173,12 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         dispatch(notify({ msg: 'Invalid appointment id', sev: 'warning' }));
         return;
       }
-      if (currentStatus !== 'CONFIRMED') {
+      if (currentStatus == 'BOOKED') {
         dispatch(notify({ msg: 'Please confirm the appointment before check-in', sev: 'warning' }));
+        return;
+      }
+      if (currentStatus == 'CHECKEDIN') {
+        dispatch(notify({ msg: 'Appointment already checked in', sev: 'warning' }));
         return;
       }
 
@@ -187,7 +188,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         onStatusChange();
         onActionsModalClose();
       } catch (error: any) {
-        dispatch(notify({ msg: 'An error occurred while checking in the appointment', sev: 'warn' }));
+         const errorMsg = extractErrorMessage(error) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       }
     };
   
@@ -367,20 +369,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             onActionsModalClose();
         } catch (error: any) {
             // Extract error message from API response
-            const rawMessage =
-              error?.data?.message ||
-              error?.data?.errorKey ||
-              error?.message ||
-              'An error occurred while confirming the appointment';
-
-            // Friendly mapping for backend error keys (like the screenshot)
-            const errorMessage =
-              String(rawMessage).trim() === 'error.patient.department.date.duplicate'
-                ? 'This patient already has an appointment in this department for the selected date.'
-                : String(rawMessage);
-            
-            // Always show error message to user
-            dispatch(notify({ msg: errorMessage, sev: 'warning' }));
+             const errorMsg = extractErrorMessage(error) || 'Save Failed';
+             dispatch(notify({ msg: errorMsg, sev: 'warning' }));
         }
     }
 
@@ -442,7 +432,8 @@ const handleNonShow = async () => {
     setOtherReason(null);
     setResonKey(null);
   } catch (error: any) {
-    dispatch(notify({ msg: getApiErrorMessage(error, 'An error occurred while updating appointment status'), sev: 'warning' }));
+    const errorMsg = extractErrorMessage(error) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     return;
   }
 };
@@ -469,7 +460,8 @@ const handleCancel = async () => {
     setOtherReason(null);
     setResonKey(null);
   } catch (error: any) {
-    dispatch(notify({ msg: getApiErrorMessage(error, 'An error occurred while canceling appointment'), sev: 'warning' }));
+     const errorMsg = extractErrorMessage(error) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
     return;
   }
 };

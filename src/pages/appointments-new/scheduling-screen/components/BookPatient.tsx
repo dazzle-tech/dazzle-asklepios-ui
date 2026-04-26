@@ -569,20 +569,37 @@ const BookPatient = ({
     setPatientSidebarOpen(false);
   };
 
+  const extractErrorMessage = (response: any): string => {
+    try {
+      const msg = response?.data?.message;
+      if (typeof msg === 'string') {
+        return msg.replace(/^error\./i, '');
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
   const handleBooking = async () => {
-    if (readOnly) return;
+  if (readOnly) return;
+
+  try {
     if (!appointmentId || !record?.patientId) {
       dispatch(notify({ msg: 'Please enter patient id', sev: 'warning' }));
-      throw new Error('Missing patient id');
+      return
     }
+
     if (!record?.service) {
       dispatch(notify({ msg: 'Please select service', sev: 'warning' }));
-      throw new Error('Missing service');
+      return
     }
+
     if (record?.priority == null || String(record.priority).trim() === '') {
       dispatch(notify({ msg: 'Please select priority', sev: 'warning' }));
-      throw new Error('Missing priority');
+      return
     }
+
     if (record.service === 'FOLLOW_UP') {
       if (!appointmentDepartmentId) {
         dispatch(
@@ -591,11 +608,12 @@ const BookPatient = ({
             sev: 'warning'
           })
         );
-        throw new Error('Missing department for follow-up');
+        return
       }
+
       if (!Number(record.followUpEncounterId)) {
         dispatch(notify({ msg: 'Please select a previous encounter for follow-up.', sev: 'warning' }));
-        throw new Error('Missing follow-up encounter');
+        return
       }
     }
 
@@ -620,7 +638,11 @@ const BookPatient = ({
     dispatch(notify({ msg: 'Appointment booked successfully', sev: 'success' }));
     await Promise.resolve(onBooked?.());
     handleClose();
-  };
+  } catch (error: any) {
+      const errorMsg = extractErrorMessage(error) || 'Save Failed';
+        dispatch(notify({ msg: errorMsg, sev: 'warning' }));
+  }
+};
 
   return (
     <>
