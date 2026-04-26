@@ -9,7 +9,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { skipToken } from '@reduxjs/toolkit/query';
-import React, { useMemo, useState } from 'react';
+import React, { forwardRef, useMemo, useState } from 'react';
 import { HStack } from 'rsuite';
 
 import { useFilterDiagnosticOrderTestResultsQuery } from '@/services/setup/diagnosticTest/diagnosticOrderTestResultService';
