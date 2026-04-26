@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import clsx from 'clsx';
 import { Panel, Sidebar, Sidenav, Nav } from 'rsuite';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ActiveAllergies from '../encounter-component/patient-summary/ActiveAllergies';
 import BodyDiagram from '../encounter-component/patient-summary/BodyDiagram';
 import PreviuosVisitData from '../encounter-component/patient-summary/PreviuosVisitData';

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Translate from '@/components/Translate';
 import Section from '@/components/Section';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './styles.less';
 import PatientSide from '@/pages/encounter/encounter-main-info-section/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
