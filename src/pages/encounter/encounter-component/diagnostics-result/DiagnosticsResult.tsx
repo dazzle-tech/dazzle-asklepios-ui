@@ -15,7 +15,7 @@ const DiagnosticsResult = props => {
     { title: 'Results', content: <Result patient={patient} /> },
     {
       title: 'Reports',
-      content: <Reports patient={patient}  />
+      content: <Reports patient={patient} />
     },
     {
       title: 'Laboratory Result Comparison',
@@ -23,13 +23,11 @@ const DiagnosticsResult = props => {
     }
   ];
 
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-        // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>

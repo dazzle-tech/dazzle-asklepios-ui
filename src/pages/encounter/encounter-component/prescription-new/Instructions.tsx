@@ -1,6 +1,6 @@
 import MyInput from '@/components/MyInput';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Col, Dropdown, Form, Row } from 'rsuite';
+import { Col, Dropdown, Row } from 'rsuite';
 import './styles.less';
 
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -110,7 +110,7 @@ const Instructions = ({
     <div dir={dir}>
       {/* -------- Custom Instruction -------- */}
       {selectedOption === OPTION_CUSTOM && (
-        <Form fluid layout="inline">
+        <div className="instructions-inline-row">
           <Row gutter={16}>
             <Col md={6}>
               <MyInput
@@ -169,12 +169,12 @@ const Instructions = ({
               />
             </Col>
           </Row>
-        </Form>
+        </div>
       )}
 
       {/* -------- Predefined Instruction -------- */}
       {selectedOption === OPTION_PREDEFINED && (
-        <Form fluid layout="inline" className="fill-width-instructions">
+        <div className="fill-width-instructions">
           <div style={{ marginBottom: 6 }}>
             <span>
               Pre-defined Instructions <span style={{ color: 'red' }}>*</span>
@@ -195,12 +195,12 @@ const Instructions = ({
               </Dropdown.Item>
             ))}
           </Dropdown>
-        </Form>
+        </div>
       )}
 
       {/* -------- Manual Instruction -------- */}
       {selectedOption === OPTION_MANUAL && (
-        <Form fluid layout="inline" className="fill-width-instructions">
+        <div className="fill-width-instructions">
           <MyInput
             fieldName="manual"
             fieldType="textarea"
@@ -213,7 +213,7 @@ const Instructions = ({
             placeholder="Enter instructions..."
             required={true}
           />
-        </Form>
+        </div>
       )}
     </div>
   );

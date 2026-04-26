@@ -4,7 +4,7 @@ import { Line } from 'react-chartjs-2';
 // BODY
 import {
   useGetWeightListByPatientBetweenDatesQuery,
-  useGetHeightListByPatientBetweenDatesQuery,
+  useGetHeightListByPatientBetweenDatesQuery
 } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 
 // VITAL
@@ -13,22 +13,16 @@ import {
   useGetPulseRateListByPatientBetweenDatesQuery,
   useGetRespiratoryRateListByPatientBetweenDatesQuery,
   useGetOxygenSaturationListByPatientBetweenDatesQuery,
-  useGetBloodPressureListByPatientBetweenDatesQuery,
+  useGetBloodPressureListByPatientBetweenDatesQuery
 } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 import { useLocation } from 'react-router-dom';
 
 const AllGraphsTab = (props: any) => {
   const location = useLocation();
 
-
-
-    const patient = props.patient || location.state?.patient;
+  const patient = props.patient || location.state?.patient;
 
   const patientId = Number(patient?.id);
-
-  console.log('🔥 FINAL patient:', patient);
-  console.log('🔥 FINAL patientId:', patientId);
-  
 
   const { fromIso, toIso } = useMemo(() => {
     const now = new Date();
@@ -80,36 +74,6 @@ const AllGraphsTab = (props: any) => {
     { skip: !patientId }
   );
 
-  // ================= DEBUG LOGS =================
-  useEffect(() => {
-    console.log('================ DEBUG ALL GRAPHS =================');
-
-    console.log('patientId:', patientId);
-    console.log('fromIso:', fromIso);
-    console.log('toIso:', toIso);
-
-    console.log('WEIGHT:', weightQuery);
-    console.log('HEIGHT:', heightQuery);
-    console.log('TEMP:', tempQuery);
-    console.log('PULSE:', pulseQuery);
-    console.log('RESP:', respQuery);
-    console.log('OXY:', oxyQuery);
-    console.log('BP:', bpQuery);
-
-    console.log('===================================================');
-  }, [
-    patientId,
-    fromIso,
-    toIso,
-    weightQuery,
-    heightQuery,
-    tempQuery,
-    pulseQuery,
-    respQuery,
-    oxyQuery,
-    bpQuery
-  ]);
-
   const weightData = weightQuery.data || [];
   const heightData = heightQuery.data || [];
   const tempData = tempQuery.data || [];
@@ -121,10 +85,12 @@ const AllGraphsTab = (props: any) => {
   const format = d => new Date(d).toLocaleString();
 
   const renderChart = (title, arr, key, label) => {
-    console.log(`📊 ${title} DATA:`, arr);
-
     if (!arr.length) {
-      return <div className="graph-card"><h4>{title}</h4>No Data</div>;
+      return (
+        <div className="graph-card">
+          <h4>{title}</h4>No Data
+        </div>
+      );
     }
 
     return (
@@ -158,7 +124,6 @@ const AllGraphsTab = (props: any) => {
 
       <div className="graph-card">
         <h4>Blood Pressure</h4>
-        {console.log('📊 BP DATA:', bpData)}
         {bpData.length ? (
           <Line
             data={{

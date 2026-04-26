@@ -56,6 +56,20 @@
   margin-bottom: 15px !important;
 }
 
+// Force full-width inputs inside inline Form
+.full-width-input {
+  display: block !important;
+  width: 100% !important;
+
+  .rs-input-group,
+  .rs-picker-check,
+  .rs-picker-toggle-wrapper,
+  .rs-form-control-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 @media (max-width: 500px) {
 
   .bt-div {

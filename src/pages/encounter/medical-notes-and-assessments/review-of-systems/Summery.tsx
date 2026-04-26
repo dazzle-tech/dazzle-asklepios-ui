@@ -9,7 +9,6 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter,system})=>{
 
   const { data: bodySystemsDetailLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_SYS_DETAIL');
-  console.log("details",bodySystemsDetailLovQueryResponse)
     return(<>
         <MyModal
         position='right'

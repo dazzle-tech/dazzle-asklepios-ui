@@ -59,7 +59,6 @@ const RootWrapper = () => {
     </MUIThemeProvider>
   );
 };
-
 const rootElement = document.getElementById('root');
 
 if (rootElement) {

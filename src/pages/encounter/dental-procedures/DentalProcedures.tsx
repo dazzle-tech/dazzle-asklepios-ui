@@ -41,6 +41,14 @@ const getStatusColor = (cancelled: boolean) => (cancelled ? '#D64545' : '#0DAA41
 
 type FormMode = 'add' | 'edit';
 
+const emptyForm = {
+  ...newDentalProcedure,
+  anesthesiaUsed: '',
+  dose: '',
+  fillingMaterial: '',
+  notes: ''
+};
+
 const DentalProcedures = props => {
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -55,7 +63,7 @@ const DentalProcedures = props => {
   // ── Single modal state ──
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [formMode, setFormMode] = useState<FormMode>('add');
-  const [form, setForm] = useState<any>({ ...newDentalProcedure });
+  const [form, setForm] = useState<any>({ ...emptyForm });
   const [modalKey, setModalKey] = useState(0);
 
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
@@ -122,7 +130,7 @@ const DentalProcedures = props => {
     if (saveMutation.isSuccess) {
       dispatch(notify({ msg: 'Dental procedure saved successfully', sev: 'success' }));
       setFormModalOpen(false);
-      setForm({ ...newDentalProcedure });
+      setForm({ ...emptyForm });
       setModalKey(prev => prev + 1);
     }
     if (saveMutation.isError) {
@@ -134,7 +142,7 @@ const DentalProcedures = props => {
     if (updateMutation.isSuccess) {
       dispatch(notify({ msg: 'Dental procedure updated successfully', sev: 'success' }));
       setFormModalOpen(false);
-      setForm({ ...newDentalProcedure });
+      setForm({ ...emptyForm });
     }
     if (updateMutation.isError) {
       dispatch(notify({ msg: 'Failed to update dental procedure', sev: 'warning' }));
@@ -177,14 +185,20 @@ const DentalProcedures = props => {
 
   // ─── Helpers to open modal ────────────────────────────────────────────────
   const openAddModal = () => {
-    setForm({ ...newDentalProcedure });
+    setForm({ ...emptyForm });
     setFormMode('add');
     setModalKey(prev => prev + 1);
     setFormModalOpen(true);
   };
 
   const openEditModal = (row: DentalProcedureResponseVM) => {
-    setForm({ ...row });
+    setForm({
+      ...row,
+      anesthesiaUsed: row.anesthesiaUsed ?? '',
+      dose: row.dose ?? '',
+      fillingMaterial: row.fillingMaterial ?? '',
+      notes: row.notes ?? ''
+    });
     setFormMode('edit');
     setModalKey(prev => prev + 1);
     setFormModalOpen(true);
@@ -194,11 +208,20 @@ const DentalProcedures = props => {
   const handleSubmit = async () => {
     if (formMode === 'add') {
       try {
-        await saveProcedure({
-          ...form,
-          patientId: patient?.id ?? patient?.key,
-          encounterId: encounter?.id ?? encounter?.key
-        }).unwrap();
+        const createPayload = {
+          patientId: { id: patient?.id ?? patient?.key },
+          encounterId: { id: encounter?.id ?? encounter?.key },
+          toothNumber: form.toothNumber,
+          surface: form.surface,
+          anesthesiaUsed: form.anesthesiaUsed?.trim() || null,
+          dose: form.dose !== '' && form.dose != null ? Number(form.dose) : null,
+          unit: form.unit || null,
+          fillingMaterial: form.fillingMaterial?.trim() || null,
+          serviceId: form.serviceId,
+          cdtCodeId: form.cdtCodeId || null,
+          notes: form.notes?.trim() || null
+        };
+        await saveProcedure(createPayload).unwrap();
       } catch {
         dispatch(notify({ msg: 'Failed to save dental procedure', sev: 'warning' }));
       }
@@ -209,13 +232,13 @@ const DentalProcedures = props => {
           id: form.id,
           toothNumber: form.toothNumber,
           surface: form.surface,
-          anesthesiaUsed: form.anesthesiaUsed ?? null,
-          dose: form.dose ?? null,
-          unit: form.unit ?? null,
-          fillingMaterial: form.fillingMaterial ?? null,
+          anesthesiaUsed: form.anesthesiaUsed?.trim() || null,
+          dose: form.dose !== '' && form.dose != null ? Number(form.dose) : null,
+          unit: form.unit || null,
+          fillingMaterial: form.fillingMaterial?.trim() || null,
           serviceId: form.serviceId,
-          cdtCodeId: form.cdtCodeId ?? null,
-          notes: form.notes ?? null
+          cdtCodeId: form.cdtCodeId || null,
+          notes: form.notes?.trim() || null
         };
         await updateProcedure({ id: form.id, body }).unwrap();
       } catch {

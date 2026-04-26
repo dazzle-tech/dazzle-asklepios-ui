@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest } from '@/types/types';
-import { Col, Dropdown, Form, Row } from 'rsuite';
+import { Col, Dropdown, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetIcdListQuery } from '@/services/setupService';
 import SearchIcon from '@rsuite/icons/Search';
@@ -77,7 +77,7 @@ const Assessment = ({
 
   return (
     <div className="assessment-container" dir={dir}>
-      <Form className="assessment-container" fluid>
+      <div>
         <Row>
           <Col md={8}>
             <Icd10Search
@@ -202,7 +202,7 @@ const Assessment = ({
             />
           </Col>
         </Row>
-      </Form>
+      </div>
     </div>
   );
 };

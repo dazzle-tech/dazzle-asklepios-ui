@@ -1,8 +1,7 @@
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useState } from 'react';
-import { MdDelete, MdModeEdit } from 'react-icons/md';
+import { MdModeEdit } from 'react-icons/md';
 
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
@@ -13,16 +12,12 @@ import {
   useGetSurgicalHistoryQuery
 } from '@/services/patients/surgicalHistoryService';
 
-import { useAppDispatch } from '@/hooks';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
-import { notify } from '@/utils/uiReducerActions';
 
-import '../styles.less';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import '../styles.less';
 
 const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
-  const dispatch = useAppDispatch();
-
   const { data: anesthesiaLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
   const { data: complicationsLov } = useGetLovValuesByCodeQuery('PROC_COMPLIC');
 
@@ -40,13 +35,10 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
     { skip: !isValidPatientId }
   );
 
-  const [deleteSurgicalHistory] = useDeleteSurgicalHistoryMutation();
-
   const handleEdit = (row: any) => {
     setSelectedRow(row);
     setOpen(true);
   };
-
 
   const columns = [
     { key: 'surgery', title: 'SURGERY', flexGrow: 3 },
@@ -119,57 +111,58 @@ const SurgicalHistory = ({ patient, edit, toShowData = false }) => {
     setPage(0);
   };
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div className="medical-container-div" dir={dir}>
-      <SectionContainer
-        title="Surgical History"
-        action={
-          !toShowData && (
-            <MyButton
-              disabled={edit}
-              prefixIcon={() => <PlusIcon />}
-              onClick={() => {
-                setSelectedRow(null);
-                setOpen(true);
-              }}
-            >
-              Add
-            </MyButton>
-          )
-        }
-        content={
-          <>
-            <MyTable
-              height={450}
-              data={data?.data ?? []}
-              loading={isFetching}
-              columns={columns}
-              page={page}
-              rowsPerPage={size}
-              totalCount={data?.totalCount ?? 0}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-            />
+    <div className="medical-main-container" dir={dir}>
+      <div className="medical-container-div" dir={dir}>
+        <SectionContainer
+          title="Surgical History"
+          action={
+            !toShowData && (
+              <MyButton
+                disabled={edit}
+                prefixIcon={() => <PlusIcon />}
+                onClick={() => {
+                  setSelectedRow(null);
+                  setOpen(true);
+                }}
+              >
+                Add
+              </MyButton>
+            )
+          }
+          content={
+            <>
+              <MyTable
+                height={450}
+                data={data?.data ?? []}
+                loading={isFetching}
+                columns={columns}
+                page={page}
+                rowsPerPage={size}
+                totalCount={data?.totalCount ?? 0}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+              />
 
-            <AddSurgicalHistory
-              open={open}
-              setOpen={() => {
-                setOpen(false);
-                setSelectedRow(null);
-              }}
-              initialData={selectedRow}
-              patient={patient}
-            />
-          </>
-        }
-      />
+              <AddSurgicalHistory
+                open={open}
+                setOpen={() => {
+                  setOpen(false);
+                  setSelectedRow(null);
+                }}
+                initialData={selectedRow}
+                patient={patient}
+              />
+            </>
+          }
+        />
+      </div>
     </div>
   );
 };

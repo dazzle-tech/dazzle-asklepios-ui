@@ -127,6 +127,14 @@ const SOCIAL_HISTORY_ERROR_MAP: Record<string, string> = {
   notfound: 'Social history not found.'
 };
 
+const toNoonTimestamp = (value: any): number | null => {
+  if (!value) return null;
+  const d = value instanceof Date ? new Date(value) : new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setHours(12, 0, 0, 0);
+  return d.getTime();
+};
+
 const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
 
@@ -188,26 +196,94 @@ const AddSocialHistory = ({ open, setOpen, initialData, patient }) => {
     }
   }, [open, initialData, patient?.id]);
 
-  const handleSave = async () => {
-    const payload = {
-      ...record,
-      patientId: patient?.id,
+  const validateBeforeSave = (): string[] => {
+    const errors: string[] = [];
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
 
+    if (record.isCurrentSmoker && record.isPreviousSmoker) {
+      errors.push('Cannot be both a current smoker and a previous smoker.');
+    }
+
+    if (record.isCurrentSmoker) {
+      if (!record.smokeStartDate) {
+        errors.push('Smoke start date is required for current smokers.');
+      } else if (new Date(record.smokeStartDate) > today) {
+        errors.push('Smoke start date cannot be in the future.');
+      }
+      if (!record.cigaretteAmount || record.cigaretteAmount <= 0) {
+        errors.push('Cigarette amount is required and must be greater than 0 for current smokers.');
+      }
+    }
+
+    if (record.isPreviousSmoker) {
+      if (!record.smokeQuitDate) {
+        errors.push('Smoke quit date is required for previous smokers.');
+      } else if (new Date(record.smokeQuitDate) > today) {
+        errors.push('Smoke quit date cannot be in the future.');
+      }
+    }
+
+    if (record.alcoholConsumption) {
+      if (!record.alcoholSinceWhen) {
+        errors.push('"Since when" date is required when alcohol consumption is enabled.');
+      } else if (new Date(record.alcoholSinceWhen) > today) {
+        errors.push('Alcohol since-when date cannot be in the future.');
+      }
+    }
+
+    return errors;
+  };
+
+  const handleSave = async () => {
+    const errors = validateBeforeSave();
+    if (errors.length) {
+      dispatch(notify({ msg: errors.join('\n'), sev: 'warning' }));
+      return;
+    }
+
+    const payload: any = {
+      patientId: Number(patient?.id),
+
+      isCurrentSmoker: record.isCurrentSmoker ?? false,
       smokeStartDate:
         record.isCurrentSmoker && record.smokeStartDate
-          ? new Date(record.smokeStartDate).toISOString()
+          ? toNoonTimestamp(record.smokeStartDate)
           : null,
+      cigaretteAmount: record.isCurrentSmoker ? (record.cigaretteAmount ?? null) : null,
+      cigaretteType: record.isCurrentSmoker
+        ? (record.cigaretteType?.trim() || null)
+        : null,
 
+      isPreviousSmoker: record.isPreviousSmoker ?? false,
       smokeQuitDate:
         record.isPreviousSmoker && record.smokeQuitDate
-          ? new Date(record.smokeQuitDate).toISOString()
+          ? toNoonTimestamp(record.smokeQuitDate)
           : null,
 
+      exposureToSecondHandSmoke: record.exposureToSecondHandSmoke ?? false,
+
+      alcoholConsumption: record.alcoholConsumption ?? false,
+      typeOfAlcohol: record.alcoholConsumption
+        ? (record.typeOfAlcohol?.trim() || null)
+        : null,
       alcoholSinceWhen:
         record.alcoholConsumption && record.alcoholSinceWhen
-          ? new Date(record.alcoholSinceWhen).toISOString()
-          : null
+          ? toNoonTimestamp(record.alcoholSinceWhen)
+          : null,
+
+      substanceUse: record.substanceUse ?? false,
+      route: record.substanceUse ? (record.route || null) : null,
+      frequency: record.substanceUse ? (record.frequency || null) : null,
+
+      physicalLimitation: record.physicalLimitation || null,
+      diagnosedEatingDisorders: record.diagnosedEatingDisorders || null
     };
+
+    if (record.id) {
+      payload.id = record.id;
+    }
+
     try {
       if (record.id) {
         await updateSocialHistory(payload).unwrap();

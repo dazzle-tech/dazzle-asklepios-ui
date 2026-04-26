@@ -1,7 +1,6 @@
 import React from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import PatientHistorySummary from './PatientHistorySummary';
-import { useGetPatientSummaryQuery } from '@/services/encounterService'; 
 
 interface Props {
   open: boolean;

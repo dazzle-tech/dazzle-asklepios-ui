@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 // BODY
 import {
   useGetWeightListByPatientBetweenDatesQuery,
-  useGetHeightListByPatientBetweenDatesQuery,
+  useGetHeightListByPatientBetweenDatesQuery
 } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
 
 // VITAL
@@ -14,7 +14,7 @@ import {
   useGetPulseRateListByPatientBetweenDatesQuery,
   useGetRespiratoryRateListByPatientBetweenDatesQuery,
   useGetOxygenSaturationListByPatientBetweenDatesQuery,
-  useGetBloodPressureListByPatientBetweenDatesQuery,
+  useGetBloodPressureListByPatientBetweenDatesQuery
 } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 
 const OneGraphTab = ({ patient: patientProp }) => {
@@ -22,8 +22,6 @@ const OneGraphTab = ({ patient: patientProp }) => {
 
   const patient = patientProp ?? location.state?.patient;
   const patientId = patient?.id;
-
-  console.log('🔥 OneGraph patientId:', patientId);
 
   const { fromIso, toIso } = useMemo(() => {
     const now = new Date();
@@ -74,18 +72,17 @@ const OneGraphTab = ({ patient: patientProp }) => {
   const format = d => new Date(d).toLocaleString();
 
   // 🔥 خذ labels من أول dataset فيه بيانات
-  const base =
-    weightData.length
-      ? weightData
-      : tempData.length
-      ? tempData
-      : pulseData.length
-      ? pulseData
-      : respData.length
-      ? respData
-      : oxyData.length
-      ? oxyData
-      : bpData;
+  const base = weightData.length
+    ? weightData
+    : tempData.length
+    ? tempData
+    : pulseData.length
+    ? pulseData
+    : respData.length
+    ? respData
+    : oxyData.length
+    ? oxyData
+    : bpData;
 
   const labels = base.map(x => format(x.createdAt));
 

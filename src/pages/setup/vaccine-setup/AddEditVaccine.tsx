@@ -154,8 +154,8 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const [openConfirmDeleteBrandModal, setOpenConfirmDeleteBrandModal] = useState<boolean>(false);
   const [stateOfDeleteBrandModal, setStateOfDeleteBrandModal] = useState<string>('delete');
 
-  const [selectedFacilityId, setSelectedFacilityId] = useState<string | null>(
-    vaccine?.facilityId ?? null
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(
+    vaccine?.facilityId?.id ?? vaccine?.facilityId ?? null
   );
 
   const [page, setPage] = useState(0);
@@ -240,7 +240,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
 
   useEffect(() => {
     if (vaccine?.facilityId) {
-      setSelectedFacilityId(vaccine.facilityId);
+      setSelectedFacilityId(vaccine.facilityId?.id ?? vaccine.facilityId);
     }
   }, [vaccine?.facilityId]);
 
@@ -359,7 +359,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
         contraindicationsAndPrecautions: toNullIfEmpty(vaccine?.contraindicationsAndPrecautions),
         storageAndHandling: toNullIfEmpty(vaccine?.storageAndHandling),
 
-        facilityId: toNullIfEmpty(selectedFacilityId),
+        facilityId: selectedFacilityId ? { id: Number(selectedFacilityId) } : null,
         price: toNumberOrNull(vaccine?.price),
 
         isActive: vaccine?.isActive ?? true
@@ -665,6 +665,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
                   setRecord={setVaccine}
                   disabled={!edit_new || (vaccine?.numberOfDoses && vaccine?.id)}
                   menuMaxHeight={200}
+                  required
                 />
               </div>
             </div>

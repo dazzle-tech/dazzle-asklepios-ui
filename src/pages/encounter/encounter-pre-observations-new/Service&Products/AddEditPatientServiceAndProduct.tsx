@@ -7,18 +7,18 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useEnumOptions } from '@/services/enumsApi';
 import {
   useCreatePatientServiceOrProductMutation,
-  useUpdatePatientServiceOrProductMutation,
+  useUpdatePatientServiceOrProductMutation
 } from '@/services/encounters/patientServicesAndProductsService';
 import { notify } from '@/utils/uiReducerActions';
 import {
   PatientServiceAndProduct,
   PatientServiceProductCreateDTO,
-  PatientServiceProductUpdateDTO,
+  PatientServiceProductUpdateDTO
 } from '@/types/model-types-new';
 import {
   newPatientServiceAndProduct,
   newPatientServiceProductCreateDTO,
-  newPatientServiceProductUpdateDTO,
+  newPatientServiceProductUpdateDTO
 } from '@/types/model-types-constructor-new';
 
 import { useGetActiveServicesByFacilityQuery } from '@/services/setup/serviceService';
@@ -30,14 +30,14 @@ const AddEditPatientServiceAndProduct = ({
   open,
   setOpen,
   patientServiceAndProduct,
-  setPatientServiceAndProduct,
+  setPatientServiceAndProduct
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   patientServiceAndProduct: PatientServiceAndProduct;
   setPatientServiceAndProduct: (patientServiceAndProduct: PatientServiceAndProduct) => void;
 }) => {
-  const authSlice = useAppSelector((state) => state.auth);
+  const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const location = useLocation();
 
@@ -47,105 +47,87 @@ const AddEditPatientServiceAndProduct = ({
   const selectedFacilityId =
     authSlice?.selectedDepartment?.facilityId ?? authSlice?.tenant?.selectedFacility?.id;
 
-  const billingItemTypeOptions = useEnumOptions('BillingItemTypes',{   exclude: [
-      'PATHOLOGY',
-    ]});
+  const billingItemTypeOptions = useEnumOptions('BillingItemTypes', { exclude: ['PATHOLOGY'] });
 
-  const {
-    data: activeServicesResponse,
-    isFetching: isFetchingServices,
-  } = useGetActiveServicesByFacilityQuery(
-    {
-      facilityId: selectedFacilityId,
-      page: 0,
-      size: 50,
-      sort: 'id,asc',
-    },
-    {
-      skip:
-        !open ||
-        !selectedFacilityId ||
-        patientServiceAndProduct?.billingItemType !== 'SERVICE',
-    }
-  );
+  const { data: activeServicesResponse, isFetching: isFetchingServices } =
+    useGetActiveServicesByFacilityQuery(
+      {
+        facilityId: selectedFacilityId,
+        page: 0,
+        size: 50,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open || !selectedFacilityId || patientServiceAndProduct?.billingItemType !== 'SERVICE'
+      }
+    );
 
-  const {
-    data: medicationsResponse,
-    isFetching: isFetchingMedications,
-  } = useGetBrandMedicationsByIsActiveQuery(
-    {
-      isActive: true,
-      page: 0,
-      size: 50,
-      sort: 'id,asc',
-    },
-    {
-      skip: !open || patientServiceAndProduct?.billingItemType !== 'MEDICATION',
-    }
-  );
+  const { data: medicationsResponse, isFetching: isFetchingMedications } =
+    useGetBrandMedicationsByIsActiveQuery(
+      {
+        isActive: true,
+        page: 0,
+        size: 50,
+        sort: 'id,asc'
+      },
+      {
+        skip: !open || patientServiceAndProduct?.billingItemType !== 'MEDICATION'
+      }
+    );
 
-  const {
-    data: laboratoryResponse,
-    isFetching: isFetchingLaboratory,
-  } = useGetActiveDiagnosticTestsByTypeQuery(
-    {
-      type: 'LABORATORY',
-      page: 0,
-      size: 50,
-      sort: 'id,asc',
-    },
-    {
-      skip: !open || patientServiceAndProduct?.billingItemType !== 'LABORATORY',
-    }
-  );
+  const { data: laboratoryResponse, isFetching: isFetchingLaboratory } =
+    useGetActiveDiagnosticTestsByTypeQuery(
+      {
+        type: 'LABORATORY',
+        page: 0,
+        size: 50,
+        sort: 'id,asc'
+      },
+      {
+        skip: !open || patientServiceAndProduct?.billingItemType !== 'LABORATORY'
+      }
+    );
 
-  const {
-    data: radiologyResponse,
-    isFetching: isFetchingRadiology,
-  } = useGetActiveDiagnosticTestsByTypeQuery(
-    {
-      type: 'RADIOLOGY',
-      page: 0,
-      size: 50,
-      sort: 'id,asc',
-    },
-    {
-      skip: !open || patientServiceAndProduct?.billingItemType !== 'RADIOLOGY',
-    }
-  );
+  const { data: radiologyResponse, isFetching: isFetchingRadiology } =
+    useGetActiveDiagnosticTestsByTypeQuery(
+      {
+        type: 'RADIOLOGY',
+        page: 0,
+        size: 50,
+        sort: 'id,asc'
+      },
+      {
+        skip: !open || patientServiceAndProduct?.billingItemType !== 'RADIOLOGY'
+      }
+    );
 
-  const {
-    data: pathologyResponse,
-    isFetching: isFetchingPathology,
-  } = useGetActiveDiagnosticTestsByTypeQuery(
-    {
-      type: 'PATHOLOGY',
-      page: 0,
-      size: 50,
-      sort: 'id,asc',
-    },
-    {
-      skip: !open || patientServiceAndProduct?.billingItemType !== 'PATHOLOGY',
-    }
-  );
+  const { data: pathologyResponse, isFetching: isFetchingPathology } =
+    useGetActiveDiagnosticTestsByTypeQuery(
+      {
+        type: 'PATHOLOGY',
+        page: 0,
+        size: 50,
+        sort: 'id,asc'
+      },
+      {
+        skip: !open || patientServiceAndProduct?.billingItemType !== 'PATHOLOGY'
+      }
+    );
 
-  const {
-    data: proceduresResponse,
-    isFetching: isFetchingProcedures,
-  } = useGetActiveProceduresByFacilityQuery(
-    {
-      facilityId: selectedFacilityId,
-      page: 0,
-      size: 50,
-      sort: 'id,asc',
-    },
-    {
-      skip:
-        !open ||
-        !selectedFacilityId ||
-        patientServiceAndProduct?.billingItemType !== 'PROCEDURE',
-    }
-  );
+  const { data: proceduresResponse, isFetching: isFetchingProcedures } =
+    useGetActiveProceduresByFacilityQuery(
+      {
+        facilityId: selectedFacilityId,
+        page: 0,
+        size: 50,
+        sort: 'id,asc'
+      },
+      {
+        skip:
+          !open || !selectedFacilityId || patientServiceAndProduct?.billingItemType !== 'PROCEDURE'
+      }
+    );
 
   const [createPatientServiceAndProduct, { isLoading: isCreating }] =
     useCreatePatientServiceOrProductMutation();
@@ -213,11 +195,13 @@ const AddEditPatientServiceAndProduct = ({
     }
 
     if (!patientServiceAndProduct?.quantity || Number(patientServiceAndProduct?.quantity) <= 0) {
-      errorMsg += errorMsg ? ', Quantity should be greater than 0' : 'Quantity should be greater than 0';
+      errorMsg += errorMsg
+        ? ', Quantity should be greater than 0'
+        : 'Quantity should be greater than 0';
     }
 
-    if (!patientServiceAndProduct?.currency) {
-      errorMsg += errorMsg ? ', Currency can`t be empty' : 'Currency can`t be empty';
+    if (!errorMsg && !patientServiceAndProduct?.currency) {
+      errorMsg = 'Currency can`t be empty';
     }
 
     return errorMsg;
@@ -233,7 +217,7 @@ const AddEditPatientServiceAndProduct = ({
           selectDataLabel: 'name',
           selectDataValue: 'id',
           loading: isFetchingMedications,
-          hasMore: medicationsResponse?.links?.next != null,
+          hasMore: medicationsResponse?.links?.next != null
         };
 
       case 'LABORATORY':
@@ -244,7 +228,7 @@ const AddEditPatientServiceAndProduct = ({
           selectDataLabel: 'name',
           selectDataValue: 'id',
           loading: isFetchingLaboratory,
-          hasMore: laboratoryResponse?.links?.next != null,
+          hasMore: laboratoryResponse?.links?.next != null
         };
 
       case 'RADIOLOGY':
@@ -255,7 +239,7 @@ const AddEditPatientServiceAndProduct = ({
           selectDataLabel: 'name',
           selectDataValue: 'id',
           loading: isFetchingRadiology,
-          hasMore: radiologyResponse?.links?.next != null,
+          hasMore: radiologyResponse?.links?.next != null
         };
 
       case 'PATHOLOGY':
@@ -266,7 +250,7 @@ const AddEditPatientServiceAndProduct = ({
           selectDataLabel: 'name',
           selectDataValue: 'id',
           loading: isFetchingPathology,
-          hasMore: pathologyResponse?.links?.next != null,
+          hasMore: pathologyResponse?.links?.next != null
         };
 
       case 'SERVICE':
@@ -277,7 +261,7 @@ const AddEditPatientServiceAndProduct = ({
           selectDataLabel: 'name',
           selectDataValue: 'id',
           loading: isFetchingServices,
-          hasMore: activeServicesResponse?.links?.next != null,
+          hasMore: activeServicesResponse?.links?.next != null
         };
 
       case 'PROCEDURE':
@@ -288,7 +272,7 @@ const AddEditPatientServiceAndProduct = ({
           selectDataLabel: 'name',
           selectDataValue: 'id',
           loading: isFetchingProcedures,
-          hasMore: proceduresResponse?.links?.next != null,
+          hasMore: proceduresResponse?.links?.next != null
         };
 
       default:
@@ -307,7 +291,7 @@ const AddEditPatientServiceAndProduct = ({
     isFetchingRadiology,
     isFetchingPathology,
     isFetchingServices,
-    isFetchingProcedures,
+    isFetchingProcedures
   ]);
 
   const handleSave = async () => {
@@ -349,7 +333,7 @@ const AddEditPatientServiceAndProduct = ({
 
           quantity: Number(patientServiceAndProduct.quantity),
           unitPrice: patientServiceAndProduct.unitPrice ?? 0,
-          currency: patientServiceAndProduct.currency,
+          currency: patientServiceAndProduct.currency
         };
 
         await createPatientServiceAndProduct(createDTO).unwrap();
@@ -357,7 +341,7 @@ const AddEditPatientServiceAndProduct = ({
         dispatch(
           notify({
             msg: 'Billing Item Added Successfully',
-            sev: 'success',
+            sev: 'success'
           })
         );
       } else {
@@ -395,19 +379,19 @@ const AddEditPatientServiceAndProduct = ({
           currency: patientServiceAndProduct.currency,
           isBilled: patientServiceAndProduct.isBilled ?? false,
           billingInvoiceId: patientServiceAndProduct.billingInvoiceId ?? null,
-          billingInvoiceItemId: patientServiceAndProduct.billingInvoiceItemId ?? null,
+          billingInvoiceItemId: patientServiceAndProduct.billingInvoiceItemId ?? null
         };
 
         await updatePatientServiceAndProduct({
           id: patientServiceAndProduct.id,
           body: updateDTO,
-          encounterId: encounter?.id,
+          encounterId: encounter?.id
         }).unwrap();
 
         dispatch(
           notify({
             msg: 'Billing Item Updated Successfully',
-            sev: 'success',
+            sev: 'success'
           })
         );
       }
@@ -431,7 +415,7 @@ const AddEditPatientServiceAndProduct = ({
         selectDataLabel="label"
         selectDataValue="value"
         record={patientServiceAndProduct}
-        setRecord={(val) =>
+        setRecord={val =>
           setPatientServiceAndProduct({
             ...val,
             brandMedicationId: null,
@@ -439,7 +423,7 @@ const AddEditPatientServiceAndProduct = ({
             serviceId: null,
             procedureId: null,
             unitPrice: 0,
-            currency: '',
+            currency: ''
           })
         }
         width="100%"
@@ -462,13 +446,13 @@ const AddEditPatientServiceAndProduct = ({
           loading={itemSelectConfig.loading}
           hasMore={itemSelectConfig.hasMore}
           onFetchMore={async () => {}}
-          onSelectItem={(selectedItem) => {
+          onSelectItem={selectedItem => {
             setPatientServiceAndProduct({
               ...patientServiceAndProduct,
               [itemSelectConfig.fieldName]:
                 selectedItem?.[itemSelectConfig.selectDataValue] ?? null,
               unitPrice: selectedItem?.price ?? 0,
-              currency: selectedItem?.currency ?? '',
+              currency: selectedItem?.currency ?? ''
             });
           }}
         />

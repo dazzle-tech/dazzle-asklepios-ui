@@ -67,7 +67,6 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
   };
 
   const showApiError = (error: any) => {
-    console.log('full error:', JSON.stringify(error));
 
     const data = error?.data ?? {};
     const traceId = data?.traceId || data?.requestId || data?.correlationId;
@@ -179,11 +178,9 @@ const PatientPlan: React.FC<PatientPlanProps> = ({
     <SectionContainer
       title={title}
       action={
-        <Form fluid layout="inline">
-          <MyButton onClick={handleSave} disabled={disabled || isFetchingLatest || isSaving}>
-            Save
-          </MyButton>
-        </Form>
+        <MyButton onClick={handleSave} disabled={disabled || isFetchingLatest || isSaving}>
+          Save
+        </MyButton>
       }
       content={
         <div style={width ? { width } : {}}>

@@ -20,7 +20,6 @@ const PreObservation = ({ patient }) => {
       : (undefined as any),
     { skip: !patientId }
   );
-  console.log("vitalPage: ", vitalPage);
 
   const formatDateTime = (d: Date) => {
     const pad = (n: number) => String(n).padStart(2, '0');

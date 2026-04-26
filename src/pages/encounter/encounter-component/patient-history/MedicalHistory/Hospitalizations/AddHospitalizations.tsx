@@ -10,7 +10,6 @@ import {
   useAddHospitalizationMutation,
   useUpdateHospitalizationMutation
 } from '@/services/patients/hospitalizationsService';
-import { newHospitalization } from '@/types/model-types-constructor-new';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import Translate from '@/components/Translate';
@@ -107,7 +106,16 @@ const PATIENT_ADMISSION_ERROR_MAP: Record<string, string> = {
 
 const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
   const dispatch = useAppDispatch();
-  const [formData, setFormData] = useState<any>(newHospitalization);
+  const [formData, setFormData] = useState<any>({
+    facility: '',
+    reason: '',
+    admissionType: '',
+    dateOfAdmission: null,
+    lengthOfStayDays: null,
+    outcomes: '',
+    medicalInterventionsPerformed: '',
+    patientId: null
+  });
 
   /*  LOAD  */
 
@@ -119,7 +127,13 @@ const AddHospitalizations = ({ open, setOpen, initialData, patient }) => {
       });
     } else {
       setFormData({
-        ...newHospitalization,
+        facility: '',
+        reason: '',
+        admissionType: '',
+        dateOfAdmission: null,
+        lengthOfStayDays: null,
+        outcomes: '',
+        medicalInterventionsPerformed: '',
         patientId: Number(patient?.id)
       });
     }

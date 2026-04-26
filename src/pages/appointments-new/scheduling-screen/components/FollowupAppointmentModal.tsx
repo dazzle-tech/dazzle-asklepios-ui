@@ -780,7 +780,6 @@ const FollowupAppointmentModal = ({
         const day = String(dateValue.getDate()).padStart(2, '0');
         searchValue = `${year}-${month}-${day}`;
       } catch (error) {
-        console.error('Invalid date:', error);
         return;
       }
     }

@@ -3,9 +3,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import SectionContainer from '@/components/SectionsoContainer';
 import { useAppDispatch } from '@/hooks';
-import {
-  useGetPatientProblemsQuery
-} from '@/services/patients/patientProblemService';
+import { useGetPatientProblemsQuery } from '@/services/patients/patientProblemService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { conjureValueBasedOnKeyFromList, formatEnumString } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
@@ -50,10 +48,6 @@ const PatientProblems = ({ patient, edit, toShowData = false }) => {
       skip: !isValidPatientId
     }
   );
-
-  console.log('PatientProblems pageData:', pageData);
-  /* DELETE */
-  console.log('Patient Obj ==>', patient);
 
   /* HELPERS */
 

@@ -157,7 +157,7 @@ const Reports = ({ patient }) => {
   const { data: comments } = useGetReportCommentsByReportIdQuery(
     openNoteResultModal && selectedReport?.id
       ? selectedReport.id
-      : undefined
+      : skipToken
   );
 
  
@@ -178,7 +178,12 @@ const Reports = ({ patient }) => {
         window.URL.revokeObjectURL(fileURL);
       }, 1000);
     } catch (error) {
-      console.error('Failed to download report pdf', error);
+      dispatch(
+        notify({
+          msg: 'Failed to generate report PDF',
+          sev: 'error'
+        })
+      );
     }
   };
   const reportColumns: ColumnConfig[] = [

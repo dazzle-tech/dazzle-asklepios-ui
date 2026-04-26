@@ -178,313 +178,314 @@ const SocialHistory = ({ patient, edit, toShowData = false }) => {
       : [])
   ];
 
-          // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-    <div className="medical-container-div" dir={dir}>
-      <SectionContainer
-        title="Social History"
-        action={
-          !toShowData && (
-            <MyButton
-              disabled={edit}
-              prefixIcon={() => <PlusIcon />}
-              onClick={() => {
-                setEditData(null);
-                setOpen(true);
-              }}
-            >
-              Add
-            </MyButton>
-          )
-        }
-        content={
-          <div dir={dir}>
-            <MyTable
-              height={450}
-              data={data?.data ?? []}
-              loading={isFetching}
-              columns={columns}
-              page={page}
-              rowsPerPage={size}
-              totalCount={data?.totalCount ?? 0}
-              onRowClick={handleRowClick}
-              rowClassName={row => (row?.id === previewRow?.id ? 'selected-row' : '')}
-              onPageChange={(_, p) => setPage(p)}
-              onRowsPerPageChange={e => {
-                setSize(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-            />
+    <div className="medical-main-container" dir={dir}>
+      <div className="medical-container-div" dir={dir}>
+        <SectionContainer
+          title="Social History"
+          action={
+            !toShowData && (
+              <MyButton
+                disabled={edit}
+                prefixIcon={() => <PlusIcon />}
+                onClick={() => {
+                  setEditData(null);
+                  setOpen(true);
+                }}
+              >
+                Add
+              </MyButton>
+            )
+          }
+          content={
+            <div dir={dir}>
+              <MyTable
+                height={450}
+                data={data?.data ?? []}
+                loading={isFetching}
+                columns={columns}
+                page={page}
+                rowsPerPage={size}
+                totalCount={data?.totalCount ?? 0}
+                onRowClick={handleRowClick}
+                rowClassName={row => (row?.id === previewRow?.id ? 'selected-row' : '')}
+                onPageChange={(_, p) => setPage(p)}
+                onRowsPerPageChange={e => {
+                  setSize(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+              />
 
-            {previewRow && (
-              <div ref={previewRef} className="margin-top-20">
-                <SectionContainer
-                  title="Social History Details"
-                  content={
-                    <Form fluid>
-                      <div className="preview-grid">
-                        <div className="full-row">
-                          <MyInput
-                            width={180}
-                            column
-                            fieldType="checkbox"
-                            fieldLabel="Current Smoker"
-                            fieldName="isCurrentSmoker"
-                            record={previewRow}
-                            disabled
-                          />
-                        </div>
-
-                        {previewRow.isCurrentSmoker && (
-                          <>
-                            <MyInput
-                              width={180}
-                              column
-                              fieldType="text"
-                              fieldLabel="Start date"
-                              fieldName="smokeStartDate"
-                              record={{
-                                smokeStartDate: previewRow.smokeStartDate
-                                  ? new Date(previewRow.smokeStartDate).toLocaleDateString()
-                                  : '-'
-                              }}
-                              disabled
-                            />
-
-                            <MyInput
-                              width={110}
-                              column
-                              fieldType="text"
-                              fieldLabel="Amount"
-                              fieldName="cigaretteAmount"
-                              record={{
-                                cigaretteAmount:
-                                  previewRow.cigaretteAmount !== null &&
-                                  previewRow.cigaretteAmount !== undefined
-                                    ? previewRow.cigaretteAmount
-                                    : '-'
-                              }}
-                              disabled
-                              rightAddon="pack/day"
-                              rightAddonwidth={80}
-                            />
-
-                            <MyInput
-                              width={180}
-                              column
-                              fieldType="text"
-                              fieldLabel="Cigarette Type"
-                              fieldName="cigaretteType"
-                              record={{ cigaretteType: previewRow.cigaretteType || '-' }}
-                              disabled
-                            />
-                          </>
-                        )}
-
-                        <div className="full-row">
-                          <MyInput
-                            width={180}
-                            column
-                            fieldType="checkbox"
-                            fieldLabel="Previous Smoker"
-                            fieldName="isPreviousSmoker"
-                            record={previewRow}
-                            disabled
-                          />
-                        </div>
-
-                        {previewRow.isPreviousSmoker && (
+              {previewRow && (
+                <div ref={previewRef} className="margin-top-20">
+                  <SectionContainer
+                    title="Social History Details"
+                    content={
+                      <Form fluid>
+                        <div className="preview-grid">
                           <div className="full-row">
                             <MyInput
                               width={180}
                               column
-                              fieldType="text"
-                              fieldLabel="Quit date"
-                              fieldName="smokeQuitDate"
-                              record={{
-                                smokeQuitDate: previewRow.smokeQuitDate
-                                  ? new Date(previewRow.smokeQuitDate).toLocaleDateString()
-                                  : '-'
-                              }}
+                              fieldType="checkbox"
+                              fieldLabel="Current Smoker"
+                              fieldName="isCurrentSmoker"
+                              record={previewRow}
                               disabled
                             />
                           </div>
-                        )}
 
-                        <MyInput
-                          width={180}
-                          column
-                          fieldType="checkbox"
-                          fieldLabel="Exposure to second-hand smoke"
-                          fieldName="exposureToSecondHandSmoke"
-                          record={previewRow}
-                          disabled
-                        />
+                          {previewRow.isCurrentSmoker && (
+                            <>
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Start date"
+                                fieldName="smokeStartDate"
+                                record={{
+                                  smokeStartDate: previewRow.smokeStartDate
+                                    ? new Date(previewRow.smokeStartDate).toLocaleDateString()
+                                    : '-'
+                                }}
+                                disabled
+                              />
 
-                        <div className="full-row">
+                              <MyInput
+                                width={110}
+                                column
+                                fieldType="text"
+                                fieldLabel="Amount"
+                                fieldName="cigaretteAmount"
+                                record={{
+                                  cigaretteAmount:
+                                    previewRow.cigaretteAmount !== null &&
+                                    previewRow.cigaretteAmount !== undefined
+                                      ? previewRow.cigaretteAmount
+                                      : '-'
+                                }}
+                                disabled
+                                rightAddon="pack/day"
+                                rightAddonwidth={80}
+                              />
+
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Cigarette Type"
+                                fieldName="cigaretteType"
+                                record={{ cigaretteType: previewRow.cigaretteType || '-' }}
+                                disabled
+                              />
+                            </>
+                          )}
+
+                          <div className="full-row">
+                            <MyInput
+                              width={180}
+                              column
+                              fieldType="checkbox"
+                              fieldLabel="Previous Smoker"
+                              fieldName="isPreviousSmoker"
+                              record={previewRow}
+                              disabled
+                            />
+                          </div>
+
+                          {previewRow.isPreviousSmoker && (
+                            <div className="full-row">
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Quit date"
+                                fieldName="smokeQuitDate"
+                                record={{
+                                  smokeQuitDate: previewRow.smokeQuitDate
+                                    ? new Date(previewRow.smokeQuitDate).toLocaleDateString()
+                                    : '-'
+                                }}
+                                disabled
+                              />
+                            </div>
+                          )}
+
                           <MyInput
                             width={180}
                             column
                             fieldType="checkbox"
-                            fieldLabel="Alcohol Consumption"
-                            fieldName="alcoholConsumption"
+                            fieldLabel="Exposure to second-hand smoke"
+                            fieldName="exposureToSecondHandSmoke"
                             record={previewRow}
                             disabled
                           />
-                        </div>
 
-                        {previewRow.alcoholConsumption && (
-                          <>
+                          <div className="full-row">
                             <MyInput
                               width={180}
                               column
-                              fieldType="text"
-                              fieldLabel="Since when"
-                              fieldName="alcoholSinceWhen"
-                              record={{
-                                alcoholSinceWhen: previewRow.alcoholSinceWhen
-                                  ? new Date(previewRow.alcoholSinceWhen).toLocaleDateString()
-                                  : '-'
-                              }}
+                              fieldType="checkbox"
+                              fieldLabel="Alcohol Consumption"
+                              fieldName="alcoholConsumption"
+                              record={previewRow}
                               disabled
                             />
+                          </div>
 
+                          {previewRow.alcoholConsumption && (
+                            <>
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Since when"
+                                fieldName="alcoholSinceWhen"
+                                record={{
+                                  alcoholSinceWhen: previewRow.alcoholSinceWhen
+                                    ? new Date(previewRow.alcoholSinceWhen).toLocaleDateString()
+                                    : '-'
+                                }}
+                                disabled
+                              />
+
+                              <MyInput
+                                width={180}
+                                column
+                                fieldType="text"
+                                fieldLabel="Type of alcohol"
+                                fieldName="typeOfAlcohol"
+                                record={{ typeOfAlcohol: previewRow.typeOfAlcohol || '-' }}
+                                disabled
+                              />
+                            </>
+                          )}
+
+                          <div className="full-row">
                             <MyInput
                               width={180}
                               column
-                              fieldType="text"
-                              fieldLabel="Type of alcohol"
-                              fieldName="typeOfAlcohol"
-                              record={{ typeOfAlcohol: previewRow.typeOfAlcohol || '-' }}
+                              fieldType="checkbox"
+                              fieldLabel="Substance Use"
+                              fieldName="substanceUse"
+                              record={previewRow}
                               disabled
                             />
-                          </>
-                        )}
+                          </div>
 
-                        <div className="full-row">
+                          {previewRow.substanceUse && (
+                            <>
+                              <MyInput
+                                width={180}
+                                column
+                                fieldLabel="Route"
+                                fieldName="route"
+                                fieldType="select"
+                                selectData={routeLov?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                record={previewRow}
+                                disabled
+                              />
+
+                              <MyInput
+                                width={180}
+                                column
+                                fieldLabel="Frequency"
+                                fieldName="frequency"
+                                fieldType="select"
+                                selectData={freqLov?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                record={previewRow}
+                                disabled
+                              />
+                            </>
+                          )}
+
                           <MyInput
                             width={180}
                             column
-                            fieldType="checkbox"
-                            fieldLabel="Substance Use"
-                            fieldName="substanceUse"
+                            fieldLabel="Physical limitations"
+                            fieldName="physicalLimitation"
+                            fieldType="select"
+                            selectData={physicalLov?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
                             record={previewRow}
                             disabled
                           />
-                        </div>
 
-                        {previewRow.substanceUse && (
-                          <>
-                            <MyInput
-                              width={180}
-                              column
-                              fieldLabel="Route"
-                              fieldName="route"
-                              fieldType="select"
-                              selectData={routeLov?.object ?? []}
-                              selectDataLabel="lovDisplayVale"
-                              selectDataValue="key"
-                              record={previewRow}
-                              disabled
-                            />
+                          <MyInput
+                            width={180}
+                            column
+                            fieldLabel="Diagnosed eating disorders"
+                            fieldName="diagnosedEatingDisorders"
+                            fieldType="select"
+                            selectData={diagnoseLov?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            record={previewRow}
+                            disabled
+                          />
 
-                            <MyInput
-                              width={180}
-                              column
-                              fieldLabel="Frequency"
-                              fieldName="frequency"
-                              fieldType="select"
-                              selectData={freqLov?.object ?? []}
-                              selectDataLabel="lovDisplayVale"
-                              selectDataValue="key"
-                              record={previewRow}
-                              disabled
-                            />
-                          </>
-                        )}
-
-                        <MyInput
-                          width={180}
-                          column
-                          fieldLabel="Physical limitations"
-                          fieldName="physicalLimitation"
-                          fieldType="select"
-                          selectData={physicalLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={previewRow}
-                          disabled
-                        />
-
-                        <MyInput
-                          width={180}
-                          column
-                          fieldLabel="Diagnosed eating disorders"
-                          fieldName="diagnosedEatingDisorders"
-                          fieldType="select"
-                          selectData={diagnoseLov?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          record={previewRow}
-                          disabled
-                        />
-
-                        <MyInput
-                          width={220}
-                          column
-                          fieldType="text"
-                          fieldLabel={<Translate>Created By / At</Translate>}
-                          fieldName="createdBy"
-                          record={{
-                            createdBy: previewRow.createdDate
-                              ? `${previewRow.createdBy} - ${formatDateWithoutSeconds(
-                                  previewRow.createdDate
-                                )}`
-                              : previewRow.createdBy || '-'
-                          }}
-                          disabled
-                        />
-
-                        {previewRow.lastModifiedDate && (
                           <MyInput
                             width={220}
                             column
                             fieldType="text"
-                            fieldLabel="Last Modified By / At"
-                            fieldName="lastModifiedBy"
+                            fieldLabel={<Translate>Created By / At</Translate>}
+                            fieldName="createdBy"
                             record={{
-                              lastModifiedBy: `${
-                                previewRow.lastModifiedBy
-                              } - ${formatDateWithoutSeconds(previewRow.lastModifiedDate)}`
+                              createdBy: previewRow.createdDate
+                                ? `${previewRow.createdBy} - ${formatDateWithoutSeconds(
+                                    previewRow.createdDate
+                                  )}`
+                                : previewRow.createdBy || '-'
                             }}
                             disabled
                           />
-                        )}
-                      </div>
-                    </Form>
-                  }
-                />
-              </div>
-            )}
 
-            <AddSocialHistory
-              open={open}
-              setOpen={() => {
-                setOpen(false);
-                setEditData(null);
-              }}
-              initialData={editData}
-              patient={patient}
-            />
-          </div>
-        }
-      />
+                          {previewRow.lastModifiedDate && (
+                            <MyInput
+                              width={220}
+                              column
+                              fieldType="text"
+                              fieldLabel="Last Modified By / At"
+                              fieldName="lastModifiedBy"
+                              record={{
+                                lastModifiedBy: `${
+                                  previewRow.lastModifiedBy
+                                } - ${formatDateWithoutSeconds(previewRow.lastModifiedDate)}`
+                              }}
+                              disabled
+                            />
+                          )}
+                        </div>
+                      </Form>
+                    }
+                  />
+                </div>
+              )}
+
+              <AddSocialHistory
+                open={open}
+                setOpen={() => {
+                  setOpen(false);
+                  setEditData(null);
+                }}
+                initialData={editData}
+                patient={patient}
+              />
+            </div>
+          }
+        />
+      </div>
     </div>
   );
 };

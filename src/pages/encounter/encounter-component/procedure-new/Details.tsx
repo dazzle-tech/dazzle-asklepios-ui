@@ -10,7 +10,7 @@ import {
 } from '@/services/patients/patientProcedureService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetActiveFacilitiesQuery } from '@/services/security/facilityService';
-import { useLazyGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
+import { useLazyGetDepartmentByFacilityQuery } from '@/services/security/departmentService';
 import { notify } from '@/utils/uiReducerActions';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -26,6 +26,7 @@ import Icd10DiagnosisSearch from '@/components/Icd10DiagnosisSearch';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 const FIELD_ORDER = [
   'procedureId',
   'toFacilityId',
@@ -154,6 +155,11 @@ const Details = ({
   const [procedurePage, setProcedurePage] = useState(0);
   const [procedureOptions, setProcedureOptions] = useState<any[]>([]);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const deptSize = 20;
+  const [deptPage, setDeptPage] = useState(0);
+  const [allDepartments, setAllDepartments] = useState<any[]>([]);
+  const [deptHasMore, setDeptHasMore] = useState(false);
+  const [deptNextLink, setDeptNextLink] = useState<string | null>(null);
   const dispatch = useAppDispatch();
 
   const [createProcedure] = useCreateProcdureMutation();
@@ -166,8 +172,8 @@ const Details = ({
   const ProcedureLevel = useEnumOptions('ProcedureLevel');
   const Priority = useEnumOptions('Priority');
 
-  const [getDepartmentsByFacility, { data: departmentListResponse }] =
-    useLazyGetActiveDepartmentByFacilityListQuery();
+  const [getDepartmentsByFacility, { isFetching: deptLoading }] =
+    useLazyGetDepartmentByFacilityQuery();
 
   const [
     getProcedureByFacility,
@@ -176,20 +182,49 @@ const Details = ({
 
   const { data: facilityListResponse } = useGetActiveFacilitiesQuery(null);
 
-  // ✅ جلب الـ departments لما يتغير الـ facility
-  useEffect(() => {
-    if (procedure?.toFacilityId) {
-      getDepartmentsByFacility({ facilityId: procedure.toFacilityId });
-    }
-  }, [procedure?.toFacilityId, getDepartmentsByFacility]);
+  const loadDepartments = async ({
+    facilityId,
+    page = 0,
+    append = false
+  }: {
+    facilityId: any;
+    page?: number;
+    append?: boolean;
+  }) => {
+    if (!facilityId) return;
+    try {
+      const response = await getDepartmentsByFacility({
+        facilityId,
+        page,
+        size: deptSize,
+        sort: 'id,asc'
+      }).unwrap();
 
-  // ✅ جلب الـ procedures — مع تصفير فوري عند page 0
+      const rows = response?.data ?? [];
+      const nextLink = response?.links?.next ?? null;
+
+      setDeptHasMore(Boolean(nextLink));
+      setDeptNextLink(nextLink);
+
+      if (append) {
+        setAllDepartments(prev => {
+          const seen = new Set(prev.map((d: any) => d.id));
+          return [...prev, ...rows.filter((d: any) => !seen.has(d.id))];
+        });
+      } else {
+        setAllDepartments(rows);
+      }
+    } catch {
+      setAllDepartments([]);
+    }
+  };
+
   useEffect(() => {
     const facilityId = procedure?.toFacilityId || authSlice?.selectedDepartment?.facilityId;
 
     if (facilityId && procedure.categoryKey) {
       if (procedurePage === 0) {
-        setProcedureOptions([]);
+        setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
       }
       getProcedureByFacility({
         facilityId,
@@ -199,7 +234,7 @@ const Details = ({
         sort: 'name,asc'
       });
     } else {
-      setProcedureOptions([]);
+      setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
     }
   }, [
     procedure?.toFacilityId,
@@ -209,18 +244,33 @@ const Details = ({
     getProcedureByFacility
   ]);
 
-  // ✅ تجميع الـ pages
   useEffect(() => {
-    if (procedureByFacility?.data) {
-      if (procedurePage === 0) {
-        setProcedureOptions(procedureByFacility.data);
+    if (!procedureByFacility?.data) return;
+
+    const apiData = procedureByFacility.data;
+
+    if (procedurePage === 0) {
+      const selectedInApi = apiData.some(
+        (p: any) => p.id === procedure?.procedureId
+      );
+
+      if (procedure?.procedureObj && !selectedInApi) {
+        setProcedureOptions([procedure.procedureObj, ...apiData]);
       } else {
-        setProcedureOptions(prev => [...prev, ...procedureByFacility.data]);
+        setProcedureOptions(apiData);
       }
+    } else {
+      setProcedureOptions(prev => {
+        const existingIds = new Set(prev.map((p: any) => p.id));
+        const merged = [...prev];
+        apiData.forEach((p: any) => {
+          if (!existingIds.has(p.id)) merged.push(p);
+        });
+        return merged;
+      });
     }
   }, [procedureByFacility?.data]);
 
-  // ✅ لما يتغير الـ currentDepartment
   useEffect(() => {
     if (procedure.currentDepartment) {
       setProcedure(prev => ({
@@ -231,15 +281,26 @@ const Details = ({
     }
   }, [procedure.currentDepartment, authSlice?.selectedDepartment?.facilityId]);
 
-  // ✅ تصفير الـ department لما يُمسح الـ facility
+  // Reset & reload departments whenever facility changes
   useEffect(() => {
+    setAllDepartments([]);
+    setDeptHasMore(false);
+    setDeptNextLink(null);
+    setDeptPage(0);
+
     if (!procedure?.toFacilityId) {
-      setProcedure(prev => ({
-        ...prev,
-        toDepartmentId: null
-      }));
+      setProcedure(prev => ({ ...prev, toDepartmentId: null }));
+      return;
     }
+
+    loadDepartments({ facilityId: procedure.toFacilityId, page: 0 });
   }, [procedure?.toFacilityId]);
+
+  // ✅ تصفير الـ page والـ options لما يتغير الـ category أو الـ facility
+  useEffect(() => {
+    setProcedurePage(0);
+    setProcedureOptions(procedure?.procedureObj ? [procedure.procedureObj] : []);
+  }, [procedure?.categoryKey, procedure?.toFacilityId]);
 
   const hasMoreProcedures = procedureByFacility?.links?.next != null;
 
@@ -252,6 +313,10 @@ const Details = ({
   const handleClear = () => {
     setProcedureOptions([]);
     setProcedurePage(0);
+    setAllDepartments([]);
+    setDeptHasMore(false);
+    setDeptNextLink(null);
+    setDeptPage(0);
     setProcedure({
       indicationId: null,
       bodyPart: '',
@@ -262,6 +327,8 @@ const Details = ({
       toDepartmentId: null,
       categoryKey: null,
       procedureId: null,
+      procedureObj: null,
+      procedureName: null,
       encounterId: encounter?.id,
       patientId: patient?.id,
       currentDepartment: true,
@@ -271,7 +338,63 @@ const Details = ({
     });
   };
 
+  const validateRequiredFields = (): boolean => {
+    const FIELD_LABELS: Record<string, string> = {
+      procedureId: 'procedure name',
+      toFacilityId: 'facility',
+      procedureLevel: 'procedure level',
+      priority: 'priority',
+      scheduledDateTime: 'scheduled date time',
+      bodyPart: 'body part'
+    };
+
+    const effectiveToFacilityId = procedure.currentDepartment
+      ? authSlice?.selectedDepartment?.facilityId
+      : procedure.toFacilityId;
+
+    const valuesMap: Record<string, any> = {
+      procedureId: procedure.procedureId,
+      toFacilityId: effectiveToFacilityId,
+      procedureLevel: procedure.procedureLevel,
+      priority: procedure.priority,
+      scheduledDateTime: procedure.scheduledDateTime,
+      bodyPart: procedure.bodyPart
+    };
+
+    const missing: string[] = [];
+
+    REQUIRED_FIELDS.forEach(field => {
+      const value = valuesMap[field];
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        (typeof value === 'string' && value.trim() === '');
+
+      if (isEmpty) {
+        missing.push(FIELD_LABELS[field] ?? field);
+      }
+    });
+
+    if (missing.length > 0) {
+      const lines = missing.map(label => `• ${label}: is required`).join('\n');
+      dispatch(
+        notify({
+          msg: `Please fix the following fields:\n${lines}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
     try {
       const procedureData = {
         procedureId: procedure.procedureId,
@@ -397,8 +520,11 @@ const Details = ({
                         setRecord={updatedProcedure => {
                           setProcedure({
                             ...updatedProcedure,
-                            procedureId: null
+                            procedureId: null,
+                            procedureObj: null,
+                            procedureName: null
                           });
+                          setProcedurePage(0);
                         }}
                         required
                       />
@@ -430,15 +556,25 @@ const Details = ({
                           width="100%"
                           fieldLabel="Department"
                           fieldName="toDepartmentId"
-                          fieldType="select"
-                          selectData={
-                            Array.isArray(departmentListResponse) ? departmentListResponse : []
-                          }
+                          fieldType="selectPagination"
+                          selectData={allDepartments}
                           selectDataLabel="name"
                           selectDataValue="id"
                           record={procedure}
                           setRecord={setProcedure}
                           disabled={!procedure?.toFacilityId}
+                          loading={deptLoading}
+                          hasMore={deptHasMore}
+                          onFetchMore={async () => {
+                            if (!deptNextLink || !procedure?.toFacilityId) return;
+                            const { page } = extractPaginationFromLink(deptNextLink);
+                            setDeptPage(page);
+                            await loadDepartments({
+                              facilityId: procedure.toFacilityId,
+                              page,
+                              append: true
+                            });
+                          }}
                           required
                         />
                       )}

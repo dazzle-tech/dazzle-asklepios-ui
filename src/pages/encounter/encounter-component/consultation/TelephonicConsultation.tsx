@@ -18,6 +18,8 @@ const TelephonicConsultation = () => {
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [consultationOrders, setConsultationOrder] = useState<any>({});
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   // Utility: is the event target within form-ish/editable elements?
   const isFormField = (node: EventTarget | null) => {
@@ -193,14 +195,19 @@ const TelephonicConsultation = () => {
         <div ref={tableContainerRef}>
           <MyTable
             columns={tableColumns}
-            data={tableData}
+            data={tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
             loading={false}
             tableButtons={tablebuttons}
-            page={0}
-            rowsPerPage={5}
+            page={page}
+            rowsPerPage={rowsPerPage}
             totalCount={tableData.length}
-            onRowClick={row => setSelectedRow(row)} // set current selection
-            rowClassName={isSelected} // highlight the selected row
+            onPageChange={(_: unknown, newPage: number) => setPage(newPage)}
+            onRowsPerPageChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            onRowClick={row => setSelectedRow(row)}
+            rowClassName={isSelected}
           />
         </div>
       </div>

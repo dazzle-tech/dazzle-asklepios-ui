@@ -26,23 +26,25 @@ const MyTagInput = ({ tags = [], setTags, labelText = '', width = '100%', fontSi
           }}
 
         renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              key={index}
-              label={option}
-              {...getTagProps({ index })}
-              onDelete={() => handleDelete(option)}
-              sx={{
-                margin: '2px', // Adjust space between tags
-                '.MuiChip-deleteIcon': {
-                  margin: '0', // Remove margin for the delete icon
-                  color: 'rgba(0, 0, 0, 0.26)', // Color for the delete icon
-                  fontSize: { fontSize } // Set font size for the delete icon
-                },
-                
-              }}
-            />
-          ))
+          value.map((option, index) => {
+            const { key, ...tagProps } = getTagProps({ index });
+            return (
+              <Chip
+                key={key}
+                label={option}
+                {...tagProps}
+                onDelete={() => handleDelete(option)}
+                sx={{
+                  margin: '2px',
+                  '.MuiChip-deleteIcon': {
+                    margin: '0',
+                    color: 'rgba(0, 0, 0, 0.26)',
+                    fontSize: { fontSize }
+                  }
+                }}
+              />
+            );
+          })
         }
         renderInput={params => (
           <TextField

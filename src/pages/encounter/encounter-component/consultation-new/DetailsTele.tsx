@@ -243,7 +243,41 @@ const DetailsTele = ({
     setPractitionerPage(0);
   };
 
+  const buildValidationError = () => {
+    const fieldErrors = [];
+
+    if (!practitioner?.facilityId) {
+      fieldErrors.push({ field: 'facilityId', message: 'must not be null' });
+    }
+
+    if (!formData.practitionerId) {
+      fieldErrors.push({ field: 'practitionerId', message: 'must not be null' });
+    }
+
+    if (!formData.dateOfCall) {
+      fieldErrors.push({ field: 'dateOfCall', message: 'must not be null' });
+    }
+
+    if (!formData.consultationContent) {
+      fieldErrors.push({ field: 'consultationContent', message: 'must not be blank' });
+    }
+
+    return fieldErrors.length > 0
+      ? {
+          data: { fieldErrors },
+          status: 400
+        }
+      : null;
+  };
+
   const handleSave = async () => {
+    const validationError = buildValidationError();
+
+    if (validationError) {
+      handleCrudError(validationError, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
+      return;
+    }
+
     try {
       if ((formData as TelephonicConsultations).id) {
         const payload = {
@@ -255,37 +289,47 @@ const DetailsTele = ({
           notes: formData.notes,
           extraDocumentation: formData.extraDocumentation
         };
+
         await updateConsultation(payload).unwrap();
-        dispatch(notify({ msg: 'Telephonic consultation updated successfully', sev: 'success' }));
+
+        dispatch(
+          notify({
+            msg: 'Telephonic consultation updated successfully',
+            sev: 'success'
+          })
+        );
       } else {
         const createPayload = {
           ...formData,
           patientId: patient?.id
         };
+
         await createConsultation(createPayload).unwrap();
-        dispatch(notify({ msg: 'Telephonic consultation created successfully', sev: 'success' }));
+
+        dispatch(
+          notify({
+            msg: 'Telephonic consultation created successfully',
+            sev: 'success'
+          })
+        );
       }
 
       setOpen(false);
+      refetchCon?.();
     } catch (err: any) {
       handleCrudError(err, dispatch, TELEPHONIC_CONSULTATION_ERROR_MAP);
-      return;
     }
-
-    refetchCon?.();
   };
-
   const handleOpenAttachmentModal = () => {
     if (!(formData as any)?.id) return;
     setShowAttachmentModal(true);
   };
 
-        // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
+  // Direction handling for RTL/LTR
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
 
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
     <div dir={dir}>
