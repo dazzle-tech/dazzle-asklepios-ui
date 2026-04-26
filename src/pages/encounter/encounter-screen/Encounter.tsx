@@ -6,7 +6,6 @@ import { MedicalSheets } from '@/config/modules-config';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FollowupAppointmentModal from '@/pages/appointments-new/scheduling-screen/components/FollowupAppointmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-// import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { useCompleteEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetMedicalSheetsByDepartmentQuery } from '@/services/MedicalSheetsService';
 import { useGetPatientByIdQuery } from '@/services/patient/patientService';

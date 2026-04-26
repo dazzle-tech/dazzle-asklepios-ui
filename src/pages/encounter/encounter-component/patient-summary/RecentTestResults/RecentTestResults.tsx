@@ -60,7 +60,9 @@ const renderMarker = (marker?: string) => {
   }
 };
 
-const RecentTestResults: React.FC<Props> = ({ patient }) => {
+const RecentTestResults = forwardRef<any, Props>(({ patient }, ref) => {
+  void ref;
+
   const [pageIndex, setPageIndex] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
@@ -266,5 +268,5 @@ const RecentTestResults: React.FC<Props> = ({ patient }) => {
       }
     />
   );
-};
+});
 export default RecentTestResults;

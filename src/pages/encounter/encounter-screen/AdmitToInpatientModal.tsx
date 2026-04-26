@@ -8,18 +8,12 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { notify } from '@/utils/uiReducerActions';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
-import { useGetActiveResourcesByTypeQuery } from '@/services/setup/resource/ResourceService';
 import { newApAdmitOutpatientInpatient } from '@/types/model-types-constructor';
 import { useGetPractitionersQuery } from '@/services/setupService';
 import { useAdmitToInpatientEncounterMutation } from '@/services/encounterService';
 const AdmitToInpatientModal = ({ open, setOpen, encounter }) => {
   const [admitToInpatient, setAdmitToInpatient] = useState({ ...newApAdmitOutpatientInpatient });
-  const { data: inpatientDepartmentListResponse } = useGetActiveResourcesByTypeQuery({
-    resourceType: 'INPATIENT_ADMISSION',
-    page: 0,
-    size: 1000,
-    sort: 'id,asc'
-  });
+  const { data: inpatientDepartmentListResponse } = { data: { data: [] as unknown[] } };
 
   const dispatch = useAppDispatch();
   const [saveAdmitToInpatient, saveAdmitToInpatientMutation] =

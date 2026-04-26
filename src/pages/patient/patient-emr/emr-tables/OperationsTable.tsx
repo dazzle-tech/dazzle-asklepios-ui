@@ -83,7 +83,7 @@ const OperationsTable = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [tableData, setTableData] = useState(sampleOperationsData);
+  const [tableData] = useState(sampleOperationsData);
 
   const sortedData = [...tableData].sort((a, b) => {
     const aValue = a[sortColumn];

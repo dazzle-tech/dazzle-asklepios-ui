@@ -140,9 +140,9 @@ const PatientQuickAppointment = ({
     encounterDate: new Date()
   });
 
-  const [validationResult, setValidationResult] = useState<any>({});
-  const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
+  const [isReadOnly] = useState(isDisabeld);
   const [isEncounterSaved, setIsEncounterSaved] = useState(false);
+  const [validationResult, setValidationResult] = useState<any>({});
 
   const paymentRef = useRef<PatientPaymentInfoHandle | null>(null);
   const [isPaymentSaved, setIsPaymentSaved] = useState(false);

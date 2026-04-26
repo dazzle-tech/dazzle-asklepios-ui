@@ -2,7 +2,6 @@ import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import React from "react";
-import { useGetDuplicationCandidatesQuery } from "@/services/potintialDuplicateService";
 
 const PatientDuplicate = ({
   open,

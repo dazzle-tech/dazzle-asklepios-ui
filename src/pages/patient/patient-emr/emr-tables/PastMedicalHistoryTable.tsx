@@ -49,7 +49,7 @@ const PastMedicalHistoryTable = () => {
   const [sortType, setSortType] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [tableData, setTableData] = useState(sampleHistoryData);
+  const [tableData] = useState(sampleHistoryData);
 
   const sortedData = [...tableData].sort((a, b) => {
     const aValue = a[sortColumn];

@@ -39,8 +39,8 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
-  const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const { data: painPatternLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_PATTERN');
+  const severityEnumResponse = useEnumOptions('Severity', { exclude: ['CRITICAL'] });
 
   const painLevelEnum = useEnumOptions('PainLevel', {
     labelOverrides: {
@@ -115,6 +115,17 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     return 'red';
   };
 
+  const getSeverityFromPainLevel = (painLevel: string | null | undefined): string | null => {
+    if (!painLevel) return null;
+    const match = String(painLevel).match(/LEVEL_(\d+)/);
+    const level = match ? Number(match[1]) : NaN;
+    if (!Number.isFinite(level)) return null;
+    if (level >= 0 && level <= 3) return 'MILD_MINOR';
+    if (level >= 4 && level <= 7) return 'MODERATE';
+    if (level >= 8 && level <= 10) return 'SEVERE';
+    return null;
+  };
+
   useEffect(() => {
     if (!latestByEncounter) return;
 
@@ -130,6 +141,13 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
           : true
     }));
   }, [latestByEncounter, patientId, encounterId]);
+
+  useEffect(() => {
+    const nextSeverity = getSeverityFromPainLevel((record as any)?.painLevel);
+    setRecord(prev =>
+      prev.painDegree === nextSeverity ? prev : { ...prev, painDegree: nextSeverity }
+    );
+  }, [(record as any)?.painLevel]);
 
   const createPayload = useMemo(() => {
     return {
@@ -278,14 +296,14 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
           <Row className="pain-assessment__row">
             <Col md={12}>
               <MyInput
-                disabled={disabled}
+                disabled
                 width="100%"
                 fieldLabel="Pain Degree"
                 fieldType="select"
                 fieldName="painDegree"
-                selectData={painDegreesLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
+                selectData={severityEnumResponse ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
                 record={record}
                 setRecord={setRecord}
                 searchable={false}

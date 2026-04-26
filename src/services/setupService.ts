@@ -1243,8 +1243,8 @@ getLovValuesBulkByKeys: builder.query({
         },
         url: `/reference-data/get-lov-defult-value`
       }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
+      // onQueryStarted: onQueryStarted,
+      // keepUnusedDataFor: 5
 
     }),   
      saveRoom: builder.mutation({

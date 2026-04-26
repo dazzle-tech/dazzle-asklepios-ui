@@ -26,7 +26,7 @@ const columns: ColumnConfig[] = [
   {
     key: "created",
     title: <Translate>CREATED BY / AT</Translate>,
-    render: (row: any) => (
+    render: () => (
       <>
         {row?.createdBy ?? ""}
         <br />
@@ -40,22 +40,16 @@ const columns: ColumnConfig[] = [
     key: "actions",
     title: <Translate>ACTIONS</Translate>,
     width: 120,
-    render: (row: any) => (
+    render: () => (
       <div style={{ display: "flex", gap: 10 }}>
         <MdVisibility
           size={20}
           style={{ cursor: "pointer", color: "var(--primary-gray)" }}
-          onClick={() => {
-            console.log("VIEW FORM", row);
-          }}
         />
 
         <MdModeEdit
           size={20}
           style={{ cursor: "pointer", color: "var(--primary-gray)" }}
-          onClick={() => {
-            console.log("EDIT FORM", row);
-          }}
         />
       </div>
     )

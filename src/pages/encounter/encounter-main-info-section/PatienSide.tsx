@@ -10,10 +10,12 @@ import {
   useLazyGetLatestVitalSignsByEncounterIdQuery
 } from '@/services/medicalsheetsEncounter/observations/vitalSignsService';
 import {
-  useGetLatestBodyMeasurementsByPatientIdQuery,
-  useLazyGetLatestBodyMeasurementsByPatientIdQuery
+  useLazyGetBodyMeasurementsBetweenDatesByPatientIdQuery
 } from '@/services/medicalsheetsEncounter/observations/bodyMeasurementsService';
-import { useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery } from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
+import {
+  useLazyExistsPatientDiagnosisByEncounterIdQuery,
+  useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery
+} from '@/services/medicalsheetsEncounter/clinicalVisit/patientDiagnosisService';
 import { useLazyGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import {
   useGetPrimaryDocumentByPatientQuery,
@@ -127,15 +129,9 @@ const PatientSide = ({
     );
 
   const [triggerGetLatestVitalSigns] = useLazyGetLatestVitalSignsByEncounterIdQuery();
-
-  const { data: latestBodyMeasurements, refetch: refetchLatestBodyMeasurements } =
-    useGetLatestBodyMeasurementsByPatientIdQuery(
-      { patientId: patient?.id },
-      {
-        skip: !patient?.id
-      }
-    );
-  const [triggerGetLatestBodyMeasurements] = useLazyGetLatestBodyMeasurementsByPatientIdQuery();
+  const [latestBodyMeasurements, setLatestBodyMeasurements] = useState<any>(null);
+  const [triggerGetBodyMeasurementsList] = useLazyGetBodyMeasurementsBetweenDatesByPatientIdQuery();
+  const [triggerExistsPrimaryDiagnosis] = useLazyExistsPatientDiagnosisByEncounterIdQuery();
   const [triggerGetPrimaryDiagnosis] = useLazyGetPrimaryPatientDiagnosisByEncounterIdQuery();
   const {
     data: latestPatientObservationsComplaints,
@@ -255,6 +251,27 @@ const PatientSide = ({
     }
   }, [fetchPatientImageResponse]);
 
+  const loadLatestBodyMeasurements = async (patientId: number | null) => {
+    if (!patientId) {
+      setLatestBodyMeasurements(null);
+      return;
+    }
+
+    try {
+      const response = await triggerGetBodyMeasurementsList({
+        patientId,
+        page: 0,
+        size: 1,
+        sort: 'createdDate,desc'
+      }).unwrap();
+
+      const latest = response?.content?.[0] ?? null;
+      setLatestBodyMeasurements(latest);
+    } catch {
+      setLatestBodyMeasurements(null);
+    }
+  };
+
   const loadPrimaryDiagnosis = async (encounterId: number | null) => {
     if (!encounterId) {
       setPrimaryDiagnosis(null);
@@ -263,6 +280,13 @@ const PatientSide = ({
     }
 
     try {
+      const exists = await triggerExistsPrimaryDiagnosis({ encounterId }).unwrap();
+      if (!exists) {
+        setPrimaryDiagnosis(null);
+        setPrimaryDiagnosisError(null);
+        return;
+      }
+
       const resp = await triggerGetPrimaryDiagnosis({
         encounterId,
         timestamp: Date.now()
@@ -287,10 +311,14 @@ const PatientSide = ({
   }, [encounterIdNumber]);
 
   useEffect(() => {
+    loadLatestBodyMeasurements(patient?.id ? Number(patient.id) : null);
+  }, [patient?.id]);
+
+  useEffect(() => {
     if (refetchList) {
       if (patient?.id) {
         triggerGetPrimaryDocument(patient?.id);
-        triggerGetLatestBodyMeasurements({ patientId: patient?.id });
+        loadLatestBodyMeasurements(Number(patient.id));
       }
 
       if (encounter?.id) {
@@ -303,7 +331,6 @@ const PatientSide = ({
     refetchList,
     triggerGetPrimaryDocument,
     triggerGetLatestVitalSigns,
-    triggerGetLatestBodyMeasurements,
     triggerGetLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id
@@ -317,9 +344,11 @@ const PatientSide = ({
 
       if (encounter?.id) {
         refetchLatestVitalSigns();
-        refetchLatestBodyMeasurements();
         refetchLatestPatientObservationsComplaints();
         loadPrimaryDiagnosis(Number(encounter.id));
+      }
+      if (patient?.id) {
+        loadLatestBodyMeasurements(Number(patient.id));
       }
 
       dispatch(resetRefetchPatientSide());
@@ -328,7 +357,6 @@ const PatientSide = ({
     refetchPatientSide,
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
-    refetchLatestBodyMeasurements,
     refetchLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id,
@@ -345,7 +373,7 @@ const PatientSide = ({
           refetchAllergies(),
           patient?.id ? refetchPrimaryDocument() : Promise.resolve(),
           encounter?.id ? refetchLatestVitalSigns() : Promise.resolve(),
-          encounter?.id ? refetchLatestBodyMeasurements() : Promise.resolve(),
+          patient?.id ? loadLatestBodyMeasurements(Number(patient.id)) : Promise.resolve(),
           encounter?.id ? loadPrimaryDiagnosis(Number(encounter.id)) : Promise.resolve(),
           encounter?.id ? refetchLatestPatientObservationsComplaints() : Promise.resolve()
         ]);
@@ -363,7 +391,6 @@ const PatientSide = ({
     refetchAllergies,
     refetchPrimaryDocument,
     refetchLatestVitalSigns,
-    refetchLatestBodyMeasurements,
     refetchLatestPatientObservationsComplaints,
     patient?.id,
     encounter?.id,

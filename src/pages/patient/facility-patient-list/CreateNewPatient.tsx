@@ -429,6 +429,16 @@ const NAME_FIELDS: { key: keyof Patient; label: string }[] = [
 
 const INVALID_TRAILING_CHARS = /[\s\-#.]+$/;
 
+const PATIENT_REQUIRED_FIELDS: Array<{ key: keyof Patient; label: string }> = [
+  { key: 'firstName', label: 'First Name' },
+  { key: 'secondName', label: 'Second Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'dateOfBirth', label: 'DOB' },
+  { key: 'sexAtBirth', label: 'Gender' },
+  { key: 'primaryMobileNumber', label: 'Primary Mobile Number' },
+  { key: 'email', label: 'Email' }
+];
+
 const validatePatientNameFields = (patient: Patient): string | null => {
   for (const { key, label } of NAME_FIELDS) {
     const value = String((patient as any)[key] ?? '');
@@ -481,7 +491,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
   const [encounterType, setEncounterType] = useState<string>('EMERGENCY');
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
-  const [deptPage, setDeptPage] = useState(0);
+  const [, setDeptPage] = useState(0);
   const deptSize = 20;
   const [allDepartments, setAllDepartments] = useState<any[]>([]);
   const EncounterTypeEnum = useEnumOptions('EncounterType');
@@ -565,13 +575,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
     if (!selectedFacilityId) return;
 
     try {
-      console.log('[TRACE] fetchDepartments:start', {
-        facilityId: selectedFacilityId,
-        encounterType: 'EMERGENCY',
-        page,
-        size: deptSize
-      });
-
       const result = await triggerDepartments({
         facilityId: selectedFacilityId,
         encounterType: 'EMERGENCY',
@@ -581,13 +584,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
       }).unwrap();
 
       const rows = result?.data ?? [];
-
-      console.log('[TRACE] fetchDepartments:success', {
-        page,
-        count: rows.length,
-        rows,
-        links: result?.links
-      });
 
       setAllDepartments(prev => {
         if (page === 0) return rows;
@@ -603,6 +599,19 @@ const CreateNewPatient = ({ open, setOpen }) => {
 
         return merged;
       });
+
+      if (page === 0) {
+        setSelectedDepartmentId(prevSelectedDepartmentId => {
+          if (prevSelectedDepartmentId !== null && prevSelectedDepartmentId !== undefined) {
+            return prevSelectedDepartmentId;
+          }
+
+          const firstDepartmentId = rows?.[0]?.id;
+          return firstDepartmentId !== undefined && firstDepartmentId !== null
+            ? Number(firstDepartmentId)
+            : null;
+        });
+      }
     } catch (error) {
       console.error('[TRACE] fetchDepartments:error', error);
       if (page === 0) setAllDepartments([]);
@@ -976,7 +985,32 @@ const CreateNewPatient = ({ open, setOpen }) => {
     }
   };
 
+  const validateMandatoryPatientFields = (): boolean => {
+    const missingFields = PATIENT_REQUIRED_FIELDS.filter(({ key }) => {
+      const value = (localPatient as any)?.[key];
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string' && value.trim() === '') return true;
+      return false;
+    }).map(({ label }) => label);
+
+    if (missingFields.length > 0) {
+      dispatch(
+        notify({
+          msg: `Please fill all mandatory fields: ${missingFields.join(', ')}`,
+          sev: 'warning'
+        })
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async (): Promise<Patient | null> => {
+    if (!validateMandatoryPatientFields()) {
+      return null;
+    }
+
     const nameError = validatePatientNameFields(localPatient);
     if (nameError) {
       dispatch(notify({ msg: nameError, sev: 'warning' }));
@@ -1020,6 +1054,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
   };
 
   const handleSavePatientAndQuick = async () => {
+    if (!validateMandatoryPatientFields()) {
+      return;
+    }
+
     const facilityId = selectedFacilityId;
     const departmentId = selectedDepartmentId;
 
@@ -1275,6 +1313,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
               fieldName="dateOfBirth"
               record={localPatient}
               setRecord={setLocalPatient}
+              disableFutureDates
+              showWarningIfBeforeYear1900
             />
 
             <MyInput
@@ -1360,6 +1400,15 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     }
                   }}
                 />
+            <MyInput
+              width={200}
+              column
+              fieldType="checkbox"
+              fieldName="isPrivatePatient"
+              fieldLabel="Private Patient"
+              record={localPatient}
+              setRecord={setLocalPatient}
+            />
               </>
             )}
           </Form>

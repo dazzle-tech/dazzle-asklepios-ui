@@ -7,7 +7,6 @@ import { FlexboxGrid, IconButton, Input, Panel, Table, Grid, Row, Col, Text } fr
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { useNavigate } from 'react-router-dom';
-import { BlockUI } from 'primereact/blockui';
 const Assessments = () => {
   const patientSlice = useAppSelector(state => state.patient);
 

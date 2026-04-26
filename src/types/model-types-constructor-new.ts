@@ -1058,8 +1058,8 @@ export const newAvailabilityTemplateResponseVM: modelTypes.AvailabilityTemplateR
 
 export const newAvailabilityGenerationBatchApplyDTO: modelTypes.AvailabilityGenerationBatchApplyDTO = {
   templateId: 0,
-  startDate: '',
-  endDate: '',
+  startDate: null,
+  endDate: null,
   deferred: false,
   deferredAt: null,
   scope: '',
@@ -2808,15 +2808,6 @@ export const newPatientAdministrativeWarningCreateDTO: modelTypes.PatientAdminis
     description: ''
   };
 
-export const newPatientAdministrativeWarningResolveDTO: modelTypes.PatientAdministrativeWarningsResolveDTO =
-  {
-    id: undefined
-  };
-
-export const newPatientAdministrativeWarningUndoResolveDTO: modelTypes.PatientAdministrativeWarningsUndoResolveDTO =
-  {
-    id: undefined
-  };
 export const newReferralRequest: modelTypes.ReferralRequest = {
   id: undefined,
 

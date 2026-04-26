@@ -16,10 +16,11 @@ import { useAddEncounterAssignToBedMutation } from '@/services/patients/emergenc
 
 import { useGetAvailableRoomsByDepartmentAndGenderQuery } from '@/services/setup/room/roomService';
 import {
-  useGetActiveBedsByRoomIdQuery,
+  useLazyGetActiveBedsByRoomIdQuery,
   useOccupyBedMutation
 } from '@/services/setup/room/bedService';
 import { useMoveWaitingListToNewMutation } from '@/services/encounters/patientEncounterService';
+import { extractPaginationFromLink } from '@/utils/paginationHelper';
 
 type Id = number | string;
 
@@ -122,6 +123,9 @@ const BedAssignmentModal: React.FC<Props> = ({
   const [occupyBed, { isLoading: isOccupyingBed }] = useOccupyBedMutation();
   const [moveWaitingListToNew, { isLoading: isMovingEncounterStatus }] =
     useMoveWaitingListToNewMutation();
+  const [loadBedsByRoom, { isFetching: isFetchingBeds }] = useLazyGetActiveBedsByRoomIdQuery();
+  const [bedOptions, setBedOptions] = useState<any[]>([]);
+  const [bedsNextLink, setBedsNextLink] = useState<string | null>(null);
 
   const {
     data: roomsResponse,
@@ -139,23 +143,7 @@ const BedAssignmentModal: React.FC<Props> = ({
     }
   );
 
-  const {
-    data: bedsResponse,
-    isFetching: isFetchingBeds
-  } = useGetActiveBedsByRoomIdQuery(
-    {
-      roomId: record.roomId as Id,
-      page: 0,
-      size: 10,
-      sort: 'id,asc'
-    },
-    {
-      skip: !open || !record.roomId
-    }
-  );
-
   const roomOptions = useMemo(() => roomsResponse?.data ?? [], [roomsResponse]);
-  const bedOptions = useMemo(() => bedsResponse?.data ?? [], [bedsResponse]);
 
   useEffect(() => {
     if (open) {
@@ -167,11 +155,66 @@ const BedAssignmentModal: React.FC<Props> = ({
   }, [open, resolvedDepartmentId]);
 
   useEffect(() => {
-    setRecord(prev => ({
-      ...prev,
-      bedId: null
-    }));
-  }, [record.roomId]);
+    if (!open || !record.roomId) {
+      setBedOptions([]);
+      setBedsNextLink(null);
+      return;
+    }
+
+    const roomId = record.roomId;
+    loadBedsByRoom(
+      {
+        roomId: roomId as Id,
+        page: 0,
+        size: 10,
+        sort: 'id,asc'
+      },
+      false
+    )
+      .unwrap()
+      .then(response => {
+        setBedOptions(response?.data ?? []);
+        setBedsNextLink(response?.links?.next ?? null);
+      })
+      .catch(() => {
+        setBedOptions([]);
+        setBedsNextLink(null);
+      });
+  }, [open, record.roomId, loadBedsByRoom]);
+
+  const handleFetchMoreBeds = async () => {
+    if (!bedsNextLink || !record.roomId || isFetchingBeds) return;
+
+    const { page } = extractPaginationFromLink(bedsNextLink);
+    if (page == null || Number.isNaN(page)) return;
+
+    try {
+      const response = await loadBedsByRoom(
+        {
+          roomId: record.roomId as Id,
+          page,
+          size: 10,
+          sort: 'id,asc'
+        },
+        false
+      ).unwrap();
+
+      const incoming = response?.data ?? [];
+      setBedOptions(prev => {
+        const seen = new Set(prev.map((item: any) => String(item?.id)));
+        const merged = [...prev];
+        incoming.forEach((item: any) => {
+          const key = String(item?.id);
+          if (!seen.has(key)) merged.push(item);
+        });
+        return merged;
+      });
+
+      setBedsNextLink(response?.links?.next ?? null);
+    } catch {
+      setBedsNextLink(null);
+    }
+  };
 
   const handleClose = () => {
     setOpen(false);
@@ -227,25 +270,22 @@ const BedAssignmentModal: React.FC<Props> = ({
 
       try {
         await addEncounterAssignToBed(payload).unwrap();
-        console.log('assign saved');
       } catch (err) {
-        console.log('assign error', err);
+        console.error('assign error', err);
         throw err;
       }
 
       try {
         await occupyBed({ id: record.bedId }).unwrap();
-        console.log('bed occupied');
       } catch (err) {
-        console.log('occupy bed error', err);
+        console.error('occupy bed error', err);
         throw err;
       }
 
       try {
         await moveWaitingListToNew({ id: encounterId }).unwrap();
-        console.log('encounter moved to new');
       } catch (err) {
-        console.log('move encounter error', err);
+        console.error('move encounter error', err);
         throw err;
       }
 
@@ -281,6 +321,13 @@ const BedAssignmentModal: React.FC<Props> = ({
         loading={isFetchingRooms}
         hasMore={roomsResponse?.links?.next != null}
         onFetchMore={async () => { }}
+        onSelectItem={(item: any) => {
+          setRecord(prev => ({
+            ...prev,
+            roomId: item?.id ?? null,
+            bedId: null
+          }));
+        }}
       />
 
       <MyInput
@@ -297,8 +344,8 @@ const BedAssignmentModal: React.FC<Props> = ({
         width={250}
         searchable={false}
         loading={isFetchingBeds}
-        hasMore={bedsResponse?.links?.next != null}
-        onFetchMore={async () => { }}
+        hasMore={bedsNextLink != null}
+        onFetchMore={handleFetchMoreBeds}
       />
 
       <MyInput
@@ -327,7 +374,7 @@ const BedAssignmentModal: React.FC<Props> = ({
       size="38vw"
       bodyheight="60vh"
       actionButtonFunction={handleSave}
-      actionButtonLoading={
+      isDisabledActionBtn={
         isSavingAssignment || isOccupyingBed || isMovingEncounterStatus
       }
       content={<div dir={dir}>{modalContent}</div>}

@@ -379,8 +379,8 @@ export interface AvailabilityTemplateUpdateDTO extends AvailabilityTemplateCreat
 
 export interface AvailabilityGenerationBatchApplyDTO {
   templateId: number;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   deferred: boolean;
   deferredAt?: string | null;
   scope: string;
@@ -4060,14 +4060,6 @@ export interface PatientAdministrativeWarningsCreateDTO {
   patientId: number;
   warningType: string;
   description?: string;
-}
-
-export interface PatientAdministrativeWarningsResolveDTO {
-  id: number;
-}
-
-export interface PatientAdministrativeWarningsUndoResolveDTO {
-  id: number;
 }
 export interface ReferralRequest {
   id: number | undefined;
