@@ -42,36 +42,36 @@ const Facilities = () => {
   // Initialize list request with default filters
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   // Fetch Facilities list response
-  const { data: facilityListResponse, refetch: refetchFacility, isFetching} = useGetAllFacilitiesQuery({});
+  const { data: facilityListResponse, refetch: refetchFacility, isFetching } = useGetAllFacilitiesQuery({});
   // Save Facility
   const [saveFacility, saveFacilityMutation] = useAddFacilityMutation();
-    // Update Facility
+  // Update Facility
   const [updateFacility, updateFacilityMutation] = useUpdateFacilityMutation();
   // Remove Facility
-  const [removeFacility] = useDeleteFacilityMutation(); 
+  const [removeFacility] = useDeleteFacilityMutation();
   // To check if we are in edit mode
   const [isEditing, setIsEditing] = useState<boolean>(false);
-   // Pagination values
+  // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
   const totalCount = facilityListResponse?.extraNumeric ?? 0;
 
   // Effects
   useEffect(() => {
-      const handleResize = () => setWidth(window.innerWidth);
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }, []);
-    
-    useEffect(() => {
-      if (saveFacilityMutation.data) {
-        setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-      }
-    }, [saveFacilityMutation.data]);
-  
-    useEffect(() => {
-      handleFilterChange('facilityName', recordOfSearchForFacility['facilityName']);
-    }, [recordOfSearchForFacility]);
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (saveFacilityMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveFacilityMutation.data]);
+
+  useEffect(() => {
+    handleFilterChange('facilityName', recordOfSearchForFacility['facilityName']);
+  }, [recordOfSearchForFacility]);
 
   // Page header setup
   const divContent = (
@@ -80,9 +80,9 @@ const Facilities = () => {
 
 
   useEffect(() => {
-  dispatch(setPageCode('Facilities'));
-  dispatch(setDivContent(divContent));
-  
+    dispatch(setPageCode('Facilities'));
+    dispatch(setDivContent(divContent));
+
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent(''));
@@ -132,23 +132,23 @@ const Facilities = () => {
       />
       {rowData?.isActive ?
         <MdDelete
-       title="Deactivate"
-       size={24}
-       fill="var(--primary-pink)"
-       onClick={() => setOpenConfirmDeleteModel(true)}
-       className='icons-style'
-       />
-       :
-      // back to this function when update the filter(status) in back end
-      <FaUndo
-                className="icons-style"
-                title="Activate"
-                size={21}
-                fill="var(--primary-gray)"
-                onClick={handleActive}
-              />
-      
-    
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => setOpenConfirmDeleteModel(true)}
+          className='icons-style'
+        />
+        :
+        // back to this function when update the filter(status) in back end
+        <FaUndo
+          className="icons-style"
+          title="Activate"
+          size={21}
+          fill="var(--primary-gray)"
+          onClick={handleActive}
+        />
+
+
       }
     </div>
   );
@@ -157,56 +157,56 @@ const Facilities = () => {
     setPopupOpen(false);
     setLoad(true);
     let errMsg = "";
-    if(!createFacility.code){
+    if (!createFacility.code) {
       errMsg += "Field Facility Id is required";
     }
-    if(!createFacility.type){
-      if(errMsg){
-      errMsg += ", Field Facility type is required";
+    if (!createFacility.type) {
+      if (errMsg) {
+        errMsg += ", Field Facility type is required";
       }
-      else{
+      else {
         errMsg += "Field Facility type is required";
       }
     }
-    if(!createFacility.defaultCurrency){
-      if(errMsg){
-      errMsg += ", Field Default Currency is required";
+    if (!createFacility.defaultCurrency) {
+      if (errMsg) {
+        errMsg += ", Field Default Currency is required";
       }
-      else{
+      else {
         errMsg += "Field Default Currency is required";
       }
     }
-    if(!errMsg){
-   await saveFacility({ ...createFacility }).unwrap().then(() => {
-    dispatch(notify({ msg: 'The Facility has been saved successfully', sev: 'success' }));
-    refetchFacility();
-   }).catch(() => {
-    dispatch(notify({ msg: 'Failed to save this Facility', sev: 'warning' }));
-   });
-  } else{
-     dispatch(notify({ msg: errMsg, sev: 'warning' }));
-  }
-   setLoad(false);
+    if (!errMsg) {
+      await saveFacility({ ...createFacility }).unwrap().then(() => {
+        dispatch(notify({ msg: 'The Facility has been saved successfully', sev: 'success' }));
+        refetchFacility();
+      }).catch(() => {
+        dispatch(notify({ msg: 'Failed to save this Facility', sev: 'warning' }));
+      });
+    } else {
+      dispatch(notify({ msg: errMsg, sev: 'warning' }));
+    }
+    setLoad(false);
   };
 
-    // Handle click on Update Facility button
+  // Handle click on Update Facility button
   const handleUpdate = async () => {
     setPopupOpen(false);
     setLoad(true);
-   await updateFacility({ ...facility }).unwrap().then(() => {
-    dispatch(notify({ msg: 'The Facility has been updated successfully', sev: 'success' }));
-    refetchFacility();
-   }).catch(() => {
-    dispatch(notify({ msg: 'Failed to update this Facility', sev: 'warning' }));
-   });
-   setLoad(false);
+    await updateFacility({ ...facility }).unwrap().then(() => {
+      dispatch(notify({ msg: 'The Facility has been updated successfully', sev: 'success' }));
+      refetchFacility();
+    }).catch(() => {
+      dispatch(notify({ msg: 'Failed to update this Facility', sev: 'warning' }));
+    });
+    setLoad(false);
   };
 
   // Handle remove Facility
   const handleRemove = async () => {
     setPopupOpen(false);
     setLoad(true);
-   await removeFacility(facility)
+    await removeFacility(facility)
       .unwrap()
       .then(() => {
         refetchFacility();
@@ -214,8 +214,8 @@ const Facilities = () => {
       }).catch(() => {
         dispatch(notify({ msg: 'Failed to deactivated this Facility', sev: 'warning' }));
       });
-      setLoad(false);
-      setOpenConfirmDeleteModel(false);
+    setLoad(false);
+    setOpenConfirmDeleteModel(false);
   };
   // back to this function when update the filter in back end 
   // Handle Activation Facility
@@ -223,17 +223,17 @@ const Facilities = () => {
     await saveFacility({ ...facility, isActive: true }).unwrap();
   };
   // Handle page change in navigation
-    const handlePageChange = (_: unknown, newPage: number) => {
-      setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-    };
-    // Handle change rows per page in navigation
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setListRequest({
-        ...listRequest,
-        pageSize: parseInt(event.target.value, 10),
-        pageNumber: 1
-      });
-    };
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
   // ClassName for selected row
   const isSelected = rowData => {
     if (rowData && facility && rowData.id === facility.id) {
@@ -286,7 +286,7 @@ const Facilities = () => {
       key: 'isActive',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
-      render: (rowData) => {return(<p>{rowData?.isActive ? "Active" : "Inactive"}</p>);} 
+      render: (rowData) => { return (<p>{rowData?.isActive ? "Active" : "Inactive"}</p>); }
     },
     {
       key: 'actions',
@@ -298,40 +298,40 @@ const Facilities = () => {
 
   return (
     <div>
-        <div>
-          <Panel >
+      <div>
+        <Panel >
 
-            <MyTable
-              height={450}
-              data={facilityListResponse ?? []}
-              loading={isFetching || load}
-              columns={tableColumns}
-              rowClassName={isSelected}
-              onRowClick={rowData => {
-                setFacility(rowData);
-                setAddress(rowData.address);
-                setDepartments(rowData.department);
-              }}
-              sortColumn={listRequest.sortBy}
-              sortType={listRequest.sortType}
-              onSortChange={(sortBy, sortType) => {
-                if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-              }}
-              page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          tableButtons={<div className="container-of-add-new-button">
-            <MyButton
-                  prefixIcon={() => <AddOutlineIcon />}
-                  color="var(--deep-blue)"
-                  width="109px"
-                  height="32px"
-                  onClick={handleNew}
-                >
-                  Add New
-                </MyButton></div>}
+          <MyTable
+            height={450}
+            data={facilityListResponse ?? []}
+            loading={isFetching || load}
+            columns={tableColumns}
+            rowClassName={isSelected}
+            onRowClick={rowData => {
+              setFacility(rowData);
+              setAddress(rowData.address);
+              setDepartments(rowData.department);
+            }}
+            sortColumn={listRequest.sortBy}
+            sortType={listRequest.sortType}
+            onSortChange={(sortBy, sortType) => {
+              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+            }}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            tableButtons={<div className="container-of-add-new-button">
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                width="109px"
+                height="32px"
+                onClick={handleNew}
+              >
+                Add New
+              </MyButton></div>}
             filters={<div className='container-of-header-actions-facility' >
               <Form layout='inline'>
                 <MyInput
@@ -343,40 +343,40 @@ const Facilities = () => {
                   placeholder="Search by Facility Name"
                   width={'220px'}
                 />
-              </Form>        
+              </Form>
             </div>}
 
-            />
-            <AddEditFacility 
-              open={popupOpen}
-              setOpen={setPopupOpen}
-              facility={isEditing ? facility : createFacility}
-              setFacility={isEditing ? setFacility : setCreateFacility}
-              address={address}
-              setAddress={setAddress}
-              handleSave={isEditing ? handleUpdate : handleSave}
-              width={width}
-            />
-            <RoleManegment
-              open={popupOpenRole}
-              setOpen={setPopupOpenRole}
-              facility={facility}
-              setFacility={setFacility}
-            />
-            <FacilityDepartment
-             open={facilityDepartmentPopupOpen}
-             setOpen={setFacilityDepartmentPopupOpen}
-             departments={departments}
-             width={width}
-            />
-            <DeletionConfirmationModal 
-             open={openConfirmDeleteModel}
-             setOpen={setOpenConfirmDeleteModel}
-             itemToDelete='Facility'
+          />
+          <AddEditFacility
+            open={popupOpen}
+            setOpen={setPopupOpen}
+            facility={isEditing ? facility : createFacility}
+            setFacility={isEditing ? setFacility : setCreateFacility}
+            address={address}
+            setAddress={setAddress}
+            handleSave={isEditing ? handleUpdate : handleSave}
+            width={width}
+          />
+          <RoleManegment
+            open={popupOpenRole}
+            setOpen={setPopupOpenRole}
+            facility={facility}
+            setFacility={setFacility}
+          />
+          <FacilityDepartment
+            open={facilityDepartmentPopupOpen}
+            setOpen={setFacilityDepartmentPopupOpen}
+            departments={departments}
+            width={width}
+          />
+          <DeletionConfirmationModal
+            open={openConfirmDeleteModel}
+            setOpen={setOpenConfirmDeleteModel}
+            itemToDelete='Facility'
             actionButtonFunction={handleRemove}
-            />          
-          </Panel>
-        </div>
+          />
+        </Panel>
+      </div>
     </div>
   );
 };

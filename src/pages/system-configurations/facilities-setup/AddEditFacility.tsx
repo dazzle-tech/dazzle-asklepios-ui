@@ -179,73 +179,73 @@ const AddEditFacility = ({
             </Row>
           </Form>
         );
-      case 1:
-        return (
-          <Form fluid>
-            <div
-              className={clsx('', {
-                'container-of-two-fields-facility': width > 600
-              })}
-            >
-              <MyInput
-                width={"13vw"}
-                vr={validationResult}
-                fieldLabel="Facility Country"
-                fieldType="select"
-                fieldName="countryLkey"
-                selectData={contryLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={address}
-                setRecord={setAddress}
-              />
-              <MyInput
-                width={"13vw"}
-                vr={validationResult}
-                fieldLabel="Facility City"
-                fieldType="select"
-                fieldName="cityLkey"
-                selectData={cityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={address}
-                setRecord={setAddress}
-              />
-            </div>
-            <div
-              className={clsx('', {
-                'container-of-two-fields-facility': width > 600
-              })}
-            >
-              <MyInput
-                width={"13vw"}
-                vr={validationResult}
-                fieldLabel="State/Region"
-                fieldType="select"
-                fieldName="stateProvinceRegionLkey"
-                selectData={stateLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={address}
-                setRecord={setAddress}
-              />
-              <MyInput
-                fieldLabel="Street"
-                fieldName="streetAddressLine1"
-                record={address}
-                setRecord={setAddress}
-                width={"13vw"}
-              />
-            </div>
-            <MyInput
-              fieldLabel="Facility Postal/ZIP"
-              fieldName="postalCode"
-              record={address}
-              setRecord={setAddress}
-              width={"26vw"}
-            />
-          </Form>
-        );
+      // case 1:
+      //   return (
+      //     <Form fluid>
+      //       <div
+      //         className={clsx('', {
+      //           'container-of-two-fields-facility': width > 600
+      //         })}
+      //       >
+      //         <MyInput
+      //           width={"13vw"}
+      //           vr={validationResult}
+      //           fieldLabel="Facility Country"
+      //           fieldType="select"
+      //           fieldName="countryLkey"
+      //           selectData={contryLovQueryResponse?.object ?? []}
+      //           selectDataLabel="lovDisplayVale"
+      //           selectDataValue="key"
+      //           record={address}
+      //           setRecord={setAddress}
+      //         />
+      //         <MyInput
+      //           width={"13vw"}
+      //           vr={validationResult}
+      //           fieldLabel="Facility City"
+      //           fieldType="select"
+      //           fieldName="cityLkey"
+      //           selectData={cityLovQueryResponse?.object ?? []}
+      //           selectDataLabel="lovDisplayVale"
+      //           selectDataValue="key"
+      //           record={address}
+      //           setRecord={setAddress}
+      //         />
+      //       </div>
+      //       <div
+      //         className={clsx('', {
+      //           'container-of-two-fields-facility': width > 600
+      //         })}
+      //       >
+      //         <MyInput
+      //           width={"13vw"}
+      //           vr={validationResult}
+      //           fieldLabel="State/Region"
+      //           fieldType="select"
+      //           fieldName="stateProvinceRegionLkey"
+      //           selectData={stateLovQueryResponse?.object ?? []}
+      //           selectDataLabel="lovDisplayVale"
+      //           selectDataValue="key"
+      //           record={address}
+      //           setRecord={setAddress}
+      //         />
+      //         <MyInput
+      //           fieldLabel="Street"
+      //           fieldName="streetAddressLine1"
+      //           record={address}
+      //           setRecord={setAddress}
+      //           width={"13vw"}
+      //         />
+      //       </div>
+      //       <MyInput
+      //         fieldLabel="Facility Postal/ZIP"
+      //         fieldName="postalCode"
+      //         record={address}
+      //         setRecord={setAddress}
+      //         width={"26vw"}
+      //       />
+      //     </Form>
+      //   );
       case 2:
         return (
           <Form fluid>
@@ -309,7 +309,7 @@ const AddEditFacility = ({
       size="38vw"
       steps={[
         { title: 'Basic Info', icon: <FontAwesomeIcon icon={faUser} /> },
-        { title: 'Address', icon: <FontAwesomeIcon icon={faLocationDot} /> },
+        // { title: 'Address', icon: <FontAwesomeIcon icon={faLocationDot} /> },
         { title: 'Contact', icon: <FontAwesomeIcon icon={faPhone} /> }
       ]}
     />

@@ -22,51 +22,92 @@ import { useGetAllLanguagesQuery } from '@/services/setup/languageService';
 const OrganizationDefinition = () => {
   const dispatch = useAppDispatch();
   const [width, setWidth] = useState<number>(window.innerWidth);
-  const [organization, setOrganization] = useState<OrganizationDefinitionType>({ ...newOrganizationDefinition });
+
+  const [organization, setOrganization] = useState<OrganizationDefinitionType>({
+    ...newOrganizationDefinition,
+    name: newOrganizationDefinition.name ?? '',
+    description: newOrganizationDefinition.description ?? '',
+    address: newOrganizationDefinition.address ?? '',
+    contactName: newOrganizationDefinition.contactName ?? '',
+    contactAddress: newOrganizationDefinition.contactAddress ?? '',
+    contactEmail: newOrganizationDefinition.contactEmail ?? '',
+    contactMobile: newOrganizationDefinition.contactMobile ?? '',
+    contactLandNumber: newOrganizationDefinition.contactLandNumber ?? '',
+    taxValue: newOrganizationDefinition.taxValue ?? 0,
+    defaultTimeZone: newOrganizationDefinition.defaultTimeZone ?? '',
+    defaultLanguageId: newOrganizationDefinition.defaultLanguageId ?? '',
+    workingDays: newOrganizationDefinition.workingDays ?? [],
+  });
+
   const [showAdminsModal, setShowAdminsModal] = useState(false);
 
-  // API hooks
   const { data: organizations, isLoading, refetch } = useGetAllOrganizationDefinitionsQuery({});
   const [createOrganization, { isLoading: isCreating }] = useCreateOrganizationDefinitionMutation();
   const [updateOrganization, { isLoading: isUpdating }] = useUpdateOrganizationDefinitionMutation();
 
-  const {
-    data: langData,
-  } = useGetAllLanguagesQuery({});
+  const { data: langData } = useGetAllLanguagesQuery({});
   const timeZone = useEnumOptions('TimeZone');
   const DayOfWeek = useEnumOptions('DayOfWeek');
 
-
-  // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
+    dispatch(setPageCode('ORGANIZATION_DEFINITION'));
+    dispatch(setDivContent('Organization Definition'));
+
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
     };
   }, [dispatch]);
 
-  // Load existing organization if available
   useEffect(() => {
     if (organizations && organizations.length > 0) {
       const nextOrg = organizations[0];
-      if (!organization.id || organization.id !== nextOrg.id) {
-        setOrganization(nextOrg);
-      }
+
+      setOrganization({
+        ...newOrganizationDefinition,
+        ...nextOrg,
+        name: nextOrg.name ?? '',
+        description: nextOrg.description ?? '',
+        address: nextOrg.address ?? '',
+        contactName: nextOrg.contactName ?? '',
+        contactAddress: nextOrg.contactAddress ?? '',
+        contactEmail: nextOrg.contactEmail ?? '',
+        contactMobile: nextOrg.contactMobile ?? '',
+        contactLandNumber: nextOrg.contactLandNumber ?? '',
+        taxValue: nextOrg.taxValue ?? 0,
+        defaultTimeZone: nextOrg.defaultTimeZone ?? '',
+        defaultLanguageId: nextOrg.defaultLanguageId ?? '',
+        workingDays: nextOrg.workingDays ?? [],
+      });
     } else {
-      if (organization.id) {
-        setOrganization({ ...newOrganizationDefinition });
-      }
+      setOrganization({
+        ...newOrganizationDefinition,
+        name: newOrganizationDefinition.name ?? '',
+        description: newOrganizationDefinition.description ?? '',
+        address: newOrganizationDefinition.address ?? '',
+        contactName: newOrganizationDefinition.contactName ?? '',
+        contactAddress: newOrganizationDefinition.contactAddress ?? '',
+        contactEmail: newOrganizationDefinition.contactEmail ?? '',
+        contactMobile: newOrganizationDefinition.contactMobile ?? '',
+        contactLandNumber: newOrganizationDefinition.contactLandNumber ?? '',
+        taxValue: newOrganizationDefinition.taxValue ?? 0,
+        defaultTimeZone: newOrganizationDefinition.defaultTimeZone ?? '',
+        defaultLanguageId: newOrganizationDefinition.defaultLanguageId ?? '',
+        workingDays: newOrganizationDefinition.workingDays ?? [],
+      });
     }
-  }, [organizations, organization.id]);
+  }, [organizations]);
 
   const workingDaysRecord = useMemo(() => {
     const map: Record<string, boolean> = {};
+
     if (!DayOfWeek || DayOfWeek.length === 0) return map;
 
     DayOfWeek.forEach(day => {
@@ -96,35 +137,33 @@ const OrganizationDefinition = () => {
     }));
   };
 
-  // Page header setup
-  const divContent = 'Organization Definition';
-  dispatch(setPageCode('ORGANIZATION_DEFINITION'));
-  dispatch(setDivContent(divContent));
-
-  // Handle save organization
   const handleSave = async () => {
     const workingDaysPayload =
       DayOfWeek && DayOfWeek.length > 0
         ? DayOfWeek.map(day => ({
-          dayOfWeek: day.value,
-          isWorking: !!workingDaysRecord[day.value],
-        }))
-        : (organization.workingDays ?? []);
+            dayOfWeek: day.value,
+            isWorking: !!workingDaysRecord[day.value],
+          }))
+        : organization.workingDays ?? [];
 
-    // Validation
     let errorMsg = '';
+
     if (!organization.name) {
       errorMsg = 'Organization Name is required';
     }
+
     if (organization.taxValue === undefined || organization.taxValue === null) {
       errorMsg = errorMsg ? `${errorMsg}, Tax Value is required` : 'Tax Value is required';
     }
+
     if (!organization.defaultTimeZone) {
       errorMsg = errorMsg ? `${errorMsg}, Default Time Zone is required` : 'Default Time Zone is required';
     }
+
     if (!organization.defaultLanguageId) {
       errorMsg = errorMsg ? `${errorMsg}, Default Language is required` : 'Default Language is required';
     }
+
     if (errorMsg) {
       dispatch(notify({ msg: errorMsg, sev: 'warning' }));
       return;
@@ -132,7 +171,6 @@ const OrganizationDefinition = () => {
 
     try {
       if (organization.id) {
-        // Update existing organization
         const updatePayload = {
           id: organization.id!,
           name: organization.name!,
@@ -148,10 +186,10 @@ const OrganizationDefinition = () => {
           defaultLanguageId: organization.defaultLanguageId!,
           workingDays: workingDaysPayload,
         };
+
         await updateOrganization(updatePayload).unwrap();
         dispatch(notify({ msg: 'Organization updated successfully', sev: 'success' }));
       } else {
-        // Create new organization
         await createOrganization({
           name: organization.name!,
           description: organization.description || null,
@@ -161,13 +199,15 @@ const OrganizationDefinition = () => {
           contactEmail: organization.contactEmail || null,
           contactMobile: organization.contactMobile || null,
           contactLandNumber: organization.contactLandNumber || null,
-          taxValue: organization.taxValue || null,
+          taxValue: organization.taxValue ?? null,
           defaultTimeZone: organization.defaultTimeZone,
           defaultLanguageId: organization.defaultLanguageId,
           workingDays: workingDaysPayload,
         }).unwrap();
+
         dispatch(notify({ msg: 'Organization saved successfully', sev: 'success' }));
       }
+
       refetch();
     } catch (error: any) {
       const errorMessage = error?.data?.message || error?.message || 'Failed to save organization';
@@ -177,22 +217,18 @@ const OrganizationDefinition = () => {
 
   const isLoadingData = isLoading || isCreating || isUpdating;
 
-      // Direction handling for RTL/LTR
-    const direction = localStorage.getItem('direction') || 'LTR';
-    const isRTL = direction === 'RTL';
-
-    const dir = isRTL ? 'rtl' : 'ltr';
-
+  const direction = localStorage.getItem('direction') || 'LTR';
+  const isRTL = direction === 'RTL';
+  const dir = isRTL ? 'rtl' : 'ltr';
 
   return (
-
     <Form fluid dir={dir}>
-      <div className='organization-sections-container'>
-        <div className='organization-section-Column'>
+      <div className="organization-sections-container">
+        <div className="organization-section-Column">
           <Section
             title={<Translate>Information</Translate>}
             content={
-              <div className='organization-section'>
+              <div className="organization-section">
                 <Row>
                   <Col md={12}>
                     <MyInput
@@ -201,21 +237,23 @@ const OrganizationDefinition = () => {
                       record={organization}
                       setRecord={setOrganization}
                       required
-                      width={"100%"}
+                      width="100%"
                       disabled={isLoadingData}
                     />
                   </Col>
+
                   <Col md={12}>
                     <MyInput
                       fieldLabel={<Translate>Organization Address</Translate>}
                       fieldName="address"
                       record={organization}
                       setRecord={setOrganization}
-                      width={"100%"}
+                      width="100%"
                       disabled={isLoadingData}
                     />
                   </Col>
                 </Row>
+
                 <Row>
                   <MyInput
                     fieldLabel={<Translate>Organization Description</Translate>}
@@ -230,15 +268,16 @@ const OrganizationDefinition = () => {
                 </Row>
               </div>
             }
-            setOpen={() => { }}
+            setOpen={() => {}}
             rightLink={null}
             openedContent={null}
             disabled={isLoadingData}
           />
+
           <Section
             title={<Translate>Contact</Translate>}
             content={
-              <div className='organization-section'>
+              <div className="organization-section">
                 <Row>
                   <Col md={12}>
                     <MyInput
@@ -246,10 +285,11 @@ const OrganizationDefinition = () => {
                       fieldName="contactName"
                       record={organization}
                       setRecord={setOrganization}
-                      width={"100%"}
+                      width="100%"
                       disabled={isLoadingData}
                     />
                   </Col>
+
                   <Col md={12}>
                     <MyInput
                       fieldLabel={<Translate>Contact Email</Translate>}
@@ -257,11 +297,12 @@ const OrganizationDefinition = () => {
                       fieldType="text"
                       record={organization}
                       setRecord={setOrganization}
-                      width={"100%"}
+                      width="100%"
                       disabled={isLoadingData}
                     />
                   </Col>
                 </Row>
+
                 <Row>
                   <MyInput
                     fieldLabel={<Translate>Contact Address</Translate>}
@@ -274,6 +315,7 @@ const OrganizationDefinition = () => {
                     disabled={isLoadingData}
                   />
                 </Row>
+
                 <Row>
                   <Col md={12}>
                     <MyInput
@@ -282,10 +324,11 @@ const OrganizationDefinition = () => {
                       fieldType="text"
                       record={organization}
                       setRecord={setOrganization}
-                      width={"100%"}
+                      width="100%"
                       disabled={isLoadingData}
                     />
                   </Col>
+
                   <Col md={12}>
                     <MyInput
                       fieldLabel={<Translate>Contact Land Number</Translate>}
@@ -293,45 +336,51 @@ const OrganizationDefinition = () => {
                       fieldType="text"
                       record={organization}
                       setRecord={setOrganization}
-                      width={"100%"}
+                      width="100%"
                       disabled={isLoadingData}
                     />
                   </Col>
                 </Row>
               </div>
             }
-            setOpen={() => { }}
+            setOpen={() => {}}
             rightLink={null}
             openedContent={null}
             disabled={isLoadingData}
           />
         </div>
-        <div className='organization-section-Column'>
+
+        <div className="organization-section-Column">
           <Section
             title={<Translate>Tax Information</Translate>}
             content={
-              <div className='organization-section'>
+              <div className="organization-section">
                 <MyInput
-                  fieldLabel={<span><Translate>Tax Value</Translate> (%)</span>}
+                  fieldLabel={
+                    <span>
+                      <Translate>Tax Value</Translate> (%)
+                    </span>
+                  }
                   fieldName="taxValue"
                   fieldType="number"
                   record={organization}
                   setRecord={setOrganization}
-                  width={width > 600 ? "48%" : "100%"}
+                  width={width > 600 ? '48%' : '100%'}
                   disabled={isLoadingData}
                   required
                 />
               </div>
             }
-            setOpen={() => { }}
+            setOpen={() => {}}
             rightLink={null}
             openedContent={null}
             disabled={isLoadingData}
           />
+
           <Section
             title={<Translate>Appointment Configuration</Translate>}
             content={
-              <div className='organization-section'>
+              <div className="organization-section">
                 <Row>
                   <Col md={12}>
                     <MyInput
@@ -343,38 +392,42 @@ const OrganizationDefinition = () => {
                       selectDataValue="value"
                       record={organization}
                       setRecord={setOrganization}
-                      width={"100%"}
+                      width="100%"
                       disabled={isLoadingData}
                       required
                     />
                   </Col>
+
                   <Col md={12}>
                     <MyInput
                       width="100%"
                       fieldName="defaultLanguageId"
                       fieldLabel={<Translate>Default Language</Translate>}
                       fieldType="select"
-                      selectData={langData}
+                      selectData={langData ?? []}
                       selectDataLabel="langName"
                       selectDataValue="id"
                       record={organization}
                       setRecord={setOrganization}
                       placeholder="Select Language"
                       searchable={false}
+                      disabled={isLoadingData}
+                      required
                     />
                   </Col>
                 </Row>
               </div>
             }
-            setOpen={() => { }}
+            setOpen={() => {}}
             rightLink={null}
             openedContent={null}
             disabled={isLoadingData}
           />
+
           <Section
             title={<Translate>Working Days</Translate>}
             content={
-              <div className='organization-section'>
+              <div className="organization-section">
                 <div className="organization-working-days">
                   {DayOfWeek?.map(day => (
                     <MyInput
@@ -389,17 +442,16 @@ const OrganizationDefinition = () => {
                     />
                   ))}
                 </div>
-
               </div>
             }
-            setOpen={() => { }}
+            setOpen={() => {}}
             rightLink={null}
             openedContent={null}
             disabled={isLoadingData}
           />
         </div>
       </div>
-      {/* Action Buttons */}
+
       <div className="organization-modal-actions">
         <MyButton
           appearance="default"
@@ -410,6 +462,7 @@ const OrganizationDefinition = () => {
         >
           <Translate>View Active Admins</Translate>
         </MyButton>
+
         <MyButton
           appearance="primary"
           onClick={handleSave}
@@ -419,13 +472,10 @@ const OrganizationDefinition = () => {
           <Translate>Save</Translate>
         </MyButton>
       </div>
-      <ActiveAdminsModal
-        open={showAdminsModal}
-        onClose={() => setShowAdminsModal(false)}
-      />
+
+      <ActiveAdminsModal open={showAdminsModal} onClose={() => setShowAdminsModal(false)} />
     </Form>
   );
 };
 
 export default OrganizationDefinition;
-
