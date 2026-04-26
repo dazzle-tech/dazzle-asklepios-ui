@@ -907,7 +907,6 @@ const MyConsultations = () => {
             ? 'View Response'
             : 'Add Response';
 
-          // 👇 هون الشرط تبع Add Services
           const canAddServices = status === 'SUBMITTED';
 
           return (
@@ -1036,14 +1035,6 @@ const MyConsultations = () => {
                 </div>
               </Whisper>
 
-              {/* Add Report */}
-              <Whisper trigger="hover" placement="top" speaker={<Tooltip>Add Report</Tooltip>}>
-                <div>
-                  <MyButton size="small" radius="6px" backgroundColor="black">
-                    <FontAwesomeIcon icon={faUpload} color="white" />
-                  </MyButton>
-                </div>
-              </Whisper>
             </div>
           );
         }
