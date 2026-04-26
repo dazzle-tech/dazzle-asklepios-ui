@@ -68,6 +68,7 @@ import {
 import { useGetAllPayorsQuery } from '@/services/setup/payer/PayorService';
 import { useGetPlansByPayorQuery } from '@/services/setup/payer/PayorPlanService';
 import { useGetRelativePatientsByCategoryQuery } from '@/services/patients/PatientRelationService';
+import { PhoneNumberInput } from '@/components';
 
 const SAUDI_ARABIA_LOV_NAME = '1216848210951800';
 
@@ -1020,13 +1021,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -1080,13 +1081,13 @@ const CreateNewPatient = ({ open, setOpen }) => {
     try {
       const saved = localPatient?.id
         ? await updatePatient({
-            id: localPatient.id,
-            data: { ...localPatient, isCompletedPatient: true }
-          }).unwrap()
+          id: localPatient.id,
+          data: { ...localPatient, isCompletedPatient: true }
+        }).unwrap()
         : await addPatient({
-            ...localPatient,
-            isCompletedPatient: true
-          }).unwrap();
+          ...localPatient,
+          isCompletedPatient: true
+        }).unwrap();
 
       setLocalPatient(saved);
 
@@ -1330,16 +1331,14 @@ const CreateNewPatient = ({ open, setOpen }) => {
               record={localPatient}
               setRecord={setLocalPatient}
             />
-
-            <MyInput
-              width={200}
-              column
+            <PhoneNumberInput
               required
-              fieldType="textnumber"
+              column
               fieldName="primaryMobileNumber"
               fieldLabel="Primary Mobile Number"
               record={localPatient}
               setRecord={setLocalPatient}
+              width={200}
             />
             <MyInput
               required
@@ -1400,15 +1399,15 @@ const CreateNewPatient = ({ open, setOpen }) => {
                     }
                   }}
                 />
-            <MyInput
-              width={200}
-              column
-              fieldType="checkbox"
-              fieldName="isPrivatePatient"
-              fieldLabel="Private Patient"
-              record={localPatient}
-              setRecord={setLocalPatient}
-            />
+                <MyInput
+                  width={200}
+                  column
+                  fieldType="checkbox"
+                  fieldName="isPrivatePatient"
+                  fieldLabel="Private Patient"
+                  record={localPatient}
+                  setRecord={setLocalPatient}
+                />
               </>
             )}
           </Form>

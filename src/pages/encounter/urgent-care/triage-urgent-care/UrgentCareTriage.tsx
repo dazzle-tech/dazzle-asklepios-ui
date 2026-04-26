@@ -1263,7 +1263,7 @@ const UrgentCareTriage = () => {
           <Tooltip>Start Triage</Tooltip>
         );
         const tooltipTriage = <Tooltip>View Triage</Tooltip>;
-        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
+        const tooltipCancel = <Tooltip>Cancel is only allowed for NEW, WAITING TRIAGE, or PENDING PAYMENT</Tooltip>;
         const tooltipPayment = <Tooltip>Add Payment</Tooltip>;
         const tooltipPaymentDisabled = (
           <Tooltip>Payment is only available for pending payment encounters</Tooltip>
@@ -1415,7 +1415,7 @@ const UrgentCareTriage = () => {
               isReceptionist={isReceptionist}
             />
 
-            {['WAITING_TRIAGE', 'NEW', 'SENT_TO_ER', 'WAITING_LIST', 'PENDING_PAYMENT'].includes(
+            {['WAITING_TRIAGE', 'NEW', 'PENDING_PAYMENT'].includes(
               String(rowData?.status ?? rowData?.encounterStatus ?? '').toUpperCase()
             ) && (
               <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>

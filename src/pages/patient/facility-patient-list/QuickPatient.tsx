@@ -26,6 +26,7 @@ import { useEnumOptions } from '@/services/enumsApi';
 import { useCreateQuickAppointmentMutation } from '@/services/appointment/appointmentService';
 import { useLazyGetAppointableActiveDepartmentsByEncounterTypeAndFacilityQuery } from '@/services/security/departmentService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
+import { PhoneNumberInput } from '@/components';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Encounter data is required.',
@@ -524,14 +525,13 @@ const QuickPatient = ({ open, setOpen, setPatient = null }: QuickPatientProps) =
           width={200}
         />
 
-        <MyInput
+       <PhoneNumberInput
           required
-          vr={validationResult}
           column
-          fieldType="textnumber"
           fieldName="primaryMobileNumber"
           record={localPatient}
           setRecord={setLocalPatient}
+          fieldLabel="Primary Mobile Number" 
           disabled={isUnknown}
           width={200}
         />
