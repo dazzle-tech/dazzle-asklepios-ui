@@ -38,7 +38,7 @@ const TestCardModal = ({ test }: any) => {
   const { data: fullTest } = useGetDiagnosticTestByIdQuery(testId, { skip: !testId });
 
   const { data: lab } = useGetLaboratoryByTestIdQuery(testId, {
-    skip:  raw !== 'LABORATORY',
+    skip: !testId || raw !== 'LABORATORY',
   });
 
   const { data: rad } = useGetRadiologyByTestIdQuery(testId, {

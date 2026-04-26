@@ -68,7 +68,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
         const n = m ? Number(m[1]) : NaN;
         return { value, label, n };
       })
-      .filter((x) => Number.isFinite(x.n))
+      .filter(x => Number.isFinite(x.n))
       .sort((a, b) => a.n - b.n);
 
     if (parsed.length === 0) {
@@ -102,7 +102,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     const painLevel = (record as any)?.painLevel as string | null | undefined;
     if (!painLevel) return minLevel;
 
-    const found = painLevelSteps.find((x) => x.value === painLevel);
+    const found = painLevelSteps.find(x => x.value === painLevel);
     if (found) return found.n;
     const m = String(painLevel).match(/LEVEL_(\d+)/);
     return m ? Number(m[1]) : minLevel;
@@ -118,7 +118,7 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
   useEffect(() => {
     if (!latestByEncounter) return;
 
-    setRecord((prev) => ({
+    setRecord(prev => ({
       ...prev,
       ...latestByEncounter,
       id: undefined,
@@ -190,7 +190,9 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     }
 
     const messageProperty: string = data?.message || '';
-    const errorKey = messageProperty.startsWith('error.') ? messageProperty.substring(6) : undefined;
+    const errorKey = messageProperty.startsWith('error.')
+      ? messageProperty.substring(6)
+      : undefined;
 
     const keyMap: Record<string, string> = {
       'payload.required': 'Pain assessment payload is required.',
@@ -220,10 +222,23 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
       return;
     }
 
-    try {
-      const created = await createPainAssessment(createPayload as any).unwrap();
+    if (!record.painDegree) {
+      dispatch(
+        notify({
+          msg: 'Please fix the following fields:\n• Pain Degree: must not be empty',
+          sev: 'warning'
+        })
+      );
+      return;
+    }
 
-      setRecord((prev) => ({
+    try {
+      const created = await createPainAssessment({
+        ...createPayload,
+        painLevel: (createPayload as any).painLevel ?? `LEVEL_${minLevel}`
+      } as any).unwrap();
+
+      setRecord(prev => ({
         ...prev,
         ...created,
         patientId,
@@ -249,103 +264,103 @@ const PainAssessment: React.FC<PainAssessmentProps> = ({
     <SectionContainer
       title={title}
       action={
-        <Form fluid layout="inline">
+        <div style={{ display: 'flex', gap: 8 }}>
           <MyButton onClick={handleSave} disabled={disabled}>
             Save
           </MyButton>
           <MyButton onClick={handleClear} disabled={disabled}>
             Clear
           </MyButton>
-        </Form>
+        </div>
       }
       content={
         <div className="pain-assessment__wrapper" style={width ? { width } : {}}>
-          <Form fluid>
-            <Row className="pain-assessment__row">
-              <Col md={12}>
-                <MyInput
-                  disabled={disabled}
-                  width="100%"
-                  fieldLabel="Pain Degree"
-                  fieldType="select"
-                  fieldName="painDegree"
-                  selectData={painDegreesLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                  searchable={false}
-                  required
-                />
-              </Col>
+          <Row className="pain-assessment__row">
+            <Col md={12}>
+              <MyInput
+                disabled={disabled}
+                width="100%"
+                fieldLabel="Pain Degree"
+                fieldType="select"
+                fieldName="painDegree"
+                selectData={painDegreesLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={record}
+                setRecord={setRecord}
+                searchable={false}
+                required
+              />
+            </Col>
 
-              <Col md={12}>
-                <MyInput
-                  disabled={disabled}
-                  width="100%"
-                  fieldLabel="Pain Pattern"
-                  fieldType="select"
-                  fieldName="painPattern"
-                  selectData={painPatternLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={record}
-                  setRecord={setRecord}
-                  searchable={false}
-                />
-              </Col>
-            </Row>
+            <Col md={12}>
+              <MyInput
+                disabled={disabled}
+                width="100%"
+                fieldLabel="Pain Pattern"
+                fieldType="select"
+                fieldName="painPattern"
+                selectData={painPatternLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={record}
+                setRecord={setRecord}
+                searchable={false}
+              />
+            </Col>
+          </Row>
 
-            <Row className="pain-assessment__row">
-              <Col md={12}>
-                <div className="pain-assessment__slider">
-                  <MyLabel label={`Pain Level (${painLevelValue}-${maxLevel})`} required />
-                  <div className="pain-assessment__sliderTrack">
-                    <Slider
-                      value={painLevelValue}
-                      onChange={(value) => {
-                        const v = Number(value ?? minLevel);
-                        const enumItem = painLevelSteps.find((x) => x.n === v);
-                        const enumValue = enumItem?.value ?? `LEVEL_${v}`;
+          <Row className="pain-assessment__row">
+            <Col md={12}>
+              <div className="pain-assessment__slider">
+                <MyLabel label={`Pain Level (${painLevelValue}-${maxLevel})`} required />
+                <div className="pain-assessment__sliderTrack">
+                  <Slider
+                    value={painLevelValue}
+                    onChange={value => {
+                      const v = Number(value ?? minLevel);
+                      const enumItem = painLevelSteps.find(x => x.n === v);
+                      const enumValue = enumItem?.value ?? `LEVEL_${v}`;
 
-                        setRecord((prev) => ({
-                          ...prev,
-                          painLevel: enumValue as any
-                        }));
-                      }}
-                      min={minLevel}
-                      max={maxLevel}
-                      step={1}
-                      progress
-                      disabled={disabled}
-                    />
+                      setRecord(prev => ({
+                        ...prev,
+                        painLevel: enumValue as any
+                      }));
+                    }}
+                    min={minLevel}
+                    max={maxLevel}
+                    step={1}
+                    progress
+                    disabled={disabled}
+                  />
 
-                    <div
-                      className="pain-assessment__sliderFill"
-                      style={{
-                        width: `${((painLevelValue - minLevel) / Math.max(1, maxLevel - minLevel)) * 100}%`,
-                        backgroundColor: getTrackColor(painLevelValue)
-                      }}
-                    />
-                  </div>
+                  <div
+                    className="pain-assessment__sliderFill"
+                    style={{
+                      width: `${
+                        ((painLevelValue - minLevel) / Math.max(1, maxLevel - minLevel)) * 100
+                      }%`,
+                      backgroundColor: getTrackColor(painLevelValue)
+                    }}
+                  />
                 </div>
-              </Col>
-            </Row>
+              </div>
+            </Col>
+          </Row>
 
-            <Row className="pain-assessment__row">
-              <Col md={24}>
-                <MyInput
-                  fieldType="textarea"
-                  width="100%"
-                  fieldLabel="Pain Description"
-                  fieldName="painDescription"
-                  record={record}
-                  setRecord={setRecord}
-                  disabled={disabled}
-                />
-              </Col>
-            </Row>
-          </Form>
+          <Row className="pain-assessment__row">
+            <Col md={24}>
+              <MyInput
+                fieldType="textarea"
+                width="100%"
+                fieldLabel="Pain Description"
+                fieldName="painDescription"
+                record={record}
+                setRecord={setRecord}
+                disabled={disabled}
+              />
+            </Col>
+          </Row>
         </div>
       }
     />

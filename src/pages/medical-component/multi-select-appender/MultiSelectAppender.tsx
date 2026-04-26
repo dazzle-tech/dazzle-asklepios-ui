@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Tag, TagGroup, Input } from 'rsuite';
+import { Tag, TagGroup } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import './styles.less';
+
 const MultiSelectAppender = ({
   label = 'Select',
   options = [],
@@ -14,15 +15,12 @@ const MultiSelectAppender = ({
 }) => {
   const [selected, setSelected] = useState({ item: null });
   const [values, setValues] = useState<string[]>([]);
-  const [text, setText] = useState('');
 
   const normalizedOptions = useMemo(() => {
     if (!Array.isArray(options)) return [];
-
     if (options.length && typeof options[0] === 'string') {
       return options.map(v => ({ value: v, label: v }));
     }
-
     return options;
   }, [options]);
 
@@ -53,14 +51,11 @@ const MultiSelectAppender = ({
 
   useEffect(() => {
     if (!selected?.item) return;
-
     const raw = String(selected.item);
-
     setValues(prev => {
       if (prev.includes(raw)) return prev;
       return [...prev, raw];
     });
-
     setSelected({ item: null });
   }, [selected?.item]);
 
@@ -68,23 +63,8 @@ const MultiSelectAppender = ({
     setValues(prev => prev.filter(v => v !== value));
   };
 
-  const handleKeyDown = (e: any) => {
-    if (e.key === 'Enter' && text.trim()) {
-      e.preventDefault();
-
-      const newValue = text.trim();
-
-      setValues(prev => {
-        if (prev.includes(newValue)) return prev;
-        return [...prev, newValue];
-      });
-
-      setText('');
-    }
-  };
-
   return (
-    <Form className="margin-bottom-00">
+    <div className="margin-bottom-00">
       <MyInput
         width="100%"
         fieldType="select"
@@ -97,7 +77,6 @@ const MultiSelectAppender = ({
         setRecord={setSelected}
         disabled={disabled}
       />
-
       <div className="multi-select-tags-container">
         <TagGroup>
           {values.map(v => (
@@ -107,7 +86,7 @@ const MultiSelectAppender = ({
           ))}
         </TagGroup>
       </div>
-    </Form>
+    </div>
   );
 };
 

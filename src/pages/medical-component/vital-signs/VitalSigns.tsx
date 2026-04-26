@@ -60,10 +60,11 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
   );
 
   // Triage latest
-  const { data: latestTriageVitalSignsByEncounterId } = useGetLatestTriageVitalSignsByEncounterIdQuery(
-    { encounterId },
-    { skip: !encounterId || !isTriage }
-  );
+  const { data: latestTriageVitalSignsByEncounterId } =
+    useGetLatestTriageVitalSignsByEncounterIdQuery(
+      { encounterId },
+      { skip: !encounterId || !isTriage }
+    );
 
   // === Local state ===
   const [meanArterialPressureValue, setMeanArterialPressureValue] = useState<string | null>(null);
@@ -74,7 +75,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     encounterId,
     isTriage
   });
-
 
   useEffect(() => {
     const source = isTriage ? latestTriageVitalSignsByEncounterId : latestVitalSignsByEncounterId;
@@ -87,10 +87,7 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       patientId,
       encounterId,
       isTriage,
-      isActive:
-        typeof (source as any)?.isActive === 'boolean'
-          ? (source as any).isActive
-          : true
+      isActive: typeof (source as any)?.isActive === 'boolean' ? (source as any).isActive : true
     }));
   }, [
     isTriage,
@@ -99,7 +96,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     patientId,
     encounterId
   ]);
-
 
   useEffect(() => {
     const diastolicValue = Number(vitalSigns?.bloodPressureDiastolic);
@@ -130,7 +126,6 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       notes: vitalSigns.notes ?? null
     };
   }, [vitalSigns, patientId, encounterId, isTriage]);
-
 
   const normalizeFieldErrorMessage = (message: string) => {
     const messageLower = (message || '').toLowerCase();
@@ -184,7 +179,9 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     }
 
     const messageProperty: string = data?.message || '';
-    const errorKey = messageProperty.startsWith('error.') ? messageProperty.substring(6) : undefined;
+    const errorKey = messageProperty.startsWith('error.')
+      ? messageProperty.substring(6)
+      : undefined;
 
     const keyMap: Record<string, string> = {
       'payload.required': 'Vital signs payload is required.',
@@ -221,10 +218,8 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
       missingFields.push('Blood Pressure Systolic');
     if (!vitalSigns.bloodPressureDiastolic && vitalSigns.bloodPressureDiastolic !== 0)
       missingFields.push('Blood Pressure Diastolic');
-    if (!vitalSigns.heartRate && vitalSigns.heartRate !== 0)
-      missingFields.push('Heart Rate');
-    if (!vitalSigns.temperature && vitalSigns.temperature !== 0)
-      missingFields.push('Temperature');
+    if (!vitalSigns.heartRate && vitalSigns.heartRate !== 0) missingFields.push('Heart Rate');
+    if (!vitalSigns.temperature && vitalSigns.temperature !== 0) missingFields.push('Temperature');
     if (!vitalSigns.oxygenSaturation && vitalSigns.oxygenSaturation !== 0)
       missingFields.push('Oxygen Saturation');
     if (!vitalSigns.respiratoryRate && vitalSigns.respiratoryRate !== 0)
@@ -233,7 +228,9 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     if (missingFields.length > 0) {
       dispatch(
         notify({
-          msg: `Please fill in the required fields:\n${missingFields.map(f => `• ${f}`).join('\n')}`,
+          msg: `Please fill in the required fields:\n${missingFields
+            .map(f => `• ${f}`)
+            .join('\n')}`,
           sev: 'warning'
         })
       );
@@ -271,131 +268,131 @@ const VitalSigns: React.FC<VitalSignsProps> = ({
     <SectionContainer
       title={title}
       action={
-        <Form fluid layout="inline">
+        <div style={{ display: 'flex', gap: 8 }}>
           <MyButton onClick={handleSaveVitalSigns} disabled={disabled}>
             Save
           </MyButton>
           <MyButton onClick={handleClearVitalSigns} disabled={disabled}>
             Clear
           </MyButton>
-        </Form>
+        </div>
       }
       content={
+        <Form fluid>
         <div style={width ? { width } : {}}>
-          <Form fluid>
-            <div className="vital-signs-handle-position-row">
-              <MyInput
-                width="100%"
-                fieldType="number"
-                fieldName="bloodPressureSystolic"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                required
-              />
+          <div className="vital-signs-handle-position-row">
+            <MyInput
+              width="100%"
+              fieldType="number"
+              fieldName="bloodPressureSystolic"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              required
+            />
 
-              <div className="gap-betwen-blood-pressures">/</div>
-
-              <MyInput
-                width="100%"
-                fieldType="number"
-                fieldName="bloodPressureDiastolic"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                required
-              />
-
-              <div className="container-Column">
-                <MyLabel label="MAP" />
-                <div>
-                  <FontAwesomeIcon icon={faHeartPulse} className="my-icon" />
-                  <text>{meanArterialPressureValue}</text>
-                </div>
-              </div>
-            </div>
-
-            <div className="margin-bot-10">
-              <MyInput
-                required={isTriage}
-                width={isTriage ?"42%" : "100%"} 
-                fieldType="select"
-                fieldLabel="Measurment Site"
-                fieldName="measurementSite"
-                selectData={bloodPressureMeasurementSiteLov?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                searchable={false}
-              />
-            </div>
-
-            <div className="vital-signs-handle-position-row">
-              <MyInput
-                required
-                width="100%"
-                fieldType="number"
-                fieldName="heartRate"
-                rightAddon="bpm"
-                rightAddonwidth={45}
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-              />
-
-              <MyInput
-                required
-                width="100%"
-                fieldType="number"
-                rightAddon="C"
-                fieldName="temperature"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                allowDecimal
-              />
-            </div>
-
-            <div className="vital-signs-handle-position-row">
-              <MyInput
-                required
-                width="100%"
-                fieldType="number"
-                rightAddon=" % "
-                fieldName="oxygenSaturation"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-                allowDecimal
-              />
-
-              <MyInput
-                required
-                width="100%"
-                fieldType="number"
-                rightAddon="bpm"
-                rightAddonwidth={45}
-                fieldName="respiratoryRate"
-                fieldLabel="R.R"
-                record={vitalSigns}
-                setRecord={setVitalSigns}
-                disabled={disabled}
-              />
-            </div>
+            <div className="gap-betwen-blood-pressures">/</div>
 
             <MyInput
-              fieldLabel="Note"
               width="100%"
-              fieldName="notes"
-              fieldType="textarea"
+              fieldType="number"
+              fieldName="bloodPressureDiastolic"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              required
+            />
+
+            <div className="container-Column">
+              <MyLabel label="MAP" />
+              <div>
+                <FontAwesomeIcon icon={faHeartPulse} className="my-icon" />
+                <span>{meanArterialPressureValue}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="margin-bot-10">
+            <MyInput
+              required={isTriage}
+              width={isTriage ? '42%' : '100%'}
+              fieldType="select"
+              fieldLabel="Measurment Site"
+              fieldName="measurementSite"
+              selectData={bloodPressureMeasurementSiteLov?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              searchable={false}
+            />
+          </div>
+
+          <div className="vital-signs-handle-position-row">
+            <MyInput
+              required
+              width="100%"
+              fieldType="number"
+              fieldName="heartRate"
+              rightAddon="bpm"
+              rightAddonwidth={45}
               record={vitalSigns}
               setRecord={setVitalSigns}
               disabled={disabled}
             />
-          </Form>
+
+            <MyInput
+              required
+              width="100%"
+              fieldType="number"
+              rightAddon="C"
+              fieldName="temperature"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              allowDecimal
+            />
+          </div>
+
+          <div className="vital-signs-handle-position-row">
+            <MyInput
+              required
+              width="100%"
+              fieldType="number"
+              rightAddon=" % "
+              fieldName="oxygenSaturation"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+              allowDecimal
+            />
+
+            <MyInput
+              required
+              width="100%"
+              fieldType="number"
+              rightAddon="bpm"
+              rightAddonwidth={45}
+              fieldName="respiratoryRate"
+              fieldLabel="R.R"
+              record={vitalSigns}
+              setRecord={setVitalSigns}
+              disabled={disabled}
+            />
+          </div>
+
+          <MyInput
+            fieldLabel="Note"
+            width="100%"
+            fieldName="notes"
+            fieldType="textarea"
+            record={vitalSigns}
+            setRecord={setVitalSigns}
+            disabled={disabled}
+          />
         </div>
+        </Form>
       }
     />
   );

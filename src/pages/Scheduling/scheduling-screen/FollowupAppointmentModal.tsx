@@ -248,7 +248,9 @@ const FollowupAppointmentModal = ({
       size: 100
     },
     {
-      skip: !appointment?.resourceTypeLkey
+      // DEPARTMENT type resources are fetched via useGetAppointableDepartmentsQuery instead.
+      // Calling by-type with DEPARTMENT returns 400 from the backend.
+      skip: !appointment?.resourceTypeLkey || appointment?.resourceTypeLkey === 'DEPARTMENT'
     }
   );
   const dispatch = useAppDispatch();
@@ -815,7 +817,6 @@ const FollowupAppointmentModal = ({
         const day = String(dateValue.getDate()).padStart(2, '0');
         searchValue = `${year}-${month}-${day}`;
       } catch (error) {
-        console.error('Invalid date:', error);
         return;
       }
     }

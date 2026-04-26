@@ -73,7 +73,7 @@ const RootWrapper = () => {
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
   <Provider store={store}>
-    <HashRouter>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <RootWrapper />
     </HashRouter>
   </Provider>

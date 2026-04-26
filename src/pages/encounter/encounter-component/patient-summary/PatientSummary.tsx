@@ -10,7 +10,7 @@ import PreviuosVisitData from './PreviuosVisitData';
 import { useLocation } from 'react-router-dom';
 import PreObservation from './PreObservation/PreObservation';
 import Procedures from './Procedures/Procedures';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import ChooseDashboardScreen from './ChooseDashboardSections';
 import { ActionContext } from './ActionContext';
 import Last24HMedications from './Last24-hMedications';

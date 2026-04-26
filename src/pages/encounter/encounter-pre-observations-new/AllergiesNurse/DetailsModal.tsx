@@ -101,298 +101,273 @@ const DetailsModal = ({
               'disabled-panel': edit || allerges.statusLvalue?.valueCode === 'ARS_CANCEL'
             })}
           >
-            <Form fluid>
-              <Form fluid layout="inline">
-                <MyInput
-                  fieldType="select"
-                  fieldLabel="Allergy Type"
-                  selectData={allergyTypeEnumResponse ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  fieldName="allergenType"
-                  record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
-                  setRecord={
-                    !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
-                  }
-                  searchable={false}
-                  required
-                />
-                {isMedication ? (
-                  <>
-                    <MyInput
-                      fieldType="select"
-                      fieldLabel="Medication Class"
-                      selectData={medicationClassesListResponse ?? []}
-                      selectDataLabel="name"
-                      selectDataValue="id"
-                      fieldName="medicationClassId"
-                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
-                      setRecord={
-                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
-                      }
-                      loading={isMedicationClassesLoaded}
-                      required
-                    />
-                    <MyInput
-                      fieldType="checkPicker"
-                      fieldLabel="Active Ingredient"
-                      selectData={activeIngredientsAll?.data ?? []}
-                      selectDataLabel="name"
-                      selectDataValue="id"
-                      fieldName="activeIngredients"
-                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
-                      setRecord={
-                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
-                      }
-                      loading={isMedicationClassesLoaded}
-                    />
-                  </>
-                ) : (
+            <Form fluid layout="inline">
+              <MyInput
+                fieldType="select"
+                fieldLabel="Allergy Type"
+                selectData={allergyTypeEnumResponse ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
+                fieldName="allergenType"
+                record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                setRecord={
+                  !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                }
+                searchable={false}
+                required
+                column
+              />
+              {isMedication ? (
+                <>
                   <MyInput
                     fieldType="select"
-                    fieldLabel="Allergen"
-                    selectData={allergensListResponse?.data ?? []}
+                    fieldLabel="Medication Class"
+                    selectData={medicationClassesListResponse ?? []}
                     selectDataLabel="name"
                     selectDataValue="id"
-                    fieldName="allergenId"
+                    fieldName="medicationClassId"
                     record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
                     setRecord={
                       !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
                     }
-                    searchable={false}
+                    loading={isMedicationClassesLoaded}
                     required
+                    column
                   />
-                )}
+                  <MyInput
+                    fieldType="checkPicker"
+                    fieldLabel="Active Ingredient"
+                    selectData={activeIngredientsAll?.data ?? []}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    fieldName="activeIngredients"
+                    record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                    setRecord={
+                      !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                    }
+                    loading={isMedicationClassesLoaded}
+                    column
+                  />
+                </>
+              ) : (
                 <MyInput
                   fieldType="select"
-                  fieldLabel="Severity"
-                  selectData={severityEnumResponse ?? []}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  fieldName="severity"
+                  fieldLabel="Allergen"
+                  selectData={allergensListResponse?.data ?? []}
+                  selectDataLabel="name"
+                  selectDataValue="id"
+                  fieldName="allergenId"
                   record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
                   setRecord={
                     !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
                   }
                   searchable={false}
                   required
+                  column
                 />
-              </Form>
-              <br />
-              <Row className="rows-gap">
-                <Col md={24}>
-                  <MyButton
-                    prefixIcon={() => (
-                      <FontAwesomeIcon icon={showAllFields ? faChevronUp : faChevronDown} />
-                    )}
-                    onClick={() => setShowAllFields(!showAllFields)}
-                    color="var(--primary-blue)"
-                  >
-                    {showAllFields ? 'Hide Details' : 'More Details'}
-                  </MyButton>
-                </Col>
-              </Row>
-              <br />
-              {showAllFields && (
-                <>
-                  <Row className="rows-gap">
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="select"
-                        fieldLabel="Criticality"
-                        selectData={criticalityLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="criticality"
-                        record={
-                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
-                        }
-                        setRecord={
-                          !allerges?.id
-                            ? setPatientAllergiesCreateDTO
-                            : setPatientAllergiesUpdateDTO
-                        }
-                        searchable={false}
-                      />
-                    </Col>
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldName="certainty"
-                        record={
-                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
-                        }
-                        setRecord={
-                          !allerges?.id
-                            ? setPatientAllergiesCreateDTO
-                            : setPatientAllergiesUpdateDTO
-                        }
-                      />
-                    </Col>
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="select"
-                        fieldLabel="Treatment Strategy"
-                        selectData={treatmentstrategyLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="treatmentStrategy"
-                        record={
-                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
-                        }
-                        setRecord={
-                          !allerges?.id
-                            ? setPatientAllergiesCreateDTO
-                            : setPatientAllergiesUpdateDTO
-                        }
-                        searchable={false}
-                      />
-                    </Col>
-                  </Row>
-                  <Row className="rows-gap">
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="select"
-                        fieldLabel="Onset"
-                        selectData={onsetLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="onset"
-                        record={
-                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
-                        }
-                        setRecord={
-                          !allerges?.id
-                            ? setPatientAllergiesCreateDTO
-                            : setPatientAllergiesUpdateDTO
-                        }
-                        searchable={false}
-                      />
-                    </Col>
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="date"
-                        fieldName="onsetDate"
-                        record={
-                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
-                        }
-                        setRecord={
-                          !allerges?.id
-                            ? setPatientAllergiesCreateDTO
-                            : setPatientAllergiesUpdateDTO
-                        }
-                        disabled={
-                          !allerges?.id
-                            ? patientAllergiesCreateDTO?.onsetDateUndefined
-                            : patientAllergiesUpdateDTO?.onsetDateUndefined
-                        }
-                      />
-                    </Col>
-                    <Col md={8}>
-                      <MyInput
-                        fieldLabel="Undefined"
-                        fieldName="onsetDateUndefined"
-                        width="100%"
-                        fieldType="checkbox"
-                        record={
-                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
-                        }
-                        setRecord={
-                          !allerges?.id
-                            ? setPatientAllergiesCreateDTO
-                            : setPatientAllergiesUpdateDTO
-                        }
-                      />
-                    </Col>
-                  </Row>
-                  <Row className="rows-gap">
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="select"
-                        fieldLabel="Type of Propensity"
-                        selectData={allgPropnLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="typeOfPropensity"
-                        record={
-                          !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
-                        }
-                        setRecord={
-                          !allerges?.id
-                            ? setPatientAllergiesCreateDTO
-                            : setPatientAllergiesUpdateDTO
-                        }
-                        searchable={false}
-                      />
-                    </Col>
-                    <Col md={8}>
-                      <Form fluid>
-                        <MyInput
-                          disabled={
-                            !allerges?.id
-                              ? patientAllergiesCreateDTO?.byPatient
-                              : patientAllergiesUpdateDTO?.byPatient
-                          }
-                          width="100%"
-                          fieldType="select"
-                          fieldLabel="Source of Information"
-                          selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="sourceOfInformation"
-                          record={
-                            !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
-                          }
-                          setRecord={
-                            !allerges?.id
-                              ? setPatientAllergiesCreateDTO
-                              : setPatientAllergiesUpdateDTO
-                          }
-                        />
-                      </Form>
-                    </Col>
-                    <Col md={8}>
-                      <Form fluid>
-                        <MyInput
-                          fieldLabel="BY Patient"
-                          fieldName="byPatient"
-                          width="100%"
-                          fieldType="checkbox"
-                          record={
-                            !allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO
-                          }
-                          setRecord={
-                            !allerges?.id
-                              ? setPatientAllergiesCreateDTO
-                              : setPatientAllergiesUpdateDTO
-                          }
-                        />
-                      </Form>
-                    </Col>
-                  </Row>
-                  <Row className="rows-gap">
-                    <Row>
-                      <Col md={24}>
-                        <MyInput
-                          width="100%"
-                          fieldType="checkPicker"
-                          fieldLabel="Allergic Reactions"
-                          selectData={reactionLovQueryResponse?.object ?? []}
-                          selectDataLabel="lovDisplayVale"
-                          selectDataValue="key"
-                          fieldName="reactions"
-                          record={reactions}
-                          setRecord={setReactions}
-                        />
-                      </Col>
-                    </Row>
+              )}
+              <MyInput
+                fieldType="select"
+                fieldLabel="Severity"
+                selectData={severityEnumResponse ?? []}
+                selectDataLabel="label"
+                selectDataValue="value"
+                fieldName="severity"
+                record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                setRecord={
+                  !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                }
+                searchable={false}
+                required
+                column
+              />
+            </Form>
+            <br />
+            <Row className="rows-gap">
+              <Col md={24}>
+                <MyButton
+                  prefixIcon={() => (
+                    <FontAwesomeIcon icon={showAllFields ? faChevronUp : faChevronDown} />
+                  )}
+                  onClick={() => setShowAllFields(!showAllFields)}
+                  color="var(--primary-blue)"
+                >
+                  {showAllFields ? 'Hide Details' : 'More Details'}
+                </MyButton>
+              </Col>
+            </Row>
+            <br />
+            {showAllFields && (
+              <Form fluid layout="inline">
+                <Row className="rows-gap">
+                  <Col md={8}>
+                    <MyInput
+                      width="180px"
+                      fieldType="select"
+                      fieldLabel="Criticality"
+                      selectData={criticalityLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="criticality"
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
+                      searchable={false}
+                      column
+                    />
+                  </Col>
+                  <Col md={8}>
+                    <MyInput
+                      width="180px"
+                      fieldName="certainty"
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
+                      column
+                    />
+                  </Col>
+                  <Col md={8}>
+                    <MyInput
+                      width="180px"
+                      fieldType="select"
+                      fieldLabel="Treatment Strategy"
+                      selectData={treatmentstrategyLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="treatmentStrategy"
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
+                      searchable={false}
+                      column
+                    />
+                  </Col>
+                </Row>
+                <Row className="rows-gap">
+                  <Col md={8}>
+                    <MyInput
+                      width="180px"
+                      fieldType="select"
+                      fieldLabel="Onset"
+                      selectData={onsetLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="onset"
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
+                      searchable={false}
+                      column
+                    />
+                  </Col>
+                  <Col md={8}>
+                    <MyInput
+                      width="180px"
+                      fieldType="date"
+                      fieldName="onsetDate"
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
+                      disabled={
+                        !allerges?.id
+                          ? patientAllergiesCreateDTO?.onsetDateUndefined
+                          : patientAllergiesUpdateDTO?.onsetDateUndefined
+                      }
+                      column
+                    />
+                  </Col>
+                  <Col md={8}>
+                    <MyInput
+                      fieldLabel="Undefined"
+                      fieldName="onsetDateUndefined"
+                      width="180px"
+                      fieldType="checkbox"
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
+                      column
+                    />
+                  </Col>
+                </Row>
+                <Row className="rows-gap">
+                  <Col md={8}>
+                    <MyInput
+                      width="180px"
+                      fieldType="select"
+                      fieldLabel="Type of Propensity"
+                      selectData={allgPropnLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="typeOfPropensity"
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
+                      searchable={false}
+                      column
+                    />
+                  </Col>
+                  <Col md={8}>
+                    <MyInput
+                      disabled={
+                        !allerges?.id
+                          ? patientAllergiesCreateDTO?.byPatient
+                          : patientAllergiesUpdateDTO?.byPatient
+                      }
+                      width="180px"
+                      fieldType="select"
+                      fieldLabel="Source of Information"
+                      selectData={sourceofinformationLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="sourceOfInformation"
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
+                      column
+                    />
+                  </Col>
+                  <Col md={8}>
+                    <MyInput
+                      fieldLabel="BY Patient"
+                      fieldName="byPatient"
+                      width="180px"
+                      fieldType="checkbox"
+                      record={!allerges?.id ? patientAllergiesCreateDTO : patientAllergiesUpdateDTO}
+                      setRecord={
+                        !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
+                      }
+                      column
+                    />
+                  </Col>
+                </Row>
+                <Row className="rows-gap">
+                  <Col md={24}>
                     <MyInput
                       width="100%"
+                      className="full-width-input"
+                      fieldType="checkPicker"
+                      fieldLabel="Allergic Reactions"
+                      selectData={reactionLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      fieldName="reactions"
+                      record={reactions}
+                      setRecord={setReactions}
+                      column
+                    />
+                  </Col>
+                  <Col md={24}>
+                    <MyInput
+                      width="100%"
+                      className="full-width-input"
                       fieldLabel="Note"
                       fieldType="textarea"
                       fieldName="note"
@@ -402,10 +377,10 @@ const DetailsModal = ({
                         !allerges?.id ? setPatientAllergiesCreateDTO : setPatientAllergiesUpdateDTO
                       }
                     />
-                  </Row>
-                </>
-              )}
-            </Form>
+                  </Col>
+                </Row>
+              </Form>
+            )}
           </div>
         );
     }

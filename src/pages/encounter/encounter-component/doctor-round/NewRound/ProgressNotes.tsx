@@ -1,5 +1,4 @@
 import React from 'react';
-import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 const ProgressNotes = ({ doctorRound, setDoctorRound, doctorRoundList, ...props }) => {
           // Direction handling for RTL/LTR
@@ -10,7 +9,7 @@ const ProgressNotes = ({ doctorRound, setDoctorRound, doctorRoundList, ...props 
 
 
   return (
-    <Form dir={dir}> 
+    <div dir={dir}>
       <MyInput
         width="100%"
         fieldLabel="Initial Note"
@@ -44,7 +43,7 @@ const ProgressNotes = ({ doctorRound, setDoctorRound, doctorRoundList, ...props 
         disabled={!doctorRound?.key || props.view}
         fieldType="textarea"
       />
-    </Form>
+    </div>
   );
 };
 export default ProgressNotes;

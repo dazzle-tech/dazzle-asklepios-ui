@@ -22,8 +22,20 @@ const UccMedicationOrderAddModal = ({
   const dispatch = useAppDispatch();
 
   // ================= state =================
-  const [record, setRecord] = useState<any>({ ...newPatientUccMedicationOrder });
-  const [selectedActiveIngredient, setSelectedActiveIngredient] = useState({ ...newActiveIngredient })
+  const emptyRecord = {
+    ...newPatientUccMedicationOrder,
+    instructionText: '',
+    dose: '',
+    unit: null,
+    frequency: null,
+    roa: null,
+  };
+
+  const [record, setRecord] = useState<any>({ ...emptyRecord });
+  const [selectedActiveIngredient, setSelectedActiveIngredient] = useState({
+    ...newActiveIngredient,
+    drugClassName: '',
+  })
   const [selectedOption, setSelectedOption] = useState<
     'MANUAL_INSTRUCTIONS' | 'CUSTOM_INSTRUCTIONS'
   >('MANUAL_INSTRUCTIONS');
@@ -64,7 +76,7 @@ const UccMedicationOrderAddModal = ({
 
   useEffect(() => {
     if (!record.activeIngredientId) {
-      setSelectedActiveIngredient({ ...newActiveIngredient });
+      setSelectedActiveIngredient({ ...newActiveIngredient, drugClassName: '' });
       return;
     }
 
@@ -73,7 +85,7 @@ const UccMedicationOrderAddModal = ({
     );
 
     if (!selected) {
-      setSelectedActiveIngredient({ ...newActiveIngredient });
+      setSelectedActiveIngredient({ ...newActiveIngredient, drugClassName: '' });
       return;
     }
 
@@ -85,12 +97,12 @@ const UccMedicationOrderAddModal = ({
 
   const handleSave = () => {
     if (!record.activeIngredientId) {
-      dispatch(notify({ msg: 'Please select active ingredient', sev: 'error' }));
+      dispatch(notify({ msg: 'Please select active ingredient', sev: 'warning' }));
       return;
     }
 
     if (!patient?.id || !encounter?.id) {
-      dispatch(notify({ msg: 'Missing patient or encounter', sev: 'error' }));
+      dispatch(notify({ msg: 'Missing patient or encounter', sev: 'warning' }));
       return;
     }
 
@@ -108,7 +120,7 @@ const UccMedicationOrderAddModal = ({
     }
 
     if (!finalInstruction) {
-      dispatch(notify({ msg: 'Please enter instructions', sev: 'error' }));
+      dispatch(notify({ msg: 'Please enter instructions', sev: 'warning' }));
       return;
     }
 
@@ -159,7 +171,7 @@ const UccMedicationOrderAddModal = ({
         onAdd(payload);
       }
 
-      setRecord({ ...newPatientUccMedicationOrder });
+      setRecord({ ...emptyRecord });
 
       setSelectedOption('MANUAL_INSTRUCTIONS');
       setOpen(false);
@@ -167,7 +179,7 @@ const UccMedicationOrderAddModal = ({
       dispatch(
         notify({
           msg: 'Failed to add medication',
-          sev: 'error'
+          sev: 'warning'
         })
       );
     }
@@ -180,12 +192,13 @@ useEffect(() => {
   if (!editRow) return;
 
   setRecord({
-    activeIngredientId: editRow.activeIngredientId,
-    instructionText: editRow.instructionText,
-    dose: editRow.dose,
-    unit: editRow.doseUnit,
-    frequency: editRow.frequency,
-    roa: editRow.route
+    ...emptyRecord,
+    activeIngredientId: editRow.activeIngredientId ?? null,
+    instructionText: editRow.instructionText ?? '',
+    dose: editRow.dose ?? '',
+    unit: editRow.doseUnit ?? null,
+    frequency: editRow.frequency ?? null,
+    roa: editRow.route ?? null,
   });
 
   setSelectedOption(editRow.instructionType || 'MANUAL_INSTRUCTIONS');
@@ -193,7 +206,7 @@ useEffect(() => {
 
 useEffect(() => {
   if (!open) {
-    setRecord({ ...newPatientUccMedicationOrder });
+    setRecord({ ...emptyRecord });
     setSelectedOption('MANUAL_INSTRUCTIONS');
   }
 }, [open]);
@@ -226,6 +239,7 @@ useEffect(() => {
               selectDataValue="id"
               record={record}
               setRecord={setRecord}
+              required
             />
 
             <div className="add-medication-info-container">
@@ -270,6 +284,7 @@ useEffect(() => {
                 setRecord={setRecord}
                 width="100%"
                 height={80}
+                required
               />
             )}
 

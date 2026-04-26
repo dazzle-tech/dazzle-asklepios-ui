@@ -12,6 +12,7 @@ import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds, formatEnumString } from '@/utils';
 import BlockIcon from '@rsuite/icons/Block';
 import { useLocation } from 'react-router-dom';
@@ -31,6 +32,24 @@ import { cond } from 'lodash';
 import { useGetProceduresByIdsQuery } from '@/services/setup/procedure/procedureService';
 import { useGetIcdDiagnosesByIdsQuery } from '@/services/setup/icdTreeService';
 import './styles.less';
+
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'REQUESTED':
+      return '#E6A100';
+    case 'CONFIRMED':
+    case 'COMPLETED':
+      return '#0DAA41';
+    case 'CANCELLED':
+      return '#D64545';
+    case 'IN_PROGRESS':
+      return '#0B5ED7';
+    case 'READY':
+      return '#17A2B8';
+    default:
+      return '#6c757d';
+  }
+};
 
 const TableLoader = () => (
   <div className="table-loader">
@@ -140,6 +159,8 @@ const Referrals = (props: any) => {
       toDepartmentId: null,
       categoryKey: null,
       procedureId: null,
+      procedureObj: null,
+      procedureName: null,
       notes: null,
       extraDocumentation: null,
       scheduledDateTime: null
@@ -224,7 +245,6 @@ const Referrals = (props: any) => {
       handleClear();
     } catch (error) {
       dispatch(notify({ msg: 'Cancellation failed', sev: 'warning' }));
-      console.error('Cancel error:', error);
     }
   };
 
@@ -395,56 +415,83 @@ const Referrals = (props: any) => {
         }
       },
       {
+        key: 'status',
+        dataKey: 'status',
+        title: <Translate>STATUS</Translate>,
+        flexGrow: 1.5,
+        minWidth: 110,
+        render: (rowData: any) => {
+          const status = String(rowData?.status ?? '').toUpperCase();
+          const statusDisplay = status ? status.replace(/_/g, ' ') : '';
+          return <MyBadgeStatus contant={statusDisplay} color={getStatusColor(status)} />;
+        }
+      },
+      {
         key: 'edit',
         dataKey: '',
         title: <Translate>EDIT</Translate>,
         flexGrow: 1,
-        render: (rowData: any) => (
-          <MdModeEdit
-            size={24}
-            fill="var(--primary-gray)"
-            className="edit-icon"
-            onClick={async e => {
-              e.stopPropagation();
+        render: (rowData: any) => {
+          const isCancelled = rowData?.status === 'CANCELLED';
+          return (
+            <MdModeEdit
+              size={24}
+              fill={isCancelled ? '#ccc' : 'var(--primary-gray)'}
+              className={isCancelled ? 'edit-icon disabled' : 'edit-icon'}
+              style={{ cursor: isCancelled ? 'not-allowed' : 'pointer', opacity: isCancelled ? 0.5 : 1 }}
+              onClick={async e => {
+                e.stopPropagation();
 
-              if (!rowData?.procedureId) {
-                dispatch(notify({ msg: 'Procedure ID is missing', sev: 'warning' }));
-                return;
-              }
+                if (isCancelled) {
+                  dispatch(
+                    notify({
+                      msg: 'Cancelled procedure cannot be edited',
+                      sev: 'warning'
+                    })
+                  );
+                  return;
+                }
 
-              try {
-                const procedureRes = await getProcedureById({
-                  id: rowData.procedureId
-                }).unwrap();
+                if (!rowData?.procedureId) {
+                  dispatch(notify({ msg: 'Procedure ID is missing', sev: 'warning' }));
+                  return;
+                }
 
-                const updatedProcedure = {
-                  ...rowData,
-                  procedureId: procedureRes.id,
-                  categoryKey:
-                    procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
+                try {
+                  const procedureRes = await getProcedureById({
+                    id: rowData.procedureId
+                  }).unwrap();
 
-                  toDepartmentId:
-                    rowData.toDepartmentId ||
-                    procedureRes.toDepartmentId ||
-                    procedureRes.departmentId ||
-                    procedureRes.department?.id,
+                  const updatedProcedure = {
+                    ...rowData,
+                    procedureId: procedureRes.id,
+                    procedureObj: procedureRes,
+                    procedureName: procedureRes.name,
+                    categoryKey:
+                      procedureRes.categoryType || procedureRes.category || rowData.categoryKey,
 
-                  procedureLevel:
-                    rowData.procedureLevel ||
-                    procedureRes.procedureLevel ||
-                    procedureRes.level ||
-                    procedureRes.procedureLevelKey
-                };
+                    toDepartmentId:
+                      rowData.toDepartmentId ||
+                      procedureRes.toDepartmentId ||
+                      procedureRes.departmentId ||
+                      procedureRes.department?.id,
 
-                setProcedure(updatedProcedure);
-                setOpenDetailsModal(true);
-              } catch (error) {
-                console.error('GET PROCEDURE ERROR', error);
-                dispatch(notify({ msg: 'Failed to load procedure details', sev: 'warning' }));
-              }
-            }}
-          />
-        )
+                    procedureLevel:
+                      rowData.procedureLevel ||
+                      procedureRes.procedureLevel ||
+                      procedureRes.level ||
+                      procedureRes.procedureLevelKey
+                  };
+
+                  setProcedure(updatedProcedure);
+                  setOpenDetailsModal(true);
+                } catch (error) {
+                  dispatch(notify({ msg: 'Failed to load procedure details', sev: 'warning' }));
+                }
+              }}
+            />
+          );
+        }
       },
       {
         key: 'created',
@@ -560,7 +607,6 @@ const Referrals = (props: any) => {
                 setShowPreview(true);
               }
             } catch (error) {
-              console.error('Failed to load procedure details:', error);
               setProcedure(rowData);
               setEditing(rowData?.status === 'CANCELLED');
               setShowPreview(true);

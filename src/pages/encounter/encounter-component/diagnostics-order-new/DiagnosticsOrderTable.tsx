@@ -125,7 +125,6 @@ const getDepartmentName = (id?: number) =>
       render: (rowData: any) => {
         const rowId = Number(rowData.id);
         const isDisabled = rowData.status !== 'NEW';
-        console.log(rowData, "Row Data");
         return (
           <Checkbox
             checked={selectedRows.includes(rowId)}
@@ -254,7 +253,7 @@ const getDepartmentName = (id?: number) =>
       }
     },
     {
-      key: '',
+      key: 'createdAtBy',
       title: <Translate>Created At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
@@ -266,7 +265,7 @@ const getDepartmentName = (id?: number) =>
       )
     },
     {
-      key: '',
+      key: 'updatedAtBy',
       title: <Translate>Updated At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (
@@ -278,7 +277,7 @@ const getDepartmentName = (id?: number) =>
       )
     },
     {
-      key: '',
+      key: 'cancelledAtBy',
       title: <Translate>Cancelled At/By</Translate>,
       expandable: true,
       render: (rowData: any) => (

@@ -17,7 +17,8 @@ import { useLazyGetActiveIngredientPreRequestedTestsQuery } from '@/services/set
 import { useGetActiveIngredientsActiveByNameQuery } from '@/services/setup/activeIngredients/activeIngredientsService';
 import {
   useGetBrandMedicationByIdQuery,
-  useGetBrandMedicationsByActiveIdsMutation} from '@/services/setup/brandmedication/BrandMedicationService';
+  useGetBrandMedicationsByActiveIdsMutation
+} from '@/services/setup/brandmedication/BrandMedicationService';
 import './styles.less';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
 import InfoCardList from '@/components/InfoCardList';
@@ -30,14 +31,17 @@ import { faRightLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CheckIcon from '@rsuite/icons/Check';
 import SearchIcon from '@rsuite/icons/Search';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Dropdown, Form, Input, InputGroup, Radio, RadioGroup, Text } from 'rsuite';
 import DiagnosticsOrder from '../diagnostics-order-new';
 import Substitues from '../drug-order/SubstitutesNew';
 import ActiveIngrediantList from './ActiveIngredient';
 import Instructions from './Instructions';
 import PatientDiagnosisTable from '../../medical-notes-and-assessments/patient-diagnosis/PatientDiagnosisTable';
-import { useCheckCurrentMedicationExistsQuery, useLazyCheckCurrentMedicationExistsQuery } from '@/services/patients/currentMedicationService';
+import {
+  useCheckCurrentMedicationExistsQuery,
+  useLazyCheckCurrentMedicationExistsQuery
+} from '@/services/patients/currentMedicationService';
 
 const DetailsModal = ({
   edit,
@@ -117,10 +121,8 @@ const DetailsModal = ({
 
   const activeIngredientData = activeIngredientListResponse?.data ?? [];
 
- 
   const [getBrandsByActive, { data: brandMedicationByActiveResponse, isLoading }] =
-  useGetBrandMedicationsByActiveIdsMutation();
-
+    useGetBrandMedicationsByActiveIdsMutation();
 
   const allBrandsForSelectedActive = brandMedicationByActiveResponse ?? [];
 
@@ -134,21 +136,16 @@ const DetailsModal = ({
   const { data: Brand } = useGetBrandMedicationByIdQuery(medIdForBrand, {
     skip: !medIdForBrand
   });
-const {
-  data: exists,
-  isFetching
-} = useCheckCurrentMedicationExistsQuery(
-  {
-    patientId: patient?.id,
-    activeIngredientId: selectedActiveIngredient?.id
-  },
-  {
-    skip: !selectedActiveIngredient?.id || !patient?.id
-  }
-);  const {
-    data: customeInstructions,
-    refetch: refetchCo
-  } = useGetCustomeInstructionsQuery({
+  const { data: exists, isFetching } = useCheckCurrentMedicationExistsQuery(
+    {
+      patientId: patient?.id,
+      activeIngredientId: selectedActiveIngredient?.id
+    },
+    {
+      skip: !selectedActiveIngredient?.id || !patient?.id
+    }
+  );
+  const { data: customeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
     ...initialListRequest
   });
 
@@ -175,16 +172,16 @@ const {
     useCreatePatientPrescriptionMedicationMutation();
   const [updatePrescriptionMedication, { isLoading: isUpdatingPrescriptionMedication }] =
     useUpdatePatientPrescriptionMedicationMutation();
-useEffect(() => {
-  if (exists === true) {
-    dispatch(
-      notify({
-        msg: 'This active ingredient already exists in patient current medications and is written in prescription',
-        sev: 'warning'
-      })
-    );
-  }
-}, [exists]);
+  useEffect(() => {
+    if (exists === true) {
+      dispatch(
+        notify({
+          msg: 'This active ingredient already exists in patient current medications and is written in prescription',
+          sev: 'warning'
+        })
+      );
+    }
+  }, [exists]);
   useEffect(() => {
     if (!open) {
       setSearchKeyword('');
@@ -337,12 +334,11 @@ useEffect(() => {
   useEffect(() => {
     if (!open) return;
 
-    const aiList =
-      selectedGeneric?.activeIngredients?.length
-        ? selectedGeneric.activeIngredients
-        : selectedActiveIngredient
-          ? [selectedActiveIngredient]
-          : [];
+    const aiList = selectedGeneric?.activeIngredients?.length
+      ? selectedGeneric.activeIngredients
+      : selectedActiveIngredient
+      ? [selectedActiveIngredient]
+      : [];
 
     if (!aiList.length) {
       setTestsByAiId({});
@@ -515,11 +511,7 @@ useEffect(() => {
       administrationInstructionValue = adminInstructions.administrationInstructions.join(',');
     }
 
-    const selectedMedicationId =
-      selectedGeneric?.id ?? prescriptionMedication?.medicationsId ;
-    
-
-   
+    const selectedMedicationId = selectedGeneric?.id ?? prescriptionMedication?.medicationsId;
 
     const isChronic = Boolean(prescriptionMedication?.chronicMedication);
     const durationRaw = prescriptionMedication?.duration;
@@ -561,8 +553,6 @@ useEffect(() => {
       indicationUseValue !== undefined &&
       String(indicationUseValue).trim() !== '';
 
-  
-
     if (!hasIndicationUse) {
       dispatch(notify({ msg: 'Please fill Indication Use', sev: 'warning' }));
       return;
@@ -577,8 +567,8 @@ useEffect(() => {
         selectedOption === OPTION_MANUAL
           ? String(inst ?? '')
           : selectedOption === OPTION_PREDEFINED
-            ? String(inst ?? '')
-            : null,
+          ? String(inst ?? '')
+          : null,
       dose:
         selectedOption === OPTION_CUSTOM
           ? customeinst?.dose ?? null
@@ -621,7 +611,7 @@ useEffect(() => {
     };
 
     try {
-      const medicationId = prescriptionMedication?.id ;
+      const medicationId = prescriptionMedication?.id;
       if (medicationId) {
         await updatePrescriptionMedication({
           id: Number(medicationId),
@@ -690,32 +680,32 @@ useEffect(() => {
     setShowActiveIngredientDropdown(!!value);
   };
 
-const handleActiveIngredientClick = async (activeIngredient: any) => {
-  setSelectedActiveIngredient(activeIngredient);
-  setActiveIngredientKeyword(activeIngredient?.name ?? '');
-  setShowActiveIngredientDropdown(false);
+  const handleActiveIngredientClick = async (activeIngredient: any) => {
+    setSelectedActiveIngredient(activeIngredient);
+    setActiveIngredientKeyword(activeIngredient?.name ?? '');
+    setShowActiveIngredientDropdown(false);
 
-  setSelectedGeneric(null);
-  setSearchKeyword('');
-  setShowMedicationDropdown(false);
+    setSelectedGeneric(null);
+    setSearchKeyword('');
+    setShowMedicationDropdown(false);
 
-  if (activeIngredient?.id) {
-    try {
-      await getBrandsByActive([activeIngredient.id]).unwrap();
-    } catch (e) {
-      console.error('Error fetching brands:', e);
+    if (activeIngredient?.id) {
+      try {
+        await getBrandsByActive([activeIngredient.id]).unwrap();
+      } catch (e) {
+        console.error('Error fetching brands:', e);
+      }
     }
-  }
 
-  if (activeIngredient?.highAlert) {
-    dispatch(
-      notify({
-        msg: 'This active ingredient is high alert',
-        sev: 'warning'
-      })
-    );
-  }
-};
+    if (activeIngredient?.highAlert) {
+      dispatch(
+        notify({
+          msg: 'This active ingredient is high alert',
+          sev: 'warning'
+        })
+      );
+    }
+  };
 
   const handleSaveAndClose = () => {
     handleSaveMedication(true);
@@ -726,7 +716,6 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
     setSearchKeyword(Generic?.name ?? '');
     setShowMedicationDropdown(false);
   };
-
 
   const handleSearch = value => {
     if (!selectedActiveIngredient) {
@@ -778,6 +767,18 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
     )
   );
 
+  // Normalize undefined fields to null so rsuite inputs stay controlled at all times.
+  // When handleCleare() resets to newApPrescriptionMedications (which has many `undefined` fields),
+  // rsuite InputNumber/Input would switch from controlled to uncontrolled, causing React warnings.
+  const safeRecord = useMemo(() => {
+    if (!prescriptionMedication) return {};
+    const result: any = { ...prescriptionMedication };
+    Object.keys(result).forEach(k => {
+      if (result[k] === undefined) result[k] = null;
+    });
+    return result;
+  }, [prescriptionMedication]);
+
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
@@ -794,7 +795,9 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
           </span>
         }
         size="70vw"
-        leftTitle={<Translate>{selectedGeneric ? selectedGeneric.name : 'Select Generic'}</Translate>}
+        leftTitle={
+          <Translate>{selectedGeneric ? selectedGeneric.name : 'Select Generic'}</Translate>
+        }
         rightTitle="Medication Order Details"
         leftContent={
           <div dir={dir}>
@@ -823,7 +826,11 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
             >
               Order Related Tests
             </MyButton>
-            <MyButton appearance="primary" onClick={handleSaveAndClose} prefixIcon={() => <CheckIcon />}>
+            <MyButton
+              appearance="primary"
+              onClick={handleSaveAndClose}
+              prefixIcon={() => <CheckIcon />}
+            >
               Save and Close
             </MyButton>
           </div>
@@ -848,7 +855,9 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                                 placeholder={'Active Ingredient Name'}
                                 value={activeIngredientKeyword}
                                 onChange={handleSearchActiveIngredient}
-                                onFocus={() => setShowActiveIngredientDropdown(!!activeIngredientKeyword)}
+                                onFocus={() =>
+                                  setShowActiveIngredientDropdown(!!activeIngredientKeyword)
+                                }
                               />
                               <InputGroup.Button>
                                 <SearchIcon />
@@ -907,8 +916,6 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                                   <SearchIcon />
                                 </InputGroup.Button>
                               </InputGroup>
-
-                            
                             </div>
 
                             {showMedicationDropdown && selectedActiveIngredient && (
@@ -924,7 +931,6 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                                         <div className="prescription-dropdown-item-title">
                                           {Generic.name}
                                         </div>
-                                      
                                       </div>
                                     </Dropdown.Item>
                                   ))
@@ -981,7 +987,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                             fieldType="number"
                             fieldLabel="Duration"
                             fieldName={'duration'}
-                            record={prescriptionMedication}
+                            record={safeRecord}
                             setRecord={setPrescriptionMedications}
                           />
                           <MyInput
@@ -993,7 +999,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
                             fieldName="durationType"
-                            record={prescriptionMedication}
+                            record={safeRecord}
                             setRecord={setPrescriptionMedications}
                             searchable={false}
                           />
@@ -1004,7 +1010,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                               fieldLabel="Chronic Medication"
                               fieldType="checkbox"
                               fieldName="chronicMedication"
-                              record={prescriptionMedication}
+                              record={safeRecord}
                               setRecord={setPrescriptionMedications}
                             />
                           </div>
@@ -1019,7 +1025,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                             fieldType="number"
                             fieldLabel="Maximum Dose"
                             fieldName="maximumDose"
-                            record={prescriptionMedication}
+                            record={safeRecord}
                             setRecord={setPrescriptionMedications}
                           />
 
@@ -1030,7 +1036,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                               fieldLabel="Brand Substitute Allowed"
                               fieldType="checkbox"
                               fieldName="genericSubstitute"
-                              record={prescriptionMedication}
+                              record={safeRecord}
                               setRecord={setPrescriptionMedications}
                             />
                           </div>
@@ -1082,7 +1088,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
                             fieldName={'indicationUseLkey'}
-                            record={prescriptionMedication}
+                            record={safeRecord}
                             setRecord={setPrescriptionMedications}
                             searchable={false}
                             required
@@ -1203,7 +1209,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                       height={100}
                       fieldType="textarea"
                       fieldName="notes"
-                      record={prescriptionMedication}
+                      record={safeRecord}
                       setRecord={setPrescriptionMedications}
                       width="100%"
                     />
@@ -1213,7 +1219,7 @@ const handleActiveIngredientClick = async (activeIngredient: any) => {
                       height={100}
                       fieldType="textarea"
                       fieldName="extraDocumentation"
-                      record={prescriptionMedication}
+                      record={safeRecord}
                       setRecord={setPrescriptionMedications}
                       width="100%"
                     />

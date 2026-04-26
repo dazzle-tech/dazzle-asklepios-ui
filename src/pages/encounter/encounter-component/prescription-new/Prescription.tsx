@@ -52,7 +52,6 @@ import type { PatientPrescription, PatientPrescriptionMedication } from '@/types
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
 import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
-import { render } from 'react-dom';
 
 type Props = any;
 
@@ -328,18 +327,8 @@ const Prescription = (props: Props) => {
   const activeIngredientIds = useMemo(() => {
     const medications = patientPrescriptionMedicationsRaw?.data ?? [];
 
-    const ids = medications.map((item) => {
-      console.log('ID raw:', item.activeIngredientId);
-      console.log(typeof medications[0]?.activeIngredientId);
-      return item.activeIngredientId;
-    });
-
-    console.log('Mapped IDs:', ids);
-
+    const ids = medications.map((item) => item.activeIngredientId);
     const filtered = ids.filter((id): id is number => id != null);
-    console.log('Filtered IDs:', filtered);
-
-
     return filtered;
   }, [patientPrescriptionMedicationsRaw]);
 

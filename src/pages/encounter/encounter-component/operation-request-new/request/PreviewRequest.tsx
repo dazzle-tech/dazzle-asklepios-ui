@@ -20,7 +20,23 @@ const PreviewRequest: React.FC<PreviewRequestProps> = ({
     encounter
 }) => {
     const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
-    const [previewData, setPreviewData] = useState<any>({});
+    const [previewData, setPreviewData] = useState<any>({
+        facilityName: '',
+        departmentName: '',
+        operationDateTime: '',
+        priority: '',
+        operationName: '',
+        operationLevel: '',
+        operationType: '',
+        bodyPart: '',
+        sideOfProcedure: '',
+        plannedAnesthesiaType: '',
+        implantOrDeviceExpected: false,
+        needBloodProducts: false,
+        extraDocumentation: '',
+        notes: '',
+        diagnosisKey: ''
+    });
 
     useEffect(() => {
         if (request) {

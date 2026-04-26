@@ -353,44 +353,82 @@ const Details = ({
     setPractitionerPage(0);
   };
 
+  const buildValidationError = () => {
+    const fieldErrors = [];
+
+    if (!formData.toFacilityId) {
+      fieldErrors.push({ field: 'toFacilityId', message: 'must not be null' });
+    }
+
+    if (formData.destinationType === 'DEPARTMENT' && !formData.toDepartmentId) {
+      fieldErrors.push({ field: 'toDepartmentId', message: 'must not be null' });
+    }
+
+    if (formData.destinationType === 'CONSULTANT') {
+      if (!formData.consultantSpeciality) {
+        fieldErrors.push({ field: 'consultantSpeciality', message: 'must not be null' });
+      }
+      if (!formData.practitionerId) {
+        fieldErrors.push({ field: 'practitionerId', message: 'must not be null' });
+      }
+    }
+
+    if (!formData.consultationMethod) {
+      fieldErrors.push({ field: 'consultationMethod', message: 'must not be null' });
+    }
+
+    if (!formData.consultationType) {
+      fieldErrors.push({ field: 'consultationType', message: 'must not be null' });
+    }
+
+    if (!formData.consultationLevel) {
+      fieldErrors.push({ field: 'consultationLevel', message: 'must not be null' });
+    }
+
+    if (!formData.consultationContent) {
+      fieldErrors.push({ field: 'consultationContent', message: 'must not be blank' });
+    }
+
+    return fieldErrors.length > 0
+      ? {
+          data: {
+            fieldErrors
+          },
+          status: 400
+        }
+      : null;
+  };
+
   const handleSave = async () => {
+    const validationError = buildValidationError();
+
+    if (validationError) {
+      handleCrudError(validationError, dispatch, CONSULTATION_ERROR_MAP);
+      return; 
+    }
+
     try {
       if (formData.id) {
-        const updatePayload: ConsultationUpdatePayload = {
-          id: formData.id,
-          destinationType: formData.destinationType,
-          toFacilityId: formData.toFacilityId,
-          toDepartmentId: formData.toDepartmentId,
-          consultantSpeciality: formData.consultantSpeciality,
-          practitionerId: formData.practitionerId,
-          consultationMethod: formData.consultationMethod,
-          consultationType: formData.consultationType,
-          consultationLevel: formData.consultationLevel,
-          consultationContent: formData.consultationContent,
-          notes: formData.notes,
-          extraDocument: formData.extraDocument,
-          approvalNumber: formData.approvalNumber
-        };
-        await updateConsultation(updatePayload).unwrap();
+        await updateConsultation({
+          ...formData
+        }).unwrap();
+
         dispatch(notify({ msg: 'Consultation updated successfully', sev: 'success' }));
       } else {
         await createConsultation({
           ...formData,
-          status: 'REQUESTED',
-          fromFacilityId: selectedDepartment.facilityId,
-          fromDepartmentId: selectedDepartment.departmentId
+          status: 'REQUESTED'
         }).unwrap();
+
         dispatch(notify({ msg: 'Consultation created successfully', sev: 'success' }));
       }
 
       setOpen(false);
       handleClear();
+      refetchCon?.();
     } catch (err) {
       handleCrudError(err, dispatch, CONSULTATION_ERROR_MAP);
-      return;
     }
-
-    refetchCon?.();
   };
 
   const handleOpenAttachmentModal = () => {

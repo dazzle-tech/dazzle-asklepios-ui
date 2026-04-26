@@ -116,7 +116,6 @@ const UccMedicationOrder = (props: any) => {
             sev: 'success'
           })
         );
-
       } else {
         await createOrder(data).unwrap();
 
@@ -131,7 +130,6 @@ const UccMedicationOrder = (props: any) => {
 
       setOpenAdd(false);
       await refetch();
-
     } catch (error: any) {
       dispatch(
         notify({
@@ -149,12 +147,12 @@ const UccMedicationOrder = (props: any) => {
         isHighAlert: !!ingredientMap[row?.activeIngredientId]?.highAlert
       }).unwrap();
 
-        dispatch(
-          notify({
-            msg: 'Medication Submitted Successfully',
-            sev: 'success'
-          })
-        );
+      dispatch(
+        notify({
+          msg: 'Medication Submitted Successfully',
+          sev: 'success'
+        })
+      );
       setSelectedIds(prev => prev.filter(id => id !== row.id));
       await refetch();
     } catch (error: any) {
@@ -171,18 +169,23 @@ const UccMedicationOrder = (props: any) => {
   const handleCancel = async () => {
     if (!selectedCancelId) return;
 
+    if (!cancelObject.cancelReason?.trim()) {
+      dispatch(notify({ msg: 'Please enter a cancellation reason', sev: 'warning' }));
+      return;
+    }
+
     try {
       await cancelOrder({
         id: selectedCancelId,
-        cancellationReason: cancelObject.cancelReason
+        cancellationReason: cancelObject.cancelReason.trim()
       }).unwrap();
 
-        dispatch(
-          notify({
-            msg: 'Medication Cancelled Successfully',
-            sev: 'success'
-          })
-        );
+      dispatch(
+        notify({
+          msg: 'Medication Cancelled Successfully',
+          sev: 'success'
+        })
+      );
       setOpenCancel(false);
       setSelectedCancelId(null);
       setCancelObject({ cancelReason: '' });
@@ -196,11 +199,9 @@ const UccMedicationOrder = (props: any) => {
   const selectableIds = selectableRows.map((r: any) => r.id);
 
   const isAllSelected =
-    selectableIds.length > 0 &&
-    selectableIds.every(id => selectedIds.includes(id));
+    selectableIds.length > 0 && selectableIds.every(id => selectedIds.includes(id));
 
-  const isIndeterminate =
-    selectedIds.length > 0 && !isAllSelected;
+  const isIndeterminate = selectedIds.length > 0 && !isAllSelected;
 
   const toggleAll = (checked: boolean) => {
     setSelectedIds(checked ? selectableIds : []);
@@ -208,19 +209,17 @@ const UccMedicationOrder = (props: any) => {
 
   const toggleRow = (row: any, checked: boolean) => {
     if (row?.status !== 'NEW') return;
-    setSelectedIds(prev =>
-      checked ? [...prev, row.id] : prev.filter(id => id !== row.id)
-    );
+    setSelectedIds(prev => (checked ? [...prev, row.id] : prev.filter(id => id !== row.id)));
   };
 
-    const handlePageChange = (_: any, newPage: number) => {
-      setPaginationParams(prev => ({
-        ...prev,
-        page: newPage
-      }));
+  const handlePageChange = (_: any, newPage: number) => {
+    setPaginationParams(prev => ({
+      ...prev,
+      page: newPage
+    }));
 
-      setSelectedIds([]);
-    };
+    setSelectedIds([]);
+  };
 
   const handleSortChange = (col: string, type: 'asc' | 'desc') => {
     setSortColumn(col);
@@ -233,58 +232,36 @@ const UccMedicationOrder = (props: any) => {
     }));
   };
 
+  const unitMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    (unitLov?.object || []).forEach((item: any) => {
+      map[item.key] = item.lovDisplayVale;
+    });
+    return map;
+  }, [unitLov]);
 
-  
-    const unitMap = useMemo(() => {
-      const map: Record<string, string> = {};
-      (unitLov?.object || []).forEach((item: any) => {
-        map[item.key] = item.lovDisplayVale;
-      });
-      return map;
-    }, [unitLov]);
+  const frequencyMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    (frequencyLov?.object || []).forEach((item: any) => {
+      map[item.key] = item.lovDisplayVale;
+    });
+    return map;
+  }, [frequencyLov]);
 
-    const frequencyMap = useMemo(() => {
-      const map: Record<string, string> = {};
-      (frequencyLov?.object || []).forEach((item: any) => {
-        map[item.key] = item.lovDisplayVale;
-      });
-      return map;
-    }, [frequencyLov]);
-
-    const roaMap = useMemo(() => {
-      const map: Record<string, string> = {};
-      (roaOptions || []).forEach((item: any) => {
-        map[item.value] = item.label;
-      });
-      return map;
-    }, [roaOptions]);
+  const roaMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    (roaOptions || []).forEach((item: any) => {
+      map[item.value] = item.label;
+    });
+    return map;
+  }, [roaOptions]);
 
   const columns = [
-    {
-      key: 'select',
-      title: (
-        <Checkbox
-          checked={isAllSelected}
-          indeterminate={isIndeterminate}
-          onChange={(_, checked) => toggleAll(checked)}
-        />
-      ),
-      align: 'center',
-      width: 60,
-      render: (row: any) => (
-        <Checkbox
-          checked={selectedIds.includes(row.id)}
-          disabled={row?.status !== 'NEW'}
-          onChange={(_, checked) => toggleRow(row, checked)}
-        />
-      )
-    },
     {
       key: 'medicationName',
       title: <Translate>MEDICATION NAME</Translate>,
       flexGrow: 2,
-      render: (row: any) =>
-        ingredientMap[row?.activeIngredientId]?.name || '-'
+      render: (row: any) => ingredientMap[row?.activeIngredientId]?.name || '-'
     },
     {
       key: 'highAlert',
@@ -329,11 +306,9 @@ const UccMedicationOrder = (props: any) => {
       width: 120,
       render: (row: any) => (
         <div style={{ display: 'flex', gap: 10 }}>
-
-
           <FontAwesomeIcon
             icon={faPenToSquare}
-            className='ucc-medication-order-icons-size'
+            className="ucc-medication-order-icons-size"
             style={{
               cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
               opacity: row?.status === 'NEW' ? 1 : 0.4
@@ -349,7 +324,7 @@ const UccMedicationOrder = (props: any) => {
           />
 
           <CheckRoundIcon
-            className='ucc-medication-order-icons-size'
+            className="ucc-medication-order-icons-size"
             style={{
               cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
               opacity: row?.status === 'NEW' ? 1 : 0.4
@@ -361,7 +336,7 @@ const UccMedicationOrder = (props: any) => {
           />
 
           <WarningRoundIcon
-            className='ucc-medication-order-icons-size'
+            className="ucc-medication-order-icons-size"
             style={{
               cursor: row?.status === 'NEW' ? 'pointer' : 'not-allowed',
               opacity: row?.status === 'NEW' ? 1 : 0.4
@@ -372,49 +347,46 @@ const UccMedicationOrder = (props: any) => {
               setOpenCancel(true);
             }}
           />
-
         </div>
       )
     }
   ];
 
-console.log('ordersResponse:', ordersResponse);
-
   return (
     <div>
-    <MyTable
-      height={450}
-      data={rows}
-      totalCount={totalCount}
-      loading={isLoading || isFetching}
-      columns={columns}
-      page={paginationParams.page}
-      rowsPerPage={paginationParams.size}
-      tableButtons={
+      <MyTable
+        height={450}
+        data={rows}
+        totalCount={totalCount}
+        loading={isLoading || isFetching}
+        columns={columns}
+        page={paginationParams.page}
+        rowsPerPage={paginationParams.size}
+        tableButtons={
           <MyButton onClick={() => setOpenAdd(true)} prefixIcon={() => <PlusIcon />}>
             Add
           </MyButton>
         }
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={(e: any) => {
-        const newSize = Number(e.target.value);
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={(e: any) => {
+          const newSize = Number(e.target.value);
 
-        setPaginationParams(prev => ({
-          ...prev,
-          size: newSize,
-          page: 0
-        }));
+          setPaginationParams(prev => ({
+            ...prev,
+            size: newSize,
+            page: 0
+          }));
 
-        setSelectedIds([]);
-      }}
-      onSortChange={handleSortChange}
-      sortColumn={sortColumn}
-      sortType={sortType}
-    />
+          setSelectedIds([]);
+        }}
+        onSortChange={handleSortChange}
+        sortColumn={sortColumn}
+        sortType={sortType}
+      />
 
       <UccMedicationOrderAddModal
         open={openAdd}
-        setOpen={(val) => {
+        setOpen={val => {
           setOpenAdd(val);
           if (!val) setEditRow(null);
         }}
@@ -433,9 +405,10 @@ console.log('ordersResponse:', ordersResponse);
         fieldName="cancelReason"
         fieldLabel="CANCELLATION_REASON"
         title="Cancel Medication"
+        required
       />
     </div>
   );
 };
 
-export default UccMedicationOrder;  
+export default UccMedicationOrder;

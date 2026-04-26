@@ -1,7 +1,7 @@
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { useFetchAttachmentByKeyQuery } from '@/services/attachmentService';
-import { useGetActiveDepartmentByTypeQuery } from '@/services/security/departmentService';
+import { useGetDepartmentByTypeQuery } from '@/services/security/departmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { extractPaginationFromLink } from '@/utils/paginationHelper';
 import { faVials } from '@fortawesome/free-solid-svg-icons';
@@ -29,7 +29,7 @@ const DetailsModal = ({
   const [receivedType, setReceivedType] = useState('');
   const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
   const [deptPage, setDeptPage] = useState(0);
-  const { data: receivedLabList } = useGetActiveDepartmentByTypeQuery(
+  const { data: receivedLabList } = useGetDepartmentByTypeQuery(
     receivedType
       ? {
         type: receivedType,

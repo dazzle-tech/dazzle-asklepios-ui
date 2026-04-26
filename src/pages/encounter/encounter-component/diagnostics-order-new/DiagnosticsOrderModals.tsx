@@ -200,13 +200,15 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         size="lg"
         hideActionBtn
         content={
-          <EncounterAttachment
-            localEncounter={encounter}
-            source="DIAGNOSTIC_ORDER_ATTACHMENT"
-            sourceId={test?.id ? Number(test.id) : undefined}
-            refetchAttachmentList={false}
-            setRefetchAttachmentList={() => { }}
-          />
+          attachmentsModalOpen ? (
+            <EncounterAttachment
+              localEncounter={encounter}
+              source="DIAGNOSTIC_ORDER_ATTACHMENT"
+              sourceId={test?.id ? Number(test.id) : undefined}
+              refetchAttachmentList={false}
+              setRefetchAttachmentList={() => { }}
+            />
+          ) : null
         }
       />
 
@@ -262,10 +264,12 @@ const DiagnosticsOrderModals: React.FC<Props> = props => {
         position="center"
         steps={[{ title: '', icon: <FontAwesomeIcon icon={faCreditCard} /> }]}
         content={
+          testCardModal ? (
             <div dir={dir}>
               <TestCardModal orderTest={orderTest} test={test} />
             </div>
-          }
+          ) : null
+        }
       />
 
       <BulkAssignDepartmentModal

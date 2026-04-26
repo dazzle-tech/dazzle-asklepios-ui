@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AdvancedModal from '@/components/AdvancedModal';
 import MyInput from '@/components/MyInput';
 import MyLabel from '@/components/MyLabel';
@@ -488,6 +488,27 @@ const AddEncounterVaccine = ({
 
   const dir = isRTL ? 'rtl' : 'ltr';
 
+  // ── Form-safe records: replace null with '' so <input value> is never null ──
+  const vaccineForForm = useMemo(
+    () => ({ ...vaccine, postOpeningDuration: vaccine.postOpeningDuration ?? '' }),
+    [vaccine]
+  );
+  const vaccineBrandForForm = useMemo(
+    () => ({ ...vaccineBrand, volume: vaccineBrand?.volume ?? '' }),
+    [vaccineBrand]
+  );
+  const evForForm = useMemo(
+    () => ({
+      ...(encounterVaccination as any),
+      vaccineLotNumber: encounterVaccination.vaccineLotNumber ?? '',
+      administeredLocation: (encounterVaccination as any).administeredLocation ?? '',
+      externalFacilityName: (encounterVaccination as any).externalFacilityName ?? '',
+      administrationReactions: encounterVaccination.administrationReactions ?? '',
+      notes: encounterVaccination.notes ?? ''
+    }),
+    [encounterVaccination]
+  );
+
   return (
     <AdvancedModal
       open={open}
@@ -680,7 +701,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="Volume"
               fieldName="volume"
-              record={vaccineBrand}
+              record={vaccineBrandForForm}
               setRecord={setVaccineBrand}
             />
             <MyInput
@@ -715,7 +736,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="Vaccine Lot Number"
               fieldName="vaccineLotNumber"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
             />
             <MyInput
@@ -774,7 +795,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="Administered Location"
               fieldName="administeredLocation"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
             />
 
@@ -793,7 +814,7 @@ const AddEncounterVaccine = ({
               fieldType="text"
               fieldLabel="External Facility Name"
               fieldName="externalFacilityName"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
               disabled={isDisabledField || !externalFacilityToggle.isExternalFacility}
             />
@@ -831,7 +852,7 @@ const AddEncounterVaccine = ({
                 fieldType="textarea"
                 fieldLabel="Administration Reactions"
                 fieldName="administrationReactions"
-                record={encounterVaccination}
+                record={evForForm}
                 setRecord={setEncounterVaccination}
                 rows={4}
               />
@@ -842,7 +863,7 @@ const AddEncounterVaccine = ({
               fieldType="textarea"
               fieldLabel="Notes"
               fieldName="notes"
-              record={encounterVaccination}
+              record={evForForm}
               setRecord={setEncounterVaccination}
               rows={6}
             />
@@ -867,7 +888,7 @@ const AddEncounterVaccine = ({
               disabled
               fieldLabel="Post Opening Duration"
               fieldName="postOpeningDuration"
-              record={vaccine}
+              record={vaccineForForm}
               setRecord={setVaccine}
             />
             <MyInput
