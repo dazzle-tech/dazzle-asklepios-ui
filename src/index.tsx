@@ -10,7 +10,6 @@ import './styles/index.less';
 import { CustomProvider as RSuiteProvider } from 'rsuite';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
 
-// Only in development; avoid in production if you can.
 if (typeof window !== 'undefined') {
   const resizeObserverErr = (e: ErrorEvent) => {
     if (
@@ -30,14 +29,12 @@ if (typeof window !== 'undefined') {
 const RootWrapper = () => {
   const mode = useSelector((state: any) => state.ui.mode);
 
-  // MUI theme
   const muiTheme = createTheme({
     palette: {
       mode: mode === 'dark' ? 'dark' : 'light'
     }
   });
 
-  // Styled Components theme
   const styledTheme = {
     mode,
     colors: {
@@ -65,12 +62,7 @@ if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <Provider store={store}>
-      <HashRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true
-        }}
-      >
+      <HashRouter>
         <RootWrapper />
       </HashRouter>
     </Provider>
