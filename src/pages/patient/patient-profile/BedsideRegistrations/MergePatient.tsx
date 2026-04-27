@@ -47,7 +47,7 @@ const MergePatient = ({ open, setOpen }) => {
       setOpen={setOpen}
       title="Merge Patient"
       position="center"
-      content={<div dir={dir}>{conjureFormContent}</div>}
+      content={<div dir={dir}>{conjureFormContent(0)}</div>}
       hideActionBtn
       steps={[{ title: 'Merge Patient', icon: <GrScheduleNew /> }]}
       size="md"

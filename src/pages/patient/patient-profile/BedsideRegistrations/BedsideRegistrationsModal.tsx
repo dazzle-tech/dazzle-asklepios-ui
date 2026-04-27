@@ -95,7 +95,7 @@ const BedsideRegistrationsModal = ({ open, setOpen, setLocalPatient }) => {
       setOpen={setOpen}
       title="Bedside Registrations"
       position="right"
-      content={<div dir={dir}>{conjureFormContent}</div>}
+      content={<div dir={dir}>{conjureFormContent(0)}</div>}
       hideActionBtn
       steps={[{ title: 'Bedside Registrations', icon: <GrScheduleNew /> }]}
     />
