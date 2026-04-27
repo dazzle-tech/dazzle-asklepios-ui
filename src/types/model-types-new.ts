@@ -24,6 +24,7 @@ export interface ApUser {
   jobDescription?: string | null;
   jobRole?: string | null;
   admin?: boolean;
+  hasResetKey?: boolean; // Transient field to indicate if resetKey exists (for UI logic)
 }
 
 export interface Candidate {
