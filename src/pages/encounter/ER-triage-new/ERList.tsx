@@ -439,7 +439,7 @@ const ERList = () => {
       const lastName = String(patientFromMap?.lastName ?? row?.patient?.lastName ?? '').trim();
 
       const fullName =
-        [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim() || '-';
+        [firstName, secondName, lastName].filter(Boolean).join(' ').trim() || '-';
 
       const mrn = patientFromMap?.medicalRecordNumber ?? row?.patient?.medicalRecordNumber ?? null;
       const dob = patientFromMap?.dateOfBirth ?? row?.patient?.dateOfBirth ?? null;

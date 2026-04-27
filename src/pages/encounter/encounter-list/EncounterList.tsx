@@ -351,7 +351,7 @@ const EncounterList = () => {
       const thirdName = String(patientFromMap?.thirdName ?? row?.patient?.thirdName ?? '').trim();
       const lastName = String(patientFromMap?.lastName ?? row?.patient?.lastName ?? '').trim();
       const fullName =
-        [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim() || '-';
+        [firstName, secondName, lastName].filter(Boolean).join(' ').trim() || '-';
 
       const mrn = patientFromMap?.medicalRecordNumber ?? row?.patient?.medicalRecordNumber ?? null;
       const dob = patientFromMap?.dateOfBirth ?? row?.patient?.dateOfBirth ?? null;
@@ -473,9 +473,6 @@ const startEncounterSafe = async (row: any) => {
   };
 
   const handleGoToPreVisitObservations = async (encounterData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
-
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -592,6 +589,16 @@ const startEncounterSafe = async (row: any) => {
       });
       setFiltersKey(prev => prev + 1);
     };
+
+  // Auto-refetch when returning from nurse station after completing a visit
+  const didAutoRefetchRef = useRef(false);
+  useEffect(() => {
+    if (location.state?.shouldRefetch && !didAutoRefetchRef.current && departmentId) {
+      didAutoRefetchRef.current = true;
+      handleClearFilters();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isAdmin = !!authSlice.user?.admin;
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();

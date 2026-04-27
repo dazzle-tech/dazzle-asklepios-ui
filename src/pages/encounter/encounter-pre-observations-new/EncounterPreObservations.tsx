@@ -136,9 +136,9 @@ const NurseStation = () => {
       navigate('/inpatient-encounters-list');
     } else if (completeEncounterMutation.status === 'fulfilled') {
       if (pageSource === 'Urgent_Care_List') {
-        navigate('/urgent-care-department-list');
+        navigate('/urgent-care-department-list', { state: { shouldRefetch: true } });
       } else {
-        navigate('/encounter-list');
+        navigate('/encounter-list', { state: { shouldRefetch: true } });
       }
     }
   }, [completeEncounterMutation.status, localEncounter?.encounterType, navigate, pageSource]);

@@ -272,8 +272,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
                     const patient = patientsMap[String(order.patientId)];
 
                     return patient
-                        ? (patient.fullName ||
-                            `${patient.firstName ?? ''} ${patient.lastName ?? ''}`.trim())
+                        ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ')
                         : '—';
                 }
             },

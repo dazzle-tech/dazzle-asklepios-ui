@@ -345,7 +345,7 @@ const ReviewResults = forwardRef<any, any>(
         return {
           ...r,
           _patientName: patient
-            ? `${patient.firstName} ${patient.lastName}`
+            ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ')
             : '—',
           _profile: profile,
           _testName: profile?.name ?? '-',

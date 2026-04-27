@@ -419,7 +419,7 @@ useEffect(() => {
       const lastName = String(patientFromMap?.lastName ?? row?.patient?.lastName ?? '').trim();
 
       const fullName =
-        [firstName, secondName, thirdName, lastName].filter(Boolean).join(' ').trim() || '-';
+        [firstName, secondName, lastName].filter(Boolean).join(' ').trim() || '-';
 
       const mrn = patientFromMap?.medicalRecordNumber ?? row?.patient?.medicalRecordNumber ?? null;
       const dob = patientFromMap?.dateOfBirth ?? row?.patient?.dateOfBirth ?? null;
@@ -689,9 +689,6 @@ useEffect(() => {
   };
 
   const handleGoToNurseStation = async (encounterData: any) => {
-    const isStarted = await startEncounterSafe(encounterData);
-    if (!isStarted) return;
-
     dispatch(showSystemLoader());
     const fullPatient = await fetchPatientForEncounter(encounterData);
     dispatch(hideSystemLoader());
@@ -1060,7 +1057,11 @@ useEffect(() => {
                   onClick={() => {
                     setLocalEncounter(row);
                     setLocalPatient(row?.patientObject ?? { ...newPatient });
-                    setOpenNurseAssessment(true);
+                    if (row?.isObserved) {
+                      handleGoToNurseStation(row);
+                    } else {
+                      setOpenNurseAssessment(true);
+                    }
                   }}
                 >
                   <FontAwesomeIcon icon={faUserNurse} />
