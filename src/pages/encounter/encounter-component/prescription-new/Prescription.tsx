@@ -7,28 +7,23 @@ import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import EncounterAttachment from '@/pages/patient/patient-profile/tabs/Attachment-new/EncounterAttachment';
 import { useGetCustomeInstructionsQuery } from '@/services/encounterService';
-import { useGeneratePrescriptionPdfMutation } from '@/services/setup/PrescriptionReportRequest';
 import { useGetAllBrandMedicationsQuery } from '@/services/setup/brandmedication/BrandMedicationService';
 import { useGetAllPrescriptionInstructionsQuery } from '@/services/setup/prescription-instruction/prescriptionInstructionService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useGetAllFacilitiesQuery } from '@/services/security/facilityService';
-import { useGetActiveDepartmentByFacilityListQuery } from '@/services/security/departmentService';
 import {
   useCreateOrGetPatientPrescriptionMutation,
   useGetPatientPrescriptionQuery,
-  useUpdatePatientPrescriptionMutation,
   useSubmitPatientPrescriptionMutation,
   useLazyGetPrescriptionPdfQuery
 } from '@/services/patients/Prescription/patientPrescriptionService';
 import {
   useGetPatientPrescriptionMedicationsQuery,
-  useUpdatePatientPrescriptionMedicationMutation,
   useDeletePatientPrescriptionMedicationMutation
 } from '@/services/patients/Prescription/patientPrescriptionMedicationService';
 
 import { notify } from '@/utils/uiReducerActions';
-import { conjureValueBasedOnIDFromList, conjureValueBasedOnKeyFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
-import { faPrint, faStar } from '@fortawesome/free-solid-svg-icons';
+import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds, formatEnumString } from '@/utils';
+import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
@@ -50,7 +45,6 @@ import './styles.less';
 
 import type { PatientPrescription, PatientPrescriptionMedication } from '@/types/model-types-new';
 import { newPatientPrescriptionMedication } from '@/types/model-types-constructor-new';
-import { useUpdateEncounterMutation } from '@/services/encounters/patientEncounterService';
 import { useGetActiveIngredientsByIdsMutation } from '@/services/setup/activeIngredients/activeIngredientsService';
 
 type Props = any;
@@ -65,7 +59,6 @@ const Prescription = (props: Props) => {
 
   const dispatch = useAppDispatch();
   const authSlice = useAppSelector(state => state.auth);
-  const selectedFacility = useAppSelector(state => state.auth?.tenant?.selectedFacility);
   const jobRole = String(authSlice.user?.jobRole ?? '').toUpperCase();
   const isNurse = jobRole === 'NURSE';
   const [openToAdd, setOpenToAdd] = useState(true);
@@ -83,38 +76,14 @@ const Prescription = (props: Props) => {
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [selectedMedicationForAttachments, setSelectedMedicationForAttachments] =
     useState<PatientPrescriptionMedication | null>(null);
-  const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<any>(null);
 
   const [summaryModalOpen, setSummaryModalOpen] = useState(false);
-  const [submitAssignModalOpen, setSubmitAssignModalOpen] = useState(false);
-  const [submitAssignment, setSubmitAssignment] = useState<{
-    toFacilityId: number | null;
-    toDepartmentId: number | null;
-  }>({
-    toFacilityId: null,
-    toDepartmentId: null
-  });
 
   const [patientPrescriptionMedicationObject, setPatientPrescriptionMedicationObject] =
     useState<PatientPrescriptionMedication>({
       ...newPatientPrescriptionMedication,
       prescriptionHeaderId: null as any
     });
-
-  const { data: facilityListResponse } = useGetAllFacilitiesQuery({});
-  const { data: departmentByFacility = [] } = useGetActiveDepartmentByFacilityListQuery(
-    { facilityId: Number(submitAssignment.toFacilityId) },
-    { skip: !submitAssignment.toFacilityId }
-  );
-  const departmentOptions = (departmentByFacility ?? []).map((d: any) => ({
-    id: Number(d?.id ?? d?.key),
-    name: d?.name ?? d?.departmentName ?? d?.label ?? `Department ${d?.id ?? d?.key}`
-  }));
-  const facilityName = conjureValueBasedOnIDFromList(
-    facilityListResponse ?? [],
-    selectedFacility?.id,
-    'name'
-  );
 
   const { data: predefinedInstructionsListResponse } = useGetAllPrescriptionInstructionsQuery({
     page: 0,
@@ -320,7 +289,6 @@ const Prescription = (props: Props) => {
     getActiveIngredientsByIds,
     {
       data: activeIngredientsByIds,
-      isLoading: isLoadingActiveIngredientsByIds,
     },
   ] = useGetActiveIngredientsByIdsMutation();
 
@@ -351,7 +319,7 @@ const Prescription = (props: Props) => {
   );
 
   // Custom instructions (legacy table formatting uses this)
-  const { data: customeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
+  const { data: customeInstructions } = useGetCustomeInstructionsQuery({
     ...({} as any)
   });
 
@@ -698,7 +666,6 @@ const Prescription = (props: Props) => {
       dispatch(notify({ msg: 'Submitted successfully', type: 'success' } as any));
 
 
-      setSubmitAssignModalOpen(false);
       setSummaryModalOpen(false);
       await preRefetch();
       await medicRefetch();
@@ -890,9 +857,6 @@ const Prescription = (props: Props) => {
       title: 'Actions',
       flexGrow: 1.5,
       render: (rowData: any) => {
-        const medId = rowData.medicationsId ?? rowData.genericMedicationsId;
-
-
         return (
           <div className="flex-c8">
             <MdModeEdit
@@ -1092,17 +1056,6 @@ const Prescription = (props: Props) => {
         <div className="mt-4">
           <PrescriptionPreview
             orderMedication={selectedPreviewMedication as any}
-            genericMedicationListResponse={genericMedicationListResponse as any}
-            orderTypeLovQueryResponse={{ object: [] }}
-            unitLovQueryResponse={{ object: [] }}
-            unitsLovQueryResponse={{ object: [] }}
-            DurationTypeLovQueryResponse={{ object: [] }}
-            filteredList={[]}
-            indicationLovQueryResponse={{ object: [] }}
-            administrationInstructionsLovQueryResponse={{ object: [] }}
-            routeLovQueryResponse={{ object: [] }}
-            frequencyLovQueryResponse={{ object: [] }}
-            infusionDeviceLovQueryResponse={{ object: [] }}
           />
         </div>
       )}
