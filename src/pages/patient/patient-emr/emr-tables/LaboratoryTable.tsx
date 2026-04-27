@@ -265,8 +265,8 @@ const LaboratoryTable: React.FC<Props> = ({ patient }) => {
       return {
         ...r,
         _patientName: patientInfo
-          ? `${patientInfo.firstName} ${patientInfo.lastName}`
-          : '-',
+            ? [patientInfo.firstName, patientInfo.secondName, patientInfo.lastName].filter(Boolean).join(' ')
+            : '—',
         _profile: profile,
         _test: test,
         _lab: lab,

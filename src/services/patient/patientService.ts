@@ -37,6 +37,7 @@ const mapPaged = (response: any[], meta): PagedResult<any> => {
 
 type PatientBasicInformationResponseVM = {
   firstName: string;
+  secondName?: string;
   lastName: string;
   medicalRecordNumber: string;
   dateOfBirth: string;

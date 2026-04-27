@@ -165,7 +165,7 @@ const Allergies = (props: AllergiesProps) => {
             size={24}
             fill="var(--primary-gray)"
             onClick={() => {
-              if (isPast) return;
+              if (isPast || rowData.status !== 'ACTIVE') return;
               setOpenDetailsModal(true);
               setOpenToAdd(false);
             }}

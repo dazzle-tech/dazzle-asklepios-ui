@@ -80,7 +80,7 @@ const BulkRegistration = ({ open, setOpen }) => {
       setOpen={setOpen}
       title="Bulk Registration"
       position="right"
-      content={<div dir={dir}>{conjureFormContent}</div>}
+      content={<div dir={dir}>{conjureFormContent(0)}</div>}
       hideActionBtn
       size={width > 600 ? '36vw' : '70vw'}
       steps={[

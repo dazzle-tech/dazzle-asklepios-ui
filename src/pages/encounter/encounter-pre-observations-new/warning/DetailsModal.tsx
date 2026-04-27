@@ -263,9 +263,8 @@ const DetailsModal = ({
                   fieldType="textarea"
                   fieldName="note"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={
-                    !warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO
-                  }
+                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  allowEnterNewLine
                 />
               </Col>
               <Col md={12}>
@@ -275,9 +274,8 @@ const DetailsModal = ({
                   fieldType="textarea"
                   fieldName="actionTaken"
                   record={!warning?.id ? patientWarningsCreateDTO : patientWarningsUpdateDTO}
-                  setRecord={
-                    !warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO
-                  }
+                  setRecord={!warning?.id ? setPatientWarningsCreateDTO : setPatientWarningsUpdateDTO}
+                  allowEnterNewLine
                 />
               </Col>
             </Row>
