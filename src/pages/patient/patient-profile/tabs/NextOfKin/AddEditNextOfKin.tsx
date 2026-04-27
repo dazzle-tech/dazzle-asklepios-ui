@@ -3,6 +3,7 @@ import { Form } from 'rsuite';
 import '../styles.less';
 import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
+import PhoneNumberInput from '@/components/PhoneNumberInput/PhoneNumberInput';
 import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
 import { GiRelationshipBounds } from 'react-icons/gi';
@@ -20,6 +21,42 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
 
   const [addNextOfKin] = useAddNextOfKinMutation();
   const [updateNextOfKin] = useUpdateNextOfKinMutation();
+
+  const parsePhoneWithPrefix = (phoneValue: unknown): string => {
+    if (!phoneValue) return '';
+    if (typeof phoneValue === 'string') return phoneValue;
+    if (typeof phoneValue !== 'object') return String(phoneValue);
+
+    const valueObject = phoneValue as Record<string, unknown>;
+    const directPhone =
+      valueObject.phone ??
+      valueObject.phoneNumber ??
+      valueObject.mobileNumber ??
+      valueObject.value ??
+      valueObject.number;
+
+    if (typeof directPhone === 'string' && directPhone.trim()) {
+      return directPhone.trim();
+    }
+
+    const rawPrefix =
+      valueObject.prefix ??
+      valueObject.countryCode ??
+      valueObject.dialCode ??
+      valueObject.code;
+    const rawNumber =
+      valueObject.localNumber ??
+      valueObject.nationalNumber ??
+      valueObject.mobile ??
+      valueObject.lineNumber;
+
+    const prefix = typeof rawPrefix === 'string' ? rawPrefix.trim() : '';
+    const number = typeof rawNumber === 'string' ? rawNumber.trim() : '';
+    if (!prefix || !number) return '';
+
+    const normalizedPrefix = prefix.startsWith('+') ? prefix : `+${prefix}`;
+    return `${normalizedPrefix}${number}`;
+  };
 
   const getDigits = value => String(value ?? '').replace(/\D/g, '');
   const validateNumberLengths = nok => {
@@ -158,22 +195,24 @@ const AddEditNextOfKin = ({ open, setOpen, patientId, nextOfKin, setNextOfKin })
       <MyInput required column fieldName="address" record={nextOfKin} setRecord={setNextOfKin} />
       <MyInput required column fieldName="email" record={nextOfKin} setRecord={setNextOfKin} />
 
-      <MyInput
+      <PhoneNumberInput
         required
         column
-        fieldType="textnumber"
+        fieldLabel="Mobile Number"
         fieldName="mobileNumber"
         record={nextOfKin}
         setRecord={setNextOfKin}
+        value={parsePhoneWithPrefix(nextOfKin?.mobileNumber)}
       />
 
       <MyInput column fieldType="textnumber" fieldName="telephone" record={nextOfKin} setRecord={setNextOfKin} />
-      <MyInput
+      <PhoneNumberInput
         column
-        fieldType="textnumber"
+        fieldLabel="International Number"
         fieldName="internationalNumber"
         record={nextOfKin}
         setRecord={setNextOfKin}
+        value={parsePhoneWithPrefix(nextOfKin?.internationalNumber)}
       />
       <MyInput
         column
