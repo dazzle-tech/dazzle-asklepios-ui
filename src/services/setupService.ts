@@ -430,24 +430,7 @@ getLovValuesBulkByKeys: builder.query({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-    getPractitioners: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/setup/practitioner-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    savePractitioner: builder.mutation({
-      query: (practitioner: ApPractitioner) => ({
-        url: `/setup/save-practitioner`,
-        method: 'POST',
-        body: practitioner
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
+
     getDepartments: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/department-list?${fromListRequestToQueryParams(listRequest)}`
@@ -867,29 +850,7 @@ getLovValuesBulkByKeys: builder.query({
       },
     }),
 
-    removePractitioner: builder.mutation({
-      query: (practitioner: ApPractitioner) => ({
-        url: `/setup/remove-practitioner`,
-        method: 'POST',
-        body: practitioner,
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
-    }),
-
-    deactiveActivePractitioner: builder.mutation({
-      query: (practitioner: ApPractitioner) => ({
-        url: `/setup/deactive-avtice-practitioner`,
-        method: 'POST',
-        body: practitioner,
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      },
-    }),
+ 
     saveAgeGroup: builder.mutation({
       query: (agegroup: ApAgeGroup) => ({
         url: `/setup/save-age-group`,
@@ -1528,10 +1489,6 @@ export const {
   useGetLovValuesByCodeAndParentQuery,
   useGetMetadataQuery,
   useGetMetadataFieldsQuery,
-  useGetPractitionersQuery,
-  useSavePractitionerMutation,
-  useRemovePractitionerMutation,
-  useDeactiveActivePractitionerMutation,
   useGetDepartmentsQuery,
   useSaveDepartmentMutation,
   useGetAllergensQuery,
