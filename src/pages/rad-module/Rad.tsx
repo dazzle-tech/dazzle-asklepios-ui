@@ -31,7 +31,7 @@ const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
     await fn();
-  } catch {}
+  } catch { }
 };
 
 const startOfDay = (date: Date) => {
@@ -212,21 +212,27 @@ const Rad = React.forwardRef<RadRef, {}>((props, ref) => {
         setEncounter({ ...newPatientEncounter });
       });
   }, [order?.encounterId]);
+
   useEffect(() => {
-    if (!order?.encounterId) {
-      setEncounter({ ...newPatientEncounter });
+    if (!order?.patientId) {
+      setPatient({ ...newPatient });
       return;
     }
 
-    getEncounterById({ id: order.encounterId })
+    getBulkPatientBasicInfo([Number(order.patientId)])
       .unwrap()
-      .then((res: any) => {
-        setEncounter(res ?? { ...newPatientEncounter });
+      .then((res: any[]) => {
+        if (res?.length > 0) {
+          setPatient(res[0]);
+        } else {
+          setPatient({ ...newPatient });
+        }
       })
       .catch(() => {
-        setEncounter({ ...newPatientEncounter });
+        setPatient({ ...newPatient });
       });
-  }, [order?.encounterId]);
+  }, [order?.patientId]);
+
 
   // Direction handling for RTL/LTR
   const direction = localStorage.getItem('direction') || 'LTR';

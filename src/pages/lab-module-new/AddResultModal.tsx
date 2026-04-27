@@ -295,6 +295,16 @@ const AddResultModal = ({
     }
   }, [open]);
 
+
+  const hasAnyProfiles = acceptedTests.some(orderTest => {
+    const profiles =
+      (profilesByTestId[orderTest.testId] ?? []).filter(
+        profile => !filledProfileTestIds.includes(profile.id)
+      );
+
+    return profiles.length > 0;
+  });
+
 // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
@@ -313,39 +323,59 @@ const AddResultModal = ({
         { title: 'Results', icon: <FontAwesomeIcon icon={faFlask} /> }
       ]}
       content={
-      <div dir={dir}>
-          <Form fluid>
-          {acceptedTests.map(orderTest => {
-            const profiles =
-              (profilesByTestId[orderTest.testId] ?? []).filter(
-                profile => !filledProfileTestIds.includes(profile.id)
-              );
+        <div dir={dir}>
+          {!hasAnyProfiles ? (
+            <div
+              style={{
+                height: '40vh',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                color: '#888'
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faFlask}
+                style={{ fontSize: 40, marginBottom: 12, opacity: 0.6 }}
+              />
 
-            return (
-              <Panel
-                key={orderTest.id}
-                bordered
-                header={<strong>{orderTest.test?.name}</strong>}
-                style={{ marginBottom: 16 }}
-              >
+              <div style={{ fontSize: 16, fontWeight: 500 }}>
+                No Pending Results to Add
+              </div>
 
-                {profiles.length === 0 ? (
-                  <p style={{ color: '#999' }}>
-                    No active profiles for this test
-                  </p>
-                ) : (
+              <div style={{ fontSize: 13, marginTop: 6 }}>
+                There are no remaining profiles to fill
+              </div>
+            </div>
+          ) : (
+            <Form fluid>
+              {acceptedTests.map(orderTest => {
+                const profiles =
+                  (profilesByTestId[orderTest.testId] ?? []).filter(
+                    profile => !filledProfileTestIds.includes(profile.id)
+                  );
 
-                  <MyTable
-                    height={260}
-                    data={profiles}
-                    columns={buildColumns(orderTest)}
-                  />
-                )}
-              </Panel>
-            );
-          })}
-        </Form>
-      </div>
+                if (profiles.length === 0) return null;
+
+                return (
+                  <Panel
+                    key={orderTest.id}
+                    bordered
+                    header={<strong>{orderTest.test?.name}</strong>}
+                    style={{ marginBottom: 16 }}
+                  >
+                    <MyTable
+                      height={260}
+                      data={profiles}
+                      columns={buildColumns(orderTest)}
+                    />
+                  </Panel>
+                );
+              })}
+            </Form>
+          )}
+        </div>
       }
     />
   </div>

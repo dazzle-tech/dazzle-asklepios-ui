@@ -77,7 +77,7 @@ useEffect(() => {
       )}
 
       <div className="main-screen-bar-filters-header" >
-        <Form fluid layout="inline">
+        <Form fluid>
           <div className="main-screen-bar-buttons-main-container" style={{flexDirection: direction === "LTR" ? "row" : "row-reverse"}}>
             {width > 800 || displaySearch ? (
               <>

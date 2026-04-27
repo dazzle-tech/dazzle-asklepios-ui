@@ -109,7 +109,7 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     const [fetchOrders] = useLazyFilterDiagnosticOrdersQuery();
     const [fetchEncounterById] = useLazyGetEncounterByIdQuery();
     const [localHasCommentIds, setLocalHasCommentIds] = useState<(number | string)[]>([]);
-
+    const [filtersKey, setFiltersKey] = useState(0);
     const [
         createComment, { isLoading: isSendingComment }] = useCreateReportCommentMutation();
 
@@ -361,22 +361,27 @@ const ReviewReport = ({ user, setEncounter, setPatient }) => {
     );
 
     const resetFilters = () => {
-        const today = new Date();
-        setApprovalDate({
-            fromDate: today,
-            toDate: today
-        });
-        setOrderDate({
-            fromDate: null,
-            toDate: null
-        });
-        setShowReviewed(false);
-        setOrderIdIn(null);
-        setPage(0);
+    const today = new Date();
+
+    setApprovalDate({
+        fromDate: new Date(today),
+        toDate: new Date(today)
+    });
+
+    setOrderDate({
+        fromDate: null,
+        toDate: null
+    });
+
+    setShowReviewed(false);
+    setOrderIdIn(null);
+    setPage(0);
+
+    setFiltersKey(prev => prev + 1);
     };
 
     const filters = (
-        <Form fluid>
+        <Form fluid key={filtersKey}>
             <div className="report-review-results-filters-main-container">
                 <MyInput
                     fieldType="date"

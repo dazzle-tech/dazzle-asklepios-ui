@@ -165,6 +165,7 @@ const BulkCollectSampleModal = ({
                 setRecord={setRecord}
                 column
                 width={'14vw'}
+                required
               />
               <MyInput
                 fieldLabel="Unit"
@@ -177,6 +178,7 @@ const BulkCollectSampleModal = ({
                 setRecord={setRecord}
                 column
                 width={'14vw'}
+                required
               />
 
               <MyInput
@@ -187,6 +189,7 @@ const BulkCollectSampleModal = ({
                 setRecord={setRecord}
                 column
                 width={'14vw'}
+                required
               />
               <MyInput
                 fieldName="dateTime"
@@ -209,6 +212,7 @@ const BulkCollectSampleModal = ({
                 setRecord={setRecord}
                 column
                 width={'14vw'}
+                required
               />
             </Form>
           </div>

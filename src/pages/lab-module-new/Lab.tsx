@@ -280,6 +280,7 @@ const Lab = () => {
                           width={130}
                           placeholder="Order ID"
                           fieldType="text"
+                          column
                           fieldName="orderNumber"
                           record={{ orderNumber: orderNumberFilter }}
                           setRecord={(val: any) => setOrderNumberFilter(val.orderNumber ?? '')}

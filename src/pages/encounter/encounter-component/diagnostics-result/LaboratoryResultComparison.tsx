@@ -119,22 +119,28 @@ const LaboratoryResultComparison: React.FC<Props> = ({
         useGetLovValuesByCodeQuery('VALUE_UNIT');
 
     const resolveLovDisplayValue = (lovId: any, key: any) => {
-        if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object)
-            return key;
 
-        const lovDef = lovDefinitions.object.find(
-            (d: any) => String(d.key) === String(lovId)
-        );
+    if (!lovId || key == null || !lovDefinitions?.object || !allLovValues?.object) {
+        return '-';
+    }
 
-        if (!lovDef?.lovCode) return key;
+    const lovDef = lovDefinitions.object.find(
+        (d: any) => String(d.key) === String(lovId)
+    );
 
-        return (
-            allLovValues.object.find(
-                (v: any) =>
-                    String(v.lovCode) === String(lovDef.lovCode) &&
-                    String(v.key) === String(key)
-            )?.lovDisplayVale ?? key
-        );
+
+    if (!lovDef?.lovCode) {
+        return '-';
+    }
+
+    const found = allLovValues.object.find(
+        (v: any) =>
+        String(v.lovCode) === String(lovDef.lovCode) &&
+        String(v.key) === String(key)
+    );
+
+
+    return found?.lovDisplayVale || found?.name || '-';
     };
 
 
@@ -186,64 +192,59 @@ const LaboratoryResultComparison: React.FC<Props> = ({
     }, [pivotData, record]);
 
     const renderResultValue = (result: any) => {
-        if (!result) return '-';
+    if (!result) return '-';
 
-        const profile = profileMap.get(result.profileTestId);
+    const profile = profileMap.get(result.profileTestId);
 
-        const isLovTest =
-            profile?.resultType?.toUpperCase() === 'LOV';
+    const isLovTest =
+        profile?.resultType?.toUpperCase() === 'LOV';
 
-        let displayValue: any = '-';
+    let displayValue: any = '-';
 
-        if (isLovTest) {
-            displayValue = resolveLovDisplayValue(
-                profile?.listOfValueId,
-                result.resultValueText
-            );
-        }
-        else if (profile?.listOfValueId && result.resultValueText) {
-            displayValue = resolveLovDisplayValue(
-                profile?.listOfValueId,
-                result.resultValueText
-            );
-        }
-        else if (
-            result.resultValueNumber !== null &&
-            result.resultValueNumber !== undefined
-        ) {
-            displayValue = result.resultValueNumber;
-        }
-        else if (result.resultValueText) {
-            displayValue = result.resultValueText;
-        }
-
-        const unit = resolveUnitDisplay(profile);
-
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div>
-                    <span>{displayValue}</span>
-                    {unit && (
-                        <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#666' }}>
-                            {unit}
-                        </span>
-                    )}
-                </div>
-
-
-                {result.normalRangeValue?.trim() && (
-                    <span
-                        style={{
-                            fontSize: '0.75rem',
-                            color: '#6b7280',
-                            marginTop: 2
-                        }}
-                    >
-                        {result.normalRangeValue}
-                    </span>
-                )}
-            </div>
+    if (isLovTest) {
+        displayValue = resolveLovDisplayValue(
+        profile?.listOfValueId,
+        result.resultValueText
         );
+    }
+    else if (
+        result.resultValueNumber !== null &&
+        result.resultValueNumber !== undefined
+    ) {
+        displayValue = result.resultValueNumber;
+    }
+
+    const unit = resolveUnitDisplay(profile);
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div>
+            <span>{displayValue}</span>
+            {unit && (
+            <span style={{ marginLeft: 6, fontSize: '0.7rem', color: '#666' }}>
+                {unit}
+            </span>
+            )}
+        </div>
+
+{result.normalRangeValue?.trim() && (
+  <span
+    style={{
+      fontSize: '0.75rem',
+      color: '#6b7280',
+      marginTop: 2
+    }}
+  >
+    {isLovTest
+      ? resolveLovDisplayValue(
+          profile?.listOfValueId,
+          result.normalRangeValue
+        )
+      : result.normalRangeValue}
+  </span>
+)}
+        </div>
+    );
     };
 
     const filters = () => (

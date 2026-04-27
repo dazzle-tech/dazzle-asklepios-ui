@@ -304,8 +304,20 @@ const Tests = forwardRef<any, Props>(
         setOpenRejectedModal(false);
         await refetchAllLabData();
       } catch (e: any) {
-        const backendMessage = e?.data?.message || e?.data?.detail || e?.error || 'Reject failed';
-        dispatch(notify({ msg: backendMessage, sev: 'error' }));
+        const rawMessage =
+          e?.data?.message ||
+          e?.data?.detail ||
+          e?.error ||
+          'Reject failed';
+
+        const cleanMessage = rawMessage.replace(/^error\./i, '');
+
+        dispatch(
+          notify({
+            msg: cleanMessage,
+            sev: 'error'
+          })
+        );
       }
     };
 
@@ -325,7 +337,10 @@ const Tests = forwardRef<any, Props>(
       }
 
       try {
-        await undoAcceptTest(rowData.id).unwrap();
+        await undoAcceptTest({
+          id: undoAcceptTargetId,
+          undoAcceptReason: undoAcceptReason
+        }).unwrap();
 
         dispatch(
           notify({
@@ -334,9 +349,13 @@ const Tests = forwardRef<any, Props>(
           })
         );
 
+        setOpenUndoAcceptModal(false);
+        setUndoAcceptReason('');
+        setUndoAcceptTargetId(null);
+
         await refetchAllLabData();
         await fetchTest();
-        setTest(rowData);
+
       } catch (e: any) {
         const errorKey = e?.data?.errorKey || e?.data?.message || e?.error;
         const errorMessage = e?.data?.message || e?.data?.detail || '';
@@ -633,8 +652,11 @@ const Tests = forwardRef<any, Props>(
         render: (rowData: any) => {
           const canAccept = rowData.processingStatus === DiagnosticOrderTestStatus.SAMPLE_COLLECTED;
           const canReject =
-            rowData.status !== DiagnosticOrderTestStatus.RESULT_APPROVED &&
-            rowData.status !== DiagnosticOrderTestStatus.REJECTED;
+            ![
+              DiagnosticOrderTestStatus.RESULT_READY,
+              DiagnosticOrderTestStatus.RESULT_APPROVED,
+              DiagnosticOrderTestStatus.REJECTED
+            ].includes(rowData.processingStatus);
           const canUndoAccept = rowData.processingStatus === DiagnosticOrderTestStatus.ACCEPTED;
 
           return (
@@ -880,9 +902,20 @@ const Tests = forwardRef<any, Props>(
               onRowsPerPageChange={e =>
                 setPaginationParams(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))
               }
-              onSortChange={(column, type) =>
-                setPaginationParams(prev => ({ ...prev, sort: `${column},${type}`, page: 0 }))
-              }
+              
+              onSortChange={(column, type) => {
+                const invalidSortFields = ['action', 'check', 'collectsample', 'print'];
+
+                if (invalidSortFields.includes(column)) {
+                  return; // ignore
+                }
+
+                setPaginationParams(prev => ({
+                  ...prev,
+                  sort: `${column},${type}`,
+                  page: 0
+                }));
+              }}
             />
           </div>
 
@@ -905,6 +938,7 @@ const Tests = forwardRef<any, Props>(
             setObject={setTest}
             fieldLabel="Reject Reason"
             title="Reject"
+            required
           />
 
           <ChatModal

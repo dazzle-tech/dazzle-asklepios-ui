@@ -336,26 +336,70 @@ const Result = forwardRef<any, Props>(
         );
       }
     };
+
     // ─────────────────────────────────────────────────────────────────────────
 
+    const isResultEmpty = (row: any) => {
+      const profile = row.profile;
+
+      if (!profile) return true;
+
+      if (isLovProfile(profile)) {
+        return (
+          row.resultValueText === null ||
+          row.resultValueText === undefined ||
+          row.resultValueText === ''
+        );
+      }
+
+      return (
+        row.resultValueNumber === null ||
+        row.resultValueNumber === undefined
+      );
+    };
+
     const handleApprove = (row: any) => {
+
+      if (isResultEmpty(row)) {
+        dispatch(
+          notify({
+            msg: 'Cannot approve. Result value is missing.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
       if (isCriticalResult(row)) {
-        // Show confirmation modal only for critical results
         setPendingApproveRow(row);
         setIsBulkCriticalApprove(false);
         setOpenCriticalConfirmModal(true);
       } else {
-        // Approve directly for non-critical results
         doApprove(row);
       }
     };
 
     const handleBulkApprove = () => {
       if (!selectedResultIds.length) return;
-      // Check if any selected result is critical
+
+      const emptyResults = normalizedResults.filter(
+        r => selectedResultIds.includes(r.id) && isResultEmpty(r)
+      );
+
+      if (emptyResults.length > 0) {
+        dispatch(
+          notify({
+            msg: 'Some selected results are empty. Please fill them before approval.',
+            sev: 'warning'
+          })
+        );
+        return;
+      }
+
       const hasCritical = normalizedResults.some(
         r => selectedResultIds.includes(r.id) && isCriticalResult(r)
       );
+
       if (hasCritical) {
         setIsBulkCriticalApprove(true);
         setPendingApproveRow(null);
@@ -590,14 +634,14 @@ const Result = forwardRef<any, Props>(
             case 'CRITICAL_UPPER':
               return (
                 <HStack spacing={10}>
-                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} color='red'/>
+                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} color='red' />
                   <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />
                 </HStack>
               );
             case 'CRITICAL_LOWER':
               return (
                 <HStack spacing={10}>
-                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} color='red'/>
+                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} color='red' />
                   <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />
                 </HStack>
               );
@@ -837,7 +881,9 @@ const Result = forwardRef<any, Props>(
       setSelectedResultIds(prev => prev.filter(id => currentIds.includes(id)));
     }, [normalizedResults]);
 
-// Direction handling for RTL/LTR
+
+
+    // Direction handling for RTL/LTR
     const direction = localStorage.getItem('direction') || 'LTR';
     const isRTL = direction === 'RTL';
 
@@ -845,165 +891,166 @@ const Result = forwardRef<any, Props>(
 
 
     return (
-    <div dir={dir}>
-      <Panel
-        defaultExpanded
-        header={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span />
-            <HStack spacing={10}>
+      <div dir={dir}>
+        <Panel
+          defaultExpanded
+          header={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span />
+              <HStack spacing={10}>
 
-              <Whisper placement="top" speaker={<Tooltip>Approve</Tooltip>}>
-                <span style={{ display: 'inline-block' }}>
-                  <MyButton
-                    prefixIcon={() => <CheckRoundIcon />}
-                    disabled={!selectedResultIds.length}
-                    onClick={handleBulkApprove}
-                  >
-                    Approve Selected
-                  </MyButton>
-                </span>
-              </Whisper>
+                <Whisper placement="top" speaker={<Tooltip>Approve</Tooltip>}>
+                  <span style={{ display: 'inline-block' }}>
+                    <MyButton
+                      prefixIcon={() => <CheckRoundIcon />}
+                      disabled={!selectedResultIds.length}
+                      onClick={handleBulkApprove}
+                    >
+                      Approve Selected
+                    </MyButton>
+                  </span>
+                </Whisper>
 
-              <Whisper placement="top" speaker={<Tooltip>Reject</Tooltip>}>
-                <span style={{ display: 'inline-block' }}>
-                  <MyButton
-                    prefixIcon={() => <WarningRoundIcon />}
-                    appearance="ghost"
-                    disabled={!selectedResultIds.length}
-                    onClick={() => {
-                      setIsBulkRejectMode(true);
-                      setOpenResultRejectModal(true);
-                    }}
-                  >
-                    Reject Selected
-                  </MyButton>
-                </span>
-              </Whisper>
-            </HStack>
-          </div>
-        }
-      >
-        <MyTable
-          columns={columns}
-          data={normalizedResults}
-          loading={loading || isFetching}
-          page={paginationParams.page}
-          rowsPerPage={paginationParams.size}
-          totalCount={resultsResponse?.totalCount ?? 0}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortColumn={sortColumn}
-          sortType={sortType}
-          onSortChange={handleSortChange}
-          rowClassName={isResultSelected}
-          onRowClick={rowData => {
-            setSelectedRow(rowData);
-            if (rowData?.orderTestId) {
-              setTest({
-                id: rowData.orderTestId,
-                processingStatus: rowData.processingStatus,
-                status: rowData.status
-              });
-            }
-          }}
-        />
-
-        <ChatModal
-          open={openResultNoteModal}
-          setOpen={setOpenResultNoteModal}
-          title="Result Comments"
-          list={resultNotesResponse ?? []}
-          fieldShowName="note"
-          handleSendMessage={handleSendResultNote}
-        />
-
-        <LogResult
-          open={openLogsModal}
-          setOpen={setOpenLogsModal}
-          result={selectedResultForLogs}
-        />
-
-        <CancellationModal
-          open={openResultRejectModal}
-          setOpen={(open: boolean) => {
-            setOpenResultRejectModal(open);
-            if (!open) {
-              setIsBulkRejectMode(false);
-              setResultRejectReason('');
-            }
-          }}
-          fieldName="rejectedReason"
-          handleCancle={handleReject}
-          object={{ rejectedReason: resultRejectReason }}
-          setObject={(obj: any) => setResultRejectReason(obj.rejectedReason)}
-          fieldLabel="Reject Reason"
-          title={isBulkRejectMode ? 'Reject Selected Results' : 'Reject Result'}
-        />
-
-        <EditResultModal
-          open={openEditModal}
-          setOpen={setOpenEditModal}
-          result={selectedResultForEdit}
-          onSuccess={() => refetch()}
-        />
-
-        <NormalRangeModal
-          open={openNormalRangeModal}
-          setOpen={setOpenNormalRangeModal}
-          ranges={
-            selectedResult
-              ? normalRangesMap[selectedResult.profileTestId] ?? []
-              : []
-          }
-          profileTestId={selectedResult?.profileTestId ?? null}
-        />
-
-        <MyModal
-          open={openCriticalConfirmModal}
-          setOpen={setOpenCriticalConfirmModal}
-          title="Approve Result — Confirmation Required"
-          size="30vw"
-          bodyheight="30vh"
-          pagesCount={1}
-          hideBack
-          actionButtonLabel="Yes, Approve"
-          actionButtonFunction={handleCriticalConfirmYes}
-          cancelButtonLabel="No, Keep Unapproved"
-          handleCancelFunction={handleCriticalConfirmNo}
-          content={() => (
-            <div style={{ textAlign: 'center', padding: '16px 8px' }}>
-              <FontAwesomeIcon
-                icon={faTriangleExclamation}
-                style={{ fontSize: '2.5rem', color: 'var(--primary-pink)', marginBottom: 16 }}
-              />
-              <p style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: 8 }}>
-                You are about to <span style={{ color: 'var(--primary-pink)' }}>APPROVE</span> this result.
-              </p>
-              <p style={{ fontSize: '0.95rem', color: 'var(--gray-dark)' }}>
-                Communicated to Healthcare Provider?
-              </p>
+                <Whisper placement="top" speaker={<Tooltip>Reject</Tooltip>}>
+                  <span style={{ display: 'inline-block' }}>
+                    <MyButton
+                      prefixIcon={() => <WarningRoundIcon />}
+                      appearance="ghost"
+                      disabled={!selectedResultIds.length}
+                      onClick={() => {
+                        setIsBulkRejectMode(true);
+                        setOpenResultRejectModal(true);
+                      }}
+                    >
+                      Reject Selected
+                    </MyButton>
+                  </span>
+                </Whisper>
+              </HStack>
             </div>
-          )}
-        />
+          }
+        >
+          <MyTable
+            columns={columns}
+            data={normalizedResults}
+            loading={loading || isFetching}
+            page={paginationParams.page}
+            rowsPerPage={paginationParams.size}
+            totalCount={resultsResponse?.totalCount ?? 0}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            sortColumn={sortColumn}
+            sortType={sortType}
+            onSortChange={handleSortChange}
+            rowClassName={isResultSelected}
+            onRowClick={rowData => {
+              setSelectedRow(rowData);
+              if (rowData?.orderTestId) {
+                setTest({
+                  id: rowData.orderTestId,
+                  processingStatus: rowData.processingStatus,
+                  status: rowData.status
+                });
+              }
+            }}
+          />
 
-        <MyModal
-          open={openComparisonModal}
-          setOpen={setOpenComparisonModal}
-          title="Laboratory Result Comparison"
-          size="80vw"
-          bodyheight="85vh"
-          hideActionBtn
-          content={() => (
-            <LaboratoryResultComparison
-              patient={{ key: order?.patientId }}
-              profileTestId={selectedComparisonProfileId}
-              hideTestNameFilter={true}
-            />
-          )}
-        />
-      </Panel>
-    </div>
+          <ChatModal
+            open={openResultNoteModal}
+            setOpen={setOpenResultNoteModal}
+            title="Result Comments"
+            list={resultNotesResponse ?? []}
+            fieldShowName="note"
+            handleSendMessage={handleSendResultNote}
+          />
+
+          <LogResult
+            open={openLogsModal}
+            setOpen={setOpenLogsModal}
+            result={selectedResultForLogs}
+          />
+
+          <CancellationModal
+            open={openResultRejectModal}
+            setOpen={(open: boolean) => {
+              setOpenResultRejectModal(open);
+              if (!open) {
+                setIsBulkRejectMode(false);
+                setResultRejectReason('');
+              }
+            }}
+            fieldName="rejectedReason"
+            handleCancle={handleReject}
+            object={{ rejectedReason: resultRejectReason }}
+            setObject={(obj: any) => setResultRejectReason(obj.rejectedReason)}
+            fieldLabel="Reject Reason"
+            title={isBulkRejectMode ? 'Reject Selected Results' : 'Reject Result'}
+            required
+          />
+
+          <EditResultModal
+            open={openEditModal}
+            setOpen={setOpenEditModal}
+            result={selectedResultForEdit}
+            onSuccess={() => refetch()}
+          />
+
+          <NormalRangeModal
+            open={openNormalRangeModal}
+            setOpen={setOpenNormalRangeModal}
+            ranges={
+              selectedResult
+                ? normalRangesMap[selectedResult.profileTestId] ?? []
+                : []
+            }
+            profileTestId={selectedResult?.profileTestId ?? null}
+          />
+
+          <MyModal
+            open={openCriticalConfirmModal}
+            setOpen={setOpenCriticalConfirmModal}
+            title="Approve Result — Confirmation Required"
+            size="30vw"
+            bodyheight="30vh"
+            pagesCount={1}
+            hideBack
+            actionButtonLabel="Yes, Approve"
+            actionButtonFunction={handleCriticalConfirmYes}
+            cancelButtonLabel="No, Keep Unapproved"
+            handleCancelFunction={handleCriticalConfirmNo}
+            content={() => (
+              <div style={{ textAlign: 'center', padding: '16px 8px' }}>
+                <FontAwesomeIcon
+                  icon={faTriangleExclamation}
+                  style={{ fontSize: '2.5rem', color: 'var(--primary-pink)', marginBottom: 16 }}
+                />
+                <p style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: 8 }}>
+                  You are about to <span style={{ color: 'var(--primary-pink)' }}>APPROVE</span> this result.
+                </p>
+                <p style={{ fontSize: '0.95rem', color: 'var(--gray-dark)' }}>
+                  Communicated to Healthcare Provider?
+                </p>
+              </div>
+            )}
+          />
+
+          <MyModal
+            open={openComparisonModal}
+            setOpen={setOpenComparisonModal}
+            title="Laboratory Result Comparison"
+            size="80vw"
+            bodyheight="85vh"
+            hideActionBtn
+            content={() => (
+              <LaboratoryResultComparison
+                patient={{ key: order?.patientId }}
+                profileTestId={selectedComparisonProfileId}
+                hideTestNameFilter={true}
+              />
+            )}
+          />
+        </Panel>
+      </div>
     );
   }
 );
