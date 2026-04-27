@@ -114,6 +114,7 @@ export const allergensService = createApi({
 export const {
   useGetAllergensQuery,
   useLazyGetAllergensByTypeQuery,
+  useGetAllergensByTypeQuery,
   useLazyGetAllergensByNameQuery,
   useAddAllergenMutation,
   useUpdateAllergenMutation,
