@@ -195,7 +195,7 @@ const Orders = forwardRef<any, OrdersProps>(
           const patient = patientsMap[Number(r.patientId)];
           return (
             <>
-              <span>{patient ? `${patient.firstName} ${patient.lastName}` : '—'}</span>
+              <span>{patient ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ') : '—'}</span>
               <br />
               <span className="date-table-style">{patient?.medicalRecordNumber ?? '—'}</span>
             </>

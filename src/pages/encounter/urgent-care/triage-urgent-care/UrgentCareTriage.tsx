@@ -652,6 +652,7 @@ const UrgentCareTriage = () => {
           id: patientId,
           medicalRecordNumber: patientMrn,
           firstName: patientMerged?.firstName ?? '',
+          secondName: patientMerged?.secondName ?? '',
           lastName: patientMerged?.lastName ?? '',
           privatePatient: Boolean(patientMerged?.isPrivatePatient ?? false),
           dateOfBirth,
@@ -1185,7 +1186,7 @@ const UrgentCareTriage = () => {
 
         const patientName = (
           <span className="patient-name-text">
-            {rowData?.patientObject?.firstName} {rowData?.patientObject?.lastName}
+            {[rowData?.patientObject?.firstName, rowData?.patientObject?.secondName, rowData?.patientObject?.lastName].filter(Boolean).join(' ')}
           </span>
         );
 

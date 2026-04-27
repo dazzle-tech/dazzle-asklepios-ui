@@ -192,10 +192,7 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
   }
 
   const humanReadableMessage =
-    responseData?.detail ||
-    responseData?.title ||
-    responseData?.message ||
-    'Unexpected error';
+    responseData?.detail || responseData?.title || responseData?.message || 'Unexpected error';
 
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
 };
@@ -366,7 +363,9 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
     const savedExemptedByServiceIdRef = useRef<Map<number, boolean>>(new Map());
 
     const PaymentMethodsEnum = useEnumOptions('PaymentMethods', {
-      exclude: payment?.paymentTypes === 'OUT_OF_POCKET' ? ['INSURANCE_COVERAGE'] : []
+      // exclude: payment?.paymentTypes === 'CASH' ? ['INSURANCE_COVERAGE'] : []
+
+      exclude: ['INSURANCE_COVERAGE']
     });
 
     const patientInsuranceResponse = useGetInsurancesByPatientQuery(
@@ -834,81 +833,89 @@ const PatientPaymentInfo = forwardRef<PatientPaymentInfoHandle, any>(
       );
     };
 
-const handleConfirm = async () => {
-  const hasBillableServices = uiDueAmount > 0;
+    const handleConfirm = async () => {
+      const hasBillableServices = uiDueAmount > 0;
 
-  const paymentDto: modelTypes.PatientPaymentDTO = {
-    id: payment.id,
-    patientId: payment.patientId,
-    encounterId: payment.encounterId,
-    planId: hasBillableServices ? (payment.planId ?? null) : null,
+      const paymentDto: modelTypes.PatientPaymentDTO = {
+        id: payment.id,
+        patientId: payment.patientId,
+        encounterId: payment.encounterId,
+        planId: hasBillableServices ? payment.planId ?? null : null,
 
-    paymentTypes: hasBillableServices ? payment.paymentTypes ?? null : null,
-    paymentMethods: hasBillableServices ? payment.paymentMethods ?? null : null,
+        paymentTypes: hasBillableServices ? payment.paymentTypes ?? null : null,
+        paymentMethods: hasBillableServices ? payment.paymentMethods ?? null : null,
 
-    amount: hasBillableServices
-      ? (payment.amount != null ? Number(payment.amount) : null)
-      : null,
+        amount: hasBillableServices
+          ? payment.amount != null
+            ? Number(payment.amount)
+            : null
+          : null,
 
-    currency: hasBillableServices ? (payment.currency ?? null) : null,
-    facilityDefaultCurrency: hasBillableServices ? (payment.facilityDefaultCurrency ?? null) : null,
-    exchangeRate: hasBillableServices ? (payment.exchangeRate ?? null) : null,
-    amountInFacilityCurrency: hasBillableServices ? (payment.amountInFacilityCurrency ?? null) : null,
+        currency: hasBillableServices ? payment.currency ?? null : null,
+        facilityDefaultCurrency: hasBillableServices
+          ? payment.facilityDefaultCurrency ?? null
+          : null,
+        exchangeRate: hasBillableServices ? payment.exchangeRate ?? null : null,
+        amountInFacilityCurrency: hasBillableServices
+          ? payment.amountInFacilityCurrency ?? null
+          : null,
 
-    addToFreeBalance: hasBillableServices ? payment.addToFreeBalance ?? false : null,
-    useBalanceToSettleDebts: hasBillableServices ? payment.useBalanceToSettleDebts ?? false : null,
+        addToFreeBalance: hasBillableServices ? payment.addToFreeBalance ?? false : null,
+        useBalanceToSettleDebts: hasBillableServices
+          ? payment.useBalanceToSettleDebts ?? false
+          : null,
 
-    cardNumber: hasBillableServices ? payment.cardNumber ?? null : null,
-    cardHolderName: hasBillableServices ? payment.cardHolderName ?? null : null,
-    cardValidUntil: hasBillableServices ? toDateOnlyOrNull(payment.cardValidUntil) : null,
+        cardNumber: hasBillableServices ? payment.cardNumber ?? null : null,
+        cardHolderName: hasBillableServices ? payment.cardHolderName ?? null : null,
+        cardValidUntil: hasBillableServices ? toDateOnlyOrNull(payment.cardValidUntil) : null,
 
-    chequeNumber: hasBillableServices ? payment.chequeNumber ?? null : null,
-    chequeBankName: hasBillableServices ? payment.chequeBankName ?? null : null,
-    chequeDueDate: hasBillableServices ? toDateOnlyOrNull(payment.chequeDueDate) : null,
+        chequeNumber: hasBillableServices ? payment.chequeNumber ?? null : null,
+        chequeBankName: hasBillableServices ? payment.chequeBankName ?? null : null,
+        chequeDueDate: hasBillableServices ? toDateOnlyOrNull(payment.chequeDueDate) : null,
 
-    transferNumber: hasBillableServices ? payment.transferNumber ?? null : null,
-    transferBankName: hasBillableServices ? payment.transferBankName ?? null : null,
-    transferDate: hasBillableServices ? toDateOnlyOrNull(payment.transferDate) : null,
+        transferNumber: hasBillableServices ? payment.transferNumber ?? null : null,
+        transferBankName: hasBillableServices ? payment.transferBankName ?? null : null,
+        transferDate: hasBillableServices ? toDateOnlyOrNull(payment.transferDate) : null,
 
-    services: (servicesRows ?? []).map(serviceRow => ({
-      serviceId: Number((serviceRow as any).serviceId ?? 0),
-      price: Number((serviceRow as any).price ?? 0),
-      isExempted: Boolean((serviceRow as any).isExempted)
-    }))
-  };
+        services: (servicesRows ?? []).map(serviceRow => ({
+          serviceId: Number((serviceRow as any).serviceId ?? 0),
+          price: Number((serviceRow as any).price ?? 0),
+          isExempted: Boolean((serviceRow as any).isExempted)
+        }))
+      };
 
-  let paymentDetails: modelTypes.PatientPaymentDetails;
+      let paymentDetails: modelTypes.PatientPaymentDetails;
 
-  if (paymentDto.id) {
-    paymentDetails = await updatePayment({ id: paymentDto.id, body: paymentDto }).unwrap();
-  } else {
-    paymentDetails = await createPayment({ body: paymentDto }).unwrap();
-  }
+      if (paymentDto.id) {
+        paymentDetails = await updatePayment({ id: paymentDto.id, body: paymentDto }).unwrap();
+      } else {
+        paymentDetails = await createPayment({ body: paymentDto }).unwrap();
+      }
 
-  if (paymentDetails?.payment) {
-    const savedPayment: any = paymentDetails.payment;
+      if (paymentDetails?.payment) {
+        const savedPayment: any = paymentDetails.payment;
 
-    setPayment((previousPayment: any) => ({
-      ...previousPayment,
-      ...savedPayment,
-      paidFromAmount: Number(savedPayment?.paidFromAmount ?? 0),
-      paidFromBalance: Number(savedPayment?.paidFromBalance ?? 0),
-      refunds: Number(savedPayment?.refunds ?? 0)
-    }));
-  }
+        setPayment((previousPayment: any) => ({
+          ...previousPayment,
+          ...savedPayment,
+          paidFromAmount: Number(savedPayment?.paidFromAmount ?? 0),
+          paidFromBalance: Number(savedPayment?.paidFromBalance ?? 0),
+          refunds: Number(savedPayment?.refunds ?? 0)
+        }));
+      }
 
-  applySavedServicesToTable(paymentDetails);
+      applySavedServicesToTable(paymentDetails);
 
-  const departmentIdNum = Number(departmentId ?? 0);
-  if (departmentIdNum) {
-    const servicesResult: any = triggerGetServicesByDepartment(
-      { sourceId: departmentIdNum, page: 0, size: 200, sort: 'id,asc' },
-      true
-    );
-    if (servicesResult?.unwrap) await servicesResult.unwrap();
-    applySavedServicesToTable(paymentDetails);
-  }
-};
+      const departmentIdNum = Number(departmentId ?? 0);
+      if (departmentIdNum) {
+        const servicesResult: any = triggerGetServicesByDepartment(
+          { sourceId: departmentIdNum, page: 0, size: 200, sort: 'id,asc' },
+          true
+        );
+        if (servicesResult?.unwrap) await servicesResult.unwrap();
+        applySavedServicesToTable(paymentDetails);
+      }
+    };
 
     const validateBeforeSave = () => {
       const validationDetails = validationResult?.details ?? {};
@@ -1054,7 +1061,7 @@ const handleConfirm = async () => {
             const nextPayment = { ...updatedPayment };
 
             if (
-              nextPayment.paymentTypes === 'OUT_OF_POCKET' &&
+              nextPayment.paymentTypes === 'CASH' &&
               nextPayment.paymentMethods === 'INSURANCE_COVERAGE'
             ) {
               nextPayment.paymentMethods = null;

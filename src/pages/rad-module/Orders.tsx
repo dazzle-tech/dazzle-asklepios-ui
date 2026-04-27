@@ -219,7 +219,7 @@ const Orders = forwardRef<any, OrdersProps>(
           return (
             <>
               <span>
-                {patient ? `${patient.firstName} ${patient.lastName}` : ' '}
+                {patient ? [patient.firstName, patient.secondName, patient.lastName].filter(Boolean).join(' ') : ' '}
               </span>
               <br />
               <span className="date-table-style">

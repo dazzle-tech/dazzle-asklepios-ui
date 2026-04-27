@@ -21,6 +21,7 @@ import { formatDateWithoutSeconds, conjureValueBasedOnKeyFromList } from '@/util
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useGetCdtByIdsQuery } from '@/services/setup/cdtCodeService';
 import { useGetServicesByCategoryQuery } from '@/services/setup/serviceService';
+import { useGetProceduresByCategoryQuery } from '@/services/setup/procedure/procedureService';
 import {
   useGetDentalProceduresByPatientQuery,
   useSaveDentalProcedureMutation,
@@ -33,11 +34,7 @@ import { DentalProcedureResponseVM } from '@/types/model-types-new';
 import './styles.less';
 import { useEnumOptions } from '@/services/enumsApi';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 const getStatusColor = (cancelled: boolean) => (cancelled ? '#D64545' : '#0DAA41');
-
-// ─── Component ───────────────────────────────────────────────────────────────
 
 type FormMode = 'add' | 'edit';
 
@@ -60,7 +57,6 @@ const DentalProcedures = props => {
   const [selectedRow, setSelectedRow] = useState<DentalProcedureResponseVM | null>(null);
   const [showCancelled, setShowCancelled] = useState(false);
 
-  // ── Single modal state ──
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [formMode, setFormMode] = useState<FormMode>('add');
   const [form, setForm] = useState<any>({ ...emptyForm });
@@ -80,6 +76,11 @@ const DentalProcedures = props => {
     page: 0,
     size: 1000,
     category: 'DENTAL'
+  });
+  const { data: procedureList } = useGetProceduresByCategoryQuery({
+    categoryType: '10636199250201941',
+    page: 0,
+    size: 1000
   });
   const ToothEnum = useEnumOptions('ToothNumber');
 
@@ -183,7 +184,7 @@ const DentalProcedures = props => {
     return () => document.removeEventListener('pointerdown', handlePointer, true);
   }, [handleClearSelection, cancelModalOpen, formModalOpen, attachmentsModalOpen]);
 
-  // ─── Helpers to open modal ────────────────────────────────────────────────
+  // ─── Modal openers ────────────────────────────────────────────────────────
   const openAddModal = () => {
     setForm({ ...emptyForm });
     setFormMode('add');
@@ -194,6 +195,8 @@ const DentalProcedures = props => {
   const openEditModal = (row: DentalProcedureResponseVM) => {
     setForm({
       ...row,
+      procedureId: (row as any).procedureId ?? null,
+      serviceId: row.serviceId ?? null,
       anesthesiaUsed: row.anesthesiaUsed ?? '',
       dose: row.dose ?? '',
       fillingMaterial: row.fillingMaterial ?? '',
@@ -217,7 +220,8 @@ const DentalProcedures = props => {
           dose: form.dose !== '' && form.dose != null ? Number(form.dose) : null,
           unit: form.unit || null,
           fillingMaterial: form.fillingMaterial?.trim() || null,
-          serviceId: form.serviceId,
+          procedureId: form.procedureId,
+          serviceId: form.serviceId || null,
           cdtCodeId: form.cdtCodeId || null,
           notes: form.notes?.trim() || null
         };
@@ -236,7 +240,8 @@ const DentalProcedures = props => {
           dose: form.dose !== '' && form.dose != null ? Number(form.dose) : null,
           unit: form.unit || null,
           fillingMaterial: form.fillingMaterial?.trim() || null,
-          serviceId: form.serviceId,
+          procedureId: form.procedureId,
+          serviceId: form.serviceId || null,
           cdtCodeId: form.cdtCodeId || null,
           notes: form.notes?.trim() || null
         };
@@ -288,8 +293,19 @@ const DentalProcedures = props => {
         title: <Translate>Procedure</Translate>,
         flexGrow: 2,
         render: (row: DentalProcedureResponseVM) => {
+          const procedure = (procedureList?.data ?? []).find(
+            (p: any) => p.id === (row as any).procedureId
+          );
+          return procedure?.name ?? '-';
+        }
+      },
+      {
+        key: 'service',
+        title: <Translate>Service</Translate>,
+        flexGrow: 2,
+        render: (row: DentalProcedureResponseVM) => {
           const service = (serviceList?.data ?? []).find((s: any) => s.id === row.serviceId);
-          return service?.name ?? row.serviceId ?? '-';
+          return service?.name ?? '-';
         }
       },
       {
@@ -304,7 +320,6 @@ const DentalProcedures = props => {
           </>
         )
       },
-
       {
         key: 'cdtCode',
         title: <Translate>CDT Code</Translate>,
@@ -314,7 +329,6 @@ const DentalProcedures = props => {
           return cdt ? `${cdt.code} – ${cdt.description}` : '-';
         }
       },
-      // ── Expandable fields ──────────────────────────────────────────────────
       {
         key: 'anesthesiaUsed',
         title: <Translate>Anesthesia Used</Translate>,
@@ -353,7 +367,6 @@ const DentalProcedures = props => {
         expandable: true,
         render: (row: DentalProcedureResponseVM) => row.notes ?? '-'
       },
-      // ── End expandable fields ──────────────────────────────────────────────
       {
         key: 'status',
         title: <Translate>Status</Translate>,
@@ -384,10 +397,9 @@ const DentalProcedures = props => {
         )
       }
     ],
-    [serviceList, toothSurfData, ToothEnum, cdtMap, valueUnitData]
+    [serviceList, procedureList, toothSurfData, ToothEnum, cdtMap, valueUnitData]
   );
 
-  // ─── RTL/LTR ──────────────────────────────────────────────────────────────
   const direction = localStorage.getItem('direction') || 'LTR';
   const dir = direction === 'RTL' ? 'rtl' : 'ltr';
 
@@ -559,11 +571,11 @@ const DentalProcedures = props => {
                   <MyInput
                     width="100%"
                     column
-                    fieldName="serviceId"
+                    fieldName="procedureId"
                     fieldLabel="Procedure"
                     fieldType="select"
                     required
-                    selectData={serviceList?.data ?? []}
+                    selectData={procedureList?.data ?? []}
                     selectDataLabel="name"
                     selectDataValue="id"
                     record={form}
@@ -572,6 +584,23 @@ const DentalProcedures = props => {
                 </Col>
 
                 <Col md={12}>
+                  <MyInput
+                    width="100%"
+                    column
+                    fieldName="serviceId"
+                    fieldLabel="Service"
+                    fieldType="select"
+                    selectData={serviceList?.data ?? []}
+                    selectDataLabel="name"
+                    selectDataValue="id"
+                    record={form}
+                    setRecord={setForm}
+                  />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={24}>
                   <MyInput
                     width="100%"
                     column
