@@ -132,7 +132,7 @@ const workingHoursToTime = toTimeStr
               setOpen={setOpen}
               title={warehouse?.key ? 'Edit working hours' : 'New working hours'}
               position="right"
-              content={<div dir={dir}>{conjureFormContent}</div>}
+              content={<div dir={dir}>{conjureFormContent()}</div>}
               actionButtonLabel={warehouse?.key ? 'Save' : 'Create'}
               actionButtonFunction={handleSave}
               steps={[{ title: 'Warehouse Working Hours', icon: <FaClock /> }]}
