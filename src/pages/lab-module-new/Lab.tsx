@@ -31,28 +31,28 @@ const safeRefetch = async (fn?: () => any) => {
   if (!fn) return;
   try {
     await fn();
-  } catch {}
+  } catch { }
 };
 
 const Lab = () => {
   const dispatch = useAppDispatch();
-   const authSlice = useAppSelector(state => state.auth);
+  const authSlice = useAppSelector(state => state.auth);
   const user = authSlice?.user;
   const OrdersRef = useRef<any>(null);
   const TestsRef = useRef<any>(null);
-
+  const [mainActiveTab, setMainActiveTab] = useState('1');
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [patient, setPatient] = useState({ ...newPatient });
   const [encounter, setEncounter] = useState({ ...newPatientEncounter });
   const [globalLoading, setGlobalLoading] = useState(false);
   const [visibleTests, setVisibleTests] = useState<any[]>([]);
-
+const [activeKey, setActiveKey] = useState('1');
   const [orderNumberFilter, setOrderNumberFilter] = useState<string>('');
 
   const [getBulkPatientBasicInfo] = useGetBulkPatientBasicInfoMutation();
   const [getEncounterById] = useLazyGetEncounterByIdQuery();
-  const [activeKey, setActiveKey] = useState<'1' | '2'>('1');
+  const [activeKey2, setActiveKey2] = useState('1');
 
   useEffect(() => {
     dispatch(setPageCode('Lab'));
@@ -200,7 +200,35 @@ const Lab = () => {
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
   const dir = isRTL ? 'rtl' : 'ltr';
-
+  const innerTabsData = [
+    {
+      title: 'Tests',
+      content: (
+        <Tests
+          ref={TestsRef}
+          order={order}
+          setTest={setTest}
+          test={test}
+          samplesList={samplesList}
+          fecthSample={fecthSample}
+          loading={globalLoading}
+          refetchAllLabData={refetchAllLabData}
+          onTestsLoaded={setVisibleTests}
+        />
+      )
+    },
+    {
+      title: 'Results',
+      content: (
+        <Result
+          order={order}
+          setTest={setTest}
+          loading={globalLoading}
+          refetchAllLabData={refetchAllLabData}
+        />
+      )
+    }
+  ];
   const tabData = [
     {
       title: 'Laboratory',
@@ -298,30 +326,12 @@ const Lab = () => {
                       {test.id && <Row>Number of Samples Collected: {samplesList.length}</Row>}
                     </Col>
                   </Row>
-
-                  <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
-                    <Tabs.Tab eventKey="1" title="Tests">
-                      <Tests
-                        ref={TestsRef}
-                        order={order}
-                        setTest={setTest}
-                        test={test}
-                        samplesList={samplesList}
-                        fecthSample={fecthSample}
-                        loading={globalLoading}
-                        refetchAllLabData={refetchAllLabData}
-                        onTestsLoaded={setVisibleTests}
-                      />
-                    </Tabs.Tab>
-                    <Tabs.Tab eventKey="2" title="Results">
-                      <Result
-                        order={order}
-                        setTest={setTest}
-                        loading={globalLoading}
-                        refetchAllLabData={refetchAllLabData}
-                      />
-                    </Tabs.Tab>
-                  </Tabs>
+                  <MyTab
+                    data={innerTabsData}
+                    activeTab={activeKey2}
+                    setActiveTab={setActiveKey2}
+                    lazy
+                  />
                 </div>
 
                 <div className="right-boxs">
@@ -351,8 +361,8 @@ const Lab = () => {
           <ReviewResults
             setEncounter={setEncounter}
             setPatient={setPatient}
-            user={user?.id} 
-    
+            user={user?.id}
+
           />        </div>
       )
     }
@@ -360,7 +370,12 @@ const Lab = () => {
 
   return (
     <>
-      <MyTab data={tabData} />
+      <MyTab
+        data={tabData}
+        activeTab={mainActiveTab}
+        setActiveTab={setMainActiveTab}
+        lazy
+      />
     </>
   );
 };

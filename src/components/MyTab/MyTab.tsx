@@ -1,76 +1,74 @@
-// import React, { useEffect, useState } from 'react';
-// import { Tooltip, Whisper } from 'rsuite';
-// import Translate from '../Translate';
-// import { useSelector } from 'react-redux';
-// import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
-// const MyTab = ({data, ...props}) => {
-//   const [errorType, setErrorType] = useState(undefined);
-//   const mode = useSelector((state: any) => state.ui.mode);
-
-//   return (
-//    <Tabs>
-
-//    </Tabs>
-//   );
-// };
-
-// export default MyTab;
 import { Tabs } from 'rsuite';
-import React, { ReactElement } from 'react';
+import React, { useState } from 'react';
 import Translate from '../Translate';
-import "./styles.less";
+import './styles.less';
 
 interface TabDataItem {
   title: string;
-  content: ReactElement;
-  disabled?: boolean
+  content: React.ReactNode;
+  disabled?: boolean;
 }
 
 interface MyTabProps {
   data: TabDataItem[];
   defaultActiveKey?: string | number;
-  appearance?: "subtle" | "tabs" | "pills";
+  appearance?: 'subtle' | 'tabs' | 'pills';
   className?: string;
   activeTab?: string | number;
-  setActiveTab?: (key: string | number) => void;
+  setActiveTab?: (key: string) => void;
+  lazy?: boolean;
 }
 
 const MyTab: React.FC<MyTabProps> = ({
   data,
   defaultActiveKey = '1',
   appearance = 'subtle',
-  className = "",
+  className = '',
   activeTab,
-  setActiveTab
+  setActiveTab,
+  lazy = false,
 }) => {
+  const [internalActiveTab, setInternalActiveTab] = useState(String(defaultActiveKey));
 
-  if (!Array.isArray(data)) {
-    return null;
-  }
+  if (!Array.isArray(data)) return null;
 
   const isControlled = activeTab !== undefined && typeof setActiveTab === 'function';
+  const currentActiveTab = isControlled ? String(activeTab) : internalActiveTab;
+
+  const handleSelect = (key: any) => {
+    if (!key) return;
+
+    const selectedKey = String(key);
+
+    if (isControlled) {
+      setActiveTab?.(selectedKey);
+    } else {
+      setInternalActiveTab(selectedKey);
+    }
+  };
 
   return (
     <Tabs
-      // defaultActiveKey={defaultActiveKey}
-       {...(isControlled
-        ? {
-            activeKey: activeTab,
-            onSelect: key => {
-              if (key && setActiveTab) setActiveTab(key.toString());
-            },
-          }
-        : {
-            defaultActiveKey,
-          })}
+      activeKey={currentActiveTab}
+      onSelect={handleSelect}
       appearance={appearance}
       className={`tabs-style ${className}`}
     >
-      {data.map((item, index) => (
-          <Tabs.Tab key={index} eventKey={(index + 1) + ""} title={<Translate>{item.title}</Translate>} disabled={item.disabled ? item.disabled : false}>
-            {item.content}
+      {data.map((item, index) => {
+        const eventKey = String(index + 1);
+        const isActive = currentActiveTab === eventKey;
+
+        return (
+          <Tabs.Tab
+            key={eventKey}
+            eventKey={eventKey}
+            title={<Translate>{item.title}</Translate>}
+            disabled={item.disabled ?? false}
+          >
+            {!lazy || isActive ? item.content : null}
           </Tabs.Tab>
-        ))}
+        );
+      })}
     </Tabs>
   );
 };
