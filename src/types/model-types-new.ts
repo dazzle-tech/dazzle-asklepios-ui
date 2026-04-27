@@ -1560,18 +1560,39 @@ export interface UserStickyNotesCreateVM {
 export interface PriceListItem {
   id?: number;
   priceListId: number;
-  itemType: string;
-  // only if itemType = PRODUCT (enum ProductTypes on backend)
-  productType?: string | null; // MEDICATION | CONSUMABLE | ... (string enum)
-  // polymorphic target
+  itemType: string | null;
+
   serviceId?: number | null;
-  productId?: number | null;
-  price: number | string; // BigDecimal -> number/string on FE
+  brandMedicationId?: number | null;
+  diagnosticTestId?: number | null;
+  procedureId?: number | null;
+
+  price: number | string;
   discountAllowed: boolean;
   isActive: boolean;
-  createdDate?: Date | null;
-  lastModifiedDate?: Date | null;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
 }
+
+export interface PriceListItem {
+  id?: number;
+  priceListId: number;
+  itemType: string | null;
+
+  serviceId?: number | null;
+  brandMedicationId?: number | null;
+  diagnosticTestId?: number | null;
+  procedureId?: number | null;
+
+  price: number | string;
+  discountAllowed: boolean;
+  isActive: boolean;
+
+  createdDate?: Date | string | null;
+  lastModifiedDate?: Date | string | null;
+}
+
 
 /* Billing Invoices */
 

@@ -1272,9 +1272,10 @@ export const newPriceListItem: modelTypes.PriceListItem = {
   id: undefined,
   priceListId: 0,
   itemType: null,
-  productType: null,
   serviceId: null,
-  productId: null,
+  brandMedicationId: null,
+  diagnosticTestId: null,
+  procedureId: null,
   price: 0,
   discountAllowed: false,
   isActive: true
