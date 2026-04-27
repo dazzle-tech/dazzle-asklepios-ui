@@ -340,7 +340,19 @@ export const patientEncounterService = createApi({
       }),
       providesTags: ['PatientEncounter']
     }),
-  })
+    getEncountersByIds: builder.query<PatientEncounter[], { ids: Id[] }>({
+  query: ({ ids }) => ({
+    url: `/api/patient/encounter/by-ids`,
+    method: 'POST',
+    body: ids
+  }),
+  providesTags: res =>
+    res
+      ? [...res.map(e => ({ type: 'PatientEncounter' as const, id: e.id })), 'PatientEncounter']
+      : ['PatientEncounter']
+}),
+  }),
+
 });
 
 export const {
@@ -375,4 +387,6 @@ export const {
   useCountDepartmentWaitingListByDateRangeQuery,
   useCountDepartmentTriageByDateRangeQuery,
   useCountDepartmentDischargedByDateRangeQuery,
+  useGetEncountersByIdsQuery
+  ,useLazyGetEncountersByIdsQuery
 } = patientEncounterService;
