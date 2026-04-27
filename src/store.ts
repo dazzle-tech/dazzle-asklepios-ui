@@ -48,8 +48,6 @@ import { inventoryTransactionAttachmentService } from './services/inventory/inve
 
 import { userService } from '@/services/userService';
 
-import { labService } from './services/labService';
-import { radService } from '@/services/radService';
 import { procedureService } from './services/procedureService';
 import { operationService } from './services/operationService';
 
@@ -327,9 +325,7 @@ export const store = configureStore({
       inventoryTransactionAttachmentService.reducer,
 
     // lab / rad / operation / procedures
-    [labService.reducerPath]: labService.reducer,
     [operationService.reducerPath]: operationService.reducer,
-    [radService.reducerPath]: radService.reducer,
     [procedureService.reducerPath]: procedureService.reducer,
     [PatientRelationService.reducerPath]: PatientRelationService.reducer,
 
@@ -635,8 +631,6 @@ export const store = configureStore({
         inventoryTransactionAttachmentService.middleware,
 
         // lab / rad / procedure / operation
-        labService.middleware,
-        radService.middleware,
         procedureService.middleware,
         operationService.middleware,
 

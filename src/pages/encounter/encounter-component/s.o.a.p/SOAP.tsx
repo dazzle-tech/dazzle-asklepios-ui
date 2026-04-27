@@ -207,7 +207,7 @@ const SOAP = props => {
     }
   ];
 
-  useEffect(() => {
+    useEffect(() => {
     if (isLoading || isFetching) dispatch(showSystemLoader());
     else dispatch(hideSystemLoader());
 
