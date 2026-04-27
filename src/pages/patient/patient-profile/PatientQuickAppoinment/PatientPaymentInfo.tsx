@@ -88,8 +88,13 @@ const PAYMENT_ERROR_MAP: Record<string, string> = {
   'payload.required': 'Payment data is required.',
   'patient.invalid': 'Invalid patient id.',
   'patient.notfound': 'Patient not found.',
+  'patient.required': 'Patient is required.',
   'encounter.invalid': 'Invalid encounter id.',
   'encounter.notfound': 'Encounter not found.',
+  'encounter.required': 'Encounter is required.',
+  'encounter.invalid.status':
+    'Encounter is not ready for payment (must be in Pending Payment status).',
+  'payment.duplicate.encounter': 'Payment already exists for this encounter.',
   'id.notfound': 'Payment record not found.',
   notfound: 'Payment record not found.',
   duplicate: 'Duplicate record.',
@@ -191,8 +196,18 @@ const handleCrudError = (error: any, dispatch: any, keyMap: Record<string, strin
     return;
   }
 
+  const stripErrorPrefix = (raw: string) =>
+    raw && raw.startsWith('error.') ? raw.substring(6) : raw;
+
+  const status = error?.status ?? error?.originalStatus;
+  const statusText = error?.error || error?.statusText;
+
   const humanReadableMessage =
-    responseData?.detail || responseData?.title || responseData?.message || 'Unexpected error';
+    responseData?.detail ||
+    stripErrorPrefix(responseData?.message || '') ||
+    responseData?.title ||
+    statusText ||
+    (status ? `Request failed (HTTP ${status})` : 'Unexpected error');
 
   dispatch(notify({ msg: humanReadableMessage + traceSuffix, sev: 'warning' }));
 };

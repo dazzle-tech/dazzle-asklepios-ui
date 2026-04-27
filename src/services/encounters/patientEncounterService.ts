@@ -265,10 +265,19 @@ export const patientEncounterService = createApi({
       providesTags: ['PatientEncounter']
     }),
 
-    getPreviousClosedEncounter: builder.query<PatientEncounter, { encounterId: Id }>({
+    getPreviousClosedEncounter: builder.query<PatientEncounter | null, { encounterId: Id }>({
       query: ({ encounterId }) => ({
         url: `/api/patient/encounter/${encounterId}/previous-encounter-completed`,
-        method: 'GET'
+        method: 'GET',
+        responseHandler: async (response: Response) => {
+          const text = await response.text();
+          if (!text) return null;
+          try {
+            return JSON.parse(text);
+          } catch {
+            return null;
+          }
+        }
       }),
       providesTags: ['PatientEncounter']
     }),
