@@ -30,7 +30,7 @@ import Translate from '@/components/Translate';
 const SOAP = props => {
   const dispatch = useAppDispatch();
   const location = useLocation();
-
+  const [activeTab, setActiveTab] = useState('1');
   const outletContext = useOutletContext<any>();
 
   const patient = props.patient || location.state?.patient || outletContext?.patient;
@@ -93,7 +93,8 @@ const SOAP = props => {
     chiefComplaint: encounter?.chiefComplaint ?? null,
     hasPrescription: Boolean(encounter?.hasPrescription),
     hasOrder: Boolean(encounter?.hasOrder),
-    isObserved: Boolean(encounter?.isObserved)
+    isObserved: Boolean(encounter?.isObserved),
+    physicalExaminationSummery: encounter?.physicalExaminationSummery ?? null,
   });
 
   const saveChanges = async () => {
@@ -146,7 +147,7 @@ const SOAP = props => {
         <div className={clsx('column-container', { 'disabled-panel': edit })}>
           <div className="top-section">
             <SectionContainer
-              title={<Translate>Chief Complain</Translate>}
+              title={<Translate>Chief Complaint </Translate>}
               content={
                 <Form fluid>
                   <MyInput
@@ -202,7 +203,7 @@ const SOAP = props => {
     },
     {
       title: 'Physical Examination & Findings',
-      content: <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} />
+      content: <ReviewOfSystems patient={patient} encounter={localEncounter} edit={edit} setEncounter={setLocalEncounter} />
     }
   ];
 
@@ -222,10 +223,10 @@ const SOAP = props => {
   return (
     <div className="patient-summary-container">
       <MyTab
-        data={tabData.map(tab => ({
-          ...tab,
-          content: <div dir={dir}>{tab.content}</div>
-        }))}
+        data={tabData}     
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        lazy    
       />
     </div>
   );
