@@ -2,7 +2,7 @@ import SectionContainer from '@/components/SectionsoContainer';
 import React from 'react';
 import { Col, Row, Text } from 'rsuite';
 import BloodOrder from '../../blood-order';
-import Consultation from '../../consultation';
+import Consultation from '../../consultation-new';
 import DiagnosticsOrder from '../../diagnostics-order-new';
 import DrugOrder from '../../drug-order';
 import IVFluidOrder from '../../iv-fluid-order';
