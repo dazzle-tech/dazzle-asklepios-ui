@@ -24,6 +24,7 @@ import {
   useCreateQuickAppointmentMutation
 } from '@/services/appointment/appointmentService';
 import { useAcceptReferralRequestMutation } from '@/services/medicalsheetsEncounter/referralRequestService';
+import { useLazyGetEncountersByPatientQuery } from '@/services/encounters/patientEncounterService';
 import * as modelTypes from '@/types/model-types-new';
 
 const ENCOUNTER_ERROR_MAP: Record<string, string> = {
@@ -40,7 +41,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'followUpEncounter.required.byReason':
     'Follow-up Encounter is required when Reason is Follow up (and must be empty otherwise).',
   'patient.department.date.duplicate':
-    'This patient already has an encounter in this department on the selected date.',
+    'Patient already has same department encounter Today',
   'department.date.sequence.duplicate':
     'Daily sequence number already exists for this department and date. Please try again.',
   'patient.emergency.notAllowed.withOngoing':
@@ -156,6 +157,7 @@ const PatientQuickAppointment = ({
 
   const [createQuickAppointment] = useCreateQuickAppointmentMutation();
   const [acceptReferralRequest] = useAcceptReferralRequestMutation();
+  const [fetchPatientEncounters] = useLazyGetEncountersByPatientQuery();
 
   const didAcceptReferralRef = useRef(false);
 
@@ -236,13 +238,72 @@ const PatientQuickAppointment = ({
     return true;
   };
 
+  const isSameLocalDate = (a: any, b: any) => {
+    const da = a instanceof Date ? a : new Date(a);
+    const db = b instanceof Date ? b : new Date(b);
+    if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return false;
+    return (
+      da.getFullYear() === db.getFullYear() &&
+      da.getMonth() === db.getMonth() &&
+      da.getDate() === db.getDate()
+    );
+  };
+
+  const checkDuplicateEncounter = async (
+    patientId: number,
+    departmentId: number,
+    encounterDate: any
+  ): Promise<boolean> => {
+    if (!patientId || !departmentId || !encounterDate) return false;
+    try {
+      const result: any = await fetchPatientEncounters(
+        { patientId, page: 0, size: 200, sort: 'createdDate,desc' },
+        true
+      ).unwrap();
+
+      const list: any[] = Array.isArray(result?.data)
+        ? result.data
+        : Array.isArray(result)
+        ? result
+        : [];
+
+      return list.some((e: any) => {
+        const sameDept =
+          Number(e?.departmentId ?? e?.department?.id ?? 0) === Number(departmentId);
+        const status = String(e?.status ?? '').toUpperCase();
+        const isCancelled = status === 'CANCELLED';
+        const dateValue = e?.encounterDate ?? e?.createdDate;
+        return sameDept && !isCancelled && isSameLocalDate(dateValue, encounterDate);
+      });
+    } catch {
+      return false;
+    }
+  };
+
   const handleSave = async () => {
     if (!validateRequiredFields()) return;
 
+    const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
+    const practitionerId = Number(localEncounter?.practitionerId ?? 0);
+    const departmentId = Number(localEncounter?.departmentId ?? 0);
+
+    const hasDuplicate = await checkDuplicateEncounter(
+      patientId,
+      departmentId,
+      localEncounter?.encounterDate
+    );
+
+    if (hasDuplicate) {
+      dispatch(
+        notify({
+          msg: 'Patient already has same department encounter Today',
+          sev: 'error'
+        })
+      );
+      return;
+    }
+
     try {
-      const patientId = Number(localPatient?.id ?? localPatient?.key ?? 0);
-      const practitionerId = Number(localEncounter?.practitionerId ?? 0);
-      const departmentId = Number(localEncounter?.departmentId ?? 0);
 
       const payload: modelTypes.AppointmentFromTemplateQuickAppointmentDTO = {
         facilityId: Number(localEncounter?.facilityId ?? 0),

@@ -100,9 +100,6 @@ export const appointmentFromTemplateService = createApi({
         method: 'POST',
         body
       }),
-      async onQueryStarted(arg, api) {
-        await onQueryStarted(arg, api);
-      },
       invalidatesTags: ['AppointmentFromTemplate']
     }),
 

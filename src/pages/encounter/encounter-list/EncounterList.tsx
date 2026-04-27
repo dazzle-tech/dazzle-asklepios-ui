@@ -92,7 +92,7 @@ const ENCOUNTER_ERROR_MAP: Record<string, string> = {
   'followUpEncounter.notfound': 'Follow-up encounter not found.',
   'encounterNumber.duplicate': 'Encounter number already exists.',
   'patient.department.date.duplicate':
-    'This patient already has an encounter for this department on this date.',
+    'Patient already has same department encounter Today',
   'department.date.sequence.duplicate':
     'Department daily sequence number already exists for this date.',
   'db.constraint': 'Database constraint violated while saving patient encounter.'
