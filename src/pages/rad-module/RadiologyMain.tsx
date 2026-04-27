@@ -11,6 +11,7 @@ const RadiologyMain = () => {
   const authSlice = useAppSelector(state => state.auth);
 const user = authSlice?.user;
   // Direction handling for RTL/LTR
+  const [activeKey, setActiveKey] = React.useState('1');
   const direction = localStorage.getItem('direction') || 'LTR';
   const isRTL = direction === 'RTL';
 
@@ -51,7 +52,7 @@ const user = authSlice?.user;
     }
   ];
 
-  return <MyTab data={tabData} />;
+  return <MyTab data={tabData} activeTab={activeKey} setActiveTab={setActiveKey} lazy/>;
 };
 
 export default RadiologyMain;

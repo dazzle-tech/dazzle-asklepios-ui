@@ -115,7 +115,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   const tabData = [
     {
       title: 'Demographics',
-      content: isTabLoaded('1') ? (
+      content:
         <DemographicsTab
           localPatient={localPatient}
           setLocalPatient={setLocalPatient}
@@ -127,74 +127,63 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           ageFormatType={ageFormatType}
           ageGroupValue={ageGroupValue}
         />
-      ) : (
-        <></>
-      )
+     
     },
     {
       title: 'Documents',
-      content: isTabLoaded('2') ? <SecondaryIDTab localPatient={localPatient} /> : <></>
+      content:  <SecondaryIDTab localPatient={localPatient} />
     },
     {
       title: 'Address',
-      content: isTabLoaded('3') ? <AddressTab localPatient={localPatient} /> : <></>
-    },
+      content:  <AddressTab localPatient={localPatient} /> },
     {
       title: 'Extra Details',
-      content: isTabLoaded('4') ? (
+      content:
         <ExtraDetailsTab
           localPatient={localPatient}
           setLocalPatient={setLocalPatient}
           validationResult={validationResult}
         />
-      ) : (
-        <></>
-      )
+     
     },
     {
       title: 'Insurance',
-      content: isTabLoaded('5') ? <InsuranceTab localPatient={localPatient} /> : <></>
+      content:  <InsuranceTab localPatient={localPatient} /> 
     },
     {
       title: 'Privacy & Security',
-      content: isTabLoaded('6') ? (
+      content: 
         <PrivacySecurityTab
           localPatient={localPatient}
           setLocalPatient={setLocalPatient}
           validationResult={validationResult}
         />
-      ) : (
-        <></>
-      )
+    
     },
     {
       title: 'Primary Care Provider',
-      content: isTabLoaded('7') ? (
+      content: 
         <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.id} />
-      ) : (
-        <></>
-      )
+     
     },
     {
       title: 'Family Members',
-      content: isTabLoaded('8') ? <PatientFamilyMembers localPatient={localPatient} /> : <></>
+      content: <PatientFamilyMembers localPatient={localPatient} /> 
     },
     {
       title: 'Next of Kin',
-      content: isTabLoaded('9') ? <NextOfKin patient={localPatient} isClick={!localPatient.id} /> : <></>
+      content: <NextOfKin patient={localPatient} isClick={!localPatient.id} /> 
     },
 
     {
       title: 'Attachments',
-      content: isTabLoaded('10') ? (
+      content:  (
         <PatientAttachment
           localPatient={localPatient}
           setRefetchAttachmentList={setRefetchAttachmentList}
           refetchAttachmentList={refetchAttachmentList}
         />
-      ) : (
-        <></>
-      )
+      ) 
     }
   ];
   // Direction handling for RTL/LTR
@@ -212,7 +201,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           </div>
         }
       >
-        <MyTab data={tabData} activeTab={activeTab} setActiveTab={key => setActiveTab(String(key))} />
+        <MyTab data={tabData} activeTab={activeTab} setActiveTab={setActiveTab} lazy/>
+       
       </Panel>
     </div>
   );
